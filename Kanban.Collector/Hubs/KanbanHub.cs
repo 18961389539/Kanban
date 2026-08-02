@@ -15,12 +15,18 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
 {
     private readonly SnapshotAggregator _snapshotAggregator;
     private readonly EventBroadcaster _eventBroadcaster;
+    private readonly HistoryQueryHandler _historyQueryHandler;
     private readonly ILogger<KanbanHub> _logger;
 
-    public KanbanHub(SnapshotAggregator snapshotAggregator, EventBroadcaster eventBroadcaster, ILogger<KanbanHub> logger)
+    public KanbanHub(
+        SnapshotAggregator snapshotAggregator,
+        EventBroadcaster eventBroadcaster,
+        HistoryQueryHandler historyQueryHandler,
+        ILogger<KanbanHub> logger)
     {
         _snapshotAggregator = snapshotAggregator;
         _eventBroadcaster = eventBroadcaster;
+        _historyQueryHandler = historyQueryHandler;
         _logger = logger;
     }
 
@@ -60,5 +66,5 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
 
     /// <inheritdoc />
     public Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request)
-        => _eventBroadcaster.QueryHistoryAsync(request, Context.ConnectionAborted);
+        => _historyQueryHandler.QueryAsync(request, Context.ConnectionAborted);
 }

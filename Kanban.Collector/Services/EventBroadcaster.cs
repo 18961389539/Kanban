@@ -104,19 +104,4 @@ public sealed class EventBroadcaster
             yield return evt;
         }
     }
-
-    /// <summary>
-    /// 历史查询占位实现：第 3 步迁入 HistoryService/DatabaseProvider 后替换为真实查询。
-    /// </summary>
-    public Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken cancellationToken = default)
-    {
-        _logger.LogWarning("历史查询尚未接入数据存储（第 3 步迁移后启用），QueryType={QueryType}", request.QueryType);
-        return Task.FromResult(new HistoryQueryResponse
-        {
-            Items = [],
-            Total = 0,
-            Page = request.Page,
-            PageSize = request.PageSize,
-        });
-    }
 }

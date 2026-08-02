@@ -84,7 +84,6 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<StatusTransitionHistoryStore>();
         services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<StatusTransitionHistoryStore>());
         services.AddSingleton<HistoryStorageDiagnostics>();
-        services.AddSingleton<IHistoryService>(sp => sp.GetRequiredService<HistoryService>());
         services.AddSingleton<GpuUsageMonitor>();
         services.AddSingleton<SystemResourceMonitor>();
         services.AddSingleton<IDeviceSelectionService, DeviceSelectionService>();
@@ -95,6 +94,14 @@ public static class MainAppServiceCollectionExtensions
         // ──────────── Remote 模式数据链路（展示端瘦身） ────────────
         services.AddSingleton<KanbanDataClient>();
         services.AddSingleton<RemoteRuntimeSink>();
+        // 历史查询路由代理：Local 委托 HistoryService（SQLite），Remote 走 SignalR。
+        // 覆盖 IHistoryService / IHistoryQueryExecutor / 各历史域接口，ViewModel 无需改动。
+        services.AddSingleton<RemoteHistoryQueryService>();
+        services.AddSingleton<IHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        services.AddSingleton<IAlarmHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        services.AddSingleton<IWorkOrderProductionBatchQuery>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
 
         return services;
     }

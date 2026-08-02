@@ -35,20 +35,30 @@ public sealed record HistoryQueryRequest
     /// <summary>工单 Id 过滤（仅生产日志有效）</summary>
     public int? WorkOrderId { get; init; }
 
+    /// <summary>报警 Id 过滤（仅报警事件有效，GetLatestAlarmEvent 语义）</summary>
+    public string? AlarmId { get; init; }
+
+    /// <summary>是否只取最新一条（按时间倒序第一条，配合 To 实现 GetLatest* 语义）。默认 false。</summary>
+    public bool LatestFirst { get; init; }
+
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 50;
 }
 
 /// <summary>
-/// 历史查询响应。Items 为 <see cref="HistoryQueryType"/> 对应的记录 DTO 列表。
+/// 历史查询响应。按 QueryType 填充对应强类型列表
+/// （SignalR 序列化 object 装箱集合会退化为 JsonElement，故必须用强类型字段）。
 /// </summary>
 public sealed record HistoryQueryResponse
 {
-    public required IReadOnlyList<object> Items { get; init; }
-
     public int Total { get; init; }
     public int Page { get; init; }
     public int PageSize { get; init; }
+
+    public IReadOnlyList<ProductionLogDto> ProductionLogs { get; init; } = [];
+    public IReadOnlyList<AlarmEventRecordDto> AlarmEvents { get; init; } = [];
+    public IReadOnlyList<StatusTransitionRecordDto> StatusTransitions { get; init; } = [];
+    public IReadOnlyList<DefectSnapshotRecordDto> DefectSnapshots { get; init; } = [];
 }
 
 /// <summary>生产日志记录 DTO（对齐 ProductionLog 实体）</summary>

@@ -39,6 +39,7 @@ public static class Program
             builder.Services.AddSingleton<EventBroadcaster>();
             builder.Services.AddSingleton<SnapshotAggregator>();
             builder.Services.AddSingleton<SnapshotPublisher>();
+            builder.Services.AddSingleton<HistoryQueryHandler>();
             builder.Services.AddHostedService<CollectorWorker>();
 
             // ──────────── SignalR 服务端 ────────────
