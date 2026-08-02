@@ -63,11 +63,17 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>当前选中设备的工单（Running 优先，回退最新 Pending；null=无）。</summary>
     public WorkOrderDto? CurrentWorkOrder { get; private set; }
 
+    /// <summary>工单拉取失败原因（供 UI 直接显示，便于定位 WASM 运行时问题）。</summary>
+    public string? WorkOrderError { get; private set; }
+
     /// <summary>工单最后拉取时间（供页面节流判断）。</summary>
     public DateTime WorkOrderFetchedAt { get; private set; }
 
     /// <summary>当前班次进度。</summary>
     public ShiftProgressDto? ShiftProgress { get; private set; }
+
+    /// <summary>班次进度拉取失败原因（供 UI 直接显示）。</summary>
+    public string? ShiftError { get; private set; }
 
     /// <summary>班次进度最后拉取时间。</summary>
     public DateTime ShiftFetchedAt { get; private set; }
@@ -127,9 +133,11 @@ public sealed class DashboardState : IAsyncDisposable
         try
         {
             CurrentWorkOrder = await _client.GetCurrentWorkOrderAsync(deviceId);
+            WorkOrderError = null;
         }
         catch (Exception ex)
         {
+            WorkOrderError = ex.Message;
             _logger.LogWarning(ex, "拉取当前工单失败 Device={DeviceId}", deviceId);
         }
         WorkOrderFetchedAt = DateTime.Now;
@@ -142,9 +150,11 @@ public sealed class DashboardState : IAsyncDisposable
         try
         {
             ShiftProgress = await _client.GetShiftProgressAsync();
+            ShiftError = null;
         }
         catch (Exception ex)
         {
+            ShiftError = ex.Message;
             _logger.LogWarning(ex, "拉取班次进度失败");
         }
         ShiftFetchedAt = DateTime.Now;
