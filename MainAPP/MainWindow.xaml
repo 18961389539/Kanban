@@ -1,0 +1,341 @@
+﻿<Window
+    x:Class="MainAPP.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:views="clr-namespace:MainAPP.Views"
+    x:Name="RootWindow"
+    Icon="{StaticResource AppIcon}"
+    Title="看板系统"
+    Background="{StaticResource BackgroundBrush}"
+    FontFamily="Microsoft YaHei"
+    FontSize="14"
+    PreviewKeyDown="OnPreviewKeyDown"
+    WindowState="Maximized"
+    mc:Ignorable="d">
+
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding SelectPageCommand}" CommandParameter="0" />
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding SelectPageCommand}" CommandParameter="1" />
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding SelectPageCommand}" CommandParameter="2" />
+        <KeyBinding Gesture="Ctrl+4" Command="{Binding SelectPageCommand}" CommandParameter="3" />
+        <KeyBinding Gesture="Ctrl+5" Command="{Binding SelectPageCommand}" CommandParameter="4" />
+        <KeyBinding Gesture="Ctrl+6" Command="{Binding SelectPageCommand}" CommandParameter="5" />
+        <KeyBinding Gesture="Ctrl+7" Command="{Binding SelectPageCommand}" CommandParameter="6" />
+        <KeyBinding Gesture="Ctrl+8" Command="{Binding SelectPageCommand}" CommandParameter="7" />
+        <KeyBinding Gesture="Ctrl+9" Command="{Binding SelectPageCommand}" CommandParameter="8" />
+    </Window.InputBindings>
+
+    <!--  大屏自适应：Viewbox 按实际窗口等比缩放 1920×1080 设计画布。
+          Stretch=Uniform：完整适配窗口、内容不裁切（非 16:9 屏以信箱化留边，
+          避免 UniformToFill 裁掉边缘 KPI/报警导致大屏远距看不到）。
+          浮层（右键菜单/ComboBox 下拉/Dialog）不在此树内，暂不动。  -->
+    <Viewbox Stretch="Uniform">
+        <Grid Width="1920" Height="1080">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  ============ 侧边栏 ============  -->
+        <Border
+            x:Name="NavigationBar"
+            Grid.Column="0"
+            VerticalAlignment="Stretch"
+            Background="{StaticResource BackgroundBrush}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Width" Value="208" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="(Border.Width)"
+                                            To="72"
+                                            Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuadraticEase />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="(Border.Width)"
+                                            To="208"
+                                            Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuadraticEase />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <DockPanel LastChildFill="True">
+                <!--  顶部：折叠按钮 + Logo  -->
+                <DockPanel Margin="12,16,12,16" DockPanel.Dock="Top">
+                    <Button
+                        Width="40"
+                        Height="40"
+                        Padding="0"
+                        AutomationProperties.Name="折叠展开侧边栏"
+                        Command="{Binding ToggleSidebarCommand}"
+                        FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                        Style="{StaticResource ButtonDefault}"
+                        ToolTip="折叠/展开侧边栏">
+                        <materialIcons:MaterialIcon
+                            Width="18"
+                            Height="18"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Kind="Menu" />
+                    </Button>
+                    <StackPanel
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource SidebarLabel}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Kind="ViewDashboard" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource PrimaryTextBrush}"
+                                Text="看板系统" />
+                        </StackPanel>
+                        <TextBlock
+                            Margin="28,2,0,0"
+                            FontSize="{DynamicResource FontSizeMicro}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="KANBAN SYSTEM" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!--  底部：PLC 连接状态  -->
+                <Border
+                    Padding="16,14"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    DockPanel.Dock="Bottom">
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Style="{StaticResource SidebarLabel}"
+                            Text="PLC 连接" />
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse
+                                Width="8"
+                                Height="8"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ConnectionManager.IsConnected}" Value="True">
+                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <hc:Badge Value="{Binding ConnectionManager.TotalDisconnectCount}" Status="Text" ToolTip="累计断线次数">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource FontSizeCaption}"
+                                    Foreground="{StaticResource SecondaryTextBrush}"
+                                    Style="{StaticResource SidebarLabel}"
+                                    Text="{Binding ConnectionManager.ConnectionStatus}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </hc:Badge>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!--  底部：授权状态（点击跳转设置页管理授权）。
+                      与 PLC 状态卡片同风格：状态色点 + 状态文本。
+                      状态色点通过 DataTrigger 按 LicenseStatus 切换颜色：
+                        Active=绿 / Trial=黄 / 其他异常=红  -->
+                <Border
+                    Padding="16,14"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Cursor="Hand"
+                    DockPanel.Dock="Bottom"
+                    ToolTip="{Binding LicenseStatusTooltip}">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding GoToLicenseSettingsCommand}" />
+                    </Border.InputBindings>
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Style="{StaticResource SidebarLabel}"
+                            Text="授权状态" />
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse
+                                Width="8"
+                                Height="8"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
+                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
+                                                <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="{DynamicResource FontSizeCaption}"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{Binding LicenseStatusText}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!--  导航项（ListBox + ListBoxItem 模板，替代 hc:SideMenu）。
+                      原 hc:SideMenuItem 不暴露 AutomationProperties.Name 到 UIA Control 树，
+                      导致跨页面交互测试无法 ByName+Click；改用原生 ListBox 后 ListBoxItem
+                      原生支持 UIA，AutomationProperties.Name 通过 SidebarNavListBoxStyle 中的
+                      ItemContainerStyle Setter 绑定到 NavItem.AccessibleName，可被 UIA 客户端直接识别。  -->
+                <ListBox
+                    x:Name="NavListBox"
+                    Margin="12,8,12,8"
+                    VerticalAlignment="Stretch"
+                    AutomationProperties.Name="主导航"
+                    ItemTemplate="{StaticResource SidebarNavItemTemplate}"
+                    ItemsSource="{Binding NavItems}"
+                    SelectionChanged="OnNavigationSelectionChanged"
+                    SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                    Style="{StaticResource SidebarNavListBoxStyle}" />
+            </DockPanel>
+        </Border>
+
+        <!--  ============ 内容区（PageTransition：切换时 0.2s 渐显） ============  -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <!--  Row 0：全局 PLC 断连横幅（断连时显示，所有页面可见）  -->
+                <RowDefinition Height="Auto" />
+                <!--  Row 1：页面内容  -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  全局 PLC 断连横幅：断连时红底显示，所有页面可见，避免切到非主页后用户误操作已过时数据  -->
+            <Border
+                Grid.Row="0"
+                Padding="16,6"
+                Background="{StaticResource DangerBrush}"
+                Visibility="{Binding IsPlcDisconnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPlcConnecting}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <materialIcons:MaterialIcon
+                        Width="14" Height="14"
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Kind="AlertCircleOutline"
+                        Foreground="White" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        FontWeight="Medium"
+                        Foreground="White"
+                        Text="{Binding PlcConnectionBannerText}" />
+                </StackPanel>
+            </Border>
+
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding Pages, ElementName=RootWindow}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:NavigationPageHost
+                            Page="{Binding}"
+                            Style="{StaticResource PageTransition}">
+                            <controls:NavigationPageHost.Visibility>
+                                <MultiBinding Converter="{StaticResource PageSelectionVisibilityConverter}">
+                                    <Binding Path="DataContext.SelectedIndex" ElementName="RootWindow" />
+                                    <Binding Path="Definition.Index" />
+                                </MultiBinding>
+                            </controls:NavigationPageHost.Visibility>
+                        </controls:NavigationPageHost>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Button
+                x:Name="FullscreenMenuButton"
+                Grid.Row="1"
+                Width="44"
+                Height="44"
+                Margin="16,16,0,0"
+                Padding="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Panel.ZIndex="900"
+                AutomationProperties.Name="显示导航菜单"
+                Click="OnFullscreenMenuClick"
+                FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                Style="{StaticResource ButtonDefault}"
+                Visibility="Collapsed"
+                ToolTip="显示导航菜单">
+                <materialIcons:MaterialIcon Width="20" Height="20" Kind="Menu" />
+            </Button>
+        </Grid>
+
+        <!--  全局 Growl 通知容器（右上角）。
+              HandyControl 的 Growl 需要一个 Panel 容器才能在 UI 显示通知；
+              用 StackPanel 覆盖全窗口（ColumnSpan=2），Z-order 在最上层。
+              容器注册在 MainWindow 构造函数中通过 Growl.SetGrowlParent 完成。  -->
+        <StackPanel x:Name="GrowlContainer"
+                    Grid.ColumnSpan="2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,16,16,0"
+                    Panel.ZIndex="1000" />
+        </Grid>
+    </Viewbox>
+</Window>

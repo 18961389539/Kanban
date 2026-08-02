@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MainAPP</RootNamespace>
+    <AssemblyName>Kanban.Collector.Core</AssemblyName>
+    <!-- UseWPF：DeviceRepository/WorkOrderRepository 用 BindingOperations.EnableCollectionSynchronization 注册集合绑定同步锁 -->
+    <UseWPF>true</UseWPF>
+    <!-- 展示端瘦身：采集/存储/领域模型迁入此类库，MainAPP 与 Kanban.Collector 共同引用 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Sinks.Async" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="HslCommunication">
+      <HintPath>..\MainAPP\DLLS\HslCommunication.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MainAPP.Tests" />
+    <InternalsVisibleTo Include="MainAPP.Benchmarks" />
+    <InternalsVisibleTo Include="MainAPP.E2E" />
+    <InternalsVisibleTo Include="Kanban.Collector" />
+    <!-- 过渡期：MainAPP 仍直接使用采集核心的 internal 成员（JsonOptions/RuntimeMap/MitsubishiAddressCodec），第 4 步瘦身后移除 -->
+    <InternalsVisibleTo Include="MainAPP" />
+  </ItemGroup>
+
+</Project>

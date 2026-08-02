@@ -1,0 +1,151 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.HomeOeeCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    mc:Ignorable="d"
+    d:DesignHeight="400"
+    d:DesignWidth="500">
+    <!--
+        主页仪表板卡片 4：OEE 综合效率（OEE 主环 + 可用率/性能率/合格率三环小卡）。
+        DataContext 由父级 HomeView 传入 HomeViewModel。
+        共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
+    -->
+    <Border Style="{StaticResource DashboardCard}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  标题  -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,14" Orientation="Horizontal">
+                <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="OEE 综合效率" />
+                <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
+            </StackPanel>
+
+            <!--  左右布局：OEE 主环居左，A/P/Q 三环指标居右，避免上下堆叠导致底部文字被压缩/重叠  -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  左：OEE 主环 + 中心百分比  -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Grid Width="220" Height="220" HorizontalAlignment="Center">
+                        <oxy:PlotView Model="{Binding OeeRingChart}" Width="220" Height="220"
+                                      Background="Transparent" />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    ToolTip="{Binding OeeFormulaText, StringFormat='OEE = {0}'}">
+                            <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeHero}" FontWeight="Bold"
+                                       Foreground="{Binding OeeValue, Converter={StaticResource OeeThreshold}}"
+                                       Text="{Binding OeeDisplay}" />
+                            <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="{DynamicResource FontSizeCaption}"
+                                       Foreground="{StaticResource ThirdlyTextBrush}" Text="OEE" />
+                        </StackPanel>
+                        <!-- 空状态：OeeRingChart 为 null 时显示，遮盖空环和 0% 文本 -->
+                        <controls:EmptyState IconKind="ChartArc" Message="暂无 OEE 数据" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <controls:EmptyState.Style>
+                                <Style TargetType="controls:EmptyState">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OeeRingChart}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:EmptyState.Style>
+                        </controls:EmptyState>
+                    </Grid>
+                </StackPanel>
+
+                <!--  右：可用率 / 性能率 / 合格率 三环小卡  -->
+                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <!--  可用率  -->
+                    <Border Padding="12" Margin="0,0,0,10" Style="{StaticResource KpiCardSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <oxy:PlotView Grid.Column="0" Model="{Binding AvailabilityRingChart}"
+                                          Width="54" Height="54" Background="Transparent" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="A时间稼动率" />
+                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                               Foreground="{Binding AvailabilityRate, Converter={StaticResource OeeThreshold}}"
+                                               Text="{Binding AvailabilityRateDisplay}" />
+                                </DockPanel>
+                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding AvailabilityFormulaText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!--  性能率  -->
+                    <Border Padding="12" Margin="0,0,0,10" Style="{StaticResource KpiCardSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <oxy:PlotView Grid.Column="0" Model="{Binding PerformanceRingChart}"
+                                          Width="54" Height="54" Background="Transparent" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="B性能达标率" />
+                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                               Foreground="{Binding PerformanceRate, Converter={StaticResource OeeThreshold}}"
+                                               Text="{Binding PerformanceRateDisplay}" />
+                                </DockPanel>
+                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding PerformanceFormulaText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!--  合格率  -->
+                    <Border Padding="12" Style="{StaticResource KpiCardSecondary}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <oxy:PlotView Grid.Column="0" Model="{Binding QualityRingChart}"
+                                          Width="54" Height="54" Background="Transparent" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="C良品率" />
+                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                               Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                                               Text="{Binding QualityRateDisplay}" />
+                                </DockPanel>
+                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding QualityFormulaText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

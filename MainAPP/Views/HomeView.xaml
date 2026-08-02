@@ -1,0 +1,179 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.HomeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    xmlns:views="clr-namespace:MainAPP.Views"
+    d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}"
+    d:DesignHeight="1080"
+    d:DesignWidth="1712"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <!--  共享样式（DashboardCard/CardTitleIcon/CardTitleText）已移至 Styles/HomeResources.xaml
+              并在 App.xaml 全局注册：子 UserControl 在 XAML 加载阶段无法跨 UserControl 边界查找父级资源。
+              OkDiffBadge/NgDiffBadge 仅合格率卡片使用，已移至 HomeQualityRateCard.xaml 本地 Resources。  -->
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ============ 顶部栏：标题 + PLC连接状态 + 设备切换器 + 班次进度 ============  -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <Grid>
+            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="ChartLineVariant" />
+                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="生产仪表板" />
+            </StackPanel>
+
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <!--  PLC 连接状态：仅色点，hover 显示文字  -->
+                <Ellipse Width="10" Height="10" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                            <Setter Property="ToolTip" Value="PLC 未连接" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ConnectionManager.IsConnected}" Value="True">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                    <Setter Property="ToolTip" Value="PLC 已连接" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+
+                <!--  设备切换  -->
+                <ComboBox
+                    Width="200"
+                    VerticalAlignment="Center"
+                    AutomationProperties.Name="设备筛选"
+                    DisplayMemberPath="Name"
+                    ItemsSource="{Binding DeviceFilterItems}"
+                    SelectedValue="{Binding SelectedDeviceId}"
+                    SelectedValuePath="Id"
+                    Style="{StaticResource ComboBoxExtend}" />
+
+                <!--  班次进度：精简为名称 + 百分比，去进度条  -->
+                <Border Margin="14,0,0,0" Padding="10,4" CornerRadius="6"
+                        Background="{StaticResource SecondaryRegionBrush}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        Visibility="{Binding IsShiftProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding ShiftProgressName}" />
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                   Foreground="{StaticResource PrimaryTextBrush}" FontWeight="Bold"
+                                   Text="{Binding ShiftProgressPct}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  当前工单条：精简为工单号 + 百分比，去产品名和进度条  -->
+                <Border Margin="14,0,0,0" Padding="10,4" CornerRadius="6"
+                        Background="{StaticResource SecondaryRegionBrush}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        Visibility="{Binding HasCurrentWorkOrder, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center"
+                                                    Foreground="{StaticResource PrimaryBrush}" Kind="ClipboardTextOutline" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding CurrentWorkOrder.OrderNo}" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                   Foreground="{StaticResource ChartBaseSeriesBrush}"
+                                   Text="{Binding CurrentWorkOrder.ProductCode}" />
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding WorkOrderProgressPct}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  工单管理入口  -->
+                <Button Margin="10,0,0,0" VerticalAlignment="Center"
+                        AutomationProperties.Name="工单管理"
+                        Command="{Binding ViewWorkOrderManagerCommand}"
+                        Content="工单管理"
+                        Style="{StaticResource IconButtonPrimary}"
+                        Tag="{x:Static mi:MaterialIconKind.ClipboardListOutline}"
+                        ToolTip="打开工单管理页" />
+
+                <!--  查看设备详情  -->
+                <Button Margin="6,0,0,0" VerticalAlignment="Center"
+                        AutomationProperties.Name="查看详情"
+                        Command="{Binding ViewDeviceDetailCommand}"
+                        Content="设备详情"
+                        Style="{StaticResource IconButtonDefault}"
+                        Tag="{x:Static mi:MaterialIconKind.ChartBoxOutline}"
+                        ToolTip="查看当前选中设备的详情" />
+            </StackPanel>
+            </Grid>
+
+            <!--  PLC 断线警示横幅：断线时显示，连接时折叠  -->
+            <Border Margin="0,10,0,0" Padding="14,8" CornerRadius="8"
+                    Background="{StaticResource StatusAlarmSoftBrush}"
+                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ConnectionManager.IsConnected}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal">
+                    <materialIcons:MaterialIcon Width="18" Height="18" VerticalAlignment="Center"
+                                                Foreground="{StaticResource DangerBrush}" Kind="Alert" />
+                    <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                               Foreground="{StaticResource DangerBrush}" Text="PLC 未连接，实时数据可能已过期" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!--  ============ 第 1 行：设备状态 | 当前生产状态 | 实时故障 ============  -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  列 1：设备状态  -->
+            <views:HomeDeviceStatusCard Grid.Column="0" />
+            <!--  列 2：当前生产状态（速度进度条 + 2x2 KPI 网格）  -->
+            <views:HomeProductionOverviewCard Grid.Column="2" />
+            <!--  列 3：实时故障（卡片式列表，按级别+时间排序，新报警闪烁）  -->
+            <views:HomeRealtimeAlarmsCard Grid.Column="4" />
+        </Grid>
+
+        <!--  ============ 第 2 行：OEE 预览 | 合格率概览 | 缺陷图表 ============  -->
+        <Grid Grid.Row="2" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  列 1：OEE 综合效率（大环 + 三行指标条，公式收至 ToolTip）  -->
+            <views:HomeOeeCard Grid.Column="0" />
+            <!--  列 2：合格率概览（OK / NG + 合格率饼图）  -->
+            <views:HomeQualityRateCard Grid.Column="2" />
+            <!--  列 3：设备缺陷图表  -->
+            <views:HomeDefectParetoCard Grid.Column="4" />
+        </Grid>
+    </Grid>
+</UserControl>

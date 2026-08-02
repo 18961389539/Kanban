@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <OutputType>Exe</OutputType>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MainAPP.UIAutomation</RootNamespace>
+    <AssemblyName>MainAPP.UIAutomation</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- UI 自动化测试需串行运行，避免多个 MainAPP.exe 实例争抢 Global\Kanban_SingleInstance Mutex -->
+    <TestTfm>$(TargetFramework)</TestTfm>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlaUI.UIA3" />
+    <!-- System.Drawing.Common 在 net10.0-windows 已自动可用（NU1510），无需显式引用 -->
+    <PackageReference Include="xunit.v3.mtp-v2" />
+    <PackageReference Include="Appium.WebDriver" />
+    <!-- 仿真测试预置 work_orders.db：用 Microsoft.Data.Sqlite 直接创建 SQLite 数据库 -->
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MainAPP\MainAPP.csproj" />
+  </ItemGroup>
+
+</Project>

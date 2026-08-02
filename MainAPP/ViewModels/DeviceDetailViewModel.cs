@@ -1,0 +1,987 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Collections.Specialized;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MainAPP.Data;
+using MainAPP.Entities;
+using MainAPP.Models;
+using MainAPP.Services;
+using Microsoft.Extensions.Logging;
+using OxyPlot;
+
+namespace MainAPP.ViewModels;
+/// 设备详情页视图模型：单设备深度监控视图。
+///  - DeviceRepository.Devices/Runtimes：实时运行时数据与设备配置
+///  - IHistoryService.QueryAlarmEvents：历史报警事件
+///  - IDeviceSelectionService.SelectedDeviceId：当前选中设备（跨页同步）
+/// 不引入定时器：实时数据通过 DeviceRuntime.PropertyChanged 推送，历史数据通过手动刷新命令拉取。
+/// </summary>
+public partial class DeviceDetailViewModel : ObservableObject, IDisposable
+{
+    private readonly DeviceRepository _deviceRepository;
+    private readonly IHistoryService _historyService;
+    private readonly IDeviceSelectionService _selection;
+    private readonly IDialogService _dialog;
+    private readonly ILogger<DeviceDetailViewModel> _logger;
+    private readonly WorkOrderRepository _workOrderRepo;
+    private readonly IWorkOrderService _workOrderService;
+
+    private Device? _currentDevice;
+    private DeviceRuntime? _currentRuntime;
+
+    /// <summary>
+    /// 最近报警查询的取消令牌：每次新查询前取消旧令牌，避免快速切换设备时
+    /// 旧查询的后台线程覆盖新数据（竞态导致显示过期数据）。
+    /// </summary>
+    private CancellationTokenSource? _recentAlarmsCts;
+
+    /// <summary>产量趋势/工单产量聚合查询的取消令牌（与报警查询独立，避免互相取消）。</summary>
+    private CancellationTokenSource? _productionCts;
+
+    public DeviceDetailViewModel(
+        DeviceRepository deviceRepository,
+        IHistoryService historyService,
+        IDeviceSelectionService selection,
+        IDialogService dialog,
+        ILogger<DeviceDetailViewModel> logger,
+        WorkOrderRepository workOrderRepo,
+        IWorkOrderService workOrderService)
+    {
+        _deviceRepository = deviceRepository;
+        _historyService = historyService;
+        _selection = selection;
+        _dialog = dialog;
+        _logger = logger;
+        _workOrderRepo = workOrderRepo;
+        _workOrderService = workOrderService;
+
+        _selection.PropertyChanged += OnSelectionServiceChanged;
+        // 首次加载：尝试用共享选中设备初始化
+        ApplySelectedDevice(_selection.SelectedDeviceId);
+    }
+
+    // ──────────── 当前设备 ────────────
+
+    /// <summary>当前选中设备（配置数据）。</summary>
+    public Device? CurrentDevice
+    {
+        get => _currentDevice;
+        private set
+        {
+            if (_currentDevice != null)
+            {
+                _currentDevice.PropertyChanged -= OnDevicePropertyChanged;
+                _currentDevice.Alarms.CollectionChanged -= OnAlarmsCollectionChanged;
+                _currentDevice.Defects.CollectionChanged -= OnDefectsCollectionChanged;
+                _currentDevice.CountAlarms.CollectionChanged -= OnCountAlarmsCollectionChanged;
+                foreach (var alarm in _currentDevice.Alarms)
+                    alarm.PropertyChanged -= OnAlarmPropertyChanged;
+                foreach (var defect in _currentDevice.Defects)
+                    defect.PropertyChanged -= OnDefectPropertyChanged;
+                foreach (var alarm in _currentDevice.CountAlarms)
+                    alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+            }
+            SetProperty(ref _currentDevice, value);
+            if (value != null)
+            {
+                value.PropertyChanged += OnDevicePropertyChanged;
+                value.Alarms.CollectionChanged += OnAlarmsCollectionChanged;
+                value.Defects.CollectionChanged += OnDefectsCollectionChanged;
+                value.CountAlarms.CollectionChanged += OnCountAlarmsCollectionChanged;
+                foreach (var alarm in value.Alarms)
+                    alarm.PropertyChanged += OnAlarmPropertyChanged;
+                foreach (var defect in value.Defects)
+                    defect.PropertyChanged += OnDefectPropertyChanged;
+                foreach (var alarm in value.CountAlarms)
+                    alarm.PropertyChanged += OnCountAlarmPropertyChanged;
+            }
+        }
+    }
+
+    /// <summary>当前设备运行时（实时数据）。</summary>
+    public DeviceRuntime? CurrentRuntime
+    {
+        get => _currentRuntime;
+        private set
+        {
+            if (_currentRuntime != null)
+                _currentRuntime.PropertyChanged -= OnRuntimePropertyChanged;
+            SetProperty(ref _currentRuntime, value);
+            if (value != null)
+                value.PropertyChanged += OnRuntimePropertyChanged;
+        }
+    }
+
+    /// <summary>是否有选中的设备（无设备时显示空状态）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoDevice))]
+    private bool _hasDevice;
+
+    public bool HasNoDevice => !HasDevice;
+
+    // ──────────── KPI ────────────
+
+    [ObservableProperty] private int _totalOk;
+    [ObservableProperty] private int _totalNg;
+    [ObservableProperty] private double _qualityRate;
+    [ObservableProperty] private double _oee;
+    [ObservableProperty] private double _availabilityRate;
+    [ObservableProperty] private double _performanceRate;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    private double _runTimeHours;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    private double _alarmTimeHours;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    private double _pausedTimeHours;
+    [ObservableProperty] private int _todayAlarmCount;
+    [ObservableProperty] private int _activeAlarmCount;
+    [ObservableProperty] private int _actualCycle;
+    [ObservableProperty] private string _statusText = "初始";
+    [ObservableProperty] private string _statusBrushKey = "StatusIdleBrush";
+    [ObservableProperty] private string _dataScopeText = "实时数据 · 今日报警 · 近24小时产量";
+    [ObservableProperty] private string _refreshStatusText = "就绪";
+    [ObservableProperty] private bool _isRefreshing;
+
+    // ──────────── 设备配置（从 Device 读取） ────────────
+
+    /// <summary>目标节拍（个/小时）。</summary>
+    [ObservableProperty] private int _targetCycle;
+    /// <summary>配方名称。</summary>
+    [ObservableProperty] private string _recipeName = string.Empty;
+    /// <summary>配方值。</summary>
+    [ObservableProperty] private int _recipeValue;
+    /// <summary>OK 计数 PLC 地址。</summary>
+    [ObservableProperty] private string _okCountAddress = string.Empty;
+    /// <summary>NG 计数 PLC 地址。</summary>
+    [ObservableProperty] private string _ngCountAddress = string.Empty;
+    /// <summary>状态字 PLC 地址。</summary>
+    [ObservableProperty] private string _statusAddress = string.Empty;
+    /// <summary>复位 PLC 地址。</summary>
+    [ObservableProperty] private string _resetAddress = string.Empty;
+
+    // ──────────── PLC 原始值（从 DeviceRuntime 读取） ────────────
+
+    /// <summary>当前 OK 计数（PLC 原始值）。</summary>
+    [ObservableProperty] private int _plcOkCount;
+    /// <summary>当前 NG 计数（PLC 原始值）。</summary>
+    [ObservableProperty] private int _plcNgCount;
+    /// <summary>当前状态字（PLC 原始值）。</summary>
+    [ObservableProperty] private int _plcStatusWord;
+
+    // ──────────── 工单信息 ────────────
+
+    /// <summary>当前是否有关联的活跃工单。</summary>
+    [ObservableProperty] private bool _hasWorkOrder;
+    /// <summary>工单号。</summary>
+    [ObservableProperty] private string _workOrderNo = string.Empty;
+    /// <summary>产品名称。</summary>
+    [ObservableProperty] private string _productName = string.Empty;
+    /// <summary>计划数量。</summary>
+    [ObservableProperty] private int _plannedQuantity;
+    /// <summary>已完成数量（OK 产量）。</summary>
+    [ObservableProperty] private int _completedQuantity;
+    /// <summary>工单状态文本（进行中/已完成/已中止）。</summary>
+    [ObservableProperty] private string _workOrderStatusText = string.Empty;
+    /// <summary>工单完成进度（0~1）。</summary>
+    [ObservableProperty] private double _workOrderProgress;
+
+    // ──────────── 节拍与理论产量对比 ────────────
+
+    /// <summary>实际节拍（产量/运行时长，个/小时）。运行时长为 0 时为 0。</summary>
+    [ObservableProperty] private double _actualCycleRate;
+    /// <summary>节拍差距百分比（实际 vs 目标，负值表示未达标）。</summary>
+    [ObservableProperty] private double _cycleGapPercent;
+    /// <summary>理论产量（目标节拍 × 运行时长）。</summary>
+    [ObservableProperty] private int _theoreticalOutput;
+    /// <summary>实际总产量（OK+NG）。</summary>
+    [ObservableProperty] private int _actualTotalOutput;
+
+    // ──────────── 图表 ────────────
+
+    /// <summary>按小时产量柱状图（最近 24 小时）。</summary>
+    [ObservableProperty] private PlotModel? _hourlyProductionChart;
+    /// <summary>缺陷占比饼图。</summary>
+    [ObservableProperty] private PlotModel? _defectPieChart;
+    [ObservableProperty] private int _hourlyRangeHours = 24;
+    [ObservableProperty] private string _hourlyRangeText = "近24小时";
+    [ObservableProperty] private int _defectTotal;
+    [ObservableProperty] private int _defectTypeCount;
+    [ObservableProperty] private string _topDefectText = "—";
+
+    // ──────────── 状态时长比例（用于堆叠条形图） ────────────
+
+    /// <summary>总时长（运行+报警+待机），用于计算状态时长占比。无数据时为 0。</summary>
+    public double TotalDurationHours => RunTimeHours + AlarmTimeHours + PausedTimeHours;
+    /// <summary>运行时长占比（0~1）。无数据时为 0。</summary>
+    public double RunTimeRatio => TotalDurationHours > 0 ? RunTimeHours / TotalDurationHours : 0;
+    /// <summary>报警时长占比（0~1）。无数据时为 0。</summary>
+    public double AlarmTimeRatio => TotalDurationHours > 0 ? AlarmTimeHours / TotalDurationHours : 0;
+    /// <summary>待机时长占比（0~1）。无数据时为 0。</summary>
+    public double PausedTimeRatio => TotalDurationHours > 0 ? PausedTimeHours / TotalDurationHours : 0;
+
+    // ──────────── 列表数据 ────────────
+
+    /// <summary>最近报警事件（从历史库查询）。</summary>
+    public ObservableCollection<AlarmEventRecord> RecentAlarms { get; } = new();
+
+    /// <summary>当前活跃报警（从设备配置筛选 IsActive=true）。</summary>
+    public ObservableCollection<AlarmConfigRow> ActiveAlarms { get; } = new();
+
+    /// <summary>最后刷新时间。</summary>
+    [ObservableProperty] private DateTime _lastUpdateTime = DateTime.Now;
+
+    // ──────────── 选中设备变更 ────────────
+
+    private void OnSelectionServiceChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IDeviceSelectionService.SelectedDeviceId))
+            ApplySelectedDevice(_selection.SelectedDeviceId);
+    }
+
+    private void ApplySelectedDevice(string? deviceId)
+    {
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            CurrentDevice = null;
+            CurrentRuntime = null;
+            HasDevice = false;
+            ClearLists();
+            ClearKpis();
+            return;
+        }
+
+        var device = _deviceRepository.Devices.FirstOrDefault(d => d.Id == deviceId);
+        var runtime = _deviceRepository.Runtimes.FirstOrDefault(r => r.DeviceId == deviceId);
+
+        CurrentDevice = device;
+        CurrentRuntime = runtime;
+        HasDevice = device != null;
+
+        RefreshKpis();
+        RefreshRecentAlarms();
+    }
+
+    /// <summary>清空所有集合数据（活跃报警 + 最近报警事件）。</summary>
+    private void ClearLists()
+    {
+        ActiveAlarms.Clear();
+        RecentAlarms.Clear();
+        ActiveAlarmCount = 0;
+        TodayAlarmCount = 0;
+    }
+
+    /// <summary>清空 KPI 数值（产量/率/时长/状态）。</summary>
+    private void ClearKpis()
+    {
+        TotalOk = 0;
+        TotalNg = 0;
+        QualityRate = 0;
+        Oee = 0;
+        AvailabilityRate = 0;
+        PerformanceRate = 0;
+        RunTimeHours = 0;
+        AlarmTimeHours = 0;
+        PausedTimeHours = 0;
+        ActualCycle = 0;
+        StatusText = "初始";
+        StatusBrushKey = "StatusIdleBrush";
+
+        // 设备配置
+        TargetCycle = 0;
+        RecipeName = string.Empty;
+        RecipeValue = 0;
+        OkCountAddress = string.Empty;
+        NgCountAddress = string.Empty;
+        StatusAddress = string.Empty;
+        ResetAddress = string.Empty;
+
+        // PLC 原始值
+        PlcOkCount = 0;
+        PlcNgCount = 0;
+        PlcStatusWord = 0;
+
+        // 工单
+        HasWorkOrder = false;
+        WorkOrderNo = string.Empty;
+        ProductName = string.Empty;
+        PlannedQuantity = 0;
+        CompletedQuantity = 0;
+        WorkOrderStatusText = string.Empty;
+        WorkOrderProgress = 0;
+
+        // 节拍与理论产量
+        ActualCycleRate = 0;
+        CycleGapPercent = 0;
+        TheoreticalOutput = 0;
+        ActualTotalOutput = 0;
+
+        // 图表
+        HourlyProductionChart = null;
+        DefectPieChart = null;
+    }
+
+    // ──────────── 实时数据刷新 ────────────
+
+    private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Runtime 属性在 PLC 采集后台线程被修改，必须切回 UI 线程才能更新绑定集合
+        // （ObservableCollection 不允许跨线程修改，否则抛 NotSupportedException）
+        DispatchOnUi(RefreshKpis);
+    }
+
+    private void OnDevicePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Device 配置变更（如修改报警级别、PLC地址）时刷新活跃报警列表
+        DispatchOnUi(() =>
+        {
+            RefreshActiveAlarms();
+            RefreshDefectChart();
+        });
+    }
+
+    private void OnDefectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems != null)
+            foreach (Defect defect in e.OldItems)
+                defect.PropertyChanged -= OnDefectPropertyChanged;
+        if (e.NewItems != null)
+            foreach (Defect defect in e.NewItems)
+                defect.PropertyChanged += OnDefectPropertyChanged;
+        DispatchOnUi(RefreshDefectChart);
+    }
+
+    private void OnAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems != null)
+            foreach (Alarm alarm in e.OldItems)
+                alarm.PropertyChanged -= OnAlarmPropertyChanged;
+        if (e.NewItems != null)
+            foreach (Alarm alarm in e.NewItems)
+                alarm.PropertyChanged += OnAlarmPropertyChanged;
+        DispatchOnUi(RefreshActiveAlarms);
+    }
+
+    private void OnAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(Alarm.StartTime) or nameof(Alarm.EndTime))
+            DispatchOnUi(RefreshActiveAlarms);
+    }
+
+    private void OnDefectPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(Defect.Count) or nameof(Defect.Name))
+            DispatchOnUi(RefreshDefectChart);
+    }
+
+    private void OnCountAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems != null)
+            foreach (CountAlarm alarm in e.OldItems)
+                alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+        if (e.NewItems != null)
+            foreach (CountAlarm alarm in e.NewItems)
+                alarm.PropertyChanged += OnCountAlarmPropertyChanged;
+        DispatchOnUi(RefreshActiveAlarms);
+    }
+
+    private void OnCountAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(CountAlarm.CurrentValue) or nameof(CountAlarm.MaxValue)
+            or nameof(CountAlarm.Enabled))
+            DispatchOnUi(RefreshActiveAlarms);
+    }
+
+    /// <summary>
+    /// 将操作切换到 UI 线程执行：runtime/device 属性变更来自 PLC 采集后台线程，
+    /// 而 ObservableCollection 和 ObservableProperty 绑定的 UI 元素必须在调度线程访问。
+    /// 应用关闭时 Dispatcher 可能已终止，故做空守卫。
+    /// </summary>
+    private static void DispatchOnUi(Action action)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted) return;
+        if (dispatcher.CheckAccess()) action();
+        else dispatcher.BeginInvoke(action);
+    }
+
+    /// <summary>
+    /// 释放事件订阅并取消挂起的后台查询。
+    /// 构造时订阅了 IDeviceSelectionService.PropertyChanged，并在 CurrentDevice/CurrentRuntime
+    /// setter 中订阅了 Device/DeviceRuntime 及其子集合的事件；释放时统一解绑，避免事件泄漏。
+    /// 同时取消挂起的报警/产量查询，防止 Dispose 后回调写入已释放的资源。
+    /// </summary>
+    public void Dispose()
+    {
+        _selection.PropertyChanged -= OnSelectionServiceChanged;
+
+        // 解绑当前设备及其子集合/子项的事件（与 CurrentDevice setter 的清理逻辑保持一致）
+        if (_currentDevice != null)
+        {
+            _currentDevice.PropertyChanged -= OnDevicePropertyChanged;
+            _currentDevice.Alarms.CollectionChanged -= OnAlarmsCollectionChanged;
+            _currentDevice.Defects.CollectionChanged -= OnDefectsCollectionChanged;
+            _currentDevice.CountAlarms.CollectionChanged -= OnCountAlarmsCollectionChanged;
+            foreach (var alarm in _currentDevice.Alarms)
+                alarm.PropertyChanged -= OnAlarmPropertyChanged;
+            foreach (var defect in _currentDevice.Defects)
+                defect.PropertyChanged -= OnDefectPropertyChanged;
+            foreach (var alarm in _currentDevice.CountAlarms)
+                alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+        }
+
+        if (_currentRuntime != null)
+            _currentRuntime.PropertyChanged -= OnRuntimePropertyChanged;
+
+        // 取消挂起的后台查询，避免回调访问已释放资源
+        _recentAlarmsCts?.Cancel();
+        _recentAlarmsCts?.Dispose();
+        _productionCts?.Cancel();
+        _productionCts?.Dispose();
+    }
+
+    /// <summary>刷新 KPI 与状态（从 Runtime 实时读取）。</summary>
+    private void RefreshKpis()
+    {
+        var rt = CurrentRuntime;
+        if (rt == null)
+        {
+            ClearKpis();
+            ClearLists();
+            return;
+        }
+
+        TotalOk = rt.TotalOkProduction;
+        TotalNg = rt.TotalNgProduction;
+        QualityRate = rt.QualityRate;
+        Oee = rt.Oee;
+        AvailabilityRate = rt.AvailabilityRate;
+        PerformanceRate = rt.PerformanceRate;
+        RunTimeHours = rt.RunTime;
+        AlarmTimeHours = rt.AlarmTime;
+        PausedTimeHours = rt.PausedTime;
+
+        // PLC 原始值
+        PlcOkCount = rt.OkProduction;
+        PlcNgCount = rt.NgProduction;
+        PlcStatusWord = rt.StatusWord;
+
+        // 节拍与理论产量对比
+        ActualTotalOutput = rt.TotalOkProduction + rt.TotalNgProduction;
+        var runHours = rt.RunTime;
+        ActualCycleRate = runHours > 0 ? ActualTotalOutput / runHours : 0;
+        TheoreticalOutput = (int)Math.Round(rt.TargetCycle * runHours);
+        CycleGapPercent = rt.TargetCycle > 0
+            ? (ActualCycleRate - rt.TargetCycle) / rt.TargetCycle * 100
+            : 0;
+
+        // 状态文本与画刷
+        (StatusText, StatusBrushKey) = MapStatus(rt.StatusWord);
+
+        // 设备配置（从 Device 读取）
+        RefreshDeviceConfig();
+
+        // 活跃报警从设备配置读取
+        RefreshActiveAlarms();
+
+        // 工单信息
+        RefreshWorkOrder();
+
+        // 缺陷饼图（从内存快照）
+        RefreshDefectChart();
+
+        LastUpdateTime = DateTime.Now;
+    }
+
+    /// <summary>刷新设备配置属性（从 CurrentDevice 读取）。</summary>
+    private void RefreshDeviceConfig()
+    {
+        var dev = CurrentDevice;
+        if (dev == null)
+        {
+            TargetCycle = 0;
+            RecipeName = string.Empty;
+            RecipeValue = 0;
+            OkCountAddress = string.Empty;
+            NgCountAddress = string.Empty;
+            StatusAddress = string.Empty;
+            ResetAddress = string.Empty;
+            return;
+        }
+        TargetCycle = dev.TargetCycle;
+        RecipeName = dev.RecipeName;
+        RecipeValue = dev.RecipeValue;
+        OkCountAddress = dev.OkCountAddress;
+        NgCountAddress = dev.NgCountAddress;
+        StatusAddress = dev.StatusCountAddress;
+        ResetAddress = dev.ProductionResetAddress;
+    }
+
+    /// <summary>
+    /// 刷新当前设备关联的活跃工单。
+    /// 查询 Running 状态工单，若无 Running 则查询最新 Pending 作为预览。
+    /// 产量聚合通过 IWorkOrderService.GetProductionSummary 获取。
+    /// </summary>
+    private void RefreshWorkOrder()
+    {
+        var dev = CurrentDevice;
+        if (dev == null)
+        {
+            HasWorkOrder = false;
+            WorkOrderNo = string.Empty;
+            ProductName = string.Empty;
+            PlannedQuantity = 0;
+            CompletedQuantity = 0;
+            WorkOrderStatusText = string.Empty;
+            WorkOrderProgress = 0;
+            return;
+        }
+
+        var order = _workOrderRepo.GetRunningByDevice(dev.Id)
+                    ?? _workOrderRepo.GetLatestPendingByDevice(dev.Id);
+        if (order == null)
+        {
+            HasWorkOrder = false;
+            WorkOrderNo = string.Empty;
+            ProductName = string.Empty;
+            PlannedQuantity = 0;
+            CompletedQuantity = 0;
+            WorkOrderStatusText = string.Empty;
+            WorkOrderProgress = 0;
+            return;
+        }
+
+        HasWorkOrder = true;
+        WorkOrderNo = order.OrderNo;
+        ProductName = order.ProductName;
+        PlannedQuantity = order.TargetQuantity;
+        WorkOrderStatusText = order.Status switch
+        {
+            WorkOrderStatus.Pending => "待开始",
+            WorkOrderStatus.Running => "进行中",
+            WorkOrderStatus.Completed => "已完成",
+            WorkOrderStatus.Aborted => "已中止",
+            _ => order.Status.ToString(),
+        };
+
+        // 产量聚合：Running 工单查询实际产量，Pending 工单无产量
+        if (order.Status == WorkOrderStatus.Running)
+        {
+            try
+            {
+                var summary = _workOrderService.GetProductionSummary(order);
+                CompletedQuantity = summary.OkCount;
+                WorkOrderProgress = order.TargetQuantity > 0
+                    ? Math.Clamp((double)summary.OkCount / order.TargetQuantity, 0, 1)
+                    : 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
+                CompletedQuantity = 0;
+                WorkOrderProgress = 0;
+            }
+        }
+        else
+        {
+            CompletedQuantity = 0;
+            WorkOrderProgress = 0;
+        }
+    }
+
+    /// <summary>
+    /// 刷新缺陷占比饼图（从 CurrentDevice.Defects 内存快照）。
+    /// 无缺陷数据时设为 null（由 UI 显示空状态）。
+    /// </summary>
+    private void RefreshDefectChart()
+    {
+        var dev = CurrentDevice;
+        if (dev == null || dev.Defects.Count == 0)
+        {
+            DefectPieChart = null;
+            DefectTotal = 0;
+            DefectTypeCount = 0;
+            TopDefectText = "—";
+            return;
+        }
+        var snapshot = dev.Defects.ToList();
+        var positive = snapshot.Where(d => d.Count > 0).OrderByDescending(d => d.Count).ToList();
+        DefectTotal = positive.Sum(d => d.Count);
+        DefectTypeCount = positive.Count;
+        TopDefectText = positive.Count > 0 ? $"{positive[0].Name} ({positive[0].Count})" : "—";
+        DefectPieChart = ChartService.BuildDefectPieChart(
+            snapshot.Select(d => (d.Name, d.Count)));
+    }
+
+    private static (string text, string brushKey) MapStatus(int statusWord)
+    {
+        // 状态文本复用 HistoryQueryHelper.GetStateText（全应用统一映射），此处只保留画刷映射。
+        var text = HistoryQueryHelper.GetStateText(statusWord);
+        var brushKey = statusWord switch
+        {
+            (int)DeviceStatus.Running => "StatusRunBrush",
+            (int)DeviceStatus.Alarm => "StatusAlarmBrush",
+            (int)DeviceStatus.Paused => "StatusPauseBrush",
+            _ => "StatusIdleBrush",
+        };
+        return (text, brushKey);
+    }
+
+    /// <summary>
+    /// 刷新活跃报警列表：从设备配置筛选未恢复的报警
+    /// （已触发 StartTime &gt; MinValue 且未恢复 EndTime &lt; StartTime）。
+    /// 活跃报警的 Duration 用 Now - StartTime 动态计算（Alarm.Duration 在活跃态返回 Zero）。
+    /// </summary>
+    private void RefreshActiveAlarms()
+    {
+        ActiveAlarms.Clear();
+        if (CurrentDevice == null) return;
+
+        var now = DateTime.Now;
+        foreach (var a in CurrentDevice.Alarms)
+        {
+            // 活跃判断：已触发（StartTime > MinValue）且未恢复（EndTime < StartTime）
+            if (a.StartTime > DateTime.MinValue && a.EndTime < a.StartTime)
+            {
+                ActiveAlarms.Add(new AlarmConfigRow
+                {
+                    Name = a.Name,
+                    PlcAddress = a.PlcAddress,
+                    Level = a.Level,
+                    Description = a.Description,
+                    StartTime = a.StartTime,
+                    Duration = now - a.StartTime,
+                });
+            }
+        }
+        foreach (var alarm in CurrentDevice.CountAlarms)
+        {
+            if (!alarm.Enabled || !alarm.IsTriggered) continue;
+            ActiveAlarms.Add(new AlarmConfigRow
+            {
+                Name = alarm.Name,
+                PlcAddress = alarm.PlcAddress,
+                Level = AlarmLevel.Medium,
+                Description = alarm.Description,
+                IsCountAlarm = true,
+                CurrentValue = alarm.CurrentValue,
+                Threshold = alarm.MaxValue,
+                StartTime = now,
+                Duration = TimeSpan.Zero,
+            });
+        }
+        ActiveAlarmCount = ActiveAlarms.Count;
+    }
+
+    [RelayCommand]
+    private void ViewAlarmHistory(AlarmConfigRow? alarm)
+    {
+        if (alarm == null || CurrentDevice == null) return;
+        ViewAlarmHistoryRequested?.Invoke(CurrentDevice.Id, alarm.Name);
+    }
+
+    [RelayCommand]
+    private void ShowOeeExplanation(string? metric)
+    {
+        var explanation = metric switch
+        {
+            "Availability" => "时间稼动率 = 运行时间 / 计划时间",
+            "Performance" => "性能达标率 = 实际产量 / 理论产量",
+            "Quality" => "良品率 = 合格产量 / (合格产量 + 不合格产量)",
+            _ => "OEE = 时间稼动率 × 性能达标率 × 良品率",
+        };
+        _dialog.NotifyInfo(explanation);
+    }
+
+    /// <summary>
+    /// 查询最近报警事件（从历史库，异步）。
+    /// 每次查询前取消上一次查询，避免快速切换设备时旧查询覆盖新数据。
+    /// </summary>
+    private void RefreshRecentAlarms()
+    {
+        // 取消上一次未完成的查询
+        _recentAlarmsCts?.Cancel();
+        _recentAlarmsCts?.Dispose();
+        _recentAlarmsCts = new CancellationTokenSource();
+        var token = _recentAlarmsCts.Token;
+
+        if (CurrentDevice == null)
+        {
+            RecentAlarms.Clear();
+            TodayAlarmCount = 0;
+            IsRefreshing = false;
+            RefreshStatusText = "暂无设备";
+            return;
+        }
+
+        var deviceId = CurrentDevice.Id;
+        Task.Run(() =>
+        {
+            try
+            {
+                var end = DateTime.Now;
+                var start = DateTime.Today;
+                var records = _historyService.QueryAlarmEvents(start, end, deviceId);
+                token.ThrowIfCancellationRequested();
+
+                var list = records.OrderByDescending(r => r.EventTime).Take(50).ToList();
+                token.ThrowIfCancellationRequested();
+
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    RecentAlarms.Clear();
+                    foreach (var r in list)
+                        RecentAlarms.Add(r);
+                    TodayAlarmCount = records.Count(r => r.EventType == AlarmEventType.Triggered);
+                    IsRefreshing = false;
+                    RefreshStatusText = "刷新完成";
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // 切换设备导致的取消，非错误，不记录
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查询设备 {DeviceId} 报警事件失败", deviceId);
+                DispatchOnUi(() =>
+                {
+                    IsRefreshing = false;
+                    RefreshStatusText = "刷新失败";
+                });
+                DispatchOnUi(() => _dialog.NotifyError($"查询报警事件失败: {ex.Message}"));
+            }
+        }, token).Forget(_logger);
+    }
+
+    // ──────────── 命令 ────────────
+
+    /// <summary>手动刷新（重新查询历史数据并刷新 KPI）。</summary>
+    [RelayCommand]
+    private void Refresh()
+    {
+        IsRefreshing = true;
+        RefreshStatusText = "正在刷新";
+        RefreshKpis();
+        RefreshRecentAlarms();
+    }
+
+    /// <summary>
+    /// 设备详情页进入时加载一次最近 24 小时产量图。
+    /// ViewModel 为单例，不能放在构造函数中，否则会在应用启动而非页面进入时查询。
+    /// </summary>
+    public void RefreshOnEnter()
+    {
+        RefreshStatusText = "正在加载";
+        RefreshHourlyProduction();
+    }
+
+    [RelayCommand]
+    private void SetHourlyRange(string? hoursText)
+    {
+        if (!int.TryParse(hoursText, out var hours) || hours is not (8 or 24))
+            return;
+        HourlyRangeHours = hours;
+        HourlyRangeText = hours == 8 ? "近8小时" : "近24小时";
+        RefreshHourlyProduction();
+    }
+
+    /// <summary>
+    /// 刷新按小时产量柱状图（最近选定时长）。
+    /// 在后台线程查询 ProductionLog，按小时桶聚合后差分得到增量。
+    /// OK/NG 的累计值差分独立计算（OverviewViewModel 中 NG 未实现差分，此处补全）。
+    /// </summary>
+    private void RefreshHourlyProduction()
+    {
+        // 取消上次未完成的产量查询
+        _productionCts?.Cancel();
+        _productionCts?.Dispose();
+        _productionCts = new CancellationTokenSource();
+        var token = _productionCts.Token;
+
+        if (CurrentDevice == null)
+        {
+            HourlyProductionChart = null;
+            return;
+        }
+
+        var deviceId = CurrentDevice.Id;
+        var targetCycle = CurrentDevice.TargetCycle;
+        var rangeHours = HourlyRangeHours;
+        Task.Run(() =>
+        {
+            try
+            {
+                var to = DateTime.Now;
+                var from = to.AddHours(-rangeHours);
+                var logs = _historyService.QueryProductionLogs(from, to, deviceId);
+                token.ThrowIfCancellationRequested();
+
+                // 构建按小时桶
+                var buckets = BuildHourlyBuckets(from, to);
+                if (buckets.Length == 0)
+                {
+                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                    {
+                        if (!token.IsCancellationRequested) HourlyProductionChart = null;
+                    });
+                    return;
+                }
+
+                var okCumulative = new int[buckets.Length];
+                var ngCumulative = new int[buckets.Length];
+                var hasSample = new bool[buckets.Length];
+                foreach (var log in logs.OrderBy(log => log.Timestamp))
+                {
+                    var idx = GetBucketIndex(buckets, log.Timestamp);
+                    if (idx >= 0 && idx < buckets.Length)
+                    {
+                        // 累计值：桶内保留末条（覆盖写入）
+                        okCumulative[idx] = log.OkProduction;
+                        ngCumulative[idx] = log.NgProduction;
+                        hasSample[idx] = true;
+                    }
+                }
+
+                // 缺少采集记录的小时沿用上一条累计值，避免后续差分把空桶当成归零。
+                var lastOk = 0;
+                var lastNg = 0;
+                for (int i = 0; i < buckets.Length; i++)
+                {
+                    if (hasSample[i])
+                    {
+                        lastOk = okCumulative[i];
+                        lastNg = ngCumulative[i];
+                    }
+                    else
+                    {
+                        okCumulative[i] = lastOk;
+                        ngCumulative[i] = lastNg;
+                    }
+                }
+
+                // 累计转增量（负差分置零，班次切换重置场景）
+                var okDiff = DiffCumulative(okCumulative);
+                var ngDiff = DiffCumulative(ngCumulative);
+
+                var chart = ChartService.BuildHourlyProductionBarChart(buckets, okDiff, ngDiff, targetCycle);
+                token.ThrowIfCancellationRequested();
+
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                {
+                    if (!token.IsCancellationRequested)
+                    {
+                        HourlyProductionChart = chart;
+                        RefreshStatusText = "加载完成";
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // 切换设备导致的取消，非错误
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查询设备 {DeviceId} 按小时产量失败", deviceId);
+                DispatchOnUi(() =>
+                {
+                    RefreshStatusText = "加载失败";
+                    _dialog.NotifyError($"查询产量数据失败: {ex.Message}");
+                });
+            }
+        }, token).Forget(_logger);
+    }
+
+    // ──────────── 按小时桶聚合辅助（参考 OverviewViewModel） ────────────
+
+    private static DateTime[] BuildHourlyBuckets(DateTime from, DateTime to)
+    {
+        List<DateTime> list = [];
+        var cur = new DateTime(from.Year, from.Month, from.Day, from.Hour, 0, 0);
+        while (cur <= to)
+        {
+            list.Add(cur);
+            cur = cur.AddHours(1);
+        }
+        return list.ToArray();
+    }
+
+    private static int GetBucketIndex(DateTime[] buckets, DateTime time)
+    {
+        var aligned = new DateTime(time.Year, time.Month, time.Day, time.Hour, 0, 0);
+        for (int i = 0; i < buckets.Length; i++)
+        {
+            if (buckets[i] == aligned) return i;
+        }
+        for (int i = 0; i < buckets.Length; i++)
+        {
+            if (buckets[i] >= aligned) return i;
+        }
+        return -1;
+    }
+
+    /// <summary>累计值转增量：后一桶减前一桶，负数置零（班次切换重置场景）。</summary>
+    private static int[] DiffCumulative(int[] cumulative)
+    {
+        if (cumulative.Length == 0) return cumulative;
+        var result = new int[cumulative.Length];
+        result[0] = Math.Max(0, cumulative[0]);
+        for (int i = 1; i < cumulative.Length; i++)
+        {
+            result[i] = Math.Max(0, cumulative[i] - cumulative[i - 1]);
+        }
+        return result;
+    }
+
+    /// <summary>返回主页：触发 GoBackRequested 事件，由 MainWindowViewModel 订阅后置 SelectedIndex=0。</summary>
+    [RelayCommand]
+    private void GoBack()
+    {
+        GoBackRequested?.Invoke();
+    }
+
+    /// <summary>返回主页请求事件（MainWindowViewModel 订阅）。</summary>
+    public event Action? GoBackRequested;
+    public event Action<string, string>? ViewAlarmHistoryRequested;
+}
+
+// ──────────── 配置行数据模型 ────────────
+
+public class AlarmConfigRow
+{
+    public string Name { get; set; } = string.Empty;
+    public string PlcAddress { get; set; } = string.Empty;
+    public AlarmLevel Level { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public bool IsCountAlarm { get; set; }
+    public int CurrentValue { get; set; }
+    public int Threshold { get; set; }
+    public DateTime StartTime { get; set; }
+    public TimeSpan Duration { get; set; }
+    public string LevelText => Level switch
+    {
+        AlarmLevel.High => "高",
+        AlarmLevel.Medium => "中",
+        _ => "低",
+    };
+    /// <summary>持续时间文本（活跃报警显示累计时长）。</summary>
+    public string DurationText => Duration.TotalSeconds > 0
+        ? $"{(int)Duration.TotalHours}h {Duration.Minutes}m"
+        : "—";
+    public string ValueText => IsCountAlarm
+        ? $"当前 {CurrentValue} / 阈值 {Threshold}"
+        : $"触发于 {StartTime:HH:mm:ss} · {PlcAddress}";
+}

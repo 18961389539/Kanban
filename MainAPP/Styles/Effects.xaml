@@ -1,0 +1,10 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--  共享效果  -->
+    <DropShadowEffect x:Key="CardDropShadow"
+        BlurRadius="14" Direction="270" Opacity="0.35"
+        ShadowDepth="3" Color="#000000" />
+
+</ResourceDictionary>

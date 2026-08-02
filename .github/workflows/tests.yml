@@ -1,0 +1,185 @@
+﻿name: Tests (Unit + Integration + E2E + Coverage)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'MainAPP/**'
+      - 'MainAPP.Tests/**'
+      - 'MainAPP.E2E/**'
+      - 'MainAPP.Benchmarks/**'
+      - 'LicenseManager.App/**'
+      - 'LicenseIssuer.CLI/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - 'Kanban.slnx'
+      - '.runsettings'
+      - 'MainAPP/DLLS/**'
+      - 'MainAPP/Data/Migrations/**'
+      - '.editorconfig'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'MainAPP/**'
+      - 'MainAPP.Tests/**'
+      - 'MainAPP.E2E/**'
+      - 'MainAPP.Benchmarks/**'
+      - 'LicenseManager.App/**'
+      - 'LicenseIssuer.CLI/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - 'Kanban.slnx'
+      - '.runsettings'
+      - 'MainAPP/DLLS/**'
+      - 'MainAPP/Data/Migrations/**'
+      - '.editorconfig'
+      - '.github/workflows/tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build & Run Tests
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Kill leftover testhost processes (avoid file lock on DLLs)
+        shell: powershell
+        run: |
+          Get-Process testhost -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Get-Process testhost.x86 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+      - name: Restore
+        shell: powershell
+        run: dotnet restore Kanban.slnx --nologo
+
+      - name: Install EF Core CLI
+        shell: powershell
+        run: dotnet tool install --global dotnet-ef --version 10.0.10 --no-cache
+
+      - name: Build (Debug)
+        shell: powershell
+        run: dotnet build Kanban.slnx -c Debug --no-restore --nologo
+
+      - name: Verify EF Core migrations
+        shell: powershell
+        run: |
+          dotnet ef migrations list --project MainAPP/MainAPP.csproj --context ProductionLogDbContext --no-build
+          dotnet ef migrations list --project MainAPP/MainAPP.csproj --context AlarmEventDbContext --no-build
+          dotnet ef migrations list --project MainAPP/MainAPP.csproj --context StatusTransitionDbContext --no-build
+          dotnet ef migrations list --project MainAPP/MainAPP.csproj --context WorkOrderDbContext --no-build
+
+      - name: Run MainAPP.Tests (Unit + Integration)
+        shell: powershell
+        run: |
+          dotnet test --project MainAPP.Tests/MainAPP.Tests.csproj `
+            -c Debug --no-build --nologo `
+            --results-directory TestResults `
+            --coverlet `
+            --coverlet-output-format cobertura `
+            --coverlet-file-prefix mainapp-tests `
+            --report-xunit-trx `
+            --report-xunit-trx-filename mainapp-tests.trx
+
+      - name: Run MainAPP.E2E
+        shell: powershell
+        run: |
+          dotnet test --project MainAPP.E2E/MainAPP.E2E.csproj `
+            -c Debug --no-build --nologo `
+            --results-directory TestResults `
+            --report-xunit-trx `
+            --report-xunit-trx-filename mainapp-e2e.trx
+
+      - name: Build Release (verify Obfuscar + Release config)
+        shell: powershell
+        run: dotnet build Kanban.slnx -c Release --nologo
+
+      - name: Publish MainAPP Release artifact
+        shell: powershell
+        run: |
+          dotnet publish MainAPP/MainAPP.csproj -c Release --no-restore --no-self-contained `
+            -r win-x64 -o artifacts/MainAPP
+
+      - name: Upload MainAPP Release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MainAPP-win-x64-${{ github.sha }}
+          path: artifacts/MainAPP/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Run Benchmarks
+        shell: powershell
+        continue-on-error: true
+        run: |
+          dotnet run --project MainAPP.Benchmarks/MainAPP.Benchmarks.csproj `
+            -c Release --no-build `
+            -- --job short --filter '*' --exporters json,html `
+               --memory --iterationCount 3 --warmupCount 1 `
+               --loggers console `
+               --artifacts TestResults/Benchmarks
+
+      - name: Generate coverage report
+        if: always()
+        shell: powershell
+        run: |
+          # 安装 ReportGenerator 工具（如未安装）
+          dotnet tool install -g dotnet-reportgenerator-globaltool --ignore-failed-sources 2>$null
+          # 查找 MTP Coverlet 生成的 Cobertura 文件（文件名包含时间戳）
+          $coverageFiles = Get-ChildItem -Path TestResults -Recurse -Filter "*coverage.cobertura*.xml" -ErrorAction SilentlyContinue
+          if ($coverageFiles) {
+            $coverageFile = $coverageFiles[0].FullName
+            Write-Host "Found coverage file: $coverageFile"
+            reportgenerator -reports:"$coverageFile" -targetdir:"CoverageReport" -reporttypes:"Html;Cobertura;TextSummary"
+            # 输出覆盖率摘要到日志
+            Get-Content CoverageReport/Summary.txt -ErrorAction SilentlyContinue
+          } else {
+            Write-Host "No coverage file found"
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            CoverageReport/**
+            TestResults/**/coverage.cobertura.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: TestResults/Benchmarks/**/*
+          if-no-files-found: ignore
+          retention-days: 30

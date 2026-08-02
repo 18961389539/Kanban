@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MainAPP</RootNamespace>
+    <AssemblyName>MainAPP</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="HandyControl" />
+    <PackageReference Include="Material.Icons.WPF" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="OxyPlot.Wpf" />
+    <PackageReference Include="OxyPlot.Core" />
+    <PackageReference Include="OxyPlot.SkiaSharp" />
+    <PackageReference Include="PdfSharpCore" />
+    <!-- SignalR 客户端：Remote 模式连接 Kanban.Collector -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Sinks.Async" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="HslCommunication">
+      <HintPath>DLLS\HslCommunication.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MainAPP.Tests" />
+    <InternalsVisibleTo Include="MainAPP.Benchmarks" />
+    <InternalsVisibleTo Include="MainAPP.E2E" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LicenseManager.App\LicenseManager.App.csproj" />
+    <!-- 展示端瘦身过渡期：采集/存储/领域模型已迁入 Core，MainAPP 经项目引用继续使用（第 4 步改为客户端代理后移除） -->
+    <ProjectReference Include="..\Kanban.Collector.Core\Kanban.Collector.Core.csproj" />
+  </ItemGroup>
+
+</Project>

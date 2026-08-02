@@ -1,0 +1,543 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.DeviceManagerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:conv="clr-namespace:MainAPP.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:views="clr-namespace:MainAPP.Views"
+    d:DesignHeight="700"
+    d:DesignWidth="1100"
+    Loaded="OnLoaded"
+    PreviewKeyDown="OnPreviewKeyDown"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <!--  ObjectDataProvider（AlarmLevelValues/DefectSeverityValues/DefectCategoryValues）
+              已移至各 Tab 子 UserControl 的本地 Resources，避免重复定义。  -->
+
+        <!--  设备运行时状态 → 色点画刷 / 文本（列表项实时状态指示）  -->
+        <conv:DeviceRuntimeStatusConverter x:Key="DeviceRuntimeStatusConverter" />
+        <conv:DeviceAddressConflictConverter x:Key="DeviceAddressConflictConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <!--  列表与详情始终采用同一布局：列表固定 360（可被分隔条拖拽调整），详情占剩余。
+                  无论是否选中设备都保持一致，未选中时详情区显示"请选择设备"空状态。
+                  列表列设 MinWidth，保证 GridSplitter 拖拽时不会被压得过窄。  -->
+            <ColumnDefinition x:Name="ListColumn" MinWidth="240" Width="360" />
+            <!--  分隔条占位列（常驻）  -->
+            <ColumnDefinition x:Name="SplitterColumn" Width="10" />
+            <ColumnDefinition x:Name="DetailColumn" MinWidth="320" Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  ============ 左侧：设备列表 ============  -->
+
+        <Border
+            Grid.Column="0"
+            Padding="0"
+            Style="{StaticResource MainCard}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  标题  -->
+                <DockPanel Grid.Row="0" Margin="18,18,18,10">
+                    <materialIcons:MaterialIcon Kind="ViewList" Style="{StaticResource SectionTitleIcon}" />
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        Style="{StaticResource SectionTitleText}"
+                        Text="设备列表" />
+                    <TextBlock
+                        Margin="6,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding DeviceSummaryText}" />
+                    <TextBlock
+                        DockPanel.Dock="Right"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource WarningBrush}"
+                        Text="● 未保存"
+                        Visibility="{Binding IsDirty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <materialIcons:MaterialIcon
+                        DockPanel.Dock="Right"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Kind="Alert"
+                        Foreground="{StaticResource WarningBrush}"
+                        ToolTip="{Binding AddressConflictCount, StringFormat='检测到 {0} 处跨设备地址冲突，保存时将提示定位'}"
+                        Visibility="{Binding HasAddressConflicts, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </DockPanel>
+
+                <!--  搜索  -->
+                <hc:SearchBar
+                    x:Name="DeviceSearchBar"
+                    Grid.Row="1"
+                    Margin="18,0,18,10"
+                    AutomationProperties.Name="搜索设备"
+                    Style="{StaticResource SearchBarExtend}"
+                    Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
+
+                <!--  状态筛选  -->
+                <hc:ComboBox
+                    Grid.Row="2"
+                    Margin="18,0,18,10"
+                    Width="150"
+                    HorizontalAlignment="Left"
+                    AutomationProperties.Name="按状态筛选设备"
+                    hc:InfoElement.Placeholder="状态筛选"
+                    hc:InfoElement.Title="状态"
+                    DisplayMemberPath="Label"
+                    ItemsSource="{Binding StatusFilterOptions}"
+                    SelectedValue="{Binding StatusFilter}"
+                    SelectedValuePath="Value"
+                    Style="{StaticResource ComboBoxExtend}" />
+
+                <!--  设备列表  -->
+                <ListBox
+                    Grid.Row="3"
+                    Margin="18,0,18,8"
+                    AllowDrop="True"
+                    AutomationProperties.Name="设备列表"
+                    DragOver="OnListDragOver"
+                    Drop="OnListDrop"
+                    ItemContainerStyle="{StaticResource CardListItemStyle}"
+                    ItemsSource="{Binding FilteredDevices}"
+                    PreviewMouseLeftButtonDown="OnListPreviewMouseLeftButtonDown"
+                    PreviewMouseMove="OnListPreviewMouseMove"
+                    SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling"
+                    VirtualizingPanel.ScrollUnit="Pixel">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse
+                                    Width="10"
+                                    Height="10"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center">
+                                    <Ellipse.Fill>
+                                        <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}">
+                                            <Binding Path="." />
+                                            <Binding Path="DataContext.DeviceRuntimeMap" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </Ellipse.Fill>
+                                    <Ellipse.ToolTip>
+                                        <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}" ConverterParameter="Text">
+                                            <Binding Path="." />
+                                            <Binding Path="DataContext.DeviceRuntimeMap" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </Ellipse.ToolTip>
+                                </Ellipse>
+                                <TextBlock
+                                    Padding="4,8"
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Foreground>
+                                        <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}">
+                                            <Binding />
+                                            <Binding Path="DataContext.DeviceRuntimeMap" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </TextBlock.Foreground>
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}" ConverterParameter="Text">
+                                            <Binding />
+                                            <Binding Path="DataContext.DeviceRuntimeMap" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource WarningBrush}"
+                                    Text="*"
+                                    Visibility="{Binding DataContext.IsDirty, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button
+                                    Margin="6,0,0,0"
+                                    Padding="0"
+                                    AutomationProperties.Name="地址冲突，点击定位"
+                                    Command="{Binding DataContext.SelectAddressConflictCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="{StaticResource WarningBrush}"
+                                    ToolTipService.ShowOnDisabled="True">
+                                    <Button.ToolTip>
+                                        <MultiBinding Converter="{StaticResource DeviceAddressConflictConverter}" ConverterParameter="Text">
+                                            <Binding />
+                                            <Binding Path="DataContext.AddressConflictSummaries" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </Button.ToolTip>
+                                    <Button.Visibility>
+                                        <MultiBinding Converter="{StaticResource DeviceAddressConflictConverter}">
+                                            <Binding />
+                                            <Binding Path="DataContext.AddressConflictSummaries" RelativeSource="{RelativeSource AncestorType=UserControl}" />
+                                        </MultiBinding>
+                                    </Button.Visibility>
+                                    <materialIcons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14" />
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!--  空状态：筛选无结果时覆盖在 ListBox 上  -->
+                <Border Grid.Row="3" Margin="18,0,18,8" Visibility="Collapsed">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding FilteredDevices.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <controls:EmptyState
+                        IconKind="FilterRemoveOutline"
+                        Message="无匹配的设备"
+                        Hint="提示：调整搜索关键词或状态筛选条件" />
+                </Border>
+
+                <!--  操作按钮：主操作单行 + 更多下拉菜单承载低频操作  -->
+                <StackPanel
+                    Grid.Row="4"
+                    Margin="18,0,18,18"
+                    Orientation="Horizontal">
+                    <Button
+                        Margin="0,0,6,0"
+                        AutomationProperties.Name="新增设备"
+                        Command="{Binding AddDeviceCommand}"
+                        Content="新增"
+                        Style="{StaticResource IconButtonPrimary}"
+                        Tag="{x:Static mi:MaterialIconKind.Plus}" />
+                    <Button
+                        Margin="0,0,6,0"
+                        AutomationProperties.Name="删除选中的设备"
+                        Command="{Binding RemoveDeviceCommand}"
+                        CommandParameter="{Binding SelectedDevice}"
+                        Content="删除"
+                        Style="{StaticResource IconButtonDanger}"
+                        Tag="{x:Static mi:MaterialIconKind.Delete}" />
+                    <Button
+                        Margin="0,0,6,0"
+                        AutomationProperties.Name="保存设备配置"
+                        Command="{Binding SaveCommand}"
+                        Content="保存"
+                        Style="{StaticResource IconButtonSuccess}"
+                        Tag="{x:Static mi:MaterialIconKind.ContentSave}"
+                        ToolTip="保存设备配置 (Ctrl+S)" />
+                    <!--  更多：复制 / 导入 / 导出 / 恢复 / 虚拟（低频操作收进下拉菜单）  -->
+                    <Button
+                        x:Name="MoreActionsButton"
+                        AutomationProperties.Name="更多设备操作"
+                        Click="OnMoreActionsClick"
+                        Content="更多"
+                        Style="{StaticResource IconButtonDefault}"
+                        Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
+                        ToolTip="复制 / 导入 / 导出 / 恢复 / 虚拟">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem
+                                    AutomationProperties.Name="复制选中的设备"
+                                    Command="{Binding CopyDeviceCommand}"
+                                    CommandParameter="{Binding SelectedDevice}"
+                                    Header="复制选中设备">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="ContentCopy" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem
+                                    AutomationProperties.Name="导入设备配置"
+                                    Command="{Binding ImportConfigCommand}"
+                                    Header="导入配置">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="Import" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    AutomationProperties.Name="导出设备配置"
+                                    Command="{Binding ExportConfigCommand}"
+                                    Header="导出配置">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="Export" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem
+                                    AutomationProperties.Name="恢复上一版本配置"
+                                    Command="{Binding RollbackToBackupCommand}"
+                                    Header="恢复上一版本"
+                                    ToolTip="用上一次保存前的配置覆盖当前配置（需密码确认）">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="History" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    AutomationProperties.Name="生成虚拟设备"
+                                    Command="{Binding SeedSampleDevicesCommand}"
+                                    Header="生成虚拟设备"
+                                    ToolTip="生成 20 台虚拟设备用于预览（需密码确认）">
+                                    <MenuItem.Icon>
+                                        <materialIcons:MaterialIcon Kind="ToyBrickPlus" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--  ============ 中间：可拖拽分隔条（仅选中设备时显示）  ============  -->
+        <GridSplitter
+            x:Name="ListDetailSplitter"
+            Grid.Column="1"
+            Width="10"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Stretch"
+            Background="Transparent"
+            Cursor="SizeWE"
+            ResizeBehavior="PreviousAndNext"
+            ResizeDirection="Columns"
+            AutomationProperties.Name="调整设备列表与设备详情的宽度">
+            <GridSplitter.Template>
+                <ControlTemplate TargetType="GridSplitter">
+                    <Grid Background="Transparent">
+                        <Rectangle
+                            x:Name="Grip"
+                            Width="2"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Stretch"
+                            Fill="{StaticResource BorderBrush}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Grip" Property="Fill" Value="{StaticResource PrimaryBrush}" />
+                            <Setter TargetName="Grip" Property="Width" Value="3" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </GridSplitter.Template>
+        </GridSplitter>
+
+        <!--  ============ 右侧：设备详情/编辑 ============  -->
+        <Border
+            Grid.Column="2"
+            Padding="0"
+            Style="{StaticResource MainCard}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!--  详情标题：设备名 + 实时状态徽章（切设备时同步刷新，避免改错设备）  -->
+                <DockPanel Grid.Row="0" Margin="24,18,24,12">
+                    <TextBlock Style="{StaticResource SectionTitleText}" Text="设备详情" />
+                    <!--  当前编辑设备名（突出显示，区别于"设备详情"固定标题）  -->
+                    <StackPanel
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal"
+                        Visibility="{Binding SelectedDevice, Converter={StaticResource NullToVisibilityConverter}}">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource PrimaryTextBrush}"
+                            FontSize="17"
+                            Text="{Binding SelectedDevice.Name}" />
+                        <!--  实时状态徽章：色点 + 文本，与列表项状态指示一致  -->
+                        <Ellipse
+                            Width="8"
+                            Height="8"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center">
+                            <Ellipse.Fill>
+                                <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}">
+                                    <Binding Path="SelectedDevice" />
+                                    <Binding Path="DeviceRuntimeMap" />
+                                </MultiBinding>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <TextBlock
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource CaptionText}">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{StaticResource DeviceRuntimeStatusConverter}" ConverterParameter="Text">
+                                    <Binding Path="SelectedDevice" />
+                                    <Binding Path="DeviceRuntimeMap" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </DockPanel>
+                <Border
+                    Grid.Row="0"
+                    VerticalAlignment="Bottom"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,0,1" />
+
+                <Grid Grid.Row="1">
+                    <!--  空状态  -->
+                    <controls:EmptyState
+                        Hint="选中后可在此处编辑设备参数、PLC 地址、报警与缺陷"
+                        IconKind="Harddisk"
+                        Message="请选择设备或点击新增">
+                        <controls:EmptyState.Style>
+                            <Style TargetType="controls:EmptyState">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedDevice}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </controls:EmptyState.Style>
+                    </controls:EmptyState>
+
+                    <!--  编辑表单  -->
+                    <Border Visibility="{Binding SelectedDevice, Converter={StaticResource NullToVisibilityConverter}}">
+                        <TabControl
+                            Style="{StaticResource KanbanTabControl}"
+                            Padding="0"
+                            AutomationProperties.Name="设备详情选项卡"
+                            BorderThickness="0"
+                            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
+                            SelectionChanged="OnTabSelectionChanged">
+
+                            <!--  ============ Tab 1：设备参数 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="设备参数">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="Cog" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="设备参数" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerDeviceParamsTab />
+                            </TabItem>
+
+                            <!--  ============ Tab 2：报警管理 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="报警管理">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="Bell" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="报警管理" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerAlarmsTab DataContext="{Binding AlarmManagerVm}" />
+                            </TabItem>
+
+                            <!--  ============ Tab 3：缺陷管理 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="缺陷管理">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="Bug" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="缺陷管理" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerDefectsTab DataContext="{Binding DefectManagerVm}" />
+                            </TabItem>
+
+                            <!--  ============ Tab 4：计数报警 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="计数报警">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="Counter" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="计数报警" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerCountAlarmsTab DataContext="{Binding CountAlarmManagerVm}" />
+                            </TabItem>
+
+                            <!--  ============ Tab 5：工单 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="工单">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="ClipboardListOutline" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="工单" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerWorkOrdersTab />
+                            </TabItem>
+                        </TabControl>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!--  加载中覆盖层：PLC 写入（配方 / 清空计数报警当前值）期间显示  -->
+        <Border
+            Grid.ColumnSpan="3"
+            AutomationProperties.Name="加载中"
+            Style="{StaticResource LoadingOverlay}"
+            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <hc:LoadingCircle
+                Width="60"
+                Height="60"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Style="{StaticResource LoadingDefault}" />
+        </Border>
+    </Grid>
+</UserControl>

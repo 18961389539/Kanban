@@ -1,0 +1,906 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.HistoryQueryView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    d:DataContext="{d:DesignInstance Type=vm:HistoryQueryViewModel}"
+    d:DesignHeight="800"
+    d:DesignWidth="1200"
+    mc:Ignorable="d">
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SearchCommand}" />
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding ResetCommand}" />
+        <KeyBinding Gesture="Ctrl+E" Command="{Binding ExportCommand}" />
+    </UserControl.InputBindings>
+    <UserControl.Resources>
+    </UserControl.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ============ 筛选条件栏 ============  -->
+        <Border
+            Grid.Row="0"
+            Margin="0,0,0,16"
+            Padding="20"
+            Style="{StaticResource MainCard}">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="DatabaseSearchOutline" />
+                        <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="历史查询" />
+                    </StackPanel>
+                    <TextBlock
+                        DockPanel.Dock="Right"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource SecondaryTextBrush}"
+                        Text="{Binding QuerySummaryText}" />
+                    <hc:Divider DockPanel.Dock="Bottom" Margin="0,8,0,0" />
+                </DockPanel>
+
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="10,8"
+                    Background="{StaticResource PrimarySoftBrush}"
+                    BorderBrush="{StaticResource WarningBrush}"
+                    BorderThickness="1"
+                    Visibility="{Binding HasQueryValidationError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Foreground="{StaticResource WarningBrush}" Text="{Binding QueryValidationMessage}" />
+                </Border>
+
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="10,8"
+                    Background="{StaticResource StatusAlarmSoftBrush}"
+                    BorderBrush="{StaticResource DangerBrush}"
+                    BorderThickness="1"
+                    Visibility="{Binding HasQueryError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Foreground="{StaticResource DangerBrush}" Text="{Binding QueryErrorMessage}" TextWrapping="Wrap" />
+                </Border>
+
+                <!-- 第一行：设备 / 快捷时间 / 从 / 至 / 查询 / 重置 / 导出 -->
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox
+                        Grid.Column="0"
+                        VerticalAlignment="Bottom"
+                        hc:InfoElement.Title="设备"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="设备筛选"
+                        DisplayMemberPath="Name"
+                        ItemsSource="{Binding DeviceFilterItems}"
+                        SelectedValue="{Binding SelectedDeviceId}"
+                        SelectedValuePath="Id"
+                        Style="{StaticResource ComboBoxExtend}" />
+
+                    <ComboBox
+                        Grid.Column="2"
+                        VerticalAlignment="Bottom"
+                        hc:InfoElement.Title="快捷时间"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="快捷时间选择"
+                        SelectedIndex="{Binding QuickTimeIndex}"
+                        Style="{StaticResource ComboBoxExtend}">
+                        <ComboBoxItem Content="自定义" />
+                        <ComboBoxItem Content="今天" />
+                        <ComboBoxItem Content="昨天" />
+                        <ComboBoxItem Content="近7天" />
+                        <ComboBoxItem Content="近30天" />
+                        <ComboBoxItem Content="本班次" />
+                        <ComboBoxItem Content="上班次" />
+                        <ComboBoxItem Content="本周" />
+                        <ComboBoxItem Content="本月" />
+                    </ComboBox>
+
+                    <hc:DateTimePicker
+                        Grid.Column="4"
+                        VerticalAlignment="Bottom"
+                        hc:InfoElement.Title="从"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="查询起始时间"
+                        SelectedDateTime="{Binding FromDate}"
+                        Style="{StaticResource DateTimePickerExtend}" />
+
+                    <TextBlock
+                        Grid.Column="5"
+                        Width="12"
+                        Margin="0,0,0,6"
+                        VerticalAlignment="Bottom"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="—" />
+                    <hc:DateTimePicker
+                        Grid.Column="6"
+                        VerticalAlignment="Bottom"
+                        hc:InfoElement.Title="至"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="查询结束时间"
+                        SelectedDateTime="{Binding ToDate}"
+                        Style="{StaticResource DateTimePickerExtend}" />
+
+                    <Button
+                        Grid.Column="8"
+                        VerticalAlignment="Bottom"
+                        AutomationProperties.Name="查询历史数据"
+                        Command="{Binding SearchCommand}"
+                        Style="{StaticResource ButtonPrimary}"
+                        ToolTip="查询 (Ctrl+Enter)">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon
+                                Width="14"
+                                Height="14"
+                                VerticalAlignment="Center"
+                                Kind="Magnify" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="查询" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        Grid.Column="10"
+                        VerticalAlignment="Bottom"
+                        AutomationProperties.Name="重置筛选条件"
+                        Command="{Binding ResetCommand}"
+                        Style="{StaticResource ButtonDefault}"
+                        ToolTip="清空筛选条件 (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon
+                                Width="14"
+                                Height="14"
+                                VerticalAlignment="Center"
+                                Kind="Refresh" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="重置" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button
+                        Grid.Column="12"
+                        VerticalAlignment="Bottom"
+                        AutomationProperties.Name="导出当前 Tab 数据为 CSV"
+                        Command="{Binding ExportCommand}"
+                        Style="{StaticResource ButtonDefault}"
+                        ToolTip="导出 CSV (Ctrl+E)">
+                        <StackPanel Orientation="Horizontal">
+                            <hc:LoadingCircle
+                                Width="14"
+                                Height="14"
+                                Visibility="{Binding IsExporting, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            <materialIcons:MaterialIcon
+                                Width="14"
+                                Height="14"
+                                VerticalAlignment="Center"
+                                Kind="DownloadOutline">
+                                <materialIcons:MaterialIcon.Style>
+                                    <Style TargetType="materialIcons:MaterialIcon">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExporting}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialIcons:MaterialIcon.Style>
+                            </materialIcons:MaterialIcon>
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="导出" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- 第二行：班次筛选（产量/报警/OEE Tab 显示）+ 报警名称筛选（仅报警 Tab 显示） -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="200" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 班次筛选：全部 Tab 显示（含状态页 Tab 1） -->
+                    <ComboBox
+                        Grid.Column="0"
+                        hc:InfoElement.Title="班次"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="班次筛选"
+                        DisplayMemberPath="DisplayText"
+                        ItemsSource="{Binding ShiftFilterItems}"
+                        SelectedValue="{Binding SelectedShiftName}"
+                        SelectedValuePath="Value">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}" />
+                        </ComboBox.Style>
+                    </ComboBox>
+
+                    <!-- 报警名称筛选：仅 Tab 2 显示 -->
+                    <ComboBox
+                        Grid.Column="2"
+                        hc:InfoElement.Title="报警类型"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="报警类型筛选"
+                        DisplayMemberPath="DisplayText"
+                        ItemsSource="{Binding AlarmNameFilterItems}"
+                        SelectedValue="{Binding SelectedAlarmName}"
+                        SelectedValuePath="Value"
+                        ToolTip="从历史报警事件中动态生成">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.Style>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!--  ============ TabControl ============  -->
+        <Grid Grid.Row="1">
+            <TabControl
+                BorderThickness="0"
+                SelectedIndex="{Binding SelectedTabIndex}">
+                <TabControl.Style>
+                    <Style TargetType="TabControl" BasedOn="{StaticResource KanbanTabControl}">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TabControl.Style>
+
+            <!--  ============ Tab 0: 产量查询 ============  -->
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="产量查询 标签">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ChartBar" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="产量查询" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- 统计卡片 -->
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
+                                 Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="总 OK 产量" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding ProductionQuery.TotalOk, StringFormat={}{0:N0} 件}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="总 NG 产量" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding ProductionQuery.TotalNg, StringFormat={}{0:N0} 件}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="良品率" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- 智能洞察 -->
+                    <Border
+                        Grid.Row="1"
+                        Margin="0,0,0,12"
+                        Style="{StaticResource HintCard}"
+                        Visibility="{Binding ProductionQuery.ProductionInsight, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ProductionQuery.ProductionInsight}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 图表 -->
+                    <Border Grid.Row="2" Margin="0,0,0,12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                        <oxy:PlotView Model="{Binding ProductionQuery.ProductionChart}" Background="Transparent" />
+                    </Border>
+
+                    <!-- 数据表格 -->
+                    <Grid Grid.Row="3">
+                        <Border
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <DataGrid
+                                AlternationCount="2"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.Name="产量日志表"
+                                CellStyle="{StaticResource KanbanDataGridCell}"
+                                ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                ItemsSource="{Binding ProductionQuery.ProductionLogs}"
+                                Style="{StaticResource KanbanDataGrid}"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                VirtualizingPanel.ScrollUnit="Pixel">
+                                <DataGrid.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                    </ItemsPanelTemplate>
+                                </DataGrid.ItemsPanel>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource KanbanDataGridRow}">
+                                        <Style.Triggers>
+                                            <!-- NG 超阈值：NgProduction >= NgAlarmThreshold → 整行红色高亮 -->
+                                            <DataTrigger Value="True">
+                                                <DataTrigger.Binding>
+                                                    <Binding Path="NgProduction" Converter="{StaticResource ComparisonConverter}" ConverterParameter="{x:Static vm:HistoryQueryViewModel.NgAlarmThresholdExpr}" />
+                                                </DataTrigger.Binding>
+                                                <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="时间" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="设备" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="班次" Binding="{Binding ShiftName}" />
+                                    <DataGridTextColumn Header="OK 产量(件)" Binding="{Binding OkProduction}" />
+                                    <DataGridTextColumn Header="NG 产量(件)" Binding="{Binding NgProduction}" />
+                                    <DataGridTextColumn Header="设备状态" Binding="{Binding StatusWord, Converter={StaticResource StateToTextConverter}}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+
+                        <!-- 空状态：用 EmptyState 组件替代手写 StackPanel -->
+                        <Border
+                            Visibility="{Binding IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <controls:EmptyState
+                                IconKind="DatabaseSearchOutline"
+                                Message="未查询到符合条件的产量数据"
+                                Hint="提示：尝试切换设备、放宽时间范围，或检查 PLC 采集是否正常" />
+                        </Border>
+                    </Grid>
+
+                    <!-- 分页栏：用 hc:Pagination 替换自定义上一页/下一页按钮（P1-4） -->
+                    <Border Grid.Row="4" Margin="0,8,0,0" Padding="12,10" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <hc:Pagination
+                            MaxPageCount="{Binding TotalPages}"
+                            PageIndex="{Binding CurrentPage}"
+                            IsJumpEnabled="True"
+                            PageUpdated="Pagination_PageChanged"
+                            HorizontalAlignment="Right" />
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!--  ============ Tab 1: 状态时长 ============  -->
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="状态时长 标签">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ClockOutline" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="状态时长" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
+                                 Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="运行时长" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding StatusQuery.RunTimeFormatted}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="报警时长" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource WarningBrush}" Text="{Binding StatusQuery.AlarmTimeFormatted}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="待机时长" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding StatusQuery.PausedTimeFormatted}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- 智能洞察 -->
+                    <Border
+                        Grid.Row="1"
+                        Margin="0,0,0,12"
+                        Style="{StaticResource HintCard}"
+                        Visibility="{Binding StatusQuery.StatusInsight, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding StatusQuery.StatusInsight}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Margin="0,0,0,12" Padding="12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="状态分布" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="时长柱状图" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="状态切换时间线" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <oxy:PlotView Grid.Column="0" Model="{Binding StatusQuery.StatusChart}" Background="Transparent" />
+                                <oxy:PlotView Grid.Column="1" Model="{Binding StatusQuery.StatusBarChart}" Background="Transparent" />
+                                <oxy:PlotView Grid.Column="2" Model="{Binding StatusQuery.StatusGanttChart}" Background="Transparent" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="3">
+                        <Border Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                            <DataGrid
+                                AlternationCount="2"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.Name="状态转换记录表"
+                                CellStyle="{StaticResource KanbanDataGridCell}"
+                                ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                ItemsSource="{Binding StatusQuery.StatusTransitions}"
+                                RowStyle="{StaticResource KanbanDataGridRow}"
+                                Style="{StaticResource KanbanDataGrid}"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                VirtualizingPanel.ScrollUnit="Pixel">
+                                <DataGrid.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                    </ItemsPanelTemplate>
+                                </DataGrid.ItemsPanel>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="时间" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="设备" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="之前状态" Binding="{Binding PreviousState, Converter={StaticResource StateToTextConverter}}" />
+                                    <DataGridTextColumn Header="之后状态" Binding="{Binding CurrentState, Converter={StaticResource StateToTextConverter}}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <Border
+                            Visibility="{Binding IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <controls:EmptyState
+                                IconKind="DatabaseSearchOutline"
+                                Message="未查询到符合条件的状态转换记录"
+                                Hint="提示：状态时长需选择具体设备，请检查设备筛选" />
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Row="4" Margin="0,8,0,0" Padding="12,10" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <hc:Pagination
+                            MaxPageCount="{Binding TotalPages}"
+                            PageIndex="{Binding CurrentPage}"
+                            IsJumpEnabled="True"
+                            PageUpdated="Pagination_PageChanged"
+                            HorizontalAlignment="Right" />
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!--  ============ Tab 2: 报警记录 ============  -->
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="报警记录 标签">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="BellAlert" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="报警记录" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
+                                 Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="触发次数" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmQuery.AlarmTriggerCount, StringFormat={}{0} 次}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="恢复次数" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding AlarmQuery.AlarmRecoverCount, StringFormat={}{0} 次}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="待恢复" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, StringFormat={}{0} 次}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- 智能洞察：Top3 高频报警 -->
+                    <Border
+                        Grid.Row="1"
+                        Margin="0,0,0,12"
+                        Style="{StaticResource HintCard}"
+                        Visibility="{Binding AlarmQuery.AlarmInsight, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AlarmQuery.AlarmInsight}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Margin="0,0,0,12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                        <oxy:PlotView Model="{Binding AlarmQuery.AlarmChart}" Background="Transparent" />
+                    </Border>
+
+                    <Grid Grid.Row="3">
+                        <Border Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                            <DataGrid
+                                AlternationCount="2"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.Name="报警事件表"
+                                CellStyle="{StaticResource KanbanDataGridCell}"
+                                ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                ItemsSource="{Binding AlarmQuery.AlarmEvents}"
+                                Style="{StaticResource KanbanDataGrid}"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                VirtualizingPanel.ScrollUnit="Pixel">
+                                <DataGrid.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                    </ItemsPanelTemplate>
+                                </DataGrid.ItemsPanel>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource KanbanDataGridRow}">
+                                        <Style.Triggers>
+                                            <!-- 报警触发事件（EventType=Triggered）→ 整行浅红高亮，便于区分"触发"与"恢复" -->
+                                            <DataTrigger Binding="{Binding EventType}" Value="Triggered">
+                                                <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="时间" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
+                                    <DataGridTextColumn Header="设备" Binding="{Binding DeviceName}" />
+                                    <DataGridTextColumn Header="报警名称" Binding="{Binding AlarmName}" />
+                                    <DataGridTextColumn Header="PLC 地址" Binding="{Binding PlcAddress}" />
+                                    <DataGridTextColumn Header="事件类型" Binding="{Binding EventType, Converter={StaticResource EventTypeToTextConverter}}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <Border
+                            Visibility="{Binding IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <controls:EmptyState
+                                IconKind="DatabaseSearchOutline"
+                                Message="未查询到符合条件的报警记录"
+                                Hint="提示：尝试切换设备或放宽时间范围" />
+                        </Border>
+                    </Grid>
+
+                    <Border Grid.Row="4" Margin="0,8,0,0" Padding="12,10" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <hc:Pagination
+                            MaxPageCount="{Binding TotalPages}"
+                            PageIndex="{Binding CurrentPage}"
+                            IsJumpEnabled="True"
+                            PageUpdated="Pagination_PageChanged"
+                            HorizontalAlignment="Right" />
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!--  ============ Tab 3: OEE 分析 ============  -->
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="OEE 分析 标签">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="ChartPie" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="OEE 分析" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1*" MinHeight="80" />
+                    </Grid.RowDefinitions>
+
+                    <!-- KPI 卡片 -->
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
+                                 Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="良品率" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeQualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding OeeQuery.OeeQualityRate, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="性能达标率" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeePerformanceRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeePerformanceRate, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="时间稼动率" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeAvailabilityRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeAvailabilityRate, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCardAccent}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Foreground="{StaticResource PrimaryBrush}" Text="OEE 综合" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueLg}" Foreground="{Binding OeeQuery.OeeValue, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeValue, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- 图表：三图并排（指标 | 趋势 | 班次对比） -->
+                    <Border Grid.Row="1" Margin="0,0,0,12" Padding="12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="OEE 指标" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="趋势变化" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                    <Border Style="{StaticResource ChartCardTitleBar}" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Margin="8,0,0,0" Text="班次对比" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <oxy:PlotView Grid.Column="0" Model="{Binding OeeQuery.OeeChart}" Background="Transparent" />
+                                <oxy:PlotView Grid.Column="1" Model="{Binding OeeQuery.OeeTrendChart}" Background="Transparent" />
+                                <oxy:PlotView Grid.Column="2" Model="{Binding OeeQuery.OeeShiftBarChart}" Background="Transparent" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- 智能洞察：瓶颈因子 -->
+                    <Border
+                        Grid.Row="2"
+                        Margin="0,0,0,12"
+                        Style="{StaticResource HintCard}"
+                        Visibility="{Binding OeeQuery.OeeInsight, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
+                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OeeQuery.OeeInsight}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 明细 -->
+                    <UniformGrid Grid.Row="3" Margin="0,0,0,12" Columns="4">
+                        <Border Style="{StaticResource KpiCardSecondary}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HintText}" Text="OK 产量" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeOkProduction, StringFormat={}{0} 件}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCardSecondary}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HintText}" Text="NG 产量" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeNgProduction, StringFormat={}{0} 件}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCardSecondary}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HintText}" Text="运行时长" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeRunTimeHours, StringFormat={}{0:F1}h}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCardSecondary}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource HintText}" Text="目标节拍" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, StringFormat={}{0} 件/h}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- 按班次明细表格（性能率 < 0.6 的行黄色高亮） + 空状态引导 -->
+                    <Grid Grid.Row="4">
+                        <Border
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <DataGrid
+                                AlternationCount="2"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                AutomationProperties.Name="OEE 班次明细表"
+                                CellStyle="{StaticResource KanbanDataGridCell}"
+                                ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                ItemsSource="{Binding OeeQuery.OeeShiftDetails}"
+                                Style="{StaticResource KanbanDataGrid}"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                VirtualizingPanel.ScrollUnit="Pixel">
+                                <DataGrid.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                    </ItemsPanelTemplate>
+                                </DataGrid.ItemsPanel>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource KanbanDataGridRow}">
+                                        <Style.Triggers>
+                                            <!-- 低性能率：Performance < LowPerformanceThreshold → 整行黄色高亮 -->
+                                            <DataTrigger Value="True">
+                                                <DataTrigger.Binding>
+                                                    <Binding Path="Performance" Converter="{StaticResource ComparisonConverter}" ConverterParameter="{x:Static vm:HistoryQueryViewModel.LowPerformanceThresholdExpr}" />
+                                                </DataTrigger.Binding>
+                                                <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="班次开始" Binding="{Binding ShiftTime, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                    <DataGridTextColumn Header="班次" Binding="{Binding ShiftName}" />
+                                    <DataGridTextColumn Header="良品率" Binding="{Binding Quality, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="性能达标率" Binding="{Binding Performance, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="时间稼动率" Binding="{Binding Availability, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat={}{0:P1}}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                        <!-- 未查询/无数据时的引导 -->
+                        <Border
+                            Visibility="{Binding IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource RegionBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <controls:EmptyState
+                                IconKind="InformationCircleOutline"
+                                Message="选择设备和时间范围后点击「查询」，即可计算该时段的 OEE 指标。"
+                                Hint="OEE = 良品率 × 性能达标率 × 时间稼动率" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            </TabControl>
+
+            <!--  ============ 骨架屏占位（IsLoading=true 时显示，模拟 KPI 卡片 + 图表 + 表格布局） ============  -->
+            <StackPanel Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <!-- KPI 骨架卡片（3 列） -->
+                <UniformGrid Margin="0,0,0,12" Columns="3">
+                    <Border Style="{StaticResource KpiCard}">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource KpiCard}">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource KpiCard}">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- 图表骨架 -->
+                <Border Margin="0,0,0,12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                    <Border Style="{StaticResource SkeletonBorder}" Height="280" Margin="8" />
+                </Border>
+
+                <!-- 数据表骨架 -->
+                <Border Style="{StaticResource MainCard}" Padding="14">
+                    <StackPanel>
+                        <Border Style="{StaticResource SkeletonBorder}" Width="120" Height="17" Margin="0,0,0,10" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="32" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

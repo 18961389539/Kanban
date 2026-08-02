@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+    <PackageReference Include="coverlet.MTP" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="NSubstitute" />
+    <!-- System.IO.Ports：HslCommunication 的 SiemensS7Server / ModbusTcpServer 构造函数
+         依赖此程序集（用于串口 RTU 支持），PLC 仿真测试需要实例化服务器故需引用。 -->
+    <PackageReference Include="System.IO.Ports" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MainAPP\MainAPP.csproj" />
+  </ItemGroup>
+
+  <!-- HslCommunication：MainAPP 通过 HintPath 引用本地 DLL，但裸 <Reference> 不会传递到测试项目，
+       这里显式引用同一份 DLL，供 PLC 仿真测试（SiemensS7Server / ModbusTcpServer）使用。 -->
+  <ItemGroup>
+    <Reference Include="HslCommunication">
+      <HintPath>..\MainAPP\DLLS\HslCommunication.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- xunit.runner.json：xUnit 运行时配置（并行策略、测试名显示、慢测试阈值）。
+       必须复制到输出目录，xUnit 在测试程序集同级目录读取此文件。 -->
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testconfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- TestResults 输出重定向到系统临时目录，避免源码树累积 GUID 子目录。 -->
+  <PropertyGroup>
+    <TestResultsDirectory>$([System.IO.Path]::GetTempPath())KanbanTestResults\$(MSBuildProjectName)</TestResultsDirectory>
+  </PropertyGroup>
+
+  <!-- dotnet clean 时清理：源码树下残留的旧 TestResults 目录（迁移到临时目录前的存量）。
+       新结果已在系统临时目录，由 OS 清理；此 target 仅作存量兜底，RemoveDir 对不存在目录是空操作。 -->
+  <Target Name="CleanTestResults" BeforeTargets="Clean">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\TestResults" />
+  </Target>
+
+</Project>

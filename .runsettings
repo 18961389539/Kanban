@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- 旧 VSTest 客户端兼容配置。MTP 测试使用 global.json、testconfig.json 和原生命令行参数。 -->
+  <RunConfiguration>
+    <!-- 仅供旧 VSTest 客户端使用；MTP CLI 直接使用 --timeout 和 --results-directory。 -->
+    <TestSessionTimeout>120000</TestSessionTimeout>
+    <!-- 无测试视为错误：CI 上若 filter 错配导致 0 测试，应失败而非静默通过。 -->
+    <TreatNoTestsAsError>true</TreatNoTestsAsError>
+    <!-- 目标平台：x86/x64/AnyCPU。WPF 与 HslCommunication 在 x64 下行为一致。 -->
+    <TargetPlatform>x64</TargetPlatform>
+    <!-- 禁用测试结果隔离开启时的强命名跳过，保持与生产一致的程序集加载行为。 -->
+    <DisableAppDomain>true</DisableAppDomain>
+  </RunConfiguration>
+
+</RunSettings>

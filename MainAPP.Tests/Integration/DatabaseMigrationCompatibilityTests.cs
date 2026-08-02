@@ -1,0 +1,111 @@
+﻿using MainAPP.Data;
+using MainAPP.Entities;
+using MainAPP.Services;
+using Microsoft.Data.Sqlite;
+using System.IO;
+using Xunit;
+
+namespace MainAPP.Tests.Integration;
+
+[CollectionDefinition("Database environment", DisableParallelization = true)]
+[Trait("Category","Integration")]
+[Trait("Speed","Slow")]
+[Trait("Requires","Database")]
+public sealed class DatabaseEnvironmentCollection;
+
+[Collection("Database environment")]
+public sealed class DatabaseMigrationCompatibilityTests : IDisposable
+{
+    private readonly string _directory = Path.Combine(Path.GetTempPath(), "kanban_migration_" + Guid.NewGuid().ToString("N"));
+    private readonly AppSettings _settings;
+    private readonly string? _previousDataRoot;
+
+    public DatabaseMigrationCompatibilityTests()
+    {
+        Directory.CreateDirectory(_directory);
+        _previousDataRoot = Environment.GetEnvironmentVariable("KANBAN_DATA_DIR");
+        Environment.SetEnvironmentVariable("KANBAN_DATA_DIR", _directory);
+        _settings = new AppSettings();
+    }
+
+    [Fact]
+    public void EnsureCreatedAll_LegacyProductionDatabase_CreatesBaselineAndKeepsData()
+    {
+        _settings.EnsureDirectory();
+        var path = _settings.GetFilePath("production_logs.db");
+        using (var connection = new SqliteConnection($"Data Source={path}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TABLE ProductionLogs (Id INTEGER PRIMARY KEY, DeviceId TEXT NOT NULL, DeviceName TEXT NOT NULL, ShiftName TEXT NOT NULL, OkProduction INTEGER NOT NULL, NgProduction INTEGER NOT NULL, StatusWord INTEGER NOT NULL, Timestamp TEXT NOT NULL); CREATE INDEX IX_ProductionLogs_DeviceId ON ProductionLogs (DeviceId); CREATE INDEX IX_ProductionLogs_DeviceId_Timestamp ON ProductionLogs (DeviceId, Timestamp); CREATE INDEX IX_ProductionLogs_Timestamp ON ProductionLogs (Timestamp); INSERT INTO ProductionLogs (Id, DeviceId, DeviceName, ShiftName, OkProduction, NgProduction, StatusWord, Timestamp) VALUES (7, 'D1', '设备1', '白班', 9, 1, 0, '2026-07-31 08:00:00');";
+            command.ExecuteNonQuery();
+        }
+
+        new DatabaseProvider(_settings).EnsureCreatedAll();
+
+        using var verify = new SqliteConnection($"Data Source={path}");
+        verify.Open();
+        using var query = verify.CreateCommand();
+        query.CommandText = "SELECT COUNT(*) FROM ProductionLogs WHERE Id = 7";
+        Assert.Equal(1L, query.ExecuteScalar());
+
+        query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20260731070824_InitialSchema'";
+        Assert.Equal(1L, query.ExecuteScalar());
+        Assert.Single(Directory.GetFiles(
+            Path.GetDirectoryName(path)!,
+            Path.GetFileName(path) + ".pre-migration-*.bak"));
+    }
+
+    [Fact]
+    public void EnsureCreatedAll_NewDatabases_CreatesEfMigrationHistoryForAllDatabases()
+    {
+        _settings.EnsureDirectory();
+        new DatabaseProvider(_settings).EnsureCreatedAll();
+
+        foreach (var databaseName in new[]
+        {
+            "production_logs.db",
+            "alarm_events.db",
+            "status_transitions.db",
+            "work_orders.db"
+        })
+        {
+            var path = _settings.GetFilePath(databaseName);
+            Assert.True(File.Exists(path), $"数据库文件未创建: {databaseName}");
+            using var connection = new SqliteConnection($"Data Source={path}");
+            connection.Open();
+            using var query = connection.CreateCommand();
+            query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
+            Assert.Equal(1L, query.ExecuteScalar());
+        }
+    }
+
+    [Fact]
+    public void EnsureCreatedAll_IncompleteLegacyDatabase_RefusesToCreateBaseline()
+    {
+        _settings.EnsureDirectory();
+        var path = _settings.GetFilePath("alarm_events.db");
+        using (var connection = new SqliteConnection($"Data Source={path}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TABLE AlarmEvents (Id INTEGER PRIMARY KEY)";
+            command.ExecuteNonQuery();
+        }
+
+        var exception = Assert.Throws<InvalidOperationException>(() => new DatabaseProvider(_settings).EnsureCreatedAll());
+
+        Assert.Contains("结构不完整", exception.Message);
+        using var verify = new SqliteConnection($"Data Source={path}");
+        verify.Open();
+        using var query = verify.CreateCommand();
+        query.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '__EFMigrationsHistory'";
+        Assert.Equal(0L, query.ExecuteScalar());
+    }
+
+    public void Dispose()
+    {
+        Environment.SetEnvironmentVariable("KANBAN_DATA_DIR", _previousDataRoot);
+        try { Directory.Delete(_directory, true); } catch { }
+    }
+}

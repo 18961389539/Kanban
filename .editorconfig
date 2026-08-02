@@ -1,0 +1,58 @@
+root = true
+
+[*]
+indent_style = space
+charset = utf-8-bom
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+
+# 现代语言特性偏好
+csharp_style_prefer_primary_constructor = true:suggestion
+csharp_style_collection_expression = true:suggestion
+csharp_style_prefer_braces = true:warning
+dotnet_style_prefer_collection_expression = when_types_exactly_match:suggestion
+csharp_style_required_properties = true:suggestion
+
+# 模式匹配偏好
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+
+# 初始化器偏好
+csharp_prefer_braces = true:warning
+csharp_prefer_simple_default_expression = true:suggestion
+csharp_style_prefer_local_over_anonymous_function = true:suggestion
+
+# 使用 using 指令偏好
+csharp_using_directive_placement = outside_namespace:warning
+
+# 现代 using 风格
+csharp_prefer_simple_using_statement = true:suggestion
+
+# 文件头
+dotnet_diagnostic.CA1416.severity = warning
+
+# ──────────── 测试项目专属规则 ────────────
+# 测试代码与生产代码风格略有不同：允许 magic number、非 static 测试类、下划线分词方法名。
+[MainAPP.Tests/**.cs]
+# 测试方法名使用下划线分词（如 ReadInt32_ReturnsPresetValue），与现有 1000+ 测试保持一致
+# 此为命名约定，编辑器不强制重命名，仅在使用不同风格时给出建议
+dotnet_diagnostic.CA1707.severity = none          # 方法名可含下划线
+# 测试类无需 static（xUnit 测试类需实例化，每个 [Fact] 独立实例）
+dotnet_diagnostic.CA1052.severity = none          # 非静态测试类不报 CA1052
+# 测试中允许 magic number（测试数据本身就是具体的）
+dotnet_diagnostic.CA1305.severity = none          # 字符串格式化不要求 IFormatProvider
+dotnet_diagnostic.CA1310.severity = none          # 字符串比较不要求 StringComparison
+# 测试中允许 public 字段（Fake/Stub 的测试桩字段供断言读取）
+dotnet_diagnostic.CA1051.severity = none          # 可见实例字段
+# 测试方法可无参（[Fact] 要求无参无返回值）
+dotnet_diagnostic.CA1822.severity = none          # 方法可标记为 static → 测试方法不行
+# Verify 快照生成的 *.verified.txt / *.received.txt 不参与分析
+[MainAPP.Tests/**/*.verified.txt]
+generated_code = true
+[MainAPP.Tests/**/*.received.txt]
+generated_code = true

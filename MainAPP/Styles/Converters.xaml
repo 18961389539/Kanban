@@ -1,0 +1,38 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:MainAPP.Converters">
+
+    <!--  转换器  -->
+    <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    <converters:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
+    <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+    <converters:PageSelectionVisibilityConverter x:Key="PageSelectionVisibilityConverter" />
+    <converters:StateToTextConverter x:Key="StateToTextConverter" />
+    <converters:StateToBrushConverter x:Key="StateToBrushConverter" />
+    <converters:AlarmLevelToBrushConverter x:Key="AlarmLevelToBrushConverter" />
+    <converters:AlarmLevelToTextConverter x:Key="AlarmLevelToTextConverter" />
+    <converters:DefectSeverityToBrushConverter x:Key="DefectSeverityToBrushConverter" />
+    <converters:DefectSeverityToTextConverter x:Key="DefectSeverityToTextConverter" />
+    <converters:DefectCategoryToTextConverter x:Key="DefectCategoryToTextConverter" />
+    <converters:EventTypeToTextConverter x:Key="EventTypeToTextConverter" />
+    <converters:ComparisonConverter x:Key="ComparisonConverter" />
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+    <!--  全局统一注册的转换器（原各 View 局部声明，避免重复实例化）  -->
+    <converters:OeeThresholdConverter x:Key="OeeThreshold" />
+    <converters:RatioThresholdConverter x:Key="RatioThreshold" />
+    <converters:InverseRatioThresholdConverter x:Key="InverseRatioThreshold" />
+    <converters:RatioToWidthConverter x:Key="RatioToWidthConverter" />
+    <converters:EqualityConverter x:Key="EqualityConverter" />
+    <converters:TimeSpanToTimeStringConverter x:Key="TimeSpanConverter" />
+    <converters:TimeSpanToDateTimeConverter x:Key="TimeSpanToDateTimeConverter" />
+    <converters:DoubleToInvariantStringConverter x:Key="DoubleToInvariantStringConverter" />
+    <converters:ProgressToStrokeDashArrayConverter x:Key="ProgressToStrokeDashArrayConverter" />
+    <converters:RatioToGridLengthConverter x:Key="RatioToGridLengthConverter" />
+
+    <!--  安全校验错误模板：避免直接索引 (Validation.Errors)[0] 在集合为空时抛
+          ArgumentOutOfRangeException（调试输出 "Error 17" 噪音）。  -->
+    <converters:ValidationErrorsToMessageConverter x:Key="ValidationErrorsToMessage" />
+
+</ResourceDictionary>

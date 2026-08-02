@@ -1,0 +1,271 @@
+using AutoMapper;
+using System.Collections.ObjectModel;
+using System.Windows.Data;
+using MainAPP.Entities;
+using MainAPP.Services;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+
+namespace MainAPP.Data;
+
+/// <summary>
+/// 工单仓储：管理 <see cref="WorkOrder"/> 的内存集合与持久化。
+/// 参照 <see cref="DeviceRepository"/> 模式：DI 单例 + <see cref="ObservableCollection{WorkOrder}"/> +
+/// <see cref="BindingOperations.EnableCollectionSynchronization"/> 注册锁支持后台线程读写。
+///
+/// 持久化使用 EF Core + SQLite（work_orders.db），每次写操作短上下文模式（using ctx），
+/// 避免长生命周期 DbContext 的变更追踪开销与并发问题。
+/// 内存集合仅在 LoadAll/Reload 时全量刷新，CRUD 操作直接落库 + 同步内存。
+///
+/// 注意：不在此处暴露 ICollectionView（属 UI 层关注点），由 ViewModel 通过
+/// CollectionViewSource.GetDefaultView(WorkOrders) 自行创建过滤视图。
+/// </summary>
+public class WorkOrderRepository
+{
+    private readonly DatabaseProvider _dbProvider;
+    private readonly IMapper _mapper;
+    private readonly object _collectionLock = new();
+
+    /// <summary>工单内存集合（绑定到 UI）。所有读写经 _collectionLock 串行化。</summary>
+    public ObservableCollection<WorkOrder> WorkOrders { get; } = new();
+
+    public WorkOrderRepository(DatabaseProvider dbProvider, IMapper mapper)
+    {
+        _dbProvider = dbProvider;
+        _mapper = mapper;
+        // 注册 WPF 绑定同步锁：UI 线程 + 后台线程并发访问 WorkOrders 时由 _collectionLock 串行化
+        BindingOperations.EnableCollectionSynchronization(WorkOrders, _collectionLock);
+    }
+
+    /// <summary>
+    /// 启动期加载全部工单到内存集合（按 CreatedAt 倒序）。
+    /// 调用时机：App.OnStartup 在 EnsureCreatedAll 之后。
+    /// </summary>
+    public void LoadAll()
+    {
+        List<WorkOrder> snapshot;
+        try
+        {
+            using var ctx = _dbProvider.CreateWorkOrderContext();
+            snapshot = ctx.WorkOrders
+                .AsNoTracking()
+                .OrderByDescending(w => w.CreatedAt)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "work_orders.db 加载失败，回退空工单列表");
+            snapshot = new();
+        }
+
+        lock (_collectionLock)
+        {
+            WorkOrders.Clear();
+            foreach (var w in snapshot)
+            {
+                WorkOrders.Add(w);
+            }
+        }
+
+        Log.Information("WorkOrderRepository.LoadAll 完成：加载 {Count} 条工单", snapshot.Count);
+    }
+
+    /// <summary>获取工单快照副本（后台线程枚举用，避免持有锁过久）。</summary>
+    public List<WorkOrder> GetSnapshot()
+    {
+        lock (_collectionLock)
+        {
+            return WorkOrders.ToList();
+        }
+    }
+
+    /// <summary>
+    /// 新增或更新工单。Id==0 时插入，否则更新。
+    /// 写库成功后同步内存集合（已存在则替换，不存在则追加到首位）。
+    /// 返回落库后的实体（含自增 Id）。
+    /// </summary>
+    public WorkOrder Upsert(WorkOrder workOrder)
+    {
+        workOrder.UpdatedAt = DateTime.Now;
+        var isNew = workOrder.Id == 0;
+        var oldStatus = default(WorkOrderStatus?);
+        using var ctx = _dbProvider.CreateWorkOrderContext();
+        if (workOrder.Id == 0)
+        {
+            if (workOrder.CreatedAt == default)
+            {
+                workOrder.CreatedAt = DateTime.Now;
+            }
+            ctx.WorkOrders.Add(workOrder);
+        }
+        else
+            {
+                var existing = ctx.WorkOrders.Find(workOrder.Id);
+                if (existing == null)
+                {
+                    // 数据库无此 Id（可能已被外部删除），改为插入
+                    ctx.WorkOrders.Add(workOrder);
+                    isNew = true;
+                }
+                else
+                {
+                    oldStatus = existing.Status;
+                    // AutoMapper 批量拷贝所有匹配属性（忽略 Id/CreatedAt），避免手动逐字段赋值漏写新字段
+                    _mapper.Map(workOrder, existing);
+                }
+            }
+        ctx.SaveChanges();
+
+        // 同步内存集合（直接 for 循环查找，避免 ToList 拷贝开销）
+        lock (_collectionLock)
+        {
+            var idx = -1;
+            for (var i = 0; i < WorkOrders.Count; i++)
+            {
+                if (WorkOrders[i].Id == workOrder.Id)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx >= 0)
+            {
+                // 替换而非就地修改属性：ObservableCollection 不会对元素属性变更触发通知，
+                // 替换整项可让绑定 UI 重新读取
+                WorkOrders[idx] = workOrder;
+            }
+            else
+            {
+                // 新增：插入到首位（按 CreatedAt 倒序约定）
+                WorkOrders.Insert(0, workOrder);
+            }
+        }
+
+        // 业务事件 INF 日志：新增 / 状态变化 / 字段更新
+        if (isNew)
+        {
+            Log.Information("工单新增 Id={Id} OrderNo={OrderNo} Device={Device} TargetQty={Qty} Status={Status}",
+                workOrder.Id, workOrder.OrderNo, workOrder.DeviceName, workOrder.TargetQuantity, workOrder.Status);
+        }
+        else if (oldStatus.HasValue && oldStatus.Value != workOrder.Status)
+        {
+            Log.Information("工单状态变更 Id={Id} OrderNo={OrderNo} {Old} -> {New}",
+                workOrder.Id, workOrder.OrderNo, oldStatus.Value, workOrder.Status);
+        }
+        else
+        {
+            Log.Information("工单字段更新 Id={Id} OrderNo={OrderNo} Status={Status}",
+                workOrder.Id, workOrder.OrderNo, workOrder.Status);
+        }
+
+        return workOrder;
+    }
+
+    /// <summary>
+    /// 删除指定工单。同时从数据库与内存集合移除。
+    /// </summary>
+    public void Delete(int id)
+    {
+        WorkOrder? removed = null;
+        using var ctx = _dbProvider.CreateWorkOrderContext();
+        var existing = ctx.WorkOrders.Find(id);
+        if (existing == null)
+        {
+            return;
+        }
+        removed = existing;
+        ctx.WorkOrders.Remove(existing);
+        ctx.SaveChanges();
+
+        lock (_collectionLock)
+        {
+            for (var i = 0; i < WorkOrders.Count; i++)
+            {
+                if (WorkOrders[i].Id == id)
+                {
+                    WorkOrders.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+
+        Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
+            removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);
+    }
+
+    /// <summary>
+    /// 清理超过指定时间的已完成/已中止工单。
+    /// 默认保留一年（365天），启动时调用一次。
+    /// 仅清理 Completed/Aborted 状态的工单，Pending/Running 状态的工单不受影响（避免误删进行中业务数据）。
+    /// 同时同步内存集合，保持内存与数据库一致。
+    /// 返回删除的记录数。
+    /// </summary>
+    public int CleanupOldWorkOrders(int retentionDays = 365)
+    {
+        try
+        {
+            var cutoff = DateTime.Now.AddDays(-retentionDays);
+            using var ctx = _dbProvider.CreateWorkOrderContext();
+            // 仅清理已结束状态（Completed/Aborted）且 UpdatedAt 早于 cutoff 的工单
+            var old = ctx.WorkOrders
+                .Where(w => (w.Status == WorkOrderStatus.Completed || w.Status == WorkOrderStatus.Aborted)
+                            && w.UpdatedAt < cutoff)
+                .ToList();
+            if (old.Count == 0)
+            {
+                return 0;
+            }
+
+            var removedIds = old.Select(w => w.Id).ToHashSet();
+            ctx.WorkOrders.RemoveRange(old);
+            ctx.SaveChanges();
+
+            // 同步内存集合
+            lock (_collectionLock)
+            {
+                for (var i = WorkOrders.Count - 1; i >= 0; i--)
+                {
+                    if (removedIds.Contains(WorkOrders[i].Id))
+                    {
+                        WorkOrders.RemoveAt(i);
+                    }
+                }
+            }
+
+            Log.Information("已清理 {Count} 条过期工单（已结束且早于 {Cutoff:yyyy-MM-dd}）", old.Count, cutoff);
+            return old.Count;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "清理过期工单失败");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// 获取指定设备的当前 Running 工单。同设备最多 1 个 Running（由调用方保证）。
+    /// 主页工单条与设备详情页用此查询当前工单。
+    /// </summary>
+    public WorkOrder? GetRunningByDevice(string deviceId)
+    {
+        lock (_collectionLock)
+        {
+            return WorkOrders.FirstOrDefault(w => w.DeviceId == deviceId && w.Status == WorkOrderStatus.Running);
+        }
+    }
+
+    /// <summary>
+    /// 获取指定设备的最新 Pending 工单（按 PlannedStart 升序）。
+    /// 主页工单条无 Running 时回退显示最近待开始工单。
+    /// </summary>
+    public WorkOrder? GetLatestPendingByDevice(string deviceId)
+    {
+        lock (_collectionLock)
+        {
+            return WorkOrders
+                .Where(w => w.DeviceId == deviceId && w.Status == WorkOrderStatus.Pending)
+                .OrderBy(w => w.PlannedStart)
+                .FirstOrDefault();
+        }
+    }
+}

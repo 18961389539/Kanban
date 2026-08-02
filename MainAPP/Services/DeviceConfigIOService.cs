@@ -1,0 +1,129 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows;
+using MainAPP.Data;
+using MainAPP.Models;
+
+namespace MainAPP.Services;
+
+/// <summary>
+/// 设备配置导入/导出/回滚服务：从 JSON 文件导入、导出到 JSON 文件、从 .bak 恢复上一版本。
+/// 二次确认对话框（替换/恢复会丢弃当前配置）由本服务通过 IDialogService 弹出，
+/// 替换设备列表的实际工作（ReplaceAll）也由本服务委托 DeviceRepository 完成。
+/// 调用方（ViewModel）仅负责：执行后更新 SelectedDevice、刷新命令可用状态、置脏标记。
+/// </summary>
+public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogService dialog)
+{
+    private const string DeviceFileFilter = "JSON 文件|*.json|所有文件|*.*";
+
+    private readonly DeviceRepository _deviceRepository = deviceRepository;
+    private readonly IDialogService _dialog = dialog;
+
+    /// <summary>
+    /// 导出当前全部设备配置到用户选择的 JSON 文件（原子写入，备份上一版本）。
+    /// 仅导出内存中的配置、不触发持久化或脏标记变化（导出是只读操作）。
+    /// 用户取消保存对话框则不写文件。
+    /// </summary>
+    /// <param name="deviceCount">当前设备数量，用于成功提示文案。</param>
+    /// <returns>是否导出成功（用户取消或写盘失败返回 false）。</returns>
+    public bool ExportConfig(int deviceCount)
+    {
+        var path = _dialog.ShowSaveFileDialog("导出设备配置", "devices.json", DeviceFileFilter);
+        if (string.IsNullOrEmpty(path)) return false;
+
+        try
+        {
+            _deviceRepository.ExportToFile(path);
+            _dialog.NotifySuccess($"已导出 {deviceCount} 台设备到 {Path.GetFileName(path)}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError($"导出失败: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 从用户选择的 JSON 文件导入设备配置，整体替换当前内存中的设备（含运行时状态）。
+    /// 导入前二次确认（替换会丢弃当前未保存的配置），导入后由调用方标记脏并提示用户保存以持久化。
+    /// 文件解析失败或文件无设备数据时给出对应提示，不替换。
+    /// </summary>
+    /// <returns>导入的设备列表；用户取消、解析失败或文件为空时返回 null。</returns>
+    public List<Device>? ImportConfig(int currentDeviceCount)
+    {
+        var path = _dialog.ShowOpenFileDialog("导入设备配置", DeviceFileFilter);
+        if (string.IsNullOrEmpty(path)) return null;
+
+        List<Device>? imported;
+        try
+        {
+            var json = File.ReadAllText(path);
+            imported = _deviceRepository.ImportFromJson(json);
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError($"文件读取或解析失败: {ex.Message}");
+            return null;
+        }
+
+        if (imported == null || imported.Count == 0)
+        {
+            _dialog.NotifyWarning("所选文件中没有设备数据");
+            return null;
+        }
+
+        // 二次确认：替换会丢弃当前内存中的设备配置（含未保存改动）
+        var confirm = _dialog.Show(
+            $"导入将用文件中的 {imported.Count} 台设备替换当前 {currentDeviceCount} 台设备配置，且不会自动保存到磁盘。是否继续？",
+            "确认导入", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return null;
+
+        _deviceRepository.ReplaceAll(imported);
+        _dialog.NotifySuccess($"已导入 {imported.Count} 台设备，请点击保存以持久化");
+        return imported;
+    }
+
+    /// <summary>
+    /// 恢复上一版本：复用 AppSettings.WriteFileAtomically 每次保存前留下的 devices.json.bak，
+    /// 把上一次保存前的配置加载回内存（走已验证的 ReplaceAll 路径，自动重建 Runtimes/订阅）。
+    /// 安全验证（密码确认）由调用方 ViewModel 在调用前完成；本方法只负责读取备份并替换，
+    /// 不再做二次确认对话框。
+    /// </summary>
+    /// <returns>恢复的设备列表；备份不存在、解析失败时返回 null。</returns>
+    public List<Device>? RollbackToBackup()
+    {
+        var backupPath = _deviceRepository.FilePath + ".bak";
+        if (!File.Exists(backupPath))
+        {
+            _dialog.NotifyWarning("未找到上一版本备份文件");
+            return null;
+        }
+
+        List<Device>? restored;
+        try
+        {
+            var json = File.ReadAllText(backupPath);
+            restored = _deviceRepository.ImportFromJson(json);
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError($"备份文件读取或解析失败: {ex.Message}");
+            return null;
+        }
+
+        if (restored == null || restored.Count == 0)
+        {
+            _dialog.NotifyWarning("备份文件为空或无效");
+            return null;
+        }
+
+        _deviceRepository.ReplaceAll(restored);
+        _dialog.NotifySuccess($"已恢复上一版本（{restored.Count} 台设备），请点击保存以持久化");
+        return restored;
+    }
+
+    /// <summary>是否存在可恢复的 .bak 备份文件。</summary>
+    public bool HasBackup => File.Exists(_deviceRepository.FilePath + ".bak");
+}

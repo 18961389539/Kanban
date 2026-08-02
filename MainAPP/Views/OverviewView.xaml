@@ -1,0 +1,1139 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.OverviewView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:OverviewViewModel}"
+    d:DesignHeight="900"
+    d:DesignWidth="1400"
+    mc:Ignorable="d">
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+    <UserControl.Resources>
+        <!-- KPI 紧凑单元格样式：基于 InnerCard，Padding 与 HomeView KPI 一致；Margin=2 避免相邻双线 -->
+        <Style x:Key="KpiCell" TargetType="Border" BasedOn="{StaticResource InnerCard}">
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+        <!-- KPI 标签样式：基于全局 KpiLabel，追加底部间距 -->
+        <Style x:Key="KpiLabel" TargetType="TextBlock" BasedOn="{StaticResource KpiLabel}">
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <!-- KPI 数值样式：基于全局 KpiValueMd（22px Bold Consolas） -->
+        <Style x:Key="KpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}" />
+        <!-- KPI 副标题样式：12px（原 11px 对比度临界） -->
+        <Style x:Key="KpiSub" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <!-- 设备表格行按状态着色 -->
+        <Style x:Key="DeviceRowAlarm" TargetType="DataGridRow" BasedOn="{StaticResource KanbanDataGridRow}">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Height" Value="81" />
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StatusWord}" Value="2">
+                    <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
+                    <Setter Property="BorderThickness" Value="3,0,0,0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StatusWord}" Value="3">
+                    <Setter Property="BorderBrush" Value="{StaticResource StatusPauseBrush}" />
+                    <Setter Property="BorderThickness" Value="3,0,0,0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StatusWord}" Value="0">
+                    <Setter Property="BorderBrush" Value="{StaticResource StatusIdleBrush}" />
+                    <Setter Property="BorderThickness" Value="3,0,0,0" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DeviceNameCell" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="DeviceMetricCell" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style x:Key="DeviceCoreMetricCell" TargetType="TextBlock" BasedOn="{StaticResource DeviceMetricCell}">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+        </Style>
+        <Style x:Key="DeviceOutputLabel" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="DeviceDurationLabel" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="DeviceDataGridCell" TargetType="DataGridCell" BasedOn="{StaticResource KanbanDataGridCell}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ============ 标题栏 + 时间范围切换 ============  -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <materialIcons:MaterialIcon
+                    Style="{StaticResource PageTitleIcon}" Kind="ChartTimelineVariant" />
+                <TextBlock
+                    Style="{StaticResource PageTitleText}"
+                    Margin="10,0,0,0" Text="生产复盘" />
+                <ComboBox
+                    Width="180"
+                    Margin="16,0,0,0"
+                    VerticalAlignment="Center"
+                    AutomationProperties.Name="复盘设备选择"
+                    DisplayMemberPath="Name"
+                    ItemsSource="{Binding DeviceFilterItems}"
+                    SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay}"
+                    SelectedValuePath="Id"
+                    Style="{StaticResource ComboBoxExtend}"
+                    ToolTip="选择要复盘的单台设备" />
+                <!-- 当前班次标签：班次名+时间段（主标签）+ 带日期的完整区间（辅助行） -->
+                <Border
+                    Margin="16,0,0,0" Padding="10,4"
+                    Background="{StaticResource SecondaryRegionBrush}"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="12">
+                    <StackPanel>
+                        <TextBlock
+                            FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                            Foreground="{StaticResource PrimaryTextBrush}"
+                            Text="{Binding CurrentShiftName}" />
+                        <TextBlock
+                            FontSize="{DynamicResource FontSizeMicro}" Margin="0,2,0,0"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="{Binding CurrentShiftDateRange}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <!-- 时间范围切换 -->
+                <ComboBox
+                    Width="120" VerticalAlignment="Center"
+                    AutomationProperties.Name="时间范围选择"
+                    DisplayMemberPath="Label"
+                    ItemsSource="{Binding TimeRangeOptions}"
+                    SelectedValue="{Binding SelectedTimeRange}"
+                    SelectedValuePath="Value"
+                    Style="{StaticResource ComboBoxExtend}" />
+                <!-- 刷新按钮 -->
+                <Button
+                    Margin="8,0,0,0" VerticalAlignment="Center"
+                    AutomationProperties.Name="刷新复盘数据"
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource ButtonDefault}"
+                    ToolTip="手动刷新 (F5)">
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" Kind="Refresh" />
+                        <TextBlock Margin="6,0,0,0" Text="刷新" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Margin="8,0,0,0" VerticalAlignment="Center"
+                    AutomationProperties.Name="导出生产复盘报表"
+                    Command="{Binding ExportReportCommand}"
+                    Content="导出报表"
+                    Style="{StaticResource IconButtonDefault}"
+                    Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
+                    ToolTip="导出当前时间范围的生产复盘报表" />
+                <Button
+                    Margin="8,0,0,0" VerticalAlignment="Center"
+                    AutomationProperties.Name="导出生产复盘 PDF"
+                    Command="{Binding ExportReportPdfCommand}"
+                    Content="导出 PDF"
+                    Style="{StaticResource IconButtonDefault}"
+                    Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
+                    ToolTip="导出当前时间范围的生产复盘 PDF" />
+                <!-- 上次更新时间：StringFormat 需用 {0:format} 占位符，否则 "HH:mm:ss" 被当作字面量 -->
+                <TextBlock
+                    Margin="12,0,0,0" VerticalAlignment="Center"
+                    Style="{StaticResource SubtitleText}"
+                    FontFamily="Consolas"
+                    Text="{Binding LastUpdateTime, StringFormat=更新于 {0:HH:mm:ss}}" />
+            </StackPanel>
+        </DockPanel>
+
+        <!--  ============ 主内容：滚动区（加载时折叠，由骨架屏占位） ============  -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
+            <StackPanel>
+                <!-- 数据完整性与目标对比：避免把部分数据误读为完整复盘结果 -->
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="12,8"
+                    Background="{StaticResource SecondaryRegionBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <DockPanel>
+                        <TextBlock
+                            DockPanel.Dock="Right"
+                            VerticalAlignment="Center"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="{Binding TargetStatusText}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="{StaticResource PrimaryTextBrush}"
+                            Text="{Binding DataCoverageText}" />
+                    </DockPanel>
+                </Border>
+
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.2*" />
+                            <ColumnDefinition Width="1.4*" />
+                            <ColumnDefinition Width="1.4*" />
+                            <ColumnDefinition Width="1.2*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Style="{StaticResource KpiLabel}" Text="设备健康评分" />
+                            <TextBlock Style="{StaticResource KpiValue}" Text="{Binding HealthScoreText}" Foreground="{StaticResource PrimaryBrush}" />
+                            <ItemsControl ItemsSource="{Binding HealthIssues}" Margin="0,4,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding}" TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="18,0,0,0">
+                            <TextBlock Style="{StaticResource KpiLabel}" Text="当前工单" />
+                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentWorkOrderText}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiLabel}" Text="产品 / 批次" />
+                            <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding CurrentProductText}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="18,0,0,0">
+                            <TextBlock Style="{StaticResource KpiLabel}" Text="当前配方" />
+                            <TextBlock Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentRecipeText}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiSub}" Text="配方值来自当前设备配置" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="18,0,0,0">
+                            <TextBlock Style="{StaticResource KpiLabel}" Text="时间线选择" />
+                            <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding TimelineSelectionText}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <TextBlock Style="{StaticResource SectionTitleText}" Text="复盘结论" />
+                            <TextBlock Style="{StaticResource SubtitleText}" Text="根据当前生产、设备与质量数据生成分析结论" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding ReviewConclusions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,3">
+                                        <TextBlock Foreground="{StaticResource PrimaryBrush}" Text="• " />
+                                        <TextBlock Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap" Text="{Binding Mode=OneWay}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── KPI 条（1行×5列，仅保留非 OEE 指标） ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="12" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 总产量 -->
+                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource KpiCell}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="总产量" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiValue}" Text="{Binding TotalOutput, StringFormat=N0}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="件" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiSub}" Text="{Binding TotalOk, StringFormat=OK {0:N0}}" />
+                                    <TextBlock Margin="8,0,0,0" Style="{StaticResource KpiSub}" Text="{Binding TotalNg, StringFormat=NG {0:N0}}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource KpiSub}" Text="{Binding OutputAchievementRate, StringFormat=目标达成 {0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                        <!-- 报警次数 -->
+                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KpiCell}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="报警次数" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiValue}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat=N0}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="次" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiSub}" Text="{Binding RecoveredAlarmCount, StringFormat=已恢复 {0}}" />
+                                    <!--  待处理 > 0 时才显示，避免 "/ 待处理 0" 噪音  -->
+                                    <TextBlock Margin="4,0,0,0" Text="{Binding PendingAlarmCount, StringFormat=/ 待处理 {0}}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource KpiSub}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PendingAlarmCount}" Value="0">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- 最长停机设备：大数字为停机时长，副标题为设备名+报警名，与其它 KPI 节奏一致 -->
+                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource KpiCell}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="最长停机" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiValue}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding LongestDowntimeHours, StringFormat={}{0:F1}h}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource KpiSub}" Text="{Binding LongestDowntimeDevice, StringFormat={}{0} ·}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Style="{StaticResource KpiSub}" Text="{Binding LongestDowntimeAlarm}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                        <!-- 峰值时段 -->
+                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource KpiCell}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="峰值时段" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiValue}" Text="{Binding PeakHour}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="6,0,0,0" Text="{Binding PeakHourOk, StringFormat={}{0} 件}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <!-- 谷值时段 -->
+                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource KpiCell}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="谷值时段" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiValue}" Text="{Binding ValleyHour}" />
+                                    <TextBlock Style="{StaticResource KpiSub}" Margin="6,0,0,0" Text="{Binding ValleyHourOk, StringFormat={}{0} 件}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!--  ──────── 单设备基线对比 ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Left">
+                            <TextBlock Style="{StaticResource SectionTitleText}" Text="周期对比" />
+                            <TextBlock Style="{StaticResource SubtitleText}" Text="当前设备与上一周期的变化" />
+                        </StackPanel>
+                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding ComparisonSummaryText}" />
+                        <UniformGrid Columns="4" Margin="24,0,24,0">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="当前总产量" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding TotalOutput, StringFormat=N0}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="{Binding ComparisonLabel}" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding BaselineTotalOutput, StringFormat=N0}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="当前良品率" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding QualityRate, StringFormat=P1}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="当前 OEE" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding Oee, StringFormat=P1}" />
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── 主区：左趋势图 + 右 Top 报警 ────────  -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 趋势图 -->
+                    <Border Grid.Column="0" Style="{StaticResource MainCard}" Padding="14">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartOkSeriesBrush}" />
+                                <StackPanel Margin="8,0,0,0">
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="产量趋势" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="按时间范围查看产量变化" />
+                                </StackPanel>
+                            </StackPanel>
+                            <oxy:PlotView
+                                Model="{Binding TrendChart}"
+                                Background="Transparent"
+                                Height="240" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Top 5 报警 -->
+                    <Border Grid.Column="2" Style="{StaticResource MainCard}" Padding="14">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource StatusAlarmBrush}" />
+                                <StackPanel Margin="8,0,0,0">
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="Top 5 报警" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="当前时间范围内的主要报警" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid>
+                                <ItemsControl ItemsSource="{Binding TopAlarms}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        FontSize="13" FontWeight="Medium"
+                                                        Foreground="{StaticResource PrimaryTextBrush}"
+                                                        Text="{Binding AlarmName}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource SecondaryTextBrush}"
+                                                        Text="{Binding DeviceName}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                    <TextBlock
+                                                        FontFamily="Consolas" FontSize="13" FontWeight="Bold"
+                                                        Foreground="{StaticResource StatusAlarmBrush}"
+                                                        Text="{Binding TriggerCount, StringFormat={}{0} 次}" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource ThirdlyTextBrush}"
+                                                        Text="{Binding TotalDurationHours, StringFormat={}{0:F1}h}" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource ThirdlyTextBrush}"
+                                                        Text="{Binding RepeatCount, StringFormat=重复 {0} 次}" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource ThirdlyTextBrush}"
+                                                        Text="{Binding AverageIntervalMinutes, StringFormat=间隔 {0:F0} min}" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource StatusAlarmBrush}"
+                                                        Text="{Binding OutputDelta, StringFormat=前后产量差 {0:N0}}" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        FontWeight="Bold"
+                                                        Foreground="{StaticResource StatusAlarmBrush}"
+                                                        Text="高频重复"
+                                                        Visibility="{Binding IsHighFrequency, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <!-- 空状态：TopAlarms 为空时显示 -->
+                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="暂无报警记录" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <controls:EmptyState.Style>
+                                        <Style TargetType="controls:EmptyState">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TopAlarms.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </controls:EmptyState.Style>
+                                </controls:EmptyState>
+                            </Grid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource PrimaryBrush}" />
+                            <StackPanel Margin="8,0,0,0">
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="设备状态时间线" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="运行、暂停、报警和断线区间；点击区间查看该段报警与产量" />
+                            </StackPanel>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding StatusTimeline}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,8,8" Padding="10,8" MinWidth="180"
+                                            Command="{Binding DataContext.SelectTimelineSegmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                                <Setter Property="BorderThickness" Value="1" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding StatusWord}" Value="1">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource StatusRunBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusWord}" Value="2">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding StatusWord}" Value="3">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource StatusPauseBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <StackPanel>
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding StatusText}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding TimeRangeText}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding DurationText}" />
+                                            <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeHint}" Text="{Binding OutputText}" />
+                                            <TextBlock Foreground="{StaticResource StatusAlarmBrush}" Text="运行无产量" Visibility="{Binding HasNoOutput, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── 设备明细表格 ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="14">
+                    <DockPanel>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <Border Style="{StaticResource ChartCardTitleBar}" />
+                                                               <StackPanel Margin="8,0,0,0">
+                                                                <TextBlock Style="{StaticResource SectionTitleText}" Text="当前设备明细" />
+                                                                                                       <TextBlock Style="{StaticResource SubtitleText}" Text="所选设备的产量、运行时长与 OEE" />
+                                                               </StackPanel>
+                        </StackPanel>
+                        <DataGrid
+                            Style="{StaticResource KanbanDataGrid}"
+                            ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                            CellStyle="{StaticResource DeviceDataGridCell}"
+                            RowStyle="{StaticResource DeviceRowAlarm}"
+                            ItemsSource="{Binding DeviceSummaries}"
+                            Background="{StaticResource RegionBrush}"
+                            VerticalContentAlignment="Center"
+                            GridLinesVisibility="None"
+                            RowHeight="81"
+                            Height="Auto"
+                            MinHeight="92"
+                            MaxHeight="520"
+                            RowHeaderWidth="0"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling"
+                            VirtualizingPanel.ScrollUnit="Pixel">
+                            <DataGrid.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                </ItemsPanelTemplate>
+                            </DataGrid.ItemsPanel>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="设备" Binding="{Binding DeviceName}" Width="170" MinWidth="150"
+                                                    ElementStyle="{StaticResource DeviceNameCell}" />
+                                <DataGridTemplateColumn Header="产量" Width="160" MinWidth="145">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="6" />
+                                                </Grid.RowDefinitions>
+                                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource DeviceOutputLabel}"
+                                                               Foreground="{StaticResource StatusRunBrush}"
+                                                               Text="{Binding OkCount, StringFormat=OK {0:N0}}" />
+                                                    <TextBlock Margin="10,0,0,0"
+                                                               Style="{StaticResource DeviceOutputLabel}"
+                                                               Foreground="{StaticResource StatusAlarmBrush}"
+                                                               Text="{Binding NgCount, StringFormat=NG {0:N0}}" />
+                                                </StackPanel>
+                                                <Grid Grid.Row="1" Margin="0,6,0,0" Height="7" Background="{StaticResource StatusAlarmSoftBrush}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="{Binding OkRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
+                                                        <ColumnDefinition Width="{Binding NgRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Background="{StaticResource StatusRunBrush}" />
+                                                    <Border Grid.Column="1" Background="{StaticResource StatusAlarmBrush}" />
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="良品率" Binding="{Binding QualityRate, StringFormat=P1}" Width="92" MinWidth="86">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat=P1}" Width="86" MinWidth="80">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Header="状态分布" Width="220" MinWidth="205">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                <oxy:PlotView Width="100" Height="24" Margin="0,0,12,0"
+                                                              Model="{Binding StatusDistributionChart}"
+                                                              Background="Transparent" />
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource DeviceDurationLabel}"
+                                                               Foreground="{StaticResource StatusRunBrush}"
+                                                               Text="{Binding RunTimeHours, StringFormat=运行 {0:F1}h}" />
+                                                    <TextBlock Margin="0,2,0,0"
+                                                               Style="{StaticResource DeviceDurationLabel}"
+                                                               Foreground="{StaticResource StatusPauseBrush}"
+                                                               Text="{Binding PausedTimeHours, StringFormat=待机 {0:F1}h}" />
+                                                    <TextBlock Margin="0,2,0,0"
+                                                               Style="{StaticResource DeviceDurationLabel}"
+                                                               Foreground="{StaticResource StatusAlarmBrush}"
+                                                               Text="{Binding AlarmDurationHours, StringFormat=报警 {0:F1}h}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="主要报警" Binding="{Binding TopAlarmName}" Width="*" MinWidth="180">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                            <DataGrid.InputBindings>
+                                <MouseBinding
+                                    MouseAction="LeftClick"
+                                    Command="{Binding FocusDeviceCommand}"
+                                    CommandParameter="{Binding SelectedItem.DeviceId, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                            </DataGrid.InputBindings>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── 班次对比表 ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource PrimaryBrush}" />
+                                <StackPanel Margin="8,0,0,0">
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="班次对比" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="各班次产量与良品率差异" />
+                                </StackPanel>
+                        </StackPanel>
+                        <Grid>
+                            <DataGrid
+                                Style="{StaticResource KanbanDataGrid}"
+                                ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                CellStyle="{StaticResource KanbanDataGridCell}"
+                                ItemsSource="{Binding ShiftComparisons}"
+                                AutoGenerateColumns="False"
+                                IsReadOnly="True"
+                                Height="160"
+                                RowHeight="52"
+                                GridLinesVisibility="None"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                VirtualizingPanel.ScrollUnit="Pixel">
+                                <DataGrid.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                    </ItemsPanelTemplate>
+                                </DataGrid.ItemsPanel>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="班次" Binding="{Binding ShiftName}" Width="110">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTemplateColumn Header="产量构成" Width="230" MinWidth="210">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid VerticalAlignment="Center" Margin="8,0">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="6" />
+                                                    </Grid.RowDefinitions>
+                                                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource StatusRunBrush}"
+                                                                   Text="{Binding OkCount, StringFormat=合格 {0:N0}}" />
+                                                        <TextBlock Margin="12,0,0,0" FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource StatusAlarmBrush}"
+                                                                   Text="{Binding NgCount, StringFormat=不合格 {0:N0}}" />
+                                                    </StackPanel>
+                                                    <Grid Grid.Row="1" Margin="0,5,0,0" Background="{StaticResource StatusAlarmSoftBrush}">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="{Binding OkRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
+                                                            <ColumnDefinition Width="{Binding NgRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" Background="{StaticResource StatusRunBrush}" />
+                                                        <Border Grid.Column="1" Background="{StaticResource StatusAlarmBrush}" />
+                                                    </Grid>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="总产量" Binding="{Binding TotalCount, StringFormat=N0}" Width="90">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontFamily" Value="Consolas" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="良品率" Binding="{Binding OkRatio, StringFormat=P1}" Width="88">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontFamily" Value="Consolas" />
+                                                <Setter Property="FontWeight" Value="Bold" />
+                                                <Setter Property="Foreground" Value="{StaticResource StatusRunBrush}" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="报警次数" Binding="{Binding AlarmCount, StringFormat=N0}" Width="88">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontFamily" Value="Consolas" />
+                                                <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="报警密度" Binding="{Binding AlarmRate, StringFormat=P1}" Width="92">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                <Setter Property="FontFamily" Value="Consolas" />
+                                                <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat=P1}" Width="86" />
+                                    <DataGridTextColumn Header="运行时长" Binding="{Binding RunTimeHours, StringFormat={}{0:F1}h}" Width="100" />
+                                    <DataGridTextColumn Header="报警时长" Binding="{Binding AlarmDurationHours, StringFormat={}{0:F1}h}" Width="100" />
+                                    <DataGridTextColumn Header="目标达成" Binding="{Binding TargetAchievementRate, StringFormat=P1}" Width="100" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <!--  空状态：未配置班次或无数据时提示  -->
+                            <controls:EmptyState IconKind="CalendarClockOutline" Message="暂无班次数据" Hint="请在设置页配置班次" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <controls:EmptyState.Style>
+                                    <Style TargetType="controls:EmptyState">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShiftComparisons.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </controls:EmptyState.Style>
+                            </controls:EmptyState>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── OEE 瀑布图 + 缺陷帕累托（左右布局） ────────  -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- OEE 瀑布图 -->
+                    <Border Grid.Column="0" Style="{StaticResource MainCard}" Padding="14">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartBaseSeriesBrush}" />
+                                <StackPanel Margin="8,0,0,0">
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="OEE 损失拆解" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="从性能、可用率和质量三个维度定位损失来源" />
+                                </StackPanel>
+                            </StackPanel>
+                            <oxy:PlotView
+                                Model="{Binding OeeWaterfallChart}"
+                                Background="Transparent"
+                                Height="220" />
+                            <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                                <TextBlock Margin="0,0,12,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding AvailabilityLossText}" />
+                                <TextBlock Margin="0,0,12,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding PerformanceLossText}" />
+                                <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding QualityLossText}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- 缺陷帕累托图 -->
+                    <Border Grid.Column="2" Style="{StaticResource MainCard}" Padding="14">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource DangerBrush}" />
+                                <StackPanel Margin="8,0,0,0">
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="当前设备缺陷帕累托" />
+                                    <TextBlock Style="{StaticResource SubtitleText}" Text="识别所选设备当前累计的主要质量问题" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid>
+                                <ItemsControl ItemsSource="{Binding DefectParetos}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,3">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        FontSize="13" FontWeight="Medium"
+                                                        Foreground="{StaticResource PrimaryTextBrush}"
+                                                        Text="{Binding DefectName}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        FontSize="{DynamicResource FontSizeHint}"
+                                                        Foreground="{StaticResource SecondaryTextBrush}"
+                                                        Text="{Binding DeviceName}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                           FontFamily="Consolas" FontSize="13" FontWeight="Bold"
+                                                           Foreground="{StaticResource DangerBrush}"
+                                                           Text="{Binding Count, StringFormat={}{0:N0}}"
+                                                           Margin="0,0,12,0" />
+                                                <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                           FontFamily="Consolas" FontSize="12"
+                                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                                           Text="{Binding CumulativePercent, StringFormat={}{0:F1}%}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <controls:EmptyState IconKind="ShieldCheckOutline" Message="暂无当前累计缺陷" Hint="缺陷计数来自设备当前累计快照，不代表所选时间范围" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <controls:EmptyState.Style>
+                                        <Style TargetType="controls:EmptyState">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DefectParetos.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </controls:EmptyState.Style>
+                                </controls:EmptyState>
+                            </Grid>
+                            <TextBlock Margin="0,10,0,4" Style="{StaticResource SubtitleText}" Text="缺陷集中班次 / 时段" />
+                            <ItemsControl ItemsSource="{Binding DefectConcentrations}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding DefectName}" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Grid.Column="1" Margin="8,0,8,0">
+                                                <TextBlock Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding ShiftName}" />
+                                                <TextBlock Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding TimeRangeText}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock FontFamily="Consolas" Foreground="{StaticResource DangerBrush}" Text="{Binding Count, StringFormat={}{0:N0}}" />
+                                                <TextBlock FontFamily="Consolas" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding Share, StringFormat={}{0:P0}}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+
+                <!--  ──────── 停机分析 ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource StatusAlarmBrush}" />
+                            <StackPanel Margin="8,0,0,0">
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="停机分析" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="基于当前设备状态和报警历史计算" />
+                            </StackPanel>
+                        </StackPanel>
+                        <UniformGrid Columns="4">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="总停机时长" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding TotalDowntimeHours, StringFormat={}{0:F1}h}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="平均报警时长" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding AverageAlarmDurationMinutes, StringFormat={}{0:F1}min}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="MTBF" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding MtbfHours, StringFormat={}{0:F1}h}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource KpiLabel}" Text="最长停机" />
+                                <TextBlock Style="{StaticResource KpiValue}" Text="{Binding LongestDowntimeHours, StringFormat={}{0:F1}h}" />
+                            </StackPanel>
+                        </UniformGrid>
+                    </DockPanel>
+                </Border>
+
+                <!--  ──────── 时段产量热力图 ────────  -->
+                <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                    <DockPanel>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <Border Style="{StaticResource ChartCardTitleBar}" Background="{StaticResource ChartBaseSeriesBrush}" />
+                            <StackPanel Margin="8,0,0,0">
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="时段产量热力图" />
+                                <TextBlock Style="{StaticResource SubtitleText}" Text="查看不同设备在各时段的产量分布" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Grid>
+                            <oxy:PlotView
+                                Model="{Binding ProductionHeatmapChart}"
+                                Background="Transparent"
+                                Height="180" />
+                            <!--  空状态：无设备或无产量数据时提示  -->
+                            <controls:EmptyState IconKind="GridLarge" Message="暂无热力图数据" Hint="设备未运行或未采集到产量" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <controls:EmptyState.Style>
+                                    <Style TargetType="controls:EmptyState">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DeviceSummaries.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </controls:EmptyState.Style>
+                            </controls:EmptyState>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  ============ 骨架屏占位（IsLoading=true 时显示，模拟 KPI 条 + 趋势图 + 表格布局） ============  -->
+        <StackPanel Grid.Row="1" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <!-- KPI 骨架条（1 行 × 5 列） -->
+            <Border Style="{StaticResource MainCard}" Padding="12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource InnerCard}" Margin="2" Padding="14,10">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="48" Height="13" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="70" Height="22" Margin="0,6,0,0" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="56" Height="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource InnerCard}" Margin="2" Padding="14,10">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="48" Height="13" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="70" Height="22" Margin="0,6,0,0" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="56" Height="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource InnerCard}" Margin="2" Padding="14,10">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="48" Height="13" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="70" Height="22" Margin="0,6,0,0" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="56" Height="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource InnerCard}" Margin="2" Padding="14,10">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="48" Height="13" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="70" Height="22" Margin="0,6,0,0" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="56" Height="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource InnerCard}" Margin="2" Padding="14,10">
+                        <StackPanel>
+                            <Border Style="{StaticResource SkeletonBorder}" Width="48" Height="13" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="70" Height="22" Margin="0,6,0,0" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="56" Height="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 趋势图 + Top 报警 骨架 -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Style="{StaticResource MainCard}" Padding="14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="120" Height="17" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <Border Style="{StaticResource SkeletonBorder}" Height="240" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource MainCard}" Padding="14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="90" Height="17" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 设备明细表格骨架 -->
+            <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                        <Border Style="{StaticResource SkeletonBorder}" Width="80" Height="17" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" />
+                </StackPanel>
+            </Border>
+
+            <!-- 班次对比表骨架 -->
+            <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                        <Border Style="{StaticResource SkeletonBorder}" Width="80" Height="17" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
+                    <Border Style="{StaticResource SkeletonBorder}" Height="32" />
+                </StackPanel>
+            </Border>
+
+            <!-- OEE 瀑布图 + 缺陷帕累托 骨架 -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Style="{StaticResource MainCard}" Padding="14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="17" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <Border Style="{StaticResource SkeletonBorder}" Height="220" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource MainCard}" Padding="14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                            <Border Style="{StaticResource SkeletonBorder}" Width="90" Height="17" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" Margin="0,0,0,6" />
+                        <Border Style="{StaticResource SkeletonBorder}" Height="36" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 热力图骨架 -->
+            <Border Style="{StaticResource MainCard}" Padding="14" Margin="0,0,0,12">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Border Style="{StaticResource SkeletonBorder}" Width="3" Height="14" />
+                        <Border Style="{StaticResource SkeletonBorder}" Width="120" Height="17" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <Border Style="{StaticResource SkeletonBorder}" Height="180" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

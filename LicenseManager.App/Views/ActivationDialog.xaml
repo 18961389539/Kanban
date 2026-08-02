@@ -1,0 +1,157 @@
+<Window
+    x:Class="LicenseManager.Views.ActivationDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="软件激活"
+    Width="520"
+    Height="440"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterOwner"
+    Background="#1A2029"
+    FontFamily="Microsoft YaHei"
+    Foreground="#E5E7EB"
+    FocusManager.FocusedElement="{Binding ElementName=ProductKeyBox}"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/LicenseManager.App;component/LicenseManagerResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  标题  -->
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,16"
+            FontSize="18"
+            FontWeight="Bold"
+            Text="软件激活" />
+
+        <!--  状态提示（试用期内显示剩余天数）  -->
+        <Border
+            Grid.Row="1"
+            Margin="0,0,0,12"
+            Padding="12,8"
+            Background="#263040"
+            CornerRadius="4">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding StatusMessage}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock
+                FontSize="13"
+                Foreground="#E5E7EB"
+                Text="{Binding StatusMessage}" />
+        </Border>
+
+        <!--  机器码区  -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+            <TextBlock
+                Margin="0,0,0,6"
+                FontSize="13"
+                Foreground="#9CA3AF"
+                Text="当前机器码（请将此码发送给管理员以获取激活码）：" />
+            <DockPanel>
+                <TextBox
+                    x:Name="MachineCodeBox"
+                    Margin="0,0,8,0"
+                    IsReadOnly="True"
+                    FontFamily="Consolas"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Background="#212834"
+                    Foreground="#E5E7EB"
+                    BorderBrush="#2A323F"
+                    Text="{Binding MachineCode, Mode=OneWay}" />
+                <Button
+                    Width="80"
+                    Command="{Binding CopyMachineCodeCommand}"
+                    Content="复制"
+                    Style="{StaticResource ButtonDefault}" />
+            </DockPanel>
+        </StackPanel>
+
+        <!--  激活码输入  -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,8">
+            <TextBlock
+                Margin="0,0,0,6"
+                FontSize="13"
+                Foreground="#9CA3AF"
+                Text="请输入激活码：" />
+            <TextBox
+                x:Name="ProductKeyBox"
+                Padding="8,6"
+                FontFamily="Consolas"
+                FontSize="16"
+                FontWeight="Bold"
+                Background="#212834"
+                Foreground="#E5E7EB"
+                BorderBrush="#2A323F"
+                CharacterCasing="Upper"
+                MaxLength="29"
+                Text="{Binding ProductKey, UpdateSourceTrigger=PropertyChanged}"
+                hc:InfoElement.Placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" />
+        </StackPanel>
+
+        <!--  错误提示  -->
+        <TextBlock
+            Grid.Row="4"
+            Margin="0,0,0,8"
+            FontSize="13"
+            Foreground="#F87171"
+            Text="{Binding ErrorMessage}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ErrorMessage}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!--  激活按钮  -->
+        <StackPanel
+            Grid.Row="6"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                Width="90"
+                Margin="0,0,8,0"
+                Click="OnCancelClick"
+                Content="取消"
+                IsCancel="True"
+                Style="{StaticResource ButtonDefault}" />
+            <Button
+                Width="90"
+                Command="{Binding ActivateCommand}"
+                Content="激活"
+                IsDefault="True"
+                Style="{StaticResource ButtonPrimary}" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,243 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.DeviceManagerCountAlarmsTab"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:conv="clr-namespace:MainAPP.Converters"
+    mc:Ignorable="d"
+    d:DesignHeight="600"
+    d:DesignWidth="800">
+    <!--
+        设备管理 Tab 4：计数报警。
+        DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
+        内层 Grid 重设 DataContext={Binding SelectedDevice} 切换到当前设备。
+        按钮通过 RelativeSource AncestorType=UserControl 找到子 UserControl（其 DataContext 仍是 VM）。
+    -->
+    <Grid Margin="24,16" DataContext="{Binding SelectedDevice}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" LastChildFill="True">
+            <Button
+                Margin="0,0,0,10"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.Name="新增计数报警"
+                Command="{Binding DataContext.AddCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Content="新增计数报警"
+                DockPanel.Dock="Top"
+                Style="{StaticResource IconButtonDefault}"
+                Tag="{x:Static mi:MaterialIconKind.Plus}" />
+            <ListBox
+                AutomationProperties.Name="计数报警列表"
+                ItemContainerStyle="{StaticResource CardListItemStyle}"
+                ItemsSource="{Binding CountAlarms}"
+                SelectedItem="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="4,6">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                Text="{Binding Name}"
+                                TextTrimming="CharacterEllipsis" />
+                            <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    VerticalAlignment="Center"
+                                    Fill="{StaticResource DangerBrush}">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock
+                                    Margin="6,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource FontSizeHint}"
+                                    Foreground="{StaticResource SecondaryTextBrush}"
+                                    Text="{Binding CurrentValue, StringFormat='当前 {0}'}" />
+                                <TextBlock
+                                    Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource FontSizeHint}"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{Binding Unit}" />
+                                <TextBlock
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource FontSizeHint}"
+                                    Foreground="{StaticResource SecondaryTextBrush}"
+                                    Text="{Binding MaxValue, StringFormat='上限 {0}'}" />
+                                <TextBlock
+                                    Margin="2,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="{DynamicResource FontSizeHint}"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{Binding Unit}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <Border
+            Grid.Column="2"
+            Padding="20"
+            Background="{StaticResource SecondaryRegionBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Visibility="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}">
+            <StackPanel DataContext="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="报警名称"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="计数报警名称"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="PLC 地址（如 D300）"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="计数报警 PLC 地址"
+                    Style="{StaticResource TextBoxExtend}">
+                    <hc:TextBox.Text>
+                        <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <conv:PlcAddressValidationRule ExpectedType="DWord" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </hc:TextBox.Text>
+                </hc:TextBox>
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="阈值上限"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="计数报警阈值上限"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding MaxValue, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="单位"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="计数单位"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Height="60"
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="报警描述"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AcceptsReturn="True"
+                    AutomationProperties.Name="计数报警描述"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto" />
+                <Border
+                    Margin="0,0,0,16"
+                    Padding="10,8"
+                    Background="{StaticResource SecondaryRegionBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="当前值：" />
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="15"
+                            FontWeight="Bold"
+                            Text="{Binding CurrentValue}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsTriggered}" Value="False">
+                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="{Binding Unit}" />
+                        <TextBlock
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="{Binding MaxValue, StringFormat='上限 {0}'}" />
+                        <TextBlock
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="{Binding Unit}" />
+                        <Border Margin="12,0,0,0" CornerRadius="3">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock
+                                Margin="6,2"
+                                FontSize="12"
+                                Foreground="White"
+                                Text="已超限" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button
+                        Margin="0,0,8,0"
+                        AutomationProperties.Name="清空计数报警当前值"
+                        Command="{Binding DataContext.ResetCountAlarmValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"
+                        Content="清空当前值"
+                        Style="{StaticResource IconButtonDefault}"
+                        Tag="{x:Static mi:MaterialIconKind.Refresh}" />
+                    <Button
+                        AutomationProperties.Name="删除计数报警"
+                        Command="{Binding DataContext.RemoveCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}"
+                        Content="删除计数报警"
+                        Style="{StaticResource IconButtonDanger}"
+                        Tag="{x:Static mi:MaterialIconKind.Delete}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

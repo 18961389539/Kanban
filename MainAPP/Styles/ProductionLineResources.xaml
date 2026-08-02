@@ -1,0 +1,59 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:MainAPP.Converters">
+
+    <!--  ============ 产线页布局共享资源 ============  -->
+    <!--  放在 App.xaml 全局注册：子 UserControl（Large/Medium/CompactTable Layout）
+          在 XAML 加载阶段通过 StaticResource 查找时无法跨 UserControl 边界访问父级资源，
+          必须放到全局资源字典才能正确解析。  -->
+
+    <!--  状态文本/色转换器别名：StateText / StateBrush  -->
+    <conv:StateToTextConverter x:Key="StateText" />
+    <conv:StateToBrushConverter x:Key="StateBrush" />
+
+    <!--  状态色条（卡片左侧 4px 竖条，按 StatusWord 切色）。Layout 1/2 共用。  -->
+    <Style x:Key="StatusStripe" TargetType="Border">
+        <Setter Property="Width" Value="4" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Background" Value="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
+    </Style>
+
+    <!--  设备卡片边框：默认中性灰边；悬浮高亮（主色 2px）；选中态（主色 2.5px）。
+          Layout 1/2 共用。选中态通过 EqualityConverter 比较多卡片设备 Id 与当前选中设备 Id。  -->
+    <Style x:Key="DeviceCardBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <TranslateTransform Y="0" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!--  悬浮高亮（先于选中触发声明，使选中态在同时悬浮时仍优先）  -->
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <TranslateTransform Y="-3" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <!--  选中态：卡片对应设备 == 当前选中设备  -->
+            <DataTrigger Value="True">
+                <DataTrigger.Binding>
+                    <MultiBinding Converter="{StaticResource EqualityConverter}">
+                        <Binding Path="Device.Id" />
+                        <Binding Path="DataContext.SelectedDeviceId" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                    </MultiBinding>
+                </DataTrigger.Binding>
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="2.5" />
+                <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

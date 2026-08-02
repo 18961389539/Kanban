@@ -1,0 +1,22 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!--  ============ 语义化字号资源（大屏远距可读性） ============  -->
+    <!--  所有字号集中在此，样式与关键文本用 DynamicResource 引用。
+          FontSizeManager.ApplyScale(scale) 在启动时 / 设置“界面字号”切换时，
+          按 base × scale 覆盖下列键值，实现全局字号缩放（标准 100% / 大屏 115% / 超大屏 130%）。  -->
+    <sys:Double x:Key="FontSizeHero">48</sys:Double>
+    <sys:Double x:Key="FontSizeKpiLg">32</sys:Double>
+    <sys:Double x:Key="FontSizeKpiMd">26</sys:Double>
+    <sys:Double x:Key="FontSizeKpiSm">20</sys:Double>
+    <sys:Double x:Key="FontSizeKpiXs">18</sys:Double>
+    <sys:Double x:Key="FontSizeKpiLabel">15</sys:Double>
+    <sys:Double x:Key="FontSizeCaption">13</sys:Double>
+    <sys:Double x:Key="FontSizeHint">13</sys:Double>
+    <sys:Double x:Key="FontSizeMicro">12</sys:Double>
+    <sys:Double x:Key="FontSizePageTitle">28</sys:Double>
+    <sys:Double x:Key="FontSizeSectionTitle">19</sys:Double>
+    <sys:Double x:Key="FontSizeSubtitle">16</sys:Double>
+</ResourceDictionary>

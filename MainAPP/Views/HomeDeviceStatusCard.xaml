@@ -1,0 +1,168 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.HomeDeviceStatusCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    mc:Ignorable="d"
+    d:DesignHeight="400"
+    d:DesignWidth="400">
+    <!--
+        主页仪表板卡片 1：设备状态。
+        DataContext 由父级 HomeView 传入 HomeViewModel。
+        共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
+    -->
+    <Border Style="{StaticResource DashboardCard}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
+                <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Harddisk" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="设备状态" />
+                <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
+            </StackPanel>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- 当前状态 -->
+                <StackPanel Grid.Row="0" Margin="0,4">
+                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="当前状态" />
+                    <Border Margin="0,6,0,0" Padding="12,8" HorizontalAlignment="Left"
+                            CornerRadius="6"
+                            Background="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}">
+                        <TextBlock FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold" Foreground="White"
+                                   Text="{Binding RealtimeStatus, Converter={StaticResource StateToTextConverter}}" />
+                    </Border>
+                    <!-- 配方信息：RecipeName 为空时不显示 -->
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RecipeName}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center"
+                                                    Foreground="{StaticResource ThirdlyTextBrush}" Kind="PackageVariant" />
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="配方" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding RecipeName}" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{Binding RecipeValue, StringFormat=配方值 {0}}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 状态饼图（左） + 图例说明（右） -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <oxy:PlotView Model="{Binding StatusPieChart}" Background="Transparent" />
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    IsHitTestVisible="False">
+                            <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeKpiXs}" FontWeight="Bold"
+                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding TotalTimeFormatted}" />
+                        </StackPanel>
+                        <!-- 空状态：StatusPieChart 为 null 时显示 -->
+                        <controls:EmptyState IconKind="ChartDonut" Message="暂无状态数据" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <controls:EmptyState.Style>
+                                <Style TargetType="controls:EmptyState">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusPieChart}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:EmptyState.Style>
+                        </controls:EmptyState>
+                    </Grid>
+
+                    <!-- 右侧图例：每行 色点 + 名称 + 时长 + 占比 -->
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusPieChart}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <!-- 运行 -->
+                        <StackPanel Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{StaticResource SuccessBrush}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="运行" />
+                            </StackPanel>
+                            <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                       Foreground="{StaticResource SuccessBrush}"
+                                       Text="{Binding RunTimeFormatted}" />
+                            <TextBlock Margin="20,2,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{Binding RunTimeRatio, StringFormat={}{0:P0}}" />
+                        </StackPanel>
+
+                        <!-- 报警 -->
+                        <StackPanel Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{StaticResource StatusAlarmBrush}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="报警" />
+                            </StackPanel>
+                            <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                       Foreground="{StaticResource StatusAlarmBrush}"
+                                       Text="{Binding AlarmTimeFormatted}" />
+                            <TextBlock Margin="20,2,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{Binding AlarmTimeRatio, StringFormat={}{0:P0}}" />
+                        </StackPanel>
+
+                        <!-- 待机 -->
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
+                                         Fill="{StaticResource StatusPauseBrush}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="待机" />
+                            </StackPanel>
+                            <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                       Foreground="{StaticResource StatusPauseBrush}"
+                                       Text="{Binding PausedTimeFormatted}" />
+                            <TextBlock Margin="20,2,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{Binding PausedTimeRatio, StringFormat={}{0:P0}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

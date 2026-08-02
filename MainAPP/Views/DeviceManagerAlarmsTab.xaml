@@ -1,0 +1,184 @@
+﻿<UserControl
+    x:Class="MainAPP.Views.DeviceManagerAlarmsTab"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:conv="clr-namespace:MainAPP.Converters"
+    xmlns:models="clr-namespace:MainAPP.Models;assembly=Kanban.Collector.Core"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    mc:Ignorable="d"
+    d:DesignHeight="600"
+    d:DesignWidth="800">
+    <UserControl.Resources>
+        <!--  报警级别枚举值（ComboBox 数据源），仅本 Tab 使用  -->
+        <ObjectDataProvider
+            x:Key="AlarmLevelValues"
+            MethodName="GetValues"
+            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:AlarmLevel" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </UserControl.Resources>
+
+    <!--
+        设备管理 Tab 2：报警管理。
+        DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
+        内层 Grid 重设 DataContext={Binding SelectedDevice} 切换到当前设备。
+        按钮通过 RelativeSource AncestorType=UserControl 找到子 UserControl（其 DataContext 仍是 VM）。
+    -->
+    <Grid Margin="24,16" DataContext="{Binding SelectedDevice}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" LastChildFill="True">
+            <Button
+                Margin="0,0,0,10"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.Name="新增报警"
+                Command="{Binding DataContext.AddAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Content="新增报警"
+                DockPanel.Dock="Top"
+                Style="{StaticResource IconButtonDefault}"
+                Tag="{x:Static mi:MaterialIconKind.Plus}" />
+            <!--  报警 CSV 导入/导出：批量编辑场景（Excel 整理后回导）  -->
+            <StackPanel
+                Margin="0,0,0,10"
+                HorizontalAlignment="Stretch"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal">
+                <Button
+                    Width="36"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.Name="导出报警 CSV"
+                    Command="{Binding DataContext.ExportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{StaticResource ButtonDefault}"
+                    ToolTip="导出当前设备全部报警到 CSV 文件（可用 Excel 编辑）">
+                    <materialIcons:MaterialIcon
+                        Width="14"
+                        Height="14"
+                        Kind="{x:Static mi:MaterialIconKind.FileExportOutline}" />
+                </Button>
+                <Button
+                    Width="36"
+                    Height="32"
+                    Padding="0"
+                    AutomationProperties.Name="导入报警 CSV"
+                    Command="{Binding DataContext.ImportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{StaticResource ButtonDefault}"
+                    ToolTip="从 CSV 文件导入报警（追加或替换当前设备报警列表）">
+                    <materialIcons:MaterialIcon
+                        Width="14"
+                        Height="14"
+                        Kind="{x:Static mi:MaterialIconKind.FileImportOutline}" />
+                </Button>
+            </StackPanel>
+            <ListBox
+                AutomationProperties.Name="报警列表"
+                ItemContainerStyle="{StaticResource CardListItemStyle}"
+                ItemsSource="{Binding Alarms}"
+                SelectedItem="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel
+                            VerticalAlignment="Stretch"
+                            LastChildFill="True">
+                            <Rectangle
+                                Width="5"
+                                RadiusX="2.5"
+                                RadiusY="2.5"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Stretch"
+                                Fill="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}" />
+                            <Border
+                                Margin="6,0,0,0"
+                                Padding="8,1"
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Right"
+                                CornerRadius="10"
+                                Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
+                                <TextBlock
+                                    FontSize="{DynamicResource FontSizeMicro}"
+                                    Foreground="White"
+                                    Text="{Binding Level, Converter={StaticResource AlarmLevelToTextConverter}}" />
+                            </Border>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                Text="{Binding Name}"
+                                TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <Border
+            Grid.Column="2"
+            Padding="20"
+            Background="{StaticResource SecondaryRegionBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Visibility="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}">
+            <StackPanel DataContext="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="报警名称"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="报警名称"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="PLC 地址（如 M100）"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="报警 PLC 地址"
+                    Style="{StaticResource TextBoxExtend}">
+                    <hc:TextBox.Text>
+                        <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
+                            <Binding.ValidationRules>
+                                <conv:PlcAddressValidationRule ExpectedType="MBit" />
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </hc:TextBox.Text>
+                </hc:TextBox>
+                <hc:ComboBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="报警级别"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="报警级别"
+                    ItemsSource="{Binding Source={StaticResource AlarmLevelValues}}"
+                    SelectedItem="{Binding Level, UpdateSourceTrigger=PropertyChanged}"
+                    Style="{StaticResource ComboBoxExtend}" />
+                <hc:TextBox
+                    Height="80"
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="报警描述"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AcceptsReturn="True"
+                    AutomationProperties.Name="报警描述"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto" />
+                <Button
+                    HorizontalAlignment="Right"
+                    AutomationProperties.Name="删除报警"
+                    Command="{Binding DataContext.RemoveAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    Content="删除报警"
+                    Style="{StaticResource IconButtonDanger}"
+                    Tag="{x:Static mi:MaterialIconKind.Delete}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

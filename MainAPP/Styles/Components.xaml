@@ -1,0 +1,406 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF">
+
+    <!--  取代 HandyControl 默认 Validation.ErrorTemplate：用转换器安全读取首条错误，
+          保留错误文本显示，但集合为空时返回空串、不再抛异常。  -->
+    <ControlTemplate x:Key="SafeValidationErrorTemplate">
+        <StackPanel Orientation="Vertical">
+            <AdornedElementPlaceholder x:Name="AdornedElement" />
+            <TextBlock Margin="0,2,0,0"
+                       FontSize="{DynamicResource FontSizeHint}"
+                       Foreground="{StaticResource DangerBrush}"
+                       Text="{Binding ElementName=AdornedElement,
+                                      Path=AdornedElement.(Validation.Errors),
+                                      Converter={StaticResource ValidationErrorsToMessage}}" />
+        </StackPanel>
+    </ControlTemplate>
+
+    <!--  加载中覆盖层样式（hc:LoadingCircle）  -->
+    <Style x:Key="LoadingDefault" TargetType="hc:LoadingCircle">
+        <Setter Property="DotBorderBrush" Value="{StaticResource PrimaryBrush}" />
+    </Style>
+
+    <Style x:Key="TouchFocusVisual" TargetType="Control">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Control">
+                    <Border
+                        Margin="-2"
+                        BorderBrush="{StaticResource PrimaryBrush}"
+                        BorderThickness="2"
+                        CornerRadius="5">
+                        <AdornedElementPlaceholder />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  侧边栏折叠时隐藏的元素（业务逻辑，HC 无等价物）  -->
+    <Style x:Key="SidebarLabel" TargetType="FrameworkElement">
+        <Setter Property="Visibility" Value="Visible" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding DataContext.IsSidebarCollapsed, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  TextBox 焦点态加亮：聚焦时边框高亮为主色并加粗  -->
+    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <!--  用安全错误模板取代 HandyControl 默认模板，消除 (Validation.Errors)[0] 越界噪音  -->
+        <Setter Property="Validation.ErrorTemplate" Value="{StaticResource SafeValidationErrorTemplate}" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="1.5" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource SecondaryBorderBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  通用 ListBoxItem 样式：选中态左侧 3px 主色指示条 + 背景加深 + 文字主色高亮  -->
+    <Style x:Key="CardListItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Padding" Value="10,10" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{StaticResource PrimaryBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4"
+                        Padding="{TemplateBinding Padding}"
+                        SnapsToDevicePixels="True">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                            <Setter Property="BorderThickness" Value="3,0,0,0" />
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  ============ 侧边栏导航 ListBox 样式（替代 hc:SideMenu，原生支持 UIA） ============  -->
+    <!--  配合 MainWindowViewModel.NavItems 数据绑定 + 双向 SelectedIndex 同步。
+          ListBoxItem 是 WPF 原生控件，AutomationProperties.Name 会正确暴露到 UIA Control 树，
+          解决 hc:SideMenuItem 不暴露到 UIA 导致跨页面交互测试无法 ByName+Click 的问题。  -->
+    <Style x:Key="SidebarNavListBoxStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,2" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+                    <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <!--  绑定到 NavItem.AccessibleName，使 UIA 客户端可通过 ByName 直接定位每个导航项  -->
+                    <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
+                    <Setter Property="ToolTip" Value="{Binding ToolTip}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border
+                                    x:Name="Bd"
+                                    Background="Transparent"
+                                    BorderBrush="{StaticResource PrimaryBrush}"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    Padding="12,10"
+                                    SnapsToDevicePixels="True">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                        <Setter TargetName="Bd" Property="BorderThickness" Value="3,0,0,0" />
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  侧边栏导航项数据模板（图标 + 文本，文本受折叠状态控制）  -->
+    <DataTemplate x:Key="SidebarNavItemTemplate">
+        <StackPanel Orientation="Horizontal">
+            <materialIcons:MaterialIcon
+                Width="16"
+                Height="16"
+                VerticalAlignment="Center"
+                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                Kind="{Binding Icon}" />
+            <TextBlock
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                Style="{StaticResource SidebarLabel}"
+                Text="{Binding Label}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--  ============ 图标按钮样式（Tag 传 MaterialIconKind，Content 传文本） ============  -->
+    <!--  用法：Tag="{x:Static materialIcons:MaterialIconKind.Plus}" Content="新增"  -->
+    <DataTemplate x:Key="IconButtonContent">
+        <StackPanel Orientation="Horizontal">
+            <materialIcons:MaterialIcon
+                Width="16"
+                Height="16"
+                VerticalAlignment="Center"
+                Kind="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}" />
+            <TextBlock
+                Margin="6,0,0,0"
+                VerticalAlignment="Center"
+                Text="{Binding}" />
+        </StackPanel>
+    </DataTemplate>
+    <Style x:Key="IconButtonPrimary" TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+    </Style>
+    <Style x:Key="IconButtonDanger" TargetType="Button" BasedOn="{StaticResource ButtonDanger}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+    </Style>
+    <Style x:Key="IconButtonSuccess" TargetType="Button" BasedOn="{StaticResource ButtonSuccess}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+    </Style>
+    <Style x:Key="IconButtonDefault" TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+    </Style>
+    <Style x:Key="IconButtonWarning" TargetType="Button" BasedOn="{StaticResource ButtonWarning}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+    </Style>
+
+    <!--  ============ 统一 DataGrid 样式（看板表格） ============  -->
+    <Style x:Key="KanbanDataGrid" TargetType="DataGrid">
+        <Setter Property="controls:DataGridLayoutPersistence.IsEnabled" Value="True" />
+        <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="RowBackground" Value="Transparent" />
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource SecondaryRegionBrush}" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource DividerBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource DividerBrush}" />
+        <Setter Property="RowHeight" Value="36" />
+        <Setter Property="ColumnHeaderHeight" Value="40" />
+        <Setter Property="HeadersVisibility" Value="Column" />
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="CanUserResizeRows" Value="False" />
+        <Setter Property="CanUserResizeColumns" Value="True" />
+        <Setter Property="CanUserSortColumns" Value="True" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="IsReadOnly" Value="True" />
+    </Style>
+
+    <!--  DataGrid 表头样式  -->
+    <Style x:Key="KanbanDataGridColumnHeader" TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!--  DataGrid 单元格样式  -->
+    <Style x:Key="KanbanDataGridCell" TargetType="DataGridCell">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  DataGrid 行样式  -->
+    <Style x:Key="KanbanDataGridRow" TargetType="DataGridRow">
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  ============ 页面切换过渡动画 ============  -->
+    <!--  当 Visibility 从 Collapsed 切换到 Visible 时，Opacity 从 0 渐显到 1（0.2s）。
+          TargetType=FrameworkElement 可同时应用于 ContentControl 和 UserControl。  -->
+    <Style x:Key="PageTransition" TargetType="FrameworkElement">
+        <Setter Property="Opacity" Value="1" />
+        <Style.Triggers>
+            <Trigger Property="Visibility" Value="Visible">
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation
+                                Storyboard.TargetProperty="Opacity"
+                                From="0" To="1" Duration="0:0:0.2">
+                                <DoubleAnimation.EasingFunction>
+                                    <QuadraticEase />
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  ============ 共享：状态色条（4px 圆角，统一各 View 状态指示宽度） ============  -->
+    <Style x:Key="StatusStripe" TargetType="Border">
+        <Setter Property="Width" Value="4" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Margin" Value="0,2,0,2" />
+    </Style>
+
+    <!--  ============ 共享：加载覆盖层（半透明背景 + LoadingCircle） ============ -->
+    <!--  用法：Border Style=LoadingOverlay Visibility={Binding IsLoading, Converter=BooleanToVisibility}
+          背景用 OverlayBackgroundBrush（50% 透明），子元素（LoadingCircle 等）保持完整不透明度。
+          旧实现 Border.Opacity=0.6 会让 LoadingCircle 一起变暗，新实现避免该副作用。  -->
+    <Style x:Key="LoadingOverlay" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource OverlayBackgroundBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <!--  ============ 共享：骨架屏占位（SkeletonBorder） ============ -->
+    <!--  用法：Border Style=SkeletonBorder，配合 IsLoading 切换 Visibility 实现骨架屏。
+          灰底 + 0.4↔1.0 脉动动画，模拟内容加载中。  -->
+    <Style x:Key="SkeletonBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Style.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation
+                            Storyboard.TargetProperty="Opacity"
+                            From="0.4" To="1" Duration="0:0:1.2"
+                            AutoReverse="True" RepeatBehavior="Forever" />
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  ============ 共享：图表卡片标题（3px 主色竖条 + SectionTitleText） ============  -->
+    <!--  默认 PrimaryBrush；如需其他色（如报警红条），用内联 Background 覆盖。  -->
+    <Style x:Key="ChartCardTitleBar" TargetType="Border">
+        <Setter Property="Width" Value="3" />
+        <Setter Property="Height" Value="14" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  ============ 深色主题 TabControl / TabItem 样式 ============  -->
+    <!--  覆盖 HandyControl 默认白底黑字，与看板深色主题统一。
+          用法：TabControl 自动继承（BasedOn={StaticResource {x:Type TabControl}}），
+          或显式 Style="{StaticResource KanbanTabControl}"。  -->
+    <Style x:Key="KanbanTabControl" TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="{x:Null}" />
+    </Style>
+
+    <Style x:Key="KanbanTabItem" TargetType="TabItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="Margin" Value="2,0,0,0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource PrimaryBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6,6,0,0"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                            <Setter TargetName="Bd" Property="BorderThickness" Value="0,0,0,2" />
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

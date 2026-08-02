@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  旧 VSTest 客户端兼容配置。MTP 测试使用项目输出目录中的 testconfig.json
+  和原生命令行参数启用覆盖率。
+-->
+<RunSettings>
+  <RunConfiguration>
+    <ResultsDirectory>$(MSBuildProjectDirectory)\TestResults</ResultsDirectory>
+    <!-- 单次测试会话最长 10 分钟，防止卡死测试拖垮 CI -->
+    <TestSessionTimeout>600000</TestSessionTimeout>
+    <TargetFrameworkVersion>net10.0</TargetFrameworkVersion>
+  </RunConfiguration>
+</RunSettings>

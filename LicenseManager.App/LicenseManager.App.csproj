@@ -1,0 +1,115 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>LicenseManager</RootNamespace>
+    <AssemblyName>LicenseManager.App</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- GeneratePathProperty=true 使 NuGet 生成 $(PkgCommunityToolkit_Mvvm) 指向包根目录，
+         供下方 Obfuscar 混淆目标解析 CommunityToolkit.Mvvm.dll 路径 -->
+    <PackageReference Include="CommunityToolkit.Mvvm">
+      <GeneratePathProperty>true</GeneratePathProperty>
+    </PackageReference>
+    <PackageReference Include="HandyControl" />
+    <PackageReference Include="Material.Icons.WPF" />
+    <PackageReference Include="System.Management" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Obfuscar 混淆工具（仅 Release 构建生效，通过下方 ObfuscateRelease 目标触发）
+      PrivateAssets=all 避免传递到 MainAPP，仅在本项目构建时使用
+    -->
+    <PackageReference Include="Obfuscar">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MainAPP" />
+    <InternalsVisibleTo Include="MainAPP.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- obfuscar.xml 不参与编译，仅作为 Obfuscar 配置文件存在 -->
+    <None Update="obfuscar.xml">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!--
+    ====================================================================
+    P3-3: Release 构建后混淆 LicenseManager.App.dll
+    ====================================================================
+    触发条件：Configuration == Release
+    工作流程：
+      1. 在 TargetDir 中执行 obfuscar.console.exe，读取项目根目录的 obfuscar.xml
+      2. Obfuscar 输出到 TargetDir\Obfuscated\ 子目录
+      3. 将混淆后的 DLL 覆盖回 TargetDir，使 MainAPP 引用到混淆后的版本
+    注意：MainAPP 不直接引用 Crypto 类型，故 MarkedOnly 模式完全混淆 Crypto 命名空间安全
+
+    依赖解析（Q-1 后新增）：
+      ActivationViewModel 重构后使用 CommunityToolkit.Mvvm（ObservableObject/[RelayCommand]/[ObservableProperty]），
+      Obfuscar 构建 InheritMap 时需解析这些类型。类库默认不复制依赖 DLL 到输出目录（deps.json 解析），
+      故在混淆前显式复制 CommunityToolkit.Mvvm.dll 到 TargetDir，混淆完成后清理。
+
+    注意：CommunityToolkit.Mvvm 版本号从 Directory.Packages.props 集中管理（CPM），
+          此处用 MSBuild 属性动态解析，避免版本升级时遗漏修改。
+  -->
+  <Target Name="ObfuscateRelease"
+          AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Release'">
+
+    <PropertyGroup>
+      <ObfuscarConsole>$(PkgObfuscar)\tools\obfuscar.console.exe</ObfuscarConsole>
+      <ObfuscarConfig>$(MSBuildProjectDirectory)\obfuscar.xml</ObfuscarConfig>
+      <ObfuscarOutput>$(TargetDir)Obfuscated\$(AssemblyName).dll</ObfuscarOutput>
+      <!-- Q-1 后 Obfuscar 需要解析 CommunityToolkit.Mvvm 才能构建 InheritMap -->
+      <!-- NuGetPackageRoot 自动指向 %USERPROFILE%\.nuget\packages\（系统级或用户级 NuGet 缓存） -->
+      <!-- 版本号通过 PKg 变量动态获取，不再硬编码 8.3.2 -->
+      <CommunityToolkitMvvmDll>$(PkgCommunityToolkit_Mvvm)\lib\net8.0\CommunityToolkit.Mvvm.dll</CommunityToolkitMvvmDll>
+      <CommunityToolkitMvvmTarget>$(TargetDir)CommunityToolkit.Mvvm.dll</CommunityToolkitMvvmTarget>
+    </PropertyGroup>
+
+    <Error Text="Obfuscar 控制台未找到：$(ObfuscarConsole)。请执行 dotnet restore 后重试。"
+           Condition="!Exists('$(ObfuscarConsole)')" />
+
+    <Error Text="CommunityToolkit.Mvvm.dll 未找到：$(CommunityToolkitMvvmDll)。请执行 dotnet restore 后重试。"
+           Condition="!Exists('$(CommunityToolkitMvvmDll)')" />
+
+    <!-- 混淆前：复制依赖 DLL 供 Obfuscar 解析（避免 Unable to resolve dependency 错误） -->
+    <Copy SourceFiles="$(CommunityToolkitMvvmDll)"
+          DestinationFiles="$(CommunityToolkitMvvmTarget)"
+          Condition="!Exists('$(CommunityToolkitMvvmTarget)')" />
+
+    <Message Text="[Obfuscar] 开始混淆 $(AssemblyName).dll ..." Importance="high" />
+
+    <Exec Command="&quot;$(ObfuscarConsole)&quot; &quot;$(ObfuscarConfig)&quot;"
+          WorkingDirectory="$(TargetDir)"
+          ConsoleToMSBuild="true" />
+
+    <!-- 混淆后：清理临时复制的依赖 DLL（LicenseManager.App 类库输出不应包含此文件） -->
+    <Delete Files="$(CommunityToolkitMvvmTarget)" />
+
+    <Error Text="Obfuscar 未生成混淆后的 DLL：$(ObfuscarOutput)"
+           Condition="!Exists('$(ObfuscarOutput)')" />
+
+    <Copy SourceFiles="$(ObfuscarOutput)"
+          DestinationFiles="$(TargetDir)$(AssemblyName).dll" />
+
+    <!-- 同步覆盖 .pdb（混淆后的符号文件），便于 Release 排查崩溃 -->
+    <Copy SourceFiles="$(TargetDir)Obfuscated\$(AssemblyName).pdb"
+          DestinationFiles="$(TargetDir)$(AssemblyName).pdb"
+          Condition="Exists('$(TargetDir)Obfuscated\$(AssemblyName).pdb')" />
+
+    <Message Text="[Obfuscar] 混淆完成，已覆盖 $(AssemblyName).dll" Importance="high" />
+  </Target>
+
+</Project>

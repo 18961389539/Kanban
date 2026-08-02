@@ -1,0 +1,43 @@
+# ── .NET / 构建产物 ──
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
+*.dll
+*.exe
+*.deps.json
+*.runtimeconfig.json
+
+# ── 测试输出 ──
+TestResults/
+*.trx
+*.coverage
+coverage_*.json
+
+# ── IDE / 工具 ──
+.vs/
+.idea/
+*.swp
+*.sln.DotSettings.user
+
+# ── 运行日志 / 本地生成物 ──
+*.log
+modbus_out*.txt
+modbus_test_out*.txt
+calib_run.log
+screenshots/
+CalibResults/
+
+# ── 工具数据（编辑器/工作台） ──
+.arts/
+
+# ── 运行时数据（本地配置/数据库，勿入库） ──
+Config/
+*.db
+*.db-shm
+*.db-wal
+
+# ── 工作台工具数据 ──
+.workbuddy/

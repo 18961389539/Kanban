@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Obfuscar 配置（仅 Release 构建生效）
+
+  策略说明：
+  - MarkedOnly=true：仅混淆标注了 [Obfuscation(Exclude=false)] 的类型
+  - 标注范围：LicenseManager.Crypto 命名空间下的所有类型（EmbeddedKey/ProductKeyCodec/HmacValidator/Base32）
+             + LicenseManager.Services.HardwareFingerprint（机器码计算逻辑）
+  - 不标注：LicenseGate/LicenseStore/TrialTracker 等公共门面与模型（MainAPP 直接引用，必须保留公共 API）
+  - MainAPP 不直接引用任何 Crypto 类型，故可完全混淆（含公共方法重命名 + 字符串加密）
+
+  安全收益：
+  - HideStrings=true：HMAC 密钥（EmbeddedKey.HmacKeyBase64）在 IL 中加密存储，反编译不可见
+  - RenameFields=true：私有字段重命名为 Unicode 字符，难以阅读
+  - UseUnicodeNames=true：使用非 ASCII 字符命名，提升逆向难度
+  - SuppressIldasm=true：在程序集元数据中标记 SuppressIldasmAttribute
+-->
+<Obfuscator>
+  <!-- 输入输出路径（MSBuild Exec 的 WorkingDirectory 设置为 $(TargetDir)） -->
+  <Var name="InPath" value="." />
+  <Var name="OutPath" value=".\Obfuscated" />
+
+  <!-- 仅处理标注 [Obfuscation(Exclude=false)] 的类型 -->
+  <Var name="MarkedOnly" value="true" />
+
+  <!-- 字符串加密：保护内嵌 HMAC 密钥 -->
+  <Var name="HideStrings" value="true" />
+
+  <!-- 重命名策略：保留属性/事件名（避免破坏反射与序列化），重命名字段 -->
+  <Var name="RenameProperties" value="false" />
+  <Var name="RenameEvents" value="false" />
+  <Var name="RenameFields" value="true" />
+
+  <!-- 使用 Unicode 字符命名（非 ASCII），提升反编译阅读难度 -->
+  <Var name="UseUnicodeNames" value="true" />
+
+  <!-- 方法优化与 ILDasm 抑制 -->
+  <Var name="OptimizeMethods" value="true" />
+  <Var name="SuppressIldasm" value="true" />
+
+  <!-- 目标程序集 -->
+  <Module file="LicenseManager.App.dll" />
+</Obfuscator>

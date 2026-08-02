@@ -1,0 +1,14 @@
+<Solution>
+  <Project Path="MainAPP/MainAPP.csproj" />
+  <Project Path="Kanban.Contracts/Kanban.Contracts.csproj" />
+  <Project Path="Kanban.Collector/Kanban.Collector.csproj" />
+  <Project Path="Kanban.Collector.Core/Kanban.Collector.Core.csproj" />
+  <Project Path="MainAPP.Tests/MainAPP.Tests.csproj" />
+  <Project Path="MainAPP.E2E/MainAPP.E2E.csproj" />
+  <Project Path="MainAPP.Benchmarks/MainAPP.Benchmarks.csproj" />
+  <Project Path="MainAPP.UIAutomation/MainAPP.UIAutomation.csproj" />
+  <Project Path="LicenseManager.App/LicenseManager.App.csproj" />
+  <Project Path="LicenseIssuer.CLI/LicenseIssuer.CLI.csproj" />
+  <Project Path="LicenseIssuer.Wpf/LicenseIssuer.Wpf.csproj" />
+  <Project Path="PlcSimulator/PlcSimulator.csproj" />
+</Solution>

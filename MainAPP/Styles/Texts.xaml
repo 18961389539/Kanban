@@ -1,0 +1,112 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF">
+
+    <!--  全局文字默认使用深色主题主文本色，避免未显式设置 Foreground 的绑定值继承系统黑色。  -->
+    <Style TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+
+    <!--  ============ KPI 数值文本样式（四级字号体系） ============  -->
+    <!--  Hero：42px Bold，页面焦点指标（如主页速度达成率、OEE 主环）  -->
+    <Style x:Key="KpiValueHero" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeHero}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <!--  Lg：28px Bold，KPI 卡片主值（产量/OEE/合格率等核心指标）  -->
+    <Style x:Key="KpiValueLg" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiLg}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <!--  Md：22px Bold，次级指标（OEE 子环/总产量/不良率等）  -->
+    <Style x:Key="KpiValueMd" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiMd}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <!--  Sm：18px Bold，图例/小卡数值  -->
+    <Style x:Key="KpiValueSm" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiSm}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <!--  Xs：16px Bold，明细卡数值（OEE 班次明细等）  -->
+    <Style x:Key="KpiValueXs" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiXs}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <!--  KpiLabel：13px Regular，KPI 卡片标签  -->
+    <Style x:Key="KpiLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiLabel}" />
+        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+    </Style>
+    <!--  CaptionText：14px Regular，辅助标签/单位/说明（小于 KpiLabel）  -->
+    <Style x:Key="CaptionText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+    </Style>
+    <!--  HintText：13px Regular，徽章/小图例（仅用于非关键提示）  -->
+    <Style x:Key="HintText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeHint}" />
+        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+    </Style>
+    <!--  兼容旧引用：KpiValueText = KpiValueLg  -->
+    <Style x:Key="KpiValueText" TargetType="TextBlock" BasedOn="{StaticResource KpiValueLg}" />
+
+    <!--  ============ 统一标题层级样式 ============  -->
+    <!--  页面主标题：24px Bold，搭配 26px 图标  -->
+    <Style x:Key="PageTitleText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizePageTitle}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="PageTitleIcon" TargetType="materialIcons:MaterialIcon">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+    </Style>
+
+    <!--  卡片标题：17px Bold，搭配 20px 图标  -->
+    <Style x:Key="SectionTitleText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeSectionTitle}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="SectionTitleIcon" TargetType="materialIcons:MaterialIcon">
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+    </Style>
+
+    <!--  副标题：14px Regular（计数/辅助说明）  -->
+    <Style x:Key="SubtitleText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeSubtitle}" />
+        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  空状态共享文字层级：EmptyState 及页面自定义空态统一使用 18/13px。  -->
+    <Style x:Key="EmptyStateMessageText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+    </Style>
+    <Style x:Key="EmptyStateHintText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+    </Style>
+
+</ResourceDictionary>

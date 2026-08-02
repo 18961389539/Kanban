@@ -1,0 +1,304 @@
+﻿using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CsvHelper.Configuration.Attributes;
+using MainAPP.Data;
+using MainAPP.Entities;
+using MainAPP.Models;
+using MainAPP.Services;
+using OxyPlot;
+using Serilog;
+
+namespace MainAPP.ViewModels;
+
+public partial class StatusQueryViewModel : ObservableObject
+{
+    private readonly IStatusTransitionHistoryService _historyService;
+
+    [ObservableProperty]
+    private ObservableCollection<StatusTransitionRecord> _statusTransitions = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RunTimeFormatted))]
+    private double _runTimeSeconds;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeFormatted))]
+    private double _alarmTimeSeconds;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PausedTimeFormatted))]
+    private double _pausedTimeSeconds;
+
+    /// <summary>运行时长格式化（Xd Yh / Xh Ym / Xm），便于人眼阅读。</summary>
+    public string RunTimeFormatted => FormatDuration(RunTimeSeconds);
+    /// <summary>报警时长格式化。</summary>
+    public string AlarmTimeFormatted => FormatDuration(AlarmTimeSeconds);
+    /// <summary>暂停时长格式化。</summary>
+    public string PausedTimeFormatted => FormatDuration(PausedTimeSeconds);
+
+    /// <summary>秒数 → "Xd Yh" / "Xh Ym" / "Xm" 格式。不足 1 分钟显示 "0m"。</summary>
+    private static string FormatDuration(double seconds)
+    {
+        if (seconds < 60) return "0m";
+        var ts = TimeSpan.FromSeconds(seconds);
+        if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h";
+        if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
+        return $"{(int)ts.TotalMinutes}m";
+    }
+
+    [ObservableProperty]
+    private PlotModel? _statusChart;
+
+    [ObservableProperty]
+    private PlotModel? _statusBarChart;
+
+    [ObservableProperty]
+    private PlotModel? _statusGanttChart;
+
+    [ObservableProperty]
+    private string? _statusInsight;
+
+    public string? QueryError { get; private set; }
+
+    public StatusQueryViewModel(IStatusTransitionHistoryService historyService)
+    {
+        _historyService = historyService;
+    }
+
+    public (int TotalCount, int TotalPages) Query(
+        string? deviceId, DateTime from, DateTime to, string? shiftName, int currentPage, int pageSize)
+    {
+        StatusTransitions.Clear();
+        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0;
+        StatusInsight = null;
+        QueryError = null;
+
+        if (deviceId == null)
+        {
+            StatusChart = null; StatusBarChart = null; StatusGanttChart = null;
+            return (0, 0);
+        }
+
+        try
+        {
+            var allInRange = QueryStatusTransitions(deviceId, from, to, shiftName);
+
+            var totalCount = allInRange.Count;
+            var totalPages = HistoryQueryHelper.CalcTotalPages(totalCount, pageSize);
+
+            var pageItems = HistoryQueryHelper.PageItems(allInRange, currentPage, pageSize);
+            StatusTransitions.Clear();
+            foreach (var item in pageItems)
+                StatusTransitions.Add(item);
+
+            int initialState = 1;
+            var lastBefore = GetLatestStatusBefore(deviceId, from, shiftName);
+            if (lastBefore != null)
+                initialState = lastBefore.CurrentState;
+
+            var effectiveTo = HistoryQueryHelper.ClampToNow(to);
+
+            var durations = OeeCalculator.CalculateStateDurations(allInRange, from, effectiveTo, initialState);
+            RunTimeSeconds = durations.RunTime;
+            AlarmTimeSeconds = durations.AlarmTime;
+            PausedTimeSeconds = durations.PausedTime;
+
+            var dailyDurations = BuildDailyDurations(allInRange, from, effectiveTo, initialState);
+            StatusChart = ChartService.BuildStatusChart(dailyDurations);
+            StatusBarChart = ChartService.BuildStatusBarChart(dailyDurations);
+            StatusGanttChart = ChartService.BuildStatusGanttChart(
+                BuildGanttSegments(allInRange, from, effectiveTo, initialState));
+
+            StatusInsight = BuildStatusInsight(allInRange, from, to, initialState);
+
+            return (totalCount, totalPages);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "状态查询失败: {Message}", ex.Message);
+            QueryError = $"状态历史查询失败：{ex.Message}";
+            return (0, 0);
+        }
+    }
+
+    private List<StatusTransitionRecord> QueryStatusTransitions(string deviceId, DateTime from, DateTime to, string? shiftName)
+        => _historyService is IHistoryQueryExecutor strict
+            ? strict.QueryStatusTransitionsStrict(deviceId, from, to, shiftName)
+            : _historyService.QueryStatusTransitions(deviceId, from, to, shiftName);
+
+    private StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName)
+        => _historyService is IHistoryQueryExecutor strict
+            ? strict.GetLatestStatusBeforeStrict(deviceId, before, shiftName)
+            : _historyService.GetLatestStatusBefore(deviceId, before, shiftName);
+
+    public void Reset()
+    {
+        StatusTransitions.Clear();
+        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0;
+        StatusChart = null; StatusBarChart = null; StatusGanttChart = null;
+        StatusInsight = null;
+    }
+
+    public string? BuildCsv()
+    {
+        if (StatusTransitions.Count == 0) return null;
+
+        var rows = StatusTransitions.Select(s => new StatusCsvRow
+        {
+            Timestamp = s.EventTime,
+            DeviceId = s.DeviceId,
+            DeviceName = s.DeviceName,
+            PrevState = s.PreviousState,
+            CurrState = s.CurrentState,
+            PrevStateText = HistoryQueryHelper.GetStateText(s.PreviousState),
+            CurrStateText = HistoryQueryHelper.GetStateText(s.CurrentState)
+        }).ToList();
+
+        return HistoryQueryHelper.BuildCsv(rows,
+            $"# 运行时长：{RunTimeSeconds / 3600:F2}h，报警时长：{AlarmTimeSeconds / 3600:F2}h，待机时长：{PausedTimeSeconds / 3600:F2}h",
+            $"# {StatusInsight ?? "无洞察"}");
+    }
+
+    private static string? BuildStatusInsight(List<StatusTransitionRecord> transitions,
+        DateTime from, DateTime to, int initialState)
+    {
+        var segments = BuildGanttSegments(transitions, from, to, initialState).ToList();
+        if (segments.Count == 0) return null;
+
+        // 阈值定义（与 HistoryQueryViewModel.NgAlarmThreshold / LowPerformanceThreshold 对齐，
+        // 复用既有"报警/性能"阈值语义，避免新增未使用的常量）
+        const double LongAlarmThresholdMin = 30;        // 单次报警 > 30 分钟视为长报警
+        const double HighPauseRatioThreshold = 0.20;    // 暂停/报警占比 > 20% 视为异常
+
+        List<string> parts = [];
+
+        // 最长运行段
+        var runSegments = segments.Where(s => s.State == 1).ToList();
+        if (runSegments.Count > 0)
+        {
+            var longestRun = runSegments.MaxBy(s => s.End - s.Start);
+            var minutes = (longestRun.End - longestRun.Start).TotalMinutes;
+            if (minutes > 0)
+                parts.Add($"最长运行 {minutes:F0} 分钟（{longestRun.Start:HH:mm}–{longestRun.End:HH:mm}）");
+        }
+
+        // 最长报警段（含长报警阈值检测）
+        var alarmSegments = segments.Where(s => s.State == 2).ToList();
+        if (alarmSegments.Count > 0)
+        {
+            var longestAlarm = alarmSegments.MaxBy(s => s.End - s.Start);
+            var minutes = (longestAlarm.End - longestAlarm.Start).TotalMinutes;
+            if (minutes > 0)
+            {
+                var prefix = minutes > LongAlarmThresholdMin ? "🔴 长报警" : "最长报警";
+                parts.Add($"{prefix} {minutes:F0} 分钟（{longestAlarm.Start:HH:mm}–{longestAlarm.End:HH:mm}）");
+            }
+        }
+
+        // 最长暂停段
+        var pauseSegments = segments.Where(s => s.State == 3).ToList();
+        if (pauseSegments.Count > 0)
+        {
+            var longestPause = pauseSegments.MaxBy(s => s.End - s.Start);
+            var minutes = (longestPause.End - longestPause.Start).TotalMinutes;
+            if (minutes > 0)
+                parts.Add($"最长待机 {minutes:F0} 分钟（{longestPause.Start:HH:mm}–{longestPause.End:HH:mm}）");
+        }
+
+        // 占比异常检测：总报警/暂停时长 / 窗口时长 > 阈值时主动提示
+        var totalSpan = (to - from).TotalSeconds;
+        if (totalSpan > 0)
+        {
+            var alarmRatio = alarmSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
+            var pauseRatio = pauseSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
+            if (pauseRatio > HighPauseRatioThreshold)
+                parts.Add($"⏸ 待机占比 {pauseRatio:P0}，高于阈值 {HighPauseRatioThreshold:P0}");
+            else if (alarmRatio > HighPauseRatioThreshold)
+                parts.Add($"⚠ 报警占比 {alarmRatio:P0}，高于阈值 {HighPauseRatioThreshold:P0}");
+        }
+
+        return parts.Count > 0 ? string.Join("，", parts) : null;
+    }
+
+    private static IEnumerable<(DateTime Date, double RunHours, double AlarmHours, double PauseHours)>
+        BuildDailyDurations(List<StatusTransitionRecord> transitions, DateTime from, DateTime to, int initialState)
+    {
+        List<(DateTime Start, DateTime End, int State)> rawSegments = [];
+        var currentState = initialState;
+        var segStart = from;
+        foreach (var t in transitions)
+        {
+            if (t.EventTime < from) continue;
+            if (t.EventTime > segStart)
+                rawSegments.Add((segStart, t.EventTime, currentState));
+            currentState = t.CurrentState;
+            segStart = t.EventTime;
+        }
+        if (segStart < to)
+            rawSegments.Add((segStart, to, currentState));
+
+        Dictionary<DateTime, (double Run, double Alarm, double Pause)> byDay = [];
+        foreach (var seg in rawSegments)
+        {
+            var cursor = seg.Start;
+            while (cursor < seg.End)
+            {
+                var nextMidnight = cursor.Date.AddDays(1);
+                var end = seg.End < nextMidnight ? seg.End : nextMidnight;
+                var secs = (end - cursor).TotalSeconds;
+                if (secs > 0)
+                {
+                    var day = cursor.Date;
+                    var acc = byDay.TryGetValue(day, out var a) ? a : (0, 0, 0);
+                    if (seg.State == (int)DeviceStatus.Running) acc.Run += secs;
+                    else if (seg.State == (int)DeviceStatus.Alarm) acc.Alarm += secs;
+                    else if (seg.State == (int)DeviceStatus.Paused) acc.Pause += secs;
+                    byDay[day] = acc;
+                }
+                cursor = nextMidnight;
+            }
+        }
+
+        return byDay
+            .OrderBy(kv => kv.Key)
+            .Select(kv => (
+                Date: kv.Key,
+                RunHours: kv.Value.Run / 3600.0,
+                AlarmHours: kv.Value.Alarm / 3600.0,
+                PauseHours: kv.Value.Pause / 3600.0
+            ));
+    }
+
+    internal static IEnumerable<(DateTime Start, DateTime End, int State)>
+        BuildGanttSegments(List<StatusTransitionRecord> transitions, DateTime from, DateTime to, int initialState)
+    {
+        var currentState = initialState;
+        var segStart = from;
+
+        foreach (var t in transitions)
+        {
+            if (t.EventTime <= from) continue;
+            if (t.EventTime > to) break;
+
+            if (t.EventTime > segStart)
+                yield return (segStart, t.EventTime, currentState);
+
+            currentState = t.CurrentState;
+            segStart = t.EventTime;
+        }
+
+        if (segStart < to)
+            yield return (segStart, to, currentState);
+    }
+
+    private class StatusCsvRow
+    {
+        [Name("事件时间")] public DateTime Timestamp { get; set; }
+        [Name("设备ID")] public string? DeviceId { get; set; }
+        [Name("设备名称")] public string? DeviceName { get; set; }
+        [Name("前一状态")] public int PrevState { get; set; }
+        [Name("当前状态")] public int CurrState { get; set; }
+        [Name("前一状态文本")] public string? PrevStateText { get; set; }
+        [Name("当前状态文本")] public string? CurrStateText { get; set; }
+    }
+}

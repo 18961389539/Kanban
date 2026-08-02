@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>产线页 UI 预览</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0E1116;
+    color: #E5E7EB;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 14px;
+    padding: 16px;
+  }
+  .label { color: #6B7280; font-size: 11px; margin: 24px 0 8px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2A323F; padding-bottom: 4px; }
+
+  /* 标题栏 */
+  .title-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .title-bar .icon { color: #818CF8; font-size: 22px; }
+  .title-bar h1 { font-size: 20px; font-weight: bold; }
+  .title-bar .divider { width: 1px; height: 20px; background: #2A323F; margin: 0 4px; }
+  .title-bar .count { color: #9CA3AF; font-size: 13px; }
+
+  /* KPI 条 */
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 16px; }
+  .kpi-box { background: #1A2029; border: 1px solid #2A323F; border-radius: 6px; padding: 10px 14px; }
+  .kpi-box .label { font-size: 11px; color: #6B7280; margin: 0 0 4px; border: 0; padding: 0; text-transform: none; letter-spacing: 0; }
+  .kpi-box .value { font-size: 22px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .green { color: #34D399; } .green-bg .dot { background: #34D399; }
+  .red { color: #F87171; } .red-bg .dot { background: #F87171; }
+  .yellow { color: #FBBF24; } .yellow-bg .dot { background: #FBBF24; }
+  .gray { color: #9CA3AF; }
+
+  /* 卡片通用 */
+  .card { background: #1A2029; border: 1px solid #2A323F; border-radius: 8px; box-shadow: 0 3px 14px rgba(0,0,0,0.35); position: relative; overflow: hidden; }
+  .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 1.5px; }
+
+  /* 大卡片 */
+  .large-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .large-card { padding: 16px 16px 16px 24px; }
+  .large-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .large-card .name { font-size: 18px; font-weight: bold; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }
+  .large-card .recipe { color: #6B7280; font-size: 12px; margin-bottom: 12px; }
+  .large-card .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .large-card .kpi-item .label { font-size: 11px; color: #6B7280; margin: 0 0 4px; border: 0; padding: 0; text-transform: none; letter-spacing: 0; }
+  .large-card .kpi-item .val { font-size: 22px; font-weight: bold; }
+  .large-card .kpi-item .val.small { font-size: 18px; }
+  .large-card .kpi-item .sub { font-size: 13px; margin-left: 6px; }
+
+  /* 中卡片 */
+  .medium-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+  .medium-card { width: 240px; padding: 12px 12px 12px 20px; }
+  .medium-card .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .medium-card .name { font-size: 15px; font-weight: bold; }
+  .medium-card .badge { padding: 1px 6px; border-radius: 8px; font-size: 10px; }
+  .medium-card .row { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+  .medium-card .row .label { font-size: 10px; color: #6B7280; margin: 0; border: 0; padding: 0; text-transform: none; letter-spacing: 0; }
+  .medium-card .row .val { font-size: 18px; font-weight: bold; }
+  .medium-card .prod .label { font-size: 10px; color: #6B7280; margin: 0; border: 0; padding: 0; text-transform: none; letter-spacing: 0; }
+  .medium-card .prod .val { font-size: 15px; font-weight: bold; }
+  .medium-card .prod .sub { font-size: 12px; color: #F87171; margin-left: 6px; }
+
+  /* 表格 */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { font-size: 12px; font-weight: bold; color: #9CA3AF; text-align: left; padding: 4px 6px; }
+  .table td { font-size: 13px; padding: 4px 6px; color: #E5E7EB; }
+  .table .row-bg { background: #212834; border-radius: 2px; }
+  .table .status-cell { display: flex; align-items: center; gap: 4px; }
+  .table .status-cell .dot { width: 6px; height: 6px; }
+  .table .name-cell { font-weight: normal; }
+  .table .recipe-cell { color: #6B7280; }
+
+  /* 颜色 */
+  .oee-good { color: #34D399; }
+  .oee-warn { color: #FBBF24; }
+  .oee-bad { color: #F87171; }
+</style>
+</head>
+<body>
+
+<div class="title-bar">
+  <span class="icon">🏭</span>
+  <h1>产线总览</h1>
+  <div class="divider"></div>
+  <span class="count">共 3 台设备</span>
+</div>
+
+<!-- 顶部汇总 KPI 条 -->
+<div class="kpi-row">
+  <div class="kpi-box">
+    <div class="label">运行</div>
+    <div class="value green-bg"><span class="dot"></span><span class="green">2</span></div>
+  </div>
+  <div class="kpi-box">
+    <div class="label">报警中</div>
+    <div class="value red-bg"><span class="dot"></span><span class="red">1</span></div>
+  </div>
+  <div class="kpi-box">
+    <div class="label">暂停 / 待机</div>
+    <div class="value yellow-bg"><span class="dot"></span><span class="yellow">0 / </span><span class="gray">0</span></div>
+  </div>
+  <div class="kpi-box">
+    <div class="label">总产量</div>
+    <div class="value"><span>3,644</span><span class="sub red" style="font-size:11px;align-self:flex-end;">不良 67</span></div>
+  </div>
+  <div class="kpi-box">
+    <div class="label">整体合格率</div>
+    <div class="value green">98.2%</div>
+  </div>
+  <div class="kpi-box">
+    <div class="label">加权 OEE</div>
+    <div class="value green">87%</div>
+  </div>
+</div>
+
+<!-- ===== 大卡片布局 (1-4 设备) ===== -->
+<div class="label">布局 1：大卡片（1-4 台设备，2×2 网格）</div>
+<div class="large-grid">
+  <!-- 设备 A -->
+  <div class="card large-card">
+    <div class="stripe" style="background:#34D399;"></div>
+    <div class="head">
+      <span class="name">设备 A - 注塑机</span>
+      <span class="badge" style="background:#34D399;">运行</span>
+    </div>
+    <div class="recipe">配方: 手机壳-黑色</div>
+    <div class="kpi-grid">
+      <div class="kpi-item">
+        <div class="label">OEE</div>
+        <div class="val oee-good">91%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">合格率</div>
+        <div class="val green">99.5%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">产量 / 不良</div>
+        <div><span class="val small">1,234</span><span class="sub red">/12</span></div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">运行 / 报警</div>
+        <div><span class="val small green">5h 30m</span><span class="sub red">0m</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- 设备 B (报警) -->
+  <div class="card large-card" style="border-color:#F87171;">
+    <div class="stripe" style="background:#F87171;"></div>
+    <div class="head">
+      <span class="name">设备 B - 组装线</span>
+      <span class="badge" style="background:#F87171;">报警</span>
+    </div>
+    <div class="recipe">配方: PCBA-主板V2</div>
+    <div class="kpi-grid">
+      <div class="kpi-item">
+        <div class="label">OEE</div>
+        <div class="val oee-bad">52%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">合格率</div>
+        <div class="val oee-bad">94.7%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">产量 / 不良</div>
+        <div><span class="val small">890</span><span class="sub red">/47</span></div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">运行 / 报警</div>
+        <div><span class="val small green">4h 10m</span><span class="sub red">20m</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- 设备 C -->
+  <div class="card large-card">
+    <div class="stripe" style="background:#34D399;"></div>
+    <div class="head">
+      <span class="name">设备 C - 检测机</span>
+      <span class="badge" style="background:#34D399;">运行</span>
+    </div>
+    <div class="recipe">配方: 外观检测-通用</div>
+    <div class="kpi-grid">
+      <div class="kpi-item">
+        <div class="label">OEE</div>
+        <div class="val oee-good">95%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">合格率</div>
+        <div class="val green">99.9%</div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">产量 / 不良</div>
+        <div><span class="val small">1,520</span><span class="sub red">/8</span></div>
+      </div>
+      <div class="kpi-item">
+        <div class="label">运行 / 报警</div>
+        <div><span class="val small green">5h 35m</span><span class="sub red">0m</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 中卡片布局 (5-8 设备) ===== -->
+<div class="label">布局 2：中卡片（5-8 台设备，WrapPanel 自适应换行）</div>
+<div class="medium-grid">
+  <div class="card medium-card">
+    <div class="stripe" style="background:#34D399;"></div>
+    <div class="head"><span class="name">设备 A</span><span class="badge" style="background:#34D399;">运行</span></div>
+    <div class="row">
+      <div><div class="label">OEE</div><div class="val oee-good">91%</div></div>
+      <div><div class="label">合格率</div><div class="val green">99%</div></div>
+    </div>
+    <div class="prod"><div class="label">产量</div><div><span class="val">1,234</span><span class="sub">不良 12</span></div></div>
+  </div>
+  <div class="card medium-card" style="border-color:#F87171;">
+    <div class="stripe" style="background:#F87171;"></div>
+    <div class="head"><span class="name">设备 B</span><span class="badge" style="background:#F87171;">报警</span></div>
+    <div class="row">
+      <div><div class="label">OEE</div><div class="val oee-bad">52%</div></div>
+      <div><div class="label">合格率</div><div class="val oee-bad">95%</div></div>
+    </div>
+    <div class="prod"><div class="label">产量</div><div><span class="val">890</span><span class="sub">不良 47</span></div></div>
+  </div>
+  <div class="card medium-card">
+    <div class="stripe" style="background:#34D399;"></div>
+    <div class="head"><span class="name">设备 C</span><span class="badge" style="background:#34D399;">运行</span></div>
+    <div class="row">
+      <div><div class="label">OEE</div><div class="val oee-good">95%</div></div>
+      <div><div class="label">合格率</div><div class="val green">99%</div></div>
+    </div>
+    <div class="prod"><div class="label">产量</div><div><span class="val">1,520</span><span class="sub">不良 8</span></div></div>
+  </div>
+  <div class="card medium-card">
+    <div class="stripe" style="background:#FBBF24;"></div>
+    <div class="head"><span class="name">设备 D</span><span class="badge" style="background:#FBBF24;">暂停</span></div>
+    <div class="row">
+      <div><div class="label">OEE</div><div class="val oee-warn">68%</div></div>
+      <div><div class="label">合格率</div><div class="val oee-warn">97%</div></div>
+    </div>
+    <div class="prod"><div class="label">产量</div><div><span class="val">560</span><span class="sub">不良 15</span></div></div>
+  </div>
+  <div class="card medium-card">
+    <div class="stripe" style="background:#9CA3AF;"></div>
+    <div class="head"><span class="name">设备 E</span><span class="badge" style="background:#9CA3AF;">待机</span></div>
+    <div class="row">
+      <div><div class="label">OEE</div><div class="val gray">—</div></div>
+      <div><div class="label">合格率</div><div class="val gray">—</div></div>
+    </div>
+    <div class="prod"><div class="label">产量</div><div><span class="val gray">0</span></div></div>
+  </div>
+</div>
+
+<!-- ===== 表格布局 (9+ 设备) ===== -->
+<div class="label">布局 3：紧凑表格（9+ 台设备，一行一设备）</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th style="width:70px;">状态</th>
+      <th>设备名</th>
+      <th style="width:120px;">配方</th>
+      <th style="width:70px;">OEE</th>
+      <th style="width:70px;">合格率</th>
+      <th style="width:80px;">OK 产量</th>
+      <th style="width:60px;">不良</th>
+      <th style="width:80px;">运行时长</th>
+      <th style="width:70px;">报警时长</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="row-bg">
+      <td><div class="status-cell"><span class="dot" style="background:#34D399;"></span>运行</div></td>
+      <td class="name-cell">设备 A - 注塑机</td>
+      <td class="recipe-cell">手机壳-黑色</td>
+      <td class="oee-good" style="font-weight:bold;">91%</td>
+      <td class="green">99.5%</td>
+      <td>1,234</td>
+      <td class="red">12</td>
+      <td class="green">5h 30m</td>
+      <td class="red">0m</td>
+    </tr>
+    <tr class="row-bg">
+      <td><div class="status-cell"><span class="dot" style="background:#F87171;"></span>报警</div></td>
+      <td class="name-cell">设备 B - 组装线</td>
+      <td class="recipe-cell">PCBA-主板V2</td>
+      <td class="oee-bad" style="font-weight:bold;">52%</td>
+      <td class="oee-bad">94.7%</td>
+      <td>890</td>
+      <td class="red">47</td>
+      <td class="green">4h 10m</td>
+      <td class="red">20m</td>
+    </tr>
+    <tr class="row-bg">
+      <td><div class="status-cell"><span class="dot" style="background:#34D399;"></span>运行</div></td>
+      <td class="name-cell">设备 C - 检测机</td>
+      <td class="recipe-cell">外观检测-通用</td>
+      <td class="oee-good" style="font-weight:bold;">95%</td>
+      <td class="green">99.9%</td>
+      <td>1,520</td>
+      <td class="red">8</td>
+      <td class="green">5h 35m</td>
+      <td class="red">0m</td>
+    </tr>
+    <tr class="row-bg">
+      <td><div class="status-cell"><span class="dot" style="background:#FBBF24;"></span>暂停</div></td>
+      <td class="name-cell">设备 D - 包装机</td>
+      <td class="recipe-cell">标准包装</td>
+      <td class="oee-warn" style="font-weight:bold;">68%</td>
+      <td class="oee-warn">97.3%</td>
+      <td>560</td>
+      <td class="red">15</td>
+      <td class="green">3h 50m</td>
+      <td class="red">5m</td>
+    </tr>
+    <tr class="row-bg">
+      <td><div class="status-cell"><span class="dot" style="background:#9CA3AF;"></span>待机</div></td>
+      <td class="name-cell">设备 E - 激光打标</td>
+      <td class="recipe-cell">—</td>
+      <td class="gray">—</td>
+      <td class="gray">—</td>
+      <td class="gray">0</td>
+      <td class="gray">0</td>
+      <td class="gray">0m</td>
+      <td class="gray">0m</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
