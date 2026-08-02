@@ -263,3 +263,37 @@ body {
 @media (min-width: 1100px) {
     .grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ──────────── 状态语义类（收敛 razor 行内色，与调色板变量同源） ──────────── */
+
+.status-badge.run { color: var(--green); border-color: var(--green); background: rgba(52, 211, 153, 0.13); }
+.status-badge.alarm { color: var(--red); border-color: var(--red); background: rgba(248, 113, 113, 0.13); }
+.status-badge.paused { color: var(--yellow); border-color: var(--yellow); background: rgba(251, 191, 36, 0.13); }
+.status-badge.idle { color: var(--gray); border-color: var(--gray); background: rgba(156, 163, 175, 0.13); }
+
+.status-badge.wo-running { color: var(--green); border-color: var(--green); background: rgba(52, 211, 153, 0.13); }
+.status-badge.wo-pending { color: var(--yellow); border-color: var(--yellow); background: rgba(251, 191, 36, 0.13); }
+.status-badge.wo-completed { color: var(--gray); border-color: var(--gray); background: rgba(156, 163, 175, 0.13); }
+.status-badge.wo-aborted { color: var(--red); border-color: var(--red); background: rgba(248, 113, 113, 0.13); }
+
+.sum-item.run { color: var(--green); }
+.sum-item.alarm { color: var(--red); }
+.sum-item.paused { color: var(--yellow); }
+.sum-item.idle { color: var(--gray); }
+
+.kpi-value.run { color: var(--green); }
+.kpi-value.alarm { color: var(--red); }
+.kpi-value.paused { color: var(--yellow); }
+
+.time-bar .seg.run { background: var(--green); }
+.time-bar .seg.alarm { background: var(--red); }
+.time-bar .seg.paused { background: var(--yellow); }
+.time-bar .seg.ok { background: var(--green); }
+.time-bar .seg.ng { background: var(--red); }
+.time-bar .seg.wo { background: var(--green); }
+.time-bar .seg.shift { background: #378ADD; }
+
+.lvl-high { background: var(--red); }
+.lvl-medium { background: var(--yellow); }
+.lvl-low { background: var(--gray); }
+

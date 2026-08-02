@@ -1,6 +1,7 @@
 @page "/"
 @implements IDisposable
 @inject DashboardState Dashboard
+@inject IJSRuntime JS
 
 <div class="dashboard">
     <header class="topbar">
@@ -29,10 +30,10 @@
     else
     {
         <div class="summary-bar">
-            <span class="sum-item" style="color:#34D399"><span class="dot"></span>运行 <b>@Dashboard.StatusSummary.Running</b></span>
-            <span class="sum-item" style="color:#F87171"><span class="dot"></span>报警 <b>@Dashboard.StatusSummary.Alarm</b></span>
-            <span class="sum-item" style="color:#FBBF24"><span class="dot"></span>暂停 <b>@Dashboard.StatusSummary.Paused</b></span>
-            <span class="sum-item" style="color:#9CA3AF"><span class="dot"></span>待机 <b>@Dashboard.StatusSummary.Idle</b></span>
+            <span class="sum-item run"><span class="dot"></span>运行 <b>@Dashboard.StatusSummary.Running</b></span>
+            <span class="sum-item alarm"><span class="dot"></span>报警 <b>@Dashboard.StatusSummary.Alarm</b></span>
+            <span class="sum-item paused"><span class="dot"></span>暂停 <b>@Dashboard.StatusSummary.Paused</b></span>
+            <span class="sum-item idle"><span class="dot"></span>待机 <b>@Dashboard.StatusSummary.Idle</b></span>
             <span class="sum-item">设备 <b>@Dashboard.DeviceCount</b></span>
         </div>
     }
@@ -51,17 +52,17 @@
                 <div class="card-title">设备状态</div>
                 <div class="dev-head">
                     <span class="dev-name">@SelectedSnapshot.DeviceName</span>
-                    <span class="status-badge" style="@StatusStyle">@Status.Text</span>
+                    <span class="status-badge @Status.Class">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div><span class="kpi-label">运行</span><span class="kpi-value" style="color:#34D399">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
-                    <div><span class="kpi-label">报警</span><span class="kpi-value" style="color:#F87171">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
-                    <div><span class="kpi-label">暂停</span><span class="kpi-value" style="color:#FBBF24">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
+                    <div><span class="kpi-label">运行</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
+                    <div><span class="kpi-label">报警</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
+                    <div><span class="kpi-label">暂停</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
                 </div>
                 <div class="time-bar">
-                    <div class="seg" style="width:@RunRatio%;background:#34D399"></div>
-                    <div class="seg" style="width:@AlarmRatio%;background:#F87171"></div>
-                    <div class="seg" style="width:@PauseRatio%;background:#FBBF24"></div>
+                    <div class="seg run" style="width:@RunRatio%"></div>
+                    <div class="seg alarm" style="width:@AlarmRatio%"></div>
+                    <div class="seg paused" style="width:@PauseRatio%"></div>
                 </div>
                 <div class="meta-line">状态字 0x@(SelectedSnapshot.StatusWord.ToString("X4")) · 目标 @SelectedSnapshot.TargetCycle 件/h</div>
             </section>
@@ -94,7 +95,7 @@
                         @foreach (var a in SelectedSnapshot.ActiveAlarms)
                         {
                             <div class="alarm-item">
-                                <span class="lvl-dot" style="background:@LevelColor(a.Level)"></span>
+                                <span class="lvl-dot @LevelClass(a.Level)"></span>
                                 <span class="alarm-name">@a.Name</span>
                                 <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
                             </div>
@@ -127,8 +128,8 @@
                     </div>
                 </div>
                 <div class="time-bar">
-                    <div class="seg" style="width:@OkRatio%;background:#34D399"></div>
-                    <div class="seg" style="width:@NgRatio%;background:#F87171"></div>
+                    <div class="seg ok" style="width:@OkRatio%"></div>
+                    <div class="seg ng" style="width:@NgRatio%"></div>
                 </div>
                 <div class="meta-line">合格率 @Pct(SelectedSnapshot.QualityRate) · 不良率 @NgRateText</div>
             </section>
@@ -143,12 +144,12 @@
                 {
                     <div class="dev-head">
                         <span class="dev-name">@CurrentWorkOrder.OrderNo</span>
-                        <span class="status-badge" style="@WoStatusStyle">@WoStatusText</span>
+                        <span class="status-badge @WoStatusClass">@WoStatusText</span>
                     </div>
                     <div class="wo-product">@CurrentWorkOrder.ProductCode · @CurrentWorkOrder.ProductName</div>
                     <div class="wo-progress-text">@WoProgressText</div>
                     <div class="time-bar">
-                        <div class="seg" style="width:@WoProgressRatio%;background:#34D399"></div>
+                        <div class="seg wo" style="width:@WoProgressRatio%"></div>
                     </div>
                     <div class="meta-line">计划 @CurrentWorkOrder.TargetQuantity.ToString("N0") 件</div>
                 }
@@ -182,7 +183,7 @@
                         <span class="kpi-value">@Dashboard.ShiftProgress.Pct</span>
                     </div>
                     <div class="time-bar">
-                        <div class="seg" style="width:@(Dashboard.ShiftProgress.Ratio * 100)%;background:#378ADD"></div>
+                        <div class="seg shift" style="width:@(Dashboard.ShiftProgress.Ratio * 100)%"></div>
                     </div>
                     <div class="duration-row">
                         <div><span class="kpi-label">已运行</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
@@ -211,17 +212,30 @@
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
 
+    private const string DevicePreferenceKey = "kanban.selected-device";
+
     /// <summary>
-    /// 当前选中设备。未手动选择时默认第一台（避免初次进入提示"未选择设备"）。
-    /// getter 兜底：快照数据到达后无需手动操作，自动呈现第一台设备。
+    /// 当前选中设备。未手动选择时默认第一台；选择持久化到 localStorage（刷新/重进保留）。
+    /// getter 兜底：存储的设备已不存在或快照未到时，自动回退第一台。
     /// </summary>
     private string? SelectedDeviceId
     {
-        get => _selectedDeviceId ?? Dashboard.Snapshots.FirstOrDefault()?.DeviceId;
+        get
+        {
+            var snaps = Dashboard.Snapshots;
+            if (snaps.Count == 0) return null;
+            if (_selectedDeviceId is not null && snaps.Any(s => s.DeviceId == _selectedDeviceId))
+                return _selectedDeviceId;
+            return snaps[0].DeviceId;
+        }
         set
         {
             if (_selectedDeviceId != value)
+            {
                 _selectedDeviceId = value;
+                // 持久化选中设备（fire-and-forget；localStorage 同步极快）
+                _ = JS.InvokeVoidAsync("localStorage.setItem", DevicePreferenceKey, value);
+            }
         }
     }
 
@@ -233,6 +247,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // 恢复上次选中的设备（localStorage 持久化）
+        try
+        {
+            _selectedDeviceId = await JS.InvokeAsync<string?>("localStorage.getItem", DevicePreferenceKey);
+        }
+        catch (Exception)
+        {
+            // localStorage 不可用（隐私模式等）时静默忽略，回退默认第一台
+        }
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
         // 渲染节流：2s 统一重渲染（推送 500ms 只更新内存，避免 render tree 高频 diff）
         _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTick), null, 2000, 2000);
@@ -253,19 +276,16 @@
         GC.SuppressFinalize(this);
     }
 
-    // ──────────── 展示辅助（纯快照数据换算，无本地计算） ────────────
+    // ──────────── 展示辅助（纯快照数据换算，无本地计算；颜色走 CSS 语义类） ────────────
 
-    private (string Text, string Color) Status
+    private (string Text, string Class) Status
         => SelectedSnapshot?.Status switch
         {
-            DeviceStatus.Running => ("运行", "#34D399"),
-            DeviceStatus.Alarm => ("报警", "#F87171"),
-            DeviceStatus.Paused => ("暂停", "#FBBF24"),
-            _ => ("待机", "#9CA3AF"),
+            DeviceStatus.Running => ("运行", "run"),
+            DeviceStatus.Alarm => ("报警", "alarm"),
+            DeviceStatus.Paused => ("暂停", "paused"),
+            _ => ("待机", "idle"),
         };
-
-    private string StatusStyle
-        => $"color:{Status.Color};border-color:{Status.Color};background:{Status.Color}22";
 
     private string WoStatusText => CurrentWorkOrder?.Status switch
     {
@@ -275,15 +295,13 @@
         _ => "待开始",
     };
 
-    private string WoStatusColor => CurrentWorkOrder?.Status switch
+    private string WoStatusClass => CurrentWorkOrder?.Status switch
     {
-        WorkOrderStatus.Running => "#34D399",
-        WorkOrderStatus.Completed => "#9CA3AF",
-        WorkOrderStatus.Aborted => "#F87171",
-        _ => "#FBBF24",
+        WorkOrderStatus.Running => "wo-running",
+        WorkOrderStatus.Completed => "wo-completed",
+        WorkOrderStatus.Aborted => "wo-aborted",
+        _ => "wo-pending",
     };
-
-    private string WoStatusStyle => $"color:{WoStatusColor};border-color:{WoStatusColor};background:{WoStatusColor}22";
 
     /// <summary>工单进度：Running 工单用当前 OK 产量/目标；Pending 显示 "0 / 目标"。</summary>
     private string WoProgressText
@@ -382,10 +400,10 @@
         return total > 0 ? Math.Clamp(100.0 * value / total, 0, 100) : 0;
     }
 
-    private static string LevelColor(AlarmLevel level) => level switch
+    private static string LevelClass(AlarmLevel level) => level switch
     {
-        AlarmLevel.High => "#F87171",
-        AlarmLevel.Medium => "#FBBF24",
-        _ => "#9CA3AF",
+        AlarmLevel.High => "lvl-high",
+        AlarmLevel.Medium => "lvl-medium",
+        _ => "lvl-low",
     };
 }
