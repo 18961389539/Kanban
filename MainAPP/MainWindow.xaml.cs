@@ -23,7 +23,6 @@ public partial class MainWindow : Window
     private WindowStyle _windowStyleBeforeFullscreen;
     private ResizeMode _resizeModeBeforeFullscreen;
     private WindowState _windowStateBeforeFullscreen;
-    private bool _topmostBeforeFullscreen;
     private double _leftBeforeFullscreen;
     private double _topBeforeFullscreen;
     private double _widthBeforeFullscreen;
@@ -99,7 +98,6 @@ public partial class MainWindow : Window
         _windowStyleBeforeFullscreen = WindowStyle;
         _resizeModeBeforeFullscreen = ResizeMode;
         _windowStateBeforeFullscreen = WindowState;
-        _topmostBeforeFullscreen = Topmost;
         _leftBeforeFullscreen = Left;
         _topBeforeFullscreen = Top;
         _widthBeforeFullscreen = Width;
@@ -112,7 +110,6 @@ public partial class MainWindow : Window
         WindowState = WindowState.Normal;
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
-        Topmost = true;
         Left = monitorBounds.Left;
         Top = monitorBounds.Top;
         Width = monitorBounds.Width;
@@ -126,7 +123,6 @@ public partial class MainWindow : Window
         FullscreenMenuButton.Visibility = Visibility.Collapsed;
         ResizeMode = _resizeModeBeforeFullscreen;
         WindowStyle = _windowStyleBeforeFullscreen;
-        Topmost = _topmostBeforeFullscreen;
         Left = _leftBeforeFullscreen;
         Top = _topBeforeFullscreen;
         Width = _widthBeforeFullscreen;
