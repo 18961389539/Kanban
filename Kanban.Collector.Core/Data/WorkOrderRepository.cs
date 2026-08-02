@@ -1,12 +1,12 @@
 using AutoMapper;
 using System.Collections.ObjectModel;
 using System.Windows.Data;
-using MainAPP.Entities;
-using MainAPP.Services;
+using Kanban.Core.Entities;
+using Kanban.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// 工单仓储：管理 <see cref="WorkOrder"/> 的内存集合与持久化。

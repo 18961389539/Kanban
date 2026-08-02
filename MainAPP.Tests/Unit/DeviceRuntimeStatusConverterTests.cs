@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using MainAPP.Converters;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Xunit;
 

@@ -1,6 +1,6 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public sealed record PlcRuntimeProfile(
     PlcBrand Brand,

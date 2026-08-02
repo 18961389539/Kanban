@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
-using MainAPP.Data;
+using Kanban.Core.Data;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

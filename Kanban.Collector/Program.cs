@@ -1,7 +1,8 @@
 using Kanban.Collector.Hubs;
 using Kanban.Collector.Services;
-using MainAPP.Data;
-using MainAPP.Services;
+using Kanban.Core.DependencyInjection;
+using Kanban.Core.Data;
+using Kanban.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -77,53 +78,10 @@ public static class Program
     }
 
     /// <summary>
-    /// 注册采集/存储核心服务（参照 MainAPP.AddMainAppCoreServices 的采集部分，去掉 UI/复盘/报表）。
+    /// 注册采集/存储核心服务（与 MainAPP.AddMainAppCoreServices 共享 AddKanbanDataServices 单一入口）。
     /// </summary>
     private static void RegisterCoreServices(IServiceCollection services)
-    {
-        services.AddAutoMapper(cfg => cfg.AddProfile<MainAPP.Mapping.MappingProfile>());
-        services.AddSingleton<AppSettings>();
-        services.AddSingleton<ProductionBaselineStore>();
-        services.AddSingleton<DatabaseProvider>();
-        services.AddSingleton<DeviceRepository>();
-        services.AddSingleton<WorkOrderRepository>();
-        services.AddSingleton<DefectHistoryStore>();
-        services.AddSingleton<ISharedPlcDriverFactory, HslSharedPlcDriverFactory>();
-        services.AddSingleton<IPlcAddressCodecResolver, PlcAddressCodecResolver>();
-        services.AddSingleton<IPlcRuntimeProfileProvider, PlcRuntimeProfileProvider>();
-        services.AddSingleton<SharedPlcDriverRouter>();
-        services.AddSingleton<IPlcDriver>(sp => sp.GetRequiredService<SharedPlcDriverRouter>());
-        services.AddSingleton<PlcConnectionManager>();
-        services.AddSingleton<IDeviceAdapter, PlcDeviceAdapter>();
-        services.AddSingleton<IDeviceAdapterResolver, DeviceAdapterResolver>();
-        services.AddSingleton<ProductionHistoryWriter>();
-        services.AddSingleton<HistoryService>();
-        services.AddSingleton<IProductionHistoryWriter>(sp => sp.GetRequiredService<ProductionHistoryWriter>());
-        services.AddSingleton<ProductionHistoryStore>();
-        services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<ProductionHistoryStore>());
-        services.AddSingleton<AlarmHistoryStore>();
-        services.AddSingleton<IAlarmHistoryService>(sp => sp.GetRequiredService<AlarmHistoryStore>());
-        services.AddSingleton<StatusTransitionHistoryStore>();
-        services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<StatusTransitionHistoryStore>());
-        services.AddSingleton<HistoryStorageDiagnostics>();
-        services.AddSingleton<IHistoryService>(sp => sp.GetRequiredService<HistoryService>());
-        services.AddSingleton<PlcDataAcquisitionService>(sp => new PlcDataAcquisitionService(
-            sp.GetRequiredService<IPlcDriver>(),
-            sp.GetRequiredService<PlcConnectionManager>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<IProductionHistoryWriter>(),
-            sp.GetRequiredService<IAlarmHistoryService>(),
-            sp.GetRequiredService<IStatusTransitionHistoryService>(),
-            sp.GetRequiredService<DeviceRepository>(),
-            sp.GetRequiredService<ProductionBaselineStore>(),
-            sp.GetRequiredService<ILogger<PlcDataAcquisitionService>>(),
-            sp.GetRequiredService<IDeviceAdapterResolver>(),
-            sp.GetRequiredService<WorkOrderRepository>(),
-            sp.GetRequiredService<IAlarmNotificationChannel>(),
-            sp.GetRequiredService<DefectHistoryStore>()));
-        services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
-        services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();
-    }
+        => services.AddKanbanDataServices();
 }
 
 /// <summary>

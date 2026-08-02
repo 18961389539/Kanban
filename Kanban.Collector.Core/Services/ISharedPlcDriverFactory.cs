@@ -1,7 +1,7 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>为当前应用创建唯一的共享 PLC 驱动；所有设备复用该实例。</summary>
 public interface ISharedPlcDriverFactory

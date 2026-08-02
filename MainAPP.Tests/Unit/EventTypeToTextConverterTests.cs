@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Windows.Data;
 using MainAPP.Converters;
-using MainAPP.Entities;
+using Kanban.Core.Entities;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;

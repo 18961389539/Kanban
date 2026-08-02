@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -6,7 +6,8 @@ using LicenseManager.Models;
 using LicenseManager.Services;
 using LicenseManager.ViewModels;
 using LicenseManager.Views;
-using MainAPP.Data;
+using Kanban.Core.Data;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -125,7 +126,7 @@ public partial class App : Application
             var startupCoordinator = _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>();
 
             // 加载轻量配置 + 设备数据（均在本线程，避免跨线程修改绑定的 ObservableCollection）
-            var appSettings = _host.Services.GetRequiredService<Services.AppSettings>();
+            var appSettings = _host.Services.GetRequiredService<AppSettings>();
             appSettings.Load();
             Log("AppSettings.Load 完成");
             // 大屏远距可读性：按保存的字号缩放（默认 100%）应用全局语义字号资源。
@@ -133,7 +134,7 @@ public partial class App : Application
             FontSizeManager.ApplyScale(appSettings.UiScale);
             Log($"全局字号缩放应用完成 (UiScale={appSettings.UiScale})");
             // 加载产量基线（原寄居 AppSettings，现归位于 ProductionBaselineStore）
-            var baselineStore = _host.Services.GetRequiredService<Services.ProductionBaselineStore>();
+            var baselineStore = _host.Services.GetRequiredService<ProductionBaselineStore>();
             baselineStore.Load();
             Log("ProductionBaselineStore.Load 完成");
 
@@ -174,13 +175,13 @@ public partial class App : Application
             // 否则 ViewModel 在 Loaded/Dispatcher.BeginInvoke 中立即查询会命中空库，
             // 抛出 "no such table: AlarmEvents/StatusTransitions/ProductionLogs"。
             // 不使用 EnsureDeleted（会清空历史数据），启动时通过 EF Core Migrate 增量更新 schema。
-            var dbProvider = _host.Services.GetRequiredService<Data.DatabaseProvider>();
+            var dbProvider = _host.Services.GetRequiredService<Kanban.Core.Data.DatabaseProvider>();
             dbProvider.EnsureCreatedAll();
             dbProvider.EnsureWalModeEnabled();
             Log("四库 EF Core Migrate + WAL 完成 (Show 前)");
 
             // 工单仓储启动期加载：在 EnsureCreatedAll 之后（schema 已就绪）
-            var workOrderRepo = _host.Services.GetRequiredService<Data.WorkOrderRepository>();
+            var workOrderRepo = _host.Services.GetRequiredService<Kanban.Core.Data.WorkOrderRepository>();
             workOrderRepo.LoadAll();
             Log("WorkOrderRepository.LoadAll 完成");
 
@@ -267,10 +268,10 @@ public partial class App : Application
         {
             // 退出全程用 try/catch/finally 保护：任何步骤抛异常都不能阻断 base.OnExit 与互斥锁释放，
             // 否则 Host 托管资源泄漏、互斥锁残留导致下次启动误判为"已存在实例"。
-            var dataMode = _host.Services.GetRequiredService<Services.AppSettings>().DataMode;
+            var dataMode = _host.Services.GetRequiredService<AppSettings>().DataMode;
 
             // Remote 模式：释放 Collector 连接，不执行本地采集停止（本地采集未启动）
-            if (dataMode == Services.KanbanDataMode.Remote)
+            if (dataMode == KanbanDataMode.Remote)
             {
                 try
                 {
@@ -289,7 +290,7 @@ public partial class App : Application
                 // StopAsync 会写入离线状态转换记录，避免停机时段被算进上一状态导致重启后 OEE 历史虚高。
                 try
                 {
-                    await _host.Services.GetRequiredService<Services.PlcDataAcquisitionService>().StopAsync();
+                    await _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync();
                 }
                 catch (Exception ex)
                 {
@@ -317,7 +318,7 @@ public partial class App : Application
             }
             try
             {
-                _host.Services.GetRequiredService<Services.AppSettings>().Save();
+                _host.Services.GetRequiredService<AppSettings>().Save();
             }
             catch (Exception ex)
             {
@@ -327,7 +328,7 @@ public partial class App : Application
             // P0-3：HistoryService.Dispose 改用 DisposeAsync，避免在 UI 线程同步阻塞最多 3 秒
             try
             {
-                await _host.Services.GetRequiredService<Services.HistoryService>().DisposeAsync();
+                await _host.Services.GetRequiredService<HistoryService>().DisposeAsync();
             }
             catch (Exception ex)
             {
@@ -361,7 +362,7 @@ public partial class App : Application
             foreach (var disposable in new object?[]
             {
                 _host.Services.GetService<ViewModels.HomeViewModel>(),
-                _host.Services.GetService<Services.IPlcDriver>(), // HslPlcDriver：释放 PLC socket
+                _host.Services.GetService<IPlcDriver>(), // HslPlcDriver：释放 PLC socket
             })
             {
                 if (disposable is IDisposable d)

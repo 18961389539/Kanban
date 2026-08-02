@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using MainAPP.Data;
+using Kanban.Core.Data;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

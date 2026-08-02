@@ -2,7 +2,9 @@
 using System.IO;
 using System.Windows;
 using LicenseManager.Services;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.DependencyInjection;

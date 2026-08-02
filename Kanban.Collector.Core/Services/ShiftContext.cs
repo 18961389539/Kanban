@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 班次上下文：拥有 <see cref="_currentShiftId"/> 与 <see cref="_lastShiftSummaries"/> 及其专用锁。职责：

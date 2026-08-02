@@ -1,8 +1,10 @@
 ﻿using System.IO;
 using System.Windows;
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using Xunit;

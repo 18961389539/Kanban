@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal sealed record PlcBatchReadPlanGroup(
     IDeviceAdapter Adapter,

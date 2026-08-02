@@ -2,7 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Xunit;
 

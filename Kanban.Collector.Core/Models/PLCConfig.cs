@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace MainAPP.Models;
+namespace Kanban.Core.Models;
 
 public enum PlcBrand
 {

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using MainAPP.Entities;
-using MainAPP.Models;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 报警状态追踪器：拥有 <see cref="_prevAlarmStates"/> 与 <see cref="_shiftChangeFailedAlarms"/>

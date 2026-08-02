@@ -1,6 +1,6 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 设备连接生命周期抽象。采集业务只需要通过适配器读写，连接管理不应绑定 PLC 类型。

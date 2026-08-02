@@ -1,3 +1,7 @@
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -5,6 +9,7 @@ using System.Linq;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Kanban.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Services;

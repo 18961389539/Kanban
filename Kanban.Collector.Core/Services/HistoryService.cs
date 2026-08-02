@@ -1,10 +1,10 @@
-using MainAPP.Data;
-using MainAPP.Entities;
-using MainAPP.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public sealed record HistoryDiagnosticsSnapshot
 {

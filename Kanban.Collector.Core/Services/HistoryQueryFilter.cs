@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal static class HistoryQueryFilter
 {

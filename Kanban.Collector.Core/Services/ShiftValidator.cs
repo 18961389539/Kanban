@@ -1,6 +1,6 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 班次配置校验器（纯函数，无副作用，便于单元测试）。

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using Kanban.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Controls;

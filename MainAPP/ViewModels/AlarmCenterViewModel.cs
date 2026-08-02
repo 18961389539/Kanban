@@ -4,10 +4,12 @@ using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using MainAPP.Helpers;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Serilog;
 

@@ -5,6 +5,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.ComponentModel;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using Serilog;

@@ -1,4 +1,6 @@
-﻿using MainAPP.Services;
+﻿using Kanban.Core.Services;
+using MainAPP.Services;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Xunit;
 
@@ -95,8 +97,8 @@ public sealed class PlcBatchReadPlannerTests
     [Fact]
     public void Plan_SiemensDWord_UsesCodecAndFourByteStride()
     {
-        var settings = new MainAPP.Services.AppSettings();
-        settings.PlcConfig.Brand = MainAPP.Models.PlcBrand.Siemens;
+        var settings = new AppSettings();
+        settings.PlcConfig.Brand = Kanban.Core.Models.PlcBrand.Siemens;
         var codec = new PlcAddressCodecResolver(settings).Current;
 
         var blocks = PlcBatchReadPlanner.Plan(

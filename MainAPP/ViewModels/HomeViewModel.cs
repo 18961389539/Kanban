@@ -1,13 +1,15 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.Helpers;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
 
@@ -593,7 +595,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void CheckWorkOrderCompletionTarget()
     {
         if (_dialog == null || CurrentWorkOrder == null) return;
-        if (CurrentWorkOrder.Status != Entities.WorkOrderStatus.Running) return;
+        if (CurrentWorkOrder.Status != Kanban.Core.Entities.WorkOrderStatus.Running) return;
         if (_notifiedWorkOrderIds.Contains(CurrentWorkOrder.Id)) return;
         var produced = TotalOkProduction;
         if (CurrentWorkOrder.TargetQuantity > 0 && produced >= CurrentWorkOrder.TargetQuantity)

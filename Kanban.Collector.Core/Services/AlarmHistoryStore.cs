@@ -1,9 +1,9 @@
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryStore> logger) : IAlarmHistoryService
 {

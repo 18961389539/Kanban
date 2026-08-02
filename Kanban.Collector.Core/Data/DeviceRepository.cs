@@ -4,11 +4,11 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Data;
-using MainAPP.Models;
-using MainAPP.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Services;
 using Serilog;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// 设备仓储（DI 单例）：封装内存设备列表的访问与持久化操作。

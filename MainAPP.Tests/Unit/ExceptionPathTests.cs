@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using AutoMapper;
-using MainAPP.Data;
-using MainAPP.Entities;
-using MainAPP.Mapping;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Mapping;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using Microsoft.EntityFrameworkCore;

@@ -1,9 +1,9 @@
 using HslCommunication;
 using HslCommunication.Profinet.Omron;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 欧姆龙 FINS TCP 驱动。地址格式由 OmronAddressCodec 负责转换，

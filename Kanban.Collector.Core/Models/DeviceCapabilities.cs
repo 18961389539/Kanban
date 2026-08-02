@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MainAPP.Models;
+namespace Kanban.Core.Models;
 
 /// <summary>
 /// 设备可用能力。能力由当前设备配置派生，不单独持久化，避免配置状态不一致。

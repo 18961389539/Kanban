@@ -1,9 +1,9 @@
 using HslCommunication;
 using HslCommunication.Profinet.Siemens;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal sealed class HslSiemensPlcDriver : HslNetworkPlcDriver<SiemensS7Net>
 {

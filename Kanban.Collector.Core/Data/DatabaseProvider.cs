@@ -1,4 +1,4 @@
-﻿using MainAPP.Services;
+﻿using Kanban.Core.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -7,7 +7,7 @@ using Serilog;
 using System.Data.Common;
 using System.IO;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// 数据库提供者：为各历史领域分别创建独立数据库的 DbContext。

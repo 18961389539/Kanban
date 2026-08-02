@@ -1,9 +1,9 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Serilog;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// PLC 连接管理器：封装连接/断开/重连冷却期逻辑，驱动方式为外部定时调用 EnsureConnected()。

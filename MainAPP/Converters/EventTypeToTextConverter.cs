@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
-using MainAPP.Entities;
+using Kanban.Core.Entities;
 
 namespace MainAPP.Converters;
 

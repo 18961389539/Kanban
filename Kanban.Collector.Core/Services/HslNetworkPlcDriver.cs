@@ -1,9 +1,9 @@
 using HslCommunication;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 using System.Runtime.ExceptionServices;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
     where TClient : class

@@ -1,4 +1,8 @@
-using MainAPP.Entities;
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Entities;
 
 namespace MainAPP.Services;
 

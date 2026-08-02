@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 欧姆龙 FINS 地址编解码器。

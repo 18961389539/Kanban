@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace MainAPP.Models;
+namespace Kanban.Core.Models;
 
 /// <summary>
 /// 缺陷严重等级

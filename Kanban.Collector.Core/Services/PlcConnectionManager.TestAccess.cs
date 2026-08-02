@@ -1,4 +1,4 @@
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// <see cref="PlcConnectionManager"/> 的测试访问助手（partial）。

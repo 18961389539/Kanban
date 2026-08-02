@@ -1,4 +1,4 @@
-namespace MainAPP.Entities;
+namespace Kanban.Core.Entities;
 
 /// <summary>
 /// 报警事件类型：与数据库 AlarmEvents.EventType 字段（INTEGER）一一对应。

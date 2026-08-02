@@ -1,7 +1,7 @@
 using System.IO;
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public static class PlcErrorClassifier
 {

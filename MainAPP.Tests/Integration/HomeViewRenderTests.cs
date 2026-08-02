@@ -1,5 +1,7 @@
 ﻿using System.Windows;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;

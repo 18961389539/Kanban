@@ -1,10 +1,10 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using MainAPP.Data;
-using MainAPP.Entities;
-using MainAPP.Models;
-using MainAPP.Entities;
-using MainAPP.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
 using DefectSeverity = Kanban.Contracts.Enums.DefectSeverity;
@@ -111,7 +111,7 @@ public sealed class ConfigSyncHandler
                 Name = a.Name,
                 PlcAddress = a.PlcAddress,
                 Description = a.Description,
-                Level = (MainAPP.Models.AlarmLevel)a.Level,
+                Level = (Kanban.Core.Models.AlarmLevel)a.Level,
             });
         }
         foreach (var d in dto.Defects)
@@ -122,8 +122,8 @@ public sealed class ConfigSyncHandler
                 DeviceId = d.DeviceId,
                 Name = d.Name,
                 PlcAddress = d.PlcAddress,
-                Severity = (MainAPP.Models.DefectSeverity)d.Severity,
-                Category = (MainAPP.Models.DefectCategory)d.Category,
+                Severity = (Kanban.Core.Models.DefectSeverity)d.Severity,
+                Category = (Kanban.Core.Models.DefectCategory)d.Category,
             });
         }
         foreach (var c in dto.CountAlarms)
@@ -154,7 +154,7 @@ public sealed class ConfigSyncHandler
         TargetQuantity = dto.TargetQuantity,
         PlannedStart = dto.PlannedStart,
         PlannedEnd = dto.PlannedEnd,
-        Status = (MainAPP.Entities.WorkOrderStatus)dto.Status,
+        Status = (Kanban.Core.Entities.WorkOrderStatus)dto.Status,
         CompletedOkCount = dto.CompletedOkCount,
         CompletedNgCount = dto.CompletedNgCount,
         Remark = dto.Remark,

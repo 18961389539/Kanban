@@ -3,6 +3,7 @@ using System.Windows;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Kanban.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.ViewModels;

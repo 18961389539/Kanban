@@ -1,4 +1,4 @@
-namespace MainAPP.Models;
+namespace Kanban.Core.Models;
 
 /// <summary>
 /// 设备状态枚举。

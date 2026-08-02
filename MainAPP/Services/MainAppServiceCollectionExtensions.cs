@@ -1,5 +1,10 @@
-﻿using MainAPP.Data;
-using MainAPP.Mapping;
+﻿using Kanban.Core.Data;
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.DependencyInjection;
+using Kanban.Core.Mapping;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,7 +19,8 @@ public static class MainAppServiceCollectionExtensions
         this IServiceCollection services,
         AppSettings? appSettings = null)
     {
-        services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
+        // ──────────── 采集/存储核心服务（单一共享入口，与 Kanban.Collector 复用，避免漏注册） ────────────
+        services.AddKanbanDataServices(appSettings);
 
         services.AddSingleton<LicenseManager.Services.LicenseStore>();
         services.AddSingleton<LicenseManager.Services.TrialRegistryBackup>();
@@ -23,17 +29,8 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<LicenseManager.Services.LicenseGate>();
         services.AddTransient<LicenseManager.ViewModels.ActivationViewModel>();
 
-        if (appSettings == null)
-            services.AddSingleton<AppSettings>();
-        else
-            services.AddSingleton(appSettings);
-
-        services.AddSingleton<ProductionBaselineStore>();
-        services.AddSingleton<DatabaseProvider>();
-        services.AddSingleton<DeviceRepository>();
-        services.AddSingleton<WorkOrderRepository>();
+        // ──────────── 工单 / 复盘 / 报表（MainAPP 侧业务服务） ────────────
         services.AddSingleton<IWorkOrderService, WorkOrderService>();
-        services.AddSingleton<DefectHistoryStore>();
         services.AddSingleton<IProductionReviewDataService, ProductionReviewDataService>();
         services.AddSingleton<IProductionReviewMetricsService, ProductionReviewMetricsService>();
         services.AddSingleton<IProductionReviewAlarmAnalysisService, ProductionReviewAlarmAnalysisService>();
@@ -50,40 +47,6 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<IProductionReviewChartService, ProductionReviewChartService>();
         services.AddSingleton<IProductionReviewPdfService, ProductionReviewPdfService>();
         services.AddSingleton<ProductionDailyReportService>();
-        services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();
-        services.AddSingleton<ISharedPlcDriverFactory, HslSharedPlcDriverFactory>();
-        services.AddSingleton<IPlcAddressCodecResolver, PlcAddressCodecResolver>();
-        services.AddSingleton<IPlcRuntimeProfileProvider, PlcRuntimeProfileProvider>();
-        services.AddSingleton<SharedPlcDriverRouter>();
-        services.AddSingleton<IPlcDriver>(sp => sp.GetRequiredService<SharedPlcDriverRouter>());
-        services.AddSingleton<PlcConnectionManager>();
-        services.AddSingleton<IDeviceAdapter, PlcDeviceAdapter>();
-        services.AddSingleton<IDeviceAdapterResolver, DeviceAdapterResolver>();
-        services.AddSingleton<PlcDataAcquisitionService>(sp => new PlcDataAcquisitionService(
-            sp.GetRequiredService<IPlcDriver>(),
-            sp.GetRequiredService<PlcConnectionManager>(),
-            sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<IProductionHistoryWriter>(),
-            sp.GetRequiredService<IAlarmHistoryService>(),
-            sp.GetRequiredService<IStatusTransitionHistoryService>(),
-            sp.GetRequiredService<DeviceRepository>(),
-            sp.GetRequiredService<ProductionBaselineStore>(),
-            sp.GetRequiredService<ILogger<PlcDataAcquisitionService>>(),
-            sp.GetRequiredService<IDeviceAdapterResolver>(),
-            sp.GetRequiredService<WorkOrderRepository>(),
-            sp.GetRequiredService<IAlarmNotificationChannel>(),
-            sp.GetRequiredService<DefectHistoryStore>()));
-        services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
-        services.AddSingleton<ProductionHistoryWriter>();
-        services.AddSingleton<HistoryService>();
-        services.AddSingleton<IProductionHistoryWriter>(sp => sp.GetRequiredService<ProductionHistoryWriter>());
-        services.AddSingleton<ProductionHistoryStore>();
-        services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<ProductionHistoryStore>());
-        services.AddSingleton<AlarmHistoryStore>();
-        services.AddSingleton<IAlarmHistoryService>(sp => sp.GetRequiredService<AlarmHistoryStore>());
-        services.AddSingleton<StatusTransitionHistoryStore>();
-        services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<StatusTransitionHistoryStore>());
-        services.AddSingleton<HistoryStorageDiagnostics>();
         services.AddSingleton<GpuUsageMonitor>();
         services.AddSingleton<SystemResourceMonitor>();
         services.AddSingleton<IDeviceSelectionService, DeviceSelectionService>();

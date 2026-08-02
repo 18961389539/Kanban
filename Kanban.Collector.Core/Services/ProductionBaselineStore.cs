@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using Serilog;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 产量基线存储（彻底归位）：原寄居在 AppSettings 上的「按设备产量基线」现归位于本独立服务。

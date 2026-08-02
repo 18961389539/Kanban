@@ -1,4 +1,4 @@
-namespace MainAPP.Entities;
+namespace Kanban.Core.Entities;
 
 /// <summary>
 /// 生产数据快照，用于历史存储

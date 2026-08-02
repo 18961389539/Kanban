@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using System.Collections.ObjectModel;
 

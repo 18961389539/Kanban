@@ -7,7 +7,9 @@ using LicenseManager.Models;
 using LicenseManager.Services;
 using LicenseManager.ViewModels;
 using LicenseManager.Views;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.DependencyInjection;
 

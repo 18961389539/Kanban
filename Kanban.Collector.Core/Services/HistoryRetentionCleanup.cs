@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal static class HistoryRetentionCleanup
 {

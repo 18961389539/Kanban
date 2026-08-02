@@ -2,6 +2,7 @@
 using System.Windows.Media;
 using MainAPP.Converters;
 using MainAPP.Tests.Integration;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Xunit;
 

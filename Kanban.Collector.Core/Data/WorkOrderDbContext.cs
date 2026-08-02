@@ -1,8 +1,8 @@
-using MainAPP.Entities;
-using MainAPP.Services;
+using Kanban.Core.Entities;
+using Kanban.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// 工单数据库上下文（独立数据库文件 work_orders.db）。

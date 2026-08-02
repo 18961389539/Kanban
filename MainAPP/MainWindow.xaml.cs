@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using System.Windows.Threading;
 using MainAPP.ViewModels;

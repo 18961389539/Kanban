@@ -1,5 +1,5 @@
-using MainAPP.Data;
-using MainAPP.Services;
+using Kanban.Core.Data;
+using Kanban.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,4 @@
-﻿namespace MainAPP.Models;
+﻿namespace Kanban.Core.Models;
 
 public enum DeviceStatusWord
 {

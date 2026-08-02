@@ -2,8 +2,10 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using MainAPP.Data;
+using Kanban.Core.Data;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests;
 using MainAPP.Tests.Unit;

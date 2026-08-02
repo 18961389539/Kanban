@@ -1,3 +1,7 @@
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -9,7 +13,7 @@ namespace MainAPP.Models;
 /// </summary>
 public static class DeviceFilterHelper
 {
-    public static void Refresh(ObservableCollection<DeviceFilterItem> items, Data.DeviceRepository repo)
+    public static void Refresh(ObservableCollection<DeviceFilterItem> items, Kanban.Core.Data.DeviceRepository repo)
     {
         items.Clear();
         foreach (var d in repo.Devices)
@@ -20,7 +24,7 @@ public static class DeviceFilterHelper
     /// 删除设备后回退选中：若当前选中设备不再存在，选第一个（或清空）。
     /// 返回应设置的 SelectedDeviceId（null 表示清空）。
     /// </summary>
-    public static string? FallbackSelected(Data.DeviceRepository repo, string? currentId)
+    public static string? FallbackSelected(Kanban.Core.Data.DeviceRepository repo, string? currentId)
     {
         if (currentId != null && !repo.Devices.Any(d => d.Id == currentId))
             return repo.Devices.Count > 0 ? repo.Devices[0].Id : null;

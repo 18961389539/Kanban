@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Collections.ObjectModel;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;

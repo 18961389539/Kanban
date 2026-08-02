@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public sealed record HistoryStorageSnapshot(long ProductionDatabaseBytes, long ProductionWalBytes);
 

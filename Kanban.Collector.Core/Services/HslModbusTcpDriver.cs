@@ -1,9 +1,9 @@
 using HslCommunication;
 using HslCommunication.ModBus;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal sealed class HslModbusTcpDriver : HslNetworkPlcDriver<ModbusTcpNet>
 {

@@ -1,6 +1,12 @@
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using MainAPP.Data;
+using AlarmEventType = Kanban.Contracts.Enums.AlarmEventType;
+using Kanban.Core.Data;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Microsoft.Extensions.Logging;
 using System.Windows.Threading;

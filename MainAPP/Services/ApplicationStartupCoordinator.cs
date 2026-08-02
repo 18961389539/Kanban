@@ -1,6 +1,10 @@
 ﻿using System.Diagnostics;
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using System.Windows;
-using MainAPP.Data;
+using Kanban.Core.Data;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;

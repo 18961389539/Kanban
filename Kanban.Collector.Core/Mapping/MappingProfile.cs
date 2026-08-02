@@ -1,7 +1,7 @@
 using AutoMapper;
-using MainAPP.Entities;
+using Kanban.Core.Entities;
 
-namespace MainAPP.Mapping;
+namespace Kanban.Core.Mapping;
 
 /// <summary>
 /// AutoMapper 映射配置。

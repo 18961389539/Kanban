@@ -1,5 +1,5 @@
 using Kanban.Contracts.Dtos;
-using MainAPP.Services;
+using Kanban.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Services;

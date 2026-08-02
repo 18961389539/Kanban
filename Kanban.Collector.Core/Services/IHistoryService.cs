@@ -1,4 +1,4 @@
-﻿namespace MainAPP.Services;
+﻿namespace Kanban.Core.Services;
 
 /// <summary>
 /// 历史数据服务兼容门面：聚合生产、报警和状态转换三个领域接口。

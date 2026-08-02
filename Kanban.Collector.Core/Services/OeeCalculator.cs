@@ -1,7 +1,7 @@
-using MainAPP.Models;
-using MainAPP.Entities;
+using Kanban.Core.Models;
+using Kanban.Core.Entities;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// OEE（设备综合效率）计算器。

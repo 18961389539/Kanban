@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using MainAPP.Services;
+using Kanban.Core.Services;
 
-namespace MainAPP.Models;
+namespace Kanban.Core.Models;
 
 /// <summary>
 /// 设备运行时状态（纯内存，不持久化）。
@@ -64,6 +64,9 @@ public partial class DeviceRuntime : ObservableObject
     private double _pausedTime;
 
     // ──────────── OEE 计算属性 ────────────
+    // 单源约定：OEE 公式只在 OeeCalculator 实现一处（含内存注释引用 memory/project_memory.md）。
+    // 此处与快照发布器（SnapshotPublisher 读 runtime.Oee）、日报/复盘均委托 OeeCalculator，
+    // 禁止内联重复公式，否则改公式需改多处。
 
     public double QualityRate => OeeCalculator.CalculateQualityRate(TotalOkProduction, TotalNgProduction);
 

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// PLC 地址类型

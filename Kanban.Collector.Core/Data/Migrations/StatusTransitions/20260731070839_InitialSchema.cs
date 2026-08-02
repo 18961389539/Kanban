@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MainAPP.Data.Migrations.StatusTransitions
+namespace Kanban.Core.Data.Migrations.StatusTransitions
 {
     /// <inheritdoc />
     public partial class InitialSchema : Migration

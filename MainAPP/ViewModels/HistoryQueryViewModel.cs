@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -6,8 +6,10 @@ using System.Text.Json;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MainAPP.Data;
+using Kanban.Core.Data;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using NodaTime;
 using Serilog;
@@ -807,7 +809,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         try
         {
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
-            var exportDir = Path.Combine(MainAPP.Services.AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");
+            var exportDir = Path.Combine(AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");
             Directory.CreateDirectory(exportDir);
             var fullPath = Path.Combine(exportDir, fileName);
 

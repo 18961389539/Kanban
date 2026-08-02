@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 设备状态字追踪器：拥有 <see cref="_prevStatusWords"/> 字典及其专用锁。职责：

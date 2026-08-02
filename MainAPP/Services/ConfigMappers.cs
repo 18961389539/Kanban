@@ -1,5 +1,10 @@
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using Kanban.Contracts.Dtos;
-using MainAPP.Entities;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using MainAPP.Models;
 
 
@@ -95,7 +100,7 @@ public static class WorkOrderMapper
         TargetQuantity = dto.TargetQuantity,
         PlannedStart = dto.PlannedStart,
         PlannedEnd = dto.PlannedEnd,
-        Status = (Entities.WorkOrderStatus)dto.Status,
+        Status = (Kanban.Core.Entities.WorkOrderStatus)dto.Status,
         CompletedOkCount = dto.CompletedOkCount,
         CompletedNgCount = dto.CompletedNgCount,
         Remark = dto.Remark,

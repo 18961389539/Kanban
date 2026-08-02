@@ -1,7 +1,9 @@
 using System.Windows.Threading;
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using Kanban.Core.Models;
 using MainAPP.Models;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
@@ -49,7 +51,7 @@ public class HistoryQueryFlowTests
         _host.Run(() =>
         {
             // 添加设备（ProductionQuery.Query 要求 deviceId 非空才返回结果）
-            var repo = _host.Resolve<MainAPP.Data.DeviceRepository>();
+            var repo = _host.Resolve<Kanban.Core.Data.DeviceRepository>();
             if (!repo.Devices.Any(d => d.Id == "dev-001"))
             {
                 repo.Devices.Add(new Device { Id = "dev-001", Name = "测试设备A", TargetCycle = 500 });

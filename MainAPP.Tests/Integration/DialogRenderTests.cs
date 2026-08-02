@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.Views;
 using Xunit;

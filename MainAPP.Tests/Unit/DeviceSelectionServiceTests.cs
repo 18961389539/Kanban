@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Xunit;
 

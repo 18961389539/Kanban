@@ -1,6 +1,6 @@
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
-using MainAPP.Models;
+using Kanban.Core.Models;
 
 /// <summary>
 /// PLC 通信驱动抽象接口，解耦业务层与具体 PLC 协议库（HslCommunication）。

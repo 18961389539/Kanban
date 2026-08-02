@@ -1,6 +1,6 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 班次标识：用于检测班次切换与产量基线归属判定。

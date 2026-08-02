@@ -1,6 +1,6 @@
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Entities;
+namespace Kanban.Core.Entities;
 
 /// <summary>
 /// 缺陷计数历史快照。Count 为设备/班次内累计值，复盘时按缺陷和班次实例做差分。

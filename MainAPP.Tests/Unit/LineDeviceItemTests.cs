@@ -1,4 +1,5 @@
-﻿using MainAPP.Models;
+﻿using Kanban.Core.Models;
+using MainAPP.Models;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;

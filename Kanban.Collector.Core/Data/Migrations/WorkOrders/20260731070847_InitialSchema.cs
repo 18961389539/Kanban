@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MainAPP.Data.Migrations.WorkOrders
+namespace Kanban.Core.Data.Migrations.WorkOrders
 {
     /// <inheritdoc />
     public partial class InitialSchema : Migration

@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Windows.Media;
 using MainAPP.Converters;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Xunit;
 

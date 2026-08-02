@@ -1,9 +1,9 @@
-﻿using MainAPP.Models;
-using MainAPP.Services;
+﻿using Kanban.Core.Models;
+using Kanban.Core.Services;
 using Microsoft.EntityFrameworkCore;
-using MainAPP.Entities;
+using Kanban.Core.Entities;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// 报警事件数据库上下文（独立数据库文件 alarm_events.db）。

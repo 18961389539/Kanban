@@ -1,3 +1,7 @@
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using System.Globalization;
 using System.IO;
 using MainAPP.ViewModels;

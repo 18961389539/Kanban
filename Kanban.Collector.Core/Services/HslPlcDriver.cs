@@ -1,11 +1,11 @@
 using HslCommunication;
 using HslCommunication.Profinet.Melsec;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Runtime.ExceptionServices;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// IPlcDriver 的 HslCommunication 实现，基于三菱 MC 协议（3E 帧，二进制）。

@@ -1,8 +1,8 @@
-﻿using MainAPP.Services;
+﻿using Kanban.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace MainAPP.Data;
+namespace Kanban.Core.Data;
 
 /// <summary>
 /// EF CLI 设计时工厂。四个数据库共用 AppSettings，但每个上下文仍生成独立迁移目录。

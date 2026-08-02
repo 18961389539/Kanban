@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Windows.Controls;
 using MainAPP.Converters;
+using Kanban.Core.Services;
 using MainAPP.Services;
 using Xunit;
 

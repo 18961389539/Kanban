@@ -1,7 +1,7 @@
 using HslCommunication.Core;
-using MainAPP.Models;
+using Kanban.Core.Models;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal static class HslDataFormatMapper
 {

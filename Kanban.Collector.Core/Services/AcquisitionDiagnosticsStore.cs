@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using System.Diagnostics;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal sealed class AcquisitionDiagnosticsStore
 {

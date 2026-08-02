@@ -1,11 +1,11 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Channels;
-using MainAPP.Data;
-using MainAPP.Entities;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposable, IAsyncDisposable
 {

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 internal interface ISettingsMigration
 {
@@ -56,11 +56,11 @@ internal sealed class SettingsMigrationRunner
         public JsonObject Migrate(JsonObject settings)
         {
             var plc = settings["PlcConfig"] as JsonObject ?? new JsonObject();
-            plc["Brand"] ??= (int)MainAPP.Models.PlcBrand.Mitsubishi;
+            plc["Brand"] ??= (int)Kanban.Core.Models.PlcBrand.Mitsubishi;
             if (plc["Port"] is null)
             {
-                var brand = plc["Brand"]?.GetValue<int>() ?? (int)MainAPP.Models.PlcBrand.Mitsubishi;
-                plc["Port"] = MainAPP.Models.PlcConfig.GetDefaultPort((MainAPP.Models.PlcBrand)brand);
+                var brand = plc["Brand"]?.GetValue<int>() ?? (int)Kanban.Core.Models.PlcBrand.Mitsubishi;
+                plc["Port"] = Kanban.Core.Models.PlcConfig.GetDefaultPort((Kanban.Core.Models.PlcBrand)brand);
             }
             plc["TimeoutMs"] ??= 5000;
             plc["SiemensModel"] ??= "S1200";
@@ -82,8 +82,8 @@ internal sealed class SettingsMigrationRunner
             plc["ModbusAddressStartWithZero"] ??= true;
             plc["ModbusRegisterFunction"] ??= 3;
             plc["ModbusBitFunction"] ??= 1;
-            plc["ModbusDataFormat"] ??= (int)MainAPP.Models.PlcDataFormat.ABCD;
-            plc["SiemensDataFormat"] ??= (int)MainAPP.Models.PlcDataFormat.ABCD;
+            plc["ModbusDataFormat"] ??= (int)Kanban.Core.Models.PlcDataFormat.ABCD;
+            plc["SiemensDataFormat"] ??= (int)Kanban.Core.Models.PlcDataFormat.ABCD;
             settings["PlcConfig"] = plc;
             return settings;
         }

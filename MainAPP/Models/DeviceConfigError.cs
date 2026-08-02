@@ -1,3 +1,4 @@
+using Kanban.Core.Models;
 namespace MainAPP.Models;
 
 /// <summary>

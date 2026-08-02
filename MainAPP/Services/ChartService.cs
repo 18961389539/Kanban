@@ -1,4 +1,9 @@
-﻿using MainAPP.Models;
+﻿using Kanban.Core.Models;
+using Kanban.Core.Services;
+using Kanban.Core.Models;
+using Kanban.Core.Data;
+using Kanban.Core.Entities;
+using MainAPP.Models;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;

@@ -3,10 +3,10 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using MainAPP.Models;
+using Kanban.Core.Models;
 using Serilog;
 
-namespace MainAPP.Services;
+namespace Kanban.Core.Services;
 
 /// <summary>
 /// 数据采集模式。
