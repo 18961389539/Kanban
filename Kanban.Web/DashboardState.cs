@@ -78,6 +78,12 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>班次进度最后拉取时间。</summary>
     public DateTime ShiftFetchedAt { get; private set; }
 
+    /// <summary>元数据（工单/班次）刷新诊断：记录最近一次尝试的结果，供 UI 直接显示定位问题。</summary>
+    public string MetaStatus { get; private set; } = "尚未刷新（等待首个渲染周期）";
+
+    /// <summary>记录元数据刷新诊断（成功/跳过/失败原因）。</summary>
+    private void SetMetaStatus(string status) => MetaStatus = $"{DateTime.Now:HH:mm:ss} {status}";
+
     /// <summary>设备总数（快照字典大小）。</summary>
     public int DeviceCount => _snapshots.Count;
 
@@ -129,15 +135,26 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>刷新当前选中设备的工单（页面按节流周期调用；设备切换时立即调用）。</summary>
     public async Task RefreshWorkOrderAsync(string? deviceId)
     {
-        if (string.IsNullOrEmpty(deviceId) || !IsConnected) return;
+        if (!IsConnected)
+        {
+            SetMetaStatus($"跳过工单刷新（IsConnected=false，连接尚未就绪）");
+            return;
+        }
+        if (string.IsNullOrEmpty(deviceId))
+        {
+            SetMetaStatus($"跳过工单刷新（deviceId 为空）");
+            return;
+        }
         try
         {
             CurrentWorkOrder = await _client.GetCurrentWorkOrderAsync(deviceId);
             WorkOrderError = null;
+            SetMetaStatus($"工单刷新成功（{deviceId}）");
         }
         catch (Exception ex)
         {
             WorkOrderError = ex.Message;
+            SetMetaStatus($"工单刷新失败：{ex.Message}");
             _logger.LogWarning(ex, "拉取当前工单失败 Device={DeviceId}", deviceId);
         }
         WorkOrderFetchedAt = DateTime.Now;
@@ -146,15 +163,21 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>刷新班次进度（页面按节流周期调用）。</summary>
     public async Task RefreshShiftAsync()
     {
-        if (!IsConnected) return;
+        if (!IsConnected)
+        {
+            SetMetaStatus($"跳过班次刷新（IsConnected=false，连接尚未就绪）");
+            return;
+        }
         try
         {
             ShiftProgress = await _client.GetShiftProgressAsync();
             ShiftError = null;
+            SetMetaStatus($"班次刷新成功（{ShiftProgress?.Name}）");
         }
         catch (Exception ex)
         {
             ShiftError = ex.Message;
+            SetMetaStatus($"班次刷新失败：{ex.Message}");
             _logger.LogWarning(ex, "拉取班次进度失败");
         }
         ShiftFetchedAt = DateTime.Now;
