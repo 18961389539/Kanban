@@ -18,6 +18,14 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
+        // 单实例保护：防误启双进程抢端口/双写 SQLite（与 MainAPP 的 Mutex 模式一致）
+        using var singleInstanceMutex = new Mutex(true, "Kanban.Collector.SingleInstance", out var isFirstInstance);
+        if (!isFirstInstance)
+        {
+            Console.Error.WriteLine("Kanban.Collector 已在运行（单实例保护），本实例退出。");
+            return;
+        }
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .Enrich.FromLogContext()
@@ -45,9 +53,15 @@ public static class Program
             builder.Services.AddHostedService<CollectorWorker>();
 
             // ──────────── SignalR 服务端 ────────────
-            builder.Services.AddSignalR();
+            // MessagePack 二进制序列化：多屏订阅 500ms 快照时显著降低带宽与 CPU
+            builder.Services.AddSignalR().AddMessagePackProtocol();
+            builder.Services.AddHealthChecks();
 
             var app = builder.Build();
+
+            // 健康检查：运维/看板客户端探测进程存活（GET /healthz）
+            app.MapHealthChecks("/healthz");
+
             app.MapHub<KanbanHub>("/hubs/kanban");
             await app.RunAsync();
         }

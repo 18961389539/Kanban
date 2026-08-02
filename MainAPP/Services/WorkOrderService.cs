@@ -50,33 +50,54 @@ public interface IWorkOrderService
     /// <returns>已保存的工单；用户取消时返回 null。</returns>
     WorkOrder? AddWorkOrder(WorkOrder? template = null);
 
+    /// <summary>异步新增工单（Remote 模式用，避免 UI 线程阻塞等待 SignalR 落库）。</summary>
+    Task<WorkOrder?> AddWorkOrderAsync(WorkOrder? template = null);
+
     /// <summary>复制指定工单并以新工单方式编辑保存。</summary>
     WorkOrder? CopyWorkOrder(WorkOrder source);
+
+    /// <summary>异步复制工单（Remote 模式用）。</summary>
+    Task<WorkOrder?> CopyWorkOrderAsync(WorkOrder source);
 
     /// <summary>
     /// 编辑指定工单（拷贝后打开对话框，避免直接修改原对象）。
     /// <returns>已保存的工单；用户取消时返回 null。</returns>
     WorkOrder? EditWorkOrder(WorkOrder source);
 
+    /// <summary>异步编辑工单（Remote 模式用）。</summary>
+    Task<WorkOrder?> EditWorkOrderAsync(WorkOrder source);
+
     /// <summary>
     /// 删除指定工单（带二次确认对话框）。
     /// <returns>true=已删除；false=用户取消。</returns>
     bool DeleteWorkOrder(WorkOrder target);
+
+    /// <summary>异步删除工单（Remote 模式用）。</summary>
+    Task<bool> DeleteWorkOrderAsync(WorkOrder target);
 
     /// <summary>
     /// 启动工单：校验 Status==Pending + 同设备无 Running 工单，通过后置 Running。
     /// <returns>已保存的工单；校验失败或同设备冲突时返回 null（已提示原因）。</returns>
     WorkOrder? StartWorkOrder(WorkOrder target);
 
+    /// <summary>异步启动工单（Remote 模式用）。</summary>
+    Task<WorkOrder?> StartWorkOrderAsync(WorkOrder target);
+
     /// <summary>
     /// 完成工单：校验 Status==Running，通过后置 Completed。
     /// <returns>已保存的工单；校验失败时返回 null（已提示原因）。</returns>
     WorkOrder? CompleteWorkOrder(WorkOrder target);
 
+    /// <summary>异步完成工单（Remote 模式用）。</summary>
+    Task<WorkOrder?> CompleteWorkOrderAsync(WorkOrder target);
+
     /// <summary>
     /// 中止工单：校验 Status∈{Running, Pending}，通过后弹二次确认，确认后置 Aborted。
     /// <returns>已保存的工单；校验失败或用户取消时返回 null。</returns>
     WorkOrder? AbortWorkOrder(WorkOrder target);
+
+    /// <summary>异步中止工单（Remote 模式用）。</summary>
+    Task<WorkOrder?> AbortWorkOrderAsync(WorkOrder target);
 
     /// <summary>
     /// 查询指定工单的产量聚合（合格/不良/达成率）。
@@ -164,17 +185,31 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? AddWorkOrder(WorkOrder? template = null)
+        => AddWorkOrderCore(template).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> AddWorkOrderAsync(WorkOrder? template = null)
+        => await AddWorkOrderCore(template);
+
+    private async Task<WorkOrder?> AddWorkOrderCore(WorkOrder? template)
     {
         var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
-        var saved = _workOrderRepo.Upsert(result);
+        var saved = await _workOrderRepo.UpsertAsync(result);
         _dialog.NotifySuccess($"已新增工单 {saved.OrderNo}");
         return saved;
     }
 
     /// <inheritdoc />
     public WorkOrder? CopyWorkOrder(WorkOrder source)
+        => CopyWorkOrderCore(source).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> CopyWorkOrderAsync(WorkOrder source)
+        => await CopyWorkOrderCore(source);
+
+    private async Task<WorkOrder?> CopyWorkOrderCore(WorkOrder source)
     {
         var template = Clone(source);
         template.Id = 0;
@@ -189,31 +224,45 @@ public class WorkOrderService(
         var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
-        var saved = _workOrderRepo.Upsert(result);
+        var saved = await _workOrderRepo.UpsertAsync(result);
         _dialog.NotifySuccess($"已复制工单 {saved.OrderNo}");
         return saved;
     }
 
     /// <inheritdoc />
     public WorkOrder? EditWorkOrder(WorkOrder source)
+        => EditWorkOrderCore(source).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> EditWorkOrderAsync(WorkOrder source)
+        => await EditWorkOrderCore(source);
+
+    private async Task<WorkOrder?> EditWorkOrderCore(WorkOrder source)
     {
         var template = Clone(source);
         var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
-        var saved = _workOrderRepo.Upsert(result);
+        var saved = await _workOrderRepo.UpsertAsync(result);
         _dialog.NotifySuccess($"已更新工单 {saved.OrderNo}");
         return saved;
     }
 
     /// <inheritdoc />
     public bool DeleteWorkOrder(WorkOrder target)
+        => DeleteWorkOrderCore(target).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteWorkOrderAsync(WorkOrder target)
+        => await DeleteWorkOrderCore(target);
+
+    private async Task<bool> DeleteWorkOrderCore(WorkOrder target)
     {
         var r = _dialog.Show(
             $"确定删除工单「{target.OrderNo}」（{target.ProductName}）吗？此操作不可恢复。",
             "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
-        _workOrderRepo.Delete(target.Id);
+        await _workOrderRepo.DeleteAsync(target.Id);
         _dialog.NotifySuccess("已删除工单");
         return true;
     }
@@ -247,6 +296,13 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? StartWorkOrder(WorkOrder target)
+        => StartWorkOrderCore(target).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> StartWorkOrderAsync(WorkOrder target)
+        => await StartWorkOrderCore(target);
+
+    private async Task<WorkOrder?> StartWorkOrderCore(WorkOrder target)
     {
         // 同设备 Running 检查保留在 Service 层（跨工单约束，实体无法自检）
         var running = _workOrderRepo.GetRunningByDevice(target.DeviceId);
@@ -266,13 +322,20 @@ public class WorkOrderService(
             _dialog.NotifyWarning(ex.Message);
             return null;
         }
-        var saved = _workOrderRepo.Upsert(updated);
+        var saved = await _workOrderRepo.UpsertAsync(updated);
         _dialog.NotifySuccess($"工单 {saved.OrderNo} 已开始");
         return saved;
     }
 
     /// <inheritdoc />
     public WorkOrder? CompleteWorkOrder(WorkOrder target)
+        => CompleteWorkOrderCore(target).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> CompleteWorkOrderAsync(WorkOrder target)
+        => await CompleteWorkOrderCore(target);
+
+    private async Task<WorkOrder?> CompleteWorkOrderCore(WorkOrder target)
     {
         var updated = Clone(target);
         // 状态机校验下沉到实体方法，违反约束时实体抛 InvalidOperationException
@@ -290,13 +353,20 @@ public class WorkOrderService(
         var summary = GetProductionSummary(updated);
         updated.CompletedOkCount = summary.OkCount;
         updated.CompletedNgCount = summary.NgCount;
-        var saved = _workOrderRepo.Upsert(updated);
+        var saved = await _workOrderRepo.UpsertAsync(updated);
         _dialog.NotifySuccess($"工单 {saved.OrderNo} 已完成");
         return saved;
     }
 
     /// <inheritdoc />
     public WorkOrder? AbortWorkOrder(WorkOrder target)
+        => AbortWorkOrderCore(target).GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WorkOrder?> AbortWorkOrderAsync(WorkOrder target)
+        => await AbortWorkOrderCore(target);
+
+    private async Task<WorkOrder?> AbortWorkOrderCore(WorkOrder target)
     {
         var updated = Clone(target);
         // 状态机校验下沉到实体方法：先在副本上验证状态约束，失败则直接提示，不弹确认框
@@ -321,7 +391,7 @@ public class WorkOrderService(
             updated.CompletedOkCount = summary.OkCount;
             updated.CompletedNgCount = summary.NgCount;
         }
-        var saved = _workOrderRepo.Upsert(updated);
+        var saved = await _workOrderRepo.UpsertAsync(updated);
         _dialog.NotifySuccess($"工单 {saved.OrderNo} 已中止");
         return saved;
     }

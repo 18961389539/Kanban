@@ -12,8 +12,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- SignalR 服务端位于 ASP.NET Core 共享框架 -->
+    <!-- SignalR 服务端位于 ASP.NET Core 共享框架；MessagePack 协议包随服务端引用 -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />
   </ItemGroup>
 
   <ItemGroup>

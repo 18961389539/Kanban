@@ -548,7 +548,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
-    private void Save()
+    private async Task Save()
     {
         // 聚合全部配置错误（不再逐个 return），统一列出并支持点击定位到出错设备/选项卡
         var errors = DeviceConfigValidator.CollectValidationErrors(
@@ -566,9 +566,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         try
         {
-            // 保存内部会回填子项 DeviceId（触发属性变更），临时抑制脏标记避免自我触发
+            // 保存内部会回填子项 DeviceId（触发属性变更），临时抑制脏标记避免自我触发。
+            // Remote 模式下 SaveAllAsync 经 SignalR 推给 Collector 落盘（异步，不阻塞 UI 线程）
             _suppressDirty = true;
-            _deviceRepository.SaveAll();
+            await _deviceRepository.SaveAllAsync();
 
             // 保存后同步所有设备运行时的 TargetCycle
             foreach (var device in Devices)
@@ -900,7 +901,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 新增工单：以当前选中设备预填模板打开编辑对话框（Id=0 表示新增）。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAddWorkOrder))]
-    private void AddWorkOrder()
+    private async Task AddWorkOrder()
     {
         if (SelectedDevice == null) return;
         // 预填当前设备的模板（Id=0 → 对话框显示"新增工单"标题）
@@ -909,55 +910,55 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             DeviceId = SelectedDevice.Id,
             DeviceName = SelectedDevice.Name,
         };
-        var saved = _workOrderService.AddWorkOrder(template);
+        var saved = await _workOrderService.AddWorkOrderAsync(template);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     [RelayCommand(CanExecute = nameof(CanEditWorkOrder))]
-    private void EditWorkOrder()
+    private async Task EditWorkOrder()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.EditWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.EditWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     private bool CanEditWorkOrder() => SelectedWorkOrder != null;
 
     [RelayCommand(CanExecute = nameof(CanDeleteWorkOrder))]
-    private void DeleteWorkOrder()
+    private async Task DeleteWorkOrder()
     {
         if (SelectedWorkOrder == null) return;
-        if (_workOrderService.DeleteWorkOrder(SelectedWorkOrder))
+        if (await _workOrderService.DeleteWorkOrderAsync(SelectedWorkOrder))
             SelectedWorkOrder = null;
     }
 
     private bool CanDeleteWorkOrder() => SelectedWorkOrder != null;
 
     [RelayCommand(CanExecute = nameof(CanStartWorkOrder))]
-    private void StartWorkOrder()
+    private async Task StartWorkOrder()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.StartWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.StartWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     private bool CanStartWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
 
     [RelayCommand(CanExecute = nameof(CanCompleteWorkOrder))]
-    private void CompleteWorkOrder()
+    private async Task CompleteWorkOrder()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.CompleteWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     private bool CanCompleteWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Running;
 
     [RelayCommand(CanExecute = nameof(CanAbortWorkOrder))]
-    private void AbortWorkOrder()
+    private async Task AbortWorkOrder()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.AbortWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.AbortWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 

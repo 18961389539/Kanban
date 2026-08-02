@@ -128,16 +128,17 @@ public sealed class ApplicationStartupCoordinator(
         // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection）
         sink.Start();
 
-        // 设备/工单写操作 → Collector（唯一写者），MainAPP 不再直接写 devices.json / work_orders.db
+        // 设备/工单写操作 → Collector（唯一写者），MainAPP 不再直接写 devices.json / work_orders.db。
+        // 钩子为异步签名（AsyncRelayCommand 调用，避免 UI 线程阻塞等待网络）。
         var deviceRepo = services.GetRequiredService<DeviceRepository>();
         deviceRepo.RemotePersistenceHook = devices =>
-            client.SaveDevicesAsync(DeviceMapper.ToDtos(devices)).GetAwaiter().GetResult();
+            client.SaveDevicesAsync(DeviceMapper.ToDtos(devices));
         var workOrderRepo = services.GetRequiredService<WorkOrderRepository>();
-        workOrderRepo.RemoteUpsertHook = wo =>
-            WorkOrderMapper.ToEntity(client.UpsertWorkOrderAsync(WorkOrderMapper.ToDto(wo)).GetAwaiter().GetResult());
-        workOrderRepo.RemoteDeleteHook = id =>
+        workOrderRepo.RemoteUpsertHook = async wo =>
+            WorkOrderMapper.ToEntity(await client.UpsertWorkOrderAsync(WorkOrderMapper.ToDto(wo)));
+        workOrderRepo.RemoteDeleteHook = async id =>
         {
-            client.DeleteWorkOrderAsync(id).GetAwaiter().GetResult();
+            await client.DeleteWorkOrderAsync(id);
             return true;
         };
 

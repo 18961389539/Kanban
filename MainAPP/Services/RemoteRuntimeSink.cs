@@ -40,9 +40,43 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         _client.OnSnapshot(OnSnapshotReceived);
         _client.OnAlarmEvent(OnAlarmEventReceived);
         _client.OnStatusEvent(OnStatusEventReceived);
+        _client.Reconnected += (_, _) => { _ = OnReconnectedAsync(); };
 
         _ = RefreshAsync();
         _ = _client.SubscribeSnapshotsAsync();
+        // 断线重连后按游标补拉未消费的报警事件
+        _ = SubscribeAlarmEventsWithResumeAsync();
+    }
+
+    /// <summary>报警事件游标：已消费的最大 Seq。断线重连后从此处补拉，避免漏报。</summary>
+    private long _lastAlarmSeq;
+
+    /// <summary>订阅报警事件流：带游标断线续传（服务端环形缓冲按 afterSeq 补发）。</summary>
+    private async Task SubscribeAlarmEventsWithResumeAsync()
+    {
+        try
+        {
+            await _client.SubscribeAlarmEventsAsync(_lastAlarmSeq);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "订阅报警事件流失败（游标 {Seq}）", _lastAlarmSeq);
+        }
+    }
+
+    /// <summary>重连成功：恢复快照订阅 + 按游标补拉报警事件。</summary>
+    private async Task OnReconnectedAsync()
+    {
+        _logger.LogInformation("Collector 重连成功，恢复订阅（报警游标 {Seq}）", _lastAlarmSeq);
+        try
+        {
+            await _client.SubscribeSnapshotsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "重连后恢复快照订阅失败");
+        }
+        await SubscribeAlarmEventsWithResumeAsync();
     }
 
     private async Task RefreshAsync()
@@ -91,6 +125,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void OnAlarmEventReceived(AlarmEventDto evt)
     {
+        // 更新游标：无论 UI 应用是否成功，事件已消费（防止补拉风暴）
+        Interlocked.Exchange(ref _lastAlarmSeq, evt.Seq);
         _dispatcher.InvokeAsync(() =>
         {
             try

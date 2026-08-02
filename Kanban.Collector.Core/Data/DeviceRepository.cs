@@ -68,8 +68,38 @@ public class DeviceRepository
         BindingOperations.EnableCollectionSynchronization(Runtimes, _collectionLock);
     }
 
-    /// <summary>设备配置远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落盘 devices.json）。Local 模式为 null。</summary>
-    public Action<IReadOnlyList<Device>>? RemotePersistenceHook { get; set; }
+    /// <summary>
+    /// 设备配置远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落盘 devices.json）。
+    /// Local 模式为 null。异步签名避免 UI 线程阻塞等待网络。
+    /// </summary>
+    public Func<IReadOnlyList<Device>, Task>? RemotePersistenceHook { get; set; }
+
+    /// <summary>
+    /// 异步保存全部设备。Remote 模式下委托 Collector 落盘（不写本地）；
+    /// Local 模式走本地原子写（等价于 <see cref="SaveAll"/>）。
+    /// </summary>
+    public async Task SaveAllAsync()
+    {
+        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘
+        if (RemotePersistenceHook != null)
+        {
+            List<Device> remoteSnapshot;
+            lock (_collectionLock)
+            {
+                foreach (var device in Devices)
+                {
+                    foreach (var a in device.Alarms) a.DeviceId = device.Id;
+                    foreach (var d in device.Defects) d.DeviceId = device.Id;
+                    foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                }
+                remoteSnapshot = Devices.ToList();
+            }
+            await RemotePersistenceHook(remoteSnapshot);
+            return;
+        }
+
+        SaveAll();
+    }
 
     /// <summary>
     /// 从 devices.json 加载所有设备到内存，并同步创建对应的 DeviceRuntime。
@@ -136,7 +166,9 @@ public class DeviceRepository
     /// </summary>
     public void SaveAll()
     {
-        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘
+        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘。
+        // 同步版本仅用于退出/迁移等同步上下文：阻塞等待推送完成，避免 fire-and-forget 丢数据。
+        // 常规保存请使用 SaveAllAsync。
         if (RemotePersistenceHook != null)
         {
             List<Device> remoteSnapshot;
@@ -150,7 +182,7 @@ public class DeviceRepository
                 }
                 remoteSnapshot = Devices.ToList();
             }
-            RemotePersistenceHook(remoteSnapshot);
+            RemotePersistenceHook(remoteSnapshot).GetAwaiter().GetResult();
             return;
         }
 

@@ -308,7 +308,8 @@ public partial class App : Application
 
             try
             {
-                _host.Services.GetRequiredService<DeviceRepository>().SaveAll();
+                // Remote 模式经 SignalR 推送 Collector 落盘（async 等待避免退出时丢数据）
+                await _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync();
             }
             catch (Exception ex)
             {

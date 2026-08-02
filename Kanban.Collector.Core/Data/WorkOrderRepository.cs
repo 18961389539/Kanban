@@ -82,27 +82,53 @@ public class WorkOrderRepository
     /// <summary>
     /// 工单远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落库 work_orders.db）。
     /// Upsert 返回落库后的实体（含自增 Id）；Delete 返回是否成功。Local 模式为 null。
+    /// 异步签名避免 UI 线程阻塞等待网络。
     /// </summary>
-    public Func<WorkOrder, WorkOrder>? RemoteUpsertHook { get; set; }
+    public Func<WorkOrder, Task<WorkOrder>>? RemoteUpsertHook { get; set; }
 
-    public Func<int, bool>? RemoteDeleteHook { get; set; }
+    public Func<int, Task<bool>>? RemoteDeleteHook { get; set; }
 
     /// <summary>
-    /// 新增或更新工单。Id==0 时插入，否则更新。
-    /// 写库成功后同步内存集合（已存在则替换，不存在则追加到首位）。
-    /// 返回落库后的实体（含自增 Id）。
-    /// Remote 模式下若设置了 <see cref="RemoteUpsertHook"/>，改为委托 Collector 落库（MainAPP 不写本地库）。
+    /// 异步新增或更新工单。Remote 模式委托 Collector 落库；Local 模式等价于 <see cref="Upsert"/>。
     /// </summary>
-    public WorkOrder Upsert(WorkOrder workOrder)
+    public async Task<WorkOrder> UpsertAsync(WorkOrder workOrder)
     {
         // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库，返回带 Id 的结果
         if (RemoteUpsertHook != null)
         {
-            var saved = RemoteUpsertHook(workOrder);
+            var saved = await RemoteUpsertHook(workOrder);
             SyncMemoryCollection(saved);
             return saved;
         }
 
+        return Upsert(workOrder);
+    }
+
+    /// <summary>
+    /// 异步删除工单。Remote 模式委托 Collector 落库；Local 模式等价于 <see cref="Delete"/>。
+    /// </summary>
+    public async Task DeleteAsync(int id)
+    {
+        // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库删除
+        if (RemoteDeleteHook != null)
+        {
+            if (await RemoteDeleteHook(id))
+            {
+                RemoveFromMemory(id);
+            }
+            return;
+        }
+
+        Delete(id);
+    }
+
+    /// <summary>
+    /// 同步新增或更新工单（Local 模式专用；Remote 模式请使用 <see cref="UpsertAsync"/>）。
+    /// 写库成功后同步内存集合（已存在则替换，不存在则追加到首位）。
+    /// 返回落库后的实体（含自增 Id）。
+    /// </summary>
+    public WorkOrder Upsert(WorkOrder workOrder)
+    {
         workOrder.UpdatedAt = DateTime.Now;
         var isNew = workOrder.Id == 0;
         var oldStatus = default(WorkOrderStatus?);
@@ -184,20 +210,11 @@ public class WorkOrderRepository
     }
 
     /// <summary>
-    /// 删除指定工单。同时从数据库与内存集合移除。
+    /// 同步删除指定工单（Local 模式专用；Remote 模式请使用 <see cref="DeleteAsync"/>）。
+    /// 同时从数据库与内存集合移除。
     /// </summary>
     public void Delete(int id)
     {
-        // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库删除
-        if (RemoteDeleteHook != null)
-        {
-            if (RemoteDeleteHook(id))
-            {
-                RemoveFromMemory(id);
-            }
-            return;
-        }
-
         WorkOrder? removed = null;
         using var ctx = _dbProvider.CreateWorkOrderContext();
         var existing = ctx.WorkOrders.Find(id);

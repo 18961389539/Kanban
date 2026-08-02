@@ -27,8 +27,9 @@
     <PackageReference Include="OxyPlot.Core" />
     <PackageReference Include="OxyPlot.SkiaSharp" />
     <PackageReference Include="PdfSharpCore" />
-    <!-- SignalR 客户端：Remote 模式连接 Kanban.Collector -->
+    <!-- SignalR 客户端：Remote 模式连接 Kanban.Collector；MessagePack 与 Collector 服务端协议对齐 -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="Serilog.Sinks.Async" />

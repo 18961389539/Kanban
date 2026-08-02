@@ -1,6 +1,7 @@
 using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 
@@ -32,6 +33,9 @@ public sealed class KanbanDataClient : IAsyncDisposable
     /// <summary>进入自动重连阶段事件（SignalR WithAutomaticReconnect 触发，UI 可据此显示"重连中"）</summary>
     public event EventHandler? Reconnecting;
 
+    /// <summary>自动重连成功事件（订阅方可恢复快照/按游标补拉事件）</summary>
+    public event EventHandler? Reconnected;
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
     public int ConsecutiveFailures => _consecutiveFailures;
@@ -46,6 +50,8 @@ public sealed class KanbanDataClient : IAsyncDisposable
         _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _connection = new HubConnectionBuilder()
             .WithUrl(_hubUrl)
+            // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）
+            .AddMessagePackProtocol()
             .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) })
             .Build();
 
@@ -61,6 +67,7 @@ public sealed class KanbanDataClient : IAsyncDisposable
             _logger.LogInformation("Collector 重连成功");
             _consecutiveFailures = 0;
             ConnectionStateChanged?.Invoke(this, true);
+            Reconnected?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         };
         _connection.Closed += async ex =>

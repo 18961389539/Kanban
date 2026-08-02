@@ -371,47 +371,47 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Add()
+    private async Task Add()
     {
-        var saved = _workOrderService.AddWorkOrder(null);
+        var saved = await _workOrderService.AddWorkOrderAsync(null);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
-    private void Edit()
+    private async Task Edit()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.EditWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.EditWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     private bool CanEdit() => SelectedWorkOrder != null;
 
     [RelayCommand(CanExecute = nameof(CanCopy))]
-    private void Copy()
+    private async Task Copy()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.CopyWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.CopyWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
     }
 
     private bool CanCopy() => SelectedWorkOrder != null;
 
     [RelayCommand(CanExecute = nameof(CanDelete))]
-    private void Delete()
+    private async Task Delete()
     {
         if (SelectedWorkOrder == null) return;
-        if (_workOrderService.DeleteWorkOrder(SelectedWorkOrder))
+        if (await _workOrderService.DeleteWorkOrderAsync(SelectedWorkOrder))
             SelectedWorkOrder = null;
     }
 
     private bool CanDelete() => SelectedWorkOrder != null;
 
     [RelayCommand(CanExecute = nameof(CanStart))]
-    private void Start()
+    private async Task Start()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.StartWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.StartWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
@@ -420,10 +420,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     private bool CanStart() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
 
     [RelayCommand(CanExecute = nameof(CanComplete))]
-    private void Complete()
+    private async Task Complete()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.CompleteWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
@@ -432,10 +432,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     private bool CanComplete() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Running;
 
     [RelayCommand(CanExecute = nameof(CanAbort))]
-    private void Abort()
+    private async Task Abort()
     {
         if (SelectedWorkOrder == null) return;
-        var saved = _workOrderService.AbortWorkOrder(SelectedWorkOrder);
+        var saved = await _workOrderService.AbortWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
@@ -534,7 +534,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     /// 覆盖 Pending/Running/Completed/Aborted 四种状态。需密码确认，已有工单时提示是否追加。
     /// </summary>
     [RelayCommand]
-    private void SeedSampleWorkOrders()
+    private async Task SeedSampleWorkOrders()
     {
         var devices = _deviceRepo.GetDevicesSnapshot();
         if (devices.Count == 0)
@@ -558,7 +558,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
 
         var samples = BuildSampleWorkOrders(devices);
         foreach (var wo in samples)
-            _workOrderRepo.Upsert(wo);
+            await _workOrderRepo.UpsertAsync(wo);
 
         _dialog.NotifySuccess($"已生成 {samples.Count} 条样本工单");
     }
