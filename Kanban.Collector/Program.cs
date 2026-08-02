@@ -62,9 +62,16 @@ public static class Program
             builder.Services.AddSignalR().AddMessagePackProtocol();
             builder.Services.AddHealthChecks();
 
+            // CORS：允许浏览器展示端（Blazor WASM / 其他前端）跨源连接 Hub。
+            // 内网信任模型：放行任意 Origin（WebSocket 不携带凭据，无需 AllowCredentials）。
+            // 若日后需要限定来源，可改为 WithOrigins("http://10.x.x.x") 白名单。
+            builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+                policy.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod()));
+
             var app = builder.Build();
 
             // 健康检查：运维/看板客户端探测进程存活（GET /healthz）
+            app.UseCors();
             app.MapHealthChecks("/healthz");
 
             app.MapHub<KanbanHub>("/hubs/kanban");

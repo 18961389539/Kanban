@@ -8,6 +8,7 @@ using HandyControl.Controls;
 using HandyControl.Data;
 using LicenseManager.Models;
 using LicenseManager.Services;
+using Kanban.Client;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;

@@ -1,4 +1,5 @@
-﻿using Kanban.Core.Data;
+﻿using Kanban.Client;
+using Kanban.Core.Data;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
@@ -55,7 +56,10 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<AlarmCsvIOService>();
 
         // ──────────── Remote 模式数据链路（展示端瘦身） ────────────
-        services.AddSingleton<KanbanDataClient>();
+        // KanbanDataClient 来自共享库 Kanban.Client（构造解耦：只收 HubUrl 字符串，不依赖 AppSettings/WPF）
+        services.AddSingleton<KanbanDataClient>(sp => new KanbanDataClient(
+            sp.GetRequiredService<AppSettings>().CollectorHubUrl,
+            sp.GetRequiredService<ILogger<KanbanDataClient>>()));
         services.AddSingleton<RemoteRuntimeSink>();
         // 历史查询路由代理：Local 委托 HistoryService（SQLite），Remote 走 SignalR。
         // 覆盖 IHistoryService / IHistoryQueryExecutor / 各历史域接口，ViewModel 无需改动。

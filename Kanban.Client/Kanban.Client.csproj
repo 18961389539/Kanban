@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Kanban.Client</RootNamespace>
+    <AssemblyName>Kanban.Client</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SignalR 客户端：WPF 端走 MessagePack（与 Collector 协议对齐），Blazor WASM 端 useMessagePack=false 走 JSON -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -6,6 +6,7 @@ using LicenseManager.Models;
 using LicenseManager.Services;
 using LicenseManager.ViewModels;
 using LicenseManager.Views;
+using Kanban.Client;
 using Kanban.Core.Data;
 using Kanban.Core.Services;
 using MainAPP.Services;
@@ -276,7 +277,7 @@ public partial class App : Application
             {
                 try
                 {
-                    var client = _host.Services.GetRequiredService<Services.KanbanDataClient>();
+                    var client = _host.Services.GetRequiredService<KanbanDataClient>();
                     if (client is IAsyncDisposable disposable)
                         await disposable.DisposeAsync();
                 }

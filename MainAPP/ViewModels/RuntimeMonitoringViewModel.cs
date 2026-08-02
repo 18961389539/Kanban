@@ -2,6 +2,7 @@
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Kanban.Client;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;

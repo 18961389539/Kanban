@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Kanban.Client;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;

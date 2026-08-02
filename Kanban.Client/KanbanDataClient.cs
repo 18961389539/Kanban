@@ -1,33 +1,30 @@
-using Kanban.Core.Services;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
 using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
-namespace MainAPP.Services;
+namespace Kanban.Client;
 
 /// <summary>
-/// Kanban.Collector SignalR 客户端（Remote 模式数据源）。
+/// Kanban.Collector SignalR 客户端（共享库，WPF 与 Blazor WASM 展示端共用）。
 /// 管理连接生命周期：指数退避重连、快照/事件订阅、历史查询。
-/// ViewModel 不直接依赖本类，而是通过 <see cref="RemoteRuntimeSink"/>
-/// 把快照灌回 DeviceRepository.Runtimes，保持 UI 层绑定关系不变。
+/// 不依赖任何 UI/WPF 类型：桌面端（MainAPP）以 <c>useMessagePack: true</c> 使用 MessagePack 协议，
+/// 浏览器端（Blazor WASM）以 <c>useMessagePack: false</c> 使用默认 JSON 协议（Collector 双协议并存）。
 /// </summary>
 public sealed class KanbanDataClient : IAsyncDisposable
 {
     private readonly string _hubUrl;
+    private readonly bool _useMessagePack;
     private readonly ILogger<KanbanDataClient> _logger;
     private HubConnection? _connection;
     private CancellationTokenSource? _reconnectCts;
     private int _consecutiveFailures;
 
-    public KanbanDataClient(AppSettings appSettings, ILogger<KanbanDataClient> logger)
+    public KanbanDataClient(string hubUrl, ILogger<KanbanDataClient> logger, bool useMessagePack = true)
     {
-        _hubUrl = appSettings.CollectorHubUrl;
+        _hubUrl = hubUrl;
+        _useMessagePack = useMessagePack;
         _logger = logger;
     }
 
@@ -55,7 +52,7 @@ public sealed class KanbanDataClient : IAsyncDisposable
         get { lock (_dataLock) return _lastDataReceivedAt; }
     }
 
-    /// <summary>收到实时数据时由数据消费者（RemoteRuntimeSink）调用，刷新数据新鲜度时间戳。</summary>
+    /// <summary>收到实时数据时由数据消费者调用，刷新数据新鲜度时间戳。</summary>
     public void MarkDataReceived()
     {
         lock (_dataLock) _lastDataReceivedAt = DateTime.Now;
@@ -69,12 +66,13 @@ public sealed class KanbanDataClient : IAsyncDisposable
         if (_connection is { State: HubConnectionState.Connected }) return;
 
         _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _connection = new HubConnectionBuilder()
+        var builder = new HubConnectionBuilder()
             .WithUrl(_hubUrl)
-            // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）
-            .AddMessagePackProtocol()
-            .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) })
-            .Build();
+            // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
+            .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
+        if (_useMessagePack)
+            builder.AddMessagePackProtocol();
+        _connection = builder.Build();
 
         _connection.Reconnecting += _ =>
         {
@@ -121,7 +119,7 @@ public sealed class KanbanDataClient : IAsyncDisposable
         }
     }
 
-    // ──────────── 强类型回调注册（由 RemoteRuntimeSink 调用） ────────────
+    // ──────────── 强类型回调注册（由数据消费者调用） ────────────
 
     public void OnSnapshot(Action<DeviceSnapshotDto> handler)
         => _connection!.On<DeviceSnapshotDto>(nameof(IKanbanHubClient.OnSnapshot), handler);
