@@ -29,10 +29,10 @@
     else
     {
         <div class="summary-bar">
-            <span class="sum-item" style="color:#34D399"><span class="dot"></span>运行 <b>@RunCount</b></span>
-            <span class="sum-item" style="color:#F87171"><span class="dot"></span>报警 <b>@AlarmCount</b></span>
-            <span class="sum-item" style="color:#FBBF24"><span class="dot"></span>暂停 <b>@PauseCount</b></span>
-            <span class="sum-item" style="color:#9CA3AF"><span class="dot"></span>待机 <b>@IdleCount</b></span>
+            <span class="sum-item" style="color:#34D399"><span class="dot"></span>运行 <b>@Dashboard.StatusSummary.Running</b></span>
+            <span class="sum-item" style="color:#F87171"><span class="dot"></span>报警 <b>@Dashboard.StatusSummary.Alarm</b></span>
+            <span class="sum-item" style="color:#FBBF24"><span class="dot"></span>暂停 <b>@Dashboard.StatusSummary.Paused</b></span>
+            <span class="sum-item" style="color:#9CA3AF"><span class="dot"></span>待机 <b>@Dashboard.StatusSummary.Idle</b></span>
             <span class="sum-item">设备 <b>@Dashboard.DeviceCount</b></span>
         </div>
     }
@@ -209,6 +209,7 @@
 @code {
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
+    private bool _disposed;
 
     /// <summary>
     /// 当前选中设备。未手动选择时默认第一台（避免初次进入提示"未选择设备"）。
@@ -234,28 +235,23 @@
     {
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
         // 渲染节流：2s 统一重渲染（推送 500ms 只更新内存，避免 render tree 高频 diff）
-        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTickAsync), null, 2000, 2000);
+        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTick), null, 2000, 2000);
         await Task.CompletedTask;
     }
 
     /// <summary>渲染 tick：2s 统一重渲染（工单/班次由 Collector 推送，无需轮询）。</summary>
-    private void OnRenderTickAsync()
+    private void OnRenderTick()
     {
+        if (_disposed) return; // Dispose 后 Timer 残留回调守卫
         StateHasChanged();
     }
 
     public void Dispose()
     {
+        _disposed = true;
         _renderTimer?.Dispose();
         GC.SuppressFinalize(this);
     }
-
-    // ──────────── 设备状态汇总条 ────────────
-
-    private int RunCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Running);
-    private int AlarmCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Alarm);
-    private int PauseCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Paused);
-    private int IdleCount => Dashboard.Snapshots.Count(s => s.Status is not (DeviceStatus.Running or DeviceStatus.Alarm or DeviceStatus.Paused));
 
     // ──────────── 展示辅助（纯快照数据换算，无本地计算） ────────────
 

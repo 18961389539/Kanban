@@ -1,37 +1,48 @@
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Enums;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Kanban.Web;
 
 /// <summary>
 /// 看板内存状态（Blazor WASM 端唯一数据源）。
-/// 双连接架构（WASM 约束）：订阅连接只收推送（快照/事件/元数据），查询连接只做 Invoke——
-/// 同一连接"长驻订阅 + 后续 InvokeAsync"在 WASM 上会导致 Invoke 永久挂起（已复现确认）。
+/// 双连接架构（WASM 约束：每连接最多一个长驻订阅，禁止"长驻+Invoke"/"多长驻"混用——均有实测问题）：
+///   _client      订阅连接：唯一长驻 = 快照推送（OnSnapshot）
+///   _metaClient  元数据连接：唯一长驻 = Meta 推送（OnMeta，工单/班次）
+///   _invokeClient 查询连接：无长驻，专做历史查询等 Invoke（懒连接，首次调用才建）
 /// 渲染节流：推送回调（500ms 快照 / 5s 元数据）只更新内存字典，页面用 2s Timer 触发重渲染。
 /// OEE 四率直接使用快照自带值（服务端 OeeCalculator 单源计算，客户端零重复计算）。
-/// 工单/班次由 Collector 低频推送（OnMeta），客户端零轮询、零 Invoke。
+/// 缓存策略：排序快照列表（设备增删失效）、状态汇总（状态变化脏标记）——避免每帧全量重算。
 /// </summary>
 public sealed class DashboardState : IAsyncDisposable
 {
     private readonly KanbanDataClient _client;
-    private readonly KanbanDataClient _queryClient;
+    private readonly KanbanDataClient _metaClient;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<DashboardState> _logger;
     private readonly Dictionary<string, DeviceSnapshotDto> _snapshots = new();
     private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
     private readonly Dictionary<string, WorkOrderDto?> _workOrdersByDevice = new();
     private readonly object _lock = new();
+    private IReadOnlyList<DeviceSnapshotDto>? _sortedSnapshotsCache;
+    private bool _sortedSnapshotsDirty = true;
+    private bool _statusSummaryDirty = true;
+    private DeviceSnapshotStatusSummary? _statusSummaryCache;
+    private ShiftProgressDto? _shiftProgress;
+    private KanbanDataClient? _invokeClient;
     private bool _initialized;
 
-    public DashboardState(KanbanDataClient client, ILogger<DashboardState> logger)
+    public DashboardState(
+        KanbanDataClient client,
+        ILoggerFactory loggerFactory,
+        ILogger<DashboardState> logger)
     {
         _client = client;
+        _loggerFactory = loggerFactory;
         _logger = logger;
-        // 双连接架构（WASM 约束）：每连接最多一个长驻订阅，禁止"长驻订阅 + 后续 Invoke"混用
-        // （WASM 上会永久挂起、桌面端会严重延迟——已复现）。
-        // 订阅连接：快照推送（OnSnapshot）；查询连接：元数据订阅（OnMeta）+ 未来历史查询 Invoke。
-        _queryClient = new KanbanDataClient(client.HubUrl, NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
+        // 元数据连接：与订阅连接分开（每连接单长驻订阅约束），专职工单/班次推送
+        _metaClient = new KanbanDataClient(client.HubUrl, loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: false);
         _client.ConnectionStateChanged += (_, connected) =>
         {
             IsConnected = connected;
@@ -44,8 +55,8 @@ public sealed class DashboardState : IAsyncDisposable
             // 重连成功：恢复快照订阅（游标补拉由 Collector 侧 Seq 保证）
             _ = SubscribeAndRefreshAsync();
         };
-        // 查询连接重连成功后：重新订阅元数据（长驻订阅随连接断开而结束）
-        _queryClient.Reconnected += (_, _) => _ = SubscribeMetaSafeAsync();
+        // 元数据连接重连成功后：重新订阅 Meta（长驻订阅随连接断开而结束）
+        _metaClient.Reconnected += (_, _) => _ = SubscribeMetaSafeAsync();
     }
 
     /// <summary>连接状态变化通知（UI 刷新连接指示器）。</summary>
@@ -57,19 +68,19 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>最近一次连接成功时间。</summary>
     public DateTime? LastConnectedAt { get; private set; }
 
-    // ──────────── 数据新鲜度 ────────────
+    // ──────────── 数据新鲜度（统一走 KanbanDataClient，快照回调时 MarkDataReceived） ────────────
 
-    private DateTime? _lastDataAt;
-
-    /// <summary>最后一次收到实时数据（快照）的时间。</summary>
+    /// <summary>最后一次收到实时数据（快照）的时间；null=尚未收到。</summary>
     public DateTime? LastDataAt
     {
-        get { lock (_lock) return _lastDataAt; }
+        get
+        {
+            var t = _client.LastDataReceivedAt;
+            return t == default ? null : t;
+        }
     }
 
     // ──────────── 低频元数据（Collector 5s 推送，非轮询） ────────────
-
-    private ShiftProgressDto? _shiftProgress;
 
     /// <summary>当前班次进度（Collector 推送，5s 更新一次）。</summary>
     public ShiftProgressDto? ShiftProgress
@@ -85,16 +96,56 @@ public sealed class DashboardState : IAsyncDisposable
             return _workOrdersByDevice.TryGetValue(deviceId, out var wo) ? wo : null;
     }
 
-    /// <summary>设备总数（快照字典大小）。</summary>
-    public int DeviceCount => _snapshots.Count;
+    // ──────────── 快照访问（带缓存） ────────────
 
-    /// <summary>全部设备快照（按设备名排序）。</summary>
+    /// <summary>设备总数（快照字典大小）。</summary>
+    public int DeviceCount
+    {
+        get { lock (_lock) return _snapshots.Count; }
+    }
+
+    /// <summary>全部设备快照（按设备名排序，设备集合变化时才重排）。</summary>
     public IReadOnlyList<DeviceSnapshotDto> Snapshots
     {
         get
         {
             lock (_lock)
-                return _snapshots.Values.OrderBy(s => s.DeviceName).ToList();
+            {
+                if (_sortedSnapshotsDirty || _sortedSnapshotsCache is null)
+                {
+                    _sortedSnapshotsCache = _snapshots.Values.OrderBy(s => s.DeviceName).ToList();
+                    _sortedSnapshotsDirty = false;
+                }
+                return _sortedSnapshotsCache;
+            }
+        }
+    }
+
+    /// <summary>设备状态汇总（状态变化时脏标记重算，状态不变时复用缓存）。</summary>
+    public DeviceSnapshotStatusSummary StatusSummary
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (!_statusSummaryDirty && _statusSummaryCache is not null)
+                    return _statusSummaryCache;
+                var s = new DeviceSnapshotStatusSummary();
+                foreach (var snap in _snapshots.Values)
+                {
+                    switch (snap.Status)
+                    {
+                        case DeviceStatus.Running: s.Running++; break;
+                        case DeviceStatus.Alarm: s.Alarm++; break;
+                        case DeviceStatus.Paused: s.Paused++; break;
+                        default: s.Idle++; break;
+                    }
+                }
+                s.Total = _snapshots.Count;
+                _statusSummaryCache = s;
+                _statusSummaryDirty = false;
+                return s;
+            }
         }
     }
 
@@ -112,6 +163,28 @@ public sealed class DashboardState : IAsyncDisposable
             return _speedHistoryByDevice.TryGetValue(deviceId, out var q) ? q.ToList() : [];
     }
 
+    // ──────────── 查询连接（懒连接，历史查询等 Invoke 专用，无长驻订阅） ────────────
+
+    /// <summary>历史查询（走独立查询连接；懒连接——首次调用才建立，不占用任何长驻订阅连接）。</summary>
+    public async Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        var client = GetInvokeClient();
+        if (!client.IsConnected)
+            await client.ConnectAsync(ct);
+        return await client.QueryHistoryAsync(request, ct);
+    }
+
+    private KanbanDataClient GetInvokeClient()
+    {
+        lock (_lock)
+        {
+            return _invokeClient ??= new KanbanDataClient(
+                _client.HubUrl, _loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: false);
+        }
+    }
+
+    // ──────────── 连接与订阅 ────────────
+
     /// <summary>建立连接并启动订阅（幂等，可安全重入；失败后自动复位允许下次重试）。</summary>
     public async Task InitializeAsync()
     {
@@ -123,9 +196,8 @@ public sealed class DashboardState : IAsyncDisposable
             await _client.ConnectAsync();
             // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
             _client.OnSnapshot(OnSnapshotReceived);
-            await _queryClient.ConnectAsync();
-            // 元数据推送走查询连接（每连接单长驻订阅约束），回调注册在其连接上
-            _queryClient.OnMeta(OnMetaReceived);
+            await _metaClient.ConnectAsync();
+            _metaClient.OnMeta(OnMetaReceived);
         }
         catch (Exception ex)
         {
@@ -136,13 +208,22 @@ public sealed class DashboardState : IAsyncDisposable
         await SubscribeAndRefreshAsync();
     }
 
-    /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史（不触达 UI，渲染节流由页面 Timer 负责）。</summary>
+    /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史 + 汇总脏标记（不触达 UI）。</summary>
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
         lock (_lock)
         {
+            var isNew = !_snapshots.TryGetValue(snapshot.DeviceId, out var old);
             _snapshots[snapshot.DeviceId] = snapshot;
-            _lastDataAt = DateTime.Now;
+            if (isNew)
+            {
+                _sortedSnapshotsDirty = true;
+                _statusSummaryDirty = true;
+            }
+            else if (old!.Status != snapshot.Status)
+            {
+                _statusSummaryDirty = true;
+            }
 
             // 速度点：总产量 / 运行小时（RunTime >= 5s 才记，避免启动失真；口径与 WPF HomeViewModel 一致）
             double speed = snapshot.RunTime >= 5
@@ -156,13 +237,15 @@ public sealed class DashboardState : IAsyncDisposable
             queue.Enqueue(new SpeedPoint(DateTime.Now, speed));
             while (queue.Count > 120) queue.Dequeue();
         }
+        _client.MarkDataReceived(); // 统一数据新鲜度来源
     }
 
-    /// <summary>元数据回调（Collector 约 5s 推送）：更新全部设备工单缓存 + 班次进度。</summary>
+    /// <summary>元数据回调（Collector 约 5s 推送）：全量替换工单缓存 + 更新班次（设备删除不留残留）。</summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
         lock (_lock)
         {
+            _workOrdersByDevice.Clear();
             foreach (var d in meta.Devices)
                 _workOrdersByDevice[d.DeviceId] = d.WorkOrder;
             _shiftProgress = meta.Shift;
@@ -173,13 +256,19 @@ public sealed class DashboardState : IAsyncDisposable
     private async Task SubscribeAndRefreshAsync()
     {
         _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
-        _ = SubscribeMetaSafeAsync();      // 元数据订阅走查询连接（每连接单长驻订阅约束）
+        _ = SubscribeMetaSafeAsync();      // 元数据订阅走元数据连接（每连接单长驻订阅约束）
         try
         {
             var snapshots = await _client.GetCurrentSnapshotsAsync();
             lock (_lock)
+            {
                 foreach (var s in snapshots)
+                {
                     _snapshots[s.DeviceId] = s;
+                    _sortedSnapshotsDirty = true;
+                    _statusSummaryDirty = true;
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -187,10 +276,7 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>
-    /// 快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），
-    /// 必须观察异常，否则 fire-and-forget 的未观察 Task 会触发 Blazor 全局错误 UI。
-    /// </summary>
+    /// <summary>快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），观察异常防全局错误 UI。</summary>
     private async Task SubscribeSnapshotsSafeAsync()
     {
         try
@@ -203,12 +289,12 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>元数据订阅包装（查询连接上长驻；断开/重连自动重订阅，观察 fault 防止未观察异常）。</summary>
+    /// <summary>元数据订阅包装（元数据连接上长驻；断开/重连自动重订阅，观察 fault 防未观察异常）。</summary>
     private async Task SubscribeMetaSafeAsync()
     {
         try
         {
-            await _queryClient.SubscribeMetaAsync();
+            await _metaClient.SubscribeMetaAsync();
         }
         catch (Exception ex)
         {
@@ -218,9 +304,21 @@ public sealed class DashboardState : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _queryClient.DisposeAsync();
+        if (_invokeClient is not null)
+            await _invokeClient.DisposeAsync();
+        await _metaClient.DisposeAsync();
         await _client.DisposeAsync();
     }
+}
+
+/// <summary>设备状态汇总（可变计数，Home 汇总条一次取用）。</summary>
+public sealed class DeviceSnapshotStatusSummary
+{
+    public int Running { get; set; }
+    public int Alarm { get; set; }
+    public int Paused { get; set; }
+    public int Idle { get; set; }
+    public int Total { get; set; }
 }
 
 /// <summary>速度趋势点（时间 + 实时速度 件/小时）。</summary>

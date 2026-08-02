@@ -62,12 +62,15 @@ public sealed class KanbanDataClient : IAsyncDisposable
     }
 
     /// <summary>
-    /// 建立连接并启动订阅。内部自动断线重连（指数退避 1s→30s，与 PlcConnectionManager 策略一致）。
+    /// 建立连接并启动订阅。内部自动断线重连（指数退避 1s→30s，与 PlcConnectionManager 策略一致）；
+    /// 自动重连耗尽后由 Closed 处理器进入后台循环重连（5s 间隔），实现"永久自愈"。
+    /// 连接超时 10s：Collector 不可达时快速失败（WASM 端由上层按节流重试），避免长时间挂起。
     /// </summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         if (_connection is { State: HubConnectionState.Connected }) return;
 
+        _reconnectCts?.Dispose();
         _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var builder = new HubConnectionBuilder()
             .WithUrl(_hubUrl)
@@ -94,23 +97,40 @@ public sealed class KanbanDataClient : IAsyncDisposable
         };
         _connection.Closed += async ex =>
         {
-            _logger.LogWarning(ex, "Collector 连接已关闭");
+            // WithAutomaticReconnect 全部耗尽后触发：进入后台循环重连（5s 间隔），
+            // 直至成功或连接被显式释放。否则 Collector 短暂不可用后页面将永久离线。
+            _logger.LogWarning(ex, "Collector 自动重连已耗尽，进入后台循环重连");
             ConnectionStateChanged?.Invoke(this, false);
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            try
+            var cts = _reconnectCts;
+            while (cts is { IsCancellationRequested: false })
             {
-                await _connection.StartAsync(_reconnectCts?.Token ?? CancellationToken.None);
-            }
-            catch (Exception retryEx)
-            {
-                _logger.LogError(retryEx, "Collector 重连失败");
-                _consecutiveFailures++;
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+                    await _connection.StartAsync(cts.Token);
+                    _logger.LogInformation("Collector 后台重连成功");
+                    _consecutiveFailures = 0;
+                    ConnectionStateChanged?.Invoke(this, true);
+                    Reconnected?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                {
+                    return; // 连接被释放，停止重连
+                }
+                catch (Exception retryEx)
+                {
+                    _logger.LogWarning(retryEx, "Collector 后台重连失败，5s 后重试");
+                }
             }
         };
 
         try
         {
-            await _connection.StartAsync(cancellationToken);
+            // 10s 连接超时：Collector 不可达时快速失败（超时抛 OperationCanceledException）
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
+            await _connection.StartAsync(timeoutCts.Token);
             _consecutiveFailures = 0;
             _logger.LogInformation("已连接 Collector {Url}", _hubUrl);
             ConnectionStateChanged?.Invoke(this, true);
@@ -122,19 +142,41 @@ public sealed class KanbanDataClient : IAsyncDisposable
         }
     }
 
-    // ──────────── 强类型回调注册（由数据消费者调用） ────────────
+    /// <summary>校验连接已建立，未建立时抛带说明的异常（替代 _connection! 的 NullReferenceException）。</summary>
+    private void EnsureConnected()
+    {
+        if (_connection is not { State: HubConnectionState.Connected })
+            throw new InvalidOperationException("SignalR 连接尚未建立：请先调用 ConnectAsync 并等待成功（回调注册同理）。");
+    }
+
+    /// <summary>校验连接已建立（供依赖连接状态的服务端调用使用）。</summary>
+    public void EnsureConnectionEstablished() => EnsureConnected();
+
+    // ──────────── 强类型回调注册（由数据消费者调用，须在连接建立后） ────────────
 
     public void OnSnapshot(Action<DeviceSnapshotDto> handler)
-        => _connection!.On<DeviceSnapshotDto>(nameof(IKanbanHubClient.OnSnapshot), handler);
+    {
+        EnsureConnected();
+        _connection!.On<DeviceSnapshotDto>(nameof(IKanbanHubClient.OnSnapshot), handler);
+    }
 
     public void OnAlarmEvent(Action<AlarmEventDto> handler)
-        => _connection!.On<AlarmEventDto>(nameof(IKanbanHubClient.OnAlarmEvent), handler);
+    {
+        EnsureConnected();
+        _connection!.On<AlarmEventDto>(nameof(IKanbanHubClient.OnAlarmEvent), handler);
+    }
 
     public void OnStatusEvent(Action<StatusEventDto> handler)
-        => _connection!.On<StatusEventDto>(nameof(IKanbanHubClient.OnStatusEvent), handler);
+    {
+        EnsureConnected();
+        _connection!.On<StatusEventDto>(nameof(IKanbanHubClient.OnStatusEvent), handler);
+    }
 
     public void OnMeta(Action<MetaStateDto> handler)
-        => _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler);
+    {
+        EnsureConnected();
+        _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler);
+    }
 
     // ──────────── 服务端调用 ────────────
 
