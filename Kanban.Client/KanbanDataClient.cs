@@ -178,55 +178,94 @@ public sealed class KanbanDataClient : IAsyncDisposable
         _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler);
     }
 
-    // ──────────── 服务端调用 ────────────
+    // ──────────── 服务端调用（均前置校验连接，未连接抛带说明的 InvalidOperationException） ────────────
 
     public async Task<IReadOnlyList<DeviceSnapshotDto>> GetCurrentSnapshotsAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync<IReadOnlyList<DeviceSnapshotDto>>(
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<DeviceSnapshotDto>>(
             nameof(IKanbanHubServer.GetCurrentSnapshotsAsync), ct);
+    }
 
     public async Task SubscribeSnapshotsAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeSnapshotsAsync), ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeSnapshotsAsync), ct);
+    }
 
     public async Task SubscribeAlarmEventsAsync(long afterSeq, CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeAlarmEventsAsync), afterSeq, ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeAlarmEventsAsync), afterSeq, ct);
+    }
 
     public async Task SubscribeStatusEventsAsync(long afterSeq, CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeStatusEventsAsync), afterSeq, ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeStatusEventsAsync), afterSeq, ct);
+    }
 
     public async Task SubscribeMetaAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeMetaAsync), ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeMetaAsync), ct);
+    }
 
     public async Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default)
-        => await _connection!.InvokeAsync<HistoryQueryResponse>(
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<HistoryQueryResponse>(
             nameof(IKanbanHubServer.QueryHistoryAsync), request, ct);
+    }
 
     /// <summary>拉取 Collector 运行诊断快照（运行监控页 Remote 模式）。</summary>
     public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync<CollectorDiagnosticsDto>("GetDiagnosticsAsync", ct);
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<CollectorDiagnosticsDto>("GetDiagnosticsAsync", ct);
+    }
 
     /// <summary>同步设备配置到 Collector 落盘（Remote 模式设备管理保存）。</summary>
     public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveDevicesAsync), devices, ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveDevicesAsync), devices, ct);
+    }
 
     /// <summary>从 Collector 拉取设备配置（Remote 模式屏端零配置，不依赖本地 devices.json）。</summary>
     public async Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync<IReadOnlyList<DeviceConfigDto>>(nameof(IKanbanHubServer.GetDevicesAsync), ct);
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<DeviceConfigDto>>(nameof(IKanbanHubServer.GetDevicesAsync), ct);
+    }
 
     /// <summary>新增/更新工单到 Collector 落库，返回带 Id 的结果。</summary>
     public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
-        => await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanHubServer.UpsertWorkOrderAsync), workOrder, ct);
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanHubServer.UpsertWorkOrderAsync), workOrder, ct);
+    }
 
     /// <summary>删除工单（Collector 落库）。</summary>
     public async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
-        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.DeleteWorkOrderAsync), workOrderId, ct);
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.DeleteWorkOrderAsync), workOrderId, ct);
+    }
 
     /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
     public async Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId, CancellationToken ct = default)
-        => await _connection!.InvokeAsync<WorkOrderDto?>(nameof(IKanbanHubServer.GetCurrentWorkOrderAsync), deviceId, ct);
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<WorkOrderDto?>(nameof(IKanbanHubServer.GetCurrentWorkOrderAsync), deviceId, ct);
+    }
 
     /// <summary>查询当前班次进度。</summary>
     public async Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default)
-        => await _connection!.InvokeAsync<ShiftProgressDto>(nameof(IKanbanHubServer.GetShiftProgressAsync), ct);
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<ShiftProgressDto>(nameof(IKanbanHubServer.GetShiftProgressAsync), ct);
+    }
 
     public async ValueTask DisposeAsync()
     {

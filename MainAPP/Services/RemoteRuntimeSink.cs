@@ -6,8 +6,6 @@ using Kanban.Core.Entities;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using AlarmEventType = Kanban.Contracts.Enums.AlarmEventType;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using Microsoft.Extensions.Logging;
 using System.Windows.Threading;
@@ -15,15 +13,20 @@ using System.Windows.Threading;
 namespace MainAPP.Services;
 
 /// <summary>
-/// Remote 模式运行时同步器：订阅 <see cref="KanbanDataClient"/> 的快照/事件流，
-/// 把 Collector 推来的 <see cref="DeviceSnapshotDto"/> 灌回 <see cref="DeviceRepository.Runtimes"/>
-/// （对齐 AlarmStateTracker 的 UI 线程封送约定），报警事件同步到 Device.Alarms 的 StartTime/EndTime。
-/// ViewModel 层完全无感——它们照常读 Runtimes / Device.Alarms。
+/// Remote 模式运行时同步器：把 Collector 推来的快照/事件灌回本地内存状态。
+/// 双连接架构（与 WASM 端同源约束，桌面端同适用）：
+///   _client        快照连接：唯一长驻 = 快照订阅（500ms）；Invoke（初始快照/设备/工单）走此连接
+///   _eventsClient  事件连接：唯一长驻优先级——报警（第一个长驻，必须实时，不受"多长驻延迟"影响）
+///                   + Meta（第二个长驻，一次性延迟约 13s 可接受，工单/班次低频）
+/// 说明：桌面端"长驻+Invoke"合法（RemoteHistoryQueryService 已用），但"同连接多长驻订阅"
+/// 第二个起会延迟（实测 13s）——报警若与快照同连接将成为第二长驻而延迟，故必须分连接。
 /// </summary>
 public sealed class RemoteRuntimeSink : IAsyncDisposable
 {
     private readonly KanbanDataClient _client;
+    private readonly KanbanDataClient _eventsClient;
     private readonly DeviceRepository _deviceRepository;
+    private readonly WorkOrderRepository _workOrderRepository;
     private readonly ILogger<RemoteRuntimeSink> _logger;
     private readonly Dispatcher _dispatcher;
     private readonly Dictionary<string, DeviceRuntime> _runtimeById = new();
@@ -32,27 +35,50 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     public RemoteRuntimeSink(
         KanbanDataClient client,
         DeviceRepository deviceRepository,
+        WorkOrderRepository workOrderRepository,
+        ILoggerFactory loggerFactory,
         ILogger<RemoteRuntimeSink> logger)
     {
         _client = client;
         _deviceRepository = deviceRepository;
+        _workOrderRepository = workOrderRepository;
         _logger = logger;
         _dispatcher = Dispatcher.CurrentDispatcher;
+        // 事件连接：与快照连接分开，保证报警是事件连接的第一个长驻订阅（实时不延迟）
+        _eventsClient = new KanbanDataClient(
+            client.HubUrl, loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: true);
     }
 
-    /// <summary>启动订阅。调用方须确保 KanbanDataClient 已连接。</summary>
+    /// <summary>启动订阅。调用方须确保主 KanbanDataClient 已连接（事件连接在内部连接）。</summary>
     public void Start()
     {
         // 连接后先拉一次当前快照（覆盖 Collector 重启导致的内存清空）
         _client.OnSnapshot(OnSnapshotReceived);
-        _client.OnAlarmEvent(OnAlarmEventReceived);
-        _client.OnStatusEvent(OnStatusEventReceived);
         _client.Reconnected += (_, _) => { _ = OnReconnectedAsync(); };
+        // 事件连接：报警（第一个长驻）+ Meta（工单/班次，第二个长驻）
+        _eventsClient.OnAlarmEvent(OnAlarmEventReceived);
+        _eventsClient.OnMeta(OnMetaReceived);
+        _eventsClient.Reconnected += (_, _) => { _ = OnEventsReconnectedAsync(); };
 
         _ = RefreshAsync();
         _ = _client.SubscribeSnapshotsAsync();
-        // 断线重连后按游标补拉未消费的报警事件
-        _ = SubscribeAlarmEventsWithResumeAsync();
+        _ = StartEventLinkAsync();
+    }
+
+    /// <summary>建立事件连接并订阅报警（第一个长驻）+ Meta（第二个长驻，一次性延迟可接受）。</summary>
+    private async Task StartEventLinkAsync()
+    {
+        try
+        {
+            await _eventsClient.ConnectAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "事件连接建立失败：报警事件与工单/班次推送不可用（快照链路不受影响）");
+            return;
+        }
+        await SubscribeAlarmEventsWithResumeAsync();
+        await SubscribeMetaSafeAsync();
     }
 
     /// <summary>报警事件游标：已消费的最大 Seq。断线重连后从此处补拉，避免漏报。</summary>
@@ -63,7 +89,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     {
         try
         {
-            await _client.SubscribeAlarmEventsAsync(_lastAlarmSeq);
+            await _eventsClient.SubscribeAlarmEventsAsync(_lastAlarmSeq);
         }
         catch (Exception ex)
         {
@@ -71,7 +97,20 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         }
     }
 
-    /// <summary>重连成功：恢复快照订阅 + 按游标补拉报警事件。</summary>
+    /// <summary>订阅元数据流（工单/班次，Collector 5s 推送）：长驻 fault 属正常生命周期，观察防未观察异常。</summary>
+    private async Task SubscribeMetaSafeAsync()
+    {
+        try
+        {
+            await _eventsClient.SubscribeMetaAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "元数据订阅结束（连接断开/重连触发，属正常）");
+        }
+    }
+
+    /// <summary>主连接重连成功：恢复快照订阅 + 按游标补拉报警事件。</summary>
     private async Task OnReconnectedAsync()
     {
         _logger.LogInformation("Collector 重连成功，恢复订阅（报警游标 {Seq}）", _lastAlarmSeq);
@@ -83,7 +122,14 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         {
             _logger.LogWarning(ex, "重连后恢复快照订阅失败");
         }
+    }
+
+    /// <summary>事件连接重连成功：恢复报警 + 元数据订阅。</summary>
+    private async Task OnEventsReconnectedAsync()
+    {
+        _logger.LogInformation("事件连接重连成功，恢复报警/元数据订阅");
         await SubscribeAlarmEventsWithResumeAsync();
+        await SubscribeMetaSafeAsync();
     }
 
     private async Task RefreshAsync()
@@ -167,17 +213,32 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         });
     }
 
-    private void OnStatusEventReceived(StatusEventDto evt)
+    /// <summary>元数据推送（Collector 5s）：全量重建本地工单列表（Remote 模式以 Collector 为单源）。
+    /// 工单列表绑定 UI（ObservableCollection），走 Dispatcher 封送。</summary>
+    private void OnMetaReceived(MetaStateDto meta)
     {
-        // 数据新鲜度：状态事件也是实时数据信号
-        _client.MarkDataReceived();
-        // 状态事件仅入库（Collector 侧），UI 状态以快照 StatusWord 为准，此处无需处理。
-        _logger.LogTrace("状态事件 {Device} {From}->{To}", evt.DeviceId, evt.PreviousState, evt.CurrentState);
+        _dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                // 全量重建：设备工单以 Collector 推送为准（新增/删除/状态变化均以最新包覆盖）
+                _workOrderRepository.WorkOrders.Clear();
+                foreach (var d in meta.Devices)
+                {
+                    if (d.WorkOrder is null) continue;
+                    _workOrderRepository.WorkOrders.Add(WorkOrderMapper.ToEntity(d.WorkOrder));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "应用元数据推送失败（工单列表）");
+            }
+        });
     }
 
     public async ValueTask DisposeAsync()
     {
-        // 连接由 KanbanDataClient 统一释放
-        await Task.CompletedTask;
+        await _eventsClient.DisposeAsync();
+        // 主连接由 KanbanDataClient 统一释放（StartupCoordinator/退出流程）
     }
 }
