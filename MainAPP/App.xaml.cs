@@ -35,6 +35,7 @@ public partial class App : Application
                     .WriteTo.Async(a => a.File(
                         Path.Combine(logDir, "kanban_.log"),
                         rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 14,
                         flushToDiskInterval: TimeSpan.FromSeconds(2),
                         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
             })

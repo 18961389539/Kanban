@@ -44,6 +44,23 @@ public sealed class KanbanDataClient : IAsyncDisposable
 
     public int ConsecutiveFailures => _consecutiveFailures;
 
+    // ──────────── 数据新鲜度（采集停滞监控） ────────────
+
+    private DateTime _lastDataReceivedAt;
+    private readonly object _dataLock = new();
+
+    /// <summary>最后一次收到实时数据（快照/事件）的时间。default 表示尚未收到。</summary>
+    public DateTime LastDataReceivedAt
+    {
+        get { lock (_dataLock) return _lastDataReceivedAt; }
+    }
+
+    /// <summary>收到实时数据时由数据消费者（RemoteRuntimeSink）调用，刷新数据新鲜度时间戳。</summary>
+    public void MarkDataReceived()
+    {
+        lock (_dataLock) _lastDataReceivedAt = DateTime.Now;
+    }
+
     /// <summary>
     /// 建立连接并启动订阅。内部自动断线重连（指数退避 1s→30s，与 PlcConnectionManager 策略一致）。
     /// </summary>

@@ -75,14 +75,65 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>当前是否为 Remote 模式（横幅文案区分 PLC 与采集服务）。</summary>
     public bool IsRemoteDataMode => AppSettings.DataMode == KanbanDataMode.Remote;
 
-    /// <summary>全局连接状态横幅文案（Remote 模式下文案指向 Collector 采集服务）。</summary>
-    public string PlcConnectionBannerText => IsPlcConnecting
-        ? IsRemoteDataMode
-            ? $"正在连接采集服务 · {ConnectionManager.ConnectionStatus}"
-            : $"PLC 正在连接 · {ConnectionManager.ConnectionStatus}"
-        : IsRemoteDataMode
-            ? $"采集服务已断开 · {ConnectionManager.ConnectionStatus}"
-            : $"PLC 已断开 · {ConnectionManager.ConnectionStatus}";
+    /// <summary>
+    /// 数据停滞判定阈值：超过该秒数未收到任何实时数据（快照/事件）视为采集停滞。
+    /// Remote 模式快照 500ms 一帧，Local 模式 200ms 轮询，10s 无数据可断定链路卡死。
+    /// </summary>
+    private const int DataStaleThresholdSeconds = 10;
+
+    /// <summary>最近一次收到实时数据的时间（Remote=Collector 快照/事件；Local=PLC 成功轮询）。</summary>
+    private DateTime LastDataTimestamp => IsRemoteDataMode
+        ? (_dataClient?.LastDataReceivedAt ?? default)
+        : (_acquisitionService?.GetDiagnosticsSnapshot().LastSuccessfulAt ?? default);
+
+    /// <summary>采集链路是否活跃（连接正常或采集运行中）。链路不活跃时不算"停滞"（横幅另有断连提示）。</summary>
+    private bool IsAcquisitionActive => IsRemoteDataMode
+        ? ConnectionManager.IsConnected
+        : (_acquisitionService?.IsRunning ?? false);
+
+    /// <summary>数据是否停滞：链路活跃但超过阈值未收到数据。</summary>
+    public bool IsDataStale
+    {
+        get
+        {
+            var last = LastDataTimestamp;
+            return IsAcquisitionActive
+                && last != default
+                && (DateTime.Now - last).TotalSeconds > DataStaleThresholdSeconds;
+        }
+    }
+
+    /// <summary>数据停滞秒数（文案用）。</summary>
+    public int DataStaleSeconds
+    {
+        get
+        {
+            var last = LastDataTimestamp;
+            return last == default ? 0 : (int)(DateTime.Now - last).TotalSeconds;
+        }
+    }
+
+    /// <summary>全局横幅可见性：连接断开或数据停滞（连接正常但采集卡死）。</summary>
+    public bool IsConnectionBannerVisible => IsPlcDisconnected || IsDataStale;
+
+    /// <summary>全局连接状态横幅文案（连接断开 / 连接中 / 数据停滞三种态，Remote 文案指向采集服务）。</summary>
+    public string PlcConnectionBannerText
+    {
+        get
+        {
+            if (IsDataStale && !IsPlcDisconnected)
+                return IsRemoteDataMode
+                    ? $"数据已停滞 {DataStaleSeconds}s，采集服务可能卡死"
+                    : $"数据已停滞 {DataStaleSeconds}s，PLC 采集可能卡死";
+            return IsPlcConnecting
+                ? IsRemoteDataMode
+                    ? $"正在连接采集服务 · {ConnectionManager.ConnectionStatus}"
+                    : $"PLC 正在连接 · {ConnectionManager.ConnectionStatus}"
+                : IsRemoteDataMode
+                    ? $"采集服务已断开 · {ConnectionManager.ConnectionStatus}"
+                    : $"PLC 已断开 · {ConnectionManager.ConnectionStatus}";
+        }
+    }
 
     /// <summary>
     /// 授权门禁（暴露给 UI 绑定授权状态/剩余天数/机器码）
@@ -162,6 +213,19 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     // UI Dispatcher：构造时捕获（DI 在 UI 线程构造），用于切换后测量渲染完成耗时
     private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
 
+    // 数据新鲜度监控：Remote 取 KanbanDataClient 最后收数时间，Local 取采集服务最后成功轮询
+    private readonly KanbanDataClient? _dataClient;
+    private readonly PlcDataAcquisitionService? _acquisitionService;
+    private readonly DispatcherTimer _staleCheckTimer;
+
+    private void OnStaleCheckTick(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(IsDataStale));
+        OnPropertyChanged(nameof(DataStaleSeconds));
+        OnPropertyChanged(nameof(IsConnectionBannerVisible));
+        OnPropertyChanged(nameof(PlcConnectionBannerText));
+    }
+
     private static IReadOnlyList<NavigationPageDefinition> CatalogDefinitions => NavigationPageCatalog.All;
 
     /// <summary>
@@ -218,7 +282,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         SettingsViewModel settingsViewModel,
         PlcConnectionManager connectionManager,
         LicenseGate licenseGate,
-        RuntimeMonitoringViewModel? runtimeMonitoringViewModel = null)
+        RuntimeMonitoringViewModel? runtimeMonitoringViewModel = null,
+        KanbanDataClient? dataClient = null,
+        PlcDataAcquisitionService? acquisitionService = null)
     {
         AppSettings = appSettings;
         DeviceManagerViewModel = deviceManagerViewModel;
@@ -233,6 +299,15 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         RuntimeMonitoringViewModel = runtimeMonitoringViewModel;
         ConnectionManager = connectionManager;
         LicenseGate = licenseGate;
+        _dataClient = dataClient;
+        _acquisitionService = acquisitionService;
+        // 数据新鲜度检查：2s 轮询刷新"数据停滞"横幅（连接正常但采集卡死时提示）
+        _staleCheckTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromSeconds(2),
+        };
+        _staleCheckTimer.Tick += OnStaleCheckTick;
+        _staleCheckTimer.Start();
         var sidebarItems = new ObservableCollection<NavItem>(
             PageDefinitions.Where(page => page.ShowInSidebar
                 && (!IsViewerMode || ViewerAllowedPageKeys.Contains(page.Key)))
@@ -265,6 +340,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         if (_disposed) return;
         _disposed = true;
 
+        _staleCheckTimer.Stop();
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;
         ProductionLineViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;

@@ -252,17 +252,20 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!--  全局 PLC 断连横幅：断连时红底显示，所有页面可见，避免切到非主页后用户误操作已过时数据  -->
+            <!--  全局连接状态横幅：断连红底 / 连接中黄底 / 数据停滞（采集卡死）黄底，所有页面可见  -->
             <Border
                 Grid.Row="0"
                 Padding="16,6"
                 Background="{StaticResource DangerBrush}"
-                Visibility="{Binding IsPlcDisconnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Visibility="{Binding IsConnectionBannerVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource DangerBrush}" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsPlcConnecting}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsDataStale}" Value="True">
                                 <Setter Property="Background" Value="{StaticResource WarningBrush}" />
                             </DataTrigger>
                         </Style.Triggers>

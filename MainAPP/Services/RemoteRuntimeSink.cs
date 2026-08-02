@@ -101,6 +101,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
+        // 数据新鲜度：收到实时数据即刷新时间戳（采集停滞监控依据）
+        _client.MarkDataReceived();
         // 快照频率 500ms，直接跑在 SignalR 回调线程；设备运行时状态非绑定主源（Runtimes 已注册集合同步锁），
         // 但 Alarm.StartTime/EndTime 绑定 UI，走 Dispatcher 封送，避免跨线程绑定异常。
         _dispatcher.InvokeAsync(() =>
@@ -131,6 +133,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void OnAlarmEventReceived(AlarmEventDto evt)
     {
+        // 数据新鲜度：报警事件也是实时数据信号
+        _client.MarkDataReceived();
         // 更新游标：无论 UI 应用是否成功，事件已消费（防止补拉风暴）
         Interlocked.Exchange(ref _lastAlarmSeq, evt.Seq);
         _dispatcher.InvokeAsync(() =>
@@ -164,6 +168,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void OnStatusEventReceived(StatusEventDto evt)
     {
+        // 数据新鲜度：状态事件也是实时数据信号
+        _client.MarkDataReceived();
         // 状态事件仅入库（Collector 侧），UI 状态以快照 StatusWord 为准，此处无需处理。
         _logger.LogTrace("状态事件 {Device} {From}->{To}", evt.DeviceId, evt.PreviousState, evt.CurrentState);
     }
