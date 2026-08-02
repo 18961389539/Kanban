@@ -19,6 +19,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly CollectorDiagnosticsProvider _diagnosticsProvider;
     private readonly ConfigSyncHandler _configSyncHandler;
     private readonly ShiftProgressProvider _shiftProgressProvider;
+    private readonly MetaPublisher _metaPublisher;
     private readonly ILogger<KanbanHub> _logger;
 
     public KanbanHub(
@@ -28,6 +29,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         CollectorDiagnosticsProvider diagnosticsProvider,
         ConfigSyncHandler configSyncHandler,
         ShiftProgressProvider shiftProgressProvider,
+        MetaPublisher metaPublisher,
         ILogger<KanbanHub> logger)
     {
         _snapshotAggregator = snapshotAggregator;
@@ -36,6 +38,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         _diagnosticsProvider = diagnosticsProvider;
         _configSyncHandler = configSyncHandler;
         _shiftProgressProvider = shiftProgressProvider;
+        _metaPublisher = metaPublisher;
         _logger = logger;
     }
 
@@ -104,4 +107,16 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task<ShiftProgressDto> GetShiftProgressAsync()
         => Task.FromResult(_shiftProgressProvider.GetProgress());
+
+    /// <inheritdoc />
+    public async Task SubscribeMetaAsync()
+    {
+        var channel = await _metaPublisher.SubscribeAsync(Context.ConnectionAborted);
+
+        // 逐条转发：客户端回调 OnMeta
+        await foreach (var meta in channel.ReadAllAsync(Context.ConnectionAborted))
+        {
+            await Clients.Caller.OnMeta(meta);
+        }
+    }
 }

@@ -133,6 +133,9 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public void OnStatusEvent(Action<StatusEventDto> handler)
         => _connection!.On<StatusEventDto>(nameof(IKanbanHubClient.OnStatusEvent), handler);
 
+    public void OnMeta(Action<MetaStateDto> handler)
+        => _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler);
+
     // ──────────── 服务端调用 ────────────
 
     public async Task<IReadOnlyList<DeviceSnapshotDto>> GetCurrentSnapshotsAsync(CancellationToken ct = default)
@@ -147,6 +150,9 @@ public sealed class KanbanDataClient : IAsyncDisposable
 
     public async Task SubscribeStatusEventsAsync(long afterSeq, CancellationToken ct = default)
         => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeStatusEventsAsync), afterSeq, ct);
+
+    public async Task SubscribeMetaAsync(CancellationToken ct = default)
+        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SubscribeMetaAsync), ct);
 
     public async Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default)
         => await _connection!.InvokeAsync<HistoryQueryResponse>(

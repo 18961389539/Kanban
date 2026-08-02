@@ -135,22 +135,22 @@
 
             <section class="card">
                 <div class="card-title">当前工单</div>
-                @if (Dashboard.CurrentWorkOrder is null)
+                @if (CurrentWorkOrder is null)
                 {
-                    <div class="no-data">@(Dashboard.WorkOrderError ?? "暂无工单")</div>
+                    <div class="no-data">暂无工单</div>
                 }
                 else
                 {
                     <div class="dev-head">
-                        <span class="dev-name">@Dashboard.CurrentWorkOrder.OrderNo</span>
+                        <span class="dev-name">@CurrentWorkOrder.OrderNo</span>
                         <span class="status-badge" style="@WoStatusStyle">@WoStatusText</span>
                     </div>
-                    <div class="wo-product">@Dashboard.CurrentWorkOrder.ProductCode · @Dashboard.CurrentWorkOrder.ProductName</div>
+                    <div class="wo-product">@CurrentWorkOrder.ProductCode · @CurrentWorkOrder.ProductName</div>
                     <div class="wo-progress-text">@WoProgressText</div>
                     <div class="time-bar">
                         <div class="seg" style="width:@WoProgressRatio%;background:#34D399"></div>
                     </div>
-                    <div class="meta-line">计划 @Dashboard.CurrentWorkOrder.TargetQuantity.ToString("N0") 件</div>
+                    <div class="meta-line">计划 @CurrentWorkOrder.TargetQuantity.ToString("N0") 件</div>
                 }
             </section>
 
@@ -173,7 +173,7 @@
                 <div class="card-title">班次进度</div>
                 @if (Dashboard.ShiftProgress is null)
                 {
-                    <div class="no-data">@(Dashboard.ShiftError ?? "暂无数据")</div>
+                    <div class="no-data">暂无数据</div>
                 }
                 else
                 {
@@ -209,7 +209,6 @@
 @code {
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
-    private DateTime _lastMetaFetch = DateTime.MinValue;
 
     /// <summary>
     /// 当前选中设备。未手动选择时默认第一台（避免初次进入提示"未选择设备"）。
@@ -221,34 +220,27 @@
         set
         {
             if (_selectedDeviceId != value)
-            {
                 _selectedDeviceId = value;
-                // 设备切换立即刷新工单（元数据低频，不影响渲染节流）
-                _ = Dashboard.RefreshWorkOrderAsync(value);
-            }
         }
     }
 
     private DeviceSnapshotDto? SelectedSnapshot
         => SelectedDeviceId is null ? null : Dashboard.GetSnapshot(SelectedDeviceId);
 
+    /// <summary>当前选中设备的工单（Collector 5s 推送缓存，切换设备即时取用）。</summary>
+    private WorkOrderDto? CurrentWorkOrder => Dashboard.GetWorkOrder(SelectedDeviceId);
+
     protected override async Task OnInitializedAsync()
     {
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
-        // 渲染节流：2s 统一重渲染（快照 500ms 只更新内存，避免 render tree 高频 diff）
+        // 渲染节流：2s 统一重渲染（推送 500ms 只更新内存，避免 render tree 高频 diff）
         _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTickAsync), null, 2000, 2000);
         await Task.CompletedTask;
     }
 
-    /// <summary>渲染 tick：低频元数据（工单/班次）10s 节流刷新 + 2s 统一重渲染。</summary>
-    private async Task OnRenderTickAsync()
+    /// <summary>渲染 tick：2s 统一重渲染（工单/班次由 Collector 推送，无需轮询）。</summary>
+    private void OnRenderTickAsync()
     {
-        if (Dashboard.IsConnected && (DateTime.Now - _lastMetaFetch).TotalSeconds >= 10)
-        {
-            _lastMetaFetch = DateTime.Now;
-            await Dashboard.RefreshWorkOrderAsync(SelectedSnapshot?.DeviceId);
-            await Dashboard.RefreshShiftAsync();
-        }
         StateHasChanged();
     }
 
@@ -279,7 +271,7 @@
     private string StatusStyle
         => $"color:{Status.Color};border-color:{Status.Color};background:{Status.Color}22";
 
-    private string WoStatusText => Dashboard.CurrentWorkOrder?.Status switch
+    private string WoStatusText => CurrentWorkOrder?.Status switch
     {
         WorkOrderStatus.Running => "生产中",
         WorkOrderStatus.Completed => "已完成",
@@ -287,7 +279,7 @@
         _ => "待开始",
     };
 
-    private string WoStatusColor => Dashboard.CurrentWorkOrder?.Status switch
+    private string WoStatusColor => CurrentWorkOrder?.Status switch
     {
         WorkOrderStatus.Running => "#34D399",
         WorkOrderStatus.Completed => "#9CA3AF",
@@ -302,7 +294,7 @@
     {
         get
         {
-            var wo = Dashboard.CurrentWorkOrder;
+            var wo = CurrentWorkOrder;
             if (wo is null) return "";
             var target = wo.TargetQuantity > 0 ? wo.TargetQuantity.ToString("N0") : "--";
             return wo.Status == WorkOrderStatus.Running
@@ -315,7 +307,7 @@
     {
         get
         {
-            var wo = Dashboard.CurrentWorkOrder;
+            var wo = CurrentWorkOrder;
             if (wo is null || wo.TargetQuantity <= 0) return 0;
             var ok = SelectedSnapshot?.TotalOkProduction ?? 0;
             return Math.Clamp(100.0 * ok / wo.TargetQuantity, 0, 100);

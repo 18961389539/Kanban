@@ -7,11 +7,11 @@ namespace Kanban.Web;
 
 /// <summary>
 /// 看板内存状态（Blazor WASM 端唯一数据源）。
-/// 连接 Collector（JSON 协议）→ 拉初始快照 → 订阅快照流，全部快照按 DeviceId 存字典。
-/// 渲染节流策略：快照回调（约 500ms/次）只更新内存字典，页面用 2s Timer 触发重渲染——
-/// 避免 Blazor render tree 高频 diff 导致卡顿。
+/// 双连接架构（WASM 约束）：订阅连接只收推送（快照/事件/元数据），查询连接只做 Invoke——
+/// 同一连接"长驻订阅 + 后续 InvokeAsync"在 WASM 上会导致 Invoke 永久挂起（已复现确认）。
+/// 渲染节流：推送回调（500ms 快照 / 5s 元数据）只更新内存字典，页面用 2s Timer 触发重渲染。
 /// OEE 四率直接使用快照自带值（服务端 OeeCalculator 单源计算，客户端零重复计算）。
-/// 附加状态：设备状态汇总、数据新鲜度、速度趋势历史、当前工单、班次进度。
+/// 工单/班次由 Collector 低频推送（OnMeta），客户端零轮询、零 Invoke。
 /// </summary>
 public sealed class DashboardState : IAsyncDisposable
 {
@@ -20,6 +20,7 @@ public sealed class DashboardState : IAsyncDisposable
     private readonly ILogger<DashboardState> _logger;
     private readonly Dictionary<string, DeviceSnapshotDto> _snapshots = new();
     private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
+    private readonly Dictionary<string, WorkOrderDto?> _workOrdersByDevice = new();
     private readonly object _lock = new();
     private bool _initialized;
 
@@ -27,9 +28,9 @@ public sealed class DashboardState : IAsyncDisposable
     {
         _client = client;
         _logger = logger;
-        // 独立查询连接：WASM 上同一连接"长驻订阅 + 后续 InvokeAsync"会导致 Invoke 永久挂起
-        // （服务端推送正常但客户端→服务端请求无响应，已用无头浏览器复现）。双连接绕开该问题：
-        // 订阅连接只收快照推送，查询连接专职工单/班次等 Invoke 调用。
+        // 双连接架构（WASM 约束）：每连接最多一个长驻订阅，禁止"长驻订阅 + 后续 Invoke"混用
+        // （WASM 上会永久挂起、桌面端会严重延迟——已复现）。
+        // 订阅连接：快照推送（OnSnapshot）；查询连接：元数据订阅（OnMeta）+ 未来历史查询 Invoke。
         _queryClient = new KanbanDataClient(client.HubUrl, NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
         _client.ConnectionStateChanged += (_, connected) =>
         {
@@ -40,9 +41,11 @@ public sealed class DashboardState : IAsyncDisposable
         _client.Reconnecting += (_, _) => StateChanged?.Invoke();
         _client.Reconnected += (_, _) =>
         {
-            // 重连成功：恢复快照订阅（游标补拉由 Collector 侧 Seq 保证，此处无需补拉快照）
+            // 重连成功：恢复快照订阅（游标补拉由 Collector 侧 Seq 保证）
             _ = SubscribeAndRefreshAsync();
         };
+        // 查询连接重连成功后：重新订阅元数据（长驻订阅随连接断开而结束）
+        _queryClient.Reconnected += (_, _) => _ = SubscribeMetaSafeAsync();
     }
 
     /// <summary>连接状态变化通知（UI 刷新连接指示器）。</summary>
@@ -64,31 +67,23 @@ public sealed class DashboardState : IAsyncDisposable
         get { lock (_lock) return _lastDataAt; }
     }
 
-    // ──────────── 当前工单 / 班次进度（低频元数据） ────────────
+    // ──────────── 低频元数据（Collector 5s 推送，非轮询） ────────────
 
-    /// <summary>当前选中设备的工单（Running 优先，回退最新 Pending；null=无）。</summary>
-    public WorkOrderDto? CurrentWorkOrder { get; private set; }
+    private ShiftProgressDto? _shiftProgress;
 
-    /// <summary>工单拉取失败原因（供 UI 直接显示，便于定位 WASM 运行时问题）。</summary>
-    public string? WorkOrderError { get; private set; }
+    /// <summary>当前班次进度（Collector 推送，5s 更新一次）。</summary>
+    public ShiftProgressDto? ShiftProgress
+    {
+        get { lock (_lock) return _shiftProgress; }
+    }
 
-    /// <summary>工单最后拉取时间（供页面节流判断）。</summary>
-    public DateTime WorkOrderFetchedAt { get; private set; }
-
-    /// <summary>当前班次进度。</summary>
-    public ShiftProgressDto? ShiftProgress { get; private set; }
-
-    /// <summary>班次进度拉取失败原因（供 UI 直接显示）。</summary>
-    public string? ShiftError { get; private set; }
-
-    /// <summary>班次进度最后拉取时间。</summary>
-    public DateTime ShiftFetchedAt { get; private set; }
-
-    /// <summary>元数据（工单/班次）刷新诊断：记录最近一次尝试的结果，供 UI 直接显示定位问题。</summary>
-    public string MetaStatus { get; private set; } = "尚未刷新（等待首个渲染周期）";
-
-    /// <summary>记录元数据刷新诊断（成功/跳过/失败原因）。</summary>
-    private void SetMetaStatus(string status) => MetaStatus = $"{DateTime.Now:HH:mm:ss} {status}";
+    /// <summary>指定设备当前工单（Running 优先回退最新 Pending；null=无工单或尚未收到推送）。</summary>
+    public WorkOrderDto? GetWorkOrder(string? deviceId)
+    {
+        if (string.IsNullOrEmpty(deviceId)) return null;
+        lock (_lock)
+            return _workOrdersByDevice.TryGetValue(deviceId, out var wo) ? wo : null;
+    }
 
     /// <summary>设备总数（快照字典大小）。</summary>
     public int DeviceCount => _snapshots.Count;
@@ -128,8 +123,9 @@ public sealed class DashboardState : IAsyncDisposable
             await _client.ConnectAsync();
             // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
             _client.OnSnapshot(OnSnapshotReceived);
-            // 独立查询连接：与订阅连接分开，避免 WASM 上 InvokeAsync 挂起
             await _queryClient.ConnectAsync();
+            // 元数据推送走查询连接（每连接单长驻订阅约束），回调注册在其连接上
+            _queryClient.OnMeta(OnMetaReceived);
         }
         catch (Exception ex)
         {
@@ -138,61 +134,6 @@ public sealed class DashboardState : IAsyncDisposable
             return;
         }
         await SubscribeAndRefreshAsync();
-    }
-
-    /// <summary>刷新当前选中设备的工单（页面按节流周期调用；设备切换时立即调用）。</summary>
-    public async Task RefreshWorkOrderAsync(string? deviceId)
-    {
-        _logger.LogInformation("RefreshWorkOrder 进入 Device={DeviceId} IsConnected={IsConnected}", deviceId, IsConnected);
-        if (!IsConnected)
-        {
-            SetMetaStatus($"跳过工单刷新（IsConnected=false，连接尚未就绪）");
-            return;
-        }
-        if (string.IsNullOrEmpty(deviceId))
-        {
-            SetMetaStatus($"跳过工单刷新（deviceId 为空）");
-            return;
-        }
-        try
-        {
-            // 6s 超时兜底：WASM 上 InvokeAsync 曾有永久挂起（双连接已绕开，超时仅作保险）
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
-            var result = await _queryClient.GetCurrentWorkOrderAsync(deviceId, cts.Token);
-            CurrentWorkOrder = result;
-            WorkOrderError = null;
-            SetMetaStatus($"工单刷新成功（{deviceId}）");
-        }
-        catch (Exception ex)
-        {
-            WorkOrderError = ex.Message;
-            SetMetaStatus($"工单刷新失败：{ex.Message}");
-            _logger.LogWarning(ex, "拉取当前工单失败 Device={DeviceId}", deviceId);
-        }
-        WorkOrderFetchedAt = DateTime.Now;
-    }
-
-    /// <summary>刷新班次进度（页面按节流周期调用）。</summary>
-    public async Task RefreshShiftAsync()
-    {
-        if (!IsConnected)
-        {
-            SetMetaStatus($"跳过班次刷新（IsConnected=false，连接尚未就绪）");
-            return;
-        }
-        try
-        {
-            ShiftProgress = await _queryClient.GetShiftProgressAsync();
-            ShiftError = null;
-            SetMetaStatus($"班次刷新成功（{ShiftProgress?.Name}）");
-        }
-        catch (Exception ex)
-        {
-            ShiftError = ex.Message;
-            SetMetaStatus($"班次刷新失败：{ex.Message}");
-            _logger.LogWarning(ex, "拉取班次进度失败");
-        }
-        ShiftFetchedAt = DateTime.Now;
     }
 
     /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史（不触达 UI，渲染节流由页面 Timer 负责）。</summary>
@@ -217,10 +158,22 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>订阅快照流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。</summary>
+    /// <summary>元数据回调（Collector 约 5s 推送）：更新全部设备工单缓存 + 班次进度。</summary>
+    private void OnMetaReceived(MetaStateDto meta)
+    {
+        lock (_lock)
+        {
+            foreach (var d in meta.Devices)
+                _workOrdersByDevice[d.DeviceId] = d.WorkOrder;
+            _shiftProgress = meta.Shift;
+        }
+    }
+
+    /// <summary>订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。</summary>
     private async Task SubscribeAndRefreshAsync()
     {
         _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
+        _ = SubscribeMetaSafeAsync();      // 元数据订阅走查询连接（每连接单长驻订阅约束）
         try
         {
             var snapshots = await _client.GetCurrentSnapshotsAsync();
@@ -247,6 +200,19 @@ public sealed class DashboardState : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "快照订阅结束（连接断开/重连触发，属正常）");
+        }
+    }
+
+    /// <summary>元数据订阅包装（查询连接上长驻；断开/重连自动重订阅，观察 fault 防止未观察异常）。</summary>
+    private async Task SubscribeMetaSafeAsync()
+    {
+        try
+        {
+            await _queryClient.SubscribeMetaAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "元数据订阅结束（连接断开/重连触发，属正常）");
         }
     }
 

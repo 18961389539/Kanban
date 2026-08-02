@@ -119,6 +119,34 @@ public sealed class ConfigSyncHandler
         }
     }
 
+    /// <summary>
+    /// 全部设备的当前工单快照（低频元数据推送用，MetaPublisher 每 5s 调用一次）。
+    /// Running 优先、回退最新 Pending；无工单设备 WorkOrder=null。
+    /// </summary>
+    public IReadOnlyList<DeviceWorkOrderDto> GetWorkOrderSnapshot()
+    {
+        try
+        {
+            var result = new List<DeviceWorkOrderDto>();
+            foreach (var device in _deviceRepository.GetDevicesSnapshot())
+            {
+                var running = _workOrderRepository.GetRunningByDevice(device.Id);
+                var workOrder = running ?? _workOrderRepository.GetLatestPendingByDevice(device.Id);
+                result.Add(new DeviceWorkOrderDto
+                {
+                    DeviceId = device.Id,
+                    WorkOrder = workOrder is null ? null : ToDto(workOrder),
+                });
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "工单快照构建失败");
+            return [];
+        }
+    }
+
     // ──────────── DTO → 实体 ────────────
 
     private static Device ToDevice(DeviceConfigDto dto)

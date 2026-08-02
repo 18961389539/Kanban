@@ -16,6 +16,9 @@ public interface IKanbanHubClient
 
     /// <summary>推送状态转换边沿事件</summary>
     Task OnStatusEvent(StatusEventDto statusEvent);
+
+    /// <summary>推送低频元数据包（约 5s 一次：全部设备当前工单 + 班次进度）</summary>
+    Task OnMeta(MetaStateDto meta);
 }
 
 /// <summary>
@@ -58,4 +61,7 @@ public interface IKanbanHubServer
 
     /// <summary>查询当前班次进度（按班次配置与当前时间计算，无班次配置时 IsInShift=false）。</summary>
     Task<ShiftProgressDto> GetShiftProgressAsync();
+
+    /// <summary>订阅低频元数据流（约 5s 一次 OnMeta：全部设备当前工单 + 班次进度；替代轮询 Invoke）</summary>
+    Task SubscribeMetaAsync();
 }

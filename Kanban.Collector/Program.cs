@@ -39,7 +39,15 @@ public static class Program
 
         try
         {
-            var builder = WebApplication.CreateBuilder(args);
+            // 固定 ContentRoot/WebRoot 为 exe 目录：服务或异目录启动时 cwd 可能不在 exe 旁，
+            // 否则 wwwroot（WASM 静态托管产物）会解析到错误路径导致 404。
+            var appOptions = new WebApplicationOptions
+            {
+                Args = args,
+                ContentRootPath = AppContext.BaseDirectory,
+                WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+            };
+            var builder = WebApplication.CreateBuilder(appOptions);
             // Windows 服务宿主：作为服务安装后由 SCM 拉起（开机自启 + 崩溃自动重启策略由脚本配置）；
             // 未安装服务时以控制台方式正常运行，行为不变。
             builder.Host.UseWindowsService(options => options.ServiceName = "KanbanCollector");
@@ -56,6 +64,8 @@ public static class Program
             builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddSingleton<ConfigSyncHandler>();
             builder.Services.AddSingleton<ShiftProgressProvider>();
+            builder.Services.AddSingleton<MetaPublisher>();
+            builder.Services.AddHostedService(sp => sp.GetRequiredService<MetaPublisher>()); // 同一实例作为定时发布器
             builder.Services.AddHostedService<CollectorWorker>();
 
             // ──────────── SignalR 服务端 ────────────
@@ -73,6 +83,18 @@ public static class Program
 
             // 健康检查：运维/看板客户端探测进程存活（GET /healthz）
             app.UseCors();
+
+            // 单端口部署：Collector 同时静态托管 WASM 展示端产物（wwwroot/ 下）。
+            // 浏览器访问 http://host:5129/ 直接打开看板，与 Hub 同源，无需 CORS/双端口/双防火墙规则。
+            app.UseDefaultFiles();
+            // .dat 无默认 MIME（WASM 运行时资源如 icudt_*.dat 会 404），显式注册
+            var contentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+            contentTypeProvider.Mappings[".dat"] = "application/octet-stream";
+            app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
+            {
+                ContentTypeProvider = contentTypeProvider,
+            });
+
             app.MapHealthChecks("/healthz");
 
             app.MapHub<KanbanHub>("/hubs/kanban");
