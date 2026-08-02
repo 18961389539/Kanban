@@ -141,18 +141,17 @@
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
 
+    /// <summary>
+    /// 当前选中设备。未手动选择时默认第一台（避免初次进入提示"未选择设备"）。
+    /// getter 兜底：快照数据到达后无需手动操作，自动呈现第一台设备。
+    /// </summary>
     private string? SelectedDeviceId
     {
-        get => _selectedDeviceId;
+        get => _selectedDeviceId ?? Dashboard.Snapshots.FirstOrDefault()?.DeviceId;
         set
         {
             if (_selectedDeviceId != value)
-            {
                 _selectedDeviceId = value;
-                // 默认选中第一台设备
-                if (_selectedDeviceId is null && Dashboard.Snapshots.Count > 0)
-                    _selectedDeviceId = Dashboard.Snapshots[0].DeviceId;
-            }
         }
     }
 
