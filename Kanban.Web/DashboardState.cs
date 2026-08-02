@@ -1,6 +1,7 @@
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Kanban.Web;
 
@@ -15,6 +16,7 @@ namespace Kanban.Web;
 public sealed class DashboardState : IAsyncDisposable
 {
     private readonly KanbanDataClient _client;
+    private readonly KanbanDataClient _queryClient;
     private readonly ILogger<DashboardState> _logger;
     private readonly Dictionary<string, DeviceSnapshotDto> _snapshots = new();
     private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
@@ -25,6 +27,10 @@ public sealed class DashboardState : IAsyncDisposable
     {
         _client = client;
         _logger = logger;
+        // 独立查询连接：WASM 上同一连接"长驻订阅 + 后续 InvokeAsync"会导致 Invoke 永久挂起
+        // （服务端推送正常但客户端→服务端请求无响应，已用无头浏览器复现）。双连接绕开该问题：
+        // 订阅连接只收快照推送，查询连接专职工单/班次等 Invoke 调用。
+        _queryClient = new KanbanDataClient(client.HubUrl, NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
         _client.ConnectionStateChanged += (_, connected) =>
         {
             IsConnected = connected;
@@ -122,6 +128,8 @@ public sealed class DashboardState : IAsyncDisposable
             await _client.ConnectAsync();
             // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
             _client.OnSnapshot(OnSnapshotReceived);
+            // 独立查询连接：与订阅连接分开，避免 WASM 上 InvokeAsync 挂起
+            await _queryClient.ConnectAsync();
         }
         catch (Exception ex)
         {
@@ -135,6 +143,7 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>刷新当前选中设备的工单（页面按节流周期调用；设备切换时立即调用）。</summary>
     public async Task RefreshWorkOrderAsync(string? deviceId)
     {
+        _logger.LogInformation("RefreshWorkOrder 进入 Device={DeviceId} IsConnected={IsConnected}", deviceId, IsConnected);
         if (!IsConnected)
         {
             SetMetaStatus($"跳过工单刷新（IsConnected=false，连接尚未就绪）");
@@ -147,7 +156,10 @@ public sealed class DashboardState : IAsyncDisposable
         }
         try
         {
-            CurrentWorkOrder = await _client.GetCurrentWorkOrderAsync(deviceId);
+            // 6s 超时兜底：WASM 上 InvokeAsync 曾有永久挂起（双连接已绕开，超时仅作保险）
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+            var result = await _queryClient.GetCurrentWorkOrderAsync(deviceId, cts.Token);
+            CurrentWorkOrder = result;
             WorkOrderError = null;
             SetMetaStatus($"工单刷新成功（{deviceId}）");
         }
@@ -170,7 +182,7 @@ public sealed class DashboardState : IAsyncDisposable
         }
         try
         {
-            ShiftProgress = await _client.GetShiftProgressAsync();
+            ShiftProgress = await _queryClient.GetShiftProgressAsync();
             ShiftError = null;
             SetMetaStatus($"班次刷新成功（{ShiftProgress?.Name}）");
         }
@@ -222,7 +234,11 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync() => await _client.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await _queryClient.DisposeAsync();
+        await _client.DisposeAsync();
+    }
 }
 
 /// <summary>速度趋势点（时间 + 实时速度 件/小时）。</summary>

@@ -39,6 +39,9 @@ public sealed class KanbanDataClient : IAsyncDisposable
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
+    /// <summary>Hub 地址（供创建同地址的独立查询连接，如 WASM 端双连接架构）。</summary>
+    public string HubUrl => _hubUrl;
+
     public int ConsecutiveFailures => _consecutiveFailures;
 
     // ──────────── 数据新鲜度（采集停滞监控） ────────────
