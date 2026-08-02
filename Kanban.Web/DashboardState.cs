@@ -220,7 +220,7 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>订阅快照流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。</summary>
     private async Task SubscribeAndRefreshAsync()
     {
-        _ = _client.SubscribeSnapshotsAsync(); // 长驻调用，fire-and-forget
+        _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
         try
         {
             var snapshots = await _client.GetCurrentSnapshotsAsync();
@@ -231,6 +231,22 @@ public sealed class DashboardState : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "拉取初始快照失败（等待订阅推送）");
+        }
+    }
+
+    /// <summary>
+    /// 快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），
+    /// 必须观察异常，否则 fire-and-forget 的未观察 Task 会触发 Blazor 全局错误 UI。
+    /// </summary>
+    private async Task SubscribeSnapshotsSafeAsync()
+    {
+        try
+        {
+            await _client.SubscribeSnapshotsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "快照订阅结束（连接断开/重连触发，属正常）");
         }
     }
 
