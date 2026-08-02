@@ -26,7 +26,18 @@
             <div class="empty-sub">确认 PlcSimulator 与 Kanban.Collector 已启动，且 CollectorHubUrl 端口一致</div>
         </div>
     }
-    else if (SelectedSnapshot is null)
+    else
+    {
+        <div class="summary-bar">
+            <span class="sum-item" style="color:#34D399"><span class="dot"></span>运行 <b>@RunCount</b></span>
+            <span class="sum-item" style="color:#F87171"><span class="dot"></span>报警 <b>@AlarmCount</b></span>
+            <span class="sum-item" style="color:#FBBF24"><span class="dot"></span>暂停 <b>@PauseCount</b></span>
+            <span class="sum-item" style="color:#9CA3AF"><span class="dot"></span>待机 <b>@IdleCount</b></span>
+            <span class="sum-item">设备 <b>@Dashboard.DeviceCount</b></span>
+        </div>
+    }
+
+    @if (SelectedSnapshot is null)
     {
         <div class="empty-state">
             <div class="empty-title">未选择设备</div>
@@ -123,13 +134,72 @@
             </section>
 
             <section class="card">
+                <div class="card-title">当前工单</div>
+                @if (Dashboard.CurrentWorkOrder is null)
+                {
+                    <div class="no-data">暂无工单</div>
+                }
+                else
+                {
+                    <div class="dev-head">
+                        <span class="dev-name">@Dashboard.CurrentWorkOrder.OrderNo</span>
+                        <span class="status-badge" style="@WoStatusStyle">@WoStatusText</span>
+                    </div>
+                    <div class="wo-product">@Dashboard.CurrentWorkOrder.ProductCode · @Dashboard.CurrentWorkOrder.ProductName</div>
+                    <div class="wo-progress-text">@WoProgressText</div>
+                    <div class="time-bar">
+                        <div class="seg" style="width:@WoProgressRatio%;background:#34D399"></div>
+                    </div>
+                    <div class="meta-line">计划 @Dashboard.CurrentWorkOrder.TargetQuantity.ToString("N0") 件</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">速度趋势 <span class="badge-soft">近 1 分钟</span></div>
+                @if (SpeedPointsText is null)
+                {
+                    <div class="no-data">等待数据积累…</div>
+                }
+                else
+                {
+                    <svg class="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
+                        <polyline points="@SpeedPointsText" fill="none" stroke="#34D399" stroke-width="1.5" />
+                    </svg>
+                    <div class="meta-line">当前 @RealtimeSpeedText 件/h · 采样 0.5s</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">班次进度</div>
+                @if (Dashboard.ShiftProgress is null)
+                {
+                    <div class="no-data">暂无数据</div>
+                }
+                else
+                {
+                    <div class="dev-head">
+                        <span class="dev-name">@Dashboard.ShiftProgress.Name</span>
+                        <span class="kpi-value">@Dashboard.ShiftProgress.Pct</span>
+                    </div>
+                    <div class="time-bar">
+                        <div class="seg" style="width:@(Dashboard.ShiftProgress.Ratio * 100)%;background:#378ADD"></div>
+                    </div>
+                    <div class="duration-row">
+                        <div><span class="kpi-label">已运行</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
+                        <div><span class="kpi-label">剩余</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
+                    </div>
+                    <div class="meta-line">按班次配置自动计算</div>
+                }
+            </section>
+
+            <section class="card">
                 <div class="card-title">数据源</div>
                 <div class="info-list">
                     <div><span class="kpi-label">连接状态</span><span class="kpi-value">@(Dashboard.IsConnected ? "已连接" : "断开")</span></div>
                     <div><span class="kpi-label">设备总数</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
-                    <div><span class="kpi-label">快照时间</span><span class="kpi-value">@SelectedSnapshot.Timestamp.ToString("HH:mm:ss")</span></div>
+                    <div><span class="kpi-label">数据更新</span><span class="kpi-value">@FreshnessText</span></div>
                     <div><span class="kpi-label">快照序号</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
-                    <div><span class="kpi-label">服务地址</span><span class="kpi-value mono">http://127.0.0.1:5129/hubs/kanban</span></div>
+                    <div><span class="kpi-label">服务地址</span><span class="kpi-value mono">动态派生 · :5129</span></div>
                 </div>
             </section>
         </main>
@@ -139,6 +209,7 @@
 @code {
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
+    private DateTime _lastMetaFetch = DateTime.MinValue;
 
     /// <summary>
     /// 当前选中设备。未手动选择时默认第一台（避免初次进入提示"未选择设备"）。
@@ -150,7 +221,11 @@
         set
         {
             if (_selectedDeviceId != value)
+            {
                 _selectedDeviceId = value;
+                // 设备切换立即刷新工单（元数据低频，不影响渲染节流）
+                _ = Dashboard.RefreshWorkOrderAsync(value);
+            }
         }
     }
 
@@ -161,8 +236,20 @@
     {
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
         // 渲染节流：2s 统一重渲染（快照 500ms 只更新内存，避免 render tree 高频 diff）
-        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(StateHasChanged), null, 2000, 2000);
+        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTickAsync), null, 2000, 2000);
         await Task.CompletedTask;
+    }
+
+    /// <summary>渲染 tick：低频元数据（工单/班次）10s 节流刷新 + 2s 统一重渲染。</summary>
+    private async Task OnRenderTickAsync()
+    {
+        if (Dashboard.IsConnected && (DateTime.Now - _lastMetaFetch).TotalSeconds >= 10)
+        {
+            _lastMetaFetch = DateTime.Now;
+            await Dashboard.RefreshWorkOrderAsync(SelectedSnapshot?.DeviceId);
+            await Dashboard.RefreshShiftAsync();
+        }
+        StateHasChanged();
     }
 
     public void Dispose()
@@ -170,6 +257,13 @@
         _renderTimer?.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    // ──────────── 设备状态汇总条 ────────────
+
+    private int RunCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Running);
+    private int AlarmCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Alarm);
+    private int PauseCount => Dashboard.Snapshots.Count(s => s.Status == DeviceStatus.Paused);
+    private int IdleCount => Dashboard.Snapshots.Count(s => s.Status is not (DeviceStatus.Running or DeviceStatus.Alarm or DeviceStatus.Paused));
 
     // ──────────── 展示辅助（纯快照数据换算，无本地计算） ────────────
 
@@ -184,6 +278,84 @@
 
     private string StatusStyle
         => $"color:{Status.Color};border-color:{Status.Color};background:{Status.Color}22";
+
+    private string WoStatusText => Dashboard.CurrentWorkOrder?.Status switch
+    {
+        WorkOrderStatus.Running => "生产中",
+        WorkOrderStatus.Completed => "已完成",
+        WorkOrderStatus.Aborted => "已终止",
+        _ => "待开始",
+    };
+
+    private string WoStatusColor => Dashboard.CurrentWorkOrder?.Status switch
+    {
+        WorkOrderStatus.Running => "#34D399",
+        WorkOrderStatus.Completed => "#9CA3AF",
+        WorkOrderStatus.Aborted => "#F87171",
+        _ => "#FBBF24",
+    };
+
+    private string WoStatusStyle => $"color:{WoStatusColor};border-color:{WoStatusColor};background:{WoStatusColor}22";
+
+    /// <summary>工单进度：Running 工单用当前 OK 产量/目标；Pending 显示 "0 / 目标"。</summary>
+    private string WoProgressText
+    {
+        get
+        {
+            var wo = Dashboard.CurrentWorkOrder;
+            if (wo is null) return "";
+            var target = wo.TargetQuantity > 0 ? wo.TargetQuantity.ToString("N0") : "--";
+            return wo.Status == WorkOrderStatus.Running
+                ? $"{SelectedSnapshot?.TotalOkProduction ?? 0:N0} / {target} 件"
+                : $"-- / {target} 件";
+        }
+    }
+
+    private double WoProgressRatio
+    {
+        get
+        {
+            var wo = Dashboard.CurrentWorkOrder;
+            if (wo is null || wo.TargetQuantity <= 0) return 0;
+            var ok = SelectedSnapshot?.TotalOkProduction ?? 0;
+            return Math.Clamp(100.0 * ok / wo.TargetQuantity, 0, 100);
+        }
+    }
+
+    /// <summary>数据新鲜度文本（距最后收到快照的秒数）。</summary>
+    private string FreshnessText
+    {
+        get
+        {
+            if (Dashboard.LastDataAt is not { } last) return "未收到";
+            var secs = (int)(DateTime.Now - last).TotalSeconds;
+            return secs switch
+            {
+                < 3 => "实时",
+                < 60 => $"{secs} 秒前",
+                _ => $"{(secs / 60)} 分钟前",
+            };
+        }
+    }
+
+    /// <summary>速度趋势 sparkline 坐标串（最近 1 分钟，viewBox 300x64）。</summary>
+    private string? SpeedPointsText
+    {
+        get
+        {
+            var pts = Dashboard.GetSpeedHistory(SelectedSnapshot?.DeviceId ?? "");
+            if (pts.Count < 2) return null;
+            var max = Math.Max(pts.Max(p => p.Speed), 1);
+            var min = pts.Min(p => p.Speed);
+            var range = Math.Max(max - min, max * 0.1); // 区间过小时放大避免直线
+            return string.Join(" ", pts.Select((p, i) =>
+            {
+                var x = (double)i / (pts.Count - 1) * 300;
+                var y = 56 - (p.Speed - min) / range * 48;
+                return $"{x:F0},{y:F0}";
+            }));
+        }
+    }
 
     private static string Pct(double v) => $"{v:P0}";
 

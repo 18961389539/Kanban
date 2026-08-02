@@ -7,15 +7,17 @@ namespace Kanban.Web;
 /// <summary>
 /// 看板内存状态（Blazor WASM 端唯一数据源）。
 /// 连接 Collector（JSON 协议）→ 拉初始快照 → 订阅快照流，全部快照按 DeviceId 存字典。
-/// 渲染节流策略：快照回调（约 500ms/次）只更新内存字典，页面用 1s Timer 触发重渲染——
-/// 避免 Blazor render tree 以 500ms 频率全量 diff 导致卡顿。
+/// 渲染节流策略：快照回调（约 500ms/次）只更新内存字典，页面用 2s Timer 触发重渲染——
+/// 避免 Blazor render tree 高频 diff 导致卡顿。
 /// OEE 四率直接使用快照自带值（服务端 OeeCalculator 单源计算，客户端零重复计算）。
+/// 附加状态：设备状态汇总、数据新鲜度、速度趋势历史、当前工单、班次进度。
 /// </summary>
 public sealed class DashboardState : IAsyncDisposable
 {
     private readonly KanbanDataClient _client;
     private readonly ILogger<DashboardState> _logger;
     private readonly Dictionary<string, DeviceSnapshotDto> _snapshots = new();
+    private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
     private readonly object _lock = new();
     private bool _initialized;
 
@@ -46,6 +48,30 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>最近一次连接成功时间。</summary>
     public DateTime? LastConnectedAt { get; private set; }
 
+    // ──────────── 数据新鲜度 ────────────
+
+    private DateTime? _lastDataAt;
+
+    /// <summary>最后一次收到实时数据（快照）的时间。</summary>
+    public DateTime? LastDataAt
+    {
+        get { lock (_lock) return _lastDataAt; }
+    }
+
+    // ──────────── 当前工单 / 班次进度（低频元数据） ────────────
+
+    /// <summary>当前选中设备的工单（Running 优先，回退最新 Pending；null=无）。</summary>
+    public WorkOrderDto? CurrentWorkOrder { get; private set; }
+
+    /// <summary>工单最后拉取时间（供页面节流判断）。</summary>
+    public DateTime WorkOrderFetchedAt { get; private set; }
+
+    /// <summary>当前班次进度。</summary>
+    public ShiftProgressDto? ShiftProgress { get; private set; }
+
+    /// <summary>班次进度最后拉取时间。</summary>
+    public DateTime ShiftFetchedAt { get; private set; }
+
     /// <summary>设备总数（快照字典大小）。</summary>
     public int DeviceCount => _snapshots.Count;
 
@@ -64,6 +90,13 @@ public sealed class DashboardState : IAsyncDisposable
     {
         lock (_lock)
             return _snapshots.TryGetValue(deviceId, out var s) ? s : null;
+    }
+
+    /// <summary>指定设备的速度趋势点（时间升序，客户端按 500ms 快照采样，最多保留 120 点 ≈ 1 分钟）。</summary>
+    public IReadOnlyList<SpeedPoint> GetSpeedHistory(string deviceId)
+    {
+        lock (_lock)
+            return _speedHistoryByDevice.TryGetValue(deviceId, out var q) ? q.ToList() : [];
     }
 
     /// <summary>建立连接并启动订阅（幂等，可安全重入；失败后自动复位允许下次重试）。</summary>
@@ -87,10 +120,56 @@ public sealed class DashboardState : IAsyncDisposable
         await SubscribeAndRefreshAsync();
     }
 
-    /// <summary>快照回调：仅更新内存字典（不触达 UI，渲染节流由页面 Timer 负责）。</summary>
+    /// <summary>刷新当前选中设备的工单（页面按节流周期调用；设备切换时立即调用）。</summary>
+    public async Task RefreshWorkOrderAsync(string? deviceId)
+    {
+        if (string.IsNullOrEmpty(deviceId) || !IsConnected) return;
+        try
+        {
+            CurrentWorkOrder = await _client.GetCurrentWorkOrderAsync(deviceId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "拉取当前工单失败 Device={DeviceId}", deviceId);
+        }
+        WorkOrderFetchedAt = DateTime.Now;
+    }
+
+    /// <summary>刷新班次进度（页面按节流周期调用）。</summary>
+    public async Task RefreshShiftAsync()
+    {
+        if (!IsConnected) return;
+        try
+        {
+            ShiftProgress = await _client.GetShiftProgressAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "拉取班次进度失败");
+        }
+        ShiftFetchedAt = DateTime.Now;
+    }
+
+    /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史（不触达 UI，渲染节流由页面 Timer 负责）。</summary>
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
-        lock (_lock) _snapshots[snapshot.DeviceId] = snapshot;
+        lock (_lock)
+        {
+            _snapshots[snapshot.DeviceId] = snapshot;
+            _lastDataAt = DateTime.Now;
+
+            // 速度点：总产量 / 运行小时（RunTime >= 5s 才记，避免启动失真；口径与 WPF HomeViewModel 一致）
+            double speed = snapshot.RunTime >= 5
+                ? (snapshot.TotalOkProduction + snapshot.TotalNgProduction) / (snapshot.RunTime / 3600.0)
+                : 0;
+            if (!_speedHistoryByDevice.TryGetValue(snapshot.DeviceId, out var queue))
+            {
+                queue = new Queue<SpeedPoint>(121);
+                _speedHistoryByDevice[snapshot.DeviceId] = queue;
+            }
+            queue.Enqueue(new SpeedPoint(DateTime.Now, speed));
+            while (queue.Count > 120) queue.Dequeue();
+        }
     }
 
     /// <summary>订阅快照流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。</summary>
@@ -112,3 +191,6 @@ public sealed class DashboardState : IAsyncDisposable
 
     public async ValueTask DisposeAsync() => await _client.DisposeAsync();
 }
+
+/// <summary>速度趋势点（时间 + 实时速度 件/小时）。</summary>
+public sealed record SpeedPoint(DateTime Time, double Speed);

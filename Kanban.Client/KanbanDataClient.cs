@@ -169,6 +169,14 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
         => await _connection!.InvokeAsync(nameof(IKanbanHubServer.DeleteWorkOrderAsync), workOrderId, ct);
 
+    /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
+    public async Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId, CancellationToken ct = default)
+        => await _connection!.InvokeAsync<WorkOrderDto?>(nameof(IKanbanHubServer.GetCurrentWorkOrderAsync), deviceId, ct);
+
+    /// <summary>查询当前班次进度。</summary>
+    public async Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default)
+        => await _connection!.InvokeAsync<ShiftProgressDto>(nameof(IKanbanHubServer.GetShiftProgressAsync), ct);
+
     public async ValueTask DisposeAsync()
     {
         _reconnectCts?.Cancel();

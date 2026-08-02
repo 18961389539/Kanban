@@ -55,6 +55,7 @@ public static class Program
             builder.Services.AddSingleton<HistoryQueryHandler>();
             builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddSingleton<ConfigSyncHandler>();
+            builder.Services.AddSingleton<ShiftProgressProvider>();
             builder.Services.AddHostedService<CollectorWorker>();
 
             // ──────────── SignalR 服务端 ────────────

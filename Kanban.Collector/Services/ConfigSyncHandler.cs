@@ -100,6 +100,25 @@ public sealed class ConfigSyncHandler
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// 查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。
+    /// 供展示端（WPF/WASM）顶栏工单条/工单卡使用。
+    /// </summary>
+    public Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId)
+    {
+        try
+        {
+            var running = _workOrderRepository.GetRunningByDevice(deviceId);
+            var workOrder = running ?? _workOrderRepository.GetLatestPendingByDevice(deviceId);
+            return Task.FromResult(workOrder is null ? null : ToDto(workOrder));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Remote 当前工单查询失败 Device={DeviceId}", deviceId);
+            throw;
+        }
+    }
+
     // ──────────── DTO → 实体 ────────────
 
     private static Device ToDevice(DeviceConfigDto dto)

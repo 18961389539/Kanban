@@ -18,6 +18,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly HistoryQueryHandler _historyQueryHandler;
     private readonly CollectorDiagnosticsProvider _diagnosticsProvider;
     private readonly ConfigSyncHandler _configSyncHandler;
+    private readonly ShiftProgressProvider _shiftProgressProvider;
     private readonly ILogger<KanbanHub> _logger;
 
     public KanbanHub(
@@ -26,6 +27,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         HistoryQueryHandler historyQueryHandler,
         CollectorDiagnosticsProvider diagnosticsProvider,
         ConfigSyncHandler configSyncHandler,
+        ShiftProgressProvider shiftProgressProvider,
         ILogger<KanbanHub> logger)
     {
         _snapshotAggregator = snapshotAggregator;
@@ -33,6 +35,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         _historyQueryHandler = historyQueryHandler;
         _diagnosticsProvider = diagnosticsProvider;
         _configSyncHandler = configSyncHandler;
+        _shiftProgressProvider = shiftProgressProvider;
         _logger = logger;
     }
 
@@ -93,4 +96,12 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task DeleteWorkOrderAsync(int workOrderId)
         => _configSyncHandler.DeleteWorkOrderAsync(workOrderId);
+
+    /// <inheritdoc />
+    public Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId)
+        => _configSyncHandler.GetCurrentWorkOrderAsync(deviceId);
+
+    /// <inheritdoc />
+    public Task<ShiftProgressDto> GetShiftProgressAsync()
+        => Task.FromResult(_shiftProgressProvider.GetProgress());
 }

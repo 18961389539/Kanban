@@ -52,4 +52,10 @@ public interface IKanbanHubServer
 
     /// <summary>删除工单（Remote 模式：Collector 落库）</summary>
     Task DeleteWorkOrderAsync(int workOrderId);
+
+    /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
+    Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId);
+
+    /// <summary>查询当前班次进度（按班次配置与当前时间计算，无班次配置时 IsInShift=false）。</summary>
+    Task<ShiftProgressDto> GetShiftProgressAsync();
 }
