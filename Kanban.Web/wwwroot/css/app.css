@@ -1,4 +1,5 @@
-/* 生产看板 · 深色主题（对齐 WPF 调色板：背景 #0E1116 / 卡片 #1A2029 / 边框 #2A323F） */
+/* 生产看板 · 深色主题（对齐 WPF 调色板：背景 #0E1116 / 卡片 #1A2029 / 边框 #2A323F）
+   布局策略：移动端竖屏优先——默认样式即手机竖屏（单列流），断点向上增强 */
 
 :root {
     --bg: #0E1116;
@@ -23,59 +24,63 @@ body {
     color: var(--text);
     font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
     font-size: 14px;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.dashboard { min-height: 100vh; padding: 16px 20px; }
+.dashboard { min-height: 100vh; padding: 12px 12px 20px; }
 
-/* ──────────── 顶栏 ──────────── */
+/* ──────────── 顶栏（竖屏：两行堆叠） ──────────── */
 
 .topbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
-    padding-bottom: 14px;
+    gap: 10px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
-.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand { display: flex; align-items: baseline; gap: 8px; }
 
-.brand-title { font-size: 22px; font-weight: 500; letter-spacing: 1px; }
+.brand-title { font-size: 18px; font-weight: 500; letter-spacing: 1px; }
 
-.brand-sub { color: var(--text-3); font-size: 12px; }
+.brand-sub { color: var(--text-3); font-size: 11px; }
 
 .conn-badge {
     display: flex; align-items: center; gap: 6px;
-    padding: 4px 12px; border-radius: 999px; font-size: 13px;
+    padding: 3px 10px; border-radius: 999px; font-size: 12px;
+    margin-left: auto;
 }
 
 .conn-ok { color: var(--green); background: rgba(52, 211, 153, 0.12); }
 .conn-bad { color: var(--red); background: rgba(248, 113, 113, 0.12); }
 
-.conn-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.conn-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
 .device-select {
     background: var(--card); color: var(--text);
     border: 1px solid var(--border); border-radius: 8px;
-    padding: 6px 12px; font-size: 14px; outline: none; min-width: 180px;
+    padding: 8px 12px; font-size: 14px; outline: none;
+    width: 100%;
+    min-height: 40px; /* 触控友好 */
 }
 
 .device-select:focus { border-color: var(--text-3); }
 
-/* ──────────── 卡片网格（2 行 3 列） ──────────── */
+/* ──────────── 卡片：竖屏默认单列 ──────────── */
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: minmax(220px, auto);
-    gap: 14px;
+    grid-template-columns: 1fr;
+    gap: 12px;
 }
 
 .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -95,14 +100,14 @@ body {
 
 .dev-head { display: flex; align-items: center; gap: 10px; }
 
-.dev-name { font-size: 18px; font-weight: 500; }
+.dev-name { font-size: 17px; font-weight: 500; }
 
 .status-badge {
     font-size: 12px; padding: 2px 10px; border-radius: 999px;
     border: 1px solid; background: transparent;
 }
 
-.duration-row { display: flex; gap: 20px; }
+.duration-row { display: flex; flex-wrap: wrap; gap: 16px; }
 
 .duration-row > div { display: flex; flex-direction: column; gap: 2px; }
 
@@ -123,7 +128,7 @@ body {
 
 /* ──────────── 生产状态卡 ──────────── */
 
-.big-number { font-size: 40px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.big-number { font-size: 38px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
 
 .big-label { color: var(--text-3); font-size: 12px; }
 
@@ -145,7 +150,7 @@ body {
 
 .alarm-item {
     display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px; background: var(--card-2); border-radius: 8px; font-size: 13px;
+    padding: 9px 10px; background: var(--card-2); border-radius: 8px; font-size: 13px;
 }
 
 .lvl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -156,17 +161,22 @@ body {
 
 .no-data { color: var(--text-3); font-size: 13px; padding: 12px 0; text-align: center; }
 
-/* ──────────── OEE 卡 ──────────── */
+/* ──────────── OEE 卡（竖屏 2x2 环） ──────────── */
 
-.ring-row { display: flex; justify-content: space-between; align-items: center; }
+.ring-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    justify-items: center;
+    gap: 10px;
+}
 
-.ring { width: 96px; height: 96px; }
+.ring { width: 88px; height: 88px; }
 
 .ring-bg { fill: none; stroke: var(--card-2); stroke-width: 10; }
 
 .ring-fg { fill: none; stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; }
 
-.ring-value { fill: var(--text); font-size: 20px; font-weight: 500; text-anchor: middle; }
+.ring-value { fill: var(--text); font-size: 18px; font-weight: 500; text-anchor: middle; }
 
 .ring-label { fill: var(--text-3); font-size: 11px; text-anchor: middle; }
 
@@ -178,7 +188,7 @@ body {
 
 .quality-block { flex: 1; }
 
-.quality-num { font-size: 32px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.quality-num { font-size: 30px; font-weight: 500; font-variant-numeric: tabular-nums; }
 
 .quality-num.ok { color: var(--green); }
 .quality-num.ng { color: var(--red); }
@@ -191,26 +201,32 @@ body {
 
 .info-list > div { display: flex; justify-content: space-between; }
 
-.mono { font-family: Consolas, monospace; font-size: 12px; }
+.mono { font-family: Consolas, monospace; font-size: 12px; word-break: break-all; }
 
 /* ──────────── 空状态 ──────────── */
 
 .empty-state {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 50vh; gap: 8px; color: var(--text-2);
+    min-height: 60vh; gap: 8px; color: var(--text-2);
+    text-align: center; padding: 0 20px;
 }
 
-.empty-title { font-size: 18px; }
+.empty-title { font-size: 17px; }
 
-.empty-sub { font-size: 13px; color: var(--text-3); }
+.empty-sub { font-size: 12px; color: var(--text-3); }
 
-/* ──────────── 响应式：窄屏降为单列 ──────────── */
+/* ──────────── 桌面/横屏增强（断点向上） ──────────── */
 
-@media (max-width: 1100px) {
-    .grid { grid-template-columns: 1fr 1fr; }
+@media (min-width: 720px) {
+    .dashboard { padding: 16px 20px; }
+    .topbar { flex-wrap: nowrap; }
+    .device-select { width: auto; min-width: 180px; }
+    .brand-title { font-size: 22px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+    .ring-row { grid-template-columns: repeat(4, 1fr); }
+    .ring { width: 96px; height: 96px; }
 }
 
-@media (max-width: 720px) {
-    .grid { grid-template-columns: 1fr; }
-    .topbar { flex-wrap: wrap; }
+@media (min-width: 1100px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
 }
