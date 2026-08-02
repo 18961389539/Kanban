@@ -1,0 +1,233 @@
+@page "/"
+@implements IDisposable
+@inject DashboardState Dashboard
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-title">生产看板</span>
+            <span class="brand-sub">Blazor WASM 展示端</span>
+        </div>
+        <div class="conn-badge @(Dashboard.IsConnected ? "conn-ok" : "conn-bad")">
+            <span class="dot"></span>
+            @(Dashboard.IsConnected ? "实时" : "未连接")
+        </div>
+        <select class="device-select" @bind="SelectedDeviceId">
+            @foreach (var dev in Dashboard.Snapshots)
+            {
+                <option value="@dev.DeviceId">@dev.DeviceName</option>
+            }
+        </select>
+    </header>
+
+    @if (Dashboard.Snapshots.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-title">@(Dashboard.IsConnected ? "暂无设备数据" : "等待连接采集服务…")</div>
+            <div class="empty-sub">确认 PlcSimulator 与 Kanban.Collector 已启动，且 CollectorHubUrl 端口一致</div>
+        </div>
+    }
+    else if (SelectedSnapshot is null)
+    {
+        <div class="empty-state">
+            <div class="empty-title">未选择设备</div>
+            <div class="empty-sub">从右上角选择要查看的设备</div>
+        </div>
+    }
+    else
+    {
+        <main class="grid">
+            <section class="card">
+                <div class="card-title">设备状态</div>
+                <div class="dev-head">
+                    <span class="dev-name">@SelectedSnapshot.DeviceName</span>
+                    <span class="status-badge" style="@StatusStyle">@Status.Text</span>
+                </div>
+                <div class="duration-row">
+                    <div><span class="kpi-label">运行</span><span class="kpi-value" style="color:#34D399">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
+                    <div><span class="kpi-label">报警</span><span class="kpi-value" style="color:#F87171">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
+                    <div><span class="kpi-label">暂停</span><span class="kpi-value" style="color:#FBBF24">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
+                </div>
+                <div class="time-bar">
+                    <div class="seg" style="width:@RunRatio%;background:#34D399"></div>
+                    <div class="seg" style="width:@AlarmRatio%;background:#F87171"></div>
+                    <div class="seg" style="width:@PauseRatio%;background:#FBBF24"></div>
+                </div>
+                <div class="meta-line">状态字 0x@(SelectedSnapshot.StatusWord.ToString("X4")) · 目标 @SelectedSnapshot.TargetCycle 件/h</div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">当前生产状态</div>
+                <div class="big-number">@RealtimeSpeedText</div>
+                <div class="big-label">实时速度（件/小时）</div>
+                <div class="metric-grid">
+                    <div><span class="kpi-label">目标节拍</span><span class="kpi-value">@TargetCycleText</span></div>
+                    <div><span class="kpi-label">实际节拍</span><span class="kpi-value">@ActualCycleText</span></div>
+                    <div><span class="kpi-label">总产量</span><span class="kpi-value">@TotalOutputText</span></div>
+                    <div><span class="kpi-label">不良率</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
+                </div>
+                <div class="speed-meter">
+                    <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
+                    <span class="meter-text">达成率 @SpeedAchievementRateText</span>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">实时故障 <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
+                @if (SelectedSnapshot.ActiveAlarms.Count == 0)
+                {
+                    <div class="no-data">当前无激活报警</div>
+                }
+                else
+                {
+                    <div class="alarm-list">
+                        @foreach (var a in SelectedSnapshot.ActiveAlarms)
+                        {
+                            <div class="alarm-item">
+                                <span class="lvl-dot" style="background:@LevelColor(a.Level)"></span>
+                                <span class="alarm-name">@a.Name</span>
+                                <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">OEE 概览</div>
+                <div class="ring-row">
+                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="#34D399" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="可用率" Color="#378ADD" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="性能率" Color="#BA7517" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="合格率" Color="#639922" />
+                </div>
+                <div class="oee-formula">@Pct(SelectedSnapshot.AvailabilityRate) × @Pct(SelectedSnapshot.PerformanceRate) × @Pct(SelectedSnapshot.QualityRate)</div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">产量明细</div>
+                <div class="quality-row">
+                    <div class="quality-block">
+                        <div class="quality-num ok">@SelectedSnapshot.TotalOkProduction.ToString("N0")</div>
+                        <div class="quality-label">OK 良品</div>
+                    </div>
+                    <div class="quality-block">
+                        <div class="quality-num ng">@SelectedSnapshot.TotalNgProduction.ToString("N0")</div>
+                        <div class="quality-label">NG 不良</div>
+                    </div>
+                </div>
+                <div class="time-bar">
+                    <div class="seg" style="width:@OkRatio%;background:#34D399"></div>
+                    <div class="seg" style="width:@NgRatio%;background:#F87171"></div>
+                </div>
+                <div class="meta-line">合格率 @Pct(SelectedSnapshot.QualityRate) · 不良率 @NgRateText</div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">数据源</div>
+                <div class="info-list">
+                    <div><span class="kpi-label">连接状态</span><span class="kpi-value">@(Dashboard.IsConnected ? "已连接" : "断开")</span></div>
+                    <div><span class="kpi-label">设备总数</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
+                    <div><span class="kpi-label">快照时间</span><span class="kpi-value">@SelectedSnapshot.Timestamp.ToString("HH:mm:ss")</span></div>
+                    <div><span class="kpi-label">快照序号</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
+                    <div><span class="kpi-label">服务地址</span><span class="kpi-value mono">http://127.0.0.1:5129/hubs/kanban</span></div>
+                </div>
+            </section>
+        </main>
+    }
+</div>
+
+@code {
+    private string? _selectedDeviceId;
+    private System.Threading.Timer? _renderTimer;
+
+    private string? SelectedDeviceId
+    {
+        get => _selectedDeviceId;
+        set
+        {
+            if (_selectedDeviceId != value)
+            {
+                _selectedDeviceId = value;
+                // 默认选中第一台设备
+                if (_selectedDeviceId is null && Dashboard.Snapshots.Count > 0)
+                    _selectedDeviceId = Dashboard.Snapshots[0].DeviceId;
+            }
+        }
+    }
+
+    private DeviceSnapshotDto? SelectedSnapshot
+        => SelectedDeviceId is null ? null : Dashboard.GetSnapshot(SelectedDeviceId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
+        // 渲染节流：1s 统一重渲染（快照 500ms 只更新内存，避免 render tree 高频 diff）
+        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(StateHasChanged), null, 1000, 1000);
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _renderTimer?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    // ──────────── 展示辅助（纯快照数据换算，无本地计算） ────────────
+
+    private (string Text, string Color) Status
+        => SelectedSnapshot?.Status switch
+        {
+            DeviceStatus.Running => ("运行", "#34D399"),
+            DeviceStatus.Alarm => ("报警", "#F87171"),
+            DeviceStatus.Paused => ("暂停", "#FBBF24"),
+            _ => ("待机", "#9CA3AF"),
+        };
+
+    private string StatusStyle
+        => $"color:{Status.Color};border-color:{Status.Color};background:{Status.Color}22";
+
+    private static string Pct(double v) => $"{v:P0}";
+
+    private static string FmtDuration(double secs)
+    {
+        var ts = TimeSpan.FromSeconds(Math.Max(0, secs));
+        return ts.TotalHours >= 1
+            ? $"{(int)ts.TotalHours}h {ts.Minutes}m {ts.Seconds}s"
+            : $"{ts.Minutes}m {ts.Seconds}s";
+    }
+
+    private double TotalOutput => SelectedSnapshot is null ? 0 : SelectedSnapshot.TotalOkProduction + SelectedSnapshot.TotalNgProduction;
+
+    /// <summary>实时速度（件/小时）= 总产量 / 运行小时；运行时长过短（&lt;5s）返回 0 避免启动失真（口径与 WPF HomeViewModel 一致）。</summary>
+    private double RealtimeSpeed
+        => SelectedSnapshot is { RunTime: >= 5 } s ? (s.TotalOkProduction + s.TotalNgProduction) / (s.RunTime / 3600.0) : 0;
+
+    private string RealtimeSpeedText => RealtimeSpeed > 0 ? RealtimeSpeed.ToString("N0") : "—";
+    private string TotalOutputText => TotalOutput.ToString("N0");
+    private string TargetCycleText => SelectedSnapshot is { TargetCycle: > 0 } ? $"{(3600.0 / SelectedSnapshot.TargetCycle):F2}s" : "—";
+    private string ActualCycleText => RealtimeSpeed > 0 ? $"{(3600.0 / RealtimeSpeed):F2}s" : "—";
+    private double NgRate => TotalOutput > 0 ? (double)SelectedSnapshot!.TotalNgProduction / TotalOutput : 0;
+    private string NgRateText => TotalOutput > 0 ? $"{NgRate:P1}" : "—";
+    private double SpeedAchievementRate => SelectedSnapshot is { TargetCycle: > 0 } ? Math.Clamp(RealtimeSpeed / SelectedSnapshot.TargetCycle, 0, 1) : 0;
+    private string SpeedAchievementRateText => $"{SpeedAchievementRate:P0}";
+
+    private double RunRatio => RatioOf(SelectedSnapshot?.RunTime ?? 0, SelectedSnapshot);
+    private double AlarmRatio => RatioOf(SelectedSnapshot?.AlarmTime ?? 0, SelectedSnapshot);
+    private double PauseRatio => RatioOf(SelectedSnapshot?.PausedTime ?? 0, SelectedSnapshot);
+    private double OkRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalOkProduction / TotalOutput : 0;
+    private double NgRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalNgProduction / TotalOutput : 0;
+
+    private static double RatioOf(double value, DeviceSnapshotDto? s)
+    {
+        var total = (s?.RunTime ?? 0) + (s?.AlarmTime ?? 0) + (s?.PausedTime ?? 0);
+        return total > 0 ? Math.Clamp(100.0 * value / total, 0, 100) : 0;
+    }
+
+    private static string LevelColor(AlarmLevel level) => level switch
+    {
+        AlarmLevel.High => "#F87171",
+        AlarmLevel.Medium => "#FBBF24",
+        _ => "#9CA3AF",
+    };
+}

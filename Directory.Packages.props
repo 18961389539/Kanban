@@ -41,6 +41,12 @@
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.10" />
   </ItemGroup>
 
+  <!-- ============ Blazor WASM 展示端（Kanban.Web） ============ -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" />
+  </ItemGroup>
+
   <!-- ============ 测试 ============ -->
   <ItemGroup>
     <!-- xunit.v3.mtp-v2：使用 Microsoft.Testing.Platform v2，支持 MTP 原生扩展。 -->

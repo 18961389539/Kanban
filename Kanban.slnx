@@ -2,6 +2,7 @@
   <Project Path="MainAPP/MainAPP.csproj" />
   <Project Path="Kanban.Contracts/Kanban.Contracts.csproj" />
   <Project Path="Kanban.Client/Kanban.Client.csproj" />
+  <Project Path="Kanban.Web/Kanban.Web.csproj" />
   <Project Path="Kanban.Collector/Kanban.Collector.csproj" />
   <Project Path="Kanban.Collector.Core/Kanban.Collector.Core.csproj" />
   <Project Path="MainAPP.Tests/MainAPP.Tests.csproj" />

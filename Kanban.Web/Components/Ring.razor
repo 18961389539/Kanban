@@ -1,0 +1,29 @@
+<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="@($"{(int)(Value * 100)}%")">
+    <circle class="ring-bg" cx="60" cy="60" r="50" />
+    <circle class="ring-fg" cx="60" cy="60" r="50"
+            stroke="@Color"
+            stroke-dasharray="@($"{Circumference:f1} {Circumference:f1}")"
+            stroke-dashoffset="@Offset" />
+    <text class="ring-value" x="60" y="56">@ValueText</text>
+    <text class="ring-label" x="60" y="74">@Label</text>
+</svg>
+
+@code {
+    private const double Radius = 50;
+
+    /// <summary>进度值（0.0 ~ 1.0）。</summary>
+    [Parameter] public double Value { get; set; }
+
+    /// <summary>环中心显示文本（如 "65%"）。</summary>
+    [Parameter] public string ValueText { get; set; } = "--";
+
+    /// <summary>环下方标签。</summary>
+    [Parameter] public string Label { get; set; } = "";
+
+    /// <summary>环颜色（与 WPF 调色板一致）。</summary>
+    [Parameter] public string Color { get; set; } = "#34D399";
+
+    private double Circumference => 2 * Math.PI * Radius;
+
+    private double Offset => Circumference * (1 - Math.Clamp(Value, 0, 1));
+}

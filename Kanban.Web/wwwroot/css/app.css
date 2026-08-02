@@ -1,0 +1,216 @@
+/* 生产看板 · 深色主题（对齐 WPF 调色板：背景 #0E1116 / 卡片 #1A2029 / 边框 #2A323F） */
+
+:root {
+    --bg: #0E1116;
+    --card: #1A2029;
+    --card-2: #212834;
+    --border: #2A323F;
+    --text: #E5E7EB;
+    --text-2: #9CA3AF;
+    --text-3: #8B92A0;
+    --green: #34D399;
+    --red: #F87171;
+    --yellow: #FBBF24;
+    --gray: #9CA3AF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    font-size: 14px;
+}
+
+.dashboard { min-height: 100vh; padding: 16px 20px; }
+
+/* ──────────── 顶栏 ──────────── */
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+}
+
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+
+.brand-title { font-size: 22px; font-weight: 500; letter-spacing: 1px; }
+
+.brand-sub { color: var(--text-3); font-size: 12px; }
+
+.conn-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 999px; font-size: 13px;
+}
+
+.conn-ok { color: var(--green); background: rgba(52, 211, 153, 0.12); }
+.conn-bad { color: var(--red); background: rgba(248, 113, 113, 0.12); }
+
+.conn-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+.device-select {
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font-size: 14px; outline: none; min-width: 180px;
+}
+
+.device-select:focus { border-color: var(--text-3); }
+
+/* ──────────── 卡片网格（2 行 3 列） ──────────── */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(220px, auto);
+    gap: 14px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-title {
+    color: var(--text-2); font-size: 13px; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.badge-count {
+    background: var(--red); color: #fff; font-size: 11px;
+    border-radius: 999px; padding: 1px 8px;
+}
+
+/* ──────────── 设备状态卡 ──────────── */
+
+.dev-head { display: flex; align-items: center; gap: 10px; }
+
+.dev-name { font-size: 18px; font-weight: 500; }
+
+.status-badge {
+    font-size: 12px; padding: 2px 10px; border-radius: 999px;
+    border: 1px solid; background: transparent;
+}
+
+.duration-row { display: flex; gap: 20px; }
+
+.duration-row > div { display: flex; flex-direction: column; gap: 2px; }
+
+.kpi-label { color: var(--text-3); font-size: 12px; }
+
+.kpi-value { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.kpi-value.danger { color: var(--red); }
+
+.time-bar {
+    display: flex; height: 8px; border-radius: 4px; overflow: hidden;
+    background: var(--card-2);
+}
+
+.time-bar .seg { height: 100%; }
+
+.meta-line { color: var(--text-3); font-size: 12px; margin-top: auto; }
+
+/* ──────────── 生产状态卡 ──────────── */
+
+.big-number { font-size: 40px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+
+.big-label { color: var(--text-3); font-size: 12px; }
+
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.metric-grid > div { display: flex; flex-direction: column; gap: 2px; }
+
+.speed-meter { margin-top: auto; display: flex; align-items: center; gap: 10px; }
+
+.meter-track { flex: 1; height: 6px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+
+.meter-fill { height: 100%; background: var(--green); border-radius: 3px; }
+
+.meter-text { color: var(--text-3); font-size: 12px; white-space: nowrap; }
+
+/* ──────────── 实时故障卡 ──────────── */
+
+.alarm-list { display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+
+.alarm-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--card-2); border-radius: 8px; font-size: 13px;
+}
+
+.lvl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.alarm-name { flex: 1; }
+
+.alarm-dur { color: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.no-data { color: var(--text-3); font-size: 13px; padding: 12px 0; text-align: center; }
+
+/* ──────────── OEE 卡 ──────────── */
+
+.ring-row { display: flex; justify-content: space-between; align-items: center; }
+
+.ring { width: 96px; height: 96px; }
+
+.ring-bg { fill: none; stroke: var(--card-2); stroke-width: 10; }
+
+.ring-fg { fill: none; stroke-width: 10; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; }
+
+.ring-value { fill: var(--text); font-size: 20px; font-weight: 500; text-anchor: middle; }
+
+.ring-label { fill: var(--text-3); font-size: 11px; text-anchor: middle; }
+
+.oee-formula { color: var(--text-3); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ──────────── 产量明细卡 ──────────── */
+
+.quality-row { display: flex; gap: 20px; justify-content: center; text-align: center; }
+
+.quality-block { flex: 1; }
+
+.quality-num { font-size: 32px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.quality-num.ok { color: var(--green); }
+.quality-num.ng { color: var(--red); }
+
+.quality-label { color: var(--text-3); font-size: 12px; }
+
+/* ──────────── 数据源卡 ──────────── */
+
+.info-list { display: flex; flex-direction: column; gap: 10px; }
+
+.info-list > div { display: flex; justify-content: space-between; }
+
+.mono { font-family: Consolas, monospace; font-size: 12px; }
+
+/* ──────────── 空状态 ──────────── */
+
+.empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 50vh; gap: 8px; color: var(--text-2);
+}
+
+.empty-title { font-size: 18px; }
+
+.empty-sub { font-size: 13px; color: var(--text-3); }
+
+/* ──────────── 响应式：窄屏降为单列 ──────────── */
+
+@media (max-width: 1100px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+    .topbar { flex-wrap: wrap; }
+}
