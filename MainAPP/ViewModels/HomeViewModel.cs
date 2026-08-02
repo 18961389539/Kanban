@@ -267,7 +267,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusText => DataStatusKind switch
     {
-        "Disconnected" => "PLC断开",
+        "Disconnected" => _appSettings.DataMode == KanbanDataMode.Remote ? "服务断开" : "PLC断开",
         "NoData" => "无数据",
         "Live" => "实时",
         _ => "未选择设备",
@@ -275,7 +275,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusTooltip => DataStatusKind switch
     {
-        "Disconnected" => "PLC 当前未连接，主页指标不代表实时数据",
+        "Disconnected" => _appSettings.DataMode == KanbanDataMode.Remote
+            ? "采集服务当前未连接，主页指标不代表实时数据"
+            : "PLC 当前未连接，主页指标不代表实时数据",
         "NoData" => "当前设备暂无运行时数据",
         "Live" => "当前指标来自已连接设备的运行时数据",
         _ => "请选择设备查看实时指标",

@@ -70,10 +70,17 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>PLC 是否正在尝试连接，用于区分连接中与已断开。</summary>
     public bool IsPlcConnecting => IsPlcDisconnected && ConnectionManager.ConnectionStatus.StartsWith("正在连接", StringComparison.Ordinal);
 
-    /// <summary>全局连接状态横幅文案。</summary>
+    /// <summary>当前是否为 Remote 模式（横幅文案区分 PLC 与采集服务）。</summary>
+    public bool IsRemoteDataMode => AppSettings.DataMode == KanbanDataMode.Remote;
+
+    /// <summary>全局连接状态横幅文案（Remote 模式下文案指向 Collector 采集服务）。</summary>
     public string PlcConnectionBannerText => IsPlcConnecting
-        ? $"PLC 正在连接 · {ConnectionManager.ConnectionStatus}"
-        : $"PLC 已断开 · {ConnectionManager.ConnectionStatus}";
+        ? IsRemoteDataMode
+            ? $"正在连接采集服务 · {ConnectionManager.ConnectionStatus}"
+            : $"PLC 正在连接 · {ConnectionManager.ConnectionStatus}"
+        : IsRemoteDataMode
+            ? $"采集服务已断开 · {ConnectionManager.ConnectionStatus}"
+            : $"PLC 已断开 · {ConnectionManager.ConnectionStatus}";
 
     /// <summary>
     /// 授权门禁（暴露给 UI 绑定授权状态/剩余天数/机器码）
@@ -309,14 +316,34 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         OnPropertyChanged(nameof(LicenseStatusTooltip));
     }
 
-    /// <summary>
-    /// PLC 连接状态边沿回调：在后台采集线程触发，必须用 UI 线程封送后弹 Growl。
-    /// 事件仅 断开/重连 各触发一次，不会刷屏。
-    /// </summary>
+    /// <summary>PLC 连接状态边沿回调：在后台采集线程触发，必须用 UI 线程封送后弹 Growl。
+    /// 事件仅 断开/重连 各触发一次，不会刷屏。Remote 模式下文案指向 Collector 采集服务。</summary>
     private void OnConnectionStateChanged(object? sender, ConnectionStateChangedEventArgs e)
     {
         _dispatcher.Invoke(() =>
         {
+            if (IsRemoteDataMode)
+            {
+                if (!e.IsConnected)
+                    Growl.Error(new GrowlInfo
+                    {
+                        Message = $"采集服务已断开（{e.IpAddress}）· 第 {e.DisconnectCount} 次重试",
+                        ShowDateTime = false,
+                    });
+                else
+                {
+                    var dur = e.DisconnectDuration.HasValue
+                        ? $"{e.DisconnectDuration.Value.TotalSeconds:F0}s"
+                        : "—";
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = $"采集服务已重连，断线时长 {dur}",
+                        ShowDateTime = false,
+                    });
+                }
+                return;
+            }
+
             if (!e.IsConnected)
             {
                 Growl.Error(new GrowlInfo

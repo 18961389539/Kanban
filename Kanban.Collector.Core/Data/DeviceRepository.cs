@@ -68,6 +68,9 @@ public class DeviceRepository
         BindingOperations.EnableCollectionSynchronization(Runtimes, _collectionLock);
     }
 
+    /// <summary>设备配置远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落盘 devices.json）。Local 模式为 null。</summary>
+    public Action<IReadOnlyList<Device>>? RemotePersistenceHook { get; set; }
+
     /// <summary>
     /// 从 devices.json 加载所有设备到内存，并同步创建对应的 DeviceRuntime。
     /// 启动时调用一次。文件不存在时 Devices 保持空集合。
@@ -129,9 +132,28 @@ public class DeviceRepository
     /// 将内存中所有设备全量写入 devices.json。
     /// 写入前回填子项的 DeviceId，确保 JSON 中数据完整。
     /// 采用原子写入（写临时文件 → 重命名），避免写入过程中崩溃导致文件损坏。
+    /// Remote 模式下若设置了 <see cref="RemotePersistenceHook"/>，改为委托 Collector 落盘（MainAPP 不写本地）。
     /// </summary>
     public void SaveAll()
     {
+        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘
+        if (RemotePersistenceHook != null)
+        {
+            List<Device> remoteSnapshot;
+            lock (_collectionLock)
+            {
+                foreach (var device in Devices)
+                {
+                    foreach (var a in device.Alarms) a.DeviceId = device.Id;
+                    foreach (var d in device.Defects) d.DeviceId = device.Id;
+                    foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                }
+                remoteSnapshot = Devices.ToList();
+            }
+            RemotePersistenceHook(remoteSnapshot);
+            return;
+        }
+
         _appSettings.EnsureDirectory();
 
         List<Device> snapshot;

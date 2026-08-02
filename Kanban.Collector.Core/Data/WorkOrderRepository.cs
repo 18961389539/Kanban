@@ -80,12 +80,29 @@ public class WorkOrderRepository
     }
 
     /// <summary>
+    /// 工单远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落库 work_orders.db）。
+    /// Upsert 返回落库后的实体（含自增 Id）；Delete 返回是否成功。Local 模式为 null。
+    /// </summary>
+    public Func<WorkOrder, WorkOrder>? RemoteUpsertHook { get; set; }
+
+    public Func<int, bool>? RemoteDeleteHook { get; set; }
+
+    /// <summary>
     /// 新增或更新工单。Id==0 时插入，否则更新。
     /// 写库成功后同步内存集合（已存在则替换，不存在则追加到首位）。
     /// 返回落库后的实体（含自增 Id）。
+    /// Remote 模式下若设置了 <see cref="RemoteUpsertHook"/>，改为委托 Collector 落库（MainAPP 不写本地库）。
     /// </summary>
     public WorkOrder Upsert(WorkOrder workOrder)
     {
+        // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库，返回带 Id 的结果
+        if (RemoteUpsertHook != null)
+        {
+            var saved = RemoteUpsertHook(workOrder);
+            SyncMemoryCollection(saved);
+            return saved;
+        }
+
         workOrder.UpdatedAt = DateTime.Now;
         var isNew = workOrder.Id == 0;
         var oldStatus = default(WorkOrderStatus?);
@@ -116,7 +133,31 @@ public class WorkOrderRepository
             }
         ctx.SaveChanges();
 
-        // 同步内存集合（直接 for 循环查找，避免 ToList 拷贝开销）
+        SyncMemoryCollection(workOrder);
+
+        // 业务事件 INF 日志：新增 / 状态变化 / 字段更新
+        if (isNew)
+        {
+            Log.Information("工单新增 Id={Id} OrderNo={OrderNo} Device={Device} TargetQty={Qty} Status={Status}",
+                workOrder.Id, workOrder.OrderNo, workOrder.DeviceName, workOrder.TargetQuantity, workOrder.Status);
+        }
+        else if (oldStatus.HasValue && oldStatus.Value != workOrder.Status)
+        {
+            Log.Information("工单状态变更 Id={Id} OrderNo={OrderNo} {Old} -> {New}",
+                workOrder.Id, workOrder.OrderNo, oldStatus.Value, workOrder.Status);
+        }
+        else
+        {
+            Log.Information("工单字段更新 Id={Id} OrderNo={OrderNo} Status={Status}",
+                workOrder.Id, workOrder.OrderNo, workOrder.Status);
+        }
+
+        return workOrder;
+    }
+
+    /// <summary>同步内存集合：已存在则替换（整项替换触发 UI 通知），不存在则插入到首位（按 CreatedAt 倒序约定）。</summary>
+    private void SyncMemoryCollection(WorkOrder workOrder)
+    {
         lock (_collectionLock)
         {
             var idx = -1;
@@ -140,25 +181,6 @@ public class WorkOrderRepository
                 WorkOrders.Insert(0, workOrder);
             }
         }
-
-        // 业务事件 INF 日志：新增 / 状态变化 / 字段更新
-        if (isNew)
-        {
-            Log.Information("工单新增 Id={Id} OrderNo={OrderNo} Device={Device} TargetQty={Qty} Status={Status}",
-                workOrder.Id, workOrder.OrderNo, workOrder.DeviceName, workOrder.TargetQuantity, workOrder.Status);
-        }
-        else if (oldStatus.HasValue && oldStatus.Value != workOrder.Status)
-        {
-            Log.Information("工单状态变更 Id={Id} OrderNo={OrderNo} {Old} -> {New}",
-                workOrder.Id, workOrder.OrderNo, oldStatus.Value, workOrder.Status);
-        }
-        else
-        {
-            Log.Information("工单字段更新 Id={Id} OrderNo={OrderNo} Status={Status}",
-                workOrder.Id, workOrder.OrderNo, workOrder.Status);
-        }
-
-        return workOrder;
     }
 
     /// <summary>
@@ -166,6 +188,16 @@ public class WorkOrderRepository
     /// </summary>
     public void Delete(int id)
     {
+        // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库删除
+        if (RemoteDeleteHook != null)
+        {
+            if (RemoteDeleteHook(id))
+            {
+                RemoveFromMemory(id);
+            }
+            return;
+        }
+
         WorkOrder? removed = null;
         using var ctx = _dbProvider.CreateWorkOrderContext();
         var existing = ctx.WorkOrders.Find(id);
@@ -177,6 +209,15 @@ public class WorkOrderRepository
         ctx.WorkOrders.Remove(existing);
         ctx.SaveChanges();
 
+        RemoveFromMemory(id);
+
+        Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
+            removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);
+    }
+
+    /// <summary>从内存集合移除指定 Id 工单。</summary>
+    private void RemoveFromMemory(int id)
+    {
         lock (_collectionLock)
         {
             for (var i = 0; i < WorkOrders.Count; i++)
@@ -188,9 +229,6 @@ public class WorkOrderRepository
                 }
             }
         }
-
-        Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
-            removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);
     }
 
     /// <summary>

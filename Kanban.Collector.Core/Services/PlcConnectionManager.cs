@@ -261,6 +261,25 @@ public partial class PlcConnectionManager : ObservableObject
     }
 
     /// <summary>
+    /// Remote 模式重连中桥接：与本地采集的"正在连接..."状态对齐，
+    /// 使 MainWindowViewModel.IsPlcConnecting（ConnectionStatus.StartsWith("正在连接")）命中黄色横幅分支。
+    /// </summary>
+    public void SyncRemoteReconnecting(int attempt)
+    {
+        lock (_stateLock)
+        {
+            IsConnected = false;
+            ConnectionStatus = $"正在连接采集服务 (第{attempt}次)";
+        }
+        ConnectionStateChanged?.Invoke(this, new ConnectionStateChangedEventArgs
+        {
+            IsConnected = false,
+            Timestamp = DateTime.Now,
+            IpAddress = _appSettings.CollectorHubUrl,
+        });
+    }
+
+    /// <summary>
     /// 主动断开连接（UI 线程停机/配置变更时调用）。
     /// 线程安全：状态先切换为未连接，驱动断开操作由独立操作锁串行化。
     /// 设计权衡：不重置 _consecutiveFailures / _lastConnectAttempt，

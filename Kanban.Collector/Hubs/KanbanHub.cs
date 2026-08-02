@@ -17,6 +17,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly EventBroadcaster _eventBroadcaster;
     private readonly HistoryQueryHandler _historyQueryHandler;
     private readonly CollectorDiagnosticsProvider _diagnosticsProvider;
+    private readonly ConfigSyncHandler _configSyncHandler;
     private readonly ILogger<KanbanHub> _logger;
 
     public KanbanHub(
@@ -24,12 +25,14 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         EventBroadcaster eventBroadcaster,
         HistoryQueryHandler historyQueryHandler,
         CollectorDiagnosticsProvider diagnosticsProvider,
+        ConfigSyncHandler configSyncHandler,
         ILogger<KanbanHub> logger)
     {
         _snapshotAggregator = snapshotAggregator;
         _eventBroadcaster = eventBroadcaster;
         _historyQueryHandler = historyQueryHandler;
         _diagnosticsProvider = diagnosticsProvider;
+        _configSyncHandler = configSyncHandler;
         _logger = logger;
     }
 
@@ -74,4 +77,16 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <summary>运行监控页 Remote 模式：拉取 Collector 采集/历史/连接诊断快照。</summary>
     public Task<CollectorDiagnosticsDto> GetDiagnosticsAsync()
         => Task.FromResult(_diagnosticsProvider.GetSnapshot());
+
+    /// <inheritdoc />
+    public Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices)
+        => _configSyncHandler.SaveDevicesAsync(devices);
+
+    /// <inheritdoc />
+    public Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder)
+        => _configSyncHandler.UpsertWorkOrderAsync(workOrder);
+
+    /// <inheritdoc />
+    public Task DeleteWorkOrderAsync(int workOrderId)
+        => _configSyncHandler.DeleteWorkOrderAsync(workOrderId);
 }

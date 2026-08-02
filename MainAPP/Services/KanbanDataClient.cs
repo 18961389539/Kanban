@@ -29,6 +29,9 @@ public sealed class KanbanDataClient : IAsyncDisposable
     /// <summary>连接状态变化事件（IsConnected = SignalR 传输层状态）</summary>
     public event EventHandler<bool>? ConnectionStateChanged;
 
+    /// <summary>进入自动重连阶段事件（SignalR WithAutomaticReconnect 触发，UI 可据此显示"重连中"）</summary>
+    public event EventHandler? Reconnecting;
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
     public int ConsecutiveFailures => _consecutiveFailures;
@@ -49,7 +52,8 @@ public sealed class KanbanDataClient : IAsyncDisposable
         _connection.Reconnecting += _ =>
         {
             _logger.LogWarning("Collector 连接断开，正在重连...");
-            ConnectionStateChanged?.Invoke(this, false);
+            Interlocked.Increment(ref _consecutiveFailures);
+            Reconnecting?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         };
         _connection.Reconnected += _ =>
@@ -122,6 +126,18 @@ public sealed class KanbanDataClient : IAsyncDisposable
     /// <summary>拉取 Collector 运行诊断快照（运行监控页 Remote 模式）。</summary>
     public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
         => await _connection!.InvokeAsync<CollectorDiagnosticsDto>("GetDiagnosticsAsync", ct);
+
+    /// <summary>同步设备配置到 Collector 落盘（Remote 模式设备管理保存）。</summary>
+    public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
+        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveDevicesAsync), devices, ct);
+
+    /// <summary>新增/更新工单到 Collector 落库，返回带 Id 的结果。</summary>
+    public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
+        => await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanHubServer.UpsertWorkOrderAsync), workOrder, ct);
+
+    /// <summary>删除工单（Collector 落库）。</summary>
+    public async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
+        => await _connection!.InvokeAsync(nameof(IKanbanHubServer.DeleteWorkOrderAsync), workOrderId, ct);
 
     public async ValueTask DisposeAsync()
     {

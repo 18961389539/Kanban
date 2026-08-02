@@ -102,6 +102,7 @@ public sealed class ApplicationStartupCoordinator(
 
     /// <summary>
     /// Remote 模式：连接 Kanban.Collector，订阅快照/事件并灌回本地内存状态。
+    /// 同时挂接设备/工单写操作的远程持久化钩子（Collector 作为唯一写者落盘/落库）。
     /// </summary>
     private async Task StartRemoteDataLinkAsync()
     {
@@ -112,14 +113,34 @@ public sealed class ApplicationStartupCoordinator(
         {
             // 桥接到 PlcConnectionManager 状态，复用全局连接状态横幅（MainWindowViewModel 绑定）
             if (connected)
-                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected("Collector 已连接");
+                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected("采集服务已连接");
             else
                 services.GetRequiredService<PlcConnectionManager>().MarkDisconnected(DisconnectionReason.ReadFailure);
+        };
+        // 自动重连阶段：横幅显示"正在连接采集服务（第 N 次）"，命中 IsPlcConnecting 黄色分支
+        client.Reconnecting += (_, _) =>
+        {
+            var attempt = services.GetRequiredService<KanbanDataClient>().ConsecutiveFailures;
+            services.GetRequiredService<PlcConnectionManager>().SyncRemoteReconnecting(attempt);
         };
 
         await client.ConnectAsync();
         // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection）
         sink.Start();
+
+        // 设备/工单写操作 → Collector（唯一写者），MainAPP 不再直接写 devices.json / work_orders.db
+        var deviceRepo = services.GetRequiredService<DeviceRepository>();
+        deviceRepo.RemotePersistenceHook = devices =>
+            client.SaveDevicesAsync(DeviceMapper.ToDtos(devices)).GetAwaiter().GetResult();
+        var workOrderRepo = services.GetRequiredService<WorkOrderRepository>();
+        workOrderRepo.RemoteUpsertHook = wo =>
+            WorkOrderMapper.ToEntity(client.UpsertWorkOrderAsync(WorkOrderMapper.ToDto(wo)).GetAwaiter().GetResult());
+        workOrderRepo.RemoteDeleteHook = id =>
+        {
+            client.DeleteWorkOrderAsync(id).GetAwaiter().GetResult();
+            return true;
+        };
+
         Log.Information("Remote 模式数据链路已建立：{Url}", services.GetRequiredService<AppSettings>().CollectorHubUrl);
     }
 }
