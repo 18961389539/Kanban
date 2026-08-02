@@ -19,20 +19,24 @@ namespace MainAPP.Services;
 public sealed class RemoteHistoryQueryService :
     IHistoryService,
     IHistoryQueryExecutor,
-    IWorkOrderProductionBatchQuery
+    IWorkOrderProductionBatchQuery,
+    IDefectHistoryReader
 {
     private readonly HistoryService _local;
+    private readonly DefectHistoryStore _localDefectStore;
     private readonly KanbanDataClient _client;
     private readonly AppSettings _settings;
     private readonly ILogger<RemoteHistoryQueryService> _logger;
 
     public RemoteHistoryQueryService(
         HistoryService local,
+        DefectHistoryStore localDefectStore,
         KanbanDataClient client,
         AppSettings settings,
         ILogger<RemoteHistoryQueryService> logger)
     {
         _local = local;
+        _localDefectStore = localDefectStore;
         _client = client;
         _settings = settings;
         _logger = logger;
@@ -159,8 +163,14 @@ public sealed class RemoteHistoryQueryService :
             ? QueryRemoteList<StatusTransitionRecord>(HistoryQueryType.StatusTransition, DateTime.MinValue, before, deviceId, shiftName, latestFirst: true).FirstOrDefault()
             : _local.GetLatestStatusBeforeStrict(deviceId, before, shiftName);
 
-    // ──────────── IWorkOrderProductionBatchQuery ────────────
+    // ──────────── IDefectHistoryReader ────────────
 
+    public List<DefectSnapshotRecord> Query(DateTime from, DateTime to, string deviceId)
+        => IsRemote
+            ? QueryRemoteList<DefectSnapshotRecord>(HistoryQueryType.DefectSnapshot, from, to, deviceId, null)
+            : _localDefectStore.Query(from, to, deviceId);
+
+    // ──────────── IWorkOrderProductionBatchQuery ────────────
     public Dictionary<int, List<ProductionLog>> QueryProductionLogsByWorkOrderBatch(IReadOnlyList<int> workOrderIds)
     {
         if (!IsRemote)

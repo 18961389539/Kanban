@@ -25,7 +25,16 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<ApplicationStartupCoordinator>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<RuntimeMonitoringViewModel>();
+        services.AddSingleton<RuntimeMonitoringViewModel>(sp => new RuntimeMonitoringViewModel(
+            sp.GetRequiredService<PlcConnectionManager>(),
+            sp.GetRequiredService<PlcDataAcquisitionService>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<DeviceRepository>(),
+            sp.GetRequiredService<HistoryService>(),
+            sp.GetRequiredService<SystemResourceMonitor>(),
+            sp.GetService<IPlcAddressCodecResolver>(),
+            sp.GetService<IPlcRuntimeProfileProvider>(),
+            sp.GetService<KanbanDataClient>()));
         return services;
     }
 
@@ -48,7 +57,7 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IProductionReviewPdfService>(),
-            sp.GetRequiredService<DefectHistoryStore>(),
+            sp.GetRequiredService<IDefectHistoryReader>(),
             sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetRequiredService<IProductionReviewAnalysisService>(),
             sp.GetRequiredService<IProductionReviewDataService>(),

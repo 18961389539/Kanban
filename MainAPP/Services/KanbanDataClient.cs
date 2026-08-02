@@ -119,6 +119,10 @@ public sealed class KanbanDataClient : IAsyncDisposable
         => await _connection!.InvokeAsync<HistoryQueryResponse>(
             nameof(IKanbanHubServer.QueryHistoryAsync), request, ct);
 
+    /// <summary>拉取 Collector 运行诊断快照（运行监控页 Remote 模式）。</summary>
+    public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
+        => await _connection!.InvokeAsync<CollectorDiagnosticsDto>("GetDiagnosticsAsync", ct);
+
     public async ValueTask DisposeAsync()
     {
         _reconnectCts?.Cancel();

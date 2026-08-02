@@ -40,6 +40,7 @@ public static class Program
             builder.Services.AddSingleton<SnapshotAggregator>();
             builder.Services.AddSingleton<SnapshotPublisher>();
             builder.Services.AddSingleton<HistoryQueryHandler>();
+            builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddHostedService<CollectorWorker>();
 
             // ──────────── SignalR 服务端 ────────────

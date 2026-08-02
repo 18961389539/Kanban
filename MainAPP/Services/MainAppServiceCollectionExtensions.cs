@@ -102,6 +102,7 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<IAlarmHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
         services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
         services.AddSingleton<IWorkOrderProductionBatchQuery>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        services.AddSingleton<IDefectHistoryReader>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
 
         return services;
     }

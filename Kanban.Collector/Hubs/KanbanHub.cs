@@ -16,17 +16,20 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly SnapshotAggregator _snapshotAggregator;
     private readonly EventBroadcaster _eventBroadcaster;
     private readonly HistoryQueryHandler _historyQueryHandler;
+    private readonly CollectorDiagnosticsProvider _diagnosticsProvider;
     private readonly ILogger<KanbanHub> _logger;
 
     public KanbanHub(
         SnapshotAggregator snapshotAggregator,
         EventBroadcaster eventBroadcaster,
         HistoryQueryHandler historyQueryHandler,
+        CollectorDiagnosticsProvider diagnosticsProvider,
         ILogger<KanbanHub> logger)
     {
         _snapshotAggregator = snapshotAggregator;
         _eventBroadcaster = eventBroadcaster;
         _historyQueryHandler = historyQueryHandler;
+        _diagnosticsProvider = diagnosticsProvider;
         _logger = logger;
     }
 
@@ -67,4 +70,8 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request)
         => _historyQueryHandler.QueryAsync(request, Context.ConnectionAborted);
+
+    /// <summary>运行监控页 Remote 模式：拉取 Collector 采集/历史/连接诊断快照。</summary>
+    public Task<CollectorDiagnosticsDto> GetDiagnosticsAsync()
+        => Task.FromResult(_diagnosticsProvider.GetSnapshot());
 }

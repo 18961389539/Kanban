@@ -12,7 +12,7 @@ namespace MainAPP.Services;
 /// </summary>
 public sealed class DefectHistoryStore(
     DatabaseProvider databaseProvider,
-    ILogger<DefectHistoryStore>? logger = null)
+    ILogger<DefectHistoryStore>? logger = null) : IDefectHistoryReader
 {
     private readonly DatabaseProvider _databaseProvider = databaseProvider;
     private readonly Microsoft.Extensions.Logging.ILogger _logger =

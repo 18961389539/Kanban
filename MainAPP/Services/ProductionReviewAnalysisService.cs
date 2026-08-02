@@ -61,7 +61,7 @@ public interface IProductionReviewAnalysisService
 public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisService
 {
     private readonly IProductionReviewDataService _reviewDataService;
-    private readonly DefectHistoryStore? _defectHistoryStore;
+    private readonly IDefectHistoryReader? _defectHistoryStore;
     private readonly WorkOrderRepository? _workOrderRepository;
     private readonly IProductionReviewAlarmAnalysisService _alarmAnalysisService;
     private readonly IProductionReviewStatusTimelineService _statusTimelineService;
@@ -69,7 +69,7 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
 
     public ProductionReviewAnalysisService(
         IProductionReviewDataService reviewDataService,
-        DefectHistoryStore? defectHistoryStore = null,
+        IDefectHistoryReader? defectHistoryStore = null,
         WorkOrderRepository? workOrderRepository = null,
         IProductionReviewAlarmAnalysisService? alarmAnalysisService = null,
         IProductionReviewStatusTimelineService? statusTimelineService = null,
@@ -85,7 +85,7 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
 
     public ProductionReviewAnalysisService(
         IHistoryService historyService,
-        DefectHistoryStore? defectHistoryStore = null,
+        IDefectHistoryReader? defectHistoryStore = null,
         WorkOrderRepository? workOrderRepository = null,
         IProductionReviewAlarmAnalysisService? alarmAnalysisService = null,
         IProductionReviewStatusTimelineService? statusTimelineService = null,

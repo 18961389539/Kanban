@@ -148,7 +148,7 @@ public partial class OverviewViewModel : ObservableObject
     private readonly IDialogService _dialog;
     private readonly IDeviceSelectionService _selection;
     private readonly IProductionReviewPdfService? _pdfService;
-    private readonly DefectHistoryStore? _defectHistoryStore;
+    private readonly IDefectHistoryReader? _defectHistoryStore;
     private readonly WorkOrderRepository? _workOrderRepository;
     private readonly IProductionReviewAnalysisService _analysisService;
     private readonly IProductionReviewCsvExportService _csvExportService;
@@ -501,7 +501,7 @@ public partial class OverviewViewModel : ObservableObject
         IDialogService dialog,
         IDeviceSelectionService selection,
         IProductionReviewPdfService? pdfService,
-        DefectHistoryStore? defectHistoryStore,
+        IDefectHistoryReader? defectHistoryStore,
         WorkOrderRepository? workOrderRepository,
         IProductionReviewAnalysisService analysisService,
         IProductionReviewDataService reviewDataService,
@@ -548,7 +548,7 @@ public partial class OverviewViewModel : ObservableObject
         IDialogService dialog,
         IDeviceSelectionService selection,
         IProductionReviewPdfService? pdfService = null,
-        DefectHistoryStore? defectHistoryStore = null,
+        IDefectHistoryReader? defectHistoryStore = null,
         WorkOrderRepository? workOrderRepository = null,
         IProductionReviewAnalysisService? analysisService = null,
         IProductionReviewDataService? reviewDataService = null,

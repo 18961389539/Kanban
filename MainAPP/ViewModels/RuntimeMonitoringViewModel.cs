@@ -50,6 +50,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
     private readonly SystemResourceMonitor _systemResourceMonitor;
+    private readonly KanbanDataClient? _remoteClient;
     private readonly DispatcherTimer _refreshTimer;
 
     [ObservableProperty] private bool _isConnected;
@@ -137,7 +138,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         HistoryService historyService,
         SystemResourceMonitor systemResourceMonitor,
         IPlcAddressCodecResolver? addressCodecResolver = null,
-        IPlcRuntimeProfileProvider? profileProvider = null)
+        IPlcRuntimeProfileProvider? profileProvider = null,
+        KanbanDataClient? remoteClient = null)
     {
         _connectionManager = connectionManager;
         _acquisitionService = acquisitionService;
@@ -147,6 +149,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         _systemResourceMonitor = systemResourceMonitor;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
+        _remoteClient = remoteClient;
         _pollingTrendSeries = (LineSeries)_pollingTrend.Series[0];
         _refreshTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -166,6 +169,19 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
     [RelayCommand]
     private void Refresh()
+    {
+        // Remote 模式：采集/历史诊断在 Collector 进程，从 SignalR 拉取
+        if (_remoteClient is not null && _appSettings.DataMode == KanbanDataMode.Remote)
+        {
+            RefreshFromRemote();
+            return;
+        }
+
+        RefreshFromLocal();
+    }
+
+    /// <summary>本地采集模式：直接读本进程采集/历史诊断（原行为不变）。</summary>
+    private void RefreshFromLocal()
     {
         var snapshot = _acquisitionService.GetDiagnosticsSnapshot();
         IsConnected = _connectionManager.IsConnected;
@@ -236,6 +252,85 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         OnPropertyChanged(nameof(ProcessResourceText));
         OnPropertyChanged(nameof(SystemMemoryText));
         OnPropertyChanged(nameof(DiskFreeText));
+    }
+
+    /// <summary>Remote 模式：从 Collector 拉取诊断快照（异步，避免阻塞 UI 刷新）。</summary>
+    private async void RefreshFromRemote()
+    {
+        try
+        {
+            var d = await _remoteClient!.GetDiagnosticsAsync();
+            IsConnected = d.IsConnected;
+            IsAcquisitionRunning = d.IsConnected;
+            ConnectionStatus = d.ConnectionStatus;
+            TotalDisconnectCount = d.TotalDisconnectCount;
+            ConsecutiveFailures = d.ConsecutiveFailures;
+            OnPropertyChanged(nameof(DisconnectDurationText));
+            CompletedCycles = d.CompletedCycles;
+            FailedCycles = d.FailedCycles;
+            LastCycleSucceeded = d.LastCycleSucceeded;
+            ConsecutiveFailureCycles = d.ConsecutiveFailureCycles;
+            LastFailureAt = d.LastFailureAt;
+            LastFailureMessage = d.LastFailureMessage;
+            LastCycleMilliseconds = d.LastCycleMilliseconds;
+            AverageCycleMilliseconds = d.AverageCycleMilliseconds;
+            MaxCycleMilliseconds = d.MaxCycleMilliseconds;
+            LastSuccessfulDevices = d.LastSuccessfulDevices;
+            ConfiguredDevices = d.ConfiguredDevices;
+            LastSuccessfulAt = d.LastSuccessfulAt;
+            SuccessfulCycles = d.SuccessfulCycles;
+            SuccessRatePercent = d.CompletedCycles == 0
+                ? 0
+                : d.SuccessfulCycles * 100.0 / d.CompletedCycles;
+            EstimatedReadOperations = d.EstimatedReadOperations;
+            PendingHistoryCount = d.PendingHistoryCount;
+            RecoveryFileExists = d.RecoveryFileExists;
+            RecoveryFileBytes = d.RecoveryFileBytes;
+            LastHistoryFlushAt = d.LastHistoryFlushAt;
+            HistoryFlushFailureCount = d.HistoryFlushFailureCount;
+            ProductionDatabaseBytes = d.ProductionDatabaseBytes;
+            ProductionWalBytes = d.ProductionWalBytes;
+            BatchPlanRebuilds = d.BatchPlanRebuilds;
+            BatchPlanBuildMilliseconds = d.BatchPlanBuildMilliseconds;
+            DwordReadMilliseconds = d.DWordReadMilliseconds;
+            AlarmReadMilliseconds = d.AlarmReadMilliseconds;
+            DefectReadMilliseconds = d.DefectReadMilliseconds;
+            CountAlarmReadMilliseconds = d.CountAlarmReadMilliseconds;
+            HistoryWriteMilliseconds = d.HistoryWriteMilliseconds;
+
+            UpdateResourceMetrics();
+            UpdateConsistencyMetrics();
+            LastRefreshTime = DateTime.Now;
+            OnPropertyChanged(nameof(HealthText));
+            OnPropertyChanged(nameof(HasActiveFailure));
+            OnPropertyChanged(nameof(PlcEndpoint));
+            OnPropertyChanged(nameof(PollingIntervalMs));
+            OnPropertyChanged(nameof(HistoryWriteIntervalScans));
+            OnPropertyChanged(nameof(TotalDeviceCount));
+            OnPropertyChanged(nameof(RecoveryFileText));
+            OnPropertyChanged(nameof(DataConsistencyText));
+            OnPropertyChanged(nameof(DeviceReadSummary));
+            OnPropertyChanged(nameof(CpuMemoryText));
+            OnPropertyChanged(nameof(GpuUsageText));
+            OnPropertyChanged(nameof(AddressIssueSummary));
+            OnPropertyChanged(nameof(ProcessUptimeText));
+            OnPropertyChanged(nameof(ReadDetailText));
+            OnPropertyChanged(nameof(HistoryStorageText));
+            OnPropertyChanged(nameof(StageTimingText));
+            OnPropertyChanged(nameof(BatchPlanText));
+            OnPropertyChanged(nameof(ProcessResourceText));
+            OnPropertyChanged(nameof(SystemMemoryText));
+            OnPropertyChanged(nameof(DiskFreeText));
+        }
+        catch (Exception ex)
+        {
+            // Collector 未连接：显示离线状态，不崩溃
+            IsConnected = false;
+            IsAcquisitionRunning = false;
+            ConnectionStatus = "Collector 未连接";
+            OnPropertyChanged(nameof(HealthText));
+            OnPropertyChanged(nameof(PlcEndpoint));
+        }
     }
 
     private void OnRefreshTimerTick(object? sender, EventArgs e) => Refresh();

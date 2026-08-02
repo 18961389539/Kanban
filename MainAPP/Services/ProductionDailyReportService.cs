@@ -17,7 +17,7 @@ public sealed class ProductionDailyReportService : IDisposable
     private readonly AppSettings _settings;
     private readonly DeviceRepository _deviceRepository;
     private readonly IHistoryService _historyService;
-    private readonly DefectHistoryStore _defectHistoryStore;
+    private readonly IDefectHistoryReader _defectHistoryStore;
     private readonly IProductionReviewPdfService _pdfService;
     private readonly object _lifecycleLock = new();
     private CancellationTokenSource? _cancellation;
@@ -27,7 +27,7 @@ public sealed class ProductionDailyReportService : IDisposable
         AppSettings settings,
         DeviceRepository deviceRepository,
         IHistoryService historyService,
-        DefectHistoryStore defectHistoryStore,
+        IDefectHistoryReader defectHistoryStore,
         IProductionReviewPdfService pdfService)
     {
         _settings = settings;
