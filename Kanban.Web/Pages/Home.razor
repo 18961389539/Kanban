@@ -160,8 +160,8 @@
     protected override async Task OnInitializedAsync()
     {
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
-        // 渲染节流：1s 统一重渲染（快照 500ms 只更新内存，避免 render tree 高频 diff）
-        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(StateHasChanged), null, 1000, 1000);
+        // 渲染节流：2s 统一重渲染（快照 500ms 只更新内存，避免 render tree 高频 diff）
+        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(StateHasChanged), null, 2000, 2000);
         await Task.CompletedTask;
     }
 
