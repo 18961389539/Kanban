@@ -72,11 +72,11 @@ public sealed class DashboardState : IAsyncDisposable
         if (_initialized) return;
         _initialized = true;
 
-        // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection）
-        _client.OnSnapshot(OnSnapshotReceived);
         try
         {
             await _client.ConnectAsync();
+            // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
+            _client.OnSnapshot(OnSnapshotReceived);
         }
         catch (Exception ex)
         {
