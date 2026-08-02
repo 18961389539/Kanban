@@ -9,7 +9,8 @@ namespace Kanban.Collector.Services;
 /// <summary>
 /// 事件广播器：为报警/状态边沿事件分配单调递增 Seq，并维护最近 <see cref="RetentionCount"/> 条
 /// 环形缓冲，供断线重连客户端按 LastSeq 补拉。
-/// 第 3 步由采集服务边沿检测（迁入）驱动发布。
+/// 采用"订阅者列表 + 扇出"模型：每个订阅者持有独立 channel，Publish 时写入全部订阅者，
+/// 保证**每个**屏端都收到全部事件（多屏广播，非竞争消费）。
 /// </summary>
 public sealed class EventBroadcaster
 {
@@ -19,8 +20,8 @@ public sealed class EventBroadcaster
     private readonly object _gate = new();
     private readonly LinkedList<(long Seq, object Payload)> _alarmRing = new();
     private readonly LinkedList<(long Seq, object Payload)> _statusRing = new();
-    private readonly Channel<AlarmEventDto> _alarmChannel = Channel.CreateUnbounded<AlarmEventDto>();
-    private readonly Channel<StatusEventDto> _statusChannel = Channel.CreateUnbounded<StatusEventDto>();
+    private readonly List<Channel<AlarmEventDto>> _alarmSubscribers = new();
+    private readonly List<Channel<StatusEventDto>> _statusSubscribers = new();
     private readonly ILogger<EventBroadcaster> _logger;
     private long _nextSeq = 1;
 
@@ -29,7 +30,7 @@ public sealed class EventBroadcaster
         _logger = logger;
     }
 
-    /// <summary>发布报警事件（分配 Seq，写入环形缓冲 + 广播）</summary>
+    /// <summary>发布报警事件（分配 Seq，写入环形缓冲 + 扇出广播）</summary>
     public void PublishAlarmEvent(AlarmEventDto evt)
     {
         var withSeq = evt with { Seq = NextSeq() };
@@ -38,11 +39,14 @@ public sealed class EventBroadcaster
             _alarmRing.AddLast((withSeq.Seq, withSeq));
             while (_alarmRing.Count > RetentionCount)
                 _alarmRing.RemoveFirst();
+            foreach (var subscriber in _alarmSubscribers)
+            {
+                subscriber.Writer.TryWrite(withSeq);
+            }
         }
-        _alarmChannel.Writer.TryWrite(withSeq);
     }
 
-    /// <summary>发布状态事件（分配 Seq，写入环形缓冲 + 广播）</summary>
+    /// <summary>发布状态事件（分配 Seq，写入环形缓冲 + 扇出广播）</summary>
     public void PublishStatusEvent(StatusEventDto evt)
     {
         var withSeq = evt with { Seq = NextSeq() };
@@ -51,8 +55,11 @@ public sealed class EventBroadcaster
             _statusRing.AddLast((withSeq.Seq, withSeq));
             while (_statusRing.Count > RetentionCount)
                 _statusRing.RemoveFirst();
+            foreach (var subscriber in _statusSubscribers)
+            {
+                subscriber.Writer.TryWrite(withSeq);
+            }
         }
-        _statusChannel.Writer.TryWrite(withSeq);
     }
 
     private long NextSeq()
@@ -65,6 +72,7 @@ public sealed class EventBroadcaster
 
     /// <summary>
     /// 订阅报警事件流：先补发 LastSeq 之后的环形缓冲事件，再实时转发。
+    /// 订阅时注册专属 channel；连接断开（cancellationToken 触发）时自动退订。
     /// </summary>
     public async IAsyncEnumerable<AlarmEventDto> WatchAlarmEventsAsync(
         long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -78,8 +86,8 @@ public sealed class EventBroadcaster
                     yield return (AlarmEventDto)payload;
             }
         }
-        // 实时转发
-        await foreach (var evt in _alarmChannel.Reader.ReadAllAsync(cancellationToken))
+        var channel = RegisterAlarmSubscriber(cancellationToken);
+        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
         {
             yield return evt;
         }
@@ -87,6 +95,7 @@ public sealed class EventBroadcaster
 
     /// <summary>
     /// 订阅状态事件流：先补发 LastSeq 之后的环形缓冲事件，再实时转发。
+    /// 订阅时注册专属 channel；连接断开（cancellationToken 触发）时自动退订。
     /// </summary>
     public async IAsyncEnumerable<StatusEventDto> WatchStatusEventsAsync(
         long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -99,9 +108,46 @@ public sealed class EventBroadcaster
                     yield return (StatusEventDto)payload;
             }
         }
-        await foreach (var evt in _statusChannel.Reader.ReadAllAsync(cancellationToken))
+        var channel = RegisterStatusSubscriber(cancellationToken);
+        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
         {
             yield return evt;
         }
+    }
+
+    private Channel<AlarmEventDto> RegisterAlarmSubscriber(CancellationToken cancellationToken)
+    {
+        var channel = Channel.CreateUnbounded<AlarmEventDto>(
+            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        lock (_gate)
+        {
+            _alarmSubscribers.Add(channel);
+        }
+        cancellationToken.Register(() =>
+        {
+            lock (_gate)
+            {
+                _alarmSubscribers.Remove(channel);
+            }
+        });
+        return channel;
+    }
+
+    private Channel<StatusEventDto> RegisterStatusSubscriber(CancellationToken cancellationToken)
+    {
+        var channel = Channel.CreateUnbounded<StatusEventDto>(
+            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        lock (_gate)
+        {
+            _statusSubscribers.Add(channel);
+        }
+        cancellationToken.Register(() =>
+        {
+            lock (_gate)
+            {
+                _statusSubscribers.Remove(channel);
+            }
+        });
+        return channel;
     }
 }
