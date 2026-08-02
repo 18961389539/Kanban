@@ -51,6 +51,21 @@ public sealed class ConfigSyncHandler
         return Task.CompletedTask;
     }
 
+    /// <summary>返回当前设备配置快照（屏端 Remote 模式零配置：设备列表从此拉取，不再依赖本地 devices.json）。</summary>
+    public Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync()
+    {
+        try
+        {
+            var devices = _deviceRepository.GetDevicesSnapshot();
+            return Task.FromResult<IReadOnlyList<DeviceConfigDto>>(devices.Select(ToDto).ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Remote 设备配置读取失败");
+            throw;
+        }
+    }
+
     /// <summary>新增/更新工单并落库，返回带 Id 的落库结果（对齐 WorkOrderRepository.Upsert 语义）。</summary>
     public Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto dto)
     {
@@ -181,5 +196,50 @@ public sealed class ConfigSyncHandler
         Remark = e.Remark,
         CreatedAt = e.CreatedAt,
         UpdatedAt = e.UpdatedAt,
+    };
+
+    // ──────────── 实体 → DTO ────────────
+
+    private static DeviceConfigDto ToDto(Device device) => new()
+    {
+        Id = device.Id,
+        Name = device.Name,
+        OkCountAddress = device.OkCountAddress,
+        NgCountAddress = device.NgCountAddress,
+        StatusCountAddress = device.StatusCountAddress,
+        ProductionResetAddress = device.ProductionResetAddress,
+        RecipeName = device.RecipeName,
+        RecipeValue = device.RecipeValue,
+        RecipeAddress = device.RecipeAddress,
+        TargetCycle = device.TargetCycle,
+        Alarms = device.Alarms.Select(a => new AlarmConfigDto
+        {
+            Id = a.Id,
+            DeviceId = a.DeviceId,
+            Name = a.Name,
+            PlcAddress = a.PlcAddress,
+            Description = a.Description,
+            Level = (AlarmLevel)a.Level,
+        }).ToList(),
+        Defects = device.Defects.Select(d => new DefectConfigDto
+        {
+            Id = d.Id,
+            DeviceId = d.DeviceId,
+            Name = d.Name,
+            PlcAddress = d.PlcAddress,
+            Severity = (DefectSeverity)d.Severity,
+            Category = (DefectCategory)d.Category,
+        }).ToList(),
+        CountAlarms = device.CountAlarms.Select(c => new CountAlarmConfigDto
+        {
+            Id = c.Id,
+            DeviceId = c.DeviceId,
+            Name = c.Name,
+            PlcAddress = c.PlcAddress,
+            MaxValue = c.MaxValue,
+            Enabled = c.Enabled,
+            Description = c.Description,
+            Unit = c.Unit,
+        }).ToList(),
     };
 }

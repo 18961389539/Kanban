@@ -19,8 +19,9 @@ public static class Program
 {
     public static async Task Main(string[] args)
     {
-        // 单实例保护：防误启双进程抢端口/双写 SQLite（与 MainAPP 的 Mutex 模式一致）
-        using var singleInstanceMutex = new Mutex(true, "Kanban.Collector.SingleInstance", out var isFirstInstance);
+        // 单实例保护：防误启双进程抢端口/双写 SQLite（与 MainAPP 的 Mutex 模式一致）。
+        // 用 Global\ 前缀：Windows 服务跑在 Session 0，与交互会话（屏端控制台）互斥检测生效。
+        using var singleInstanceMutex = new Mutex(true, @"Global\Kanban.Collector.SingleInstance", out var isFirstInstance);
         if (!isFirstInstance)
         {
             Console.Error.WriteLine("Kanban.Collector 已在运行（单实例保护），本实例退出。");
@@ -39,6 +40,9 @@ public static class Program
         try
         {
             var builder = WebApplication.CreateBuilder(args);
+            // Windows 服务宿主：作为服务安装后由 SCM 拉起（开机自启 + 崩溃自动重启策略由脚本配置）；
+            // 未安装服务时以控制台方式正常运行，行为不变。
+            builder.Host.UseWindowsService(options => options.ServiceName = "KanbanCollector");
             builder.Logging.AddSerilog(Log.Logger);
 
             // ──────────── 采集/存储核心（来自 Kanban.Collector.Core） ────────────

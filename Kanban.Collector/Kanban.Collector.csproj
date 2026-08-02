@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
     <PackageReference Include="NodaTime" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Hosting" />

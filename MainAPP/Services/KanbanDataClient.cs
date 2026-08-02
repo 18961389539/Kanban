@@ -142,6 +142,10 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
         => await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveDevicesAsync), devices, ct);
 
+    /// <summary>从 Collector 拉取设备配置（Remote 模式屏端零配置，不依赖本地 devices.json）。</summary>
+    public async Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync(CancellationToken ct = default)
+        => await _connection!.InvokeAsync<IReadOnlyList<DeviceConfigDto>>(nameof(IKanbanHubServer.GetDevicesAsync), ct);
+
     /// <summary>新增/更新工单到 Collector 落库，返回带 Id 的结果。</summary>
     public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
         => await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanHubServer.UpsertWorkOrderAsync), workOrder, ct);

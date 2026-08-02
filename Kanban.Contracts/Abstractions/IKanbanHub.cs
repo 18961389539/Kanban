@@ -44,6 +44,9 @@ public interface IKanbanHubServer
     /// <summary>同步设备配置（Remote 模式：MainAPP 设备管理页保存时推给 Collector 落盘 devices.json）</summary>
     Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices);
 
+    /// <summary>拉取设备配置（Remote 模式屏端零配置：设备列表从此获取，不依赖本地 devices.json）</summary>
+    Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync();
+
     /// <summary>新增/更新工单（Remote 模式：Collector 落库 work_orders.db，返回带 Id 的落库结果）</summary>
     Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder);
 

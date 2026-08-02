@@ -174,12 +174,26 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     public IReadOnlyList<NavigationPageDefinition> PageDefinitions => NavigationPageCatalog.All;
 
     /// <summary>
+    /// Viewer（展示）模式下允许访问的页面键：主页/产线/报警中心 + 主页"查看详情"入口（设备详情）。
+    /// 其余管理页（设备/工单/历史/复盘/设置/运行监控）在 Viewer 模式下不可达。
+    /// </summary>
+    private static readonly HashSet<string> ViewerAllowedPageKeys =
+        ["Home", "ProductionLine", "AlarmCenter", "DeviceDetail"];
+
+    /// <summary>是否 Viewer（展示）模式：侧栏只留展示页，导航受限，退出需确认。</summary>
+    public bool IsViewerMode => AppSettings.RunMode == KanbanRunMode.Viewer;
+
+    /// <summary>
     /// 基于名称导航到指定页面（INavigationService 实现）。
-    /// 通过 s_pageIndices 字典查找索引，避免与 s_navItems 顺序强耦合的魔术数字。
-    /// 未知 pageKey 记日志后不跳转，防止静默失败。
+    /// Viewer 模式下仅允许展示页（<see cref="ViewerAllowedPageKeys"/>），管理页跳转被忽略并记日志。
     /// </summary>
     public void Navigate(string pageKey)
     {
+        if (IsViewerMode && !ViewerAllowedPageKeys.Contains(pageKey))
+        {
+            Log.Warning("Viewer 模式 拒绝导航到管理页 {PageKey}", pageKey);
+            return;
+        }
         var page = PageDefinitions.FirstOrDefault(item => item.Key == pageKey);
         if (page is not null)
         {
@@ -220,7 +234,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         ConnectionManager = connectionManager;
         LicenseGate = licenseGate;
         var sidebarItems = new ObservableCollection<NavItem>(
-            PageDefinitions.Where(page => page.ShowInSidebar).Select(page => page.NavItem));
+            PageDefinitions.Where(page => page.ShowInSidebar
+                && (!IsViewerMode || ViewerAllowedPageKeys.Contains(page.Key)))
+                .Select(page => page.NavItem));
         NavItems = new ReadOnlyObservableCollection<NavItem>(sidebarItems);
         ConnectionManager.ConnectionStateChanged += OnConnectionStateChanged;
         // 横幅依赖 IsConnected 与 ConnectionStatus，连接尝试期间两者都会变化。

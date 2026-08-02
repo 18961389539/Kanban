@@ -11,6 +11,7 @@ using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MainAPP.ViewModels;
@@ -66,6 +67,120 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private bool _isTestingConnection;
 
     public string TestConnectionButtonText => IsTestingConnection ? "测试中..." : "测试连接";
+
+    // ──────────── 数据源与运行模式（[连接向导]）────────────
+
+    /// <summary>数据采集模式（草稿值）：Local=本进程采集 / Remote=连接采集服务。</summary>
+    public KanbanDataMode SelectedDataMode
+    {
+        get => DraftSettings.DataMode;
+        set
+        {
+            if (DraftSettings.DataMode == value) return;
+            DraftSettings.DataMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsLocalMode));
+            OnPropertyChanged(nameof(IsRemoteMode));
+        }
+    }
+
+    public bool IsLocalMode
+    {
+        get => SelectedDataMode == KanbanDataMode.Local;
+        set { if (value) SelectedDataMode = KanbanDataMode.Local; }
+    }
+
+    public bool IsRemoteMode
+    {
+        get => SelectedDataMode == KanbanDataMode.Remote;
+        set { if (value) SelectedDataMode = KanbanDataMode.Remote; }
+    }
+
+    /// <summary>运行模式（草稿值）：Full=展示+管理 / Viewer=仅大屏展示。</summary>
+    public KanbanRunMode SelectedRunMode
+    {
+        get => DraftSettings.RunMode;
+        set
+        {
+            if (DraftSettings.RunMode == value) return;
+            DraftSettings.RunMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsFullMode));
+            OnPropertyChanged(nameof(IsViewerMode));
+        }
+    }
+
+    public bool IsFullMode
+    {
+        get => SelectedRunMode == KanbanRunMode.Full;
+        set { if (value) SelectedRunMode = KanbanRunMode.Full; }
+    }
+
+    public bool IsViewerMode
+    {
+        get => SelectedRunMode == KanbanRunMode.Viewer;
+        set { if (value) SelectedRunMode = KanbanRunMode.Viewer; }
+    }
+
+    /// <summary>测试采集服务连接中。</summary>
+    [ObservableProperty]
+    private bool _isTestingCollectorConnection;
+
+    public string TestCollectorButtonText => IsTestingCollectorConnection ? "测试中..." : "测试连接";
+
+    /// <summary>测试采集服务连接结果文案。</summary>
+    [ObservableProperty]
+    private string _collectorTestResult = string.Empty;
+
+    /// <summary>测试采集服务连接结果类型（"Success"/"Error"/"None"）。</summary>
+    [ObservableProperty]
+    private string _collectorTestResultType = "None";
+
+    partial void OnIsTestingCollectorConnectionChanged(bool value)
+    {
+        TestCollectorConnectionCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(TestCollectorButtonText));
+    }
+
+    /// <summary>
+    /// 测试采集服务连接：用草稿中的 CollectorHubUrl 建立一次 SignalR 连接（5 秒超时），
+    /// 连接成功即服务可达。不影响主链路（KanbanDataClient 单例）。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanTestCollectorConnection))]
+    private async Task TestCollectorConnectionAsync()
+    {
+        var url = DraftSettings.CollectorHubUrl;
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            CollectorTestResult = "请输入采集服务地址";
+            CollectorTestResultType = "Error";
+            return;
+        }
+
+        IsTestingCollectorConnection = true;
+        CollectorTestResult = $"正在连接 {url} …";
+        CollectorTestResultType = "None";
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var builder = new HubConnectionBuilder().WithUrl(url);
+            await using var connection = builder.Build();
+            await connection.StartAsync(cts.Token);
+            CollectorTestResult = "连接成功（采集服务可达）";
+            CollectorTestResultType = "Success";
+        }
+        catch (Exception ex)
+        {
+            CollectorTestResult = $"连接失败：{ex.Message}";
+            CollectorTestResultType = "Error";
+        }
+        finally
+        {
+            IsTestingCollectorConnection = false;
+        }
+    }
+
+    private bool CanTestCollectorConnection() => !IsTestingCollectorConnection;
 
     // ──────────── 保存反馈 ────────────
 
@@ -587,6 +702,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         _draftBrand = DraftSettings.PlcConfig.Brand;
         WireDraftEvents();
         OnPropertyChanged(nameof(DraftSettings));
+        OnPropertyChanged(nameof(SelectedDataMode));
+        OnPropertyChanged(nameof(IsLocalMode));
+        OnPropertyChanged(nameof(IsRemoteMode));
+        OnPropertyChanged(nameof(SelectedRunMode));
+        OnPropertyChanged(nameof(IsFullMode));
+        OnPropertyChanged(nameof(IsViewerMode));
         HasUnsavedChanges = true;
         OnPropertyChanged(nameof(UnsavedChangesText));
     }

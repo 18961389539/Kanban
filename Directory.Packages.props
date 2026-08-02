@@ -23,6 +23,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageVersion Include="OxyPlot.Wpf" Version="2.2.0" />
     <PackageVersion Include="OxyPlot.Core" Version="2.2.0" />

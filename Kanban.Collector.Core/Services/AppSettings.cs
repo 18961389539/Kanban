@@ -20,6 +20,18 @@ public enum KanbanDataMode
 }
 
 /// <summary>
+/// 运行模式。
+/// Full：完整模式（默认）——展示 + 管理（设备/工单/设置/复盘等全部页面可用）。
+/// Viewer：展示模式（屏端大屏）——只保留展示页（主页/产线/报警中心/设备详情），
+/// 管理入口隐藏、导航受限、退出需确认，防止车间工人误触管理功能或关掉看板。
+/// </summary>
+public enum KanbanRunMode
+{
+    Full = 0,
+    Viewer = 1,
+}
+
+/// <summary>
 /// 应用全局设置服务，统一管理配置和设备列表持久化
 /// </summary>
 public partial class AppSettings : ObservableObject
@@ -141,6 +153,12 @@ public partial class AppSettings : ObservableObject
     /// </summary>
     [ObservableProperty]
     private string _collectorHubUrl = "http://127.0.0.1:5129/hubs/kanban";
+
+    /// <summary>
+    /// 运行模式：Full（展示+管理，默认）/ Viewer（屏端只展示）。
+    /// </summary>
+    [ObservableProperty]
+    private KanbanRunMode _runMode = KanbanRunMode.Full;
 
     /// <summary>
     /// 班次配置列表（支持多班次编辑），默认白班 08:00-20:00 + 夜班 20:00-次日08:00
@@ -278,6 +296,7 @@ public partial class AppSettings : ObservableObject
                 DataMode = Enum.IsDefined(settings.DataMode) ? settings.DataMode : KanbanDataMode.Local;
                 if (!string.IsNullOrWhiteSpace(settings.CollectorHubUrl))
                     CollectorHubUrl = settings.CollectorHubUrl;
+                RunMode = Enum.IsDefined(settings.RunMode) ? settings.RunMode : KanbanRunMode.Full;
                 // 保证至少一个班次：若加载到空集合或 null，回退到默认两个班次
                 Shifts = (settings.Shifts is { Count: > 0 } shifts)
                     ? shifts

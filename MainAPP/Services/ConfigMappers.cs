@@ -63,6 +63,66 @@ public static class DeviceMapper
             Unit = c.Unit,
         }).ToList(),
     };
+
+    /// <summary>DTO 列表 → 设备实体列表（Remote 屏端零配置：从 Collector 拉取的设备配置灌回内存）。</summary>
+    public static List<Device> ToEntities(IReadOnlyList<DeviceConfigDto> dtos)
+        => dtos.Select(ToEntity).ToList();
+
+    public static Device ToEntity(DeviceConfigDto dto)
+    {
+        var device = new Device
+        {
+            Id = dto.Id,
+            Name = dto.Name,
+            OkCountAddress = dto.OkCountAddress,
+            NgCountAddress = dto.NgCountAddress,
+            StatusCountAddress = dto.StatusCountAddress,
+            ProductionResetAddress = dto.ProductionResetAddress,
+            RecipeName = dto.RecipeName,
+            RecipeValue = dto.RecipeValue,
+            RecipeAddress = dto.RecipeAddress,
+            TargetCycle = dto.TargetCycle,
+        };
+        foreach (var a in dto.Alarms)
+        {
+            device.Alarms.Add(new Alarm
+            {
+                Id = a.Id,
+                DeviceId = a.DeviceId,
+                Name = a.Name,
+                PlcAddress = a.PlcAddress,
+                Description = a.Description,
+                Level = (Kanban.Core.Models.AlarmLevel)a.Level,
+            });
+        }
+        foreach (var x in dto.Defects)
+        {
+            device.Defects.Add(new Defect
+            {
+                Id = x.Id,
+                DeviceId = x.DeviceId,
+                Name = x.Name,
+                PlcAddress = x.PlcAddress,
+                Severity = (Kanban.Core.Models.DefectSeverity)x.Severity,
+                Category = (Kanban.Core.Models.DefectCategory)x.Category,
+            });
+        }
+        foreach (var c in dto.CountAlarms)
+        {
+            device.CountAlarms.Add(new CountAlarm
+            {
+                Id = c.Id,
+                DeviceId = c.DeviceId,
+                Name = c.Name,
+                PlcAddress = c.PlcAddress,
+                MaxValue = c.MaxValue,
+                Enabled = c.Enabled,
+                Description = c.Description,
+                Unit = c.Unit,
+            });
+        }
+        return device;
+    }
 }
 
 /// <summary>

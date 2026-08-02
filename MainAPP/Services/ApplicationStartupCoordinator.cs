@@ -146,6 +146,23 @@ public sealed class ApplicationStartupCoordinator(
             return true;
         };
 
+        // 屏端零配置：设备列表从 Collector 拉取（屏端无 devices.json 也能启动）。
+        // 失败（服务未就绪等）时保留本地已加载配置，不影响启动。
+        try
+        {
+            var remoteDevices = await client.GetDevicesAsync();
+            if (remoteDevices.Count > 0)
+            {
+                var entities = DeviceMapper.ToEntities(remoteDevices);
+                deviceRepo.ReplaceAll(entities);
+                Log.Information("Remote 设备配置已从采集服务加载：{Count} 台", entities.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "远程设备配置加载失败，使用本地配置");
+        }
+
         Log.Information("Remote 模式数据链路已建立：{Url}", services.GetRequiredService<AppSettings>().CollectorHubUrl);
     }
 }

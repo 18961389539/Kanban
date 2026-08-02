@@ -256,6 +256,85 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
+                    <!--  ============ 左列：数据源与运行模式 ============  -->
+                    <Border
+                        x:Name="DataSourceSection"
+                        Grid.Column="0"
+                        Padding="20"
+                        VerticalAlignment="Top"
+                        Style="{StaticResource MainCard}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitleText}" Text="数据源与运行模式" />
+                            <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="选择数据来源（本地采集 / 远程采集服务）与程序运行模式。" />
+                            <hc:Divider Margin="0,8" />
+
+                            <Border Style="{StaticResource SettingsGroupHeader}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="数据采集模式" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="远程模式连接 Kanban.Collector 采集服务，支持多屏共享同一数据源。" />
+                                </StackPanel>
+                            </Border>
+
+                            <RadioButton Content="本地采集（单机模式）"
+                                         AutomationProperties.Name="本地采集模式"
+                                         IsChecked="{Binding IsLocalMode}" Margin="0,8,0,0" />
+                            <RadioButton Content="远程采集（连接采集服务）"
+                                         AutomationProperties.Name="远程采集模式"
+                                         IsChecked="{Binding IsRemoteMode}" Margin="0,4,0,0" />
+                            <hc:TextBox
+                                hc:InfoElement.Title="采集服务地址"
+                                hc:InfoElement.TitlePlacement="Top"
+                                AutomationProperties.Name="采集服务地址"
+                                Style="{StaticResource SettingsTextBox}"
+                                IsEnabled="{Binding IsRemoteMode}"
+                                Text="{Binding DraftSettings.CollectorHubUrl, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Kanban.Collector 的 SignalR 地址，如 http://192.168.1.10:5129/hubs/kanban" />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button
+                                    Style="{StaticResource IconButtonDefault}"
+                                    AutomationProperties.Name="测试采集服务连接"
+                                    Command="{Binding TestCollectorConnectionCommand}"
+                                    Content="{Binding TestCollectorButtonText}"
+                                    Tag="{x:Static mi:MaterialIconKind.ServerNetwork}"
+                                    ToolTip="测试采集服务 SignalR 连接是否可达"
+                                    IsEnabled="{Binding IsRemoteMode}" />
+                                <TextBlock
+                                    VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
+                                    Text="{Binding CollectorTestResult}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Success">
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Error">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <Border Style="{StaticResource SettingsGroupHeader}" Margin="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="运行模式" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="展示模式仅保留大屏页面并限制退出，适合车间屏端（保存后重启生效）。" />
+                                </StackPanel>
+                            </Border>
+                            <RadioButton Content="完整模式（展示 + 管理）"
+                                         AutomationProperties.Name="完整模式"
+                                         IsChecked="{Binding IsFullMode}" Margin="0,8,0,0" />
+                            <RadioButton Content="展示模式（仅大屏页面）"
+                                         AutomationProperties.Name="展示模式"
+                                         IsChecked="{Binding IsViewerMode}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
                     <!--  ============ 左列：PLC 连接配置 ============  -->
                     <Border
                         x:Name="PlcSection"

@@ -200,6 +200,21 @@ public partial class MainWindow : Window
     /// </summary>
     private void OnMainWindowClosing(object? sender, CancelEventArgs e)
     {
+        // Viewer（展示）模式：退出看板需确认，防止车间工人误关大屏。
+        if (DataContext is MainWindowViewModel viewerVm && viewerVm.IsViewerMode)
+        {
+            var confirm = MessageBox.Show(
+                "展示终端正在运行，确定要退出看板吗？",
+                "退出确认",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes)
+            {
+                e.Cancel = true;
+                return;
+            }
+        }
+
         if (DataContext is MainWindowViewModel vm && !vm.DeviceManagerViewModel.TryCloseWithDirtyCheck())
             e.Cancel = true;
         if (!e.Cancel && DataContext is MainWindowViewModel closingViewModel)

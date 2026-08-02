@@ -83,6 +83,10 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         => _configSyncHandler.SaveDevicesAsync(devices);
 
     /// <inheritdoc />
+    public Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync()
+        => _configSyncHandler.GetDevicesAsync();
+
+    /// <inheritdoc />
     public Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder)
         => _configSyncHandler.UpsertWorkOrderAsync(workOrder);
 
