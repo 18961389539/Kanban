@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -50,7 +50,7 @@ public class AlarmTopItem
 public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 {
     private readonly IAlarmHistoryService _historyService;
-    private readonly DeviceRepository _deviceRepository;
+    private readonly IDeviceRepository _deviceRepository;
     private readonly IDialogService _dialog;
     private readonly DispatcherTimer _activeTimer;  // 3s 刷新活跃报警
     private readonly DispatcherTimer _statsTimer;   // 60s 刷新事件流与统计
@@ -132,7 +132,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 
     public AlarmCenterViewModel(
         IAlarmHistoryService historyService,
-        DeviceRepository deviceRepository,
+        IDeviceRepository deviceRepository,
         IDialogService dialog)
     {
         _historyService = historyService;
@@ -210,12 +210,18 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 
     private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        DeviceFilterItems.Clear();
-        foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
-            DeviceFilterItems.Add(device);
-        if (SelectedDeviceId != null && !DeviceFilterItems.Any(d => d.Id == SelectedDeviceId))
-            SelectedDeviceId = null;
-        RefreshActiveAlarms();
+        // 设备列表可能在后台线程变更（Remote 模式从 Collector 拉取/删除设备、DeviceManager 移除），
+        // 而 DeviceFilterItems 是绑定 UI 的集合（未注册线程同步），必须封送 UI 线程——
+        // 与 Home/Overview/ProductionLine 的同类回调保持一致，否则跨线程改集合抛异常。
+        _uiDispatcher.BeginInvoke(new Action(() =>
+        {
+            DeviceFilterItems.Clear();
+            foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
+                DeviceFilterItems.Add(device);
+            if (SelectedDeviceId != null && !DeviceFilterItems.Any(d => d.Id == SelectedDeviceId))
+                SelectedDeviceId = null;
+            RefreshActiveAlarms();
+        }));
     }
 
     [RelayCommand]

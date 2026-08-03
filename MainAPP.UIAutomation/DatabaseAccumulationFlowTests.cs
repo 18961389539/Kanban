@@ -134,6 +134,31 @@ public class DatabaseAccumulationFlowTests : IDisposable
         return File.Exists(walPath) ? new FileInfo(walPath).Length : 0;
     }
 
+    /// <summary>
+    /// 轮询等待 ProductionLogs 达到预期条数（5s 间隔），达标提前返回；
+    /// 超时上限兜底（不抛异常，按当前数据继续，由后续断言裁决成败）。
+    /// 替代固定 Thread.Sleep：不依赖精确时钟——数据提前达标即提前退出（CI 抖动可容忍），
+    /// 数据链路故障时也能更快暴露（超时后断言失败而非干等满时长）。
+    /// WAL 模式下 MainAPP 运行中仍可只读查询已提交数据。
+    /// </summary>
+    private void WaitForProductionLogs(string dataDir, int expectedMinimum, string stage, int timeoutSeconds = 200)
+    {
+        var dbPath = Path.Combine(dataDir, "Config", "production_logs.db");
+        var deadline = DateTime.Now.AddSeconds(timeoutSeconds);
+        while (DateTime.Now < deadline)
+        {
+            var count = File.Exists(dbPath) ? CountRowsWithPath(dbPath, "ProductionLogs") : 0;
+            if (count >= expectedMinimum)
+            {
+                Console.WriteLine($"  [{stage}] 数据提前达标：ProductionLogs={count} 条（≥{expectedMinimum}），提前结束等待");
+                return;
+            }
+            Thread.Sleep(5000);
+        }
+        var finalCount = File.Exists(dbPath) ? CountRowsWithPath(dbPath, "ProductionLogs") : 0;
+        Console.WriteLine($"  [{stage}] 等待超时（{timeoutSeconds}s），当前 ProductionLogs={finalCount} 条，按现状继续验证");
+    }
+
     // ======== 数据积累主测试 ========
 
     /// <summary>
@@ -165,11 +190,11 @@ public class DatabaseAccumulationFlowTests : IDisposable
             // 3. 启动 MainAPP
             simCtx.StartApp();
 
-            // 4. 等待 3 分钟积累数据（180 秒）
-            //    PollingIntervalMs=1000，HistoryWriteIntervalScans=60 → 每 60 秒写一条 ProductionLog
-            //    3 分钟 ≈ 3 条 ProductionLog/设备 × 3 设备 = 9 条
-            Console.WriteLine($"  [数据积累] 开始等待 180 秒（3 分钟）积累数据...");
-            Thread.Sleep(180_000);
+            // 4. 等待数据积累：轮询等待 ProductionLogs 达到预期下限（8 条 ≈ 3 分钟 × 10 倍速），
+            //    达标提前返回；不达标等到超时上限（200s）后按现状继续（由后续断言裁决）。
+            //    替代固定 Sleep(180s)：不依赖精确时钟，CI 抖动可容忍。
+            Console.WriteLine($"  [数据积累] 开始轮询等待 ProductionLogs 达到 8 条（上限 200s）...");
+            WaitForProductionLogs(dataDir, expectedMinimum: 8, stage: "3 分钟积累", timeoutSeconds: 200);
             Console.WriteLine($"  [数据积累] 等待结束，开始验证数据库");
 
             // 5. 关闭 MainAPP（正常退出，触发 OnExit 保存）
@@ -421,8 +446,8 @@ public class DatabaseAccumulationFlowTests : IDisposable
             simCtx.StartSimulator("demo", 10);
             simCtx.StartApp();
 
-            Console.WriteLine($"  [数据积累] 开始等待 60 秒...");
-            Thread.Sleep(60_000);
+            Console.WriteLine($"  [数据积累] 开始轮询等待 ProductionLogs（上限 90s）...");
+            WaitForProductionLogs(dataDir, expectedMinimum: 1, stage: "60 秒积累", timeoutSeconds: 90);
             Console.WriteLine($"  [数据积累] 等待结束");
         }
         finally
@@ -457,7 +482,7 @@ public class DatabaseAccumulationFlowTests : IDisposable
         {
             simCtx.StartSimulator("demo", 10);
             simCtx.StartApp();
-            Thread.Sleep(60_000);
+            WaitForProductionLogs(dataDir, expectedMinimum: 1, stage: "首次运行积累", timeoutSeconds: 90);
         }
         finally
         {

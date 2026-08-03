@@ -267,7 +267,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         {
             var d = await _remoteClient!.GetDiagnosticsAsync();
             IsConnected = d.IsConnected;
-            IsAcquisitionRunning = d.IsConnected;
+            // 采集状态用真值（CollectorDiagnosticsDto.IsRunning）：连接正常 ≠ 采集运行中，
+            // 原先用 IsConnected 会在"连接正常但采集停止"时误报"运行中"。
+            IsAcquisitionRunning = d.IsRunning;
             ConnectionStatus = d.ConnectionStatus;
             TotalDisconnectCount = d.TotalDisconnectCount;
             ConsecutiveFailures = d.ConsecutiveFailures;

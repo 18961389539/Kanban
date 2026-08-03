@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Core.Models;
 using Serilog;
@@ -18,8 +19,35 @@ namespace Kanban.Core.Services;
 /// _stateLock 只保护连接状态机字段；_driver 的 Configure/Connect/Disconnect 由独立的
 /// _driverOperationLock 串行化，避免 PLC 网络超时阻塞状态查询和其他状态变更。
 /// </summary>
-public partial class PlcConnectionManager : ObservableObject
+/// <summary>
+/// PLC 连接管理器抽象接口：供 ViewModel 依赖，解耦具体实现。
+/// 继承 INotifyPropertyChanged 以便 UI 绑定 IsConnected/ConnectionStatus 等 [ObservableProperty] 属性。
+/// </summary>
+public interface IPlcConnectionManager : INotifyPropertyChanged
 {
+    bool IsConnected { get; }
+    string ConnectionStatus { get; }
+    int TotalDisconnectCount { get; }
+    TimeSpan? LastDisconnectDuration { get; }
+    DateTime? DisconnectedAt { get; }
+    int ConsecutiveFailures { get; }
+    event EventHandler<ConnectionStateChangedEventArgs>? ConnectionStateChanged;
+    void EnsureConnected();
+    void MarkDisconnected(DisconnectionReason reason = DisconnectionReason.ReadFailure);
+    void SyncRemoteConnected(string statusText = "Collector 已连接");
+    void SyncRemoteReconnecting(int attempt);
+    void Disconnect();
+}
+
+public partial class PlcConnectionManager : ObservableObject, IPlcConnectionManager
+{
+    /// <summary>
+    /// 连接中状态文案前缀（本地"正在连接... (第N次)" / Remote"正在连接采集服务 (第N次)"共用）。
+    /// MainWindowViewModel.IsPlcConnecting 用此常量判断（StartsWith），改文案只需改这里，
+    /// 避免跨层魔法字符串协议（原实现直接硬编码"正在连接"字符串比较）。
+    /// </summary>
+    public const string ConnectingStatusPrefix = "正在连接";
+
     private readonly IPlcDriver _driver;
     private readonly AppSettings _appSettings;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
@@ -130,7 +158,7 @@ public partial class PlcConnectionManager : ObservableObject
             if ((now - _lastConnectAttempt) < cooldown) return;
 
             _lastConnectAttempt = now;
-            ConnectionStatus = $"正在连接... (第{_consecutiveFailures + 1}次)";
+            ConnectionStatus = $"{ConnectingStatusPrefix}... (第{_consecutiveFailures + 1}次)";
             config = _profileProvider?.Current.Config ?? _appSettings.PlcConfig.CreateSnapshot();
             disconnectedAt = _disconnectedAt;
         }
@@ -269,7 +297,7 @@ public partial class PlcConnectionManager : ObservableObject
         lock (_stateLock)
         {
             IsConnected = false;
-            ConnectionStatus = $"正在连接采集服务 (第{attempt}次)";
+            ConnectionStatus = $"{ConnectingStatusPrefix}采集服务 (第{attempt}次)";
         }
         ConnectionStateChanged?.Invoke(this, new ConnectionStateChangedEventArgs
         {

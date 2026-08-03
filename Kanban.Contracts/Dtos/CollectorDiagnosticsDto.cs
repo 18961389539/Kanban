@@ -40,6 +40,8 @@ public sealed record CollectorDiagnosticsDto
 
     // ── 连接状态 ──
     public bool IsConnected { get; init; }
+    /// <summary>采集是否在运行（区分"连接正常但采集停止"与"采集运行中"——连接 ≠ 采集）。</summary>
+    public bool IsRunning { get; init; }
     public string ConnectionStatus { get; init; } = string.Empty;
     public int TotalDisconnectCount { get; init; }
     public int ConsecutiveFailures { get; init; }

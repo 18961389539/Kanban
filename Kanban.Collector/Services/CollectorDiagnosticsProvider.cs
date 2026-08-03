@@ -64,6 +64,7 @@ public sealed class CollectorDiagnosticsProvider
                 ProductionDatabaseBytes = hist.ProductionDatabaseBytes,
                 ProductionWalBytes = hist.ProductionWalBytes,
                 IsConnected = _connectionManager.IsConnected,
+                IsRunning = _acquisition.IsRunning,
                 ConnectionStatus = _connectionManager.ConnectionStatus,
                 TotalDisconnectCount = _connectionManager.TotalDisconnectCount,
                 ConsecutiveFailures = _connectionManager.ConsecutiveFailures,

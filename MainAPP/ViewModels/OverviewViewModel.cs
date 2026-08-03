@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
@@ -142,16 +142,16 @@ public class DefectParetoSummary
 /// 汇总全厂产量/报警，按小时聚合趋势，列出 Top 报警和设备明细（每台设备独立 OEE）。
 /// 数据来源：HistoryService（历史快照）+ DeviceRepository.Runtimes（实时状态色条）。
 /// </summary>
-public partial class OverviewViewModel : ObservableObject
+public partial class OverviewViewModel : ObservableObject, IDisposable
 {
     private readonly IProductionReviewDataService _reviewDataService;
-    private readonly DeviceRepository _deviceRepository;
+    private readonly IDeviceRepository _deviceRepository;
     private readonly AppSettings _appSettings;
     private readonly IDialogService _dialog;
     private readonly IDeviceSelectionService _selection;
     private readonly IProductionReviewPdfService? _pdfService;
     private readonly IDefectHistoryReader? _defectHistoryStore;
-    private readonly WorkOrderRepository? _workOrderRepository;
+    private readonly IWorkOrderRepository? _workOrderRepository;
     private readonly IProductionReviewAnalysisService _analysisService;
     private readonly IProductionReviewCsvExportService _csvExportService;
     private readonly IProductionReviewChartService _chartService;
@@ -498,13 +498,13 @@ public partial class OverviewViewModel : ObservableObject
     public event Action<string>? FocusDeviceRequested;
 
     public OverviewViewModel(
-        DeviceRepository deviceRepository,
+        IDeviceRepository deviceRepository,
         AppSettings appSettings,
         IDialogService dialog,
         IDeviceSelectionService selection,
         IProductionReviewPdfService? pdfService,
         IDefectHistoryReader? defectHistoryStore,
-        WorkOrderRepository? workOrderRepository,
+        IWorkOrderRepository? workOrderRepository,
         IProductionReviewAnalysisService analysisService,
         IProductionReviewDataService reviewDataService,
         IProductionReviewCsvExportService csvExportService,
@@ -540,12 +540,22 @@ public partial class OverviewViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 退订事件（DI 单例由容器 dispose 时调用，与同族 ViewModel 保持一致，避免事件链泄漏）。
+    /// 命名方法订阅 + 退订，多次调用安全。
+    /// </summary>
+    public void Dispose()
+    {
+        _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
+        _selection.PropertyChanged -= OnSelectionChanged;
+    }
+
+    /// <summary>
     /// 兼容旧测试和外部调用方的构造入口。生产 DI 使用上面的分层构造，
     /// 此入口仅负责把旧历史门面适配为复盘应用服务。
     /// </summary>
     public OverviewViewModel(
         IHistoryService historyService,
-        DeviceRepository deviceRepository,
+        IDeviceRepository deviceRepository,
         AppSettings appSettings,
         IDialogService dialog,
         IDeviceSelectionService selection,
@@ -962,7 +972,9 @@ public partial class OverviewViewModel : ObservableObject
         }
 
         if (!_uiDispatcher.HasShutdownStarted)
-            _uiDispatcher.Invoke(ApplyKpis);
+            // BeginInvoke 而非 Invoke：RefreshAsync 在后台线程调用，Invoke 会同步阻塞后台线程
+            // 直到 UI 执行完 ApplyKpis（可能拖慢后续班次对比/图表构建，与下方更新集合的注释一致）。
+            _uiDispatcher.BeginInvoke(ApplyKpis);
 
         // ── 班次对比：复用 QueryData 已查的批量数据，按 ShiftName 内存分组，不再重新查询 ──
         var shiftComparisons = _metricsService.BuildShiftComparisons(
@@ -1230,215 +1242,6 @@ public partial class OverviewViewModel : ObservableObject
             _ => BucketSize.Hour,
         };
     }
-
-    // ──────────── 报警统计辅助 ────────────
-
-    private List<AlarmOverviewSummary> BuildTopAlarms(
-        List<AlarmEventRecord> events,
-        List<ProductionLog> productionLogs)
-    {
-        var now = DateTime.Now;
-        return events
-            .Where(e => e.EventType == AlarmEventType.Triggered)
-            .GroupBy(e => new { e.AlarmName, e.DeviceName, e.PlcAddress })
-            .Select(group =>
-            {
-                var triggers = group.OrderBy(e => e.EventTime).ToList();
-                var intervals = triggers.Zip(triggers.Skip(1), (first, second) =>
-                    (second.EventTime - first.EventTime).TotalMinutes).ToList();
-                var averageInterval = intervals.Count > 0 ? intervals.Average() : 0;
-                var outputBefore = 0;
-                var outputAfter = 0;
-                foreach (var trigger in triggers)
-                {
-                    outputBefore += CalculateProductionDelta(
-                        productionLogs, trigger.EventTime.AddMinutes(-15), trigger.EventTime);
-                    outputAfter += CalculateProductionDelta(
-                        productionLogs, trigger.EventTime, trigger.EventTime.AddMinutes(15));
-                }
-
-                return new AlarmOverviewSummary
-                {
-                    AlarmName = group.Key.AlarmName,
-                    DeviceName = group.Key.DeviceName,
-                    PlcAddress = group.Key.PlcAddress,
-                    TriggerCount = triggers.Count,
-                    AverageIntervalMinutes = averageInterval,
-                    IsHighFrequency = triggers.Count >= 3 || (triggers.Count >= 2 && averageInterval <= 30),
-                    OutputBefore = outputBefore,
-                    OutputAfter = outputAfter,
-                    ShiftName = triggers[0].ShiftName,
-                    TotalDurationHours = CalcAlarmDurationHours(events, group.Key.AlarmName, group.Key.DeviceName),
-                };
-            })
-            .OrderByDescending(a => a.TriggerCount)
-            .ThenBy(a => a.AverageIntervalMinutes == 0 ? double.MaxValue : a.AverageIntervalMinutes)
-            .Take(5)
-            .ToList();
-    }
-
-    private List<ReviewStatusSegment> BuildStatusTimeline(
-        Device device,
-        List<StatusTransitionRecord> transitions,
-        List<ProductionLog> productionLogs,
-        DateTime from,
-        DateTime to,
-        List<AlarmEventRecord> alarms)
-    {
-        var ordered = transitions
-            .Where(t => t.EventTime >= from && t.EventTime <= to)
-            .OrderBy(t => t.EventTime)
-            .ToList();
-            var initialState = _reviewDataService.GetLatestStatusBefore(device.Id, from)?.CurrentState
-            ?? (int)DeviceStatus.Unknown;
-        var segments = new List<ReviewStatusSegment>();
-        var cursor = from;
-        var state = initialState;
-
-        foreach (var transition in ordered)
-        {
-            var transitionTime = transition.EventTime < from ? from : transition.EventTime > to ? to : transition.EventTime;
-            if (transitionTime > cursor)
-                segments.Add(CreateStatusSegment(state, cursor, transitionTime, productionLogs, alarms));
-            cursor = transitionTime;
-            state = transition.CurrentState;
-        }
-
-        if (to > cursor)
-            segments.Add(CreateStatusSegment(state, cursor, to, productionLogs, alarms));
-        return segments.Where(segment => segment.DurationMinutes >= 0.1).ToList();
-    }
-
-    private static ReviewStatusSegment CreateStatusSegment(
-        int state,
-        DateTime start,
-        DateTime end,
-        List<ProductionLog> productionLogs,
-        List<AlarmEventRecord> alarms)
-    {
-        var output = CalculateProductionDelta(productionLogs, start, end);
-        var alarmCount = alarms.Count(alarm =>
-            alarm.EventType == AlarmEventType.Triggered
-            && alarm.EventTime >= start
-            && alarm.EventTime < end);
-        return new ReviewStatusSegment
-        {
-            Start = start,
-            End = end,
-            StatusWord = state,
-            StatusText = state switch
-            {
-                (int)DeviceStatus.Running => "运行",
-                (int)DeviceStatus.Paused => "暂停",
-                (int)DeviceStatus.Alarm => "报警",
-                0 => "断线",
-                _ => "未知",
-            },
-            OutputDelta = output,
-            AlarmCount = alarmCount,
-            HasNoOutput = state == (int)DeviceStatus.Running && output == 0,
-        };
-    }
-
-    private List<DefectConcentrationSummary> BuildDefectConcentrations(Device device, DateTime from, DateTime to)
-    {
-        if (_defectHistoryStore == null) return [];
-        var snapshots = _defectHistoryStore.Query(from.AddDays(-1), to, device.Id);
-        var cells = new List<(string Name, string Shift, DateTime Bucket, int Count)>();
-        foreach (var group in snapshots.GroupBy(snapshot => new { snapshot.DefectId, snapshot.ShiftName }))
-        {
-            var ordered = group.OrderBy(snapshot => snapshot.Timestamp).ToList();
-            var previous = ordered.LastOrDefault(snapshot => snapshot.Timestamp < from);
-            foreach (var snapshot in ordered.Where(snapshot => snapshot.Timestamp >= from && snapshot.Timestamp <= to))
-            {
-                var count = previous == null
-                    ? Math.Max(0, snapshot.Count)
-                    : Math.Max(0, snapshot.Count - previous.Count);
-                if (count > 0)
-                {
-                    var bucket = new DateTime(snapshot.Timestamp.Year, snapshot.Timestamp.Month, snapshot.Timestamp.Day, snapshot.Timestamp.Hour, 0, 0);
-                    cells.Add((snapshot.DefectName, snapshot.ShiftName, bucket, count));
-                }
-                previous = snapshot;
-            }
-        }
-
-        var total = cells.Sum(cell => cell.Count);
-        return cells
-            .GroupBy(cell => new { cell.Name, cell.Shift, cell.Bucket })
-            .Select(group => new DefectConcentrationSummary
-            {
-                DefectName = group.Key.Name,
-                ShiftName = group.Key.Shift,
-                TimeRangeText = group.Key.Bucket.ToString("MM-dd HH:00"),
-                Count = group.Sum(cell => cell.Count),
-                Share = total > 0 ? (double)group.Sum(cell => cell.Count) / total : 0,
-            })
-            .OrderByDescending(item => item.Count)
-            .Take(10)
-            .ToList();
-    }
-
-    private List<string> BuildHealthIssues(
-        Device device,
-        List<ProductionLog> productionLogs,
-        List<AlarmEventRecord> alarms,
-        List<ReviewStatusSegment> timeline,
-        List<DefectConcentrationSummary> concentrations,
-        DateTime from,
-        DateTime to)
-    {
-        List<string> issues = [];
-        var totalOutput = CalculateProductionDelta(productionLogs, from, to);
-        var runHours = timeline.Where(segment => segment.StatusWord == (int)DeviceStatus.Running)
-            .Sum(segment => segment.DurationMinutes) / 60.0;
-        if (device.TargetCycle > 0 && runHours > 0 && totalOutput / runHours < device.TargetCycle * 0.8)
-            issues.Add($"节拍异常：实际 {totalOutput / runHours:F1} 件/小时，低于目标 {device.TargetCycle:F0} 件/小时的 80%");
-
-        var currentAlarmCount = alarms.Count(alarm => alarm.EventType == AlarmEventType.Triggered);
-        var comparison = GetComparisonRange(from, to);
-        var previousAlarmCount = _reviewDataService.QueryAlarmEvents(comparison.From, comparison.To, device.Id)
-            .Count(alarm => alarm.EventType == AlarmEventType.Triggered);
-        if (currentAlarmCount >= 3 && (previousAlarmCount == 0 || currentAlarmCount > previousAlarmCount * 1.5))
-            issues.Add($"报警突增：当前 {currentAlarmCount} 次，上一周期 {previousAlarmCount} 次");
-
-        var defectCount = concentrations.Sum(item => item.Count);
-        var previousDefectCount = 0;
-        if (_defectHistoryStore != null)
-        {
-            var previousConcentrations = BuildDefectConcentrations(device, comparison.From, comparison.To);
-            previousDefectCount = previousConcentrations.Sum(item => item.Count);
-        }
-        if (defectCount >= 3 && (previousDefectCount == 0 || defectCount > previousDefectCount * 1.5))
-            issues.Add($"缺陷率突增：当前 {defectCount} 个，上一周期 {previousDefectCount} 个");
-
-        var idleRunning = timeline.FirstOrDefault(segment => segment.HasNoOutput && segment.DurationMinutes >= 30);
-        if (idleRunning != null)
-            issues.Add($"运行无产量：{idleRunning.TimeRangeText} 持续 {idleRunning.DurationText}");
-        return issues;
-    }
-
-    private static int CalculateHealthScore(IReadOnlyList<string> issues)
-    {
-        var score = 100;
-        foreach (var issue in issues)
-        {
-            score -= issue.StartsWith("运行无产量", StringComparison.Ordinal) ? 30
-                : issue.StartsWith("缺陷率突增", StringComparison.Ordinal) ? 25
-                : issue.StartsWith("报警突增", StringComparison.Ordinal) ? 20
-                : 25;
-        }
-        return Math.Clamp(score, 0, 100);
-    }
-
-    private static int CalculateProductionDelta(List<ProductionLog> logs, DateTime from, DateTime to)
-    {
-        var inWindow = logs.Where(log => log.Timestamp >= from && log.Timestamp <= to).ToList();
-        var baseline = logs.Where(log => log.Timestamp < from).ToList();
-        var (ok, ng) = HistoryQueryHelper.SumWindowProduction(inWindow, baseline, from);
-        return ok + ng;
-    }
-
     private static int CountPendingAlarms(List<AlarmEventRecord> events)
     {
         // 按 AlarmId 分组，最后一条是 Triggered 且无 Recovered → 待处理
@@ -1494,17 +1297,6 @@ public partial class OverviewViewModel : ObservableObject
         if (durations.Count == 0) return (string.Empty, 0);
         var max = durations.Aggregate((a, b) => a.Value >= b.Value ? a : b);
         return (max.Key, max.Value);
-    }
-
-    /// <summary>
-    /// 计算指定报警名+设备名的 Triggered→Recovered 配对总时长（小时）。
-    /// 复用 PairAlarmDurations，按 "AlarmName|DeviceName" 复合键分组后取指定 key。
-    /// </summary>
-    private static double CalcAlarmDurationHours(List<AlarmEventRecord> events, string alarmName, string deviceName)
-    {
-        var key = $"{alarmName}|{deviceName}";
-        var durations = PairAlarmDurations(events, e => $"{e.AlarmName}|{e.DeviceName}", DateTime.Now);
-        return durations.TryGetValue(key, out double sec) ? sec / 3600.0 : 0;
     }
 
     // ──────────── 峰值/谷值 ────────────
@@ -1619,229 +1411,6 @@ public partial class OverviewViewModel : ObservableObject
         return result.Take(5).ToList();
     }
 
-    /// <summary>
-    /// 构建 OEE 瀑布图：从 100% 逐步扣减性能损失、可用率损失、质量损失，得到最终 OEE。
-    /// 用 RectangleBarSeries 画 4 个柱：起始 100%、性能后、可用后、质量后(OEE)。
-    /// 损失部分用红色柱向下显示。
-    /// </summary>
-    private static PlotModel BuildOeeWaterfallChart(double performance, double availability, double quality, double oee)
-    {
-        var textColor = ChartPalette.Text;
-        var gridColor = ChartPalette.Grid;
-        var baseColor = ChartPalette.Base;   // 起始/最终柱（蓝）
-        var lossColor = ChartPalette.Loss;    // 损失柱（红）
-        var remainColor = ChartPalette.Remain;  // 剩余柱（灰）
-
-        var model = new PlotModel
-        {
-            Background = OxyColors.Transparent,
-            PlotAreaBackground = OxyColors.Transparent,
-            TextColor = textColor,
-        };
-
-        var catAxis = new CategoryAxis
-        {
-            Position = AxisPosition.Bottom,
-            TextColor = textColor,
-            TicklineColor = gridColor,
-            AxislineColor = gridColor,
-            MajorGridlineStyle = LineStyle.None,
-        };
-        catAxis.Key = "wfCat";
-        catAxis.Labels.Add("起始");
-        catAxis.Labels.Add("性能损失");
-        catAxis.Labels.Add("可用损失");
-        catAxis.Labels.Add("质量损失");
-        catAxis.Labels.Add("OEE");
-        model.Axes.Add(catAxis);
-
-        var valAxis = new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            Minimum = 0,
-            Maximum = 100,
-            Title = "百分比(%)",
-            TextColor = textColor,
-            TitleColor = textColor,
-            TicklineColor = gridColor,
-            MajorGridlineColor = gridColor,
-            MajorGridlineStyle = LineStyle.Solid,
-            LabelFormatter = v => $"{v:F0}%",
-        };
-        valAxis.Key = "wfVal";
-        model.Axes.Add(valAxis);
-
-        // 瀑布数据：起始100 → 扣性能损失 → 扣可用损失 → 扣质量损失 → OEE
-        var perfLoss = (1 - performance) * 100;
-        var availLoss = performance * (1 - availability) * 100;
-        var qualLoss = performance * availability * (1 - quality) * 100;
-
-        // 用 RectangleBarSeries 画柱（OxyPlot 2.2 无 ColumnSeries）
-        var series = new RectangleBarSeries
-        {
-            FillColor = baseColor,
-            StrokeColor = OxyColors.Transparent,
-            XAxisKey = "wfCat",
-            YAxisKey = "wfVal",
-        };
-
-        // 起始柱：0 → 100
-        series.Items.Add(new RectangleBarItem(0.1, 0, 0.9, 100) { Color = baseColor });
-        // 性能损失后：0 → (100 - perfLoss)
-        var afterPerf = 100 - perfLoss;
-        series.Items.Add(new RectangleBarItem(1.1, 0, 1.9, afterPerf) { Color = remainColor });
-        // 可用损失后：0 → (afterPerf - availLoss)
-        var afterAvail = afterPerf - availLoss;
-        series.Items.Add(new RectangleBarItem(2.1, 0, 2.9, afterAvail) { Color = remainColor });
-        // 质量损失后：0 → (afterAvail - qualLoss) = OEE
-        var afterQual = afterAvail - qualLoss;
-        series.Items.Add(new RectangleBarItem(3.1, 0, 3.9, afterQual) { Color = remainColor });
-        // OEE 最终柱
-        series.Items.Add(new RectangleBarItem(4.1, 0, 4.9, oee * 100) { Color = baseColor });
-        model.Series.Add(series);
-
-        // 损失标注（TextAnnotation 显示损失值）
-        void AddLossLabel(int catIdx, double fromVal, double toVal, string text, OxyColor color)
-        {
-            if (Math.Abs(fromVal - toVal) < 0.1) return;
-            model.Annotations.Add(new TextAnnotation
-            {
-                Text = text,
-                TextColor = color,
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Stroke = OxyColors.Transparent,
-                Background = OxyColors.Transparent,
-                TextPosition = new DataPoint(catIdx, (fromVal + toVal) / 2),
-                TextVerticalAlignment = VerticalAlignment.Middle,
-                TextHorizontalAlignment = HorizontalAlignment.Center,
-            });
-        }
-
-        AddLossLabel(1, 100, afterPerf, $"-{perfLoss:F1}%", lossColor);
-        AddLossLabel(2, afterPerf, afterAvail, $"-{availLoss:F1}%", lossColor);
-        AddLossLabel(3, afterAvail, afterQual, $"-{qualLoss:F1}%", lossColor);
-
-        // OEE 最终值标注
-        model.Annotations.Add(new TextAnnotation
-        {
-            Text = $"{oee * 100:F1}%",
-            TextColor = baseColor,
-            FontSize = 14,
-            FontWeight = FontWeights.Bold,
-            Stroke = OxyColors.Transparent,
-            Background = OxyColors.Transparent,
-            TextPosition = new DataPoint(4, oee * 100),
-            TextVerticalAlignment = VerticalAlignment.Bottom,
-            TextHorizontalAlignment = HorizontalAlignment.Center,
-        });
-
-        return model;
-    }
-
-    /// <summary>
-    /// 构建时段产量热力图：设备（Y 轴）× 时段桶（X 轴），颜色深浅表示产量。
-    /// 用 RectangleBarSeries 每格一个矩形，颜色按产量线性映射（浅→深）。
-    /// 直接复用 QueryData 已计算的 deviceSummaries.HourlyOk，避免再次查询 ProductionLogs。
-    /// </summary>
-    private PlotModel BuildProductionHeatmap(IReadOnlyList<DeviceOverviewSummary> devices, DateTime[] buckets, BucketSize bucketSize)
-    {
-        if (buckets.Length == 0 || devices.Count == 0)
-        {
-            return new PlotModel { Background = OxyColors.Transparent };
-        }
-
-        var textColor = ChartPalette.Text;
-        var gridColor = ChartPalette.Grid;
-
-        var model = new PlotModel
-        {
-            Background = OxyColors.Transparent,
-            PlotAreaBackground = OxyColors.Transparent,
-            TextColor = textColor,
-        };
-
-        // X 轴：时间
-        var xAxis = new DateTimeAxis
-        {
-            Position = AxisPosition.Bottom,
-            TicklineColor = gridColor,
-            MajorGridlineColor = gridColor,
-            MajorGridlineStyle = LineStyle.Solid,
-            AxislineColor = gridColor,
-            TextColor = textColor,
-            StringFormat = SelectedTimeRange == OverviewTimeRange.Days7 ? "MM-dd" : "HH:mm",
-        };
-        model.Axes.Add(xAxis);
-
-        // Y 轴：设备（CategoryAxis）
-        var catAxis = new CategoryAxis
-        {
-            Position = AxisPosition.Left,
-            TextColor = textColor,
-            TicklineColor = gridColor,
-            AxislineColor = gridColor,
-            MajorGridlineStyle = LineStyle.None,
-        };
-        foreach (var d in devices)
-            catAxis.Labels.Add(d.DeviceName);
-        model.Axes.Add(catAxis);
-
-        // 收集每台设备每个桶的产量：直接复用 deviceSummaries.HourlyOk（已在 QueryData 中差分计算）
-        var heatData = new int[devices.Count, buckets.Length];
-        var maxOk = 1;
-        for (int di = 0; di < devices.Count; di++)
-        {
-            var hourly = devices[di].HourlyOk;
-            if (hourly == null) continue;
-            for (int bi = 0; bi < buckets.Length && bi < hourly.Count; bi++)
-            {
-                heatData[di, bi] = hourly[bi];
-                if (hourly[bi] > maxOk) maxOk = hourly[bi];
-            }
-        }
-
-        // 用 RectangleBarSeries 画热力格
-        var series = new RectangleBarSeries
-        {
-            StrokeColor = ChartPalette.HeatmapBorder,
-            StrokeThickness = 0.5,
-        };
-        var bucketSpanTicks = bucketSize switch
-        {
-            BucketSize.Minute5 => TimeSpan.FromMinutes(5).Ticks,
-            BucketSize.Hour => TimeSpan.FromHours(1).Ticks,
-            BucketSize.Day => TimeSpan.FromDays(1).Ticks,
-            _ => TimeSpan.FromHours(1).Ticks,
-        };
-
-        for (int di = 0; di < devices.Count; di++)
-        {
-            for (int bi = 0; bi < buckets.Length; bi++)
-            {
-                var val = heatData[di, bi];
-                var x0 = DateTimeAxis.ToDouble(buckets[bi]);
-                var x1 = DateTimeAxis.ToDouble(buckets[bi].AddTicks(bucketSpanTicks));
-                var y0 = di - 0.4;
-                var y1 = di + 0.4;
-                // 颜色：0 值用深灰，否则按产量比例从深蓝到亮蓝
-                OxyColor color;
-                color = val <= 0
-                    ? ChartPalette.HeatmapZero
-                    : ChartPalette.Heatmap((double)val / maxOk);
-                series.Items.Add(new RectangleBarItem(x0, y0, x1, y1) { Color = color });
-            }
-        }
-        model.Series.Add(series);
-
-        return model;
-    }
-
-    // ──────────── 设备跳转 ────────────
-
-    /// <summary>
-    /// 点击设备行：设置共享选中设备并触发跳转主页请求。
-    /// </summary>
     [RelayCommand]
     private void FocusDevice(string? deviceId)
     {

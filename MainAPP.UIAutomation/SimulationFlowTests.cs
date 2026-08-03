@@ -953,8 +953,10 @@ public class SimulationFlowTests
         ctx.StartSimulator("normal", 10);
         ctx.StartApp();
 
-        // 等待班次切换发生（A班 2 分钟 → B班）
-        Thread.Sleep(130000);
+        // 等待班次切换发生（A班 2 分钟 → B班）：轮询日志查找"班次切换"字样，找到即提前返回；
+        // 上限 160s 兜底（超时后仍按现状断言，由 Assert 裁决）。替代固定 Sleep(130s)：
+        // 班次切换在 120s 附近发生，找到即退出不干等，链路故障时也更快暴露。
+        WaitForShiftChangeInLog(ctx, timeoutSeconds: 160);
 
         // 断言：MainAPP 日志包含"班次切换"字样
         // 日志路径：Config/Logs/kanban_YYYYMMDD.log（按天滚动）
@@ -966,5 +968,32 @@ public class SimulationFlowTests
         using (var reader = new StreamReader(fs))
             logContent = reader.ReadToEnd();
         Assert.Contains("班次切换", logContent);
+    }
+
+    /// <summary>
+    /// 轮询等待 MainAPP 日志出现"班次切换"字样（5s 间隔；FileShare.ReadWrite 避免 Serilog 写锁冲突）。
+    /// 替代固定长睡眠：找到即提前返回（班次切换 120s 附近发生），上限兜底后按现状继续断言。
+    /// </summary>
+    private static void WaitForShiftChangeInLog(SimulationContext ctx, int timeoutSeconds)
+    {
+        var deadline = DateTime.Now.AddSeconds(timeoutSeconds);
+        while (DateTime.Now < deadline)
+        {
+            var logPath = Path.Combine(ctx.TempDir, "Config", "Logs", $"kanban_{DateTime.Now:yyyyMMdd}.log");
+            if (File.Exists(logPath))
+            {
+                string content;
+                using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var reader = new StreamReader(fs))
+                    content = reader.ReadToEnd();
+                if (content.Contains("班次切换"))
+                {
+                    Console.WriteLine("  [班次] 检测到'班次切换'日志，提前结束等待");
+                    return;
+                }
+            }
+            Thread.Sleep(5000);
+        }
+        Console.WriteLine($"  [班次] 等待超时（{timeoutSeconds}s），未在日志中发现'班次切换'，按现状继续断言");
     }
 }

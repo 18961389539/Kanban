@@ -65,13 +65,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>
     /// PLC 连接管理器（暴露给 UI 绑定连接状态/状态文本）
     /// </summary>
-    public PlcConnectionManager ConnectionManager { get; }
+    public IPlcConnectionManager ConnectionManager { get; }
 
     /// <summary>PLC 是否未连接，用于全局连接状态横幅 Visibility 绑定。</summary>
     public bool IsPlcDisconnected => !ConnectionManager.IsConnected;
 
     /// <summary>PLC 是否正在尝试连接，用于区分连接中与已断开。</summary>
-    public bool IsPlcConnecting => IsPlcDisconnected && ConnectionManager.ConnectionStatus.StartsWith("正在连接", StringComparison.Ordinal);
+    public bool IsPlcConnecting => IsPlcDisconnected
+        && ConnectionManager.ConnectionStatus.StartsWith(PlcConnectionManager.ConnectingStatusPrefix, StringComparison.Ordinal);
 
     /// <summary>当前是否为 Remote 模式（横幅文案区分 PLC 与采集服务）。</summary>
     public bool IsRemoteDataMode => AppSettings.DataMode == KanbanDataMode.Remote;
@@ -216,7 +217,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     // 数据新鲜度监控：Remote 取 KanbanDataClient 最后收数时间，Local 取采集服务最后成功轮询
     private readonly KanbanDataClient? _dataClient;
-    private readonly PlcDataAcquisitionService? _acquisitionService;
+    private readonly IPlcDataAcquisitionService? _acquisitionService;
     private readonly DispatcherTimer _staleCheckTimer;
 
     private void OnStaleCheckTick(object? sender, EventArgs e)
@@ -281,11 +282,11 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         DeviceDetailViewModel deviceDetailViewModel,
         WorkOrderManagerViewModel workOrderManagerViewModel,
         SettingsViewModel settingsViewModel,
-        PlcConnectionManager connectionManager,
+        IPlcConnectionManager connectionManager,
         LicenseGate licenseGate,
         RuntimeMonitoringViewModel? runtimeMonitoringViewModel = null,
         KanbanDataClient? dataClient = null,
-        PlcDataAcquisitionService? acquisitionService = null)
+        IPlcDataAcquisitionService? acquisitionService = null)
     {
         AppSettings = appSettings;
         DeviceManagerViewModel = deviceManagerViewModel;
