@@ -70,6 +70,21 @@ public class ConfigSyncHandlerTests : IDisposable
     }
 
     [Fact]
+    public void GetTitle_ReturnsAppSettingsAppTitle()
+    {
+        // 默认值
+        Assert.Equal("生产看板", _handler.GetTitle());
+
+        // 修改 AppSettings 后反映（屏端经 Hub GetTitleAsync 拉取）
+        _appSettings.AppTitle = "一号车间看板";
+        Assert.Equal("一号车间看板", _handler.GetTitle());
+
+        // 空白标题回退默认
+        _appSettings.AppTitle = "   ";
+        Assert.Equal("生产看板", _handler.GetTitle());
+    }
+
+    [Fact]
     public async Task SaveCollectorSettings_PartialUpdate_NullFieldsUntouched()
     {
         await _handler.SaveCollectorSettingsAsync(new CollectorSettingsDto { PollingIntervalMs = 800 });

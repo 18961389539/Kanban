@@ -128,6 +128,13 @@ public partial class AppSettings : ObservableObject
     private double _uiScale = 1.0;
 
     /// <summary>
+    /// 看板标题（窗口/页面标题，settings.json 可配置）。
+    /// WPF 窗口标题与 WASM 屏端标题均使用此值；屏端经 Hub 的 GetTitleAsync 拉取（零配置）。
+    /// </summary>
+    [ObservableProperty]
+    private string _appTitle = "生产看板";
+
+    /// <summary>
     /// 是否启用新报警声音。默认开启；关闭后仍保留页面上的视觉提醒和报警历史。
     /// </summary>
     [ObservableProperty]
@@ -288,6 +295,7 @@ public partial class AppSettings : ObservableObject
                 PlcBatchReadMaxGapSlots = settings.PlcBatchReadMaxGapSlots;
                 PlcConfig.OmronReadSplits = settings.PlcConfig?.OmronReadSplits ?? 500;
                 DashboardRefreshIntervalMs = settings.DashboardRefreshIntervalMs;
+                AppTitle = string.IsNullOrWhiteSpace(settings.AppTitle) ? "生产看板" : settings.AppTitle;
                 IsDarkTheme = settings.IsDarkTheme;
                 UiScale = settings.UiScale;
                 EnableAlarmSound = settings.EnableAlarmSound;

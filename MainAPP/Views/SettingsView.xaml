@@ -666,9 +666,19 @@
                             <Border Style="{StaticResource SettingsGroupHeader}">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="显示设置" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="调整大屏远距阅读时的界面字号。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="调整看板标题与界面字号（大屏远距阅读）。" />
                                 </StackPanel>
                             </Border>
+
+                            <!--  看板标题：窗口/页面标题（settings.json 可配置，屏端经 Hub 拉取零配置）  -->
+                            <hc:TextBox
+                                hc:InfoElement.Title="看板标题"
+                                hc:InfoElement.TitlePlacement="Top"
+                                AutomationProperties.Name="看板标题"
+                                MaxLength="40"
+                                Style="{StaticResource SettingsTextBox}"
+                                Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="看板窗口/页面标题。屏端（Web 大屏）自动从采集服务拉取，无需逐屏配置" />
 
                             <!--  界面字号（大屏远距可读性）：切换后实时预览，保存设置后持久化  -->
                             <hc:ComboBox

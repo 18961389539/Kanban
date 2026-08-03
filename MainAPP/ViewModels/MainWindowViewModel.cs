@@ -249,6 +249,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>是否 Viewer（展示）模式：侧栏只留展示页，导航受限，退出需确认。</summary>
     public bool IsViewerMode => AppSettings.RunMode == KanbanRunMode.Viewer;
 
+    /// <summary>窗口标题（跟随 AppSettings.AppTitle，设置页保存后实时刷新）。</summary>
+    public string WindowTitle => AppSettings.AppTitle;
+
     /// <summary>
     /// 基于名称导航到指定页面（INavigationService 实现）。
     /// Viewer 模式下仅允许展示页（<see cref="ViewerAllowedPageKeys"/>），管理页跳转被忽略并记日志。
@@ -310,6 +313,12 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         };
         _staleCheckTimer.Tick += OnStaleCheckTick;
         _staleCheckTimer.Start();
+        // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）
+        AppSettings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.AppTitle))
+                OnPropertyChanged(nameof(WindowTitle));
+        };
         var sidebarItems = new ObservableCollection<NavItem>(
             PageDefinitions.Where(page => page.ShowInSidebar
                 && (!IsViewerMode || ViewerAllowedPageKeys.Contains(page.Key)))

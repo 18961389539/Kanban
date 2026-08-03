@@ -10,7 +10,7 @@
     xmlns:views="clr-namespace:MainAPP.Views"
     x:Name="RootWindow"
     Icon="{StaticResource AppIcon}"
-    Title="看板系统"
+    Title="{Binding WindowTitle}"
     Background="{StaticResource BackgroundBrush}"
     FontFamily="Microsoft YaHei"
     FontSize="14"

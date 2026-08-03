@@ -56,6 +56,7 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
             })(),
             text: document.body.innerText,
             title: txt('.app-title'),
+            brandTitle: txt('.brand-title'),
             statusBadge: txt('.status-badge'),
             bigNumber: txt('.big-number'),
             targetCycle: label('目标节拍'),
@@ -91,8 +92,11 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
     console.log(`数据源: ${dom.conn} | 设备${dom.deviceCount} | ${dom.freshness} | ${dom.seq} | v${dom.serverVersion}`);
 
     // ──── 基础断言（原有，保留） ────
-    if (!dom.text.includes('生产看板')) fail('页面标题缺失（WASM 未渲染）');
-    else ok('WASM 渲染完成（标题存在）');
+    // 看板标题来自 Collector settings.json 的 AppTitle（可配置），断言非空即可（默认"生产看板"）
+    const brandTitle = dom.brandTitle;
+    console.log(`  · 看板标题=${brandTitle}`);
+    if (!brandTitle) fail('页面标题缺失（WASM 未渲染）');
+    else ok(`WASM 渲染完成（标题=${brandTitle}）`);
     // 注：无头 Edge 下 #blazor-error-ui 偶现误显示（环境伪影，真实浏览器未复现、功能正常），仅告警不判失败
     if (dom.errVisible) warn('#blazor-error-ui 可见（无头环境伪影，功能不受影响，请人工确认）');
     if (!dom.text.includes('注塑机')) fail('设备数据缺失');

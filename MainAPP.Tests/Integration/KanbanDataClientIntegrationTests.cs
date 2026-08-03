@@ -29,6 +29,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     {
         public Task<string> GetServerVersionAsync() => Task.FromResult("test-1.0.0");
 
+        public Task<string> GetTitleAsync() => Task.FromResult("测试看板");
+
         /// <summary>长驻订阅（模拟真实 KanbanHub.SubscribeSnapshotsAsync：方法不返回直到连接断开）。</summary>
         public async Task SubscribeSnapshotsAsync()
         {
@@ -131,6 +133,15 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         await client.ConnectAsync();
         var version = await client.GetServerVersionAsync();
         Assert.Equal("test-1.0.0", version);
+    }
+
+    [Fact]
+    public async Task GetTitle_ReturnsServerValue()
+    {
+        await using var client = CreateClient();
+        await client.ConnectAsync();
+        var title = await client.GetTitleAsync();
+        Assert.Equal("测试看板", title);
     }
 
     [Fact]
@@ -267,6 +278,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
             () => client.GetShiftProgressAsync(),
             () => client.SaveCollectorSettingsAsync(new CollectorSettingsDto()),
             () => client.GetServerVersionAsync(),
+            () => client.GetTitleAsync(),
         };
         foreach (var call in calls)
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await call());

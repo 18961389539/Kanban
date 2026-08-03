@@ -295,6 +295,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetServerVersionAsync), ct);
     }
 
+    /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端拉取实现零配置）。</summary>
+    public async Task<string> GetTitleAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetTitleAsync), ct);
+    }
+
     public async ValueTask DisposeAsync()
     {
         // 幂等：首次调用把 _reconnectCts 置 null 并取消/释放；二次调用直接释放连接

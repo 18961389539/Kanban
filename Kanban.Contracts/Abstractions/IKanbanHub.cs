@@ -63,6 +63,9 @@ public interface IKanbanHubServer
     /// 版本不一致时提示"客户端版本过旧/服务已升级"，替代升级后无征兆的运行时异常。
     /// </summary>
     Task<string> GetServerVersionAsync();
+
+    /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端零配置——从服务端拉取而非逐屏配置）。</summary>
+    Task<string> GetTitleAsync();
 }
 
 /// <summary>

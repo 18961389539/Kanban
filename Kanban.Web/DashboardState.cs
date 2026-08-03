@@ -73,6 +73,9 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>Collector 服务端版本（版本握手获取；失败/未获取时 null）。用于升级兼容性校验与展示。</summary>
     public string? ServerVersion { get; private set; }
 
+    /// <summary>看板标题（Collector settings.json 的 AppTitle；拉取失败时保持默认"生产看板"）。</summary>
+    public string Title { get; private set; } = "生产看板";
+
     // ──────────── 数据新鲜度（统一走 KanbanDataClient，快照回调时 MarkDataReceived） ────────────
 
     /// <summary>最后一次收到实时数据（快照）的时间；null=尚未收到。</summary>
@@ -376,6 +379,16 @@ public sealed class DashboardState : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "获取服务端版本失败（忽略）");
+        }
+        // 看板标题（屏端零配置——从服务端拉取；失败保持默认"生产看板"）
+        try
+        {
+            var title = await _client.GetTitleAsync();
+            if (!string.IsNullOrWhiteSpace(title)) Title = title;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "获取看板标题失败（使用默认标题）");
         }
 
         // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）

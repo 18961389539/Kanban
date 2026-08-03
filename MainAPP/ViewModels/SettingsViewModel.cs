@@ -780,6 +780,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.PlcBatchReadMaxLength = source.PlcBatchReadMaxLength;
         target.PlcBatchReadMaxGapSlots = source.PlcBatchReadMaxGapSlots;
         target.DashboardRefreshIntervalMs = source.DashboardRefreshIntervalMs;
+        target.AppTitle = source.AppTitle;
         target.IsDarkTheme = source.IsDarkTheme;
         target.UiScale = source.UiScale;
         target.EnableAlarmSound = source.EnableAlarmSound;
@@ -794,6 +795,10 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// </summary>
     private string? Validate(AppSettings settings)
     {
+        // 看板标题校验
+        if (string.IsNullOrWhiteSpace(settings.AppTitle))
+            return "看板标题不能为空";
+
         // IP 地址校验
         var ip = settings.PlcConfig.IpAddress;
         if (string.IsNullOrWhiteSpace(ip))

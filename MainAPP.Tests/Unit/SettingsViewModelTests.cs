@@ -264,4 +264,29 @@ public class SettingsViewModelTests : IDisposable
         Assert.NotEmpty(_dialog.Info);
         Assert.Contains("至少保留一个班次", _dialog.Info[0]);
     }
+
+    // ───────────── 看板标题 ─────────────
+
+    [Fact]
+    public void Save_AppTitle_AppliedAndPersisted()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.AppTitle = "一号车间看板";
+        vm.SaveCommand.Execute(null);
+
+        Assert.Contains("设置已保存", _dialog.Success[0]);
+        Assert.Equal("一号车间看板", _appSettings.AppTitle); // 保存后写入 AppSettings（窗口标题绑定源）
+    }
+
+    [Fact]
+    public void Save_EmptyAppTitle_NotifiesWarning()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.AppTitle = "   ";
+        vm.SaveCommand.Execute(null);
+
+        Assert.NotEmpty(_dialog.Warning);
+        Assert.Contains("看板标题不能为空", _dialog.Warning[0]);
+        Assert.Empty(_dialog.Success);
+    }
 }
