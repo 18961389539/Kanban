@@ -340,11 +340,16 @@ public sealed class DashboardState : IAsyncDisposable
 
     /// <summary>订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。
     /// 全量拉取采用**替换**语义（清空后写入）：服务端返回的就是当前完整设备集，
-    /// 配合 tombstone 保证设备删除后本机收敛（只 upsert 会导致被删设备永远残留）。</summary>
+    /// 配合 tombstone 保证设备删除后本机收敛（只 upsert 会导致被删设备永远残留）。
+    ///
+    /// ⚠️ 顺序约束（重要）：SignalR 服务端对同一连接**按序处理 invocation**（DefaultHubDispatcher
+    /// 顺序 dispatch）——长驻订阅（SubscribeSnapshotsAsync/SubscribeMetaAsync）一旦发出，
+    /// 同连接的后续 Invoke（GetCurrentSnapshotsAsync/GetServerVersionAsync 等）会**无限排队**。
+    /// 因此所有"客户端→服务端"Invoke 必须在发起订阅**之前**完成（实测复现并锁定于
+    /// KanbanDataClientIntegrationTests.ConcurrentInvoke_WhileLongRunningSubscribePending_StillWorks）。</summary>
     private async Task SubscribeAndRefreshAsync()
     {
-        _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
-        _ = SubscribeMetaSafeAsync();      // 元数据订阅走元数据连接（每连接单长驻订阅约束）
+        // ① 先做 Invoke（连接空闲，不会被长驻订阅阻塞）
         try
         {
             var snapshots = await _client.GetCurrentSnapshotsAsync();
@@ -363,15 +368,19 @@ public sealed class DashboardState : IAsyncDisposable
         {
             _logger.LogWarning(ex, "拉取初始快照失败（等待订阅推送）");
         }
-        // 版本握手（升级兼容性观测）：失败不阻断看板
+        // 版本握手（升级兼容性观测）：失败不阻断看板（LogWarning 便于冒烟/运维诊断）
         try
         {
             ServerVersion = await _client.GetServerVersionAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "获取服务端版本失败（忽略）");
+            _logger.LogWarning(ex, "获取服务端版本失败（忽略）");
         }
+
+        // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）
+        _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
+        _ = SubscribeMetaSafeAsync();      // 元数据订阅走元数据连接（每连接单长驻订阅约束）
     }
 
     /// <summary>快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），观察异常防全局错误 UI。</summary>

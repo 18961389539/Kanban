@@ -123,9 +123,9 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                         Reconnected?.Invoke(this, EventArgs.Empty);
                         return;
                     }
-                    catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                    catch (OperationCanceledException)
                     {
-                        return; // 连接被释放，停止重连
+                        return; // 连接被释放/取消，停止重连
                     }
                     catch (Exception retryEx)
                     {
@@ -297,12 +297,19 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
 
     public async ValueTask DisposeAsync()
     {
-        _reconnectCts?.Cancel();
+        // 幂等：首次调用把 _reconnectCts 置 null 并取消/释放；二次调用直接释放连接
+        // （HubConnection.DisposeAsync 本身幂等）。修复：二次调用对已 Dispose 的 CTS 再 Cancel()
+        // 会抛 ObjectDisposedException——IAsyncDisposable 契约要求重复调用安全。
+        var cts = Interlocked.Exchange(ref _reconnectCts, null);
+        if (cts is not null)
+        {
+            try { cts.Cancel(); } catch (ObjectDisposedException) { }
+        }
         if (_connection is not null)
         {
             try { await _connection.DisposeAsync(); }
             catch (Exception ex) { _logger.LogDebug(ex, "释放 HubConnection 异常"); }
         }
-        _reconnectCts?.Dispose();
+        try { cts?.Dispose(); } catch (ObjectDisposedException) { }
     }
 }
