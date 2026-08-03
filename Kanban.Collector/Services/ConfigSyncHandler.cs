@@ -4,7 +4,9 @@ using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using Kanban.Core.Mapping;
 using Kanban.Core.Models;
+using Kanban.Core.Services;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 
 namespace Kanban.Collector.Services;
@@ -12,23 +14,27 @@ namespace Kanban.Collector.Services;
 /// <summary>
 /// 配置同步处理器：Remote 模式下 MainAPP 的设备/工单管理写操作经 SignalR 转发到 Collector，
 /// Collector 作为唯一写者落盘/落库，MainAPP 本地不再直接写文件/库，避免双进程写冲突。
+/// 采集参数（settings.json 采集子集）同样经本类同步：解决"Remote 模式设置改了采集进程无感知"的配置分裂。
 /// </summary>
 public sealed class ConfigSyncHandler
 {
     private readonly DeviceRepository _deviceRepository;
     private readonly WorkOrderRepository _workOrderRepository;
     private readonly SnapshotAggregator _snapshotAggregator;
+    private readonly AppSettings _appSettings;
     private readonly ILogger<ConfigSyncHandler> _logger;
 
     public ConfigSyncHandler(
         DeviceRepository deviceRepository,
         WorkOrderRepository workOrderRepository,
         SnapshotAggregator snapshotAggregator,
+        AppSettings appSettings,
         ILogger<ConfigSyncHandler> logger)
     {
         _deviceRepository = deviceRepository;
         _workOrderRepository = workOrderRepository;
         _snapshotAggregator = snapshotAggregator;
+        _appSettings = appSettings;
         _logger = logger;
     }
 
@@ -176,5 +182,50 @@ public sealed class ConfigSyncHandler
             return [];
         }
     }
+
+    /// <summary>
+    /// 采集设置同步（Remote 模式 MainAPP 设置页保存时调用）：把采集相关参数合并进 Collector 的
+    /// AppSettings 实例（**热生效**——轮询循环每次迭代读 PollingIntervalMs，班次每次切换读 Shifts），
+    /// 随后整体落盘 Collector 侧 settings.json。只更新 DTO 中非空字段（部分更新语义）。
+    /// </summary>
+    public Task SaveCollectorSettingsAsync(CollectorSettingsDto dto)
+    {
+        try
+        {
+            if (dto.PollingIntervalMs.HasValue) _appSettings.PollingIntervalMs = dto.PollingIntervalMs.Value;
+            if (dto.HistoryWriteIntervalScans.HasValue) _appSettings.HistoryWriteIntervalScans = dto.HistoryWriteIntervalScans.Value;
+            if (dto.PlcBatchReadMaxLength.HasValue) _appSettings.PlcBatchReadMaxLength = dto.PlcBatchReadMaxLength.Value;
+            if (dto.PlcBatchReadMaxGapSlots.HasValue) _appSettings.PlcBatchReadMaxGapSlots = dto.PlcBatchReadMaxGapSlots.Value;
+            if (dto.PlcBrand.HasValue) _appSettings.PlcConfig.Brand = (PlcBrand)dto.PlcBrand.Value;
+            if (!string.IsNullOrWhiteSpace(dto.PlcIpAddress)) _appSettings.PlcConfig.IpAddress = dto.PlcIpAddress;
+            if (dto.PlcPort.HasValue) _appSettings.PlcConfig.Port = dto.PlcPort.Value;
+            if (dto.PlcTimeoutMs.HasValue) _appSettings.PlcConfig.TimeoutMs = dto.PlcTimeoutMs.Value;
+            if (dto.Shifts is { Count: > 0 })
+            {
+                _appSettings.Shifts.Clear();
+                foreach (var s in dto.Shifts)
+                {
+                    _appSettings.Shifts.Add(new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime });
+                }
+            }
+            _appSettings.Save(); // 落 Collector 侧 settings.json（合并后全量序列化，UI 字段保留 Collector 已有值）
+            _logger.LogInformation("采集设置已从 Remote 端同步：Polling={Poll}ms Shifts={ShiftCount} Plc={Brand}/{Ip}:{Port}",
+                _appSettings.PollingIntervalMs, _appSettings.Shifts.Count,
+                _appSettings.PlcConfig.Brand, _appSettings.PlcConfig.IpAddress, _appSettings.PlcConfig.Port);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "采集设置同步失败");
+            throw;
+        }
+    }
+
+    /// <summary>服务端版本（程序集信息版本，供客户端升级兼容性校验与展示）。</summary>
+    public string GetServerVersion()
+        => System.Reflection.Assembly.GetEntryAssembly()
+            ?.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion
+            ?? "unknown";
 }
 

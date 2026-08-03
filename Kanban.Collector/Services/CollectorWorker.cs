@@ -38,6 +38,7 @@ public sealed class CollectorWorker : BackgroundService
             using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
+                Interlocked.Increment(ref CollectorMetrics.AcquisitionCycleCount);
                 _snapshotPublisher.PublishAll();
             }
         }

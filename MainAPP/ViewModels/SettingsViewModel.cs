@@ -11,6 +11,8 @@ using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using Kanban.Client;
+using Kanban.Contracts.Dtos;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,7 +29,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     public AppSettings AppSettings { get; }
     public AppSettings DraftSettings { get; private set; }
 
-    private readonly PlcConnectionManager _connectionManager;
+    private readonly IPlcConnectionManager _connectionManager;
     private readonly IDialogService _dialog;
     private readonly LicenseGate _licenseGate;
     private readonly IServiceProvider _services;
@@ -291,7 +293,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// </summary>
     public SettingsViewModel(
         AppSettings appSettings,
-        PlcConnectionManager connectionManager,
+        IPlcConnectionManager connectionManager,
         IDialogService dialog,
         LicenseGate licenseGate,
         IServiceProvider services,
@@ -666,6 +668,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             OnPropertyChanged(nameof(UnsavedChangesText));
 
             _dialog.NotifySuccess("设置已保存");
+            SyncCollectorSettingsAsync(); // Remote 模式：采集参数同步到 Collector（热生效）
         }
         catch (Exception ex)
         {
@@ -678,6 +681,46 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     }
 
     private bool CanSave() => !IsSaving;
+
+    /// <summary>
+    /// Remote 模式：把采集相关参数同步到 Collector（落 Collector 侧 settings.json 并热生效）。
+    /// 解决"Remote 模式下设置改了采集进程无感知"的配置分裂——MainAPP 本地仍写自己的 settings.json
+    /// （UI 设置），采集参数经 SignalR 推给 Collector。失败仅提示，不阻断保存。
+    /// 全部用 GetService（可空）+ try/catch：测试宿主未注册 Remote 链路时静默跳过。
+    /// </summary>
+    private async void SyncCollectorSettingsAsync()
+    {
+        try
+        {
+            var runtimeMode = _services.GetService<IRuntimeMode>();
+            if (runtimeMode is null || !runtimeMode.IsRemote) return;
+            var client = _services.GetService<KanbanDataClient>();
+            if (client is null || !client.IsConnected) return; // 未连接时本地保存仍生效，连接恢复后由用户再保存一次
+            var dto = new CollectorSettingsDto
+            {
+                PollingIntervalMs = AppSettings.PollingIntervalMs,
+                HistoryWriteIntervalScans = AppSettings.HistoryWriteIntervalScans,
+                PlcBatchReadMaxLength = AppSettings.PlcBatchReadMaxLength,
+                PlcBatchReadMaxGapSlots = AppSettings.PlcBatchReadMaxGapSlots,
+                PlcBrand = (int)AppSettings.PlcConfig.Brand,
+                PlcIpAddress = AppSettings.PlcConfig.IpAddress,
+                PlcPort = AppSettings.PlcConfig.Port,
+                PlcTimeoutMs = AppSettings.PlcConfig.TimeoutMs,
+                Shifts = AppSettings.Shifts.Select(s => new ShiftConfigDto
+                {
+                    Name = s.Name,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                }).ToList(),
+            };
+            await client.SaveCollectorSettingsAsync(dto);
+            _dialog?.NotifySuccess("采集服务参数已同步（轮询/班次/PLC 连接已对采集进程生效）");
+        }
+        catch (Exception ex)
+        {
+            _dialog?.NotifyWarning($"采集服务参数同步失败（本地已保存）：{ex.Message}");
+        }
+    }
 
     [RelayCommand]
     private void CancelChanges()

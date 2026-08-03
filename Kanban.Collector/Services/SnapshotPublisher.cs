@@ -48,9 +48,11 @@ public sealed class SnapshotPublisher
             }
             catch (Exception ex)
             {
+                Interlocked.Increment(ref CollectorMetrics.PublishErrorCount);
                 _logger.LogError(ex, "发布设备 {DeviceId} 快照失败", device.Id);
             }
         }
+        Interlocked.Increment(ref CollectorMetrics.SnapshotPublishCount);
     }
 
     private DeviceSnapshotDto ToSnapshot(Device device, DeviceRuntime? runtime)

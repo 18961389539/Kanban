@@ -62,10 +62,13 @@ public sealed class MetaPublisher : IHostedService, IDisposable
                 _latest = meta;
                 foreach (var subscriber in _subscribers)
                     subscriber.Writer.TryWrite(meta);
+                CollectorMetrics.TrackSubscriberCount(ref CollectorMetrics.MetaSubscriberPeak, _subscribers.Count);
             }
+            Interlocked.Increment(ref CollectorMetrics.MetaPublishCount);
         }
         catch (Exception ex)
         {
+            Interlocked.Increment(ref CollectorMetrics.PublishErrorCount);
             _logger.LogError(ex, "元数据发布失败");
         }
     }

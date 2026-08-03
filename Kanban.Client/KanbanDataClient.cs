@@ -281,6 +281,20 @@ public sealed class KanbanDataClient : IAsyncDisposable
         return await _connection!.InvokeAsync<ShiftProgressDto>(nameof(IKanbanHubServer.GetShiftProgressAsync), ct);
     }
 
+    /// <summary>同步采集设置到 Collector 落盘并热生效（Remote 模式设置页保存）。</summary>
+    public async Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveCollectorSettingsAsync), settings, ct);
+    }
+
+    /// <summary>服务端版本握手（Collector 程序集信息版本；用于升级兼容性校验）。</summary>
+    public async Task<string> GetServerVersionAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetServerVersionAsync), ct);
+    }
+
     public async ValueTask DisposeAsync()
     {
         _reconnectCts?.Cancel();

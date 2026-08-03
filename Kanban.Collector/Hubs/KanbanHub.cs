@@ -119,4 +119,12 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
             await Clients.Caller.OnMeta(meta);
         }
     }
+
+    /// <inheritdoc />
+    public Task SaveCollectorSettingsAsync(CollectorSettingsDto settings)
+        => _configSyncHandler.SaveCollectorSettingsAsync(settings);
+
+    /// <inheritdoc />
+    public Task<string> GetServerVersionAsync()
+        => Task.FromResult(_configSyncHandler.GetServerVersion());
 }

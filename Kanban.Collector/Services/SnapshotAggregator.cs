@@ -48,6 +48,7 @@ public sealed class SnapshotAggregator
                 channel.Writer.TryWrite(snapshot);
             }
             _subscribers.Add(channel);
+            CollectorMetrics.TrackSubscriberCount(ref CollectorMetrics.SnapshotSubscriberPeak, _subscribers.Count);
         }
 
         // 连接断开（Hub 的 ConnectionAborted）时退订，避免订阅者泄漏

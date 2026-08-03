@@ -50,7 +50,9 @@ public sealed class EventBroadcaster
             {
                 subscriber.Writer.TryWrite(withSeq);
             }
+            CollectorMetrics.TrackSubscriberCount(ref CollectorMetrics.EventSubscriberPeak, _alarmSubscribers.Count);
         }
+        Interlocked.Increment(ref CollectorMetrics.AlarmEventPublishCount);
     }
 
     /// <summary>发布状态事件（分配状态流 Seq，写入环形缓冲 + 扇出广播）</summary>
@@ -71,7 +73,9 @@ public sealed class EventBroadcaster
             {
                 subscriber.Writer.TryWrite(withSeq);
             }
+            CollectorMetrics.TrackSubscriberCount(ref CollectorMetrics.EventSubscriberPeak, _statusSubscribers.Count);
         }
+        Interlocked.Increment(ref CollectorMetrics.StatusEventPublishCount);
     }
 
     /// <summary>

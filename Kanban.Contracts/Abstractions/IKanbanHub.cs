@@ -64,4 +64,16 @@ public interface IKanbanHubServer
 
     /// <summary>订阅低频元数据流（约 5s 一次 OnMeta：全部设备当前工单 + 班次进度；替代轮询 Invoke）</summary>
     Task SubscribeMetaAsync();
+
+    /// <summary>
+    /// 采集设置同步（Remote 模式：MainAPP 设置页保存时把采集相关参数推给 Collector 落盘 settings.json 并热生效）。
+    /// 解决"Remote 模式下设置改了采集进程无感知"的配置分裂问题。
+    /// </summary>
+    Task SaveCollectorSettingsAsync(CollectorSettingsDto settings);
+
+    /// <summary>
+    /// 服务端版本握手（Collector 程序集信息版本）。客户端用于升级兼容性校验：
+    /// 版本不一致时提示"客户端版本过旧/服务已升级"，替代升级后无征兆的运行时异常。
+    /// </summary>
+    Task<string> GetServerVersionAsync();
 }

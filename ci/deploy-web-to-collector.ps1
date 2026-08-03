@@ -44,3 +44,10 @@ if (-not $icudt) { throw "verify failed: _framework/icudt_*.dat missing (Collect
 Write-Host "==> deployed: $targetWwwRoot"
 Write-Host "    entry: http://<host-ip>:5129/  (Collector on 0.0.0.0:5129)"
 Write-Host "    assets: $($blazorJs.Name) / $($icudt.Name)"
+
+# ---- version stamp (upgrade traceability) ----
+$collectorCsproj = Join-Path $repoRoot "Kanban.Collector\Kanban.Collector.csproj"
+$versionMatch = Select-String -Path $collectorCsproj -Pattern "<Version>([^<]+)</Version>"
+if ($versionMatch) {
+    Write-Host "    collector version: $($versionMatch.Matches[0].Groups[1].Value)  (GetServerVersionAsync / /metrics)"
+}

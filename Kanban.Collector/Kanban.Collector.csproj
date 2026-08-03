@@ -8,6 +8,8 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Kanban.Collector</RootNamespace>
     <AssemblyName>Kanban.Collector</AssemblyName>
+    <!-- 服务进程版本（版本握手 GetServerVersionAsync / /metrics 返回）：升级发布可追溯 -->
+    <Version>1.0.0</Version>
     <!-- 服务进程不需要 WPF 特性，但保留 windows TFM 以兼容 HslCommunication 与 System.IO.Ports -->
   </PropertyGroup>
 

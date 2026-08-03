@@ -174,6 +174,17 @@ public sealed class ApplicationStartupCoordinator(
         // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection）
         sink.Start();
 
+        // 版本握手：升级兼容性观测——Collector 版本与本地记录不一致时打警告（方法签名变化前可提前发现）
+        try
+        {
+            var serverVersion = await client.GetServerVersionAsync();
+            Log.Information("已连接采集服务 {Url}，服务端版本 {ServerVersion}", client.HubUrl, serverVersion);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "获取采集服务版本失败（不影响连接）");
+        }
+
         // 设备/工单写操作 → Collector（唯一写者），MainAPP 不再直接写 devices.json / work_orders.db。
         // 钩子为异步签名（AsyncRelayCommand 调用，避免 UI 线程阻塞等待网络）。
         var deviceRepo = services.GetRequiredService<DeviceRepository>();

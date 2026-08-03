@@ -70,6 +70,9 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>最近一次连接成功时间。</summary>
     public DateTime? LastConnectedAt { get; private set; }
 
+    /// <summary>Collector 服务端版本（版本握手获取；失败/未获取时 null）。用于升级兼容性校验与展示。</summary>
+    public string? ServerVersion { get; private set; }
+
     // ──────────── 数据新鲜度（统一走 KanbanDataClient，快照回调时 MarkDataReceived） ────────────
 
     /// <summary>最后一次收到实时数据（快照）的时间；null=尚未收到。</summary>
@@ -356,6 +359,15 @@ public sealed class DashboardState : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "拉取初始快照失败（等待订阅推送）");
+        }
+        // 版本握手（升级兼容性观测）：失败不阻断看板
+        try
+        {
+            ServerVersion = await _client.GetServerVersionAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "获取服务端版本失败（忽略）");
         }
     }
 

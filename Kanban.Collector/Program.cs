@@ -97,6 +97,9 @@ public static class Program
 
             app.MapHealthChecks("/healthz");
 
+            // 运行指标（运维可观测）：采集/推送/事件计数 + 订阅者峰值 + 错误计数（text/plain）
+            app.MapGet("/metrics", () => Kanban.Collector.Services.CollectorMetrics.Render());
+
             app.MapHub<KanbanHub>("/hubs/kanban");
             await app.RunAsync();
         }
