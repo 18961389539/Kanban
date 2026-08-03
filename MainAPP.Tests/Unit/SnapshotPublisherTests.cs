@@ -14,6 +14,14 @@ using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
+/// 串行集合：本集合内的测试修改**进程级** KANBAN_DATA_DIR 环境变量，
+/// 与依赖默认 DataRoot 的测试（DefectHistoryStoreTests 等）并行会污染彼此路径
+/// （曾导致 'no such table: DefectSnapshots' 偶发失败）。禁用并行隔离。
+/// </summary>
+[CollectionDefinition("EnvIsolation", DisableParallelization = true)]
+public class EnvIsolationCollection;
+
+/// <summary>
 /// SnapshotPublisher 测试：锁住**增量快照发布**（第七轮扩展性改进的核心逻辑）。
 /// - SameSnapshot：业务字段等价比较（排除 Timestamp/Seq、ActiveAlarms 按内容比）——判定正确则
 ///   静止设备不推、运行设备照推
@@ -22,6 +30,7 @@ namespace MainAPP.Tests.Unit;
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
+[Collection("EnvIsolation")]
 public class SnapshotPublisherTests : IDisposable
 {
     private readonly string _tempDir;

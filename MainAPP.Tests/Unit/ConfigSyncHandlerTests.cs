@@ -15,9 +15,11 @@ namespace MainAPP.Tests.Unit;
 /// ConfigSyncHandler 测试：锁住**采集设置同步**（第五轮修复 Remote 配置分裂的核心逻辑）。
 /// - SaveCollectorSettingsAsync：可空字段部分更新语义 + 班次整体替换 + 落 Collector 侧 settings.json
 /// 此前 Collector 服务端零测试，此文件是补盲区第二块。
+/// 串行集合：本类修改进程级 KANBAN_DATA_DIR 环境变量（与 SnapshotPublisherTests 同集合隔离）。
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
+[Collection("EnvIsolation")]
 public class ConfigSyncHandlerTests : IDisposable
 {
     private readonly string _tempDir;
