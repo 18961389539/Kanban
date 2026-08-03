@@ -93,26 +93,26 @@
                                     VerticalAlignment="Center"
                                     Foreground="{StaticResource PrimaryBrush}"
                                     Kind="ShieldKeyOutline" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="授权管理" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K472}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <Button
-                                    AutomationProperties.Name="复制机器码"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K101}"
                                     Command="{Binding CopyMachineCodeCommand}"
-                                    Content="复制机器码"
+                                    Content="{x:Static resources:Strings.K101}"
                                     Style="{StaticResource IconButtonDefault}"
                                     Tag="{x:Static mi:MaterialIconKind.ContentCopy}" />
                                 <Button
                                     Margin="8,0,0,0"
-                                    AutomationProperties.Name="重新激活"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K102}"
                                     Command="{Binding ReactivateCommand}"
-                                    Content="重新激活"
+                                    Content="{x:Static resources:Strings.K102}"
                                     Style="{StaticResource IconButtonPrimary}"
                                     Tag="{x:Static mi:MaterialIconKind.KeyVariant}" />
                             </StackPanel>
                         </Grid>
                         <TextBlock Margin="28,0,0,8" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="查看当前设备授权状态，必要时重新激活或备份授权信息。" />
+                                   Text="{x:Static resources:Strings.K473}" />
                         <hc:Divider Margin="0,8" />
 
                         <!--  状态行  -->
@@ -162,7 +162,7 @@
                             <TextBlock
                                 Grid.Row="0" Grid.Column="0"
                                 Style="{StaticResource InfoLabel}"
-                                Text="机器码：" />
+                                Text="{x:Static resources:Strings.K474}" />
                             <TextBlock
                                 Grid.Row="0" Grid.Column="1"
                                 FontFamily="Consolas" FontSize="14" FontWeight="Bold"
@@ -172,7 +172,7 @@
                             <TextBlock
                                 Grid.Row="0" Grid.Column="3"
                                 Style="{StaticResource InfoLabel}"
-                                Text="授权类型：" />
+                                Text="{x:Static resources:Strings.K475}" />
                             <TextBlock
                                 Grid.Row="0" Grid.Column="4"
                                 Foreground="{StaticResource PrimaryTextBrush}"
@@ -182,7 +182,7 @@
                                 Grid.Row="1" Grid.Column="0"
                                 Margin="0,8,0,0"
                                 Style="{StaticResource InfoLabel}"
-                                Text="激活时间：" />
+                                Text="{x:Static resources:Strings.K476}" />
                             <TextBlock
                                 Grid.Row="1" Grid.Column="1"
                                 Margin="0,8,0,0"
@@ -193,7 +193,7 @@
                                 Grid.Row="1" Grid.Column="3"
                                 Margin="0,8,0,0"
                                 Style="{StaticResource InfoLabel}"
-                                Text="到期时间：" />
+                                Text="{x:Static resources:Strings.K477}" />
                             <TextBlock
                                 Grid.Row="1" Grid.Column="4"
                                 Margin="0,8,0,0"
@@ -205,7 +205,7 @@
                                 Grid.Row="2" Grid.Column="0"
                                 Margin="0,8,0,0"
                                 Style="{StaticResource InfoLabel}"
-                                Text="激活码：">
+                                Text="{x:Static resources:Strings.K478}">
                                 <TextBlock.Visibility>
                                     <Binding Path="CurrentLicense">
                                         <Binding.Converter>
@@ -231,9 +231,9 @@
                                     <!--  复制激活码：统一 IconButtonDefault 风格，与顶部复制机器码按钮一致  -->
                                     <Button
                                         Margin="8,0,0,0"
-                                        AutomationProperties.Name="复制激活码"
+                                        AutomationProperties.Name="{x:Static resources:Strings.K479}"
                                         Command="{Binding CopyProductKeyCommand}"
-                                        Content="复制"
+                                        Content="{x:Static resources:Strings.K026}"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource IconButtonDefault}"
                                         Tag="{x:Static mi:MaterialIconKind.ContentCopy}" />
@@ -265,40 +265,40 @@
                         VerticalAlignment="Top"
                         Style="{StaticResource MainCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleText}" Text="数据源与运行模式" />
+                            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K480}" />
                             <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="选择数据来源（本地采集 / 远程采集服务）与程序运行模式。" />
+                                       Text="{x:Static resources:Strings.K481}" />
                             <hc:Divider Margin="0,8" />
 
                             <Border Style="{StaticResource SettingsGroupHeader}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="数据采集模式" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="远程模式连接 Kanban.Collector 采集服务，支持多屏共享同一数据源。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K482}" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K483}" />
                                 </StackPanel>
                             </Border>
 
-                            <RadioButton Content="本地采集（单机模式）"
-                                         AutomationProperties.Name="本地采集模式"
+                            <RadioButton Content="{x:Static resources:Strings.K484}"
+                                         AutomationProperties.Name="{x:Static resources:Strings.K485}"
                                          IsChecked="{Binding IsLocalMode}" Margin="0,8,0,0" />
-                            <RadioButton Content="远程采集（连接采集服务）"
-                                         AutomationProperties.Name="远程采集模式"
+                            <RadioButton Content="{x:Static resources:Strings.K486}"
+                                         AutomationProperties.Name="{x:Static resources:Strings.K487}"
                                          IsChecked="{Binding IsRemoteMode}" Margin="0,4,0,0" />
                             <hc:TextBox
-                                hc:InfoElement.Title="采集服务地址"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K103}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="采集服务地址"
+                                AutomationProperties.Name="{x:Static resources:Strings.K103}"
                                 Style="{StaticResource SettingsTextBox}"
                                 IsEnabled="{Binding IsRemoteMode}"
                                 Text="{Binding DraftSettings.CollectorHubUrl, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="Kanban.Collector 的 SignalR 地址，如 http://192.168.1.10:5129/hubs/kanban" />
+                                ToolTip="{x:Static resources:Strings.K488}" />
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                 <Button
                                     Style="{StaticResource IconButtonDefault}"
-                                    AutomationProperties.Name="测试采集服务连接"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K489}"
                                     Command="{Binding TestCollectorConnectionCommand}"
                                     Content="{Binding TestCollectorButtonText}"
                                     Tag="{x:Static mi:MaterialIconKind.ServerNetwork}"
-                                    ToolTip="测试采集服务 SignalR 连接是否可达"
+                                    ToolTip="{x:Static resources:Strings.K490}"
                                     IsEnabled="{Binding IsRemoteMode}" />
                                 <TextBlock
                                     VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
@@ -323,15 +323,15 @@
 
                             <Border Style="{StaticResource SettingsGroupHeader}" Margin="0,16,0,0">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="运行模式" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="展示模式仅保留大屏页面并限制退出，适合车间屏端（保存后重启生效）。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K491}" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K492}" />
                                 </StackPanel>
                             </Border>
-                            <RadioButton Content="完整模式（展示 + 管理）"
-                                         AutomationProperties.Name="完整模式"
+                            <RadioButton Content="{x:Static resources:Strings.K493}"
+                                         AutomationProperties.Name="{x:Static resources:Strings.K494}"
                                          IsChecked="{Binding IsFullMode}" Margin="0,8,0,0" />
-                            <RadioButton Content="展示模式（仅大屏页面）"
-                                         AutomationProperties.Name="展示模式"
+                            <RadioButton Content="{x:Static resources:Strings.K495}"
+                                         AutomationProperties.Name="{x:Static resources:Strings.K496}"
                                          IsChecked="{Binding IsViewerMode}" Margin="0,4,0,0" />
                         </StackPanel>
                     </Border>
@@ -344,42 +344,42 @@
                         VerticalAlignment="Top"
                         Style="{StaticResource MainCard}">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleText}" Text="PLC 连接配置" />
+                            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K497}" />
                             <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="配置通信地址、采集频率和显示密度。" />
+                                       Text="{x:Static resources:Strings.K498}" />
                             <hc:Divider Margin="0,8" />
 
                             <Border Style="{StaticResource SettingsGroupHeader}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="连接与协议" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="选择 PLC 品牌并配置通信参数。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K499}" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K500}" />
                                 </StackPanel>
                             </Border>
 
                             <hc:ComboBox
-                                hc:InfoElement.Title="PLC 品牌"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K104}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC 品牌"
+                                AutomationProperties.Name="{x:Static resources:Strings.K104}"
                                 ItemsSource="{Binding PlcBrands}"
                                 SelectedItem="{Binding DraftSettings.PlcConfig.Brand, Mode=TwoWay}"
                                 Style="{StaticResource SettingsComboBox}" />
 
                             <hc:TextBox
-                                hc:InfoElement.Title="IP 地址"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K501}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC IP 地址"
+                                AutomationProperties.Name="{x:Static resources:Strings.K502}"
                                 Style="{StaticResource SettingsTextBox}"
                                 Text="{Binding DraftSettings.PlcConfig.IpAddress, UpdateSourceTrigger=PropertyChanged}" />
                             <hc:TextBox
-                                hc:InfoElement.Title="端口"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K105}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC 端口"
+                                AutomationProperties.Name="{x:Static resources:Strings.K503}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.Port" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="端口"
+                                                FieldName="{x:Static resources:Strings.K105}"
                                                 MaxValue="65535"
                                                 MinValue="1" />
                                         </Binding.ValidationRules>
@@ -387,22 +387,22 @@
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="连接超时（毫秒）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K504}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC 连接超时（毫秒）"
+                                AutomationProperties.Name="{x:Static resources:Strings.K505}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.TimeoutMs" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="连接超时" MaxValue="60000" MinValue="100" />
+                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K506}" MaxValue="60000" MinValue="100" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:ComboBox
-                                hc:InfoElement.Title="Siemens 型号"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K106}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Siemens 型号"
+                                AutomationProperties.Name="{x:Static resources:Strings.K106}"
                                 ItemsSource="{Binding SiemensModels}"
                                 SelectedItem="{Binding DraftSettings.PlcConfig.SiemensModel, Mode=TwoWay}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
@@ -436,37 +436,37 @@
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:ComboBox
-                                hc:InfoElement.Title="Siemens 数据格式"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K107}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Siemens 数据格式"
+                                AutomationProperties.Name="{x:Static resources:Strings.K107}"
                                 ItemsSource="{Binding PlcDataFormats}"
                                 SelectedItem="{Binding DraftSettings.PlcConfig.SiemensDataFormat, Mode=TwoWay}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
                                 Style="{StaticResource SettingsComboBox}" />
                             <hc:TextBox
-                                hc:InfoElement.Title="Siemens 批量 Int32 上限"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K039}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Siemens 批量 Int32 上限"
+                                AutomationProperties.Name="{x:Static resources:Strings.K039}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.SiemensBatchInt32Limit" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Siemens 批量 Int32 上限" MaxValue="55" MinValue="1" />
+                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K039}" MaxValue="55" MinValue="1" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="欧姆龙 FINS 读取切割长度"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K040}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="欧姆龙 FINS 读取切割长度"
+                                AutomationProperties.Name="{x:Static resources:Strings.K040}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Omron}}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.OmronReadSplits" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="欧姆龙 FINS 读取切割长度" MaxValue="999" MinValue="1" />
+                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K040}" MaxValue="999" MinValue="1" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </hc:TextBox.Text>
@@ -487,61 +487,61 @@
                             </hc:TextBox>
                             <CheckBox
                                 Margin="0,0,0,16"
-                                Content="Modbus 地址从 0 开始"
+                                Content="{x:Static resources:Strings.K507}"
                                 IsChecked="{Binding DraftSettings.PlcConfig.ModbusAddressStartWithZero, Mode=TwoWay}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}" />
                             <hc:TextBox
-                                hc:InfoElement.Title="Modbus 寄存器功能码（3/4）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K508}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Modbus 寄存器功能码"
+                                AutomationProperties.Name="{x:Static resources:Strings.K108}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.ModbusRegisterFunction" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Modbus 寄存器功能码" MaxValue="4" MinValue="3" />
+                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K108}" MaxValue="4" MinValue="3" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="Modbus 位功能码（1/2）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K509}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Modbus 位功能码"
+                                AutomationProperties.Name="{x:Static resources:Strings.K109}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcConfig.ModbusBitFunction" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Modbus 位功能码" MaxValue="2" MinValue="1" />
+                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K109}" MaxValue="2" MinValue="1" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:ComboBox
-                                hc:InfoElement.Title="Modbus 数据格式"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K110}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Modbus 数据格式"
+                                AutomationProperties.Name="{x:Static resources:Strings.K110}"
                                 ItemsSource="{Binding PlcDataFormats}"
                                 SelectedItem="{Binding DraftSettings.PlcConfig.ModbusDataFormat, Mode=TwoWay}"
                                 Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
                                 Style="{StaticResource SettingsComboBox}" />
                             <Border Style="{StaticResource SettingsGroupHeader}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="采集策略" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="调整批量读取、轮询和历史写入节奏。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K510}" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K511}" />
                                 </StackPanel>
                             </Border>
                             <hc:TextBox
-                                hc:InfoElement.Title="PLC 批量读取最大数量"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K111}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC 批量读取最大数量"
+                                AutomationProperties.Name="{x:Static resources:Strings.K111}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcBatchReadMaxLength" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="PLC 批量读取数量"
+                                                FieldName="{x:Static resources:Strings.K512}"
                                                 MaxValue="1024"
                                                 MinValue="1" />
                                         </Binding.ValidationRules>
@@ -549,16 +549,16 @@
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="批量读取允许地址空洞数"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K112}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="批量读取允许地址空洞数"
+                                AutomationProperties.Name="{x:Static resources:Strings.K112}"
                                 Style="{StaticResource SettingsTextBox}"
-                                ToolTip="允许批次跨过的未配置逻辑地址数量，0 表示仅合并严格连续地址。">
+                                ToolTip="{x:Static resources:Strings.K513}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PlcBatchReadMaxGapSlots" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="批量读取地址空洞"
+                                                FieldName="{x:Static resources:Strings.K514}"
                                                 MaxValue="16"
                                                 MinValue="0" />
                                         </Binding.ValidationRules>
@@ -573,7 +573,7 @@
                                     Command="{Binding TestConnectionCommand}"
                                     Style="{StaticResource IconButtonDefault}"
                                     Tag="{x:Static mi:MaterialIconKind.LanConnect}"
-                                    ToolTip="使用当前 IP 和端口测试 PLC 连接（不会影响正在运行的数据采集）" />
+                                    ToolTip="{x:Static resources:Strings.K515}" />
                                 <TextBlock
                                     Margin="12,0,0,0"
                                     VerticalAlignment="Center"
@@ -616,15 +616,15 @@
                                 <TextBlock VerticalAlignment="Center" Text="{Binding PlcConnectionStatus}" />
                             </StackPanel>
                             <hc:TextBox
-                                hc:InfoElement.Title="轮询间隔（毫秒）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K516}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="PLC 数据采集轮询间隔（毫秒）"
+                                AutomationProperties.Name="{x:Static resources:Strings.K517}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.PollingIntervalMs" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="轮询间隔"
+                                                FieldName="{x:Static resources:Strings.K518}"
                                                 MaxValue="60000"
                                                 MinValue="50" />
                                         </Binding.ValidationRules>
@@ -632,15 +632,15 @@
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="历史写入间隔（扫描次数）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K519}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="历史数据写入间隔（扫描次数）"
+                                AutomationProperties.Name="{x:Static resources:Strings.K520}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.HistoryWriteIntervalScans" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="历史写入间隔"
+                                                FieldName="{x:Static resources:Strings.K521}"
                                                 MaxValue="36000"
                                                 MinValue="1" />
                                         </Binding.ValidationRules>
@@ -648,15 +648,15 @@
                                 </hc:TextBox.Text>
                             </hc:TextBox>
                             <hc:TextBox
-                                hc:InfoElement.Title="主页刷新间隔（毫秒）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K522}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="主页仪表板刷新间隔（毫秒）"
+                                AutomationProperties.Name="{x:Static resources:Strings.K523}"
                                 Style="{StaticResource SettingsTextBox}">
                                 <hc:TextBox.Text>
                                     <Binding Path="DraftSettings.DashboardRefreshIntervalMs" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
                                             <conv:IntegerRangeValidationRule
-                                                FieldName="主页刷新间隔"
+                                                FieldName="{x:Static resources:Strings.K524}"
                                                 MaxValue="60000"
                                                 MinValue="500" />
                                         </Binding.ValidationRules>
@@ -673,19 +673,19 @@
 
                             <!--  看板标题：窗口/页面标题（settings.json 可配置，屏端经 Hub 拉取零配置）  -->
                             <hc:TextBox
-                                hc:InfoElement.Title="看板标题"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K113}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="看板标题"
+                                AutomationProperties.Name="{x:Static resources:Strings.K113}"
                                 MaxLength="40"
                                 Style="{StaticResource SettingsTextBox}"
                                 Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="看板窗口/页面标题。屏端（Web 大屏）自动从采集服务拉取，无需逐屏配置" />
+                                ToolTip="{x:Static resources:Strings.K525}" />
 
                             <!--  界面语言（中文/英文/日文，默认中文；重启后生效）  -->
                             <hc:ComboBox
                                 hc:InfoElement.Title="{x:Static resources:Strings.Common_Language}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="界面语言"
+                                AutomationProperties.Name="{x:Static resources:Strings.K526}"
                                 Style="{StaticResource SettingsComboBox}"
                                 SelectedValue="{Binding DraftSettings.Language}"
                                 SelectedValuePath="Tag"
@@ -697,36 +697,36 @@
 
                             <!--  界面字号（大屏远距可读性）：切换后实时预览，保存设置后持久化  -->
                             <hc:ComboBox
-                                hc:InfoElement.Title="界面字号（大屏远距可读性）"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K529}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="界面字号缩放"
+                                AutomationProperties.Name="{x:Static resources:Strings.K530}"
                                 Style="{StaticResource SettingsComboBox}"
                                 SelectedValue="{Binding DraftSettings.UiScale, Mode=TwoWay, Converter={StaticResource DoubleToInvariantStringConverter}}"
                                 SelectedValuePath="Tag">
-                                <ComboBoxItem Content="标准 100%" Tag="1" />
-                                <ComboBoxItem Content="大屏 115%" Tag="1.15" />
-                                <ComboBoxItem Content="超大屏 130%" Tag="1.3" />
+                                <ComboBoxItem Content="{x:Static resources:Strings.K531}" Tag="1" />
+                                <ComboBoxItem Content="{x:Static resources:Strings.K532}" Tag="1.15" />
+                                <ComboBoxItem Content="{x:Static resources:Strings.K533}" Tag="1.3" />
                             </hc:ComboBox>
                             <CheckBox
                                 Margin="0,0,0,16"
-                                AutomationProperties.Name="启用新报警声音"
-                                Content="启用新报警声音"
+                                AutomationProperties.Name="{x:Static resources:Strings.K114}"
+                                Content="{x:Static resources:Strings.K114}"
                                 IsChecked="{Binding DraftSettings.EnableAlarmSound, Mode=TwoWay}"
-                                ToolTip="新报警触发时播放本机系统提示音；关闭后仍保留视觉提醒和历史记录" />
+                                ToolTip="{x:Static resources:Strings.K534}" />
                             <CheckBox
                                 Margin="0,0,0,8"
-                                AutomationProperties.Name="启用自动日报"
-                                Content="自动生成单设备日报 PDF"
+                                AutomationProperties.Name="{x:Static resources:Strings.K535}"
+                                Content="{x:Static resources:Strings.K536}"
                                 IsChecked="{Binding DraftSettings.EnableAutomaticDailyReport, Mode=TwoWay}"
-                                ToolTip="按设定时刻为每台有数据的设备生成上一自然日 PDF，文件保存在 Reports 目录" />
+                                ToolTip="{x:Static resources:Strings.K537}" />
                             <hc:DateTimePicker
-                                hc:InfoElement.Title="自动日报生成时间"
+                                hc:InfoElement.Title="{x:Static resources:Strings.K115}"
                                 hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="自动日报生成时间"
+                                AutomationProperties.Name="{x:Static resources:Strings.K115}"
                                 IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
                                 SelectedDateTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
                                 Style="{StaticResource DateTimePickerExtend}"
-                                ToolTip="到达该时刻后生成上一自然日单设备日报" />
+                                ToolTip="{x:Static resources:Strings.K538}" />
                         </StackPanel>
                     </Border>
 
@@ -751,15 +751,15 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="班次配置" />
+                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K539}" />
                                     <TextBlock Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                               Text="管理生产班次和时间范围。" />
+                                               Text="{x:Static resources:Strings.K540}" />
                                 </StackPanel>
                                 <Button
                                     Grid.Column="1"
-                                    AutomationProperties.Name="新增班次"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K116}"
                                     Command="{Binding AddShiftCommand}"
-                                    Content="新增班次"
+                                    Content="{x:Static resources:Strings.K116}"
                                     Style="{StaticResource IconButtonPrimary}"
                                     Tag="{x:Static mi:MaterialIconKind.Plus}" />
                             </Grid>
@@ -769,7 +769,7 @@
                                     Margin="0,0,0,8"
                                     FontSize="{DynamicResource FontSizeCaption}"
                                     Foreground="{StaticResource SecondaryTextBrush}"
-                                    Text="班次保存后立即生效，采集将在下一个轮询周期使用；当前班次可能被重新判定。"
+                                    Text="{x:Static resources:Strings.K541}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
 
@@ -794,9 +794,9 @@
                                                         <hc:TextBox
                                                             Grid.Column="0"
                                                             VerticalAlignment="Center"
-                                                            hc:InfoElement.Title="班次名称"
+                                                            hc:InfoElement.Title="{x:Static resources:Strings.K117}"
                                                             hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="班次名称"
+                                                            AutomationProperties.Name="{x:Static resources:Strings.K117}"
                                                             Style="{StaticResource TextBoxExtend}"
                                                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                                                         <Button
@@ -812,7 +812,7 @@
                                                             Content=""
                                                             Style="{StaticResource IconButtonDanger}"
                                                             Tag="{x:Static mi:MaterialIconKind.Delete}"
-                                                            ToolTip="删除此班次" />
+                                                            ToolTip="{x:Static resources:Strings.K542}" />
                                                     </Grid>
 
                                                     <Grid>
@@ -823,12 +823,12 @@
                                                         </Grid.ColumnDefinitions>
                                                         <hc:DateTimePicker
                                                             Grid.Column="0"
-                                                            hc:InfoElement.Title="开始"
+                                                            hc:InfoElement.Title="{x:Static resources:Strings.K036}"
                                                             hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="班次开始时间"
+                                                            AutomationProperties.Name="{x:Static resources:Strings.K543}"
                                                             SelectedDateTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
                                                             Style="{StaticResource DateTimePickerExtend}"
-                                                            ToolTip="点击时钟图标选择时刻" />
+                                                            ToolTip="{x:Static resources:Strings.K118}" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             Margin="0,0,0,8"
@@ -838,12 +838,12 @@
                                                             Text="—" />
                                                         <hc:DateTimePicker
                                                             Grid.Column="2"
-                                                            hc:InfoElement.Title="结束"
+                                                            hc:InfoElement.Title="{x:Static resources:Strings.K544}"
                                                             hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="班次结束时间"
+                                                            AutomationProperties.Name="{x:Static resources:Strings.K545}"
                                                             SelectedDateTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
                                                             Style="{StaticResource DateTimePickerExtend}"
-                                                            ToolTip="点击时钟图标选择时刻" />
+                                                            ToolTip="{x:Static resources:Strings.K118}" />
                                                     </Grid>
                                                 </StackPanel>
                                             </Border>
@@ -853,8 +853,8 @@
                                 <!--  空状态：班次列表为空时提示（防御性，VM 至少保留 1 个）  -->
                                 <controls:EmptyState
                                     IconKind="CalendarClockOutline"
-                                    Message="暂无班次"
-                                    Hint="点击右上角「新增班次」开始配置"
+                                    Message="{x:Static resources:Strings.K546}"
+                                    Hint="{x:Static resources:Strings.K547}"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
                                     <controls:EmptyState.Style>
@@ -891,17 +891,17 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-            <Button Content="取消修改" Command="{Binding CancelChangesCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
-            <Button Content="恢复默认" Command="{Binding RestoreDefaultsCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
+            <Button Content="{x:Static resources:Strings.K548}" Command="{Binding CancelChangesCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
+            <Button Content="{x:Static resources:Strings.K549}" Command="{Binding RestoreDefaultsCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
             <Button
             Content="{Binding SaveButtonText}"
             Width="140"
             Margin="0"
-            AutomationProperties.Name="保存设置"
+            AutomationProperties.Name="{x:Static resources:Strings.K550}"
             Command="{Binding SaveCommand}"
             Style="{StaticResource IconButtonPrimary}"
             Tag="{x:Static mi:MaterialIconKind.ContentSave}"
-            ToolTip="保存设置 (Ctrl+S)" />
+            ToolTip="{x:Static resources:Strings.K551}" />
         </StackPanel>
         </Border>
     </Grid>

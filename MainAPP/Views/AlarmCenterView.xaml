@@ -11,7 +11,7 @@
     d:DataContext="{d:DesignInstance Type=vm:AlarmCenterViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}" />
     </UserControl.InputBindings>
@@ -97,7 +97,7 @@
                     Style="{StaticResource PageTitleIcon}" Kind="BellAlert" />
                 <TextBlock
                     Style="{StaticResource PageTitleText}"
-                    Margin="10,0,0,0" Text="报警中心" />
+                    Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
                 <!-- 最后刷新时间 -->
                 <TextBlock
                     Margin="16,0,0,0" VerticalAlignment="Center"
@@ -110,36 +110,36 @@
                 <ComboBox Width="150" Margin="0,0,8,0" VerticalContentAlignment="Center"
                           ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
                           SelectedValue="{Binding SelectedDeviceId}" SelectedValuePath="Id"
-                          ToolTip="设备筛选" />
-                <Button Content="全部" Padding="8,3" Margin="0,0,8,0"
-                    Command="{Binding ClearDeviceFilterCommand}" ToolTip="显示全部设备报警" />
+                          ToolTip="{x:Static resources:Strings.K024}" />
+                <Button Content="{x:Static resources:Strings.K004}" Padding="8,3" Margin="0,0,8,0"
+                    Command="{Binding ClearDeviceFilterCommand}" ToolTip="{x:Static resources:Strings.K123}" />
                 <TextBox Width="170" Margin="0,0,8,0" VerticalContentAlignment="Center"
                          Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
-                         ToolTip="搜索设备或报警名称" />
+                         ToolTip="{x:Static resources:Strings.K124}" />
                 <!-- 时间范围切换（RadioButton 互斥，双向绑定 IsXxx 派生属性） -->
                 <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="近1小时"
+                    AutomationProperties.Name="{x:Static resources:Strings.K042}"
                     IsChecked="{Binding IsHour1}"
                     Style="{StaticResource TimeRangeTab}"
-                    Content="近1小时" />
+                    Content="{x:Static resources:Strings.K042}" />
                 <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="近4小时"
+                    AutomationProperties.Name="{x:Static resources:Strings.K043}"
                     IsChecked="{Binding IsHours4}"
                     Style="{StaticResource TimeRangeTab}"
-                    Content="近4小时" />
+                    Content="{x:Static resources:Strings.K043}" />
                 <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="近24小时"
+                    AutomationProperties.Name="{x:Static resources:Strings.K025}"
                     IsChecked="{Binding IsHours24}"
                     Style="{StaticResource TimeRangeTab}"
                     Margin="0,0,12,0"
-                    Content="近24小时" />
+                    Content="{x:Static resources:Strings.K025}" />
                 <!-- 刷新按钮 -->
                 <Button
                     Command="{Binding RefreshAllCommand}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Refresh}"
-                    Content="刷新"
-                    ToolTip="刷新（F5）" />
+                    Content="{x:Static resources:Strings.K015}"
+                    ToolTip="{x:Static resources:Strings.K044}" />
             </StackPanel>
         </DockPanel>
 
@@ -157,28 +157,28 @@
                 <!-- 活跃报警数 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="活跃报警" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K125}" />
                         <TextBlock Style="{StaticResource KpiValue}" Text="{Binding ActiveCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日触发 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="今日触发" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K126}" />
                         <TextBlock Style="{StaticResource KpiValue}" Text="{Binding TodayTriggerCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日恢复 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="今日恢复" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K127}" />
                         <TextBlock Style="{StaticResource KpiValue}" Text="{Binding TodayRecoverCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 最长持续 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="最长持续" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K128}" />
                         <TextBlock Style="{StaticResource KpiValue}" Text="{Binding LongestDurationText}" />
                         <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
                                    Text="{Binding LongestAlarmText}" TextTrimming="CharacterEllipsis"
@@ -188,14 +188,14 @@
                 <!-- 影响设备数 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="影响设备" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K129}" />
                         <TextBlock Style="{StaticResource KpiValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 最频繁报警 -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabel}" Text="最频繁报警" />
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K130}" />
                         <TextBlock Style="{StaticResource KpiValue}" FontSize="16"
                                    Text="{Binding MostFrequentAlarm}"
                                    TextTrimming="CharacterEllipsis"
@@ -220,7 +220,7 @@
                         <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="实时活跃报警" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K045}" />
                                 <!-- 活跃计数徽章 -->
                                 <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10"
                                         Background="{StaticResource DangerBrush}">
@@ -231,11 +231,11 @@
                             <!-- 级别筛选 chips -->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowHighAlarms}" Content="高级" />
+                                    IsChecked="{Binding ShowHighAlarms}" Content="{x:Static resources:Strings.K131}" />
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowMediumAlarms}" Content="中级" />
+                                    IsChecked="{Binding ShowMediumAlarms}" Content="{x:Static resources:Strings.K132}" />
                                 <ToggleButton Style="{StaticResource LevelFilterChip}"
-                                    IsChecked="{Binding ShowLowAlarms}" Content="低级" />
+                                    IsChecked="{Binding ShowLowAlarms}" Content="{x:Static resources:Strings.K133}" />
                             </StackPanel>
                         </DockPanel>
 
@@ -245,7 +245,7 @@
                                 <ItemsControl ItemsSource="{Binding ActiveAlarms}"
                                               VirtualizingStackPanel.IsVirtualizing="True"
                                               VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="活跃报警列表">
+                                              AutomationProperties.Name="{x:Static resources:Strings.K134}">
                                     <!-- 显式设置 ItemsPanel 为 VirtualizingStackPanel，否则默认 StackPanel 不虚拟化 -->
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -309,12 +309,12 @@
                                                                        Text="{Binding DeviceName}" />
                                                         </StackPanel>
                                                                         <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
-                                                                            <Button Content="复制" Padding="6,2" Margin="0,0,6,0"
+                                                                            <Button Content="{x:Static resources:Strings.K026}" Padding="6,2" Margin="0,0,6,0"
                                                                                 Command="{Binding DataContext.CopyAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                                CommandParameter="{Binding}" ToolTip="复制报警信息" />
-                                                                            <Button Content="历史" Padding="6,2"
+                                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.K135}" />
+                                                                            <Button Content="{x:Static resources:Strings.K136}" Padding="6,2"
                                                                                 Command="{Binding DataContext.ViewAlarmHistoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                                CommandParameter="{Binding}" ToolTip="查看报警历史" />
+                                                                                CommandParameter="{Binding}" ToolTip="{x:Static resources:Strings.K137}" />
                                                                         </StackPanel>
                                                     </StackPanel>
                                                 </DockPanel>
@@ -356,13 +356,13 @@
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="最近事件流" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
                             </DockPanel>
                             <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                                 <ItemsControl ItemsSource="{Binding RecentEvents}"
                                               VirtualizingStackPanel.IsVirtualizing="True"
                                               VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="最近事件流">
+                                              AutomationProperties.Name="{x:Static resources:Strings.K046}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
@@ -424,13 +424,13 @@
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="累计持续时间 Top 10" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K138}" />
                             </DockPanel>
                             <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                                 <ItemsControl ItemsSource="{Binding TopAlarms}"
                                               VirtualizingStackPanel.IsVirtualizing="True"
                                               VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="报警排行列表">
+                                              AutomationProperties.Name="{x:Static resources:Strings.K139}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />

@@ -12,7 +12,7 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  报警级别枚举值（ComboBox 数据源），仅本 Tab 使用  -->
         <ObjectDataProvider
@@ -42,9 +42,9 @@
             <Button
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
-                AutomationProperties.Name="新增报警"
+                AutomationProperties.Name="{x:Static resources:Strings.K053}"
                 Command="{Binding DataContext.AddAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                Content="新增报警"
+                Content="{x:Static resources:Strings.K053}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
@@ -58,10 +58,10 @@
                     Width="36"
                     Height="32"
                     Padding="0"
-                    AutomationProperties.Name="导出报警 CSV"
+                    AutomationProperties.Name="{x:Static resources:Strings.K167}"
                     Command="{Binding DataContext.ExportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Style="{StaticResource ButtonDefault}"
-                    ToolTip="导出当前设备全部报警到 CSV 文件（可用 Excel 编辑）">
+                    ToolTip="{x:Static resources:Strings.K168}">
                     <materialIcons:MaterialIcon
                         Width="14"
                         Height="14"
@@ -71,10 +71,10 @@
                     Width="36"
                     Height="32"
                     Padding="0"
-                    AutomationProperties.Name="导入报警 CSV"
+                    AutomationProperties.Name="{x:Static resources:Strings.K169}"
                     Command="{Binding DataContext.ImportAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Style="{StaticResource ButtonDefault}"
-                    ToolTip="从 CSV 文件导入报警（追加或替换当前设备报警列表）">
+                    ToolTip="{x:Static resources:Strings.K170}">
                     <materialIcons:MaterialIcon
                         Width="14"
                         Height="14"
@@ -82,7 +82,7 @@
                 </Button>
             </StackPanel>
             <ListBox
-                AutomationProperties.Name="报警列表"
+                AutomationProperties.Name="{x:Static resources:Strings.K171}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding Alarms}"
                 SelectedItem="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -132,16 +132,16 @@
             <StackPanel DataContext="{Binding DataContext.SelectedAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="报警名称"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K018}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="报警名称"
+                    AutomationProperties.Name="{x:Static resources:Strings.K018}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="PLC 地址（如 M100）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K172}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="报警 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K173}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
@@ -153,29 +153,29 @@
                 </hc:TextBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="报警级别"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K054}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="报警级别"
+                    AutomationProperties.Name="{x:Static resources:Strings.K054}"
                     ItemsSource="{Binding Source={StaticResource AlarmLevelValues}}"
                     SelectedItem="{Binding Level, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}" />
                 <hc:TextBox
                     Height="80"
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="报警描述"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K030}"
                     hc:InfoElement.TitlePlacement="Top"
                     AcceptsReturn="True"
-                    AutomationProperties.Name="报警描述"
+                    AutomationProperties.Name="{x:Static resources:Strings.K030}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="删除报警"
+                    AutomationProperties.Name="{x:Static resources:Strings.K055}"
                     Command="{Binding DataContext.RemoveAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding}"
-                    Content="删除报警"
+                    Content="{x:Static resources:Strings.K055}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>

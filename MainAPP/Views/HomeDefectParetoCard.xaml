@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         主页仪表板卡片 6：缺陷帕累托（TOP5 柱状图 + 空状态）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -23,7 +23,7 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Bug" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="缺陷帕累托（TOP5）" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K317}" />
                 <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
@@ -40,7 +40,7 @@
                     </oxy:PlotView.Style>
                 </oxy:PlotView>
                 <!-- 空状态 -->
-                <controls:EmptyState IconKind="CheckCircleOutline" Message="暂无缺陷数据" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <controls:EmptyState IconKind="CheckCircleOutline" Message="{x:Static resources:Strings.K052}" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <controls:EmptyState.Style>
                         <Style TargetType="controls:EmptyState">
                             <Setter Property="Visibility" Value="Collapsed" />

@@ -1,18 +1,18 @@
-<Window
+﻿<Window
     x:Class="MainAPP.Views.WorkOrderEditDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="工单编辑"
+    Title="{x:Static resources:Strings.K552}"
     Width="520"
     Height="640"
     Background="{StaticResource RegionBrush}"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterOwner"
     FocusManager.FocusedElement="{Binding ElementName=OrderNoBox}"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <Grid Margin="24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -33,9 +33,9 @@
             x:Name="OrderNoBox"
             Grid.Row="0"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="工单号"
+            hc:InfoElement.Title="{x:Static resources:Strings.K008}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="工单号"
+            AutomationProperties.Name="{x:Static resources:Strings.K008}"
             FontSize="14"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding OrderNo, UpdateSourceTrigger=PropertyChanged}" />
@@ -45,9 +45,9 @@
             x:Name="ProductCodeBox"
             Grid.Row="1"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="产品编码"
+            hc:InfoElement.Title="{x:Static resources:Strings.K019}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="产品编码"
+            AutomationProperties.Name="{x:Static resources:Strings.K019}"
             FontSize="14"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}" />
@@ -57,9 +57,9 @@
             x:Name="ProductNameBox"
             Grid.Row="2"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="产品名称"
+            hc:InfoElement.Title="{x:Static resources:Strings.K020}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="产品名称"
+            AutomationProperties.Name="{x:Static resources:Strings.K020}"
             FontSize="14"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" />
@@ -69,9 +69,9 @@
             x:Name="DeviceComboBox"
             Grid.Row="3"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="绑定设备"
+            hc:InfoElement.Title="{x:Static resources:Strings.K041}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="绑定设备"
+            AutomationProperties.Name="{x:Static resources:Strings.K041}"
             DisplayMemberPath="Name"
             FontSize="14"
             ItemsSource="{Binding AvailableDevices}"
@@ -84,9 +84,9 @@
             x:Name="TargetQuantityBox"
             Grid.Row="4"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="计划产量（件）"
+            hc:InfoElement.Title="{x:Static resources:Strings.K553}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="计划产量"
+            AutomationProperties.Name="{x:Static resources:Strings.K035}"
             FontSize="14"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding TargetQuantityText, UpdateSourceTrigger=PropertyChanged}" />
@@ -96,9 +96,9 @@
             x:Name="PlannedStartPicker"
             Grid.Row="5"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="计划开始时间"
+            hc:InfoElement.Title="{x:Static resources:Strings.K119}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="计划开始时间"
+            AutomationProperties.Name="{x:Static resources:Strings.K119}"
             FontSize="14"
             SelectedDateTime="{Binding PlannedStart, Mode=TwoWay}"
             Style="{StaticResource DateTimePickerExtend}" />
@@ -108,9 +108,9 @@
             x:Name="PlannedEndPicker"
             Grid.Row="6"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="计划结束时间"
+            hc:InfoElement.Title="{x:Static resources:Strings.K120}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="计划结束时间"
+            AutomationProperties.Name="{x:Static resources:Strings.K120}"
             FontSize="14"
             SelectedDateTime="{Binding PlannedEnd, Mode=TwoWay}"
             Style="{StaticResource DateTimePickerExtend}" />
@@ -120,9 +120,9 @@
             x:Name="RemarkBox"
             Grid.Row="7"
             Margin="0,0,0,12"
-            hc:InfoElement.Title="备注"
+            hc:InfoElement.Title="{x:Static resources:Strings.K021}"
             hc:InfoElement.TitlePlacement="Top"
-            AutomationProperties.Name="备注"
+            AutomationProperties.Name="{x:Static resources:Strings.K021}"
             FontSize="14"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding Remark, UpdateSourceTrigger=PropertyChanged}" />
@@ -139,14 +139,14 @@
             <Button
                 Width="80"
                 Click="Cancel_Click"
-                Content="取消"
+                Content="{x:Static resources:Strings.K092}"
                 IsCancel="True"
                 Style="{StaticResource ButtonDefault}" />
             <Button
                 Margin="8,0,0,0"
                 Width="80"
                 Click="Confirm_Click"
-                Content="确定"
+                Content="{x:Static resources:Strings.K093}"
                 IsDefault="True"
                 Style="{StaticResource ButtonPrimary}" />
         </StackPanel>

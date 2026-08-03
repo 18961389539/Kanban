@@ -7,7 +7,7 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         主页仪表板卡片 2：当前生产状态（速度进度条 + 2x2 KPI 网格）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -21,7 +21,7 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="TrendingUp" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="当前生产状态" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K323}" />
                 <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
@@ -36,7 +36,7 @@
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeSubtitle}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="当前速度" />
+                                   Text="{x:Static resources:Strings.K324}" />
                         <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
                                    Text="{Binding SpeedAchievementRate, StringFormat=达成率 {0:P0}}" />
@@ -46,7 +46,7 @@
                                        Text="{Binding RealtimeSpeedDisplay}" />
                             <TextBlock Margin="8,0,0,0" VerticalAlignment="Bottom"
                                        FontSize="{DynamicResource FontSizeKpiSm}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="件/h" />
+                                       Text="{x:Static resources:Strings.K325}" />
                         </StackPanel>
                     </DockPanel>
                     <!-- 进度条：Foreground 绑定达成率阈值色，Background 为深灰轨道 -->
@@ -100,14 +100,14 @@
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6">
                         <StackPanel>
-                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="工单目标" />
+                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K326}" />
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                 <TextBlock FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding WorkOrderTargetQuantity, StringFormat={}{0:N0}}" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                            FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="件" />
+                                           Text="{x:Static resources:Strings.K014}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -118,14 +118,14 @@
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6">
                         <StackPanel>
-                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="工单完成" />
+                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K327}" />
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                 <TextBlock FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding TotalOkProductionDisplay}" />
                                 <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
                                            FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="件" />
+                                           Text="{x:Static resources:Strings.K014}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -136,7 +136,7 @@
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6">
                         <StackPanel>
-                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="目标节拍" />
+                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
                             <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                        Foreground="{StaticResource WarningBrush}"
                                        Text="{Binding TargetCycleDisplay}" />
@@ -149,7 +149,7 @@
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1" CornerRadius="6">
                         <StackPanel>
-                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="实际节拍" />
+                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K050}" />
                             <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                        Foreground="{StaticResource PrimaryTextBrush}"
                                        Text="{Binding ActualCycleDisplay}" />

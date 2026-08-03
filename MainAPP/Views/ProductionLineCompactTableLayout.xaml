@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="1200">
+    d:DesignWidth="1200" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         产线页布局 3：紧凑表格（16+ 台设备）。
         DockPanel 承载表头 + 分隔线 + 合计行（Dock=Bottom）+ 表体 ItemsControl。
@@ -50,15 +50,15 @@
                 <ColumnDefinition SharedSizeGroup="c_run" Width="110" />
                 <ColumnDefinition SharedSizeGroup="c_alarm" Width="100" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Style="{StaticResource TableHeader}" Text="状态" />
-            <TextBlock Grid.Column="1" Style="{StaticResource TableHeader}" Text="设备名" />
-            <TextBlock Grid.Column="2" Style="{StaticResource TableHeader}" Text="配方" />
+            <TextBlock Grid.Column="0" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K003}" />
+            <TextBlock Grid.Column="1" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K403}" />
+            <TextBlock Grid.Column="2" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K027}" />
             <TextBlock Grid.Column="3" Style="{StaticResource TableHeader}" Text="OEE" />
-            <TextBlock Grid.Column="4" Style="{StaticResource TableHeader}" Text="良品率" />
-            <TextBlock Grid.Column="5" Style="{StaticResource TableHeader}" Text="OK 产量(件)" />
-            <TextBlock Grid.Column="6" Style="{StaticResource TableHeader}" Text="不良(件)" />
-            <TextBlock Grid.Column="7" Style="{StaticResource TableHeader}" Text="运行时长" />
-            <TextBlock Grid.Column="8" Style="{StaticResource TableHeader}" Text="报警时长" />
+            <TextBlock Grid.Column="4" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K001}" />
+            <TextBlock Grid.Column="5" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K080}" />
+            <TextBlock Grid.Column="6" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K404}" />
+            <TextBlock Grid.Column="7" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K007}" />
+            <TextBlock Grid.Column="8" Style="{StaticResource TableHeader}" Text="{x:Static resources:Strings.K038}" />
         </Grid>
 
         <Border Background="{StaticResource DividerBrush}" Height="1" DockPanel.Dock="Top" />

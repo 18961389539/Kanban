@@ -11,7 +11,7 @@
     xmlns:entities="clr-namespace:Kanban.Core.Entities;assembly=Kanban.Collector.Core"
     d:DesignHeight="700"
     d:DesignWidth="1100"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  工单状态 → 显示文本 + 色点画刷（DataTrigger 内联，避免新建转换器）  -->
         <Style x:Key="StatusDot" TargetType="Ellipse">
@@ -41,19 +41,19 @@
             <Setter Property="Text" Value="—" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                    <Setter Property="Text" Value="待开始" />
+                    <Setter Property="Text" Value="{x:Static resources:Strings.K010}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                    <Setter Property="Text" Value="进行中" />
+                    <Setter Property="Text" Value="{x:Static resources:Strings.K011}" />
                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                     <Setter Property="FontWeight" Value="Bold" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                    <Setter Property="Text" Value="已完成" />
+                    <Setter Property="Text" Value="{x:Static resources:Strings.K012}" />
                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                    <Setter Property="Text" Value="已中止" />
+                    <Setter Property="Text" Value="{x:Static resources:Strings.K013}" />
                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -104,7 +104,7 @@
                 <!--  标题  -->
                 <DockPanel Grid.Row="0" Margin="18,18,18,10">
                     <materialIcons:MaterialIcon Kind="ClipboardListOutline" Style="{StaticResource SectionTitleIcon}" />
-                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="工单列表" />
+                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K554}" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{Binding WorkOrders.Count, StringFormat={}({0})}" />
@@ -118,13 +118,13 @@
                         <ColumnDefinition Width="160" />
                     </Grid.ColumnDefinitions>
                     <hc:TextBox Grid.Column="0"
-                                hc:InfoElement.Placeholder="搜索工单号/产品/设备"
+                                hc:InfoElement.Placeholder="{x:Static resources:Strings.K555}"
                                 FontSize="{DynamicResource FontSizeCaption}"
                                 Style="{StaticResource TextBoxExtend}"
                                 Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
                     <hc:ComboBox Grid.Column="2"
                                  FontSize="{DynamicResource FontSizeCaption}"
-                                 hc:InfoElement.Placeholder="设备"
+                                 hc:InfoElement.Placeholder="{x:Static resources:Strings.K002}"
                                  ItemsSource="{Binding DeviceOptions}"
                                  SelectedItem="{Binding DeviceFilter, Mode=TwoWay}"
                                  Style="{StaticResource ComboBoxExtend}" />
@@ -132,73 +132,73 @@
 
                 <!-- 高级筛选：按计划日期和生产结果快速定位异常工单 -->
                 <WrapPanel Grid.Row="2" Margin="18,0,18,8">
-                    <DatePicker Width="128" Margin="0,0,6,4" SelectedDate="{Binding FilterFromDate, Mode=TwoWay}" ToolTip="计划时间从" />
-                    <DatePicker Width="128" Margin="0,0,12,4" SelectedDate="{Binding FilterToDate, Mode=TwoWay}" ToolTip="计划时间至" />
+                    <DatePicker Width="128" Margin="0,0,6,4" SelectedDate="{Binding FilterFromDate, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.K556}" />
+                    <DatePicker Width="128" Margin="0,0,12,4" SelectedDate="{Binding FilterToDate, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.K557}" />
                     <ComboBox Width="150" Margin="0,0,12,4"
-                              AutomationProperties.Name="工单排程排序"
+                              AutomationProperties.Name="{x:Static resources:Strings.K558}"
                               DisplayMemberPath="Label"
                               ItemsSource="{Binding SortOptions}"
                               SelectedValue="{Binding SortMode, Mode=TwoWay}"
                               SelectedValuePath="Value"
                               Style="{StaticResource ComboBoxExtend}"
-                              ToolTip="按计划时间或状态排序" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="仅超期" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="仅达标" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="有 NG" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}" />
+                              ToolTip="{x:Static resources:Strings.K559}" />
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K560}" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}" />
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K561}" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}" />
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K562}" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}" />
                 </WrapPanel>
 
                 <!--  状态分布概览：一眼看到各状态工单数量，点击切换筛选（RadioButton 单选互斥）  -->
                 <StackPanel Grid.Row="3" Margin="18,0,18,8" Orientation="Horizontal">
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="全部"
-                                 Content="全部" Style="{StaticResource StatusFilterChip}">
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K004}"
+                                 Content="{x:Static resources:Strings.K004}" Style="{StaticResource StatusFilterChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="全部" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K004}" />
                         </RadioButton.IsChecked>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="待开始"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K010}"
                                  Style="{StaticResource StatusFilterChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="待开始" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K010}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="待开始 " />
+                                <TextBlock Text="{x:Static resources:Strings.K010}" />
                                 <TextBlock FontWeight="Bold" Text="{Binding PendingCount}" />
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="进行中"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K011}"
                                  Style="{StaticResource StatusFilterChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="进行中" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K011}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="进行中 " />
+                                <TextBlock Text="{x:Static resources:Strings.K011}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding RunningCount}" />
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="已完成"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K012}"
                                  Style="{StaticResource StatusFilterChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="已完成" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K012}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="已完成 " />
+                                <TextBlock Text="{x:Static resources:Strings.K012}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding CompletedCount}" />
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="已中止"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K013}"
                                  Style="{StaticResource StatusFilterChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="已中止" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K013}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="已中止 " />
+                                <TextBlock Text="{x:Static resources:Strings.K013}" />
                                 <TextBlock FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding AbortedCount}" />
                             </StackPanel>
                         </RadioButton.Content>
@@ -222,9 +222,9 @@
                         <ColumnDefinition Width="120" />
                         <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="工单号 / 产品" />
-                    <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="设备" />
-                    <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="状态" />
+                    <TextBlock Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K563}" />
+                    <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K002}" />
+                    <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K003}" />
                 </Grid>
 
                 <!--  工单列表 + 空状态提示  -->
@@ -255,7 +255,7 @@
                                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
                                                     Visibility="{Binding Production, Converter={StaticResource NullToVisibilityConverter}}">
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}"
-                                                       Foreground="{StaticResource ThirdlyTextBrush}" Text="已生产 " />
+                                                       Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K564}" />
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold"
                                                        Foreground="{StaticResource PrimaryBrush}"
                                                        Text="{Binding Production.OkCount}" />
@@ -265,7 +265,7 @@
                                                        Foreground="{StaticResource ThirdlyTextBrush}"
                                                        Text="{Binding TargetQuantity}" />
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}"
-                                                       Foreground="{StaticResource ThirdlyTextBrush}" Text=" 件" />
+                                                       Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K014}" />
                                             <TextBlock Margin="8,0,0,0" FontSize="{DynamicResource FontSizeHint}"
                                                        Foreground="{StaticResource SecondaryTextBrush}"
                                                        Text="{Binding Production.ScheduleStatusText}" />
@@ -285,9 +285,9 @@
 
                     <!--  空状态：筛选无结果或无工单时提示  -->
                     <controls:EmptyState
-                        Hint="点击下方「新增」或调整筛选条件"
+                        Hint="{x:Static resources:Strings.K565}"
                         IconKind="ClipboardListOutline"
-                        Message="未找到匹配的工单">
+                        Message="{x:Static resources:Strings.K566}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -304,30 +304,30 @@
                 <!--  底部操作按钮  -->
                 <DockPanel Grid.Row="6" Margin="18,12,18,18" LastChildFill="False">
                     <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding AddCommand}" Content="新增" Style="{StaticResource IconButtonPrimary}"
+                        <Button Command="{Binding AddCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
                                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
-                        <Button Margin="8,0,0,0" Command="{Binding EditCommand}" Content="编辑" Style="{StaticResource IconButtonDefault}"
+                        <Button Margin="8,0,0,0" Command="{Binding EditCommand}" Content="{x:Static resources:Strings.K072}" Style="{StaticResource IconButtonDefault}"
                                 Tag="{x:Static mi:MaterialIconKind.PencilOutline}" />
-                        <Button Margin="8,0,0,0" Command="{Binding CopyCommand}" Content="复制" Style="{StaticResource IconButtonDefault}"
-                            Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="复制当前工单并创建新的待开始工单" />
-                        <Button Margin="8,0,0,0" Command="{Binding DeleteCommand}" Content="删除" Style="{StaticResource IconButtonDanger}"
+                        <Button Margin="8,0,0,0" Command="{Binding CopyCommand}" Content="{x:Static resources:Strings.K026}" Style="{StaticResource IconButtonDefault}"
+                            Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="{x:Static resources:Strings.K567}" />
+                        <Button Margin="8,0,0,0" Command="{Binding DeleteCommand}" Content="{x:Static resources:Strings.K034}" Style="{StaticResource IconButtonDanger}"
                                 Tag="{x:Static mi:MaterialIconKind.Delete}" />
-                        <Button Margin="8,0,0,0" Command="{Binding RefreshAllProductionCommand}" Content="刷新产量"
+                        <Button Margin="8,0,0,0" Command="{Binding RefreshAllProductionCommand}" Content="{x:Static resources:Strings.K568}"
                                 Style="{StaticResource IconButtonDefault}"
                                 Tag="{x:Static mi:MaterialIconKind.ChartLineVariant}"
-                                ToolTip="查询所有工单的产量数据并更新列表进度" />
-                        <Button Margin="8,0,0,0" Command="{Binding ExportCsvCommand}" Content="导出"
+                                ToolTip="{x:Static resources:Strings.K569}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ExportCsvCommand}" Content="{x:Static resources:Strings.K079}"
                                 Style="{StaticResource IconButtonDefault}"
                                 Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
-                                ToolTip="导出当前筛选结果到 CSV 文件" />
+                                ToolTip="{x:Static resources:Strings.K570}" />
                     </StackPanel>
                     <!--  生成样本工单（需密码确认）  -->
                     <Button DockPanel.Dock="Right"
                             Command="{Binding SeedSampleWorkOrdersCommand}"
-                            Content="生成样本"
+                            Content="{x:Static resources:Strings.K571}"
                             Style="{StaticResource IconButtonDefault}"
                             Tag="{x:Static mi:MaterialIconKind.ToyBrickPlus}"
-                            ToolTip="生成样本工单用于预览（需密码确认）" />
+                            ToolTip="{x:Static resources:Strings.K572}" />
                 </DockPanel>
             </Grid>
         </Border>
@@ -342,7 +342,7 @@
             Cursor="SizeWE"
             ResizeBehavior="PreviousAndNext"
             ResizeDirection="Columns"
-            AutomationProperties.Name="调整工单列表与工单详情的宽度">
+            AutomationProperties.Name="{x:Static resources:Strings.K573}">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="GridSplitter">
                     <Grid Background="Transparent">
@@ -375,7 +375,7 @@
                 <!--  标题  -->
                 <DockPanel Grid.Row="0" Margin="18,18,18,10">
                     <materialIcons:MaterialIcon Kind="ClipboardTextOutline" Style="{StaticResource SectionTitleIcon}" />
-                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="工单详情" />
+                    <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K073}" />
                 </DockPanel>
 
                 <!--  详情内容  -->
@@ -383,8 +383,8 @@
                     <!--  无选中时占位：用 EmptyState 替代裸 TextBlock，与列表空态视觉一致  -->
                     <controls:EmptyState
                         IconKind="ClipboardTextOutline"
-                        Message="请选择左侧工单查看详情"
-                        Hint="支持搜索工单号、产品名称或设备名快速定位">
+                        Message="{x:Static resources:Strings.K074}"
+                        Hint="{x:Static resources:Strings.K574}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -403,35 +403,35 @@
                             <!--  工单号  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="工单号" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K008}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.OrderNo}" />
                             </DockPanel>
                             <!--  产品编码  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="产品编码" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K019}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductCode}" />
                             </DockPanel>
                             <!--  产品名称  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="产品名称" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K020}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductName}" />
                             </DockPanel>
                             <!--  绑定设备  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="绑定设备" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K041}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.DeviceName}" />
                             </DockPanel>
                             <!--  计划产量  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="计划产量" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding SelectedWorkOrder.TargetQuantity, StringFormat={}{0:N0} 件}" />
@@ -441,28 +441,28 @@
                                         Visibility="{Binding SelectedProduction, Converter={StaticResource NullToVisibilityConverter}}">
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="合格产量" />
+                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K047}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource SuccessBrush}"
                                                Text="{Binding SelectedProduction.OkCount, StringFormat={}{0:N0} 件}" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="不良产量" />
+                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K575}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource DangerBrush}"
                                                Text="{Binding SelectedProduction.NgCount, StringFormat={}{0:N0} 件}" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="达成率" />
+                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K576}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource PrimaryBrush}"
                                                Text="{Binding SelectedProduction.AchievementRate, StringFormat={}{0:P1}}" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="不良率" />
+                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource WarningBrush}"
                                                Text="{Binding SelectedProduction.DefectRate, StringFormat={}{0:P1}}" />
@@ -471,7 +471,7 @@
                             <!--  计划时间（分别绑定 PlannedStart 与 PlannedEnd，避免原 Bug 两处都显示 PlannedStart）  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="计划时间" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                                Foreground="{StaticResource PrimaryTextBrush}"
@@ -486,7 +486,7 @@
                             <!--  状态  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="状态" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K003}" />
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <Ellipse Style="{StaticResource StatusDot}" DataContext="{Binding SelectedWorkOrder}" />
                                     <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" DataContext="{Binding SelectedWorkOrder}" />
@@ -495,7 +495,7 @@
                             <!--  备注  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Top"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="备注" />
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K021}" />
                                 <TextBlock VerticalAlignment="Top" FontSize="{DynamicResource FontSizeCaption}"
                                            Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
                                            Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
@@ -506,11 +506,11 @@
 
                 <!--  底部状态操作按钮  -->
                 <StackPanel Grid.Row="2" Margin="18,0,18,18" Orientation="Horizontal">
-                    <Button Command="{Binding StartCommand}" Content="开始" Style="{StaticResource IconButtonPrimary}"
+                    <Button Command="{Binding StartCommand}" Content="{x:Static resources:Strings.K036}" Style="{StaticResource IconButtonPrimary}"
                             Tag="{x:Static mi:MaterialIconKind.Play}" ToolTip="{Binding StartActionReason}" />
-                    <Button Margin="8,0,0,0" Command="{Binding CompleteCommand}" Content="完成" Style="{StaticResource IconButtonSuccess}"
+                    <Button Margin="8,0,0,0" Command="{Binding CompleteCommand}" Content="{x:Static resources:Strings.K076}" Style="{StaticResource IconButtonSuccess}"
                             Tag="{x:Static mi:MaterialIconKind.Check}" ToolTip="{Binding CompleteActionReason}" />
-                    <Button Margin="8,0,0,0" Command="{Binding AbortCommand}" Content="中止" Style="{StaticResource IconButtonWarning}"
+                    <Button Margin="8,0,0,0" Command="{Binding AbortCommand}" Content="{x:Static resources:Strings.K077}" Style="{StaticResource IconButtonWarning}"
                             Tag="{x:Static mi:MaterialIconKind.Stop}" ToolTip="{Binding AbortActionReason}" />
                 </StackPanel>
             </Grid>

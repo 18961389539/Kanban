@@ -6,7 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="1200">
+    d:DesignWidth="1200" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         产线页布局 1：大卡片网格（2 列 UniformGrid）。
         适用于 1-8 台设备：每卡 2x4 指标网格 + 报警/缺陷文本。
@@ -125,13 +125,13 @@
                                                    Text="{Binding Runtime.Oee, StringFormat=P0}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,8,10">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="良品率" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K001}" />
                                         <TextBlock FontFamily="Consolas" FontSize="20" FontWeight="Bold"
                                                    Foreground="{Binding Runtime.QualityRate, Converter={StaticResource RatioThreshold}}"
                                                    Text="{Binding Runtime.QualityRate, StringFormat=P1}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="0" Grid.Column="2" Margin="8,0,8,10">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="产量 / 不良" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K094}" />
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock FontFamily="Consolas" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
                                                        Text="{Binding Runtime.TotalOkProduction, StringFormat={}{0:N0} 件}" />
@@ -141,7 +141,7 @@
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Row="0" Grid.Column="3" Margin="8,0,0,10">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="运行 / 报警" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K095}" />
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock FontSize="13" Foreground="{StaticResource SuccessBrush}"
                                                        Text="{Binding RunTimeFormatted}" />
@@ -152,19 +152,19 @@
 
                                     <!--  行 2：性能参数 4 指标  -->
                                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,0">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="性能效率" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K096}" />
                                         <TextBlock FontFamily="Consolas" FontSize="16" FontWeight="Bold"
                                                    Foreground="{Binding Runtime.PerformanceRate, Converter={StaticResource OeeThreshold}}"
                                                    Text="{Binding Runtime.PerformanceRate, StringFormat=P1}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,8,0">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="时间稼动率" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K009}" />
                                         <TextBlock FontFamily="Consolas" FontSize="16" FontWeight="Bold"
                                                    Foreground="{Binding Runtime.AvailabilityRate, Converter={StaticResource OeeThreshold}}"
                                                    Text="{Binding Runtime.AvailabilityRate, StringFormat=P1}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="2" Margin="8,0,8,0">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="目标 / 实际" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K097}" />
                                         <TextBlock FontSize="14" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}">
                                             <TextBlock.Text>
                                                 <MultiBinding StringFormat="{}{0}件/h · {1:F1}s">
@@ -175,7 +175,7 @@
                                         </TextBlock>
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="3" Margin="8,0,0,0">
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="综合停机" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K098}" />
                                         <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource SecondaryTextBrush}"
                                                    Text="{Binding DowntimeFormatted}" />
                                     </StackPanel>

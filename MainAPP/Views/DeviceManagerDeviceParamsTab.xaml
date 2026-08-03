@@ -10,7 +10,7 @@
     xmlns:conv="clr-namespace:MainAPP.Converters"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         设备管理 Tab 1：设备参数。
         DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
@@ -35,7 +35,7 @@
                 <StackPanel Orientation="Horizontal">
                     <materialIcons:MaterialIcon Kind="LanDisconnect" Width="18" Height="18" Foreground="{StaticResource DangerBrush}" />
                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
-                               Text="PLC 未连接，读取、写入和清零操作已禁用" />
+                               Text="{x:Static resources:Strings.K192}" />
                 </StackPanel>
             </Border>
 
@@ -72,14 +72,14 @@
                     <TextBlock
                         FontWeight="Bold"
                         Foreground="{StaticResource DangerBrush}"
-                        Text="当前设备存在配置问题" />
+                        Text="{x:Static resources:Strings.K193}" />
                     <ItemsControl ItemsSource="{Binding DataContext.CurrentDeviceValidationErrors, RelativeSource={RelativeSource AncestorType=UserControl}}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button
                                     Margin="0,6,0,0"
                                     HorizontalContentAlignment="Left"
-                                    AutomationProperties.Name="配置错误，点击定位"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K194}"
                                     Command="{Binding DataContext.FocusValidationErrorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Content="{Binding Message}"
@@ -93,28 +93,28 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Style="{StaticResource SectionTitleText}" Text="基本参数" />
+            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K195}" />
             <hc:Divider Margin="0,8" />
 
             <hc:TextBox
                 Margin="0,8,0,16"
-                hc:InfoElement.Title="设备名称"
+                hc:InfoElement.Title="{x:Static resources:Strings.K062}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="设备名称"
+                AutomationProperties.Name="{x:Static resources:Strings.K062}"
                 Style="{StaticResource TextBoxExtend}"
                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="目标周期（个 / 小时）"
+                hc:InfoElement.Title="{x:Static resources:Strings.K196}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="目标周期"
+                AutomationProperties.Name="{x:Static resources:Strings.K197}"
                 Style="{StaticResource TextBoxExtend}"
                 Text="{Binding TargetCycle, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock
                 Margin="0,8,0,0"
                 Style="{StaticResource SectionTitleText}"
-                Text="PLC 地址配置" />
+                Text="{x:Static resources:Strings.K198}" />
             <hc:Divider Margin="0,8" />
 
             <Grid Margin="0,8,0,16">
@@ -126,9 +126,9 @@
                 <hc:TextBox
                     x:Name="OkAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="OK 数量地址（如 D100）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K199}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="OK 数量 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K200}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="OkCountAddress" UpdateSourceTrigger="PropertyChanged">
@@ -141,13 +141,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="读取 OK 数量地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K201}"
                     Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding OkCountAddress}"
-                    Content="读取"
+                    Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="读取 PLC 当前值；PLC 断线时不可用"
+                    ToolTip="{x:Static resources:Strings.K032}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -159,9 +159,9 @@
                 <hc:TextBox
                     x:Name="NgAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="NG 数量地址（如 D102）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K202}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="NG 数量 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K203}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="NgCountAddress" UpdateSourceTrigger="PropertyChanged">
@@ -174,13 +174,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="读取 NG 数量地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K204}"
                     Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding NgCountAddress}"
-                    Content="读取"
+                    Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="读取 PLC 当前值；PLC 断线时不可用"
+                    ToolTip="{x:Static resources:Strings.K032}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -192,9 +192,9 @@
                 <hc:TextBox
                     x:Name="StatusAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="状态地址（如 D104）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K205}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="状态 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K206}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="StatusCountAddress" UpdateSourceTrigger="PropertyChanged">
@@ -207,13 +207,13 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="读取状态地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K207}"
                     Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding StatusCountAddress}"
-                    Content="读取"
+                    Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Eye}"
-                    ToolTip="读取 PLC 当前值；PLC 断线时不可用"
+                    ToolTip="{x:Static resources:Strings.K032}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
             <Grid Margin="0,0,0,16">
@@ -225,11 +225,11 @@
                 <hc:TextBox
                     x:Name="ResetAddressTextBox"
                     Grid.Column="0"
-                    hc:InfoElement.Title="OEE 清零地址（如 D106）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K208}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="OEE 清零 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K209}"
                     Style="{StaticResource TextBoxExtend}"
-                    ToolTip="班次切换或手动清零时向该地址写 1，由 PLC 程序清零本设备的 OK/NG 产量计数器。">
+                    ToolTip="{x:Static resources:Strings.K210}">
                     <hc:TextBox.Text>
                         <Binding Path="ProductionResetAddress" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -241,40 +241,40 @@
                 <Button
                     Grid.Column="2"
                     Margin="0,16,0,0"
-                    AutomationProperties.Name="手动触发 OEE 清零"
+                    AutomationProperties.Name="{x:Static resources:Strings.K211}"
                     Command="{Binding DataContext.ResetProductionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="清零"
+                    Content="{x:Static resources:Strings.K212}"
                     Style="{StaticResource IconButtonWarning}"
                     Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
-                    ToolTip="向 PLC 写入清零指令；不可撤销且断线时不可用"
+                    ToolTip="{x:Static resources:Strings.K213}"
                     ToolTipService.ShowOnDisabled="True" />
             </Grid>
 
             <TextBlock
                 Margin="0,8,0,0"
                 Style="{StaticResource SectionTitleText}"
-                Text="配方参数" />
+                Text="{x:Static resources:Strings.K214}" />
             <hc:Divider Margin="0,8" />
 
             <hc:TextBox
                 Margin="0,8,0,16"
-                hc:InfoElement.Title="配方名称"
+                hc:InfoElement.Title="{x:Static resources:Strings.K063}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="配方名称"
+                AutomationProperties.Name="{x:Static resources:Strings.K063}"
                 Style="{StaticResource TextBoxExtend}"
                 Text="{Binding RecipeName, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="配方值（整数，写入 DWord）"
+                hc:InfoElement.Title="{x:Static resources:Strings.K215}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="配方值"
+                AutomationProperties.Name="{x:Static resources:Strings.K216}"
                 Style="{StaticResource TextBoxExtend}"
                 Text="{Binding RecipeValue, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
-                hc:InfoElement.Title="配方地址（如 D500）"
+                hc:InfoElement.Title="{x:Static resources:Strings.K217}"
                 hc:InfoElement.TitlePlacement="Top"
-                AutomationProperties.Name="配方 PLC 地址"
+                AutomationProperties.Name="{x:Static resources:Strings.K218}"
                 Style="{StaticResource TextBoxExtend}"
                 Text="{Binding RecipeAddress, UpdateSourceTrigger=PropertyChanged}" />
             <DockPanel Margin="0,4,0,16">
@@ -285,12 +285,12 @@
                     Text="{Binding DataContext.RecipeStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="写入配方到 PLC"
+                    AutomationProperties.Name="{x:Static resources:Strings.K219}"
                     Command="{Binding DataContext.WriteRecipeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="写入 PLC"
+                    Content="{x:Static resources:Strings.K220}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Upload}"
-                    ToolTip="写入配方到 PLC；请确认设备和地址后操作"
+                    ToolTip="{x:Static resources:Strings.K221}"
                     ToolTipService.ShowOnDisabled="True" />
             </DockPanel>
         </StackPanel>

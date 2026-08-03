@@ -16,7 +16,7 @@
     FontSize="14"
     PreviewKeyDown="OnPreviewKeyDown"
     WindowState="Maximized"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
 
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+1" Command="{Binding SelectPageCommand}" CommandParameter="0" />
@@ -92,11 +92,11 @@
                         Width="40"
                         Height="40"
                         Padding="0"
-                        AutomationProperties.Name="折叠展开侧边栏"
+                        AutomationProperties.Name="{x:Static resources:Strings.K577}"
                         Command="{Binding ToggleSidebarCommand}"
                         FocusVisualStyle="{StaticResource TouchFocusVisual}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="折叠/展开侧边栏">
+                        ToolTip="{x:Static resources:Strings.K578}">
                         <materialIcons:MaterialIcon
                             Width="18"
                             Height="18"
@@ -120,7 +120,7 @@
                                 FontSize="16"
                                 FontWeight="Bold"
                                 Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="看板系统" />
+                                Text="{x:Static resources:Strings.K579}" />
                         </StackPanel>
                         <TextBlock
                             Margin="28,2,0,0"
@@ -142,7 +142,7 @@
                             FontSize="{DynamicResource FontSizeHint}"
                             Foreground="{StaticResource ThirdlyTextBrush}"
                             Style="{StaticResource SidebarLabel}"
-                            Text="PLC 连接" />
+                            Text="{x:Static resources:Strings.K099}" />
                         <StackPanel Orientation="Horizontal">
                             <Ellipse
                                 Width="8"
@@ -160,7 +160,7 @@
                                     </Style>
                                 </Ellipse.Style>
                             </Ellipse>
-                            <hc:Badge Value="{Binding ConnectionManager.TotalDisconnectCount}" Status="Text" ToolTip="累计断线次数">
+                            <hc:Badge Value="{Binding ConnectionManager.TotalDisconnectCount}" Status="Text" ToolTip="{x:Static resources:Strings.K580}">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     FontSize="{DynamicResource FontSizeCaption}"
@@ -193,7 +193,7 @@
                             FontSize="{DynamicResource FontSizeHint}"
                             Foreground="{StaticResource ThirdlyTextBrush}"
                             Style="{StaticResource SidebarLabel}"
-                            Text="授权状态" />
+                            Text="{x:Static resources:Strings.K581}" />
                         <StackPanel Orientation="Horizontal">
                             <Ellipse
                                 Width="8"
@@ -234,7 +234,7 @@
                     x:Name="NavListBox"
                     Margin="12,8,12,8"
                     VerticalAlignment="Stretch"
-                    AutomationProperties.Name="主导航"
+                    AutomationProperties.Name="{x:Static resources:Strings.K582}"
                     ItemTemplate="{StaticResource SidebarNavItemTemplate}"
                     ItemsSource="{Binding NavItems}"
                     SelectionChanged="OnNavigationSelectionChanged"
@@ -319,12 +319,12 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Panel.ZIndex="900"
-                AutomationProperties.Name="显示导航菜单"
+                AutomationProperties.Name="{x:Static resources:Strings.K121}"
                 Click="OnFullscreenMenuClick"
                 FocusVisualStyle="{StaticResource TouchFocusVisual}"
                 Style="{StaticResource ButtonDefault}"
                 Visibility="Collapsed"
-                ToolTip="显示导航菜单">
+                ToolTip="{x:Static resources:Strings.K121}">
                 <materialIcons:MaterialIcon Width="20" Height="20" Kind="Menu" />
             </Button>
         </Grid>

@@ -11,7 +11,7 @@
     d:DataContext="{d:DesignInstance Type=vm:RuntimeMonitoringViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
@@ -41,10 +41,10 @@
         <Style x:Key="HealthKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}">
             <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding HealthText}" Value="运行正常">
+                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.K418}">
                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding HealthText}" Value="通信中断">
+                <DataTrigger Binding="{Binding HealthText}" Value="{x:Static resources:Strings.K419}">
                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -95,13 +95,13 @@
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="MonitorDashboard" />
                 <StackPanel Margin="10,0,0,0">
-                    <TextBlock Style="{StaticResource PageTitleText}" Text="运行状态监控" />
-                    <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="PLC 通信、采集循环与设备读取健康度" />
+                    <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.K420}" />
+                    <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K421}" />
                 </StackPanel>
             </StackPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                 <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, StringFormat=刷新于 {0:HH:mm:ss}}" />
-                <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="刷新" ToolTip="刷新运行指标（F5）" />
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}" ToolTip="{x:Static resources:Strings.K422}" />
             </StackPanel>
         </DockPanel>
 
@@ -126,12 +126,12 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="采集异常" />
+                    <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="{x:Static resources:Strings.K423}" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding LastFailureMessage}" TextWrapping="Wrap" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding LastFailureAt, StringFormat=最近发生：{0:HH:mm:ss}}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="连续失败" />
+                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K424}" />
                     <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding ConsecutiveFailureCycles}" />
                 </StackPanel>
             </Grid>
@@ -140,7 +140,7 @@
         <UniformGrid Grid.Row="2" Columns="4" Margin="0,0,0,14">
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="PLC 连接" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K099}" />
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Style="{StaticResource ConnectionIndicator}" />
                         <TextBlock Style="{StaticResource ConnectionKpiValue}" Text="{Binding ConnectionStatus}" />
@@ -150,21 +150,21 @@
             </Border>
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="系统健康" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K425}" />
                     <TextBlock Style="{StaticResource HealthKpiValue}" Text="{Binding HealthText}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding IsAcquisitionRunning, StringFormat=采集服务运行：{0}}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="最近采集周期" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K426}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding LastCycleMilliseconds, StringFormat={}{0} ms}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding AverageCycleMilliseconds, StringFormat=平均 {0:F1} ms}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="累计断线" />
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K100}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding TotalDisconnectCount}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding FailedCycles, StringFormat=失败轮询 {0:N0} 次}" />
                 </StackPanel>
@@ -186,7 +186,7 @@
 
             <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="采集循环" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K427}" />
                     <Grid Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -201,26 +201,26 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="完成轮询" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K428}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, StringFormat={}{0:N0} 次}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="平均周期" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K429}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding AverageCycleMilliseconds, StringFormat={}{0:F1} ms}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="最大周期" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K430}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MaxCycleMilliseconds, StringFormat={}{0} ms}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="配置轮询间隔" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K431}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PollingIntervalMs, StringFormat={}{0} ms}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="历史写入频率" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K432}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, StringFormat=每 {0} 次轮询}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
-                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="实际采集周期包含 PLC 读取耗时和轮询等待时间。若最大周期持续高于配置间隔，建议检查 PLC 响应、网络或地址数量。" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K433}" />
                     </Border>
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="设备读取" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K434}" />
                     <Grid Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -232,24 +232,24 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="配置设备数" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K435}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDeviceCount}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="最近成功读取" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K436}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulDevices}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="最近成功时间" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K437}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=暂无}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="累计失败轮询" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K438}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding FailedCycles, StringFormat={}{0:N0} 次}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
-                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="最近成功读取表示上一轮至少成功读取到的设备数量；0 台时会触发断线判定或表示当前没有可读地址。" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K439}" />
                     </Border>
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="PLC 通信详情" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K440}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -261,13 +261,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="连接端点" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K441}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PlcEndpoint}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="断线持续" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K442}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DisconnectDurationText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="连续失败重试" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K443}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ConsecutiveFailures, StringFormat={}{0} 次}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="累计断线" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K100}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDisconnectCount, StringFormat={}{0} 次}" />
                     </Grid>
                 </StackPanel>
@@ -275,7 +275,7 @@
 
             <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="采集质量与读取性能" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K444}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -287,23 +287,23 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="轮询成功率" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K445}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SuccessRatePercent, StringFormat={}{0:F1}%}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="读取点数 / 配置" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K446}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ReadDetailText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="最近成功设备" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K447}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DeviceReadSummary}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="最大采集周期" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K448}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MaxCycleMilliseconds, StringFormat={}{0} ms}" />
                     </Grid>
                     <ProgressBar Style="{StaticResource MetricProgressBar}" Value="{Binding SuccessRatePercent}" Maximum="100" />
-                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="采集成功率" />
+                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K449}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="历史写入健康度" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K450}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -316,15 +316,15 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="待写入快照" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K451}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PendingHistoryCount}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="恢复文件" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K452}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding RecoveryFileText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="最近成功写入历史" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K453}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:HH:mm:ss}, TargetNullValue=暂无}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="写入失败次数" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K454}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushFailureCount}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="数据库存储" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K455}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryStorageText}" />
                     </Grid>
                 </StackPanel>
@@ -332,7 +332,7 @@
 
             <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource MainCard}" Padding="20" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="系统资源与数据一致性" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K456}" />
                     <Grid Margin="0,14,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180" />
@@ -347,40 +347,40 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="CPU / 内存" />
+                        <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K457}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CpuMemoryText}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="程序运行时长" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K458}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ProcessUptimeText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="GPU 使用率" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K459}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding GpuUsageText}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="配置检查" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K460}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DataConsistencyText}" />
-                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="进程资源" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K461}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ProcessResourceText}" />
-                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="内存 / 磁盘" />
+                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K462}" />
                         <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SystemMemoryText}" />
-                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="磁盘剩余" />
+                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K463}" />
                         <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DiskFreeText}" />
                     </Grid>
                     <ProgressBar Style="{StaticResource MetricProgressBar}" Value="{Binding GpuUsagePercent}" Maximum="100" />
-                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="GPU 引擎负载" />
-                    <TextBlock Margin="0,10,0,0" Style="{StaticResource HintText}" Text="阶段耗时" />
+                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K464}" />
+                    <TextBlock Margin="0,10,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K465}" />
                     <TextBlock Margin="0,2,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding StageTimingText}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,8,0,0" Style="{StaticResource HintText}" Text="批次计划" />
+                    <TextBlock Margin="0,8,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K466}" />
                     <TextBlock Margin="0,2,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding BatchPlanText}" />
                 </StackPanel>
             </Border>
 
             <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="设备级采集状态" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K467}" />
                     <ListView Margin="0,12,0,0" Height="220" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
                         <ListView.View>
                             <GridView ColumnHeaderContainerStyle="{StaticResource MetricColumnHeader}">
-                                <GridViewColumn Header="设备" Width="150" DisplayMemberBinding="{Binding DeviceName}" />
-                                <GridViewColumn Header="当前状态" Width="92" DisplayMemberBinding="{Binding StatusText}" />
-                                <GridViewColumn Header="本轮采集" Width="92" DisplayMemberBinding="{Binding AcquisitionText}" />
-                                <GridViewColumn Header="读取配置" Width="110" DisplayMemberBinding="{Binding ReadSummary}" />
+                                <GridViewColumn Header="{x:Static resources:Strings.K002}" Width="150" DisplayMemberBinding="{Binding DeviceName}" />
+                                <GridViewColumn Header="{x:Static resources:Strings.K083}" Width="92" DisplayMemberBinding="{Binding StatusText}" />
+                                <GridViewColumn Header="{x:Static resources:Strings.K468}" Width="92" DisplayMemberBinding="{Binding AcquisitionText}" />
+                                <GridViewColumn Header="{x:Static resources:Strings.K469}" Width="110" DisplayMemberBinding="{Binding ReadSummary}" />
                                 <GridViewColumn Header="OK / NG" Width="100">
                                     <GridViewColumn.DisplayMemberBinding>
                                         <Binding Path="ProductionSummary" />
@@ -394,8 +394,8 @@
 
             <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="轮询周期趋势" />
-                    <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="最近 60 次刷新 · 单位 ms" />
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K470}" />
+                    <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K471}" />
                     <oxy:PlotView Height="220" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
                 </StackPanel>
             </Border>

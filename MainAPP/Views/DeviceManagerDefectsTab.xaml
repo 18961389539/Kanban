@@ -12,7 +12,7 @@
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  缺陷严重等级 / 类别枚举值（ComboBox 数据源），仅本 Tab 使用  -->
         <ObjectDataProvider
@@ -50,14 +50,14 @@
             <Button
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
-                AutomationProperties.Name="新增缺陷"
+                AutomationProperties.Name="{x:Static resources:Strings.K058}"
                 Command="{Binding DataContext.AddDefectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                Content="新增缺陷"
+                Content="{x:Static resources:Strings.K058}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
             <ListBox
-                AutomationProperties.Name="缺陷列表"
+                AutomationProperties.Name="{x:Static resources:Strings.K187}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding Defects}"
                 SelectedItem="{Binding DataContext.SelectedDefect, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -107,16 +107,16 @@
             <StackPanel DataContext="{Binding DataContext.SelectedDefect, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="缺陷名称"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K059}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="缺陷名称"
+                    AutomationProperties.Name="{x:Static resources:Strings.K059}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="PLC 地址（如 D200）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K188}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="缺陷 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K189}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
@@ -128,9 +128,9 @@
                 </hc:TextBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="严重等级"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K190}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="缺陷严重等级"
+                    AutomationProperties.Name="{x:Static resources:Strings.K191}"
                     ItemsSource="{Binding Source={StaticResource DefectSeverityValues}}"
                     SelectedItem="{Binding Severity, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}">
@@ -142,9 +142,9 @@
                 </hc:ComboBox>
                 <hc:ComboBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="缺陷类别"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K060}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="缺陷类别"
+                    AutomationProperties.Name="{x:Static resources:Strings.K060}"
                     ItemsSource="{Binding Source={StaticResource DefectCategoryValues}}"
                     SelectedItem="{Binding Category, UpdateSourceTrigger=PropertyChanged}"
                     Style="{StaticResource ComboBoxExtend}">
@@ -156,10 +156,10 @@
                 </hc:ComboBox>
                 <Button
                     HorizontalAlignment="Right"
-                    AutomationProperties.Name="删除缺陷"
+                    AutomationProperties.Name="{x:Static resources:Strings.K061}"
                     Command="{Binding DataContext.RemoveDefectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding}"
-                    Content="删除缺陷"
+                    Content="{x:Static resources:Strings.K061}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>

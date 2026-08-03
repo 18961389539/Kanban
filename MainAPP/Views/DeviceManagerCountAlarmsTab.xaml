@@ -10,7 +10,7 @@
     xmlns:conv="clr-namespace:MainAPP.Converters"
     mc:Ignorable="d"
     d:DesignHeight="600"
-    d:DesignWidth="800">
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         设备管理 Tab 4：计数报警。
         DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
@@ -28,14 +28,14 @@
             <Button
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
-                AutomationProperties.Name="新增计数报警"
+                AutomationProperties.Name="{x:Static resources:Strings.K056}"
                 Command="{Binding DataContext.AddCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                Content="新增计数报警"
+                Content="{x:Static resources:Strings.K056}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
             <ListBox
-                AutomationProperties.Name="计数报警列表"
+                AutomationProperties.Name="{x:Static resources:Strings.K174}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding CountAlarms}"
                 SelectedItem="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -106,16 +106,16 @@
             <StackPanel DataContext="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="报警名称"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K018}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="计数报警名称"
+                    AutomationProperties.Name="{x:Static resources:Strings.K175}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="PLC 地址（如 D300）"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K176}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="计数报警 PLC 地址"
+                    AutomationProperties.Name="{x:Static resources:Strings.K177}"
                     Style="{StaticResource TextBoxExtend}">
                     <hc:TextBox.Text>
                         <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
@@ -127,25 +127,25 @@
                 </hc:TextBox>
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="阈值上限"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K178}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="计数报警阈值上限"
+                    AutomationProperties.Name="{x:Static resources:Strings.K179}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding MaxValue, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="单位"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K180}"
                     hc:InfoElement.TitlePlacement="Top"
-                    AutomationProperties.Name="计数单位"
+                    AutomationProperties.Name="{x:Static resources:Strings.K181}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" />
                 <hc:TextBox
                     Height="60"
                     Margin="0,0,0,16"
-                    hc:InfoElement.Title="报警描述"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K030}"
                     hc:InfoElement.TitlePlacement="Top"
                     AcceptsReturn="True"
-                    AutomationProperties.Name="计数报警描述"
+                    AutomationProperties.Name="{x:Static resources:Strings.K182}"
                     Style="{StaticResource TextBoxExtend}"
                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
@@ -162,7 +162,7 @@
                             VerticalAlignment="Center"
                             FontSize="13"
                             Foreground="{StaticResource SecondaryTextBrush}"
-                            Text="当前值：" />
+                            Text="{x:Static resources:Strings.K183}" />
                         <TextBlock
                             Margin="4,0,0,0"
                             VerticalAlignment="Center"
@@ -216,24 +216,24 @@
                                 Margin="6,2"
                                 FontSize="12"
                                 Foreground="White"
-                                Text="已超限" />
+                                Text="{x:Static resources:Strings.K184}" />
                         </Border>
                     </StackPanel>
                 </Border>
                 <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                     <Button
                         Margin="0,0,8,0"
-                        AutomationProperties.Name="清空计数报警当前值"
+                        AutomationProperties.Name="{x:Static resources:Strings.K185}"
                         Command="{Binding DataContext.ResetCountAlarmValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"
-                        Content="清空当前值"
+                        Content="{x:Static resources:Strings.K186}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.Refresh}" />
                     <Button
-                        AutomationProperties.Name="删除计数报警"
+                        AutomationProperties.Name="{x:Static resources:Strings.K057}"
                         Command="{Binding DataContext.RemoveCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"
-                        Content="删除计数报警"
+                        Content="{x:Static resources:Strings.K057}"
                         Style="{StaticResource IconButtonDanger}"
                         Tag="{x:Static mi:MaterialIconKind.Delete}" />
                 </StackPanel>

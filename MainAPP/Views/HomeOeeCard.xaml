@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="500">
+    d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         主页仪表板卡片 4：OEE 综合效率（OEE 主环 + 可用率/性能率/合格率三环小卡）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -25,7 +25,7 @@
             <!--  标题  -->
             <StackPanel Grid.Row="0" Margin="0,0,0,14" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="OEE 综合效率" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
                 <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
@@ -50,7 +50,7 @@
                                        Foreground="{StaticResource ThirdlyTextBrush}" Text="OEE" />
                         </StackPanel>
                         <!-- 空状态：OeeRingChart 为 null 时显示，遮盖空环和 0% 文本 -->
-                        <controls:EmptyState IconKind="ChartArc" Message="暂无 OEE 数据" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:EmptyState IconKind="ChartArc" Message="{x:Static resources:Strings.K320}" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <controls:EmptyState.Style>
                                 <Style TargetType="controls:EmptyState">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -80,7 +80,7 @@
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="A时间稼动率" />
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K321}" />
                                     <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
                                                VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                                Foreground="{Binding AvailabilityRate, Converter={StaticResource OeeThreshold}}"
@@ -106,7 +106,7 @@
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="B性能达标率" />
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K322}" />
                                     <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
                                                VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                                Foreground="{Binding PerformanceRate, Converter={StaticResource OeeThreshold}}"
@@ -132,7 +132,7 @@
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="C良品率" />
+                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
                                     <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
                                                VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                                Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"

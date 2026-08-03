@@ -13,7 +13,7 @@
     d:DesignHeight="1080"
     d:DesignWidth="1712"
     PreviewKeyDown="OnPreviewKeyDown"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  共享资源（StateText/StateBrush/StatusStripe/DeviceCardBorder）已移至 Styles/ProductionLineResources.xaml
               并在 App.xaml 全局注册：子 UserControl 在 XAML 加载阶段无法跨 UserControl 边界查找父级资源。  -->
@@ -78,7 +78,7 @@
         <!--  ============ 标题栏 ============  -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
             <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Factory" />
-            <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="产线总览" />
+            <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K405}" />
             <Border Width="1" Margin="20,4" Background="{StaticResource BorderBrush}" />
             <TextBlock
                 VerticalAlignment="Center" FontSize="14"
@@ -93,39 +93,39 @@
                 Width="220"
                 Height="34"
                 VerticalAlignment="Center"
-                AutomationProperties.Name="按设备名搜索"
+                AutomationProperties.Name="{x:Static resources:Strings.K406}"
                 Style="{StaticResource SearchBarExtend}"
                 Text="{Binding LineSearchKeyword, UpdateSourceTrigger=PropertyChanged}"
-                ToolTip="按设备名搜索 (Ctrl+F)" />
+                ToolTip="{x:Static resources:Strings.K407}" />
             <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13"
-                           Foreground="{StaticResource SecondaryTextBrush}" Text="状态" />
-                <Button Content="全部" Style="{StaticResource LineSegmentButton}"
+                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K003}" />
+                <Button Content="{x:Static resources:Strings.K004}" Style="{StaticResource LineSegmentButton}"
                         Tag="{x:Static vm:LineStatusFilter.All}"
                         Command="{Binding SetStatusFilterCommand}" CommandParameter="{x:Static vm:LineStatusFilter.All}" />
-                <Button Content="运行" Style="{StaticResource LineSegmentButton}"
+                <Button Content="{x:Static resources:Strings.K005}" Style="{StaticResource LineSegmentButton}"
                         Tag="{x:Static vm:LineStatusFilter.Running}"
                         Command="{Binding SetStatusFilterCommand}" CommandParameter="{x:Static vm:LineStatusFilter.Running}" />
-                <Button Content="报警" Style="{StaticResource LineSegmentButton}"
+                <Button Content="{x:Static resources:Strings.K016}" Style="{StaticResource LineSegmentButton}"
                         Tag="{x:Static vm:LineStatusFilter.Alarm}"
                         Command="{Binding SetStatusFilterCommand}" CommandParameter="{x:Static vm:LineStatusFilter.Alarm}" />
-                <Button Content="待机" Style="{StaticResource LineSegmentButton}"
+                <Button Content="{x:Static resources:Strings.K006}" Style="{StaticResource LineSegmentButton}"
                     Tag="{x:Static vm:LineStatusFilter.Paused}"
                     Command="{Binding SetStatusFilterCommand}" CommandParameter="{x:Static vm:LineStatusFilter.Paused}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" FontSize="13"
-                           Foreground="{StaticResource SecondaryTextBrush}" Text="排序" />
-                <Button Content="报警优先" Style="{StaticResource LineSortButton}"
+                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K408}" />
+                <Button Content="{x:Static resources:Strings.K409}" Style="{StaticResource LineSortButton}"
                     Tag="{x:Static vm:LineSortBy.AlarmFirst}"
                     Command="{Binding SetSortCommand}" CommandParameter="{x:Static vm:LineSortBy.AlarmFirst}" />
-                <Button Content="默认" Style="{StaticResource LineSortButton}"
+                <Button Content="{x:Static resources:Strings.K410}" Style="{StaticResource LineSortButton}"
                         Tag="{x:Static vm:LineSortBy.Default}"
                         Command="{Binding SetSortCommand}" CommandParameter="{x:Static vm:LineSortBy.Default}" />
                 <Button Content="OEE↓" Style="{StaticResource LineSortButton}"
                         Tag="{x:Static vm:LineSortBy.OeeDesc}"
                         Command="{Binding SetSortCommand}" CommandParameter="{x:Static vm:LineSortBy.OeeDesc}" />
-                <Button Content="产量↓" Style="{StaticResource LineSortButton}"
+                <Button Content="{x:Static resources:Strings.K411}" Style="{StaticResource LineSortButton}"
                         Tag="{x:Static vm:LineSortBy.OutputDesc}"
                         Command="{Binding SetSortCommand}" CommandParameter="{x:Static vm:LineSortBy.OutputDesc}" />
             </StackPanel>
@@ -145,7 +145,7 @@
             <!--  运行  -->
             <Border Grid.Column="0" Style="{StaticResource SummaryKpiBox}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="运行" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K005}" />
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{StaticResource SuccessBrush}" />
                         <TextBlock FontFamily="Consolas" FontSize="28" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"
@@ -157,7 +157,7 @@
             <!--  报警  -->
             <Border Grid.Column="1" Style="{StaticResource SummaryKpiBox}" Margin="8,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="报警中" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K412}" />
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{StaticResource DangerBrush}" />
                         <TextBlock FontFamily="Consolas" FontSize="28" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"
@@ -169,7 +169,7 @@
             <!--  待机  -->
             <Border Grid.Column="2" Style="{StaticResource SummaryKpiBox}" Margin="8,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="待机" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K006}" />
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{StaticResource StatusPauseBrush}" />
                         <TextBlock FontFamily="Consolas" FontSize="28" FontWeight="Bold" Foreground="{StaticResource StatusPauseBrush}"
@@ -181,7 +181,7 @@
             <!--  总产量  -->
             <Border Grid.Column="3" Style="{StaticResource SummaryKpiBox}" Margin="8,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="总产量" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K023}" />
                     <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <TextBlock FontFamily="Consolas" FontSize="28" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
                                    Text="{Binding TotalOutput, StringFormat={}{0:N0} 件}" />
@@ -218,7 +218,7 @@
             <!--  整体合格率  -->
             <Border Grid.Column="4" Style="{StaticResource SummaryKpiBox}" Margin="8,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="整体良品率" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K413}" />
                     <TextBlock Margin="0,6,0,0" FontFamily="Consolas" FontSize="28" FontWeight="Bold"
                                Foreground="{Binding OverallQualityRate, Converter={StaticResource RatioThreshold}}"
                                Text="{Binding OverallQualityRate, StringFormat=P1}" />
@@ -228,7 +228,7 @@
             <!--  加权 OEE  -->
             <Border Grid.Column="5" Style="{StaticResource SummaryKpiBox}" Margin="8,0,0,0">
                 <StackPanel>
-                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="加权 OEE" />
+                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K414}" />
                     <TextBlock Margin="0,6,0,0" FontFamily="Consolas" FontSize="28" FontWeight="Bold"
                                Foreground="{Binding WeightedOee, Converter={StaticResource OeeThreshold}}"
                                Text="{Binding WeightedOee, StringFormat=P1}" />
@@ -239,7 +239,7 @@
         <!--  ============ 当前班次标注 ============  -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,12" VerticalAlignment="Center">
             <TextBlock FontSize="13" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
-                <Run Text="当前班次：" />
+                <Run Text="{x:Static resources:Strings.K415}" />
                 <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentShiftName, Mode=OneWay}" />
                 <Run Text="  " />
                 <Run Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding CurrentShiftTimeRange, Mode=OneWay}" />
@@ -263,7 +263,7 @@
                 Visibility="{Binding HasNoDevices, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Background="{StaticResource RegionBrush}" CornerRadius="8"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-            <controls:EmptyState IconKind="Factory" Message="暂无设备" Hint="请在设备管理中添加设备" />
+            <controls:EmptyState IconKind="Factory" Message="{x:Static resources:Strings.K416}" Hint="{x:Static resources:Strings.K417}" />
         </Border>
     </Grid>
 </UserControl>

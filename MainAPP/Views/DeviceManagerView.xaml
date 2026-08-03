@@ -14,7 +14,7 @@
     d:DesignWidth="1100"
     Loaded="OnLoaded"
     PreviewKeyDown="OnPreviewKeyDown"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  ObjectDataProvider（AlarmLevelValues/DefectSeverityValues/DefectCategoryValues）
               已移至各 Tab 子 UserControl 的本地 Resources，避免重复定义。  -->
@@ -56,7 +56,7 @@
                     <TextBlock
                         Margin="8,0,0,0"
                         Style="{StaticResource SectionTitleText}"
-                        Text="设备列表" />
+                        Text="{x:Static resources:Strings.K064}" />
                     <TextBlock
                         Margin="6,0,0,0"
                         VerticalAlignment="Center"
@@ -70,7 +70,7 @@
                         FontSize="12"
                         FontWeight="Bold"
                         Foreground="{StaticResource WarningBrush}"
-                        Text="● 未保存"
+                        Text="{x:Static resources:Strings.K222}"
                         Visibility="{Binding IsDirty, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <materialIcons:MaterialIcon
                         DockPanel.Dock="Right"
@@ -87,7 +87,7 @@
                     x:Name="DeviceSearchBar"
                     Grid.Row="1"
                     Margin="18,0,18,10"
-                    AutomationProperties.Name="搜索设备"
+                    AutomationProperties.Name="{x:Static resources:Strings.K223}"
                     Style="{StaticResource SearchBarExtend}"
                     Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -97,9 +97,9 @@
                     Margin="18,0,18,10"
                     Width="150"
                     HorizontalAlignment="Left"
-                    AutomationProperties.Name="按状态筛选设备"
-                    hc:InfoElement.Placeholder="状态筛选"
-                    hc:InfoElement.Title="状态"
+                    AutomationProperties.Name="{x:Static resources:Strings.K224}"
+                    hc:InfoElement.Placeholder="{x:Static resources:Strings.K225}"
+                    hc:InfoElement.Title="{x:Static resources:Strings.K003}"
                     DisplayMemberPath="Label"
                     ItemsSource="{Binding StatusFilterOptions}"
                     SelectedValue="{Binding StatusFilter}"
@@ -111,7 +111,7 @@
                     Grid.Row="3"
                     Margin="18,0,18,8"
                     AllowDrop="True"
-                    AutomationProperties.Name="设备列表"
+                    AutomationProperties.Name="{x:Static resources:Strings.K064}"
                     DragOver="OnListDragOver"
                     Drop="OnListDrop"
                     ItemContainerStyle="{StaticResource CardListItemStyle}"
@@ -179,7 +179,7 @@
                                 <Button
                                     Margin="6,0,0,0"
                                     Padding="0"
-                                    AutomationProperties.Name="地址冲突，点击定位"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K226}"
                                     Command="{Binding DataContext.SelectAddressConflictCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Background="Transparent"
@@ -218,8 +218,8 @@
                     </Border.Style>
                     <controls:EmptyState
                         IconKind="FilterRemoveOutline"
-                        Message="无匹配的设备"
-                        Hint="提示：调整搜索关键词或状态筛选条件" />
+                        Message="{x:Static resources:Strings.K227}"
+                        Hint="{x:Static resources:Strings.K228}" />
                 </Border>
 
                 <!--  操作按钮：主操作单行 + 更多下拉菜单承载低频操作  -->
@@ -229,79 +229,79 @@
                     Orientation="Horizontal">
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="新增设备"
+                        AutomationProperties.Name="{x:Static resources:Strings.K229}"
                         Command="{Binding AddDeviceCommand}"
-                        Content="新增"
+                        Content="{x:Static resources:Strings.K033}"
                         Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.Plus}" />
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="删除选中的设备"
+                        AutomationProperties.Name="{x:Static resources:Strings.K230}"
                         Command="{Binding RemoveDeviceCommand}"
                         CommandParameter="{Binding SelectedDevice}"
-                        Content="删除"
+                        Content="{x:Static resources:Strings.K034}"
                         Style="{StaticResource IconButtonDanger}"
                         Tag="{x:Static mi:MaterialIconKind.Delete}" />
                     <Button
                         Margin="0,0,6,0"
-                        AutomationProperties.Name="保存设备配置"
+                        AutomationProperties.Name="{x:Static resources:Strings.K231}"
                         Command="{Binding SaveCommand}"
-                        Content="保存"
+                        Content="{x:Static resources:Strings.K232}"
                         Style="{StaticResource IconButtonSuccess}"
                         Tag="{x:Static mi:MaterialIconKind.ContentSave}"
-                        ToolTip="保存设备配置 (Ctrl+S)" />
+                        ToolTip="{x:Static resources:Strings.K233}" />
                     <!--  更多：复制 / 导入 / 导出 / 恢复 / 虚拟（低频操作收进下拉菜单）  -->
                     <Button
                         x:Name="MoreActionsButton"
-                        AutomationProperties.Name="更多设备操作"
+                        AutomationProperties.Name="{x:Static resources:Strings.K234}"
                         Click="OnMoreActionsClick"
-                        Content="更多"
+                        Content="{x:Static resources:Strings.K235}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
-                        ToolTip="复制 / 导入 / 导出 / 恢复 / 虚拟">
+                        ToolTip="{x:Static resources:Strings.K236}">
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem
-                                    AutomationProperties.Name="复制选中的设备"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K237}"
                                     Command="{Binding CopyDeviceCommand}"
                                     CommandParameter="{Binding SelectedDevice}"
-                                    Header="复制选中设备">
+                                    Header="{x:Static resources:Strings.K238}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ContentCopy" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem
-                                    AutomationProperties.Name="导入设备配置"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K239}"
                                     Command="{Binding ImportConfigCommand}"
-                                    Header="导入配置">
+                                    Header="{x:Static resources:Strings.K240}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="Import" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem
-                                    AutomationProperties.Name="导出设备配置"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K241}"
                                     Command="{Binding ExportConfigCommand}"
-                                    Header="导出配置">
+                                    Header="{x:Static resources:Strings.K242}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="Export" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <Separator />
                                 <MenuItem
-                                    AutomationProperties.Name="恢复上一版本配置"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K243}"
                                     Command="{Binding RollbackToBackupCommand}"
-                                    Header="恢复上一版本"
-                                    ToolTip="用上一次保存前的配置覆盖当前配置（需密码确认）">
+                                    Header="{x:Static resources:Strings.K244}"
+                                    ToolTip="{x:Static resources:Strings.K245}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="History" />
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem
-                                    AutomationProperties.Name="生成虚拟设备"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K065}"
                                     Command="{Binding SeedSampleDevicesCommand}"
-                                    Header="生成虚拟设备"
-                                    ToolTip="生成 20 台虚拟设备用于预览（需密码确认）">
+                                    Header="{x:Static resources:Strings.K065}"
+                                    ToolTip="{x:Static resources:Strings.K246}">
                                     <MenuItem.Icon>
                                         <materialIcons:MaterialIcon Kind="ToyBrickPlus" />
                                     </MenuItem.Icon>
@@ -324,7 +324,7 @@
             Cursor="SizeWE"
             ResizeBehavior="PreviousAndNext"
             ResizeDirection="Columns"
-            AutomationProperties.Name="调整设备列表与设备详情的宽度">
+            AutomationProperties.Name="{x:Static resources:Strings.K247}">
             <GridSplitter.Template>
                 <ControlTemplate TargetType="GridSplitter">
                     <Grid Background="Transparent">
@@ -358,7 +358,7 @@
 
                 <!--  详情标题：设备名 + 实时状态徽章（切设备时同步刷新，避免改错设备）  -->
                 <DockPanel Grid.Row="0" Margin="24,18,24,12">
-                    <TextBlock Style="{StaticResource SectionTitleText}" Text="设备详情" />
+                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K066}" />
                     <!--  当前编辑设备名（突出显示，区别于"设备详情"固定标题）  -->
                     <StackPanel
                         Margin="12,0,0,0"
@@ -406,9 +406,9 @@
                 <Grid Grid.Row="1">
                     <!--  空状态  -->
                     <controls:EmptyState
-                        Hint="选中后可在此处编辑设备参数、PLC 地址、报警与缺陷"
+                        Hint="{x:Static resources:Strings.K248}"
                         IconKind="Harddisk"
-                        Message="请选择设备或点击新增">
+                        Message="{x:Static resources:Strings.K249}">
                         <controls:EmptyState.Style>
                             <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -426,13 +426,13 @@
                         <TabControl
                             Style="{StaticResource KanbanTabControl}"
                             Padding="0"
-                            AutomationProperties.Name="设备详情选项卡"
+                            AutomationProperties.Name="{x:Static resources:Strings.K250}"
                             BorderThickness="0"
                             SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
                             SelectionChanged="OnTabSelectionChanged">
 
                             <!--  ============ Tab 1：设备参数 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="设备参数">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K067}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -443,14 +443,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="设备参数" />
+                                            Text="{x:Static resources:Strings.K067}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerDeviceParamsTab />
                             </TabItem>
 
                             <!--  ============ Tab 2：报警管理 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="报警管理">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K068}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -461,14 +461,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="报警管理" />
+                                            Text="{x:Static resources:Strings.K068}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerAlarmsTab DataContext="{Binding AlarmManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 3：缺陷管理 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="缺陷管理">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K069}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -479,14 +479,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="缺陷管理" />
+                                            Text="{x:Static resources:Strings.K069}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerDefectsTab DataContext="{Binding DefectManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 4：计数报警 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="计数报警">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K070}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -497,14 +497,14 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="计数报警" />
+                                            Text="{x:Static resources:Strings.K070}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerCountAlarmsTab DataContext="{Binding CountAlarmManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 5：工单 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="工单">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K071}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -515,7 +515,7 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="工单" />
+                                            Text="{x:Static resources:Strings.K071}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerWorkOrdersTab />
@@ -529,7 +529,7 @@
         <!--  加载中覆盖层：PLC 写入（配方 / 清空计数报警当前值）期间显示  -->
         <Border
             Grid.ColumnSpan="3"
-            AutomationProperties.Name="加载中"
+            AutomationProperties.Name="{x:Static resources:Strings.K251}"
             Style="{StaticResource LoadingOverlay}"
             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <hc:LoadingCircle

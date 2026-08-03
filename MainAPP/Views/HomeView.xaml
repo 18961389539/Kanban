@@ -12,7 +12,7 @@
     d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}"
     d:DesignHeight="1080"
     d:DesignWidth="1712"
-    mc:Ignorable="d">
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  共享样式（DashboardCard/CardTitleIcon/CardTitleText）已移至 Styles/HomeResources.xaml
               并在 App.xaml 全局注册：子 UserControl 在 XAML 加载阶段无法跨 UserControl 边界查找父级资源。
@@ -31,7 +31,7 @@
             <Grid>
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="ChartLineVariant" />
-                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="生产仪表板" />
+                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K335}" />
             </StackPanel>
 
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
@@ -40,11 +40,11 @@
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
                             <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                            <Setter Property="ToolTip" Value="PLC 未连接" />
+                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.K336}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding ConnectionManager.IsConnected}" Value="True">
                                     <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                    <Setter Property="ToolTip" Value="PLC 已连接" />
+                                    <Setter Property="ToolTip" Value="{x:Static resources:Strings.K337}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -55,7 +55,7 @@
                 <ComboBox
                     Width="200"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="设备筛选"
+                    AutomationProperties.Name="{x:Static resources:Strings.K024}"
                     DisplayMemberPath="Name"
                     ItemsSource="{Binding DeviceFilterItems}"
                     SelectedValue="{Binding SelectedDeviceId}"
@@ -99,21 +99,21 @@
 
                 <!--  工单管理入口  -->
                 <Button Margin="10,0,0,0" VerticalAlignment="Center"
-                        AutomationProperties.Name="工单管理"
+                        AutomationProperties.Name="{x:Static resources:Strings.K089}"
                         Command="{Binding ViewWorkOrderManagerCommand}"
-                        Content="工单管理"
+                        Content="{x:Static resources:Strings.K089}"
                         Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.ClipboardListOutline}"
-                        ToolTip="打开工单管理页" />
+                        ToolTip="{x:Static resources:Strings.K338}" />
 
                 <!--  查看设备详情  -->
                 <Button Margin="6,0,0,0" VerticalAlignment="Center"
-                        AutomationProperties.Name="查看详情"
+                        AutomationProperties.Name="{x:Static resources:Strings.K339}"
                         Command="{Binding ViewDeviceDetailCommand}"
-                        Content="设备详情"
+                        Content="{x:Static resources:Strings.K066}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.ChartBoxOutline}"
-                        ToolTip="查看当前选中设备的详情" />
+                        ToolTip="{x:Static resources:Strings.K340}" />
             </StackPanel>
             </Grid>
 
@@ -135,7 +135,7 @@
                     <materialIcons:MaterialIcon Width="18" Height="18" VerticalAlignment="Center"
                                                 Foreground="{StaticResource DangerBrush}" Kind="Alert" />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                               Foreground="{StaticResource DangerBrush}" Text="PLC 未连接，实时数据可能已过期" />
+                               Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.K341}" />
                 </StackPanel>
             </Border>
         </StackPanel>

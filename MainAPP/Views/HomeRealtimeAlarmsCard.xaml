@@ -8,7 +8,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         主页仪表板卡片 3：实时故障（卡片式列表 + 级别筛选 + 静音按钮）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -25,7 +25,7 @@
                 <!--  左：标题 + 报警计数徽章（High 级别时红色）  -->
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="BellAlert" />
-                    <TextBlock Style="{StaticResource CardTitleText}" Text="实时故障" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K329}" />
                     <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
                     <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="11"
                             VerticalAlignment="Center">
@@ -47,10 +47,10 @@
                 <!--  右：静音按钮（切换新报警闪烁动画）  -->
                 <Button DockPanel.Dock="Right" Width="30" Height="30" Padding="0" Margin="8,0,0,0"
                         VerticalAlignment="Center"
-                        AutomationProperties.Name="静音或恢复新报警闪烁"
+                        AutomationProperties.Name="{x:Static resources:Strings.K330}"
                         Command="{Binding ToggleAlarmMuteCommand}"
                         Style="{StaticResource ButtonDefault}"
-                        ToolTip="静音/恢复新报警闪烁">
+                        ToolTip="{x:Static resources:Strings.K331}">
                     <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
                         <materialIcons:MaterialIcon.Style>
                             <Style TargetType="materialIcons:MaterialIcon">
@@ -71,12 +71,12 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="8,0"
                             VerticalAlignment="Center">
                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Margin="0,0,6,0"
-                               Foreground="{StaticResource ThirdlyTextBrush}" Text="级别" />
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K332}" />
                     <!--  High：红色，对应 Danger  -->
                     <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="筛选 High 级别报警"
+                                  AutomationProperties.Name="{x:Static resources:Strings.K086}"
                                   IsChecked="{Binding ShowHighAlarms, Mode=TwoWay}"
-                                  ToolTip="筛选 High 级别报警">
+                                  ToolTip="{x:Static resources:Strings.K086}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -96,9 +96,9 @@
                     </ToggleButton>
                     <!--  Medium：黄色，对应 Warning  -->
                     <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="筛选 Medium 级别报警"
+                                  AutomationProperties.Name="{x:Static resources:Strings.K087}"
                                   IsChecked="{Binding ShowMediumAlarms, Mode=TwoWay}"
-                                  ToolTip="筛选 Medium 级别报警">
+                                  ToolTip="{x:Static resources:Strings.K087}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -118,9 +118,9 @@
                     </ToggleButton>
                     <!--  Low：主色蓝紫，对应 Primary  -->
                     <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                  AutomationProperties.Name="筛选 Low 级别报警"
+                                  AutomationProperties.Name="{x:Static resources:Strings.K088}"
                                   IsChecked="{Binding ShowLowAlarms, Mode=TwoWay}"
-                                  ToolTip="筛选 Low 级别报警">
+                                  ToolTip="{x:Static resources:Strings.K088}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
@@ -147,7 +147,7 @@
                     <ItemsControl ItemsSource="{Binding FilteredActiveAlarms}"
                                   VirtualizingStackPanel.IsVirtualizing="True"
                                   VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                  AutomationProperties.Name="实时故障列表">
+                                  AutomationProperties.Name="{x:Static resources:Strings.K333}">
                         <!-- ItemsControl 默认 ItemsPanel 是 StackPanel（非虚拟化），
                              VirtualizingStackPanel.IsVirtualizing 附加属性仅在 Panel 为 VirtualizingStackPanel 时生效。
                              必须显式设置 ItemsPanel 为 VirtualizingStackPanel 才能真正启用虚拟化，
@@ -270,7 +270,7 @@
                 </ScrollViewer>
 
                 <!-- 空状态 -->
-                <controls:EmptyState IconKind="ShieldCheckOutline" Message="暂无活跃故障" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.K334}" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <controls:EmptyState.Style>
                         <Style TargetType="controls:EmptyState">
                             <Setter Property="Visibility" Value="Collapsed" />

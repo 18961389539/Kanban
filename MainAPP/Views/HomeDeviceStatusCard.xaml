@@ -9,7 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     mc:Ignorable="d"
     d:DesignHeight="400"
-    d:DesignWidth="400">
+    d:DesignWidth="400" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
         主页仪表板卡片 1：设备状态。
         DataContext 由父级 HomeView 传入 HomeViewModel。
@@ -24,7 +24,7 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,16" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Harddisk" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="设备状态" />
+                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K028}" />
                 <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
@@ -36,7 +36,7 @@
 
                 <!-- 当前状态 -->
                 <StackPanel Grid.Row="0" Margin="0,4">
-                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="当前状态" />
+                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K083}" />
                     <Border Margin="0,6,0,0" Padding="12,8" HorizontalAlignment="Left"
                             CornerRadius="6"
                             Background="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}">
@@ -59,7 +59,7 @@
                                                     Foreground="{StaticResource ThirdlyTextBrush}" Kind="PackageVariant" />
                         <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="配方" />
+                                   Text="{x:Static resources:Strings.K027}" />
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                    Foreground="{StaticResource PrimaryTextBrush}"
@@ -86,7 +86,7 @@
                                        Text="{Binding TotalTimeFormatted}" />
                         </StackPanel>
                         <!-- 空状态：StatusPieChart 为 null 时显示 -->
-                        <controls:EmptyState IconKind="ChartDonut" Message="暂无状态数据" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:EmptyState IconKind="ChartDonut" Message="{x:Static resources:Strings.K318}" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <controls:EmptyState.Style>
                                 <Style TargetType="controls:EmptyState">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -119,7 +119,7 @@
                                 <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                                          Fill="{StaticResource SuccessBrush}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="运行" />
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K005}" />
                             </StackPanel>
                             <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                        Foreground="{StaticResource SuccessBrush}"
@@ -135,7 +135,7 @@
                                 <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                                          Fill="{StaticResource StatusAlarmBrush}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="报警" />
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K016}" />
                             </StackPanel>
                             <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                        Foreground="{StaticResource StatusAlarmBrush}"
@@ -151,7 +151,7 @@
                                 <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                                          Fill="{StaticResource StatusPauseBrush}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="待机" />
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K006}" />
                             </StackPanel>
                             <TextBlock Margin="20,6,0,0" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                        Foreground="{StaticResource StatusPauseBrush}"
