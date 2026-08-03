@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -57,11 +58,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject
 
     /// <summary>状态筛选选项（"全部"/"待开始"/"进行中"/"已完成"/"已中止"）。</summary>
     [ObservableProperty]
-    private string _statusFilter = "全部";
+    private string _statusFilter = Strings.M040;
 
     /// <summary>设备筛选选项（"全部设备" + 各设备名称）。</summary>
     [ObservableProperty]
-    private string _deviceFilter = "全部设备";
+    private string _deviceFilter = Strings.M044;
 
     [ObservableProperty] private DateTime? _filterFromDate;
     [ObservableProperty] private DateTime? _filterToDate;
@@ -71,19 +72,19 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     [ObservableProperty] private WorkOrderSortMode _sortMode = WorkOrderSortMode.ScheduleStart;
 
     /// <summary>可选状态筛选值列表（中文标签，绑定到 ComboBox）。</summary>
-    public IReadOnlyList<string> StatusOptions { get; } = new[] { "全部", "待开始", "进行中", "已完成", "已中止" };
+    public IReadOnlyList<string> StatusOptions { get; } = new[] { Strings.M040, Strings.M041, Strings.M042, Strings.M043, Strings.M031 };
 
     /// <summary>可选设备筛选值列表（"全部设备" + 各设备名称，启动时从 DeviceRepository 刷新）。</summary>
-    public ObservableCollection<string> DeviceOptions { get; } = new() { "全部设备" };
+    public ObservableCollection<string> DeviceOptions { get; } = new() { Strings.M044 };
 
     /// <summary>中文状态标签 → 枚举值映射（过滤时用）。</summary>
     private static readonly Dictionary<string, WorkOrderStatus?> StatusLabelToEnum = new()
     {
-        ["全部"] = null,
-        ["待开始"] = WorkOrderStatus.Pending,
-        ["进行中"] = WorkOrderStatus.Running,
-        ["已完成"] = WorkOrderStatus.Completed,
-        ["已中止"] = WorkOrderStatus.Aborted,
+        [Strings.M040] = null,
+        [Strings.M041] = WorkOrderStatus.Pending,
+        [Strings.M042] = WorkOrderStatus.Running,
+        [Strings.M043] = WorkOrderStatus.Completed,
+        [Strings.M031] = WorkOrderStatus.Aborted,
     };
 
     /// <summary>选中工单的产量聚合（详情页绑定）。null 表示未查询/未选中。</summary>
@@ -175,11 +176,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         var devices = _deviceRepo.GetDevicesSnapshot();
         var current = DeviceFilter;
         DeviceOptions.Clear();
-        DeviceOptions.Add("全部设备");
+        DeviceOptions.Add(Strings.M044);
         foreach (var d in devices)
             DeviceOptions.Add(d.Name);
         // 尝试恢复之前选中的设备筛选（若仍存在）
-        DeviceFilter = DeviceOptions.Contains(current) ? current : "全部设备";
+        DeviceFilter = DeviceOptions.Contains(current) ? current : Strings.M044;
     }
 
     /// <summary>过滤条件：关键字 + 状态 + 设备。</summary>
@@ -187,10 +188,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     {
         if (obj is not WorkOrder w) return false;
         // 状态筛选（中文标签 → 枚举值）
-        if (StatusLabelToEnum.TryGetValue(StatusFilter ?? "全部", out var expected) && expected.HasValue && w.Status != expected.Value)
+        if (StatusLabelToEnum.TryGetValue(StatusFilter ?? Strings.M040, out var expected) && expected.HasValue && w.Status != expected.Value)
             return false;
         // 设备筛选
-        if (!string.IsNullOrEmpty(DeviceFilter) && DeviceFilter != "全部设备")
+        if (!string.IsNullOrEmpty(DeviceFilter) && DeviceFilter != Strings.M044)
         {
             if (w.DeviceName != DeviceFilter) return false;
         }
@@ -364,11 +365,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         if (workOrder.Status == WorkOrderStatus.Completed)
             return achievementRate >= 1 ? "已达标完成" : "未达标完成";
         if (workOrder.Status == WorkOrderStatus.Aborted)
-            return "已中止";
+            return Strings.M031;
         if (achievementRate >= 1.0)
-            return "已达标待完成";
+            return Strings.M032;
         if (workOrder.PlannedEnd < DateTime.Now)
-            return "已超期未完成";
+            return Strings.M033;
         return GetProgressDeviation(workOrder, achievementRate) < -0.1 ? "进度落后" : "正常生产";
     }
 
@@ -456,7 +457,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         var filtered = FilteredView.OfType<WorkOrder>().ToList();
         if (filtered.Count == 0)
         {
-            _dialog.NotifyWarning("当前筛选结果为空，无可导出的工单");
+            _dialog.NotifyWarning(Strings.M034);
             return;
         }
 
@@ -474,10 +475,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject
             {
                 var statusText = w.Status switch
                 {
-                    WorkOrderStatus.Pending => "待开始",
-                    WorkOrderStatus.Running => "进行中",
-                    WorkOrderStatus.Completed => "已完成",
-                    WorkOrderStatus.Aborted => "已中止",
+                    WorkOrderStatus.Pending => Strings.M041,
+                    WorkOrderStatus.Running => Strings.M042,
+                    WorkOrderStatus.Completed => Strings.M043,
+                    WorkOrderStatus.Aborted => Strings.M031,
                     _ => w.Status.ToString(),
                 };
                 // CSV 字段含逗号需双引号包裹
@@ -541,13 +542,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         var devices = _deviceRepo.GetDevicesSnapshot();
         if (devices.Count == 0)
         {
-            _dialog.NotifyWarning("请先在设备管理页添加设备");
+            _dialog.NotifyWarning(Strings.M035);
             return;
         }
 
         // 密码确认：防止误触生成虚拟数据
         const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput("安全验证", "请输入密码以生成样本工单：");
+        var password = _dialog.ShowPasswordInput(Strings.M001, "请输入密码以生成样本工单：");
         if (password != expectedPassword) return;
 
         if (WorkOrders.Count > 0)

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -799,7 +800,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
         if (fileName == null || string.IsNullOrEmpty(csv))
         {
-            _dialog.NotifyInfo("当前 Tab 无数据可导出");
+            _dialog.NotifyInfo(Strings.M011);
             Log.Debug("导出取消：Tab={TabIndex}，无数据", SelectedTabIndex);
             return;
         }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -633,4 +633,52 @@
   <data name="K580" xml:space="preserve"><value>累计断线次数</value></data>
   <data name="K581" xml:space="preserve"><value>授权状态</value></data>
   <data name="K582" xml:space="preserve"><value>主导航</value></data>
+  <data name="M001" xml:space="preserve"><value>安全验证</value></data>
+  <data name="M002" xml:space="preserve"><value>未找到 Microsoft YaHei 中文字体，无法生成 PDF</value></data>
+  <data name="M003" xml:space="preserve"><value>所选文件中没有设备数据</value></data>
+  <data name="M004" xml:space="preserve"><value>未找到上一版本备份文件</value></data>
+  <data name="M005" xml:space="preserve"><value>备份文件为空或无效</value></data>
+  <data name="M006" xml:space="preserve"><value>已删除工单</value></data>
+  <data name="M007" xml:space="preserve"><value>报警信息已复制</value></data>
+  <data name="M008" xml:space="preserve"><value>已删除设备</value></data>
+  <data name="M009" xml:space="preserve"><value>保存成功</value></data>
+  <data name="M010" xml:space="preserve"><value>密码错误，已取消恢复操作</value></data>
+  <data name="M011" xml:space="preserve"><value>当前 Tab 无数据可导出</value></data>
+  <data name="M012" xml:space="preserve"><value>● 达标</value></data>
+  <data name="M013" xml:space="preserve"><value>通信中断</value></data>
+  <data name="M014" xml:space="preserve"><value>采集已停止</value></data>
+  <data name="M015" xml:space="preserve"><value>试用授权</value></data>
+  <data name="M016" xml:space="preserve"><value>激活成功</value></data>
+  <data name="M017" xml:space="preserve"><value>机器码已复制到剪贴板</value></data>
+  <data name="M018" xml:space="preserve"><value>复制失败，请手动记录机器码</value></data>
+  <data name="M019" xml:space="preserve"><value>当前未激活，无激活码可复制</value></data>
+  <data name="M020" xml:space="preserve"><value>激活码已复制到剪贴板</value></data>
+  <data name="M021" xml:space="preserve"><value>复制失败，请手动记录激活码</value></data>
+  <data name="M022" xml:space="preserve"><value>至少保留一个班次</value></data>
+  <data name="M023" xml:space="preserve"><value>设置已保存</value></data>
+  <data name="M024" xml:space="preserve"><value>采集服务参数已同步（轮询/班次/PLC 连接已对采集进程生效）</value></data>
+  <data name="M025" xml:space="preserve"><value>已取消未保存修改</value></data>
+  <data name="M026" xml:space="preserve"><value>确定恢复设置默认值吗？当前未保存修改将被覆盖。</value></data>
+  <data name="M027" xml:space="preserve"><value>已恢复默认值，请点击保存设置后生效</value></data>
+  <data name="M028" xml:space="preserve"><value>看板标题不能为空</value></data>
+  <data name="M029" xml:space="preserve"><value>IP 地址不能为空</value></data>
+  <data name="M030" xml:space="preserve"><value>PLC 数据格式无效</value></data>
+  <data name="M031" xml:space="preserve"><value>已中止</value></data>
+  <data name="M032" xml:space="preserve"><value>已达标待完成</value></data>
+  <data name="M033" xml:space="preserve"><value>已超期未完成</value></data>
+  <data name="M034" xml:space="preserve"><value>当前筛选结果为空，无可导出的工单</value></data>
+  <data name="M035" xml:space="preserve"><value>请先在设备管理页添加设备</value></data>
+  <data name="M036" xml:space="preserve"><value>提示</value></data>
+  <data name="M037" xml:space="preserve"><value>错误</value></data>
+  <data name="M038" xml:space="preserve"><value>确认</value></data>
+  <data name="M039" xml:space="preserve"><value>警告</value></data>
+  <data name="M040" xml:space="preserve"><value>全部</value></data>
+  <data name="M041" xml:space="preserve"><value>待开始</value></data>
+  <data name="M042" xml:space="preserve"><value>进行中</value></data>
+  <data name="M043" xml:space="preserve"><value>已完成</value></data>
+  <data name="M044" xml:space="preserve"><value>全部设备</value></data>
+  <data name="M045" xml:space="preserve"><value>状态</value></data>
+  <data name="M046" xml:space="preserve"><value>C良品率</value></data>
+  <data name="M047" xml:space="preserve"><value>B性能达标率</value></data>
+  <data name="M048" xml:space="preserve"><value>A时间稼动率</value></data>
 </root>

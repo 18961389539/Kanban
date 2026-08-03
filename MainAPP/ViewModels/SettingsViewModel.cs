@@ -1,4 +1,5 @@
 using System.Net;
+using MainAPP.Resources;
 using System.Text.Json;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -434,7 +435,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             var status = _licenseGate.CurrentStatus;
             if (status == LicenseStatus.Active && _licenseGate.CurrentLicense != null)
                 return _licenseGate.CurrentLicense.IsPermanent ? "永久授权" : "限期授权";
-            if (status == LicenseStatus.Trial) return "试用授权";
+            if (status == LicenseStatus.Trial) return Strings.M015;
             return "—";
         }
     }
@@ -511,7 +512,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             // 激活成功 → 刷新本页授权信息 + 通知主窗口刷新侧边栏状态
             RefreshLicenseStatus();
             NotifyMainWindowLicenseChanged();
-            _dialog.NotifySuccess("激活成功");
+            _dialog.NotifySuccess(Strings.M016);
         }
     }
 
@@ -524,11 +525,11 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         try
         {
             Clipboard.SetText(_licenseGate.MachineCode);
-            _dialog.NotifySuccess("机器码已复制到剪贴板");
+            _dialog.NotifySuccess(Strings.M017);
         }
         catch
         {
-            _dialog.NotifyWarning("复制失败，请手动记录机器码");
+            _dialog.NotifyWarning(Strings.M018);
         }
     }
 
@@ -541,18 +542,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var key = _licenseGate.CurrentLicense?.ProductKey;
         if (string.IsNullOrEmpty(key))
         {
-            _dialog.NotifyWarning("当前未激活，无激活码可复制");
+            _dialog.NotifyWarning(Strings.M019);
             return;
         }
 
         try
         {
             Clipboard.SetText(key);
-            _dialog.NotifySuccess("激活码已复制到剪贴板");
+            _dialog.NotifySuccess(Strings.M020);
         }
         catch
         {
-            _dialog.NotifyWarning("复制失败，请手动记录激活码");
+            _dialog.NotifyWarning(Strings.M021);
         }
     }
 
@@ -603,7 +604,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (shift == null) return;
         if (DraftSettings.Shifts.Count <= 1)
         {
-            _dialog.NotifyInfo("至少保留一个班次");
+            _dialog.NotifyInfo(Strings.M022);
             return;
         }
         DraftSettings.Shifts.Remove(shift);
@@ -671,7 +672,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             HasUnsavedChanges = false;
             OnPropertyChanged(nameof(UnsavedChangesText));
 
-            _dialog.NotifySuccess("设置已保存");
+            _dialog.NotifySuccess(Strings.M023);
             // 语言切换：保存到 settings.json，需重启后经 App 启动应用 CultureInfo 生效
             if (DraftSettings.Language != _lastSavedLanguage)
             {
@@ -724,7 +725,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 }).ToList(),
             };
             await client.SaveCollectorSettingsAsync(dto);
-            _dialog?.NotifySuccess("采集服务参数已同步（轮询/班次/PLC 连接已对采集进程生效）");
+            _dialog?.NotifySuccess(Strings.M024);
         }
         catch (Exception ex)
         {
@@ -736,16 +737,16 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private void CancelChanges()
     {
         ReplaceDraft(CloneSettings(AppSettings));
-        _dialog.NotifyInfo("已取消未保存修改");
+        _dialog.NotifyInfo(Strings.M025);
     }
 
     [RelayCommand]
     private void RestoreDefaults()
     {
-        var result = _dialog.Show("确定恢复设置默认值吗？当前未保存修改将被覆盖。", "恢复默认设置", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var result = _dialog.Show(Strings.M026, "恢复默认设置", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
         ReplaceDraft(new AppSettings());
-        _dialog.NotifyInfo("已恢复默认值，请点击保存设置后生效");
+        _dialog.NotifyInfo(Strings.M027);
     }
 
     private void ReplaceDraft(AppSettings settings)
@@ -808,12 +809,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     {
         // 看板标题校验
         if (string.IsNullOrWhiteSpace(settings.AppTitle))
-            return "看板标题不能为空";
+            return Strings.M028;
 
         // IP 地址校验
         var ip = settings.PlcConfig.IpAddress;
         if (string.IsNullOrWhiteSpace(ip))
-            return "IP 地址不能为空";
+            return Strings.M029;
         if (!IPAddress.TryParse(ip, out _))
             return $"无效的 IP 地址: {ip}";
 
@@ -843,7 +844,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusBitFunction is not (1 or 2))
             return $"Modbus 位功能码必须为 1 或 2，当前值: {settings.PlcConfig.ModbusBitFunction}";
         if (!Enum.IsDefined(settings.PlcConfig.ModbusDataFormat) || !Enum.IsDefined(settings.PlcConfig.SiemensDataFormat))
-            return "PLC 数据格式无效";
+            return Strings.M030;
 
         // 轮询间隔校验
         var interval = settings.PollingIntervalMs;

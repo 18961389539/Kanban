@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -633,4 +633,52 @@
   <data name="K580" xml:space="preserve"><value>Cumulative Disconnects</value></data>
   <data name="K581" xml:space="preserve"><value>License Status</value></data>
   <data name="K582" xml:space="preserve"><value>Main Navigation</value></data>
+  <data name="M001" xml:space="preserve"><value>Security Verification</value></data>
+  <data name="M002" xml:space="preserve"><value>Microsoft YaHei font not found; cannot generate PDF</value></data>
+  <data name="M003" xml:space="preserve"><value>No device data in the selected file</value></data>
+  <data name="M004" xml:space="preserve"><value>Previous version backup not found</value></data>
+  <data name="M005" xml:space="preserve"><value>Backup file is empty or invalid</value></data>
+  <data name="M006" xml:space="preserve"><value>Work order deleted</value></data>
+  <data name="M007" xml:space="preserve"><value>Alarm info copied</value></data>
+  <data name="M008" xml:space="preserve"><value>Device deleted</value></data>
+  <data name="M009" xml:space="preserve"><value>Saved successfully</value></data>
+  <data name="M010" xml:space="preserve"><value>Wrong password; restore cancelled</value></data>
+  <data name="M011" xml:space="preserve"><value>No data in the current tab to export</value></data>
+  <data name="M012" xml:space="preserve"><value>● Met</value></data>
+  <data name="M013" xml:space="preserve"><value>Communication Lost</value></data>
+  <data name="M014" xml:space="preserve"><value>Acquisition Stopped</value></data>
+  <data name="M015" xml:space="preserve"><value>Trial License</value></data>
+  <data name="M016" xml:space="preserve"><value>Activation Successful</value></data>
+  <data name="M017" xml:space="preserve"><value>Machine code copied to clipboard</value></data>
+  <data name="M018" xml:space="preserve"><value>Copy failed; record the machine code manually</value></data>
+  <data name="M019" xml:space="preserve"><value>Not activated; no license key to copy</value></data>
+  <data name="M020" xml:space="preserve"><value>License key copied to clipboard</value></data>
+  <data name="M021" xml:space="preserve"><value>Copy failed; record the license key manually</value></data>
+  <data name="M022" xml:space="preserve"><value>Keep at least one shift</value></data>
+  <data name="M023" xml:space="preserve"><value>Settings saved</value></data>
+  <data name="M024" xml:space="preserve"><value>Collector parameters synced (polling/shifts/PLC connection now active)</value></data>
+  <data name="M025" xml:space="preserve"><value>Unsaved changes discarded</value></data>
+  <data name="M026" xml:space="preserve"><value>Restore default settings? Unsaved changes will be overwritten.</value></data>
+  <data name="M027" xml:space="preserve"><value>Defaults restored; click Save Settings to apply</value></data>
+  <data name="M028" xml:space="preserve"><value>Dashboard title cannot be empty</value></data>
+  <data name="M029" xml:space="preserve"><value>IP address cannot be empty</value></data>
+  <data name="M030" xml:space="preserve"><value>Invalid PLC data format</value></data>
+  <data name="M031" xml:space="preserve"><value>Aborted</value></data>
+  <data name="M032" xml:space="preserve"><value>Met, Pending</value></data>
+  <data name="M033" xml:space="preserve"><value>Overdue, Incomplete</value></data>
+  <data name="M034" xml:space="preserve"><value>No work orders match the current filter</value></data>
+  <data name="M035" xml:space="preserve"><value>Add devices in Device Management first</value></data>
+  <data name="M036" xml:space="preserve"><value>Tip</value></data>
+  <data name="M037" xml:space="preserve"><value>Error</value></data>
+  <data name="M038" xml:space="preserve"><value>Confirm</value></data>
+  <data name="M039" xml:space="preserve"><value>Warning</value></data>
+  <data name="M040" xml:space="preserve"><value>All</value></data>
+  <data name="M041" xml:space="preserve"><value>Pending</value></data>
+  <data name="M042" xml:space="preserve"><value>In Progress</value></data>
+  <data name="M043" xml:space="preserve"><value>Completed</value></data>
+  <data name="M044" xml:space="preserve"><value>All Devices</value></data>
+  <data name="M045" xml:space="preserve"><value>Status</value></data>
+  <data name="M046" xml:space="preserve"><value>C: Quality Rate</value></data>
+  <data name="M047" xml:space="preserve"><value>B: Performance Rate</value></data>
+  <data name="M048" xml:space="preserve"><value>A: Time Availability</value></data>
 </root>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -633,4 +633,52 @@
   <data name="K580" xml:space="preserve"><value>累積切断回数</value></data>
   <data name="K581" xml:space="preserve"><value>ライセンス状態</value></data>
   <data name="K582" xml:space="preserve"><value>メインナビゲーション</value></data>
+  <data name="M001" xml:space="preserve"><value>セキュリティ検証</value></data>
+  <data name="M002" xml:space="preserve"><value>Microsoft YaHeiフォントが見つからず、PDFを生成できません</value></data>
+  <data name="M003" xml:space="preserve"><value>選択ファイルに設備データがありません</value></data>
+  <data name="M004" xml:space="preserve"><value>前回バージョンのバックアップが見つかりません</value></data>
+  <data name="M005" xml:space="preserve"><value>バックアップファイルが空または無効です</value></data>
+  <data name="M006" xml:space="preserve"><value>工単を削除しました</value></data>
+  <data name="M007" xml:space="preserve"><value>アラーム情報をコピーしました</value></data>
+  <data name="M008" xml:space="preserve"><value>設備を削除しました</value></data>
+  <data name="M009" xml:space="preserve"><value>保存しました</value></data>
+  <data name="M010" xml:space="preserve"><value>パスワードが違います。復元をキャンセルしました</value></data>
+  <data name="M011" xml:space="preserve"><value>現在のタブにエクスポートできるデータがありません</value></data>
+  <data name="M012" xml:space="preserve"><value>● 達成</value></data>
+  <data name="M013" xml:space="preserve"><value>通信断</value></data>
+  <data name="M014" xml:space="preserve"><value>収集停止</value></data>
+  <data name="M015" xml:space="preserve"><value>試用ライセンス</value></data>
+  <data name="M016" xml:space="preserve"><value>アクティベーション成功</value></data>
+  <data name="M017" xml:space="preserve"><value>マシンコードをクリップボードにコピーしました</value></data>
+  <data name="M018" xml:space="preserve"><value>コピー失敗。マシンコードを手動で記録してください</value></data>
+  <data name="M019" xml:space="preserve"><value>未アクティベーション。コピーするコードがありません</value></data>
+  <data name="M020" xml:space="preserve"><value>アクティベーションコードをコピーしました</value></data>
+  <data name="M021" xml:space="preserve"><value>コピー失敗。コードを手動で記録してください</value></data>
+  <data name="M022" xml:space="preserve"><value>シフトは少なくとも1つ必要です</value></data>
+  <data name="M023" xml:space="preserve"><value>設定を保存しました</value></data>
+  <data name="M024" xml:space="preserve"><value>収集サービスパラメータを同期しました（ポーリング/シフト/PLC接続が有効）</value></data>
+  <data name="M025" xml:space="preserve"><value>未保存の変更を破棄しました</value></data>
+  <data name="M026" xml:space="preserve"><value>設定を既定値に戻しますか？未保存の変更は上書きされます。</value></data>
+  <data name="M027" xml:space="preserve"><value>既定値に戻しました。「設定を保存」をクリックして適用</value></data>
+  <data name="M028" xml:space="preserve"><value>看板タイトルは空にできません</value></data>
+  <data name="M029" xml:space="preserve"><value>IPアドレスは空にできません</value></data>
+  <data name="M030" xml:space="preserve"><value>PLCデータ形式が無効です</value></data>
+  <data name="M031" xml:space="preserve"><value>中止済み</value></data>
+  <data name="M032" xml:space="preserve"><value>達成済み・未完了</value></data>
+  <data name="M033" xml:space="preserve"><value>期限超過・未完了</value></data>
+  <data name="M034" xml:space="preserve"><value>現在の絞り込みに一致する工単がありません</value></data>
+  <data name="M035" xml:space="preserve"><value>先に設備管理ページで設備を追加してください</value></data>
+  <data name="M036" xml:space="preserve"><value>ヒント</value></data>
+  <data name="M037" xml:space="preserve"><value>エラー</value></data>
+  <data name="M038" xml:space="preserve"><value>確認</value></data>
+  <data name="M039" xml:space="preserve"><value>警告</value></data>
+  <data name="M040" xml:space="preserve"><value>すべて</value></data>
+  <data name="M041" xml:space="preserve"><value>未開始</value></data>
+  <data name="M042" xml:space="preserve"><value>進行中</value></data>
+  <data name="M043" xml:space="preserve"><value>完了</value></data>
+  <data name="M044" xml:space="preserve"><value>全設備</value></data>
+  <data name="M045" xml:space="preserve"><value>状態</value></data>
+  <data name="M046" xml:space="preserve"><value>C:良品率</value></data>
+  <data name="M047" xml:space="preserve"><value>B:性能達成率</value></data>
+  <data name="M048" xml:space="preserve"><value>A:時間稼働率</value></data>
 </root>

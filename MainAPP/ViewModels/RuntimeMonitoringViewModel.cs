@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,8 +19,8 @@ internal static class RuntimeHealthText
 {
     public static string Format(bool isConnected, bool isRunning, bool lastCycleSucceeded, int consecutiveFailures)
     {
-        if (!isConnected) return "通信中断";
-        if (!isRunning) return "采集已停止";
+        if (!isConnected) return Strings.M013;
+        if (!isRunning) return Strings.M014;
         return lastCycleSucceeded ? "运行正常" : $"连续失败 {consecutiveFailures} 次";
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -186,7 +187,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 状态筛选下拉选项（全部 / 运行 / 报警 / 待机 / 离线）。
     /// </summary>
     public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
-        new() { Value = DeviceStatusFilter.All, Label = "全部" },
+        new() { Value = DeviceStatusFilter.All, Label = Strings.M040 },
         new() { Value = DeviceStatusFilter.Running, Label = "运行" },
         new() { Value = DeviceStatusFilter.Alarm, Label = "报警" },
         new() { Value = DeviceStatusFilter.Paused, Label = "待机" },
@@ -440,7 +441,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 设备数量变化后刷新 Save 按钮可用状态（删除最后一个设备时 CanSave 应变 false）
         SaveCommand.NotifyCanExecuteChanged();
 
-        _dialog.NotifySuccess("已删除设备");
+        _dialog.NotifySuccess(Strings.M008);
         MarkDirty();
     }
 
@@ -577,7 +578,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             foreach (var device in Devices)
                 _deviceRepository.SyncTargetCycle(device.Id, device.TargetCycle);
 
-            _dialog.NotifySuccess("保存成功");
+            _dialog.NotifySuccess(Strings.M009);
             IsDirty = false;
         }
         catch (System.Exception ex)
@@ -692,10 +693,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         // 安全验证：恢复上一版本会覆盖当前未保存的设备配置，需密码确认防止误触
         const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput("安全验证", "恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：");
+        var password = _dialog.ShowPasswordInput(Strings.M001, "恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：");
         if (password != expectedPassword)
         {
-            _dialog.NotifyWarning("密码错误，已取消恢复操作");
+            _dialog.NotifyWarning(Strings.M010);
             return;
         }
 
@@ -739,7 +740,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         // 密码确认：防止误触生成虚拟数据
         const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput("安全验证", "请输入密码以生成虚拟设备：");
+        var password = _dialog.ShowPasswordInput(Strings.M001, "请输入密码以生成虚拟设备：");
         if (password != expectedPassword)
             return;
 

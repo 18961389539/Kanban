@@ -1,4 +1,5 @@
 ﻿using Kanban.Core.Models;
+using MainAPP.Resources;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
@@ -295,7 +296,7 @@ public static class ChartService
 
         var stateAxis = new LinearAxis
         {
-            Title = "状态",
+            Title = Strings.M045,
             Position = AxisPosition.Left,
             Minimum = 0.5,
             Maximum = 3.5,
@@ -318,7 +319,7 @@ public static class ChartService
 
         var series = new RectangleBarSeries
         {
-            Title = "状态",
+            Title = Strings.M045,
         };
 
         foreach (var (start, end, state) in list)
@@ -438,7 +439,7 @@ public static class ChartService
     {
         var model = CreateBaseModel("OEE 指标");
 
-        var categoryAxis = CreateCategoryAxis("", new[] { "C良品率", "B性能达标率", "A时间稼动率", "OEE" });
+        var categoryAxis = CreateCategoryAxis("", new[] { Strings.M046, Strings.M047, Strings.M048, "OEE" });
         categoryAxis.Key = "xCategory";
         model.Axes.Add(categoryAxis);
 
@@ -627,7 +628,7 @@ public static class ChartService
         {
             Position = AxisPosition.Left,
             IsAxisVisible = false,
-            ItemsSource = new[] { "状态" },
+            ItemsSource = new[] { Strings.M045 },
         };
         var valueAxis = new LinearAxis
         {

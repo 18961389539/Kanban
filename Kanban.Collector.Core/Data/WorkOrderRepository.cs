@@ -9,6 +9,25 @@ using Serilog;
 namespace Kanban.Core.Data;
 
 /// <summary>
+/// 工单仓储抽象接口：供 ViewModel / Service 依赖，解耦具体实现。
+/// </summary>
+public interface IWorkOrderRepository
+{
+    ObservableCollection<WorkOrder> WorkOrders { get; }
+    void LoadAll();
+    List<WorkOrder> GetSnapshot();
+    Func<WorkOrder, Task<WorkOrder>>? RemoteUpsertHook { get; set; }
+    Func<int, Task<bool>>? RemoteDeleteHook { get; set; }
+    Task<WorkOrder> UpsertAsync(WorkOrder workOrder);
+    Task DeleteAsync(int id);
+    WorkOrder Upsert(WorkOrder workOrder);
+    void Delete(int id);
+    int CleanupOldWorkOrders(int retentionDays = 365);
+    WorkOrder? GetRunningByDevice(string deviceId);
+    WorkOrder? GetLatestPendingByDevice(string deviceId);
+}
+
+/// <summary>
 /// 工单仓储：管理 <see cref="WorkOrder"/> 的内存集合与持久化。
 /// 参照 <see cref="DeviceRepository"/> 模式：DI 单例 + <see cref="ObservableCollection{WorkOrder}"/> +
 /// <see cref="BindingOperations.EnableCollectionSynchronization"/> 注册锁支持后台线程读写。
@@ -20,7 +39,7 @@ namespace Kanban.Core.Data;
 /// 注意：不在此处暴露 ICollectionView（属 UI 层关注点），由 ViewModel 通过
 /// CollectionViewSource.GetDefaultView(WorkOrders) 自行创建过滤视图。
 /// </summary>
-public class WorkOrderRepository
+public class WorkOrderRepository : IWorkOrderRepository
 {
     private readonly DatabaseProvider _dbProvider;
     private readonly IMapper _mapper;

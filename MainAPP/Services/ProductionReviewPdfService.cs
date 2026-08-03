@@ -1,4 +1,5 @@
 using Kanban.Core.Services;
+using MainAPP.Resources;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -187,7 +188,7 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
             var fileName = faceName == "msyh-bold" ? "Dengb.ttf" : "Deng.ttf";
             var path = Path.Combine(fontDirectory, fileName);
             if (!File.Exists(path))
-                throw new FileNotFoundException("未找到 Microsoft YaHei 中文字体，无法生成 PDF", path);
+                throw new FileNotFoundException(Strings.M002, path);
             return File.ReadAllBytes(path);
         }
     }

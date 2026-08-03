@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MainAPP.Resources;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -60,7 +61,7 @@ public partial class App : Application
             // 启动早期 Growl 容器未就绪，用 HC MessageBox（理由详见下方配置文件损坏处）
             HandyControl.Controls.MessageBox.Show(
                 "程序已在运行，不能重复启动。",
-                "提示",
+                Strings.M036,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
             Shutdown();

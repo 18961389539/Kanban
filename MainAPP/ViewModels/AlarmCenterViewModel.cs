@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -466,7 +467,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     {
         if (alarm == null) return;
         Clipboard.SetText($"{alarm.DeviceName} · {alarm.AlarmName}\n级别：{alarm.Level}\n触发时间：{alarm.EventTime:yyyy-MM-dd HH:mm:ss}\n持续时间：{alarm.DurationText}");
-        _dialog.NotifySuccess("报警信息已复制");
+        _dialog.NotifySuccess(Strings.M007);
     }
 
     [RelayCommand]

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -397,7 +398,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         LineStatusFilter.Running => "运行",
         LineStatusFilter.Alarm => "报警",
         LineStatusFilter.Paused => "待机",
-        _ => "全部",
+        _ => Strings.M040,
     };
 
     [RelayCommand]

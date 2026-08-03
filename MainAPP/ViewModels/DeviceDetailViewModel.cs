@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.ComponentModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -571,10 +572,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         PlannedQuantity = order.TargetQuantity;
         WorkOrderStatusText = order.Status switch
         {
-            WorkOrderStatus.Pending => "待开始",
-            WorkOrderStatus.Running => "进行中",
-            WorkOrderStatus.Completed => "已完成",
-            WorkOrderStatus.Aborted => "已中止",
+            WorkOrderStatus.Pending => Strings.M041,
+            WorkOrderStatus.Running => Strings.M042,
+            WorkOrderStatus.Completed => Strings.M043,
+            WorkOrderStatus.Aborted => Strings.M031,
             _ => order.Status.ToString(),
         };
 

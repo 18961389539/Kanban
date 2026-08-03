@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
@@ -182,9 +183,9 @@ public partial class OeeQueryViewModel : ObservableObject
         if (OeeValue == 0 && OeeOkProduction == 0) return null;
 
         List<OeeCsvRow> rows = [
-            new() { Metric = "C良品率", Value = OeeQualityRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = "B性能达标率", Value = OeePerformanceRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = "A时间稼动率", Value = OeeAvailabilityRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M046, Value = OeeQualityRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M047, Value = OeePerformanceRate.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M048, Value = OeeAvailabilityRate.ToString("F4", CultureInfo.InvariantCulture) },
             new() { Metric = "OEE综合", Value = OeeValue.ToString("F4", CultureInfo.InvariantCulture) },
             new() { Metric = "OK产量", Value = OeeOkProduction.ToString(CultureInfo.InvariantCulture) },
             new() { Metric = "NG产量", Value = OeeNgProduction.ToString(CultureInfo.InvariantCulture) },
@@ -294,9 +295,9 @@ public partial class OeeQueryViewModel : ObservableObject
 
         var items = new[]
         {
-            (Name: "C良品率", Value: q),
-            (Name: "B性能达标率", Value: p),
-            (Name: "A时间稼动率", Value: a)
+            (Name: Strings.M046, Value: q),
+            (Name: Strings.M047, Value: p),
+            (Name: Strings.M048, Value: a)
         };
         var min = items.MinBy(x => x.Value);
         var max = items.MaxBy(x => x.Value);
@@ -333,9 +334,9 @@ public partial class OeeQueryViewModel : ObservableObject
         // 定位 worst 班次的拖累项：与 best 班次的 Q/P/A 比较，差距最大的因子即主因
         var factors = new[]
         {
-            (Name: "C良品率", Diff: worst.Quality - best.Quality, Worst: worst.Quality, Best: best.Quality),
-            (Name: "B性能达标率", Diff: worst.Performance - best.Performance, Worst: worst.Performance, Best: best.Performance),
-            (Name: "A时间稼动率", Diff: worst.Availability - best.Availability, Worst: worst.Availability, Best: best.Availability)
+            (Name: Strings.M046, Diff: worst.Quality - best.Quality, Worst: worst.Quality, Best: best.Quality),
+            (Name: Strings.M047, Diff: worst.Performance - best.Performance, Worst: worst.Performance, Best: best.Performance),
+            (Name: Strings.M048, Diff: worst.Availability - best.Availability, Worst: worst.Availability, Best: best.Availability)
         };
         var drag = factors.MinBy(f => f.Diff);
 

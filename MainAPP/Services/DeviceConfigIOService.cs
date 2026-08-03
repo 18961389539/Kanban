@@ -1,4 +1,5 @@
 using Kanban.Core.Services;
+using MainAPP.Resources;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -75,7 +76,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
 
         if (imported == null || imported.Count == 0)
         {
-            _dialog.NotifyWarning("所选文件中没有设备数据");
+            _dialog.NotifyWarning(Strings.M003);
             return null;
         }
 
@@ -102,7 +103,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         var backupPath = _deviceRepository.FilePath + ".bak";
         if (!File.Exists(backupPath))
         {
-            _dialog.NotifyWarning("未找到上一版本备份文件");
+            _dialog.NotifyWarning(Strings.M004);
             return null;
         }
 
@@ -120,7 +121,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
 
         if (restored == null || restored.Count == 0)
         {
-            _dialog.NotifyWarning("备份文件为空或无效");
+            _dialog.NotifyWarning(Strings.M005);
             return null;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using MainAPP.Resources;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
@@ -268,7 +269,7 @@ public class WorkOrderService(
             "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
         await _workOrderRepo.DeleteAsync(target.Id);
-        _dialog.NotifySuccess("已删除工单");
+        _dialog.NotifySuccess(Strings.M006);
         return true;
     }
 

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MainAPP.Resources;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Threading;
@@ -358,7 +359,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             if (TargetCycleSec <= 0 || ActualCycleSec <= 0) return "";
             var diff = ActualCycleSec - TargetCycleSec;
-            if (Math.Abs(diff) < 0.01) return "● 达标";
+            if (Math.Abs(diff) < 0.01) return Strings.M012;
             return diff > 0 ? $"▼ 慢 {diff:F2}s" : $"▲ 快 {Math.Abs(diff):F2}s";
         }
     }
