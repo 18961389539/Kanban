@@ -32,6 +32,8 @@ public sealed class DashboardState : IAsyncDisposable
     private ShiftProgressDto? _shiftProgress;
     private KanbanDataClient? _invokeClient;
     private bool _initialized;
+    private CancellationTokenSource? _retryCts;
+    private DateTime _invokeFailedUntil;
 
     public DashboardState(
         KanbanDataClient client,
@@ -165,13 +167,24 @@ public sealed class DashboardState : IAsyncDisposable
 
     // ──────────── 查询连接（懒连接，历史查询等 Invoke 专用，无长驻订阅） ────────────
 
-    /// <summary>历史查询（走独立查询连接；懒连接——首次调用才建立，不占用任何长驻订阅连接）。</summary>
+    /// <summary>历史查询（走独立查询连接；懒连接——首次调用才建立，不占用任何长驻订阅连接）。
+    /// 连接失败后 30s 内快速失败（避免每次点击都等 10s 连接超时，页面像死机）。</summary>
     public async Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default)
     {
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
         var client = GetInvokeClient();
-        if (!client.IsConnected)
-            await client.ConnectAsync(ct);
-        return await client.QueryHistoryAsync(request, ct);
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryHistoryAsync(request, ct);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
     }
 
     private KanbanDataClient GetInvokeClient()
@@ -185,7 +198,7 @@ public sealed class DashboardState : IAsyncDisposable
 
     // ──────────── 连接与订阅 ────────────
 
-    /// <summary>建立连接并启动订阅（幂等，可安全重入；失败后自动复位允许下次重试）。</summary>
+    /// <summary>建立连接并启动订阅（幂等，可安全重入；失败自动进入 5s 间隔内部重试循环，Collector 晚启动也能自愈）。</summary>
     public async Task InitializeAsync()
     {
         if (_initialized) return;
@@ -201,16 +214,79 @@ public sealed class DashboardState : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "连接 Collector 失败，看板显示离线状态（请确认 Collector 已启动且端口一致）");
-            _initialized = false; // 允许页面定时器下轮重试
+            _logger.LogWarning(ex, "连接 Collector 失败，看板显示离线状态（5s 后自动重试，请确认 Collector 已启动且端口一致）");
+            _initialized = false; // 允许重试
+            ScheduleRetry();
             return;
         }
         await SubscribeAndRefreshAsync();
     }
 
+    /// <summary>
+    /// 失败重试调度：Collector 晚启动/重启时，页面不依赖用户手动刷新即可自动连上。
+    /// 保证只存在一个重试循环（_retryCts 非空且未取消则跳过）。
+    /// </summary>
+    private void ScheduleRetry()
+    {
+        CancellationTokenSource cts;
+        lock (_lock)
+        {
+            if (_retryCts is { IsCancellationRequested: false }) return;
+            cts = _retryCts = new CancellationTokenSource();
+        }
+        _ = RetryLoopAsync(cts);
+    }
+
+    private async Task RetryLoopAsync(CancellationTokenSource cts)
+    {
+        while (!cts.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return; // Dispose 停止重试
+            }
+            try
+            {
+                await InitializeAsync();
+                // 双连接均连通才算成功（InitializeAsync 成功路径已订阅快照/元数据）
+                if (_client.IsConnected && _metaClient.IsConnected)
+                {
+                    lock (_lock)
+                    {
+                        if (ReferenceEquals(_retryCts, cts)) _retryCts = null;
+                    }
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "连接重试异常（InitializeAsync 内部已 catch，此处兜底）");
+            }
+        }
+    }
+
     /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史 + 汇总脏标记（不触达 UI）。</summary>
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
+        // tombstone：Collector 设备配置删除广播，从内存移除该设备（快照流只有 upsert 语义，删除须显式表达）
+        if (snapshot.Removed)
+        {
+            lock (_lock)
+            {
+                if (_snapshots.Remove(snapshot.DeviceId))
+                {
+                    _sortedSnapshotsDirty = true;
+                    _statusSummaryDirty = true;
+                }
+            }
+            _client.MarkDataReceived();
+            return;
+        }
+
         lock (_lock)
         {
             var isNew = !_snapshots.TryGetValue(snapshot.DeviceId, out var old);
@@ -220,9 +296,13 @@ public sealed class DashboardState : IAsyncDisposable
                 _sortedSnapshotsDirty = true;
                 _statusSummaryDirty = true;
             }
-            else if (old!.Status != snapshot.Status)
+            else
             {
-                _statusSummaryDirty = true;
+                if (old!.Status != snapshot.Status)
+                    _statusSummaryDirty = true;
+                // 设备重命名（同 Id 换名）：排序缓存按 DeviceName，须一并失效
+                if (old!.DeviceName != snapshot.DeviceName)
+                    _sortedSnapshotsDirty = true;
             }
 
             // 速度点：总产量 / 运行小时（RunTime >= 5s 才记，避免启动失真；口径与 WPF HomeViewModel 一致）
@@ -252,7 +332,9 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。</summary>
+    /// <summary>订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。
+    /// 全量拉取采用**替换**语义（清空后写入）：服务端返回的就是当前完整设备集，
+    /// 配合 tombstone 保证设备删除后本机收敛（只 upsert 会导致被删设备永远残留）。</summary>
     private async Task SubscribeAndRefreshAsync()
     {
         _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
@@ -262,12 +344,13 @@ public sealed class DashboardState : IAsyncDisposable
             var snapshots = await _client.GetCurrentSnapshotsAsync();
             lock (_lock)
             {
+                _snapshots.Clear();
                 foreach (var s in snapshots)
                 {
                     _snapshots[s.DeviceId] = s;
-                    _sortedSnapshotsDirty = true;
-                    _statusSummaryDirty = true;
                 }
+                _sortedSnapshotsDirty = true;
+                _statusSummaryDirty = true;
             }
         }
         catch (Exception ex)
@@ -304,6 +387,9 @@ public sealed class DashboardState : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _retryCts?.Cancel();
+        _retryCts?.Dispose();
+        _retryCts = null;
         if (_invokeClient is not null)
             await _invokeClient.DisposeAsync();
         await _metaClient.DisposeAsync();

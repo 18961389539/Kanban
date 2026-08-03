@@ -20,6 +20,8 @@ public sealed class KanbanDataClient : IAsyncDisposable
     private HubConnection? _connection;
     private CancellationTokenSource? _reconnectCts;
     private int _consecutiveFailures;
+    // 连接建立互斥：并发 ConnectAsync 时串行化，防止各自建连接互相覆盖 _connection（旧连接泄漏）
+    private readonly SemaphoreSlim _connectGate = new(1, 1);
 
     public KanbanDataClient(string hubUrl, ILogger<KanbanDataClient> logger, bool useMessagePack = true)
     {
@@ -68,77 +70,89 @@ public sealed class KanbanDataClient : IAsyncDisposable
     /// </summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        if (_connection is { State: HubConnectionState.Connected }) return;
-
-        _reconnectCts?.Dispose();
-        _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var builder = new HubConnectionBuilder()
-            .WithUrl(_hubUrl)
-            // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
-            .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
-        if (_useMessagePack)
-            builder.AddMessagePackProtocol();
-        _connection = builder.Build();
-
-        _connection.Reconnecting += _ =>
-        {
-            _logger.LogWarning("Collector 连接断开，正在重连...");
-            Interlocked.Increment(ref _consecutiveFailures);
-            Reconnecting?.Invoke(this, EventArgs.Empty);
-            return Task.CompletedTask;
-        };
-        _connection.Reconnected += _ =>
-        {
-            _logger.LogInformation("Collector 重连成功");
-            _consecutiveFailures = 0;
-            ConnectionStateChanged?.Invoke(this, true);
-            Reconnected?.Invoke(this, EventArgs.Empty);
-            return Task.CompletedTask;
-        };
-        _connection.Closed += async ex =>
-        {
-            // WithAutomaticReconnect 全部耗尽后触发：进入后台循环重连（5s 间隔），
-            // 直至成功或连接被显式释放。否则 Collector 短暂不可用后页面将永久离线。
-            _logger.LogWarning(ex, "Collector 自动重连已耗尽，进入后台循环重连");
-            ConnectionStateChanged?.Invoke(this, false);
-            var cts = _reconnectCts;
-            while (cts is { IsCancellationRequested: false })
-            {
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
-                    await _connection.StartAsync(cts.Token);
-                    _logger.LogInformation("Collector 后台重连成功");
-                    _consecutiveFailures = 0;
-                    ConnectionStateChanged?.Invoke(this, true);
-                    Reconnected?.Invoke(this, EventArgs.Empty);
-                    return;
-                }
-                catch (OperationCanceledException) when (cts.IsCancellationRequested)
-                {
-                    return; // 连接被释放，停止重连
-                }
-                catch (Exception retryEx)
-                {
-                    _logger.LogWarning(retryEx, "Collector 后台重连失败，5s 后重试");
-                }
-            }
-        };
-
+        // 并发保护：同一实例的并发 ConnectAsync 串行化（double-check 已连接则直接返回），
+        // 避免多个调用各自建连接、后者覆盖 _connection 导致前者泄漏。
+        await _connectGate.WaitAsync(cancellationToken);
         try
         {
-            // 10s 连接超时：Collector 不可达时快速失败（超时抛 OperationCanceledException）
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
-            await _connection.StartAsync(timeoutCts.Token);
-            _consecutiveFailures = 0;
-            _logger.LogInformation("已连接 Collector {Url}", _hubUrl);
-            ConnectionStateChanged?.Invoke(this, true);
+            if (_connection is { State: HubConnectionState.Connected }) return;
+
+            _reconnectCts?.Dispose();
+            _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var builder = new HubConnectionBuilder()
+                .WithUrl(_hubUrl)
+                // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
+                .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
+            if (_useMessagePack)
+                builder.AddMessagePackProtocol();
+            _connection = builder.Build();
+
+            _connection.Reconnecting += _ =>
+            {
+                _logger.LogWarning("Collector 连接断开，正在重连...");
+                Interlocked.Increment(ref _consecutiveFailures);
+                // 重连中：连接状态已非 Connected，通知 UI 徽标切换（否则断线期间仍显示"实时"误导）
+                ConnectionStateChanged?.Invoke(this, false);
+                Reconnecting?.Invoke(this, EventArgs.Empty);
+                return Task.CompletedTask;
+            };
+            _connection.Reconnected += _ =>
+            {
+                _logger.LogInformation("Collector 重连成功");
+                _consecutiveFailures = 0;
+                ConnectionStateChanged?.Invoke(this, true);
+                Reconnected?.Invoke(this, EventArgs.Empty);
+                return Task.CompletedTask;
+            };
+            _connection.Closed += async ex =>
+            {
+                // WithAutomaticReconnect 全部耗尽后触发：进入后台循环重连（5s 间隔），
+                // 直至成功或连接被显式释放。否则 Collector 短暂不可用后页面将永久离线。
+                _logger.LogWarning(ex, "Collector 自动重连已耗尽，进入后台循环重连");
+                ConnectionStateChanged?.Invoke(this, false);
+                var cts = _reconnectCts;
+                while (cts is { IsCancellationRequested: false })
+                {
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+                        await _connection.StartAsync(cts.Token);
+                        _logger.LogInformation("Collector 后台重连成功");
+                        _consecutiveFailures = 0;
+                        ConnectionStateChanged?.Invoke(this, true);
+                        Reconnected?.Invoke(this, EventArgs.Empty);
+                        return;
+                    }
+                    catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                    {
+                        return; // 连接被释放，停止重连
+                    }
+                    catch (Exception retryEx)
+                    {
+                        _logger.LogWarning(retryEx, "Collector 后台重连失败，5s 后重试");
+                    }
+                }
+            };
+
+            try
+            {
+                // 10s 连接超时：Collector 不可达时快速失败（超时抛 OperationCanceledException）
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
+                await _connection.StartAsync(timeoutCts.Token);
+                _consecutiveFailures = 0;
+                _logger.LogInformation("已连接 Collector {Url}", _hubUrl);
+                ConnectionStateChanged?.Invoke(this, true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "连接 Collector 失败 {Url}", _hubUrl);
+                throw;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            _logger.LogError(ex, "连接 Collector 失败 {Url}", _hubUrl);
-            throw;
+            _connectGate.Release();
         }
     }
 

@@ -23,17 +23,24 @@ public sealed class EventBroadcaster
     private readonly List<Channel<AlarmEventDto>> _alarmSubscribers = new();
     private readonly List<Channel<StatusEventDto>> _statusSubscribers = new();
     private readonly ILogger<EventBroadcaster> _logger;
-    private long _nextSeq = 1;
+    // 报警/状态各自独立计数：两条流互不占用对方序号，各自的 Seq 连续（补拉游标语义干净）
+    private long _nextAlarmSeq = 1;
+    private long _nextStatusSeq = 1;
 
     public EventBroadcaster(ILogger<EventBroadcaster> logger)
     {
         _logger = logger;
     }
 
-    /// <summary>发布报警事件（分配 Seq，写入环形缓冲 + 扇出广播）</summary>
+    /// <summary>发布报警事件（分配报警流 Seq，写入环形缓冲 + 扇出广播）</summary>
     public void PublishAlarmEvent(AlarmEventDto evt)
     {
-        var withSeq = evt with { Seq = NextSeq() };
+        long seq;
+        lock (_gate)
+        {
+            seq = _nextAlarmSeq++;
+        }
+        var withSeq = evt with { Seq = seq };
         lock (_gate)
         {
             _alarmRing.AddLast((withSeq.Seq, withSeq));
@@ -46,10 +53,15 @@ public sealed class EventBroadcaster
         }
     }
 
-    /// <summary>发布状态事件（分配 Seq，写入环形缓冲 + 扇出广播）</summary>
+    /// <summary>发布状态事件（分配状态流 Seq，写入环形缓冲 + 扇出广播）</summary>
     public void PublishStatusEvent(StatusEventDto evt)
     {
-        var withSeq = evt with { Seq = NextSeq() };
+        long seq;
+        lock (_gate)
+        {
+            seq = _nextStatusSeq++;
+        }
+        var withSeq = evt with { Seq = seq };
         lock (_gate)
         {
             _statusRing.AddLast((withSeq.Seq, withSeq));
@@ -62,67 +74,28 @@ public sealed class EventBroadcaster
         }
     }
 
-    private long NextSeq()
-    {
-        lock (_gate)
-        {
-            return _nextSeq++;
-        }
-    }
-
     /// <summary>
-    /// 订阅报警事件流：先补发 LastSeq 之后的环形缓冲事件，再实时转发。
-    /// 订阅时注册专属 channel；连接断开（cancellationToken 触发）时自动退订。
+    /// 订阅报警事件流：先补发 afterSeq 之后的环形缓冲事件，再实时转发。
+    /// channel 创建 + 环形缓冲补发 + 订阅者注册在**同一个锁内原子完成**：
+    /// 消除"补发完成但尚未注册"窗口——否则该窗口内到达的事件既不会被补发扫描到、
+    /// 也不会写入本订阅者 channel，直接丢失。
     /// </summary>
     public async IAsyncEnumerable<AlarmEventDto> WatchAlarmEventsAsync(
         long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        // 补发窗口内未消费事件
+        var channel = Channel.CreateUnbounded<AlarmEventDto>(
+            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+
         lock (_gate)
         {
             foreach (var (seq, payload) in _alarmRing)
             {
                 if (seq > afterSeq)
-                    yield return (AlarmEventDto)payload;
+                    channel.Writer.TryWrite((AlarmEventDto)payload);
             }
-        }
-        var channel = RegisterAlarmSubscriber(cancellationToken);
-        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
-        {
-            yield return evt;
-        }
-    }
-
-    /// <summary>
-    /// 订阅状态事件流：先补发 LastSeq 之后的环形缓冲事件，再实时转发。
-    /// 订阅时注册专属 channel；连接断开（cancellationToken 触发）时自动退订。
-    /// </summary>
-    public async IAsyncEnumerable<StatusEventDto> WatchStatusEventsAsync(
-        long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        lock (_gate)
-        {
-            foreach (var (seq, payload) in _statusRing)
-            {
-                if (seq > afterSeq)
-                    yield return (StatusEventDto)payload;
-            }
-        }
-        var channel = RegisterStatusSubscriber(cancellationToken);
-        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
-        {
-            yield return evt;
-        }
-    }
-
-    private Channel<AlarmEventDto> RegisterAlarmSubscriber(CancellationToken cancellationToken)
-    {
-        var channel = Channel.CreateUnbounded<AlarmEventDto>(
-            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
-        lock (_gate)
-        {
             _alarmSubscribers.Add(channel);
         }
+
         cancellationToken.Register(() =>
         {
             lock (_gate)
@@ -130,17 +103,33 @@ public sealed class EventBroadcaster
                 _alarmSubscribers.Remove(channel);
             }
         });
-        return channel;
+
+        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+        {
+            yield return evt;
+        }
     }
 
-    private Channel<StatusEventDto> RegisterStatusSubscriber(CancellationToken cancellationToken)
+    /// <summary>
+    /// 订阅状态事件流：先补发 afterSeq 之后的环形缓冲事件，再实时转发。
+    /// 与报警订阅相同的原子注册语义（补发 + 注册同一临界区，无丢事件窗口）。
+    /// </summary>
+    public async IAsyncEnumerable<StatusEventDto> WatchStatusEventsAsync(
+        long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var channel = Channel.CreateUnbounded<StatusEventDto>(
             new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+
         lock (_gate)
         {
+            foreach (var (seq, payload) in _statusRing)
+            {
+                if (seq > afterSeq)
+                    channel.Writer.TryWrite((StatusEventDto)payload);
+            }
             _statusSubscribers.Add(channel);
         }
+
         cancellationToken.Register(() =>
         {
             lock (_gate)
@@ -148,6 +137,10 @@ public sealed class EventBroadcaster
                 _statusSubscribers.Remove(channel);
             }
         });
-        return channel;
+
+        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+        {
+            yield return evt;
+        }
     }
 }

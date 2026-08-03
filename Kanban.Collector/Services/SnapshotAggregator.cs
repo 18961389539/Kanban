@@ -62,6 +62,29 @@ public sealed class SnapshotAggregator
         return ValueTask.FromResult<ChannelReader<DeviceSnapshotDto>>(channel.Reader);
     }
 
+    /// <summary>
+    /// 设备配置删除：从最新副本移除，并向所有订阅者广播 tombstone 快照（Removed=true），
+    /// 客户端据此从内存移除该设备（快照流只有 upsert 语义，删除必须显式表达）。
+    /// </summary>
+    public void RemoveDevice(string deviceId)
+    {
+        var tombstone = new DeviceSnapshotDto
+        {
+            DeviceId = deviceId,
+            DeviceName = "",
+            Status = default,
+            Removed = true,
+        };
+        lock (_gate)
+        {
+            _latest.Remove(deviceId);
+            foreach (var subscriber in _subscribers)
+            {
+                subscriber.Writer.TryWrite(tombstone);
+            }
+        }
+    }
+
     /// <summary>获取当前全部设备快照（连接后首次拉取用）</summary>
     public Task<IReadOnlyList<DeviceSnapshotDto>> GetCurrentSnapshotsAsync(CancellationToken cancellationToken = default)
     {

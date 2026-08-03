@@ -48,6 +48,12 @@ public sealed record DeviceSnapshotDto
 
     /// <summary>单调递增序号（断线补拉、乱序纠正用）</summary>
     public long Seq { get; init; }
+
+    /// <summary>
+    /// 删除标记（tombstone）：Collector 在设备配置删除后广播此快照，
+    /// 客户端收到后应从内存移除该设备（快照流只有 upsert 语义，删除须显式表达）。
+    /// </summary>
+    public bool Removed { get; init; }
 }
 
 /// <summary>

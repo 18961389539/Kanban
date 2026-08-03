@@ -29,8 +29,6 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly WorkOrderRepository _workOrderRepository;
     private readonly ILogger<RemoteRuntimeSink> _logger;
     private readonly Dispatcher _dispatcher;
-    private readonly Dictionary<string, DeviceRuntime> _runtimeById = new();
-    private readonly Dictionary<string, Alarm> _alarmByKey = new();
 
     public RemoteRuntimeSink(
         KanbanDataClient client,
@@ -167,7 +165,14 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void ApplySnapshot(DeviceSnapshotDto snapshot)
     {
-        var device = _deviceRepository.GetDevicesSnapshot().FirstOrDefault(d => d.Id == snapshot.DeviceId);
+        // tombstone：Collector 设备配置删除广播，从本地移除该设备（Runtimes 集合 + RuntimeMap）
+        if (snapshot.Removed)
+        {
+            _deviceRepository.RemoveRuntime(snapshot.DeviceId);
+            return;
+        }
+
+        var device = _deviceRepository.GetDeviceById(snapshot.DeviceId);
         if (device is null) return; // Collector 的设备列表未与本地同步时跳过（等设备配置同步后再灌入）
 
         var runtime = _deviceRepository.EnsureRuntime(device);
@@ -188,7 +193,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         {
             try
             {
-                var device = _deviceRepository.GetDevicesSnapshot().FirstOrDefault(d => d.Id == evt.DeviceId);
+                var device = _deviceRepository.GetDeviceById(evt.DeviceId);
                 if (device is null) return;
 
                 var alarm = device.Alarms.FirstOrDefault(a => a.Id == evt.AlarmId);
@@ -213,25 +218,42 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         });
     }
 
-    /// <summary>元数据推送（Collector 5s）：全量重建本地工单列表（Remote 模式以 Collector 为单源）。
-    /// 工单列表绑定 UI（ObservableCollection），走 Dispatcher 封送。</summary>
+    /// <summary>
+    /// 元数据推送（Collector 5s）：**增量同步**工单列表。
+    /// Meta 只携带"每设备当前工单"（Running 或最新一条 Pending），是全量工单表的子集——
+    /// 绝不能全量重建本地集合（会把未绑定设备的工单/多条 Pending 从 UI 清掉）。
+    /// 增量语义：meta 中出现 → 服务器权威（已存在则整项替换触发 UI 通知，不存在则插入首位）；meta 未出现 → 本地保留。
+    /// 局限：跨端删除的工单不会出现在 meta 中，本机无法感知（低频场景，可接受）。
+    /// 工单列表绑定 UI（ObservableCollection），走 Dispatcher 封送。
+    /// </summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
         _dispatcher.InvokeAsync(() =>
         {
             try
             {
-                // 全量重建：设备工单以 Collector 推送为准（新增/删除/状态变化均以最新包覆盖）
-                _workOrderRepository.WorkOrders.Clear();
                 foreach (var d in meta.Devices)
                 {
                     if (d.WorkOrder is null) continue;
-                    _workOrderRepository.WorkOrders.Add(WorkOrderMapper.ToEntity(d.WorkOrder));
+                    var entity = WorkOrderMapper.ToEntity(d.WorkOrder);
+                    var existing = _workOrderRepository.WorkOrders.FirstOrDefault(w => w.Id == entity.Id);
+                    if (existing is not null)
+                    {
+                        // 服务器权威：整项替换（与 SyncMemoryCollection 一致，触发 UI 重新读取）
+                        var idx = _workOrderRepository.WorkOrders.IndexOf(existing);
+                        if (idx >= 0)
+                            _workOrderRepository.WorkOrders[idx] = entity;
+                    }
+                    else
+                    {
+                        // 跨端新增（另一台 WPF/浏览器创建的工单）：按 CreatedAt 倒序约定插到首位
+                        _workOrderRepository.WorkOrders.Insert(0, entity);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "应用元数据推送失败（工单列表）");
+                _logger.LogError(ex, "应用元数据推送失败（工单列表增量同步）");
             }
         });
     }

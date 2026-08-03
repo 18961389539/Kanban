@@ -226,7 +226,9 @@
             if (snaps.Count == 0) return null;
             if (_selectedDeviceId is not null && snaps.Any(s => s.DeviceId == _selectedDeviceId))
                 return _selectedDeviceId;
-            return snaps[0].DeviceId;
+            // 兜底写回：直接赋值 _selectedDeviceId（不走 setter，避免触发 localStorage 写入），
+            // 让 <select> 的 DOM 高亮与逻辑选中一致
+            return _selectedDeviceId = snaps[0].DeviceId;
         }
         set
         {

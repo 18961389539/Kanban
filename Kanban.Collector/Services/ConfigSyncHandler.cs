@@ -21,26 +21,37 @@ public sealed class ConfigSyncHandler
 {
     private readonly DeviceRepository _deviceRepository;
     private readonly WorkOrderRepository _workOrderRepository;
+    private readonly SnapshotAggregator _snapshotAggregator;
     private readonly ILogger<ConfigSyncHandler> _logger;
 
     public ConfigSyncHandler(
         DeviceRepository deviceRepository,
         WorkOrderRepository workOrderRepository,
+        SnapshotAggregator snapshotAggregator,
         ILogger<ConfigSyncHandler> logger)
     {
         _deviceRepository = deviceRepository;
         _workOrderRepository = workOrderRepository;
+        _snapshotAggregator = snapshotAggregator;
         _logger = logger;
     }
 
-    /// <summary>整体替换设备配置并落盘（对齐 DeviceRepository.ReplaceAll + SaveAll 语义）。</summary>
+    /// <summary>整体替换设备配置并落盘（对齐 DeviceRepository.ReplaceAll + SaveAll 语义）。
+    /// 被删除的设备同步从快照聚合器裁剪并广播 tombstone，展示端据此移除（否则屏端永远残留"死设备"）。</summary>
     public Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices)
     {
         try
         {
             var entities = devices.Select(ToDevice).ToList();
+            // 替换前记录旧设备 Id，替换后计算差集裁剪
+            var oldIds = _deviceRepository.GetDevicesSnapshot().Select(d => d.Id).ToHashSet();
             _deviceRepository.ReplaceAll(entities);
             _deviceRepository.SaveAll();
+            foreach (var removedId in oldIds.Except(entities.Select(e => e.Id)))
+            {
+                _snapshotAggregator.RemoveDevice(removedId);
+                _logger.LogInformation("设备已删除并从快照流裁剪：{DeviceId}", removedId);
+            }
             _logger.LogInformation("Remote 设备配置同步完成：{Count} 台", entities.Count);
         }
         catch (Exception ex)
@@ -122,16 +133,39 @@ public sealed class ConfigSyncHandler
     /// <summary>
     /// 全部设备的当前工单快照（低频元数据推送用，MetaPublisher 每 5s 调用一次）。
     /// Running 优先、回退最新 Pending；无工单设备 WorkOrder=null。
+    /// 单次遍历内存集合完成全部设备聚合（O(工单数)），避免逐设备线性扫描（O(设备数×工单数)）。
     /// </summary>
     public IReadOnlyList<DeviceWorkOrderDto> GetWorkOrderSnapshot()
     {
         try
         {
-            var result = new List<DeviceWorkOrderDto>();
-            foreach (var device in _deviceRepository.GetDevicesSnapshot())
+            var devices = _deviceRepository.GetDevicesSnapshot();
+            if (devices.Count == 0) return [];
+
+            var snapshot = _workOrderRepository.GetSnapshot(); // 锁内拷贝一次
+            // Running：同设备最多 1 条（由业务保证），直接按设备建索引
+            var runningByDevice = new Dictionary<string, WorkOrder>();
+            // Pending：按设备取 PlannedStart 最早的（对齐 GetLatestPendingByDevice 语义）
+            var pendingByDevice = new Dictionary<string, WorkOrder>();
+            foreach (var w in snapshot)
             {
-                var running = _workOrderRepository.GetRunningByDevice(device.Id);
-                var workOrder = running ?? _workOrderRepository.GetLatestPendingByDevice(device.Id);
+                if (w.Status == Kanban.Core.Entities.WorkOrderStatus.Running)
+                {
+                    runningByDevice.TryAdd(w.DeviceId, w);
+                }
+                else if (w.Status == Kanban.Core.Entities.WorkOrderStatus.Pending)
+                {
+                    if (!pendingByDevice.TryGetValue(w.DeviceId, out var current) || w.PlannedStart < current.PlannedStart)
+                        pendingByDevice[w.DeviceId] = w;
+                }
+            }
+
+            var result = new List<DeviceWorkOrderDto>(devices.Count);
+            foreach (var device in devices)
+            {
+                var workOrder = runningByDevice.TryGetValue(device.Id, out var running)
+                    ? running
+                    : pendingByDevice.TryGetValue(device.Id, out var pending) ? pending : null;
                 result.Add(new DeviceWorkOrderDto
                 {
                     DeviceId = device.Id,

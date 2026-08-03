@@ -11,6 +11,32 @@ using Serilog;
 namespace Kanban.Core.Data;
 
 /// <summary>
+/// 设备仓储抽象接口：供 ViewModel / Service 依赖，解耦具体实现。
+/// </summary>
+public interface IDeviceRepository
+{
+    ObservableCollection<Device> Devices { get; }
+    ObservableCollection<DeviceRuntime> Runtimes { get; }
+    string FilePath { get; }
+    string? LoadErrorMessage { get; }
+    Func<IReadOnlyList<Device>, Task>? RemotePersistenceHook { get; set; }
+    Task SaveAllAsync();
+    void LoadAll();
+    void SaveAll();
+    void ExportToFile(string path);
+    List<Device>? ImportFromJson(string json);
+    void ReplaceAll(IEnumerable<Device> newDevices);
+    void AddRuntime(Device device);
+    void RemoveRuntime(string deviceId);
+    void SyncTargetCycle(string deviceId, int targetCycle);
+    DeviceRuntime EnsureRuntime(Device device);
+    List<Device> GetDevicesSnapshot();
+    Device? GetDeviceById(string deviceId);
+    List<DeviceRuntime> GetRuntimesSnapshot();
+    ConcurrentDictionary<string, DeviceRuntime> RuntimeMap { get; }
+}
+
+/// <summary>
 /// 设备仓储（DI 单例）：封装内存设备列表的访问与持久化操作。
 /// 设备配置持久化到 JSON 文件（devices.json），启动时加载、保存时全量覆写。
 /// 线程安全：Devices / Runtimes 通过 <see cref="BindingOperations.EnableCollectionSynchronization"/> 注册锁，
@@ -19,7 +45,7 @@ namespace Kanban.Core.Data;
 /// 避免 ObservableCollection 在并发枚举时抛 InvalidOperationException。
 /// RuntimeMap 改用 ConcurrentDictionary 以支持并发读写。
 /// </summary>
-public class DeviceRepository
+public class DeviceRepository : IDeviceRepository
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -47,7 +73,7 @@ public class DeviceRepository
     /// <summary>
     /// DeviceId → DeviceRuntime 快速查找。改用 ConcurrentDictionary 以支持后台采集线程读 + UI 线程增删的并发访问。
     /// </summary>
-    internal ConcurrentDictionary<string, DeviceRuntime> RuntimeMap { get; } = new();
+    public ConcurrentDictionary<string, DeviceRuntime> RuntimeMap { get; } = new();
 
     private readonly AppSettings _appSettings;
 
@@ -182,7 +208,10 @@ public class DeviceRepository
                 }
                 remoteSnapshot = Devices.ToList();
             }
-            RemotePersistenceHook(remoteSnapshot).GetAwaiter().GetResult();
+            // Task.Run 隔离同步上下文：RemotePersistenceHook 内部走 SignalR（真正异步），
+            // 直接 .GetAwaiter().GetResult() 在 UI 线程调用会死锁。Task.Run 转入线程池执行，
+            // 无 SynchronizationContext 回跳，避免死锁。仅 Remote 模式且需同步保存时命中此分支。
+            Task.Run(() => RemotePersistenceHook(remoteSnapshot)).GetAwaiter().GetResult();
             return;
         }
 
@@ -324,6 +353,24 @@ public class DeviceRepository
     {
         lock (_collectionLock)
             return Devices.ToList();
+    }
+
+    /// <summary>
+    /// 按 Id 查找单个设备（锁内线性扫描，无快照拷贝分配）。
+    /// 供高频路径使用（如 RemoteRuntimeSink 每 500ms×每设备一次），
+    /// 避免 GetDevicesSnapshot().FirstOrDefault 的每次全量 ToList 分配。
+    /// 设备数量达到百级时可改为 DeviceId 索引字典，当前量级线性扫描足够。
+    /// </summary>
+    public Device? GetDeviceById(string deviceId)
+    {
+        lock (_collectionLock)
+        {
+            foreach (var device in Devices)
+            {
+                if (device.Id == deviceId) return device;
+            }
+            return null;
+        }
     }
 
     /// <summary>
