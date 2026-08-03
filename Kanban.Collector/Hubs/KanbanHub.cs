@@ -7,11 +7,11 @@ using Microsoft.Extensions.Logging;
 namespace Kanban.Collector.Hubs;
 
 /// <summary>
-/// SignalR 强类型 Hub：实现 <see cref="IKanbanHubServer"/> 方法，
+/// SignalR 强类型 Hub：实现 <see cref="IKanbanHubServer"/>（监控域）与 <see cref="IKanbanAdminServer"/>（管理域），
 /// 客户端回调走 <see cref="IKanbanHubClient"/> 强类型接口。
 /// SignalR 方法签名不含 CancellationToken（见契约说明），取消用 Context.ConnectionAborted。
 /// </summary>
-public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
+public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanbanAdminServer
 {
     private readonly SnapshotAggregator _snapshotAggregator;
     private readonly EventBroadcaster _eventBroadcaster;

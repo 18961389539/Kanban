@@ -229,6 +229,9 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     /// </summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
+        // 数据新鲜度：Meta 约 5s 一帧，快照增量发布后静止设备不再触发 OnSnapshot，
+        // 必须由 Meta 维持 LastDataReceivedAt 前进（否则全厂静止时 WPF 10s 停滞判定误报）
+        _client.MarkDataReceived();
         _dispatcher.InvokeAsync(() =>
         {
             try

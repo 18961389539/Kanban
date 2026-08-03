@@ -71,7 +71,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     // ──────────── 拆分出的协作组件（构造时内部创建，不暴露 DI） ────────────
     // 每个组件拥有自己的状态字典与锁，职责独立。本类保留 facade API 委托调用，
     // 维持原有 internal 接口不变（测试与历史调用方零改动）。
-    private readonly AlarmStateTracker _alarmTracker = new();
+    // PlcScanPipeline：批量读缓存 + 报警/缺陷/计数报警三组扫描（见 PlcScanPipeline.cs）
+    private readonly PlcScanPipeline _scanPipeline;
     private readonly DeviceStatusTracker _statusTracker = new();
     private readonly BaselineResetCoordinator _baselineCoordinator = new();
     private readonly ShiftContext _shiftContext = new();
@@ -88,15 +89,6 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 不与轮询循环主体互斥（ResetShift 由轮询线程 DetectShiftChange 调用，同线程无并发）。
     /// </summary>
     private readonly object _resetLock = new();
-    private readonly Dictionary<string, int> _cycleInt32Values = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _initializedCountAlarmIds = new(StringComparer.OrdinalIgnoreCase);
-    private readonly PlcBatchReadPlanCache _dwordPlanCache = new();
-    private bool _dwordBatchPrepared;
-    private int _cycleBatchReadRequests;
-    private int _cycleBatchReadSuccesses;
-    private int _cycleBatchReadValues;
-    private int _cycleBatchReadFallbacks;
 
     /// <summary>
     /// 采集循环是否正在运行
@@ -160,6 +152,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _workOrderRepo = workOrderRepo;
         _alarmNotificationChannel = alarmNotificationChannel;
         _defectHistoryStore = defectHistoryStore;
+        // 扫描子系统：批量读缓存 + 报警/缺陷/计数报警扫描（班次名经委托取当前值，避免组件间循环依赖）
+        _scanPipeline = new PlcScanPipeline(
+            _adapterResolver, _deviceRepository, _alarmHistory, _appSettings,
+            () => GetCurrentShiftName(), _logger, _alarmNotificationChannel);
     }
 
     public PlcDataAcquisitionService(
@@ -324,15 +320,15 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     // 业务异常（NullReference/集合并发修改等）只记 LogError，不影响 PLC 连接状态。
                     // 返回值保留（ScanAlarms/ScanDefects 返回 false 表示至少一次读取失败），便于运行时感知。
                     var alarmReadStopwatch = Stopwatch.StartNew();
-                    _ = TryScan(() => ScanAlarms(), nameof(ScanAlarms));
+                    _ = TryScan(() => _scanPipeline.ScanAlarms(), nameof(PlcScanPipeline.ScanAlarms));
                     var alarmReadMilliseconds = alarmReadStopwatch.ElapsedMilliseconds;
 
                     var defectReadStopwatch = Stopwatch.StartNew();
-                    _ = TryScan(() => ScanDefects(), nameof(ScanDefects));
+                    _ = TryScan(() => _scanPipeline.ScanDefects(), nameof(PlcScanPipeline.ScanDefects));
                     var defectReadMilliseconds = defectReadStopwatch.ElapsedMilliseconds;
 
                     var countAlarmReadStopwatch = Stopwatch.StartNew();
-                    TryScan(ScanCountAlarms, nameof(ScanCountAlarms));
+                    TryScan(_scanPipeline.ScanCountAlarms, nameof(PlcScanPipeline.ScanCountAlarms));
                     var countAlarmReadMilliseconds = countAlarmReadStopwatch.ElapsedMilliseconds;
 
                     // 首次启动后从 StatusTransitions 重建 OEE 时间（仅执行一次，依赖采集已落库状态转换）
@@ -373,12 +369,12 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         noDevicesToRead,
                         configuredDevices,
                         estimatedReadOperations,
-                        _cycleBatchReadRequests,
-                        _cycleBatchReadSuccesses,
-                        _cycleBatchReadValues,
-                        _cycleBatchReadFallbacks,
-                        _dwordPlanCache.RebuildCount,
-                        _dwordPlanCache.LastBuildMilliseconds);
+                        _scanPipeline.BatchReadRequests,
+                        _scanPipeline.BatchReadSuccesses,
+                        _scanPipeline.BatchReadValues,
+                        _scanPipeline.BatchReadFallbacks,
+                        _scanPipeline.BatchPlanRebuilds,
+                        _scanPipeline.BatchPlanBuildMilliseconds);
                     _diagnostics.RecordStageTimings(
                         dwordReadMilliseconds,
                         alarmReadMilliseconds,
@@ -398,7 +394,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         LogOfflineTransition(device);
 
                     // PLC 断线时清除所有设备的活跃报警，避免遗留报警状态持续显示到 UI
-                    ClearAlarmsOnDisconnect();
+                    _scanPipeline.ClearAlarmsOnDisconnect();
 
                     // PLC 断线时重置 Stopwatch 计时起点，
                     // 避免重连后第一次成功读取时 elapsed 包含整个断线期间导致 OEE 时间暴涨
@@ -549,7 +545,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     internal HashSet<string> RefreshDeviceData(out bool noDevicesToRead)
     {
         HashSet<string> successDevices = [];
-        PrepareDWordBatchValues();
+        _scanPipeline.PrepareDWordBatchValues();
         var checkedDevices = 0;
         var notConfiguredDevices = 0;
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
@@ -611,7 +607,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             return ReadResult.NotConfigured;
         }
 
-        var result = ReadInt32Value(device, address);
+        var result = _scanPipeline.ReadInt32Value(device, address);
         if (!result.IsSuccess) return ReadResult.Failed;
 
         var raw = result.Content;
@@ -632,134 +628,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         return ReadResult.Success;
     }
 
-    private PlcOperationResult<int> ReadInt32Value(Models.Device device, string address)
-    {
-        var adapter = _adapterResolver.Resolve(device);
-        var normalizedAddress = adapter.AddressCodec.Normalize(address);
-        var cacheKey = GetBatchCacheKey(adapter, normalizedAddress);
-        if (_dwordBatchPrepared
-            && !string.IsNullOrEmpty(normalizedAddress)
-            && _cycleInt32Values.TryGetValue(cacheKey, out var value))
-            return PlcOperationResult<int>.Success(value);
-        if (_dwordBatchPrepared
-            && !string.IsNullOrEmpty(normalizedAddress)
-            && _cycleBatchAddresses.Contains(cacheKey))
-            _cycleBatchReadFallbacks++;
-        return adapter.ReadInt32(address);
-    }
 
-    private void PrepareDWordBatchValues()
-    {
-        _cycleInt32Values.Clear();
-        _cycleBatchAddresses.Clear();
-        _dwordBatchPrepared = false;
-        _cycleBatchReadRequests = 0;
-        _cycleBatchReadSuccesses = 0;
-        _cycleBatchReadValues = 0;
-        _cycleBatchReadFallbacks = 0;
-        var devices = _deviceRepository.GetDevicesSnapshot();
-        var plan = GetDWordReadPlan(devices);
-        foreach (var planGroup in plan)
-        {
-            foreach (var address in planGroup.Addresses)
-            {
-                _cycleBatchAddresses.Add(GetBatchCacheKey(planGroup.Adapter, address));
-            }
-        }
-
-        foreach (var planGroup in plan)
-        {
-            foreach (var block in planGroup.Blocks)
-            {
-                _cycleBatchReadRequests++;
-                PlcOperationResult<int[]> result;
-                try { result = planGroup.Adapter.ReadInt32Batch(block.StartAddress, block.Length); }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "批量读取 DWord 地址失败（地址={Address}, 长度={Length}），将回退单地址读取",
-                        block.StartAddress, block.Length);
-                    continue;
-                }
-                if (!result.IsSuccess || result.Content.Length < block.Length)
-                {
-                    _logger.LogWarning("批量读取 DWord 地址失败（地址={Address}, 长度={Length}），将回退单地址读取：{Message}",
-                        block.StartAddress, block.Length, result.Message);
-                    continue;
-                }
-
-                _cycleBatchReadSuccesses++;
-                _cycleBatchReadValues += block.Length;
-                for (var index = 0; index < block.Length; index++)
-                {
-                    var address = planGroup.Adapter.AddressCodec.Add(block.StartAddress, index);
-                    _cycleInt32Values[GetBatchCacheKey(planGroup.Adapter, address)] = result.Content[index];
-                }
-            }
-        }
-        _dwordBatchPrepared = true;
-    }
-
-    private IReadOnlyList<PlcBatchReadPlanGroup> GetDWordReadPlan(IReadOnlyList<Models.Device> devices)
-    {
-        var candidates = new List<(IDeviceAdapter Adapter, HashSet<string> Addresses)>();
-        var signatureParts = new List<string>
-        {
-            _appSettings.PlcBatchReadMaxLength.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            _appSettings.PlcBatchReadMaxGapSlots.ToString(System.Globalization.CultureInfo.InvariantCulture),
-        };
-
-        foreach (var device in devices)
-        {
-            try
-            {
-                var adapter = _adapterResolver.Resolve(device);
-                var addresses = DWordAddressBatchCollector.Collect(device, adapter);
-                var capabilities = adapter.BatchReadCapabilities;
-                signatureParts.Add(string.Join("|", device.Id, adapter.Brand, adapter.AddressCodec.GetType().FullName,
-                    capabilities.SupportsInt32, capabilities.MaxInt32Length, capabilities.Int32AddressStride,
-                    string.Join(",", addresses.OrderBy(address => address, StringComparer.OrdinalIgnoreCase))));
-                candidates.Add((adapter, addresses));
-            }
-            catch (Exception ex)
-            {
-                signatureParts.Add($"{device.Id}|resolve-error");
-                _logger.LogWarning(ex, "设备 {Device} 无法建立 DWord 批量读取计划", device.Name);
-            }
-        }
-
-        var signature = string.Join(";", signatureParts);
-        return _dwordPlanCache.GetOrBuild(signature, () =>
-        {
-            var groups = candidates
-                .GroupBy(candidate => candidate.Adapter)
-                .Select(group =>
-                {
-                    var adapter = group.Key;
-                    var addresses = group.SelectMany(candidate => candidate.Addresses)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    var capabilities = adapter.BatchReadCapabilities;
-                    if (!capabilities.SupportsInt32 || capabilities.MaxInt32Length == 0)
-                        return new PlcBatchReadPlanGroup(adapter, [], addresses);
-
-                    var maxLength = (ushort)Math.Min(
-                        Math.Clamp(_appSettings.PlcBatchReadMaxLength, 1, ushort.MaxValue),
-                        capabilities.MaxInt32Length);
-                    var blocks = PlcBatchReadPlanner.Plan(
-                        addresses,
-                        PlcAddressType.DWord,
-                        maxLength,
-                        capabilities.Int32AddressStride,
-                        adapter.AddressCodec,
-                        _appSettings.PlcBatchReadMaxGapSlots);
-                    return new PlcBatchReadPlanGroup(adapter, blocks, addresses);
-                })
-                .ToList();
-            return (IReadOnlyList<PlcBatchReadPlanGroup>)groups;
-        });
-    }
-
-    private static string GetBatchCacheKey(IDeviceAdapter adapter, string address) =>
-        $"{adapter.Brand}|{adapter.AddressCodec.CanonicalKey(address)}";
 
     /// <summary>读取 OK 产量（委托 TryReadProductionCount 通用逻辑）</summary>
     internal ReadResult TryReadOkCount(Models.Device device)
@@ -790,7 +659,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             return ReadResult.NotConfigured;
         }
 
-        var result = ReadInt32Value(device, addr);
+        var result = _scanPipeline.ReadInt32Value(device, addr);
         if (result.IsSuccess)
         {
             runtime.StatusWord = result.Content;
@@ -810,143 +679,6 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     internal void LogOfflineTransition(Models.Device device)
         => _statusTracker.LogOfflineTransition(device, _statusHistory, GetCurrentShiftName(), _logger);
 
-    /// <summary>
-    /// PLC 断线时清除所有设备的活跃报警（设置 EndTime + 写入恢复事件），
-    /// 并重置报警边沿检测状态与计数报警。避免断线后 UI 仍显示遗留报警。
-    /// </summary>
-    private void ClearAlarmsOnDisconnect()
-    {
-        var now = DateTime.Now;
-        var shiftName = GetCurrentShiftName();
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
-        {
-            foreach (var alarm in device.Alarms.ToList())
-            {
-                if (alarm.StartTime != default && alarm.EndTime == default)
-                {
-                    alarm.EndTime = now;
-                    _alarmHistory.LogAlarmEvent(
-                        device.Id, device.Name, alarm.Id, alarm.Name, alarm.PlcAddress ?? "",
-                        AlarmEventType.Recovered, now, shiftName);
-                }
-            }
-            // 计数报警：清零 CurrentValue，使 IsTriggered 计算属性返回 false
-            foreach (var ca in device.CountAlarms.ToList())
-            {
-                ca.CurrentValue = 0;
-            }
-        }
-        _alarmTracker.ResetAll();
-    }
-
-    /// <summary>
-    /// 遍历所有缺陷，从 PLC 读取缺陷计数（直接来自 PLC，不累加）。
-    /// 返回 false 表示至少一次读取失败。
-    /// </summary>
-    internal bool ScanDefects()
-    {
-        var allSuccessful = true;
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
-        foreach (var defect in device.Defects.ToList())
-        {
-            var addr = defect.PlcAddress;
-            if (string.IsNullOrWhiteSpace(addr)) continue;
-            var adapter = _adapterResolver.Resolve(device);
-            if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
-            {
-                _logger.LogWarning("缺陷 {Defect} 地址格式无效: {Address}", defect.Name, addr);
-                continue;
-            }
-
-            var result = ReadInt32Value(device, addr);
-            if (result.IsSuccess)
-            {
-                defect.Count = result.Content;
-            }
-            else
-            {
-                allSuccessful = false;
-            }
-        }
-        return allSuccessful;
-    }
-
-    /// <summary>
-    /// 遍历设备的计数报警，按 D 字地址读取 PLC 当前值并回填到 CountAlarm.CurrentValue。
-    /// 计数报警基于数值阈值判断（与 M 位报警的边沿检测不同），不写入 AlarmEvents、不计入 OEE。
-    /// 读取失败不影响其他设备/报警的扫描结果。
-    /// </summary>
-    internal void ScanCountAlarms()
-    {
-        var configuredAlarmKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
-        foreach (var ca in device.CountAlarms.ToList())
-        {
-            var key = $"{device.Id}:{ca.Id}";
-            configuredAlarmKeys.Add(key);
-            if (!ca.Enabled)
-            {
-                _initializedCountAlarmIds.Remove(key);
-                continue;
-            }
-            var addr = ca.PlcAddress;
-            if (string.IsNullOrWhiteSpace(addr)) continue;
-            var adapter = _adapterResolver.Resolve(device);
-            if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
-            {
-                _logger.LogWarning("计数报警 {Alarm} 地址格式无效（需要D字地址）: {Address}", ca.Name, addr);
-                continue;
-            }
-
-            var result = ReadInt32Value(device, addr);
-            if (result.IsSuccess)
-            {
-                var wasTriggered = ca.IsTriggered;
-                ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
-                // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
-                var isFirstObservation = _initializedCountAlarmIds.Add(key);
-                if (!isFirstObservation && !wasTriggered && ca.IsTriggered)
-                    NotifyAlarm(device, ca.Id, ca.Name, AlarmLevel.Medium);
-            }
-            else
-            {
-                // 持续性条件：每轮都会触发，降为 Debug 避免日志泛滥。
-                _logger.LogDebug("计数报警 {Alarm} 读取失败: {Address}", ca.Name, addr);
-            }
-        }
-
-        _initializedCountAlarmIds.RemoveWhere(key => !configuredAlarmKeys.Contains(key));
-    }
-
-    /// <summary>
-    /// 遍历所有报警，读取 PLC 位状态并检测边沿（用 Alarm.Id 作为状态字典 key）。
-    /// 边沿事件同步入库，防止 PLC 断线期间内存状态丢失导致事件遗漏。
-    /// 返回 false 表示至少一次读取失败。
-    /// </summary>
-    internal bool ScanAlarms()
-    {
-        var devices = _deviceRepository.GetDevicesSnapshot();
-        if (devices.Count == 0) return true;
-        return _alarmTracker.ScanAlarms(
-            devices,
-            _adapterResolver.Resolve(devices[0]), _alarmHistory, GetCurrentShiftName(), _logger,
-            _alarmNotificationChannel,
-            _appSettings.PlcBatchReadMaxLength,
-            _appSettings.PlcBatchReadMaxGapSlots);
-    }
-
-    private void NotifyAlarm(Device device, string alarmId, string alarmName, AlarmLevel level)
-    {
-        try
-        {
-            _alarmNotificationChannel?.Enqueue(new AlarmNotification(
-                device.Id, device.Name, alarmId, alarmName, level, DateTime.Now));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "报警通知通道执行失败：设备={Device} 报警={Alarm}", device.Name, alarmName);
-        }
-    }
 
     /// <summary>
     /// 记录本轮采集成功的设备的当前产量快照到历史数据库。
@@ -1011,6 +743,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             _logger.LogInformation("已入队 {Count} 条生产快照（班次={Shift}）", count, shiftName);
         }
     }
+
+    // ──────────── 扫描子系统 facade（转发 PlcScanPipeline，维持 internal 接口不变——测试与历史调用方零改动） ────────────
+
+    internal bool ScanAlarms() => _scanPipeline.ScanAlarms();
+    internal bool ScanDefects() => _scanPipeline.ScanDefects();
+    internal void ScanCountAlarms() => _scanPipeline.ScanCountAlarms();
+    internal void ClearAlarmsOnDisconnect() => _scanPipeline.ClearAlarmsOnDisconnect();
 
     /// <summary>
     /// 根据每个设备的 StatusWord 按轮询间隔累计 OEE 时间。
@@ -1153,7 +892,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         lock (_resetLock)
         {
             // 软件侧 OEE 累计立即清零（断线期间本就没累计，立即清零无副作用）
-            _alarmTracker.ResetAll();
+            _scanPipeline.ResetAll();
             _statusTracker.ResetAll();
             _baselineCoordinator.ResetAll();
 
@@ -1244,7 +983,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
 
             // 重置报警时间戳，并清理 _prevAlarmStates 中该设备的报警状态，
             // 使下一轮 ScanAlarms 走重建逻辑（从历史表恢复），避免时间戳与内存状态不一致
-            _alarmTracker.RemoveDeviceAlarms(device);
+            _scanPipeline.RemoveDeviceAlarms(device);
             foreach (var alarm in device.Alarms.ToList())
             {
                 alarm.StartTime = default;
@@ -1273,7 +1012,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     {
         if (device == null) return;
 
-        _alarmTracker.RemoveDeviceAlarms(device);
+        _scanPipeline.RemoveDeviceAlarms(device);
         _statusTracker.RemoveDevice(device.Id);
         _baselineCoordinator.RemoveDevice(device.Id);
         _shiftContext.RemoveDevice(device.Id);
@@ -1288,7 +1027,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 应在 DeviceManagerViewModel.RemoveAlarm 删除报警后调用，避免内存泄漏。
     /// </summary>
     public void RemoveAlarmState(string alarmId)
-        => _alarmTracker.RemoveAlarmState(alarmId);
+        => _scanPipeline.RemoveAlarmState(alarmId);
 
     /// <summary>
     /// 检测班次切换：根据 DateTime.Now.TimeOfDay 匹配当前班次，
@@ -1315,7 +1054,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         // 班次切换前，同步写入 EventType=3 事件（单次尝试，不 Thread.Sleep 重试），
         // 必须在 ResetShift 清空 _prevAlarmStates 之前完成，
         // 确保 ScanAlarms 重建时 GetLatestAlarmEvent 能查到 EventType=3 而非旧 EventType=1
-        _alarmTracker.LogShiftChangeForActiveAlarms(devicesSnapshot, _alarmHistory, GetCurrentShiftName(), _logger);
+        _scanPipeline.LogShiftChangeForActiveAlarms(devicesSnapshot);
 
         // 先更新当前班次标识，使后续基线文件与产量快照都归属新班次，再执行 ResetShift
         _shiftContext.SetCurrentShift(newShift);
@@ -1330,7 +1069,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// facade 委托到 <see cref="AlarmStateTracker.LogShiftChangeForActiveAlarms"/>。
     /// </summary>
     internal void LogShiftChangeForActiveAlarms()
-        => _alarmTracker.LogShiftChangeForActiveAlarms(_deviceRepository.GetDevicesSnapshot(), _alarmHistory, GetCurrentShiftName(), _logger);
+        => _scanPipeline.LogShiftChangeForActiveAlarms(_deviceRepository.GetDevicesSnapshot());
 
     /// <summary>
     /// 班次切换前缓存当前（即将成为"上班次"）各设备产量汇总。

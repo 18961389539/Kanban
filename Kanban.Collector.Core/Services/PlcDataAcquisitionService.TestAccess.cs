@@ -25,7 +25,7 @@ public partial class PlcDataAcquisitionService
     /// 测试用：读取 _prevAlarmStates 的快照副本，便于断言报警内存状态。
     /// </summary>
     internal System.Collections.Generic.IReadOnlyDictionary<string, bool> PrevAlarmStatesForTest
-        => _alarmTracker.GetPrevAlarmStatesSnapshot();
+        => _scanPipeline.GetPrevAlarmStatesForTest();
 
     /// <summary>
     /// 测试用：读取 _prevStatusWords 的快照副本，便于断言状态字内存状态。
@@ -38,13 +38,13 @@ public partial class PlcDataAcquisitionService
     /// 用于验证 LogShiftChangeForActiveAlarms 在写入失败后是否正确标记报警。
     /// </summary>
     internal System.Collections.Generic.IReadOnlyCollection<string> ShiftChangeFailedAlarmsForTest
-        => _alarmTracker.GetShiftChangeFailedAlarmsSnapshot();
+        => _scanPipeline.GetShiftChangeFailedAlarmsForTest();
 
     /// <summary>
     /// 测试用：直接设置 _prevAlarmStates 中的某项，便于构造报警已触发等初始场景。
     /// </summary>
     internal void SetPrevAlarmStateForTest(string alarmId, bool state)
-        => _alarmTracker.SetPrevAlarmStateForTest(alarmId, state);
+        => _scanPipeline.SetPrevAlarmStateForTest(alarmId, state);
 
     /// <summary>
     /// 测试用：仅从 _prevAlarmStates 移除指定报警（不清 _shiftChangeFailedAlarms），
@@ -52,7 +52,7 @@ public partial class PlcDataAcquisitionService
     /// 不会清空 _shiftChangeFailedAlarms），便于班次切换失败恢复场景的单测。
     /// </summary>
     internal void ClearPrevAlarmStateForTest(string alarmId)
-        => _alarmTracker.ClearPrevAlarmStateForTest(alarmId);
+        => _scanPipeline.ClearPrevAlarmStateForTest(alarmId);
 
     /// <summary>
     /// 测试用：直接注入指定设备的上班次产量快照，便于构造本班次 vs 上班次对比场景。

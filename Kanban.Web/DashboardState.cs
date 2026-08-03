@@ -326,6 +326,9 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>元数据回调（Collector 约 5s 推送）：全量替换工单缓存 + 更新班次（设备删除不留残留）。</summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
+        // 数据新鲜度：Meta 约 5s 一帧，快照增量发布后静止设备不再触发 OnSnapshot，
+        // 必须由 Meta 维持 LastDataAt 前进（否则全厂静止时"数据更新"时间戳卡住）
+        _client.MarkDataReceived();
         lock (_lock)
         {
             _workOrdersByDevice.Clear();

@@ -12,7 +12,7 @@ namespace Kanban.Client;
 /// 不依赖任何 UI/WPF 类型：桌面端（MainAPP）以 <c>useMessagePack: true</c> 使用 MessagePack 协议，
 /// 浏览器端（Blazor WASM）以 <c>useMessagePack: false</c> 使用默认 JSON 协议（Collector 双协议并存）。
 /// </summary>
-public sealed class KanbanDataClient : IAsyncDisposable
+public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient, IKanbanAdminClient
 {
     private readonly string _hubUrl;
     private readonly bool _useMessagePack;
@@ -243,7 +243,7 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
     {
         EnsureConnected();
-        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveDevicesAsync), devices, ct);
+        await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveDevicesAsync), devices, ct);
     }
 
     /// <summary>从 Collector 拉取设备配置（Remote 模式屏端零配置，不依赖本地 devices.json）。</summary>
@@ -257,14 +257,14 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
     {
         EnsureConnected();
-        return await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanHubServer.UpsertWorkOrderAsync), workOrder, ct);
+        return await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanAdminServer.UpsertWorkOrderAsync), workOrder, ct);
     }
 
     /// <summary>删除工单（Collector 落库）。</summary>
     public async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
     {
         EnsureConnected();
-        await _connection!.InvokeAsync(nameof(IKanbanHubServer.DeleteWorkOrderAsync), workOrderId, ct);
+        await _connection!.InvokeAsync(nameof(IKanbanAdminServer.DeleteWorkOrderAsync), workOrderId, ct);
     }
 
     /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
@@ -285,7 +285,7 @@ public sealed class KanbanDataClient : IAsyncDisposable
     public async Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default)
     {
         EnsureConnected();
-        await _connection!.InvokeAsync(nameof(IKanbanHubServer.SaveCollectorSettingsAsync), settings, ct);
+        await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveCollectorSettingsAsync), settings, ct);
     }
 
     /// <summary>服务端版本握手（Collector 程序集信息版本；用于升级兼容性校验）。</summary>

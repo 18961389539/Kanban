@@ -20,6 +20,9 @@ public sealed class SnapshotPublisher
     private readonly ILogger<SnapshotPublisher> _logger;
     private long _seq;
 
+    /// <summary>每设备上次已发布快照（增量比较基准；业务字段一致则跳过发布，静止设备不再每 500ms 推全量）。</summary>
+    private readonly Dictionary<string, DeviceSnapshotDto> _lastPublished = new(StringComparer.Ordinal);
+
     public SnapshotPublisher(
         DeviceRepository deviceRepository,
         SnapshotAggregator aggregator,
@@ -31,7 +34,9 @@ public sealed class SnapshotPublisher
     }
 
     /// <summary>
-    /// 发布全部设备的当前快照。设备无运行时状态（未采集到）时按 Unknown/待机发布。
+    /// 发布全部设备的当前快照（**增量**：业务字段与上次一致则跳过，静止设备不推；
+    /// 首次/设备变化/新订阅者补发全量兜底）。设备无运行时状态（未采集到）时按 Unknown/待机发布。
+    /// 客户端以 upsert 语义消费（OnSnapshot 按 DeviceId 覆盖），增量不改变 DTO 契约。
     /// </summary>
     public void PublishAll()
     {
@@ -39,11 +44,22 @@ public sealed class SnapshotPublisher
         var runtimes = _deviceRepository.GetRuntimesSnapshot();
         var runtimeById = runtimes.ToDictionary(r => r.DeviceId);
 
+        // 清理已删除设备的增量基准（设备被裁剪后残留条目无意义且占内存）
+        if (_lastPublished.Count != devices.Count)
+        {
+            var liveIds = devices.Select(d => d.Id).ToHashSet();
+            foreach (var staleId in _lastPublished.Keys.Where(id => !liveIds.Contains(id)).ToList())
+                _lastPublished.Remove(staleId);
+        }
+
         foreach (var device in devices)
         {
             try
             {
                 var snapshot = ToSnapshot(device, runtimeById.TryGetValue(device.Id, out var rt) ? rt : null);
+                if (_lastPublished.TryGetValue(device.Id, out var last) && SameSnapshot(last, snapshot))
+                    continue; // 静止设备：业务字段无变化，跳过（省序列化与带宽）
+                _lastPublished[device.Id] = snapshot;
                 _aggregator.Publish(snapshot);
             }
             catch (Exception ex)
@@ -53,6 +69,26 @@ public sealed class SnapshotPublisher
             }
         }
         Interlocked.Increment(ref CollectorMetrics.SnapshotPublishCount);
+    }
+
+    /// <summary>
+    /// 业务字段等价比较（排除 Timestamp/Seq——两者每帧都变，不代表业务变化）。
+    /// ActiveAlarms 是引用类型属性，record 默认按引用比较，这里按内容逐一比较。
+    /// </summary>
+    private static bool SameSnapshot(DeviceSnapshotDto a, DeviceSnapshotDto b)
+    {
+        if (a.DeviceId != b.DeviceId || a.DeviceName != b.DeviceName || a.Status != b.Status
+            || a.StatusWord != b.StatusWord || a.OkProduction != b.OkProduction || a.NgProduction != b.NgProduction
+            || a.TotalOkProduction != b.TotalOkProduction || a.TotalNgProduction != b.TotalNgProduction
+            || a.RunTime != b.RunTime || a.AlarmTime != b.AlarmTime || a.PausedTime != b.PausedTime
+            || a.QualityRate != b.QualityRate || a.PerformanceRate != b.PerformanceRate
+            || a.AvailabilityRate != b.AvailabilityRate || a.Oee != b.Oee || a.TargetCycle != b.TargetCycle
+            || a.Removed != b.Removed)
+            return false;
+        if (a.ActiveAlarms.Count != b.ActiveAlarms.Count) return false;
+        for (int i = 0; i < a.ActiveAlarms.Count; i++)
+            if (a.ActiveAlarms[i] != b.ActiveAlarms[i]) return false;
+        return true;
     }
 
     private DeviceSnapshotDto ToSnapshot(Device device, DeviceRuntime? runtime)

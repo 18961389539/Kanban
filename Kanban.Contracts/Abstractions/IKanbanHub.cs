@@ -22,10 +22,12 @@ public interface IKanbanHubClient
 }
 
 /// <summary>
-/// SignalR Hub 方法契约（客户端 → 服务端调用方向）。
+/// SignalR Hub 方法契约——**监控域**（客户端 → 服务端调用方向，展示/查询/订阅）。
 /// 仅作为方法名与签名约定（配合 nameof 使用），由 Collector 的 KanbanHub 实现。
 /// 注意：SignalR 不支持 CancellationToken 参数（服务端通过 HubCallerContext.Abort 感知断开），
 /// 因此此处方法签名一律不含 CancellationToken。
+/// 管理写操作（设备/工单/采集设置）见 <see cref="IKanbanAdminServer"/>——按能力域拆分，
+/// 新功能按"监控 or 管理"落位，避免单接口膨胀成上帝接口。
 /// </summary>
 public interface IKanbanHubServer
 {
@@ -44,17 +46,8 @@ public interface IKanbanHubServer
     /// <summary>历史查询（Unary）</summary>
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request);
 
-    /// <summary>同步设备配置（Remote 模式：MainAPP 设备管理页保存时推给 Collector 落盘 devices.json）</summary>
-    Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices);
-
     /// <summary>拉取设备配置（Remote 模式屏端零配置：设备列表从此获取，不依赖本地 devices.json）</summary>
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync();
-
-    /// <summary>新增/更新工单（Remote 模式：Collector 落库 work_orders.db，返回带 Id 的落库结果）</summary>
-    Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder);
-
-    /// <summary>删除工单（Remote 模式：Collector 落库）</summary>
-    Task DeleteWorkOrderAsync(int workOrderId);
 
     /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
     Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId);
@@ -66,14 +59,31 @@ public interface IKanbanHubServer
     Task SubscribeMetaAsync();
 
     /// <summary>
-    /// 采集设置同步（Remote 模式：MainAPP 设置页保存时把采集相关参数推给 Collector 落盘 settings.json 并热生效）。
-    /// 解决"Remote 模式下设置改了采集进程无感知"的配置分裂问题。
-    /// </summary>
-    Task SaveCollectorSettingsAsync(CollectorSettingsDto settings);
-
-    /// <summary>
     /// 服务端版本握手（Collector 程序集信息版本）。客户端用于升级兼容性校验：
     /// 版本不一致时提示"客户端版本过旧/服务已升级"，替代升级后无征兆的运行时异常。
     /// </summary>
     Task<string> GetServerVersionAsync();
+}
+
+/// <summary>
+/// SignalR Hub 方法契约——**管理域**（客户端 → 服务端调用方向，写操作）。
+/// 与 <see cref="IKanbanHubServer"/> 由同一 KanbanHub 实现；独立接口让管理写操作与展示查询
+/// 的能力边界清晰（Collector 单写者入口），新管理功能加在这里，不污染监控接口。
+/// </summary>
+public interface IKanbanAdminServer
+{
+    /// <summary>同步设备配置（Remote 模式：MainAPP 设备管理页保存时推给 Collector 落盘 devices.json）</summary>
+    Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices);
+
+    /// <summary>新增/更新工单（Remote 模式：Collector 落库 work_orders.db，返回带 Id 的落库结果）</summary>
+    Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder);
+
+    /// <summary>删除工单（Remote 模式：Collector 落库）</summary>
+    Task DeleteWorkOrderAsync(int workOrderId);
+
+    /// <summary>
+    /// 采集设置同步（Remote 模式：MainAPP 设置页保存时把采集相关参数推给 Collector 落盘 settings.json 并热生效）。
+    /// 解决"Remote 模式下设置改了采集进程无感知"的配置分裂问题。
+    /// </summary>
+    Task SaveCollectorSettingsAsync(CollectorSettingsDto settings);
 }
