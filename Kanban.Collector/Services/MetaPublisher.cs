@@ -23,6 +23,9 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     private readonly List<Channel<MetaStateDto>> _subscribers = new();
     private Timer? _timer;
     private MetaStateDto? _latest;
+    // 脏标记：工单变更版本 + 上次组装的快照缓存（无变更时跳过全量拷贝/索引）
+    private long _lastWorkOrderVersion = -1;
+    private IReadOnlyList<DeviceWorkOrderDto>? _cachedWorkOrders;
 
     public MetaPublisher(
         ConfigSyncHandler configSyncHandler,
@@ -52,9 +55,20 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     {
         try
         {
+            // 脏标记：工单版本未变时复用缓存快照（消除每 5s 的全量拷贝 + 索引组装）；
+            // 版本变了才重组装。构建失败（null）时跳过本次：客户端保留上次数据，避免"暂无工单"假空态
+            var version = _configSyncHandler.WorkOrderChangeVersion;
+            if (version != _lastWorkOrderVersion || _cachedWorkOrders is null)
+            {
+                var workOrders = _configSyncHandler.GetWorkOrderSnapshot();
+                if (workOrders is null)
+                    return;
+                _cachedWorkOrders = workOrders;
+                _lastWorkOrderVersion = version;
+            }
             var meta = new MetaStateDto
             {
-                Devices = _configSyncHandler.GetWorkOrderSnapshot(),
+                Devices = _cachedWorkOrders!,
                 Shift = _shiftProgressProvider.GetProgress(),
             };
             lock (_gate)
@@ -76,8 +90,14 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     /// <summary>订阅元数据流（补发最新包；连接断开自动退订）。</summary>
     public ValueTask<ChannelReader<MetaStateDto>> SubscribeAsync(CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<MetaStateDto>(
-            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        // 有界 + DropOldest（5s 低频，容量 16 ≈ 80s 缓冲；慢客户端不无界积压，丢最旧保最新）
+        var channel = Channel.CreateBounded<MetaStateDto>(
+            new BoundedChannelOptions(16)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = true,
+            });
 
         lock (_gate)
         {

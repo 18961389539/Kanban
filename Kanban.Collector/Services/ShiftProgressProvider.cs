@@ -50,10 +50,5 @@ public sealed class ShiftProgressProvider
     }
 
     private static string FormatShiftTime(double secs)
-    {
-        var ts = TimeSpan.FromSeconds(Math.Max(0, secs));
-        return ts.TotalHours >= 1
-            ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-            : $"{ts.Minutes}m";
-    }
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(secs);
 }

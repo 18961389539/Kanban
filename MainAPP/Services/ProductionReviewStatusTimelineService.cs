@@ -5,6 +5,7 @@ using Kanban.Core.Entities;
 using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -64,11 +65,11 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
             && alarm.EventTime >= start && alarm.EventTime < end);
         var statusText = state switch
         {
-            (int)DeviceStatus.Running => "运行",
-            (int)DeviceStatus.Paused => "暂停",
-            (int)DeviceStatus.Alarm => "报警",
+            (int)DeviceStatus.Running => Strings.Status_Running,
+            (int)DeviceStatus.Paused => Strings.Status_Paused,
+            (int)DeviceStatus.Alarm => Strings.Status_Alarm,
             0 => "断线",
-            _ => "未知",
+            _ => Strings.Status_Unknown,
         };
         return new ReviewStatusSegmentData(
             start,

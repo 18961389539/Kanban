@@ -21,6 +21,12 @@ public interface IProductionHistoryWriter
 
 public interface IProductionHistoryService : IProductionHistoryReader, IProductionHistoryWriter
 {
+    /// <summary>分页查询生产日志（服务端 SQL 层 Skip/Take + Count；历史查询页用，避免百万级全量传输）。</summary>
+    (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize);
+
+    /// <summary>最新一条生产日志（SQL 层 OrderByDescending().Take(1)，替代全量拉取再内存 Take）。</summary>
+    ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName);
 }
 
 /// <summary>

@@ -55,8 +55,14 @@ public sealed class HistoryQueryHandler
         }
         catch (Exception ex)
         {
+            // 结构化错误：客户端据此区分"真实空数据"与"查询失败"，而非把故障当空结果显示
             _logger.LogError(ex, "历史查询失败 QueryType={QueryType} Device={DeviceId}", request.QueryType, request.DeviceId);
-            return Empty(request);
+            return new HistoryQueryResponse
+            {
+                Page = request.Page,
+                PageSize = request.PageSize,
+                Error = $"历史查询失败: {ex.Message}",
+            };
         }
     }
 
@@ -64,21 +70,29 @@ public sealed class HistoryQueryHandler
 
     private HistoryQueryResponse QueryProductionLogs(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
     {
-        List<ProductionLogDto> items;
+        // 按工单查询：工单关联记录量有限，全量拉取
         if (request.WorkOrderId.HasValue)
         {
-            items = _history.QueryProductionLogsByWorkOrder(request.WorkOrderId.Value)
+            var items = _history.QueryProductionLogsByWorkOrder(request.WorkOrderId.Value)
                 .Select(ToDto)
                 .ToList();
+            return Build(items, request);
         }
-        else
+
+        // 服务端分页下推（SQL Skip/Take + Count）：历史查询不再全量 ToList 传输百万级记录；
+        // LatestFirst 同样下推为 SQL 层 OrderByDescending().Take(1)
+        if (request.LatestFirst)
         {
-            var logs = _history.QueryProductionLogs(from, to, deviceId, request.ShiftName);
-            items = request.LatestFirst
-                ? logs.OrderByDescending(l => l.Timestamp).Take(1).Select(ToDto).ToList()
-                : logs.Select(ToDto).ToList();
+            var latest = _history.QueryLatestProductionLog(from, to, deviceId, request.ShiftName);
+            var items = latest is null
+                ? new List<ProductionLogDto>()
+                : new List<ProductionLogDto> { ToDto(latest) };
+            return Build(items, request);
         }
-        return Build(items, request);
+
+        var (pageItems, total) = _history.QueryProductionLogsPaged(
+            from, to, deviceId, request.ShiftName, request.Page, request.PageSize);
+        return Build(pageItems.Select(ToDto).ToList(), request, total);
     }
 
     private HistoryQueryResponse QueryAlarmEvents(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
@@ -134,11 +148,12 @@ public sealed class HistoryQueryHandler
         return (from, to);
     }
 
-    private static HistoryQueryResponse Build<T>(List<T> items, HistoryQueryRequest request)
+    private static HistoryQueryResponse Build<T>(List<T> items, HistoryQueryRequest request, int? totalOverride = null)
     {
         var response = new HistoryQueryResponse
         {
-            Total = items.Count,
+            // 分页查询时 totalOverride 为服务端 Count（全量总数）；否则等于本页 items 数量（未分页类型）
+            Total = totalOverride ?? items.Count,
             Page = request.Page,
             PageSize = request.PageSize,
         };

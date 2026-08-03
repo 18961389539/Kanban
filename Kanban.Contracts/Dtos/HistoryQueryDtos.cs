@@ -51,6 +51,10 @@ public sealed record HistoryQueryRequest
 /// </summary>
 public sealed record HistoryQueryResponse
 {
+    /// <summary>查询错误消息（null=成功）。服务端把落库/IO 异常转为结构化错误返回，
+    /// 客户端据此区分"真实空数据"与"查询失败"，避免把故障当空结果显示。</summary>
+    public string? Error { get; init; }
+
     public int Total { get; init; }
     public int Page { get; init; }
     public int PageSize { get; init; }

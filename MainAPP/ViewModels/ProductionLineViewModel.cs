@@ -392,12 +392,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>当前状态筛选的中文描述（按钮高亮对比用）。</summary>
+    /// <summary>当前状态筛选的中文描述（按钮高亮对比用）；文本委托多语言资源。</summary>
     public string LineStatusFilterText => _lineStatusFilter switch
     {
-        LineStatusFilter.Running => "运行",
-        LineStatusFilter.Alarm => "报警",
-        LineStatusFilter.Paused => "待机",
+        LineStatusFilter.Running => Strings.Status_Running,
+        LineStatusFilter.Alarm => Strings.Status_Alarm,
+        LineStatusFilter.Paused => Strings.Status_Paused,
         _ => Strings.M040,
     };
 

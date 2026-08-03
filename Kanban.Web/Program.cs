@@ -9,13 +9,13 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // ──────────── 共享 SignalR 客户端（JSON 协议，Collector 双协议并存） ────────────
 // Collector 地址解析优先级：wwwroot/appsettings.json 的 Kanban:CollectorHubUrl（显式配置，
-// 适配 Collector 部署在独立主机/非 5129 端口）→ 留空时自动派生：与页面同主机的 :5129
+// 适配 Collector 部署在独立主机/非默认端口）→ 留空时自动派生：与页面同主机的默认端口
 // （单端口部署：从 http://host:5129/ 打开看板时 BaseAddress.Host 即主机 IP，自动连同源 Hub；
-// dev 模式 5186 同样派生到同一主机的 :5129——零配置跨环境）。
+// dev 模式 5186 同样派生到同一主机的默认端口——零配置跨环境）。
 var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
 var configuredHubUrl = builder.Configuration["Kanban:CollectorHubUrl"];
 var collectorHubUrl = string.IsNullOrWhiteSpace(configuredHubUrl)
-    ? $"http://{baseUri.Host}:5129/hubs/kanban"
+    ? $"http://{baseUri.Host}:{Kanban.Contracts.KanbanHubPaths.DefaultPort}{Kanban.Contracts.KanbanHubPaths.HubPath}"
     : configuredHubUrl;
 
 builder.Services.AddSingleton(sp => new KanbanDataClient(

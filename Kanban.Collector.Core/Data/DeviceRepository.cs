@@ -75,6 +75,12 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public ConcurrentDictionary<string, DeviceRuntime> RuntimeMap { get; } = new();
 
+    /// <summary>
+    /// DeviceId → Device 快速查找索引（与 <see cref="Devices"/> 同步维护，LoadAll/ReplaceAll 时更新）。
+    /// 消除 GetDeviceById 的 O(n) 线性扫描——高频路径（RemoteRuntimeSink 每 500ms × 每设备）由线性退化到 O(1)。
+    /// </summary>
+    public ConcurrentDictionary<string, Device> DeviceMap { get; } = new();
+
     private readonly AppSettings _appSettings;
 
     public string FilePath => _appSettings.GetFilePath("devices.json");
@@ -138,6 +144,7 @@ public class DeviceRepository : IDeviceRepository
         lock (_collectionLock)
         {
             Devices.Clear();
+            DeviceMap.Clear();
             Runtimes.Clear();
             RuntimeMap.Clear();
             LoadErrorMessage = null;
@@ -156,6 +163,7 @@ public class DeviceRepository : IDeviceRepository
                     foreach (var d in devices)
                     {
                         Devices.Add(d);
+                        DeviceMap[d.Id] = d;
                         var runtime = new DeviceRuntime(d);
                         Runtimes.Add(runtime);
                         RuntimeMap[d.Id] = runtime;
@@ -278,12 +286,14 @@ public class DeviceRepository : IDeviceRepository
         lock (_collectionLock)
         {
             Devices.Clear();
+            DeviceMap.Clear();
             Runtimes.Clear();
             RuntimeMap.Clear();
 
             foreach (var device in deviceList)
             {
                 Devices.Add(device);
+                DeviceMap[device.Id] = device;
                 AddRuntime(device);
             }
         }
@@ -356,22 +366,12 @@ public class DeviceRepository : IDeviceRepository
     }
 
     /// <summary>
-    /// 按 Id 查找单个设备（锁内线性扫描，无快照拷贝分配）。
-    /// 供高频路径使用（如 RemoteRuntimeSink 每 500ms×每设备一次），
-    /// 避免 GetDevicesSnapshot().FirstOrDefault 的每次全量 ToList 分配。
-    /// 设备数量达到百级时可改为 DeviceId 索引字典，当前量级线性扫描足够。
+    /// 按 Id 查找单个设备（DeviceMap 索引 O(1)，无锁、无快照拷贝分配）。
+    /// 供高频路径使用（如 RemoteRuntimeSink 每 500ms×每设备一次）——索引与 Devices 在
+    /// LoadAll/ReplaceAll 内同步维护。
     /// </summary>
     public Device? GetDeviceById(string deviceId)
-    {
-        lock (_collectionLock)
-        {
-            foreach (var device in Devices)
-            {
-                if (device.Id == deviceId) return device;
-            }
-            return null;
-        }
-    }
+        => DeviceMap.TryGetValue(deviceId, out var device) ? device : null;
 
     /// <summary>
     /// 获取 Runtimes 的线程安全快照副本。供后台采集线程枚举使用。

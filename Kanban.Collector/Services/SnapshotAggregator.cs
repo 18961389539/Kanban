@@ -37,8 +37,15 @@ public sealed class SnapshotAggregator
     /// </summary>
     public ValueTask<ChannelReader<DeviceSnapshotDto>> SubscribeAsync(CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<DeviceSnapshotDto>(
-            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        // 有界 + DropOldest：快照每次全量、丢最旧保最新（客户端始终拿到最新状态）；
+        // 慢/停流客户端（如 WASM 切后台 JS 冻结）不再无界积压——无界缓冲可 OOM 拖垮采集进程。
+        var channel = Channel.CreateBounded<DeviceSnapshotDto>(
+            new BoundedChannelOptions(128)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = true,
+            });
 
         lock (_gate)
         {

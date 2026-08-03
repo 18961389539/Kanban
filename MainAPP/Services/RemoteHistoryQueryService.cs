@@ -167,6 +167,38 @@ public sealed class RemoteHistoryQueryService :
             ? QueryRemoteList<StatusTransitionRecord>(HistoryQueryType.StatusTransition, DateTime.MinValue, before, deviceId, shiftName, latestFirst: true).FirstOrDefault()
             : _local.GetLatestStatusBeforeStrict(deviceId, before, shiftName);
 
+    public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        => IsRemote
+            ? QueryRemotePaged(from, to, deviceId, shiftName, page, pageSize)
+            : _local.QueryProductionLogsPaged(from, to, deviceId, shiftName, page, pageSize);
+
+    public ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName)
+        => IsRemote
+            ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, from, to, deviceId, shiftName, latestFirst: true).FirstOrDefault()
+            : _local.QueryLatestProductionLog(from, to, deviceId, shiftName);
+
+    /// <summary>Remote 分页查询：服务端 SQL 层 Skip/Take + Count（配合 Collector 的 QueryProductionLogsPaged）。</summary>
+    private (List<ProductionLog> Items, int Total) QueryRemotePaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+    {
+        var request = new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = from == DateTime.MinValue ? null : from,
+            To = to == DateTime.MaxValue ? null : to,
+            DeviceId = deviceId,
+            ShiftName = shiftName,
+            LatestFirst = false,
+            Page = page,
+            PageSize = pageSize,
+        };
+        var response = Task.Run(() => _client.QueryHistoryAsync(request)).GetAwaiter().GetResult();
+        if (!string.IsNullOrEmpty(response.Error))
+            throw new InvalidOperationException(response.Error);
+        return (MapDtos<ProductionLog>(response), response.Total);
+    }
+
     // ──────────── IDefectHistoryReader ────────────
 
     public List<DefectSnapshotRecord> Query(DateTime from, DateTime to, string deviceId)
@@ -233,6 +265,10 @@ public sealed class RemoteHistoryQueryService :
         // （QueryHistoryAsync 的 await 会尝试回到 UI SynchronizationContext，但 UI 线程被阻塞）。
         // Task.Run 转入线程池执行，无 SynchronizationContext 回跳，避免死锁。
         var response = Task.Run(() => _client.QueryHistoryAsync(request)).GetAwaiter().GetResult();
+        // 结构化错误：服务端把落库/IO 故障转为 Error 返回（而非伪装空数据），此处转异常
+        // 让调用方走既有的"查询失败"提示路径，与真实空数据区分开
+        if (!string.IsNullOrEmpty(response.Error))
+            throw new InvalidOperationException(response.Error);
         return MapDtos<T>(response);
     }
 

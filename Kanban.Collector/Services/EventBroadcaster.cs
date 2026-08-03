@@ -32,17 +32,16 @@ public sealed class EventBroadcaster
         _logger = logger;
     }
 
-    /// <summary>发布报警事件（分配报警流 Seq，写入环形缓冲 + 扇出广播）</summary>
+    /// <summary>发布报警事件（分配报警流 Seq，写入环形缓冲 + 扇出广播）。
+    /// 单临界区：seq 分配 + ring 写入 + 扇出原子完成——订阅注册（WatchAlarmEventsAsync 内补发 ring）
+    /// 要么看到该事件已入 ring（补发路径收到）、要么订阅发生在扇出后（实时路径收到），
+    /// 杜绝"两段锁"窗口下同一事件被补发与扇出各投递一次（破坏按 Seq 单次投递语义）。</summary>
     public void PublishAlarmEvent(AlarmEventDto evt)
     {
-        long seq;
         lock (_gate)
         {
-            seq = _nextAlarmSeq++;
-        }
-        var withSeq = evt with { Seq = seq };
-        lock (_gate)
-        {
+            var seq = _nextAlarmSeq++;
+            var withSeq = evt with { Seq = seq };
             _alarmRing.AddLast((withSeq.Seq, withSeq));
             while (_alarmRing.Count > RetentionCount)
                 _alarmRing.RemoveFirst();
@@ -55,17 +54,14 @@ public sealed class EventBroadcaster
         Interlocked.Increment(ref CollectorMetrics.AlarmEventPublishCount);
     }
 
-    /// <summary>发布状态事件（分配状态流 Seq，写入环形缓冲 + 扇出广播）</summary>
+    /// <summary>发布状态事件（分配状态流 Seq，写入环形缓冲 + 扇出广播）。
+    /// 单临界区（理由同 <see cref="PublishAlarmEvent"/>）。</summary>
     public void PublishStatusEvent(StatusEventDto evt)
     {
-        long seq;
         lock (_gate)
         {
-            seq = _nextStatusSeq++;
-        }
-        var withSeq = evt with { Seq = seq };
-        lock (_gate)
-        {
+            var seq = _nextStatusSeq++;
+            var withSeq = evt with { Seq = seq };
             _statusRing.AddLast((withSeq.Seq, withSeq));
             while (_statusRing.Count > RetentionCount)
                 _statusRing.RemoveFirst();
@@ -87,8 +83,15 @@ public sealed class EventBroadcaster
     public async IAsyncEnumerable<AlarmEventDto> WatchAlarmEventsAsync(
         long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<AlarmEventDto>(
-            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        // 有界 + DropOldest：容量对齐 RetentionCount（补发需容纳全部 ring 条目，防补拉丢事件）；
+        // 慢/停流客户端不再无界积压（无界缓冲可 OOM 拖垮采集进程），超容量丢最旧、保最新。
+        var channel = Channel.CreateBounded<AlarmEventDto>(
+            new BoundedChannelOptions(RetentionCount)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = true,
+            });
 
         lock (_gate)
         {
@@ -121,8 +124,14 @@ public sealed class EventBroadcaster
     public async IAsyncEnumerable<StatusEventDto> WatchStatusEventsAsync(
         long afterSeq, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<StatusEventDto>(
-            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        // 有界 + DropOldest（理由同 WatchAlarmEventsAsync：容量对齐 RetentionCount，防无界积压 OOM）
+        var channel = Channel.CreateBounded<StatusEventDto>(
+            new BoundedChannelOptions(RetentionCount)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+                SingleWriter = true,
+            });
 
         lock (_gate)
         {

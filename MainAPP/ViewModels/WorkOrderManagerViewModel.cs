@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using MainAPP.Resources;
+using MainAPP.Helpers;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -30,7 +31,7 @@ public sealed record WorkOrderSortOption(WorkOrderSortMode Value, string Label);
 /// 工单业务逻辑（弹窗、状态机校验、二次确认、落库）已抽取到 <see cref="IWorkOrderService"/>，
 /// 本 ViewModel 仅负责列表展示、筛选与命令转发，避免与 <see cref="DeviceManagerViewModel"/> 重复。
 /// </summary>
-public partial class WorkOrderManagerViewModel : ObservableObject
+public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
 {
     private readonly WorkOrderRepository _workOrderRepo;
     private readonly IWorkOrderService _workOrderService;
@@ -152,8 +153,63 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         RefreshDeviceOptions();
         RefreshStatusCounts();
         ApplySort();
-        // 订阅集合变化：工单增删/状态切换后重算各状态计数
-        _workOrderRepo.WorkOrders.CollectionChanged += (_, _) => RefreshStatusCounts();
+        // 订阅集合变化：工单增删/状态切换后重算各状态计数（命名方法，Dispose 时解绑）
+        _workOrderRepo.WorkOrders.CollectionChanged += OnWorkOrdersCollectionChanged;
+    }
+
+    /// <summary>工单集合变更 → 增量维护各状态计数（命名方法，可精确解绑）。
+    /// 增量路径：Add/Remove/Replace 按新旧项 O(1) 调整计数，避免每次 8 次全量 LINQ Count
+    /// （Remote 模式 Meta 每 5s Upsert 触发 Replace，全量重算在 UI 线程的成本集中在此时）；
+    /// Reset（LoadAll 全量替换）回退全量重算。冲突检测依赖全局关系，仍全量（注释见下）。</summary>
+    private void OnWorkOrdersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        switch (e.Action)
+        {
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+                foreach (var w in e.NewItems!.OfType<WorkOrder>()) AdjustCounts(w, +1);
+                break;
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+                foreach (var w in e.OldItems!.OfType<WorkOrder>()) AdjustCounts(w, -1);
+                break;
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
+                foreach (var w in e.OldItems!.OfType<WorkOrder>()) AdjustCounts(w, -1);
+                foreach (var w in e.NewItems!.OfType<WorkOrder>()) AdjustCounts(w, +1);
+                break;
+            default:
+                RefreshStatusCounts();
+                return;
+        }
+        // 冲突计数与筛选视图仍需全量（冲突是设备内区间两两关系，增量维护复杂且工单量为百级时
+        // O(n²) 在 5s 周期内可接受；7 个状态计数已增量，主要开销已消除）
+        ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
+        RefreshFilteredView();
+    }
+
+    /// <summary>按工单的状态/逾期/达标/含不良属性增量调整计数（delta=±1；与全量 Count 口径一致，
+    /// 每个工单恰好贡献 0 或 1——Replace 时先 -1 旧项再 +1 新项即得净变化）。</summary>
+    private void AdjustCounts(WorkOrder w, int delta)
+    {
+        switch (w.Status)
+        {
+            case WorkOrderStatus.Pending: PendingCount += delta; break;
+            case WorkOrderStatus.Running: RunningCount += delta; break;
+            case WorkOrderStatus.Completed: CompletedCount += delta; break;
+            case WorkOrderStatus.Aborted: AbortedCount += delta; break;
+        }
+        if (IsOverdue(w)) OverdueCount += delta;
+        if (IsAchieved(w)) AchievedCount += delta;
+        if (HasNgProduction(w)) NgWorkOrderCount += delta;
+    }
+
+    private bool _disposed;
+
+    /// <summary>解除集合订阅（遵守事件治理约定：命名方法 + Dispose 解绑，防僵尸回调）。</summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _workOrderRepo.WorkOrders.CollectionChanged -= OnWorkOrdersCollectionChanged;
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>按状态统计全量工单数量，更新各计数属性（供下拉显示"进行中(2)"）。</summary>
@@ -484,15 +540,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject
                 // CSV 字段含逗号需双引号包裹
                 var remark = w.Remark ?? "";
                 writer.WriteLine(string.Join(",",
-                    CsvEscape(w.OrderNo),
-                    CsvEscape(w.ProductCode),
-                    CsvEscape(w.ProductName),
-                    CsvEscape(w.DeviceName),
+                    CsvUtil.Escape(w.OrderNo),
+                    CsvUtil.Escape(w.ProductCode),
+                    CsvUtil.Escape(w.ProductName),
+                    CsvUtil.Escape(w.DeviceName),
                     w.TargetQuantity,
                     w.PlannedStart.ToString("yyyy-MM-dd HH:mm"),
                     w.PlannedEnd.ToString("yyyy-MM-dd HH:mm"),
                     statusText,
-                    CsvEscape(remark),
+                    CsvUtil.Escape(remark),
                     w.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
                     w.UpdatedAt.ToString("yyyy-MM-dd HH:mm")));
             }
@@ -506,14 +562,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject
     }
 
     /// <summary>CSV 字段转义：含逗号、双引号或换行时用双引号包裹，内部双引号翻倍。</summary>
-    private static string CsvEscape(string field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
-
     // ──────────── 样本数据生成（DEBUG） ────────────
 
     /// <summary>

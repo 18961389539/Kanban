@@ -35,6 +35,19 @@ internal sealed class InMemoryHistoryService : IHistoryService
             .ToList();
     }
 
+    public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+    {
+        var filtered = QueryProductionLogs(from, to, deviceId, shiftName);
+        return (filtered
+            .Skip((Math.Max(1, page) - 1) * Math.Max(1, pageSize))
+            .Take(Math.Max(1, pageSize))
+            .ToList(), filtered.Count);
+    }
+
+    public ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName)
+        => QueryProductionLogs(from, to, deviceId, shiftName).LastOrDefault();
+
     public List<ProductionLog> QueryProductionLogsByWorkOrder(int workOrderId)
     {
         List<ProductionLog> snapshot;

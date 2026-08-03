@@ -137,7 +137,9 @@ public sealed class ConfigSyncHandler
     /// Running 优先、回退最新 Pending；无工单设备 WorkOrder=null。
     /// 单次遍历内存集合完成全部设备聚合（O(工单数)），避免逐设备线性扫描（O(设备数×工单数)）。
     /// </summary>
-    public IReadOnlyList<DeviceWorkOrderDto> GetWorkOrderSnapshot()
+    public long WorkOrderChangeVersion => _workOrderRepository.ChangeVersion;
+
+    public IReadOnlyList<DeviceWorkOrderDto>? GetWorkOrderSnapshot()
     {
         try
         {
@@ -178,8 +180,10 @@ public sealed class ConfigSyncHandler
         }
         catch (Exception ex)
         {
+            // 返回 null 表示构建失败（区别于"无工单"的空列表）——MetaPublisher 据此跳过本次推送，
+            // 客户端保留上次数据而非收到"暂无工单"假空态；下次 5s 自动重试
             _logger.LogError(ex, "工单快照构建失败");
-            return [];
+            return null;
         }
     }
 

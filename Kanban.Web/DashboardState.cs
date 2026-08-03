@@ -329,7 +329,9 @@ public sealed class DashboardState : IAsyncDisposable
         _client.MarkDataReceived(); // 统一数据新鲜度来源
     }
 
-    /// <summary>元数据回调（Collector 约 5s 推送）：全量替换工单缓存 + 更新班次（设备删除不留残留）。</summary>
+    /// <summary>元数据回调（Collector 约 5s 推送）：**增量**更新工单缓存 + 更新班次（设备删除收敛不留残留）。
+    /// 增量而非清空重建：避免每 5s 产生全新工单引用 → 工单卡强制重渲染抖动（与 WPF RemoteRuntimeSink 对齐；
+    /// 服务端 MetaPublisher 无变更时复用同一快照实例，此处 Equals 判定自然跳过写入）。</summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
         // 数据新鲜度：Meta 约 5s 一帧，快照增量发布后静止设备不再触发 OnSnapshot，
@@ -337,9 +339,22 @@ public sealed class DashboardState : IAsyncDisposable
         _client.MarkDataReceived();
         lock (_lock)
         {
-            _workOrdersByDevice.Clear();
-            foreach (var d in meta.Devices)
-                _workOrdersByDevice[d.DeviceId] = d.WorkOrder;
+            if (meta.Devices.Count != _workOrdersByDevice.Count)
+            {
+                // 设备集变化（增删）：全量对齐，同时清理已删除设备的残留条目
+                _workOrdersByDevice.Clear();
+                foreach (var d in meta.Devices)
+                    _workOrdersByDevice[d.DeviceId] = d.WorkOrder;
+            }
+            else
+            {
+                // 设备集未变：按设备增量替换（值相等（record）跳过写入，引用稳定 → 无渲染抖动）
+                foreach (var d in meta.Devices)
+                {
+                    if (!_workOrdersByDevice.TryGetValue(d.DeviceId, out var existing) || !Equals(existing, d.WorkOrder))
+                        _workOrdersByDevice[d.DeviceId] = d.WorkOrder;
+                }
+            }
             _shiftProgress = meta.Shift;
         }
     }

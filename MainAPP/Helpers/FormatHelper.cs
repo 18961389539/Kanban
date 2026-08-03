@@ -23,13 +23,7 @@ public static class FormatHelper
     /// 将秒数格式化为人类可读的时长文本：
     /// ≥1h → "Xh Ym"，≥1m → "Xm Ys"，否则 → "Xs"。
     /// </summary>
+    /// <remarks>口径委托 Kanban.Contracts.DurationFormatter.FormatStandard（跨进程单源，勿在此内联）。</remarks>
     public static string FormatDuration(double secs)
-    {
-        var ts = TimeSpan.FromSeconds(secs);
-        return ts.TotalHours >= 1
-            ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-            : ts.TotalMinutes >= 1
-                ? $"{ts.Minutes}m {ts.Seconds}s"
-                : $"{ts.Seconds}s";
-    }
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(secs);
 }

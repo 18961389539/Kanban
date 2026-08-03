@@ -11,9 +11,9 @@ internal static class RuntimeDeviceStatusText
 {
     public static string Format(int statusWord) => (DeviceStatusWord)statusWord switch
     {
-        DeviceStatusWord.Running => "运行",
-        DeviceStatusWord.Alarm => "报警",
-        DeviceStatusWord.Standby => "待机",
+        DeviceStatusWord.Running => Strings.Status_Running,
+        DeviceStatusWord.Alarm => Strings.Status_Alarm,
+        DeviceStatusWord.Standby => Strings.Status_Paused,
         DeviceStatusWord.Offline => "离线/未知",
         _ => string.Format(Strings.F164, statusWord),
     };

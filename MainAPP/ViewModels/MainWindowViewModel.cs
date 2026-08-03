@@ -229,6 +229,13 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         OnPropertyChanged(nameof(PlcConnectionBannerText));
     }
 
+    /// <summary>看板标题配置变更 → 刷新窗口标题（命名方法，Dispose 时解绑）。</summary>
+    private void OnAppSettingsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppSettings.AppTitle))
+            OnPropertyChanged(nameof(WindowTitle));
+    }
+
     private static IReadOnlyList<NavigationPageDefinition> CatalogDefinitions => NavigationPageCatalog.All;
 
     /// <summary>
@@ -314,12 +321,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         };
         _staleCheckTimer.Tick += OnStaleCheckTick;
         _staleCheckTimer.Start();
-        // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）
-        AppSettings.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(AppSettings.AppTitle))
-                OnPropertyChanged(nameof(WindowTitle));
-        };
+        // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）。
+        // 命名方法订阅（遵守本文件"事件全部用命名方法"约定），Dispose 精确解绑。
+        AppSettings.PropertyChanged += OnAppSettingsPropertyChanged;
         var sidebarItems = new ObservableCollection<NavItem>(
             PageDefinitions.Where(page => page.ShowInSidebar
                 && (!IsViewerMode || ViewerAllowedPageKeys.Contains(page.Key)))
@@ -353,6 +357,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         _disposed = true;
 
         _staleCheckTimer.Stop();
+        AppSettings.PropertyChanged -= OnAppSettingsPropertyChanged;
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;
         ProductionLineViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;

@@ -299,6 +299,11 @@ public class WorkOrderServiceTests : IDisposable
     {
         public List<ProductionLog> QueryProductionLogs(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
             => throw new InvalidOperationException("测试异常");
+        public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+            DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+            => throw new InvalidOperationException("测试异常");
+        public ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName)
+            => throw new InvalidOperationException("测试异常");
         public List<ProductionLog> QueryProductionLogsByWorkOrder(int workOrderId)
             => throw new InvalidOperationException("测试异常");
         public ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName)

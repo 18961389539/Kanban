@@ -30,6 +30,38 @@ public sealed class ProductionHistoryStore(DatabaseProvider db, ILogger<Producti
         return query.OrderBy(log => log.Timestamp).AsNoTracking().ToList();
     }
 
+    /// <summary>
+    /// 分页查询生产日志（服务端分页下推 SQL：Skip/Take + 独立 Count）。
+    /// 供历史查询页使用——历史查询此前全量 ToList 再客户端内存分页，7 天 × 500ms 采样
+    /// 可达百万级记录全量经 SignalR 传输；分页下推后只传输单页。
+    /// </summary>
+    public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+    {
+        using var context = db.CreateProductionLogContext();
+        var query = HistoryQueryFilter.ApplyRange(
+            context.ProductionLogs, from, to, deviceId, shiftName,
+            nameof(ProductionLog.Timestamp), nameof(ProductionLog.DeviceId), nameof(ProductionLog.ShiftName));
+        var total = query.Count();
+        var items = query
+            .OrderBy(log => log.Timestamp)
+            .Skip((Math.Max(1, page) - 1) * Math.Max(1, pageSize))
+            .Take(Math.Max(1, pageSize))
+            .AsNoTracking()
+            .ToList();
+        return (items, total);
+    }
+
+    /// <summary>最新一条生产日志（SQL 层 OrderByDescending().Take(1)，替代"全量拉取再内存 Take(1)"）。</summary>
+    public ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName)
+    {
+        using var context = db.CreateProductionLogContext();
+        var query = HistoryQueryFilter.ApplyRange(
+            context.ProductionLogs, from, to, deviceId, shiftName,
+            nameof(ProductionLog.Timestamp), nameof(ProductionLog.DeviceId), nameof(ProductionLog.ShiftName));
+        return query.OrderByDescending(log => log.Timestamp).AsNoTracking().FirstOrDefault();
+    }
+
     public List<ProductionLog> QueryProductionLogsByWorkOrder(int workOrderId)
     {
         try

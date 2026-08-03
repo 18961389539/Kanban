@@ -172,10 +172,10 @@ public partial class AppSettings : ObservableObject
 
     /// <summary>
     /// Remote 模式下 Collector 的 SignalR 地址（默认 http://127.0.0.1:5129/hubs/kanban）。
-    /// 多屏部署时指向工控机上 Collector 的地址。
+    /// 多屏部署时指向工控机上 Collector 的地址。端口与路径引用 Kanban.Contracts.KanbanHubPaths。
     /// </summary>
     [ObservableProperty]
-    private string _collectorHubUrl = "http://127.0.0.1:5129/hubs/kanban";
+    private string _collectorHubUrl = $"http://127.0.0.1:{Kanban.Contracts.KanbanHubPaths.DefaultPort}{Kanban.Contracts.KanbanHubPaths.HubPath}";
 
     /// <summary>
     /// 运行模式：Full（展示+管理，默认）/ Viewer（屏端只展示）。

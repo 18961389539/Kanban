@@ -1,6 +1,7 @@
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Entities;
+using MainAPP.Resources;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -134,11 +135,11 @@ internal static class HistoryQueryHelper
     /// 设备状态字 → 统一中文文本。与 <see cref="DeviceStatus"/> 常量对齐：
     /// 0=初始, 1=运行, 2=报警, 3=待机, 其它=未知。
     /// 该映射为全应用唯一来源，<see cref="DeviceDetailViewModel.MapStatus"/> 等实时显示处复用本方法，
-    /// 避免历史日志与实时状态文本分叉。
+    /// 避免历史日志与实时状态文本分叉。文本委托多语言资源（Strings.Status_*），随 UI 语言切换。
     /// </summary>
     public static string GetStateText(int state) => state switch
     {
-        0 => "初始", 1 => "运行", 2 => "报警", 3 => "待机", _ => "未知"
+        0 => Strings.Status_Initial, 1 => Strings.Status_Running, 2 => Strings.Status_Alarm, 3 => Strings.Status_Paused, _ => Strings.Status_Unknown
     };
 
     public static string GetEventTypeText(AlarmEventType type) => type switch

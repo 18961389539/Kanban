@@ -48,6 +48,12 @@ public class WorkOrderRepository : IWorkOrderRepository
     /// <summary>工单内存集合（绑定到 UI）。所有读写经 _collectionLock 串行化。</summary>
     public ObservableCollection<WorkOrder> WorkOrders { get; } = new();
 
+    /// <summary>工单变更版本号（LoadAll/Upsert/Delete 成功后递增）。供 MetaPublisher 脏标记判断
+    /// 是否重组装快照——无变更时跳过全量拷贝，消除每 5s 的无谓分配与锁争用。</summary>
+    private long _changeVersionBacking;
+
+    public long ChangeVersion => Volatile.Read(ref _changeVersionBacking);
+
     public WorkOrderRepository(DatabaseProvider dbProvider, IMapper mapper)
     {
         _dbProvider = dbProvider;
@@ -86,6 +92,7 @@ public class WorkOrderRepository : IWorkOrderRepository
             }
         }
 
+        Interlocked.Increment(ref _changeVersionBacking);
         Log.Information("WorkOrderRepository.LoadAll 完成：加载 {Count} 条工单", snapshot.Count);
     }
 
@@ -179,6 +186,7 @@ public class WorkOrderRepository : IWorkOrderRepository
         ctx.SaveChanges();
 
         SyncMemoryCollection(workOrder);
+        BumpChangeVersion();
 
         // 业务事件 INF 日志：新增 / 状态变化 / 字段更新
         if (isNew)
@@ -199,6 +207,8 @@ public class WorkOrderRepository : IWorkOrderRepository
 
         return workOrder;
     }
+
+    private void BumpChangeVersion() => Interlocked.Increment(ref _changeVersionBacking);
 
     /// <summary>同步内存集合：已存在则替换（整项替换触发 UI 通知），不存在则插入到首位（按 CreatedAt 倒序约定）。</summary>
     private void SyncMemoryCollection(WorkOrder workOrder)
@@ -246,6 +256,7 @@ public class WorkOrderRepository : IWorkOrderRepository
         ctx.SaveChanges();
 
         RemoveFromMemory(id);
+        BumpChangeVersion();
 
         Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
             removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);

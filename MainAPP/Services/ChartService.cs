@@ -218,10 +218,10 @@ public static class ChartService
             TickLabelDistance = 8,
             Slices =
             {
-                // 用纯名称作为 Label（图例自动按 Label 渲染）
-                new PieSlice("运行", totalRun) { Fill = _runColor },
-                new PieSlice("报警", totalAlarm) { Fill = _alarmColor },
-                new PieSlice("待机", totalPause) { Fill = _pauseColor },
+                // 用纯名称作为 Label（图例自动按 Label 渲染）；文本委托多语言资源
+                new PieSlice(Strings.Status_Running, totalRun) { Fill = _runColor },
+                new PieSlice(Strings.Status_Alarm, totalAlarm) { Fill = _alarmColor },
+                new PieSlice(Strings.Status_Paused, totalPause) { Fill = _pauseColor },
             },
         };
         model.Series.Add(series);
@@ -260,9 +260,9 @@ public static class ChartService
             };
         }
 
-        var run = MakeBar("运行", _runColor);
-        var alarm = MakeBar("报警", _alarmColor);
-        var pause = MakeBar("待机", _pauseColor);
+        var run = MakeBar(Strings.Status_Running, _runColor);
+        var alarm = MakeBar(Strings.Status_Alarm, _alarmColor);
+        var pause = MakeBar(Strings.Status_Paused, _pauseColor);
         foreach (var d in list)
         {
             run.Items.Add(new BarItem { Value = d.RunHours });
@@ -309,9 +309,9 @@ public static class ChartService
             TextColor = _textColor,
             LabelFormatter = v => v switch
             {
-                1 => "运行",
-                2 => "报警",
-                3 => "待机",
+                1 => Strings.Status_Running,
+                2 => Strings.Status_Alarm,
+                3 => Strings.Status_Paused,
                 _ => ""
             },
         };
@@ -604,7 +604,7 @@ public static class ChartService
             // 无数据占位：单个灰色扇区，不显示标签避免与图例重复
             series.InsideLabelFormat = "";
             series.OutsideLabelFormat = "";
-            series.Slices.Add(new PieSlice("初始", 1) { Fill = _idleColor });
+            series.Slices.Add(new PieSlice(Strings.Status_Initial, 1) { Fill = _idleColor });
         }
         else
         {

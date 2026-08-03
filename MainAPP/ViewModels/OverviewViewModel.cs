@@ -22,123 +22,6 @@ using MainAPP.Resources;
 namespace MainAPP.ViewModels;
 
 /// <summary>
-/// 概览页时间范围枚举。
-/// </summary>
-public enum OverviewTimeRange
-{
-    CurrentShift,
-    PreviousShift,
-    Today,
-    Hour1,
-    Hours8,
-    Hours24,
-    Days7,
-}
-
-/// <summary>
-/// 设备概览明细（一行）：用于概览页底部紧凑表格。
-/// </summary>
-public class DeviceOverviewSummary
-{
-    public string DeviceId { get; set; } = string.Empty;
-    public string DeviceName { get; set; } = string.Empty;
-    public int StatusWord { get; set; }
-    public int OkCount { get; set; }
-    public int NgCount { get; set; }
-    public double OkRatio => TotalCount > 0 ? (double)OkCount / TotalCount : 0;
-    public double NgRatio => TotalCount > 0 ? (double)NgCount / TotalCount : 0;
-    public int TotalCount => OkCount + NgCount;
-    public double QualityRate { get; set; }
-    public double Oee { get; set; }
-    public double RunTimeHours { get; set; }
-    public double PausedTimeHours { get; set; }
-    public double AlarmDurationHours { get; set; }
-    public PlotModel StatusDistributionChart { get; set; } = ChartService.BuildStatusDistributionBarChart(0, 0, 0);
-    public int AlarmCount { get; set; }
-    public string TopAlarmName { get; set; } = string.Empty;
-    public IReadOnlyList<int> HourlyOk { get; set; } = Array.Empty<int>();
-}
-
-/// <summary>
-/// Top 报警摘要：用于概览页右侧 Top 5 报警列表。
-/// </summary>
-public class AlarmOverviewSummary
-{
-    public string AlarmName { get; set; } = string.Empty;
-    public string DeviceName { get; set; } = string.Empty;
-    public string PlcAddress { get; set; } = string.Empty;
-    public int TriggerCount { get; set; }
-    public int RepeatCount => Math.Max(0, TriggerCount - 1);
-    public double AverageIntervalMinutes { get; set; }
-    public bool IsHighFrequency { get; set; }
-    public int OutputBefore { get; set; }
-    public int OutputAfter { get; set; }
-    public int OutputDelta => OutputAfter - OutputBefore;
-    public string ShiftName { get; set; } = string.Empty;
-    public double TotalDurationHours { get; set; }
-}
-
-/// <summary>当前设备状态时间段：支持点击查看该时段的报警与产量。</summary>
-public sealed class ReviewStatusSegment
-{
-    public DateTime Start { get; init; }
-    public DateTime End { get; init; }
-    public string StatusText { get; init; } = string.Empty;
-    public int StatusWord { get; init; }
-    public int OutputDelta { get; init; }
-    public int AlarmCount { get; init; }
-    public bool HasNoOutput { get; init; }
-    public double DurationMinutes => Math.Max(0, (End - Start).TotalMinutes);
-    public string TimeRangeText => $"{Start:HH:mm:ss} - {End:HH:mm:ss}";
-    public string DurationText => DurationMinutes >= 60
-        ? $"{DurationMinutes / 60:F1} h"
-        : $"{DurationMinutes:F0} min";
-    public string OutputText => string.Format(Strings.F061, OutputDelta, AlarmCount);
-}
-
-/// <summary>缺陷按班次和时间段聚合的集中度摘要。</summary>
-public sealed class DefectConcentrationSummary
-{
-    public string DefectName { get; init; } = string.Empty;
-    public string ShiftName { get; init; } = string.Empty;
-    public string TimeRangeText { get; init; } = string.Empty;
-    public int Count { get; init; }
-    public double Share { get; init; }
-}
-
-/// <summary>
-/// 班次对比摘要（一行）：用于概览页班次对比表格。
-/// 按班次聚合时间窗口内的产量/报警等核心指标，让管理者横向对比班次表现。
-/// </summary>
-public class ShiftComparisonSummary
-{
-    public string ShiftName { get; set; } = string.Empty;
-    public int OkCount { get; set; }
-    public int NgCount { get; set; }
-    public int TotalCount => OkCount + NgCount;
-    public int AlarmCount { get; set; }
-    public double OkRatio => TotalCount > 0 ? (double)OkCount / TotalCount : 0;
-    public double NgRatio => TotalCount > 0 ? (double)NgCount / TotalCount : 0;
-    public double AlarmRate => TotalCount > 0 ? (double)AlarmCount / TotalCount : 0;
-    public double Oee { get; set; }
-    public double RunTimeHours { get; set; }
-    public double AlarmDurationHours { get; set; }
-    public double TargetAchievementRate { get; set; }
-}
-
-/// <summary>
-/// 缺陷帕累托摘要（一行）：用于概览页缺陷帕累托图。
-/// 按缺陷名称聚合数量，按数量降序排列，累计占比用于帕累托折线。
-/// </summary>
-public class DefectParetoSummary
-{
-    public string DefectName { get; set; } = string.Empty;
-    public string DeviceName { get; set; } = string.Empty;
-    public int Count { get; set; }
-    public double CumulativePercent { get; set; }
-}
-
-/// <summary>
 /// 最近 N 小时生产概览 ViewModel。
 /// 汇总全厂产量/报警，按小时聚合趋势，列出 Top 报警和设备明细（每台设备独立 OEE）。
 /// 数据来源：HistoryService（历史快照）+ DeviceRepository.Runtimes（实时状态色条）。
@@ -551,9 +434,11 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 兼容旧测试和外部调用方的构造入口。生产 DI 使用上面的分层构造，
-    /// 此入口仅负责把旧历史门面适配为复盘应用服务。
+    /// 兼容旧测试的构造入口（仅测试/外部适配用，勿在新代码调用）。生产 DI 使用上面的分层构造，
+    /// 此入口仅负责把旧历史门面适配为复盘应用服务。重构提示：拆分职责时优先迁移测试到分层构造，
+    /// 随后删除本入口，消除"同一依赖两处创建"的测试/生产行为分叉。
     /// </summary>
+    [Obsolete("仅供测试/旧调用适配；生产路径使用分层构造器")]
     public OverviewViewModel(
         IHistoryService historyService,
         IDeviceRepository deviceRepository,

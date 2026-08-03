@@ -58,6 +58,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private readonly KanbanDataClient? _remoteClient;
     private readonly DispatcherTimer _refreshTimer;
 
+    /// <summary>远程刷新版本守卫（RefreshFromRemote 防重入：过期响应丢弃）。</summary>
+    private int _refreshVersion;
+
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isAcquisitionRunning;
     [ObservableProperty] private string _connectionStatus = "未连接";
@@ -262,11 +265,15 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     }
 
     /// <summary>Remote 模式：从 Collector 拉取诊断快照（异步，避免阻塞 UI 刷新）。</summary>
+    /// <remarks>防重入：1s 定时器触发，若上一次拉取未完成（网络慢），版本守卫丢弃过期响应，
+    /// 避免旧数据覆盖新数据导致数值回跳（对齐 OverviewViewModel 的 _refreshVersion 模式）。</remarks>
     private async void RefreshFromRemote()
     {
+        var refreshVersion = Interlocked.Increment(ref _refreshVersion);
         try
         {
             var d = await _remoteClient!.GetDiagnosticsAsync();
+            if (refreshVersion != Volatile.Read(ref _refreshVersion)) return; // 已有更新的刷新，丢弃过期响应
             IsConnected = d.IsConnected;
             // 采集状态用真值（CollectorDiagnosticsDto.IsRunning）：连接正常 ≠ 采集运行中，
             // 原先用 IsConnected 会在"连接正常但采集停止"时误报"运行中"。
@@ -333,7 +340,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         }
         catch (Exception ex)
         {
-            // Collector 未连接：显示离线状态，不崩溃
+            // Collector 未连接：显示离线状态，不崩溃。旧请求失败不覆盖在途的新请求（版本守卫）。
+            if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
             IsConnected = false;
             IsAcquisitionRunning = false;
             ConnectionStatus = "Collector 未连接";
@@ -430,9 +438,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             !string.IsNullOrWhiteSpace(address) && !codec.Parse(address).IsValid);
     }
 
-    private static string FormatDuration(TimeSpan duration) => duration.TotalHours >= 1
-        ? $"{(int)duration.TotalHours}h {duration.Minutes}m"
-        : duration.TotalMinutes >= 1 ? $"{duration.Minutes}m {duration.Seconds}s" : $"{Math.Max(0, duration.Seconds)}s";
+    private static string FormatDuration(TimeSpan duration)
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(duration.TotalSeconds);
 
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024
         ? $"{bytes / 1024d / 1024d:F1} MB"

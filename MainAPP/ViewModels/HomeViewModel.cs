@@ -935,15 +935,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         var ratio = totalSecs > 0 ? Math.Clamp(elapsedSecs / totalSecs, 0, 1) : 0;
 
         ShiftProgressName = currentShift.Name;
-        // 已运行/剩余时间格式化：<1h 显示纯分钟，≥1h 显示 h+m
-        string FormatShiftTime(double secs)
-        {
-            var ts = TimeSpan.FromSeconds(Math.Max(0, secs));
-            return ts.TotalHours >= 1
-                ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-                : $"{ts.Minutes}m";
-        }
-        ShiftProgressText = string.Format(Strings.F117, FormatShiftTime(elapsedSecs), FormatShiftTime(remainingSecs));
+        // 已运行/剩余时间格式化（口径单源：Kanban.Contracts.DurationFormatter.FormatCompact）
+        ShiftProgressText = string.Format(Strings.F117,
+            Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(elapsedSecs),
+            Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(remainingSecs));
         ShiftProgressRatio = ratio;
         ShiftProgressPct = $"{ratio * 100:F0}%";
     }

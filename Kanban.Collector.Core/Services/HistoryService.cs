@@ -82,6 +82,15 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _productionStore.GetLatestProductionBefore(deviceId, before, shiftName);
     public List<ProductionLog> QueryProductionLogsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
         => _productionStore.QueryProductionLogsStrict(from, to, deviceId, shiftName);
+
+    /// <summary>分页查询生产日志（服务端 SQL 层 Skip/Take + Count；历史查询页用，避免百万级全量传输）。</summary>
+    public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        => _productionStore.QueryProductionLogsPaged(from, to, deviceId, shiftName, page, pageSize);
+
+    /// <summary>最新一条生产日志（SQL 层 Take(1)）。</summary>
+    public ProductionLog? QueryLatestProductionLog(DateTime from, DateTime to, string? deviceId, string? shiftName)
+        => _productionStore.QueryLatestProductionLog(from, to, deviceId, shiftName);
     public ProductionLog? GetLatestProductionBeforeStrict(string deviceId, DateTime before, string shiftName)
         => _productionStore.GetLatestProductionBeforeStrict(deviceId, before, shiftName);
     public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)

@@ -188,9 +188,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
         new() { Value = DeviceStatusFilter.All, Label = Strings.M040 },
-        new() { Value = DeviceStatusFilter.Running, Label = "运行" },
-        new() { Value = DeviceStatusFilter.Alarm, Label = "报警" },
-        new() { Value = DeviceStatusFilter.Paused, Label = "待机" },
+        new() { Value = DeviceStatusFilter.Running, Label = Strings.Status_Running },
+        new() { Value = DeviceStatusFilter.Alarm, Label = Strings.Status_Alarm },
+        new() { Value = DeviceStatusFilter.Paused, Label = Strings.Status_Paused },
         new() { Value = DeviceStatusFilter.Offline, Label = "初始/未连接" },
     ];
 
