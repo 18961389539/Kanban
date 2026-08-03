@@ -302,6 +302,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetTitleAsync), ct);
     }
 
+    /// <summary>界面语言枚举值（Collector settings.json 的 Language；屏端拉取实现零配置）。</summary>
+    public async Task<int> GetLanguageAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<int>(nameof(IKanbanHubServer.GetLanguageAsync), ct);
+    }
+
     public async ValueTask DisposeAsync()
     {
         // 幂等：首次调用把 _reconnectCts 置 null 并取消/释放；二次调用直接释放连接

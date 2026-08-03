@@ -10,7 +10,7 @@
         </div>
         <div class="conn-badge @(Dashboard.IsConnected ? "conn-ok" : "conn-bad")">
             <span class="dot"></span>
-            @(Dashboard.IsConnected ? "实时" : "未连接")
+            @(Dashboard.IsConnected ? L.T("conn_live") : L.T("conn_down"))
         </div>
         <select class="device-select" @bind="SelectedDeviceId">
             @foreach (var dev in Dashboard.Snapshots)
@@ -23,71 +23,71 @@
     @if (Dashboard.Snapshots.Count == 0)
     {
         <div class="empty-state">
-            <div class="empty-title">@(Dashboard.IsConnected ? "暂无设备数据" : "等待连接采集服务…")</div>
-            <div class="empty-sub">确认 PlcSimulator 与 Kanban.Collector 已启动，且 CollectorHubUrl 端口一致</div>
+            <div class="empty-title">@(Dashboard.IsConnected ? L.T("no_device_data") : L.T("waiting_conn"))</div>
+            <div class="empty-sub">@L.T("empty_hint")</div>
         </div>
     }
     else
     {
         <div class="summary-bar">
-            <span class="sum-item run"><span class="dot"></span>运行 <b>@Dashboard.StatusSummary.Running</b></span>
-            <span class="sum-item alarm"><span class="dot"></span>报警 <b>@Dashboard.StatusSummary.Alarm</b></span>
-            <span class="sum-item paused"><span class="dot"></span>暂停 <b>@Dashboard.StatusSummary.Paused</b></span>
-            <span class="sum-item idle"><span class="dot"></span>待机 <b>@Dashboard.StatusSummary.Idle</b></span>
-            <span class="sum-item">设备 <b>@Dashboard.DeviceCount</b></span>
+            <span class="sum-item run"><span class="dot"></span>@L.T("st_running") <b>@Dashboard.StatusSummary.Running</b></span>
+            <span class="sum-item alarm"><span class="dot"></span>@L.T("st_alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
+            <span class="sum-item paused"><span class="dot"></span>@L.T("st_paused") <b>@Dashboard.StatusSummary.Paused</b></span>
+            <span class="sum-item idle"><span class="dot"></span>@L.T("st_idle") <b>@Dashboard.StatusSummary.Idle</b></span>
+            <span class="sum-item">@L.T("dev_count") <b>@Dashboard.DeviceCount</b></span>
         </div>
     }
 
     @if (SelectedSnapshot is null)
     {
         <div class="empty-state">
-            <div class="empty-title">未选择设备</div>
-            <div class="empty-sub">从右上角选择要查看的设备</div>
+            <div class="empty-title">@L.T("no_dev_selected")</div>
+            <div class="empty-sub">@L.T("select_hint")</div>
         </div>
     }
     else
     {
         <main class="grid">
             <section class="card">
-                <div class="card-title">设备状态</div>
+                <div class="card-title">@L.T("card_dev_status")</div>
                 <div class="dev-head">
                     <span class="dev-name">@SelectedSnapshot.DeviceName</span>
                     <span class="status-badge @Status.Class">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div><span class="kpi-label">运行</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
-                    <div><span class="kpi-label">报警</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
-                    <div><span class="kpi-label">暂停</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_run")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
                 </div>
                 <div class="time-bar">
                     <div class="seg run" style="width:@RunRatio%"></div>
                     <div class="seg alarm" style="width:@AlarmRatio%"></div>
                     <div class="seg paused" style="width:@PauseRatio%"></div>
                 </div>
-                <div class="meta-line">状态字 0x@(SelectedSnapshot.StatusWord.ToString("X4")) · 目标 @SelectedSnapshot.TargetCycle 件/h</div>
+                <div class="meta-line">@L.T("meta_statusword", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">当前生产状态</div>
+                <div class="card-title">@L.T("card_prod_status")</div>
                 <div class="big-number">@RealtimeSpeedText</div>
-                <div class="big-label">实时速度（件/小时）</div>
+                <div class="big-label">@L.T("real_time_speed")</div>
                 <div class="metric-grid">
-                    <div><span class="kpi-label">目标节拍</span><span class="kpi-value">@TargetCycleText</span></div>
-                    <div><span class="kpi-label">实际节拍</span><span class="kpi-value">@ActualCycleText</span></div>
-                    <div><span class="kpi-label">总产量</span><span class="kpi-value">@TotalOutputText</span></div>
-                    <div><span class="kpi-label">不良率</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_target_cycle")</span><span class="kpi-value">@TargetCycleText</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_actual_cycle")</span><span class="kpi-value">@ActualCycleText</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_total_output")</span><span class="kpi-value">@TotalOutputText</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_ng_rate")</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
                 </div>
                 <div class="speed-meter">
                     <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
-                    <span class="meter-text">达成率 @SpeedAchievementRateText</span>
+                    <span class="meter-text">@L.T("lbl_achievement") @SpeedAchievementRateText</span>
                 </div>
             </section>
 
             <section class="card">
-                <div class="card-title">实时故障 <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
+                <div class="card-title">@L.T("card_alarms") <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
                 @if (SelectedSnapshot.ActiveAlarms.Count == 0)
                 {
-                    <div class="no-data">当前无激活报警</div>
+                    <div class="no-data">@L.T("val_no_alarms")</div>
                 }
                 else
                 {
@@ -105,40 +105,40 @@
             </section>
 
             <section class="card">
-                <div class="card-title">OEE 概览</div>
+                <div class="card-title">@L.T("card_oee")</div>
                 <div class="ring-row">
                     <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="#34D399" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="可用率" Color="#378ADD" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="性能率" Color="#BA7517" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="合格率" Color="#639922" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("lbl_availability")" Color="#378ADD" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("lbl_performance")" Color="#BA7517" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("lbl_quality")" Color="#639922" />
                 </div>
                 <div class="oee-formula">@Pct(SelectedSnapshot.AvailabilityRate) × @Pct(SelectedSnapshot.PerformanceRate) × @Pct(SelectedSnapshot.QualityRate)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">产量明细</div>
+                <div class="card-title">@L.T("card_output")</div>
                 <div class="quality-row">
                     <div class="quality-block">
                         <div class="quality-num ok">@SelectedSnapshot.TotalOkProduction.ToString("N0")</div>
-                        <div class="quality-label">OK 良品</div>
+                        <div class="quality-label">@L.T("lbl_ok")</div>
                     </div>
                     <div class="quality-block">
                         <div class="quality-num ng">@SelectedSnapshot.TotalNgProduction.ToString("N0")</div>
-                        <div class="quality-label">NG 不良</div>
+                        <div class="quality-label">@L.T("lbl_ng")</div>
                     </div>
                 </div>
                 <div class="time-bar">
                     <div class="seg ok" style="width:@OkRatio%"></div>
                     <div class="seg ng" style="width:@NgRatio%"></div>
                 </div>
-                <div class="meta-line">合格率 @Pct(SelectedSnapshot.QualityRate) · 不良率 @NgRateText</div>
+                <div class="meta-line">@L.T("meta_quality_rate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">当前工单</div>
+                <div class="card-title">@L.T("card_workorder")</div>
                 @if (CurrentWorkOrder is null)
                 {
-                    <div class="no-data">暂无工单</div>
+                    <div class="no-data">@L.T("val_no_workorder")</div>
                 }
                 else
                 {
@@ -151,30 +151,30 @@
                     <div class="time-bar">
                         <div class="seg wo" style="width:@WoProgressRatio%"></div>
                     </div>
-                    <div class="meta-line">计划 @CurrentWorkOrder.TargetQuantity.ToString("N0") 件</div>
+                    <div class="meta-line">@L.T("meta_plan_wo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">速度趋势 <span class="badge-soft">近 1 分钟</span></div>
+                <div class="card-title">@L.T("card_trend") <span class="badge-soft">@L.T("badge_recent_1min")</span></div>
                 @if (SpeedPointsText is null)
                 {
-                    <div class="no-data">等待数据积累…</div>
+                    <div class="no-data">@L.T("val_wait_data")</div>
                 }
                 else
                 {
                     <svg class="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
                         <polyline points="@SpeedPointsText" fill="none" stroke="#34D399" stroke-width="1.5" />
                     </svg>
-                    <div class="meta-line">当前 @RealtimeSpeedText 件/h · 采样 0.5s</div>
+                    <div class="meta-line">@L.T("meta_trend_current", RealtimeSpeedText)</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">班次进度</div>
+                <div class="card-title">@L.T("card_shift")</div>
                 @if (Dashboard.ShiftProgress is null)
                 {
-                    <div class="no-data">暂无数据</div>
+                    <div class="no-data">@L.T("val_no_data")</div>
                 }
                 else
                 {
@@ -186,24 +186,24 @@
                         <div class="seg shift" style="width:@(Dashboard.ShiftProgress.Ratio * 100)%"></div>
                     </div>
                     <div class="duration-row">
-                        <div><span class="kpi-label">已运行</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
-                        <div><span class="kpi-label">剩余</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
+                        <div><span class="kpi-label">@L.T("lbl_elapsed")</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
+                        <div><span class="kpi-label">@L.T("lbl_remaining")</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
                     </div>
-                    <div class="meta-line">按班次配置自动计算</div>
+                    <div class="meta-line">@L.T("meta_shift_auto")</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">数据源</div>
+                <div class="card-title">@L.T("card_source")</div>
                 <div class="info-list">
-                    <div><span class="kpi-label">连接状态</span><span class="kpi-value">@(Dashboard.IsConnected ? "已连接" : "断开")</span></div>
-                    <div><span class="kpi-label">设备总数</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
-                    <div><span class="kpi-label">数据更新</span><span class="kpi-value">@FreshnessText</span></div>
-                    <div><span class="kpi-label">快照序号</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
-                    <div><span class="kpi-label">服务地址</span><span class="kpi-value mono">动态派生 · :5129</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_conn_status")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("val_connected") : L.T("val_disconnected"))</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_dev_total")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_data_fresh")</span><span class="kpi-value">@FreshnessText</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_snap_seq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
+                    <div><span class="kpi-label">@L.T("lbl_svc_addr")</span><span class="kpi-value mono">@L.T("val_dyn_addr")</span></div>
                     @if (!string.IsNullOrEmpty(Dashboard.ServerVersion))
                     {
-                        <div><span class="kpi-label">服务版本</span><span class="kpi-value mono">@Dashboard.ServerVersion</span></div>
+                        <div><span class="kpi-label">@L.T("lbl_svc_version")</span><span class="kpi-value mono">@Dashboard.ServerVersion</span></div>
                     }
                 </div>
             </section>
@@ -288,18 +288,18 @@
     private (string Text, string Class) Status
         => SelectedSnapshot?.Status switch
         {
-            DeviceStatus.Running => ("运行", "run"),
-            DeviceStatus.Alarm => ("报警", "alarm"),
-            DeviceStatus.Paused => ("暂停", "paused"),
-            _ => ("待机", "idle"),
+            DeviceStatus.Running => (L.T("st_running"), "run"),
+            DeviceStatus.Alarm => (L.T("st_alarm"), "alarm"),
+            DeviceStatus.Paused => (L.T("st_paused"), "paused"),
+            _ => (L.T("st_idle"), "idle"),
         };
 
     private string WoStatusText => CurrentWorkOrder?.Status switch
     {
-        WorkOrderStatus.Running => "生产中",
-        WorkOrderStatus.Completed => "已完成",
-        WorkOrderStatus.Aborted => "已终止",
-        _ => "待开始",
+        WorkOrderStatus.Running => L.T("wo_running"),
+        WorkOrderStatus.Completed => L.T("wo_completed"),
+        WorkOrderStatus.Aborted => L.T("wo_aborted"),
+        _ => L.T("wo_pending"),
     };
 
     private string WoStatusClass => CurrentWorkOrder?.Status switch
@@ -319,8 +319,8 @@
             if (wo is null) return "";
             var target = wo.TargetQuantity > 0 ? wo.TargetQuantity.ToString("N0") : "--";
             return wo.Status == WorkOrderStatus.Running
-                ? $"{SelectedSnapshot?.TotalOkProduction ?? 0:N0} / {target} 件"
-                : $"-- / {target} 件";
+                ? L.T("wo_progress", (SelectedSnapshot?.TotalOkProduction ?? 0).ToString("N0"), target)
+                : L.T("wo_progress_pending", target);
         }
     }
 
@@ -340,13 +340,13 @@
     {
         get
         {
-            if (Dashboard.LastDataAt is not { } last) return "未收到";
+            if (Dashboard.LastDataAt is not { } last) return L.T("fresh_none");
             var secs = (int)(DateTime.Now - last).TotalSeconds;
             return secs switch
             {
-                < 3 => "实时",
-                < 60 => $"{secs} 秒前",
-                _ => $"{(secs / 60)} 分钟前",
+                < 3 => L.T("fresh_live"),
+                < 60 => L.T("fresh_secs", secs),
+                _ => L.T("fresh_mins", secs / 60),
             };
         }
     }

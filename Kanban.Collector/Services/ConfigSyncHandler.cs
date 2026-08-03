@@ -230,5 +230,8 @@ public sealed class ConfigSyncHandler
 
     /// <summary>看板标题（Collector 侧 settings.json 的 AppTitle；屏端经 Hub 拉取，零配置）。</summary>
     public string GetTitle() => string.IsNullOrWhiteSpace(_appSettings.AppTitle) ? "生产看板" : _appSettings.AppTitle;
+
+    /// <summary>界面语言枚举值（Collector 侧 settings.json 的 Language；屏端经 Hub 拉取，零配置）。</summary>
+    public int GetLanguage() => (int)_appSettings.Language;
 }
 

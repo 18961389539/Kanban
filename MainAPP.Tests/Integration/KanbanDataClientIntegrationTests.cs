@@ -31,6 +31,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
 
         public Task<string> GetTitleAsync() => Task.FromResult("测试看板");
 
+        public Task<int> GetLanguageAsync() => Task.FromResult(1); // En
+
         /// <summary>长驻订阅（模拟真实 KanbanHub.SubscribeSnapshotsAsync：方法不返回直到连接断开）。</summary>
         public async Task SubscribeSnapshotsAsync()
         {
@@ -142,6 +144,15 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         await client.ConnectAsync();
         var title = await client.GetTitleAsync();
         Assert.Equal("测试看板", title);
+    }
+
+    [Fact]
+    public async Task GetLanguage_ReturnsServerValue()
+    {
+        await using var client = CreateClient();
+        await client.ConnectAsync();
+        var lang = await client.GetLanguageAsync();
+        Assert.Equal(1, lang); // TestHub 返回 En
     }
 
     [Fact]
@@ -279,6 +290,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
             () => client.SaveCollectorSettingsAsync(new CollectorSettingsDto()),
             () => client.GetServerVersionAsync(),
             () => client.GetTitleAsync(),
+            () => client.GetLanguageAsync(),
         };
         foreach (var call in calls)
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await call());

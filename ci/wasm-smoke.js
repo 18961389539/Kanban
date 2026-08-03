@@ -1,14 +1,37 @@
 // WASM 看板无头冒烟 + 业务断言：用系统 Edge 打开看板，断言关键卡片有数据、无致命错误，
 // 并验证**展示口径自洽**（OEE=可用率×性能率×合格率、状态汇总=设备总数、数据实时性等）。
+// 多语言：定位与断言语言无关（CSS 类 + 三语候选匹配）；另做 Localization.cs 三语 key 一致性静态校验。
 // 依赖：playwright-core（免下载浏览器，channel: msedge 用系统 Edge）。
 // 安装：cd <workspace> && npm install playwright-core
 // 运行：node ci/wasm-smoke.js [url] [waitSeconds]     （退出码 0=通过 1=失败）
 // 前置：PlcSimulator + Kanban.Collector 已启动（5129 单端口，wwwroot 已部署）。
 
 const { chromium } = require('playwright-core');
+const fs = require('fs');
+const path = require('path');
 
 const url = process.argv[2] || 'http://localhost:5129/';
 const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
+
+// ──── 静态校验：Localization.cs 三语 key 一致性（防漏翻译，等价 WPF 的 LocalizationTests） ────
+try {
+    // 仓库根：环境变量 KANBAN_REPO 优先，否则 cwd（在仓库内运行时 cwd 即仓库根）
+    const repoDir = process.env.KANBAN_REPO || process.cwd();
+    const locPath = path.join(repoDir, 'Kanban.Web', 'Localization.cs');
+    if (!fs.existsSync(locPath)) throw new Error(`未找到 Localization.cs（KANBAN_REPO=${repoDir}）`);
+    const src = fs.readFileSync(locPath, 'utf-8');
+    const rows = [...src.matchAll(/\[\"([\w]+)\"\] = new\[\] \{ \"([^\"]*)\", \"([^\"]*)\", \"([^\"]*)\" \}/g)];
+    if (rows.length === 0) throw new Error('未匹配到任何字典条目（格式变化？）');
+    let dictBroken = 0;
+    for (const m of rows) {
+        const [_, k, zh, en, ja] = m;
+        if (!zh.trim() || !en.trim() || !ja.trim()) { console.log(`  ✗ 字典值缺失: ${k}`); dictBroken++; }
+    }
+    if (dictBroken) process.exitCode = 1;
+    console.log(`[静态] Localization.cs 三语字典 ${rows.length} 条 key 校验 ${dictBroken === 0 ? 'PASS' : 'FAIL'}`);
+} catch (e) {
+    console.log(`  ⚠ 字典静态校验跳过: ${e.message}`);
+}
 
 (async () => {
     const browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -31,24 +54,36 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(waitMs);
 
-    // ──── 结构化采集 DOM（展示口径全部来自快照换算，这里取渲染后的值） ────
+    // ──── 结构化采集 DOM（展示口径全部来自快照换算；定位语言无关：CSS 类 + 三语候选） ────
     const dom = await page.evaluate(() => {
         const txt = sel => document.querySelector(sel)?.textContent?.trim() ?? null;
-        // 按 kpi-label 文本取同行 kpi-value
-        const label = l => {
+        // 按 kpi-label 文本（三语候选任一匹配）取同行 kpi-value
+        const label = ls => {
+            const arr = Array.isArray(ls) ? ls : [ls];
             const els = [...document.querySelectorAll('.kpi-label')];
-            const el = els.find(e => e.textContent.trim() === l);
+            const el = els.find(e => arr.includes(e.textContent.trim()));
             return el?.nextElementSibling?.textContent?.trim() ?? null;
         };
-        // 顶部状态汇总：运行/报警/暂停/待机/设备
-        const sums = {};
-        document.querySelectorAll('.sum-item').forEach(el => {
-            const m = el.textContent.trim();
-            const n = el.querySelector('b')?.textContent?.trim();
-            for (const k of ['运行', '报警', '暂停', '待机', '设备']) {
-                if (m.startsWith(k)) sums[k] = parseInt(n ?? 'NaN', 10);
-            }
-        });
+        // 顶部状态汇总：按语义类（run/alarm/paused/idle）+ 最后一个无类项（设备总数），语言无关
+        const sumItems = [...document.querySelectorAll('.sum-item')];
+        const sumOf = cls => {
+            const el = cls
+                ? sumItems.find(e => e.classList.contains(cls))
+                : sumItems.find(e => !['run', 'alarm', 'paused', 'idle'].some(c => e.classList.contains(c)));
+            return el ? parseInt(el.querySelector('b')?.textContent?.trim() ?? 'NaN', 10) : NaN;
+        };
+        const sums = {
+            run: sumOf('run'),
+            alarm: sumOf('alarm'),
+            paused: sumOf('paused'),
+            idle: sumOf('idle'),
+            dev: sumOf(null),
+        };
+        // 卡片标题（三语候选）
+        const cardTitle = ls => {
+            const arr = Array.isArray(ls) ? ls : [ls];
+            return [...document.querySelectorAll('.card-title')].find(e => arr.some(t => e.textContent.includes(t)))?.textContent ?? null;
+        };
         return {
             errVisible: (() => {
                 const ui = document.querySelector('#blazor-error-ui');
@@ -59,16 +94,16 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
             brandTitle: txt('.brand-title'),
             statusBadge: txt('.status-badge'),
             bigNumber: txt('.big-number'),
-            targetCycle: label('目标节拍'),
-            actualCycle: label('实际节拍'),
-            totalOutput: label('总产量'),
-            ngRate: label('不良率'),
+            targetCycle: label(['目标节拍', 'Target Cycle', '目標タクト']),
+            actualCycle: label(['实际节拍', 'Actual Cycle', '実績タクト']),
+            totalOutput: label(['总产量', 'Total Output', '総生産数']),
+            ngRate: label(['不良率', 'NG Rate', '不良率']),
             meterText: txt('.speed-meter .meter-text'),
-            conn: label('连接状态'),
-            deviceCount: label('设备总数'),
-            freshness: label('数据更新'),
-            seq: label('快照序号'),
-            serverVersion: label('服务版本'),
+            conn: label(['连接状态', 'Connection', '接続状態']),
+            deviceCount: label(['设备总数', 'Total Devices', 'デバイス総数']),
+            freshness: label(['数据更新', 'Data Freshness', 'データ更新']),
+            seq: label(['快照序号', 'Snapshot Seq', 'スナップショット番号']),
+            serverVersion: label(['服务版本', 'Service Version', 'サービスバージョン']),
             totalOk: txt('.quality-num.ok'),
             totalNg: txt('.quality-num.ng'),
             oeeFormula: txt('.oee-formula'),
@@ -76,6 +111,8 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
                 label: r.querySelector('.ring-label')?.textContent?.trim() ?? '',
                 value: r.querySelector('.ring-value')?.textContent?.trim() ?? '',
             })),
+            woCardTitle: cardTitle(['当前工单', 'Current Work Order', '現在の工単']),
+            shiftCardTitle: cardTitle(['班次进度', 'Shift Progress', '班次進捗']),
             sums,
         };
     });
@@ -85,14 +122,15 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
     const ok = (msg) => { pass++; console.log(`  ✓ ${msg}`); };
     const fail = (msg) => { failCount++; console.log(`  ✗ FAIL: ${msg}`); process.exitCode = 1; };
     const warn = (msg) => console.log(`  ⚠ ${msg}`);
+    const anyOf = (v, candidates) => candidates.includes(v);
 
     console.log(`状态徽标=${dom.statusBadge} | 速度=${dom.bigNumber} | 总产量=${dom.totalOutput} | 不良率=${dom.ngRate}`);
     console.log(`OEE公式=${dom.oeeFormula}`);
-    console.log(`汇总: 运行${dom.sums['运行']} 报警${dom.sums['报警']} 暂停${dom.sums['暂停']} 待机${dom.sums['待机']} 设备${dom.sums['设备']}`);
+    console.log(`汇总: 运行${dom.sums.run} 报警${dom.sums.alarm} 暂停${dom.sums.paused} 待机${dom.sums.idle} 设备${dom.sums.dev}`);
     console.log(`数据源: ${dom.conn} | 设备${dom.deviceCount} | ${dom.freshness} | ${dom.seq} | v${dom.serverVersion}`);
 
-    // ──── 基础断言（原有，保留） ────
-    // 看板标题来自 Collector settings.json 的 AppTitle（可配置），断言非空即可（默认"生产看板"）
+    // ──── 基础断言 ────
+    // 看板标题来自 Collector settings.json 的 AppTitle（可配置），断言非空即可
     const brandTitle = dom.brandTitle;
     console.log(`  · 看板标题=${brandTitle}`);
     if (!brandTitle) fail('页面标题缺失（WASM 未渲染）');
@@ -101,35 +139,45 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
     if (dom.errVisible) warn('#blazor-error-ui 可见（无头环境伪影，功能不受影响，请人工确认）');
     if (!dom.text.includes('注塑机')) fail('设备数据缺失');
     else ok('设备数据存在');
-    const woCard = dom.text.match(/当前工单\s*([^\n]*)/)?.[1];
-    const shiftCard = dom.text.match(/班次进度\s*([^\n]*)/)?.[1];
+
+    // 工单/班次卡：标题存在且内容非空态（三语候选）
+    const woCard = dom.woCardTitle;
+    const shiftCard = dom.shiftCardTitle;
     console.log(`  · 工单卡=${woCard} | 班次卡=${shiftCard}`);
-    if (!woCard || woCard === '暂无工单') fail('工单卡无数据');
-    else ok('工单卡有数据');
-    if (!shiftCard || shiftCard === '暂无数据') fail('班次卡无数据');
-    else ok('班次卡有数据');
+    if (!woCard) fail('工单卡标题缺失');
+    else {
+        const woBody = dom.text.split(woCard)[1] ?? '';
+        if (anyOf(woBody.split('\n')[0], ['暂无工单', 'No work orders', '工単なし'])) fail('工单卡无数据');
+        else ok('工单卡有数据');
+    }
+    if (!shiftCard) fail('班次卡标题缺失');
+    else {
+        const shiftBody = dom.text.split(shiftCard)[1] ?? '';
+        if (anyOf(shiftBody.split('\n')[0], ['暂无数据', 'No data', 'データなし'])) fail('班次卡无数据');
+        else ok('班次卡有数据');
+    }
 
     // ──── 业务断言（展示口径自洽） ────
-    // 1. 连接状态
-    if (dom.conn === '已连接') ok('连接状态=已连接');
+    // 1. 连接状态（三语候选）
+    if (anyOf(dom.conn, ['已连接', 'Connected', '接続済み'])) ok('连接状态=已连接');
     else fail(`连接状态异常: ${dom.conn}`);
 
-    // 2. 状态汇总自洽：运行+报警+暂停+待机 == 设备总数
+    // 2. 状态汇总自洽：运行+报警+暂停+待机 == 设备总数（按语义类，语言无关）
     const s = dom.sums;
-    if (typeof s['设备'] === 'number' && s['设备'] > 0) {
-        const sum4 = (s['运行'] || 0) + (s['报警'] || 0) + (s['暂停'] || 0) + (s['待机'] || 0);
-        if (sum4 === s['设备']) ok(`状态汇总自洽: ${sum4} == ${s['设备']}`);
-        else fail(`状态汇总不自洽: 运行+报警+暂停+待机=${sum4} != 设备=${s['设备']}`);
+    if (typeof s.dev === 'number' && s.dev > 0) {
+        const sum4 = (s.run || 0) + (s.alarm || 0) + (s.paused || 0) + (s.idle || 0);
+        if (sum4 === s.dev) ok(`状态汇总自洽: ${sum4} == ${s.dev}`);
+        else fail(`状态汇总不自洽: 运行+报警+暂停+待机=${sum4} != 设备=${s.dev}`);
     } else {
         fail(`设备总数异常: ${dom.deviceCount}`);
     }
 
-    // 3. 数据实时性：快照序号为数字且递增基线存在；数据更新非"未收到"
+    // 3. 数据实时性：快照序号为数字；数据更新非"未收到"（三语候选）
     const seqNum = dom.seq?.match(/^#(\d+)$/)?.[1];
     if (seqNum && parseInt(seqNum, 10) > 0) ok(`快照序号有效: #${seqNum}`);
     else fail(`快照序号异常: ${dom.seq}`);
-    if (dom.freshness === '未收到') fail('数据更新=未收到（实时流停滞）');
-    else if (/^(实时|\d+ 秒前|\d+ 分钟前)$/.test(dom.freshness ?? '')) ok(`数据更新: ${dom.freshness}`);
+    if (anyOf(dom.freshness, ['未收到', 'Not received', '未受信'])) fail('数据更新=未收到（实时流停滞）');
+    else if (/^(实时|\d+ 秒前|\d+ 分钟前|Live|\d+s ago|\d+ min ago|リアルタイム|\d+ 秒前|\d+ 分前)$/.test(dom.freshness ?? '')) ok(`数据更新: ${dom.freshness}`);
     else fail(`数据更新文本异常: ${dom.freshness}`);
 
     // 4. 服务版本非空
@@ -158,12 +206,9 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
     } else {
         fail(`产量不自洽: OK+NG=${okNum + ngNum} != 总产量=${dom.totalOutput}`);
     }
-    if (okNum > 0) { /* 在产正常 */ } else if (dom.statusBadge === '运行') {
-        warn('运行中但 OK=0（启动初期/会话刚重置，可接受）');
-    }
 
-    // 7. 达成率 0~100%
-    const meter = dom.meterText?.match(/达成率\s*(\d+)%/)?.[1];
+    // 7. 达成率 0~100%（三语前缀）
+    const meter = dom.meterText?.match(/(?:达成率|Achievement|達成率)\s*(\d+)%/)?.[1];
     if (meter !== undefined) {
         const m = parseInt(meter, 10);
         if (m >= 0 && m <= 100) ok(`达成率: ${m}%`);
@@ -172,13 +217,19 @@ const waitMs = (parseInt(process.argv[3] || '35', 10)) * 1000;
         fail(`达成率文本异常: ${dom.meterText}`);
     }
 
-    // 8. 状态徽标合法
-    if (['运行', '报警', '暂停', '待机'].includes(dom.statusBadge ?? '')) ok(`设备状态: ${dom.statusBadge}`);
+    // 8. 状态徽标合法（三语全集）
+    if (anyOf(dom.statusBadge, ['运行', '报警', '暂停', '待机', 'Running', 'Alarm', 'Paused', 'Idle', '稼働', 'アラーム', '一時停止', '待機'])) ok(`设备状态: ${dom.statusBadge}`);
     else fail(`设备状态徽标异常: ${dom.statusBadge}`);
 
-    // 9. ★ OEE 自洽：OEE 环值 == 可用率×性能率×合格率（P0 四舍五入，误差 ≤1%）
-    const ringOf = (l) => dom.rings.find(r => r.label === l)?.value;
-    const oee = ringOf('OEE'), avail = ringOf('可用率'), perf = ringOf('性能率'), qual = ringOf('合格率');
+    // 9. ★ OEE 自洽：OEE 环值 == 可用率×性能率×合格率（P0 四舍五入，误差 ≤1%；三语 label 候选）
+    const ringOf = (ls) => {
+        const arr = Array.isArray(ls) ? ls : [ls];
+        return dom.rings.find(r => arr.includes(r.label))?.value;
+    };
+    const oee = ringOf('OEE');
+    const avail = ringOf(['可用率', 'Availability', '稼働率']);
+    const perf = ringOf(['性能率', 'Performance', '性能率']);
+    const qual = ringOf(['合格率', 'Quality', '良品率']);
     const formula = dom.oeeFormula?.match(/(\d+)%\s*×\s*(\d+)%\s*×\s*(\d+)%/);
     const pct = s => parseInt((s ?? '').replace('%', ''), 10);
     if (formula && oee) {

@@ -85,6 +85,20 @@ public class ConfigSyncHandlerTests : IDisposable
     }
 
     [Fact]
+    public void GetLanguage_ReturnsAppSettingsLanguage()
+    {
+        // 默认中文
+        Assert.Equal((int)AppLanguage.Zh, _handler.GetLanguage());
+
+        // 修改 AppSettings 后反映（屏端经 Hub GetLanguageAsync 拉取）
+        _appSettings.Language = AppLanguage.En;
+        Assert.Equal(1, _handler.GetLanguage());
+
+        _appSettings.Language = AppLanguage.Ja;
+        Assert.Equal(2, _handler.GetLanguage());
+    }
+
+    [Fact]
     public async Task SaveCollectorSettings_PartialUpdate_NullFieldsUntouched()
     {
         await _handler.SaveCollectorSettingsAsync(new CollectorSettingsDto { PollingIntervalMs = 800 });

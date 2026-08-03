@@ -66,6 +66,12 @@ public interface IKanbanHubServer
 
     /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端零配置——从服务端拉取而非逐屏配置）。</summary>
     Task<string> GetTitleAsync();
+
+    /// <summary>
+    /// 界面语言（Collector settings.json 的 Language，AppLanguage 枚举值 0=中文/1=English/2=日本語）。
+    /// 屏端零配置——多语言由服务端统一控制，所有屏端跟随，避免逐屏配置。
+    /// </summary>
+    Task<int> GetLanguageAsync();
 }
 
 /// <summary>

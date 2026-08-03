@@ -131,4 +131,8 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
     /// <inheritdoc />
     public Task<string> GetTitleAsync()
         => Task.FromResult(_configSyncHandler.GetTitle());
+
+    /// <inheritdoc />
+    public Task<int> GetLanguageAsync()
+        => Task.FromResult(_configSyncHandler.GetLanguage());
 }
