@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MainAPP\MainAPP.csproj" />
+    <!-- Collector 服务进程（Exe 可作库引用）：补服务端零测试盲区——ConfigSyncHandler/SnapshotPublisher -->
+    <ProjectReference Include="..\Kanban.Collector\Kanban.Collector.csproj" />
   </ItemGroup>
 
   <!-- HslCommunication：MainAPP 通过 HintPath 引用本地 DLL，但裸 <Reference> 不会传递到测试项目，

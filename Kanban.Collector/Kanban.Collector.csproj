@@ -40,4 +40,9 @@
     <ProjectReference Include="..\Kanban.Collector.Core\Kanban.Collector.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 测试访问：MainAPP.Tests 直测发布器增量比较等 internal 逻辑（服务端零测试盲区补位） -->
+    <InternalsVisibleTo Include="MainAPP.Tests" />
+  </ItemGroup>
+
 </Project>

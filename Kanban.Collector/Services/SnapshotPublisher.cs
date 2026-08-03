@@ -74,8 +74,9 @@ public sealed class SnapshotPublisher
     /// <summary>
     /// 业务字段等价比较（排除 Timestamp/Seq——两者每帧都变，不代表业务变化）。
     /// ActiveAlarms 是引用类型属性，record 默认按引用比较，这里按内容逐一比较。
+    /// internal：供 MainAPP.Tests 直测（增量发布的核心判定，服务端零测试盲区补位）。
     /// </summary>
-    private static bool SameSnapshot(DeviceSnapshotDto a, DeviceSnapshotDto b)
+    internal static bool SameSnapshot(DeviceSnapshotDto a, DeviceSnapshotDto b)
     {
         if (a.DeviceId != b.DeviceId || a.DeviceName != b.DeviceName || a.Status != b.Status
             || a.StatusWord != b.StatusWord || a.OkProduction != b.OkProduction || a.NgProduction != b.NgProduction
