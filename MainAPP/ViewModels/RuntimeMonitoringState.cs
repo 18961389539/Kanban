@@ -3,6 +3,7 @@ using Kanban.Core.Models;
 using MainAPP.Models;
 using OxyPlot;
 using OxyPlot.Axes;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -14,7 +15,7 @@ internal static class RuntimeDeviceStatusText
         DeviceStatusWord.Alarm => "报警",
         DeviceStatusWord.Standby => "待机",
         DeviceStatusWord.Offline => "离线/未知",
-        _ => $"状态 {statusWord}",
+        _ => string.Format(Strings.F164, statusWord),
     };
 }
 

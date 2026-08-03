@@ -102,7 +102,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>工单进度文本：OK产量 / 计划产量（如 "1200 / 5000 件"）。</summary>
     public string WorkOrderProgressText => CurrentWorkOrder != null
-        ? $"{TotalOkProduction:N0} / {CurrentWorkOrder.TargetQuantity:N0} 件"
+        ? string.Format(Strings.F029, TotalOkProduction, CurrentWorkOrder.TargetQuantity)
         : "";
 
     /// <summary>工单进度比例（0.0-1.0，超额时 Clamp 到 1.0 避免进度条溢出）。</summary>
@@ -295,8 +295,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string QualityRateDisplay => CanDisplayKpiData ? $"{QualityRate:P0}" : "—";
     public string RealtimeSpeedDisplay => CanDisplayKpiData ? $"{RealtimeSpeed:N0}" : "—";
     public string TotalOutputDisplay => CanDisplayKpiData ? $"{TotalOutput:N0}" : "—";
-    public string TotalOkProductionDisplay => CanDisplayKpiData ? $"{TotalOkProduction:N0} 件" : "—";
-    public string TotalNgProductionDisplay => CanDisplayKpiData ? $"{TotalNgProduction:N0} 件" : "—";
+    public string TotalOkProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F030, TotalOkProduction) : "—";
+    public string TotalNgProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F028, TotalNgProduction) : "—";
     public string ShiftOkProductionDisplay => CanDisplayKpiData ? $"{TotalOkProduction:N0}" : "—";
     public string ShiftNgProductionDisplay => CanDisplayKpiData ? $"{TotalNgProduction:N0}" : "—";
     public string TargetCycleDisplay => TargetCycleSec > 0 ? $"{TargetCycleSec:F2}s" : "—";
@@ -360,7 +360,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             if (TargetCycleSec <= 0 || ActualCycleSec <= 0) return "";
             var diff = ActualCycleSec - TargetCycleSec;
             if (Math.Abs(diff) < 0.01) return Strings.M012;
-            return diff > 0 ? $"▼ 慢 {diff:F2}s" : $"▲ 快 {Math.Abs(diff):F2}s";
+            return diff > 0 ? string.Format(Strings.F047, diff) : string.Format(Strings.F046, Math.Abs(diff));
         }
     }
 
@@ -604,7 +604,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             // 业务事件 INF 级日志（符合 project_memory 中"产量达标"属于业务事件的约定）
             Serilog.Log.Information("工单 {OrderNo} 产量已达标（{Produced} / {Target} 件）",
                 CurrentWorkOrder.OrderNo, produced, CurrentWorkOrder.TargetQuantity);
-            _dialog.NotifySuccess($"工单 {CurrentWorkOrder.OrderNo} 产量已达标（{produced:N0} / {CurrentWorkOrder.TargetQuantity:N0} 件）");
+            _dialog.NotifySuccess(string.Format(Strings.F093, CurrentWorkOrder.OrderNo, produced, CurrentWorkOrder.TargetQuantity));
         }
     }
 
@@ -705,7 +705,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             var idealOutput = dev.TargetCycle * (rt.RunTime / 3600.0);
             // 拆分显示 OK/NG，让用户直观看到 NG 也计入性能率分子（总产量口径）
-            PerformanceFormulaText = $"{rt.TotalOkProduction}+{rt.TotalNgProduction} / {idealOutput:F0} 件";
+            PerformanceFormulaText = string.Format(Strings.F037, rt.TotalOkProduction, rt.TotalNgProduction, idealOutput);
         }
         else
         {
@@ -714,7 +714,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         var totalOutput = rt.TotalOkProduction + rt.TotalNgProduction;
         QualityFormulaText = totalOutput > 0
-            ? $"{rt.TotalOkProduction} 件 / {totalOutput} 件"
+            ? string.Format(Strings.F036, rt.TotalOkProduction, totalOutput)
             : "— / —";
     }
 
@@ -943,7 +943,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
                 ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
                 : $"{ts.Minutes}m";
         }
-        ShiftProgressText = $"已运行 {FormatShiftTime(elapsedSecs)}  ·  剩余 {FormatShiftTime(remainingSecs)}";
+        ShiftProgressText = string.Format(Strings.F117, FormatShiftTime(elapsedSecs), FormatShiftTime(remainingSecs));
         ShiftProgressRatio = ratio;
         ShiftProgressPct = $"{ratio * 100:F0}%";
     }

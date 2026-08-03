@@ -10,6 +10,7 @@ using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using Serilog;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -104,7 +105,7 @@ public partial class ProductionQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "产量查询失败: {Message}", ex.Message);
-            QueryError = $"产量历史查询失败：{ex.Message}";
+            QueryError = string.Format(Strings.F063, ex.Message);
             return (0, 0);
         }
     }
@@ -158,9 +159,9 @@ public partial class ProductionQueryViewModel : ObservableObject
 
         var main = deviation switch
         {
-            > 0.2 => $"📈 峰值出现在 {peak.Time:HH:mm}（OK={peak.Ok} 件，高于均值 {deviation:P0}）",
-            < -0.2 => $"📉 谷值出现在 {peak.Time:HH:mm}（OK={peak.Ok} 件，低于均值 {-deviation:P0}）",
-            _ => $"产量平稳波动，均值 OK ≈ {avgOk:F0} 件，峰值 {peak.Ok} 件 @ {peak.Time:HH:mm}"
+            > 0.2 => string.Format(Strings.F239, peak.Time, peak.Ok, deviation),
+            < -0.2 => string.Format(Strings.F240, peak.Time, peak.Ok, -deviation),
+            _ => string.Format(Strings.F064, avgOk, peak.Ok, peak.Time)
         };
 
         // 突降检测：复用 AnnotateProductionChart 的判断逻辑（curr.Ok < prev.Ok * 0.8），
@@ -179,8 +180,8 @@ public partial class ProductionQueryViewModel : ObservableObject
             var worst = drops.MaxBy(d => (d.PrevOk - d.CurrOk) / (double)d.PrevOk);
             var dropPct = 1.0 - worst.CurrOk / (double)worst.PrevOk;
             var suffix = drops.Count == 1
-                ? $"⚠ {worst.Time:HH:mm} 产量突降 {dropPct:P0}（{worst.PrevOk} 件 → {worst.CurrOk} 件）"
-                : $"⚠ 检测到 {drops.Count} 次突降，最严重 @ {worst.Time:HH:mm} 降 {dropPct:P0}（{worst.PrevOk} 件 → {worst.CurrOk} 件）";
+                ? string.Format(Strings.F048, worst.Time, dropPct, worst.PrevOk, worst.CurrOk)
+                : string.Format(Strings.F050, drops.Count, worst.Time, dropPct, worst.PrevOk, worst.CurrOk);
             return $"{main}\n{suffix}";
         }
 
@@ -202,7 +203,7 @@ public partial class ProductionQueryViewModel : ObservableObject
                 {
                     X = DateTimeAxis.ToDouble(curr.Time),
                     Y = curr.Ok,
-                    Text = $"↓突降 {curr.Time:HH:mm}",
+                    Text = string.Format(Strings.F043, curr.Time),
                     Fill = ChartPalette.Alarm,
                     Stroke = OxyColors.White,
                     TextColor = ChartPalette.Alarm,

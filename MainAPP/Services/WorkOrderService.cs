@@ -203,7 +203,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess($"已新增工单 {saved.OrderNo}");
+        _dialog.NotifySuccess(string.Format(Strings.F109, saved.OrderNo));
         return saved;
     }
 
@@ -231,7 +231,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess($"已复制工单 {saved.OrderNo}");
+        _dialog.NotifySuccess(string.Format(Strings.F099, saved.OrderNo));
         return saved;
     }
 
@@ -250,7 +250,7 @@ public class WorkOrderService(
         if (result == null) return null;
         if (!ValidateOrderIdentityAndSchedule(result)) return null;
         var saved = await _workOrderRepo.UpsertAsync(result);
-        _dialog.NotifySuccess($"已更新工单 {saved.OrderNo}");
+        _dialog.NotifySuccess(string.Format(Strings.F110, saved.OrderNo));
         return saved;
     }
 
@@ -265,7 +265,7 @@ public class WorkOrderService(
     private async Task<bool> DeleteWorkOrderCore(WorkOrder target)
     {
         var r = _dialog.Show(
-            $"确定删除工单「{target.OrderNo}」（{target.ProductName}）吗？此操作不可恢复。",
+            string.Format(Strings.F174, target.OrderNo, target.ProductName),
             "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
         await _workOrderRepo.DeleteAsync(target.Id);
@@ -280,7 +280,7 @@ public class WorkOrderService(
             && string.Equals(w.OrderNo.Trim(), candidate.OrderNo.Trim(), StringComparison.OrdinalIgnoreCase));
         if (duplicate != null)
         {
-            _dialog.NotifyWarning($"工单号「{candidate.OrderNo}」已存在（工单 Id={duplicate.Id}），请使用唯一工单号");
+            _dialog.NotifyWarning(string.Format(Strings.F097, candidate.OrderNo, duplicate.Id));
             return false;
         }
 
@@ -294,7 +294,7 @@ public class WorkOrderService(
             .FirstOrDefault(w => candidate.PlannedStart < w.PlannedEnd && w.PlannedStart < candidate.PlannedEnd);
         if (conflict != null)
         {
-            _dialog.NotifyWarning($"设备「{candidate.DeviceName}」的计划时间与工单 {conflict.OrderNo} 重叠（{conflict.PlannedStart:MM-dd HH:mm} ~ {conflict.PlannedEnd:MM-dd HH:mm}）");
+            _dialog.NotifyWarning(string.Format(Strings.F200, candidate.DeviceName, conflict.OrderNo, conflict.PlannedStart, conflict.PlannedEnd));
             return false;
         }
         return true;
@@ -314,7 +314,7 @@ public class WorkOrderService(
         var running = _workOrderRepo.GetRunningByDevice(target.DeviceId);
         if (running != null && running.Id != target.Id)
         {
-            _dialog.NotifyWarning($"设备「{target.DeviceName}」已有进行中工单 {running.OrderNo}，请先完成或中止");
+            _dialog.NotifyWarning(string.Format(Strings.F208, target.DeviceName, running.OrderNo));
             return null;
         }
         var updated = Clone(target);
@@ -329,7 +329,7 @@ public class WorkOrderService(
             return null;
         }
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess($"工单 {saved.OrderNo} 已开始");
+        _dialog.NotifySuccess(string.Format(Strings.F096, saved.OrderNo));
         return saved;
     }
 
@@ -360,7 +360,7 @@ public class WorkOrderService(
         updated.CompletedOkCount = summary.OkCount;
         updated.CompletedNgCount = summary.NgCount;
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess($"工单 {saved.OrderNo} 已完成");
+        _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
         return saved;
     }
 
@@ -386,7 +386,7 @@ public class WorkOrderService(
             return null;
         }
         var r = _dialog.Show(
-            $"确定中止工单「{target.OrderNo}」吗？中止后不可恢复为 Running。",
+            string.Format(Strings.F173, target.OrderNo),
             "确认中止", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return null;
         // 中止也写入产量快照（Running 中止时已有部分产量，需保留）
@@ -398,7 +398,7 @@ public class WorkOrderService(
             updated.CompletedNgCount = summary.NgCount;
         }
         var saved = await _workOrderRepo.UpsertAsync(updated);
-        _dialog.NotifySuccess($"工单 {saved.OrderNo} 已中止");
+        _dialog.NotifySuccess(string.Format(Strings.F094, saved.OrderNo));
         return saved;
     }
 

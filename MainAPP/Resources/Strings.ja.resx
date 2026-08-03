@@ -681,4 +681,275 @@
   <data name="M046" xml:space="preserve"><value>C:良品率</value></data>
   <data name="M047" xml:space="preserve"><value>B:性能達成率</value></data>
   <data name="M048" xml:space="preserve"><value>A:時間稼働率</value></data>
+  <data name="F001" xml:space="preserve"><value>CSV 合計 {0} 行、{1} 行が検証に失敗しスキップされます。
+</value></data>
+  <data name="F002" xml:space="preserve"><value>DWord {0} ms · Mビット {1} ms · 不良 {2} ms · カウントアラーム {3} ms · 履歴 {4} ms</value></data>
+  <data name="F003" xml:space="preserve"><value>Modbus UnitId は 1〜247 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F004" xml:space="preserve"><value>Modbus ビット機能コードは 1 または 2 である必要があります。現在値: {0}</value></data>
+  <data name="F005" xml:space="preserve"><value>Modbus レジスタ機能コードは 3 または 4 である必要があります。現在値: {0}</value></data>
+  <data name="F006" xml:space="preserve"><value>OEE は {0:P1}、目標 {2:P0} を{1}</value></data>
+  <data name="F007" xml:space="preserve"><value>OEE 履歴の取得に失敗しました: {0}</value></data>
+  <data name="F008" xml:space="preserve"><value>OEE リセットアドレスの形式が無効です（D ワードアドレスが必要）: {0}</value></data>
+  <data name="F009" xml:space="preserve"><value>PDF エクスポートに失敗しました: {0}</value></data>
+  <data name="F010" xml:space="preserve"><value>PLC 切断 · {0}</value></data>
+  <data name="F011" xml:space="preserve"><value>PLC 切断（IP:{0}）· {1} 回目の再試行</value></data>
+  <data name="F012" xml:space="preserve"><value>PLC 再接続、切断時間 {0}</value></data>
+  <data name="F013" xml:space="preserve"><value>PLC バッチ読み取りアドレスホールは 0〜16 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F014" xml:space="preserve"><value>PLC バッチ読み取り数は 1〜1024 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F015" xml:space="preserve"><value>PLC 接続中 · {0}</value></data>
+  <data name="F016" xml:space="preserve"><value>PLC タイムアウトは 100〜60000 ミリ秒の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F017" xml:space="preserve"><value>Siemens Rack は 0〜7 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F018" xml:space="preserve"><value>Siemens Slot は 0〜31 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F019" xml:space="preserve"><value>Siemens バッチ Int32 上限は 1〜55 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F020" xml:space="preserve"><value>
+  ...（計 {0} 件）</value></data>
+  <data name="F021" xml:space="preserve"><value>{0}: 生産数 {1} 個 · 良品率 {2} · OEE {3}</value></data>
+  <data name="F022" xml:space="preserve"><value>{0} 個のアドレス</value></data>
+  <data name="F023" xml:space="preserve"><value>{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · 初期 {4}</value></data>
+  <data name="F024" xml:space="preserve"><value>{0} / {1} 個のアドレス</value></data>
+  <data name="F025" xml:space="preserve"><value>{0} は空にできません</value></data>
+  <data name="F026" xml:space="preserve"><value>{0} は {1}〜{2} の範囲である必要があります</value></data>
+  <data name="F027" xml:space="preserve"><value>{0} は整数である必要があります</value></data>
+  <data name="F028" xml:space="preserve"><value>{0:N0} 個</value></data>
+  <data name="F029" xml:space="preserve"><value>{0:N0} / {1:N0} 個</value></data>
+  <data name="F030" xml:space="preserve"><value>{0:N0} 個</value></data>
+  <data name="F031" xml:space="preserve"><value>{0} 現在値: {1}</value></data>
+  <data name="F032" xml:space="preserve"><value>{0} · {1}
+レベル: {2}
+発生時刻: {3:yyyy-MM-dd HH:mm:ss}
+継続時間: {4}</value></data>
+  <data name="F033" xml:space="preserve"><value>{0}（{1} 回）</value></data>
+  <data name="F034" xml:space="preserve"><value>{0}（{1}、{2:MM-dd HH:mm} から）</value></data>
+  <data name="F035" xml:space="preserve"><value>{0} {1:F0} 分（{2:HH:mm}–{3:HH:mm}）</value></data>
+  <data name="F036" xml:space="preserve"><value>{0} 個 / {1} 個</value></data>
+  <data name="F037" xml:space="preserve"><value>{0}+{1} / {2:F0} 個</value></data>
+  <data name="F038" xml:space="preserve"><value>{0} · 目標 {1:N0} 個</value></data>
+  <data name="F039" xml:space="preserve"><value>{0} のコピー</value></data>
+  <data name="F040" xml:space="preserve"><value>{0}（{1} 回、{2:P0}）</value></data>
+  <data name="F041" xml:space="preserve"><value>{0} が生産数最多、合計 {1:N0} 個、良品率 {2:P1}</value></data>
+  <data name="F042" xml:space="preserve"><value> · 有効期限 {0:yyyy-MM-dd}</value></data>
+  <data name="F043" xml:space="preserve"><value>↓ {0:HH:mm} に急減</value></data>
+  <data name="F044" xml:space="preserve"><value>⏳ 未復旧時間 Top：{0}</value></data>
+  <data name="F045" xml:space="preserve"><value>⏸ 待機比率 {0:P0}、しきい値 {1:P0} を超過</value></data>
+  <data name="F046" xml:space="preserve"><value>▲ {0:F2}s 速い</value></data>
+  <data name="F047" xml:space="preserve"><value>▼ {0:F2}s 遅い</value></data>
+  <data name="F048" xml:space="preserve"><value>⚠ {0:HH:mm} 生産数が {1:P0} 急減（{2} 個 → {3} 個）</value></data>
+  <data name="F049" xml:space="preserve"><value>⚠ アラーム比率 {0:P0}、しきい値 {1:P0} を超過</value></data>
+  <data name="F050" xml:space="preserve"><value>⚠ {0} 回の急減を検出、最悪 @ {1:HH:mm} {2:P0} 減（{3} 個 → {4} 個）</value></data>
+  <data name="F051" xml:space="preserve"><value>⚠ ボトルネック要因: {0} は {1:P1} のみ、OEE の主な足枷</value></data>
+  <data name="F052" xml:space="preserve"><value>⚡ 連鎖発生: {0}（5 分間のウィンドウ内で {1} 回）</value></data>
+  <data name="F053" xml:space="preserve"><value>✓ 3 指標は均衡（{0:P0} / {1:P0} / {2:P0}）、OEE = {3:P1}</value></data>
+  <data name="F054" xml:space="preserve"><value>一般{0}</value></data>
+  <data name="F055" xml:space="preserve"><value>前の班（{0}）</value></data>
+  <data name="F056" xml:space="preserve"><value>未対応の PLC ブランド: {0}</value></data>
+  <data name="F057" xml:space="preserve"><value>未対応の Siemens モデル: {0}</value></data>
+  <data name="F058" xml:space="preserve"><value>重大{0}</value></data>
+  <data name="F059" xml:space="preserve"><value>主要不良は {0}（{1}）、累計 {2:N0} 個、現在の不良 Top10 の {3:F1}%</value></data>
+  <data name="F060" xml:space="preserve"><value>生産数 {0} · 良品率 {1} · OEE {2}</value></data>
+  <data name="F061" xml:space="preserve"><value>生産数 {0:N0} · アラーム {1} 回</value></data>
+  <data name="F062" xml:space="preserve"><value>生産数 {0:N0} · 良品率 {1:P1} · OEE {2:P1}</value></data>
+  <data name="F063" xml:space="preserve"><value>生産数履歴の取得に失敗しました: {0}</value></data>
+  <data name="F064" xml:space="preserve"><value>生産数は安定推移、平均 OK ≈ {0:F0} 個、ピーク {1} 個 @ {2:HH:mm}</value></data>
+  <data name="F065" xml:space="preserve"><value>最良班 {0:P0} を下回る{1}</value></data>
+  <data name="F066" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
+  <data name="F067" xml:space="preserve"><value>保存に失敗しました: 設定問題が {0} 件あります。デバイスパラメータフォームで修正してください</value></data>
+  <data name="F068" xml:space="preserve"><value>収集サービスの停止に失敗しました: {0}</value></data>
+  <data name="F069" xml:space="preserve"><value>{0:N0} 件 · {1}/{2} ページ</value></data>
+  <data name="F070" xml:space="preserve"><value>書き込みに失敗しました: {0}</value></data>
+  <data name="F071" xml:space="preserve"><value>書き込みエラー: {0}</value></data>
+  <data name="F072" xml:space="preserve"><value>書き込み成功（{0:HH:mm:ss}）</value></data>
+  <data name="F073" xml:space="preserve"><value>アラーム統計の更新に失敗しました: {0}</value></data>
+  <data name="F074" xml:space="preserve"><value>空き {0:F1} GB</value></data>
+  <data name="F075" xml:space="preserve"><value>履歴書き込み間隔は 1 以上である必要があります。現在値: {0}</value></data>
+  <data name="F076" xml:space="preserve"><value>履歴データの書き込みに失敗しました: {0}</value></data>
+  <data name="F077" xml:space="preserve"><value>履歴クエリに失敗しました: {0}</value></data>
+  <data name="F078" xml:space="preserve"><value>{0} 件の問題を検出</value></data>
+  <data name="F079" xml:space="preserve"><value>稼働率 {0:P1}、損失 {1:P1}</value></data>
+  <data name="F080" xml:space="preserve"><value>アドレス競合「{0}」が {1} 台のデバイスで共有されています:</value></data>
+  <data name="F081" xml:space="preserve"><value>アドレス競合: {0}</value></data>
+  <data name="F082" xml:space="preserve"><value>アドレス形式が無効です（D ワードアドレスが必要）: {0}</value></data>
+  <data name="F083" xml:space="preserve"><value>アドレス形式が無効です（D ワードアドレスが必要）: {0}</value></data>
+  <data name="F084" xml:space="preserve"><value>バックアップファイルの読み取りまたは解析に失敗しました: {0}</value></data>
+  <data name="F085" xml:space="preserve"><value>レビューデータの読み込みに失敗しました: {0}</value></data>
+  <data name="F086" xml:space="preserve"><value>失敗の詳細:
+  · {0}</value></data>
+  <data name="F087" xml:space="preserve"><value>失敗: {0}</value></data>
+  <data name="F088" xml:space="preserve"><value>あり · {0}</value></data>
+  <data name="F089" xml:space="preserve"><value>インポートでファイルの {0} 台のデバイスで現在の {1} 台の設定を置き換えます。ディスクには自動保存されません。続行しますか？</value></data>
+  <data name="F090" xml:space="preserve"><value>エクスポートに失敗しました: {0}</value></data>
+  <data name="F091" xml:space="preserve"><value>{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。
+</value></data>
+  <data name="F092" xml:space="preserve"><value>20 台の仮想デバイスで現在の {0} 台の設定を置き換えます。未保存の変更は失われます。続行しますか？
+（置き換え後に保存してください）</value></data>
+  <data name="F093" xml:space="preserve"><value>工単 {0} が目標に達しました（{1:N0} / {2:N0} 個）</value></data>
+  <data name="F094" xml:space="preserve"><value>工単 {0} を中止しました</value></data>
+  <data name="F095" xml:space="preserve"><value>工単 {0} を完了しました</value></data>
+  <data name="F096" xml:space="preserve"><value>工単 {0} を開始しました</value></data>
+  <data name="F097" xml:space="preserve"><value>工単番号「{0}」は既に存在します（工単 Id={1}）。一意の工単番号を使用してください</value></data>
+  <data name="F098" xml:space="preserve"><value>{0} 件の工単の生産データを更新しました</value></data>
+  <data name="F099" xml:space="preserve"><value>工単 {0} をコピーしました</value></data>
+  <data name="F100" xml:space="preserve"><value>デバイス「{0}」を「{1}」としてコピーしました</value></data>
+  <data name="F101" xml:space="preserve"><value>{0} 台のデバイスをインポートしました。保存して永続化してください</value></data>
+  <data name="F102" xml:space="preserve"><value>{0} 件のアラームをインポートしました（{1} 行スキップ）。
+</value></data>
+  <data name="F103" xml:space="preserve"><value>{0} 件のアラームをインポートしました。保存して永続化してください</value></data>
+  <data name="F104" xml:space="preserve"><value>{0} 件をエクスポートしました → {1}</value></data>
+  <data name="F105" xml:space="preserve"><value>{0} 台のデバイスを {1} にエクスポートしました</value></data>
+  <data name="F106" xml:space="preserve"><value>{0} 件の工単をエクスポートしました → {1}</value></data>
+  <data name="F107" xml:space="preserve"><value>{0} 件のアラームをエクスポートしました → {1}</value></data>
+  <data name="F108" xml:space="preserve"><value>前のバージョンを復元しました（{0} 台）。保存して永続化してください</value></data>
+  <data name="F109" xml:space="preserve"><value>工単 {0} を追加しました</value></data>
+  <data name="F110" xml:space="preserve"><value>工単 {0} を更新しました</value></data>
+  <data name="F111" xml:space="preserve"><value>「{0}」の現在値をクリアしました</value></data>
+  <data name="F112" xml:space="preserve"><value>有効 · {0:yyyy-MM-dd}</value></data>
+  <data name="F113" xml:space="preserve"><value>有効 · 有効期限 {0:yyyy-MM-dd}</value></data>
+  <data name="F114" xml:space="preserve"><value>{0} 台の仮想デバイスを生成しました。保存して永続化してください</value></data>
+  <data name="F115" xml:space="preserve"><value>{0} 件のサンプル工単を生成しました</value></data>
+  <data name="F116" xml:space="preserve"><value>「{0}」の OEE リセットを実行しました</value></data>
+  <data name="F117" xml:space="preserve"><value>稼働 {0} · 残り {1}</value></data>
+  <data name="F118" xml:space="preserve"><value>DB {0} · WAL {1}</value></data>
+  <data name="F119" xml:space="preserve"><value>アプリケーション設定の保存に失敗しました: {0}</value></data>
+  <data name="F120" xml:space="preserve"><value>現在 {0} / しきい値 {1}</value></data>
+  <data name="F121" xml:space="preserve"><value>既に {0} 件の工単があります。{1} 件のサンプル工単を追加生成します。続行しますか？</value></data>
+  <data name="F122" xml:space="preserve"><value>現在の班: {0}</value></data>
+  <data name="F123" xml:space="preserve"><value>現在の範囲で {0:N0} 回のアラームが発生しました。Top 5 アラームで主な停止要因を確認してください</value></data>
+  <data name="F124" xml:space="preserve"><value>性能率 {0:P1}、損失 {1:P1}</value></data>
+  <data name="F125" xml:space="preserve"><value>成功: {0}</value></data>
+  <data name="F126" xml:space="preserve"><value>レポートエクスポートに失敗しました: {0}</value></data>
+  <data name="F127" xml:space="preserve"><value>アラーム {0}</value></data>
+  <data name="F128" xml:space="preserve"><value>アラーム「{0}」アドレス</value></data>
+  <data name="F129" xml:space="preserve"><value>アラーム履歴の取得に失敗しました: {0}</value></data>
+  <data name="F130" xml:space="preserve"><value>アラーム急増: 今回 {0} 回、前回 {1} 回</value></data>
+  <data name="F131" xml:space="preserve"><value>データが {0}s 停滞しています。PLC 収集が停止している可能性があります</value></data>
+  <data name="F132" xml:space="preserve"><value>データが {0}s 停滞しています。収集サービスが停止している可能性があります</value></data>
+  <data name="F133" xml:space="preserve"><value>データベース/収集の初期化に失敗しました。一部機能が利用できない可能性があります:
+
+{0}</value></data>
+  <data name="F134" xml:space="preserve"><value>ファイルの読み取りまたは解析に失敗しました: {0}</value></data>
+  <data name="F135" xml:space="preserve"><value>新規デバイス {0}</value></data>
+  <data name="F136" xml:space="preserve"><value>無効な IP アドレス: {0}</value></data>
+  <data name="F137" xml:space="preserve"><value>認識できない {0} アドレス: {1}</value></data>
+  <data name="F138" xml:space="preserve"><value>最長停止 {0:F1} 時間、デバイス: {1}、アラーム: {2}</value></data>
+  <data name="F139" xml:space="preserve"><value>最長待機 {0:F0} 分（{1:HH:mm}–{2:HH:mm}）</value></data>
+  <data name="F140" xml:space="preserve"><value>最長稼働 {0:F0} 分（{1:HH:mm}–{2:HH:mm}）</value></data>
+  <data name="F141" xml:space="preserve"><value>{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。
+</value></data>
+  <data name="F142" xml:space="preserve"><value>{0} タイプのアドレスが必要です。現在は {1}</value></data>
+  <data name="F143" xml:space="preserve"><value>アラームはインポートされませんでした:
+  · {0}</value></data>
+  <data name="F144" xml:space="preserve"><value>不明なクエリタブ: {0}</value></data>
+  <data name="F145" xml:space="preserve"><value>マシンコード: {0}</value></data>
+  <data name="F146" xml:space="preserve"><value>マシンコード: {0}
+このマシンとライセンスが一致しません</value></data>
+  <data name="F147" xml:space="preserve"><value>マシンコード: {0}
+ライセンスの有効期限が切れています。再アクティベーションしてください</value></data>
+  <data name="F148" xml:space="preserve"><value>マシンコード: {0}
+システム時刻の異常を検出しました</value></data>
+  <data name="F149" xml:space="preserve"><value>マシンコード: {0}
+永久ライセンス</value></data>
+  <data name="F150" xml:space="preserve"><value>マシンコード: {0}
+プロダクトキー: {1}
+有効期限: {2:yyyy-MM-dd}</value></data>
+  <data name="F151" xml:space="preserve"><value>マシンコード: {0}
+試用残り {1} 日</value></data>
+  <data name="F152" xml:space="preserve"><value>マシンコード: {0}
+試用期間が終了しました。アクティベーションしてください</value></data>
+  <data name="F153" xml:space="preserve"><value>生産データの取得に失敗しました: {0}</value></data>
+  <data name="F154" xml:space="preserve"><value>クエリに失敗しました: {0}</value></data>
+  <data name="F155" xml:space="preserve"><value>アラームイベントの取得に失敗しました: {0}</value></data>
+  <data name="F156" xml:space="preserve"><value>オムロン FINS 読み取り分割長は 1〜999 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F157" xml:space="preserve"><value>{0}:{1} に接続中 …</value></data>
+  <data name="F158" xml:space="preserve"><value>{0} に接続中 …</value></data>
+  <data name="F159" xml:space="preserve"><value>収集サービスに接続中 · {0}</value></data>
+  <data name="F160" xml:space="preserve"><value>クリアに失敗しました: {0}</value></data>
+  <data name="F161" xml:space="preserve"><value>クリアエラー: {0}</value></data>
+  <data name="F162" xml:space="preserve"><value>リセットエラー: {0}</value></data>
+  <data name="F163" xml:space="preserve"><value>アクティベーション成功{0}。</value></data>
+  <data name="F164" xml:space="preserve"><value>状態 {0}</value></data>
+  <data name="F165" xml:space="preserve"><value>状態履歴の取得に失敗しました: {0}</value></data>
+  <data name="F166" xml:space="preserve"><value>班 {0}</value></data>
+  <data name="F167" xml:space="preserve"><value>レビュー PDF をエクスポートしました: {0}</value></data>
+  <data name="F168" xml:space="preserve"><value>レビューレポートをエクスポートしました: {0}</value></data>
+  <data name="F169" xml:space="preserve"><value>目標 {0:F0} 個/バケット</value></data>
+  <data name="F170" xml:space="preserve"><value>目標 {0:P0}</value></data>
+  <data name="F171" xml:space="preserve"><value>目標 {0:P2}</value></data>
+  <data name="F172" xml:space="preserve"><value>目標 {0} 個/h</value></data>
+  <data name="F173" xml:space="preserve"><value>工単「{0}」を中止しますか？中止後は Running に戻せません。</value></data>
+  <data name="F174" xml:space="preserve"><value>工単「{0}」（{1}）を削除しますか？この操作は元に戻せません。</value></data>
+  <data name="F175" xml:space="preserve"><value>デバイス「{0}」を削除しますか？関連するアラーム、不良、カウントアラームも削除されます。この操作は元に戻せません。</value></data>
+  <data name="F176" xml:space="preserve"><value>「{0}」の OEE を手動リセットしますか？
+OK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。</value></data>
+  <data name="F177" xml:space="preserve"><value>カウントアラーム「{0}」の現在値をクリアしますか？
+PLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。</value></data>
+  <data name="F178" xml:space="preserve"><value>起動に失敗しました。アプリを終了します:
+
+{0}</value></data>
+  <data name="F179" xml:space="preserve"><value>ポート番号は 1〜65535 の範囲である必要があります。現在: {0}</value></data>
+  <data name="F180" xml:space="preserve"><value>ポート番号は 1〜65535 の範囲である必要があります。現在値: {0}</value></data>
+  <data name="F181" xml:space="preserve"><value>{0} 行目: PLC アドレス '{1}' は M ビットタイプである必要があります。現在は {2}</value></data>
+  <data name="F182" xml:space="preserve"><value>{0} 行目: PLC アドレス '{1}' が無効です - {2}</value></data>
+  <data name="F183" xml:space="preserve"><value>{0} 行目: PLC アドレスが空です</value></data>
+  <data name="F184" xml:space="preserve"><value>{0} 行目: アラーム名が空です</value></data>
+  <data name="F185" xml:space="preserve"><value>{0} 行目: アラームレベル '{1}' が無効です（Low/Medium/High が必要）</value></data>
+  <data name="F186" xml:space="preserve"><value>スレッド {0} · ハンドル {1:N0}</value></data>
+  <data name="F187" xml:space="preserve"><value>範囲: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}</value></data>
+  <data name="F188" xml:space="preserve"><value>不良 {0}</value></data>
+  <data name="F189" xml:space="preserve"><value>不良「{0}」アドレス</value></data>
+  <data name="F190" xml:space="preserve"><value>不良率急増: 今回 {0} 個、前回 {1} 個</value></data>
+  <data name="F191" xml:space="preserve"><value>自動日報サービスの停止に失敗しました: {0}</value></data>
+  <data name="F192" xml:space="preserve"><value>良品率 {0:P1} / 目標 {1:P0} · OEE {2:P1} / 目標 {3:P0}</value></data>
+  <data name="F193" xml:space="preserve"><value>良品率 {0:P1}、損失 {1:P1}</value></data>
+  <data name="F194" xml:space="preserve"><value>良品率は {0:P1}、目標 {2:P0} を{1}</value></data>
+  <data name="F195" xml:space="preserve"><value>タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80% を下回る</value></data>
+  <data name="F196" xml:space="preserve"><value>{0:HH:mm:ss} に発生 · {1}</value></data>
+  <data name="F197" xml:space="preserve"><value>警告: {0}</value></data>
+  <data name="F198" xml:space="preserve"><value>カウントアラーム {0}</value></data>
+  <data name="F199" xml:space="preserve"><value>カウントアラーム「{0}」アドレス</value></data>
+  <data name="F200" xml:space="preserve"><value>デバイス「{0}」の予定時間が工単 {1} と重複しています（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）</value></data>
+  <data name="F201" xml:space="preserve"><value>デバイス「{0}」: {1} が無効です: {2}</value></data>
+  <data name="F202" xml:space="preserve"><value>デバイス「{0}」: アラーム名「{1}」が重複しています</value></data>
+  <data name="F203" xml:space="preserve"><value>デバイス「{0}」が未設定です: {1}</value></data>
+  <data name="F204" xml:space="preserve"><value>デバイス「{0}」の目標サイクルは 0 より大きい必要があります（現在 {1}）</value></data>
+  <data name="F205" xml:space="preserve"><value>デバイス「{0}」: 不良名「{1}」が重複しています</value></data>
+  <data name="F206" xml:space="preserve"><value>デバイス「{0}」のカウントアラーム「{1}」上限は 0 より大きい必要があります（現在 {2}）</value></data>
+  <data name="F207" xml:space="preserve"><value>デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります</value></data>
+  <data name="F208" xml:space="preserve"><value>デバイス「{0}」には進行中の工単 {1} があります。先に完了または中止してください</value></data>
+  <data name="F209" xml:space="preserve"><value>デバイス名「{0}」が重複しています（{1} 台）。デバイス名は一意である必要があります</value></data>
+  <data name="F210" xml:space="preserve"><value>デバイスデータの保存に失敗しました: {0}</value></data>
+  <data name="F211" xml:space="preserve"><value>試用 · 残り {0} 日</value></data>
+  <data name="F212" xml:space="preserve"><value>試用期間中 · 残り {0} 日</value></data>
+  <data name="F213" xml:space="preserve"><value>試用期間中、残り {0} 日。アクティベーションコードを入力して認証を完了してください。</value></data>
+  <data name="F214" xml:space="preserve"><value>試用期間中、残り {0} 日。設定ページでアクティベーションコードを入力してください。</value></data>
+  <data name="F215" xml:space="preserve"><value>試用期間が終了しました（{0} 日）。アクティベーションコードを入力して続行してください。</value></data>
+  <data name="F216" xml:space="preserve"><value>読み取りに失敗しました: {0}</value></data>
+  <data name="F217" xml:space="preserve"><value>読み取りエラー: {0}</value></data>
+  <data name="F218" xml:space="preserve"><value>ポーリング間隔は 50ms 以上である必要があります。現在値: {0}</value></data>
+  <data name="F219" xml:space="preserve"><value>軽微{0}</value></data>
+  <data name="F220" xml:space="preserve"><value>稼働中に生産なし: {0:HH:mm:ss}-{1:HH:mm:ss} 継続 {2:F0} 分</value></data>
+  <data name="F221" xml:space="preserve"><value>プロセス {0:F0} MB · 利用可能 {1:F0} MB</value></data>
+  <data name="F222" xml:space="preserve"><value>接続に失敗しました: {0}</value></data>
+  <data name="F223" xml:space="preserve"><value>接続に失敗しました: {0}</value></data>
+  <data name="F224" xml:space="preserve"><value>接続エラー: {0}</value></data>
+  <data name="F225" xml:space="preserve"><value>接続成功（{0}:{1}）</value></data>
+  <data name="F226" xml:space="preserve"><value>接続がタイムアウトしました（5 秒応答なし）。IP とポートを確認してください</value></data>
+  <data name="F227" xml:space="preserve"><value>連続 {0} 回失敗</value></data>
+  <data name="F228" xml:space="preserve"><value>インポート方法を選択:
+  · はい = 置き換え（既存をクリアしてインポート）
+  · いいえ = 追加（既存を保持、同一アドレスは上書き）
+  · キャンセル = インポート中止</value></data>
+  <data name="F229" xml:space="preserve"><value>レシピ値 {0} が妥当な範囲外です（0〜999999）</value></data>
+  <data name="F230" xml:space="preserve"><value>レシピアドレスの形式が無効です: {0}</value></data>
+  <data name="F231" xml:space="preserve"><value>収集サービスのパラメータ同期に失敗しました（ローカルに保存済み）: {0}</value></data>
+  <data name="F232" xml:space="preserve"><value>収集サービス切断 · {0}</value></data>
+  <data name="F233" xml:space="preserve"><value>収集サービス切断（{0}）· {1} 回目の再試行</value></data>
+  <data name="F234" xml:space="preserve"><value>収集サービス再接続、切断時間 {0}</value></data>
+  <data name="F235" xml:space="preserve"><value>Collector 接続の解放に失敗しました: {0}</value></data>
+  <data name="F236" xml:space="preserve"><value>再構築 {0} 回 · 直近 {1} ms</value></data>
+  <data name="F237" xml:space="preserve"><value>エラー: {0}</value></data>
+  <data name="F238" xml:space="preserve"><value>、{0} が主な足枷（{1:P0} vs {2:P0}）</value></data>
+  <data name="F239" xml:space="preserve"><value>📈 ピークは {0:HH:mm}（OK={1} 個、平均より {2:P0} 上）</value></data>
+  <data name="F240" xml:space="preserve"><value>📉 谷は {0:HH:mm}（OK={1} 個、平均より {2:P0} 下）</value></data>
+  <data name="F241" xml:space="preserve"><value>📊 {0} が最良（{1:P1}）、{2} は低調（{3:P1}）</value></data>
+  <data name="F242" xml:space="preserve"><value>🔥 Top アラーム: {0}</value></data>
+  <data name="F243" xml:space="preserve"><value>🔻 最悪班: {0} @ {1}（OEE {2:P0}）、</value></data>
 </root>

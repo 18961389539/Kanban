@@ -93,7 +93,7 @@ public partial class App : Application
 
                 activationVm.StatusMessage = licenseStatus switch
                 {
-                    LicenseStatus.TrialExpired => $"试用期已过期（{TrialTracker.TrialDays} 天），请输入激活码继续使用。",
+                    LicenseStatus.TrialExpired => string.Format(Strings.F215, TrialTracker.TrialDays),
                     LicenseStatus.TrialManipulated => "检测到系统时间异常，试用期已失效，请输入激活码继续使用。",
                     LicenseStatus.Expired => "授权已过期，请输入新的激活码。",
                     LicenseStatus.MachineMismatch => "授权与当前机器不匹配，请重新激活。",
@@ -150,15 +150,15 @@ public partial class App : Application
             if (justActivated)
             {
                 var expireText = licenseGate.CurrentLicense?.IsPermanent == false
-                    ? $"· 到期 {licenseGate.CurrentLicense.ExpireDate:yyyy-MM-dd}"
+                    ? string.Format(Strings.F042, licenseGate.CurrentLicense.ExpireDate)
                     : "· 永久授权";
                 HandyControl.Controls.Growl.Success(
-                    $"激活成功{expireText}。");
+                    string.Format(Strings.F163, expireText));
             }
             else if (licenseStatus == LicenseStatus.Trial && licenseGate.RemainingTrialDays.HasValue)
             {
                 HandyControl.Controls.Growl.Info(
-                    $"试用期内，剩余 {licenseGate.RemainingTrialDays} 天。请在设置页输入激活码完成授权。");
+                    string.Format(Strings.F214, licenseGate.RemainingTrialDays));
             }
 
             // 历史清理和采集启动放到后台，不阻塞 UI 线程。
@@ -174,7 +174,7 @@ public partial class App : Application
                 // 此时 MainWindow 已 Show（line 143），Growl 容器已就绪，用非模态通知避免阻塞。
                 Log($"后台初始化失败: {ex.Message}");
                 HandyControl.Controls.Growl.Warning(
-                    $"数据库/采集初始化失败，部分功能可能不可用：\n\n{ex.Message}");
+                    string.Format(Strings.F133, ex.Message));
             }
         }
         catch (Exception ex)
@@ -185,7 +185,7 @@ public partial class App : Application
             try { Serilog.Log.Error(ex, "OnStartup 启动失败"); }
             catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Serilog 记录失败: {logEx.Message}"); }
             HandyControl.Controls.MessageBox.Show(
-                $"程序启动失败，即将退出：\n\n{ex.Message}",
+                string.Format(Strings.F178, ex.Message),
                 "启动失败",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -229,7 +229,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"释放 Collector 连接失败：{ex.Message}");
+                    errors.Add(string.Format(Strings.F235, ex.Message));
                 }
             }
             else
@@ -242,7 +242,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"停止采集服务失败：{ex.Message}");
+                    errors.Add(string.Format(Strings.F068, ex.Message));
                 }
 
                 try
@@ -251,7 +251,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"自动日报服务停止失败：{ex.Message}");
+                    errors.Add(string.Format(Strings.F191, ex.Message));
                 }
             }
 
@@ -262,7 +262,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                errors.Add($"设备数据保存失败：{ex.Message}");
+                errors.Add(string.Format(Strings.F210, ex.Message));
             }
             try
             {
@@ -270,7 +270,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                errors.Add($"应用设置保存失败：{ex.Message}");
+                errors.Add(string.Format(Strings.F119, ex.Message));
             }
 
             // P0-3：HistoryService.Dispose 改用 DisposeAsync，避免在 UI 线程同步阻塞最多 3 秒
@@ -280,7 +280,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                errors.Add($"历史数据写入失败：{ex.Message}");
+                errors.Add(string.Format(Strings.F076, ex.Message));
             }
 
             if (errors.Count > 0)

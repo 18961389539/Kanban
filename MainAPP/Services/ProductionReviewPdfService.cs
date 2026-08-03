@@ -70,8 +70,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
         var canvas = new PdfCanvas(document);
         canvas.Title("生产复盘报表");
         canvas.Text("生产复盘报表", 18, true);
-        canvas.Text($"统计范围：{data.From:yyyy-MM-dd HH:mm:ss} ~ {data.To:yyyy-MM-dd HH:mm:ss}", 9);
-        canvas.Text($"当前班次：{data.ShiftName}", 9);
+        canvas.Text(string.Format(Strings.F187, data.From, data.To), 9);
+        canvas.Text(string.Format(Strings.F122, data.ShiftName), 9);
         canvas.Space(8);
 
         canvas.Section("核心指标");
@@ -111,8 +111,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
         canvas.Row("性能率", data.PerformanceLossText);
         canvas.Row("良品率", data.QualityLossText);
         canvas.Section("周期对比");
-        canvas.Row(data.ComparisonLabel, $"产量 {data.BaselineTotalOutput:N0} · 良品率 {data.BaselineQualityRate:P1} · OEE {data.BaselineOee:P1}");
-        canvas.Row("当前变化", $"产量 {FormatSigned(data.OutputDelta)} · 良品率 {FormatSignedPercentage(data.QualityRateDelta)} · OEE {FormatSignedPercentage(data.OeeDelta)}");
+        canvas.Row(data.ComparisonLabel, string.Format(Strings.F062, data.BaselineTotalOutput, data.BaselineQualityRate, data.BaselineOee));
+        canvas.Row("当前变化", string.Format(Strings.F060, FormatSigned(data.OutputDelta), FormatSignedPercentage(data.QualityRateDelta), FormatSignedPercentage(data.OeeDelta)));
         canvas.Section("停机分析");
         canvas.Row("总停机时长", $"{data.TotalDowntimeHours:F2}h");
         canvas.Row("平均报警时长", $"{data.AverageAlarmDurationMinutes:F1}min");

@@ -41,12 +41,12 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         try
         {
             _deviceRepository.ExportToFile(path);
-            _dialog.NotifySuccess($"已导出 {deviceCount} 台设备到 {Path.GetFileName(path)}");
+            _dialog.NotifySuccess(string.Format(Strings.F105, deviceCount, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"导出失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
     }
@@ -70,7 +70,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"文件读取或解析失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F134, ex.Message));
             return null;
         }
 
@@ -82,12 +82,12 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
 
         // 二次确认：替换会丢弃当前内存中的设备配置（含未保存改动）
         var confirm = _dialog.Show(
-            $"导入将用文件中的 {imported.Count} 台设备替换当前 {currentDeviceCount} 台设备配置，且不会自动保存到磁盘。是否继续？",
+            string.Format(Strings.F089, imported.Count, currentDeviceCount),
             "确认导入", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return null;
 
         _deviceRepository.ReplaceAll(imported);
-        _dialog.NotifySuccess($"已导入 {imported.Count} 台设备，请点击保存以持久化");
+        _dialog.NotifySuccess(string.Format(Strings.F101, imported.Count));
         return imported;
     }
 
@@ -115,7 +115,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"备份文件读取或解析失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F084, ex.Message));
             return null;
         }
 
@@ -126,7 +126,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         }
 
         _deviceRepository.ReplaceAll(restored);
-        _dialog.NotifySuccess($"已恢复上一版本（{restored.Count} 台设备），请点击保存以持久化");
+        _dialog.NotifySuccess(string.Format(Strings.F108, restored.Count));
         return restored;
     }
 

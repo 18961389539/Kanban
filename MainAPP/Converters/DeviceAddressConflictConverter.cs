@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
@@ -20,7 +21,7 @@ public sealed class DeviceAddressConflictConverter : IMultiValueConverter
 
         var hasConflict = summaries.TryGetValue(device.Id, out var summary);
         if (parameter is "Text")
-            return hasConflict ? $"地址冲突：{summary}" : string.Empty;
+            return hasConflict ? string.Format(Strings.F081, summary) : string.Empty;
         return hasConflict ? Visibility.Visible : Visibility.Collapsed;
     }
 

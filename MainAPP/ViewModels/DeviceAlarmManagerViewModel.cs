@@ -8,6 +8,7 @@ using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -98,7 +99,7 @@ public partial class DeviceAlarmManagerViewModel : ObservableObject
     {
         if (SelectedDevice == null) return;
         // 报警名在所属设备内唯一
-        var baseName = $"报警{SelectedDevice.Alarms.Count + 1}";
+        var baseName = string.Format(Strings.F127, SelectedDevice.Alarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Alarms.Select(a => a.Name));
         // 设置 DeviceId 使 OnPlcAddressChanged 能生成确定性 Id（DeviceId_PlcAddress），
         // 删除后重新添加同地址报警可续接历史数据
@@ -166,18 +167,18 @@ public partial class DeviceAlarmManagerViewModel : ObservableObject
 
             if (result.Imported.Count == 0)
             {
-                _dialog.NotifyError($"未导入任何报警：\n  · {string.Join("\n  · ", result.Errors)}");
+                _dialog.NotifyError(string.Format(Strings.F143, string.Join("\n  · ", result.Errors)));
                 return;
             }
 
             // 阶段 3：UI 线程二次确认（让用户选择追加或替换）
             var existingCount = device.Alarms.Count;
             var msg = result.HasErrors
-                ? $"CSV 共 {result.Imported.Count + result.Errors.Count} 行，{result.Errors.Count} 行校验失败将跳过。\n" +
-                  $"有效 {result.Imported.Count} 条报警将导入到当前设备（现有 {existingCount} 条）。\n" +
-                  $"选择导入方式：\n  · 是 = 替换（清空现有后导入）\n  · 否 = 追加（保留现有，同地址覆盖）\n  · 取消 = 放弃导入"
-                : $"将导入 {result.Imported.Count} 条报警到当前设备（现有 {existingCount} 条）。\n" +
-                  $"选择导入方式：\n  · 是 = 替换（清空现有后导入）\n  · 否 = 追加（保留现有，同地址覆盖）\n  · 取消 = 放弃导入";
+                ? string.Format(Strings.F001, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
+                  string.Format(Strings.F141, result.Imported.Count, existingCount) +
+                  Strings.F228
+                : string.Format(Strings.F091, result.Imported.Count, existingCount) +
+                  Strings.F228;
 
             var choice = _dialog.Show(msg, "确认导入报警", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
@@ -192,13 +193,13 @@ public partial class DeviceAlarmManagerViewModel : ObservableObject
             if (result.HasErrors)
             {
                 _dialog.NotifyWarning(
-                    $"已导入 {result.Imported.Count} 条报警（{result.Errors.Count} 行跳过）。\n" +
-                    $"失败明细：\n  · {string.Join("\n  · ", result.Errors.Take(5))}" +
-                    (result.Errors.Count > 5 ? $"\n  ...（共 {result.Errors.Count} 条）" : ""));
+                    string.Format(Strings.F102, result.Imported.Count, result.Errors.Count) +
+                    string.Format(Strings.F086, string.Join("\n  · ", result.Errors.Take(5))) +
+                    (result.Errors.Count > 5 ? string.Format(Strings.F020, result.Errors.Count) : ""));
             }
             else
             {
-                _dialog.NotifySuccess($"已导入 {result.Imported.Count} 条报警，请点击保存以持久化");
+                _dialog.NotifySuccess(string.Format(Strings.F103, result.Imported.Count));
             }
         }
         finally

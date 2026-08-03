@@ -464,7 +464,7 @@ public static class ChartService
         // 目标线（横向虚线，LineSeries 默认 X→X轴 Y→Y轴）
         var targetSeries = new LineSeries
         {
-            Title = $"目标 {target:P2}",
+            Title = string.Format(Strings.F171, target),
             Color = _alarmColor,
             StrokeThickness = 2,
             LineStyle = LineStyle.Dash,
@@ -530,7 +530,7 @@ public static class ChartService
         // 目标线
         var targetLine = new LineSeries
         {
-            Title = $"目标 {target:P0}",
+            Title = string.Format(Strings.F170, target),
             Color = _alarmColor,
             StrokeThickness = 1.5,
             LineStyle = LineStyle.Dash,
@@ -1066,7 +1066,7 @@ public static class ChartService
                 Color = _secondaryColor,
                 LineStyle = LineStyle.Dash,
                 StrokeThickness = 2,
-                Text = $"目标 {targetCycle} 件/h",
+                Text = string.Format(Strings.F172, targetCycle),
                 TextOrientation = AnnotationTextOrientation.Horizontal,
                 TextVerticalAlignment = VerticalAlignment.Top,
             });

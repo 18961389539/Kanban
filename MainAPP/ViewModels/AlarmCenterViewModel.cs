@@ -396,7 +396,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                     TodayTriggerCount = triggerCount;
                     TodayRecoverCount = recoverCount;
                     MostFrequentAlarm = mostFrequent != null
-                        ? $"{mostFrequent.AlarmName}（{mostFrequent.TriggerCount}次）"
+                        ? string.Format(Strings.F033, mostFrequent.AlarmName, mostFrequent.TriggerCount)
                         : "—";
                     LastUpdateTime = now;
                 }));
@@ -407,7 +407,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                 _uiDispatcher.BeginInvoke(new Action(() =>
                 {
                     if (_disposed || requestVersion != _statsRefreshVersion) return;
-                    _dialog.NotifyError($"刷新报警统计失败: {ex.Message}");
+                    _dialog.NotifyError(string.Format(Strings.F073, ex.Message));
                 }));
             }
         }).Forget();
@@ -466,7 +466,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     private void CopyAlarm(ActiveAlarmInfo? alarm)
     {
         if (alarm == null) return;
-        Clipboard.SetText($"{alarm.DeviceName} · {alarm.AlarmName}\n级别：{alarm.Level}\n触发时间：{alarm.EventTime:yyyy-MM-dd HH:mm:ss}\n持续时间：{alarm.DurationText}");
+        Clipboard.SetText(string.Format(Strings.F032, alarm.DeviceName, alarm.AlarmName, alarm.Level, alarm.EventTime, alarm.DurationText));
         _dialog.NotifySuccess(Strings.M007);
     }
 

@@ -9,6 +9,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
 using Serilog;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -118,7 +119,7 @@ public partial class StatusQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "状态查询失败: {Message}", ex.Message);
-            QueryError = $"状态历史查询失败：{ex.Message}";
+            QueryError = string.Format(Strings.F165, ex.Message);
             return (0, 0);
         }
     }
@@ -181,7 +182,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var longestRun = runSegments.MaxBy(s => s.End - s.Start);
             var minutes = (longestRun.End - longestRun.Start).TotalMinutes;
             if (minutes > 0)
-                parts.Add($"最长运行 {minutes:F0} 分钟（{longestRun.Start:HH:mm}–{longestRun.End:HH:mm}）");
+                parts.Add(string.Format(Strings.F140, minutes, longestRun.Start, longestRun.End));
         }
 
         // 最长报警段（含长报警阈值检测）
@@ -193,7 +194,7 @@ public partial class StatusQueryViewModel : ObservableObject
             if (minutes > 0)
             {
                 var prefix = minutes > LongAlarmThresholdMin ? "🔴 长报警" : "最长报警";
-                parts.Add($"{prefix} {minutes:F0} 分钟（{longestAlarm.Start:HH:mm}–{longestAlarm.End:HH:mm}）");
+                parts.Add(string.Format(Strings.F035, prefix, minutes, longestAlarm.Start, longestAlarm.End));
             }
         }
 
@@ -204,7 +205,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var longestPause = pauseSegments.MaxBy(s => s.End - s.Start);
             var minutes = (longestPause.End - longestPause.Start).TotalMinutes;
             if (minutes > 0)
-                parts.Add($"最长待机 {minutes:F0} 分钟（{longestPause.Start:HH:mm}–{longestPause.End:HH:mm}）");
+                parts.Add(string.Format(Strings.F139, minutes, longestPause.Start, longestPause.End));
         }
 
         // 占比异常检测：总报警/暂停时长 / 窗口时长 > 阈值时主动提示
@@ -214,9 +215,9 @@ public partial class StatusQueryViewModel : ObservableObject
             var alarmRatio = alarmSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             var pauseRatio = pauseSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             if (pauseRatio > HighPauseRatioThreshold)
-                parts.Add($"⏸ 待机占比 {pauseRatio:P0}，高于阈值 {HighPauseRatioThreshold:P0}");
+                parts.Add(string.Format(Strings.F045, pauseRatio, HighPauseRatioThreshold));
             else if (alarmRatio > HighPauseRatioThreshold)
-                parts.Add($"⚠ 报警占比 {alarmRatio:P0}，高于阈值 {HighPauseRatioThreshold:P0}");
+                parts.Add(string.Format(Strings.F049, alarmRatio, HighPauseRatioThreshold));
         }
 
         return parts.Count > 0 ? string.Join("，", parts) : null;

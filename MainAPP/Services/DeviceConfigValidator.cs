@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -42,7 +43,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 0,
-                    Message = $"设备「{device.Name}」未配置：{string.Join("、", missing)}",
+                    Message = string.Format(Strings.F203, device.Name, string.Join("、", missing)),
                 });
 
             AddAddressError(errors, device, addressCodec, device.OkCountAddress, PlcAddressType.DWord, 0, "OK 数量地址");
@@ -51,11 +52,11 @@ public static class DeviceConfigValidator
             AddAddressError(errors, device, addressCodec, device.ProductionResetAddress, PlcAddressType.DWord, 0, "OEE 清零地址");
             AddAddressError(errors, device, addressCodec, device.RecipeAddress, PlcAddressType.DWord, 0, "配方地址");
             foreach (var alarm in device.Alarms)
-                AddAddressError(errors, device, addressCodec, alarm.PlcAddress, PlcAddressType.MBit, 1, $"报警「{alarm.Name}」地址");
+                AddAddressError(errors, device, addressCodec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
             foreach (var defect in device.Defects)
-                AddAddressError(errors, device, addressCodec, defect.PlcAddress, PlcAddressType.DWord, 2, $"缺陷「{defect.Name}」地址");
+                AddAddressError(errors, device, addressCodec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
             foreach (var countAlarm in device.CountAlarms)
-                AddAddressError(errors, device, addressCodec, countAlarm.PlcAddress, PlcAddressType.DWord, 3, $"计数报警「{countAlarm.Name}」地址");
+                AddAddressError(errors, device, addressCodec, countAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, countAlarm.Name));
 
             // 目标周期必须 > 0：OEE 性能率分母为 TargetCycle，0 会导致性能率恒为 0
             if (device.TargetCycle <= 0)
@@ -63,7 +64,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 0,
-                    Message = $"设备「{device.Name}」目标周期必须 > 0（当前 {device.TargetCycle}）",
+                    Message = string.Format(Strings.F204, device.Name, device.TargetCycle),
                 });
         }
 
@@ -76,7 +77,7 @@ public static class DeviceConfigValidator
             {
                 Device = g.First(),
                 TargetTabIndex = 0,
-                Message = $"设备名重复：「{g.Key}」（{g.Count()} 台），设备名必须唯一",
+                Message = string.Format(Strings.F209, g.Key, g.Count()),
             });
         }
 
@@ -92,7 +93,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 1,
-                    Message = $"设备「{device.Name}」报警名重复：「{dupAlarmName.Key}」",
+                    Message = string.Format(Strings.F202, device.Name, dupAlarmName.Key),
                 });
 
             // 报警 PLC 地址唯一性：Alarm.Id 基于确定性生成（{DeviceId}_{PlcAddress}），
@@ -108,7 +109,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 1,
-                    Message = $"设备「{device.Name}」重复报警 PLC 地址：「{dupAlarmAddr.Key}」，同一设备内报警地址必须唯一",
+                    Message = string.Format(Strings.F207, device.Name, dupAlarmAddr.Key),
                 });
 
             var dupDefect = device.Defects
@@ -120,7 +121,7 @@ public static class DeviceConfigValidator
                 {
                     Device = device,
                     TargetTabIndex = 2,
-                    Message = $"设备「{device.Name}」缺陷名重复：「{dupDefect.Key}」",
+                    Message = string.Format(Strings.F205, device.Name, dupDefect.Key),
                 });
 
             // 计数报警阈值上限必须 > 0：MaxValue=0 时 IsTriggered => CurrentValue > 0 永远触发，新建未配置即误报
@@ -131,7 +132,7 @@ public static class DeviceConfigValidator
                     {
                         Device = device,
                         TargetTabIndex = 3,
-                        Message = $"设备「{device.Name}」计数报警「{c.Name}」阈值上限必须 > 0（当前 {c.MaxValue}）",
+                        Message = string.Format(Strings.F206, device.Name, c.Name, c.MaxValue),
                     });
             }
         }
@@ -177,7 +178,7 @@ public static class DeviceConfigValidator
             {
                 Device = list[1],
                 TargetTabIndex = 0,
-                Message = $"地址冲突「{addr}」被 {list.Count} 台设备共用：" +
+                Message = string.Format(Strings.F080, addr, list.Count) +
                           string.Join("、", list.Select(x => x.Name)),
             });
         }
@@ -201,7 +202,7 @@ public static class DeviceConfigValidator
             {
                 Device = device,
                 TargetTabIndex = tabIndex,
-                Message = $"设备「{device.Name}」{label}无效：{parsed.ErrorMessage}",
+                Message = string.Format(Strings.F201, device.Name, label, parsed.ErrorMessage),
             });
         }
     }

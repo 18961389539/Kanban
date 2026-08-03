@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
@@ -17,6 +17,7 @@ using OxyPlot.Axes;
 using OxyPlot.Legends;
 using OxyPlot.Series;
 using Serilog;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -92,7 +93,7 @@ public sealed class ReviewStatusSegment
     public string DurationText => DurationMinutes >= 60
         ? $"{DurationMinutes / 60:F1} h"
         : $"{DurationMinutes:F0} min";
-    public string OutputText => $"产量 {OutputDelta:N0} · 报警 {AlarmCount} 次";
+    public string OutputText => string.Format(Strings.F061, OutputDelta, AlarmCount);
 }
 
 /// <summary>缺陷按班次和时间段聚合的集中度摘要。</summary>
@@ -236,7 +237,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
 
     public int TotalOutput => TotalOk + TotalNg;
     public string ComparisonSummaryText =>
-        $"{ComparisonLabel}：产量 {FormatSigned(OutputDelta)} 件 · 良品率 {FormatPercentageDelta(QualityRateDelta)} · OEE {FormatPercentageDelta(OeeDelta)}";
+        string.Format(Strings.F021, ComparisonLabel, FormatSigned(OutputDelta), FormatPercentageDelta(QualityRateDelta), FormatPercentageDelta(OeeDelta));
 
     public const double QualityTarget = 0.95;
     public const double OeeTarget = 0.85;
@@ -252,7 +253,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             : !HasAlarmData
                 ? "当前范围有产量记录，暂无报警记录"
                 : "产量、状态和报警数据均已采集";
-    public string TargetStatusText => $"良品率 {QualityRate:P1} / 目标 {QualityTarget:P0} · OEE {Oee:P1} / 目标 {OeeTarget:P0}";
+    public string TargetStatusText => string.Format(Strings.F192, QualityRate, QualityTarget, Oee, OeeTarget);
 
     private static string FormatSigned(int value) => value > 0 ? $"+{value:N0}" : value.ToString("N0");
     private static string FormatPercentageDelta(double value) => value > 0 ? $"+{value:P1}" : value.ToString("P1");
@@ -388,12 +389,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         try
         {
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
-            _dialog.NotifySuccess($"生产复盘报表已导出：{Path.GetFileName(path)}");
+            _dialog.NotifySuccess(string.Format(Strings.F168, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出生产复盘报表失败");
-            _dialog.NotifyError($"报表导出失败：{ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F126, ex.Message));
         }
         finally
         {
@@ -451,12 +452,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         try
         {
             await Task.Run(() => _pdfService.Export(path, data));
-            _dialog.NotifySuccess($"生产复盘 PDF 已导出：{Path.GetFileName(path)}");
+            _dialog.NotifySuccess(string.Format(Strings.F167, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出生产复盘 PDF 失败");
-            _dialog.NotifyError($"PDF 导出失败：{ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F009, ex.Message));
         }
         finally
         {
@@ -703,7 +704,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Log.Warning(ex, "概览页数据查询失败");
-            _dialog.NotifyError($"复盘数据加载失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F085, ex.Message));
         }
         finally
         {
@@ -962,9 +963,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             MtbfHours = totalAlarmCount > 0
                 ? totalRunSec / totalAlarmCount / 3600.0
                 : totalRunSec / 3600.0;
-            AvailabilityLossText = $"可用率 {availability:P1}，损失 {(1 - availability):P1}";
-            PerformanceLossText = $"性能率 {performance:P1}，损失 {(1 - performance):P1}";
-            QualityLossText = $"良品率 {quality:P1}，损失 {(1 - quality):P1}";
+            AvailabilityLossText = string.Format(Strings.F079, availability, (1 - availability));
+            PerformanceLossText = string.Format(Strings.F124, performance, (1 - performance));
+            QualityLossText = string.Format(Strings.F193, quality, (1 - quality));
             HealthScore = healthScore;
             CurrentWorkOrderText = workOrderText;
             CurrentProductText = productText;
@@ -1203,7 +1204,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         var previousIndex = (currentIndex - 1 + shifts.Count) % shifts.Count;
         var previous = shifts[previousIndex];
         var range = previous.ResolveRange(currentRange.Start.AddMinutes(-1));
-        return (range.Start, range.End, $"上一班次（{previous.Name}）");
+        return (range.Start, range.End, string.Format(Strings.F055, previous.Name));
     }
 
     private (DateTime From, DateTime To) ResolveCurrentShiftRange(DateTime now)
@@ -1384,29 +1385,29 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
 
         if (total > 0)
         {
-            result.Add($"良品率为 {quality:P1}，{(quality >= QualityTarget ? "达到" : "低于")} {QualityTarget:P0} 目标");
+            result.Add(string.Format(Strings.F194, quality, (quality >= QualityTarget ? "达到" : "低于"), QualityTarget));
         }
 
         if (oee > 0)
         {
-            result.Add($"OEE 为 {oee:P1}，{(oee >= OeeTarget ? "达到" : "低于")} {OeeTarget:P0} 目标");
+            result.Add(string.Format(Strings.F006, oee, (oee >= OeeTarget ? "达到" : "低于"), OeeTarget));
         }
 
         if (longestDowntimeSec > 0)
         {
-            result.Add($"最长停机为 {longestDowntimeSec / 3600.0:F1} 小时，设备：{longestDowntimeDevice}，报警：{longestDowntimeAlarm}");
+            result.Add(string.Format(Strings.F138, longestDowntimeSec / 3600.0, longestDowntimeDevice, longestDowntimeAlarm));
         }
 
         var topShift = shifts.Where(s => s.TotalCount > 0).OrderByDescending(s => s.TotalCount).FirstOrDefault();
         if (topShift != null)
-            result.Add($"{topShift.ShiftName}产量最高，共 {topShift.TotalCount:N0} 件，良品率 {topShift.OkRatio:P1}");
+            result.Add(string.Format(Strings.F041, topShift.ShiftName, topShift.TotalCount, topShift.OkRatio));
 
         var topDefect = defects.FirstOrDefault();
         if (topDefect != null)
-            result.Add($"主要缺陷为 {topDefect.DefectName}（{topDefect.DeviceName}），当前累计 {topDefect.Count:N0} 件，占当前缺陷 Top10 的 {topDefect.CumulativePercent:F1}%");
+            result.Add(string.Format(Strings.F059, topDefect.DefectName, topDefect.DeviceName, topDefect.Count, topDefect.CumulativePercent));
 
         if (totalAlarmCount > 0 && result.Count < 5)
-            result.Add($"当前范围共触发 {totalAlarmCount:N0} 次报警，请结合 Top 5 报警确认主要停机来源");
+            result.Add(string.Format(Strings.F123, totalAlarmCount));
 
         return result.Take(5).ToList();
     }

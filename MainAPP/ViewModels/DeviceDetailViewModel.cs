@@ -765,7 +765,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                     IsRefreshing = false;
                     RefreshStatusText = "刷新失败";
                 });
-                DispatchOnUi(() => _dialog.NotifyError($"查询报警事件失败: {ex.Message}"));
+                DispatchOnUi(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
             }
         }, token).Forget(_logger);
     }
@@ -902,7 +902,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 DispatchOnUi(() =>
                 {
                     RefreshStatusText = "加载失败";
-                    _dialog.NotifyError($"查询产量数据失败: {ex.Message}");
+                    _dialog.NotifyError(string.Format(Strings.F153, ex.Message));
                 });
             }
         }, token).Forget(_logger);
@@ -985,6 +985,6 @@ public class AlarmConfigRow
         ? $"{(int)Duration.TotalHours}h {Duration.Minutes}m"
         : "—";
     public string ValueText => IsCountAlarm
-        ? $"当前 {CurrentValue} / 阈值 {Threshold}"
-        : $"触发于 {StartTime:HH:mm:ss} · {PlcAddress}";
+        ? string.Format(Strings.F120, CurrentValue, Threshold)
+        : string.Format(Strings.F196, StartTime, PlcAddress);
 }

@@ -109,7 +109,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                 }
             }
 
-            return $"{Devices.Count} 台 · 运行 {running} · 报警 {alarm} · 待机 {paused} · 初始 {initial}";
+            return string.Format(Strings.F023, Devices.Count, running, alarm, paused, initial);
         }
     }
 
@@ -355,7 +355,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private void AddDevice()
     {
         // 保证新设备名唯一：若默认名冲突则追加数字后缀
-        var baseName = $"新设备{Devices.Count + 1}";
+        var baseName = string.Format(Strings.F135, Devices.Count + 1);
         var newName = EnsureUniqueName(baseName, Devices.Select(d => d.Name));
         var newDevice = new Device { Name = newName };
         Devices.Add(newDevice);
@@ -421,7 +421,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         // 使用 HC MessageBox（深色主题）进行 YesNo 确认，返回 MessageBoxResult 与原 API 一致。
         var result = _dialog.Show(
-            $"确定删除设备「{target.Name}」吗？关联的报警、缺陷和计数报警将一并移除。此操作不可撤销。",
+            string.Format(Strings.F175, target.Name),
             "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
 
@@ -471,12 +471,12 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (src == null) return;
 
         var copy = CloneDevice(src);
-        copy.Name = EnsureUniqueName($"{src.Name} 副本", Devices.Select(d => d.Name));
+        copy.Name = EnsureUniqueName(string.Format(Strings.F039, src.Name), Devices.Select(d => d.Name));
         Devices.Add(copy);
         _deviceRepository.AddRuntime(copy);
         SelectedDevice = copy;
         MarkDirty();
-        _dialog.NotifySuccess($"已复制设备「{src.Name}」为「{copy.Name}」");
+        _dialog.NotifySuccess(string.Format(Strings.F100, src.Name, copy.Name));
     }
 
     /// <summary>
@@ -563,7 +563,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
         if (errors.Count > 0)
         {
-            _dialog.NotifyWarning($"保存失败：发现 {errors.Count} 处配置问题，请在设备参数表单中修正");
+            _dialog.NotifyWarning(string.Format(Strings.F067, errors.Count));
             return;
         }
 
@@ -583,7 +583,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
         catch (System.Exception ex)
         {
-            _dialog.NotifyError($"保存失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
         }
         finally
         {
@@ -747,7 +747,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (Devices.Count > 0)
         {
             var confirm = _dialog.Show(
-                $"将用 20 台虚拟设备替换当前 {Devices.Count} 台设备配置，当前未保存的改动会丢失。是否继续？\n（替换后请点击保存以持久化）",
+                string.Format(Strings.F092, Devices.Count),
                 "生成虚拟设备", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
@@ -759,7 +759,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         RefreshDeviceList();
         MarkDirty();
-        _dialog.NotifySuccess($"已生成 {samples.Count} 台虚拟设备，请点击保存以持久化");
+        _dialog.NotifySuccess(string.Format(Strings.F114, samples.Count));
     }
 
     partial void OnSelectedDeviceChanged(Device? value)
@@ -815,10 +815,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             var result = await _plcCommands.WriteRecipeAsync(SelectedDevice);
             RecipeStatus = result.Status switch
             {
-                PlcOpStatus.Success => $"写入成功 ({System.DateTime.Now:HH:mm:ss})",
+                PlcOpStatus.Success => string.Format(Strings.F072, System.DateTime.Now),
                 PlcOpStatus.Info => result.Message,        // 未配置配方地址等跳过提示
-                PlcOpStatus.Warning => $"警告：{result.Message}",
-                PlcOpStatus.Error => $"错误：{result.Message}",
+                PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
+                PlcOpStatus.Error => string.Format(Strings.F237, result.Message),
                 _ => result.Message,
             };
             SetPlcOperationStatus(result);
@@ -849,7 +849,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             var result = await _plcCommands.ResetProductionAsync(
                 SelectedDevice,
                 device => _dialog.Show(
-                    $"确定手动清零「{device.Name}」的 OEE 吗？\n将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。",
+                    string.Format(Strings.F176, device.Name),
                     "确认 OEE 清零", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
 
             // Cancelled = 用户拒绝确认，不弹通知；其他状态照常通知
@@ -998,10 +998,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         PlcOperationStatus = result.Status switch
         {
-            PlcOpStatus.Success => $"成功：{result.Message}",
+            PlcOpStatus.Success => string.Format(Strings.F125, result.Message),
             PlcOpStatus.Info => result.Message,
-            PlcOpStatus.Warning => $"警告：{result.Message}",
-            PlcOpStatus.Error => $"失败：{result.Message}",
+            PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
+            PlcOpStatus.Error => string.Format(Strings.F087, result.Message),
             PlcOpStatus.Cancelled => "已取消",
             _ => result.Message,
         };

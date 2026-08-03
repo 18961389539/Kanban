@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -11,6 +11,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -101,12 +102,12 @@ public class AlarmCsvIOService(
             using var csv = new CsvWriter(writer, CsvConfig);
             csv.WriteRecords(records);
 
-            _dialog.NotifySuccess($"已导出 {records.Count} 条报警 → {Path.GetFileName(path)}");
+            _dialog.NotifySuccess(string.Format(Strings.F107, records.Count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"导出失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
     }
@@ -162,12 +163,12 @@ public class AlarmCsvIOService(
                 // 必填校验
                 if (string.IsNullOrWhiteSpace(rec.Name))
                 {
-                    result.Errors.Add($"第 {rowNum} 行：报警名称为空");
+                    result.Errors.Add(string.Format(Strings.F184, rowNum));
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(rec.PlcAddress))
                 {
-                    result.Errors.Add($"第 {rowNum} 行：PLC 地址为空");
+                    result.Errors.Add(string.Format(Strings.F183, rowNum));
                     continue;
                 }
 
@@ -175,19 +176,19 @@ public class AlarmCsvIOService(
                 var parseResult = CurrentCodec.Parse(rec.PlcAddress.Trim());
                 if (!parseResult.IsValid)
                 {
-                    result.Errors.Add($"第 {rowNum} 行：PLC 地址 '{rec.PlcAddress}' 无效 - {parseResult.ErrorMessage}");
+                    result.Errors.Add(string.Format(Strings.F182, rowNum, rec.PlcAddress, parseResult.ErrorMessage));
                     continue;
                 }
                 if (parseResult.Type != PlcAddressType.MBit)
                 {
-                    result.Errors.Add($"第 {rowNum} 行：PLC 地址 '{rec.PlcAddress}' 应为 M 位类型，当前为 {parseResult.Type}");
+                    result.Errors.Add(string.Format(Strings.F181, rowNum, rec.PlcAddress, parseResult.Type));
                     continue;
                 }
 
                 // 级别枚举解析（不区分大小写，容错 Excel 小写输入）
                 if (!Enum.TryParse<AlarmLevel>(rec.Level, ignoreCase: true, out var level))
                 {
-                    result.Errors.Add($"第 {rowNum} 行：报警级别 '{rec.Level}' 无效（应为 Low/Medium/High）");
+                    result.Errors.Add(string.Format(Strings.F185, rowNum, rec.Level));
                     continue;
                 }
 
@@ -203,7 +204,7 @@ public class AlarmCsvIOService(
         }
         catch (Exception ex)
         {
-            result.Errors.Add($"文件读取或解析失败: {ex.Message}");
+            result.Errors.Add(string.Format(Strings.F134, ex.Message));
         }
 
         return result;

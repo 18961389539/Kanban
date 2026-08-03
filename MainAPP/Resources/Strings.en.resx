@@ -681,4 +681,275 @@
   <data name="M046" xml:space="preserve"><value>C: Quality Rate</value></data>
   <data name="M047" xml:space="preserve"><value>B: Performance Rate</value></data>
   <data name="M048" xml:space="preserve"><value>A: Time Availability</value></data>
+  <data name="F001" xml:space="preserve"><value>CSV has {0} rows in total; {1} rows failed validation and will be skipped.
+</value></data>
+  <data name="F002" xml:space="preserve"><value>DWord {0} ms · M-bit {1} ms · Defect {2} ms · Count alarm {3} ms · History {4} ms</value></data>
+  <data name="F003" xml:space="preserve"><value>Modbus UnitId must be between 1-247, current: {0}</value></data>
+  <data name="F004" xml:space="preserve"><value>Modbus bit function code must be 1 or 2, current: {0}</value></data>
+  <data name="F005" xml:space="preserve"><value>Modbus register function code must be 3 or 4, current: {0}</value></data>
+  <data name="F006" xml:space="preserve"><value>OEE is {0:P1}, {1} the {2:P0} target</value></data>
+  <data name="F007" xml:space="preserve"><value>Failed to query OEE history: {0}</value></data>
+  <data name="F008" xml:space="preserve"><value>Invalid OEE reset address (D-word address required): {0}</value></data>
+  <data name="F009" xml:space="preserve"><value>PDF export failed: {0}</value></data>
+  <data name="F010" xml:space="preserve"><value>PLC disconnected · {0}</value></data>
+  <data name="F011" xml:space="preserve"><value>PLC disconnected (IP: {0}) · retry {1}</value></data>
+  <data name="F012" xml:space="preserve"><value>PLC reconnected, downtime {0}</value></data>
+  <data name="F013" xml:space="preserve"><value>PLC batch read address gap must be between 0-16, current: {0}</value></data>
+  <data name="F014" xml:space="preserve"><value>PLC batch read count must be between 1-1024, current: {0}</value></data>
+  <data name="F015" xml:space="preserve"><value>PLC connecting · {0}</value></data>
+  <data name="F016" xml:space="preserve"><value>PLC timeout must be between 100-60000 ms, current: {0}</value></data>
+  <data name="F017" xml:space="preserve"><value>Siemens Rack must be between 0-7, current: {0}</value></data>
+  <data name="F018" xml:space="preserve"><value>Siemens Slot must be between 0-31, current: {0}</value></data>
+  <data name="F019" xml:space="preserve"><value>Siemens batch Int32 limit must be between 1-55, current: {0}</value></data>
+  <data name="F020" xml:space="preserve"><value>
+  ... ({0} in total)</value></data>
+  <data name="F021" xml:space="preserve"><value>{0}: Output {1} pcs · Quality rate {2} · OEE {3}</value></data>
+  <data name="F022" xml:space="preserve"><value>{0} addresses</value></data>
+  <data name="F023" xml:space="preserve"><value>{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4}</value></data>
+  <data name="F024" xml:space="preserve"><value>{0} / {1} addresses</value></data>
+  <data name="F025" xml:space="preserve"><value>{0} must not be empty</value></data>
+  <data name="F026" xml:space="preserve"><value>{0} must be between {1}-{2}</value></data>
+  <data name="F027" xml:space="preserve"><value>{0} must be an integer</value></data>
+  <data name="F028" xml:space="preserve"><value>{0:N0} pcs</value></data>
+  <data name="F029" xml:space="preserve"><value>{0:N0} / {1:N0} pcs</value></data>
+  <data name="F030" xml:space="preserve"><value>{0:N0} pcs</value></data>
+  <data name="F031" xml:space="preserve"><value>{0} current value: {1}</value></data>
+  <data name="F032" xml:space="preserve"><value>{0} · {1}
+Level: {2}
+Triggered: {3:yyyy-MM-dd HH:mm:ss}
+Duration: {4}</value></data>
+  <data name="F033" xml:space="preserve"><value>{0} ({1} times)</value></data>
+  <data name="F034" xml:space="preserve"><value>{0} ({1}, since {2:MM-dd HH:mm})</value></data>
+  <data name="F035" xml:space="preserve"><value>{0} {1:F0} min ({2:HH:mm}–{3:HH:mm})</value></data>
+  <data name="F036" xml:space="preserve"><value>{0} / {1} pcs</value></data>
+  <data name="F037" xml:space="preserve"><value>{0}+{1} / {2:F0} pcs</value></data>
+  <data name="F038" xml:space="preserve"><value>{0} · Target {1:N0} pcs</value></data>
+  <data name="F039" xml:space="preserve"><value>{0} copy</value></data>
+  <data name="F040" xml:space="preserve"><value>{0} ({1} times, {2:P0})</value></data>
+  <data name="F041" xml:space="preserve"><value>{0} has the highest output, {1:N0} pcs in total, quality rate {2:P1}</value></data>
+  <data name="F042" xml:space="preserve"><value> · Expires {0:yyyy-MM-dd}</value></data>
+  <data name="F043" xml:space="preserve"><value>↓ Drop at {0:HH:mm}</value></data>
+  <data name="F044" xml:space="preserve"><value>⏳ Top pending duration: {0}</value></data>
+  <data name="F045" xml:space="preserve"><value>⏸ Paused ratio {0:P0}, above threshold {1:P0}</value></data>
+  <data name="F046" xml:space="preserve"><value>▲ {0:F2}s faster</value></data>
+  <data name="F047" xml:space="preserve"><value>▼ {0:F2}s slower</value></data>
+  <data name="F048" xml:space="preserve"><value>⚠ Output dropped {1:P0} at {0:HH:mm} ({2} → {3} pcs)</value></data>
+  <data name="F049" xml:space="preserve"><value>⚠ Alarm ratio {0:P0}, above threshold {1:P0}</value></data>
+  <data name="F050" xml:space="preserve"><value>⚠ {0} drops detected, worst @ {1:HH:mm} down {2:P0} ({3} → {4} pcs)</value></data>
+  <data name="F051" xml:space="preserve"><value>⚠ Bottleneck factor: {0} at only {1:P1}, the main drag on OEE</value></data>
+  <data name="F052" xml:space="preserve"><value>⚡ Chain trigger: {0} ({1} times within a 5-minute window)</value></data>
+  <data name="F053" xml:space="preserve"><value>✓ Three metrics balanced ({0:P0} / {1:P0} / {2:P0}), OEE = {3:P1}</value></data>
+  <data name="F054" xml:space="preserve"><value>Major{0}</value></data>
+  <data name="F055" xml:space="preserve"><value>Previous shift ({0})</value></data>
+  <data name="F056" xml:space="preserve"><value>Unsupported PLC brand: {0}</value></data>
+  <data name="F057" xml:space="preserve"><value>Unsupported Siemens model: {0}</value></data>
+  <data name="F058" xml:space="preserve"><value>Critical{0}</value></data>
+  <data name="F059" xml:space="preserve"><value>Main defect is {0} ({1}), cumulative {2:N0} pcs, {3:F1}% of current Top 10 defects</value></data>
+  <data name="F060" xml:space="preserve"><value>Output {0} · Quality rate {1} · OEE {2}</value></data>
+  <data name="F061" xml:space="preserve"><value>Output {0:N0} · Alarm {1} times</value></data>
+  <data name="F062" xml:space="preserve"><value>Output {0:N0} · Quality rate {1:P1} · OEE {2:P1}</value></data>
+  <data name="F063" xml:space="preserve"><value>Failed to query output history: {0}</value></data>
+  <data name="F064" xml:space="preserve"><value>Output fluctuated steadily, mean OK ≈ {0:F0} pcs, peak {1} pcs @ {2:HH:mm}</value></data>
+  <data name="F065" xml:space="preserve"><value>{1} below the best shift {0:P0}</value></data>
+  <data name="F066" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="F067" xml:space="preserve"><value>Save failed: {0} configuration issues found, please fix them in the device parameter form</value></data>
+  <data name="F068" xml:space="preserve"><value>Failed to stop the collection service: {0}</value></data>
+  <data name="F069" xml:space="preserve"><value>{0:N0} rows · Page {1}/{2}</value></data>
+  <data name="F070" xml:space="preserve"><value>Write failed: {0}</value></data>
+  <data name="F071" xml:space="preserve"><value>Write error: {0}</value></data>
+  <data name="F072" xml:space="preserve"><value>Write OK ({0:HH:mm:ss})</value></data>
+  <data name="F073" xml:space="preserve"><value>Failed to refresh alarm statistics: {0}</value></data>
+  <data name="F074" xml:space="preserve"><value>{0:F1} GB free</value></data>
+  <data name="F075" xml:space="preserve"><value>History write interval must not be less than 1, current: {0}</value></data>
+  <data name="F076" xml:space="preserve"><value>Failed to write history data: {0}</value></data>
+  <data name="F077" xml:space="preserve"><value>History query failed: {0}</value></data>
+  <data name="F078" xml:space="preserve"><value>{0} issues found</value></data>
+  <data name="F079" xml:space="preserve"><value>Availability {0:P1}, loss {1:P1}</value></data>
+  <data name="F080" xml:space="preserve"><value>Address conflict "{0}" is shared by {1} devices:</value></data>
+  <data name="F081" xml:space="preserve"><value>Address conflict: {0}</value></data>
+  <data name="F082" xml:space="preserve"><value>Invalid address format (D-word address required): {0}</value></data>
+  <data name="F083" xml:space="preserve"><value>Invalid address format (D-word address required): {0}</value></data>
+  <data name="F084" xml:space="preserve"><value>Backup file read or parse failed: {0}</value></data>
+  <data name="F085" xml:space="preserve"><value>Failed to load review data: {0}</value></data>
+  <data name="F086" xml:space="preserve"><value>Failed details:
+  · {0}</value></data>
+  <data name="F087" xml:space="preserve"><value>Failed: {0}</value></data>
+  <data name="F088" xml:space="preserve"><value>Present · {0}</value></data>
+  <data name="F089" xml:space="preserve"><value>Import will replace the current {1} devices with {0} devices from the file; changes are not saved to disk automatically. Continue?</value></data>
+  <data name="F090" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="F091" xml:space="preserve"><value>{0} alarms will be imported to the current device ({1} existing).
+</value></data>
+  <data name="F092" xml:space="preserve"><value>Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?
+(Save after replacement to persist)</value></data>
+  <data name="F093" xml:space="preserve"><value>Work order {0} reached the target ({1:N0} / {2:N0} pcs)</value></data>
+  <data name="F094" xml:space="preserve"><value>Work order {0} aborted</value></data>
+  <data name="F095" xml:space="preserve"><value>Work order {0} completed</value></data>
+  <data name="F096" xml:space="preserve"><value>Work order {0} started</value></data>
+  <data name="F097" xml:space="preserve"><value>Order number "{0}" already exists (Order Id={1}); use a unique order number</value></data>
+  <data name="F098" xml:space="preserve"><value>Refreshed output data for {0} work orders</value></data>
+  <data name="F099" xml:space="preserve"><value>Work order {0} copied</value></data>
+  <data name="F100" xml:space="preserve"><value>Device "{0}" copied as "{1}"</value></data>
+  <data name="F101" xml:space="preserve"><value>{0} devices imported; click Save to persist</value></data>
+  <data name="F102" xml:space="preserve"><value>{0} alarms imported ({1} rows skipped).
+</value></data>
+  <data name="F103" xml:space="preserve"><value>{0} alarms imported; click Save to persist</value></data>
+  <data name="F104" xml:space="preserve"><value>Exported {0} rows → {1}</value></data>
+  <data name="F105" xml:space="preserve"><value>Exported {0} devices to {1}</value></data>
+  <data name="F106" xml:space="preserve"><value>Exported {0} work orders → {1}</value></data>
+  <data name="F107" xml:space="preserve"><value>Exported {0} alarms → {1}</value></data>
+  <data name="F108" xml:space="preserve"><value>Restored the previous version ({0} devices); click Save to persist</value></data>
+  <data name="F109" xml:space="preserve"><value>Work order {0} added</value></data>
+  <data name="F110" xml:space="preserve"><value>Work order {0} updated</value></data>
+  <data name="F111" xml:space="preserve"><value>Cleared the current value of "{0}"</value></data>
+  <data name="F112" xml:space="preserve"><value>Activated · {0:yyyy-MM-dd}</value></data>
+  <data name="F113" xml:space="preserve"><value>Activated · expires {0:yyyy-MM-dd}</value></data>
+  <data name="F114" xml:space="preserve"><value>{0} virtual devices generated; click Save to persist</value></data>
+  <data name="F115" xml:space="preserve"><value>{0} sample work orders generated</value></data>
+  <data name="F116" xml:space="preserve"><value>OEE reset triggered for "{0}"</value></data>
+  <data name="F117" xml:space="preserve"><value>Running {0} · remaining {1}</value></data>
+  <data name="F118" xml:space="preserve"><value>DB {0} · WAL {1}</value></data>
+  <data name="F119" xml:space="preserve"><value>Failed to save application settings: {0}</value></data>
+  <data name="F120" xml:space="preserve"><value>Current {0} / Threshold {1}</value></data>
+  <data name="F121" xml:space="preserve"><value>{0} work orders already exist; {1} sample work orders will be appended. Continue?</value></data>
+  <data name="F122" xml:space="preserve"><value>Current shift: {0}</value></data>
+  <data name="F123" xml:space="preserve"><value>{0:N0} alarms triggered in the current range; check Top 5 alarms for main downtime sources</value></data>
+  <data name="F124" xml:space="preserve"><value>Performance {0:P1}, loss {1:P1}</value></data>
+  <data name="F125" xml:space="preserve"><value>Success: {0}</value></data>
+  <data name="F126" xml:space="preserve"><value>Report export failed: {0}</value></data>
+  <data name="F127" xml:space="preserve"><value>Alarm {0}</value></data>
+  <data name="F128" xml:space="preserve"><value>Alarm "{0}" address</value></data>
+  <data name="F129" xml:space="preserve"><value>Failed to query alarm history: {0}</value></data>
+  <data name="F130" xml:space="preserve"><value>Alarm surge: {0} this period, {1} last period</value></data>
+  <data name="F131" xml:space="preserve"><value>Data stalled for {0}s; PLC acquisition may be stuck</value></data>
+  <data name="F132" xml:space="preserve"><value>Data stalled for {0}s; the collection service may be stuck</value></data>
+  <data name="F133" xml:space="preserve"><value>Database/acquisition initialization failed; some features may be unavailable:
+
+{0}</value></data>
+  <data name="F134" xml:space="preserve"><value>File read or parse failed: {0}</value></data>
+  <data name="F135" xml:space="preserve"><value>New device {0}</value></data>
+  <data name="F136" xml:space="preserve"><value>Invalid IP address: {0}</value></data>
+  <data name="F137" xml:space="preserve"><value>Unrecognized {0} address: {1}</value></data>
+  <data name="F138" xml:space="preserve"><value>Longest downtime {0:F1} hours, device: {1}, alarm: {2}</value></data>
+  <data name="F139" xml:space="preserve"><value>Longest pause {0:F0} min ({1:HH:mm}–{2:HH:mm})</value></data>
+  <data name="F140" xml:space="preserve"><value>Longest run {0:F0} min ({1:HH:mm}–{2:HH:mm})</value></data>
+  <data name="F141" xml:space="preserve"><value>{0} alarms will be imported to the current device ({1} existing).
+</value></data>
+  <data name="F142" xml:space="preserve"><value>Expected {0} type address, current is {1}</value></data>
+  <data name="F143" xml:space="preserve"><value>No alarms imported:
+  · {0}</value></data>
+  <data name="F144" xml:space="preserve"><value>Unknown query tab: {0}</value></data>
+  <data name="F145" xml:space="preserve"><value>Machine code: {0}</value></data>
+  <data name="F146" xml:space="preserve"><value>Machine code: {0}
+License does not match this machine</value></data>
+  <data name="F147" xml:space="preserve"><value>Machine code: {0}
+License expired; please activate again</value></data>
+  <data name="F148" xml:space="preserve"><value>Machine code: {0}
+System time anomaly detected</value></data>
+  <data name="F149" xml:space="preserve"><value>Machine code: {0}
+Permanent license</value></data>
+  <data name="F150" xml:space="preserve"><value>Machine code: {0}
+Product key: {1}
+Expires: {2:yyyy-MM-dd}</value></data>
+  <data name="F151" xml:space="preserve"><value>Machine code: {0}
+{1} trial days remaining</value></data>
+  <data name="F152" xml:space="preserve"><value>Machine code: {0}
+Trial expired; please activate</value></data>
+  <data name="F153" xml:space="preserve"><value>Failed to query output data: {0}</value></data>
+  <data name="F154" xml:space="preserve"><value>Query failed: {0}</value></data>
+  <data name="F155" xml:space="preserve"><value>Failed to query alarm events: {0}</value></data>
+  <data name="F156" xml:space="preserve"><value>Omron FINS read split length must be between 1-999, current: {0}</value></data>
+  <data name="F157" xml:space="preserve"><value>Connecting to {0}:{1} …</value></data>
+  <data name="F158" xml:space="preserve"><value>Connecting to {0} …</value></data>
+  <data name="F159" xml:space="preserve"><value>Connecting to collection service · {0}</value></data>
+  <data name="F160" xml:space="preserve"><value>Clear failed: {0}</value></data>
+  <data name="F161" xml:space="preserve"><value>Clear error: {0}</value></data>
+  <data name="F162" xml:space="preserve"><value>Reset error: {0}</value></data>
+  <data name="F163" xml:space="preserve"><value>Activated successfully{0}.</value></data>
+  <data name="F164" xml:space="preserve"><value>Status {0}</value></data>
+  <data name="F165" xml:space="preserve"><value>Failed to query status history: {0}</value></data>
+  <data name="F166" xml:space="preserve"><value>Shift {0}</value></data>
+  <data name="F167" xml:space="preserve"><value>Review PDF exported: {0}</value></data>
+  <data name="F168" xml:space="preserve"><value>Review report exported: {0}</value></data>
+  <data name="F169" xml:space="preserve"><value>Target {0:F0} pcs/bucket</value></data>
+  <data name="F170" xml:space="preserve"><value>Target {0:P0}</value></data>
+  <data name="F171" xml:space="preserve"><value>Target {0:P2}</value></data>
+  <data name="F172" xml:space="preserve"><value>Target {0} pcs/h</value></data>
+  <data name="F173" xml:space="preserve"><value>Abort work order "{0}"? It cannot be restored to Running after abort.</value></data>
+  <data name="F174" xml:space="preserve"><value>Delete work order "{0}" ({1})? This cannot be undone.</value></data>
+  <data name="F175" xml:space="preserve"><value>Delete device "{0}"? Its alarms, defects and count alarms will be removed too. This cannot be undone.</value></data>
+  <data name="F176" xml:space="preserve"><value>Manually reset OEE for "{0}"?
+OK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.</value></data>
+  <data name="F177" xml:space="preserve"><value>Clear the current value of count alarm "{0}"?
+A reset command will be written to the PLC and the software-side value cleared; this cannot be undone.</value></data>
+  <data name="F178" xml:space="preserve"><value>Startup failed; the app will exit:
+
+{0}</value></data>
+  <data name="F179" xml:space="preserve"><value>Port must be between 1-65535, current: {0}</value></data>
+  <data name="F180" xml:space="preserve"><value>Port must be between 1-65535, current: {0}</value></data>
+  <data name="F181" xml:space="preserve"><value>Row {0}: PLC address '{1}' should be M-bit type, current is {2}</value></data>
+  <data name="F182" xml:space="preserve"><value>Row {0}: PLC address '{1}' invalid - {2}</value></data>
+  <data name="F183" xml:space="preserve"><value>Row {0}: PLC address is empty</value></data>
+  <data name="F184" xml:space="preserve"><value>Row {0}: alarm name is empty</value></data>
+  <data name="F185" xml:space="preserve"><value>Row {0}: alarm level '{1}' invalid (expect Low/Medium/High)</value></data>
+  <data name="F186" xml:space="preserve"><value>Threads {0} · Handles {1:N0}</value></data>
+  <data name="F187" xml:space="preserve"><value>Range: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}</value></data>
+  <data name="F188" xml:space="preserve"><value>Defect {0}</value></data>
+  <data name="F189" xml:space="preserve"><value>Defect "{0}" address</value></data>
+  <data name="F190" xml:space="preserve"><value>Defect rate surge: {0} this period, {1} last period</value></data>
+  <data name="F191" xml:space="preserve"><value>Failed to stop the auto daily report service: {0}</value></data>
+  <data name="F192" xml:space="preserve"><value>Quality rate {0:P1} / Target {1:P0} · OEE {2:P1} / Target {3:P0}</value></data>
+  <data name="F193" xml:space="preserve"><value>Quality rate {0:P1}, loss {1:P1}</value></data>
+  <data name="F194" xml:space="preserve"><value>Quality rate is {0:P1}, {1} the {2:P0} target</value></data>
+  <data name="F195" xml:space="preserve"><value>Takt anomaly: actual {0:F1} pcs/hour, below 80% of the target {1:F0} pcs/hour</value></data>
+  <data name="F196" xml:space="preserve"><value>Triggered at {0:HH:mm:ss} · {1}</value></data>
+  <data name="F197" xml:space="preserve"><value>Warning: {0}</value></data>
+  <data name="F198" xml:space="preserve"><value>Count alarm {0}</value></data>
+  <data name="F199" xml:space="preserve"><value>Count alarm "{0}" address</value></data>
+  <data name="F200" xml:space="preserve"><value>Device "{0}" scheduled time overlaps work order {1} ({2:MM-dd HH:mm} ~ {3:MM-dd HH:mm})</value></data>
+  <data name="F201" xml:space="preserve"><value>Device "{0}": {1} invalid: {2}</value></data>
+  <data name="F202" xml:space="preserve"><value>Device "{0}": duplicate alarm name "{1}"</value></data>
+  <data name="F203" xml:space="preserve"><value>Device "{0}" not configured: {1}</value></data>
+  <data name="F204" xml:space="preserve"><value>Device "{0}" target cycle must be &gt; 0 (current {1})</value></data>
+  <data name="F205" xml:space="preserve"><value>Device "{0}": duplicate defect name "{1}"</value></data>
+  <data name="F206" xml:space="preserve"><value>Device "{0}" count alarm "{1}" upper limit must be &gt; 0 (current {2})</value></data>
+  <data name="F207" xml:space="preserve"><value>Device "{0}": duplicate alarm PLC address "{1}"; alarm addresses must be unique within a device</value></data>
+  <data name="F208" xml:space="preserve"><value>Device "{0}" already has an in-progress work order {1}; finish or abort it first</value></data>
+  <data name="F209" xml:space="preserve"><value>Duplicate device name "{0}" ({1} units); device names must be unique</value></data>
+  <data name="F210" xml:space="preserve"><value>Failed to save device data: {0}</value></data>
+  <data name="F211" xml:space="preserve"><value>Trial · {0} days left</value></data>
+  <data name="F212" xml:space="preserve"><value>Trial · {0} days left</value></data>
+  <data name="F213" xml:space="preserve"><value>Trial period; {0} days remaining. Enter an activation code to complete authorization.</value></data>
+  <data name="F214" xml:space="preserve"><value>Trial period; {0} days remaining. Enter an activation code on the settings page.</value></data>
+  <data name="F215" xml:space="preserve"><value>Trial expired ({0} days); enter an activation code to continue.</value></data>
+  <data name="F216" xml:space="preserve"><value>Read failed: {0}</value></data>
+  <data name="F217" xml:space="preserve"><value>Read error: {0}</value></data>
+  <data name="F218" xml:space="preserve"><value>Poll interval must not be less than 50 ms, current: {0}</value></data>
+  <data name="F219" xml:space="preserve"><value>Minor{0}</value></data>
+  <data name="F220" xml:space="preserve"><value>Running without output: {0:HH:mm:ss}-{1:HH:mm:ss} lasted {2:F0} min</value></data>
+  <data name="F221" xml:space="preserve"><value>Process {0:F0} MB · Available {1:F0} MB</value></data>
+  <data name="F222" xml:space="preserve"><value>Connection failed: {0}</value></data>
+  <data name="F223" xml:space="preserve"><value>Connection failed: {0}</value></data>
+  <data name="F224" xml:space="preserve"><value>Connection error: {0}</value></data>
+  <data name="F225" xml:space="preserve"><value>Connected ({0}:{1})</value></data>
+  <data name="F226" xml:space="preserve"><value>Connection timed out (no response in 5 seconds); check the IP and port</value></data>
+  <data name="F227" xml:space="preserve"><value>{0} consecutive failures</value></data>
+  <data name="F228" xml:space="preserve"><value>Choose import mode:
+  · Yes = Replace (clear existing then import)
+  · No = Append (keep existing, overwrite same address)
+  · Cancel = Abort import</value></data>
+  <data name="F229" xml:space="preserve"><value>Recipe value {0} out of reasonable range (0-999999)</value></data>
+  <data name="F230" xml:space="preserve"><value>Invalid recipe address format: {0}</value></data>
+  <data name="F231" xml:space="preserve"><value>Collection service parameter sync failed (saved locally): {0}</value></data>
+  <data name="F232" xml:space="preserve"><value>Collection service disconnected · {0}</value></data>
+  <data name="F233" xml:space="preserve"><value>Collection service disconnected ({0}) · retry {1}</value></data>
+  <data name="F234" xml:space="preserve"><value>Collection service reconnected, downtime {0}</value></data>
+  <data name="F235" xml:space="preserve"><value>Failed to release the Collector connection: {0}</value></data>
+  <data name="F236" xml:space="preserve"><value>Rebuilds {0} · Last {1} ms</value></data>
+  <data name="F237" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="F238" xml:space="preserve"><value>, {0} is the main drag ({1:P0} vs {2:P0})</value></data>
+  <data name="F239" xml:space="preserve"><value>📈 Peak at {0:HH:mm} (OK={1} pcs, {2:P0} above mean)</value></data>
+  <data name="F240" xml:space="preserve"><value>📉 Trough at {0:HH:mm} (OK={1} pcs, {2:P0} below mean)</value></data>
+  <data name="F241" xml:space="preserve"><value>📊 {0} performs best ({1:P1}), {2} is low ({3:P1})</value></data>
+  <data name="F242" xml:space="preserve"><value>🔥 Top alarms: {0}</value></data>
+  <data name="F243" xml:space="preserve"><value>🔻 Worst shift: {0} @ {1} (OEE {2:P0}),</value></data>
 </root>

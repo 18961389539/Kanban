@@ -149,7 +149,7 @@ public partial class OeeQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "OEE 查询失败: {Message}", ex.Message);
-            QueryError = $"OEE 历史查询失败：{ex.Message}";
+            QueryError = string.Format(Strings.F007, ex.Message);
             return (0, 0);
         }
     }
@@ -304,11 +304,11 @@ public partial class OeeQueryViewModel : ObservableObject
 
         string main;
         if (min.Value < HistoryQueryViewModel.LowPerformanceThreshold)
-            main = $"⚠ 瓶颈因子：{min.Name} 仅 {min.Value:P1}，是 OEE 的主要拖累项";
+            main = string.Format(Strings.F051, min.Name, min.Value);
         else if (min.Value < max.Value - 0.1)
-            main = $"📊 {max.Name} 表现最佳 ({max.Value:P1})，{min.Name} 偏低 ({min.Value:P1})";
+            main = string.Format(Strings.F241, max.Name, max.Value, min.Name, min.Value);
         else
-            main = $"✓ 三项指标均衡（{q:P0} / {p:P0} / {a:P0}），OEE = {q * p * a:P1}";
+            main = string.Format(Strings.F053, q, p, a, q * p * a);
 
         var shiftInsight = BuildShiftComparisonInsight(perShiftOee);
         return shiftInsight == null ? main : $"{main}\n{shiftInsight}";
@@ -342,10 +342,10 @@ public partial class OeeQueryViewModel : ObservableObject
 
         var timeLabel = worst.ShiftTime.ToString("MM-dd HH:mm");
         var dragHint = drag!.Diff < -0.05
-            ? $"，{drag.Name} 是主要拖累项（{drag.Worst:P0} vs {drag.Best:P0}）"
+            ? string.Format(Strings.F238, drag.Name, drag.Worst, drag.Best)
             : "";
-        return $"🔻 差班次：{worst.ShiftName} @ {timeLabel}（OEE {worst.Oee:P0}），" +
-               $"低于最佳班次 {gap:P0}{dragHint}";
+        return string.Format(Strings.F243, worst.ShiftName, timeLabel, worst.Oee) +
+               string.Format(Strings.F065, gap, dragHint);
     }
 
     private class OeeCsvRow

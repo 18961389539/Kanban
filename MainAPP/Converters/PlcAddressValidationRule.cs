@@ -1,7 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Controls;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
@@ -30,11 +31,11 @@ public class PlcAddressValidationRule : ValidationRule
         var codec = s_codecProvider?.Invoke() ?? new MitsubishiAddressCodec();
         var result = codec.Parse(addr);
         if (!result.IsValid)
-            return new ValidationResult(false, $"无法识别的 {codec.Brand} 地址: {addr}");
+            return new ValidationResult(false, string.Format(Strings.F137, codec.Brand, addr));
 
         if (result.Type != ExpectedType)
             return new ValidationResult(false,
-                $"期望 {ExpectedType} 类型地址，当前为 {result.Type}");
+                string.Format(Strings.F142, ExpectedType, result.Type));
 
         return ValidationResult.ValidResult;
     }

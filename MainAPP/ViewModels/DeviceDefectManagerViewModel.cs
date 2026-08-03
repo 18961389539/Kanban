@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -73,7 +74,7 @@ public partial class DeviceDefectManagerViewModel : ObservableObject
     {
         if (SelectedDevice == null) return;
         // 缺陷名在所属设备内唯一
-        var baseName = $"缺陷{SelectedDevice.Defects.Count + 1}";
+        var baseName = string.Format(Strings.F188, SelectedDevice.Defects.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Defects.Select(d => d.Name));
         var defect = new Defect { Name = newName };
         SelectedDevice.Defects.Add(defect);

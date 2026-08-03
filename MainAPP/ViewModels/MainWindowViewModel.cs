@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
@@ -15,6 +15,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using Material.Icons;
 using Serilog;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -125,15 +126,15 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         {
             if (IsDataStale && !IsPlcDisconnected)
                 return IsRemoteDataMode
-                    ? $"数据已停滞 {DataStaleSeconds}s，采集服务可能卡死"
-                    : $"数据已停滞 {DataStaleSeconds}s，PLC 采集可能卡死";
+                    ? string.Format(Strings.F132, DataStaleSeconds)
+                    : string.Format(Strings.F131, DataStaleSeconds);
             return IsPlcConnecting
                 ? IsRemoteDataMode
-                    ? $"正在连接采集服务 · {ConnectionManager.ConnectionStatus}"
-                    : $"PLC 正在连接 · {ConnectionManager.ConnectionStatus}"
+                    ? string.Format(Strings.F159, ConnectionManager.ConnectionStatus)
+                    : string.Format(Strings.F015, ConnectionManager.ConnectionStatus)
                 : IsRemoteDataMode
-                    ? $"采集服务已断开 · {ConnectionManager.ConnectionStatus}"
-                    : $"PLC 已断开 · {ConnectionManager.ConnectionStatus}";
+                    ? string.Format(Strings.F232, ConnectionManager.ConnectionStatus)
+                    : string.Format(Strings.F010, ConnectionManager.ConnectionStatus);
         }
     }
 
@@ -157,9 +158,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             return status switch
             {
                 LicenseStatus.Active when LicenseGate.CurrentLicense?.IsPermanent == false
-                    => $"已激活 · {LicenseGate.CurrentLicense.ExpireDate:yyyy-MM-dd}",
+                    => string.Format(Strings.F112, LicenseGate.CurrentLicense.ExpireDate),
                 LicenseStatus.Active => "已激活",
-                LicenseStatus.Trial => $"试用 · 剩 {RemainingTrialDays ?? 0} 天",
+                LicenseStatus.Trial => string.Format(Strings.F211, RemainingTrialDays ?? 0),
                 LicenseStatus.TrialExpired => "试用已过期",
                 LicenseStatus.TrialManipulated => "试用异常",
                 LicenseStatus.Expired => "授权已过期",
@@ -179,14 +180,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             return status switch
             {
                 LicenseStatus.Active when LicenseGate.CurrentLicense?.IsPermanent == false
-                    => $"机器码：{machineCode}\n激活码：{LicenseGate.CurrentLicense!.ProductKey}\n到期：{LicenseGate.CurrentLicense.ExpireDate:yyyy-MM-dd}",
-                LicenseStatus.Active => $"机器码：{machineCode}\n永久授权",
-                LicenseStatus.Trial => $"机器码：{machineCode}\n试用期剩余 {RemainingTrialDays ?? 0} 天",
-                LicenseStatus.TrialExpired => $"机器码：{machineCode}\n试用期已过期，请激活",
-                LicenseStatus.TrialManipulated => $"机器码：{machineCode}\n检测到系统时间异常",
-                LicenseStatus.Expired => $"机器码：{machineCode}\n授权已过期，请重新激活",
-                LicenseStatus.MachineMismatch => $"机器码：{machineCode}\n授权与当前机器不匹配",
-                _ => $"机器码：{machineCode}",
+                    => string.Format(Strings.F150, machineCode, LicenseGate.CurrentLicense!.ProductKey, LicenseGate.CurrentLicense.ExpireDate),
+                LicenseStatus.Active => string.Format(Strings.F149, machineCode),
+                LicenseStatus.Trial => string.Format(Strings.F151, machineCode, RemainingTrialDays ?? 0),
+                LicenseStatus.TrialExpired => string.Format(Strings.F152, machineCode),
+                LicenseStatus.TrialManipulated => string.Format(Strings.F148, machineCode),
+                LicenseStatus.Expired => string.Format(Strings.F147, machineCode),
+                LicenseStatus.MachineMismatch => string.Format(Strings.F146, machineCode),
+                _ => string.Format(Strings.F145, machineCode),
             };
         }
     }
@@ -432,7 +433,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                 if (!e.IsConnected)
                     Growl.Error(new GrowlInfo
                     {
-                        Message = $"采集服务已断开（{e.IpAddress}）· 第 {e.DisconnectCount} 次重试",
+                        Message = string.Format(Strings.F233, e.IpAddress, e.DisconnectCount),
                         ShowDateTime = false,
                     });
                 else
@@ -442,7 +443,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                         : "—";
                     Growl.Success(new GrowlInfo
                     {
-                        Message = $"采集服务已重连，断线时长 {dur}",
+                        Message = string.Format(Strings.F234, dur),
                         ShowDateTime = false,
                     });
                 }
@@ -453,7 +454,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             {
                 Growl.Error(new GrowlInfo
                 {
-                    Message = $"PLC 已断开（IP:{e.IpAddress}）· 第 {e.DisconnectCount} 次重试",
+                    Message = string.Format(Strings.F011, e.IpAddress, e.DisconnectCount),
                     ShowDateTime = false,
                 });
             }
@@ -464,7 +465,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                     : "—";
                 Growl.Success(new GrowlInfo
                 {
-                    Message = $"PLC 已重连，断线时长 {dur}",
+                    Message = string.Format(Strings.F012, dur),
                     ShowDateTime = false,
                 });
             }

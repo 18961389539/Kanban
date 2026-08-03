@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -8,6 +8,7 @@ using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Legends;
 using OxyPlot.Series;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -130,7 +131,7 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
             var target = targetCycle * bucketHours * deviceCount;
             var targetSeries = new LineSeries
             {
-                Title = $"目标 {target:F0} 件/桶",
+                Title = string.Format(Strings.F169, target),
                 Color = palette.Pause,
                 StrokeThickness = 1.5,
                 LineStyle = LineStyle.Dash,

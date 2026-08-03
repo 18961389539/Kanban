@@ -21,7 +21,7 @@ internal static class RuntimeHealthText
     {
         if (!isConnected) return Strings.M013;
         if (!isRunning) return Strings.M014;
-        return lastCycleSucceeded ? "运行正常" : $"连续失败 {consecutiveFailures} 次";
+        return lastCycleSucceeded ? "运行正常" : string.Format(Strings.F227, consecutiveFailures);
     }
 }
 
@@ -33,7 +33,7 @@ public sealed partial class DeviceAcquisitionStatusItem : ObservableObject
     [ObservableProperty] private int _configuredAddressCount;
     [ObservableProperty] private int _okProduction;
     [ObservableProperty] private int _ngProduction;
-    public string ReadSummary => ConfiguredAddressCount == 0 ? "未配置地址" : $"{ConfiguredAddressCount} 个地址";
+    public string ReadSummary => ConfiguredAddressCount == 0 ? "未配置地址" : string.Format(Strings.F022, ConfiguredAddressCount);
     public string ProductionSummary => $"{OkProduction:N0} / {NgProduction:N0}";
 
     partial void OnConfiguredAddressCountChanged(int value) => OnPropertyChanged(nameof(ReadSummary));
@@ -115,20 +115,20 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string DisconnectDurationText => _connectionManager.DisconnectedAt is { } disconnectedAt
         ? FormatDuration(DateTime.Now - disconnectedAt)
         : "未断线";
-    public string RecoveryFileText => RecoveryFileExists ? $"存在 · {FormatBytes(RecoveryFileBytes)}" : "无积压";
-    public string DataConsistencyText => ConfigurationIssueCount == 0 ? "配置正常" : $"发现 {ConfigurationIssueCount} 项问题";
+    public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : "无积压";
+    public string DataConsistencyText => ConfigurationIssueCount == 0 ? "配置正常" : string.Format(Strings.F078, ConfigurationIssueCount);
     public string DeviceReadSummary => $"{LastSuccessfulDevices} / {ConfiguredDevices}";
     public string CpuMemoryText => $"{CpuUsagePercent:F1}% / {MemoryMb:F0} MB";
     public string GpuUsageText => GpuAvailable ? $"{GpuUsagePercent:F1}%" : "不可用";
     public string AddressIssueSummary => $"{InvalidAddressCount} / {AddressConflictCount}";
     public string ProcessUptimeText => ProcessUptime.ToString(@"d\.hh\:mm\:ss");
-    public string ReadDetailText => $"{EstimatedReadOperations} / {ConfiguredReadAddressCount} 个地址";
-    public string HistoryStorageText => $"库 {FormatBytes(ProductionDatabaseBytes)} · WAL {FormatBytes(ProductionWalBytes)}";
-    public string StageTimingText => $"DWord {DwordReadMilliseconds} ms · M位 {AlarmReadMilliseconds} ms · 缺陷 {DefectReadMilliseconds} ms · 计数报警 {CountAlarmReadMilliseconds} ms · 历史 {HistoryWriteMilliseconds} ms";
-    public string BatchPlanText => $"重建 {BatchPlanRebuilds} 次 · 最近 {BatchPlanBuildMilliseconds} ms";
-    public string ProcessResourceText => $"线程 {ProcessThreadCount} · 句柄 {ProcessHandleCount:N0}";
-    public string SystemMemoryText => $"进程 {MemoryMb:F0} MB · 可用 {AvailableMemoryMb:F0} MB";
-    public string DiskFreeText => $"剩余 {FreeDiskGb:F1} GB";
+    public string ReadDetailText => string.Format(Strings.F024, EstimatedReadOperations, ConfiguredReadAddressCount);
+    public string HistoryStorageText => string.Format(Strings.F118, FormatBytes(ProductionDatabaseBytes), FormatBytes(ProductionWalBytes));
+    public string StageTimingText => string.Format(Strings.F002, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CountAlarmReadMilliseconds, HistoryWriteMilliseconds);
+    public string BatchPlanText => string.Format(Strings.F236, BatchPlanRebuilds, BatchPlanBuildMilliseconds);
+    public string ProcessResourceText => string.Format(Strings.F186, ProcessThreadCount, ProcessHandleCount);
+    public string SystemMemoryText => string.Format(Strings.F221, MemoryMb, AvailableMemoryMb);
+    public string DiskFreeText => string.Format(Strings.F074, FreeDiskGb);
     public int PollingIntervalMs => _appSettings.PollingIntervalMs;
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
     public int TotalDeviceCount => _deviceRepository.GetDevicesSnapshot().Count;

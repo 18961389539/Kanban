@@ -8,6 +8,7 @@ using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -94,7 +95,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
     private void AddCountAlarm()
     {
         if (SelectedDevice == null) return;
-        var baseName = $"计数报警{SelectedDevice.CountAlarms.Count + 1}";
+        var baseName = string.Format(Strings.F198, SelectedDevice.CountAlarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CountAlarms.Select(c => c.Name));
         var alarm = new CountAlarm { Name = newName };
         SelectedDevice.CountAlarms.Add(alarm);
@@ -120,7 +121,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
     {
         if (!_host.IsPlcConnected) return;
         var confirm = _dialog.Show(
-            $"确定清空计数报警「{alarm.Name}」的当前值吗？\n将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。",
+            string.Format(Strings.F177, alarm.Name),
             "确认清空计数报警", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 

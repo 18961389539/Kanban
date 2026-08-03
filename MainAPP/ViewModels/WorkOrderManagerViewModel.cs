@@ -345,7 +345,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         RefreshStatusCounts();
         // 同步更新详情页选中工单的产量
         RefreshSelectedProduction();
-        _dialog.NotifyInfo($"已刷新 {WorkOrders.Count} 条工单的产量数据");
+        _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
     }
 
     private static double GetProgressDeviation(WorkOrder workOrder, double achievementRate)
@@ -497,11 +497,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject
                     w.UpdatedAt.ToString("yyyy-MM-dd HH:mm")));
             }
 
-            _dialog.NotifySuccess($"已导出 {filtered.Count} 条工单 → {Path.GetFileName(path)}");
+            _dialog.NotifySuccess(string.Format(Strings.F106, filtered.Count, Path.GetFileName(path)));
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"导出失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
     }
 
@@ -554,7 +554,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         if (WorkOrders.Count > 0)
         {
             var confirm = _dialog.Show(
-                $"当前已有 {WorkOrders.Count} 条工单，将追加生成 {devices.Count * 3} 条样本工单。是否继续？",
+                string.Format(Strings.F121, WorkOrders.Count, devices.Count * 3),
                 "生成样本工单", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
@@ -563,7 +563,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject
         foreach (var wo in samples)
             await _workOrderRepo.UpsertAsync(wo);
 
-        _dialog.NotifySuccess($"已生成 {samples.Count} 条样本工单");
+        _dialog.NotifySuccess(string.Format(Strings.F115, samples.Count));
     }
 
     /// <summary>

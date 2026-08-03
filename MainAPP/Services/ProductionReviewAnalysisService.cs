@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -6,6 +6,7 @@ using Kanban.Core.Entities;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -152,7 +153,7 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             health.Score,
             runningWorkOrder == null
                 ? "暂无运行工单"
-                : $"{runningWorkOrder.OrderNo} · 目标 {runningWorkOrder.TargetQuantity:N0} 件",
+                : string.Format(Strings.F038, runningWorkOrder.OrderNo, runningWorkOrder.TargetQuantity),
             runningWorkOrder == null
                 ? "暂无产品信息"
                 : $"{runningWorkOrder.ProductCode} · {runningWorkOrder.ProductName}",

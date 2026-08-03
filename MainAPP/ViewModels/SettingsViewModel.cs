@@ -164,7 +164,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
 
         IsTestingCollectorConnection = true;
-        CollectorTestResult = $"正在连接 {url} …";
+        CollectorTestResult = string.Format(Strings.F158, url);
         CollectorTestResultType = "None";
         try
         {
@@ -177,7 +177,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
         catch (Exception ex)
         {
-            CollectorTestResult = $"连接失败：{ex.Message}";
+            CollectorTestResult = string.Format(Strings.F222, ex.Message);
             CollectorTestResultType = "Error";
         }
         finally
@@ -236,13 +236,13 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
         if (port < 1 || port > 65535)
         {
-            TestConnectionResult = $"端口号必须在 1-65535 之间，当前: {port}";
+            TestConnectionResult = string.Format(Strings.F179, port);
             TestConnectionResultType = "Error";
             return;
         }
 
         IsTestingConnection = true;
-        TestConnectionResult = $"正在连接 {ip}:{port} …";
+        TestConnectionResult = string.Format(Strings.F157, ip, port);
         TestConnectionResultType = "None";
 
         try
@@ -265,23 +265,23 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
             if (result.IsSuccess)
             {
-                TestConnectionResult = $"连接成功（{ip}:{port}）";
+                TestConnectionResult = string.Format(Strings.F225, ip, port);
                 TestConnectionResultType = "Success";
             }
             else
             {
-                TestConnectionResult = $"连接失败：{result.Message}";
+                TestConnectionResult = string.Format(Strings.F223, result.Message);
                 TestConnectionResultType = "Error";
             }
         }
         catch (OperationCanceledException)
         {
-            TestConnectionResult = $"连接超时（5 秒无响应），请检查 IP 和端口";
+            TestConnectionResult = Strings.F226;
             TestConnectionResultType = "Error";
         }
         catch (Exception ex)
         {
-            TestConnectionResult = $"连接异常：{ex.Message}";
+            TestConnectionResult = string.Format(Strings.F224, ex.Message);
             TestConnectionResultType = "Error";
         }
         finally
@@ -415,9 +415,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return status switch
             {
                 LicenseStatus.Active when _licenseGate.CurrentLicense?.IsPermanent == false
-                    => $"已激活 · 到期 {_licenseGate.CurrentLicense.ExpireDate:yyyy-MM-dd}",
+                    => string.Format(Strings.F113, _licenseGate.CurrentLicense.ExpireDate),
                 LicenseStatus.Active => "已激活 · 永久授权",
-                LicenseStatus.Trial => $"试用期内 · 剩 {RemainingTrialDays ?? 0} 天",
+                LicenseStatus.Trial => string.Format(Strings.F212, RemainingTrialDays ?? 0),
                 LicenseStatus.TrialExpired => "试用期已过期",
                 LicenseStatus.TrialManipulated => "试用期异常（检测到时间篡改）",
                 LicenseStatus.Expired => "授权已过期",
@@ -500,7 +500,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         activationVm.StatusMessage = _licenseGate.CurrentStatus switch
         {
             LicenseStatus.Active => "输入新的激活码以替换当前授权。",
-            LicenseStatus.Trial => $"试用期内，剩余 {RemainingTrialDays ?? 0} 天。输入激活码以完成授权。",
+            LicenseStatus.Trial => string.Format(Strings.F213, RemainingTrialDays ?? 0),
             LicenseStatus.TrialExpired => "试用期已过期，请输入激活码继续使用。",
             LicenseStatus.Expired => "授权已过期，请输入新的激活码。",
             LicenseStatus.MachineMismatch => "授权与当前机器不匹配，请重新激活。",
@@ -592,7 +592,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [RelayCommand]
     private void AddShift()
     {
-        DraftSettings.Shifts.Add(new ShiftConfig { Name = $"班次{DraftSettings.Shifts.Count + 1}" });
+        DraftSettings.Shifts.Add(new ShiftConfig { Name = string.Format(Strings.F166, DraftSettings.Shifts.Count + 1) });
     }
 
     /// <summary>
@@ -683,7 +683,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError($"保存失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
         }
         finally
         {
@@ -729,7 +729,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
         catch (Exception ex)
         {
-            _dialog?.NotifyWarning($"采集服务参数同步失败（本地已保存）：{ex.Message}");
+            _dialog?.NotifyWarning(string.Format(Strings.F231, ex.Message));
         }
     }
 
@@ -816,50 +816,50 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (string.IsNullOrWhiteSpace(ip))
             return Strings.M029;
         if (!IPAddress.TryParse(ip, out _))
-            return $"无效的 IP 地址: {ip}";
+            return string.Format(Strings.F136, ip);
 
         // 端口校验
         var port = settings.PlcConfig.Port;
         if (port < 1 || port > 65535)
-            return $"端口号必须在 1-65535 之间，当前值: {port}";
+            return string.Format(Strings.F180, port);
 
         if (!Enum.IsDefined(settings.PlcConfig.Brand))
-            return $"不支持的 PLC 品牌: {settings.PlcConfig.Brand}";
+            return string.Format(Strings.F056, settings.PlcConfig.Brand);
         if (settings.PlcConfig.TimeoutMs < 100 || settings.PlcConfig.TimeoutMs > 60000)
-            return $"PLC 超时必须在 100-60000 毫秒之间，当前值: {settings.PlcConfig.TimeoutMs}";
+            return string.Format(Strings.F016, settings.PlcConfig.TimeoutMs);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && !SiemensModels.Contains(settings.PlcConfig.SiemensModel, StringComparer.OrdinalIgnoreCase))
-            return $"不支持的 Siemens 型号: {settings.PlcConfig.SiemensModel}";
+            return string.Format(Strings.F057, settings.PlcConfig.SiemensModel);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensRack > 7)
-            return $"Siemens Rack 必须在 0-7 之间，当前值: {settings.PlcConfig.SiemensRack}";
+            return string.Format(Strings.F017, settings.PlcConfig.SiemensRack);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensSlot > 31)
-            return $"Siemens Slot 必须在 0-31 之间，当前值: {settings.PlcConfig.SiemensSlot}";
+            return string.Format(Strings.F018, settings.PlcConfig.SiemensSlot);
         if (settings.PlcConfig.Brand == PlcBrand.Siemens && settings.PlcConfig.SiemensBatchInt32Limit is < 1 or > 55)
-            return $"Siemens 批量 Int32 上限必须在 1-55 之间，当前值: {settings.PlcConfig.SiemensBatchInt32Limit}";
+            return string.Format(Strings.F019, settings.PlcConfig.SiemensBatchInt32Limit);
         if (settings.PlcConfig.Brand == PlcBrand.Omron && settings.PlcConfig.OmronReadSplits is < 1 or > 999)
-            return $"欧姆龙 FINS 读取切割长度必须在 1-999 之间，当前值: {settings.PlcConfig.OmronReadSplits}";
+            return string.Format(Strings.F156, settings.PlcConfig.OmronReadSplits);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusUnitId is < 1 or > 247)
-            return $"Modbus UnitId 必须在 1-247 之间，当前值: {settings.PlcConfig.ModbusUnitId}";
+            return string.Format(Strings.F003, settings.PlcConfig.ModbusUnitId);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusRegisterFunction is not (3 or 4))
-            return $"Modbus 寄存器功能码必须为 3 或 4，当前值: {settings.PlcConfig.ModbusRegisterFunction}";
+            return string.Format(Strings.F005, settings.PlcConfig.ModbusRegisterFunction);
         if (settings.PlcConfig.Brand == PlcBrand.ModbusTcp && settings.PlcConfig.ModbusBitFunction is not (1 or 2))
-            return $"Modbus 位功能码必须为 1 或 2，当前值: {settings.PlcConfig.ModbusBitFunction}";
+            return string.Format(Strings.F004, settings.PlcConfig.ModbusBitFunction);
         if (!Enum.IsDefined(settings.PlcConfig.ModbusDataFormat) || !Enum.IsDefined(settings.PlcConfig.SiemensDataFormat))
             return Strings.M030;
 
         // 轮询间隔校验
         var interval = settings.PollingIntervalMs;
         if (interval < 50)
-            return $"轮询间隔不能小于 50ms，当前值: {interval}";
+            return string.Format(Strings.F218, interval);
 
         // 历史写入间隔校验
         var historyInterval = settings.HistoryWriteIntervalScans;
         if (historyInterval < 1)
-            return $"历史写入间隔不能小于 1，当前值: {historyInterval}";
+            return string.Format(Strings.F075, historyInterval);
 
         if (settings.PlcBatchReadMaxLength < 1 || settings.PlcBatchReadMaxLength > 1024)
-            return $"PLC 批量读取数量必须在 1-1024 之间，当前值: {settings.PlcBatchReadMaxLength}";
+            return string.Format(Strings.F014, settings.PlcBatchReadMaxLength);
         if (settings.PlcBatchReadMaxGapSlots < 0 || settings.PlcBatchReadMaxGapSlots > 16)
-            return $"PLC 批量读取地址空洞必须在 0-16 之间，当前值: {settings.PlcBatchReadMaxGapSlots}";
+            return string.Format(Strings.F013, settings.PlcBatchReadMaxGapSlots);
 
         // 班次配置校验
         var shiftError = ShiftValidator.Validate(settings.Shifts);

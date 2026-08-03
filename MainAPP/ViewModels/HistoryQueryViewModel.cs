@@ -90,7 +90,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             ? "查询失败"
         : TotalCount == 0
             ? "未找到数据"
-            : $"共 {TotalCount:N0} 条 · 第 {CurrentPage}/{TotalPages} 页";
+            : string.Format(Strings.F069, TotalCount, CurrentPage, TotalPages);
 
     [ObservableProperty]
     private string _queryValidationMessage = string.Empty;
@@ -633,7 +633,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             if (requestVersion != _queryVersion) return;
-            QueryErrorMessage = $"历史查询失败：{ex.Message}";
+            QueryErrorMessage = string.Format(Strings.F077, ex.Message);
             _dialog.NotifyError(QueryErrorMessage);
         }
         finally
@@ -651,7 +651,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             1 => CreateStatusResult(request),
             2 => CreateAlarmResult(request),
             3 => CreateOeeResult(request),
-            _ => throw new InvalidOperationException($"未知查询 Tab：{request.TabIndex}"),
+            _ => throw new InvalidOperationException(string.Format(Strings.F144, request.TabIndex)),
         };
     }
 
@@ -775,8 +775,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            QueryErrorMessage = $"历史查询失败：{ex.Message}";
-            _dialog.NotifyError($"查询失败: {ex.Message}");
+            QueryErrorMessage = string.Format(Strings.F077, ex.Message);
+            _dialog.NotifyError(string.Format(Strings.F154, ex.Message));
         }
         finally
         {
@@ -820,12 +820,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Log.Information("已导出 {Count} 条 → {Path}", TotalCount, fullPath);
-            _dialog.NotifySuccess($"已导出 {TotalCount} 条 → {fullPath}");
+            _dialog.NotifySuccess(string.Format(Strings.F104, TotalCount, fullPath));
         }
         catch (Exception ex)
         {
             Log.Error(ex, "导出失败: {Message}", ex.Message);
-            _dialog.NotifyError($"导出失败: {ex.Message}");
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
         finally
         {

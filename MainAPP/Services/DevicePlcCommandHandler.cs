@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -65,21 +66,21 @@ public class DevicePlcCommandHandler(
             return new PlcOpResult(PlcOpStatus.Info, "未配置配方地址");
 
         if (GetAdapter(device).AddressCodec.Parse(device.RecipeAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, $"配方地址格式无效: {device.RecipeAddress}");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F230, device.RecipeAddress));
 
         if (device.RecipeValue < 0 || device.RecipeValue > 999_999)
-            return new PlcOpResult(PlcOpStatus.Warning, $"配方值 {device.RecipeValue} 超出合理范围（0-999999）");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F229, device.RecipeValue));
 
         try
         {
             var result = await Task.Run(() => GetAdapter(device).WriteInt32(device.RecipeAddress!, device.RecipeValue));
             return result.IsSuccess
                 ? new PlcOpResult(PlcOpStatus.Success, result.Message)
-                : new PlcOpResult(PlcOpStatus.Warning, $"写入失败: {result.Message}");
+                : new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F070, result.Message));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, $"写入异常: {ex.Message}");
+            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F071, ex.Message));
         }
     }
 
@@ -104,7 +105,7 @@ public class DevicePlcCommandHandler(
             return new PlcOpResult(PlcOpStatus.Warning, "未配置 OEE 清零地址");
 
         if (GetAdapter(device).AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, $"OEE 清零地址格式无效（需要 D 字地址）: {addr}");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F008, addr));
 
         if (!confirmCallback(device))
             return new PlcOpResult(PlcOpStatus.Cancelled, "用户取消");
@@ -113,12 +114,12 @@ public class DevicePlcCommandHandler(
         {
             var success = await Task.Run(() => _dataAcquisitionService.ResetDeviceProduction(device));
             return success
-                ? new PlcOpResult(PlcOpStatus.Success, $"已触发「{device.Name}」OEE 清零")
+                ? new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F116, device.Name))
                 : new PlcOpResult(PlcOpStatus.Warning, "清零失败");
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, $"清零异常: {ex.Message}");
+            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F162, ex.Message));
         }
     }
 
@@ -138,18 +139,18 @@ public class DevicePlcCommandHandler(
             return new PlcOpResult(PlcOpStatus.Warning, "PLC 未连接，无法读取");
 
         if (_fallbackAdapter.AddressCodec.Parse(address) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, $"地址格式无效（需要 D 字地址）: {address}");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F082, address));
 
         try
         {
             var result = await Task.Run(() => _fallbackAdapter.ReadInt32(address));
             return result.IsSuccess
-                ? new PlcOpResult(PlcOpStatus.Success, $"{address} 当前值: {result.Content}", result.Content)
-                : new PlcOpResult(PlcOpStatus.Warning, $"读取失败: {result.Message}");
+                ? new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F031, address, result.Content), result.Content)
+                : new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F216, result.Message));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, $"读取异常: {ex.Message}");
+            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F217, ex.Message));
         }
     }
 
@@ -169,7 +170,7 @@ public class DevicePlcCommandHandler(
             return new PlcOpResult(PlcOpStatus.Warning, "PLC 未连接，无法清空");
 
         if (_fallbackAdapter.AddressCodec.Parse(alarm.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, $"地址格式无效（需要 D 字地址）: {alarm.PlcAddress}");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F083, alarm.PlcAddress));
 
         try
         {
@@ -177,13 +178,13 @@ public class DevicePlcCommandHandler(
             if (result.IsSuccess)
             {
                 alarm.CurrentValue = 0;
-                return new PlcOpResult(PlcOpStatus.Success, $"已清空「{alarm.Name}」当前值");
+                return new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F111, alarm.Name));
             }
-            return new PlcOpResult(PlcOpStatus.Warning, $"清空失败: {result.Message}");
+            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F160, result.Message));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, $"清空异常: {ex.Message}");
+            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F161, ex.Message));
         }
     }
 

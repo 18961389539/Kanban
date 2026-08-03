@@ -10,6 +10,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
 using Serilog;
+using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
 
@@ -132,7 +133,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Error(ex, "报警查询失败: {Message}", ex.Message);
-            QueryError = $"报警历史查询失败：{ex.Message}";
+            QueryError = string.Format(Strings.F129, ex.Message);
             return (0, 0);
         }
     }
@@ -185,9 +186,9 @@ public partial class AlarmQueryViewModel : ObservableObject
         var parts = top3.Select(t =>
         {
             var ratio = (double)t.TriggerCount / totalTriggers;
-            return $"{t.AlarmName}（{t.TriggerCount}次，{ratio:P0}）";
+            return string.Format(Strings.F040, t.AlarmName, t.TriggerCount, ratio);
         });
-        var topInsight = $"🔥 Top 报警：{string.Join(" / ", parts)}";
+        var topInsight = string.Format(Strings.F242, string.Join(" / ", parts));
 
         var sb = new StringBuilder(topInsight);
 
@@ -236,9 +237,9 @@ public partial class AlarmQueryViewModel : ObservableObject
             var dur = p.Minutes >= 60
                 ? $"{p.Minutes / 60.0:F1}h"
                 : $"{p.Minutes:F0}min";
-            return $"{p.AlarmName}（{dur}，自 {p.TriggerTime:MM-dd HH:mm}）";
+            return string.Format(Strings.F034, p.AlarmName, dur, p.TriggerTime);
         });
-        return $"⏳ 待恢复时长 Top：{string.Join(" / ", parts)}";
+        return string.Format(Strings.F044, string.Join(" / ", parts));
     }
 
     /// <summary>
@@ -283,7 +284,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         if (groups.Count == 0) return null;
 
         var top = groups.First();
-        return $"⚡ 连锁触发：{top.Pattern}（在 5 分钟窗口内出现 {top.Count} 次）";
+        return string.Format(Strings.F052, top.Pattern, top.Count);
     }
 
     private class AlarmCsvRow

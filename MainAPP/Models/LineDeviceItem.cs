@@ -1,4 +1,4 @@
-using Kanban.Core.Services;
+﻿using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MainAPP.Helpers;
+using MainAPP.Resources;
 
 namespace MainAPP.Models;
 
@@ -115,9 +116,9 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
                 .GroupBy(d => d.Severity)
                 .ToDictionary(g => g.Key, g => g.Count());
             List<string> parts = [];
-            if (counts.TryGetValue(DefectSeverity.Critical, out var c) && c > 0) parts.Add($"严重{c}");
-            if (counts.TryGetValue(DefectSeverity.Major, out var m) && m > 0) parts.Add($"一般{m}");
-            if (counts.TryGetValue(DefectSeverity.Minor, out var n) && n > 0) parts.Add($"轻微{n}");
+            if (counts.TryGetValue(DefectSeverity.Critical, out var c) && c > 0) parts.Add(string.Format(Strings.F058, c));
+            if (counts.TryGetValue(DefectSeverity.Major, out var m) && m > 0) parts.Add(string.Format(Strings.F054, m));
+            if (counts.TryGetValue(DefectSeverity.Minor, out var n) && n > 0) parts.Add(string.Format(Strings.F219, n));
             return parts.Count == 0 ? string.Empty : "缺陷 " + string.Join(" ", parts);
         }
     }

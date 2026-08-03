@@ -681,4 +681,275 @@
   <data name="M046" xml:space="preserve"><value>C良品率</value></data>
   <data name="M047" xml:space="preserve"><value>B性能达标率</value></data>
   <data name="M048" xml:space="preserve"><value>A时间稼动率</value></data>
+  <data name="F001" xml:space="preserve"><value>CSV 共 {0} 行，{1} 行校验失败将跳过。
+</value></data>
+  <data name="F002" xml:space="preserve"><value>DWord {0} ms · M位 {1} ms · 缺陷 {2} ms · 计数报警 {3} ms · 历史 {4} ms</value></data>
+  <data name="F003" xml:space="preserve"><value>Modbus UnitId 必须在 1-247 之间，当前值: {0}</value></data>
+  <data name="F004" xml:space="preserve"><value>Modbus 位功能码必须为 1 或 2，当前值: {0}</value></data>
+  <data name="F005" xml:space="preserve"><value>Modbus 寄存器功能码必须为 3 或 4，当前值: {0}</value></data>
+  <data name="F006" xml:space="preserve"><value>OEE 为 {0:P1}，{1} {2:P0} 目标</value></data>
+  <data name="F007" xml:space="preserve"><value>OEE 历史查询失败：{0}</value></data>
+  <data name="F008" xml:space="preserve"><value>OEE 清零地址格式无效（需要 D 字地址）: {0}</value></data>
+  <data name="F009" xml:space="preserve"><value>PDF 导出失败：{0}</value></data>
+  <data name="F010" xml:space="preserve"><value>PLC 已断开 · {0}</value></data>
+  <data name="F011" xml:space="preserve"><value>PLC 已断开（IP:{0}）· 第 {1} 次重试</value></data>
+  <data name="F012" xml:space="preserve"><value>PLC 已重连，断线时长 {0}</value></data>
+  <data name="F013" xml:space="preserve"><value>PLC 批量读取地址空洞必须在 0-16 之间，当前值: {0}</value></data>
+  <data name="F014" xml:space="preserve"><value>PLC 批量读取数量必须在 1-1024 之间，当前值: {0}</value></data>
+  <data name="F015" xml:space="preserve"><value>PLC 正在连接 · {0}</value></data>
+  <data name="F016" xml:space="preserve"><value>PLC 超时必须在 100-60000 毫秒之间，当前值: {0}</value></data>
+  <data name="F017" xml:space="preserve"><value>Siemens Rack 必须在 0-7 之间，当前值: {0}</value></data>
+  <data name="F018" xml:space="preserve"><value>Siemens Slot 必须在 0-31 之间，当前值: {0}</value></data>
+  <data name="F019" xml:space="preserve"><value>Siemens 批量 Int32 上限必须在 1-55 之间，当前值: {0}</value></data>
+  <data name="F020" xml:space="preserve"><value>
+  ...（共 {0} 条）</value></data>
+  <data name="F021" xml:space="preserve"><value>{0}：产量 {1} 件 · 良品率 {2} · OEE {3}</value></data>
+  <data name="F022" xml:space="preserve"><value>{0} 个地址</value></data>
+  <data name="F023" xml:space="preserve"><value>{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 初始 {4}</value></data>
+  <data name="F024" xml:space="preserve"><value>{0} / {1} 个地址</value></data>
+  <data name="F025" xml:space="preserve"><value>{0}不能为空</value></data>
+  <data name="F026" xml:space="preserve"><value>{0}必须在 {1}-{2} 之间</value></data>
+  <data name="F027" xml:space="preserve"><value>{0}必须是整数</value></data>
+  <data name="F028" xml:space="preserve"><value>{0:N0} 件</value></data>
+  <data name="F029" xml:space="preserve"><value>{0:N0} / {1:N0} 件</value></data>
+  <data name="F030" xml:space="preserve"><value>{0:N0} 件</value></data>
+  <data name="F031" xml:space="preserve"><value>{0} 当前值: {1}</value></data>
+  <data name="F032" xml:space="preserve"><value>{0} · {1}
+级别：{2}
+触发时间：{3:yyyy-MM-dd HH:mm:ss}
+持续时间：{4}</value></data>
+  <data name="F033" xml:space="preserve"><value>{0}（{1}次）</value></data>
+  <data name="F034" xml:space="preserve"><value>{0}（{1}，自 {2:MM-dd HH:mm}）</value></data>
+  <data name="F035" xml:space="preserve"><value>{0} {1:F0} 分钟（{2:HH:mm}–{3:HH:mm}）</value></data>
+  <data name="F036" xml:space="preserve"><value>{0} 件 / {1} 件</value></data>
+  <data name="F037" xml:space="preserve"><value>{0}+{1} / {2:F0} 件</value></data>
+  <data name="F038" xml:space="preserve"><value>{0} · 目标 {1:N0} 件</value></data>
+  <data name="F039" xml:space="preserve"><value>{0} 副本</value></data>
+  <data name="F040" xml:space="preserve"><value>{0}（{1}次，{2:P0}）</value></data>
+  <data name="F041" xml:space="preserve"><value>{0}产量最高，共 {1:N0} 件，良品率 {2:P1}</value></data>
+  <data name="F042" xml:space="preserve"><value>· 到期 {0:yyyy-MM-dd}</value></data>
+  <data name="F043" xml:space="preserve"><value>↓突降 {0:HH:mm}</value></data>
+  <data name="F044" xml:space="preserve"><value>⏳ 待恢复时长 Top：{0}</value></data>
+  <data name="F045" xml:space="preserve"><value>⏸ 待机占比 {0:P0}，高于阈值 {1:P0}</value></data>
+  <data name="F046" xml:space="preserve"><value>▲ 快 {0:F2}s</value></data>
+  <data name="F047" xml:space="preserve"><value>▼ 慢 {0:F2}s</value></data>
+  <data name="F048" xml:space="preserve"><value>⚠ {0:HH:mm} 产量突降 {1:P0}（{2} 件 → {3} 件）</value></data>
+  <data name="F049" xml:space="preserve"><value>⚠ 报警占比 {0:P0}，高于阈值 {1:P0}</value></data>
+  <data name="F050" xml:space="preserve"><value>⚠ 检测到 {0} 次突降，最严重 @ {1:HH:mm} 降 {2:P0}（{3} 件 → {4} 件）</value></data>
+  <data name="F051" xml:space="preserve"><value>⚠ 瓶颈因子：{0} 仅 {1:P1}，是 OEE 的主要拖累项</value></data>
+  <data name="F052" xml:space="preserve"><value>⚡ 连锁触发：{0}（在 5 分钟窗口内出现 {1} 次）</value></data>
+  <data name="F053" xml:space="preserve"><value>✓ 三项指标均衡（{0:P0} / {1:P0} / {2:P0}），OEE = {3:P1}</value></data>
+  <data name="F054" xml:space="preserve"><value>一般{0}</value></data>
+  <data name="F055" xml:space="preserve"><value>上一班次（{0}）</value></data>
+  <data name="F056" xml:space="preserve"><value>不支持的 PLC 品牌: {0}</value></data>
+  <data name="F057" xml:space="preserve"><value>不支持的 Siemens 型号: {0}</value></data>
+  <data name="F058" xml:space="preserve"><value>严重{0}</value></data>
+  <data name="F059" xml:space="preserve"><value>主要缺陷为 {0}（{1}），当前累计 {2:N0} 件，占当前缺陷 Top10 的 {3:F1}%</value></data>
+  <data name="F060" xml:space="preserve"><value>产量 {0} · 良品率 {1} · OEE {2}</value></data>
+  <data name="F061" xml:space="preserve"><value>产量 {0:N0} · 报警 {1} 次</value></data>
+  <data name="F062" xml:space="preserve"><value>产量 {0:N0} · 良品率 {1:P1} · OEE {2:P1}</value></data>
+  <data name="F063" xml:space="preserve"><value>产量历史查询失败：{0}</value></data>
+  <data name="F064" xml:space="preserve"><value>产量平稳波动，均值 OK ≈ {0:F0} 件，峰值 {1} 件 @ {2:HH:mm}</value></data>
+  <data name="F065" xml:space="preserve"><value>低于最佳班次 {0:P0}{1}</value></data>
+  <data name="F066" xml:space="preserve"><value>保存失败: {0}</value></data>
+  <data name="F067" xml:space="preserve"><value>保存失败：发现 {0} 处配置问题，请在设备参数表单中修正</value></data>
+  <data name="F068" xml:space="preserve"><value>停止采集服务失败：{0}</value></data>
+  <data name="F069" xml:space="preserve"><value>共 {0:N0} 条 · 第 {1}/{2} 页</value></data>
+  <data name="F070" xml:space="preserve"><value>写入失败: {0}</value></data>
+  <data name="F071" xml:space="preserve"><value>写入异常: {0}</value></data>
+  <data name="F072" xml:space="preserve"><value>写入成功 ({0:HH:mm:ss})</value></data>
+  <data name="F073" xml:space="preserve"><value>刷新报警统计失败: {0}</value></data>
+  <data name="F074" xml:space="preserve"><value>剩余 {0:F1} GB</value></data>
+  <data name="F075" xml:space="preserve"><value>历史写入间隔不能小于 1，当前值: {0}</value></data>
+  <data name="F076" xml:space="preserve"><value>历史数据写入失败：{0}</value></data>
+  <data name="F077" xml:space="preserve"><value>历史查询失败：{0}</value></data>
+  <data name="F078" xml:space="preserve"><value>发现 {0} 项问题</value></data>
+  <data name="F079" xml:space="preserve"><value>可用率 {0:P1}，损失 {1:P1}</value></data>
+  <data name="F080" xml:space="preserve"><value>地址冲突「{0}」被 {1} 台设备共用：</value></data>
+  <data name="F081" xml:space="preserve"><value>地址冲突：{0}</value></data>
+  <data name="F082" xml:space="preserve"><value>地址格式无效（需要 D 字地址）: {0}</value></data>
+  <data name="F083" xml:space="preserve"><value>地址格式无效（需要 D 字地址）: {0}</value></data>
+  <data name="F084" xml:space="preserve"><value>备份文件读取或解析失败: {0}</value></data>
+  <data name="F085" xml:space="preserve"><value>复盘数据加载失败: {0}</value></data>
+  <data name="F086" xml:space="preserve"><value>失败明细：
+  · {0}</value></data>
+  <data name="F087" xml:space="preserve"><value>失败：{0}</value></data>
+  <data name="F088" xml:space="preserve"><value>存在 · {0}</value></data>
+  <data name="F089" xml:space="preserve"><value>导入将用文件中的 {0} 台设备替换当前 {1} 台设备配置，且不会自动保存到磁盘。是否继续？</value></data>
+  <data name="F090" xml:space="preserve"><value>导出失败: {0}</value></data>
+  <data name="F091" xml:space="preserve"><value>将导入 {0} 条报警到当前设备（现有 {1} 条）。
+</value></data>
+  <data name="F092" xml:space="preserve"><value>将用 20 台虚拟设备替换当前 {0} 台设备配置，当前未保存的改动会丢失。是否继续？
+（替换后请点击保存以持久化）</value></data>
+  <data name="F093" xml:space="preserve"><value>工单 {0} 产量已达标（{1:N0} / {2:N0} 件）</value></data>
+  <data name="F094" xml:space="preserve"><value>工单 {0} 已中止</value></data>
+  <data name="F095" xml:space="preserve"><value>工单 {0} 已完成</value></data>
+  <data name="F096" xml:space="preserve"><value>工单 {0} 已开始</value></data>
+  <data name="F097" xml:space="preserve"><value>工单号「{0}」已存在（工单 Id={1}），请使用唯一工单号</value></data>
+  <data name="F098" xml:space="preserve"><value>已刷新 {0} 条工单的产量数据</value></data>
+  <data name="F099" xml:space="preserve"><value>已复制工单 {0}</value></data>
+  <data name="F100" xml:space="preserve"><value>已复制设备「{0}」为「{1}」</value></data>
+  <data name="F101" xml:space="preserve"><value>已导入 {0} 台设备，请点击保存以持久化</value></data>
+  <data name="F102" xml:space="preserve"><value>已导入 {0} 条报警（{1} 行跳过）。
+</value></data>
+  <data name="F103" xml:space="preserve"><value>已导入 {0} 条报警，请点击保存以持久化</value></data>
+  <data name="F104" xml:space="preserve"><value>已导出 {0} 条 → {1}</value></data>
+  <data name="F105" xml:space="preserve"><value>已导出 {0} 台设备到 {1}</value></data>
+  <data name="F106" xml:space="preserve"><value>已导出 {0} 条工单 → {1}</value></data>
+  <data name="F107" xml:space="preserve"><value>已导出 {0} 条报警 → {1}</value></data>
+  <data name="F108" xml:space="preserve"><value>已恢复上一版本（{0} 台设备），请点击保存以持久化</value></data>
+  <data name="F109" xml:space="preserve"><value>已新增工单 {0}</value></data>
+  <data name="F110" xml:space="preserve"><value>已更新工单 {0}</value></data>
+  <data name="F111" xml:space="preserve"><value>已清空「{0}」当前值</value></data>
+  <data name="F112" xml:space="preserve"><value>已激活 · {0:yyyy-MM-dd}</value></data>
+  <data name="F113" xml:space="preserve"><value>已激活 · 到期 {0:yyyy-MM-dd}</value></data>
+  <data name="F114" xml:space="preserve"><value>已生成 {0} 台虚拟设备，请点击保存以持久化</value></data>
+  <data name="F115" xml:space="preserve"><value>已生成 {0} 条样本工单</value></data>
+  <data name="F116" xml:space="preserve"><value>已触发「{0}」OEE 清零</value></data>
+  <data name="F117" xml:space="preserve"><value>已运行 {0}  ·  剩余 {1}</value></data>
+  <data name="F118" xml:space="preserve"><value>库 {0} · WAL {1}</value></data>
+  <data name="F119" xml:space="preserve"><value>应用设置保存失败：{0}</value></data>
+  <data name="F120" xml:space="preserve"><value>当前 {0} / 阈值 {1}</value></data>
+  <data name="F121" xml:space="preserve"><value>当前已有 {0} 条工单，将追加生成 {1} 条样本工单。是否继续？</value></data>
+  <data name="F122" xml:space="preserve"><value>当前班次：{0}</value></data>
+  <data name="F123" xml:space="preserve"><value>当前范围共触发 {0:N0} 次报警，请结合 Top 5 报警确认主要停机来源</value></data>
+  <data name="F124" xml:space="preserve"><value>性能率 {0:P1}，损失 {1:P1}</value></data>
+  <data name="F125" xml:space="preserve"><value>成功：{0}</value></data>
+  <data name="F126" xml:space="preserve"><value>报表导出失败：{0}</value></data>
+  <data name="F127" xml:space="preserve"><value>报警{0}</value></data>
+  <data name="F128" xml:space="preserve"><value>报警「{0}」地址</value></data>
+  <data name="F129" xml:space="preserve"><value>报警历史查询失败：{0}</value></data>
+  <data name="F130" xml:space="preserve"><value>报警突增：当前 {0} 次，上一周期 {1} 次</value></data>
+  <data name="F131" xml:space="preserve"><value>数据已停滞 {0}s，PLC 采集可能卡死</value></data>
+  <data name="F132" xml:space="preserve"><value>数据已停滞 {0}s，采集服务可能卡死</value></data>
+  <data name="F133" xml:space="preserve"><value>数据库/采集初始化失败，部分功能可能不可用：
+
+{0}</value></data>
+  <data name="F134" xml:space="preserve"><value>文件读取或解析失败: {0}</value></data>
+  <data name="F135" xml:space="preserve"><value>新设备{0}</value></data>
+  <data name="F136" xml:space="preserve"><value>无效的 IP 地址: {0}</value></data>
+  <data name="F137" xml:space="preserve"><value>无法识别的 {0} 地址: {1}</value></data>
+  <data name="F138" xml:space="preserve"><value>最长停机为 {0:F1} 小时，设备：{1}，报警：{2}</value></data>
+  <data name="F139" xml:space="preserve"><value>最长待机 {0:F0} 分钟（{1:HH:mm}–{2:HH:mm}）</value></data>
+  <data name="F140" xml:space="preserve"><value>最长运行 {0:F0} 分钟（{1:HH:mm}–{2:HH:mm}）</value></data>
+  <data name="F141" xml:space="preserve"><value>有效 {0} 条报警将导入到当前设备（现有 {1} 条）。
+</value></data>
+  <data name="F142" xml:space="preserve"><value>期望 {0} 类型地址，当前为 {1}</value></data>
+  <data name="F143" xml:space="preserve"><value>未导入任何报警：
+  · {0}</value></data>
+  <data name="F144" xml:space="preserve"><value>未知查询 Tab：{0}</value></data>
+  <data name="F145" xml:space="preserve"><value>机器码：{0}</value></data>
+  <data name="F146" xml:space="preserve"><value>机器码：{0}
+授权与当前机器不匹配</value></data>
+  <data name="F147" xml:space="preserve"><value>机器码：{0}
+授权已过期，请重新激活</value></data>
+  <data name="F148" xml:space="preserve"><value>机器码：{0}
+检测到系统时间异常</value></data>
+  <data name="F149" xml:space="preserve"><value>机器码：{0}
+永久授权</value></data>
+  <data name="F150" xml:space="preserve"><value>机器码：{0}
+激活码：{1}
+到期：{2:yyyy-MM-dd}</value></data>
+  <data name="F151" xml:space="preserve"><value>机器码：{0}
+试用期剩余 {1} 天</value></data>
+  <data name="F152" xml:space="preserve"><value>机器码：{0}
+试用期已过期，请激活</value></data>
+  <data name="F153" xml:space="preserve"><value>查询产量数据失败: {0}</value></data>
+  <data name="F154" xml:space="preserve"><value>查询失败: {0}</value></data>
+  <data name="F155" xml:space="preserve"><value>查询报警事件失败: {0}</value></data>
+  <data name="F156" xml:space="preserve"><value>欧姆龙 FINS 读取切割长度必须在 1-999 之间，当前值: {0}</value></data>
+  <data name="F157" xml:space="preserve"><value>正在连接 {0}:{1} …</value></data>
+  <data name="F158" xml:space="preserve"><value>正在连接 {0} …</value></data>
+  <data name="F159" xml:space="preserve"><value>正在连接采集服务 · {0}</value></data>
+  <data name="F160" xml:space="preserve"><value>清空失败: {0}</value></data>
+  <data name="F161" xml:space="preserve"><value>清空异常: {0}</value></data>
+  <data name="F162" xml:space="preserve"><value>清零异常: {0}</value></data>
+  <data name="F163" xml:space="preserve"><value>激活成功{0}。</value></data>
+  <data name="F164" xml:space="preserve"><value>状态 {0}</value></data>
+  <data name="F165" xml:space="preserve"><value>状态历史查询失败：{0}</value></data>
+  <data name="F166" xml:space="preserve"><value>班次{0}</value></data>
+  <data name="F167" xml:space="preserve"><value>生产复盘 PDF 已导出：{0}</value></data>
+  <data name="F168" xml:space="preserve"><value>生产复盘报表已导出：{0}</value></data>
+  <data name="F169" xml:space="preserve"><value>目标 {0:F0} 件/桶</value></data>
+  <data name="F170" xml:space="preserve"><value>目标 {0:P0}</value></data>
+  <data name="F171" xml:space="preserve"><value>目标 {0:P2}</value></data>
+  <data name="F172" xml:space="preserve"><value>目标 {0} 件/h</value></data>
+  <data name="F173" xml:space="preserve"><value>确定中止工单「{0}」吗？中止后不可恢复为 Running。</value></data>
+  <data name="F174" xml:space="preserve"><value>确定删除工单「{0}」（{1}）吗？此操作不可恢复。</value></data>
+  <data name="F175" xml:space="preserve"><value>确定删除设备「{0}」吗？关联的报警、缺陷和计数报警将一并移除。此操作不可撤销。</value></data>
+  <data name="F176" xml:space="preserve"><value>确定手动清零「{0}」的 OEE 吗？
+将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。</value></data>
+  <data name="F177" xml:space="preserve"><value>确定清空计数报警「{0}」的当前值吗？
+将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。</value></data>
+  <data name="F178" xml:space="preserve"><value>程序启动失败，即将退出：
+
+{0}</value></data>
+  <data name="F179" xml:space="preserve"><value>端口号必须在 1-65535 之间，当前: {0}</value></data>
+  <data name="F180" xml:space="preserve"><value>端口号必须在 1-65535 之间，当前值: {0}</value></data>
+  <data name="F181" xml:space="preserve"><value>第 {0} 行：PLC 地址 '{1}' 应为 M 位类型，当前为 {2}</value></data>
+  <data name="F182" xml:space="preserve"><value>第 {0} 行：PLC 地址 '{1}' 无效 - {2}</value></data>
+  <data name="F183" xml:space="preserve"><value>第 {0} 行：PLC 地址为空</value></data>
+  <data name="F184" xml:space="preserve"><value>第 {0} 行：报警名称为空</value></data>
+  <data name="F185" xml:space="preserve"><value>第 {0} 行：报警级别 '{1}' 无效（应为 Low/Medium/High）</value></data>
+  <data name="F186" xml:space="preserve"><value>线程 {0} · 句柄 {1:N0}</value></data>
+  <data name="F187" xml:space="preserve"><value>统计范围：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}</value></data>
+  <data name="F188" xml:space="preserve"><value>缺陷{0}</value></data>
+  <data name="F189" xml:space="preserve"><value>缺陷「{0}」地址</value></data>
+  <data name="F190" xml:space="preserve"><value>缺陷率突增：当前 {0} 个，上一周期 {1} 个</value></data>
+  <data name="F191" xml:space="preserve"><value>自动日报服务停止失败：{0}</value></data>
+  <data name="F192" xml:space="preserve"><value>良品率 {0:P1} / 目标 {1:P0} · OEE {2:P1} / 目标 {3:P0}</value></data>
+  <data name="F193" xml:space="preserve"><value>良品率 {0:P1}，损失 {1:P1}</value></data>
+  <data name="F194" xml:space="preserve"><value>良品率为 {0:P1}，{1} {2:P0} 目标</value></data>
+  <data name="F195" xml:space="preserve"><value>节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%</value></data>
+  <data name="F196" xml:space="preserve"><value>触发于 {0:HH:mm:ss} · {1}</value></data>
+  <data name="F197" xml:space="preserve"><value>警告：{0}</value></data>
+  <data name="F198" xml:space="preserve"><value>计数报警{0}</value></data>
+  <data name="F199" xml:space="preserve"><value>计数报警「{0}」地址</value></data>
+  <data name="F200" xml:space="preserve"><value>设备「{0}」的计划时间与工单 {1} 重叠（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）</value></data>
+  <data name="F201" xml:space="preserve"><value>设备「{0}」{1}无效：{2}</value></data>
+  <data name="F202" xml:space="preserve"><value>设备「{0}」报警名重复：「{1}」</value></data>
+  <data name="F203" xml:space="preserve"><value>设备「{0}」未配置：{1}</value></data>
+  <data name="F204" xml:space="preserve"><value>设备「{0}」目标周期必须 &gt; 0（当前 {1}）</value></data>
+  <data name="F205" xml:space="preserve"><value>设备「{0}」缺陷名重复：「{1}」</value></data>
+  <data name="F206" xml:space="preserve"><value>设备「{0}」计数报警「{1}」阈值上限必须 &gt; 0（当前 {2}）</value></data>
+  <data name="F207" xml:space="preserve"><value>设备「{0}」重复报警 PLC 地址：「{1}」，同一设备内报警地址必须唯一</value></data>
+  <data name="F208" xml:space="preserve"><value>设备「{0}」已有进行中工单 {1}，请先完成或中止</value></data>
+  <data name="F209" xml:space="preserve"><value>设备名重复：「{0}」（{1} 台），设备名必须唯一</value></data>
+  <data name="F210" xml:space="preserve"><value>设备数据保存失败：{0}</value></data>
+  <data name="F211" xml:space="preserve"><value>试用 · 剩 {0} 天</value></data>
+  <data name="F212" xml:space="preserve"><value>试用期内 · 剩 {0} 天</value></data>
+  <data name="F213" xml:space="preserve"><value>试用期内，剩余 {0} 天。输入激活码以完成授权。</value></data>
+  <data name="F214" xml:space="preserve"><value>试用期内，剩余 {0} 天。请在设置页输入激活码完成授权。</value></data>
+  <data name="F215" xml:space="preserve"><value>试用期已过期（{0} 天），请输入激活码继续使用。</value></data>
+  <data name="F216" xml:space="preserve"><value>读取失败: {0}</value></data>
+  <data name="F217" xml:space="preserve"><value>读取异常: {0}</value></data>
+  <data name="F218" xml:space="preserve"><value>轮询间隔不能小于 50ms，当前值: {0}</value></data>
+  <data name="F219" xml:space="preserve"><value>轻微{0}</value></data>
+  <data name="F220" xml:space="preserve"><value>运行无产量：{0:HH:mm:ss}-{1:HH:mm:ss} 持续 {2:F0} min</value></data>
+  <data name="F221" xml:space="preserve"><value>进程 {0:F0} MB · 可用 {1:F0} MB</value></data>
+  <data name="F222" xml:space="preserve"><value>连接失败：{0}</value></data>
+  <data name="F223" xml:space="preserve"><value>连接失败：{0}</value></data>
+  <data name="F224" xml:space="preserve"><value>连接异常：{0}</value></data>
+  <data name="F225" xml:space="preserve"><value>连接成功（{0}:{1}）</value></data>
+  <data name="F226" xml:space="preserve"><value>连接超时（5 秒无响应），请检查 IP 和端口</value></data>
+  <data name="F227" xml:space="preserve"><value>连续失败 {0} 次</value></data>
+  <data name="F228" xml:space="preserve"><value>选择导入方式：
+  · 是 = 替换（清空现有后导入）
+  · 否 = 追加（保留现有，同地址覆盖）
+  · 取消 = 放弃导入</value></data>
+  <data name="F229" xml:space="preserve"><value>配方值 {0} 超出合理范围（0-999999）</value></data>
+  <data name="F230" xml:space="preserve"><value>配方地址格式无效: {0}</value></data>
+  <data name="F231" xml:space="preserve"><value>采集服务参数同步失败（本地已保存）：{0}</value></data>
+  <data name="F232" xml:space="preserve"><value>采集服务已断开 · {0}</value></data>
+  <data name="F233" xml:space="preserve"><value>采集服务已断开（{0}）· 第 {1} 次重试</value></data>
+  <data name="F234" xml:space="preserve"><value>采集服务已重连，断线时长 {0}</value></data>
+  <data name="F235" xml:space="preserve"><value>释放 Collector 连接失败：{0}</value></data>
+  <data name="F236" xml:space="preserve"><value>重建 {0} 次 · 最近 {1} ms</value></data>
+  <data name="F237" xml:space="preserve"><value>错误：{0}</value></data>
+  <data name="F238" xml:space="preserve"><value>，{0} 是主要拖累项（{1:P0} vs {2:P0}）</value></data>
+  <data name="F239" xml:space="preserve"><value>📈 峰值出现在 {0:HH:mm}（OK={1} 件，高于均值 {2:P0}）</value></data>
+  <data name="F240" xml:space="preserve"><value>📉 谷值出现在 {0:HH:mm}（OK={1} 件，低于均值 {2:P0}）</value></data>
+  <data name="F241" xml:space="preserve"><value>📊 {0} 表现最佳 ({1:P1})，{2} 偏低 ({3:P1})</value></data>
+  <data name="F242" xml:space="preserve"><value>🔥 Top 报警：{0}</value></data>
+  <data name="F243" xml:space="preserve"><value>🔻 差班次：{0} @ {1}（OEE {2:P0}），</value></data>
 </root>

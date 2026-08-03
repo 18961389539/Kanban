@@ -1,5 +1,6 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows.Controls;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
@@ -16,13 +17,13 @@ public class IntegerRangeValidationRule : ValidationRule
     {
         var text = value as string;
         if (string.IsNullOrWhiteSpace(text))
-            return new ValidationResult(false, $"{FieldName}不能为空");
+            return new ValidationResult(false, string.Format(Strings.F025, FieldName));
 
         if (!int.TryParse(text, NumberStyles.Integer, cultureInfo, out var num))
-            return new ValidationResult(false, $"{FieldName}必须是整数");
+            return new ValidationResult(false, string.Format(Strings.F027, FieldName));
 
         if (num < MinValue || num > MaxValue)
-            return new ValidationResult(false, $"{FieldName}必须在 {MinValue}-{MaxValue} 之间");
+            return new ValidationResult(false, string.Format(Strings.F026, FieldName, MinValue, MaxValue));
 
         return ValidationResult.ValidResult;
     }
