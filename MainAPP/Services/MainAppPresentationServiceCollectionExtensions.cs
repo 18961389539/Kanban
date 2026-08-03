@@ -3,8 +3,6 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using MainAPP.Views;
@@ -40,7 +38,8 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<SystemResourceMonitor>(),
             sp.GetService<IPlcAddressCodecResolver>(),
             sp.GetService<IPlcRuntimeProfileProvider>(),
-            sp.GetService<KanbanDataClient>()));
+            sp.GetService<KanbanDataClient>(),
+            sp.GetRequiredService<IRuntimeMode>()));
         return services;
     }
 
@@ -51,7 +50,8 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<PlcConnectionManager>(),
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IPlcDataAcquisitionService>(),
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<WorkOrderRepository>(),
-            sp.GetRequiredService<IDialogService>(), sp.GetRequiredService<IWorkOrderService>()));
+            sp.GetRequiredService<IDialogService>(), sp.GetRequiredService<IWorkOrderService>(),
+            sp.GetRequiredService<IRuntimeMode>()));
         services.AddSingleton<ProductionLineViewModel>(sp => new ProductionLineViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>()));

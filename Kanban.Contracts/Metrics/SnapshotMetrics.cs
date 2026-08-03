@@ -1,0 +1,45 @@
+namespace Kanban.Contracts.Metrics;
+
+/// <summary>
+/// 快照展示换算的**全局唯一实现**（单源约定，与 OeeCalculator 同一思路）。
+/// WPF（HomeViewModel/ProductionLine 等）与 WASM（Home.razor）共用此静态类，
+/// 禁止在两端各自内联公式——改口径（如速度下限、占比算法）只需改这里。
+/// 全部方法为纯数值参数：两端从各自模型（DeviceRuntime / DeviceSnapshotDto）提取字段后调用。
+/// 注意：OEE 四率已在服务端 OeeCalculator 算好随快照下发，此处不重复实现。
+/// </summary>
+public static class SnapshotMetrics
+{
+    /// <summary>速度下限：运行时长短于此（秒）时不计算速度，避免启动瞬间产量/运行小时爆炸。</summary>
+    public const double MinRunTimeSecForSpeed = 5;
+
+    /// <summary>实时速度（件/小时）= 总产量 / 运行小时；运行时长过短归 0 防启动失真。</summary>
+    public static double RealtimeSpeed(double runTimeSeconds, int ok, int ng)
+        => runTimeSeconds >= MinRunTimeSecForSpeed ? (ok + ng) / (runTimeSeconds / 3600.0) : 0;
+
+    /// <summary>总产量（OK + NG）。</summary>
+    public static int TotalOutput(int ok, int ng) => ok + ng;
+
+    /// <summary>不良率（NG / 总产量）；总产量为 0 返回 0。</summary>
+    public static double NgRate(int ok, int ng)
+    {
+        var total = ok + ng;
+        return total > 0 ? (double)ng / total : 0;
+    }
+
+    /// <summary>
+    /// 时长占比 = value / (运行+报警+暂停)；总时长为 0 返回 0。返回 0~1 比率（调用端自行乘 100 或格式化）。
+    /// </summary>
+    public static double TimeRatio(double value, double runTime, double alarmTime, double pausedTime)
+    {
+        var total = runTime + alarmTime + pausedTime;
+        return total > 0 ? value / total : 0;
+    }
+
+    /// <summary>节拍（秒/件）= 3600 / 每小时件数；速度≤0 返回 0（UI 显示"—"）。</summary>
+    public static double CycleSeconds(double perHour)
+        => perHour > 0 ? 3600.0 / perHour : 0;
+
+    /// <summary>速度达成率 = 实际速度 / 目标节拍，Clamp[0,1]；目标≤0 返回 0。</summary>
+    public static double AchievementRate(double actualPerHour, double targetPerHour)
+        => targetPerHour > 0 ? Math.Clamp(actualPerHour / targetPerHour, 0, 1) : 0;
+}

@@ -279,6 +279,7 @@
     }
 
     // ──────────── 展示辅助（纯快照数据换算，无本地计算；颜色走 CSS 语义类） ────────────
+    // 换算公式单源：Kanban.Contracts.Metrics.SnapshotMetrics（与 WPF HomeViewModel 共用，禁止内联重复）
 
     private (string Text, string Class) Status
         => SelectedSnapshot?.Status switch
@@ -375,32 +376,34 @@
             : $"{ts.Minutes}m {ts.Seconds}s";
     }
 
-    private double TotalOutput => SelectedSnapshot is null ? 0 : SelectedSnapshot.TotalOkProduction + SelectedSnapshot.TotalNgProduction;
+    private double TotalOutput => SelectedSnapshot is null ? 0
+        : SnapshotMetrics.TotalOutput(SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
 
-    /// <summary>实时速度（件/小时）= 总产量 / 运行小时；运行时长过短（&lt;5s）返回 0 避免启动失真（口径与 WPF HomeViewModel 一致）。</summary>
+    /// <summary>实时速度（件/小时）= 总产量 / 运行小时（口径见 SnapshotMetrics，与 WPF 共用）。</summary>
     private double RealtimeSpeed
-        => SelectedSnapshot is { RunTime: >= 5 } s ? (s.TotalOkProduction + s.TotalNgProduction) / (s.RunTime / 3600.0) : 0;
+        => SelectedSnapshot is null ? 0
+            : SnapshotMetrics.RealtimeSpeed(SelectedSnapshot.RunTime, SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
 
     private string RealtimeSpeedText => RealtimeSpeed > 0 ? RealtimeSpeed.ToString("N0") : "—";
     private string TotalOutputText => TotalOutput.ToString("N0");
-    private string TargetCycleText => SelectedSnapshot is { TargetCycle: > 0 } ? $"{(3600.0 / SelectedSnapshot.TargetCycle):F2}s" : "—";
-    private string ActualCycleText => RealtimeSpeed > 0 ? $"{(3600.0 / RealtimeSpeed):F2}s" : "—";
-    private double NgRate => TotalOutput > 0 ? (double)SelectedSnapshot!.TotalNgProduction / TotalOutput : 0;
+    private string TargetCycleText => SelectedSnapshot is { TargetCycle: > 0 } ? $"{SnapshotMetrics.CycleSeconds(SelectedSnapshot.TargetCycle):F2}s" : "—";
+    private string ActualCycleText => RealtimeSpeed > 0 ? $"{SnapshotMetrics.CycleSeconds(RealtimeSpeed):F2}s" : "—";
+    private double NgRate => SelectedSnapshot is null ? 0
+        : SnapshotMetrics.NgRate(SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
     private string NgRateText => TotalOutput > 0 ? $"{NgRate:P1}" : "—";
-    private double SpeedAchievementRate => SelectedSnapshot is { TargetCycle: > 0 } ? Math.Clamp(RealtimeSpeed / SelectedSnapshot.TargetCycle, 0, 1) : 0;
+    private double SpeedAchievementRate => SelectedSnapshot is { TargetCycle: > 0 }
+        ? SnapshotMetrics.AchievementRate(RealtimeSpeed, SelectedSnapshot.TargetCycle) : 0;
     private string SpeedAchievementRateText => $"{SpeedAchievementRate:P0}";
 
-    private double RunRatio => RatioOf(SelectedSnapshot?.RunTime ?? 0, SelectedSnapshot);
-    private double AlarmRatio => RatioOf(SelectedSnapshot?.AlarmTime ?? 0, SelectedSnapshot);
-    private double PauseRatio => RatioOf(SelectedSnapshot?.PausedTime ?? 0, SelectedSnapshot);
+    private double RunRatio => RatioPercentOf(SelectedSnapshot?.RunTime ?? 0, SelectedSnapshot);
+    private double AlarmRatio => RatioPercentOf(SelectedSnapshot?.AlarmTime ?? 0, SelectedSnapshot);
+    private double PauseRatio => RatioPercentOf(SelectedSnapshot?.PausedTime ?? 0, SelectedSnapshot);
     private double OkRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalOkProduction / TotalOutput : 0;
     private double NgRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalNgProduction / TotalOutput : 0;
 
-    private static double RatioOf(double value, DeviceSnapshotDto? s)
-    {
-        var total = (s?.RunTime ?? 0) + (s?.AlarmTime ?? 0) + (s?.PausedTime ?? 0);
-        return total > 0 ? Math.Clamp(100.0 * value / total, 0, 100) : 0;
-    }
+    /// <summary>时长占比（百分比，0~100）；口径见 SnapshotMetrics.TimeRatio。</summary>
+    private static double RatioPercentOf(double value, DeviceSnapshotDto? s)
+        => 100.0 * SnapshotMetrics.TimeRatio(value, s?.RunTime ?? 0, s?.AlarmTime ?? 0, s?.PausedTime ?? 0);
 
     private static string LevelClass(AlarmLevel level) => level switch
     {

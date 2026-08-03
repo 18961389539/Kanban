@@ -11,6 +11,7 @@ using MainAPP.Models;
 using MainAPP.Helpers;
 using Kanban.Core.Services;
 using MainAPP.Services;
+using Kanban.Contracts.Metrics;
 using OxyPlot;
 
 namespace MainAPP.ViewModels;
@@ -22,12 +23,13 @@ namespace MainAPP.ViewModels;
 /// </summary>
 public partial class HomeViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
-    private readonly DeviceRepository _deviceRepository;
-    private readonly PlcConnectionManager _connectionManager;
+    private readonly IDeviceRepository _deviceRepository;
+    private readonly IPlcConnectionManager _connectionManager;
     private readonly AppSettings _appSettings;
+    private readonly IRuntimeMode _runtimeMode;
     private readonly IPlcDataAcquisitionService _plcService;
     private readonly IDeviceSelectionService _selection;
-    private readonly WorkOrderRepository? _workOrderRepo;
+    private readonly IWorkOrderRepository? _workOrderRepo;
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
     private readonly DispatcherTimer _liveTimer;
@@ -234,12 +236,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _pausedTimeFormatted = "";
     [ObservableProperty] private PlotModel? _statusPieChart;
 
-    /// <summary>运行时长占比 = RunTime / (Run+Alarm+Paused)。总时长为 0 时返回 0。</summary>
-    public double RunTimeRatio => (RunTime + AlarmTime + PausedTime) > 0 ? RunTime / (RunTime + AlarmTime + PausedTime) : 0;
+    /// <summary>运行时长占比 = RunTime / (Run+Alarm+Paused)。总时长为 0 时返回 0。口径见 SnapshotMetrics。</summary>
+    public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTime, RunTime, AlarmTime, PausedTime);
     /// <summary>报警时长占比</summary>
-    public double AlarmTimeRatio => (RunTime + AlarmTime + PausedTime) > 0 ? AlarmTime / (RunTime + AlarmTime + PausedTime) : 0;
+    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(AlarmTime, RunTime, AlarmTime, PausedTime);
     /// <summary>待机时长占比</summary>
-    public double PausedTimeRatio => (RunTime + AlarmTime + PausedTime) > 0 ? PausedTime / (RunTime + AlarmTime + PausedTime) : 0;
+    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(PausedTime, RunTime, AlarmTime, PausedTime);
 
     /// <summary>状态总时长（运行+报警+暂停）格式化文本，用于状态饼图中心叠加显示。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
@@ -269,7 +271,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusText => DataStatusKind switch
     {
-        "Disconnected" => _appSettings.DataMode == KanbanDataMode.Remote ? "服务断开" : "PLC断开",
+        "Disconnected" => _runtimeMode.IsRemote ? "服务断开" : "PLC断开",
         "NoData" => "无数据",
         "Live" => "实时",
         _ => "未选择设备",
@@ -277,7 +279,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusTooltip => DataStatusKind switch
     {
-        "Disconnected" => _appSettings.DataMode == KanbanDataMode.Remote
+        "Disconnected" => _runtimeMode.IsRemote
             ? "采集服务当前未连接，主页指标不代表实时数据"
             : "PLC 当前未连接，主页指标不代表实时数据",
         "NoData" => "当前设备暂无运行时数据",
@@ -302,7 +304,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>
     /// PLC 连接管理器：暴露给 UI 绑定连接状态指示器
     /// </summary>
-    public PlcConnectionManager ConnectionManager => _connectionManager;
+    public IPlcConnectionManager ConnectionManager => _connectionManager;
 
     // ──────────── 实时故障：静音 + 级别筛选 ────────────
 
@@ -331,20 +333,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public int FilteredAlarmCount => ActiveAlarms.Count(a => IsLevelVisible(a.Level));
 
     /// <summary>
-    /// 总产量 = OK + NG（会话累计，用于当前生产状态卡片）。
+    /// 总产量 = OK + NG（会话累计，用于当前生产状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
     /// </summary>
-    public int TotalOutput => TotalOkProduction + TotalNgProduction;
+    public int TotalOutput => SnapshotMetrics.TotalOutput(TotalOkProduction, TotalNgProduction);
 
     /// <summary>
-    /// 不良率 = NG / 总产量。无产量时返回 0，用于合格率卡片高密度展示。
+    /// 不良率 = NG / 总产量。无产量时返回 0，用于合格率卡片高密度展示。口径见 SnapshotMetrics。
     /// </summary>
-    public double NgRate => TotalOutput > 0 ? (double)TotalNgProduction / TotalOutput : 0;
+    public double NgRate => SnapshotMetrics.NgRate(TotalOkProduction, TotalNgProduction);
 
     /// <summary>
     /// 实际节拍（秒/件）= 3600 / 当前速度。速度为 0 时返回 0，UI 显示 "—"。
-    /// 与目标节拍对比，直观反映当前快慢。
+    /// 与目标节拍对比，直观反映当前快慢。口径见 SnapshotMetrics。
     /// </summary>
-    public double ActualCycleSec => RealtimeSpeed > 0 ? 3600.0 / RealtimeSpeed : 0;
+    public double ActualCycleSec => SnapshotMetrics.CycleSeconds(RealtimeSpeed);
 
     /// <summary>
     /// 实际节拍与目标节拍的差值文本：无数据返回空，达标返回"● 达标"，
@@ -364,7 +366,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(DeviceRepository deviceRepo, PlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, WorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -374,6 +376,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _workOrderRepo = workOrderRepo;
         _dialog = dialog;
         _workOrderService = workOrderService;
+        _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
 
         RefreshDeviceFilterItems();
         // 使用命名方法而非 lambda，确保 Dispose 时能正确取消订阅（lambda 每次创建新委托实例，-= 不生效）
@@ -449,12 +452,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 对话框确认后通过 Repository 落库并刷新 CurrentWorkOrder。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanEditWorkOrder))]
-    private void EditWorkOrder()
+    private async Task EditWorkOrderAsync()
     {
-        if (_workOrderRepo == null || _dialog == null) return;
+        if (_workOrderRepo == null || _dialog == null || _workOrderService == null) return;
         var saved = CurrentWorkOrder == null
-            ? _workOrderService?.AddWorkOrder()
-            : _workOrderService?.EditWorkOrder(CurrentWorkOrder);
+            ? await _workOrderService.AddWorkOrderAsync()
+            : await _workOrderService.EditWorkOrderAsync(CurrentWorkOrder);
         if (saved == null) return;
         RefreshCurrentWorkOrder();
     }
@@ -548,12 +551,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         // - 与 OEE 性能率口径一致：性能率 = 实际产量 / (目标节拍 × RunTime)
         // - 运行时长 RunTime 只在设备运行状态时累计，报警/待机期间不增加
         // - 这样报警/待机时速度保持不变（产量和运行时长都不变），避免归零
-        // - RunTime 下限保护：运行时长过短时（如 <5s）算出的速度会异常大（3600 件/h），
-        //   启动初期短暂几秒显示 0，避免数值失真
-        const double MinRunTimeSecForSpeed = 5.0;
-        RealtimeSpeed = rt.RunTime >= MinRunTimeSecForSpeed
-            ? (rt.TotalOkProduction + rt.TotalNgProduction) / (rt.RunTime / 3600.0)
-            : 0;
+        // - RunTime 下限保护见 SnapshotMetrics（<5s 返回 0，避免启动失真）——与 WASM 端共用同一实现
+        RealtimeSpeed = SnapshotMetrics.RealtimeSpeed(rt.RunTime, rt.TotalOkProduction, rt.TotalNgProduction);
 
         var now = DateTime.Now;
         ApplyRuntime(rt, CurrentDevice);
@@ -672,13 +671,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         TotalOkProduction = rt.TotalOkProduction;
         TotalNgProduction = rt.TotalNgProduction;
         RealtimeStatus = rt.StatusWord;
-        TargetCycleSec = dev != null && dev.TargetCycle > 0 ? 3600.0 / dev.TargetCycle : 0;
+        TargetCycleSec = SnapshotMetrics.CycleSeconds(dev?.TargetCycle ?? 0);
         if (dev != null) TargetSpeed = dev.TargetCycle;
         // 配方信息同步（设备状态卡显示当前生产型号）
         RecipeName = dev?.RecipeName ?? "";
         RecipeValue = dev?.RecipeValue ?? 0;
         // 限制在 [0,1] 避免超速或节拍过保守时显示 > 100%（ProgressBar Maximum=1）
-        SpeedAchievementRate = TargetSpeed > 0 ? Math.Clamp(RealtimeSpeed / TargetSpeed, 0, 1) : 0;
+        SpeedAchievementRate = SnapshotMetrics.AchievementRate(RealtimeSpeed, TargetSpeed);
         RunTimeFormatted = FormatHelper.FormatDuration(rt.RunTime);
         AlarmTimeFormatted = FormatHelper.FormatDuration(rt.AlarmTime);
         PausedTimeFormatted = FormatHelper.FormatDuration(rt.PausedTime);

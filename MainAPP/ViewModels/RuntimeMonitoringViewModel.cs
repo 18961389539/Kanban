@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -45,10 +45,11 @@ public sealed partial class DeviceAcquisitionStatusItem : ObservableObject
 /// </summary>
 public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationPageLifecycle, IDisposable
 {
-    private readonly PlcConnectionManager _connectionManager;
-    private readonly PlcDataAcquisitionService _acquisitionService;
+    private readonly IPlcConnectionManager _connectionManager;
+    private readonly IPlcDataAcquisitionService _acquisitionService;
     private readonly AppSettings _appSettings;
-    private readonly DeviceRepository _deviceRepository;
+    private readonly IRuntimeMode _runtimeMode;
+    private readonly IDeviceRepository _deviceRepository;
     private readonly HistoryService _historyService;
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
@@ -134,15 +135,16 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public bool HasActiveFailure => !LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage);
 
     public RuntimeMonitoringViewModel(
-        PlcConnectionManager connectionManager,
-        PlcDataAcquisitionService acquisitionService,
+        IPlcConnectionManager connectionManager,
+        IPlcDataAcquisitionService acquisitionService,
         AppSettings appSettings,
-        DeviceRepository deviceRepository,
+        IDeviceRepository deviceRepository,
         HistoryService historyService,
         SystemResourceMonitor systemResourceMonitor,
         IPlcAddressCodecResolver? addressCodecResolver = null,
         IPlcRuntimeProfileProvider? profileProvider = null,
-        KanbanDataClient? remoteClient = null)
+        KanbanDataClient? remoteClient = null,
+        IRuntimeMode? runtimeMode = null)
     {
         _connectionManager = connectionManager;
         _acquisitionService = acquisitionService;
@@ -153,6 +155,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
         _remoteClient = remoteClient;
+        _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _pollingTrendSeries = (LineSeries)_pollingTrend.Series[0];
         _refreshTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -174,7 +177,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private void Refresh()
     {
         // Remote 模式：采集/历史诊断在 Collector 进程，从 SignalR 拉取
-        if (_remoteClient is not null && _appSettings.DataMode == KanbanDataMode.Remote)
+        if (_remoteClient is not null && _runtimeMode.IsRemote)
         {
             RefreshFromRemote();
             return;

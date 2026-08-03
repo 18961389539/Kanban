@@ -127,70 +127,11 @@ public partial class App : Application
             Log("Host.StartAsync 完成");
             var startupCoordinator = _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>();
 
-            // 加载轻量配置 + 设备数据（均在本线程，避免跨线程修改绑定的 ObservableCollection）
-            var appSettings = _host.Services.GetRequiredService<AppSettings>();
-            appSettings.Load();
-            Log("AppSettings.Load 完成");
-            // 大屏远距可读性：按保存的字号缩放（默认 100%）应用全局语义字号资源。
-            // 必须在 MainWindow.Show 之前应用，避免首帧字号跳变。
-            FontSizeManager.ApplyScale(appSettings.UiScale);
-            Log($"全局字号缩放应用完成 (UiScale={appSettings.UiScale})");
-            // 加载产量基线（原寄居 AppSettings，现归位于 ProductionBaselineStore）
-            var baselineStore = _host.Services.GetRequiredService<ProductionBaselineStore>();
-            baselineStore.Load();
-            Log("ProductionBaselineStore.Load 完成");
-
-            // 启动时验证配置完整性：在 PLC 连接/采集启动前拦截非法配置，
-            // 避免 0 轮询间隔触发 CPU 满载、非法 IP 触发长连接超时、空班次触发误清零等问题。
-            // 验证失败时仅弹警告并继续启动（用户仍可进入设置页修改），不阻断启动。
-            var configErrors = appSettings.Validate();
-            if (configErrors.Count > 0)
-            {
-                Log($"配置验证发现 {configErrors.Count} 个错误");
-                HandyControl.Controls.MessageBox.Show(
-                    "配置文件存在以下问题，部分功能可能不可用：\n\n" + string.Join("\n", configErrors) +
-                    "\n\n建议进入「设置」页修改后保存。",
-                    "配置验证警告",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
-
-            var deviceRepo = _host.Services.GetRequiredService<DeviceRepository>();
-            deviceRepo.LoadAll();
-            Log("DeviceRepository.LoadAll 完成");
-
-            // 文件损坏时通知用户（原文件已备份为 devices.json.corrupt）
-            if (!string.IsNullOrEmpty(deviceRepo.LoadErrorMessage))
-            {
-                // 启动早期（MainWindow 尚未 Show，Growl 容器不存在），使用 HC MessageBox 获得深色主题样式
-                HandyControl.Controls.MessageBox.Show(
-                    deviceRepo.LoadErrorMessage, "配置文件损坏",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                Log($"DeviceRepository.LoadAll 警告: {deviceRepo.LoadErrorMessage}");
-            }
-
-            // CollectionView 在 ViewModel 构造时订阅空集合，LoadAll 后需手动刷新
-            _host.Services.GetRequiredService<ViewModels.DeviceManagerViewModel>().RefreshDeviceList();
-            Log("DeviceList 刷新完成");
-
-            // 数据库表结构初始化：必须在 MainWindow.Show() 之前完成，
-            // 否则 ViewModel 在 Loaded/Dispatcher.BeginInvoke 中立即查询会命中空库，
-            // 抛出 "no such table: AlarmEvents/StatusTransitions/ProductionLogs"。
-            // 不使用 EnsureDeleted（会清空历史数据），启动时通过 EF Core Migrate 增量更新 schema。
-            var dbProvider = _host.Services.GetRequiredService<Kanban.Core.Data.DatabaseProvider>();
-            dbProvider.EnsureCreatedAll();
-            dbProvider.EnsureWalModeEnabled();
-            Log("四库 EF Core Migrate + WAL 完成 (Show 前)");
-
-            // 工单仓储启动期加载：在 EnsureCreatedAll 之后（schema 已就绪）
-            var workOrderRepo = _host.Services.GetRequiredService<Kanban.Core.Data.WorkOrderRepository>();
-            workOrderRepo.LoadAll();
-            Log("WorkOrderRepository.LoadAll 完成");
-
-            // 获取 MainWindow（DI 会传递构造 MainWindowViewModel → 各子 ViewModel →
-            // PlcConnectionManager/PlcDataAcquisitionService/HistoryService，含 HslCommunication 与 EF Core 首次 JIT）
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            Log("MainWindow 实例获取完成 (含 ViewModel 树 + 重型服务 JIT)");
+            // 业务初始化（配置加载、字号、基线、设备仓储、数据库迁移、工单加载、MainWindow 实例化）
+            // 统一委托给 ApplicationStartupCoordinator.PrepareAsync。
+            // App.xaml.cs 只负责 WPF 生命周期与授权流程；PrepareAsync 内部按顺序约束执行，
+            // 并在每步更新 ApplicationRuntime 状态供 UI 绑定，避免状态机不同步。
+            var mainWindow = await startupCoordinator.PrepareAsync();
             mainWindow.Show();
             Log("MainWindow.Show 调用完成 (窗口已可见，但首帧尚未渲染)");
 
@@ -270,10 +211,8 @@ public partial class App : Application
         {
             // 退出全程用 try/catch/finally 保护：任何步骤抛异常都不能阻断 base.OnExit 与互斥锁释放，
             // 否则 Host 托管资源泄漏、互斥锁残留导致下次启动误判为"已存在实例"。
-            var dataMode = _host.Services.GetRequiredService<AppSettings>().DataMode;
-
             // Remote 模式：释放 Collector 连接，不执行本地采集停止（本地采集未启动）
-            if (dataMode == KanbanDataMode.Remote)
+            if (_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
             {
                 try
                 {

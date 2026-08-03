@@ -32,8 +32,12 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<ProductionBaselineStore>();
         services.AddSingleton<DatabaseProvider>();
         services.AddSingleton<DeviceRepository>();
+        services.AddSingleton<IDeviceRepository>(sp => sp.GetRequiredService<DeviceRepository>());
         services.AddSingleton<WorkOrderRepository>();
+        services.AddSingleton<IWorkOrderRepository>(sp => sp.GetRequiredService<WorkOrderRepository>());
         services.AddSingleton<DefectHistoryStore>();
+        // 运行模式判定（Local/Remote 统一入口，避免散落 DataMode 判断）
+        services.AddSingleton<IRuntimeMode, RuntimeMode>();
 
         // ──────────── PLC 驱动 / 连接 / 采集 ────────────
         services.AddSingleton<ISharedPlcDriverFactory, HslSharedPlcDriverFactory>();
@@ -42,6 +46,7 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<SharedPlcDriverRouter>();
         services.AddSingleton<IPlcDriver>(sp => sp.GetRequiredService<SharedPlcDriverRouter>());
         services.AddSingleton<PlcConnectionManager>();
+        services.AddSingleton<IPlcConnectionManager>(sp => sp.GetRequiredService<PlcConnectionManager>());
         services.AddSingleton<IDeviceAdapter, PlcDeviceAdapter>();
         services.AddSingleton<IDeviceAdapterResolver, DeviceAdapterResolver>();
         services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();

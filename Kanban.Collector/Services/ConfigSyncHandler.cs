@@ -2,13 +2,9 @@ using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Models;
-using Kanban.Core.Entities;
+using Kanban.Core.Mapping;
 using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
-using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
-using DefectSeverity = Kanban.Contracts.Enums.DefectSeverity;
-using DefectCategory = Kanban.Contracts.Enums.DefectCategory;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 
 namespace Kanban.Collector.Services;
@@ -42,7 +38,7 @@ public sealed class ConfigSyncHandler
     {
         try
         {
-            var entities = devices.Select(ToDevice).ToList();
+            var entities = devices.Select(DeviceMapper.ToEntity).ToList();
             // 替换前记录旧设备 Id，替换后计算差集裁剪
             var oldIds = _deviceRepository.GetDevicesSnapshot().Select(d => d.Id).ToHashSet();
             _deviceRepository.ReplaceAll(entities);
@@ -68,7 +64,7 @@ public sealed class ConfigSyncHandler
         try
         {
             var devices = _deviceRepository.GetDevicesSnapshot();
-            return Task.FromResult<IReadOnlyList<DeviceConfigDto>>(devices.Select(ToDto).ToList());
+            return Task.FromResult<IReadOnlyList<DeviceConfigDto>>(DeviceMapper.ToDtos(devices).ToList());
         }
         catch (Exception ex)
         {
@@ -82,11 +78,11 @@ public sealed class ConfigSyncHandler
     {
         try
         {
-            var entity = ToWorkOrder(dto);
+            var entity = WorkOrderMapper.ToEntity(dto);
             var saved = _workOrderRepository.Upsert(entity);
             _logger.LogInformation("Remote 工单落库 Id={Id} OrderNo={OrderNo} Status={Status}",
                 saved.Id, saved.OrderNo, saved.Status);
-            return Task.FromResult(ToDto(saved));
+            return Task.FromResult(WorkOrderMapper.ToDto(saved));
         }
         catch (Exception ex)
         {
@@ -121,7 +117,7 @@ public sealed class ConfigSyncHandler
         {
             var running = _workOrderRepository.GetRunningByDevice(deviceId);
             var workOrder = running ?? _workOrderRepository.GetLatestPendingByDevice(deviceId);
-            return Task.FromResult(workOrder is null ? null : ToDto(workOrder));
+            return Task.FromResult(workOrder is null ? null : WorkOrderMapper.ToDto(workOrder));
         }
         catch (Exception ex)
         {
@@ -169,7 +165,7 @@ public sealed class ConfigSyncHandler
                 result.Add(new DeviceWorkOrderDto
                 {
                     DeviceId = device.Id,
-                    WorkOrder = workOrder is null ? null : ToDto(workOrder),
+                    WorkOrder = workOrder is null ? null : WorkOrderMapper.ToDto(workOrder),
                 });
             }
             return result;
@@ -180,147 +176,5 @@ public sealed class ConfigSyncHandler
             return [];
         }
     }
-
-    // ──────────── DTO → 实体 ────────────
-
-    private static Device ToDevice(DeviceConfigDto dto)
-    {
-        var device = new Device
-        {
-            Id = dto.Id,
-            Name = dto.Name,
-            OkCountAddress = dto.OkCountAddress,
-            NgCountAddress = dto.NgCountAddress,
-            StatusCountAddress = dto.StatusCountAddress,
-            ProductionResetAddress = dto.ProductionResetAddress,
-            RecipeName = dto.RecipeName,
-            RecipeValue = dto.RecipeValue,
-            RecipeAddress = dto.RecipeAddress,
-            TargetCycle = dto.TargetCycle,
-        };
-        foreach (var a in dto.Alarms)
-        {
-            device.Alarms.Add(new Alarm
-            {
-                Id = a.Id,
-                DeviceId = a.DeviceId,
-                Name = a.Name,
-                PlcAddress = a.PlcAddress,
-                Description = a.Description,
-                Level = (Kanban.Core.Models.AlarmLevel)a.Level,
-            });
-        }
-        foreach (var d in dto.Defects)
-        {
-            device.Defects.Add(new Defect
-            {
-                Id = d.Id,
-                DeviceId = d.DeviceId,
-                Name = d.Name,
-                PlcAddress = d.PlcAddress,
-                Severity = (Kanban.Core.Models.DefectSeverity)d.Severity,
-                Category = (Kanban.Core.Models.DefectCategory)d.Category,
-            });
-        }
-        foreach (var c in dto.CountAlarms)
-        {
-            device.CountAlarms.Add(new CountAlarm
-            {
-                Id = c.Id,
-                DeviceId = c.DeviceId,
-                Name = c.Name,
-                PlcAddress = c.PlcAddress,
-                MaxValue = c.MaxValue,
-                Enabled = c.Enabled,
-                Description = c.Description,
-                Unit = c.Unit,
-            });
-        }
-        return device;
-    }
-
-    private static WorkOrder ToWorkOrder(WorkOrderDto dto) => new()
-    {
-        Id = dto.Id,
-        OrderNo = dto.OrderNo,
-        ProductCode = dto.ProductCode,
-        ProductName = dto.ProductName,
-        DeviceId = dto.DeviceId,
-        DeviceName = dto.DeviceName,
-        TargetQuantity = dto.TargetQuantity,
-        PlannedStart = dto.PlannedStart,
-        PlannedEnd = dto.PlannedEnd,
-        Status = (Kanban.Core.Entities.WorkOrderStatus)dto.Status,
-        CompletedOkCount = dto.CompletedOkCount,
-        CompletedNgCount = dto.CompletedNgCount,
-        Remark = dto.Remark,
-        CreatedAt = dto.CreatedAt,
-        UpdatedAt = dto.UpdatedAt,
-    };
-
-    // ──────────── 实体 → DTO ────────────
-
-    private static WorkOrderDto ToDto(WorkOrder e) => new()
-    {
-        Id = e.Id,
-        OrderNo = e.OrderNo,
-        ProductCode = e.ProductCode,
-        ProductName = e.ProductName,
-        DeviceId = e.DeviceId,
-        DeviceName = e.DeviceName,
-        TargetQuantity = e.TargetQuantity,
-        PlannedStart = e.PlannedStart,
-        PlannedEnd = e.PlannedEnd,
-        Status = (WorkOrderStatus)e.Status,
-        CompletedOkCount = e.CompletedOkCount,
-        CompletedNgCount = e.CompletedNgCount,
-        Remark = e.Remark,
-        CreatedAt = e.CreatedAt,
-        UpdatedAt = e.UpdatedAt,
-    };
-
-    // ──────────── 实体 → DTO ────────────
-
-    private static DeviceConfigDto ToDto(Device device) => new()
-    {
-        Id = device.Id,
-        Name = device.Name,
-        OkCountAddress = device.OkCountAddress,
-        NgCountAddress = device.NgCountAddress,
-        StatusCountAddress = device.StatusCountAddress,
-        ProductionResetAddress = device.ProductionResetAddress,
-        RecipeName = device.RecipeName,
-        RecipeValue = device.RecipeValue,
-        RecipeAddress = device.RecipeAddress,
-        TargetCycle = device.TargetCycle,
-        Alarms = device.Alarms.Select(a => new AlarmConfigDto
-        {
-            Id = a.Id,
-            DeviceId = a.DeviceId,
-            Name = a.Name,
-            PlcAddress = a.PlcAddress,
-            Description = a.Description,
-            Level = (AlarmLevel)a.Level,
-        }).ToList(),
-        Defects = device.Defects.Select(d => new DefectConfigDto
-        {
-            Id = d.Id,
-            DeviceId = d.DeviceId,
-            Name = d.Name,
-            PlcAddress = d.PlcAddress,
-            Severity = (DefectSeverity)d.Severity,
-            Category = (DefectCategory)d.Category,
-        }).ToList(),
-        CountAlarms = device.CountAlarms.Select(c => new CountAlarmConfigDto
-        {
-            Id = c.Id,
-            DeviceId = c.DeviceId,
-            Name = c.Name,
-            PlcAddress = c.PlcAddress,
-            MaxValue = c.MaxValue,
-            Enabled = c.Enabled,
-            Description = c.Description,
-            Unit = c.Unit,
-        }).ToList(),
-    };
 }
+

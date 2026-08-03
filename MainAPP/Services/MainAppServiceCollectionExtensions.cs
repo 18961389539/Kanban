@@ -1,8 +1,7 @@
-﻿using Kanban.Client;
+using Kanban.Client;
 using Kanban.Core.Data;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
-using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using Kanban.Core.DependencyInjection;
 using Kanban.Core.Mapping;
@@ -62,7 +61,11 @@ public static class MainAppServiceCollectionExtensions
             sp.GetRequiredService<ILogger<KanbanDataClient>>()));
         services.AddSingleton<RemoteRuntimeSink>();
         // 历史查询路由代理：Local 委托 HistoryService（SQLite），Remote 走 SignalR。
-        // 覆盖 IHistoryService / IHistoryQueryExecutor / 各历史域接口，ViewModel 无需改动。
+        // ⚠️ 刻意行为：以下 6 个接口**无条件**重定向到 RemoteHistoryQueryService（后注册覆盖
+        // AddKanbanDataServices 中的本地实现，依赖 MS DI"后注册胜出"语义）。
+        // 代理内部按 IRuntimeMode.IsRemote 分派：Local → 本地 HistoryService；Remote → SignalR 查询。
+        // 因此本地实现（HistoryService/ProductionHistoryStore/AlarmHistoryStore 等）仍须保留注册，
+        // 作为代理的依赖（Local 分派目标）。新增历史接口时须在此同步重定向。
         services.AddSingleton<RemoteHistoryQueryService>();
         services.AddSingleton<IHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
         services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());

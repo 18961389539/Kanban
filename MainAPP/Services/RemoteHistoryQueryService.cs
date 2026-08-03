@@ -5,8 +5,6 @@ using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
@@ -31,24 +29,24 @@ public sealed class RemoteHistoryQueryService :
     private readonly HistoryService _local;
     private readonly DefectHistoryStore _localDefectStore;
     private readonly KanbanDataClient _client;
-    private readonly AppSettings _settings;
+    private readonly IRuntimeMode _runtimeMode;
     private readonly ILogger<RemoteHistoryQueryService> _logger;
 
     public RemoteHistoryQueryService(
         HistoryService local,
         DefectHistoryStore localDefectStore,
         KanbanDataClient client,
-        AppSettings settings,
+        IRuntimeMode runtimeMode,
         ILogger<RemoteHistoryQueryService> logger)
     {
         _local = local;
         _localDefectStore = localDefectStore;
         _client = client;
-        _settings = settings;
+        _runtimeMode = runtimeMode;
         _logger = logger;
     }
 
-    private bool IsRemote => _settings.DataMode == KanbanDataMode.Remote;
+    private bool IsRemote => _runtimeMode.IsRemote;
 
     // ──────────── IProductionHistoryReader ────────────
 
@@ -231,8 +229,10 @@ public sealed class RemoteHistoryQueryService :
 
     private List<T> InvokeAndMap<T>(HistoryQueryRequest request)
     {
-        // SignalR InvokeAsync 是异步的；EF 查询在服务端同步执行，这里等待即可
-        var response = _client.QueryHistoryAsync(request).GetAwaiter().GetResult();
+        // SignalR InvokeAsync 是真正异步的；直接 .GetAwaiter().GetResult() 在 UI 线程会死锁
+        // （QueryHistoryAsync 的 await 会尝试回到 UI SynchronizationContext，但 UI 线程被阻塞）。
+        // Task.Run 转入线程池执行，无 SynchronizationContext 回跳，避免死锁。
+        var response = Task.Run(() => _client.QueryHistoryAsync(request)).GetAwaiter().GetResult();
         return MapDtos<T>(response);
     }
 
