@@ -2,11 +2,12 @@ using System.Globalization;
 using System.Windows.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
 /// <summary>
-/// 报警级别转中文文本：High=高, Medium=中, Low=低。用于列表项右侧级别徽标。
+/// 报警级别转文本：High=高, Medium=中, Low=低（文案走多语言资源）。用于列表项右侧级别徽标。
 /// </summary>
 public class AlarmLevelToTextConverter : IValueConverter
 {
@@ -16,9 +17,9 @@ public class AlarmLevelToTextConverter : IValueConverter
         {
             return level switch
             {
-                AlarmLevel.High => "高",
-                AlarmLevel.Medium => "中",
-                AlarmLevel.Low => "低",
+                AlarmLevel.High => Strings.Level_High,
+                AlarmLevel.Medium => Strings.Level_Medium,
+                AlarmLevel.Low => Strings.Level_Low,
                 _ => string.Empty,
             };
         }

@@ -4,6 +4,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
@@ -28,10 +29,10 @@ public class DeviceRuntimeStatusConverter : IMultiValueConverter
         {
             return status switch
             {
-                (int)DeviceStatus.Running => "运行",
-                (int)DeviceStatus.Alarm => "报警",
-                (int)DeviceStatus.Paused => "待机",
-                _ => "初始",
+                (int)DeviceStatus.Running => Strings.Status_Running,
+                (int)DeviceStatus.Alarm => Strings.Status_Alarm,
+                (int)DeviceStatus.Paused => Strings.Status_Paused,
+                _ => Strings.Status_Initial,
             };
         }
 

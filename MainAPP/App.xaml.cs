@@ -127,6 +127,12 @@ public partial class App : Application
             Log("Host.StartAsync 完成");
             var startupCoordinator = _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>();
 
+            // 界面语言应用（多语言：中文/英文/日文，默认中文；设置页切换后重启生效）。
+            // 必须在 MainWindow 实例化之前应用，否则 UI 文案已按默认文化渲染。
+            var appSettings = _host.Services.GetRequiredService<AppSettings>();
+            Services.Localization.Apply(appSettings.Language);
+            Log($"界面语言已应用：{appSettings.Language}");
+
             // 业务初始化（配置加载、字号、基线、设备仓储、数据库迁移、工单加载、MainWindow 实例化）
             // 统一委托给 ApplicationStartupCoordinator.PrepareAsync。
             // App.xaml.cs 只负责 WPF 生命周期与授权流程；PrepareAsync 内部按顺序约束执行，

@@ -2,11 +2,12 @@ using System.Globalization;
 using System.Windows.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
 /// <summary>
-/// 缺陷严重度转中文文本：Critical=严重, Major=一般, Minor=轻微。用于列表项右侧级别徽标。
+/// 缺陷严重度转文本：Critical=严重, Major=一般, Minor=轻微（文案走多语言资源）。用于列表项右侧级别徽标。
 /// </summary>
 public class DefectSeverityToTextConverter : IValueConverter
 {
@@ -16,9 +17,9 @@ public class DefectSeverityToTextConverter : IValueConverter
         {
             return severity switch
             {
-                DefectSeverity.Critical => "严重",
-                DefectSeverity.Major => "一般",
-                DefectSeverity.Minor => "轻微",
+                DefectSeverity.Critical => Strings.Severity_Critical,
+                DefectSeverity.Major => Strings.Severity_Major,
+                DefectSeverity.Minor => Strings.Severity_Minor,
                 _ => string.Empty,
             };
         }

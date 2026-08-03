@@ -2,11 +2,12 @@ using System.Globalization;
 using System.Windows.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Converters;
 
 /// <summary>
-/// 设备状态码转文本（参见 DeviceStatus 常量）
+/// 设备状态码转文本（参见 DeviceStatus 常量）；文案走多语言资源。
 /// </summary>
 public class StateToTextConverter : IValueConverter
 {
@@ -16,14 +17,14 @@ public class StateToTextConverter : IValueConverter
         {
             return state switch
             {
-                (int)DeviceStatus.Unknown => "初始",
-                (int)DeviceStatus.Running => "运行",
-                (int)DeviceStatus.Alarm => "报警",
-                (int)DeviceStatus.Paused => "待机",
-                _ => "未知"
+                (int)DeviceStatus.Unknown => Strings.Status_Initial,
+                (int)DeviceStatus.Running => Strings.Status_Running,
+                (int)DeviceStatus.Alarm => Strings.Status_Alarm,
+                (int)DeviceStatus.Paused => Strings.Status_Paused,
+                _ => Strings.Status_Unknown
             };
         }
-        return "未知";
+        return Strings.Status_Unknown;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

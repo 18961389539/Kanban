@@ -9,7 +9,20 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>MainAPP</RootNamespace>
     <AssemblyName>MainAPP</AssemblyName>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
   </PropertyGroup>
+
+  <!-- 多语言资源：Strings.resx（中文默认）+ Strings.en.resx + Strings.ja.resx；
+       强类型访问走手写 Resources/Strings.cs（ResourceManager 包装），CLI 构建不依赖 VS 代码生成器 -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx" />
+    <EmbeddedResource Update="Resources\Strings.en.resx">
+      <DependentUpon>Strings.resx</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Strings.ja.resx">
+      <DependentUpon>Strings.resx</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" />

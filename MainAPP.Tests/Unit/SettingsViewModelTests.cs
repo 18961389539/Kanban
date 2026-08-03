@@ -289,4 +289,28 @@ public class SettingsViewModelTests : IDisposable
         Assert.Contains("看板标题不能为空", _dialog.Warning[0]);
         Assert.Empty(_dialog.Success);
     }
+
+    // ───────────── 界面语言 ─────────────
+
+    [Fact]
+    public void Save_LanguageChanged_AppliesToAppSettings_AndNotifiesRestartRequired()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.Language = AppLanguage.En;
+        vm.SaveCommand.Execute(null);
+
+        Assert.Contains("设置已保存", _dialog.Success[0]);
+        Assert.Equal(AppLanguage.En, _appSettings.Language); // 持久化到 AppSettings（启动时应用）
+        Assert.Contains("重启", _dialog.Info[0]); // 语言切换提示重启生效
+    }
+
+    [Fact]
+    public void Save_LanguageUnchanged_NoRestartPrompt()
+    {
+        var vm = NewVm();
+        vm.SaveCommand.Execute(null); // 语言保持默认中文
+
+        Assert.Contains("设置已保存", _dialog.Success[0]);
+        Assert.Empty(_dialog.Info); // 未变语言不弹重启提示
+    }
 }

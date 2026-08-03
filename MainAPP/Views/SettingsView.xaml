@@ -10,6 +10,7 @@
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:models="clr-namespace:Kanban.Core.Models;assembly=Kanban.Collector.Core"
     xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
     d:DesignHeight="500"
     d:DesignWidth="600"
     Loaded="OnLoaded"
@@ -665,8 +666,8 @@
 
                             <Border Style="{StaticResource SettingsGroupHeader}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="显示设置" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="调整看板标题与界面字号（大屏远距阅读）。" />
+                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.Settings_DisplaySettings}" />
+                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.Settings_DisplayHint}" />
                                 </StackPanel>
                             </Border>
 
@@ -679,6 +680,20 @@
                                 Style="{StaticResource SettingsTextBox}"
                                 Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="看板窗口/页面标题。屏端（Web 大屏）自动从采集服务拉取，无需逐屏配置" />
+
+                            <!--  界面语言（中文/英文/日文，默认中文；重启后生效）  -->
+                            <hc:ComboBox
+                                hc:InfoElement.Title="{x:Static resources:Strings.Common_Language}"
+                                hc:InfoElement.TitlePlacement="Top"
+                                AutomationProperties.Name="界面语言"
+                                Style="{StaticResource SettingsComboBox}"
+                                SelectedValue="{Binding DraftSettings.Language}"
+                                SelectedValuePath="Tag"
+                                ToolTip="{x:Static resources:Strings.Settings_LanguageHint}">
+                                <ComboBoxItem Content="中文" Tag="0" />
+                                <ComboBoxItem Content="English" Tag="1" />
+                                <ComboBoxItem Content="日本語" Tag="2" />
+                            </hc:ComboBox>
 
                             <!--  界面字号（大屏远距可读性）：切换后实时预览，保存设置后持久化  -->
                             <hc:ComboBox

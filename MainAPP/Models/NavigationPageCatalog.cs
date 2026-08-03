@@ -2,24 +2,26 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
+using MainAPP.Resources;
 using Material.Icons;
 
 namespace MainAPP.Models;
 
 public static class NavigationPageCatalog
 {
+    /// <summary>导航项文本走多语言资源（中文默认/英文/日文，切换语言重启生效）。</summary>
     public static IReadOnlyList<NavigationPageDefinition> All { get; } =
     [
-        Page("Home", 0, "主页", MaterialIconKind.ViewDashboard, "主页", true),
-        Page("ProductionLine", 1, "产线总览", MaterialIconKind.Factory, "产线总览", true),
-        Page("AlarmCenter", 2, "报警中心", MaterialIconKind.BellAlert, "报警中心", true),
-        Page("DeviceManager", 3, "设备管理", MaterialIconKind.Harddisk, "设备管理", true),
-        Page("WorkOrder", 4, "工单管理", MaterialIconKind.ClipboardListOutline, "工单管理", true),
-        Page("HistoryQuery", 5, "历史查询", MaterialIconKind.History, "历史查询", true),
-        Page("Overview", 6, "生产复盘", MaterialIconKind.ChartTimelineVariant, "最近24小时生产复盘", true),
-        Page("Settings", 7, "设置", MaterialIconKind.Cog, "设置", true),
-        Page("RuntimeMonitoring", 8, "运行监控", MaterialIconKind.MonitorDashboard, "运行状态监控", true),
-        Page("DeviceDetail", 9, "设备详情", MaterialIconKind.Harddisk, "设备详情", false),
+        Page("Home", 0, Strings.Nav_Home, MaterialIconKind.ViewDashboard, Strings.Nav_Home, true),
+        Page("ProductionLine", 1, Strings.Nav_ProductionLine, MaterialIconKind.Factory, Strings.Nav_ProductionLine, true),
+        Page("AlarmCenter", 2, Strings.Nav_AlarmCenter, MaterialIconKind.BellAlert, Strings.Nav_AlarmCenter, true),
+        Page("DeviceManager", 3, Strings.Nav_DeviceManager, MaterialIconKind.Harddisk, Strings.Nav_DeviceManager, true),
+        Page("WorkOrder", 4, Strings.Nav_WorkOrder, MaterialIconKind.ClipboardListOutline, Strings.Nav_WorkOrder, true),
+        Page("HistoryQuery", 5, Strings.Nav_HistoryQuery, MaterialIconKind.History, Strings.Nav_HistoryQuery, true),
+        Page("Overview", 6, Strings.Nav_Overview, MaterialIconKind.ChartTimelineVariant, Strings.Nav_Overview_Tip, true),
+        Page("Settings", 7, Strings.Nav_Settings, MaterialIconKind.Cog, Strings.Nav_Settings, true),
+        Page("RuntimeMonitoring", 8, Strings.Nav_RuntimeMonitoring, MaterialIconKind.MonitorDashboard, Strings.Nav_RuntimeMonitoring, true),
+        Page("DeviceDetail", 9, Strings.Nav_DeviceDetail, MaterialIconKind.Harddisk, Strings.Nav_DeviceDetail, false),
     ];
 
     public static NavigationPageDefinition Home => All[0];

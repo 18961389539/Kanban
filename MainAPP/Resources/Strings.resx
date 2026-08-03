@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Nav_Home" xml:space="preserve"><value>主页</value></data>
+  <data name="Nav_ProductionLine" xml:space="preserve"><value>产线总览</value></data>
+  <data name="Nav_AlarmCenter" xml:space="preserve"><value>报警中心</value></data>
+  <data name="Nav_DeviceManager" xml:space="preserve"><value>设备管理</value></data>
+  <data name="Nav_WorkOrder" xml:space="preserve"><value>工单管理</value></data>
+  <data name="Nav_HistoryQuery" xml:space="preserve"><value>历史查询</value></data>
+  <data name="Nav_Overview" xml:space="preserve"><value>生产复盘</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>设置</value></data>
+  <data name="Nav_RuntimeMonitoring" xml:space="preserve"><value>运行监控</value></data>
+  <data name="Nav_DeviceDetail" xml:space="preserve"><value>设备详情</value></data>
+  <data name="Nav_Overview_Tip" xml:space="preserve"><value>最近24小时生产复盘</value></data>
+  <data name="Status_Initial" xml:space="preserve"><value>初始</value></data>
+  <data name="Status_Running" xml:space="preserve"><value>运行</value></data>
+  <data name="Status_Alarm" xml:space="preserve"><value>报警</value></data>
+  <data name="Status_Paused" xml:space="preserve"><value>待机</value></data>
+  <data name="Status_Unknown" xml:space="preserve"><value>未知</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>保存设置</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Common_Language" xml:space="preserve"><value>语言</value></data>
+  <data name="Common_RestartRequired" xml:space="preserve"><value>语言切换将在重启后生效。</value></data>
+  <data name="Settings_DisplaySettings" xml:space="preserve"><value>显示设置</value></data>
+  <data name="Settings_DisplayHint" xml:space="preserve"><value>调整看板标题与界面字号（大屏远距阅读）。</value></data>
+  <data name="Settings_LanguageHint" xml:space="preserve"><value>界面语言（中文/英文/日文），默认中文，重启后生效。</value></data>
+  <data name="Conn_Live" xml:space="preserve"><value>实时</value></data>
+  <data name="Conn_Disconnected" xml:space="preserve"><value>未连接</value></data>
+  <data name="Conn_Reconnecting" xml:space="preserve"><value>重连中</value></data>
+  <data name="Conn_Stale" xml:space="preserve"><value>数据停滞</value></data>
+  <data name="EventType_Triggered" xml:space="preserve"><value>触发</value></data>
+  <data name="EventType_Recovered" xml:space="preserve"><value>恢复</value></data>
+  <data name="EventType_ShiftChange" xml:space="preserve"><value>班次切换</value></data>
+  <data name="Level_High" xml:space="preserve"><value>高</value></data>
+  <data name="Level_Medium" xml:space="preserve"><value>中</value></data>
+  <data name="Level_Low" xml:space="preserve"><value>低</value></data>
+  <data name="Defect_Appearance" xml:space="preserve"><value>外观</value></data>
+  <data name="Defect_Dimension" xml:space="preserve"><value>尺寸</value></data>
+  <data name="Defect_Function" xml:space="preserve"><value>功能</value></data>
+  <data name="Defect_Packaging" xml:space="preserve"><value>包装</value></data>
+  <data name="Defect_Other" xml:space="preserve"><value>其他</value></data>
+  <data name="Severity_Critical" xml:space="preserve"><value>严重</value></data>
+  <data name="Severity_Major" xml:space="preserve"><value>一般</value></data>
+  <data name="Severity_Minor" xml:space="preserve"><value>轻微</value></data>
+</root>

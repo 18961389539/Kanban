@@ -32,6 +32,16 @@ public enum KanbanRunMode
 }
 
 /// <summary>
+/// 界面语言。默认中文（Zh）；切换在重启后生效（App 启动时按此值应用 CultureInfo）。
+/// </summary>
+public enum AppLanguage
+{
+    Zh = 0,
+    En = 1,
+    Ja = 2,
+}
+
+/// <summary>
 /// 应用全局设置服务，统一管理配置和设备列表持久化
 /// </summary>
 public partial class AppSettings : ObservableObject
@@ -133,6 +143,12 @@ public partial class AppSettings : ObservableObject
     /// </summary>
     [ObservableProperty]
     private string _appTitle = "生产看板";
+
+    /// <summary>
+    /// 界面语言（中文/英文/日文，默认中文）。App 启动时按此值应用 CultureInfo，切换后重启生效。
+    /// </summary>
+    [ObservableProperty]
+    private AppLanguage _language = AppLanguage.Zh;
 
     /// <summary>
     /// 是否启用新报警声音。默认开启；关闭后仍保留页面上的视觉提醒和报警历史。
@@ -296,6 +312,7 @@ public partial class AppSettings : ObservableObject
                 PlcConfig.OmronReadSplits = settings.PlcConfig?.OmronReadSplits ?? 500;
                 DashboardRefreshIntervalMs = settings.DashboardRefreshIntervalMs;
                 AppTitle = string.IsNullOrWhiteSpace(settings.AppTitle) ? "生产看板" : settings.AppTitle;
+                Language = Enum.IsDefined(settings.Language) ? settings.Language : AppLanguage.Zh;
                 IsDarkTheme = settings.IsDarkTheme;
                 UiScale = settings.UiScale;
                 EnableAlarmSound = settings.EnableAlarmSound;

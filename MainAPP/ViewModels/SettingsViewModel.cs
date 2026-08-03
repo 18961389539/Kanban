@@ -41,6 +41,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private string _lastSavedPlcConfigSignature = string.Empty;
     private PlcBrand _draftBrand;
 
+    /// <summary>上次已保存的界面语言（检测本次保存是否变更语言 → 提示重启生效）。</summary>
+    private AppLanguage _lastSavedLanguage = AppLanguage.Zh;
+
     public IReadOnlyList<PlcBrand> PlcBrands { get; } = Enum.GetValues<PlcBrand>();
     public IReadOnlyList<PlcDataFormat> PlcDataFormats { get; } = Enum.GetValues<PlcDataFormat>();
     public IReadOnlyList<string> SiemensModels { get; } = ["S1200", "S1500", "S300", "S400", "S200Smart", "S200"];
@@ -309,6 +312,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         _draftBrand = DraftSettings.PlcConfig.Brand;
         _lastSavedPlcConfigSignature = GetPlcConfigSignature(DraftSettings.PlcConfig);
         _lastSavedShiftsSignature = GetShiftsSignature(DraftSettings);
+        _lastSavedLanguage = DraftSettings.Language;
         WireDraftEvents();
         _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
     }
@@ -668,6 +672,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             OnPropertyChanged(nameof(UnsavedChangesText));
 
             _dialog.NotifySuccess("设置已保存");
+            // 语言切换：保存到 settings.json，需重启后经 App 启动应用 CultureInfo 生效
+            if (DraftSettings.Language != _lastSavedLanguage)
+            {
+                _lastSavedLanguage = DraftSettings.Language;
+                _dialog.NotifyInfo(Resources.Strings.Common_RestartRequired);
+            }
             SyncCollectorSettingsAsync(); // Remote 模式：采集参数同步到 Collector（热生效）
         }
         catch (Exception ex)
@@ -781,6 +791,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.PlcBatchReadMaxGapSlots = source.PlcBatchReadMaxGapSlots;
         target.DashboardRefreshIntervalMs = source.DashboardRefreshIntervalMs;
         target.AppTitle = source.AppTitle;
+        target.Language = source.Language;
         target.IsDarkTheme = source.IsDarkTheme;
         target.UiScale = source.UiScale;
         target.EnableAlarmSound = source.EnableAlarmSound;
