@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
-using System.Windows.Data;
 using Kanban.Core.Models;
 using Kanban.Core.Services;
 using Serilog;
@@ -58,10 +57,15 @@ public sealed class RecipeStore : IRecipeStore
     private readonly AppSettings _appSettings;
     private readonly object _collectionLock = new();
 
+    /// <summary>集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
+    /// BindingOperations.EnableCollectionSynchronization(Recipes, SyncRoot)）。</summary>
+    public object SyncRoot => _collectionLock;
+
     public RecipeStore(AppSettings appSettings)
     {
         _appSettings = appSettings;
-        BindingOperations.EnableCollectionSynchronization(Recipes, _collectionLock);
+        // 注：WPF 绑定同步锁不在此注册（UI 进程关注点，Core 不依赖 WPF），
+        // 由 MainAPP.WpfCollectionBindingRegistrar 经 SyncRoot 注册。
     }
 
     public ObservableCollection<Recipe> Recipes { get; } = new();

@@ -22,6 +22,16 @@ public static class MainAppServiceCollectionExtensions
         // ──────────── 采集/存储核心服务（单一共享入口，与 Kanban.Collector 复用，避免漏注册） ────────────
         services.AddKanbanDataServices(appSettings);
 
+        // ──────────── WPF 绑定同步（UI 进程专属，Core 去 WPF 化收口） ────────────
+        // Core 仓库集合（Devices/Runtimes/WorkOrders/Recipes）由后台采集线程写入、UI 线程绑定；
+        // EnableCollectionSynchronization 是 WPF API，只在 MainAPP 注册（无头 Collector 走
+        // AddKanbanDataServices 不注册）。随宿主启动执行，早于任何视图实例化/绑定。
+        services.AddHostedService<WpfCollectionBindingRegistrar>();
+
+        // ──────────── 报警声音通知（UI 进程专属，Core 去 WPF 化收口） ────────────
+        // SystemSounds 位于 WPF 的 WindowsBase，实现放 MainAPP；Collector 不注册（静默）。
+        services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();
+
         // ──────────── 用户与权限（RBAC）────────────
         services.AddSingleton<UserStore>();
         services.AddSingleton<UserSession>();

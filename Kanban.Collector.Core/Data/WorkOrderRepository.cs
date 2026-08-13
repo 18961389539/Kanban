@@ -1,6 +1,5 @@
 using AutoMapper;
 using System.Collections.ObjectModel;
-using System.Windows.Data;
 using Kanban.Core.Entities;
 using Kanban.Core.Services;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +29,7 @@ public interface IWorkOrderRepository
 /// <summary>
 /// 工单仓储：管理 <see cref="WorkOrder"/> 的内存集合与持久化。
 /// 参照 <see cref="DeviceRepository"/> 模式：DI 单例 + <see cref="ObservableCollection{WorkOrder}"/> +
-/// <see cref="BindingOperations.EnableCollectionSynchronization"/> 注册锁支持后台线程读写。
+/// <see cref="SyncRoot"/> 锁支持后台线程读写（WPF 绑定同步由 MainAPP.WpfCollectionBindingRegistrar 注册）。
 ///
 /// 持久化使用 EF Core + SQLite（work_orders.db），每次写操作短上下文模式（using ctx），
 /// 避免长生命周期 DbContext 的变更追踪开销与并发问题。
@@ -45,6 +44,10 @@ public class WorkOrderRepository : IWorkOrderRepository
     private readonly IMapper _mapper;
     private readonly object _collectionLock = new();
 
+    /// <summary>集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
+    /// BindingOperations.EnableCollectionSynchronization(WorkOrders, SyncRoot)）。</summary>
+    public object SyncRoot => _collectionLock;
+
     /// <summary>工单内存集合（绑定到 UI）。所有读写经 _collectionLock 串行化。</summary>
     public ObservableCollection<WorkOrder> WorkOrders { get; } = new();
 
@@ -58,8 +61,8 @@ public class WorkOrderRepository : IWorkOrderRepository
     {
         _dbProvider = dbProvider;
         _mapper = mapper;
-        // 注册 WPF 绑定同步锁：UI 线程 + 后台线程并发访问 WorkOrders 时由 _collectionLock 串行化
-        BindingOperations.EnableCollectionSynchronization(WorkOrders, _collectionLock);
+        // 注：WPF 绑定同步锁不在此注册（UI 进程关注点，Core 不依赖 WPF），
+        // 由 MainAPP.WpfCollectionBindingRegistrar 经 SyncRoot 注册。
     }
 
     /// <summary>

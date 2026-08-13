@@ -62,7 +62,9 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<IPlcConnectionManager>(sp => sp.GetRequiredService<PlcConnectionManager>());
         services.AddSingleton<IDeviceAdapter, PlcDeviceAdapter>();
         services.AddSingleton<IDeviceAdapterResolver, DeviceAdapterResolver>();
-        services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();
+        // 注：IAlarmNotificationChannel 默认不注册——声音实现（SystemAlarmNotificationChannel）依赖
+        // WPF 的 SystemSounds，位于 MainAPP（AddMainAppCoreServices 中注册，后注册胜出）；
+        // 无头 Collector 不注册，采集管线中该参数为 null（静默）。
         services.AddSingleton<PlcDataAcquisitionService>(sp => new PlcDataAcquisitionService(
             sp.GetRequiredService<IPlcDriver>(),
             sp.GetRequiredService<PlcConnectionManager>(),
@@ -75,7 +77,7 @@ public static class KanbanDataServiceCollectionExtensions
             sp.GetRequiredService<ILogger<PlcDataAcquisitionService>>(),
             sp.GetRequiredService<IDeviceAdapterResolver>(),
             sp.GetRequiredService<WorkOrderRepository>(),
-            sp.GetRequiredService<IAlarmNotificationChannel>(),
+            sp.GetService<IAlarmNotificationChannel>(),
             sp.GetRequiredService<DefectHistoryStore>()));
         services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
 

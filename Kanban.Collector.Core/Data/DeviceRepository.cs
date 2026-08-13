@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
-using System.Windows.Data;
 using Kanban.Core.Models;
 using Kanban.Core.Services;
 using Serilog;
@@ -39,8 +38,9 @@ public interface IDeviceRepository
 /// <summary>
 /// 设备仓储（DI 单例）：封装内存设备列表的访问与持久化操作。
 /// 设备配置持久化到 JSON 文件（devices.json），启动时加载、保存时全量覆写。
-/// 线程安全：Devices / Runtimes 通过 <see cref="BindingOperations.EnableCollectionSynchronization"/> 注册锁，
-/// 所有变更（Add/Clear/Remove/ReplaceAll）在 <see cref="_collectionLock"/> 内进行；
+/// 线程安全：Devices / Runtimes 的所有变更（Add/Clear/Remove/ReplaceAll）在 <see cref="SyncRoot"/> 内进行；
+/// WPF 绑定同步锁由 UI 进程（MainAPP）经 <see cref="SyncRoot"/> 注册（Core 不依赖 WPF，见
+/// MainAPP.Services.WpfCollectionBindingRegistrar）；
 /// 后台采集线程通过 <see cref="GetDevicesSnapshot"/> / <see cref="GetRuntimesSnapshot"/> 获取快照副本，
 /// 避免 ObservableCollection 在并发枚举时抛 InvalidOperationException。
 /// RuntimeMap 改用 ConcurrentDictionary 以支持并发读写。
@@ -55,10 +55,17 @@ public class DeviceRepository : IDeviceRepository
 
     /// <summary>
     /// 保护 Devices / Runtimes 变更的锁对象。
-    /// 通过 BindingOperations.EnableCollectionSynchronization 注册给 WPF 绑定引擎，
-    /// 绑定访问时也会取此锁；外部读取应使用 GetDevicesSnapshot / GetRuntimesSnapshot。
+    /// 外部读取应使用 GetDevicesSnapshot / GetRuntimesSnapshot；WPF 绑定进程（MainAPP）经
+    /// <see cref="SyncRoot"/> 注册给绑定引擎（BindingOperations.EnableCollectionSynchronization）。
     /// </summary>
     private readonly object _collectionLock = new();
+
+    /// <summary>
+    /// 集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
+    /// BindingOperations.EnableCollectionSynchronization(Devices/Runtimes, SyncRoot)）。
+    /// Core 自身不依赖 WPF API，无头 Collector 进程不注册。
+    /// </summary>
+    public object SyncRoot => _collectionLock;
 
     /// <summary>
     /// 内存中的设备配置列表
@@ -93,11 +100,8 @@ public class DeviceRepository : IDeviceRepository
     public DeviceRepository(AppSettings appSettings)
     {
         _appSettings = appSettings;
-        // 注册 WPF 绑定同步锁：WPF 绑定引擎访问 Devices / Runtimes 时会自动获取 _collectionLock，
-        // 防止后台线程枚举与 UI 线程变更并发导致 InvalidOperationException。
-        // 构造在 UI 线程进行（App DI），EnableCollectionSynchronization 需在任意线程访问集合前调用一次。
-        BindingOperations.EnableCollectionSynchronization(Devices, _collectionLock);
-        BindingOperations.EnableCollectionSynchronization(Runtimes, _collectionLock);
+        // 注：WPF 绑定同步锁（EnableCollectionSynchronization）不在此注册——那是 UI 进程关注点，
+        // 由 MainAPP 的 WpfCollectionBindingRegistrar 在宿主启动时经 SyncRoot 注册（Core 不依赖 WPF）。
     }
 
     /// <summary>

@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- 纯托管目标框架（去 WPF 化，2026-08-13）：本库曾因 BindingOperations.EnableCollectionSynchronization
+         依赖 UseWPF + net10.0-windows——那是 UI 进程关注点，已下沉到 MainAPP.WpfCollectionBindingRegistrar
+         （经各仓库 SyncRoot 注册）；无头 Collector 不再加载 WPF 程序集。 -->
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
@@ -9,8 +12,6 @@
     <AssemblyName>Kanban.Collector.Core</AssemblyName>
     <!-- RootNamespace 与程序集名统一：资源命名 Kanban.Collector.Core.Resources.Messages
          （ValidationMessages/ConnectionStatusMessages 的 ResourceManager 字符串依赖此约定） -->
-    <!-- UseWPF：DeviceRepository/WorkOrderRepository 用 BindingOperations.EnableCollectionSynchronization 注册集合绑定同步锁 -->
-    <UseWPF>true</UseWPF>
     <!-- 展示端瘦身：采集/存储/领域模型迁入此类库，MainAPP 与 Kanban.Collector 共同引用 -->
   </PropertyGroup>
 
