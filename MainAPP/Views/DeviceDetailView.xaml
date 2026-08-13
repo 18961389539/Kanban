@@ -18,15 +18,7 @@
         <KeyBinding Key="Esc" Command="{Binding GoBackCommand}" />
     </UserControl.InputBindings>
     <UserControl.Resources>
-        <!-- KPI 紧凑单元格 -->
-        <Style x:Key="KpiCell" TargetType="Border" BasedOn="{StaticResource InnerCard}">
-            <Setter Property="Padding" Value="14,10" />
-            <Setter Property="Margin" Value="2" />
-        </Style>
-        <Style x:Key="KpiLabelLocal" TargetType="TextBlock" BasedOn="{StaticResource KpiLabel}">
-            <Setter Property="Margin" Value="0,0,0,4" />
-        </Style>
-        <Style x:Key="KpiValueLocal" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}" />
+        <!-- KPI 紧凑单元格（KpiCell/KpiCellLabel/KpiCellValue 已全局化至 Styles/Cards.xaml） -->
         <!-- OEE 三环进度颜色按阈值着色 -->
         <Style x:Key="OeePctText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
             <Setter Property="FontSize" Value="18" />
@@ -87,7 +79,7 @@
                     ToolTip="{x:Static resources:Strings.K147}" />
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Harddisk" Margin="16,0,0,0" />
                 <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
-                           Text="{Binding CurrentDevice.Name, FallbackValue=设备名}" />
+                           Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}" />
                 <!-- 状态徽章：根据 StatusText 切换背景色 -->
                 <Border Margin="16,0,0,0" Padding="10,3" CornerRadius="11">
                     <Border.Style>
@@ -125,7 +117,7 @@
                            Text="{Binding DataScopeText}" />
                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
                            Foreground="{StaticResource ThirdlyTextBrush}"
-                           Text="{Binding LastUpdateTime, StringFormat=最后刷新 {0:HH:mm:ss}}" />
+                           Text="{Binding LastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F249}" />
                 <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" FontSize="{DynamicResource FontSizeHint}"
                            Foreground="{StaticResource SecondaryTextBrush}"
                            Text="{Binding RefreshStatusText}" />
@@ -151,38 +143,38 @@
             <UniformGrid Grid.Row="0" Columns="6" Margin="0,0,0,12">
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K047}" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Text="{Binding TotalOk}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K047}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalOk}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K148}" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Foreground="{StaticResource DangerBrush}" Text="{Binding TotalNg}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K148}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}" Text="{Binding TotalNg}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K001}" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Text="{Binding QualityRate, StringFormat=P0}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K001}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding QualityRate, StringFormat={}{0:P0}}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="OEE" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Text="{Binding Oee, StringFormat=P0}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="OEE" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding Oee, StringFormat={}{0:P0}}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K149}" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Text="{Binding TodayAlarmCount}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K149}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayAlarmCount}" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K007}" />
-                        <TextBlock Style="{StaticResource KpiValueLocal}" Text="{Binding RunTimeHours, StringFormat={}{0:F1}h}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K007}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding RunTimeHours, StringFormat={}{0:F1}h}" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -192,7 +184,7 @@
                 <!-- 设备配置 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K150}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K150}" />
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -205,7 +197,7 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding TargetCycle, StringFormat={}{0} 件/h}" />
+                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K027}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontWeight="Bold"
                                        Text="{Binding RecipeName}" />
@@ -216,7 +208,7 @@
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontFamily="Consolas" Foreground="{StaticResource SecondaryTextBrush}"
                                                Text="{Binding NgCountAddress, StringFormat=NG: {0}}" />
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontFamily="Consolas" Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{Binding StatusAddress, StringFormat=状态: {0}}" />
+                                               Text="{Binding StatusAddress, Converter={StaticResource LocFormatConverter}, ConverterParameter=F253}" />
                                 </StackPanel>
                             </Expander>
                         </Grid>
@@ -226,7 +218,7 @@
                 <!-- PLC 实时数据 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K151}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K151}" />
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -247,7 +239,7 @@
                             <TextBlock Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" FontSize="13" FontWeight="Bold"
                                        Foreground="{Binding PlcStatusWord, Converter={StaticResource StateToBrushConverter}}"
                                        Text="{Binding PlcStatusWord, Converter={StaticResource StateToTextConverter}}"
-                                       ToolTip="{Binding PlcStatusWord, StringFormat=状态字: {0}}" />
+                                       ToolTip="{Binding PlcStatusWord, Converter={StaticResource LocFormatConverter}, ConverterParameter=F289}" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -255,7 +247,7 @@
                 <!-- 工单信息 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K049}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K049}" />
                         <Grid Margin="0,4,0,0" Visibility="{Binding HasWorkOrder, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -300,7 +292,7 @@
                 <!-- 节拍与理论产量对比 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiLabelLocal}" Text="{x:Static resources:Strings.K157}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K157}" />
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -313,10 +305,10 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K050}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding ActualCycleRate, StringFormat={}{0:F1} 件/h}" />
+                                       Text="{Binding ActualCycleRate, Converter={StaticResource LocFormatConverter}, ConverterParameter=F267}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding TargetCycle, StringFormat={}{0} 件/h}" />
+                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             <TextBlock Grid.Row="2" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K158}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
                                        Text="{Binding CycleGapPercent, StringFormat={}{0:F1}%}">
@@ -340,10 +332,10 @@
                             <TextBlock DockPanel.Dock="Left" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K159}" />
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                 <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontFamily="Consolas" Foreground="{StaticResource SecondaryTextBrush}"
-                                           Text="{Binding TheoreticalOutput, StringFormat={}{0}件}" />
+                                           Text="{Binding TheoreticalOutput, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                                 <TextBlock Margin="4,0,4,0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="/" />
                                 <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontFamily="Consolas" FontWeight="Bold"
-                                           Text="{Binding ActualTotalOutput, StringFormat={}{0}件}" />
+                                           Text="{Binding ActualTotalOutput, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </DockPanel>
                     </StackPanel>
@@ -392,7 +384,7 @@
                                             </Ellipse.RenderTransform>
                                         </Ellipse>
                                     </Grid>
-                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding AvailabilityRate, StringFormat=P0}" />
+                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding AvailabilityRate, StringFormat={}{0:P0}}" />
                                         <Button Style="{StaticResource ButtonDefault}" Padding="0" Background="Transparent" BorderThickness="0" Content="{x:Static resources:Strings.K009}"
                                             Command="{Binding ShowOeeExplanationCommand}" CommandParameter="Availability" />
                                 </StackPanel>
@@ -408,7 +400,7 @@
                                             </Ellipse.RenderTransform>
                                         </Ellipse>
                                     </Grid>
-                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding PerformanceRate, StringFormat=P0}" />
+                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding PerformanceRate, StringFormat={}{0:P0}}" />
                                         <Button Style="{StaticResource ButtonDefault}" Padding="0" Background="Transparent" BorderThickness="0" Content="{x:Static resources:Strings.K029}"
                                             Command="{Binding ShowOeeExplanationCommand}" CommandParameter="Performance" />
                                 </StackPanel>
@@ -424,7 +416,7 @@
                                             </Ellipse.RenderTransform>
                                         </Ellipse>
                                     </Grid>
-                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding QualityRate, StringFormat=P0}" />
+                                    <TextBlock Style="{StaticResource OeePctText}" Text="{Binding QualityRate, StringFormat={}{0:P0}}" />
                                         <Button Style="{StaticResource ButtonDefault}" Padding="0" Background="Transparent" BorderThickness="0" Content="{x:Static resources:Strings.K001}"
                                             Command="{Binding ShowOeeExplanationCommand}" CommandParameter="Quality" />
                                 </StackPanel>
@@ -487,7 +479,7 @@
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8" LastChildFill="False">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding HourlyRangeText, StringFormat=按小时产量（{0}）}" />
+                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{Binding HourlyRangeText, Converter={StaticResource LocFormatConverter}, ConverterParameter=F268}" />
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                     <Button Margin="4,0,0,0" Padding="8,2" Content="8h"
                                             Command="{Binding SetHourlyRangeCommand}" CommandParameter="8" />
@@ -618,7 +610,7 @@
                                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
                                                            FontSize="{DynamicResource FontSizeMicro}" FontFamily="Consolas"
                                                            Foreground="{StaticResource ThirdlyTextBrush}"
-                                                           Text="{Binding EventTime, StringFormat=HH:mm}" />
+                                                           Text="{Binding EventTime, StringFormat={}{0:HH:mm}}" />
                                                 <TextBlock FontSize="13" Text="{Binding AlarmName}" />
                                             </DockPanel>
                                         </Border>
@@ -637,13 +629,13 @@
                                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
                                                Foreground="{StaticResource ThirdlyTextBrush}"
-                                               Text="{Binding DefectTotal, StringFormat=总数 {0}}" />
+                                               Text="{Binding DefectTotal, Converter={StaticResource LocFormatConverter}, ConverterParameter=F266}" />
                                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
                                                Foreground="{StaticResource ThirdlyTextBrush}"
-                                               Text="{Binding DefectTypeCount, StringFormat=类型 {0}}" />
+                                               Text="{Binding DefectTypeCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F269}" />
                                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
                                                Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{Binding TopDefectText, StringFormat=主要 {0}}" />
+                                               Text="{Binding TopDefectText, Converter={StaticResource LocFormatConverter}, ConverterParameter=F270}" />
                                 </StackPanel>
                             </DockPanel>
                             <Grid MinHeight="180" Margin="8,8,8,16">

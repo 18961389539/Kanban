@@ -180,7 +180,7 @@ public partial class DeviceAlarmManagerViewModel : ObservableObject
                 : string.Format(Strings.F091, result.Imported.Count, existingCount) +
                   Strings.F228;
 
-            var choice = _dialog.Show(msg, "确认导入报警", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            var choice = _dialog.Show(msg, Strings.M120, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Cancel) return;
 
             var replace = choice == MessageBoxResult.Yes;

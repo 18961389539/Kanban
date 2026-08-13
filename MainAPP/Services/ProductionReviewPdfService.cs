@@ -68,30 +68,30 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
 
         using var document = new PdfDocument();
         var canvas = new PdfCanvas(document);
-        canvas.Title("生产复盘报表");
-        canvas.Text("生产复盘报表", 18, true);
+        canvas.Title(Strings.M239);
+        canvas.Text(Strings.M239, 18, true);
         canvas.Text(string.Format(Strings.F187, data.From, data.To), 9);
         canvas.Text(string.Format(Strings.F122, data.ShiftName), 9);
         canvas.Space(8);
 
-        canvas.Section("核心指标");
-        canvas.TableHeader("指标", "数值");
-        canvas.Row("总合格产量", data.TotalOk.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row("总不良产量", data.TotalNg.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row("良品率", data.QualityRate.ToString("P1", CultureInfo.InvariantCulture));
+        canvas.Section(Strings.M254);
+        canvas.TableHeader(Strings.M265, Strings.M266);
+        canvas.Row(Strings.M241, data.TotalOk.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.M242, data.TotalNg.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.M238, data.QualityRate.ToString("P1", CultureInfo.InvariantCulture));
         canvas.Row("OEE", data.Oee.ToString("P1", CultureInfo.InvariantCulture));
-        canvas.Row("运行时长", $"{data.RunTimeHours:F2}h");
-        canvas.Row("待机时长", $"{data.PausedTimeHours:F2}h");
-        canvas.Row("报警时长", $"{data.AlarmDurationHours:F2}h");
-        canvas.Row("报警次数", data.AlarmCount.ToString(CultureInfo.InvariantCulture));
-        canvas.Row("目标产量", data.TargetOutput.ToString("N0", CultureInfo.InvariantCulture));
-        canvas.Row("目标达成率", data.OutputAchievementRate.ToString("P1", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.M244, $"{data.RunTimeHours:F2}h");
+        canvas.Row(Strings.M245, $"{data.PausedTimeHours:F2}h");
+        canvas.Row(Strings.M246, $"{data.AlarmDurationHours:F2}h");
+        canvas.Row(Strings.M247, data.AlarmCount.ToString(CultureInfo.InvariantCulture));
+        canvas.Row(Strings.M267, data.TargetOutput.ToString("N0", CultureInfo.InvariantCulture));
+        canvas.Row(Strings.M268, data.OutputAchievementRate.ToString("P1", CultureInfo.InvariantCulture));
 
-        canvas.Section("产量趋势");
+        canvas.Section(Strings.M255);
         canvas.Chart(data.TrendChart, 520, 220);
 
-        canvas.Section("设备明细");
-        canvas.TableHeader("设备", "OK", "NG", "良品率", "OEE", "报警次数");
+        canvas.Section(Strings.M248);
+        canvas.TableHeader(Strings.M205, "OK", "NG", Strings.M238, "OEE", Strings.M247);
         foreach (var device in data.Devices)
         {
             canvas.Row(
@@ -104,26 +104,26 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
         }
 
         canvas.NewPage();
-        canvas.Text("生产复盘报表", 16, true);
-        canvas.Section("OEE 损失拆解");
+        canvas.Text(Strings.M239, 16, true);
+        canvas.Section(Strings.M256);
         canvas.Chart(data.OeeWaterfallChart, 520, 210);
-        canvas.Row("可用率", data.AvailabilityLossText);
-        canvas.Row("性能率", data.PerformanceLossText);
-        canvas.Row("良品率", data.QualityLossText);
-        canvas.Section("周期对比");
+        canvas.Row(Strings.M237, data.AvailabilityLossText);
+        canvas.Row(Strings.M236, data.PerformanceLossText);
+        canvas.Row(Strings.M238, data.QualityLossText);
+        canvas.Section(Strings.M257);
         canvas.Row(data.ComparisonLabel, string.Format(Strings.F062, data.BaselineTotalOutput, data.BaselineQualityRate, data.BaselineOee));
-        canvas.Row("当前变化", string.Format(Strings.F060, FormatSigned(data.OutputDelta), FormatSignedPercentage(data.QualityRateDelta), FormatSignedPercentage(data.OeeDelta)));
-        canvas.Section("停机分析");
-        canvas.Row("总停机时长", $"{data.TotalDowntimeHours:F2}h");
-        canvas.Row("平均报警时长", $"{data.AverageAlarmDurationMinutes:F1}min");
+        canvas.Row(Strings.M260, string.Format(Strings.F060, FormatSigned(data.OutputDelta), FormatSignedPercentage(data.QualityRateDelta), FormatSignedPercentage(data.OeeDelta)));
+        canvas.Section(Strings.M258);
+        canvas.Row(Strings.K397, $"{data.TotalDowntimeHours:F2}h");
+        canvas.Row(Strings.K398, $"{data.AverageAlarmDurationMinutes:F1}min");
         canvas.Row("MTBF", $"{data.MtbfHours:F2}h");
-        canvas.Section("生产热力图");
+        canvas.Section(Strings.M259);
         canvas.Chart(data.ProductionHeatmapChart, 520, 230);
 
         canvas.NewPage();
-        canvas.Text("生产复盘报表", 16, true);
-        canvas.Section("班次对比");
-        canvas.TableHeader("班次", "OK", "NG", "总产量", "良品率", "报警次数");
+        canvas.Text(Strings.M239, 16, true);
+        canvas.Section(Strings.M250);
+        canvas.TableHeader(Strings.K022, "OK", "NG", Strings.K023, Strings.M238, Strings.M247);
         foreach (var shift in data.Shifts)
         {
             canvas.Row(
@@ -135,8 +135,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
                 shift.AlarmCount.ToString(CultureInfo.InvariantCulture));
         }
 
-        canvas.Section("Top 报警");
-        canvas.TableHeader("报警名称", "设备", "触发次数", "累计时长");
+        canvas.Section(Strings.M252);
+        canvas.TableHeader(Strings.K018, Strings.M205, Strings.K299, Strings.M264);
         foreach (var alarm in data.TopAlarms)
         {
             canvas.Row(
@@ -146,8 +146,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
                 $"{alarm.TotalDurationHours:F2}h");
         }
 
-            canvas.Section("缺陷帕累托");
-            canvas.TableHeader("缺陷", "设备", "数量", "累计占比");
+            canvas.Section(Strings.M269);
+            canvas.TableHeader(Strings.M270, Strings.M205, Strings.M216, Strings.M271);
             foreach (var defect in data.Defects ?? Array.Empty<DefectParetoSummary>())
             {
                 canvas.Row(defect.DefectName, defect.DeviceName,
@@ -261,7 +261,7 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
             EnsureSpace(height + 20);
             if (model == null)
             {
-                Text("暂无图表数据", 9);
+                Text(Strings.M272, 9);
                 return;
             }
 

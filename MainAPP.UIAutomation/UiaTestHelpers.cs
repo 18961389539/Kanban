@@ -13,13 +13,29 @@ internal static class UiaTestHelpers
 {
     /// <summary>
     /// 通过主导航 ListBox 切换到指定页面。
-    /// 主导航 ListBox 的 AutomationProperties.Name="主导航"，包含 8 个 ListBoxItem（主页/产线/报警中心/设备管理/历史查询/生产复盘/设置/工单管理）。
+    /// 主导航 ListBox 的 AutomationProperties.Name="主导航"，默认（未登录=Operator）包含 6 个 ListBoxItem
+    /// （主页/产线/报警中心/工单管理/历史查询/生产复盘；管理页按角色过滤，对 Operator 隐藏）。
     /// 用 Select() 触发 IsSelected TwoWay 绑定，等待 PageTransition 动画 + 数据渲染。
     /// </summary>
     public static void NavigateToPage(FlaUI.Core.AutomationElements.Window window, UIA3Automation automation, string pageName)
     {
         var cf = automation.ConditionFactory;
         var navList = window.FindFirstDescendant(cf.ByName("主导航"))?.AsListBox();
+
+        // 全屏启动适配：MainAPP 初始为无边框全屏（_isFullscreen=true），侧边栏 NavigationBar
+        // 处于 Visibility=Collapsed，UIA 树中不存在"主导航"。用户真实操作是先点悬浮菜单按钮
+        // （AutomationProperties.Name="显示导航菜单"，K121）展开侧边栏，这里模拟该操作。
+        if (navList == null)
+        {
+            var menuButton = window.FindFirstDescendant(cf.ByName("显示导航菜单"))?.AsButton();
+            if (menuButton != null)
+            {
+                menuButton.SafeInvoke();
+                Thread.Sleep(800); // 侧边栏展开 + 动画缓冲
+                navList = window.FindFirstDescendant(cf.ByName("主导航"))?.AsListBox();
+            }
+        }
+
         Assert.NotNull(navList);
         foreach (var item in navList!.Items)
         {

@@ -18,6 +18,7 @@ public static class DeviceMapper
     {
         Id = d.Id,
         Name = d.Name,
+        MachineType = d.MachineType,
         OkCountAddress = d.OkCountAddress,
         NgCountAddress = d.NgCountAddress,
         StatusCountAddress = d.StatusCountAddress,
@@ -67,6 +68,7 @@ public static class DeviceMapper
         {
             Id = dto.Id,
             Name = dto.Name,
+            MachineType = dto.MachineType,
             OkCountAddress = dto.OkCountAddress,
             NgCountAddress = dto.NgCountAddress,
             StatusCountAddress = dto.StatusCountAddress,
@@ -76,7 +78,7 @@ public static class DeviceMapper
             RecipeAddress = dto.RecipeAddress,
             TargetCycle = dto.TargetCycle,
         };
-        foreach (var a in dto.Alarms)
+        foreach (var a in dto.Alarms ?? [])
         {
             device.Alarms.Add(new Alarm
             {
@@ -88,7 +90,7 @@ public static class DeviceMapper
                 Level = (Kanban.Core.Models.AlarmLevel)a.Level,
             });
         }
-        foreach (var x in dto.Defects)
+        foreach (var x in dto.Defects ?? [])
         {
             device.Defects.Add(new Defect
             {
@@ -100,7 +102,7 @@ public static class DeviceMapper
                 Category = (Kanban.Core.Models.DefectCategory)x.Category,
             });
         }
-        foreach (var c in dto.CountAlarms)
+        foreach (var c in dto.CountAlarms ?? [])
         {
             device.CountAlarms.Add(new CountAlarm
             {

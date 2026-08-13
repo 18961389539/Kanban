@@ -9,6 +9,14 @@
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
   </PropertyGroup>
 
+  <!-- 编译前自动从 WPF Strings.resx 重新生成 Localization.cs（多语言单一源） -->
+  <Target Name="GenerateLocalization" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="Generating Localization.cs from WPF Strings.resx…" />
+    <Exec Command="python $(ProjectDir)..\ci\generate_web_loc.py"
+          WorkingDirectory="$(ProjectDir).."
+          ContinueOnError="false" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />

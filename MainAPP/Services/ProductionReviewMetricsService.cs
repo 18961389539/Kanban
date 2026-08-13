@@ -167,6 +167,14 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
         if (shifts.Count == 0) return [];
 
         List<ProductionReviewShiftComparison> result = [];
+        // 节拍口径与主 OEE 一致（OverviewViewModel 用 devices.Average，P2-16 统一）
+        var avgTargetCycle = devices.Count > 0 ? devices.Average(d => d.TargetCycle) : 0;
+
+        // 每设备排序一次，供各班次×天区间复用（P2-16：原来每区间重复 Where+OrderByDescending 线性扫描）
+        var sortedTransitionsByDevice = statusTransitionsByDevice.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<StatusTransitionRecord>)pair.Value.OrderBy(t => t.EventTime).ToList());
+
         foreach (var shift in shifts)
         {
             int shiftOk = 0;
@@ -195,7 +203,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                         alarm.ShiftName == shift.Name && alarm.EventType == AlarmEventType.Triggered);
                 }
 
-                if (!statusTransitionsByDevice.TryGetValue(device.Id, out var transitions)) continue;
+                if (!sortedTransitionsByDevice.TryGetValue(device.Id, out var transitions)) continue;
                 for (var day = windowFrom.Date.AddDays(-1); day <= windowTo.Date; day = day.AddDays(1))
                 {
                     var shiftRange = shift.ResolveRange(day + shift.StartTime + TimeSpan.FromMinutes(1));
@@ -203,13 +211,12 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                     var rangeTo = shiftRange.End > windowTo ? windowTo : shiftRange.End;
                     if (rangeTo <= rangeFrom) continue;
 
-                    var rangeTransitions = transitions
-                        .Where(transition => transition.EventTime >= rangeFrom && transition.EventTime <= rangeTo)
-                        .ToList();
-                    var previous = transitions
-                        .Where(transition => transition.EventTime < rangeFrom)
-                        .OrderByDescending(transition => transition.EventTime)
-                        .FirstOrDefault();
+                    // 已排序列表：用二分定位区间起点，只遍历区间内事件（避免全量 Where）
+                    var startIdx = LowerBound(transitions, rangeFrom);
+                    var rangeTransitions = new List<StatusTransitionRecord>();
+                    for (var i = startIdx; i < transitions.Count && transitions[i].EventTime <= rangeTo; i++)
+                        rangeTransitions.Add(transitions[i]);
+                    var previous = startIdx > 0 ? transitions[startIdx - 1] : null;
                     var initialState = previous?.CurrentState ?? (int)DeviceStatus.Unknown;
                     var durations = OeeCalculator.CalculateStateDurations(
                         rangeTransitions,
@@ -218,7 +225,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                         initialState);
                     runSeconds += durations.RunTime;
                     alarmSeconds += durations.AlarmTime;
-                    targetSeconds += device.TargetCycle * Math.Max(0, (rangeTo - rangeFrom).TotalHours);
+                    targetSeconds += avgTargetCycle * Math.Max(0, (rangeTo - rangeFrom).TotalHours);
                 }
             }
 
@@ -226,7 +233,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
             var performance = OeeCalculator.CalculatePerformanceRate(
                 shiftOk,
                 shiftNg,
-                devices.FirstOrDefault()?.TargetCycle ?? 0,
+                (int)avgTargetCycle,
                 runSeconds);
             var availability = OeeCalculator.CalculateAvailabilityRate(runSeconds, alarmSeconds);
             var total = shiftOk + shiftNg;
@@ -241,6 +248,19 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                 targetSeconds > 0 ? Math.Clamp(total / targetSeconds, 0, 1) : 0));
         }
         return result;
+    }
+
+    /// <summary>已按 EventTime 升序排序的列表上做二分：返回第一个 EventTime &gt;= target 的索引（无则 Count）。</summary>
+    private static int LowerBound(IReadOnlyList<StatusTransitionRecord> sorted, DateTime target)
+    {
+        int lo = 0, hi = sorted.Count;
+        while (lo < hi)
+        {
+            var mid = (lo + hi) / 2;
+            if (sorted[mid].EventTime < target) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
     }
 
     private static DateTime AlignToBucket(DateTime value, ProductionReviewBucketSize bucketSize) => bucketSize switch

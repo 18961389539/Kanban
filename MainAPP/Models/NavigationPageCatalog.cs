@@ -9,19 +9,27 @@ namespace MainAPP.Models;
 
 public static class NavigationPageCatalog
 {
-    /// <summary>导航项文本走多语言资源（中文默认/英文/日文，切换语言重启生效）。</summary>
+    /// <summary>导航项文本走多语言资源（中文默认/英文/日文，切换语言重启生效）。
+    /// 静态初始化时只存 key（NavItem 通过 getter 按 CurrentUICulture 取值），不在这里调 i18n 资源，
+    /// 避免 _host.Build() 阶段（早于 Localization.Apply）把 zh-CN 字符串缓存到 NavItem 上。
+    /// RequiredRole：展示类页面（Home/ProductionLine/AlarmCenter/DeviceDetail）无角色限制；
+    /// 设备管理需工程师，设置/运行监控需管理员。Viewer 模式仍由 MainWindowViewModel 额外过滤。
+    /// </summary>
     public static IReadOnlyList<NavigationPageDefinition> All { get; } =
     [
-        Page("Home", 0, Strings.Nav_Home, MaterialIconKind.ViewDashboard, Strings.Nav_Home, true),
-        Page("ProductionLine", 1, Strings.Nav_ProductionLine, MaterialIconKind.Factory, Strings.Nav_ProductionLine, true),
-        Page("AlarmCenter", 2, Strings.Nav_AlarmCenter, MaterialIconKind.BellAlert, Strings.Nav_AlarmCenter, true),
-        Page("DeviceManager", 3, Strings.Nav_DeviceManager, MaterialIconKind.Harddisk, Strings.Nav_DeviceManager, true),
-        Page("WorkOrder", 4, Strings.Nav_WorkOrder, MaterialIconKind.ClipboardListOutline, Strings.Nav_WorkOrder, true),
-        Page("HistoryQuery", 5, Strings.Nav_HistoryQuery, MaterialIconKind.History, Strings.Nav_HistoryQuery, true),
-        Page("Overview", 6, Strings.Nav_Overview, MaterialIconKind.ChartTimelineVariant, Strings.Nav_Overview_Tip, true),
-        Page("Settings", 7, Strings.Nav_Settings, MaterialIconKind.Cog, Strings.Nav_Settings, true),
-        Page("RuntimeMonitoring", 8, Strings.Nav_RuntimeMonitoring, MaterialIconKind.MonitorDashboard, Strings.Nav_RuntimeMonitoring, true),
-        Page("DeviceDetail", 9, Strings.Nav_DeviceDetail, MaterialIconKind.Harddisk, Strings.Nav_DeviceDetail, false),
+        Page("Home", 0, "Nav_Home", MaterialIconKind.ViewDashboard, "Nav_Home", true),
+        Page("ProductionLine", 1, "Nav_ProductionLine", MaterialIconKind.Factory, "Nav_ProductionLine", true),
+        Page("AlarmCenter", 2, "Nav_AlarmCenter", MaterialIconKind.BellAlert, "Nav_AlarmCenter", true),
+        Page("DeviceManager", 3, "Nav_DeviceManager", MaterialIconKind.Harddisk, "Nav_DeviceManager", true, UserRole.Engineer),
+        Page("WorkOrder", 4, "Nav_WorkOrder", MaterialIconKind.ClipboardListOutline, "Nav_WorkOrder", true),
+        Page("HistoryQuery", 5, "Nav_HistoryQuery", MaterialIconKind.History, "Nav_HistoryQuery", true),
+        Page("Overview", 6, "Nav_Overview", MaterialIconKind.ChartTimelineVariant, "Nav_Overview_Tip", true),
+        Page("Settings", 7, "Nav_Settings", MaterialIconKind.Cog, "Nav_Settings", true, UserRole.Admin),
+        Page("RuntimeMonitoring", 8, "Nav_RuntimeMonitoring", MaterialIconKind.MonitorDashboard, "Nav_RuntimeMonitoring", true, UserRole.Admin),
+        Page("DeviceDetail", 9, "Nav_DeviceDetail", MaterialIconKind.Harddisk, "Nav_DeviceDetail", false),
+        Page("UserManager", 10, "Nav_UserManager", MaterialIconKind.AccountGroup, "Nav_UserManager", true, UserRole.Admin),
+        Page("Audit", 11, "Nav_Audit", MaterialIconKind.ShieldAccount, "Nav_Audit", true, UserRole.Admin),
+        Page("RecipeManager", 12, "Nav_RecipeManager", MaterialIconKind.SettingsOutline, "Nav_RecipeManager", true, UserRole.Engineer),
     ];
 
     public static NavigationPageDefinition Home => All[0];
@@ -34,21 +42,26 @@ public static class NavigationPageCatalog
     public static NavigationPageDefinition Settings => All[7];
     public static NavigationPageDefinition RuntimeMonitoring => All[8];
     public static NavigationPageDefinition DeviceDetail => All[9];
+    public static NavigationPageDefinition UserManager => All[10];
+    public static NavigationPageDefinition Audit => All[11];
+    public static NavigationPageDefinition RecipeManager => All[12];
 
     private static NavigationPageDefinition Page(
-        string key, int index, string label, MaterialIconKind icon, string toolTip, bool showInSidebar) =>
+        string key, int index, string labelKey, MaterialIconKind icon, string toolTipKey, bool showInSidebar,
+        UserRole? requiredRole = null) =>
         new()
         {
             Key = key,
             Index = index,
             ShowInSidebar = showInSidebar,
+            RequiredRole = requiredRole,
             NavItem = new NavItem
             {
                 Index = index,
-                Label = label,
+                LabelKey = labelKey,
                 Icon = icon,
-                AccessibleName = label,
-                ToolTip = toolTip,
+                AccessibleNameKey = labelKey,
+                ToolTipKey = toolTipKey,
             },
         };
 }

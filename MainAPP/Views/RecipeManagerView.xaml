@@ -1,0 +1,309 @@
+<UserControl
+    x:Class="MainAPP.Views.RecipeManagerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:RecipeManagerViewModel}"
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+
+    <Grid Margin="4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ══ 顶部：目标设备 + 下发（+ 进度状态与逐项结果明细） ══  -->
+        <Border Grid.Row="0" Background="{StaticResource RegionBrush}" CornerRadius="8" Padding="12,8"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center"
+                                                    Foreground="{StaticResource SecondaryTextBrush}" Kind="Factory" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                   Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K683}" />
+                        <ComboBox Margin="8,0,0,0" MinWidth="200" VerticalContentAlignment="Center"
+                                  ItemsSource="{Binding TargetDevices}" SelectedItem="{Binding SelectedTargetDevice}"
+                                  DisplayMemberPath="Name" />
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                   Text="{Binding ApplyStatus}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ApplyStatusKind}" Value="Error">
+                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <Button Padding="14,6" Command="{Binding ApplyRecipeCommand}" Cursor="Hand"
+                                Background="{StaticResource PrimaryBrush}" Foreground="White" BorderThickness="0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Width="15" Height="15" VerticalAlignment="Center"
+                                                            Foreground="White" Kind="Send" />
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontWeight="Bold"
+                                           Text="{x:Static resources:Strings.K661}" />
+                            </StackPanel>
+                        </Button>
+                        <!-- 取消下发：仅 Local 模式下发进行中显示（Remote 为 SignalR 请求-响应无法中途取消） -->
+                        <Button Margin="8,0,0,0" Padding="14,6" Cursor="Hand" Command="{Binding CancelApplyCommand}"
+                                BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                                Content="{x:Static resources:Strings.K696}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsApplying}" Value="True" />
+                                                <Condition Binding="{Binding IsRemote}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+                <!-- 逐项下发结果明细（写/校验每项成败；空集合时不占空间） -->
+                <ScrollViewer Grid.Row="1" MaxHeight="90" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding ApplyItemResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,1">
+                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}"
+                                               Foreground="{StaticResource SecondaryTextBrush}"
+                                               Text="{Binding ParamName}" />
+                                    <TextBlock Margin="6,0" FontSize="{DynamicResource FontSizeCaption}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="·" />
+                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Text="{Binding Message}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Success}" Value="False">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!--  ══ 中部：配方列表 + 编辑表单 ══  -->
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.1*" />
+                <ColumnDefinition Width="1.4*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  ── 左：配方列表 ──  -->
+            <Grid Grid.Column="0" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Margin="2,0,0,8" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                           Foreground="{StaticResource PrimaryTextBrush}"
+                           Text="{x:Static resources:Strings.K660}" />
+                <ListBox Grid.Row="1" ItemsSource="{Binding AvailableRecipes}"
+                         SelectedItem="{Binding SelectedRecipe, Mode=TwoWay}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="2">
+                                <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="0,2,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding MachineType, TargetNullValue=''}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding NewRecipeCommand}"
+                            Content="{x:Static resources:Strings.K662}" />
+                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding CloneRecipeCommand}"
+                            Content="{x:Static resources:Strings.K689}" />
+                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding DeleteRecipeCommand}"
+                            Content="{x:Static resources:Strings.K664}" />
+                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding ExportRecipesCommand}"
+                            Content="{x:Static resources:Strings.K690}" />
+                    <Button Padding="12,6" Cursor="Hand" Command="{Binding ImportRecipesCommand}"
+                            Content="{x:Static resources:Strings.K691}" />
+                </StackPanel>
+            </Grid>
+
+            <!--  ── 右：编辑表单 ──  -->
+            <Grid Grid.Column="1" Margin="12,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- 基本信息 -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                               FontSize="{DynamicResource FontSizeCaption}"
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K678}" />
+                    <TextBox Grid.Column="1" Margin="0,0,16,0" VerticalContentAlignment="Center"
+                             Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="0,0,8,0"
+                               FontSize="{DynamicResource FontSizeCaption}"
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K679}" />
+                    <TextBox Grid.Column="3" VerticalContentAlignment="Center"
+                             Text="{Binding EditMachineType, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                               FontSize="{DynamicResource FontSizeCaption}"
+                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K680}" />
+                    <TextBox Grid.Column="1" VerticalContentAlignment="Center"
+                             Text="{Binding EditRemark, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+
+                <!-- 参数项表头 -->
+                <Grid Grid.Row="2" Margin="0,4,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="0.9*" />
+                        <ColumnDefinition Width="0.8*" />
+                        <ColumnDefinition Width="0.6*" />
+                        <ColumnDefinition Width="0.6*" />
+                        <ColumnDefinition Width="0.6*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K665}" />
+                    <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K666}" />
+                    <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K667}" />
+                    <TextBlock Grid.Column="3" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K668}" />
+                    <TextBlock Grid.Column="4" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K669}" />
+                    <TextBlock Grid.Column="5" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K670}" />
+                    <TextBlock Grid.Column="6" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K671}" />
+                </Grid>
+
+                <!-- 参数项表格（ItemsControl 行式编辑） -->
+                <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding EditItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2,0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="0.9*" />
+                                        <ColumnDefinition Width="0.8*" />
+                                        <ColumnDefinition Width="0.6*" />
+                                        <ColumnDefinition Width="0.6*" />
+                                        <ColumnDefinition Width="0.6*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                             Text="{Binding ParamName, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Grid.Column="1" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                             Text="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox Grid.Column="2" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                              ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                              SelectedItem="{Binding DataType, Mode=TwoWay}" />
+                                    <!-- Value 列：Bool 类型显示下拉（True/False/0/1），其余类型文本框 -->
+                                    <Grid Grid.Column="3" Margin="0,0,4,0">
+                                        <TextBox VerticalContentAlignment="Center"
+                                                 Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
+                                            <TextBox.Style>
+                                                <Style TargetType="TextBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataType}" Value="Bool">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBox.Style>
+                                        </TextBox>
+                                        <ComboBox VerticalContentAlignment="Center" Visibility="Collapsed"
+                                                  ItemsSource="{Binding DataContext.BoolOptions, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                  SelectedItem="{Binding Value, Mode=TwoWay}">
+                                            <ComboBox.Style>
+                                                <Style TargetType="ComboBox">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataType}" Value="Bool">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ComboBox.Style>
+                                        </ComboBox>
+                                    </Grid>
+                                    <TextBox Grid.Column="4" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                             Text="{Binding Min, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                                    <TextBox Grid.Column="5" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                             Text="{Binding Max, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
+                                    <TextBox Grid.Column="6" Margin="0,0,4,0" VerticalContentAlignment="Center"
+                                             Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Grid.Column="7" Margin="4,0,0,0" Padding="6,3" Cursor="Hand"
+                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}">
+                                        <materialIcons:MaterialIcon Width="14" Height="14"
+                                                                    Kind="DeleteOutline" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- 操作按钮 -->
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding AddItemCommand}"
+                            Content="{x:Static resources:Strings.K672}" />
+                    <Button Padding="14,6" Cursor="Hand" Command="{Binding SaveRecipeCommand}"
+                            Background="{StaticResource PrimaryBrush}" Foreground="White" BorderThickness="0"
+                            Content="{x:Static resources:Strings.K663}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

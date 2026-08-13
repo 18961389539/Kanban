@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <script type="importmap"></script>
+    <!-- ECharts 本地资源（内网部署无 CDN 依赖；Apache-2.0 许可） -->
+    <script src="lib/echarts/echarts.min.js"></script>
+    <!-- ECharts × Blazor 互操作层（图表实例管理/ResizeObserver/下载） -->
+    <script src="js/echartsInterop.js"></script>
 </head>
 
 <body>
@@ -22,10 +26,21 @@
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
+        <span>发生未处理错误（页面功能不受影响时可忽略；详情见浏览器控制台）</span>
         <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        <span class="dismiss" onclick="document.getElementById('blazor-error-ui').style.display='none'">🗙</span>
     </div>
+    <script>
+        // 前端诊断：WASM 的 unhandledrejection/error 会触发 #blazor-error-ui 显示。
+        // 这些事件在 WASM 上不会走到 .NET 的 UnobservedTaskException（无线程池终结器时机），
+        // 故在此记录到控制台，便于定位异常源（配合错误堆栈排查）。
+        window.addEventListener('unhandledrejection', function (e) {
+            console.error('[unhandledrejection]', e.reason);
+        });
+        window.addEventListener('error', function (e) {
+            console.error('[window.onerror]', e.message, e.filename + ':' + e.lineno);
+        });
+    </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 

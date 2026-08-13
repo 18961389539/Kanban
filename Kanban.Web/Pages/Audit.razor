@@ -1,0 +1,179 @@
+@page "/audit"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+@using Kanban.Web.Services
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("Au_Title")</span>
+            <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Au_Operator")</span>
+            <input class="filter-input" type="text" value="@OperatorFilter" @oninput="OnOperatorInput" placeholder="Remote / admin…" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Au_Action")</span>
+            <input class="filter-input" type="text" value="@ActionFilter" @oninput="OnActionInput" placeholder="Device.Update…" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Au_Result")</span>
+            <select class="filter-input" value="@SucceededFilter" @onchange="OnSucceededChanged">
+                <option value="">@L.T("Au_AllResults")</option>
+                <option value="1">@L.T("Au_Success")</option>
+                <option value="0">@L.T("Au_Failed")</option>
+            </select>
+        </label>
+        <div class="filter-actions">
+            <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+        </div>
+    </div>
+
+    @if (Error is not null)
+    {
+        <div class="msg-banner msg-error">@Error</div>
+    }
+    @if (IsLoading)
+    {
+        <div class="loading-row">@L.T("Hq_Loading")…</div>
+    }
+    else if (Rows.Count == 0 && Loaded)
+    {
+        <EmptyState Title="@L.T("Au_None")" Hint="" Icon="📖" />
+    }
+    else if (Rows.Count > 0)
+    {
+        <section class="card">
+            <div class="card-title">@L.T("Au_List") <span class="badge-soft">@PageSummaryText</span></div>
+            <table class="hq-table">
+                <thead>
+                    <tr>
+                        <th>@L.T("Hq_EventTime")</th>
+                        <th>@L.T("Au_Operator")</th>
+                        <th>@L.T("Au_Action")</th>
+                        <th>@L.T("Au_TargetType")</th>
+                        <th>@L.T("Au_TargetId")</th>
+                        <th>@L.T("Au_Result")</th>
+                        <th>@L.T("Au_Detail")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Rows)
+                    {
+                        <tr>
+                            <td>@e.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@e.Operator</td>
+                            <td class="mono">@e.Action</td>
+                            <td>@e.TargetType</td>
+                            <td class="mono">@e.TargetId</td>
+                            <td>
+                                @if (e.Succeeded)
+                                {
+                                    <span class="kpi-ok">✓ @L.T("Au_Success")</span>
+                                }
+                                else
+                                {
+                                    <span class="kpi-ng">✗ @L.T("Au_Failed")</span>
+                                }
+                            </td>
+                            <td class="dim">@e.Detail</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="pager">
+                <button class="btn" disabled="@(Page <= 1 || IsLoading)" @onclick="PrevPageAsync">@L.T("Hq_PrevPage")</button>
+                <span class="pager-info">@PageSummaryText</span>
+                <button class="btn" disabled="@(Page >= TotalPages || IsLoading)" @onclick="NextPageAsync">@L.T("Hq_NextPage")</button>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private const int PageSize = 50;
+
+    private string OperatorFilter { get; set; } = "";
+    private string ActionFilter { get; set; } = "";
+    private string SucceededFilter { get; set; } = "";
+
+    private List<AuditLogEntryDto> Rows { get; set; } = [];
+    private int Page { get; set; } = 1;
+    private int TotalCount { get; set; }
+    private int TotalPages { get; set; }
+    private bool Loaded { get; set; }
+    private bool IsLoading { get; set; }
+    private string? Error { get; set; }
+
+    private string PageSummaryText => L.T("Hq_PageInfo", Page, TotalPages, TotalCount);
+
+    private void OnOperatorInput(ChangeEventArgs e) => OperatorFilter = e.Value?.ToString() ?? "";
+    private void OnActionInput(ChangeEventArgs e) => ActionFilter = e.Value?.ToString() ?? "";
+
+    private void OnSucceededChanged(ChangeEventArgs e) => SucceededFilter = e.Value?.ToString() ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        Page = 1;
+        await LoadPageAsync();
+    }
+
+    private async Task LoadPageAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        try
+        {
+            var resp = await Dashboard.QueryAuditLogsAsync(new AuditLogQueryRequest
+            {
+                Operator = string.IsNullOrWhiteSpace(OperatorFilter) ? null : OperatorFilter.Trim(),
+                Action = string.IsNullOrWhiteSpace(ActionFilter) ? null : ActionFilter.Trim(),
+                Succeeded = SucceededFilter switch
+                {
+                    "1" => true,
+                    "0" => false,
+                    _ => null,
+                },
+                Page = Page,
+                PageSize = PageSize,
+            });
+            Rows = resp.Items.ToList();
+            TotalCount = resp.Total;
+            TotalPages = ProductionAnalysis.CalcTotalPages(resp.Total, PageSize);
+            Loaded = true;
+        }
+        catch (Exception)
+        {
+            Error = L.T("Hq_QueryFailed");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task PrevPageAsync()
+    {
+        if (Page <= 1) return;
+        Page--;
+        await LoadPageAsync();
+    }
+
+    private async Task NextPageAsync()
+    {
+        if (Page >= TotalPages) return;
+        Page++;
+        await LoadPageAsync();
+    }
+}

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
@@ -14,6 +14,7 @@ using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
 using Material.Icons;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using MainAPP.Resources;
 
@@ -29,10 +30,12 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 {
     // 注意：设备详情页是上下文页面（依赖选中设备），不作为侧边栏常驻导航项。
     // 入口在主页"查看详情"按钮（HomeViewModel.ViewDeviceDetailCommand），通过 SelectedIndex=9 切换。
-    // s_navItems 位置索引 0~8 对应侧边栏 9 项；SelectedIndex=9 保留给设备详情上下文页。
+    // 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=9 隐藏占位，UserManager=10/Audit=11 视觉位置为 9/10）：
+    // ListBox 必须绑 SelectedItem（SelectedNavItem，含真实 Index）而非 SelectedIndex（视觉位置），
+    // 由 VM 完成"视觉选择 → 页面索引"映射；程序导航到隐藏页时 SelectedNavItem=null（侧边栏无高亮）。
     // 导航名称直接从 s_navItems.AccessibleName 派生（见 GetNavName），避免维护第二份名称数组导致文案分叉。
 
-    // 切换计时：记录从 SelectedIndex 变更到下次渲染完成的时间，用于排查切换卡顿
+    // 切换计时：记录从 SelectedIndex 变更到下次渲染完成的时间，用于监控导航切换耗时。
     private long _navSwitchStartTicks;
     private int _navFromIndex = -1;
     /// <summary>
@@ -41,27 +44,27 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     public AppSettings AppSettings { get; }
 
     /// <summary>
-    /// 设备管理视图模型
+    /// 设备管理视图模型（懒加载：页面首次进入时创建，见构造函数 Lazy 初始化注释）
     /// </summary>
-    public DeviceManagerViewModel DeviceManagerViewModel { get; }
+    public DeviceManagerViewModel DeviceManagerViewModel => _deviceManagerLazy.Value;
 
-    public HistoryQueryViewModel HistoryQueryViewModel { get; }
+    public HistoryQueryViewModel HistoryQueryViewModel => _historyQueryLazy.Value;
 
-    public HomeViewModel HomeViewModel { get; }
+    public HomeViewModel HomeViewModel => _homeLazy.Value;
 
-    public ProductionLineViewModel ProductionLineViewModel { get; }
+    public ProductionLineViewModel ProductionLineViewModel => _productionLineLazy.Value;
 
-    public AlarmCenterViewModel AlarmCenterViewModel { get; }
+    public AlarmCenterViewModel AlarmCenterViewModel => _alarmCenterLazy.Value;
 
-    public OverviewViewModel OverviewViewModel { get; }
+    public OverviewViewModel OverviewViewModel => _overviewLazy.Value;
 
-    public DeviceDetailViewModel DeviceDetailViewModel { get; }
+    public DeviceDetailViewModel DeviceDetailViewModel => _deviceDetailLazy.Value;
 
-    public WorkOrderManagerViewModel WorkOrderManagerViewModel { get; }
+    public WorkOrderManagerViewModel WorkOrderManagerViewModel => _workOrderManagerLazy.Value;
 
-    public SettingsViewModel SettingsViewModel { get; }
+    public SettingsViewModel SettingsViewModel => _settingsLazy.Value;
 
-    public RuntimeMonitoringViewModel? RuntimeMonitoringViewModel { get; }
+    public RuntimeMonitoringViewModel? RuntimeMonitoringViewModel => _runtimeMonitoringLazy.Value;
 
     /// <summary>
     /// PLC 连接管理器（暴露给 UI 绑定连接状态/状态文本）
@@ -159,13 +162,13 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             {
                 LicenseStatus.Active when LicenseGate.CurrentLicense?.IsPermanent == false
                     => string.Format(Strings.F112, LicenseGate.CurrentLicense.ExpireDate),
-                LicenseStatus.Active => "已激活",
+                LicenseStatus.Active => Strings.M135,
                 LicenseStatus.Trial => string.Format(Strings.F211, RemainingTrialDays ?? 0),
-                LicenseStatus.TrialExpired => "试用已过期",
-                LicenseStatus.TrialManipulated => "试用异常",
-                LicenseStatus.Expired => "授权已过期",
-                LicenseStatus.MachineMismatch => "授权不匹配",
-                _ => "未激活",
+                LicenseStatus.TrialExpired => Strings.M136,
+                LicenseStatus.TrialManipulated => Strings.M137,
+                LicenseStatus.Expired => Strings.M138,
+                LicenseStatus.MachineMismatch => Strings.M139,
+                _ => Strings.M140,
             };
         }
     }
@@ -197,14 +200,53 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// 替代原 hc:SideMenu 的 SideMenuItem 子元素声明方式。
     /// AccessibleName 通过 ItemContainerStyle 绑定到 ListBoxItem.AutomationProperties.Name，
     /// 使 UIA 客户端（FlaUI/WinAppDriver）可通过 ByName 直接定位每个导航项并 Click。
+    /// 登录/退出登录后通过 RefreshNavigationForCurrentUser 重建集合以反映角色权限变化。
     /// </summary>
+    private readonly ObservableCollection<NavItem> _navItemsBacking = new();
     public ReadOnlyObservableCollection<NavItem> NavItems { get; }
 
+    /// <summary>当前登录用户会话（驱动导航权限过滤）。</summary>
+    public UserSession UserSession { get; }
+
+    private readonly ILoginDialogService? _loginDialogService;
+
+    /// <summary>当前用户显示名，供侧边栏用户卡片绑定。</summary>
+    public string CurrentUserDisplay => UserSession.CurrentUserDisplay;
+
+    /// <summary>当前用户角色的本地化名称。</summary>
+    public string CurrentRoleText => UserSession.CurrentRole switch
+    {
+        UserRole.Admin => Strings.M334,
+        UserRole.Engineer => Strings.M333,
+        _ => Strings.M332,
+    };
+
     /// <summary>
-    /// 当前页面索引（0:主页 1:设备管理 2:历史查询 3:设置）
+    /// 当前页面索引，由 Navigate()/侧边栏选择驱动；具体页面对应 NavigationPageCatalog 命名键（如 "Home"、"DeviceDetail"）。
+    /// 注意：这是"页面索引"（NavigationPageCatalog.Index），与侧边栏视觉位置不同——隐藏页（DeviceDetail=9）
+    /// 不显示在 NavItems 中，侧边栏点击必须经 <see cref="SelectedNavItem"/>（含 Index）映射后再写本属性，
+    /// 禁止把 ListBox.SelectedIndex（视觉位置）直接双向绑到本属性，否则视觉位置 ≥9 的项会错位。
     /// </summary>
     [ObservableProperty]
     private int _selectedIndex;
+
+    /// <summary>
+    /// 侧边栏当前选中的导航项（ListBox.SelectedItem 双向绑定）。
+    /// 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=9 隐藏占位），故以 NavItem.Index 为
+    /// 中介完成"视觉选择 → 页面索引"的映射；程序导航到隐藏页时本属性为 null（侧边栏无高亮）。
+    /// </summary>
+    [ObservableProperty]
+    private NavItem? _selectedNavItem;
+
+    /// <summary>侧边栏选中项变化：把 NavItem.Index 映射为页面索引（仅当确实不同，防与
+    /// OnSelectedIndexChanged 反向同步形成循环）。程序导航到隐藏页时 value 为 null，不做任何事。</summary>
+    partial void OnSelectedNavItemChanged(NavItem? value)
+    {
+        if (value is not null && value.Index != SelectedIndex)
+        {
+            SelectedIndex = value.Index;
+        }
+    }
 
     /// <summary>
     /// 侧边栏是否折叠（true=窄栏仅图标，false=展开显示文字）
@@ -263,6 +305,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>
     /// 基于名称导航到指定页面（INavigationService 实现）。
     /// Viewer 模式下仅允许展示页（<see cref="ViewerAllowedPageKeys"/>），管理页跳转被忽略并记日志。
+    /// 角色权限不足时拒绝导航并记日志（如 Operator 导航到 DeviceManager）。
     /// </summary>
     public void Navigate(string pageKey)
     {
@@ -274,6 +317,13 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         var page = PageDefinitions.FirstOrDefault(item => item.Key == pageKey);
         if (page is not null)
         {
+            // 角色权限检查：页面有 RequiredRole 时，当前用户角色必须满足
+            if (page.RequiredRole is { } required && !UserSession.CurrentRole.AtLeast(required))
+            {
+                Log.Warning("角色 {Role} 无权访问页面 {PageKey}（需 {Required}）",
+                    UserSession.CurrentRole, pageKey, required);
+                return;
+            }
             SelectedIndex = page.Index;
         }
         else
@@ -282,38 +332,95 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         }
     }
 
+    /// <summary>
+    /// 重建侧边栏导航项：按 Viewer 模式 + 当前用户角色过滤。
+    /// 构造时和登录/退出登录后调用。
+    /// </summary>
+    private void RebuildSidebarItems()
+    {
+        _navItemsBacking.Clear();
+        foreach (var page in PageDefinitions.Where(p => p.ShowInSidebar
+            && (!IsViewerMode || ViewerAllowedPageKeys.Contains(p.Key))
+            && (p.RequiredRole is null || UserSession.CurrentRole.AtLeast(p.RequiredRole.Value))))
+        {
+            _navItemsBacking.Add(page.NavItem);
+        }
+        // 列表重建后重新对齐侧边栏高亮：SelectedIndex 若未变化不会触发 OnSelectedIndexChanged，
+        // 必须在此显式同步（构造期/登录后 SelectedIndex 保持原值时保证高亮正确）。
+        SelectedNavItem = _navItemsBacking.FirstOrDefault(n => n.Index == SelectedIndex);
+    }
+
+    /// <summary>
+    /// 登录/退出登录后刷新导航：重建侧边栏并跳转到合法页面。
+    /// 若当前页在权限变更后不可访问（如退出登录后停留在设备管理页），回退到主页。
+    /// </summary>
+    public void RefreshNavigationForCurrentUser()
+    {
+        RebuildSidebarItems();
+        // 检查当前页是否仍可访问：SelectedIndex 对应的页面需通过角色检查
+        var currentPage = PageDefinitions.FirstOrDefault(p => p.Index == SelectedIndex);
+        if (currentPage?.RequiredRole is { } required && !UserSession.CurrentRole.AtLeast(required))
+        {
+            SelectedIndex = 0; // 回退到主页
+        }
+    }
+
+    /// <summary>
+    /// 运行中切换用户。Viewer 纯展示模式不开放登录入口；
+    /// 取消或验证失败时保留原会话，成功后刷新用户显示及角色导航。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSwitchUser))]
+    private void SwitchUser()
+    {
+        if (_loginDialogService?.ShowDialog() != true)
+            return;
+
+        OnPropertyChanged(nameof(CurrentUserDisplay));
+        OnPropertyChanged(nameof(CurrentRoleText));
+        RefreshNavigationForCurrentUser();
+        Log.Information("运行中用户切换成功：{Username} ({Role})",
+            UserSession.CurrentUser?.Username, UserSession.CurrentRole);
+    }
+
+    private bool CanSwitchUser() => !IsViewerMode && _loginDialogService is not null;
+
     public MainWindowViewModel(
         AppSettings appSettings,
-        DeviceManagerViewModel deviceManagerViewModel,
-        HistoryQueryViewModel historyQueryViewModel,
-        HomeViewModel homeViewModel,
-        ProductionLineViewModel productionLineViewModel,
-        AlarmCenterViewModel alarmCenterViewModel,
-        OverviewViewModel overviewViewModel,
-        DeviceDetailViewModel deviceDetailViewModel,
-        WorkOrderManagerViewModel workOrderManagerViewModel,
-        SettingsViewModel settingsViewModel,
+        IServiceProvider serviceProvider,
         IPlcConnectionManager connectionManager,
         LicenseGate licenseGate,
-        RuntimeMonitoringViewModel? runtimeMonitoringViewModel = null,
+        UserSession userSession,
         KanbanDataClient? dataClient = null,
-        IPlcDataAcquisitionService? acquisitionService = null)
+        IPlcDataAcquisitionService? acquisitionService = null,
+        ILoginDialogService? loginDialogService = null)
     {
         AppSettings = appSettings;
-        DeviceManagerViewModel = deviceManagerViewModel;
-        HistoryQueryViewModel = historyQueryViewModel;
-        HomeViewModel = homeViewModel;
-        ProductionLineViewModel = productionLineViewModel;
-        AlarmCenterViewModel = alarmCenterViewModel;
-        OverviewViewModel = overviewViewModel;
-        DeviceDetailViewModel = deviceDetailViewModel;
-        WorkOrderManagerViewModel = workOrderManagerViewModel;
-        SettingsViewModel = settingsViewModel;
-        RuntimeMonitoringViewModel = runtimeMonitoringViewModel;
+        _serviceProvider = serviceProvider;
         ConnectionManager = connectionManager;
         LicenseGate = licenseGate;
+        UserSession = userSession;
+        _loginDialogService = loginDialogService;
         _dataClient = dataClient;
         _acquisitionService = acquisitionService;
+
+        // 页面 ViewModel 懒加载（2026-08-11 启动优化）：
+        // 各页面 VM 只在首次进入页面时才创建（NavigationPage.ViewModel 是 Lazy，触发点
+        // NavigationPageHost 可见 / ActivatePage 导航），构造期不再全量实例化 10+ VM，
+        // 消除 MainWindow 实例化阶段的重型服务链（HistoryService/EF Core/Settings 服务树等）JIT 成本。
+        // 首页例外：MainWindow 构造时 ActivatePage(0) 立即创建（首屏必需，语义不变）。
+        // 跨页事件订阅在 VM 首次创建时挂接（SubscribeXxx），事件只会在对应页面被用户操作时
+        // 触发——此时 VM 必然已创建，订阅时序无竞态。
+        _deviceManagerLazy = CreateLazy(GetService<DeviceManagerViewModel>, SubscribeDeviceManager);
+        _historyQueryLazy = CreateLazy(GetService<HistoryQueryViewModel>);
+        _homeLazy = CreateLazy(GetService<HomeViewModel>, SubscribeHome);
+        _productionLineLazy = CreateLazy(GetService<ProductionLineViewModel>, SubscribeProductionLine);
+        _alarmCenterLazy = CreateLazy(GetService<AlarmCenterViewModel>, SubscribeAlarmCenter);
+        _overviewLazy = CreateLazy(GetService<OverviewViewModel>, SubscribeOverview);
+        _deviceDetailLazy = CreateLazy(GetService<DeviceDetailViewModel>, SubscribeDeviceDetail);
+        _workOrderManagerLazy = CreateLazy(GetService<WorkOrderManagerViewModel>);
+        _settingsLazy = CreateLazy(GetService<SettingsViewModel>);
+        _runtimeMonitoringLazy = CreateLazy(GetService<RuntimeMonitoringViewModel>);
+
         // 数据新鲜度检查：2s 轮询刷新"数据停滞"横幅（连接正常但采集卡死时提示）
         _staleCheckTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
@@ -324,28 +431,71 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）。
         // 命名方法订阅（遵守本文件"事件全部用命名方法"约定），Dispose 精确解绑。
         AppSettings.PropertyChanged += OnAppSettingsPropertyChanged;
-        var sidebarItems = new ObservableCollection<NavItem>(
-            PageDefinitions.Where(page => page.ShowInSidebar
-                && (!IsViewerMode || ViewerAllowedPageKeys.Contains(page.Key)))
-                .Select(page => page.NavItem));
-        NavItems = new ReadOnlyObservableCollection<NavItem>(sidebarItems);
+        NavItems = new ReadOnlyObservableCollection<NavItem>(_navItemsBacking);
+        RebuildSidebarItems();
         ConnectionManager.ConnectionStateChanged += OnConnectionStateChanged;
         // 横幅依赖 IsConnected 与 ConnectionStatus，连接尝试期间两者都会变化。
         ConnectionManager.PropertyChanged += OnConnectionManagerPropertyChanged;
-        // 产线页"跳转主页"请求：通过名称导航到主页
-        ProductionLineViewModel.FocusDeviceRequested += OnFocusDeviceRequested;
-        // 概览页"跳转主页"请求：通过名称导航到主页
-        OverviewViewModel.FocusDeviceRequested += OnFocusDeviceRequested;
-        // 设备详情页"返回主页"请求：通过名称导航到主页
-        DeviceDetailViewModel.GoBackRequested += OnGoBackRequested;
-        // 主页"查看设备详情"请求：跳转到设备详情页。
-        // HomeViewModel 已将设备 Id 写入 IDeviceSelectionService，DeviceDetailViewModel 自动响应。
-        HomeViewModel.ViewDeviceDetailRequested += OnViewDeviceDetailRequested;
-        // 主页"工单管理"请求：跳转到工单管理页。
-        HomeViewModel.ViewWorkOrderManagerRequested += OnViewWorkOrderManagerRequested;
-        DeviceDetailViewModel.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
-        AlarmCenterViewModel.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
     }
+
+    /// <summary>页面 ViewModel 惰性包装：工厂 + 首次创建时的事件订阅回调。</summary>
+    private static Lazy<T> CreateLazy<T>(Func<T> factory, Action<T>? onCreated = null)
+        where T : class
+        => new(() =>
+        {
+            var instance = factory();
+            onCreated?.Invoke(instance);
+            return instance;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>懒加载服务解析入口（DI 容器，页面 VM 首次进入时解析）。</summary>
+    private T GetService<T>() where T : class
+        => _serviceProvider.GetRequiredService<T>();
+
+    private readonly IServiceProvider _serviceProvider;
+
+    // ──────────── 页面 VM 惰性字段与订阅挂接（Dispose 按 IsValueCreated 解绑）────────────
+
+    private readonly Lazy<DeviceManagerViewModel> _deviceManagerLazy;
+    private readonly Lazy<HistoryQueryViewModel> _historyQueryLazy;
+    private readonly Lazy<HomeViewModel> _homeLazy;
+    private readonly Lazy<ProductionLineViewModel> _productionLineLazy;
+    private readonly Lazy<AlarmCenterViewModel> _alarmCenterLazy;
+    private readonly Lazy<OverviewViewModel> _overviewLazy;
+    private readonly Lazy<DeviceDetailViewModel> _deviceDetailLazy;
+    private readonly Lazy<WorkOrderManagerViewModel> _workOrderManagerLazy;
+    private readonly Lazy<SettingsViewModel> _settingsLazy;
+    private readonly Lazy<RuntimeMonitoringViewModel> _runtimeMonitoringLazy;
+
+    /// <summary>产线页"跳转主页"请求：通过名称导航到主页</summary>
+    private void SubscribeProductionLine(ProductionLineViewModel vm)
+        => vm.FocusDeviceRequested += OnFocusDeviceRequested;
+
+    /// <summary>概览页"跳转主页"请求：通过名称导航到主页</summary>
+    private void SubscribeOverview(OverviewViewModel vm)
+        => vm.FocusDeviceRequested += OnFocusDeviceRequested;
+
+    /// <summary>设备详情页"返回主页"请求：通过名称导航到主页。</summary>
+    private void SubscribeDeviceDetail(DeviceDetailViewModel vm)
+    {
+        vm.GoBackRequested += OnGoBackRequested;
+        vm.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
+    }
+
+    /// <summary>
+    /// 主页：设备详情跳转（HomeViewModel 已将设备 Id 写入 IDeviceSelectionService，
+    /// DeviceDetailViewModel 自动响应）与工单管理跳转。
+    /// </summary>
+    private void SubscribeHome(HomeViewModel vm)
+    {
+        vm.ViewDeviceDetailRequested += OnViewDeviceDetailRequested;
+        vm.ViewWorkOrderManagerRequested += OnViewWorkOrderManagerRequested;
+    }
+
+    private void SubscribeAlarmCenter(AlarmCenterViewModel vm)
+        => vm.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
+
+    private void SubscribeDeviceManager(DeviceManagerViewModel vm) { }
 
     /// <summary>
     /// 释放事件订阅，避免事件泄漏。
@@ -360,13 +510,23 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         AppSettings.PropertyChanged -= OnAppSettingsPropertyChanged;
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;
-        ProductionLineViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
-        OverviewViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
-        DeviceDetailViewModel.GoBackRequested -= OnGoBackRequested;
-        HomeViewModel.ViewDeviceDetailRequested -= OnViewDeviceDetailRequested;
-        HomeViewModel.ViewWorkOrderManagerRequested -= OnViewWorkOrderManagerRequested;
-        DeviceDetailViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
-        AlarmCenterViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+        // 页面 VM 懒加载后：只对已创建的 VM 解绑事件（IsValueCreated 判定不触发创建）
+        if (_productionLineLazy.IsValueCreated)
+            ProductionLineViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
+        if (_overviewLazy.IsValueCreated)
+            OverviewViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
+        if (_deviceDetailLazy.IsValueCreated)
+        {
+            DeviceDetailViewModel.GoBackRequested -= OnGoBackRequested;
+            DeviceDetailViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+        }
+        if (_homeLazy.IsValueCreated)
+        {
+            HomeViewModel.ViewDeviceDetailRequested -= OnViewDeviceDetailRequested;
+            HomeViewModel.ViewWorkOrderManagerRequested -= OnViewWorkOrderManagerRequested;
+        }
+        if (_alarmCenterLazy.IsValueCreated)
+            AlarmCenterViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
     }
 
     private bool _disposed;
@@ -396,8 +556,11 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         }
     }
 
-    /// <summary>产线页/概览页"跳转主页"请求。</summary>
-    private void OnFocusDeviceRequested(string _) => Navigate("Home");
+    /// <summary>
+    /// 产线页/概览页点击设备卡片：直达设备详情页（而非主页），
+    /// 避免用户在产线页点卡片却跳回主页仪表板。
+    /// </summary>
+    private void OnFocusDeviceRequested(string _) => Navigate("DeviceDetail");
 
     /// <summary>设备详情页"返回主页"请求。</summary>
     private void OnGoBackRequested() => Navigate("Home");
@@ -479,7 +642,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// SelectedIndex 变更回调：记录切换开始时刻，并在渲染完成后（Background 优先级）
-    /// 记录耗时，用于排查切换卡顿。预热流程也会经过此方法。
+    /// 记录耗时用于监控导航切换性能。预热流程也会经过此方法。
     /// </summary>
     partial void OnSelectedIndexChanged(int value)
     {
@@ -487,6 +650,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         var fromName = GetNavName(_navFromIndex, "初始");
         var toName = GetNavName(value, value.ToString());
         Log.Debug("导航 切换 {From} → {To} 开始", fromName, toName);
+
+        // 反向同步侧边栏高亮：仅当目标页是可见导航项时选中对应 NavItem；
+        // 隐藏页（如 DeviceDetail=9）在 NavItems 中不存在 → 置 null 取消高亮。
+        var visibleItem = _navItemsBacking.FirstOrDefault(n => n.Index == value);
+        if (!ReferenceEquals(SelectedNavItem, visibleItem))
+        {
+            SelectedNavItem = visibleItem;
+        }
 
         if (value == NavigationPageCatalog.DeviceDetail.Index)
             DeviceDetailViewModel.RefreshOnEnter();
@@ -521,7 +692,13 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     [RelayCommand]
     private void SelectPage(string indexStr)
     {
-        if (int.TryParse(indexStr, out var idx) && PageDefinitions.Any(page => page.ShowInSidebar && page.Index == idx))
-            SelectedIndex = idx;
+        // 转调 Navigate 复用同一套权限门禁（Viewer 白名单 + RequiredRole），
+        // 修复快捷键绕过角色/Viewer 限制直达管理页的漏洞（审查修复 2026-08-13）。
+        if (int.TryParse(indexStr, out var idx))
+        {
+            var page = PageDefinitions.FirstOrDefault(p => p.ShowInSidebar && p.Index == idx);
+            if (page is not null)
+                Navigate(page.Key);
+        }
     }
 }

@@ -17,7 +17,6 @@ namespace MainAPP.ViewModels;
 
 /// <summary>
 /// 产线页 ViewModel：所有设备俯瞰视图。
-/// 设备数量驱动 LayoutMode 自适应切换：1-4 大卡片、5-8 中卡片、9+ 紧凑表格。
 /// 数据来自 DeviceRepository（DI 单例，与主页共享），无需独立定时器。
 /// </summary>
 public partial class ProductionLineViewModel : ObservableObject, IDisposable
@@ -31,19 +30,14 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     /// <summary>设备项集合（与 Devices/Runtimes 同步）。</summary>
     public ObservableCollection<LineDeviceItem> LineDevices { get; } = new();
 
-    /// <summary>当前布局模式（UI 通过 DataTrigger 切换模板）。</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsLargeCardsLayout))]
-    [NotifyPropertyChangedFor(nameof(IsMediumCardsLayout))]
-    [NotifyPropertyChangedFor(nameof(IsTableLayout))]
-    private LineLayoutMode _layoutMode;
-
-    /// <summary>3 个布局布尔可见性辅助属性（避免 enum DataTrigger 匹配问题）。</summary>
-    public bool IsLargeCardsLayout => LayoutMode == LineLayoutMode.LargeCards;
-    public bool IsMediumCardsLayout => LayoutMode == LineLayoutMode.MediumCards;
-    public bool IsTableLayout => LayoutMode == LineLayoutMode.Table;
     /// <summary>无设备时显示空状态（BooleanToVisibilityConverter 直接绑定）。</summary>
     public bool HasNoDevices => LineDevices.Count == 0;
+
+    /// <summary>
+    /// 是否固定详细布局（产线页布局重构后：单一详细卡片模板，不再按设备数切换
+    /// 大卡/中卡/表格三态）。恒为 true，供测试与扩展断言使用。
+    /// </summary>
+    public bool IsDetailedLayout => true;
 
     /// <summary>当前选中设备 Id（镜像自共享 IDeviceSelectionService.SelectedDeviceId），用于卡片选中态高亮。</summary>
     [ObservableProperty]
@@ -73,15 +67,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         UpdateCurrentShift();
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged += OnShiftsChanged;
-        _log.Information("ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}, LayoutMode={Mode}",
-            LineDevices.Count, LayoutMode);
+        _log.Information("ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}", LineDevices.Count);
     }
 
     // ──────────── 汇总 KPI（顶部条） ────────────
 
     public int DeviceCount => LineDevices.Count;
-    /// <summary>中卡片布局列数：9-12 台使用 4 列，13-15 台使用 5 列。</summary>
-    public int MediumColumns => _deviceRepository.Devices.Count <= 12 ? 4 : 5;
     public int RunningCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Running);
     public int AlarmCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Alarm);
     public int PausedCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Paused);
@@ -175,7 +166,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
                 foreach (var item in LineDevices)
                     item.Runtime.PropertyChanged -= OnRuntimePropertyChanged;
                 LineDevices.Clear();
-                UpdateLayoutMode();
                 RefreshSummaryKpis();
                 RefreshLastShiftComparison();
                 OnPropertyChanged(nameof(FilteredLineDevices));
@@ -190,7 +180,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
                 foreach (Device dev in e.OldItems)
                     TryRemoveLineDevice(dev.Id);
 
-            UpdateLayoutMode();
             RefreshSummaryKpis();
             RefreshLastShiftComparison();
             OnPropertyChanged(nameof(FilteredLineDevices));
@@ -232,7 +221,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             return; // runtime 尚未添加，等 OnRuntimesCollectionChanged 兜底
         }
 
-        var item = new LineDeviceItem(dev, runtime);
+        var item = new LineDeviceItem(dev, runtime, _appSettings);
         item.Runtime.PropertyChanged += OnRuntimePropertyChanged;
         LineDevices.Add(item);
         _log.Information("TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}", dev.Name, dev.Id, LineDevices.Count);
@@ -261,7 +250,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         foreach (var dev in _deviceRepository.Devices)
             TryAddLineDevice(dev);
 
-        UpdateLayoutMode();
         RefreshSummaryKpis();
     }
 
@@ -302,6 +290,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
 
     private void RefreshSummaryKpis()
     {
+        OnPropertyChanged(nameof(DeviceCount));
+        OnPropertyChanged(nameof(RunningCount));
+        OnPropertyChanged(nameof(AlarmCount));
+        OnPropertyChanged(nameof(PausedCount));
+        OnPropertyChanged(nameof(IdleCount));
+        OnPropertyChanged(nameof(HasNoDevices));
         OnPropertyChanged(nameof(TotalOkProduction));
         OnPropertyChanged(nameof(TotalNgProduction));
         OnPropertyChanged(nameof(TotalOutput));
@@ -319,27 +313,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     {
         if (e.PropertyName == nameof(IDeviceSelectionService.SelectedDeviceId))
             SelectedDeviceId = _selection.SelectedDeviceId;
-    }
-
-    private void UpdateLayoutMode()
-    {
-        var oldMode = LayoutMode;
-        LayoutMode = _deviceRepository.Devices.Count switch
-        {
-            <= 8 => LineLayoutMode.LargeCards,
-            <= 15 => LineLayoutMode.MediumCards,
-            _ => LineLayoutMode.Table,
-        };
-        _log.Information("UpdateLayoutMode：Devices.Count={Count}, {Old} → {New}, IsLarge={IsLarge}, IsMedium={IsMedium}, IsTable={IsTable}",
-            _deviceRepository.Devices.Count, oldMode, LayoutMode, IsLargeCardsLayout, IsMediumCardsLayout, IsTableLayout);
-        OnPropertyChanged(nameof(DeviceCount));
-        OnPropertyChanged(nameof(RunningCount));
-        OnPropertyChanged(nameof(AlarmCount));
-        OnPropertyChanged(nameof(PausedCount));
-        OnPropertyChanged(nameof(IdleCount));
-        OnPropertyChanged(nameof(HasNoDevices));
-        OnPropertyChanged(nameof(MediumColumns));
-        OnPropertyChanged(nameof(FilteredLineDevices));
     }
 
     /// <summary>
@@ -443,9 +416,9 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         }
     }
 
-    // ───── 班次标注（P0-4）─────
+    // ───── 班次标注 ─────
 
-    private string _currentShiftName = "未配置班次";
+    private string _currentShiftName = Strings.M110;
     public string CurrentShiftName
     {
         get => _currentShiftName;
@@ -470,7 +443,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         var (shift, _) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
         if (shift == null)
         {
-            CurrentShiftName = (shifts == null || shifts.Count == 0) ? "未配置班次" : "未匹配班次";
+            CurrentShiftName = (shifts == null || shifts.Count == 0) ? Strings.M110 : Strings.M111;
             CurrentShiftTimeRange = string.Empty;
             return;
         }
@@ -504,17 +477,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         }
         LineDevices.Clear();
     }
-}
-
-/// <summary>产线页布局模式（按设备数量自适应）。</summary>
-public enum LineLayoutMode
-{
-    /// <summary>1-8 设备：大卡片 2×2 网格</summary>
-    LargeCards,
-    /// <summary>9-15 设备：中卡片响应式网格</summary>
-    MediumCards,
-    /// <summary>16+ 设备：紧凑表格</summary>
-    Table,
 }
 
 /// <summary>产线页状态筛选维度。</summary>

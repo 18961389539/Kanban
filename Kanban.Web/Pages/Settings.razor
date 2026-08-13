@@ -1,0 +1,144 @@
+@page "/settings"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("St_Title")</span>
+            <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
+        </div>
+        <button class="btn" disabled="@IsLoading" @onclick="LoadAsync">@L.T("Hq_Search")</button>
+    </div>
+
+    @if (Error is not null)
+    {
+        <div class="msg-banner msg-error">@Error</div>
+    }
+    @if (IsLoading)
+    {
+        <div class="loading-row">@L.T("Hq_Loading")…</div>
+    }
+    else if (SettingsData is { } s)
+    {
+        <div class="chart-grid two">
+            <section class="card">
+                <div class="card-title">@L.T("St_Acquisition")</div>
+                <div class="diag-grid">
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_PollingMs")</span><span class="kpi-value">@s.PollingIntervalMs ms</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_HistoryScans")</span><span class="kpi-value">@s.HistoryWriteIntervalScans</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_BatchMaxLen")</span><span class="kpi-value">@s.PlcBatchReadMaxLength</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_BatchGapSlots")</span><span class="kpi-value">@s.PlcBatchReadMaxGapSlots</span></div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("St_Plc")</div>
+                <div class="diag-grid">
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_PlcBrand")</span><span class="kpi-value">@PlcBrandText(s.PlcBrand)</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_PlcIp")</span><span class="kpi-value mono">@s.PlcIpAddress</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_PlcPort")</span><span class="kpi-value">@s.PlcPort</span></div>
+                    <div class="diag-item"><span class="kpi-label">@L.T("St_PlcTimeout")</span><span class="kpi-value">@s.PlcTimeoutMs ms</span></div>
+                </div>
+
+                @if (s.Siemens is { } siemens)
+                {
+                    <div class="card-title sub" style="margin-top:12px">Siemens</div>
+                    <div class="diag-grid">
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_SiemensModel")</span><span class="kpi-value">@siemens.Model</span></div>
+                        <div class="diag-item"><span class="kpi-label">Rack / Slot</span><span class="kpi-value">@siemens.Rack / @siemens.Slot</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@siemens.DataFormat</span></div>
+                        <div class="diag-item"><span class="kpi-label">BatchInt32</span><span class="kpi-value">@siemens.BatchInt32Limit</span></div>
+                    </div>
+                }
+                @if (s.ModbusTcp is { } modbus)
+                {
+                    <div class="card-title sub" style="margin-top:12px">Modbus TCP</div>
+                    <div class="diag-grid">
+                        <div class="diag-item"><span class="kpi-label">UnitId</span><span class="kpi-value">@modbus.UnitId</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_AddrZero")</span><span class="kpi-value">@((modbus.AddressStartWithZero ?? false) ? "✓" : "—")</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@modbus.DataFormat</span></div>
+                        <div class="diag-item"><span class="kpi-label">BatchInt32</span><span class="kpi-value">@modbus.BatchInt32Limit</span></div>
+                    </div>
+                }
+                @if (s.Omron is { } omron)
+                {
+                    <div class="card-title sub" style="margin-top:12px">Omron FINS</div>
+                    <div class="diag-grid">
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_ReadSplits")</span><span class="kpi-value">@omron.ReadSplits</span></div>
+                    </div>
+                }
+            </section>
+        </div>
+
+        <section class="card">
+            <div class="card-title">@L.T("St_Shifts") <span class="badge-soft">@s.Shifts.Count</span></div>
+            @if (s.Shifts.Count == 0)
+            {
+                <div class="no-data">@L.T("St_NoShifts")</div>
+            }
+            else
+            {
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th>@L.T("Hq_From")</th>
+                            <th>@L.T("Hq_To")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sh in s.Shifts)
+                        {
+                            <tr>
+                                <td>@sh.Name</td>
+                                <td class="mono">@sh.StartTime</td>
+                                <td class="mono">@sh.EndTime</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private CollectorSettingsDto? SettingsData { get; set; }
+    private bool IsLoading { get; set; }
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        try
+        {
+            SettingsData = await Dashboard.GetCollectorSettingsAsync();
+        }
+        catch (Exception)
+        {
+            Error = L.T("Hq_QueryFailed");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string PlcBrandText(int? brand) => brand switch
+    {
+        0 => "Mitsubishi",
+        1 => "Siemens",
+        2 => "Modbus TCP",
+        3 => "Omron FINS",
+        _ => brand?.ToString() ?? "—",
+    };
+}

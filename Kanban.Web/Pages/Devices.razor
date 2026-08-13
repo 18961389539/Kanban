@@ -1,0 +1,241 @@
+@page "/devices"
+@implements IDisposable
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("Dv_Title")</span>
+            <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
+        </div>
+    </div>
+
+    @if (DeviceList.Count == 0)
+    {
+        <EmptyState Title="@L.T("Dv_NoDevices")" Hint="" Icon="🖥️" />
+    }
+    else
+    {
+        <div class="mon-grid">
+            @foreach (var d in DeviceList)
+            {
+                <div class="mon-card line-card @(SelectedDeviceId == d.Id ? "selected" : "")" @onclick="() => SelectDevice(d.Id)">
+                    <div class="dev-head">
+                        <span class="dev-name">@d.Name</span>
+                        <span class="status-badge @StateClass(d.Id)">@StateText(d.Id)</span>
+                    </div>
+                    <div class="metric-grid">
+                        <div><span class="kpi-label">@L.T("Dv_DeviceId")</span><span class="kpi-value mono">@d.Id</span></div>
+                        <div><span class="kpi-label">@L.T("Dv_MachineType")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.MachineType) ? "—" : d.MachineType)</span></div>
+                        <div><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@d.TargetCycle 件/h</span></div>
+                    </div>
+                    <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CountAlarms.Count)</div>
+                </div>
+            }
+        </div>
+
+        @if (Selected is { } sel)
+        {
+            <section class="card">
+                <div class="card-title">@L.T("Dv_Detail", sel.Name)</div>
+
+                <div class="card-title sub">@L.T("Dv_AddressConfig")</div>
+                <table class="hq-table">
+                    <tbody>
+                        <tr><td>@L.T("Dv_OkCountAddr")</td><td class="mono">@sel.OkCountAddress</td></tr>
+                        <tr><td>@L.T("Dv_NgCountAddr")</td><td class="mono">@sel.NgCountAddress</td></tr>
+                        <tr><td>@L.T("Dv_StatusAddr")</td><td class="mono">@sel.StatusCountAddress</td></tr>
+                        <tr><td>@L.T("Dv_ResetAddr")</td><td class="mono">@sel.ProductionResetAddress</td></tr>
+                        <tr><td>@L.T("Dv_RecipeAddr")</td><td class="mono">@sel.RecipeAddress</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="card-title sub">@L.T("Dv_AlarmConfig")</div>
+                @if (sel.Alarms.Count == 0)
+                {
+                    <div class="no-data">@L.T("Dv_None")</div>
+                }
+                else
+                {
+                    <table class="hq-table">
+                        <thead>
+                            <tr>
+                                <th>@L.T("Dv_Name")</th>
+                                <th>@L.T("Dv_PlcAddr")</th>
+                                <th>@L.T("Ac_Level")</th>
+                                <th>@L.T("Dv_Description")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in sel.Alarms)
+                            {
+                                <tr>
+                                    <td>@a.Name</td>
+                                    <td class="mono">@a.PlcAddress</td>
+                                    <td><span class="lvl-dot @LevelClass(a.Level)"></span>@LevelText(a.Level)</td>
+                                    <td class="dim">@a.Description</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                <div class="card-title sub">@L.T("Dv_DefectConfig")</div>
+                @if (sel.Defects.Count == 0)
+                {
+                    <div class="no-data">@L.T("Dv_None")</div>
+                }
+                else
+                {
+                    <table class="hq-table">
+                        <thead>
+                            <tr>
+                                <th>@L.T("Dv_Name")</th>
+                                <th>@L.T("Dv_PlcAddr")</th>
+                                <th>@L.T("Dv_Severity")</th>
+                                <th>@L.T("Dv_Category")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in sel.Defects)
+                            {
+                                <tr>
+                                    <td>@d.Name</td>
+                                    <td class="mono">@d.PlcAddress</td>
+                                    <td>@d.Severity</td>
+                                    <td>@d.Category</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                <div class="card-title sub">@L.T("Dv_CountAlarmConfig")</div>
+                @if (sel.CountAlarms.Count == 0)
+                {
+                    <div class="no-data">@L.T("Dv_None")</div>
+                }
+                else
+                {
+                    <table class="hq-table">
+                        <thead>
+                            <tr>
+                                <th>@L.T("Dv_Name")</th>
+                                <th>@L.T("Dv_PlcAddr")</th>
+                                <th>@L.T("Dv_Threshold")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in sel.CountAlarms)
+                            {
+                                <tr>
+                                    <td>@c.Name</td>
+                                    <td class="mono">@c.PlcAddress</td>
+                                    <td>@c.MaxValue</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private System.Threading.Timer? _renderTimer;
+    private bool _disposed;
+    private List<DeviceConfigDto> DeviceList { get; set; } = [];
+    private string? SelectedDeviceId { get; set; }
+    private DeviceConfigDto? Selected => DeviceList.FirstOrDefault(d => d.Id == SelectedDeviceId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        await LoadDevicesAsync();
+        _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
+        await Task.CompletedTask;
+    }
+
+    private async Task LoadDevicesAsync()
+    {
+        try
+        {
+            DeviceList = [.. await Dashboard.QueryDevicesAsync()];
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private void SelectDevice(string id) => SelectedDeviceId = SelectedDeviceId == id ? null : id;
+
+        /// <summary>
+    /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
+    /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
+    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// </summary>
+    private async Task SafeTickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(OnRenderTick);
+        }
+        catch (Exception)
+        {
+            // 组件已释放的竞态：忽略（页面生命周期正常结束）
+        }
+    }
+
+private void OnRenderTick()
+    {
+        if (_disposed) return;
+        StateHasChanged(); // 状态徽标 3s 刷新（快照联动）
+    }
+
+    private string StateText(string deviceId)
+    {
+        var snap = Dashboard.GetSnapshot(deviceId);
+        return snap?.Status switch
+        {
+            DeviceStatus.Running => L.T("Status_Running"),
+            DeviceStatus.Alarm => L.T("Status_Alarm"),
+            DeviceStatus.Paused => L.T("Status_Paused"),
+            _ => L.T("Status_Idle"),
+        };
+    }
+
+    private string StateClass(string deviceId) => Dashboard.GetSnapshot(deviceId)?.Status switch
+    {
+        DeviceStatus.Running => "run",
+        DeviceStatus.Alarm => "alarm",
+        DeviceStatus.Paused => "paused",
+        _ => "idle",
+    };
+
+    private static string LevelText(AlarmLevel level) => level switch
+    {
+        AlarmLevel.High => L.T("Ac_LevelHigh"),
+        AlarmLevel.Medium => L.T("Ac_LevelMedium"),
+        _ => L.T("Ac_LevelLow"),
+    };
+
+    private static string LevelClass(AlarmLevel level) => level switch
+    {
+        AlarmLevel.High => "lvl-high",
+        AlarmLevel.Medium => "lvl-medium",
+        _ => "lvl-low",
+    };
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _renderTimer?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

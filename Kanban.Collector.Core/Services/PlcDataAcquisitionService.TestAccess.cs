@@ -1,4 +1,4 @@
-using Kanban.Core.Entities;
+﻿using Kanban.Core.Entities;
 
 namespace Kanban.Core.Services;
 

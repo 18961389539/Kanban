@@ -390,6 +390,25 @@ public class HistoryQueryHelperTests
     }
 
     /// <summary>
+    /// CSV 单元格公式注入防护：危险前缀改写、普通文本原样。
+    /// 注意：Tab 开头不构成公式注入，原样保留。
+    /// </summary>
+    [Theory]
+    [InlineData("=1+1", "'=1+1")]
+    [InlineData("+SUM(A1)", "'+SUM(A1)")]
+    [InlineData("-2+3", "'-2+3")]
+    [InlineData("@cmd", "'@cmd")]
+    [InlineData("  =1+1", "'  =1+1")] // 前导空白后接公式字符同样转义
+    [InlineData("\tTab 开头", "\tTab 开头")]
+    [InlineData("正常文本", "正常文本")]
+    [InlineData("", "")]
+    [InlineData(null, "")]
+    public void SanitizeCsvCell_PrefixesFormulaChars(string? input, string expected)
+    {
+        Assert.Equal(expected, HistoryQueryHelper.SanitizeCsvCell(input));
+    }
+
+    /// <summary>
     /// 跨月查询（1月31日 ~ 2月1日）应正常返回跨月记录。
     /// </summary>
     [Fact]

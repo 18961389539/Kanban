@@ -12,4 +12,9 @@ public static class KpiThresholds
     // 达成率阈值
     public const double AchievementGood = 0.90;
     public const double AchievementWarning = 0.70;
+
+    // 良品率阈值（2026-08-11 方案 E）：与复盘页 OverviewViewModel.QualityTarget=0.95 同源，
+    // 良品率卡片的状态 chip 与数字着色统一使用，避免 OEE 阈值(0.85)误用于良品率导致
+    // "92% 数字绿但未达 95% 目标"的矛盾观感。
+    public const double QualityGood = 0.95;
 }

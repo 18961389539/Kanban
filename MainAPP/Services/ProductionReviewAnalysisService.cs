@@ -122,11 +122,10 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             transitions,
             alarms,
             productionLogs,
-            initialStatus?.EventTime ?? from,
             initialStatus?.CurrentState ?? (int)DeviceStatus.Unknown,
             from,
             to);
-        var alarmAnalysis = _alarmAnalysisService.Analyze(alarms, productionLogs);
+        var alarmAnalysis = _alarmAnalysisService.Analyze(alarms, productionLogs, to, device.Id);
         var concentrations = BuildDefectConcentrations(device, from, to);
         var previousAlarmCount = _reviewDataService.QueryAlarmEvents(comparisonFrom, comparisonTo, device.Id)
             .Count(alarm => alarm.EventType == AlarmEventType.Triggered);
@@ -152,20 +151,21 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             health.Issues,
             health.Score,
             runningWorkOrder == null
-                ? "暂无运行工单"
+                ? Strings.M055
                 : string.Format(Strings.F038, runningWorkOrder.OrderNo, runningWorkOrder.TargetQuantity),
             runningWorkOrder == null
-                ? "暂无产品信息"
+                ? Strings.M056
                 : $"{runningWorkOrder.ProductCode} · {runningWorkOrder.ProductName}",
             string.IsNullOrWhiteSpace(device.RecipeName)
-                ? "暂无配方信息"
+                ? Strings.M057
                 : $"{device.RecipeName} · {device.RecipeValue:N0}");
     }
 
     private List<ReviewDefectConcentrationData> BuildDefectConcentrations(Device device, DateTime from, DateTime to)
     {
         if (_defectHistoryStore == null) return [];
-        var snapshots = _defectHistoryStore.Query(from.AddDays(-1), to, device.Id);
+        // 按小时分组下推（每组小时末值 + 窗口前基线），避免全量拉取高频累计快照（2 天 27 万条）
+        var snapshots = _defectHistoryStore.QueryHourlyBounds(from, to, device.Id);
         var cells = new List<(string Name, string Shift, DateTime Bucket, int Count)>();
         foreach (var group in snapshots.GroupBy(snapshot => new { snapshot.DefectId, snapshot.ShiftName }))
         {

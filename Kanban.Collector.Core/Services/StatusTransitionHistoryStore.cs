@@ -57,6 +57,31 @@ public sealed class StatusTransitionHistoryStore(DatabaseProvider db, ILogger<St
         return query.OrderBy(s => s.EventTime).AsNoTracking().ToList();
     }
 
+    /// <summary>
+    /// 分页查询状态转换记录（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。
+    /// 供历史查询页使用——此前全量 ToList 后客户端内存分页。
+    /// </summary>
+    public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
+        string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)
+    {
+        using var ctx = db.CreateStatusTransitionContext();
+        var query = HistoryQueryFilter.ApplyRange(
+            ctx.StatusTransitions, from, to, deviceId, shiftName,
+            nameof(StatusTransitionRecord.EventTime), nameof(StatusTransitionRecord.DeviceId), nameof(StatusTransitionRecord.ShiftName));
+        var total = query.Count();
+        var offset = HistoryPagination.Offset(page, pageSize);
+        var (_, size) = HistoryPagination.Normalize(page, pageSize);
+        var items = query
+            .OrderByDescending(s => s.EventTime)
+            // 稳定次级键：同轮采集多设备状态转换可能共享同一 EventTime，仅按时间排序翻页会重复/漏行（审查修复 2026-08-13）
+            .ThenByDescending(s => s.Id)
+            .Skip(offset)
+            .Take(size)
+            .AsNoTracking()
+            .ToList();
+        return (items, total);
+    }
+
     public StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName = null)
     {
         try

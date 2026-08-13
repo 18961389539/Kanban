@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
@@ -20,15 +20,27 @@ namespace MainAPP.Tests.Integration;
 [Trait("Category","Integration")]
 [Trait("Speed","Slow")]
 [Trait("Requires","STA")]
-public class DeviceManagerViewRenderTests : WpfTestHost
+public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
 {
+    private readonly List<string> _tempDirs = new();
+
     public DeviceManagerViewRenderTests(WpfStaFixture fixture) : base(fixture) { }
 
-    private static (DeviceRepository repo, PlcDataAcquisitionService dacq, IDialogService dialog, DeviceManagerViewModel vm)
+    /// <summary>渲染测试临时目录统一清理（审查修复 2026-08-13：此前每次 BuildViewModel 泄漏一个含 SQLite 的临时目录）。</summary>
+    public void Dispose()
+    {
+        foreach (var dir in _tempDirs)
+        {
+            try { if (System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    private (DeviceRepository repo, PlcDataAcquisitionService dacq, IDialogService dialog, DeviceManagerViewModel vm)
         BuildViewModel(int deviceCount = 2)
     {
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "KanbanDMTests_" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(tempDir);
+        _tempDirs.Add(tempDir);
         var appSettings = new AppSettings { ConfigDirectory = tempDir };
         var repo = new DeviceRepository(appSettings);
         var names = new[] { "注塑机A1", "焊接机器人B2", "检测机C3" };
@@ -49,9 +61,11 @@ public class DeviceManagerViewRenderTests : WpfTestHost
         var configIO = new DeviceConfigIOService(repo, dialog);
         var plcCommands = new DevicePlcCommandHandler(plc, conn, dacq);
         var alarmCsvIO = new AlarmCsvIOService(dialog);
+        var defectCsvIO = new DefectCsvIOService(dialog);
+        var countAlarmCsvIO = new CountAlarmCsvIOService(dialog);
         var workOrderRepo = new WorkOrderRepository(db, TestMapper.Instance);
         var workOrderService = new WorkOrderService(workOrderRepo, repo, dialog, history);
-        var vm = new DeviceManagerViewModel(repo, dacq, dialog, configIO, plcCommands, alarmCsvIO, workOrderRepo, workOrderService);
+        var vm = new DeviceManagerViewModel(repo, dacq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, countAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
         return (repo, dacq, dialog, vm);
     }
 

@@ -1,0 +1,11 @@
+<Project>
+  <!-- 关闭 OxyPlot 子树中心包管理：
+       Kanban 根目录 Directory.Packages.props 开启 CPM，但 OxyPlot 源码项目自带 PackageReference Version
+       （SkiaSharp 3.119.2 / DotNet.ReproducibleBuilds / Microsoft.NETFramework.ReferenceAssemblies），
+       本文件就近遮蔽根配置（MSBuild 向上查找 Directory.Packages.props 时先命中此处），避免 NU1008。
+       本地源码集成适配，勿删。 -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+</Project>

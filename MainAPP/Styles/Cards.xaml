@@ -36,6 +36,20 @@
         <Setter Property="CornerRadius" Value="4" />
     </Style>
 
+    <!--  ============ KPI 单元格（紧凑小卡，AlarmCenter/Overview/DeviceDetail 共用） ============  -->
+    <Style x:Key="KpiCell" TargetType="Border" BasedOn="{StaticResource InnerCard}">
+        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="Margin" Value="2" />
+    </Style>
+
+    <!--  KPI 单元格标签：基于全局 KpiLabel，追加底部间距  -->
+    <Style x:Key="KpiCellLabel" TargetType="TextBlock" BasedOn="{StaticResource KpiLabel}">
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <!--  KPI 单元格数值：基于全局 KpiValueMd（22px Bold Consolas）  -->
+    <Style x:Key="KpiCellValue" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}" />
+
     <!--  ============ 复合卡片样式（看板通用容器） ============  -->
 
     <!--  图表卡片：包裹 oxy:PlotView，Padding 12  -->

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Kanban.Core.Models;
 
@@ -44,12 +44,12 @@ internal sealed class ShiftContext
     /// 注意：班次配置为空或当前时刻不属于任何班次时返回 null（保持上一次状态，不动）。
     /// 调用方收到非 null 结果后需自行决定是否触发 ResetShift，并调用 <see cref="SetCurrentShift"/> 提交。
     /// </summary>
-    internal ShiftIdentifier? DetectChange(ObservableCollection<ShiftConfig> shifts)
+    internal ShiftIdentifier? DetectChange(IReadOnlyList<ShiftConfig> shifts)
     {
         var now = System.DateTime.Now.TimeOfDay;
         ShiftConfig? current = null;
         // 快照迭代：避免 UI 线程增删班次时 ObservableCollection 抛 InvalidOperationException
-        foreach (var s in shifts.ToList())
+        foreach (var s in shifts)
         {
             if (s.Contains(now))
             {
@@ -80,9 +80,9 @@ internal sealed class ShiftContext
     /// 基于当前时刻所属班次配置推算；跨天班次（如夜班 20:00-次日08:00）若当前时刻在凌晨段，
     /// 起始落在昨天，使重建范围正确覆盖整个夜班。
     /// </summary>
-    internal System.DateTime CurrentStart(System.DateTime now, ObservableCollection<ShiftConfig> shifts)
+    internal System.DateTime CurrentStart(System.DateTime now, IReadOnlyList<ShiftConfig> shifts)
     {
-        var current = shifts.ToList().FirstOrDefault(s => s.Contains(now.TimeOfDay));
+        var current = shifts.FirstOrDefault(s => s.Contains(now.TimeOfDay));
         if (current is null) return now;
         // 委托 ShiftConfig 的 NodaTime 实现，跨天班次起始正确落在昨天/今天
         return current.GetCurrentStart(now);

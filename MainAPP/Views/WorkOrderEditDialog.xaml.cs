@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using Kanban.Core.Entities;
+using MainAPP.Resources;
 
 namespace MainAPP.Views;
 
@@ -89,39 +90,39 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
         // 基本校验：工单号、产品编码、产品名为必填
         if (string.IsNullOrWhiteSpace(OrderNo))
         {
-            HandyControl.Controls.Growl.Warning("请输入工单号");
+            HandyControl.Controls.Growl.Warning(Strings.K599);
             OrderNoBox.Focus();
             return;
         }
         if (string.IsNullOrWhiteSpace(ProductCode))
         {
-            HandyControl.Controls.Growl.Warning("请输入产品编码");
+            HandyControl.Controls.Growl.Warning(Strings.K600);
             ProductCodeBox.Focus();
             return;
         }
         if (string.IsNullOrWhiteSpace(ProductName))
         {
-            HandyControl.Controls.Growl.Warning("请输入产品名称");
+            HandyControl.Controls.Growl.Warning(Strings.K601);
             ProductNameBox.Focus();
             return;
         }
         // 设备必选：工单必须绑定设备，避免产生 DeviceId="" 的孤儿工单
         if (string.IsNullOrWhiteSpace(SelectedDeviceId))
         {
-            HandyControl.Controls.Growl.Warning("请选择绑定设备");
+            HandyControl.Controls.Growl.Warning(Strings.K602);
             DeviceComboBox.Focus();
             return;
         }
         // 解析计划产量：必须为正整数（0 会导致进度条永远 0%）
         if (!int.TryParse(TargetQuantityText?.Trim(), out var qty) || qty <= 0)
         {
-            HandyControl.Controls.Growl.Warning("计划产量必须为大于 0 的整数");
+            HandyControl.Controls.Growl.Warning(Strings.K603);
             TargetQuantityBox.Focus();
             return;
         }
         if (PlannedEnd <= PlannedStart)
         {
-            HandyControl.Controls.Growl.Warning("计划结束时间必须晚于开始时间");
+            HandyControl.Controls.Growl.Warning(Strings.K604);
             PlannedEndPicker.Focus();
             return;
         }

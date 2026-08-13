@@ -53,6 +53,9 @@ namespace Kanban.Core.Data.Migrations.ProductionLogs
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("WorkOrderId")
                         .HasColumnType("INTEGER");
 
@@ -63,6 +66,9 @@ namespace Kanban.Core.Data.Migrations.ProductionLogs
                     b.HasIndex("Timestamp");
 
                     b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
 
                     b.HasIndex("DeviceId", "Timestamp");
 

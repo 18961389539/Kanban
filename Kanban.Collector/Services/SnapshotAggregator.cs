@@ -17,7 +17,8 @@ public sealed class SnapshotAggregator
     private readonly List<Channel<DeviceSnapshotDto>> _subscribers = new();
 
     /// <summary>
-    /// 采集服务发布最新快照：更新最新副本 + 扇出广播给全部订阅者（不阻塞，Unbounded channel）。
+    /// 采集服务发布最新快照：更新最新副本 + 扇出广播给全部订阅者（不阻塞；订阅者 channel 有界
+    /// 128 + DropOldest，慢/停流客户端不无界积压，丢最旧保最新——见 SubscribeAsync）。
     /// </summary>
     public void Publish(DeviceSnapshotDto snapshot)
     {

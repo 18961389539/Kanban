@@ -21,6 +21,7 @@ namespace Kanban.Core.Data.Migrations.ProductionLogs
                     DeviceName = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     ShiftName = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     WorkOrderId = table.Column<int>(type: "INTEGER", nullable: true),
+                    EventId = table.Column<Guid>(type: "TEXT", nullable: true),
                     OkProduction = table.Column<int>(type: "INTEGER", nullable: false),
                     NgProduction = table.Column<int>(type: "INTEGER", nullable: false),
                     StatusWord = table.Column<int>(type: "INTEGER", nullable: false),
@@ -50,6 +51,12 @@ namespace Kanban.Core.Data.Migrations.ProductionLogs
                 name: "IX_ProductionLogs_WorkOrderId",
                 table: "ProductionLogs",
                 column: "WorkOrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductionLogs_EventId",
+                table: "ProductionLogs",
+                column: "EventId",
+                unique: true);
         }
 
         /// <inheritdoc />

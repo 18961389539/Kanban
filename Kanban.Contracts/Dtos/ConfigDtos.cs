@@ -45,6 +45,8 @@ public sealed record DeviceConfigDto
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
+    /// <summary>设备机型/类型（配方按机型归属的关联键）。空字符串 = 通用。</summary>
+    public string MachineType { get; init; } = string.Empty;
     public required string OkCountAddress { get; init; }
     public required string NgCountAddress { get; init; }
     public required string StatusCountAddress { get; init; }

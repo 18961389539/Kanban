@@ -31,8 +31,46 @@ public sealed record CollectorSettingsDto
     /// <summary>PLC 连接超时（毫秒）。</summary>
     public int? PlcTimeoutMs { get; init; }
 
+    /// <summary>Siemens S7 品牌参数（非空时部分更新，仅应用非空字段）。</summary>
+    public SiemensSettingsDto? Siemens { get; init; }
+
+    /// <summary>Modbus TCP 品牌参数（非空时部分更新，仅应用非空字段）。</summary>
+    public ModbusTcpSettingsDto? ModbusTcp { get; init; }
+
+    /// <summary>Omron FINS 品牌参数（非空时部分更新，仅应用非空字段）。</summary>
+    public OmronFinsSettingsDto? Omron { get; init; }
+
     /// <summary>班次配置（非空时整体替换）。</summary>
     public List<ShiftConfigDto>? Shifts { get; init; }
+}
+
+/// <summary>Siemens S7 专属参数的跨进程传输形态。</summary>
+public sealed record SiemensSettingsDto
+{
+    public string? Model { get; init; }
+    public byte? Rack { get; init; }
+    public byte? Slot { get; init; }
+    /// <summary>PlcDataFormat 枚举值。</summary>
+    public int? DataFormat { get; init; }
+    public int? BatchInt32Limit { get; init; }
+}
+
+/// <summary>Modbus TCP 专属参数的跨进程传输形态。</summary>
+public sealed record ModbusTcpSettingsDto
+{
+    public byte? UnitId { get; init; }
+    public bool? AddressStartWithZero { get; init; }
+    public int? RegisterFunction { get; init; }
+    public int? BitFunction { get; init; }
+    /// <summary>PlcDataFormat 枚举值。</summary>
+    public int? DataFormat { get; init; }
+    public int? BatchInt32Limit { get; init; }
+}
+
+/// <summary>Omron FINS 专属参数的跨进程传输形态。</summary>
+public sealed record OmronFinsSettingsDto
+{
+    public int? ReadSplits { get; init; }
 }
 
 /// <summary>班次配置的跨进程传输形态（Collector 端还原为 Kanban.Core.Models.ShiftConfig）。</summary>

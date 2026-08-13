@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.Collector.Core.Localization;
 using Kanban.Core.Models;
 using Serilog;
 
@@ -190,6 +191,16 @@ public partial class AppSettings : ObservableObject
     private ObservableCollection<ShiftConfig> _shifts = GetDefaultShifts();
 
     /// <summary>
+    /// 班次集合读写锁（审查修复 2026-08-13）：ConfigSyncHandler（Hub 线程）与 SettingsViewModel.CopySettings
+    /// （UI 线程）原地 Clear+Add 写入、采集轮询线程与 Hub 快照枚举读取时共同持有，
+    /// 消除"写入中途被枚举 → Collection was modified / 半集合窗口"竞态。
+    /// [JsonIgnore]：AppSettings 经 JSON 序列化落盘/克隆（CloneSettings 用 JSON 往返），
+    /// 不标记会把锁对象写进 settings.json 且克隆后锁实例分裂。
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public object ShiftsLock { get; } = new();
+
+    /// <summary>
     /// 每路径互斥锁：保证同一文件路径的并发写串行化，避免临时文件名冲突与丢失更新。
     /// 多设备基线同时持久化时（班次切换瞬间），不同 path 各自一把锁互不阻塞，同 path 串行。
     /// </summary>
@@ -230,7 +241,10 @@ public partial class AppSettings : ObservableObject
                 {
                     File.Copy(path, path + ".bak", overwrite: true);
                 }
-                catch (IOException ex)
+                // 注意：目标 .bak 被占用/被安全软件短暂锁定/权限拒绝时抛 UnauthorizedAccessException，
+                // 与 IOException 平级（均非 IOException 子类），必须一并兜住，否则备份失败会冒泡
+                // 成未处理异常（如登录时 users.json 备份失败曾导致 MainAPP 直接崩溃退出）。
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
                     // 备份失败不应阻断主写入流程，但需记录便于排查磁盘/权限问题
                     Log.Warning(ex, "备份文件 {Path} → .bak 失败，继续主写入", path);
@@ -280,11 +294,62 @@ public partial class AppSettings : ObservableObject
     /// 采用原子写入（写临时文件 → 重命名），避免断电/强制关机时产生半截 JSON 导致配置损坏。
     /// </summary>
     public void Save()
+        => WriteSettingsFile(this);
+
+    /// <summary>
+    /// 创建全字段草稿副本（采集设置同步用）：把**所有持久化字段**拷贝到新实例，
+    /// 供 ConfigSyncHandler 先落盘、后生效流程承载候选值。
+    /// 草稿必须与运行实例除待改字段外完全一致——若只拷贝采集字段就全量序列化落盘，
+    /// Language/AppTitle/DataMode/UiScale/IsDarkTheme 等非采集字段会被默认值覆盖
+    /// （Remote 每保存一次采集设置即重置 MainAPP 语言/主题/日报配置）。
+    /// PlcConfig 深拷贝、Shifts 拷贝为新集合，保证草稿独立于运行实例。
+    /// </summary>
+    internal AppSettings CreateDraft()
     {
-        EnsureDirectory();
-        SchemaVersion = CurrentSchemaVersion;
-        var json = JsonSerializer.Serialize(this, JsonOptions);
-        WriteFileAtomically(SettingsFilePath, json);
+        return new AppSettings
+        {
+            SchemaVersion = SchemaVersion,
+            ConfigDirectory = ConfigDirectory,
+            SettingsFileName = SettingsFileName,
+            PlcConfig = PlcConfig.CreateSnapshot(),
+            PollingIntervalMs = PollingIntervalMs,
+            HistoryWriteIntervalScans = HistoryWriteIntervalScans,
+            PlcBatchReadMaxLength = PlcBatchReadMaxLength,
+            PlcBatchReadMaxGapSlots = PlcBatchReadMaxGapSlots,
+            DashboardRefreshIntervalMs = DashboardRefreshIntervalMs,
+            IsDarkTheme = IsDarkTheme,
+            UiScale = UiScale,
+            AppTitle = AppTitle,
+            Language = Language,
+            EnableAlarmSound = EnableAlarmSound,
+            EnableAutomaticDailyReport = EnableAutomaticDailyReport,
+            AutomaticDailyReportTime = AutomaticDailyReportTime,
+            DataMode = DataMode,
+            CollectorHubUrl = CollectorHubUrl,
+            RunMode = RunMode,
+            // 锁内快照拷贝：与原地写入方互斥（审查修复 2026-08-13）
+            Shifts = LockedShiftsSnapshot(),
+        };
+    }
+
+    /// <summary>班次集合锁内快照（CreateDraft/采集读取共用；审查修复 2026-08-13）。</summary>
+    internal ObservableCollection<ShiftConfig> LockedShiftsSnapshot()
+    {
+        lock (ShiftsLock)
+            return new ObservableCollection<ShiftConfig>(Shifts);
+    }
+
+    /// <summary>
+    /// 把指定实例的完整设置序列化到 settings.json（原子写入）。
+    /// 供 Remote 设置同步等"先落盘、后生效"流程使用：写入候选配置成功后，
+    /// 调用方才把候选值应用到运行实例，避免磁盘写入失败时内存/驱动已变、磁盘未变的分裂状态。
+    /// </summary>
+    internal static void WriteSettingsFile(AppSettings candidate)
+    {
+        candidate.EnsureDirectory();
+        candidate.SchemaVersion = CurrentSchemaVersion;
+        var json = JsonSerializer.Serialize(candidate, JsonOptions);
+        WriteFileAtomically(candidate.SettingsFilePath, json);
     }
 
     /// <summary>
@@ -309,7 +374,6 @@ public partial class AppSettings : ObservableObject
                 HistoryWriteIntervalScans = settings.HistoryWriteIntervalScans;
                 PlcBatchReadMaxLength = settings.PlcBatchReadMaxLength;
                 PlcBatchReadMaxGapSlots = settings.PlcBatchReadMaxGapSlots;
-                PlcConfig.OmronReadSplits = settings.PlcConfig?.OmronReadSplits ?? 500;
                 DashboardRefreshIntervalMs = settings.DashboardRefreshIntervalMs;
                 AppTitle = string.IsNullOrWhiteSpace(settings.AppTitle) ? "生产看板" : settings.AppTitle;
                 Language = Enum.IsDefined(settings.Language) ? settings.Language : AppLanguage.Zh;
@@ -385,54 +449,41 @@ public partial class AppSettings : ObservableObject
         var ip = PlcConfig.IpAddress ?? string.Empty;
         if (string.IsNullOrWhiteSpace(ip))
         {
-            errors.Add("PLC IP 地址为空");
+            errors.Add(ValidationMessages.PlcIpEmpty);
         }
         else if (!System.Net.IPAddress.TryParse(ip, out var addr)
                  || addr.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
         {
-            errors.Add($"PLC IP 地址 '{ip}' 不是合法的 IPv4 地址");
+            errors.Add(string.Format(ValidationMessages.PlcIpInvalid, ip));
         }
 
         // PLC 端口验证：1-65535
         if (PlcConfig.Port < 1 || PlcConfig.Port > 65535)
-            errors.Add($"PLC 端口 {PlcConfig.Port} 不在合法范围 (1-65535)");
+            errors.Add(string.Format(ValidationMessages.PlcPortOutOfRange, PlcConfig.Port));
         if (!Enum.IsDefined(PlcConfig.Brand))
-            errors.Add($"PLC 品牌无效：{PlcConfig.Brand}");
+            errors.Add(string.Format(ValidationMessages.PlcBrandInvalid, PlcConfig.Brand));
+        else
+            PlcBrandDescriptors.CreateDefault().Resolve(PlcConfig.Brand).Validate(PlcConfig, errors);
         if (PlcConfig.TimeoutMs < 100 || PlcConfig.TimeoutMs > 60000)
-            errors.Add($"PLC 连接超时 {PlcConfig.TimeoutMs}ms 不在合法范围 (100-60000)");
-        if (PlcConfig.Brand == PlcBrand.ModbusTcp && (PlcConfig.ModbusUnitId < 1 || PlcConfig.ModbusUnitId > 247))
-            errors.Add($"Modbus UnitId {PlcConfig.ModbusUnitId} 不在合法范围 (1-247)");
-        if (PlcConfig.Brand == PlcBrand.ModbusTcp && PlcConfig.ModbusRegisterFunction is not (3 or 4))
-            errors.Add($"Modbus 寄存器功能码 {PlcConfig.ModbusRegisterFunction} 无效，应为 3 或 4");
-        if (PlcConfig.Brand == PlcBrand.ModbusTcp && PlcConfig.ModbusBitFunction is not (1 or 2))
-            errors.Add($"Modbus 位功能码 {PlcConfig.ModbusBitFunction} 无效，应为 1 或 2");
-        if (!Enum.IsDefined(PlcConfig.ModbusDataFormat))
-            errors.Add($"Modbus 数据格式无效：{PlcConfig.ModbusDataFormat}");
-        if (!Enum.IsDefined(PlcConfig.SiemensDataFormat))
-            errors.Add($"Siemens 数据格式无效：{PlcConfig.SiemensDataFormat}");
-        if (PlcConfig.Brand == PlcBrand.Siemens &&
-            !new[] { "S1200", "S1500", "S300", "S400", "S200SMART", "S200" }
-                .Contains(PlcConfig.SiemensModel, StringComparer.OrdinalIgnoreCase))
-            errors.Add($"Siemens 型号不受支持：{PlcConfig.SiemensModel}");
-        if (PlcConfig.Brand == PlcBrand.Siemens && PlcConfig.SiemensRack > 7)
-            errors.Add($"Siemens Rack {PlcConfig.SiemensRack} 不在合法范围 (0-7)");
-        if (PlcConfig.Brand == PlcBrand.Siemens && PlcConfig.SiemensSlot > 31)
-            errors.Add($"Siemens Slot {PlcConfig.SiemensSlot} 不在合法范围 (0-31)");
-        if (PlcConfig.Brand == PlcBrand.Siemens && (PlcConfig.SiemensBatchInt32Limit < 1 || PlcConfig.SiemensBatchInt32Limit > 55))
-            errors.Add($"Siemens 批量 Int32 上限 {PlcConfig.SiemensBatchInt32Limit} 不在合法范围 (1-55)");
+            errors.Add(string.Format(ValidationMessages.PlcTimeoutOutOfRange, PlcConfig.TimeoutMs));
 
-        // 间隔类配置：必须为正数
-        if (PollingIntervalMs < 1)
-            errors.Add($"PLC 数据采集轮询间隔 {PollingIntervalMs}ms 无效，必须 ≥ 1ms");
-        if (HistoryWriteIntervalScans < 1)
-            errors.Add($"历史数据写入间隔 {HistoryWriteIntervalScans} 次无效，必须 ≥ 1 次");
+        // 间隔类配置：必须为正数；同时设上限防止 Remote 设置同步传入极端值（如 1ms 轮询造成 CPU 满载）
+        if (PollingIntervalMs < 10 || PollingIntervalMs > 60000)
+            errors.Add(string.Format(ValidationMessages.PollingIntervalInvalid, PollingIntervalMs));
+        if (HistoryWriteIntervalScans < 1 || HistoryWriteIntervalScans > 3600)
+            errors.Add(string.Format(ValidationMessages.HistoryWriteIntervalInvalid, HistoryWriteIntervalScans));
         if (DashboardRefreshIntervalMs < 1)
-            errors.Add($"主页仪表板刷新间隔 {DashboardRefreshIntervalMs}ms 无效，必须 ≥ 1ms");
+            errors.Add(string.Format(ValidationMessages.DashboardRefreshIntervalInvalid, DashboardRefreshIntervalMs));
+        // 批量读取参数上限：超出后 PlcScanPipeline 的 Math.Clamp 上限会抛 ArgumentOutOfRangeException
+        if (PlcBatchReadMaxLength < 1 || PlcBatchReadMaxLength > 1024)
+            errors.Add(string.Format(ValidationMessages.PlcBatchReadMaxLengthInvalid, PlcBatchReadMaxLength));
+        if (PlcBatchReadMaxGapSlots < 0 || PlcBatchReadMaxGapSlots > 256)
+            errors.Add(string.Format(ValidationMessages.PlcBatchReadMaxGapSlotsInvalid, PlcBatchReadMaxGapSlots));
 
         // 班次配置验证
         if (Shifts is null || Shifts.Count == 0)
         {
-            errors.Add("未配置任何班次");
+            errors.Add(ValidationMessages.NoShiftsConfigured);
         }
         else
         {
@@ -440,10 +491,10 @@ public partial class AppSettings : ObservableObject
             {
                 var s = Shifts[i];
                 if (string.IsNullOrWhiteSpace(s.Name))
-                    errors.Add($"第 {i + 1} 个班次名称为空");
+                    errors.Add(string.Format(ValidationMessages.ShiftNameEmpty, i + 1));
                 // ShiftConfig.Contains 自身验证起止时间（跨天班次合法），这里只检查零时长
                 if (s.StartTime == s.EndTime)
-                    errors.Add($"班次 '{s.Name}' 起止时间相同（{s.StartTime}）");
+                    errors.Add(string.Format(ValidationMessages.ShiftStartEndEqual, s.Name, s.StartTime));
             }
         }
 

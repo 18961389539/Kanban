@@ -104,8 +104,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DateTime _lastUpdateTime;
 
     public string ActiveEmptyStateMessage => ActiveCount > 0
-        ? "当前筛选无匹配报警"
-        : "暂无活跃故障";
+        ? Strings.M060
+        : Strings.M061;
 
     // ──────────── 列表数据 ────────────
 
@@ -289,9 +289,15 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         ActiveCount = collected.Count;
         AffectedDeviceCount = collected.Select(a => a.DeviceName).Distinct().Count();
 
-        if (collected.Count > 0)
+        // 级别/设备/搜索过滤后的集合（KPI 与列表共用同一口径；审查修复 2026-08-13：
+        // 原 KPI 基于过滤前全集——用户按级别筛选时，KPI 卡显示的最长报警可能不在下方列表中）
+        var filtered = collected
+            .Where(a => IsLevelVisible(a.Level) && IsAlarmVisible(a.DeviceName, a.AlarmName))
+            .ToList();
+
+        if (filtered.Count > 0)
         {
-            var longest = collected.OrderBy(a => a.EventTime).First();
+            var longest = filtered.OrderBy(a => a.EventTime).First();
             var ts = now - longest.EventTime;
             LongestDurationText = ts.TotalHours >= 1
                 ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
@@ -304,10 +310,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             LongestAlarmText = "—";
         }
 
-        var visible = collected
-            .Where(a => IsLevelVisible(a.Level) && IsAlarmVisible(a.DeviceName, a.AlarmName))
-            .Take(MaxActiveAlarms)
-            .ToList();
+        var visible = filtered.Take(MaxActiveAlarms).ToList();
 
         // 复用已有实例：从 ActiveAlarms 中查找相等项（ActiveAlarmInfo.Equals 基于值），
         // 让 ObservableCollectionSyncHelper 的引用比较能识别未变化项，保留 DurationText 连续性，避免列表闪烁
@@ -357,7 +360,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                 var triggerCount = todayEvents.Count(e => e.EventType == AlarmEventType.Triggered);
                 var recoverCount = todayEvents.Count(e => e.EventType == AlarmEventType.Recovered);
 
-                // Top N 报警（按触发次数）
+                // Top N 报警（按触发次数降序；审查修复 2026-08-13：原按 TotalDurationMinutes 排序，
+                // 却以"最频繁报警"标签+次数文案展示——时长最长与触发最频繁口径混淆，工业看板会误报根因）
                 var topItems = events
                     .Where(e => e.EventType == AlarmEventType.Triggered)
                     .GroupBy(e => new { e.AlarmName, e.DeviceName })
@@ -369,7 +373,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                         Level = LookupAlarmLevel(g.Key.AlarmName, g.Key.DeviceName),
                         TotalDurationMinutes = CalculateTotalDurationMinutes(g.ToList(), events),
                     })
-                    .OrderByDescending(x => x.TotalDurationMinutes)
+                    .OrderByDescending(x => x.TriggerCount)
                     .Take(TopAlarmsCount)
                     .ToList();
 
@@ -484,9 +488,9 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 
     public static string EventTypeText(AlarmEventType eventType) => eventType switch
     {
-        AlarmEventType.Triggered => "触发",
-        AlarmEventType.Recovered => "恢复",
-        AlarmEventType.ShiftChange => "班次切换",
+        AlarmEventType.Triggered => Strings.EventType_Triggered,
+        AlarmEventType.Recovered => Strings.EventType_Recovered,
+        AlarmEventType.ShiftChange => Strings.EventType_ShiftChange,
         _ => eventType.ToString(),
     };
 }

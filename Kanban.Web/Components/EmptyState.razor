@@ -1,0 +1,25 @@
+@* 统一空状态组件：对齐 WPF 端 MainAPP/Controls/EmptyState.xaml 的语义。
+   用法：<EmptyState Title="暂无数据" Hint="请检查连接" />
+   原 Home.razor 中散落的 <div class="empty-state"> / <div class="no-data"> 通过本组件统一。 *@
+<div class="empty-state">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <span class="empty-icon" aria-hidden="true">@Icon</span>
+    }
+    <div class="empty-title">@Title</div>
+    @if (!string.IsNullOrEmpty(Hint))
+    {
+        <div class="empty-sub">@Hint</div>
+    }
+</div>
+
+@code {
+    /// <summary>主标题（如 "暂无设备数据"）。</summary>
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>辅助提示（如 "请检查 PLC 连接"），可选。</summary>
+    [Parameter] public string Hint { get; set; } = "";
+
+    /// <summary>图标符号（emoji 或单字符），可选。预留扩展为 SVG 图标。</summary>
+    [Parameter] public string Icon { get; set; } = "";
+}

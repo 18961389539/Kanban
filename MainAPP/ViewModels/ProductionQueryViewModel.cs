@@ -104,7 +104,7 @@ public partial class ProductionQueryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "产量查询失败: {Message}", ex.Message);
+            Log.Error(ex, "产量查询失败");
             QueryError = string.Format(Strings.F063, ex.Message);
             return (0, 0);
         }
@@ -142,7 +142,7 @@ public partial class ProductionQueryViewModel : ObservableObject
         return HistoryQueryHelper.BuildCsv(rows,
             $"# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}",
             $"# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，C良品率：{QualityRate:P2}",
-            $"# {ProductionInsight ?? "无洞察"}");
+            $"# {ProductionInsight ?? Strings.M176}");
     }
 
     private static string? BuildProductionInsight(List<(DateTime Time, int Ok, int Ng)> chartData)

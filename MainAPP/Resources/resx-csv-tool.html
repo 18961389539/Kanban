@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RESX ↔ CSV 转换工具</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --border: #d9dee5; --text: #1f2937;
+    --muted: #6b7280; --accent: #2563eb; --accent-soft: #eff4ff;
+    --danger: #dc2626; --danger-soft: #fef2f2; --warn: #d97706; --warn-soft: #fffbeb;
+    --ok: #059669; --ok-soft: #ecfdf5; --mono: "Consolas","SFMono-Regular",monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border);
+           padding: 12px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { border: 1px solid var(--border); background: var(--panel); color: var(--text);
+           border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { background: var(--accent-soft); border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .dropzone { border: 2px dashed var(--border); border-radius: 10px; margin: 14px 20px 0;
+              padding: 26px; text-align: center; color: var(--muted); background: var(--panel);
+              transition: border-color .15s, background .15s; }
+  .dropzone.drag { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone b { color: var(--accent); cursor: pointer; }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 20px 0; }
+  .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+          padding: 3px 10px; font-size: 12px; color: var(--muted); }
+  .chip b { color: var(--text); }
+  .chip.warn { background: var(--warn-soft); border-color: #fcd34d; color: var(--warn); }
+  .chip.ok { background: var(--ok-soft); border-color: #a7f3d0; color: var(--ok); }
+  .wrap { display: flex; gap: 12px; padding: 12px 20px 20px; align-items: flex-start; }
+  .table-card { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--border);
+                border-radius: 10px; overflow: hidden; }
+  .table-card .toolbar { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .table-card input[type=search] { border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; font-size: 13px; width: 220px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { position: sticky; top: 0; background: #f0f2f5; border-bottom: 1px solid var(--border);
+             text-align: left; padding: 8px 10px; font-weight: 600; z-index: 1; white-space: nowrap; }
+  tbody td { border-bottom: 1px solid #edf0f4; padding: 4px 10px; vertical-align: top; }
+  tbody tr:hover { background: #fafbfc; }
+  td.key { font-family: var(--mono); font-weight: 600; color: var(--accent); white-space: nowrap; }
+  td.cell { min-width: 180px; }
+  td.cell[contenteditable=true]:focus { outline: 2px solid var(--accent); outline-offset: -2px;
+    background: var(--accent-soft); }
+  td.cell.empty { background: var(--danger-soft); }
+  td.cell.empty::after { content: "⚠ 空值"; color: var(--danger); font-size: 11px; margin-left: 6px; }
+  tr.missing td.key::after { content: "＋"; color: var(--warn); font-weight: 700; margin-left: 4px; }
+  tr.hidden { display: none; }
+  .scroll { max-height: 66vh; overflow: auto; }
+  .side { width: 280px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--border);
+          border-radius: 10px; padding: 12px; font-size: 13px; }
+  .side h3 { margin: 0 0 8px; font-size: 14px; }
+  .side ol { margin: 0; padding-left: 18px; color: var(--muted); }
+  .side li { margin-bottom: 6px; }
+  .side code { background: #f0f2f5; border-radius: 4px; padding: 1px 5px; font-family: var(--mono); }
+  .raw { margin: 0 20px 20px; display: none; }
+  .raw.open { display: block; }
+  .raw textarea { width: 100%; height: 220px; font-family: var(--mono); font-size: 12px;
+                  border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+  .toast { position: fixed; right: 16px; bottom: 16px; background: #111827; color: #fff;
+           padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none;
+           transition: opacity .2s; z-index: 99; }
+  .toast.show { opacity: .95; }
+  .del { color: var(--danger); border-color: #fecaca; background: var(--panel); padding: 2px 8px; }
+  .del:hover { background: var(--danger-soft); border-color: var(--danger); }
+  .footer { padding: 6px 20px 18px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RESX ↔ CSV 转换工具</h1>
+  <span class="sub">多语言资源互转 · 本地运行 · 支持预览与编辑</span>
+  <div class="toolbar" style="margin-left:auto">
+    <button onclick="openFile(false)">📄 加载 .resx</button>
+    <button onclick="openFile(true)">📊 加载 .csv</button>
+    <button class="primary" onclick="exportCsv()" id="btnCsv" disabled>⬇ 导出 CSV</button>
+    <button class="primary" onclick="exportResx()" id="btnResx" disabled>⬇ 导出 RESX</button>
+    <button onclick="toggleRaw()">👁 预览 CSV 文本</button>
+    <button onclick="clearAll()">🗑 清空</button>
+  </div>
+</header>
+
+<div class="dropzone" id="dz">
+  将 <b>.resx</b>（可多选，自动按 Key 对齐）或 <b>.csv</b>（首列 Key，其余列为语言）拖到这里，或点击加载文件
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="wrap">
+  <div class="table-card">
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="搜索 Key / 任意语言内容…" oninput="render()" />
+      <span style="flex:1"></span>
+      <button onclick="addRow()">＋ 新增一行</button>
+    </div>
+    <div class="scroll">
+      <table id="table">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="side">
+    <h3>使用说明</h3>
+    <ol>
+      <li><b>resx → CSV</b>：加载多个 resx（如 Strings.resx / Strings.en.resx / Strings.ja.resx），
+          自动按 Key 合并，导出为 <code>Key,Strings,Strings.en,Strings.ja</code> 一列一语言。</li>
+      <li><b>CSV → resx</b>：加载 CSV（首行表头：<code>Key,语言名…</code>），
+          每个语言列导出为一份 <code>语言名.resx</code>。</li>
+      <li>表格中可直接<b>编辑单元格</b>；<span style="color:var(--danger)">红底 ⚠ 空值</span>、
+          <span style="color:var(--warn)">＋ 缺语言</span> 高亮提示；支持搜索、增删行。</li>
+      <li>所有处理均在浏览器本地完成，文件不会上传。</li>
+    </ol>
+    <h3 style="margin-top:14px">CSV 格式</h3>
+    <p style="margin:0;color:var(--muted);font-size:12px">标准 RFC 4180（引号包裹含逗号/换行的值），
+       导出带 UTF-8 BOM，Excel 可直接打开中文。</p>
+  </div>
+</div>
+
+<div class="raw" id="rawBox">
+  <div class="toolbar" style="margin-bottom:6px">
+    <b>CSV 原文预览</b>
+    <span style="flex:1"></span>
+    <button onclick="document.getElementById('rawText').select();document.execCommand('copy');toast('已复制')">📋 复制</button>
+    <button onclick="toggleRaw()">✕ 关闭</button>
+  </div>
+  <textarea id="rawText" readonly spellcheck="false"></textarea>
+</div>
+
+<div class="footer">Key 排序保持加载顺序；同一语言重复 Key 取最后一个。生成 RESX 含标准 resheader，兼容 .NET ResXResourceReader。</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ 数据模型 ============ */
+let langs = [];            // 语言列名数组（不含 Key）
+let rows = [];             // { key: string, vals: string[] }（vals[i] 对应 langs[i]，未填为 ""）
+let sourceName = "";
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                  .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+/* ============ 文件加载 ============ */
+function openFile(csv) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = csv ? ".csv,text/csv" : ".resx,.xml";
+  input.multiple = !csv;
+  input.onchange = () => { const f = [...input.files]; if (f.length) (csv ? loadCsv : loadResx)(f); };
+  input.click();
+}
+
+function setupDrop() {
+  const dz = $("dz");
+  ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("drag"); }));
+  dz.addEventListener("drop", e => {
+    const files = [...e.dataTransfer.files];
+    if (!files.length) return;
+    if (files.some(f => /\.csv$/i.test(f.name))) loadCsv(files.filter(f => /\.csv$/i.test(f.name)));
+    else loadResx(files.filter(f => /\.resx$/i.test(f.name)));
+  });
+}
+
+/* ---------- resx 解析 ---------- */
+function parseResx(text, name) {
+  const doc = new DOMParser().parseFromString(text, "text/xml");
+  const err = doc.querySelector("parsererror");
+  if (err) throw new Error(name + " 不是合法 XML：\n" + err.textContent.slice(0, 200));
+  const map = new Map();
+  const dup = new Set();
+  for (const data of doc.querySelectorAll("data")) {
+    const key = data.getAttribute("name");
+    if (!key) continue;
+    const valNode = data.querySelector("value");
+    const val = valNode ? valNode.textContent : "";
+    if (map.has(key)) dup.add(key);
+    map.set(key, val);
+  }
+  return { label: name.replace(/\.resx$/i, ""), map, dup };
+}
+
+function loadResx(files) {
+  const reads = files.map(f => f.text().then(t => parseResx(t, f.name)));
+  Promise.all(reads).then(parsed => {
+    const dupInfo = parsed.filter(p => p.dup.size).map(p => p.label + ":" + [...p.dup].slice(0, 5).join(","));
+    if (dupInfo.length) toast("⚠ 重复 Key（取最后一个）：" + dupInfo.join("；"));
+    langs = parsed.map(p => p.label);
+    const order = [];
+    for (const p of parsed) for (const k of p.map.keys()) if (!order.includes(k)) order.push(k);
+    rows = order.map(k => ({ key: k, vals: parsed.map(p => p.map.get(k) ?? "") }));
+    sourceName = files[0].name.replace(/\.resx$/i, "") + "_merged";
+    refresh();
+  }).catch(e => toast("❌ " + e.message));
+}
+
+/* ---------- CSV 解析（RFC 4180） ---------- */
+function parseCsv(text) {
+  text = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const out = []; let row = [], field = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; } else inQ = false;
+      } else field += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n") { row.push(field); out.push(row); row = []; field = ""; }
+    else field += c;
+  }
+  if (field !== "" || row.length) { row.push(field); out.push(row); }
+  return out.filter(r => r.some(c => c.trim() !== ""));
+}
+
+function loadCsv(files) {
+  const f = files[0];
+  f.text().then(t => {
+    const data = parseCsv(t);
+    if (data.length < 2) { toast("❌ CSV 至少需要表头 + 一行数据"); return; }
+    const header = data[0].map(h => h.trim());
+    const keyIdx = header.findIndex(h => h.toLowerCase() === "key");
+    if (keyIdx < 0) { toast("❌ 未找到 Key 列（表头第一列应为 Key）"); return; }
+    langs = header.filter((_, i) => i !== keyIdx);
+    rows = data.slice(1).filter(r => r[keyIdx]?.trim()).map(r => ({
+      key: r[keyIdx].trim(),
+      vals: langs.map((_, li) => r[header.indexOf(langs[li])] ?? "").map(v => v ?? ""),
+    }));
+    sourceName = f.name.replace(/\.csv$/i, "") + "_imported";
+    refresh();
+  }).catch(e => toast("❌ " + e.message));
+}
+
+/* ============ 渲染 ============ */
+function refresh() {
+  $("btnCsv").disabled = $("btnResx").disabled = rows.length === 0;
+  render(); renderStats();
+}
+
+function render() {
+  const q = $("search").value.trim().toLowerCase();
+  const thead = $("thead"), tbody = $("tbody");
+  thead.innerHTML = "<tr><th>Key</th>" + langs.map(l => `<th>${esc(l)}</th>`).join("") + "<th></th></tr>";
+  tbody.innerHTML = "";
+  let shown = 0;
+  rows.forEach((r, ri) => {
+    const hit = !q || r.key.toLowerCase().includes(q) || r.vals.some(v => v.toLowerCase().includes(q));
+    if (!hit) return; shown++;
+    const tr = document.createElement("tr");
+    const missing = r.vals.some(v => !v.trim());
+    if (missing) tr.classList.add("missing");
+    tr.innerHTML = `<td class="key">${esc(r.key)}</td>` +
+      r.vals.map((v, vi) => `<td class="cell${v.trim() ? "" : " empty"}" contenteditable="true"
+          data-ri="${ri}" data-vi="${vi}" title="双击编辑">${esc(v)}</td>`).join("") +
+      `<td><button class="del" data-ri="${ri}" title="删除此行">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  if (!shown) tbody.innerHTML = `<tr><td colspan="${langs.length + 2}" style="color:var(--muted);padding:16px">无匹配行</td></tr>`;
+}
+
+function renderStats() {
+  const counts = langs.map(l => rows.filter(r => r.vals[langs.indexOf(l)].trim()).length);
+  const missingLangs = langs.filter((l, i) => counts[i] < rows.length);
+  const chips = [
+    `<span class="chip"><b>${rows.length}</b> 个 Key · <b>${langs.length}</b> 种语言</span>`,
+    ...langs.map((l, i) => `<span class="chip ${counts[i] < rows.length ? "warn" : "ok"}">${esc(l)}: <b>${counts[i]}</b>/${rows.length}</span>`),
+    missingLangs.length ? `<span class="chip warn">⚠ 缺失语言：${missingLangs.map(esc).join(", ")}</span>` : "",
+  ];
+  $("stats").innerHTML = chips.join("");
+}
+
+/* ============ 编辑 ============ */
+$("tbody").addEventListener("input", e => {
+  const td = e.target.closest("td.cell");
+  if (!td) return;
+  rows[+td.dataset.ri].vals[+td.dataset.vi] = td.textContent;
+  td.classList.toggle("empty", !td.textContent.trim());
+});
+$("tbody").addEventListener("click", e => {
+  const del = e.target.closest("button.del");
+  if (!del) return;
+  rows.splice(+del.dataset.ri, 1);
+  render(); renderStats();
+});
+
+function addRow() {
+  let base = "K", n = 1;
+  while (rows.some(r => r.key === base + n)) n++;
+  rows.push({ key: base + n, vals: langs.map(() => "") });
+  render(); renderStats();
+  toast("已新增 " + base + n + "（请填写各语言内容）");
+}
+
+/* ============ 导出 ============ */
+function toCsv() {
+  const quote = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const head = ["Key", ...langs];
+  return [head.map(quote).join(","), ...rows.map(r => [r.key, ...r.vals].map(quote).join(","))].join("\r\n");
+}
+
+function download(name, content, mime) {
+  const blob = new Blob(["\uFEFF" + content], { type: mime + ";charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+
+function exportCsv() {
+  if (!rows.length) return;
+  download(sourceName + ".csv", toCsv(), "text/csv");
+  toast("已导出 " + sourceName + ".csv");
+}
+
+function exportResx() {
+  if (!rows.length) return;
+  const xmlEscape = s => esc(s);
+  const resx = (langIdx) => {
+    const head = [
+      '<?xml version="1.0" encoding="utf-8"?>',
+      '<root>',
+      '  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>',
+      '  <resheader name="version"><value>2.0</value></resheader>',
+      '  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>',
+      '  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>',
+    ];
+    for (const r of rows)
+      head.push(`  <data name="${xmlEscape(r.key)}" xml:space="preserve">`, `    <value>${xmlEscape(r.vals[langIdx] ?? "")}</value>`, '  </data>');
+    head.push('</root>');
+    return head.join("\n");
+  };
+  langs.forEach((l, i) => download((l.endsWith(".resx") ? l : l + ".resx"), resx(i), "application/xml"));
+  toast("已导出 " + langs.length + " 个 RESX 文件");
+}
+
+function toggleRaw() {
+  const box = $("rawBox");
+  box.classList.toggle("open");
+  if (box.classList.contains("open")) $("rawText").value = rows.length ? toCsv() : "";
+}
+function clearAll() {
+  langs = []; rows = []; sourceName = ""; $("search").value = "";
+  $("thead").innerHTML = ""; $("tbody").innerHTML = ""; $("stats").innerHTML = "";
+  $("btnCsv").disabled = $("btnResx").disabled = true; $("rawBox").classList.remove("open");
+}
+
+/* ============ Toast ============ */
+let toastTimer;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+setupDrop();
+</script>
+</body>
+</html>

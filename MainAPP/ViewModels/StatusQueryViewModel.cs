@@ -39,15 +39,10 @@ public partial class StatusQueryViewModel : ObservableObject
     /// <summary>暂停时长格式化。</summary>
     public string PausedTimeFormatted => FormatDuration(PausedTimeSeconds);
 
-    /// <summary>秒数 → "Xd Yh" / "Xh Ym" / "Xm" 格式。不足 1 分钟显示 "0m"。</summary>
+    /// <summary>秒数 → "Xd Yh" / "Xh Ym" / "Xm" 格式（与旧实现逐分支等价，委托跨进程单源，
+    /// 避免与 HomeViewModel 等处的时长口径分叉）。</summary>
     private static string FormatDuration(double seconds)
-    {
-        if (seconds < 60) return "0m";
-        var ts = TimeSpan.FromSeconds(seconds);
-        if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h";
-        if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
-        return $"{(int)ts.TotalMinutes}m";
-    }
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(seconds);
 
     [ObservableProperty]
     private PlotModel? _statusChart;
@@ -118,7 +113,7 @@ public partial class StatusQueryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "状态查询失败: {Message}", ex.Message);
+            Log.Error(ex, "状态查询失败");
             QueryError = string.Format(Strings.F165, ex.Message);
             return (0, 0);
         }
@@ -158,8 +153,8 @@ public partial class StatusQueryViewModel : ObservableObject
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,
-            $"# 运行时长：{RunTimeSeconds / 3600:F2}h，报警时长：{AlarmTimeSeconds / 3600:F2}h，待机时长：{PausedTimeSeconds / 3600:F2}h",
-            $"# {StatusInsight ?? "无洞察"}");
+            string.Format(Strings.M354, RunTimeSeconds / 3600, AlarmTimeSeconds / 3600, PausedTimeSeconds / 3600),
+            $"# {StatusInsight ?? Strings.M176}");
     }
 
     private static string? BuildStatusInsight(List<StatusTransitionRecord> transitions,
@@ -193,7 +188,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var minutes = (longestAlarm.End - longestAlarm.Start).TotalMinutes;
             if (minutes > 0)
             {
-                var prefix = minutes > LongAlarmThresholdMin ? "🔴 长报警" : "最长报警";
+                var prefix = minutes > LongAlarmThresholdMin ? Strings.M177 : Strings.M178;
                 parts.Add(string.Format(Strings.F035, prefix, minutes, longestAlarm.Start, longestAlarm.End));
             }
         }

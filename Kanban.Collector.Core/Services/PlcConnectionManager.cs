@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.Collector.Core.Localization;
 using Kanban.Core.Models;
 using Serilog;
 
@@ -46,7 +47,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
     /// MainWindowViewModel.IsPlcConnecting 用此常量判断（StartsWith），改文案只需改这里，
     /// 避免跨层魔法字符串协议（原实现直接硬编码"正在连接"字符串比较）。
     /// </summary>
-    public const string ConnectingStatusPrefix = "正在连接";
+    public const string ConnectingStatusPrefix = "正在连接"; // deprecated alias — use ConnectionStatusMessages.ConnectingPrefix
 
     private readonly IPlcDriver _driver;
     private readonly AppSettings _appSettings;
@@ -158,7 +159,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
             if ((now - _lastConnectAttempt) < cooldown) return;
 
             _lastConnectAttempt = now;
-            ConnectionStatus = $"{ConnectingStatusPrefix}... (第{_consecutiveFailures + 1}次)";
+            ConnectionStatus = $"{ConnectionStatusMessages.ConnectingPrefix}{string.Format(ConnectionStatusMessages.ConnectingSuffix, _consecutiveFailures + 1)}";
             config = _profileProvider?.Current.Config ?? _appSettings.PlcConfig.CreateSnapshot();
             disconnectedAt = _disconnectedAt;
         }
@@ -186,7 +187,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
             if (IsConnected)
             {
                 _consecutiveFailures = 0;
-                ConnectionStatus = "已连接";
+                ConnectionStatus = ConnectionStatusMessages.Connected;
 
                 if (disconnectedAt.HasValue && _disconnectedAt.HasValue)
                 {
@@ -208,7 +209,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
             else
             {
                 _consecutiveFailures++;
-                ConnectionStatus = $"未连接 (重试间隔{cooldown.TotalSeconds:F0}s)";
+                ConnectionStatus = string.Format(ConnectionStatusMessages.DisconnectedWithRetry, cooldown.TotalSeconds);
             }
         }
 
@@ -231,7 +232,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
         {
             if (!IsConnected) return;
             IsConnected = false;
-            ConnectionStatus = "连接断开";
+            ConnectionStatus = ConnectionStatusMessages.ConnectionLost;
 
             // 下降沿：仅在此处记录断开时刻、累加次数、触发一次事件
             _disconnectedAt = DateTime.Now;
@@ -297,7 +298,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
         lock (_stateLock)
         {
             IsConnected = false;
-            ConnectionStatus = $"{ConnectingStatusPrefix}采集服务 (第{attempt}次)";
+            ConnectionStatus = $"{ConnectionStatusMessages.ConnectingPrefix}{string.Format(ConnectionStatusMessages.RemoteConnecting, attempt)}";
         }
         ConnectionStateChanged?.Invoke(this, new ConnectionStateChangedEventArgs
         {
@@ -322,7 +323,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
         lock (_stateLock)
         {
             IsConnected = false;
-            ConnectionStatus = "未连接";
+            ConnectionStatus = ConnectionStatusMessages.Disconnected;
         }
 
         lock (_driverOperationLock)

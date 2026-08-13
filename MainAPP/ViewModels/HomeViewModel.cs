@@ -33,6 +33,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IWorkOrderRepository? _workOrderRepo;
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
+    private readonly Kanban.Core.Services.ProductionHistoryStore? _historyStore;
     private readonly DispatcherTimer _liveTimer;
     /// <summary>
     /// 计数报警首次触发时刻缓存（key = device.Id + alarm.Id）。
@@ -56,8 +57,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 主页实时故障列表最大显示条数。主页为摘要视图，空间有限，故小于报警中心的上限
     /// （<see cref="AlarmCenterViewModel"/> 的 MaxActiveAlarms=200）。
     /// 排序（级别降序 + 时间升序）后截断，保留最关键/最新的报警。
+    /// 2026-08-11：10 → 5（用户要求精简）。
     /// </summary>
-    private const int MaxHomeActiveAlarms = 10;
+    private const int MaxHomeActiveAlarms = 5;
 
     // ──────────── 图表 diff 缓存（避免每 3 秒无变化重建 PlotModel） ────────────
     private (double a, double p, double q) _lastOeeInput;
@@ -125,6 +127,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>上班次名称（如 "白班"），无数据时为空。</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasLastShift))]
+    [NotifyPropertyChangedFor(nameof(LastShiftLabel))]
     private string _lastShiftName = "";
     /// <summary>上班次 OK 产量。</summary>
     [ObservableProperty]
@@ -147,6 +150,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>是否存在上班次数据（用于 UI 控制对比区域可见性）。</summary>
     public bool HasLastShift => !string.IsNullOrEmpty(LastShiftName);
     /// <summary>
+    /// 上班次行左侧标签：有数据 "上班次·夜班"；无数据仅 "上班次"（2026-08-11：
+    /// 上班次行不再隐藏，无数据时 OK/NG 显示 0）。
+    /// </summary>
+    public string LastShiftLabel => string.IsNullOrEmpty(LastShiftName)
+        ? Strings.K260
+        : string.Format(Strings.F265, LastShiftName);
+    /// <summary>
     /// 本班次 vs 上班次产量差异显示文本：正数前缀 "+"，负数带 "-"，0 返回空字符串。
     /// 用于 UI 在差异为 0 时隐藏徽章。
     /// </summary>
@@ -157,7 +167,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     // ──────────── 第 2 行 列 1：OEE 预览 ────────────
 
     [ObservableProperty] private double _oeeValue;
-    [ObservableProperty] private double _qualityRate;
+    /// <summary>良品率（0-1）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(QualityGapText))]
+    private double _qualityRate;
     [ObservableProperty] private double _performanceRate;
     [ObservableProperty] private double _availabilityRate;
     [ObservableProperty] private PlotModel? _oeeRingChart;
@@ -272,20 +285,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public string DataStatusText => DataStatusKind switch
     {
-        "Disconnected" => _runtimeMode.IsRemote ? "服务断开" : "PLC断开",
-        "NoData" => "无数据",
-        "Live" => "实时",
-        _ => "未选择设备",
+        "Disconnected" => _runtimeMode.IsRemote ? Strings.M070 : Strings.M071,
+        "NoData" => Strings.M072,
+        "Live" => Strings.K083,
+        _ => Strings.K144,
     };
 
     public string DataStatusTooltip => DataStatusKind switch
     {
         "Disconnected" => _runtimeMode.IsRemote
-            ? "采集服务当前未连接，主页指标不代表实时数据"
-            : "PLC 当前未连接，主页指标不代表实时数据",
-        "NoData" => "当前设备暂无运行时数据",
-        "Live" => "当前指标来自已连接设备的运行时数据",
-        _ => "请选择设备查看实时指标",
+            ? Strings.M050
+            : Strings.K341,
+        "NoData" => Strings.K051,
+        "Live" => Strings.K083,
+        _ => Strings.K144,
     };
 
     private bool CanDisplayKpiData => DataStatusKind == "Live";
@@ -293,6 +306,16 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string AvailabilityRateDisplay => CanDisplayKpiData ? $"{AvailabilityRate:P0}" : "—";
     public string PerformanceRateDisplay => CanDisplayKpiData ? $"{PerformanceRate:P0}" : "—";
     public string QualityRateDisplay => CanDisplayKpiData ? $"{QualityRate:P0}" : "—";
+
+    /// <summary>
+    /// 距目标差距文本（2026-08-11 用户选定）：纯数据格式 "+0.6%"（超目标）/ "-0.5%"（还差），
+    /// 颜色由 QualityThresholdConverter 表达（≥95% 绿 / 未达红）；不新增 resx key。
+    /// </summary>
+    public string QualityGapText => CanDisplayKpiData ? FormatQualityGap(QualityRate) : "—";
+
+    /// <summary>距目标差距格式化：正=超目标 "+x.x%"，负=差距 "-x.x%"，0="+0.0%"。</summary>
+    internal static string FormatQualityGap(double qualityRate)
+        => $"{qualityRate - KpiThresholds.QualityGood:+#0.0%;-#0.0%;+0.0%}";
     public string RealtimeSpeedDisplay => CanDisplayKpiData ? $"{RealtimeSpeed:N0}" : "—";
     public string TotalOutputDisplay => CanDisplayKpiData ? $"{TotalOutput:N0}" : "—";
     public string TotalOkProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F030, TotalOkProduction) : "—";
@@ -329,11 +352,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public ICollectionView FilteredActiveAlarms { get; }
 
     /// <summary>
-    /// 当前筛选后可见的报警数量（用于 UI 提示筛选生效中）。
-    /// </summary>
-    public int FilteredAlarmCount => ActiveAlarms.Count(a => IsLevelVisible(a.Level));
-
-    /// <summary>
     /// 总产量 = OK + NG（会话累计，用于当前生产状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
     /// </summary>
     public int TotalOutput => SnapshotMetrics.TotalOutput(TotalOkProduction, TotalNgProduction);
@@ -367,7 +385,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Core.Services.ProductionHistoryStore? historyStore = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -378,6 +396,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _dialog = dialog;
         _workOrderService = workOrderService;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
+        _historyStore = historyStore;
 
         RefreshDeviceFilterItems();
         // 使用命名方法而非 lambda，确保 Dispose 时能正确取消订阅（lambda 每次创建新委托实例，-= 不生效）
@@ -399,6 +418,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public void OnPageEnter()
     {
         if (_liveTimer.IsEnabled) return;
+        // 兜底回退选中设备：主页进入时若设备已加载但未选中（Remote 模式设备异步到达的窗口期、
+        // 设备集合重建等场景），自动选中第一台，避免主页停留在"未选择设备"空状态。
+        // 设备未加载（Remote 拉取尚未完成）时不动作——由 OnDevicesCollectionChanged 在拉取完成后回退。
+        if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
+            SelectedDeviceId = _deviceRepository.Devices[0].Id;
         SyncRuntime();
         _liveTimer.Start();
     }
@@ -572,8 +596,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         foreach (var a in ActiveAlarms)
         {
             a.RefreshDuration(now);
-            // 加入超过 3 秒后清除新报警高亮标志
-            if (a.IsNew && (now - a.AddedAt).TotalSeconds >= 3)
+            // 加入超过 30 秒后清除新报警高亮标志：3 秒过短（工人未及注意即停闪），
+            // 永不停止会视觉疲劳；30 秒兼顾提醒效果与疲劳控制。
+            if (a.IsNew && (now - a.AddedAt).TotalSeconds >= 30)
                 a.IsNew = false;
         }
         UpdateShiftProgress();
@@ -643,9 +668,19 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
+    /// 上班次回填兜底查询的退避时刻（审查修复 2026-08-13）：内存无上班次缓存时，
+    /// 原实现每 3s tick 在 UI 线程重跑一次 24 小时历史查询、永不收敛——60s 退避后重试。
+    /// </summary>
+    private DateTime _lastShiftFallbackAttemptAt = DateTime.MinValue;
+    private static readonly TimeSpan ShiftFallbackRetryInterval = TimeSpan.FromSeconds(60);
+
+    /// <summary>
     /// 从 PlcDataAcquisitionService 读取当前设备的上班次产量汇总。
     /// 班次切换后 _plcService 缓存会更新，但本方法只在 RefreshSelected（切换设备）时调用，
     /// 班次切换瞬间 SyncRuntime 会自然触发 UI 刷新（产量被清零，差异自动重算）。
+    /// 2026-08-11 兜底：内存无上班次缓存（进程内从未跨过班次边界，如仿真/演示环境重启后）
+    /// 时，本地模式从历史库回填"时间上最近的、班次不同于当前班次"的最后一条快照，
+    /// 避免上班次对比区永远空白。
     /// </summary>
     private void RefreshLastShiftComparison()
     {
@@ -655,9 +690,53 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             return;
         }
         var (ok, ng, name) = _plcService.GetLastShiftSummary(SelectedDeviceId);
-        LastShiftName = name;
-        LastShiftOk = ok;
-        LastShiftNg = ng;
+        if (!string.IsNullOrEmpty(name))
+        {
+            LastShiftName = name; LastShiftOk = ok; LastShiftNg = ng;
+            return;
+        }
+
+        if (_historyStore != null && !_runtimeMode.IsRemote
+            && DateTime.Now - _lastShiftFallbackAttemptAt >= ShiftFallbackRetryInterval)
+        {
+            _lastShiftFallbackAttemptAt = DateTime.Now;
+            var now = DateTime.Now;
+            var currentShift = FindCurrentShift(now);
+            var logs = _historyStore.QueryProductionLogs(now.AddDays(-1), now, SelectedDeviceId);
+            var lastOther = FindLastOtherShiftLog(logs, currentShift?.Name);
+            if (lastOther != null)
+            {
+                LastShiftName = lastOther.ShiftName;
+                LastShiftOk = lastOther.OkProduction;
+                LastShiftNg = lastOther.NgProduction;
+                return;
+            }
+        }
+        LastShiftName = ""; LastShiftOk = 0; LastShiftNg = 0;
+    }
+
+    /// <summary>
+    /// 在日志列表中找"时间上最近的、班次不同于当前班次"的最后一条快照（上班次产量回填用）。
+    /// currentShiftName 为 null（无班次配置）时退化为取最近一条。
+    /// </summary>
+    internal static ProductionLog? FindLastOtherShiftLog(
+        IReadOnlyList<ProductionLog> logs,
+        string? currentShiftName)
+        => logs
+            .OrderByDescending(log => log.Timestamp)
+            .FirstOrDefault(log => currentShiftName == null || log.ShiftName != currentShiftName);
+
+    /// <summary>当前时刻所属班次（无配置或不属于任何班次时返回 null）。</summary>
+    private ShiftConfig? FindCurrentShift(DateTime now)
+    {
+        var shiftConfigs = _appSettings.Shifts;
+        if (shiftConfigs == null || shiftConfigs.Count == 0) return null;
+        foreach (var sc in shiftConfigs)
+        {
+            var (start, end) = sc.ResolveRange(now);
+            if (start <= now && now < end) return sc;
+        }
+        return null;
     }
 
     private void ApplyRuntime(DeviceRuntime rt, Device? dev)
@@ -882,7 +961,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
         {
             RefreshDeviceFilterItems();
-            SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+            // 主页必须有选中设备：设备集合重建（Remote 配置拉取 ReplaceAll / 删除设备）时，
+            // ComboBox 的 SelectedValue 双向绑定会因 DeviceFilterItems 清空而把 SelectedDeviceId
+            // 置为 null；FallbackSelected 对 null 原样返回（保留"全部设备"语义给历史查询页共用），
+            // 故此处先回退第一台，避免主页停留在"未选中设备"空状态。
+            if (string.IsNullOrEmpty(SelectedDeviceId))
+                SelectedDeviceId = _deviceRepository.Devices.Count > 0 ? _deviceRepository.Devices[0].Id : null;
+            else
+                SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
         }));
     }
 
@@ -921,7 +1007,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (currentShift == null)
         {
             IsShiftProgressVisible = false;
-            ShiftProgressName = "非班次时段";
+            ShiftProgressName = Strings.M115;
             ShiftProgressText = "";
             ShiftProgressRatio = 0;
             ShiftProgressPct = "";

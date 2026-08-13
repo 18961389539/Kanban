@@ -1,4 +1,4 @@
-using Kanban.Core.Models;
+﻿using Kanban.Core.Models;
 
 namespace Kanban.Core.Services;
 
@@ -23,8 +23,15 @@ public interface IDeviceAdapter
     PlcOperationResult<int[]> ReadInt32Batch(string address, ushort length);
     PlcOperationResult<bool> ReadBool(string address);
     PlcOperationResult<bool[]> ReadBoolBatch(string address, ushort length);
+    PlcOperationResult<float> ReadFloat(string address);
+    PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length);
+    PlcOperationResult<ushort> ReadUInt16(string address);
+    PlcOperationResult<string> ReadString(string address, ushort length);
     PlcOperationResult WriteInt32(string address, int value);
     PlcOperationResult WriteBool(string address, bool value);
+    PlcOperationResult WriteFloat(string address, float value);
+    PlcOperationResult WriteUInt16(string address, ushort value);
+    PlcOperationResult WriteString(string address, string value);
 }
 
 /// <summary>按设备配置选择适配器。</summary>
@@ -132,13 +139,45 @@ public sealed class PlcDeviceAdapter(
             : PlcOperationResult<bool[]>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
+    public PlcOperationResult<float> ReadFloat(string address)
+    {
+        var parsed = AddressCodec.Parse(address);
+        return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
+            ? driver.ReadFloat(AddressCodec.ToTransportAddress(parsed.Original))
+            : PlcOperationResult<float>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+    }
+
+    public PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length)
+    {
+        var parsed = AddressCodec.Parse(address);
+        return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
+            ? driver.ReadFloatBatch(AddressCodec.ToTransportAddress(parsed.Original), length)
+            : PlcOperationResult<float[]>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+    }
+
+    public PlcOperationResult<string> ReadString(string address, ushort length)
+    {
+        var parsed = AddressCodec.Parse(address);
+        return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
+            ? driver.ReadString(AddressCodec.ToTransportAddress(parsed.Original), length)
+            : PlcOperationResult<string>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+    }
+
+    public PlcOperationResult<ushort> ReadUInt16(string address)
+    {
+        var parsed = AddressCodec.Parse(address);
+        return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
+            ? driver.ReadUInt16(AddressCodec.ToTransportAddress(parsed.Original))
+            : PlcOperationResult<ushort>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+    }
+
     public PlcOperationResult WriteInt32(string address, int value)
     {
         var parsed = AddressCodec.Parse(address);
         if (parsed is not { IsValid: true, Type: PlcAddressType.DWord })
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
-            return PlcOperationResult.Fail($"地址 {parsed.Original} 所属区域只读，不支持写入", PlcErrorKind.UnsupportedOperation);
+            return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
         return driver.WriteInt32(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 
@@ -148,7 +187,37 @@ public sealed class PlcDeviceAdapter(
         if (parsed is not { IsValid: true, Type: PlcAddressType.MBit })
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
-            return PlcOperationResult.Fail($"地址 {parsed.Original} 所属区域只读，不支持写入", PlcErrorKind.UnsupportedOperation);
+            return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
         return driver.WriteBool(AddressCodec.ToTransportAddress(parsed.Original), value);
+    }
+
+    public PlcOperationResult WriteFloat(string address, float value)
+    {
+        var parsed = AddressCodec.Parse(address);
+        if (parsed is not { IsValid: true, Type: PlcAddressType.DWord })
+            return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+        if (!AddressCodec.CanWrite(parsed))
+            return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
+        return driver.WriteFloat(AddressCodec.ToTransportAddress(parsed.Original), value);
+    }
+
+    public PlcOperationResult WriteUInt16(string address, ushort value)
+    {
+        var parsed = AddressCodec.Parse(address);
+        if (parsed is not { IsValid: true, Type: PlcAddressType.DWord })
+            return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+        if (!AddressCodec.CanWrite(parsed))
+            return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
+        return driver.WriteUInt16(AddressCodec.ToTransportAddress(parsed.Original), value);
+    }
+
+    public PlcOperationResult WriteString(string address, string value)
+    {
+        var parsed = AddressCodec.Parse(address);
+        if (parsed is not { IsValid: true, Type: PlcAddressType.DWord })
+            return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
+        if (!AddressCodec.CanWrite(parsed))
+            return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
+        return driver.WriteString(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 }

@@ -1,0 +1,93 @@
+@page "/recipes"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("Rc_Title")</span>
+            <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
+        </div>
+        <button class="btn" disabled="@IsLoading" @onclick="LoadAsync">@L.T("Hq_Search")</button>
+    </div>
+
+    @if (Error is not null)
+    {
+        <div class="msg-banner msg-error">@Error</div>
+    }
+    @if (IsLoading)
+    {
+        <div class="loading-row">@L.T("Hq_Loading")…</div>
+    }
+    else if (RecipeList.Count == 0 && Loaded)
+    {
+        <EmptyState Title="@L.T("Rc_None")" Hint="" Icon="📜" />
+    }
+    else if (RecipeList.Count > 0)
+    {
+        <div class="mon-grid">
+            @foreach (var r in RecipeList)
+            {
+                <div class="mon-card line-card">
+                    <div class="dev-head">
+                        <span class="dev-name">@r.Name</span>
+                        @if (!string.IsNullOrEmpty(r.MachineType))
+                        {
+                            <span class="line-recipe">@r.MachineType</span>
+                        }
+                        <span class="kpi-sub" style="margin-left:auto">@L.T("Rc_ItemCount", r.Items.Count)</span>
+                    </div>
+                    <table class="hq-table">
+                        <tbody>
+                            @foreach (var item in r.Items)
+                            {
+                                <tr>
+                                    <td class="dim">@item.ParamName</td>
+                                    <td class="mono">@item.PlcAddress</td>
+                                    <td>@item.Value</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<RecipeDto> RecipeList { get; set; } = [];
+    private bool Loaded { get; set; }
+    private bool IsLoading { get; set; }
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        try
+        {
+            var list = await Dashboard.QueryRecipesAsync();
+            RecipeList = list
+                .OrderBy(r => r.MachineType, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            Loaded = true;
+        }
+        catch (Exception)
+        {
+            Error = L.T("Hq_QueryFailed");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

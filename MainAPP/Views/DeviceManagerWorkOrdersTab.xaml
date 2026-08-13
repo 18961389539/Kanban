@@ -18,51 +18,7 @@
         布局参照 DeviceManagerAlarmsTab：左侧 220px 列表 + 右侧详情面板。
     -->
     <UserControl.Resources>
-        <!--  工单状态 → 色点画刷  -->
-        <Style x:Key="StatusDot" TargetType="Ellipse">
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Height" Value="8" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                    <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                    <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="StatusText" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-            <Setter Property="Text" Value="—" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K010}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K011}" />
-                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K012}" />
-                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K013}" />
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
+        <!--  工单状态色点/文本已全局化至 Styles/Components.xaml（StatusDot/StatusText）  -->
     </UserControl.Resources>
 
     <Grid Margin="24,16">
@@ -74,14 +30,41 @@
 
         <!--  ============ 左侧：工单列表 ============  -->
         <DockPanel Grid.Column="0" LastChildFill="True">
-            <!--  顶部操作按钮  -->
+            <!--  顶部操作按钮：新增（高频留文字）+ 更多（编辑/删除收进下拉，左列 220px 放不下三按钮）  -->
             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10" Orientation="Horizontal">
                 <Button Command="{Binding AddWorkOrderCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
                         Tag="{x:Static mi:MaterialIconKind.Plus}" />
-                <Button Margin="8,0,0,0" Command="{Binding EditWorkOrderCommand}" Content="{x:Static resources:Strings.K072}" Style="{StaticResource IconButtonDefault}"
-                        Tag="{x:Static mi:MaterialIconKind.PencilOutline}" />
-                <Button Margin="8,0,0,0" Command="{Binding DeleteWorkOrderCommand}" Content="{x:Static resources:Strings.K034}" Style="{StaticResource IconButtonDanger}"
-                        Tag="{x:Static mi:MaterialIconKind.Delete}" />
+                <Button
+                    Margin="8,0,0,0"
+                    x:Name="WorkOrderMoreButton"
+                    AutomationProperties.Name="{x:Static resources:Strings.K234}"
+                    Click="OnWorkOrderMoreClick"
+                    Content="{x:Static resources:Strings.K235}"
+                    Style="{StaticResource IconButtonDefault}"
+                    Tag="{x:Static mi:MaterialIconKind.DotsHorizontal}"
+                    ToolTip="{x:Static resources:Strings.K236}">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem
+                                AutomationProperties.Name="{x:Static resources:Strings.K072}"
+                                Command="{Binding EditWorkOrderCommand}"
+                                Header="{x:Static resources:Strings.K072}">
+                                <MenuItem.Icon>
+                                    <materialIcons:MaterialIcon Kind="PencilOutline" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem
+                                AutomationProperties.Name="{x:Static resources:Strings.K034}"
+                                Command="{Binding DeleteWorkOrderCommand}"
+                                Header="{x:Static resources:Strings.K034}">
+                                <MenuItem.Icon>
+                                    <materialIcons:MaterialIcon Kind="Delete" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
             </StackPanel>
 
             <!--  工单列表  -->
@@ -171,7 +154,7 @@
                                            FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
-                                           Text="{Binding SelectedWorkOrder.TargetQuantity, StringFormat={}{0:N0} 件}" />
+                                           Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </DockPanel>
                             <!--  计划时间  -->
                             <DockPanel Margin="0,0,0,12">

@@ -6,8 +6,7 @@ namespace MainAPP.Benchmarks;
 
 /// <summary>
 /// 通用转换器性能基准：ComparisonConverter（DataGrid 行高亮）、
-/// NullToVisibilityConverter、IndexToVisibilityConverter（Tab 切换可见性）、
-/// TimeSpanToTimeStringConverter（班次时间显示）。
+/// NullToVisibilityConverter、TimeSpanToTimeStringConverter（班次时间显示）。
 /// 这些转换器在 DataGrid 渲染和 Tab 切换热路径上高频调用。
 /// ComparisonConverter 每次调用都做字符串解析（运算符提取 + double.TryParse + Convert.ToDouble），
 /// 是潜在的渲染瓶颈，重点度量。
@@ -17,7 +16,6 @@ public class ConvertersBenchmark
 {
     private readonly ComparisonConverter _comparisonConverter = new();
     private readonly NullToVisibilityConverter _nullToVisibilityConverter = new();
-    private readonly IndexToVisibilityConverter _indexToVisibilityConverter = new();
     private readonly TimeSpanToTimeStringConverter _timeSpanConverter = new();
 
     // 模拟 DataGrid 100 行渲染时每行调用一次 ComparisonConverter
@@ -50,13 +48,6 @@ public class ConvertersBenchmark
     {
         for (int i = 0; i < 100; i++)
             _nullToVisibilityConverter.Convert(i % 2 == 0 ? (object?)i : null, typeof(object), null, CultureInfo.InvariantCulture);
-    }
-
-    [Benchmark(Description = "IndexToVisibilityConverter ×100")]
-    public void IndexToVisibilityConverter_Batch100()
-    {
-        for (int i = 0; i < 100; i++)
-            _indexToVisibilityConverter.Convert(i % 4, typeof(object), "0", CultureInfo.InvariantCulture);
     }
 
     [Benchmark(Description = "TimeSpanToTimeStringConverter ×100")]

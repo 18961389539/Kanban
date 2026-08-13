@@ -5,5 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- SDK 默认只排除 **/obj/** 与 **/bin/**；本地集成曾用 obj_fresh/ 等重定向目录
+         （不匹配排除模式，残留的生成 .cs 会被当源文件编译导致 CS0579）。
+         统一排除所有 obj*/bin* 中间目录。 -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/obj*/**;**/bin*/**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

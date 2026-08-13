@@ -49,6 +49,10 @@
     <None Update="testconfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Unit/LocalizationChineseLeakBaseline.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>LocalizationChineseLeakBaseline.txt</Link>
+    </None>
   </ItemGroup>
 
   <!-- TestResults 输出重定向到系统临时目录，避免源码树累积 GUID 子目录。 -->

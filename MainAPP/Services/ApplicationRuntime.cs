@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -29,7 +30,7 @@ public partial class ApplicationRuntime : ObservableObject, IApplicationRuntime
     private ApplicationRuntimeState _state = ApplicationRuntimeState.Starting;
 
     [ObservableProperty]
-    private string _statusMessage = "正在启动";
+    private string _statusMessage = Strings.M133;
 
     [ObservableProperty]
     private bool _isDatabaseReady;
@@ -49,6 +50,6 @@ public partial class ApplicationRuntime : ObservableObject, IApplicationRuntime
     public void SetFailure(Exception exception)
     {
         StartupError = exception.Message;
-        SetState(ApplicationRuntimeState.Failed, "启动失败");
+        SetState(ApplicationRuntimeState.Failed, Strings.M130);
     }
 }

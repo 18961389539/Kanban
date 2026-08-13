@@ -21,19 +21,19 @@ internal static class RuntimeHealthText
     {
         if (!isConnected) return Strings.M013;
         if (!isRunning) return Strings.M014;
-        return lastCycleSucceeded ? "运行正常" : string.Format(Strings.F227, consecutiveFailures);
+        return lastCycleSucceeded ? Strings.K418 : string.Format(Strings.F227, consecutiveFailures);
     }
 }
 
 public sealed partial class DeviceAcquisitionStatusItem : ObservableObject
 {
     [ObservableProperty] private string _deviceName = string.Empty;
-    [ObservableProperty] private string _statusText = "未知";
-    [ObservableProperty] private string _acquisitionText = "未采集";
+    [ObservableProperty] private string _statusText = Strings.Status_Unknown;
+    [ObservableProperty] private string _acquisitionText = Strings.K402;
     [ObservableProperty] private int _configuredAddressCount;
     [ObservableProperty] private int _okProduction;
     [ObservableProperty] private int _ngProduction;
-    public string ReadSummary => ConfiguredAddressCount == 0 ? "未配置地址" : string.Format(Strings.F022, ConfiguredAddressCount);
+    public string ReadSummary => ConfiguredAddressCount == 0 ? Strings.M161 : string.Format(Strings.F022, ConfiguredAddressCount);
     public string ProductionSummary => $"{OkProduction:N0} / {NgProduction:N0}";
 
     partial void OnConfiguredAddressCountChanged(int value) => OnPropertyChanged(nameof(ReadSummary));
@@ -63,7 +63,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isAcquisitionRunning;
-    [ObservableProperty] private string _connectionStatus = "未连接";
+    [ObservableProperty] private string _connectionStatus = Strings.Conn_Disconnected;
     [ObservableProperty] private int _consecutiveFailures;
     [ObservableProperty] private int _totalDisconnectCount;
     [ObservableProperty] private int _completedCycles;
@@ -117,12 +117,12 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string PlcEndpoint => $"{_appSettings.PlcConfig.IpAddress}:{_appSettings.PlcConfig.Port}";
     public string DisconnectDurationText => _connectionManager.DisconnectedAt is { } disconnectedAt
         ? FormatDuration(DateTime.Now - disconnectedAt)
-        : "未断线";
-    public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : "无积压";
-    public string DataConsistencyText => ConfigurationIssueCount == 0 ? "配置正常" : string.Format(Strings.F078, ConfigurationIssueCount);
+        : Strings.M049;
+    public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : Strings.M052;
+    public string DataConsistencyText => ConfigurationIssueCount == 0 ? Strings.M053 : string.Format(Strings.F078, ConfigurationIssueCount);
     public string DeviceReadSummary => $"{LastSuccessfulDevices} / {ConfiguredDevices}";
     public string CpuMemoryText => $"{CpuUsagePercent:F1}% / {MemoryMb:F0} MB";
-    public string GpuUsageText => GpuAvailable ? $"{GpuUsagePercent:F1}%" : "不可用";
+    public string GpuUsageText => GpuAvailable ? $"{GpuUsagePercent:F1}%" : Strings.M054;
     public string AddressIssueSummary => $"{InvalidAddressCount} / {AddressConflictCount}";
     public string ProcessUptimeText => ProcessUptime.ToString(@"d\.hh\:mm\:ss");
     public string ReadDetailText => string.Format(Strings.F024, EstimatedReadOperations, ConfiguredReadAddressCount);
@@ -238,7 +238,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         HistoryWriteMilliseconds = snapshot.HistoryWriteMilliseconds;
 
         UpdateResourceMetrics();
-        UpdateConsistencyMetrics();
+        MaybeUpdateConsistencyMetrics();
         UpdateDeviceStatuses(snapshot.LastSuccessfulDeviceIds);
         UpdatePollingTrend();
         LastRefreshTime = DateTime.Now;
@@ -315,7 +315,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             HistoryWriteMilliseconds = d.HistoryWriteMilliseconds;
 
             UpdateResourceMetrics();
-            UpdateConsistencyMetrics();
+            MaybeUpdateConsistencyMetrics();
             LastRefreshTime = DateTime.Now;
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(HasActiveFailure));
@@ -344,7 +344,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
             IsConnected = false;
             IsAcquisitionRunning = false;
-            ConnectionStatus = "Collector 未连接";
+            ConnectionStatus = Strings.M050;
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(PlcEndpoint));
         }
@@ -389,7 +389,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             {
                 DeviceName = device.Name,
                 StatusText = GetStatusText(runtime?.StatusWord ?? 0),
-                AcquisitionText = addresses == 0 ? "未配置" : lastSuccessfulDeviceIds.Contains(device.Id) ? "本轮成功" : "本轮失败",
+                AcquisitionText = addresses == 0 ? Strings.M162 : lastSuccessfulDeviceIds.Contains(device.Id) ? Strings.M163 : Strings.M164,
                 ConfiguredAddressCount = addresses,
                 OkProduction = runtime?.OkProduction ?? 0,
                 NgProduction = runtime?.NgProduction ?? 0,
@@ -416,12 +416,28 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 1),
         };
         model.Axes.Add(new DateTimeAxis { Position = AxisPosition.Bottom, StringFormat = "HH:mm:ss", TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineStyle = LineStyle.None });
-        model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Title = "ms", TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineColor = ChartPalette.Grid, MajorGridlineStyle = LineStyle.Solid });
+        model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = 0, Title = Strings.M357, TextColor = ChartPalette.MutedText, AxislineColor = OxyColors.Transparent, MajorGridlineColor = ChartPalette.Grid, MajorGridlineStyle = LineStyle.Solid });
         model.Series.Add(new LineSeries { Color = ChartPalette.Base, StrokeThickness = 2, MarkerType = MarkerType.None });
         return model;
     }
 
     private static string GetStatusText(int statusWord) => RuntimeDeviceStatusText.Format(statusWord);
+
+    /// <summary>
+    /// 一致性校验降频（每 10 次 tick ≈ 10s 执行一次）：CollectValidationErrors + CollectCrossDeviceConflicts
+    /// + 逐地址 codec.Parse 在设备/地址多时开销大，每秒执行会卡 UI。
+    /// 采集状态/资源指标保持每秒刷新；进入页面首帧立即执行一次（_consistencyTickCount 初始为阈值前值）。
+    /// 注：CollectValidationErrors 内部已含一次冲突检测，此处再单独统计属现状（降频后成本可接受）。
+    /// </summary>
+    private const int ConsistencyCheckIntervalTicks = 10;
+    private int _consistencyTickCount = ConsistencyCheckIntervalTicks - 1;
+
+    private void MaybeUpdateConsistencyMetrics()
+    {
+        if (++_consistencyTickCount < ConsistencyCheckIntervalTicks) return;
+        _consistencyTickCount = 0;
+        UpdateConsistencyMetrics();
+    }
 
     private void UpdateConsistencyMetrics()
     {
@@ -442,8 +458,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(duration.TotalSeconds);
 
     private static string FormatBytes(long bytes) => bytes >= 1024 * 1024
-        ? $"{bytes / 1024d / 1024d:F1} MB"
-        : $"{bytes / 1024d:F1} KB";
+        ? $"{bytes / 1024d / 1024d:F1}{Strings.M358}"
+        : $"{bytes / 1024d:F1}{Strings.M359}";
 
     public void Dispose()
     {

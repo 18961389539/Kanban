@@ -39,7 +39,7 @@
                                    Text="{x:Static resources:Strings.K324}" />
                         <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{Binding SpeedAchievementRate, StringFormat=达成率 {0:P0}}" />
+                                   Text="{Binding SpeedAchievementRate, Converter={StaticResource LocFormatConverter}, ConverterParameter=F251}" />
                         <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                             <TextBlock FontSize="{DynamicResource FontSizeHero}" FontWeight="Bold"
                                        Foreground="{StaticResource PrimaryTextBrush}"
@@ -82,10 +82,11 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- 2x2 KPI 网格 -->
+                <!-- 2x2 KPI 网格（列间距 16 / 行间距 16，与 OEE 三环小卡的 Margin 一致） -->
                 <Grid Grid.Row="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
+                        <RowDefinition Height="16" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -96,9 +97,7 @@
 
                     <!-- 左上：工单设置数量 -->
                     <Border Grid.Row="0" Grid.Column="0" Padding="16,12"
-                            Background="{StaticResource SecondaryRegionBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
+                            Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>
                             <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K326}" />
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -114,9 +113,7 @@
 
                     <!-- 右上：工单已生产数量 -->
                     <Border Grid.Row="0" Grid.Column="2" Padding="16,12"
-                            Background="{StaticResource SecondaryRegionBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
+                            Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>
                             <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K327}" />
                             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -131,10 +128,8 @@
                     </Border>
 
                     <!-- 左下：目标节拍 -->
-                    <Border Grid.Row="1" Grid.Column="0" Padding="16,12"
-                            Background="{StaticResource SecondaryRegionBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="2" Grid.Column="0" Padding="16,12"
+                            Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>
                             <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
                             <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
@@ -144,10 +139,8 @@
                     </Border>
 
                     <!-- 右下：实际节拍 -->
-                    <Border Grid.Row="1" Grid.Column="2" Padding="16,12"
-                            Background="{StaticResource SecondaryRegionBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Row="2" Grid.Column="2" Padding="16,12"
+                            Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>
                             <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K050}" />
                             <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"

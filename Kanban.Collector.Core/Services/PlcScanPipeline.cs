@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ public sealed class PlcScanPipeline
     private readonly IDeviceRepository _deviceRepository;
     private readonly IAlarmHistoryService _alarmHistory;
     private readonly IAlarmNotificationChannel? _alarmNotificationChannel;
+    private readonly Action<AlarmEventDto>? _onAlarmEdge;
     private readonly AppSettings _appSettings;
     private readonly ILogger _logger;
     private readonly Func<string> _shiftNameProvider;
@@ -48,7 +50,8 @@ public sealed class PlcScanPipeline
         AppSettings appSettings,
         Func<string> shiftNameProvider,
         ILogger logger,
-        IAlarmNotificationChannel? alarmNotificationChannel = null)
+        IAlarmNotificationChannel? alarmNotificationChannel = null,
+        Action<AlarmEventDto>? onAlarmEdge = null)
     {
         _adapterResolver = adapterResolver;
         _deviceRepository = deviceRepository;
@@ -57,6 +60,7 @@ public sealed class PlcScanPipeline
         _shiftNameProvider = shiftNameProvider;
         _logger = logger;
         _alarmNotificationChannel = alarmNotificationChannel;
+        _onAlarmEdge = onAlarmEdge;
     }
 
     // ──────────── 诊断指标（只读，供主类 GetDiagnosticsSnapshot 聚合） ────────────
@@ -216,7 +220,8 @@ public sealed class PlcScanPipeline
             _adapterResolver.Resolve(devices[0]), _alarmHistory, _shiftNameProvider(), _logger,
             _alarmNotificationChannel,
             _appSettings.PlcBatchReadMaxLength,
-            _appSettings.PlcBatchReadMaxGapSlots);
+            _appSettings.PlcBatchReadMaxGapSlots,
+            _onAlarmEdge);
     }
 
     /// <summary>

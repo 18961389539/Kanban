@@ -9,6 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:models="clr-namespace:Kanban.Core.Models;assembly=Kanban.Collector.Core"
+    xmlns:core="clr-namespace:Kanban.Core.Services;assembly=Kanban.Collector.Core"
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:resources="clr-namespace:MainAPP.Resources"
     d:DesignHeight="500"
@@ -249,629 +250,675 @@
                     </StackPanel>
                 </Border>
 
-                    <Grid Width="{Binding ActualWidth, ElementName=SettingsScrollViewer}"
-                        VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="16" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <hc:TabControl Margin="0,16,0,0" Style="{StaticResource TabControlCapsule}">
+                    <!--  ============ Tab 1: 通用设置 ============  -->
+                    <hc:TabItem Header="{x:Static resources:Strings.M295}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!--  数据源与运行模式  -->
+                                <Border
+                                    x:Name="DataSourceSection"
+                                    Padding="20"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource MainCard}">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K480}" />
+                                        <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{x:Static resources:Strings.K481}" />
+                                        <hc:Divider Margin="0,8" />
 
-                    <!--  ============ 左列：数据源与运行模式 ============  -->
-                    <Border
-                        x:Name="DataSourceSection"
-                        Grid.Column="0"
-                        Padding="20"
-                        VerticalAlignment="Top"
-                        Style="{StaticResource MainCard}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K480}" />
-                            <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="{x:Static resources:Strings.K481}" />
-                            <hc:Divider Margin="0,8" />
+                                        <Border Style="{StaticResource SettingsGroupHeader}">
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K482}" />
+                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K483}" />
+                                            </StackPanel>
+                                        </Border>
 
-                            <Border Style="{StaticResource SettingsGroupHeader}">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K482}" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K483}" />
-                                </StackPanel>
-                            </Border>
+                                        <RadioButton Content="{x:Static resources:Strings.K484}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K485}"
+                                                     IsChecked="{Binding IsLocalMode}" Margin="0,8,0,0" />
+                                        <RadioButton Content="{x:Static resources:Strings.K486}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K487}"
+                                                     IsChecked="{Binding IsRemoteMode}" Margin="0,4,0,0" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K103}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K103}"
+                                            Style="{StaticResource SettingsTextBox}"
+                                            IsEnabled="{Binding IsRemoteMode}"
+                                            Text="{Binding DraftSettings.CollectorHubUrl, UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="{x:Static resources:Strings.K488}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                            <Button
+                                                Style="{StaticResource IconButtonDefault}"
+                                                AutomationProperties.Name="{x:Static resources:Strings.K489}"
+                                                Command="{Binding TestCollectorConnectionCommand}"
+                                                Content="{Binding TestCollectorButtonText}"
+                                                Tag="{x:Static mi:MaterialIconKind.ServerNetwork}"
+                                                ToolTip="{x:Static resources:Strings.K490}"
+                                                IsEnabled="{Binding IsRemoteMode}" />
+                                            <TextBlock
+                                                VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
+                                                Text="{Binding CollectorTestResult}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Success">
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Error">
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
 
-                            <RadioButton Content="{x:Static resources:Strings.K484}"
-                                         AutomationProperties.Name="{x:Static resources:Strings.K485}"
-                                         IsChecked="{Binding IsLocalMode}" Margin="0,8,0,0" />
-                            <RadioButton Content="{x:Static resources:Strings.K486}"
-                                         AutomationProperties.Name="{x:Static resources:Strings.K487}"
-                                         IsChecked="{Binding IsRemoteMode}" Margin="0,4,0,0" />
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K103}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K103}"
-                                Style="{StaticResource SettingsTextBox}"
-                                IsEnabled="{Binding IsRemoteMode}"
-                                Text="{Binding DraftSettings.CollectorHubUrl, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="{x:Static resources:Strings.K488}" />
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button
-                                    Style="{StaticResource IconButtonDefault}"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K489}"
-                                    Command="{Binding TestCollectorConnectionCommand}"
-                                    Content="{Binding TestCollectorButtonText}"
-                                    Tag="{x:Static mi:MaterialIconKind.ServerNetwork}"
-                                    ToolTip="{x:Static resources:Strings.K490}"
-                                    IsEnabled="{Binding IsRemoteMode}" />
-                                <TextBlock
-                                    VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"
-                                    Text="{Binding CollectorTestResult}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Success">
-                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding CollectorTestResultType}" Value="Error">
-                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                        <Border Style="{StaticResource SettingsGroupHeader}" Margin="0,16,0,0">
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K491}" />
+                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K492}" />
+                                            </StackPanel>
+                                        </Border>
+                                        <RadioButton Content="{x:Static resources:Strings.K493}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K494}"
+                                                     IsChecked="{Binding IsFullMode}" Margin="0,8,0,0" />
+                                        <RadioButton Content="{x:Static resources:Strings.K495}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K496}"
+                                                     IsChecked="{Binding IsViewerMode}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  显示设置  -->
+                                <Border
+                                    x:Name="DisplaySection"
+                                    Margin="0,16,0,0"
+                                    Padding="20"
+                                    Style="{StaticResource MainCard}">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Settings_DisplaySettings}" />
+                                        <TextBlock
+                                            Margin="0,4,0,4"
+                                            FontSize="12"
+                                            Foreground="{StaticResource ThirdlyTextBrush}"
+                                            Text="{x:Static resources:Strings.Settings_DisplayHint}" />
+                                        <hc:Divider Margin="0,8" />
+
+                                        <!--  看板标题：窗口/页面标题（settings.json 可配置，屏端经 Hub 拉取零配置）  -->
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K113}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K113}"
+                                            MaxLength="40"
+                                            Style="{StaticResource SettingsTextBox}"
+                                            Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
+                                            ToolTip="{x:Static resources:Strings.K525}" />
+
+                                        <!--  界面语言（中文/英文/日文，默认中文；重启后生效）。
+                                             Tag 必须是 AppLanguage 枚举值（String "0"/"1"/"2" 与 enum 不能相等比较，会导致 ComboBox 选中失败、显示空白）。
+                                             改用 x:Static 引用枚举值，避免引入 Converter。  -->
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.Common_Language}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K526}"
+                                            Style="{StaticResource SettingsComboBox}"
+                                            SelectedValue="{Binding DraftSettings.Language}"
+                                            SelectedValuePath="Tag"
+                                            ToolTip="{x:Static resources:Strings.Settings_LanguageHint}">
+                                            <ComboBoxItem Content="中文" Tag="{x:Static core:AppLanguage.Zh}" />
+                                            <ComboBoxItem Content="English" Tag="{x:Static core:AppLanguage.En}" />
+                                            <ComboBoxItem Content="日本語" Tag="{x:Static core:AppLanguage.Ja}" />
+                                        </hc:ComboBox>
+                                        <TextBlock
+                                            Margin="0,-4,0,14"
+                                            FontSize="11"
+                                            Foreground="{StaticResource WarningBrush}"
+                                            Text="{x:Static resources:Strings.Common_RestartRequired}" />
+
+                                        <!--  界面字号（大屏远距可读性）：切换后实时预览，保存设置后持久化  -->
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K529}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K530}"
+                                            Style="{StaticResource SettingsComboBox}"
+                                            SelectedValue="{Binding DraftSettings.UiScale, Mode=TwoWay, Converter={StaticResource DoubleToInvariantStringConverter}}"
+                                            SelectedValuePath="Tag">
+                                            <ComboBoxItem Content="{x:Static resources:Strings.K531}" Tag="1" />
+                                            <ComboBoxItem Content="{x:Static resources:Strings.K532}" Tag="1.15" />
+                                            <ComboBoxItem Content="{x:Static resources:Strings.K533}" Tag="1.3" />
+                                        </hc:ComboBox>
+                                        <CheckBox
+                                            Margin="0,0,0,16"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K114}"
+                                            Content="{x:Static resources:Strings.K114}"
+                                            IsChecked="{Binding DraftSettings.EnableAlarmSound, Mode=TwoWay}"
+                                            ToolTip="{x:Static resources:Strings.K534}" />
+                                        <CheckBox
+                                            Margin="0,0,0,8"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K535}"
+                                            Content="{x:Static resources:Strings.K536}"
+                                            IsChecked="{Binding DraftSettings.EnableAutomaticDailyReport, Mode=TwoWay}"
+                                            ToolTip="{x:Static resources:Strings.K537}" />
+                                        <hc:DateTimePicker
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K115}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K115}"
+                                            IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
+                                            SelectedDateTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                            Style="{StaticResource DateTimePickerExtend}"
+                                            ToolTip="{x:Static resources:Strings.K538}" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
+                        </ScrollViewer>
+                    </hc:TabItem>
 
-                            <Border Style="{StaticResource SettingsGroupHeader}" Margin="0,16,0,0">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K491}" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K492}" />
-                                </StackPanel>
-                            </Border>
-                            <RadioButton Content="{x:Static resources:Strings.K493}"
-                                         AutomationProperties.Name="{x:Static resources:Strings.K494}"
-                                         IsChecked="{Binding IsFullMode}" Margin="0,8,0,0" />
-                            <RadioButton Content="{x:Static resources:Strings.K495}"
-                                         AutomationProperties.Name="{x:Static resources:Strings.K496}"
-                                         IsChecked="{Binding IsViewerMode}" Margin="0,4,0,0" />
-                        </StackPanel>
-                    </Border>
+                    <!--  ============ Tab 2: PLC 连接 ============  -->
+                    <hc:TabItem Header="{x:Static resources:Strings.M296}"
+                         Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Border
+                                    x:Name="PlcSection"
+                                    Padding="20"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Style="{StaticResource MainCard}">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K497}" />
+                                        <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{x:Static resources:Strings.K498}" />
+                                        <hc:Divider Margin="0,8" />
 
-                    <!--  ============ 左列：PLC 连接配置 ============  -->
-                    <Border
-                        x:Name="PlcSection"
-                        Grid.Column="0"
-                        Padding="20"
-                        VerticalAlignment="Top"
-                        Style="{StaticResource MainCard}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K497}" />
-                            <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                       Text="{x:Static resources:Strings.K498}" />
-                            <hc:Divider Margin="0,8" />
+                                        <Border Style="{StaticResource SettingsGroupHeader}">
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K499}" />
+                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K500}" />
+                                            </StackPanel>
+                                        </Border>
 
-                            <Border Style="{StaticResource SettingsGroupHeader}">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K499}" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K500}" />
-                                </StackPanel>
-                            </Border>
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K104}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K104}"
+                                            ItemsSource="{Binding PlcBrands}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.Brand, Mode=TwoWay}"
+                                            Style="{StaticResource SettingsComboBox}" />
 
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K104}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K104}"
-                                ItemsSource="{Binding PlcBrands}"
-                                SelectedItem="{Binding DraftSettings.PlcConfig.Brand, Mode=TwoWay}"
-                                Style="{StaticResource SettingsComboBox}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K501}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K502}"
+                                            Style="{StaticResource SettingsTextBox}"
+                                            Text="{Binding DraftSettings.PlcConfig.IpAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K105}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K503}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.Port" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K105}"
+                                                            MaxValue="65535"
+                                                            MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K504}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K505}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.TimeoutMs" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K506}" MaxValue="60000" MinValue="100" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K106}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K106}"
+                                            ItemsSource="{Binding SiemensModels}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.SiemensModel, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
+                                            Style="{StaticResource SettingsComboBox}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K596}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K596}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.SiemensRack" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K596}" MaxValue="255" MinValue="0" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K597}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K597}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.SiemensSlot" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K597}" MaxValue="255" MinValue="0" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K107}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K107}"
+                                            ItemsSource="{Binding PlcDataFormats}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.SiemensDataFormat, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
+                                            Style="{StaticResource SettingsComboBox}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K039}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K039}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.SiemensBatchInt32Limit" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K039}" MaxValue="55" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K040}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K040}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Omron}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.OmronReadSplits" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K040}" MaxValue="999" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K598}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K598}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.ModbusUnitId" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K598}" MaxValue="247" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <CheckBox
+                                            Margin="0,0,0,16"
+                                            Content="{x:Static resources:Strings.K507}"
+                                            IsChecked="{Binding DraftSettings.PlcConfig.ModbusAddressStartWithZero, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}" />
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K508}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K108}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.ModbusRegisterFunction" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K108}" MaxValue="4" MinValue="3" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K509}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K109}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcConfig.ModbusBitFunction" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K109}" MaxValue="2" MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:ComboBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K110}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K110}"
+                                            ItemsSource="{Binding PlcDataFormats}"
+                                            SelectedItem="{Binding DraftSettings.PlcConfig.ModbusDataFormat, Mode=TwoWay}"
+                                            Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
+                                            Style="{StaticResource SettingsComboBox}" />
 
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K501}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K502}"
-                                Style="{StaticResource SettingsTextBox}"
-                                Text="{Binding DraftSettings.PlcConfig.IpAddress, UpdateSourceTrigger=PropertyChanged}" />
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K105}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K503}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.Port" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K105}"
-                                                MaxValue="65535"
-                                                MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K504}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K505}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.TimeoutMs" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K506}" MaxValue="60000" MinValue="100" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K106}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K106}"
-                                ItemsSource="{Binding SiemensModels}"
-                                SelectedItem="{Binding DraftSettings.PlcConfig.SiemensModel, Mode=TwoWay}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
-                                Style="{StaticResource SettingsComboBox}" />
-                            <hc:TextBox
-                                hc:InfoElement.Title="Siemens Rack"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Siemens Rack"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.SiemensRack" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Siemens Rack" MaxValue="255" MinValue="0" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="Siemens Slot"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Siemens Slot"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.SiemensSlot" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Siemens Slot" MaxValue="255" MinValue="0" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K107}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K107}"
-                                ItemsSource="{Binding PlcDataFormats}"
-                                SelectedItem="{Binding DraftSettings.PlcConfig.SiemensDataFormat, Mode=TwoWay}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
-                                Style="{StaticResource SettingsComboBox}" />
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K039}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K039}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.SiemensBatchInt32Limit" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K039}" MaxValue="55" MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K040}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K040}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Omron}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.OmronReadSplits" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K040}" MaxValue="999" MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="Modbus UnitId"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="Modbus UnitId"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.ModbusUnitId" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="Modbus UnitId" MaxValue="247" MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <CheckBox
-                                Margin="0,0,0,16"
-                                Content="{x:Static resources:Strings.K507}"
-                                IsChecked="{Binding DraftSettings.PlcConfig.ModbusAddressStartWithZero, Mode=TwoWay}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}" />
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K508}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K108}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.ModbusRegisterFunction" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K108}" MaxValue="4" MinValue="3" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K509}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K109}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcConfig.ModbusBitFunction" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K109}" MaxValue="2" MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K110}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K110}"
-                                ItemsSource="{Binding PlcDataFormats}"
-                                SelectedItem="{Binding DraftSettings.PlcConfig.ModbusDataFormat, Mode=TwoWay}"
-                                Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
-                                Style="{StaticResource SettingsComboBox}" />
-                            <Border Style="{StaticResource SettingsGroupHeader}">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K510}" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K511}" />
-                                </StackPanel>
-                            </Border>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K111}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K111}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcBatchReadMaxLength" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K512}"
-                                                MaxValue="1024"
-                                                MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K112}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K112}"
-                                Style="{StaticResource SettingsTextBox}"
-                                ToolTip="{x:Static resources:Strings.K513}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PlcBatchReadMaxGapSlots" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K514}"
-                                                MaxValue="16"
-                                                MinValue="0" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-
-                            <!--  测试连接：按钮 Content 随 IsTestingConnection 切换为"测试中..."，结果文案着色  -->
-                            <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
-                                <Button
-                                    Content="{Binding TestConnectionButtonText}"
-                                    Command="{Binding TestConnectionCommand}"
-                                    Style="{StaticResource IconButtonDefault}"
-                                    Tag="{x:Static mi:MaterialIconKind.LanConnect}"
-                                    ToolTip="{x:Static resources:Strings.K515}" />
-                                <TextBlock
-                                    Margin="12,0,0,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="{DynamicResource FontSizeCaption}"
-                                    Text="{Binding TestConnectionResult}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding TestConnectionResult}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding TestConnectionResultType}" Value="Success">
-                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding TestConnectionResultType}" Value="Error">
-                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                        <!--  测试连接：按钮 Content 随 IsTestingConnection 切换为"测试中..."，结果文案着色  -->
+                                        <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
+                                            <Button
+                                                Content="{Binding TestConnectionButtonText}"
+                                                Command="{Binding TestConnectionCommand}"
+                                                Style="{StaticResource IconButtonDefault}"
+                                                Tag="{x:Static mi:MaterialIconKind.LanConnect}"
+                                                ToolTip="{x:Static resources:Strings.K515}" />
+                                            <TextBlock
+                                                Margin="12,0,0,0"
+                                                VerticalAlignment="Center"
+                                                FontSize="{DynamicResource FontSizeCaption}"
+                                                Text="{Binding TestConnectionResult}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding TestConnectionResult}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding TestConnectionResultType}" Value="Success">
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding TestConnectionResultType}" Value="Error">
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                                            <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsPlcConnected}" Value="True">
+                                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding PlcConnectionStatus}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                            <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsPlcConnected}" Value="True">
-                                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                                <TextBlock VerticalAlignment="Center" Text="{Binding PlcConnectionStatus}" />
+                        </ScrollViewer>
+                    </hc:TabItem>
+
+                    <!--  ============ Tab 3: 采集策略 ============  -->
+                    <hc:TabItem Header="{x:Static resources:Strings.M297}"
+                         Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Border
+                                    x:Name="AcquisitionSection"
+                                    Padding="20"
+                                    Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Style="{StaticResource MainCard}">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K510}" />
+                                        <TextBlock
+                                            Margin="0,4,0,4"
+                                            FontSize="12"
+                                            Foreground="{StaticResource ThirdlyTextBrush}"
+                                            Text="{x:Static resources:Strings.K511}" />
+                                        <hc:Divider Margin="0,8" />
+
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K111}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K111}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcBatchReadMaxLength" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K512}"
+                                                            MaxValue="1024"
+                                                            MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K112}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K112}"
+                                            Style="{StaticResource SettingsTextBox}"
+                                            ToolTip="{x:Static resources:Strings.K513}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PlcBatchReadMaxGapSlots" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K514}"
+                                                            MaxValue="16"
+                                                            MinValue="0" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K516}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K517}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.PollingIntervalMs" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K518}"
+                                                            MaxValue="60000"
+                                                            MinValue="50" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K519}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K520}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.HistoryWriteIntervalScans" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K521}"
+                                                            MaxValue="36000"
+                                                            MinValue="1" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                        <hc:TextBox
+                                            hc:InfoElement.Title="{x:Static resources:Strings.K522}"
+                                            hc:InfoElement.TitlePlacement="Top"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K523}"
+                                            Style="{StaticResource SettingsTextBox}">
+                                            <hc:TextBox.Text>
+                                                <Binding Path="DraftSettings.DashboardRefreshIntervalMs" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <conv:IntegerRangeValidationRule
+                                                            FieldName="{x:Static resources:Strings.K524}"
+                                                            MaxValue="60000"
+                                                            MinValue="500" />
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </hc:TextBox.Text>
+                                        </hc:TextBox>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K516}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K517}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.PollingIntervalMs" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K518}"
-                                                MaxValue="60000"
-                                                MinValue="50" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K519}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K520}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.HistoryWriteIntervalScans" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K521}"
-                                                MaxValue="36000"
-                                                MinValue="1" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K522}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K523}"
-                                Style="{StaticResource SettingsTextBox}">
-                                <hc:TextBox.Text>
-                                    <Binding Path="DraftSettings.DashboardRefreshIntervalMs" UpdateSourceTrigger="PropertyChanged">
-                                        <Binding.ValidationRules>
-                                            <conv:IntegerRangeValidationRule
-                                                FieldName="{x:Static resources:Strings.K524}"
-                                                MaxValue="60000"
-                                                MinValue="500" />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </hc:TextBox.Text>
-                            </hc:TextBox>
+                        </ScrollViewer>
+                    </hc:TabItem>
 
-                            <Border Style="{StaticResource SettingsGroupHeader}">
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.Settings_DisplaySettings}" />
-                                    <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.Settings_DisplayHint}" />
-                                </StackPanel>
-                            </Border>
+                    <!--  ============ Tab 4: 班次配置 ============  -->
+                    <hc:TabItem Header="{x:Static resources:Strings.M298}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Border
+                                    x:Name="ShiftSection"
+                                    Padding="20"
+                                    Style="{StaticResource MainCard}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                            <!--  看板标题：窗口/页面标题（settings.json 可配置，屏端经 Hub 拉取零配置）  -->
-                            <hc:TextBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K113}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K113}"
-                                MaxLength="40"
-                                Style="{StaticResource SettingsTextBox}"
-                                Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="{x:Static resources:Strings.K525}" />
+                                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K539}" />
+                                                <TextBlock Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                           Text="{x:Static resources:Strings.K540}" />
+                                            </StackPanel>
+                                            <Button
+                                                Grid.Column="1"
+                                                AutomationProperties.Name="{x:Static resources:Strings.K116}"
+                                                Command="{Binding AddShiftCommand}"
+                                                Content="{x:Static resources:Strings.K116}"
+                                                Style="{StaticResource IconButtonPrimary}"
+                                                Tag="{x:Static mi:MaterialIconKind.Plus}" />
+                                        </Grid>
+                                        <StackPanel Grid.Row="1">
+                                            <hc:Divider Margin="0,8" />
+                                            <TextBlock
+                                                Margin="0,0,0,8"
+                                                FontSize="{DynamicResource FontSizeCaption}"
+                                                Foreground="{StaticResource SecondaryTextBrush}"
+                                                Text="{x:Static resources:Strings.K541}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
 
-                            <!--  界面语言（中文/英文/日文，默认中文；重启后生效）  -->
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.Common_Language}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K526}"
-                                Style="{StaticResource SettingsComboBox}"
-                                SelectedValue="{Binding DraftSettings.Language}"
-                                SelectedValuePath="Tag"
-                                ToolTip="{x:Static resources:Strings.Settings_LanguageHint}">
-                                <ComboBoxItem Content="中文" Tag="0" />
-                                <ComboBoxItem Content="English" Tag="1" />
-                                <ComboBoxItem Content="日本語" Tag="2" />
-                            </hc:ComboBox>
+                                        <Grid Grid.Row="2" Margin="0,8,0,0" VerticalAlignment="Stretch">
+                                            <ItemsControl ItemsSource="{Binding DraftSettings.Shifts}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type models:ShiftConfig}">
+                                                        <Border
+                                                            Margin="0,0,0,10"
+                                                            Padding="14"
+                                                            Background="{StaticResource SecondaryRegionBrush}"
+                                                            BorderBrush="{StaticResource BorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6">
+                                                            <StackPanel>
+                                                                <Grid Margin="0,0,0,12">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="8" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <hc:TextBox
+                                                                        Grid.Column="0"
+                                                                        VerticalAlignment="Center"
+                                                                        hc:InfoElement.Title="{x:Static resources:Strings.K117}"
+                                                                        hc:InfoElement.TitlePlacement="Top"
+                                                                        AutomationProperties.Name="{x:Static resources:Strings.K117}"
+                                                                        Style="{StaticResource TextBoxExtend}"
+                                                                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                                                    <Button
+                                                                        Grid.Column="2"
+                                                                        Width="32"
+                                                                        Height="32"
+                                                                        Margin="0,16,0,0"
+                                                                        Padding="0"
+                                                                        VerticalAlignment="Center"
+                                                                        AutomationProperties.Name="{Binding Name, StringFormat={x:Static resources:Strings.F288}}"
+                                                                        Command="{Binding DataContext.RemoveShiftCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Content=""
+                                                                        Style="{StaticResource IconButtonDanger}"
+                                                                        Tag="{x:Static mi:MaterialIconKind.Delete}"
+                                                                        ToolTip="{x:Static resources:Strings.K542}" />
+                                                                </Grid>
 
-                            <!--  界面字号（大屏远距可读性）：切换后实时预览，保存设置后持久化  -->
-                            <hc:ComboBox
-                                hc:InfoElement.Title="{x:Static resources:Strings.K529}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K530}"
-                                Style="{StaticResource SettingsComboBox}"
-                                SelectedValue="{Binding DraftSettings.UiScale, Mode=TwoWay, Converter={StaticResource DoubleToInvariantStringConverter}}"
-                                SelectedValuePath="Tag">
-                                <ComboBoxItem Content="{x:Static resources:Strings.K531}" Tag="1" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.K532}" Tag="1.15" />
-                                <ComboBoxItem Content="{x:Static resources:Strings.K533}" Tag="1.3" />
-                            </hc:ComboBox>
-                            <CheckBox
-                                Margin="0,0,0,16"
-                                AutomationProperties.Name="{x:Static resources:Strings.K114}"
-                                Content="{x:Static resources:Strings.K114}"
-                                IsChecked="{Binding DraftSettings.EnableAlarmSound, Mode=TwoWay}"
-                                ToolTip="{x:Static resources:Strings.K534}" />
-                            <CheckBox
-                                Margin="0,0,0,8"
-                                AutomationProperties.Name="{x:Static resources:Strings.K535}"
-                                Content="{x:Static resources:Strings.K536}"
-                                IsChecked="{Binding DraftSettings.EnableAutomaticDailyReport, Mode=TwoWay}"
-                                ToolTip="{x:Static resources:Strings.K537}" />
-                            <hc:DateTimePicker
-                                hc:InfoElement.Title="{x:Static resources:Strings.K115}"
-                                hc:InfoElement.TitlePlacement="Top"
-                                AutomationProperties.Name="{x:Static resources:Strings.K115}"
-                                IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
-                                SelectedDateTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                Style="{StaticResource DateTimePickerExtend}"
-                                ToolTip="{x:Static resources:Strings.K538}" />
-                        </StackPanel>
-                    </Border>
-
-                    <!--  ============ 右列：班次配置 ============  -->
-                    <Border
-                        x:Name="ShiftSection"
-                        Grid.Column="2"
-                        Padding="20"
-                        VerticalAlignment="Top"
-                        Style="{StaticResource MainCard}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0" Margin="0,0,0,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K539}" />
-                                    <TextBlock Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                               Text="{x:Static resources:Strings.K540}" />
-                                </StackPanel>
-                                <Button
-                                    Grid.Column="1"
-                                    AutomationProperties.Name="{x:Static resources:Strings.K116}"
-                                    Command="{Binding AddShiftCommand}"
-                                    Content="{x:Static resources:Strings.K116}"
-                                    Style="{StaticResource IconButtonPrimary}"
-                                    Tag="{x:Static mi:MaterialIconKind.Plus}" />
-                            </Grid>
-                            <StackPanel Grid.Row="1">
-                                <hc:Divider Margin="0,8" />
-                                <TextBlock
-                                    Margin="0,0,0,8"
-                                    FontSize="{DynamicResource FontSizeCaption}"
-                                    Foreground="{StaticResource SecondaryTextBrush}"
-                                    Text="{x:Static resources:Strings.K541}"
-                                    TextWrapping="Wrap" />
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="20" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <hc:DateTimePicker
+                                                                        Grid.Column="0"
+                                                                        hc:InfoElement.Title="{x:Static resources:Strings.K036}"
+                                                                        hc:InfoElement.TitlePlacement="Top"
+                                                                        AutomationProperties.Name="{x:Static resources:Strings.K543}"
+                                                                        SelectedDateTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        Style="{StaticResource DateTimePickerExtend}"
+                                                                        ToolTip="{x:Static resources:Strings.K118}" />
+                                                                    <TextBlock
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,0,8"
+                                                                        VerticalAlignment="Bottom"
+                                                                        FontSize="18"
+                                                                        Foreground="{StaticResource ThirdlyTextBrush}"
+                                                                        Text="—" />
+                                                                    <hc:DateTimePicker
+                                                                        Grid.Column="2"
+                                                                        hc:InfoElement.Title="{x:Static resources:Strings.K544}"
+                                                                        hc:InfoElement.TitlePlacement="Top"
+                                                                        AutomationProperties.Name="{x:Static resources:Strings.K545}"
+                                                                        SelectedDateTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        Style="{StaticResource DateTimePickerExtend}"
+                                                                        ToolTip="{x:Static resources:Strings.K118}" />
+                                                                </Grid>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <!--  空状态：班次列表为空时提示（防御性，VM 至少保留 1 个）  -->
+                                            <controls:EmptyState
+                                                IconKind="CalendarClockOutline"
+                                                Message="{x:Static resources:Strings.K546}"
+                                                Hint="{x:Static resources:Strings.K547}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                                <controls:EmptyState.Style>
+                                                    <Style TargetType="controls:EmptyState">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DraftSettings.Shifts.Count}" Value="0">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </controls:EmptyState.Style>
+                                            </controls:EmptyState>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
-
-                            <Grid Grid.Row="2" Margin="0,8,0,0" VerticalAlignment="Stretch">
-                                <ItemsControl ItemsSource="{Binding DraftSettings.Shifts}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type models:ShiftConfig}">
-                                            <Border
-                                                Margin="0,0,0,10"
-                                                Padding="14"
-                                                Background="{StaticResource SecondaryRegionBrush}"
-                                                BorderBrush="{StaticResource BorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="6">
-                                                <StackPanel>
-                                                    <Grid Margin="0,0,0,12">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="8" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <hc:TextBox
-                                                            Grid.Column="0"
-                                                            VerticalAlignment="Center"
-                                                            hc:InfoElement.Title="{x:Static resources:Strings.K117}"
-                                                            hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="{x:Static resources:Strings.K117}"
-                                                            Style="{StaticResource TextBoxExtend}"
-                                                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button
-                                                            Grid.Column="2"
-                                                            Width="32"
-                                                            Height="32"
-                                                            Margin="0,16,0,0"
-                                                            Padding="0"
-                                                            VerticalAlignment="Center"
-                                                            AutomationProperties.Name="{Binding Name, StringFormat=删除班次 {0}}"
-                                                            Command="{Binding DataContext.RemoveShiftCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            CommandParameter="{Binding}"
-                                                            Content=""
-                                                            Style="{StaticResource IconButtonDanger}"
-                                                            Tag="{x:Static mi:MaterialIconKind.Delete}"
-                                                            ToolTip="{x:Static resources:Strings.K542}" />
-                                                    </Grid>
-
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="20" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <hc:DateTimePicker
-                                                            Grid.Column="0"
-                                                            hc:InfoElement.Title="{x:Static resources:Strings.K036}"
-                                                            hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="{x:Static resources:Strings.K543}"
-                                                            SelectedDateTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                                            Style="{StaticResource DateTimePickerExtend}"
-                                                            ToolTip="{x:Static resources:Strings.K118}" />
-                                                        <TextBlock
-                                                            Grid.Column="1"
-                                                            Margin="0,0,0,8"
-                                                            VerticalAlignment="Bottom"
-                                                            FontSize="18"
-                                                            Foreground="{StaticResource ThirdlyTextBrush}"
-                                                            Text="—" />
-                                                        <hc:DateTimePicker
-                                                            Grid.Column="2"
-                                                            hc:InfoElement.Title="{x:Static resources:Strings.K544}"
-                                                            hc:InfoElement.TitlePlacement="Top"
-                                                            AutomationProperties.Name="{x:Static resources:Strings.K545}"
-                                                            SelectedDateTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                                            Style="{StaticResource DateTimePickerExtend}"
-                                                            ToolTip="{x:Static resources:Strings.K118}" />
-                                                    </Grid>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <!--  空状态：班次列表为空时提示（防御性，VM 至少保留 1 个）  -->
-                                <controls:EmptyState
-                                    IconKind="CalendarClockOutline"
-                                    Message="{x:Static resources:Strings.K546}"
-                                    Hint="{x:Static resources:Strings.K547}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                    <controls:EmptyState.Style>
-                                        <Style TargetType="controls:EmptyState">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding DraftSettings.Shifts.Count}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </controls:EmptyState.Style>
-                                </controls:EmptyState>
-                            </Grid>
-                        </Grid>
-                    </Border>
-                </Grid>
+                        </ScrollViewer>
+                    </hc:TabItem>
+                </hc:TabControl>
             </StackPanel>
         </ScrollViewer>
 

@@ -8,6 +8,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -230,5 +231,50 @@ public class DeviceDetailViewModelTests : IDisposable
         // DeviceDetailViewModel 应查询并显示当前设备的 Running 工单
         // 具体属性名取决于实现，这里验证不抛异常且设备已选中
         Assert.True(vm.HasDevice);
+    }
+
+    [Fact]
+    public void RunningWorkOrder_SummaryQuery_DoesNotBlockUiThread_AndAppliesResult()
+    {
+        // 回归（审查修复 2026-08-13）：产量聚合曾同步执行在 UI 线程（Remote 模式最坏阻塞 30s），
+        // 现改为后台查询 + 节流 + UI 封送回写。此处用慢查询替身验证"选择设备立即返回、结果异步回写"。
+        var device = CreateDevice("d1", "设备1");
+        _deviceRepo.Devices.Add(device);
+        _deviceRepo.AddRuntime(device); // RefreshKpis 需 Runtime 非空才会走到 RefreshWorkOrder
+        _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-001",
+            ProductName = "产品A",
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        });
+
+        var slowService = NSubstitute.Substitute.For<IWorkOrderService>();
+        using var release = new System.Threading.ManualResetEventSlim();
+        slowService.GetProductionSummary(Arg.Any<WorkOrder>()).Returns(_ =>
+        {
+            release.Wait(TimeSpan.FromSeconds(10)); // 模拟慢查询
+            return new WorkOrderProductionSummary { OkCount = 42 };
+        });
+
+        var vm = new DeviceDetailViewModel(_deviceRepo, _historyService, _selection, _dialog,
+            NullLogger<DeviceDetailViewModel>.Instance, _workOrderRepo, slowService);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        _selection.SelectedDeviceId = "d1";
+        sw.Stop();
+        Assert.True(sw.ElapsedMilliseconds < 1000,
+            $"选择设备不应被工单聚合查询阻塞（实际 {sw.ElapsedMilliseconds}ms）");
+
+        release.Set();
+
+        // 异步回写：轮询等待结果（Dispatcher 不可用的测试环境下直接回写）
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (vm.CompletedQuantity != 42 && DateTime.UtcNow < deadline)
+            System.Threading.Thread.Sleep(10);
+        Assert.Equal(42, vm.CompletedQuantity);
+        Assert.Equal(0.42, vm.WorkOrderProgress, 2);
+        slowService.Received(1).GetProductionSummary(Arg.Any<WorkOrder>());
     }
 }

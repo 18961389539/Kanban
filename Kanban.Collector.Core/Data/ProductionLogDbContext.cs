@@ -25,6 +25,8 @@ public class ProductionLogDbContext : KanbanDbContextBase
             e.HasIndex(p => p.Timestamp);
             // WorkOrderId 索引：按工单统计产量时的高频查询路径
             e.HasIndex(p => p.WorkOrderId);
+            // EventId 唯一索引：恢复文件回放幂等键（同 EventId 不重复落库）
+            e.HasIndex(p => p.EventId).IsUnique();
 
             // 字符串字段显式约束：让 EnsureCreated 生成的 schema 有 NOT NULL 约束 + 长度限制，
             // 并由 EF Core Migrations 固化为数据库约束。
@@ -33,6 +35,8 @@ public class ProductionLogDbContext : KanbanDbContextBase
             e.Property(p => p.ShiftName).HasMaxLength(64);
             // WorkOrderId nullable：未关联工单时为 NULL，老数据兼容
             e.Property(p => p.WorkOrderId);
+            // EventId nullable：兼容旧数据；GUID 以 TEXT 存储
+            e.Property(p => p.EventId);
         });
     }
 }

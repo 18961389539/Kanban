@@ -27,6 +27,12 @@ public sealed class EventBroadcaster
     private long _nextAlarmSeq = 1;
     private long _nextStatusSeq = 1;
 
+    /// <summary>
+    /// 事件纪元：本进程启动时刻的 TickCount。Collector 重启后 Seq 从 1 重新计数，
+    /// 客户端据此识别服务端重启并重置补拉游标（否则旧游标会过滤掉新进程的低 Seq 事件）。
+    /// </summary>
+    public long ServerEpoch { get; } = Environment.TickCount64;
+
     public EventBroadcaster(ILogger<EventBroadcaster> logger)
     {
         _logger = logger;
@@ -41,7 +47,7 @@ public sealed class EventBroadcaster
         lock (_gate)
         {
             var seq = _nextAlarmSeq++;
-            var withSeq = evt with { Seq = seq };
+            var withSeq = evt with { Seq = seq, ServerEpoch = ServerEpoch };
             _alarmRing.AddLast((withSeq.Seq, withSeq));
             while (_alarmRing.Count > RetentionCount)
                 _alarmRing.RemoveFirst();
@@ -61,7 +67,7 @@ public sealed class EventBroadcaster
         lock (_gate)
         {
             var seq = _nextStatusSeq++;
-            var withSeq = evt with { Seq = seq };
+            var withSeq = evt with { Seq = seq, ServerEpoch = ServerEpoch };
             _statusRing.AddLast((withSeq.Seq, withSeq));
             while (_statusRing.Count > RetentionCount)
                 _statusRing.RemoveFirst();

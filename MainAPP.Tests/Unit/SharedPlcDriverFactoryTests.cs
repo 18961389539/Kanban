@@ -17,6 +17,8 @@ public sealed class SharedPlcDriverFactoryTests
     [InlineData(PlcBrand.Mitsubishi, "HslPlcDriver")]
     [InlineData(PlcBrand.Siemens, "HslSiemensPlcDriver")]
     [InlineData(PlcBrand.ModbusTcp, "HslModbusTcpDriver")]
+    [InlineData(PlcBrand.Omron, "HslOmronFinsDriver")]
+    [InlineData(PlcBrand.Keyence, "HslKeyenceMcDriver")]
     public void Create_SelectsSharedDriverByBrand(PlcBrand brand, string expectedTypeName)
     {
         var factory = new HslSharedPlcDriverFactory(NullLoggerFactory.Instance);

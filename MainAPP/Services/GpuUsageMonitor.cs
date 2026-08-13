@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Services;
 
@@ -9,11 +11,18 @@ namespace MainAPP.Services;
 public sealed class GpuUsageMonitor : IDisposable
 {
     private readonly object _syncRoot = new();
+    private readonly ILogger<GpuUsageMonitor> _logger;
     private List<PerformanceCounter> _counters = [];
     private bool _initialized;
+    private bool _failureLogged;
 
     public bool IsAvailable { get; private set; }
     public double UsagePercent { get; private set; }
+
+    public GpuUsageMonitor(ILogger<GpuUsageMonitor>? logger = null)
+    {
+        _logger = logger ?? NullLogger<GpuUsageMonitor>.Instance;
+    }
 
     public void Sample()
     {
@@ -32,8 +41,15 @@ public sealed class GpuUsageMonitor : IDisposable
                 UsagePercent = Math.Clamp(maximum, 0, 100);
                 IsAvailable = true;
             }
-            catch
+            catch (Exception ex)
             {
+                // 无 GPU/驱动缺失时每次采样都会失败并重建计数器：只记录一次 Warning 后降级，
+                // 避免每秒刷屏（排障时日志有据可查）
+                if (!_failureLogged)
+                {
+                    _failureLogged = true;
+                    _logger.LogWarning(ex, "GPU 计数器采样失败，GPU 使用率降级为不可用（无 GPU 或驱动缺失）");
+                }
                 UsagePercent = 0;
                 IsAvailable = false;
                 DisposeCounters();

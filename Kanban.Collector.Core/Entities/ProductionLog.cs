@@ -43,4 +43,12 @@ public class ProductionLog
 
     public int StatusWord { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// 稳定事件标识（GUID，写入时生成一次）。用于恢复文件回放的幂等键：
+    /// 崩溃恢复重放时按 EventId 去重，避免"回放成功但文件未删除"或
+    /// "批写失败转存后再回放"造成同一快照重复落库。
+    /// nullable：兼容旧数据（无 EventId 的行不参与去重）。
+    /// </summary>
+    public Guid? EventId { get; set; }
 }

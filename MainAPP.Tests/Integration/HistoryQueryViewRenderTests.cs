@@ -133,8 +133,11 @@ public class HistoryQueryViewRenderTests : WpfTestHost, IDisposable
             win.Close();
         });
 
-        // DeviceFilterItems 应包含全部设备 + "全部设备" 选项
-        Assert.True(vm.DeviceFilterItems.Count >= 2);
+        // 真实断言（审查修复 2026-08-13）：业务修正后筛选列表只含已配置设备、无"全部设备"占位项，
+        // 原注释"应包含全部设备 + '全部设备'选项"已过时且断言 Count>=2 过弱（两台设备无全选项也通过）
+        Assert.Equal(2, vm.DeviceFilterItems.Count);
+        Assert.Contains(vm.DeviceFilterItems, item => item.Id == "dev-001");
+        Assert.Contains(vm.DeviceFilterItems, item => item.Id == "dev-002");
     }
 
     /// <summary>不弹窗的 IDialogService 桩，避免测试中 MessageBox/Growl 阻塞。</summary>

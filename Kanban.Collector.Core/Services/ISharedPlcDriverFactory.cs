@@ -9,21 +9,16 @@ public interface ISharedPlcDriverFactory
     IPlcDriver Create(PlcConfig config);
 }
 
-public sealed class HslSharedPlcDriverFactory(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory)
+public sealed class HslSharedPlcDriverFactory(
+    Microsoft.Extensions.Logging.ILoggerFactory loggerFactory,
+    IPlcBrandRegistry? brandRegistry = null)
     : ISharedPlcDriverFactory
 {
+    private readonly IPlcBrandRegistry _brandRegistry = brandRegistry ?? PlcBrandDescriptors.CreateDefault();
+
     public IPlcDriver Create(PlcConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        return config.Brand switch
-        {
-            PlcBrand.Mitsubishi => new HslPlcDriver(
-                config.IpAddress, config.Port, config.TimeoutMs,
-                loggerFactory.CreateLogger<HslPlcDriver>()),
-            PlcBrand.Siemens => new HslSiemensPlcDriver(config, loggerFactory.CreateLogger<HslSiemensPlcDriver>()),
-            PlcBrand.ModbusTcp => new HslModbusTcpDriver(config, loggerFactory.CreateLogger<HslModbusTcpDriver>()),
-            PlcBrand.Omron => new HslOmronFinsDriver(config, loggerFactory.CreateLogger<HslOmronFinsDriver>()),
-            _ => throw new InvalidOperationException($"未支持的 PLC 品牌：{config.Brand}"),
-        };
+        return _brandRegistry.Resolve(config.Brand).CreateDriver(config, loggerFactory);
     }
 }

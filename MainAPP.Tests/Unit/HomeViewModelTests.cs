@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Kanban.Core.Data;
+using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
@@ -133,15 +134,11 @@ public class HomeViewModelTests : IDisposable
         Assert.Empty(vm.ActiveAlarms);
     }
 
-    [Fact(Skip = "Application.Current.Dispatcher 为 null（CLI 测试环境无 WPF Dispatcher），BeginInvoke 回调不执行。")]
-    public void CollectionChanged_UpdatesDeviceFilterItems()
-    {
-        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
-        Assert.Empty(vm.DeviceFilterItems);
-
-        _deviceRepository.Devices.Add(CreateDevice("d1", "设备1"));
-        Assert.Single(vm.DeviceFilterItems);
-    }
+    // 原 CollectionChanged_UpdatesDeviceFilterItems 因依赖 Application.Current.Dispatcher 永久 Skip 而删除
+    // （审查修复 2026-08-13）：HomeViewModel.OnDevicesCollectionChanged 的回调经 Dispatcher.BeginInvoke，
+    // CLI 测试环境无 Dispatcher 无法执行；同类逻辑已由
+    // HistoryQueryViewModelTests.DevicesChangedFromBackgroundThread_RefreshesFilterWithoutCrossThreadException
+    // 与 HomeViewRenderTests.PlcDisconnected_Banner_StateBinding_Works（STA fixture）覆盖。
 
     [Fact]
     public void Dispose_StopsTimer_WithoutException()
@@ -246,5 +243,80 @@ public class HomeViewModelTests : IDisposable
         _deviceRepository.Devices.Add(device);
         _deviceRepository.Runtimes.Add(new DeviceRuntime(device));
         return device;
+    }
+
+    // ═══════════════ 上班次历史回填（FindLastOtherShiftLog） ═══════════════
+
+    private static ProductionLog Log(string shift, DateTime ts, int ok, int ng = 0)
+        => new()
+        {
+            DeviceId = "d1",
+            DeviceName = "设备",
+            ShiftName = shift,
+            OkProduction = ok,
+            NgProduction = ng,
+            Timestamp = ts,
+        };
+
+    /// <summary>
+    /// 回归测试（2026-08-11 上班次空白修复）：内存无缓存时应取"时间上最近的、
+    /// 班次不同于当前班次"的最后一条快照——即使当前班次也有更新记录。
+    /// </summary>
+    [Fact]
+    public void FindLastOtherShiftLog_PicksLatestDifferentShift()
+    {
+        var baseTime = new DateTime(2026, 8, 11, 16, 0, 0);
+        var logs = new[]
+        {
+            Log("白班", baseTime.AddMinutes(-5), 999),          // 当前班次（应被排除）
+            Log("夜班", baseTime.AddHours(-1), 88),            // 更近的夜班
+            Log("白班", baseTime.AddHours(-2), 500),
+            Log("夜班", baseTime.AddHours(-3), 50),
+        };
+
+        var last = HomeViewModel.FindLastOtherShiftLog(logs, "白班");
+
+        Assert.NotNull(last);
+        Assert.Equal("夜班", last!.ShiftName);
+        Assert.Equal(88, last.OkProduction);
+    }
+
+    [Fact]
+    public void FindLastOtherShiftLog_AllSameShift_ReturnsNull()
+    {
+        var logs = new[]
+        {
+            Log("白班", new DateTime(2026, 8, 11, 10, 0, 0), 100),
+            Log("白班", new DateTime(2026, 8, 11, 9, 0, 0), 50),
+        };
+
+        Assert.Null(HomeViewModel.FindLastOtherShiftLog(logs, "白班"));
+    }
+
+    [Fact]
+    public void FindLastOtherShiftLog_NoCurrentShiftName_FallsBackToLatest()
+    {
+        var logs = new[]
+        {
+            Log("白班", new DateTime(2026, 8, 11, 10, 0, 0), 100),
+            Log("夜班", new DateTime(2026, 8, 11, 2, 0, 0), 77),
+        };
+
+        var last = HomeViewModel.FindLastOtherShiftLog(logs, null);
+
+        Assert.NotNull(last);
+        Assert.Equal("白班", last!.ShiftName);
+    }
+
+    // ═══════════════ 距目标差距（FormatQualityGap，2026-08-11） ═══════════════
+
+    [Theory]
+    [InlineData(0.956, "+0.6%")]   // 超目标
+    [InlineData(0.945, "-0.5%")]   // 还差
+    [InlineData(0.95, "+0.0%")]    // 恰好达标
+    [InlineData(1.0, "+5.0%")]
+    public void FormatQualityGap_FormatsCorrectly(double qualityRate, string expected)
+    {
+        Assert.Equal(expected, HomeViewModel.FormatQualityGap(qualityRate));
     }
 }

@@ -423,9 +423,15 @@ public class PlcConnectionManagerTests
         Assert.Empty(exceptions);
         // 最终状态应为 IsConnected=false（最后一次操作可能是 Disconnect）
         // 或 IsConnected=true（最后一次操作可能是 EnsureConnected）
-        // 关键是不抛异常，状态一致
-        // 验证 TotalDisconnectCount 不会因并发而错乱（MarkDisconnected 不在这批调用中）
-        Assert.True(mgr.TotalDisconnectCount >= 0);
+        // 关键是不抛异常，状态一致。
+        // 真实行为断言（审查修复 2026-08-13：原 TotalDisconnectCount >= 0 恒真）：
+        // MarkDisconnected 仅在"已连接→断开"下降沿累加，连发两次第二次必然 no-op。
+        var before = mgr.TotalDisconnectCount;
+        mgr.MarkDisconnected();
+        var afterOne = mgr.TotalDisconnectCount;
+        Assert.InRange(afterOne, before, before + 1);
+        mgr.MarkDisconnected();
+        Assert.Equal(afterOne, mgr.TotalDisconnectCount);
     }
 
     [Fact]

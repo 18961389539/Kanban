@@ -1,0 +1,317 @@
+@page "/monitoring"
+@implements IDisposable
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Contracts.Metrics
+
+<div class="query-page">
+    @* ──────────── 采集健康 KPI ──────────── *@
+    <section class="kpi-row">
+        <div class="kpi-card">
+            <span class="kpi-label">@L.T("Lbl_ConnStatus")</span>
+            <span class="kpi-value @(Diag is { IsConnected: true } ? "kpi-ok" : "kpi-ng")">@ConnText</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">@L.T("Mo_AcqStatus")</span>
+            <span class="kpi-value @(Diag is { IsRunning: true } ? "kpi-ok" : "kpi-ng")">@AcqText</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">@L.T("Mo_SuccessRate")</span>
+            <span class="kpi-value">@SuccessRateText</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">@L.T("Mo_ConsecutiveFail")</span>
+            <span class="kpi-value @(Diag is { ConsecutiveFailures: > 0 } ? "kpi-ng" : "")">@ConsecutiveFailText</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">@L.T("Mo_PendingHistory")</span>
+            <span class="kpi-value @(Diag is { PendingHistoryCount: > 0 } ? "kpi-ng" : "")">@PendingText</span>
+        </div>
+    </section>
+
+    @if (DiagError is not null)
+    {
+        <div class="msg-banner msg-error">@DiagError</div>
+    }
+
+    @* ──────────── 设备实时状态（快照驱动） ──────────── *@
+    <section class="card">
+        <div class="card-title">@L.T("Mo_DeviceLive") <span class="badge-soft">@L.T("Mo_Live3s")</span></div>
+        @if (Dashboard.Snapshots.Count == 0)
+        {
+            <div class="no-data">@L.T("Msg_WaitingConn")</div>
+        }
+        else
+        {
+            <div class="mon-grid">
+                @foreach (var s in Dashboard.Snapshots)
+                {
+                    <div class="mon-card">
+                        <div class="dev-head">
+                            <span class="dev-name">@s.DeviceName</span>
+                            <span class="status-badge @StateClass(s.Status)">@StateText(s.Status)</span>
+                        </div>
+                        <div class="metric-grid">
+                            <div><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
+                            <div><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction).ToString("N0")</span></div>
+                            <div><span class="kpi-label">@L.T("Lbl_Achievement")</span><span class="kpi-value">@AchievementText(s)</span></div>
+                            <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
+                        </div>
+                        <div class="ring-row">
+                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="#34D399" />
+                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
+                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                        </div>
+                        <div class="meta-line">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    @* ──────────── 采集循环诊断 ──────────── *@
+    <section class="card">
+        <div class="card-title">@L.T("Mo_CycleHealth") <span class="badge-soft">@L.T("Mo_Refresh10s")</span></div>
+        @if (Diag is null)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else
+        {
+            <div class="diag-grid">
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_CompletedCycles")</span><span class="kpi-value">@Diag.CompletedCycles.ToString("N0")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_FailedCycles")</span><span class="kpi-value">@Diag.FailedCycles.ToString("N0")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastCycleMs")</span><span class="kpi-value">@Diag.LastCycleMilliseconds ms</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_AvgCycleMs")</span><span class="kpi-value">@(Diag.AverageCycleMilliseconds.ToString("F1")) ms</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_MaxCycleMs")</span><span class="kpi-value">@Diag.MaxCycleMilliseconds ms</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_DevicesRead")</span><span class="kpi-value">@Diag.LastSuccessfulDevices / @Diag.ConfiguredDevices</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastSuccessAt")</span><span class="kpi-value">@(Diag.LastSuccessfulAt?.ToString("HH:mm:ss") ?? "—")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastFailureAt")</span><span class="kpi-value">@(Diag.LastFailureAt?.ToString("HH:mm:ss") ?? "—")</span></div>
+            </div>
+            @if (Diag.LastFailureMessage is { Length: > 0 })
+            {
+                <div class="msg-banner msg-error">@Diag.LastFailureMessage</div>
+            }
+        }
+    </section>
+
+    @* ──────────── 历史落库诊断 ──────────── *@
+    <section class="card">
+        <div class="card-title">@L.T("Mo_HistoryHealth")</div>
+        @if (Diag is null)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else
+        {
+            <div class="diag-grid">
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastFlushAt")</span><span class="kpi-value">@(Diag.LastHistoryFlushAt?.ToString("HH:mm:ss") ?? "—")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_FlushFailures")</span><span class="kpi-value">@Diag.HistoryFlushFailureCount</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_RecoveryFile")</span><span class="kpi-value">@(Diag.RecoveryFileExists ? $"{Diag.RecoveryFileBytes / 1024.0:F1} KB" : "—")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_DbSize")</span><span class="kpi-value">@($"{(Diag.ProductionDatabaseBytes + Diag.ProductionWalBytes) / 1024.0 / 1024.0:F1} MB")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_EstimatedOps")</span><span class="kpi-value">@Diag.EstimatedReadOperations.ToString("N0")</span></div>
+                <div class="diag-item"><span class="kpi-label">@L.T("Mo_Disconnects")</span><span class="kpi-value">@Diag.TotalDisconnectCount</span></div>
+            </div>
+        }
+    </section>
+
+    @* ──────────── 读取耗时分解（ECharts） ──────────── *@
+    <section class="card">
+        <div class="card-title">@L.T("Mo_TimingBreakdown")</div>
+        @if (Diag is null)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else
+        {
+            <EChart Option="@TimingOption" Height="260px" />
+        }
+    </section>
+</div>
+
+@code {
+    private System.Threading.Timer? _renderTimer;
+    private bool _disposed;
+
+    // ──────────── 采集诊断（GetDiagnosticsAsync，10s 刷新） ────────────
+    private CollectorDiagnosticsDto? Diag { get; set; }
+    private string? DiagError { get; set; }
+    private object? TimingOption { get; set; }
+
+    private string ConnText => Diag is { IsConnected: true } ? L.T("Conn_Connected") : L.T("Conn_Disconnected");
+    private string AcqText => Diag is { IsRunning: true } ? L.T("Mo_AcqRunning") : L.T("Mo_AcqStopped");
+    private string SuccessRateText => Diag is null ? "—" : (Diag.CompletedCycles + Diag.FailedCycles) > 0
+        ? $"{100.0 * Diag.SuccessfulCycles / (Diag.CompletedCycles + Diag.FailedCycles):F1}%"
+        : "—";
+    private string ConsecutiveFailText => Diag?.ConsecutiveFailures.ToString() ?? "—";
+    private string PendingText => Diag?.PendingHistoryCount.ToString("N0") ?? "—";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        _ = RefreshDiagnosticsAsync();
+        // 渲染节流：3s 统一重渲染（设备实时卡 + 诊断）
+        _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
+        // 诊断 10s 周期刷新（WPF 运行监控页同口径）
+        _ = DiagnosticsLoopAsync();
+        await Task.CompletedTask;
+    }
+
+    private async Task DiagnosticsLoopAsync()
+    {
+        while (!_disposed)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                if (_disposed) return;
+                await RefreshDiagnosticsAsync();
+            }
+            catch (Exception)
+            {
+                // 循环守卫：单次失败不终止周期刷新
+            }
+        }
+    }
+
+    private async Task RefreshDiagnosticsAsync()
+    {
+        DiagError = null;
+        try
+        {
+            var diag = await Dashboard.GetDiagnosticsAsync();
+            Diag = diag;
+            BuildTimingOption(diag);
+        }
+        catch (Exception)
+        {
+            DiagError = L.T("Hq_QueryFailed");
+        }
+    }
+
+    /// <summary>读取耗时分解柱状图：批计划/字读取/报警/缺陷/计数报警/历史写入（ms）。</summary>
+    private void BuildTimingOption(CollectorDiagnosticsDto diag)
+    {
+        var items = new (string Name, long Ms)[]
+        {
+            (L.T("Mo_TmBatchPlan"), diag.BatchPlanBuildMilliseconds),
+            (L.T("Mo_TmDword"), diag.DWordReadMilliseconds),
+            (L.T("Mo_TmAlarm"), diag.AlarmReadMilliseconds),
+            (L.T("Mo_TmDefect"), diag.DefectReadMilliseconds),
+            (L.T("Mo_TmCountAlarm"), diag.CountAlarmReadMilliseconds),
+            (L.T("Mo_TmHistory"), diag.HistoryWriteMilliseconds),
+        };
+        TimingOption = new Dictionary<string, object?>
+        {
+            ["backgroundColor"] = "transparent",
+            ["tooltip"] = new Dictionary<string, object?>
+            {
+                ["trigger"] = "axis",
+                ["backgroundColor"] = "#212834",
+                ["borderColor"] = "#2A323F",
+                ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#E5E7EB" },
+            },
+            ["grid"] = new Dictionary<string, object?> { ["left"] = 52, ["right"] = 16, ["top"] = 24, ["bottom"] = 28 },
+            ["xAxis"] = new Dictionary<string, object?>
+            {
+                ["type"] = "category",
+                ["data"] = items.Select(i => i.Name).ToList(),
+                ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0", ["hideOverlap"] = true },
+                ["axisLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#2A323F" } },
+            },
+            ["yAxis"] = new Dictionary<string, object?>
+            {
+                ["type"] = "value",
+                ["name"] = "ms",
+                ["nameTextStyle"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+                ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+                ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
+            },
+            ["series"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["type"] = "bar",
+                    ["data"] = items.Select(i => i.Ms).ToList(),
+                    ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#378ADD" },
+                    ["label"] = new Dictionary<string, object?> { ["show"] = true, ["position"] = "top", ["color"] = "#9CA3AF" },
+                },
+            },
+        };
+    }
+
+        /// <summary>
+    /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
+    /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
+    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// </summary>
+    private async Task SafeTickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(OnRenderTick);
+        }
+        catch (Exception)
+        {
+            // 组件已释放的竞态：忽略（页面生命周期正常结束）
+        }
+    }
+
+private void OnRenderTick()
+    {
+        if (_disposed) return;
+        StateHasChanged();
+    }
+
+    // ──────────── 展示辅助（快照换算口径单源 SnapshotMetrics，与 Home 一致） ────────────
+
+    private static string StateText(DeviceStatus status) => status switch
+    {
+        DeviceStatus.Running => L.T("Status_Running"),
+        DeviceStatus.Alarm => L.T("Status_Alarm"),
+        DeviceStatus.Paused => L.T("Status_Paused"),
+        _ => L.T("Status_Idle"),
+    };
+
+    private static string StateClass(DeviceStatus status) => status switch
+    {
+        DeviceStatus.Running => "run",
+        DeviceStatus.Alarm => "alarm",
+        DeviceStatus.Paused => "paused",
+        _ => "idle",
+    };
+
+    private static string Pct(double v) => $"{v:P0}";
+
+    private static string SpeedText(DeviceSnapshotDto s)
+    {
+        var speed = SnapshotMetrics.RealtimeSpeed(s.RunTime, s.TotalOkProduction, s.TotalNgProduction);
+        return speed > 0 ? speed.ToString("N0") : "—";
+    }
+
+    private static string AchievementText(DeviceSnapshotDto s)
+        => s.TargetCycle > 0 ? $"{SnapshotMetrics.AchievementRate(SnapshotMetrics.RealtimeSpeed(s.RunTime, s.TotalOkProduction, s.TotalNgProduction), s.TargetCycle):P0}" : "—";
+
+    /// <summary>数据新鲜度（距快照时间的秒数，三语）。</summary>
+    private static string FreshnessText(DateTime timestamp)
+    {
+        var secs = (int)(DateTime.Now - timestamp).TotalSeconds;
+        return secs switch
+        {
+            < 3 => L.T("Fresh_Live"),
+            < 60 => L.T("Fresh_Secs", secs),
+            _ => L.T("Fresh_Mins", secs / 60),
+        };
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _renderTimer?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

@@ -27,6 +27,8 @@ public class IPlcRuntimeProfileProviderContractTests
     [InlineData(PlcBrand.Mitsubishi)]
     [InlineData(PlcBrand.Siemens)]
     [InlineData(PlcBrand.ModbusTcp)]
+    [InlineData(PlcBrand.Omron)]
+    [InlineData(PlcBrand.Keyence)]
     public void BatchReadCapabilitiesFor_AllBrands_ReturnsValidCapabilities(PlcBrand brand)
     {
         var caps = PlcRuntimeProfileProvider.BatchReadCapabilitiesFor(brand);

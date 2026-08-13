@@ -102,23 +102,9 @@ public class HomeAndProductionLineRenderTests : WpfTestHost
     // ---------- 产线 3 种布局 ----------
 
     [Fact]
-    public void ProductionLineLargeLayout_Loads_WithoutException()
+    public void ProductionLineView_Loads_WithoutException()
     {
         var vm = BuildProductionLineViewModel();
-        RunOnSta(app => RenderInWindow(new ProductionLineLargeLayout { DataContext = vm }));
-    }
-
-    [Fact]
-    public void ProductionLineMediumLayout_Loads_WithoutException()
-    {
-        var vm = BuildProductionLineViewModel();
-        RunOnSta(app => RenderInWindow(new ProductionLineMediumLayout { DataContext = vm }));
-    }
-
-    [Fact]
-    public void ProductionLineCompactTableLayout_Loads_WithoutException()
-    {
-        var vm = BuildProductionLineViewModel();
-        RunOnSta(app => RenderInWindow(new ProductionLineCompactTableLayout { DataContext = vm }));
+        RunOnSta(app => RenderInWindow(new ProductionLineView { DataContext = vm }));
     }
 }

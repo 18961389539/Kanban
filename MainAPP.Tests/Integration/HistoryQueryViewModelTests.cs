@@ -634,28 +634,10 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Equal(lastDay, _vm.ToDate);
     }
 
-    [Fact]
-    public void QuickTimeIndex_CurrentShift_UsesAppSettingsShifts()
-    {
-        // 配置一个 8:00-20:00 白班
-        _appSettings.Shifts.Clear();
-        _appSettings.Shifts.Add(new ShiftConfig { Name = "白班", StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(20, 0, 0) });
-
-        var originalFrom = _vm.FromDate;
-        _vm.QuickTimeIndex = 5; // 本班次
-
-        var now = DateTime.Now;
-        var timeOfDay = now.TimeOfDay;
-        // 若当前在 8:00-20:00 之间，本班次应等于今天 8:00 到今天 20:00
-        if (timeOfDay >= new TimeSpan(8, 0, 0) && timeOfDay < new TimeSpan(20, 0, 0))
-        {
-            Assert.Equal(now.Date.AddHours(8), _vm.FromDate);
-            Assert.Equal(now.Date.AddHours(20), _vm.ToDate);
-        }
-        // 否则 GetShiftRange 找不到班次，保持原值
-        // （夜间 20:00-24:00 不属于任何班次，因为 0:00-8:00 也没配置）
-        // 测试不强校验此分支，避免依赖运行时间
-    }
+    // QuickTimeIndex 5/6（本/上班次）的日期联动已由 QuickTime_* 系列用例与
+    // SaveAndRestoreLastQuery_WithQuickTimeIndex_RestoresMatchingDates 覆盖；
+    // 原 QuickTimeIndex_CurrentShift_UsesAppSettingsShifts 用例在 20:00-08:00 时段测试体为空操作、
+    // 每天一半时间静默假绿（审查修复 2026-08-13 删除——VM 时钟不可注入，无法做确定性断言）。
 
     // ════════════════════ Reset 包含新筛选 ════════════════════
 
@@ -843,6 +825,50 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Equal(new DateTime(2026, 1, 15, 10, 0, 0), _vm.FromDate);
         Assert.Equal(new DateTime(2026, 1, 16, 18, 0, 0), _vm.ToDate);
         Assert.Equal("白班", _vm.SelectedShiftName);
+    }
+
+    [Fact]
+    public void SaveAndRestoreLastQuery_WithQuickTimeIndex_RestoresMatchingDates()
+    {
+        // 回归（审查修复 2026-08-13）：快捷档位 >0 时恢复必须按档位重算日期，
+        // 否则档位显示"近 7 天"而日期停留在默认值/旧值，查询窗口错位。
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.QuickTimeIndex = 3; // 近 7 天
+        _vm.SaveLastQuery();
+
+        // 改乱：回到自定义并设置无关日期
+        _vm.QuickTimeIndex = 0;
+        _vm.FromDate = new DateTime(2020, 1, 1);
+        _vm.ToDate = new DateTime(2020, 1, 2);
+
+        _vm.RestoreLastQuery();
+
+        Assert.Equal(3, _vm.QuickTimeIndex);
+        var now = DateTime.Now;
+        var expectedFrom = now.Date.AddDays(-7);
+        var expectedTo = now.Date.AddDays(1).AddSeconds(-1);
+        Assert.True(Math.Abs((_vm.FromDate - expectedFrom).TotalSeconds) < 5,
+            $"FromDate={_vm.FromDate} 应与近 7 天起点一致（{expectedFrom}）");
+        Assert.True(Math.Abs((_vm.ToDate - expectedTo).TotalSeconds) < 5,
+            $"ToDate={_vm.ToDate} 应与今天末一致（{expectedTo}）");
+    }
+
+    /// <summary>
+    /// 审查修复 2026-08-13：OnDevicesCollectionChanged 已封送 UI 线程（Dispatcher 缺失/关闭时直接执行），
+    /// 后台线程修改设备集合不应抛跨线程异常，且设备筛选列表最终刷新。
+    /// </summary>
+    [Fact]
+    public async Task DevicesChangedFromBackgroundThread_RefreshesFilterWithoutCrossThreadException()
+    {
+        var before = _vm.DeviceFilterItems.Count;
+
+        await Task.Run(() => _deviceRepo.Devices.Add(new Device { Id = "dev-bg", Name = "后台设备" }));
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (_vm.DeviceFilterItems.Count <= before && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
+        Assert.Contains(_vm.DeviceFilterItems, item => item.Id == "dev-bg");
     }
 
     [Fact]

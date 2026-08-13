@@ -1,12 +1,11 @@
-using System.Reflection;
 using System.Security.Cryptography;
 
 namespace LicenseManager.Crypto;
 
 /// <summary>
 /// HMAC-SHA256 签发与验证：对激活码负载生成截断标签，客户端用同一密钥验证。
+/// 不混淆：LicenseIssuer.* 工具直接引用此类，混淆重命名会导致外部程序集 TypeLoadException。
 /// </summary>
-[Obfuscation(Exclude = false, ApplyToMembers = true)]
 public static class HmacValidator
 {
     /// <summary>对负载计算 HMAC-SHA256，截断到 <see cref="EmbeddedKey.TagSize"/> 字节。</summary>

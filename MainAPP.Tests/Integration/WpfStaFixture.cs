@@ -86,16 +86,15 @@ public sealed class WpfStaFixture : IDisposable
 
     /// <summary>注入 App.xaml 中定义的资源字典（保证视图 FindResource 可用）。</summary>
     /// <remarks>
-    /// 混合策略：手动注入画刷和效果（与 Brushes.xaml/Effects.xaml 内容一致，但语义色
-    /// SuccessBrush/WarningBrush/DangerBrush 使用直接颜色而非 HC Dark 变体，确保
-    /// ThresholdConverters 静态构造获得测试期望的颜色值），再加载实际 XAML 样式字典
-    /// （Converters/TrackerControl/Texts/Cards/Components）以提供完整样式资源
-    /// （KpiCard、CardListItemStyle、IconButtonWarning 等）。
+    /// 审查修复 2026-08-13：此前"手动注入自造画刷替代 Brushes.xaml"——语义色 Success/Warning/Danger
+    /// 用直接颜色而非生产 HC Dark 变体，导致 ThresholdConverters 测试断言的是测试自造值，
+    /// 生产 Brushes.xaml 颜色变更完全不可检测。改为加载生产 Brushes.xaml/Effects.xaml
+    /// （顺序与 App.xaml 一致：HC SkinDefault → Theme → Brushes），测试改为与资源字典引用比较。
     /// </remarks>
     private static void InjectResources(Application app)
     {
         var rd = app.Resources;
-        // HC 主题（提供 DarkPrimaryBrush 等 HC 内置资源）
+        // HC 主题（提供 DarkPrimaryBrush 等 HC 内置资源，含 DarkSuccess/Warning/Danger 变体）
         rd.MergedDictionaries.Add(new ResourceDictionary
         {
             Source = new Uri("pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml", UriKind.Absolute)
@@ -105,50 +104,8 @@ public sealed class WpfStaFixture : IDisposable
             Source = new Uri("pack://application:,,,/HandyControl;component/Themes/Theme.xaml", UriKind.Absolute)
         });
 
-        // ── 手动注入画刷（替代 Brushes.xaml，语义色用直接颜色保证 ThresholdConverters 测试一致性） ──
-        Func<Color, SolidColorBrush> brush = c => new SolidColorBrush(c);
-        rd["BackgroundBrush"] = brush(Color.FromRgb(0x0E, 0x11, 0x16));
-        rd["RegionBrush"] = brush(Color.FromRgb(0x1A, 0x20, 0x29));
-        rd["SecondaryRegionBrush"] = brush(Color.FromRgb(0x21, 0x28, 0x34));
-        rd["DarkBrush"] = brush(Color.FromRgb(0x0F, 0x14, 0x19));
-        rd["BorderBrush"] = brush(Color.FromRgb(0x2A, 0x32, 0x3F));
-        rd["SecondaryBorderBrush"] = brush(Color.FromRgb(0x3A, 0x44, 0x53));
-        rd["DividerBrush"] = brush(Color.FromRgb(0x2A, 0x32, 0x3F));
-        rd["PrimaryTextBrush"] = brush(Color.FromRgb(0xE5, 0xE7, 0xEB));
-        rd["SecondaryTextBrush"] = brush(Color.FromRgb(0x9C, 0xA3, 0xAF));
-        rd["ThirdlyTextBrush"] = brush(Color.FromRgb(0x6B, 0x72, 0x80));
-        rd["PrimaryBrush"] = brush(Color.FromRgb(0x3B, 0x82, 0xF6));
-        rd["ChartBaseSeriesBrush"] = brush(Color.FromRgb(0x60, 0xA5, 0xFA));
-        rd["DangerBrush"] = brush(Color.FromRgb(0xF8, 0x71, 0x71));
-        rd["SuccessBrush"] = brush(Color.FromRgb(0x34, 0xD3, 0x99));
-        rd["WarningBrush"] = brush(Color.FromRgb(0xFB, 0xBF, 0x24));
-        // 状态语义色
-        rd["StatusRunBrush"] = brush(Color.FromRgb(0x34, 0xD3, 0x99));
-        rd["StatusRunSoftBrush"] = new SolidColorBrush(Color.FromRgb(0x34, 0xD3, 0x99)) { Opacity = 0.15 };
-        rd["StatusAlarmBrush"] = brush(Color.FromRgb(0xF8, 0x71, 0x71));
-        rd["StatusAlarmSoftBrush"] = new SolidColorBrush(Color.FromRgb(0xF8, 0x71, 0x71)) { Opacity = 0.15 };
-        rd["StatusPauseBrush"] = brush(Color.FromRgb(0xFB, 0xBF, 0x24));
-        rd["StatusPauseSoftBrush"] = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24)) { Opacity = 0.15 };
-        rd["StatusIdleBrush"] = brush(Color.FromRgb(0x9C, 0xA3, 0xAF));
-        rd["StatusIdleSoftBrush"] = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)) { Opacity = 0.15 };
-        // 交互态软色 / 覆盖层（与 Brushes.xaml 保持一致，供 Cards.xaml/Components.xaml 中的样式引用）
-        rd["PrimarySoftBrush"] = brush(Color.FromRgb(0x26, 0x30, 0x40));
-        rd["HoverBrush"] = brush(Color.FromRgb(0x1F, 0x27, 0x33));
-        rd["OverlayBackgroundBrush"] = new SolidColorBrush(Color.FromArgb(0x80, 0x0E, 0x11, 0x16));
-
-        // ── 手动注入效果（替代 Effects.xaml） ──
-        rd["CardDropShadow"] = new DropShadowEffect
-        {
-            BlurRadius = 14,
-            Direction = 270,
-            Opacity = 0.35,
-            ShadowDepth = 3,
-            Color = Colors.Black
-        };
-
-        // ── 加载实际 XAML 样式字典（Converters/TrackerControl/Texts/Cards/Components） ──
-        // 跳过 Brushes.xaml 和 Effects.xaml（已在上方手动注入）
-        string[] dictionaries = { "Converters", "TrackerControl", "Texts", "Cards", "Components", "ProductionLineResources", "HomeResources" };
+        // ── 加载生产资源字典（Brushes/Effects 与 App.xaml 同源，保证测试与生产同一套资源） ──
+        string[] dictionaries = { "Brushes", "Effects", "Converters", "TrackerControl", "Texts", "Cards", "Components", "ProductionLineResources", "HomeResources" };
         foreach (var name in dictionaries)
         {
             rd.MergedDictionaries.Add(new ResourceDictionary

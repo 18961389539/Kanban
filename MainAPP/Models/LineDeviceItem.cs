@@ -20,12 +20,30 @@ namespace MainAPP.Models;
 public partial class LineDeviceItem : ObservableObject, IDisposable
 {
     private bool _disposed;
+    private readonly AppSettings? _appSettings;
 
     public Device Device { get; }
     public DeviceRuntime Runtime { get; }
 
     /// <summary>实际节拍（秒/件）= 3600 / 目标节拍。目标为 0 时返回 0。</summary>
     public double ActualCycleSec => Runtime.TargetCycle > 0 ? 3600.0 / Runtime.TargetCycle : 0;
+
+    /// <summary>目标节拍（秒/件）= 3600 / 目标产能（件/小时）。目标为 0 时返回 0。</summary>
+    public double TargetCycleSec => Runtime.TargetCycle > 0 ? 3600.0 / Runtime.TargetCycle : 0;
+
+    /// <summary>
+    /// 真实节拍（秒/件）= 3600 / (目标产能 × 性能率)——性能率折损后的实际节拍。
+    /// 2026-08-11 新增：卡片节拍显示"实际/目标"对比（原 ActualCycleSec 实为理论值）。
+    /// </summary>
+    public double RealCycleSec => Runtime.TargetCycle > 0 && Runtime.PerformanceRate > 0
+        ? 3600.0 / (Runtime.TargetCycle * Runtime.PerformanceRate)
+        : 0;
+
+    /// <summary>节拍对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
+    public string CycleText => RealCycleSec > 0 ? $"{RealCycleSec:0.0}/{TargetCycleSec:0.0}s" : "—";
+
+    /// <summary>实际节拍是否慢于目标（用于节拍对比红色警示）。</summary>
+    public bool IsCycleSlow => TargetCycleSec > 0 && RealCycleSec > TargetCycleSec;
 
     /// <summary>总产量 = OK + NG。</summary>
     public int TotalOutput => Runtime.TotalOkProduction + Runtime.TotalNgProduction;
@@ -40,10 +58,40 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     /// <summary>综合停机时长（报警 + 待机）格式化。</summary>
     public string DowntimeFormatted => FormatHelper.FormatDuration(Runtime.AlarmTime + Runtime.PausedTime);
 
-    public LineDeviceItem(Device device, DeviceRuntime runtime)
+    /// <summary>
+    /// 当前班次理论产能（件）= 目标产能（件/小时）× 当前班次小时数。
+    /// 无班次配置/未配置 AppSettings 时返回 0（进度条隐藏）。
+    /// </summary>
+    public int ShiftTargetQuantity
+    {
+        get
+        {
+            var shift = FindCurrentShift();
+            if (shift == null || Runtime.TargetCycle <= 0) return 0;
+            var hours = (shift.EndTime - shift.StartTime).TotalHours;
+            if (hours <= 0) hours += 24; // 跨天班次（如 20:00-08:00）
+            return (int)Math.Round(Runtime.TargetCycle * hours);
+        }
+    }
+
+    /// <summary>班次进度 0-1（本班次 OK / 班次理论产能，Clamp）。</summary>
+    public double ShiftProgressRatio => ShiftTargetQuantity > 0
+        ? Math.Clamp((double)Runtime.TotalOkProduction / ShiftTargetQuantity, 0, 1)
+        : 0;
+
+    /// <summary>班次进度文本："1,284 / 1,600 件"；无目标时为空。</summary>
+    public string ShiftProgressText => ShiftTargetQuantity > 0
+        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0} 件"
+        : string.Empty;
+
+    /// <summary>是否有班次目标（进度条可见性）。</summary>
+    public bool HasShiftTarget => ShiftTargetQuantity > 0;
+
+    public LineDeviceItem(Device device, DeviceRuntime runtime, AppSettings? appSettings = null)
     {
         Device = device;
         Runtime = runtime;
+        _appSettings = appSettings;
         Runtime.PropertyChanged += OnRuntimePropertyChanged;
     }
 
@@ -73,6 +121,14 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             case nameof(DeviceRuntime.TargetCycle):
             case nameof(DeviceRuntime.PerformanceRate): // SyncTargetCycle 触发
                 OnPropertyChanged(nameof(ActualCycleSec));
+                OnPropertyChanged(nameof(TargetCycleSec));
+                OnPropertyChanged(nameof(RealCycleSec));
+                OnPropertyChanged(nameof(CycleText));
+                OnPropertyChanged(nameof(IsCycleSlow));
+                OnPropertyChanged(nameof(ShiftTargetQuantity)); // 目标产能变化影响班次目标
+                OnPropertyChanged(nameof(ShiftProgressRatio));
+                OnPropertyChanged(nameof(ShiftProgressText));
+                OnPropertyChanged(nameof(HasShiftTarget));
                 break;
             case nameof(DeviceRuntime.RunTime):
                 OnPropertyChanged(nameof(RunTimeFormatted));
@@ -88,8 +144,20 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):
                 OnPropertyChanged(nameof(TotalOutput));
+                // 班次进度（本班次 OK 变化；班次切换瞬间产量清零也经此路径刷新目标）
+                OnPropertyChanged(nameof(ShiftProgressRatio));
+                OnPropertyChanged(nameof(ShiftProgressText));
                 break;
         }
+    }
+
+    /// <summary>当前时刻所属班次（无配置/不属于任何班次时返回 null）。
+    /// 委托 HistoryQueryHelper 单源实现（Contains 语义一致）。</summary>
+    private ShiftConfig? FindCurrentShift()
+    {
+        var shifts = _appSettings?.Shifts;
+        if (shifts == null || shifts.Count == 0) return null;
+        return ViewModels.HistoryQueryHelper.FindCurrentShift(shifts, DateTime.Now.TimeOfDay).Shift;
     }
 
     /// <summary>当前触发的报警名称（StartTime 已置、EndTime 为空），顿号拼接；无则空字符串。</summary>
@@ -106,6 +174,30 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>当前触发报警的开始时间（HH:mm）；无触发报警返回空字符串。</summary>
+    public string AlarmStartTimeDisplay
+    {
+        get
+        {
+            var a = Device.Alarms.FirstOrDefault(x => x.StartTime != default && x.EndTime == default);
+            return a == null || a.StartTime == default ? string.Empty : a.StartTime.ToString("HH:mm");
+        }
+    }
+
+    /// <summary>
+    /// 当前触发报警的持续时长（如 "19s" / "2m 15s"）；无触发报警返回空字符串。
+    /// 2026-08-11 新增：卡片报警行显示 "⚠ 主电机过载 · 19s"。
+    /// </summary>
+    public string ActiveAlarmDurationText
+    {
+        get
+        {
+            var a = Device.Alarms.FirstOrDefault(x => x.StartTime != default && x.EndTime == default);
+            if (a == null || a.StartTime == default) return string.Empty;
+            return FormatHelper.FormatDuration((DateTime.Now - a.StartTime).TotalSeconds);
+        }
+    }
+
     /// <summary>缺陷按严重度统计摘要（如 "缺陷 严重2 一般1"）；无缺陷则空字符串。</summary>
     public string DefectSummaryText
     {
@@ -119,7 +211,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             if (counts.TryGetValue(DefectSeverity.Critical, out var c) && c > 0) parts.Add(string.Format(Strings.F058, c));
             if (counts.TryGetValue(DefectSeverity.Major, out var m) && m > 0) parts.Add(string.Format(Strings.F054, m));
             if (counts.TryGetValue(DefectSeverity.Minor, out var n) && n > 0) parts.Add(string.Format(Strings.F219, n));
-            return parts.Count == 0 ? string.Empty : "缺陷 " + string.Join(" ", parts);
+            return parts.Count == 0 ? string.Empty : Strings.M262 + string.Join(" ", parts);
         }
     }
 
@@ -127,6 +219,8 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public void RefreshTransientTexts()
     {
         OnPropertyChanged(nameof(ActiveAlarmText));
+        OnPropertyChanged(nameof(AlarmStartTimeDisplay));
+        OnPropertyChanged(nameof(ActiveAlarmDurationText));
         OnPropertyChanged(nameof(DefectSummaryText));
     }
 

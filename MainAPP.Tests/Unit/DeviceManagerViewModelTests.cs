@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -10,6 +10,7 @@ using MainAPP.Services;
 using MainAPP.Tests;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -58,10 +59,12 @@ public class DeviceManagerViewModelTests
         var configIO = new DeviceConfigIOService(repo, dialog);
         var plcCommands = new DevicePlcCommandHandler(driver, conn, dataAcq);
         var alarmCsvIO = new AlarmCsvIOService(dialog);
+        var defectCsvIO = new DefectCsvIOService(dialog);
+        var countAlarmCsvIO = new CountAlarmCsvIOService(dialog);
         var dbProvider = new DatabaseProvider(appSettings);
         var workOrderRepo = new WorkOrderRepository(dbProvider, TestMapper.Instance);
         var workOrderService = new WorkOrderService(workOrderRepo, repo, dialog, history);
-        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, workOrderRepo, workOrderService);
+        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, countAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
         return (vm, dialog, driver, tmp);
     }
 
@@ -117,6 +120,48 @@ public class DeviceManagerViewModelTests
         Assert.False(vm.IsDirty);
         Assert.Empty(dialog.Warning);
         Directory.Delete(tmp, true);
+    }
+
+    /// <summary>
+    /// 设备保存审计的 before 应为「上次已保存」快照，after 为「本次保存」快照（P1 修复回归测试）。
+    /// </summary>
+    [Fact]
+    public async Task Save_AuditBeforeReflectsLastSavedNotEditedDevices()
+    {
+        var (vm, _, _, tmp) = NewVm();
+        var auditService = NSubstitute.Substitute.For<IAuditService>();
+        AuditLog.ResetForTest();
+        AuditLog.Initialize(auditService, () => "tester");
+        try
+        {
+            vm.AddDeviceCommand.Execute(null);
+            ConfigureAddresses(vm.SelectedDevice!);
+            vm.SelectedDevice!.Name = "初始设备";
+            await vm.SaveCommand.ExecuteAsync(null); // 第一次保存：基线 = 初始设备
+
+            vm.SelectedDevice!.Name = "改名设备"; // 编辑后保存
+            await vm.SaveCommand.ExecuteAsync(null);
+
+            var calls = auditService.ReceivedCalls().ToList();
+            Assert.True(calls.Count >= 2, $"预期至少 2 条审计调用，实际 {calls.Count}");
+            var first = calls[0].GetArguments();
+            var second = calls[1].GetArguments();
+            // 第一次保存：before=新增前（空列表），after=新增后的设备（中文名在 JSON 中为 \u 转义，需解析）
+            using (var doc = System.Text.Json.JsonDocument.Parse((string)first[6]!))
+                Assert.Equal(0, doc.RootElement.GetProperty("count").GetInt32());
+            using (var doc = System.Text.Json.JsonDocument.Parse((string)first[7]!))
+                Assert.Equal("初始设备", doc.RootElement.GetProperty("devices")[0].GetProperty("name").GetString());
+            // 第二次保存：before=上次已保存快照（初始设备），after=改名后的设备
+            using (var doc = System.Text.Json.JsonDocument.Parse((string)second[6]!))
+                Assert.Equal("初始设备", doc.RootElement.GetProperty("devices")[0].GetProperty("name").GetString());
+            using (var doc = System.Text.Json.JsonDocument.Parse((string)second[7]!))
+                Assert.Equal("改名设备", doc.RootElement.GetProperty("devices")[0].GetProperty("name").GetString());
+        }
+        finally
+        {
+            AuditLog.ResetForTest();
+            Directory.Delete(tmp, true);
+        }
     }
 
     [Fact]

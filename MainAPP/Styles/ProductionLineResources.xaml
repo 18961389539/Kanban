@@ -1,30 +1,35 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:conv="clr-namespace:MainAPP.Converters">
+    xmlns:conv="clr-namespace:MainAPP.Converters"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:resources="clr-namespace:MainAPP.Resources">
 
     <!--  ============ 产线页布局共享资源 ============  -->
     <!--  放在 App.xaml 全局注册：子 UserControl（Large/Medium/CompactTable Layout）
           在 XAML 加载阶段通过 StaticResource 查找时无法跨 UserControl 边界访问父级资源，
           必须放到全局资源字典才能正确解析。  -->
 
-    <!--  状态文本/色转换器别名：StateText / StateBrush  -->
+    <!--  状态文本/色转换器别名：StateText / StateBrush / StateSoftBrush  -->
     <conv:StateToTextConverter x:Key="StateText" />
     <conv:StateToBrushConverter x:Key="StateBrush" />
+    <conv:StateToSoftBrushConverter x:Key="StateSoftBrush" />
 
-    <!--  状态色条（卡片左侧 4px 竖条，按 StatusWord 切色）。Layout 1/2 共用。  -->
+    <!--  状态色条（卡片左侧 6px 竖条，按 StatusWord 切色，圆角 3 让视觉更柔和）。Layout 1/2 共用。  -->
     <Style x:Key="StatusStripe" TargetType="Border">
-        <Setter Property="Width" Value="4" />
-        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Width" Value="6" />
+        <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Background" Value="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
     </Style>
 
-    <!--  设备卡片边框：默认中性灰边；悬浮高亮（主色 2px）；选中态（主色 2.5px）。
+    <!--  设备卡片边框：默认 3px 粗边，颜色随设备状态（运行绿/待机黄/报警红/离线灰）；
+          悬浮高亮（主色 4px 粗边 + 轻微上浮）；选中态仅淡蓝底色，不改变边框颜色/粗细。
           Layout 1/2 共用。选中态通过 EqualityConverter 比较多卡片设备 Id 与当前选中设备 Id。  -->
     <Style x:Key="DeviceCardBorder" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource RegionBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
+        <Setter Property="BorderThickness" Value="3" />
         <Setter Property="RenderTransform">
             <Setter.Value>
                 <TranslateTransform Y="0" />
@@ -34,14 +39,14 @@
             <!--  悬浮高亮（先于选中触发声明，使选中态在同时悬浮时仍优先）  -->
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="BorderThickness" Value="4" />
                 <Setter Property="RenderTransform">
                     <Setter.Value>
                         <TranslateTransform Y="-3" />
                     </Setter.Value>
                 </Setter>
             </Trigger>
-            <!--  选中态：卡片对应设备 == 当前选中设备  -->
+            <!--  选中态：仅改变底色，边框保持状态色不变  -->
             <DataTrigger Value="True">
                 <DataTrigger.Binding>
                     <MultiBinding Converter="{StaticResource EqualityConverter}">
@@ -49,11 +54,333 @@
                         <Binding Path="DataContext.SelectedDeviceId" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
                     </MultiBinding>
                 </DataTrigger.Binding>
-                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-                <Setter Property="BorderThickness" Value="2.5" />
                 <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
+
+    <!--  ============ 产线设备卡片模板：设备状态用粗边框颜色标识（无左侧色条） ============
+         边框颜色随状态：运行绿 / 待机黄 / 报警红 / 离线灰，默认 3px 粗边。
+         报警时红色脉冲动画边框叠加提示。
+         OEE 环复用 ProgressToStrokeDashArrayConverter（纯 Ellipse，无 OxyPlot，50 台设备零性能压力）。  -->
+    <DataTemplate x:Key="LineDeviceCardTemplate">
+        <DataTemplate.Resources>
+            <Style x:Key="RingCenterText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Foreground" Value="{Binding Runtime.Oee, Converter={StaticResource OeeThreshold}}" />
+            </Style>
+            <Style x:Key="MiniStatCell" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+            </Style>
+            <Style x:Key="MiniStatLabel" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="MiniStatValue" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+            </Style>
+            <!--  OEE 拆解三率条：label+值 一行 + 4px 进度条  -->
+            <Style x:Key="RateBarRow" TargetType="StackPanel">
+                <Setter Property="Margin" Value="0,8,0,0" />
+            </Style>
+            <Style x:Key="RateBar" TargetType="ProgressBar">
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Maximum" Value="1" />
+                <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+        </DataTemplate.Resources>
+
+        <Border CornerRadius="12" Padding="24,18" Height="380" Margin="8"
+                HorizontalAlignment="Stretch" VerticalAlignment="Top"
+                Style="{StaticResource DeviceCardBorder}"
+                AutomationProperties.Name="{Binding Device.Name}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Row 0：设备名（居中）+ 状态药丸（Soft 底 + 色点 + 状态字）  -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" HorizontalAlignment="Center" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource PrimaryTextBrush}"
+                               Text="{Binding Device.Name}" TextTrimming="CharacterEllipsis" />
+                    <Border Grid.Column="1" Margin="8,0,0,0" Padding="12,4" CornerRadius="999"
+                            Background="{Binding Runtime.StatusWord, Converter={StaticResource StateSoftBrush}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                                     Fill="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="Bold"
+                                       Foreground="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}"
+                                       Text="{Binding Runtime.StatusWord, Converter={StaticResource StateText}}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!--  Row 1：配方名 + 报警横幅（全宽 Soft 底，报警时显著）  -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0"
+                               FontSize="15" Foreground="{StaticResource ThirdlyTextBrush}"
+                               Text="{Binding Device.RecipeName}" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Device.RecipeName}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Border Margin="0,6,0,0" Padding="10,4" CornerRadius="8"
+                            Background="{StaticResource StatusAlarmSoftBrush}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveAlarmText}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <materialIcons:MaterialIcon Kind="AlertOutline" Width="15" Height="15" VerticalAlignment="Center"
+                                                        Foreground="{StaticResource DangerBrush}" />
+                            <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource DangerBrush}"
+                                       Text="{Binding ActiveAlarmText}" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontFamily="Consolas"
+                                       Foreground="{StaticResource DangerBrush}"
+                                       Text="{Binding ActiveAlarmDurationText}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!--  Row 2：左右分栏 —— 左产量区 / 右 OEE 拆解（A×P×Q 三率）  -->
+                <Grid Grid.Row="2" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.15*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  左栏：OK / NG / 总量 + 2×2 辅助指标  -->
+                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K588}" />
+                                    <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource SuccessBrush}"
+                                               Text="{Binding Runtime.TotalOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K589}" />
+                                    <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource DangerBrush}"
+                                               Text="{Binding Runtime.TotalNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F316}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource MiniStatCell}">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K590}" />
+                                    <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource PrimaryTextBrush}"
+                                               Text="{Binding TotalOutput, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!--  辅助指标纵向：节拍 / 运行 / 停机（合格率已上移至右栏三率条，此处删除）  -->
+                        <StackPanel Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K592}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding CycleText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCycleSlow}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K593}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding RunTimeFormatted}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K659}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding DowntimeFormatted}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!--  右栏：OEE 环 + A/P/Q 三率条  -->
+                    <Grid Grid.Column="1" Margin="14,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Width="1" Background="{StaticResource DividerBrush}" />
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                            <Grid Width="80" Height="80" HorizontalAlignment="Center">
+                                <Ellipse Stroke="{StaticResource ThirdlyTextBrush}" StrokeThickness="7" Opacity="0.15" />
+                                <Ellipse StrokeThickness="7"
+                                         Stroke="{Binding Runtime.Oee, Converter={StaticResource OeeThreshold}}"
+                                         StrokeDashArray="{Binding Runtime.Oee, Converter={StaticResource ProgressToStrokeDashArrayConverter}, ConverterParameter=229.34}"
+                                         StrokeDashOffset="0"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform Angle="-90" />
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <TextBlock FontSize="24"
+                                           controls:CountUp.Value="{Binding Runtime.Oee}"
+                                           controls:CountUp.Format="{}{0:P0}"
+                                           Style="{StaticResource RingCenterText}" />
+                            </Grid>
+                            <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0"
+                                       FontSize="14" Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{x:Static resources:Strings.K587}" />
+                            <StackPanel Style="{StaticResource RateBarRow}">
+                                <Grid>
+                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                               Foreground="{StaticResource StatusRunBrush}"
+                                               Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
+                                </Grid>
+                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
+                                             Foreground="{StaticResource StatusRunBrush}"
+                                             Value="{Binding Runtime.AvailabilityRate, Mode=OneWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource RateBarRow}">
+                                <Grid>
+                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
+                                </Grid>
+                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
+                                             Foreground="{StaticResource PrimaryBrush}"
+                                             Value="{Binding Runtime.PerformanceRate, Mode=OneWay}" />
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource RateBarRow}">
+                                <Grid>
+                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                               Foreground="{StaticResource ChartOkSeriesBrush}"
+                                               Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
+                                </Grid>
+                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
+                                             Foreground="{StaticResource ChartOkSeriesBrush}"
+                                             Value="{Binding Runtime.QualityRate, Mode=OneWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!--  Row 3：班次进度 + 详情按钮（底部）  -->
+                <Grid Grid.Row="3" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Margin="0,0,8,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasShiftTarget}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <ProgressBar Height="15" Maximum="1"
+                                     Foreground="{StaticResource PrimaryBrush}"
+                                     Background="{StaticResource RegionBrush}"
+                                     Value="{Binding ShiftProgressRatio, Mode=OneWay}" />
+                        <TextBlock HorizontalAlignment="Right" Margin="0,3,0,0"
+                                   FontSize="13" Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding ShiftProgressText}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Height="38" Padding="18,0" Margin="8,0,0,0"
+                            VerticalAlignment="Bottom" Cursor="Hand" FontSize="15"
+                            Background="{StaticResource SecondaryRegionBrush}"
+                            Foreground="{StaticResource PrimaryTextBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0.5"
+                            Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                            CommandParameter="{Binding Device.Id}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#x2192;" FontSize="18" Margin="0,0,6,0"
+                                       Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Text="{x:Static resources:Strings.K594}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <Border IsHitTestVisible="False"
+                        BorderBrush="{StaticResource DangerBrush}"
+                        BorderThickness="2"
+                        CornerRadius="12">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Opacity" Value="0" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Runtime.StatusWord}" Value="2">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    From="0.15"
+                                                    To="0.8"
+                                                    Duration="0:0:0.65"
+                                                    AutoReverse="True"
+                                                    RepeatBehavior="Forever" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+            </Grid>
+        </Border>
+    </DataTemplate>
 
 </ResourceDictionary>

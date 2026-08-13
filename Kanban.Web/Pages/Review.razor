@@ -1,0 +1,622 @@
+@page "/review"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using System.Globalization
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Web.Services
+
+<div class="query-page">
+    <div class="filter-bar">
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_Device")</span>
+            <select class="filter-input" @bind="DeviceId">
+                <option value="">@L.T("Hq_AllDevices")</option>
+                @foreach (var d in DeviceOptions)
+                {
+                    <option value="@d.Id">@d.Name</option>
+                }
+            </select>
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_QuickRange")</span>
+            <select class="filter-input" value="@QuickIndex" @onchange="OnQuickChanged">
+                <option value="-1">@L.T("Hq_Custom")</option>
+                <option value="1">@L.T("Hq_Today")</option>
+                <option value="2">@L.T("Hq_Yesterday")</option>
+                <option value="3">@L.T("Hq_Last7d")</option>
+                <option value="4">@L.T("Hq_Last30d")</option>
+            </select>
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_From")</span>
+            <input class="filter-input" type="datetime-local" value="@FromText" @onchange="OnFromChanged" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_To")</span>
+            <input class="filter-input" type="datetime-local" value="@ToText" @onchange="OnToChanged" />
+        </label>
+        <div class="filter-actions">
+            <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+            <button class="btn" disabled="@IsLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ValidationMessage))
+    {
+        <div class="msg-banner msg-error">@ValidationMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(QueryError))
+    {
+        <div class="msg-banner msg-error">@QueryError</div>
+    }
+
+    @if (IsLoading)
+    {
+        <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+    }
+    else if (QueryError is not null)
+    {
+    }
+    else if (!HasQueried)
+    {
+        <EmptyState Title="@L.T("Rv_HintTitle")" Hint="@L.T("Rv_HintBody")" Icon="📊" />
+    }
+    else if (Result is null)
+    {
+        <EmptyState Title="@L.T("Hq_NoData")" Hint="@L.T("Hq_NoDataHint")" Icon="📭" />
+    }
+    else
+    {
+        @* ──── 首屏摘要条 ──── *@
+        <div class="review-summary">
+            <span class="rs-item"><b>@L.T("Rv_Health")</b> <span class="rs-strong">@Result.HealthScore</span></span>
+            <span class="rs-item"><b>OEE</b> <span class="rs-strong">@Pct(Result.Oee)</span></span>
+            <span class="rs-item"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
+            <span class="rs-item"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span></span>
+            <span class="rs-item"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
+            <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@Result.ShiftName</span></span>
+        </div>
+
+        @* ──── 健康评分 + 工单/产品/配方 ──── *@
+        <section class="card">
+            <div class="review-grid3">
+                <div>
+                    <div class="card-title">@L.T("Rv_Health")</div>
+                    <div class="health-score">@Result.HealthScore</div>
+                    @foreach (var issue in Result.HealthIssues)
+                    {
+                        <div class="health-issue">⚠ @issue</div>
+                    }
+                    @if (Result.HealthIssues.Count == 0)
+                    {
+                        <div class="health-ok">✓ @L.T("Rv_NoIssues")</div>
+                    }
+                </div>
+                <div>
+                    <div class="card-title">@L.T("Rv_WorkOrder")</div>
+                    <div class="rv-text">@Result.WorkOrderText</div>
+                    <div class="card-title sub" style="margin-top:10px">@L.T("Rv_Product")</div>
+                    <div class="rv-text dim">@Result.ProductText</div>
+                </div>
+                <div>
+                    <div class="card-title">@L.T("Rv_Recipe")</div>
+                    <div class="rv-text">@Result.RecipeText</div>
+                    <div class="card-title sub" style="margin-top:10px">@L.T("Rv_RecipeHint")</div>
+                </div>
+            </div>
+        </section>
+
+        @* ──── 复盘结论 ──── *@
+        <section class="card">
+            <div class="card-title">@L.T("Rv_Conclusions") <span class="badge-soft">@L.T("Rv_ConclusionsHint")</span></div>
+            @foreach (var c in Result.Conclusions)
+            {
+                <div class="conclusion-row">
+                    <span class="conclusion-icon @c.Kind">@ConclusionIcon(c.Kind)</span>
+                    <span class="conclusion-text">@c.Text</span>
+                    @if (c.Met is { } met)
+                    {
+                        <span class="conclusion-badge @(met ? "met" : "notmet")">@(met ? L.T("Rv_Met") : L.T("Rv_NotMet"))</span>
+                    }
+                </div>
+            }
+        </section>
+
+        @* ──── 核心指标 ──── *@
+        <section class="kpi-row">
+            <div class="kpi-card">
+                <span class="kpi-label">@L.T("Lbl_TotalOutput")</span>
+                <span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span>
+                <span class="kpi-sub">@L.T("Lbl_Ok") @Result.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Result.TotalNg.ToString("N0")</span>
+                <span class="kpi-sub dim">@L.T("Rv_OutputAchievement") @Pct(Result.PerformanceRate)</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">@L.T("Rv_AlarmCount")</span>
+                <span class="kpi-value kpi-ng">@Result.AlarmTriggered.ToString("N0")</span>
+                <span class="kpi-sub">@L.T("Hq_AlarmRecovered") @Result.AlarmRecovered.ToString("N0") · @L.T("Hq_AlarmPending") @Result.AlarmPending.ToString("N0")</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">@L.T("Rv_LongestDowntime")</span>
+                <span class="kpi-value kpi-ng">@Result.LongestDowntimeText</span>
+                <span class="kpi-sub">@Result.LongestDowntimeDevice</span>
+                <span class="kpi-sub dim">@Result.LongestDowntimeAlarm</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">@L.T("Rv_PeakHour") ▲ / @L.T("Rv_ValleyHour") ▼</span>
+                <span class="kpi-value">@Result.PeakHour / @Result.ValleyHour</span>
+                <span class="kpi-sub kpi-ok">@L.T("Rv_PeakValleyOk", Result.PeakOk.ToString("N0"), Result.PeakShare)</span>
+                <span class="kpi-sub kpi-ng">@L.T("Rv_PeakValleyOk", Result.ValleyOk.ToString("N0"), Result.ValleyShare)</span>
+            </div>
+        </section>
+
+        @* ──── 周期对比 ──── *@
+        <section class="card">
+            <div class="card-title">@L.T("Rv_Comparison") <span class="badge-soft">@L.T("Rv_ComparisonHint")</span></div>
+            <div class="kpi-row">
+                <div class="kpi-card"><span class="kpi-label">@L.T("Rv_CurrentOutput")</span><span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span><span class="kpi-sub dim">@L.T("Rv_BaselineOutput") @Result.BaselineOutput.ToString("N0")</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@Pct(Result.QualityRate)</span><span class="kpi-sub dim">@L.T("Rv_BaselineQuality") @Pct(Result.BaselineQuality)</span></div>
+                <div class="kpi-card"><span class="kpi-label">OEE</span><span class="kpi-value">@Pct(Result.Oee)</span><span class="kpi-sub dim">@L.T("Rv_BaselineOee") @Pct(Result.BaselineOee)</span></div>
+            </div>
+        </section>
+
+        @* ──── 产量趋势 + 报警排行 ──── *@
+        <div class="chart-grid two">
+            <section class="card">
+                <div class="card-title">@L.T("Rv_Trend") <span class="badge-soft">15 min</span></div>
+                @if (Result.ChartData.Count > 0)
+                {
+                    <EChart Option="@Result.TrendOption" Height="300px" />
+                }
+                else
+                {
+                    <div class="no-data">@L.T("Val_WaitData")</div>
+                }
+            </section>
+            <section class="card">
+                <div class="card-title">@L.T("Rv_AlarmRank")</div>
+                @if (Result.Alarms.Count > 0)
+                {
+                    <EChart Option="@Result.AlarmOption" Height="300px" />
+                }
+                else
+                {
+                    <div class="no-data">@L.T("Val_NoAlarms")</div>
+                }
+            </section>
+        </div>
+
+        @* ──── 状态时间线 ──── *@
+        <section class="card">
+            <div class="card-title">@L.T("Rv_Timeline") <span class="badge-soft">@L.T("Rv_TimelineHint")</span></div>
+            @if (Result.Timeline.Count > 0)
+            {
+                <EChart Option="@Result.TimelineOption" Height="220px" />
+            }
+            else
+            {
+                <div class="no-data">@L.T("Val_WaitData")</div>
+            }
+        </section>
+
+        @* ──── 班次明细 ──── *@
+        <section class="card">
+            <div class="card-title">@L.T("Rv_ShiftDetails")</div>
+            <table class="hq-table">
+                <thead>
+                    <tr>
+                        <th>@L.T("Hq_Shift")</th>
+                        <th class="num">@L.T("Hq_OkCol")</th>
+                        <th class="num">@L.T("Hq_NgCol")</th>
+                        <th class="num">@L.T("Rv_AlarmCol")</th>
+                        <th class="num">@L.T("Hq_QualityRate")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Result.Shifts)
+                    {
+                        var total = s.OkCount + s.NgCount;
+                        <tr>
+                            <td>@s.ShiftName</td>
+                            <td class="num kpi-ok">@s.OkCount.ToString("N0")</td>
+                            <td class="num kpi-ng">@s.NgCount.ToString("N0")</td>
+                            <td class="num">@s.AlarmCount</td>
+                            <td class="num">@(total > 0 ? $"{(double)s.OkCount / total:P1}" : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
+</div>
+
+@code {
+    private const string TimeFormat = "yyyy-MM-ddTHH:mm";
+    private const int DefaultQuickIndex = 3; // 近 7 天
+
+    private List<(string Id, string Name)> DeviceOptions { get; set; } = [];
+    private List<DeviceConfigDto> _deviceConfigs = [];
+    private string DeviceId { get; set; } = "";
+    private int QuickIndex { get; set; } = DefaultQuickIndex;
+    private string FromText { get; set; } = "";
+    private string ToText { get; set; } = "";
+
+    private bool HasQueried { get; set; }
+    private bool IsLoading { get; set; }
+    private string? ValidationMessage { get; set; }
+    private string? QueryError { get; set; }
+    private ReviewResult? Result { get; set; }
+
+    private sealed class ReviewResult
+    {
+        public int TotalOk, TotalNg, AlarmTriggered, AlarmRecovered, AlarmPending;
+        public double QualityRate, PerformanceRate, Oee, PeakShare, ValleyShare;
+        public string LongestDowntimeText = "—", LongestDowntimeDevice = "", LongestDowntimeAlarm = "";
+        public string PeakHour = "—", ValleyHour = "—";
+        public int PeakOk, ValleyOk;
+        public int HealthScore;
+        public List<string> HealthIssues = [];
+        public List<ReviewAnalysis.ReviewConclusion> Conclusions = [];
+        public List<ReviewAnalysis.ReviewAlarmItem> Alarms = [];
+        public List<ReviewAnalysis.ReviewSegment> Timeline = [];
+        public List<ReviewAnalysis.ReviewDefectConcentration> Defects = [];
+        public List<ReviewAnalysis.ReviewShiftSummary> Shifts = [];
+        public int BaselineOutput;
+        public double BaselineQuality, BaselineOee;
+        public string WorkOrderText = "—", ProductText = "—", RecipeText = "—";
+        public string ShiftName = "—";
+        public List<(DateTime Time, int Ok, int Ng)> ChartData = [];
+        public object? TrendOption, AlarmOption, TimelineOption;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyQuickRange(QuickIndex);
+        await Dashboard.InitializeAsync();
+        await LoadDevicesAsync();
+    }
+
+    private async Task LoadDevicesAsync()
+    {
+        if (Dashboard.Snapshots.Count > 0)
+            DeviceOptions = Dashboard.Snapshots.Select(s => (s.DeviceId, s.DeviceName)).ToList();
+        try
+        {
+            _deviceConfigs = [.. await Dashboard.QueryDevicesAsync()];
+            if (DeviceOptions.Count == 0)
+                DeviceOptions = _deviceConfigs.Select(d => (d.Id, d.Name)).ToList();
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private void OnQuickChanged(ChangeEventArgs e)
+    {
+        QuickIndex = int.TryParse(e.Value?.ToString(), out var v) ? v : -1;
+        if (QuickIndex > 0) ApplyQuickRange(QuickIndex);
+    }
+
+    private void OnFromChanged(ChangeEventArgs e) => FromText = e.Value?.ToString() ?? "";
+    private void OnToChanged(ChangeEventArgs e) => ToText = e.Value?.ToString() ?? "";
+
+    private void ApplyQuickRange(int index)
+    {
+        var now = DateTime.Now;
+        (FromText, ToText) = index switch
+        {
+            1 => (now.Date.ToString(TimeFormat), now.ToString(TimeFormat)),
+            2 => (now.Date.AddDays(-1).ToString(TimeFormat), now.Date.AddSeconds(-1).ToString(TimeFormat)),
+            3 => (now.Date.AddDays(-7).ToString(TimeFormat), now.ToString(TimeFormat)),
+            4 => (now.Date.AddDays(-30).ToString(TimeFormat), now.ToString(TimeFormat)),
+            _ => (FromText, ToText),
+        };
+    }
+
+    private async Task SearchAsync()
+    {
+        ValidationMessage = null;
+        QueryError = null;
+        if (!DateTime.TryParseExact(FromText, TimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var from)
+            || !DateTime.TryParseExact(ToText, TimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var to)
+            || from > to)
+        {
+            ValidationMessage = L.T("Hq_ValidationRange");
+            return;
+        }
+        if (string.IsNullOrEmpty(DeviceId))
+        {
+            ValidationMessage = L.T("Hq_NeedDevice");
+            return;
+        }
+        await RunReviewAsync(from, to);
+    }
+
+    private void Reset()
+    {
+        ValidationMessage = null;
+        QueryError = null;
+        HasQueried = false;
+        Result = null;
+        QuickIndex = DefaultQuickIndex;
+        ApplyQuickRange(QuickIndex);
+    }
+
+    /// <summary>
+    /// 复盘主流程：窗口/基准/对比周期数据并行拉取 → 分析装配 → 图表构建。
+    /// 对比周期 = 窗口前同长度区间（WPF 上一周期口径）。
+    /// </summary>
+    private async Task RunReviewAsync(DateTime from, DateTime to)
+    {
+        IsLoading = true;
+        QueryError = null;
+        Result = null;
+        try
+        {
+            var deviceId = DeviceId;
+            var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId);
+            var comparisonFrom = from - (to - from);
+
+            // ── 窗口数据（并行，单源 HistoryFetch） ──
+            var windowProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from, to, deviceId, null, r => r.ProductionLogs);
+            var windowTrans = HistoryFetch.FetchAllAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, from, to, deviceId, null, r => r.StatusTransitions);
+            var windowAlarm = HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, from, to, deviceId, null, r => r.AlarmEvents);
+            var windowDefect = HistoryFetch.FetchAllAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, from, to, deviceId, null, r => r.DefectSnapshots);
+            var baselineProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from.AddDays(-1), from, deviceId, null, r => r.ProductionLogs);
+
+            // ── 对比周期数据（并行） ──
+            var compProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, comparisonFrom, from, deviceId, null, r => r.ProductionLogs);
+            var compTrans = HistoryFetch.FetchAllAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, from, deviceId, null, r => r.StatusTransitions);
+            var compAlarm = HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, comparisonFrom, from, deviceId, null, r => r.AlarmEvents);
+            var compDefect = HistoryFetch.FetchAllAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, comparisonFrom, from, deviceId, null, r => r.DefectSnapshots);
+
+            await Task.WhenAll(windowProd, windowTrans, windowAlarm, windowDefect, baselineProd, compProd, compTrans, compAlarm, compDefect);
+
+            var (prod, _) = await windowProd;
+            var (trans, _) = await windowTrans;
+            var (alarms, _) = await windowAlarm;
+            var (defects, _) = await windowDefect;
+            var (baseline, _) = await baselineProd;
+            var (compProdL, _) = await compProd;
+            var (compTransL, _) = await compTrans;
+            var (compAlarmL, _) = await compAlarm;
+            var (compDefectL, _) = await compDefect;
+
+            // 初始状态（LatestFirst）
+            var initialState = 1;
+            var lastBefore = await HistoryFetch.FetchLatestBeforeAsync<StatusTransitionRecordDto>(
+                Dashboard, HistoryQueryType.StatusTransition, from, deviceId, null, r => r.StatusTransitions);
+            if (lastBefore.Count > 0)
+                initialState = (int)lastBefore[0].CurrentState;
+
+            var r = new ReviewResult();
+
+            // ── 产量与 OEE（窗口差分 + 状态时长，口径与 OEE 查询页一致） ──
+            var (ok, ng) = ProductionAnalysis.SumWindowProduction(prod, baseline, from);
+            r.TotalOk = ok;
+            r.TotalNg = ng;
+            r.QualityRate = OeeAnalysis.CalculateQualityRate(ok, ng);
+            var effectiveTo = to > DateTime.Now ? DateTime.Now : to;
+            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState);
+            var targetCycle = device?.TargetCycle ?? 0;
+            r.PerformanceRate = OeeAnalysis.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
+            r.Oee = OeeAnalysis.CalculateOee(r.QualityRate, r.PerformanceRate,
+                OeeAnalysis.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime));
+
+            // ── 报警统计 ──
+            r.AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered);
+            r.AlarmRecovered = alarms.Count(e => e.EventType == AlarmEventType.Recovered);
+            r.AlarmPending = AlarmAnalysis.CountPending(alarms);
+            r.Alarms = ReviewAnalysis.AnalyzeAlarms(alarms, prod, effectiveTo);
+            var (longestName, longestHours) = ReviewAnalysis.FindLongestAlarm(alarms, effectiveTo);
+            // 审查修复 2026-08-13：FindLongestAlarm 返回的已是小时，此前再除 3600 导致显示恒 ≈0.0 h
+            r.LongestDowntimeText = longestHours > 0 ? $"{longestHours:F1} h" : "—";
+            if (longestHours > 0)
+            {
+                r.LongestDowntimeDevice = device?.Name ?? deviceId;
+                r.LongestDowntimeAlarm = longestName;
+            }
+
+            // ── 峰值/谷值 + 产量趋势 ──
+            var (peakHour, peakOk, valleyHour, valleyOk) = ReviewAnalysis.FindPeakValley(prod, from, to);
+            r.PeakHour = peakHour;
+            r.PeakOk = peakOk;
+            r.ValleyHour = valleyHour;
+            r.ValleyOk = valleyOk;
+            r.PeakShare = ok > 0 ? (double)peakOk / ok : 0;
+            r.ValleyShare = ok > 0 ? (double)valleyOk / ok : 0;
+            r.ChartData = ProductionAnalysis.BuildChartData(prod);
+
+            // ── 时间线 + 缺陷集中度 + 班次汇总 ──
+            r.Timeline = ReviewAnalysis.BuildTimeline(trans, alarms, prod, initialState, from, effectiveTo);
+            r.Defects = ReviewAnalysis.BuildDefectConcentrations(defects, from, to);
+            r.Shifts = ReviewAnalysis.BuildShiftSummaries(prod, alarms);
+            r.ShiftName = r.Shifts.FirstOrDefault()?.ShiftName ?? "—";
+
+            // ── 对比周期指标 ──
+            var compInitial = 1;
+            var compLastBefore = await HistoryFetch.FetchLatestBeforeAsync<StatusTransitionRecordDto>(
+                Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, deviceId, null, r2 => r2.StatusTransitions);
+            if (compLastBefore.Count > 0)
+                compInitial = (int)compLastBefore[0].CurrentState;
+            var compOkNg = ProductionAnalysis.SumWindowProduction(compProdL, [], comparisonFrom);
+            r.BaselineOutput = compOkNg.Ok + compOkNg.Ng;
+            r.BaselineQuality = OeeAnalysis.CalculateQualityRate(compOkNg.Ok, compOkNg.Ng);
+            var compDurations = StatusAnalysis.CalculateStateDurations(compTransL, comparisonFrom, from, compInitial);
+            var compPerf = OeeAnalysis.CalculatePerformanceRate(compOkNg.Ok, compOkNg.Ng, targetCycle, compDurations.RunTime);
+            r.BaselineOee = OeeAnalysis.CalculateOee(r.BaselineQuality, compPerf,
+                OeeAnalysis.CalculateAvailabilityRate(compDurations.RunTime, compDurations.AlarmTime));
+
+            // ── 健康分 + 结论 ──
+            var prevAlarmCount = compAlarmL.Count(e => e.EventType == AlarmEventType.Triggered);
+            var prevDefectCount = ReviewAnalysis.BuildDefectConcentrations(compDefectL, comparisonFrom, from).Sum(d => d.Count);
+            (r.HealthIssues, r.HealthScore) = ReviewAnalysis.CalculateHealth(
+                targetCycle, prod, alarms, r.Timeline, r.Defects, prevAlarmCount, prevDefectCount, from, to, L.T);
+            r.Conclusions = ReviewAnalysis.BuildConclusions(
+                ok, ng, r.AlarmTriggered, longestHours, r.LongestDowntimeDevice, longestName,
+                r.Shifts, r.Defects, r.QualityRate, r.Oee, L.T);
+
+            // ── 工单/产品/配方 ──
+            var wo = Dashboard.GetWorkOrder(deviceId);
+            r.WorkOrderText = wo is null ? "—" : $"{wo.OrderNo} · {L.T("Meta_PlanWo", wo.TargetQuantity.ToString("N0"))}";
+            r.ProductText = wo is null ? "—" : $"{wo.ProductCode} · {wo.ProductName}";
+            r.RecipeText = string.IsNullOrWhiteSpace(device?.RecipeName) ? "—" : $"{device.RecipeName} · {device.RecipeValue:N0}";
+
+            BuildCharts(r);
+            Result = r;
+            HasQueried = true;
+        }
+        catch (Exception)
+        {
+            QueryError = L.T("Hq_QueryFailed");
+            HasQueried = true;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void BuildCharts(ReviewResult r)
+    {
+        // 产量趋势（15 分钟堆叠柱，与历史查询页同构）
+        if (r.ChartData.Count > 0)
+        {
+            r.TrendOption = new Dictionary<string, object?>
+            {
+                ["backgroundColor"] = "transparent",
+                ["tooltip"] = Tooltip(),
+                ["legend"] = Legend([L.T("Hq_ChartOk"), L.T("Hq_ChartNg")]),
+                ["grid"] = new Dictionary<string, object?> { ["left"] = 52, ["right"] = 16, ["top"] = 36, ["bottom"] = 28 },
+                ["xAxis"] = new Dictionary<string, object?>
+                {
+                    ["type"] = "category",
+                    ["data"] = r.ChartData.Select(d => d.Time.ToString("MM-dd HH:mm")).ToList(),
+                    ["axisLabel"] = AxisLabel(),
+                    ["axisLine"] = AxisLine(),
+                },
+                ["yAxis"] = ValueAxis(),
+                ["series"] = new object[]
+                {
+                    new Dictionary<string, object?> { ["name"] = L.T("Hq_ChartOk"), ["type"] = "bar", ["stack"] = "t", ["data"] = r.ChartData.Select(d => d.Ok).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#34D399" } },
+                    new Dictionary<string, object?> { ["name"] = L.T("Hq_ChartNg"), ["type"] = "bar", ["stack"] = "t", ["data"] = r.ChartData.Select(d => d.Ng).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" } },
+                },
+            };
+        }
+
+        // 报警排行（触发次数降序）
+        if (r.Alarms.Count > 0)
+        {
+            r.AlarmOption = new Dictionary<string, object?>
+            {
+                ["backgroundColor"] = "transparent",
+                ["tooltip"] = Tooltip(),
+                ["grid"] = new Dictionary<string, object?> { ["left"] = 48, ["right"] = 16, ["top"] = 24, ["bottom"] = 28 },
+                ["xAxis"] = new Dictionary<string, object?>
+                {
+                    ["type"] = "category",
+                    ["data"] = r.Alarms.Select(a => a.AlarmName).ToList(),
+                    ["axisLabel"] = AxisLabel(),
+                    ["axisLine"] = AxisLine(),
+                },
+                ["yAxis"] = ValueAxis(),
+                ["series"] = new object[]
+                {
+                    new Dictionary<string, object?> { ["name"] = L.T("Rv_AlarmCol"), ["type"] = "bar", ["data"] = r.Alarms.Select(a => a.TriggerCount).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" } },
+                },
+            };
+        }
+
+        // 状态时间线（4 状态行：运行/报警/待机/未知；时间轴 [起点, 时长] bar）
+        if (r.Timeline.Count > 0)
+        {
+            var byState = new Dictionary<int, List<object[]>>();
+            foreach (var s in r.Timeline)
+            {
+                var startMs = new DateTimeOffset(s.Start).ToUnixTimeMilliseconds();
+                var durMs = (long)(s.End - s.Start).TotalMilliseconds;
+                if (durMs <= 0) continue;
+                if (!byState.TryGetValue(s.StatusWord, out var list))
+                    byState[s.StatusWord] = list = [];
+                list.Add([startMs, durMs]);
+            }
+            Dictionary<string, object?> MakeSeries(int state, string name, string color) => new()
+            {
+                ["name"] = name,
+                ["type"] = "bar",
+                ["data"] = byState.TryGetValue(state, out var d) ? d : [],
+                ["itemStyle"] = new Dictionary<string, object?> { ["color"] = color },
+            };
+            r.TimelineOption = new Dictionary<string, object?>
+            {
+                ["backgroundColor"] = "transparent",
+                ["tooltip"] = Tooltip(),
+                ["legend"] = Legend([L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused"), L.T("Hq_StateUnknown")]),
+                ["grid"] = new Dictionary<string, object?> { ["left"] = 16, ["right"] = 24, ["top"] = 36, ["bottom"] = 28 },
+                ["xAxis"] = new Dictionary<string, object?> { ["type"] = "time", ["axisLabel"] = AxisLabel(), ["axisLine"] = AxisLine() },
+                ["yAxis"] = new Dictionary<string, object?>
+                {
+                    ["type"] = "category",
+                    ["data"] = new[] { L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused"), L.T("Hq_StateUnknown") },
+                    ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF" },
+                    ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
+                },
+                ["series"] = new object[]
+                {
+                    MakeSeries(1, L.T("Status_Running"), "#34D399"),
+                    MakeSeries(2, L.T("Status_Alarm"), "#F87171"),
+                    MakeSeries(3, L.T("Status_Paused"), "#FBBF24"),
+                    MakeSeries(0, L.T("Hq_StateUnknown"), "#6B7280"),
+                },
+            };
+        }
+    }
+
+    // ──────────── 展示辅助 ────────────
+
+    private static string Pct(double v) => $"{v:P1}";
+
+    private static string ConclusionIcon(string kind) => kind switch
+    {
+        "quality" => "✅",
+        "oee" => "📈",
+        "downtime" => "⏱️",
+        "bestshift" => "🏆",
+        "topdefect" => "⚠️",
+        "alarmcount" => "🔔",
+        _ => "ℹ️",
+    };
+
+    private static Dictionary<string, object?> Tooltip() => new()
+    {
+        ["trigger"] = "axis",
+        ["backgroundColor"] = "#212834",
+        ["borderColor"] = "#2A323F",
+        ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#E5E7EB" },
+    };
+
+    private static Dictionary<string, object?> AxisLabel() => new()
+    {
+        ["color"] = "#8B92A0",
+        ["hideOverlap"] = true,
+    };
+
+    private static Dictionary<string, object?> AxisLine() => new()
+    {
+        ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#2A323F" },
+    };
+
+    private static Dictionary<string, object?> ValueAxis() => new()
+    {
+        ["type"] = "value",
+        ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+        ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
+    };
+
+    private static Dictionary<string, object?> Legend(string[] data) => new()
+    {
+        ["data"] = data,
+        ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF" },
+    };
+
+}

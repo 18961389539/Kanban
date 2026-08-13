@@ -21,25 +21,21 @@ public interface IPlcAddressCodecResolver
     IPlcAddressCodec Current { get; }
 }
 
-public sealed class PlcAddressCodecResolver(AppSettings settings) : IPlcAddressCodecResolver
+public sealed class PlcAddressCodecResolver : IPlcAddressCodecResolver
 {
-    private readonly IReadOnlyDictionary<PlcBrand, IPlcAddressCodec> _codecs = new Dictionary<PlcBrand, IPlcAddressCodec>
-    {
-        [PlcBrand.Mitsubishi] = new MitsubishiAddressCodec(),
-        [PlcBrand.Siemens] = new SiemensAddressCodec(),
-        [PlcBrand.Omron] = new OmronAddressCodec(),
-    };
+    private readonly AppSettings _settings;
+    private readonly IPlcBrandRegistry _brandRegistry;
 
-    public IPlcAddressCodec Current => Resolve(settings.PlcConfig.Brand);
-
-    public IPlcAddressCodec Resolve(PlcBrand brand)
+    public PlcAddressCodecResolver(AppSettings settings, IPlcBrandRegistry? brandRegistry = null)
     {
-        if (brand == PlcBrand.ModbusTcp)
-            return new ModbusTcpAddressCodec(settings.PlcConfig);
-        return _codecs.TryGetValue(brand, out var codec)
-            ? codec
-            : throw new InvalidOperationException($"未注册 PLC 品牌 {brand} 的地址编解码器。");
+        _settings = settings;
+        _brandRegistry = brandRegistry ?? PlcBrandDescriptors.CreateDefault();
     }
+
+    public IPlcAddressCodec Current => Resolve(_settings.PlcConfig.Brand);
+
+    public IPlcAddressCodec Resolve(PlcBrand brand) =>
+        _brandRegistry.Resolve(brand).CreateAddressCodec(_settings.PlcConfig);
 }
 
 internal sealed class MitsubishiAddressCodec : IPlcAddressCodec
@@ -203,8 +199,8 @@ internal sealed class ModbusTcpAddressCodec : IPlcAddressCodec
 
     public ModbusTcpAddressCodec(PlcConfig config)
     {
-        _registerFunction = config.ModbusRegisterFunction;
-        _bitFunction = config.ModbusBitFunction;
+        _registerFunction = config.ModbusTcp.RegisterFunction;
+        _bitFunction = config.ModbusTcp.BitFunction;
     }
     public PlcBrand Brand => PlcBrand.ModbusTcp;
 

@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Data;
+using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
@@ -39,6 +39,6 @@ public class ProductionLineDiagnosticTests
 
         Assert.Equal(2, lineVm.LineDevices.Count);
         Assert.Equal(2, lineVm.DeviceCount);
-        Assert.True(lineVm.IsLargeCardsLayout);
+        Assert.True(lineVm.IsDetailedLayout);
     }
 }

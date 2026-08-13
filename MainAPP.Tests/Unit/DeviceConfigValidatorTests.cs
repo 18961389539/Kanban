@@ -13,6 +13,16 @@ namespace MainAPP.Tests.Unit;
 [Trait("Requires","None")]
 public class DeviceConfigValidatorTests
 {
+    /// <summary>
+    /// 本类断言依赖中文文案（Strings.F20x）。
+    /// 并行测试（LocalizationTests）会调用 Localization.Apply(En/Ja) 污染静态 captured culture，
+    /// 导致本类拿到日文/英文消息而断言失败。每个用例实例化时锁定 zh-CN。
+    /// </summary>
+    public DeviceConfigValidatorTests()
+    {
+        Localization.Apply(AppLanguage.Zh);
+    }
+
     private static Device ValidDevice(string name, string addrPrefix)
         => new Device
         {
@@ -93,12 +103,13 @@ public class DeviceConfigValidatorTests
     }
 
     [Fact]
-    public void CollectValidationErrors_CountAlarmMaxValueNotPositive_ReportsError()
+    public void CollectValidationErrors_CountAlarmMaxValueZero_AllowedAsNoTrigger()
     {
+        // 0 值阈值 = 仅记录不触发（IsTriggered 已按 MaxValue > 0 防护），保存不应被阻断
         var device = ValidDevice("设备1", "D100");
         device.CountAlarms.Add(new CountAlarm { DeviceId = device.Id, Name = "计数报警", PlcAddress = "D9", MaxValue = 0 });
         var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
-        Assert.Contains(errors, e => e.Message.Contains("阈值上限必须 > 0") && e.TargetTabIndex == 3);
+        Assert.DoesNotContain(errors, e => e.Message.Contains("阈值上限必须 > 0"));
     }
 
     [Fact]

@@ -16,6 +16,10 @@ public partial class Device : ObservableObject
     [ObservableProperty]
     private string _name = string.Empty;
 
+    /// <summary>设备机型/类型（配方按机型归属的关联键）。空字符串 = 通用。</summary>
+    [ObservableProperty]
+    private string _machineType = string.Empty;
+
     // ──────────── PLC 地址配置 ────────────
 
     [ObservableProperty]

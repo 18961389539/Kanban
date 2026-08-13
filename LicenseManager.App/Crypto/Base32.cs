@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 
 namespace LicenseManager.Crypto;
@@ -7,8 +6,8 @@ namespace LicenseManager.Crypto;
 /// Base32 编解码（RFC 4648 字母表，不含填充符）。
 /// 用于将激活码二进制负载编码为可人工输入的字符序列。
 /// 字母表：A-Z 2-7（共 32 字符），剔除 0/1/O/I 避免视觉混淆。
+/// 不混淆：LicenseIssuer.* 工具直接引用此类，混淆重命名会导致外部程序集 TypeLoadException。
 /// </summary>
-[Obfuscation(Exclude = false, ApplyToMembers = true)]
 public static class Base32
 {
     private const string Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";

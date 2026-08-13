@@ -154,7 +154,11 @@ public sealed class ProductionDailyReportService : IDisposable
         var performance = OeeCalculator.CalculatePerformanceRate(ok, ng, device.TargetCycle, durations.RunTime);
         var availability = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
         var totalOutput = ok + ng;
-        var targetHours = _settings.Shifts.Sum(shift => shift.DurationHours);
+        // 班次锁内快照（审查修复 2026-08-13 复查）：日报生成线程与 UI 线程的 CopySettings 原地写入
+        // （锁内 Clear+Add）可能并发——此处两次枚举 Shifts，改为一次锁内快照，避免枚举中途被修改抛异常
+        List<ShiftConfig> shifts;
+        lock (_settings.ShiftsLock) shifts = _settings.Shifts.ToList();
+        var targetHours = shifts.Sum(shift => shift.DurationHours);
         var target = (int)Math.Max(0, Math.Round(device.TargetCycle * targetHours));
         var trend = BuildTrend(inWindow);
         var topAlarms = BuildTopAlarms(alarms);
@@ -185,7 +189,7 @@ public sealed class ProductionDailyReportService : IDisposable
                 AlarmDurationHours = durations.AlarmTime / 3600.0,
                 AlarmCount = alarms.Count(eventRecord => eventRecord.EventType == AlarmEventType.Triggered),
             }],
-            BuildShiftComparisons(device, _settings.Shifts, allProduction, alarms, from, to),
+            BuildShiftComparisons(device, shifts, allProduction, alarms, from, to),
             topAlarms,
             trend,
             null,
@@ -222,7 +226,7 @@ public sealed class ProductionDailyReportService : IDisposable
 
     private List<DefectParetoSummary> BuildDefects(Device device, DateTime from, DateTime to)
     {
-        var snapshots = _defectHistoryStore.Query(from.AddDays(-1), to, device.Id);
+        var snapshots = _defectHistoryStore.QueryWindowBounds(from, to, device.Id);
         var result = new List<DefectParetoSummary>();
         foreach (var group in snapshots.GroupBy(snapshot => new { snapshot.DefectId, snapshot.ShiftName }))
         {

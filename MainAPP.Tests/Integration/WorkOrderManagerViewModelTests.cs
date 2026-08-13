@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using Kanban.Core.Data;
@@ -52,7 +52,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
     private WorkOrderManagerViewModel CreateVm()
     {
         var workOrderService = new WorkOrderService(_workOrderRepo, _deviceRepo, _dialog, _historyService);
-        return new WorkOrderManagerViewModel(_workOrderRepo, workOrderService, _deviceRepo, _dialog);
+        return new WorkOrderManagerViewModel(_workOrderRepo, workOrderService, _deviceRepo, _dialog, new UserSession());
     }
 
     private static WorkOrder CreateWorkOrder(

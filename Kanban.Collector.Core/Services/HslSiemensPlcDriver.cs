@@ -9,24 +9,16 @@ internal sealed class HslSiemensPlcDriver : HslNetworkPlcDriver<SiemensS7Net>
 {
     public HslSiemensPlcDriver(PlcConfig config, ILogger<HslSiemensPlcDriver> logger) : base(config, logger) { }
 
-    public override BatchReadCapabilities BatchReadCapabilities => new(
-        true,
-        (ushort)Math.Clamp(Configuration.SiemensBatchInt32Limit, 1, 55),
-        4,
-        true,
-        2000,
-        1);
-
     protected override SiemensS7Net CreateClient(PlcConfig config)
     {
-        var plc = new SiemensS7Net(ParseModel(config.SiemensModel), config.IpAddress)
+        var plc = new SiemensS7Net(ParseModel(config.Siemens.Model), config.IpAddress)
         {
             Port = config.Port,
-            Rack = config.SiemensRack,
-            Slot = config.SiemensSlot,
+            Rack = config.Siemens.Rack,
+            Slot = config.Siemens.Slot,
             ConnectTimeOut = Math.Max(1, config.TimeoutMs),
         };
-        plc.ByteTransform.DataFormat = HslDataFormatMapper.ToHsl(config.SiemensDataFormat);
+        plc.ByteTransform.DataFormat = HslDataFormatMapper.ToHsl(config.Siemens.DataFormat);
         return plc;
     }
 
@@ -37,9 +29,14 @@ internal sealed class HslSiemensPlcDriver : HslNetworkPlcDriver<SiemensS7Net>
     protected override OperateResult<int[]> ReadInt32BatchCore(SiemensS7Net client, string address, ushort length) => client.ReadInt32(address, length);
     protected override OperateResult<bool> ReadBoolCore(SiemensS7Net client, string address) => client.ReadBool(address);
     protected override OperateResult<bool[]> ReadBoolBatchCore(SiemensS7Net client, string address, ushort length) => client.ReadBool(address, length);
+    protected override OperateResult<float> ReadFloatCore(SiemensS7Net client, string address) => client.ReadFloat(address);
+    protected override OperateResult<float[]> ReadFloatBatchCore(SiemensS7Net client, string address, ushort length) => client.ReadFloat(address, length);
+    protected override OperateResult<string> ReadStringCore(SiemensS7Net client, string address, ushort length) => client.ReadString(address, length);
     protected override OperateResult WriteUInt16Core(SiemensS7Net client, string address, ushort value) => client.Write(address, value);
     protected override OperateResult WriteInt32Core(SiemensS7Net client, string address, int value) => client.Write(address, value);
     protected override OperateResult WriteBoolCore(SiemensS7Net client, string address, bool value) => client.Write(address, value);
+    protected override OperateResult WriteFloatCore(SiemensS7Net client, string address, float value) => client.Write(address, value);
+    protected override OperateResult WriteStringCore(SiemensS7Net client, string address, string value) => client.Write(address, value);
 
     private static SiemensPLCS ParseModel(string model) => model.ToUpperInvariant() switch
     {

@@ -187,8 +187,8 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d5, "滑丝", "D243", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d5, "错位", "D244", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d5, "损伤", "D245", DefectSeverity.Minor, DefectCategory.Appearance);
-        AddSampleCountAlarm(d5, "错件次数", "D340", 0, "个", "错件计数（阈值 0 表示任意错件均需立即停机）");
-        AddSampleCountAlarm(d5, "漏装次数", "D341", 0, "个", "漏装计数（阈值 0 表示任意漏装均需立即停机）");
+        AddSampleCountAlarm(d5, "错件次数", "D340", 0, "个", "错件计数（阈值 0 表示仅记录不触发）");
+        AddSampleCountAlarm(d5, "漏装次数", "D341", 0, "个", "漏装计数（阈值 0 表示仅记录不触发）");
         AddSampleCountAlarm(d5, "滑丝次数", "D342", 5, "个", "单班次滑丝次数超 5 个需更换螺丝刀头");
         AddSampleCountAlarm(d5, "维护计数", "D343", 3000, "次", "累计运行达 3000 次需保养");
         devices.Add(d5);

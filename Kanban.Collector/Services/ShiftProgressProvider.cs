@@ -22,8 +22,10 @@ public sealed class ShiftProgressProvider
     public ShiftProgressDto GetProgress()
     {
         var now = DateTime.Now;
-        var shifts = _appSettings.Shifts;
-        if (shifts is null || shifts.Count == 0)
+        // 锁内快照枚举：与 ConfigSyncHandler 的原地写入互斥（审查修复 2026-08-13）
+        List<Kanban.Core.Models.ShiftConfig> shifts;
+        lock (_appSettings.ShiftsLock) shifts = _appSettings.Shifts.ToList();
+        if (shifts.Count == 0)
             return new ShiftProgressDto { Name = "非班次时段" };
 
         foreach (var sc in shifts)

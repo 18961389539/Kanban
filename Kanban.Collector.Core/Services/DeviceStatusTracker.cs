@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
 
@@ -38,7 +39,7 @@ internal sealed class DeviceStatusTracker
     /// 避免持锁期间阻塞 UI 线程的 RemoveDevice（低频删设备）。
     /// 写入失败时不更新 _prevStatusWords，下轮重试，保证转换记录不丢失。
     /// </remarks>
-    internal bool ReadAndUpdate(Device device, int newStatus, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger)
+    internal bool ReadAndUpdate(Device device, int newStatus, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger, Action<StatusEventDto>? onStatusEdge = null)
     {
         // 归一化：非 1/2/3 的值统一视为 0（初始/离线），避免 0→65535 等不同未知值间的
         // 虚假转换日志（如通信抖动导致的非法值）。
@@ -78,6 +79,27 @@ internal sealed class DeviceStatusTracker
         logger.LogInformation("设备 {Device} 状态转换 {Prev}→{New}",
             device.Name, GetStateText(effectivePrev), GetStateText(newStatus));
 
+        // 状态边沿事件广播（修复 Remote 事件流缺口）：成功落库后推送。
+        if (onStatusEdge != null)
+        {
+            try
+            {
+                onStatusEdge(new StatusEventDto
+                {
+                    DeviceId = device.Id,
+                    DeviceName = device.Name,
+                    PreviousState = (Kanban.Contracts.Enums.DeviceStatus)effectivePrev,
+                    CurrentState = (Kanban.Contracts.Enums.DeviceStatus)newStatus,
+                    EventTime = eventTime,
+                    ShiftName = shiftName,
+                });
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogWarning(ex, "状态转换事件广播失败（设备={Device}）", device.Name);
+            }
+        }
+
         // ── 锁内：更新 _prevStatusWords ──
         lock (_lock)
         {
@@ -99,7 +121,7 @@ internal sealed class DeviceStatusTracker
     /// DB 写入移到锁外执行：锁内读取 prev 判断是否需要写离线转换，锁外执行 LogStatusTransition，
     /// 完成后再加锁更新 _prevStatusWords。避免持锁期间阻塞 UI 线程的 RemoveDevice。
     /// </remarks>
-    internal void LogOfflineTransition(Device device, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger)
+    internal void LogOfflineTransition(Device device, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger, Action<StatusEventDto>? onStatusEdge = null)
     {
         // ── 锁内：读取 prev 判断是否需要写离线转换 ──
         bool shouldWrite;
@@ -117,6 +139,27 @@ internal sealed class DeviceStatusTracker
         {
             logger.LogWarning("设备 {Device} 离线状态转换写入失败，_prevStatusWords 暂不更新", device.Name);
             return;
+        }
+
+        // 离线状态事件广播
+        if (onStatusEdge != null)
+        {
+            try
+            {
+                onStatusEdge(new StatusEventDto
+                {
+                    DeviceId = device.Id,
+                    DeviceName = device.Name,
+                    PreviousState = (Kanban.Contracts.Enums.DeviceStatus)prev,
+                    CurrentState = Kanban.Contracts.Enums.DeviceStatus.Unknown,
+                    EventTime = System.DateTime.Now,
+                    ShiftName = shiftName,
+                });
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogWarning(ex, "离线状态事件广播失败（设备={Device}）", device.Name);
+            }
         }
 
         // ── 锁内：更新 _prevStatusWords ──

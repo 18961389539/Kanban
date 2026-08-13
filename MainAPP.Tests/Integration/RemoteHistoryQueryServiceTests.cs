@@ -14,7 +14,8 @@ namespace MainAPP.Tests.Integration;
 /// RemoteHistoryQueryService 路由测试（0% 盲区补位）：
 /// 历史查询路由代理的核心是 **IsRemote 分派**——本文件锁住 Local 分支：
 /// IsRemote=false 时委托本地 HistoryService（SQLite）返回数据，证明代理没有破坏本地查询链路。
-/// Remote 分支（走 SignalR）依赖真实 Collector，由 E2E/冒烟覆盖，此处不模拟。
+/// Remote 分支（走 SignalR）的服务端往返契约由 RemoteRuntimeSinkTests 的最小 Hub 覆盖；
+/// Remote 模式的历史查询路由（QueryRemoteList/QueryRemotePaged）本身仍是盲区（审查 2026-08-13 记录）。
 /// 数据经 EF 直接插入（不经写入队列，避免 HistoryService 批量落库时序），聚焦路由本身。
 /// </summary>
 [Trait("Category", "Integration")]

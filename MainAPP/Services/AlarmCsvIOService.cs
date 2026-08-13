@@ -51,7 +51,8 @@ public class AlarmCsvIOService(
     IPlcAddressCodecResolver? codecResolver = null,
     IPlcRuntimeProfileProvider? profileProvider = null)
 {
-    private const string CsvFileFilter = "CSV 文件|*.csv|所有文件|*.*";
+    // 文件对话框过滤器（三语资源，与 DefectCsvIOService/CountAlarmCsvIOService 同源 M310）
+    private static string CsvFileFilter => Strings.M310;
 
     private static readonly CsvConfiguration CsvConfig = new(CultureInfo.InvariantCulture)
     {
@@ -82,7 +83,7 @@ public class AlarmCsvIOService(
     public bool ExportAlarms(Device device)
     {
         var defaultFileName = $"报警_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv";
-        var path = _dialog.ShowSaveFileDialog("导出报警配置", defaultFileName, CsvFileFilter);
+        var path = _dialog.ShowSaveFileDialog(Strings.M222, defaultFileName, CsvFileFilter);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
@@ -122,7 +123,7 @@ public class AlarmCsvIOService(
     /// <returns>导入结果；用户取消返回 null。</returns>
     public AlarmCsvImportResult? ImportAlarms()
     {
-        var path = _dialog.ShowOpenFileDialog("导入报警配置", CsvFileFilter);
+        var path = _dialog.ShowOpenFileDialog(Strings.M223, CsvFileFilter);
         if (string.IsNullOrEmpty(path)) return null;
 
         return ParseAndValidate(path);
@@ -133,7 +134,7 @@ public class AlarmCsvIOService(
     /// 用户取消返回 null。供调用方拆分"选文件(UI)"与"解析校验(后台)"两阶段异步使用。
     /// </summary>
     public string? PickImportPath()
-        => _dialog.ShowOpenFileDialog("导入报警配置", CsvFileFilter);
+        => _dialog.ShowOpenFileDialog(Strings.M223, CsvFileFilter);
 
     /// <summary>
     /// 读取并校验指定路径的 CSV 文件，返回校验通过的报警列表与失败行错误。
@@ -151,7 +152,7 @@ public class AlarmCsvIOService(
 
             if (records.Count == 0)
             {
-                result.Errors.Add("CSV 文件中没有报警数据");
+                result.Errors.Add(Strings.F323);
                 return result;
             }
 

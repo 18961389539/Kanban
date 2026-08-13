@@ -1,2 +1,12 @@
-@* 最小展示端：单页看板（无需路由） *@
-<Home />
+@* 展示端多页面壳：路由分发 + 顶栏导航（看板 / 历史查询） *@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <MainLayout>
+            <div class="no-data" style="padding: 40px; text-align: center;">404</div>
+        </MainLayout>
+    </NotFound>
+</Router>

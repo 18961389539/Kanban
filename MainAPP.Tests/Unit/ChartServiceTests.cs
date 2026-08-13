@@ -347,4 +347,55 @@ public class ChartServiceTests
         Assert.NotNull(chart);
         Assert.Contains(chart!.Series, s => s is BarSeries);
     }
+
+    /// <summary>
+    /// 回归测试（2026-08-11 文案错配修复）：折线标题必须是"累计占比"，
+    /// 轴/系列不得再出现"停机时长""报警时长""速度""报警次数"等错配文案。
+    /// </summary>
+    [Fact]
+    public void BuildDefectBarChart_LineTitleIsCumulativeShare_NoWrongLabels()
+    {
+        var chart = ChartService.BuildDefectBarChart([("划痕", 12), ("毛刺", 8), ("压痕", 3)]);
+        Assert.NotNull(chart);
+
+        var line = chart!.Series.OfType<LineSeries>().Single();
+        Assert.Equal(MainAPP.Resources.Strings.M271, line.Title); // 累计占比
+
+        // 所有轴的 Title 与折线/柱的 Title 都不得含错误文案
+        var wrongTexts = new[]
+        {
+            MainAPP.Resources.Strings.M209, // 报警次数
+            MainAPP.Resources.Strings.M210, // 报警时长(分钟)
+            MainAPP.Resources.Strings.M211, // 停机时长(分钟)
+            MainAPP.Resources.Strings.M212, // 速度(件/小时)
+        };
+        var allTitles = chart.Axes.Select(a => a.Title)
+            .Concat(chart.Series.Select(s => s.Title))
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+        Assert.DoesNotContain(allTitles, t => wrongTexts.Contains(t));
+    }
+
+    /// <summary>
+    /// 回归测试（2026-08-11 柱内标签统一）：柱标签必须是柱内 + 深色文字（与复盘页帕累托一致），
+    /// 且不再叠加柱顶 TextAnnotation。
+    /// </summary>
+    [Fact]
+    public void BuildDefectBarChart_BarLabelsInside_DarkText()
+    {
+        var chart = ChartService.BuildDefectBarChart([("划痕", 12), ("毛刺", 8)]);
+        Assert.NotNull(chart);
+
+        var bar = chart!.Series.OfType<BarSeries>().Single();
+        Assert.Equal("{0:N0}", bar.LabelFormatString);
+        Assert.Equal(OxyPlot.Series.LabelPlacement.Inside, bar.LabelPlacement);
+        Assert.Equal(OxyColor.FromRgb(0x1A, 0x20, 0x29), bar.TextColor);
+
+        // 累计百分比点标签仍在（% 结尾的 TextAnnotation）
+        Assert.Contains(chart.Annotations, a => a is OxyPlot.Annotations.TextAnnotation ta
+            && ta.Text != null && ta.Text.EndsWith("%"));
+        // 柱顶数字标签（纯数字 TextAnnotation，原 AddBarLabels 方式）已移除
+        Assert.DoesNotContain(chart.Annotations, a => a is OxyPlot.Annotations.TextAnnotation ta
+            && ta.Text != null && ta.Text.All(char.IsDigit));
+    }
 }

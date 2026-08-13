@@ -11,7 +11,7 @@ public class IntegerRangeValidationRule : ValidationRule
 {
     public int MinValue { get; set; } = int.MinValue;
     public int MaxValue { get; set; } = int.MaxValue;
-    public string FieldName { get; set; } = "字段";
+    public string FieldName { get; set; } = Strings.M261;
 
     public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
     {

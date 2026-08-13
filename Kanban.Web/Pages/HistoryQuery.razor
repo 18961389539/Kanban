@@ -1,0 +1,448 @@
+@page "/history"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using System.Globalization
+@using System.Text
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Web.Services
+
+<div class="query-page">
+    <div class="tab-bar">
+        @for (var i = 0; i < TabTitles.Length; i++)
+        {
+            var idx = i;
+            <button class="tab-btn @(TabIndex == idx ? "active" : "")" @onclick="() => SwitchTab(idx)">@TabTitles[idx]</button>
+        }
+    </div>
+
+    <div class="filter-bar">
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_Device")</span>
+            <select class="filter-input" @bind="DeviceId">
+                <option value="">@L.T("Hq_AllDevices")</option>
+                @foreach (var d in DeviceOptions)
+                {
+                    <option value="@d.Id">@d.Name</option>
+                }
+            </select>
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_QuickRange")</span>
+            <select class="filter-input" value="@QuickIndex" @onchange="OnQuickChanged">
+                <option value="-1">@L.T("Hq_Custom")</option>
+                <option value="1">@L.T("Hq_Today")</option>
+                <option value="2">@L.T("Hq_Yesterday")</option>
+                <option value="3">@L.T("Hq_Last7d")</option>
+                <option value="4">@L.T("Hq_Last30d")</option>
+                <option value="5">@L.T("Hq_ThisWeek")</option>
+                <option value="6">@L.T("Hq_ThisMonth")</option>
+            </select>
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_From")</span>
+            <input class="filter-input" type="datetime-local" value="@FromText" @onchange="OnFromChanged" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_To")</span>
+            <input class="filter-input" type="datetime-local" value="@ToText" @onchange="OnToChanged" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_Shift")</span>
+            <select class="filter-input" @bind="ShiftName">
+                <option value="">@L.T("Hq_AllShifts")</option>
+                @foreach (var s in ActiveShiftOptions)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </label>
+        @if (TabIndex == 2)
+        {
+            <label class="filter-item">
+                <span class="filter-label">@L.T("Hq_AlarmName")</span>
+                <select class="filter-input" @bind="AlarmName">
+                    <option value="">@L.T("Hq_AllAlarms")</option>
+                    @foreach (var n in AlarmNameOptions)
+                    {
+                        <option value="@n">@n</option>
+                    }
+                </select>
+            </label>
+        }
+        <div class="filter-actions">
+            <button class="btn btn-primary" disabled="@IsAnyLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+            <button class="btn" disabled="@IsAnyLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
+            <button class="btn" disabled="@(!CanExportCurrentTab)" @onclick="ExportCurrentTabAsync">@L.T("Hq_Export")</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ValidationMessage))
+    {
+        <div class="msg-banner msg-error">@ValidationMessage</div>
+    }
+
+    @* ──────────── Tab 0：产量 ──────────── *@
+    @if (TabIndex == 0)
+    {
+        @if (!string.IsNullOrEmpty(ProdValidationMessage))
+        {
+            <div class="msg-banner msg-error">@ProdValidationMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(ProdQueryError))
+        {
+            <div class="msg-banner msg-error">@ProdQueryError</div>
+        }
+
+        @if (ProdIsLoading)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else if (ProdQueryError is not null)
+        {
+            // 查询失败：错误横幅已展示，不再渲染空态（与 WPF 区分"空数据"与"失败"一致）
+        }
+        else if (!ProdHasQueried)
+        {
+            <EmptyState Title="@L.T("Hq_HintTitle")" Hint="@L.T("Hq_HintBody")" Icon="🔍" />
+        }
+        else if (ProdTotalCount == 0)
+        {
+            <EmptyState Title="@L.T("Hq_NoData")" Hint="@L.T("Hq_NoDataHint")" Icon="📭" />
+        }
+        else
+        {
+            @if (ProdTruncated)
+            {
+                <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+            }
+            <section class="kpi-row">
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_TotalOk")</span><span class="kpi-value kpi-ok">@(ProdAnalysisDone ? ProdTotalOkText : "…")</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_TotalNg")</span><span class="kpi-value kpi-ng">@(ProdAnalysisDone ? ProdTotalNgText : "…")</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdQualityRateText : "…")</span></div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_ChartTitle") <span class="badge-soft">15 min</span></div>
+                @if (ProdAnalysisDone && ProdChartData.Count > 0)
+                {
+                    <EChart Option="@ProdChartOption" Height="340px" />
+                    @if (!string.IsNullOrEmpty(ProdInsight))
+                    {
+                        <div class="insight">@ProdInsight</div>
+                    }
+                }
+                else if (ProdAnalysisDone)
+                {
+                    <div class="no-data">@L.T("Val_WaitData")</div>
+                }
+                else
+                {
+                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Card_Output") <span class="badge-soft">@ProdPageSummaryText</span></div>
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_Time")</th>
+                            <th>@L.T("Hq_DeviceId")</th>
+                            <th>@L.T("Hq_DeviceName")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th class="num">@L.T("Hq_OkCol")</th>
+                            <th class="num">@L.T("Hq_NgCol")</th>
+                            <th class="num">@L.T("Hq_StatusWord")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in ProdRows)
+                        {
+                            <tr>
+                                <td>@r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td class="mono">@r.DeviceId</td>
+                                <td>@r.DeviceName</td>
+                                <td>@r.ShiftName</td>
+                                <td class="num kpi-ok">@r.OkProduction.ToString("N0")</td>
+                                <td class="num kpi-ng">@r.NgProduction.ToString("N0")</td>
+                                <td class="num mono">0x@r.StatusWord.ToString("X4")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="pager">
+                    <button class="btn" disabled="@(ProdPage <= 1 || ProdIsLoading)" @onclick="ProdPrevPageAsync">@L.T("Hq_PrevPage")</button>
+                    <span class="pager-info">@ProdPageSummaryText</span>
+                    <button class="btn" disabled="@(ProdPage >= ProdTotalPages || ProdIsLoading)" @onclick="ProdNextPageAsync">@L.T("Hq_NextPage")</button>
+                </div>
+            </section>
+        }
+    }
+
+    @* ──────────── Tab 1：状态 ──────────── *@
+    @if (TabIndex == 1)
+    {
+        @if (!string.IsNullOrEmpty(StError))
+        {
+            <div class="msg-banner msg-error">@StError</div>
+        }
+        @if (StIsLoading)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else if (StError is not null)
+        {
+            // 错误已展示
+        }
+        else if (!StHasQueried)
+        {
+            <EmptyState Title="@L.T("Hq_StatusHintTitle")" Hint="@L.T("Hq_StatusHintBody")" Icon="🔍" />
+        }
+        else if (StTotalCount == 0)
+        {
+            <EmptyState Title="@L.T("Hq_NoData")" Hint="@L.T("Hq_NoDataHint")" Icon="📭" />
+        }
+        else
+        {
+            <section class="kpi-row">
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value kpi-ok">@StRunText</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value kpi-ng">@StAlarmText</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusPause")</span><span class="kpi-value">@StPauseText</span></div>
+            </section>
+
+            <div class="chart-grid">
+                <section class="card">
+                    <div class="card-title">@L.T("Hq_StatusPie")</div>
+                    <EChart Option="@StPieOption" Height="260px" />
+                </section>
+                <section class="card">
+                    <div class="card-title">@L.T("Hq_StatusDaily")</div>
+                    <EChart Option="@StDailyOption" Height="260px" />
+                </section>
+                <section class="card">
+                    <div class="card-title">@L.T("Hq_StatusGantt")</div>
+                    <EChart Option="@StGanttOption" Height="260px" />
+                </section>
+            </div>
+
+            @if (!string.IsNullOrEmpty(StInsight))
+            {
+                <div class="insight">@StInsight</div>
+            }
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_StatusTransitions") <span class="badge-soft">@StPageSummaryText</span></div>
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_EventTime")</th>
+                            <th>@L.T("Hq_DeviceId")</th>
+                            <th>@L.T("Hq_DeviceName")</th>
+                            <th>@L.T("Hq_PrevState")</th>
+                            <th>@L.T("Hq_CurrState")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in StRows)
+                        {
+                            <tr>
+                                <td>@r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td class="mono">@r.DeviceId</td>
+                                <td>@r.DeviceName</td>
+                                <td>@StateText((int)r.PreviousState)</td>
+                                <td>@StateText((int)r.CurrentState)</td>
+                                <td>@r.ShiftName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="pager">
+                    <button class="btn" disabled="@(StPage <= 1 || StIsLoading)" @onclick="StPrevPage">@L.T("Hq_PrevPage")</button>
+                    <span class="pager-info">@StPageSummaryText</span>
+                    <button class="btn" disabled="@(StPage >= StTotalPages || StIsLoading)" @onclick="StNextPage">@L.T("Hq_NextPage")</button>
+                </div>
+            </section>
+        }
+    }
+
+    @* ──────────── Tab 2：报警 ──────────── *@
+    @if (TabIndex == 2)
+    {
+        @if (!string.IsNullOrEmpty(AlError))
+        {
+            <div class="msg-banner msg-error">@AlError</div>
+        }
+        @if (AlIsLoading)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else if (AlError is not null)
+        {
+        }
+        else if (!AlHasQueried)
+        {
+            <EmptyState Title="@L.T("Hq_AlarmHintTitle")" Hint="@L.T("Hq_AlarmHintBody")" Icon="🔍" />
+        }
+        else if (AlTotalCount == 0)
+        {
+            <EmptyState Title="@L.T("Hq_NoData")" Hint="@L.T("Hq_NoDataHint")" Icon="📭" />
+        }
+        else
+        {
+            <section class="kpi-row">
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmPending")</span><span class="kpi-value">@AlPendingText</span></div>
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_AlarmChart")</div>
+                @if (AlAnalysisDone)
+                {
+                    <EChart Option="@AlChartOption" Height="300px" />
+                    @if (!string.IsNullOrEmpty(AlInsight))
+                    {
+                        <div class="insight">@AlInsight</div>
+                    }
+                }
+                else
+                {
+                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_AlarmEvents") <span class="badge-soft">@AlPageSummaryText</span></div>
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_EventTime")</th>
+                            <th>@L.T("Hq_DeviceId")</th>
+                            <th>@L.T("Hq_DeviceName")</th>
+                            <th>@L.T("Hq_AlarmId")</th>
+                            <th>@L.T("Hq_AlarmName")</th>
+                            <th>@L.T("Hq_AlarmPlc")</th>
+                            <th>@L.T("Hq_AlarmType")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in AlRows)
+                        {
+                            <tr>
+                                <td>@r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td class="mono">@r.DeviceId</td>
+                                <td>@r.DeviceName</td>
+                                <td class="mono">@r.AlarmId</td>
+                                <td>@r.AlarmName</td>
+                                <td class="mono">@r.PlcAddress</td>
+                                <td>@AlarmTypeText(r.EventType)</td>
+                                <td>@r.ShiftName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="pager">
+                    <button class="btn" disabled="@(AlPage <= 1 || AlIsLoading)" @onclick="AlPrevPage">@L.T("Hq_PrevPage")</button>
+                    <span class="pager-info">@AlPageSummaryText</span>
+                    <button class="btn" disabled="@(AlPage >= AlTotalPages || AlIsLoading)" @onclick="AlNextPage">@L.T("Hq_NextPage")</button>
+                </div>
+            </section>
+        }
+    }
+
+    @* ──────────── Tab 3：OEE ──────────── *@
+    @if (TabIndex == 3)
+    {
+        @if (!string.IsNullOrEmpty(OeError))
+        {
+            <div class="msg-banner msg-error">@OeError</div>
+        }
+        @if (OeIsLoading)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else if (OeError is not null)
+        {
+        }
+        else if (!OeHasQueried)
+        {
+            <EmptyState Title="@L.T("Hq_OeeHintTitle")" Hint="@L.T("Hq_OeeHintBody")" Icon="🔍" />
+        }
+        else if (OeShifts.Count == 0 && OeOk == 0)
+        {
+            <EmptyState Title="@L.T("Hq_NoData")" Hint="@L.T("Hq_NoDataHint")" Icon="📭" />
+        }
+        else
+        {
+            <section class="card">
+                <div class="card-title">@L.T("Hq_OeeOverview")</div>
+                <div class="ring-row">
+                    <Ring Value="@OeValue" ValueText="@Pct(OeValue)" Label="OEE" Color="#34D399" />
+                    <Ring Value="@OeQ" ValueText="@Pct(OeQ)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                    <Ring Value="@OeP" ValueText="@Pct(OeP)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
+                    <Ring Value="@OeA" ValueText="@Pct(OeA)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                </div>
+                <div class="metric-grid">
+                    <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value">@OeOkText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value">@OeNgText</span></div>
+                    <div><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value">@OeRunText</span></div>
+                    <div><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value">@OeAlarmText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@OeTargetText</span></div>
+                    <div><span class="kpi-label">@L.T("Hq_DeviceName")</span><span class="kpi-value">@OeDeviceNameText</span></div>
+                </div>
+                @if (!string.IsNullOrEmpty(OeInsight))
+                {
+                    <div class="insight">@OeInsight</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_OeeTrend")</div>
+                @if (OeAnalysisDone && OeTrendOption is not null)
+                {
+                    <EChart Option="@OeTrendOption" Height="300px" />
+                }
+                else if (OeAnalysisDone)
+                {
+                    <div class="no-data">@L.T("Val_WaitData")</div>
+                }
+                else
+                {
+                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-title">@L.T("Hq_OeeDetails")</div>
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th>@L.T("Hq_ShiftTime")</th>
+                            <th class="num">@L.T("Lbl_Quality")</th>
+                            <th class="num">@L.T("Lbl_Performance")</th>
+                            <th class="num">@L.T("Lbl_Availability")</th>
+                            <th class="num">OEE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in OeShifts)
+                        {
+                            <tr>
+                                <td>@s.ShiftName</td>
+                                <td>@s.ShiftTime.ToString("MM-dd HH:mm")</td>
+                                <td class="num">@Pct(s.Quality)</td>
+                                <td class="num">@Pct(s.Performance)</td>
+                                <td class="num">@Pct(s.Availability)</td>
+                                <td class="num"><b>@Pct(s.Oee)</b></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+    }
+</div>

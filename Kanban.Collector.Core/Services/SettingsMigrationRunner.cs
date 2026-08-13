@@ -11,7 +11,7 @@ internal interface ISettingsMigration
 
 internal sealed class SettingsMigrationRunner
 {
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 7;
 
     private readonly IReadOnlyList<ISettingsMigration> _migrations =
     [
@@ -20,6 +20,8 @@ internal sealed class SettingsMigrationRunner
         new Version2To3Migration(),
         new Version3To4Migration(),
         new Version4To5Migration(),
+        new Version5To6Migration(),
+        new Version6To7Migration(),
     ];
 
     public string Migrate(string json)
@@ -118,5 +120,67 @@ internal sealed class SettingsMigrationRunner
             settings["PlcConfig"] = plc;
             return settings;
         }
+    }
+
+    private sealed class Version5To6Migration : ISettingsMigration
+    {
+        public int FromVersion => 5;
+
+        public JsonObject Migrate(JsonObject settings)
+        {
+            // 新增 ModbusBatchInt32Limit：将 Modbus 单次批量 Int32 上限写入配置，
+            // 消除 HslModbusTcpDriver.BatchReadCapabilities 与 PlcRuntimeProfileProvider
+            // 两处独立硬编码 62 的双源真相问题。默认 62 对应 HslCommunication
+            // ModbusTcpNet 的单次读寄存器上限 124（每 Int32 占 2 寄存器）。
+            var plc = settings["PlcConfig"] as JsonObject ?? new JsonObject();
+            plc["ModbusBatchInt32Limit"] ??= 62;
+            settings["PlcConfig"] = plc;
+            return settings;
+        }
+    }
+
+    private sealed class Version6To7Migration : ISettingsMigration
+    {
+        public int FromVersion => 6;
+
+        public JsonObject Migrate(JsonObject settings)
+        {
+            var plc = settings["PlcConfig"] as JsonObject ?? new JsonObject();
+            plc["Siemens"] = new JsonObject
+            {
+                ["Model"] = ReadOrDefault(plc, "SiemensModel", "S1200"),
+                ["Rack"] = ReadOrDefault(plc, "SiemensRack", 0),
+                ["Slot"] = ReadOrDefault(plc, "SiemensSlot", 1),
+                ["DataFormat"] = ReadOrDefault(plc, "SiemensDataFormat", (int)Kanban.Core.Models.PlcDataFormat.ABCD),
+                ["BatchInt32Limit"] = ReadOrDefault(plc, "SiemensBatchInt32Limit", 55),
+            };
+            plc["ModbusTcp"] = new JsonObject
+            {
+                ["UnitId"] = ReadOrDefault(plc, "ModbusUnitId", 1),
+                ["AddressStartWithZero"] = ReadOrDefault(plc, "ModbusAddressStartWithZero", true),
+                ["RegisterFunction"] = ReadOrDefault(plc, "ModbusRegisterFunction", 3),
+                ["BitFunction"] = ReadOrDefault(plc, "ModbusBitFunction", 1),
+                ["DataFormat"] = ReadOrDefault(plc, "ModbusDataFormat", (int)Kanban.Core.Models.PlcDataFormat.ABCD),
+                ["BatchInt32Limit"] = ReadOrDefault(plc, "ModbusBatchInt32Limit", 62),
+            };
+            plc["Omron"] = new JsonObject
+            {
+                ["ReadSplits"] = ReadOrDefault(plc, "OmronReadSplits", 500),
+            };
+
+            foreach (var property in new[]
+            {
+                "SiemensModel", "SiemensRack", "SiemensSlot", "SiemensDataFormat", "SiemensBatchInt32Limit",
+                "ModbusUnitId", "ModbusAddressStartWithZero", "ModbusRegisterFunction", "ModbusBitFunction",
+                "ModbusDataFormat", "ModbusBatchInt32Limit", "OmronReadSplits",
+            })
+                plc.Remove(property);
+
+            settings["PlcConfig"] = plc;
+            return settings;
+        }
+
+        private static JsonNode ReadOrDefault<T>(JsonObject source, string propertyName, T defaultValue) =>
+            source[propertyName]?.DeepClone() ?? JsonValue.Create(defaultValue)!;
     }
 }

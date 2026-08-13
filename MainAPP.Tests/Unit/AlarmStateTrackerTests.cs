@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
@@ -118,6 +119,69 @@ public class AlarmStateTrackerTests
         Assert.Equal(device.Id, notification.DeviceId);
         Assert.Equal(alarm.Id, notification.AlarmId);
         Assert.Equal(AlarmLevel.High, notification.Level);
+    }
+
+    [Fact]
+    public void ScanAlarms_RisingEdge_InvokesOnAlarmEdgeWithContractDto()
+    {
+        // 锁住 Remote 事件流修复：检测层成功落库后必须以 Contracts.Dtos.AlarmEventDto
+        // 形式回调（喂给 Collector 的 EventBroadcaster.PublishAlarmEvent）。
+        var tracker = new AlarmStateTracker();
+        var (device, alarm) = BuildDeviceWithAlarm();
+        var plc = new FakePlcDriver();
+        var history = new InMemoryHistoryService();
+        var devices = new ObservableCollection<Device> { device };
+        var edges = new List<AlarmEventDto>();
+
+        plc.SetBool(alarm.PlcAddress, false);
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
+
+        plc.SetBool(alarm.PlcAddress, true);
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger, onAlarmEdge: edges.Add);
+
+        var evt = Assert.Single(edges);
+        Assert.Equal(device.Id, evt.DeviceId);
+        Assert.Equal(device.Name, evt.DeviceName);
+        Assert.Equal(alarm.Id, evt.AlarmId);
+        Assert.Equal(alarm.Name, evt.AlarmName);
+        Assert.Equal(alarm.PlcAddress, evt.PlcAddress);
+        Assert.Equal(Kanban.Contracts.Enums.AlarmEventType.Triggered, evt.EventType);
+        Assert.Equal(Kanban.Contracts.Enums.AlarmLevel.High, evt.Level);
+        Assert.Equal("白班", evt.ShiftName);
+    }
+
+    [Fact]
+    public void ScanAlarms_FallingEdge_InvokesOnAlarmEdgeWithRecoveredDto()
+    {
+        var tracker = new AlarmStateTracker();
+        var (device, alarm) = BuildDeviceWithAlarm();
+        var plc = new FakePlcDriver();
+        var history = new InMemoryHistoryService();
+        var devices = new ObservableCollection<Device> { device };
+        var edges = new List<AlarmEventDto>();
+
+        plc.SetBool(alarm.PlcAddress, true);
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
+        plc.SetBool(alarm.PlcAddress, false);
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger, onAlarmEdge: edges.Add);
+
+        var evt = Assert.Single(edges);
+        Assert.Equal(Kanban.Contracts.Enums.AlarmEventType.Recovered, evt.EventType);
+    }
+
+    [Fact]
+    public void ScanAlarms_NullOnAlarmEdge_DoesNotThrow()
+    {
+        var tracker = new AlarmStateTracker();
+        var (device, alarm) = BuildDeviceWithAlarm();
+        var plc = new FakePlcDriver();
+        var history = new InMemoryHistoryService();
+        var devices = new ObservableCollection<Device> { device };
+
+        plc.SetBool(alarm.PlcAddress, true);
+        // 未传 onAlarmEdge（旧调用方）必须继续工作
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger, onAlarmEdge: null);
+        Assert.Single(history.AlarmEvents);
     }
 
     [Fact]

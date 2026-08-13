@@ -70,9 +70,14 @@ public sealed class SharedPlcDriverRouter : IPlcDriver
     public PlcOperationResult<int[]> ReadInt32Batch(string address, ushort length) => WithCurrent(driver => driver.ReadInt32Batch(address, length));
     public PlcOperationResult<bool> ReadBool(string address) => WithCurrent(driver => driver.ReadBool(address));
     public PlcOperationResult<bool[]> ReadBoolBatch(string address, ushort length) => WithCurrent(driver => driver.ReadBoolBatch(address, length));
+    public PlcOperationResult<float> ReadFloat(string address) => WithCurrent(driver => driver.ReadFloat(address));
+    public PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length) => WithCurrent(driver => driver.ReadFloatBatch(address, length));
+    public PlcOperationResult<string> ReadString(string address, ushort length) => WithCurrent(driver => driver.ReadString(address, length));
     public PlcOperationResult WriteUInt16(string address, ushort value) => WithCurrent(driver => driver.WriteUInt16(address, value));
     public PlcOperationResult WriteInt32(string address, int value) => WithCurrent(driver => driver.WriteInt32(address, value));
     public PlcOperationResult WriteBool(string address, bool value) => WithCurrent(driver => driver.WriteBool(address, value));
+    public PlcOperationResult WriteFloat(string address, float value) => WithCurrent(driver => driver.WriteFloat(address, value));
+    public PlcOperationResult WriteString(string address, string value) => WithCurrent(driver => driver.WriteString(address, value));
 
     private TResult WithCurrent<TResult>(Func<IPlcDriver, TResult> operation)
     {

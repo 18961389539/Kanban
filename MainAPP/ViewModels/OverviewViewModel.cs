@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Kanban.Client;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using Kanban.Core.Models;
@@ -81,11 +82,11 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(SelectedDeviceName))]
     private string? _selectedDeviceId;
 
-    public string SelectedDeviceName => DeviceFilterItems.FirstOrDefault(d => d.Id == SelectedDeviceId)?.Name ?? "未选择设备";
+    public string SelectedDeviceName => DeviceFilterItems.FirstOrDefault(d => d.Id == SelectedDeviceId)?.Name ?? Strings.M_NoDeviceSelected;
 
     [ObservableProperty] private int _targetOutput;
     [ObservableProperty] private double _outputAchievementRate;
-    [ObservableProperty] private string _comparisonLabel = "上一周期";
+    [ObservableProperty] private string _comparisonLabel = Strings.M058;
     [ObservableProperty] private int _baselineTotalOutput;
     [ObservableProperty] private double _baselineQualityRate;
     [ObservableProperty] private double _baselineOee;
@@ -99,15 +100,15 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _performanceLossText = string.Empty;
     [ObservableProperty] private string _qualityLossText = string.Empty;
     [ObservableProperty] private int _healthScore = 100;
-    [ObservableProperty] private string _currentWorkOrderText = "暂无运行工单";
-    [ObservableProperty] private string _currentProductText = "暂无产品信息";
-    [ObservableProperty] private string _currentRecipeText = "暂无配方信息";
-    [ObservableProperty] private ReviewStatusSegment? _selectedTimelineSegment;
+    [ObservableProperty] private string _currentWorkOrderText = Strings.M055;
+    [ObservableProperty] private string _currentProductText = Strings.M056;
+    [ObservableProperty] private string _currentRecipeText = Strings.M057;
 
     public string HealthScoreText => $"{HealthScore} / 100";
-    public string TimelineSelectionText => SelectedTimelineSegment == null
-        ? "点击任一状态时段查看对应报警与产量"
-        : $"{SelectedTimelineSegment.TimeRangeText} · {SelectedTimelineSegment.StatusText} · {SelectedTimelineSegment.OutputText}";
+
+    /// <summary>峰值/谷值时段 OK 产量占全窗口 OK 比例（方案 A，2026-08-11；纯数据文本）。</summary>
+    public string PeakShareText => TotalOk > 0 ? $"{PeakHourOk * 100.0 / TotalOk:F0}%" : "—";
+    public string ValleyShareText => TotalOk > 0 ? $"{ValleyHourOk * 100.0 / TotalOk:F0}%" : "—";
 
     private static OverviewChartPalette CreateChartPalette() => new(
         ChartPalette.Text,
@@ -130,12 +131,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     public bool HasStatusData => RunTimeHours > 0 || AlarmDurationHours > 0 || PausedTimeHours > 0;
     public bool HasAnyHistoryData => HasProductionData || HasAlarmData || HasStatusData;
     public string DataCoverageText => !HasAnyHistoryData
-        ? "当前范围未采集到历史数据"
+        ? Strings.M102
         : !HasProductionData
-            ? "当前范围仅有状态数据，暂无产量记录"
+            ? Strings.M103
             : !HasAlarmData
-                ? "当前范围有产量记录，暂无报警记录"
-                : "产量、状态和报警数据均已采集";
+                ? Strings.M104
+                : Strings.M105;
     public string TargetStatusText => string.Format(Strings.F192, QualityRate, QualityTarget, Oee, OeeTarget);
 
     private static string FormatSigned(int value) => value > 0 ? $"+{value:N0}" : value.ToString("N0");
@@ -155,17 +156,26 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<OverviewTimeRangeOption> TimeRangeOptions { get; } = new[]
     {
-        new OverviewTimeRangeOption(OverviewTimeRange.CurrentShift, "当前班次"),
-        new OverviewTimeRangeOption(OverviewTimeRange.PreviousShift, "上一班次"),
-        new OverviewTimeRangeOption(OverviewTimeRange.Today, "今日"),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hour1, "近1小时"),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hours8, "近8小时"),
-        new OverviewTimeRangeOption(OverviewTimeRange.Hours24, "近24小时"),
-        new OverviewTimeRangeOption(OverviewTimeRange.Days7, "近7天"),
+        new OverviewTimeRangeOption(OverviewTimeRange.CurrentShift, Strings.M106),
+        new OverviewTimeRangeOption(OverviewTimeRange.PreviousShift, Strings.M107),
+        new OverviewTimeRangeOption(OverviewTimeRange.Today, Strings.M108),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hour1, Strings.K042),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hours8, Strings.M109),
+        new OverviewTimeRangeOption(OverviewTimeRange.Hours24, Strings.K025),
+        new OverviewTimeRangeOption(OverviewTimeRange.Days7, Strings.K258),
     };
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _isExportingReport;
+
+    /// <summary>趋势图窗口内是否有产量数据（false 时 XAML 显示空状态提示，P2-9）。</summary>
+    [ObservableProperty] private bool _hasTrendData;
+
+    /// <summary>最近一次刷新失败的错误消息（页内提示条 + 重试按钮），null = 无错误。</summary>
+    [ObservableProperty] private string? _queryErrorMessage;
+
+    /// <summary>设备明细表展开状态（默认展开，复盘页核心信息首屏可见；可手动折叠）。</summary>
+    [ObservableProperty] private bool _isDeviceTableExpanded = true;
 
     public bool HasData => HasAnyHistoryData;
 
@@ -178,6 +188,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         NotifyDataCoverageChanged();
         ExportReportPdfCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ComparisonSummaryText));
+        OnPropertyChanged(nameof(PeakShareText));
+        OnPropertyChanged(nameof(ValleyShareText));
     }
 
     partial void OnTotalNgChanged(int value)
@@ -211,12 +223,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     }
 
     partial void OnHealthScoreChanged(int value) => OnPropertyChanged(nameof(HealthScoreText));
-    partial void OnSelectedTimelineSegmentChanged(ReviewStatusSegment? value)
-        => OnPropertyChanged(nameof(TimelineSelectionText));
-
-    [RelayCommand]
-    private void SelectTimelineSegment(ReviewStatusSegment? segment)
-        => SelectedTimelineSegment = segment;
 
     partial void OnIsLoadingChanged(bool value)
     {
@@ -247,7 +253,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     private async Task ExportReportAsync()
     {
         var path = _dialog.ShowSaveFileDialog(
-            "导出生产复盘报表",
+            Strings.M116,
             $"生产复盘_{DateTime.Now:yyyyMMddHHmm}.csv",
             "CSV 文件|*.csv|所有文件|*.*");
         if (string.IsNullOrWhiteSpace(path)) return;
@@ -272,6 +278,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         try
         {
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: "生产复盘报表");
             _dialog.NotifySuccess(string.Format(Strings.F168, Path.GetFileName(path)));
         }
         catch (Exception ex)
@@ -290,7 +297,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     {
         if (_pdfService == null) return;
         var path = _dialog.ShowSaveFileDialog(
-            "导出生产复盘 PDF",
+            Strings.M117,
             $"生产复盘_{DateTime.Now:yyyyMMddHHmm}.pdf",
             "PDF 文件|*.pdf|所有文件|*.*");
         if (string.IsNullOrWhiteSpace(path)) return;
@@ -335,6 +342,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         try
         {
             await Task.Run(() => _pdfService.Export(path, data));
+            AuditLog.Record("Export.Pdf", "Export", Path.GetFileName(path), detail: "生产复盘 PDF");
             _dialog.NotifySuccess(string.Format(Strings.F167, Path.GetFileName(path)));
         }
         catch (Exception ex)
@@ -363,11 +371,11 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     public ObservableCollection<DefectParetoSummary> DefectParetos { get; } = new();
 
     public ObservableCollection<ReviewStatusSegment> StatusTimeline { get; } = new();
-    public ObservableCollection<DefectConcentrationSummary> DefectConcentrations { get; } = new();
+    public ObservableCollection<HeatmapBucket> HeatmapBuckets { get; } = new();
     public ObservableCollection<string> HealthIssues { get; } = new();
 
     /// <summary>基于当前时间范围生成的事实型复盘结论，不包含无法追溯的主观判断。</summary>
-    public ObservableCollection<string> ReviewConclusions { get; } = new();
+    public ObservableCollection<ReviewConclusion> ReviewConclusions { get; } = new();
 
     /// <summary>OEE 瀑布图模型（P→A→Q→OEE 损失拆解）。</summary>
     public PlotModel? OeeWaterfallChart { get; private set; }
@@ -375,9 +383,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     /// <summary>时段产量热力图模型（设备 × 时段）。</summary>
     public PlotModel? ProductionHeatmapChart { get; private set; }
 
+    /// <summary>缺陷帕累托双轴图模型：柱=新增数量（左轴），折线=累计占比（右轴）。</summary>
+    public PlotModel? DefectParetoChart { get; private set; }
+
     /// <summary>
-    /// 点击设备行：设置主页聚焦设备并发起跳转请求。
-    /// MainWindowViewModel 订阅 FocusDeviceRequested 完成导航到主页。
+    /// 点击设备行：设置选中设备并发起跳转设备详情页请求。
+    /// MainWindowViewModel 订阅 FocusDeviceRequested 完成导航。
     /// </summary>
     public event Action<string>? FocusDeviceRequested;
 
@@ -511,8 +522,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         if (shift == null)
         {
             CurrentShiftName = (_appSettings.Shifts == null || _appSettings.Shifts.Count == 0)
-                ? "未配置班次"
-                : "未匹配班次";
+                ? Strings.M110
+                : Strings.M111;
             CurrentShiftDateRange = string.Empty;
             return;
         }
@@ -558,6 +569,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     {
         if (IsLoading)
         {
+            Log.Information("概览页刷新被跳过（IsLoading=true，置 pending）");
             _refreshPending = true;
             return;
         }
@@ -579,16 +591,44 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             var devices = _deviceRepository.GetDevicesSnapshot()
                 .Where(device => device.Id == SelectedDeviceId)
                 .ToList();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             await Task.Run(() => QueryData(devices, refreshVersion));
+            sw.Stop();
+            Log.Information("概览页刷新完成：设备 {Count} 台，耗时 {Elapsed}ms，SelectedDevice={DeviceId}",
+                devices.Count, sw.ElapsedMilliseconds, SelectedDeviceId);
             if (!_uiDispatcher.HasShutdownStarted)
                 await _uiDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
             LastUpdateTime = DateTime.Now;
             UpdateCurrentShiftName();
             OnPropertyChanged(nameof(HasData));
+            QueryErrorMessage = null;
+            _remoteRefreshRetries = 0;
         }
         catch (Exception ex)
         {
+            // Remote 模式启动竞态：MainAPP 启动早期（连接 Collector 之前）会自动触发一次刷新，
+            // 属瞬态而非数据故障——不弹错误打扰用户，延迟数秒后自动重试（连接通常 2~5s 内建立）。
+            // 重试上限 2 次：连接持续失败时交给外层重连循环，避免每 3s 一次的刷新风暴。
+            if (ex is InvalidOperationException ioe
+                && ioe.Message.Contains(KanbanDataClient.NotConnectedMessage, StringComparison.Ordinal)
+                && _remoteRefreshRetries < 2)
+            {
+                _remoteRefreshRetries++;
+                Log.Warning("概览页刷新早于采集服务连接（第 {Retry} 次），2s 后自动重试", _remoteRefreshRetries);
+                _ = Task.Delay(2000).ContinueWith(_ =>
+                {
+                    Log.Information("竞态重试回调触发 Shutdown={Shutdown}", _uiDispatcher.HasShutdownStarted);
+                    if (_uiDispatcher.HasShutdownStarted) return;
+                    _uiDispatcher.BeginInvoke(() =>
+                    {
+                        Log.Information("竞态重试 UI 回调执行 IsLoading={IsLoading}", IsLoading);
+                        if (!IsLoading) _ = RefreshAsync();
+                    });
+                });
+                return;
+            }
             Log.Warning(ex, "概览页数据查询失败");
+            QueryErrorMessage = ex.Message;
             _dialog.NotifyError(string.Format(Strings.F085, ex.Message));
         }
         finally
@@ -596,6 +636,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             IsLoading = false;
         }
     }
+
+    /// <summary>启动竞态自动重试计数（成功后清零；上限 2 次防刷新风暴）。</summary>
+    private int _remoteRefreshRetries;
 
     // ──────────── 数据查询 ────────────
 
@@ -632,10 +675,21 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         // ── 批量查询：一次拉全量后内存分组，消除 foreach 内的 N+1 ──
         var deviceIds = devices.Select(d => d.Id).ToList();
         // 生产快照向窗口前扩展一天，用于跨班次窗口差分基线；状态/报警仍只查询窗口内数据。
+        var swQuery = System.Diagnostics.Stopwatch.StartNew();
         var reviewData = _reviewDataService.QueryWindow(from, to, deviceIds);
+        swQuery.Stop();
         var prodLogsByDevice = reviewData.ProductionLogsByDevice;
         var statusByDevice = reviewData.StatusTransitionsByDevice;
         var alarmByDevice = reviewData.AlarmEventsByDevice;
+        Log.Information("[耗时] QueryWindow {Elapsed}ms 生产={Prod} 状态={Status} 报警={Alarm}",
+            swQuery.ElapsedMilliseconds,
+            prodLogsByDevice.Values.Sum(v => v.Count),
+            statusByDevice.Values.Sum(v => v.Count),
+            alarmByDevice.Values.Sum(v => v.Count));
+
+        var swDevice = System.Diagnostics.Stopwatch.StartNew();
+        var swDelta = System.Diagnostics.Stopwatch.StartNew();
+        var deltaMs = 0L;
 
         foreach (var device in devices)
         {
@@ -664,6 +718,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 from,
                 buckets,
                 (ProductionReviewBucketSize)bucketSize);
+            swDelta.Stop();
+            deltaMs += swDelta.ElapsedMilliseconds;
+            swDelta.Restart();
 
             // 汇总到全厂桶
             for (int i = 0; i < buckets.Length; i++)
@@ -698,8 +755,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             var pendingCount = CountPendingAlarms(alarmEvents);
             totalPendingAlarmCount += pendingCount;
 
-            // 最长停机报警（按报警 Id 分组，计算 Triggered 到 Recovered 的时长）
-            var (topAlarmName, topDurationSec) = FindLongestAlarm(alarmEvents);
+            // 最长停机报警（按报警 Id 分组，计算 Triggered 到 Recovered 的时长；未恢复按窗口终点截断）
+            var (topAlarmName, topDurationSec) = FindLongestAlarm(alarmEvents, to);
             if (topDurationSec > maxDowntimeSec)
             {
                 maxDowntimeSec = topDurationSec;
@@ -761,22 +818,25 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         var baselineTotalOutput = baselineMetrics.Ok + baselineMetrics.Ng;
 
         // ── 峰值/谷值小时 ──
-        FindPeakValleyHour(buckets, bucketOk, out var peakHour, out int peakOk, out var valleyHour, out int valleyOk);
+        FindPeakValleyHour(buckets, bucketOk, bucketSize == BucketSize.Day,
+            out var peakHour, out int peakOk, out var valleyHour, out int valleyOk);
 
         // ── 单设备复盘分析：由应用服务计算，ViewModel 只映射为绑定模型 ──
+        // 只传所选设备报警（服务层另有 DeviceId 强制过滤，双层防护防止全厂报警串入）
         prodLogsByDevice.TryGetValue(selectedDevice.Id, out var selectedProductionLogs);
         selectedProductionLogs ??= [];
         var analysis = _analysisService.Analyze(
             selectedDevice,
             statusByDevice.GetValueOrDefault(selectedDevice.Id) ?? [],
-            allAlarmEvents,
+            alarmByDevice.GetValueOrDefault(selectedDevice.Id) ?? [],
             selectedProductionLogs,
             from,
             to,
             comparisonRange.From,
             comparisonRange.To);
-        var topAlarms = analysis.Alarms.Select(item => new AlarmOverviewSummary
+        var topAlarms = analysis.Alarms.Select((item, index) => new AlarmOverviewSummary
         {
+            Rank = index + 1, // 方案 A 排名徽章（2026-08-11）
             AlarmName = item.AlarmName,
             DeviceName = item.DeviceName,
             PlcAddress = item.PlcAddress,
@@ -797,14 +857,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             OutputDelta = item.OutputDelta,
             AlarmCount = item.AlarmCount,
             HasNoOutput = item.HasNoOutput,
-        }).ToList();
-        var defectConcentrations = analysis.DefectConcentrations.Select(item => new DefectConcentrationSummary
-        {
-            DefectName = item.DefectName,
-            ShiftName = item.ShiftName,
-            TimeRangeText = item.TimeRangeText,
-            Count = item.Count,
-            Share = item.Share,
         }).ToList();
         var healthIssues = analysis.HealthIssues.ToList();
         var healthScore = analysis.HealthScore;
@@ -862,7 +914,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             // 直到 UI 执行完 ApplyKpis（可能拖慢后续班次对比/图表构建，与下方更新集合的注释一致）。
             _uiDispatcher.BeginInvoke(ApplyKpis);
 
+        swDevice.Stop();
+        Log.Information("[耗时] 设备循环 {Elapsed}ms（其中 BuildProductionDeltas 累计 {Delta}ms）",
+            swDevice.ElapsedMilliseconds, deltaMs);
+
         // ── 班次对比：复用 QueryData 已查的批量数据，按 ShiftName 内存分组，不再重新查询 ──
+        var swShifts = System.Diagnostics.Stopwatch.StartNew();
         var shiftComparisons = _metricsService.BuildShiftComparisons(
                 prodLogsByDevice,
                 statusByDevice,
@@ -883,13 +940,18 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 TargetAchievementRate = item.TargetAchievementRate,
             })
             .ToList();
+        swShifts.Stop();
+        Log.Information("[耗时] 班次对比 {Elapsed}ms", swShifts.ElapsedMilliseconds);
 
         // ── 缺陷帕累托：从内存 Defect.Count 快照聚合（无历史持久化，取当前累计值） ──
+        var swDefect = System.Diagnostics.Stopwatch.StartNew();
         var defectParetos = BuildDefectParetos(devices[0], from, to);
         var reviewConclusions = BuildReviewConclusions(
             totalOk, totalNg, totalAlarmCount, maxDowntimeSec,
             longestDowntimeDevice, longestDowntimeAlarm,
             shiftComparisons, defectParetos, quality, oee);
+        swDefect.Stop();
+        Log.Information("[耗时] 缺陷帕累托+结论 {Elapsed}ms", swDefect.ElapsedMilliseconds);
 
         // ── 更新集合与图表（ObservableCollection 修改必须在 UI 线程）──
         var sortedSummaries = deviceSummaries.OrderByDescending(d => d.Oee).ToList();
@@ -900,8 +962,10 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         {
             _uiDispatcher.BeginInvoke(new Action(() =>
             {
-                if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
-                DeviceSummaries.Clear();
+                try
+                {
+                    if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
+                    DeviceSummaries.Clear();
                 foreach (var ds in sortedSummaries)
                     DeviceSummaries.Add(ds);
 
@@ -921,14 +985,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 foreach (var segment in statusTimeline)
                     StatusTimeline.Add(segment);
 
-                DefectConcentrations.Clear();
-                foreach (var concentration in defectConcentrations)
-                    DefectConcentrations.Add(concentration);
+                HeatmapBuckets.Clear();
+                foreach (var bucket in HeatmapBucketBuilder.Build(statusTimeline))
+                    HeatmapBuckets.Add(bucket);
 
                 HealthIssues.Clear();
                 foreach (var issue in healthIssues)
                     HealthIssues.Add(issue);
-                SelectedTimelineSegment = null;
 
                 ReviewConclusions.Clear();
                 foreach (var conclusion in reviewConclusions)
@@ -937,9 +1000,10 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 // 图表签名比对：数据未变时跳过 PlotModel 重建（避免 60s 定时刷新的无谓 CPU 开销与 UI 闪烁）
                 // 时间戳不纳入签名（允许时间标签最多滞后一个刷新周期），仅比较产量/率值/设备明细
                 var signature = ComputeChartSignature(bucketOk, bucketNg, oee, performance,
-                    availability, quality, avgTargetCycle, SelectedTimeRange, sortedSummaries);
+                    availability, quality, avgTargetCycle, SelectedTimeRange, sortedSummaries, defectParetos);
                 if (signature != _cachedChartSignature)
                 {
+                    Log.Information("图表重建：签名变化 {Sig}（旧 {Old}），构建趋势/瀑布/热力", signature, _cachedChartSignature);
                     TrendChart = _chartService.BuildTrend(
                         buckets,
                         bucketOk,
@@ -950,6 +1014,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                         _appSettings.Shifts,
                         CreateChartPalette());
                     OnPropertyChanged(nameof(TrendChart));
+                    HasTrendData = bucketOk.Any(v => v > 0) || bucketNg.Any(v => v > 0);
 
                     OeeWaterfallChart = _chartService.BuildOeeWaterfall(
                         performance,
@@ -957,6 +1022,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                         quality,
                         oee,
                         CreateChartPalette());
+                    Log.Information("OeeWaterfallChart 已构建：perf={P:P1} avail={A:P1} qual={Q:P1} oee={O:P1}",
+                        performance, availability, quality, oee);
                     OnPropertyChanged(nameof(OeeWaterfallChart));
 
                     ProductionHeatmapChart = _chartService.BuildHeatmap(
@@ -968,8 +1035,18 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                         CreateChartPalette());
                     OnPropertyChanged(nameof(ProductionHeatmapChart));
 
+                    DefectParetoChart = _chartService.BuildDefectParetoChart(
+                        defectParetos,
+                        CreateChartPalette());
+                    OnPropertyChanged(nameof(DefectParetoChart));
+
                     _cachedChartSignature = signature;
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "概览页 UI 集合/图表更新失败（refreshVersion={Version}）", refreshVersion);
+            }
             }));
         }
     }
@@ -994,21 +1071,43 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 ShiftComparisons.Clear();
                 DefectParetos.Clear();
                 StatusTimeline.Clear();
-                DefectConcentrations.Clear();
                 HealthIssues.Clear();
                 ReviewConclusions.Clear();
-                ReviewConclusions.Add("当前时间范围未配置设备，无法生成复盘结论");
+                ReviewConclusions.Add(new ReviewConclusion
+                {
+                    Text = Strings.M_NoDeviceForReview,
+                    Kind = ReviewConclusionKind.Info,
+                    Met = ReviewConclusionMetState.Neutral,
+                });
                 HealthScore = 100;
-                CurrentWorkOrderText = "暂无运行工单";
-                CurrentProductText = "暂无产品信息";
-                CurrentRecipeText = "暂无配方信息";
-                SelectedTimelineSegment = null;
+                CurrentWorkOrderText = Strings.M055;
+                CurrentProductText = Strings.M056;
+                CurrentRecipeText = Strings.M057;
                 TrendChart = null;
                 OnPropertyChanged(nameof(TrendChart));
                 OeeWaterfallChart = null;
                 OnPropertyChanged(nameof(OeeWaterfallChart));
                 ProductionHeatmapChart = null;
                 OnPropertyChanged(nameof(ProductionHeatmapChart));
+                DefectParetoChart = null;
+                OnPropertyChanged(nameof(DefectParetoChart));
+                // P2-12 补全重置：设备为空时清空全部展示属性，避免残留旧值造成矛盾显示
+                HasTrendData = false;
+                TargetOutput = 0;
+                OutputAchievementRate = 0;
+                ComparisonLabel = string.Empty;
+                BaselineTotalOutput = 0;
+                BaselineQualityRate = 0;
+                BaselineOee = 0;
+                OutputDelta = 0;
+                QualityRateDelta = 0;
+                OeeDelta = 0;
+                TotalDowntimeHours = 0;
+                AverageAlarmDurationMinutes = 0;
+                MtbfHours = 0;
+                AvailabilityLossText = string.Empty;
+                PerformanceLossText = string.Empty;
+                QualityLossText = string.Empty;
                 _cachedChartSignature = 0;
             }));
         }
@@ -1021,7 +1120,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         int[] bucketOk, int[] bucketNg,
         double oee, double performance, double availability, double quality,
         double avgTargetCycle, OverviewTimeRange timeRange,
-        IReadOnlyList<DeviceOverviewSummary> deviceSummaries)
+        IReadOnlyList<DeviceOverviewSummary> deviceSummaries,
+        IReadOnlyList<DefectParetoSummary> defectParetos)
     {
         var hash = new HashCode();
         hash.Add(timeRange);
@@ -1040,6 +1140,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             hash.Add(d.StatusWord);
             if (d.HourlyOk != null)
                 foreach (var v in d.HourlyOk) hash.Add(v);
+        }
+        // 审查修复 2026-08-13：签名此前不含缺陷帕累托数据——产量不变、缺陷计数变化时
+        // DefectParetoChart 不重建，与每次重建的缺陷列表不一致
+        foreach (var p in defectParetos)
+        {
+            hash.Add(p.DefectName);
+            hash.Add(p.Count);
         }
         return hash.ToHashCode();
     }
@@ -1069,13 +1176,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         return SelectedTimeRange switch
         {
             OverviewTimeRange.CurrentShift => GetPreviousShiftComparison(now),
-            OverviewTimeRange.PreviousShift => (from - duration, from, "更早上一班次"),
-            OverviewTimeRange.Today => (from.AddDays(-1), from, "昨日"),
-            OverviewTimeRange.Hour1 => (from.AddHours(-1), from, "前一小时"),
-            OverviewTimeRange.Hours8 => (from.AddHours(-8), from, "前 8 小时"),
-            OverviewTimeRange.Hours24 => (from.AddDays(-1), from, "前 24 小时"),
-            OverviewTimeRange.Days7 => (from.AddDays(-7), from, "前 7 天"),
-            _ => (from - duration, from, "上一周期"),
+            OverviewTimeRange.PreviousShift => (from - duration, from, Strings.M_EarlierShift),
+            OverviewTimeRange.Today => (from.AddDays(-1), from, Strings.K257),
+            OverviewTimeRange.Hour1 => (from.AddHours(-1), from, Strings.M301),
+            OverviewTimeRange.Hours8 => (from.AddHours(-8), from, Strings.M302),
+            OverviewTimeRange.Hours24 => (from.AddDays(-1), from, Strings.M300),
+            OverviewTimeRange.Days7 => (from.AddDays(-7), from, Strings.M303),
+            _ => (from - duration, from, Strings.M058),
         };
     }
 
@@ -1084,7 +1191,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         var shifts = _appSettings.Shifts;
         var (current, currentIndex) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
         if (current == null || shifts == null || shifts.Count == 0)
-            return (now.AddHours(-24), now, "前 24 小时");
+            return (now.AddHours(-24), now, Strings.M300);
         var currentRange = current.ResolveRange(now);
         var previousIndex = (currentIndex - 1 + shifts.Count) % shifts.Count;
         var previous = shifts[previousIndex];
@@ -1138,12 +1245,13 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// 计算 Triggered→Recovered 配对时长：按事件顺序扫描，每个 Triggered 配下一个 Recovered，算时长。
-    /// 返回每组的总时长（秒）。未恢复的 Triggered 用 now 近似。
+    /// P2-13 口径修复：① 未恢复 Triggered 用 min(now, windowTo) 截断（历史窗口不再算到"现在"）；
+    /// ② 每个 Recovered 只消费一次（连续 T1,T2,R1 时 T1 配 R1、T2 未恢复按截断值，避免重复配对高估）。
     /// </summary>
     private static Dictionary<string, double> PairAlarmDurations(
         IEnumerable<AlarmEventRecord> events,
         Func<AlarmEventRecord, string> keySelector,
-        DateTime now)
+        DateTime windowTo)
     {
         return events
             .GroupBy(keySelector)
@@ -1153,14 +1261,15 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 {
                     var sorted = g.OrderBy(e => e.EventTime).ToList();
                     double total = 0;
+                    var consumed = new HashSet<AlarmEventRecord>();
                     for (int i = 0; i < sorted.Count; i++)
                     {
                         if (sorted[i].EventType != AlarmEventType.Triggered) continue;
-                        // 找下一个 Recovered
-                        DateTime end = now;
+                        // 找下一个未消费的 Recovered；未恢复则截断到 min(now, windowTo)
+                        DateTime end = windowTo < DateTime.Now ? windowTo : DateTime.Now;
                         for (int j = i + 1; j < sorted.Count; j++)
                         {
-                            if (sorted[j].EventType == AlarmEventType.Recovered)
+                            if (sorted[j].EventType == AlarmEventType.Recovered && consumed.Add(sorted[j]))
                             {
                                 end = sorted[j].EventTime;
                                 break;
@@ -1176,10 +1285,10 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     /// 找持续时间最长的报警（按 AlarmName 分组取 Triggered→Recovered 配对总时长最大者）。
     /// 复用 PairAlarmDurations 避免 FindLongestAlarm 与 CalcAlarmDurationHours 重复实现配对逻辑。
     /// </summary>
-    private static (string Name, double Seconds) FindLongestAlarm(List<AlarmEventRecord> events)
+    private static (string Name, double Seconds) FindLongestAlarm(List<AlarmEventRecord> events, DateTime windowTo)
     {
         if (events.Count == 0) return (string.Empty, 0);
-        var durations = PairAlarmDurations(events, e => e.AlarmName, DateTime.Now);
+        var durations = PairAlarmDurations(events, e => e.AlarmName, windowTo);
         if (durations.Count == 0) return (string.Empty, 0);
         var max = durations.Aggregate((a, b) => a.Value >= b.Value ? a : b);
         return (max.Key, max.Value);
@@ -1187,7 +1296,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
 
     // ──────────── 峰值/谷值 ────────────
 
-    private static void FindPeakValleyHour(DateTime[] buckets, int[] okCounts,
+    private static void FindPeakValleyHour(DateTime[] buckets, int[] okCounts, bool dayBuckets,
         out string peakHour, out int peakOk, out string valleyHour, out int valleyOk)
     {
         peakHour = "—"; valleyHour = "—";
@@ -1202,8 +1311,11 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         }
         peakOk = okCounts[maxIdx];
         valleyOk = okCounts[minIdx];
-        peakHour = buckets[maxIdx].ToString("HH:mm");
-        valleyHour = buckets[minIdx].ToString("HH:mm");
+        // 审查修复 2026-08-13：天粒度桶（近 7 天）的时间分量恒为 00:00——"HH:mm" 标签全部显示 00:00，
+        // 用户无法知道峰值是哪一天；按桶粒度区分格式
+        var format = dayBuckets ? "MM-dd" : "HH:mm";
+        peakHour = buckets[maxIdx].ToString(format);
+        valleyHour = buckets[minIdx].ToString(format);
     }
 
     /// <summary>
@@ -1216,7 +1328,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         if (_defectHistoryStore == null)
             return [];
 
-        var snapshots = _defectHistoryStore.Query(from.AddDays(-1), to, device.Id);
+        var snapshots = _defectHistoryStore.QueryWindowBounds(from, to, device.Id);
         var list = new List<DefectParetoSummary>();
         foreach (var group in snapshots.GroupBy(snapshot => new { snapshot.DefectId, snapshot.ShiftName }))
         {
@@ -1238,7 +1350,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             });
         }
 
-        list = list.OrderByDescending(d => d.Count).Take(10).ToList();
+        // 按数量降序取 Top3（2026-08-10 用户要求：卡片最多显示 3 条，突出头部缺陷）
+        list = list.OrderByDescending(d => d.Count).Take(3).ToList();
         var total = list.Sum(d => d.Count);
         if (total <= 0) return list;
 
@@ -1251,7 +1364,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         return list;
     }
 
-    private static List<string> BuildReviewConclusions(
+    private static List<ReviewConclusion> BuildReviewConclusions(
         int totalOk,
         int totalNg,
         int totalAlarmCount,
@@ -1263,36 +1376,72 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         double quality,
         double oee)
     {
-        List<string> result = [];
+        List<ReviewConclusion> result = [];
         var total = totalOk + totalNg;
         if (total == 0 && totalAlarmCount == 0)
-            return ["当前时间范围没有足够的产量或报警数据生成复盘结论"];
+            return [new ReviewConclusion { Text = Strings.M114, Kind = ReviewConclusionKind.Info, Met = ReviewConclusionMetState.Neutral }];
 
         if (total > 0)
         {
-            result.Add(string.Format(Strings.F194, quality, (quality >= QualityTarget ? "达到" : "低于"), QualityTarget));
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F194, quality, (quality >= QualityTarget ? Strings.M112 : Strings.M113), QualityTarget),
+                Kind = ReviewConclusionKind.Quality,
+                Met = quality >= QualityTarget ? ReviewConclusionMetState.Met : ReviewConclusionMetState.NotMet,
+            });
         }
 
         if (oee > 0)
         {
-            result.Add(string.Format(Strings.F006, oee, (oee >= OeeTarget ? "达到" : "低于"), OeeTarget));
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F006, oee, (oee >= OeeTarget ? Strings.M112 : Strings.M113), OeeTarget),
+                Kind = ReviewConclusionKind.Oee,
+                Met = oee >= OeeTarget ? ReviewConclusionMetState.Met : ReviewConclusionMetState.NotMet,
+            });
         }
 
         if (longestDowntimeSec > 0)
         {
-            result.Add(string.Format(Strings.F138, longestDowntimeSec / 3600.0, longestDowntimeDevice, longestDowntimeAlarm));
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F138, longestDowntimeSec / 3600.0, longestDowntimeDevice, longestDowntimeAlarm),
+                Kind = ReviewConclusionKind.Downtime,
+                Met = ReviewConclusionMetState.Neutral,
+            });
         }
 
         var topShift = shifts.Where(s => s.TotalCount > 0).OrderByDescending(s => s.TotalCount).FirstOrDefault();
         if (topShift != null)
-            result.Add(string.Format(Strings.F041, topShift.ShiftName, topShift.TotalCount, topShift.OkRatio));
+        {
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F041, topShift.ShiftName, topShift.TotalCount, topShift.OkRatio),
+                Kind = ReviewConclusionKind.BestShift,
+                Met = ReviewConclusionMetState.Neutral,
+            });
+        }
 
         var topDefect = defects.FirstOrDefault();
         if (topDefect != null)
-            result.Add(string.Format(Strings.F059, topDefect.DefectName, topDefect.DeviceName, topDefect.Count, topDefect.CumulativePercent));
+        {
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F059, topDefect.DefectName, topDefect.DeviceName, topDefect.Count, topDefect.CumulativePercent),
+                Kind = ReviewConclusionKind.TopDefect,
+                Met = ReviewConclusionMetState.Neutral,
+            });
+        }
 
         if (totalAlarmCount > 0 && result.Count < 5)
-            result.Add(string.Format(Strings.F123, totalAlarmCount));
+        {
+            result.Add(new ReviewConclusion
+            {
+                Text = string.Format(Strings.F123, totalAlarmCount),
+                Kind = ReviewConclusionKind.AlarmCount,
+                Met = ReviewConclusionMetState.Neutral,
+            });
+        }
 
         return result.Take(5).ToList();
     }

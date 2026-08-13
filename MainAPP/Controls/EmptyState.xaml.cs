@@ -1,6 +1,7 @@
 using System.Windows;
 using Material.Icons;
 using Material.Icons.WPF;
+using MainAPP.Resources;
 
 namespace MainAPP.Controls;
 
@@ -18,7 +19,7 @@ public partial class EmptyState : System.Windows.Controls.UserControl
     /// <summary>主文案依赖属性</summary>
     public static readonly DependencyProperty MessageProperty =
         DependencyProperty.Register(nameof(Message), typeof(string),
-            typeof(EmptyState), new PropertyMetadata("暂无数据"));
+            typeof(EmptyState), new PropertyMetadata(Strings.K583));
 
     /// <summary>辅助提示依赖属性（可选，为空时不显示）</summary>
     public static readonly DependencyProperty HintProperty =

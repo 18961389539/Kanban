@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- ValidationMessages (en-US) -->
+  <data name="PlcIpEmpty" xml:space="preserve">
+    <value>PLC IP address is empty</value>
+  </data>
+  <data name="PlcIpInvalid" xml:space="preserve">
+    <value>PLC IP address '{0}' is not a valid IPv4 address</value>
+  </data>
+  <data name="PlcPortOutOfRange" xml:space="preserve">
+    <value>PLC port {0} is out of range (1-65535)</value>
+  </data>
+  <data name="PlcBrandInvalid" xml:space="preserve">
+    <value>Invalid PLC brand: {0}</value>
+  </data>
+  <data name="PlcTimeoutOutOfRange" xml:space="preserve">
+    <value>PLC connection timeout {0}ms is out of range (100-60000)</value>
+  </data>
+  <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
+    <value>Modbus UnitId {0} is out of range (1-247)</value>
+  </data>
+  <data name="ModbusRegisterFunctionInvalid" xml:space="preserve">
+    <value>Modbus register function code {0} is invalid, expected 3 or 4</value>
+  </data>
+  <data name="ModbusBitFunctionInvalid" xml:space="preserve">
+    <value>Modbus bit function code {0} is invalid, expected 1 or 2</value>
+  </data>
+  <data name="ModbusDataFormatInvalid" xml:space="preserve">
+    <value>Invalid Modbus data format: {0}</value>
+  </data>
+  <data name="SiemensDataFormatInvalid" xml:space="preserve">
+    <value>Invalid Siemens data format: {0}</value>
+  </data>
+  <data name="SiemensModelUnsupported" xml:space="preserve">
+    <value>Unsupported Siemens model: {0}</value>
+  </data>
+  <data name="SiemensRackOutOfRange" xml:space="preserve">
+    <value>Siemens Rack {0} is out of range (0-7)</value>
+  </data>
+  <data name="SiemensSlotOutOfRange" xml:space="preserve">
+    <value>Siemens Slot {0} is out of range (0-31)</value>
+  </data>
+  <data name="SiemensBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Siemens batch Int32 limit {0} is out of range (1-55)</value>
+  </data>
+  <data name="ModbusBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Modbus batch Int32 limit {0} is out of range (1-2000)</value>
+  </data>
+  <data name="PollingIntervalInvalid" xml:space="preserve">
+    <value>PLC polling interval {0}ms is invalid; must be between 10-60000ms</value>
+  </data>
+  <data name="HistoryWriteIntervalInvalid" xml:space="preserve">
+    <value>History write interval {0} scans is invalid; must be between 1-3600</value>
+  </data>
+  <data name="DashboardRefreshIntervalInvalid" xml:space="preserve">
+    <value>Dashboard refresh interval {0}ms is invalid, must be ≥ 1ms</value>
+  </data>
+  <data name="NoShiftsConfigured" xml:space="preserve">
+    <value>No shifts configured</value>
+  </data>
+  <data name="ShiftNameEmpty" xml:space="preserve">
+    <value>Shift #{0} name is empty</value>
+  </data>
+  <data name="ShiftStartEndEqual" xml:space="preserve">
+    <value>Shift '{0}' has identical start and end time ({1})</value>
+  </data>
+  <!-- ConnectionStatusMessages (en-US) -->
+  <data name="Conn_Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Conn_Disconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="Conn_ConnectionLost" xml:space="preserve">
+    <value>Connection Lost</value>
+  </data>
+  <data name="Conn_DisconnectedWithRetry" xml:space="preserve">
+    <value>Disconnected (retry in {0:F0}s)</value>
+  </data>
+  <data name="Conn_ConnectingPrefix" xml:space="preserve">
+    <value>Connecting</value>
+  </data>
+  <data name="Conn_ConnectingSuffix" xml:space="preserve">
+    <value>... (attempt #{0})</value>
+  </data>
+  <data name="Conn_RemoteConnecting" xml:space="preserve">
+    <value>Collector (attempt #{0})</value>
+  </data>
+  <data name="PlcBatchReadMaxLengthInvalid" xml:space="preserve">
+    <value>PLC batch read length limit {0} is invalid; must be between 1-1024</value>
+  </data>
+  <data name="PlcBatchReadMaxGapSlotsInvalid" xml:space="preserve">
+    <value>PLC batch read gap limit {0} is invalid; must be between 0-256</value>
+  </data>
+  <!-- RecipeValidationMessages（recipe validation/apply） -->
+  <data name="RecipeNull" xml:space="preserve">
+    <value>Recipe cannot be empty</value>
+  </data>
+  <data name="RecipeNameEmpty" xml:space="preserve">
+    <value>Recipe name cannot be empty</value>
+  </data>
+  <data name="RecipeItemsEmpty" xml:space="preserve">
+    <value>Recipe requires at least one parameter</value>
+  </data>
+  <data name="RecipeParamNameEmpty" xml:space="preserve">
+    <value>Parameter name cannot be empty</value>
+  </data>
+  <data name="RecipeAddressEmpty" xml:space="preserve">
+    <value>Address cannot be empty</value>
+  </data>
+  <data name="RecipeAddressDuplicate" xml:space="preserve">
+    <value>Address {0} duplicates another parameter in the recipe</value>
+  </data>
+  <data name="RecipeAddressUnresolvable" xml:space="preserve">
+    <value>Address {0} cannot be parsed</value>
+  </data>
+  <data name="RecipeAddressTypeMismatch" xml:space="preserve">
+    <value>Address type mismatch: {0} requires {1} area</value>
+  </data>
+  <data name="RecipeValueInvalid" xml:space="preserve">
+    <value>Value "{0}" is not a valid {1}</value>
+  </data>
+  <data name="RecipeBelowMin" xml:space="preserve">
+    <value>Value {0} is below minimum {1}</value>
+  </data>
+  <data name="RecipeAboveMax" xml:space="preserve">
+    <value>Value {0} is above maximum {1}</value>
+  </data>
+  <data name="RecipeTypeInt32" xml:space="preserve">
+    <value>32-bit integer</value>
+  </data>
+  <data name="RecipeTypeFloat" xml:space="preserve">
+    <value>32-bit float</value>
+  </data>
+  <data name="RecipeTypeBool" xml:space="preserve">
+    <value>bit (0/1)</value>
+  </data>
+  <data name="RecipeTypeString" xml:space="preserve">
+    <value>string</value>
+  </data>
+  <data name="RecipeTypeUInt16" xml:space="preserve">
+    <value>16-bit unsigned integer</value>
+  </data>
+  <data name="RecipeDeviceOrRecipeEmpty" xml:space="preserve">
+    <value>Device or recipe is empty</value>
+  </data>
+  <data name="RecipePlcNotConnected" xml:space="preserve">
+    <value>PLC is not connected, cannot apply recipe</value>
+  </data>
+  <data name="RecipeReadBackupFailed" xml:space="preserve">
+    <value>Failed to read address {0} for backup</value>
+  </data>
+  <data name="RecipeBackupAbort" xml:space="preserve">
+    <value>Backup failed before applying, aborted</value>
+  </data>
+  <data name="RecipeValueParseFailed" xml:space="preserve">
+    <value>Value "{0}" cannot be parsed</value>
+  </data>
+  <data name="RecipeValueParseAbort" xml:space="preserve">
+    <value>Value of parameter {0} cannot be parsed, aborted</value>
+  </data>
+  <data name="RecipeWriteFailed" xml:space="preserve">
+    <value>Write failed: {0}</value>
+  </data>
+  <data name="RecipeWriteRollback" xml:space="preserve">
+    <value>Parameter {0} write failed, rolled back</value>
+  </data>
+  <data name="RecipeReadBackFailed" xml:space="preserve">
+    <value>Read-back verification failed</value>
+  </data>
+  <data name="RecipeReadBackRollback" xml:space="preserve">
+    <value>Parameter {0} read-back failed, rolled back</value>
+  </data>
+  <data name="RecipeReadBackMismatch" xml:space="preserve">
+    <value>Read-back mismatch (expected {0}, read {1})</value>
+  </data>
+  <data name="RecipeMismatchRollback" xml:space="preserve">
+    <value>Parameter {0} verification mismatch, rolled back</value>
+  </data>
+  <data name="RecipeApplySuccess" xml:space="preserve">
+    <value>Recipe applied successfully</value>
+  </data>
+  <data name="RecipeApplyException" xml:space="preserve">
+    <value>Apply exception: {0}</value>
+  </data>
+  <data name="RecipeUnsupportedType" xml:space="preserve">
+    <value>Unsupported data type {0}</value>
+  </data>
+  <data name="RecipeWriteVerified" xml:space="preserve">
+    <value>Written and verified</value>
+  </data>
+  <data name="RecipeAddressReadonly" xml:space="preserve">
+    <value>Address {0} area is read-only, write not supported</value>
+  </data>
+  <data name="RecipeNameDuplicate" xml:space="preserve">
+    <value>Recipe name "{0}" already exists for this machine type</value>
+  </data>
+  <data name="RecipeMinMaxInverted" xml:space="preserve">
+    <value>Min value {0} is greater than max value {1}</value>
+  </data>
+  <data name="RecipeStringTooLong" xml:space="preserve">
+    <value>String value exceeds the max length of {0} characters</value>
+  </data>
+  <data name="RecipeDeviceNotFound" xml:space="preserve">
+    <value>Device not found: {0}</value>
+  </data>
+  <data name="RecipeNotFound" xml:space="preserve">
+    <value>Recipe not found: {0}</value>
+  </data>
+  <data name="RecipeApplyCancelled" xml:space="preserve">
+    <value>Apply cancelled, rolled back</value>
+  </data>
+  <data name="RecipeWriteInProgress" xml:space="preserve">
+    <value>Writing parameter {0}…</value>
+  </data>
+</root>

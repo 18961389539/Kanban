@@ -91,28 +91,29 @@ public partial class AlarmQueryViewModel : ObservableObject
 
             // 班次切换事件（ShiftChange）表示"报警在新班次重新开始计时"，不是物理恢复。
             // 仅 Recovered 事件计入时长差分，避免跨班次报警被错误压缩为"在班次切换点恢复"。
-            var allRecovers = list
-                .Where(e => e.EventType == AlarmEventType.Recovered)
-                .GroupBy(e => new { e.DeviceId, e.AlarmId })
-                .ToDictionary(k => k.Key, v => v.OrderBy(e => e.EventTime).ToList());
-
+            // 贪心配对（审查修复 2026-08-13）：每条 Recovered 与其前最近一条**未配对** Triggered 配对。
+            // 原实现每个 Triggered 找其后第一条 Recovered——T1→T2→R 序列中 T1/T2 共用同一条 R，
+            // T2（实际尚待恢复）被误算为已恢复，平均时长系统性偏低。
             var alarmStats = list
                 .Where(e => e.EventType == AlarmEventType.Triggered)
                 .GroupBy(e => e.AlarmName)
                 .Select(g =>
                 {
                     var triggers = g.OrderBy(e => e.EventTime).ToList();
-
+                    var paired = new HashSet<AlarmEventRecord>();
                     List<double> durations = [];
-                    foreach (var t in triggers)
+                    foreach (var rec in list
+                                 .Where(e => e.EventType == AlarmEventType.Recovered)
+                                 .OrderBy(e => e.EventTime))
                     {
-                        var key = new { t.DeviceId, t.AlarmId };
-                        if (!allRecovers.TryGetValue(key, out var recList)) continue;
-
-                        var recovery = recList.FirstOrDefault(r => r.EventTime > t.EventTime);
-                        if (recovery == null) continue;
-
-                        durations.Add((recovery.EventTime - t.EventTime).TotalMinutes);
+                        var prev = triggers
+                            .Where(t => t.DeviceId == rec.DeviceId && t.AlarmId == rec.AlarmId
+                                        && t.EventTime < rec.EventTime && !paired.Contains(t))
+                            .OrderByDescending(t => t.EventTime)
+                            .FirstOrDefault();
+                        if (prev == null) continue;
+                        paired.Add(prev);
+                        durations.Add((rec.EventTime - prev.EventTime).TotalMinutes);
                     }
                     return (
                         AlarmName: g.Key,
@@ -132,7 +133,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "报警查询失败: {Message}", ex.Message);
+            Log.Error(ex, "报警查询失败");
             QueryError = string.Format(Strings.F129, ex.Message);
             return (0, 0);
         }
@@ -170,7 +171,7 @@ public partial class AlarmQueryViewModel : ObservableObject
 
         return HistoryQueryHelper.BuildCsv(rows,
             $"# 触发：{AlarmTriggerCount} 次，恢复：{AlarmRecoverCount} 次，待恢复：{AlarmPendingCount} 条",
-            $"# {AlarmInsight ?? "无洞察"}");
+            $"# {AlarmInsight ?? Strings.M176}");
     }
 
     private static string? BuildAlarmInsight(

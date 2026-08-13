@@ -18,12 +18,13 @@ public static class Localization
         _ => "zh-CN",
     };
 
-    /// <summary>把指定语言应用到当前进程（UI 文化与数字/日期格式文化同步切换）。</summary>
+    /// <summary>把指定语言应用到当前进程（UI 文化与数字/日期格式文化同步切换）。同时把 culture 快照写入 Strings 静态字段，避免运行时 CurrentUICulture 不一致导致 UI 出现混合语言。</summary>
     public static void Apply(AppLanguage language)
     {
         var culture = new CultureInfo(GetCultureName(language));
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentUICulture = culture;
+        MainAPP.Resources.Strings.CaptureCulture(culture);
     }
 }

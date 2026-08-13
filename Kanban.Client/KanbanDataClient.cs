@@ -64,15 +64,19 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     }
 
     /// <summary>
-    /// 建立连接并启动订阅。内部自动断线重连（指数退避 1s→30s，与 PlcConnectionManager 策略一致）；
-    /// 自动重连耗尽后由 Closed 处理器进入后台循环重连（5s 间隔），实现"永久自愈"。
-    /// 连接超时 10s：Collector 不可达时快速失败（WASM 端由上层按节流重试），避免长时间挂起。
+    /// 建立连接并启动订阅。内部自动断线重连（指数退避 1s→30s，与 PlcConnectionManager 策略一致）。
+    /// 运行中断线由 WithAutomaticReconnect 自愈；**首次连接失败（StartAsync 抛异常）不做后台重连**——
+    /// 重连所有权归调用方（WASM 端 DashboardState.RetryLoop / WPF 端 Coordinator），
+    /// 避免"客户端内部循环 + 调用方循环"双重重连互相覆盖连接。
+    /// 本方法失败时会释放本次创建的连接实例，可安全重复调用。
+    /// 连接超时 10s：Collector 不可达时快速失败，避免长时间挂起。
     /// </summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         // 并发保护：同一实例的并发 ConnectAsync 串行化（double-check 已连接则直接返回），
         // 避免多个调用各自建连接、后者覆盖 _connection 导致前者泄漏。
         await _connectGate.WaitAsync(cancellationToken);
+        HubConnection? created = null;
         try
         {
             if (_connection is { State: HubConnectionState.Connected }) return;
@@ -85,7 +89,10 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                 .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
             if (_useMessagePack)
                 builder.AddMessagePackProtocol();
-            _connection = builder.Build();
+            created = builder.Build();
+            _connection = created;
+            // 新连接实例：已注册回调作废（回调挂在旧实例上，新实例需重新注册——按连接实例去重语义）
+            lock (_registeredHandlers) _registeredHandlers.Clear();
 
             _connection.Reconnecting += _ =>
             {
@@ -104,34 +111,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                 Reconnected?.Invoke(this, EventArgs.Empty);
                 return Task.CompletedTask;
             };
-            _connection.Closed += async ex =>
+            _connection.Closed += ex =>
             {
-                // WithAutomaticReconnect 全部耗尽后触发：进入后台循环重连（5s 间隔），
-                // 直至成功或连接被显式释放。否则 Collector 短暂不可用后页面将永久离线。
-                _logger.LogWarning(ex, "Collector 自动重连已耗尽，进入后台循环重连");
+                // WithAutomaticReconnect 全部耗尽后触发：仅通知 UI 状态（保持 Disconnected），
+                // 不再自行循环重连——重连所有权在调用方（首次连接重试循环 / 上层策略）。
+                _logger.LogWarning(ex, "Collector 自动重连已耗尽，连接保持断开（等待上层重试策略）");
                 ConnectionStateChanged?.Invoke(this, false);
-                var cts = _reconnectCts;
-                while (cts is { IsCancellationRequested: false })
-                {
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
-                        await _connection.StartAsync(cts.Token);
-                        _logger.LogInformation("Collector 后台重连成功");
-                        _consecutiveFailures = 0;
-                        ConnectionStateChanged?.Invoke(this, true);
-                        Reconnected?.Invoke(this, EventArgs.Empty);
-                        return;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        return; // 连接被释放/取消，停止重连
-                    }
-                    catch (Exception retryEx)
-                    {
-                        _logger.LogWarning(retryEx, "Collector 后台重连失败，5s 后重试");
-                    }
-                }
+                return Task.CompletedTask;
             };
 
             try
@@ -144,9 +130,14 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                 _logger.LogInformation("已连接 Collector {Url}", _hubUrl);
                 ConnectionStateChanged?.Invoke(this, true);
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, "连接 Collector 失败 {Url}", _hubUrl);
+                _logger.LogError("连接 Collector 失败 {Url}", _hubUrl);
+                // 释放本次失败的连接实例（含其内部重连任务），避免反复 ConnectAsync 泄漏旧连接；
+                // 调用方重试时会创建全新连接。异常继续向上抛（调用方决定是否重试）。
+                if (ReferenceEquals(_connection, created))
+                    _connection = null;
+                try { await created.DisposeAsync(); } catch (Exception disposeEx) { _logger.LogDebug(disposeEx, "释放失败连接异常"); }
                 throw;
             }
         }
@@ -160,36 +151,67 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     private void EnsureConnected()
     {
         if (_connection is not { State: HubConnectionState.Connected })
-            throw new InvalidOperationException("SignalR 连接尚未建立：请先调用 ConnectAsync 并等待成功（回调注册同理）。");
+            throw new InvalidOperationException(NotConnectedMessage);
     }
+
+    /// <summary>连接未建立异常消息（供调用方按消息特征识别"连接未就绪"瞬态，避免硬编码中文）。</summary>
+    public const string NotConnectedMessage = "SignalR 连接尚未建立：请先调用 ConnectAsync 并等待成功（回调注册同理）。";
 
     /// <summary>校验连接已建立（供依赖连接状态的服务端调用使用）。</summary>
     public void EnsureConnectionEstablished() => EnsureConnected();
 
     // ──────────── 强类型回调注册（由数据消费者调用，须在连接建立后） ────────────
 
-    public void OnSnapshot(Action<DeviceSnapshotDto> handler)
+    /// <summary>
+    /// 已注册回调方法名（**按连接实例**去重，审查修复 2026-08-13）：
+    /// SignalR 的 On 是追加语义——调用方在"部分失败重试"路径对同一连接重复注册会导致同一消息双回调；
+    /// 而重连失败重建连接实例后回调会丢失、必须重新注册。两者矛盾，故：
+    /// 注册幂等性按连接实例维护——ConnectAsync 新建连接时清空本集合，On* 对当前连接只注册一次。
+    /// </summary>
+    private readonly HashSet<string> _registeredHandlers = new();
+
+    private void RegisterHandlerOnce(string methodName, Action register)
     {
         EnsureConnected();
-        _connection!.On<DeviceSnapshotDto>(nameof(IKanbanHubClient.OnSnapshot), handler);
+        lock (_registeredHandlers)
+        {
+            if (!_registeredHandlers.Add(methodName)) return;
+        }
+        register();
+    }
+
+    public void OnSnapshot(Action<DeviceSnapshotDto> handler)
+    {
+        RegisterHandlerOnce(nameof(IKanbanHubClient.OnSnapshot),
+            () => _connection!.On<DeviceSnapshotDto>(nameof(IKanbanHubClient.OnSnapshot), handler));
     }
 
     public void OnAlarmEvent(Action<AlarmEventDto> handler)
     {
-        EnsureConnected();
-        _connection!.On<AlarmEventDto>(nameof(IKanbanHubClient.OnAlarmEvent), handler);
+        RegisterHandlerOnce(nameof(IKanbanHubClient.OnAlarmEvent),
+            () => _connection!.On<AlarmEventDto>(nameof(IKanbanHubClient.OnAlarmEvent), handler));
     }
 
     public void OnStatusEvent(Action<StatusEventDto> handler)
     {
-        EnsureConnected();
-        _connection!.On<StatusEventDto>(nameof(IKanbanHubClient.OnStatusEvent), handler);
+        RegisterHandlerOnce(nameof(IKanbanHubClient.OnStatusEvent),
+            () => _connection!.On<StatusEventDto>(nameof(IKanbanHubClient.OnStatusEvent), handler));
     }
 
     public void OnMeta(Action<MetaStateDto> handler)
     {
+        RegisterHandlerOnce(nameof(IKanbanHubClient.OnMeta),
+            () => _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler));
+    }
+
+    /// <summary>
+    /// 订阅配方下发进度推送（返回订阅句柄，Dispose 即退订——调用方必须在不再需要时释放，
+    /// 否则 handler 逐次累积（进度回调重复触发 + 内存泄漏）。
+    /// </summary>
+    public IDisposable OnRecipeApplyProgress(Action<RecipeApplyProgressDto> handler)
+    {
         EnsureConnected();
-        _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler);
+        return _connection!.On<RecipeApplyProgressDto>(nameof(IKanbanHubClient.OnRecipeApplyProgress), handler);
     }
 
     // ──────────── 服务端调用（均前置校验连接，未连接抛带说明的 InvalidOperationException） ────────────
@@ -232,6 +254,19 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             nameof(IKanbanHubServer.QueryHistoryAsync), request, ct);
     }
 
+    /// <summary>批量历史查询：多个子查询一次往返（服务端全量翻页聚合），供生产复盘页多设备批查使用。</summary>
+    public async Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(
+        BatchHistoryQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        _logger.LogInformation("批量查询 Invoke 发出 {Count} 个子查询 State={State}",
+            request.Queries.Count, _connection!.State);
+        var result = await _connection!.InvokeAsync<BatchHistoryQueryResponse>(
+            nameof(IKanbanHubServer.QueryHistoryBatchAsync), request, ct);
+        _logger.LogInformation("批量查询 Invoke 返回 {Count} 个结果", result.Results.Count);
+        return result;
+    }
+
     /// <summary>拉取 Collector 运行诊断快照（运行监控页 Remote 模式）。</summary>
     public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
     {
@@ -244,6 +279,27 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     {
         EnsureConnected();
         await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveDevicesAsync), devices, ct);
+    }
+
+    /// <summary>同步全部配方到 Collector（Remote 模式配方管理保存时落盘 recipes.json）。</summary>
+    public async Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveRecipesAsync), recipes, ct);
+    }
+
+    /// <summary>从 Collector 拉取配方库（Remote 模式）。</summary>
+    public async Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<RecipeDto>>(nameof(IKanbanAdminServer.GetRecipesAsync), ct);
+    }
+
+    /// <summary>下发配方到指定设备（Remote 模式：写 PLC 由 Collector 执行，失败已回滚）。</summary>
+    public async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<RecipeApplyResultDto>(nameof(IKanbanAdminServer.ApplyRecipeAsync), deviceId, recipeId, ct);
     }
 
     /// <summary>从 Collector 拉取设备配置（Remote 模式屏端零配置，不依赖本地 devices.json）。</summary>
@@ -293,6 +349,27 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     {
         EnsureConnected();
         return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetServerVersionAsync), ct);
+    }
+
+    /// <summary>工单列表（只读管理页数据源）。</summary>
+    public async Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<WorkOrderDto>>(nameof(IKanbanHubServer.GetWorkOrdersAsync), ct);
+    }
+
+    /// <summary>采集设置快照（只读设置页数据源）。</summary>
+    public async Task<CollectorSettingsDto> GetCollectorSettingsAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<CollectorSettingsDto>(nameof(IKanbanHubServer.GetCollectorSettingsAsync), ct);
+    }
+
+    /// <summary>审计日志分页查询（只读审计页数据源）。</summary>
+    public async Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<AuditLogQueryResponse>(nameof(IKanbanHubServer.QueryAuditLogsAsync), request, ct);
     }
 
     /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端拉取实现零配置）。</summary>

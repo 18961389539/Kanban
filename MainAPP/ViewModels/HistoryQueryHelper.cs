@@ -32,6 +32,34 @@ internal static class HistoryQueryHelper
         return (null, -1);
     }
 
+    /// <summary>小时桶序列：从 from 对齐整点 AddHours(1) 累计到 to（DeviceDetail 产量图的桶聚合单源）。</summary>
+    internal static DateTime[] BuildHourlyBuckets(DateTime from, DateTime to)
+    {
+        List<DateTime> list = [];
+        var cur = new DateTime(from.Year, from.Month, from.Day, from.Hour, 0, 0);
+        while (cur <= to)
+        {
+            list.Add(cur);
+            cur = cur.AddHours(1);
+        }
+        return list.ToArray();
+    }
+
+    /// <summary>定位时刻所属桶索引：先精确对齐，再回退到第一个 ≥ 对齐时刻的桶；无则 -1。</summary>
+    internal static int GetBucketIndex(DateTime[] buckets, DateTime time)
+    {
+        var aligned = new DateTime(time.Year, time.Month, time.Day, time.Hour, 0, 0);
+        for (int i = 0; i < buckets.Length; i++)
+        {
+            if (buckets[i] == aligned) return i;
+        }
+        for (int i = 0; i < buckets.Length; i++)
+        {
+            if (buckets[i] >= aligned) return i;
+        }
+        return -1;
+    }
+
     public static List<List<ProductionLog>> SplitShiftInstances(List<ProductionLog> sortedLogs)
     {
         List<List<ProductionLog>> groups = [];
@@ -144,10 +172,10 @@ internal static class HistoryQueryHelper
 
     public static string GetEventTypeText(AlarmEventType type) => type switch
     {
-        AlarmEventType.Triggered => "触发",
-        AlarmEventType.Recovered => "恢复",
-        AlarmEventType.ShiftChange => "班次切换",
-        _ => "未知"
+        AlarmEventType.Triggered => Strings.EventType_Triggered,
+        AlarmEventType.Recovered => Strings.EventType_Recovered,
+        AlarmEventType.ShiftChange => Strings.EventType_ShiftChange,
+        _ => Strings.Status_Unknown
     };
 
     /// <summary>
@@ -169,6 +197,22 @@ internal static class HistoryQueryHelper
                 sb.AppendLine(line);
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// CSV 单元格公式注入防护：以 = + - @ 开头的文本在 Excel/WPS 中会被当作公式执行，
+    /// 归档类 CSV（尤其含操作人/详情等用户可控文本）必须转义。仅在确实命中危险前缀时改写，
+    /// 普通文本原样返回，避免改变既有导出内容。
+    /// </summary>
+    public static string SanitizeCsvCell(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return value ?? string.Empty;
+        var trimmed = value.TrimStart();
+        if (trimmed.Length == 0) return value;
+        var first = trimmed[0];
+        return (first is '=' or '+' or '-' or '@' or '\t' or '\r')
+            ? "'" + value
+            : value;
     }
 
     /// <summary>

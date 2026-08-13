@@ -85,11 +85,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     /// <summary>当前查询结果摘要，显示在筛选栏标题区。</summary>
     public string QuerySummaryText => !HasQueried
-        ? "尚未查询"
+        ? Strings.M096
         : HasQueryError
-            ? "查询失败"
+            ? Strings.M097
         : TotalCount == 0
-            ? "未找到数据"
+            ? Strings.M098
             : string.Format(Strings.F069, TotalCount, CurrentPage, TotalPages);
 
     [ObservableProperty]
@@ -213,24 +213,34 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         _isUpdatingQuickTime = true;
         try
         {
-            var now = DateTime.Now;
-            (FromDate, ToDate) = value switch
-            {
-                1 => (now.Date, now.Date.AddDays(1).AddSeconds(-1)),
-                2 => (now.Date.AddDays(-1), now.Date.AddSeconds(-1)),
-                3 => (now.Date.AddDays(-7), now.Date.AddDays(1).AddSeconds(-1)),
-                4 => (now.Date.AddDays(-30), now.Date.AddDays(1).AddSeconds(-1)),
-                5 => GetShiftRange(now, 0),
-                6 => GetShiftRange(now, -1),
-                7 => GetWeekRange(now),
-                8 => GetMonthRange(now),
-                _ => (FromDate, ToDate)
-            };
+            (FromDate, ToDate) = GetQuickTimeRange(value, DateTime.Now);
         }
         finally
         {
             _isUpdatingQuickTime = false;
         }
+    }
+
+    /// <summary>
+    /// 按快捷时间档位计算查询区间：1=今天 2=昨天 3=近7天 4=近30天 5/6=本/上一班次 7=本周 8=本月；
+    /// 其他值（自定义/未选）原样返回当前 FromDate/ToDate。
+    /// 供 OnQuickTimeIndexChanged 与 RestoreLastQuery 复用（审查修复 2026-08-13：
+    /// 恢复时守卫抑制了变更回调，必须显式按档位重算日期，否则档位与日期错位）。
+    /// </summary>
+    private (DateTime From, DateTime To) GetQuickTimeRange(int index, DateTime now)
+    {
+        return index switch
+        {
+            1 => (now.Date, now.Date.AddDays(1).AddSeconds(-1)),
+            2 => (now.Date.AddDays(-1), now.Date.AddSeconds(-1)),
+            3 => (now.Date.AddDays(-7), now.Date.AddDays(1).AddSeconds(-1)),
+            4 => (now.Date.AddDays(-30), now.Date.AddDays(1).AddSeconds(-1)),
+            5 => GetShiftRange(now, 0),
+            6 => GetShiftRange(now, -1),
+            7 => GetWeekRange(now),
+            8 => GetMonthRange(now),
+            _ => (FromDate, ToDate)
+        };
     }
 
     partial void OnFromDateChanged(DateTime value)
@@ -268,7 +278,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             .OrderBy(n => n)
             .ToList();
         ShiftFilterItems.Clear();
-        ShiftFilterItems.Add(new FilterOption(null, "全部班次"));
+        ShiftFilterItems.Add(new FilterOption(null, Strings.M099));
         foreach (var n in names)
             ShiftFilterItems.Add(new FilterOption(n, n));
     }
@@ -281,7 +291,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
                                   .OrderBy(n => n)
                                   .ToList();
         ShiftFilterItems.Clear();
-        ShiftFilterItems.Add(new FilterOption(null, "全部班次"));
+        ShiftFilterItems.Add(new FilterOption(null, Strings.M099));
         foreach (var n in distinct)
             ShiftFilterItems.Add(new FilterOption(n, n));
     }
@@ -291,7 +301,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void RefreshAlarmNameFilterItems(IEnumerable<string> alarmNames)
     {
         AlarmNameFilterItems.Clear();
-        AlarmNameFilterItems.Add(new FilterOption(null, "全部报警"));
+        AlarmNameFilterItems.Add(new FilterOption(null, Strings.Web_Hq_AllAlarms));
         foreach (var n in alarmNames)
             AlarmNameFilterItems.Add(new FilterOption(n, n));
     }
@@ -332,8 +342,29 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void OnDevicesCollectionChanged(object? sender,
         System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        RefreshDeviceFilterItems();
-        SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+        // UI 线程封送（审查修复 2026-08-13）：Devices 可能被后台线程修改（RemoteRuntimeSink 数据灌入），
+        // DeviceFilterItems 是 ObservableCollection——跨线程 Clear/Add 会抛 NotSupportedException。
+        // 与 HomeViewModel/OverviewViewModel 的 OnDevicesCollectionChanged 同模式（含关闭守卫）。
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted)
+        {
+            RefreshDeviceFilterItems();
+            SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+            return;
+        }
+        if (dispatcher.CheckAccess())
+        {
+            RefreshDeviceFilterItems();
+            SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+        }
+        else
+        {
+            dispatcher.BeginInvoke(() =>
+            {
+                RefreshDeviceFilterItems();
+                SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+            });
+        }
     }
 
     private string? NormalizeDeviceId() =>
@@ -382,7 +413,13 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         _isUpdatingQuickTime = true;
         try
         {
-            if (_savedQuickTimeIndex <= 0)
+            if (_savedQuickTimeIndex > 0)
+            {
+                // 快捷档位：按当前时间重算区间（守卫已抑制 OnQuickTimeIndexChanged 的回调），
+                // 修复恢复后"档位显示近7天、日期停留在默认值"的错位（审查修复 2026-08-13）。
+                (FromDate, ToDate) = GetQuickTimeRange(_savedQuickTimeIndex, DateTime.Now);
+            }
+            else
             {
                 FromDate = _savedFromDate;
                 ToDate = _savedToDate;
@@ -527,7 +564,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         QueryErrorMessage = string.Empty;
         if (FromDate > ToDate)
         {
-            QueryValidationMessage = "起始时间不能晚于结束时间";
+            QueryValidationMessage = Strings.M101;
             return;
         }
         CurrentPage = 1;
@@ -820,11 +857,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Log.Information("已导出 {Count} 条 → {Path}", TotalCount, fullPath);
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"{TotalCount} 条，Tab={SelectedTabIndex}");
             _dialog.NotifySuccess(string.Format(Strings.F104, TotalCount, fullPath));
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "导出失败: {Message}", ex.Message);
+            Log.Error(ex, "导出失败");
             _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
         finally

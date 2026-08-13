@@ -62,10 +62,20 @@ public class HomeViewRenderTests : WpfTestHost
             win.Show();
             win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
             win.UpdateLayout();
+
+            // 真实断言（审查修复 2026-08-13：原实现只断言 conn.IsConnected==false，
+            // 与测试名"横幅可见性绑定"无关，横幅从未被验证）：
+            // 断线 → 横幅 Visible；连接后 DataTrigger 折叠
+            var banner = view.FindName("DisconnectBanner") as System.Windows.Controls.Border;
+            Assert.NotNull(banner);
+            Assert.Equal(System.Windows.Visibility.Visible, banner.Visibility);
+
+            conn.EnsureConnected(); // FakePlcDriver 连接成功 → IsConnected=true → 触发器折叠横幅
+            win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.DataBind);
+            win.UpdateLayout();
+            Assert.Equal(System.Windows.Visibility.Collapsed, banner.Visibility);
+
             win.Close();
         });
-
-        // 仅断言 ViewModel 状态，可视化树文本搜索不稳定
-        Assert.False(conn.IsConnected);
     }
 }

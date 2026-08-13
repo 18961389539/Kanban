@@ -1,0 +1,276 @@
+@page "/line"
+@implements IDisposable
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Contracts.Metrics
+
+<div class="query-page">
+    @* ──── 标题行：产线总览 + 设备数 + 当前班次 ──── *@
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("Ln_Title")</span>
+            <span class="brand-sub">@L.T("Ln_DevCount", Dashboard.DeviceCount)</span>
+        </div>
+        @if (Dashboard.ShiftProgress is { } shift)
+        {
+            <div class="line-shift">
+                <span class="kpi-label">@L.T("Ln_CurrentShift")</span>
+                <b>@shift.Name</b>
+                <span class="kpi-sub">@L.T("Ln_ShiftProgress") @shift.Pct</span>
+            </div>
+        }
+    </div>
+
+    @if (Dashboard.Snapshots.Count == 0)
+    {
+        <EmptyState Title="@L.T("Ln_NoDevices")" Hint="@L.T("Ln_NoDevicesHint")" Icon="🏭" />
+    }
+    else
+    {
+        @* ──── 汇总 KPI 条 ──── *@
+        <section class="kpi-row">
+            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value kpi-ok">@Summary.Running</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@Summary.Alarm</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@Summary.Paused</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Idle")</span><span class="kpi-value">@Summary.Idle</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@Summary.TotalOutput.ToString("N0")</span><span class="kpi-sub">@L.T("Lbl_Ok") @Summary.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Summary.TotalNg.ToString("N0")</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Ln_WeightedOee")</span><span class="kpi-value">@Pct(Summary.WeightedOee)</span></div>
+        </section>
+
+        @* ──── 筛选：状态 / 搜索 / 排序 ──── *@
+        <div class="filter-bar compact">
+            <button class="chip-btn @(StatusFilter == 0 ? "active" : "")" @onclick="() => StatusFilter = 0">@L.T("Ln_FilterAll")</button>
+            <button class="chip-btn @(StatusFilter == 1 ? "active" : "")" @onclick="() => StatusFilter = 1">@L.T("Status_Running")</button>
+            <button class="chip-btn @(StatusFilter == 2 ? "active" : "")" @onclick="() => StatusFilter = 2">@L.T("Status_Alarm")</button>
+            <button class="chip-btn @(StatusFilter == 3 ? "active" : "")" @onclick="() => StatusFilter = 3">@L.T("Status_Paused")</button>
+            <button class="chip-btn @(StatusFilter == 4 ? "active" : "")" @onclick="() => StatusFilter = 4">@L.T("Status_Idle")</button>
+            <input class="filter-input line-search" type="search" value="@SearchText" @oninput="OnSearchInput" placeholder="@L.T("Ln_Search")" />
+            <select class="filter-input line-sort" @bind="SortBy">
+                <option value="name">@L.T("Ln_SortName")</option>
+                <option value="output">@L.T("Ln_SortOutput")</option>
+                <option value="oee">@L.T("Ln_SortOee")</option>
+            </select>
+        </div>
+
+        @if (FilteredDevices.Count == 0)
+        {
+            <EmptyState Title="@L.T("Ln_EmptyFilter")" Hint="" Icon="🔍" />
+        }
+        else
+        {
+            <div class="mon-grid">
+                @foreach (var d in FilteredDevices)
+                {
+                    <div class="mon-card line-card">
+                        <div class="dev-head">
+                            <span class="dev-name">@d.DeviceName</span>
+                            <span class="status-badge @StateClass(d.Status)">@StateText(d.Status)</span>
+                            @if (!string.IsNullOrEmpty(RecipeOf(d.DeviceId)))
+                            {
+                                <span class="line-recipe">@RecipeOf(d.DeviceId)</span>
+                            }
+                        </div>
+
+                        @* 报警行：⚠ 报警名 · 持续时长 *@
+                        @if (d.ActiveAlarms.Count > 0)
+                        {
+                            var a = d.ActiveAlarms[0];
+                            <div class="line-alarm">
+                                <span class="lvl-dot @LevelClass(a.Level)"></span>
+                                <span>@a.Name</span>
+                                <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
+                                @if (d.ActiveAlarms.Count > 1)
+                                {
+                                    <span class="kpi-sub">+@(d.ActiveAlarms.Count - 1)</span>
+                                }
+                            </div>
+                        }
+
+                        <div class="metric-grid">
+                            <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span></div>
+                            <div><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span></div>
+                            <div><span class="kpi-label">@L.T("Ln_Cycle")</span><span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span></div>
+                            <div><span class="kpi-label">@L.T("Ln_Downtime")</span><span class="kpi-value">@FmtDuration(d.AlarmTime + d.PausedTime)</span></div>
+                        </div>
+
+                        <div class="ring-row">
+                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="#34D399" />
+                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
+                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                        </div>
+                        <div class="meta-line">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime) · @L.T("Lbl_SnapSeq") #@d.Seq</div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private System.Threading.Timer? _renderTimer;
+    private bool _disposed;
+    private List<DeviceConfigDto> _deviceConfigs = [];
+
+    // ──── 筛选状态 ────
+    private int StatusFilter { get; set; } // 0=全部 1=运行 2=报警 3=待机 4=空闲
+    private string SearchText { get; set; } = "";
+    private string SortBy { get; set; } = "name";
+
+    private void OnSearchInput(ChangeEventArgs e) => SearchText = e.Value?.ToString() ?? "";
+
+    private sealed class LineSummary
+    {
+        public int Running, Alarm, Paused, Idle, TotalOk, TotalNg;
+        public int TotalOutput => TotalOk + TotalNg;
+        public double WeightedOee;
+    }
+
+    private LineSummary Summary
+    {
+        get
+        {
+            var s = new LineSummary();
+            foreach (var d in Dashboard.Snapshots)
+            {
+                switch (d.Status)
+                {
+                    case DeviceStatus.Running: s.Running++; break;
+                    case DeviceStatus.Alarm: s.Alarm++; break;
+                    case DeviceStatus.Paused: s.Paused++; break;
+                    default: s.Idle++; break;
+                }
+                s.TotalOk += d.TotalOkProduction;
+                s.TotalNg += d.TotalNgProduction;
+                s.WeightedOee += d.Oee * (d.TotalOkProduction + d.TotalNgProduction);
+            }
+            var totalWeight = s.TotalOutput;
+            s.WeightedOee = totalWeight > 0 ? s.WeightedOee / totalWeight : 0; // 加权 OEE（WPF 同口径）
+            return s;
+        }
+    }
+
+    /// <summary>筛选 + 搜索 + 排序后的设备列表。</summary>
+    private List<DeviceSnapshotDto> FilteredDevices
+    {
+        get
+        {
+            IEnumerable<DeviceSnapshotDto> list = Dashboard.Snapshots;
+            if (StatusFilter > 0)
+            {
+                var target = StatusFilter switch
+                {
+                    1 => DeviceStatus.Running,
+                    2 => DeviceStatus.Alarm,
+                    3 => DeviceStatus.Paused,
+                    _ => DeviceStatus.Unknown,
+                };
+                list = list.Where(d => d.Status == target);
+            }
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var kw = SearchText.Trim();
+                list = list.Where(d => d.DeviceName.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                    || d.DeviceId.Contains(kw, StringComparison.OrdinalIgnoreCase));
+            }
+            return SortBy switch
+            {
+                "output" => list.OrderByDescending(d => d.TotalOkProduction + d.TotalNgProduction).ToList(),
+                "oee" => list.OrderByDescending(d => d.Oee).ToList(),
+                _ => list.OrderBy(d => d.DeviceName, StringComparer.OrdinalIgnoreCase).ToList(),
+            };
+        }
+    }
+
+    private string RecipeOf(string deviceId)
+    {
+        var config = _deviceConfigs.FirstOrDefault(c => c.Id == deviceId);
+        return string.IsNullOrWhiteSpace(config?.RecipeName) ? "" : config.RecipeName;
+    }
+
+    /// <summary>节拍对比 "实际/目标s"：实际 = 3600/(目标产能×性能率)（WPF LineDeviceItem 同口径）。</summary>
+    private static string CycleText(DeviceSnapshotDto d)
+    {
+        if (d.TargetCycle <= 0) return "—";
+        var target = 3600.0 / d.TargetCycle;
+        var real = d.PerformanceRate > 0 ? 3600.0 / (d.TargetCycle * d.PerformanceRate) : 0;
+        return real > 0 ? $"{real:0.0}/{target:0.0}s" : "—";
+    }
+
+    private static bool IsCycleSlow(DeviceSnapshotDto d)
+        => d.TargetCycle > 0 && d.PerformanceRate > 0 && 3600.0 / (d.TargetCycle * d.PerformanceRate) > 3600.0 / d.TargetCycle;
+
+    private static string StateText(DeviceStatus status) => status switch
+    {
+        DeviceStatus.Running => L.T("Status_Running"),
+        DeviceStatus.Alarm => L.T("Status_Alarm"),
+        DeviceStatus.Paused => L.T("Status_Paused"),
+        _ => L.T("Status_Idle"),
+    };
+
+    private static string StateClass(DeviceStatus status) => status switch
+    {
+        DeviceStatus.Running => "run",
+        DeviceStatus.Alarm => "alarm",
+        DeviceStatus.Paused => "paused",
+        _ => "idle",
+    };
+
+    private static string LevelClass(AlarmLevel level) => level switch
+    {
+        AlarmLevel.High => "lvl-high",
+        AlarmLevel.Medium => "lvl-medium",
+        _ => "lvl-low",
+    };
+
+    private static string Pct(double v) => $"{v:P0}";
+
+    private static string FmtDuration(double seconds) => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        try
+        {
+            _deviceConfigs = [.. await Dashboard.QueryDevicesAsync()];
+        }
+        catch (Exception)
+        {
+        }
+        _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
+        await Task.CompletedTask;
+    }
+
+        /// <summary>
+    /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
+    /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
+    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// </summary>
+    private async Task SafeTickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(OnRenderTick);
+        }
+        catch (Exception)
+        {
+            // 组件已释放的竞态：忽略（页面生命周期正常结束）
+        }
+    }
+
+private void OnRenderTick()
+    {
+        if (_disposed) return;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _renderTimer?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

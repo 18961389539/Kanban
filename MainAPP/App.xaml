@@ -33,6 +33,8 @@
                 <ResourceDictionary Source="Styles/Texts.xaml" />
                 <ResourceDictionary Source="Styles/Cards.xaml" />
                 <ResourceDictionary Source="Styles/Components.xaml" />
+                <!--  全局暗色细滚动条（放在 Components 之后，确保覆盖默认滚动条样式）  -->
+                <ResourceDictionary Source="Styles/ScrollBar.xaml" />
                 <!--  产线页布局共享资源：子 UserControl 需通过全局资源访问，无法跨 UserControl 边界查找父级资源  -->
                 <ResourceDictionary Source="Styles/ProductionLineResources.xaml" />
                 <!--  主页仪表板共享资源：子 UserControl（HomeDeviceStatusCard 等 6 个卡片）需通过全局资源访问  -->

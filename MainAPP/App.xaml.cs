@@ -38,6 +38,7 @@ public partial class App : Application
                         Path.Combine(logDir, "kanban_.log"),
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 14,
+                        fileSizeLimitBytes: 20_000_000,
                         flushToDiskInterval: TimeSpan.FromSeconds(2),
                         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
             })
@@ -54,20 +55,6 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        // 禁止多开：非首个实例直接提示并退出，不启动 Host/采集/PLC，避免所有副作用。
-        if (!_isFirstInstance)
-        {
-            Log("检测到已有实例在运行，禁止多开，准备退出");
-            // 启动早期 Growl 容器未就绪，用 HC MessageBox（理由详见下方配置文件损坏处）
-            HandyControl.Controls.MessageBox.Show(
-                "程序已在运行，不能重复启动。",
-                Strings.M036,
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-            Shutdown();
-            return;
-        }
-
         Log("OnStartup 开始");
 
         // OnStartup 是 async void，未捕获异常会直接终止进程且无错误提示。
@@ -75,6 +62,43 @@ public partial class App : Application
         // 任一步骤抛异常时记录日志、提示用户并优雅退出，避免无提示崩溃。
         try
         {
+            // 界面语言应用：必须在任何 UI（含单实例提示/激活对话框）弹出之前，
+            // 否则对话框按默认中文渲染。⚠ 先 Load 再 Apply：AppSettings 构造默认值是 Zh，
+            // 未 Load 时 appSettings.Language 永远为 Zh，Apply 永远应用中文。
+            var appSettings = _host.Services.GetRequiredService<AppSettings>();
+            appSettings.Load();
+            Services.Localization.Apply(appSettings.Language);
+            // 同步覆盖 Kanban.Collector.Core 共享的连接状态文案（从 WPF resx 取值，三语统一源）
+            Kanban.Collector.Core.Localization.ConnectionStatusMessages.Override(
+                MainAPP.Resources.Strings.Conn_Connected,
+                MainAPP.Resources.Strings.Conn_Disconnected,
+                MainAPP.Resources.Strings.Conn_Lost,
+                MainAPP.Resources.Strings.Conn_DisconnectedRetry,
+                MainAPP.Resources.Strings.Conn_Connecting,
+                MainAPP.Resources.Strings.Conn_ConnectingSuffix,
+                MainAPP.Resources.Strings.Conn_RemoteConnecting);
+            // 同步覆盖 Kanban.Collector.Core 共享的配置校验消息（三语预设，与 Collector 进程一致）
+            Kanban.Collector.Core.Localization.ValidationMessages.ApplyLanguage(
+                Services.Localization.GetCultureName(appSettings.Language));
+            // 配方校验/下发消息（与配置校验消息同机制）
+            Kanban.Collector.Core.Localization.RecipeValidationMessages.ApplyLanguage(
+                Services.Localization.GetCultureName(appSettings.Language));
+            Log($"界面语言已应用：{appSettings.Language}");
+
+            // 禁止多开：非首个实例直接提示并退出，不启动 Host/采集/PLC，避免所有副作用。
+            if (!_isFirstInstance)
+            {
+                Log("检测到已有实例在运行，禁止多开，准备退出");
+                // 启动早期 Growl 容器未就绪，用 HC MessageBox（理由详见下方配置文件损坏处）
+                HandyControl.Controls.MessageBox.Show(
+                    MainAPP.Resources.Strings.M309,
+                    MainAPP.Resources.Strings.M036,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                Shutdown();
+                return;
+            }
+
             // 授权检查：在 Host.StartAsync 之前拦截，未激活/试用过期时弹激活对话框。
             // 试用期内或已激活 → 继续启动主程序；激活失败或取消 → 直接退出，不启动后台服务。
             var licenseGate = _host.Services.GetRequiredService<LicenseGate>();
@@ -94,10 +118,10 @@ public partial class App : Application
                 activationVm.StatusMessage = licenseStatus switch
                 {
                     LicenseStatus.TrialExpired => string.Format(Strings.F215, TrialTracker.TrialDays),
-                    LicenseStatus.TrialManipulated => "检测到系统时间异常，试用期已失效，请输入激活码继续使用。",
-                    LicenseStatus.Expired => "授权已过期，请输入新的激活码。",
-                    LicenseStatus.MachineMismatch => "授权与当前机器不匹配，请重新激活。",
-                    _ => "请输入激活码以继续使用。",
+                    LicenseStatus.TrialManipulated => MainAPP.Resources.Strings.M304,
+                    LicenseStatus.Expired => MainAPP.Resources.Strings.M305,
+                    LicenseStatus.MachineMismatch => MainAPP.Resources.Strings.M306,
+                    _ => MainAPP.Resources.Strings.M307,
                 };
 
                 var result = activationDialog.ShowDialog();
@@ -124,15 +148,55 @@ public partial class App : Application
                 Log($"试用期内，剩余 {licenseGate.RemainingTrialDays} 天");
             }
 
+            // 用户登录：在 Host.StartAsync 之后、MainWindow 显示之前。
+            // 首次运行 users.json 不存在时 UserStore.Load 会自动创建默认账号（admin/gly, engineer/gcs, operator 免密）；
+            // 旧版本升级时 UserStore.Load 的 EnsureOperatorAccount 会补齐缺失的 operator 账号。
+            // 非 Viewer 模式默认以管理员（admin）自动登录，全功能页面可直接使用；
+            // 极端情况下 admin 缺失时回退 operator 自动登录（保持至少 Operator 权限）。
+            // Viewer 模式（屏端大屏）跳过登录，直接以未登录态进入展示页面。
+            var userStore = _host.Services.GetRequiredService<UserStore>();
+            userStore.Load();
+
+            // 操作审计门面初始化：必须在任何用户登录/保存等可审计操作之前。
+            // operatorProvider 提供当前操作人显示名；未登录（Viewer）时为空串。
+            Kanban.Core.Services.AuditLog.Initialize(
+                _host.Services.GetService<Kanban.Core.Services.IAuditService>(),
+                () => _host.Services.GetService<Services.UserSession>()?.CurrentUserDisplay ?? string.Empty);
+
+            var appSettingsForLogin = _host.Services.GetRequiredService<AppSettings>();
+            if (appSettingsForLogin.RunMode != KanbanRunMode.Viewer)
+            {
+                var userSession = _host.Services.GetRequiredService<Services.UserSession>();
+                // 优先以管理员自动登录（默认账号 admin/gly，首次运行自动创建）；
+                var adminUser = userStore.Find("admin");
+                if (adminUser is not null)
+                {
+                    userSession.Login(adminUser);
+                    Kanban.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", adminUser.Username, detail: "启动自动登录");
+                    Log($"默认以管理员自动登录：{adminUser.Username}");
+                }
+                else
+                {
+                    // 兜底：管理员账号缺失（不应发生）时回退 operator 自动登录，保持至少 Operator 权限。
+                    var operatorUser = userStore.Find("operator");
+                    if (operatorUser is not null)
+                    {
+                        userSession.Login(operatorUser);
+                        Kanban.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", operatorUser.Username, detail: "启动自动登录（管理员账号缺失，回退 Operator）");
+                        Log($"管理员账号缺失，回退以 Operator 自动登录：{operatorUser.Username}");
+                    }
+                    else
+                    {
+                        // 极端情况：admin/operator 账号均缺失（不应发生，EnsureOperatorAccount 已补齐）。
+                        // 以未登录态继续，UserSession.CurrentRole 默认回退为 Operator，应用仍可正常使用。
+                        Serilog.Log.Warning("admin/operator 账号缺失，以未登录态继续（默认 Operator 权限）");
+                    }
+                }
+            }
+
             await _host.StartAsync();
             Log("Host.StartAsync 完成");
             var startupCoordinator = _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>();
-
-            // 界面语言应用（多语言：中文/英文/日文，默认中文；设置页切换后重启生效）。
-            // 必须在 MainWindow 实例化之前应用，否则 UI 文案已按默认文化渲染。
-            var appSettings = _host.Services.GetRequiredService<AppSettings>();
-            Services.Localization.Apply(appSettings.Language);
-            Log($"界面语言已应用：{appSettings.Language}");
 
             // 业务初始化（配置加载、字号、基线、设备仓储、数据库迁移、工单加载、MainWindow 实例化）
             // 统一委托给 ApplicationStartupCoordinator.PrepareAsync。
@@ -142,16 +206,23 @@ public partial class App : Application
             mainWindow.Show();
             Log("MainWindow.Show 调用完成 (窗口已可见，但首帧尚未渲染)");
 
+            // Show() 返回后让 UI 线程处理消息队列，使首帧（ContentRendered）尽快渲染，
+            // 避免后续同步工作（RefreshLicenseStatus / RefreshNavigationForCurrentUser）阻塞渲染导致黑屏。
+            await System.Windows.Threading.Dispatcher.Yield(
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+
             // 刷新 MainWindow 侧边栏授权状态显示（LicenseGate 已在启动早期检查完毕）
             var mainVm = _host.Services.GetRequiredService<ViewModels.MainWindowViewModel>();
             mainVm.RefreshLicenseStatus();
+            // 登录后刷新导航项：按当前用户角色过滤侧边栏可见页面
+            mainVm.RefreshNavigationForCurrentUser();
 
-            // 启动时刚通过激活对话框激活成功 → 弹 Growl 反馈（P1-3：激活成功后主界面反馈授权信息）
+            // 启动时刚通过激活对话框激活成功 → 弹 Growl 反馈授权信息。
             if (justActivated)
             {
                 var expireText = licenseGate.CurrentLicense?.IsPermanent == false
                     ? string.Format(Strings.F042, licenseGate.CurrentLicense.ExpireDate)
-                    : "· 永久授权";
+                    : MainAPP.Resources.Strings.M308;
                 HandyControl.Controls.Growl.Success(
                     string.Format(Strings.F163, expireText));
             }
@@ -171,7 +242,7 @@ public partial class App : Application
             {
                 // 后台初始化失败不崩溃应用（OnStartup 是 async void，未捕获异常会终止进程），
                 // 记录日志并提示用户，窗口保持可用，用户至少能查看/修改配置。
-                // 此时 MainWindow 已 Show（line 143），Growl 容器已就绪，用非模态通知避免阻塞。
+                // 此时 MainWindow 已 Show，Growl 容器已就绪，用非模态通知避免阻塞。
                 Log($"后台初始化失败: {ex.Message}");
                 HandyControl.Controls.Growl.Warning(
                     string.Format(Strings.F133, ex.Message));
@@ -186,7 +257,7 @@ public partial class App : Application
             catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Serilog 记录失败: {logEx.Message}"); }
             HandyControl.Controls.MessageBox.Show(
                 string.Format(Strings.F178, ex.Message),
-                "启动失败",
+                Strings.M130,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             // IHost 实现 IAsyncDisposable，但 .NET 10 中 DisposeAsync 通过 IAsyncDisposable 接口提供。
@@ -273,7 +344,7 @@ public partial class App : Application
                 errors.Add(string.Format(Strings.F119, ex.Message));
             }
 
-            // P0-3：HistoryService.Dispose 改用 DisposeAsync，避免在 UI 线程同步阻塞最多 3 秒
+            // HistoryService.Dispose 改用 DisposeAsync，避免在 UI 线程同步阻塞最多 3 秒。
             try
             {
                 await _host.Services.GetRequiredService<HistoryService>().DisposeAsync();
@@ -288,8 +359,8 @@ public partial class App : Application
                 // 退出阶段：用 HC MessageBox 模态阻塞，确保用户在应用关闭前看到保存失败信息
                 // （Growl 是非模态通知，应用关闭时会被立即销毁，用户来不及看到）
                 HandyControl.Controls.MessageBox.Show(
-                    "退出时部分数据保存失败，可能丢失：\n\n" + string.Join("\n", errors),
-                    "持久化失败",
+                    Strings.M355 + "\n\n" + string.Join("\n", errors),
+                    Strings.M356,
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
@@ -306,7 +377,7 @@ public partial class App : Application
         {
             // 在 Serilog.Log.CloseAndFlush 之前显式释放关键 IDisposable 服务：
             // _host.Dispose 会在最后调用，但其日志在 CloseAndFlush 之后无法落盘，
-            // 这里提前释放以确保 Dispose 阶段日志可被捕获，便于排查关闭阶段资源泄漏。
+            // 这里提前释放以确保 Dispose 阶段日志可被捕获，便于追踪关闭阶段资源泄漏。
             foreach (var disposable in new object?[]
             {
                 _host.Services.GetService<ViewModels.HomeViewModel>(),

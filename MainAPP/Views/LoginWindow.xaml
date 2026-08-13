@@ -1,0 +1,105 @@
+<Window
+    x:Class="MainAPP.Views.LoginWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="{x:Static resources:Strings.M315}"
+    Width="380"
+    Height="280"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterScreen"
+    Background="{StaticResource RegionBrush}"
+    FocusManager.FocusedElement="{Binding ElementName=UsernameBox}"
+    mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  标题  -->
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,20"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
+            FontWeight="Bold"
+            Foreground="{StaticResource PrimaryTextBrush}"
+            Text="{x:Static resources:Strings.M315}" />
+
+        <!--  用户名（可编辑下拉框：支持选择或手动输入）  -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <TextBlock
+                Margin="0,0,0,4"
+                FontSize="{DynamicResource FontSizeHint}"
+                Foreground="{StaticResource SecondaryTextBrush}"
+                Text="{x:Static resources:Strings.M316}" />
+            <ComboBox
+                x:Name="UsernameBox"
+                Padding="8,6"
+                FontSize="{DynamicResource FontSizeKpiLabel}"
+                ItemsSource="{Binding AvailableUsers}"
+                DisplayMemberPath="Username"
+                SelectedItem="{Binding SelectedUser, Mode=TwoWay}" />
+        </StackPanel>
+
+        <!--  密码  -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock
+                Margin="0,0,0,4"
+                FontSize="{DynamicResource FontSizeHint}"
+                Foreground="{StaticResource SecondaryTextBrush}"
+                Text="{x:Static resources:Strings.M317}" />
+            <PasswordBox
+                x:Name="PasswordBox"
+                Padding="8,6"
+                FontSize="{DynamicResource FontSizeKpiLabel}"
+                KeyDown="OnPasswordKeyDown" />
+        </StackPanel>
+
+        <!--  错误提示  -->
+        <TextBlock
+            Grid.Row="3"
+            Margin="0,4,0,0"
+            FontSize="{DynamicResource FontSizeHint}"
+            Foreground="{StaticResource DangerBrush}"
+            Text="{Binding ErrorMessage}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ErrorMessage}" Value="">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!--  登录按钮  -->
+        <StackPanel
+            Grid.Row="6"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                Width="90"
+                Click="OnCancelClick"
+                Content="{x:Static resources:Strings.K092}"
+                IsCancel="True"
+                Style="{StaticResource ButtonDefault}" />
+            <Button
+                Width="90"
+                Margin="8,0,0,0"
+                Click="OnLoginClick"
+                Content="{x:Static resources:Strings.M318}"
+                IsDefault="True"
+                Style="{StaticResource ButtonPrimary}" />
+        </StackPanel>
+    </Grid>
+</Window>

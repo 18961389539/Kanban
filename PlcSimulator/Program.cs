@@ -59,6 +59,17 @@ internal class Program
 
     static async Task Main(string[] args)
     {
+        // 单实例保护：防误启双 Simulator 抢占同一端口（残留实例与真实例双监听 4999/5000 时，
+        // Collector 连接可能路由到残留实例，导致持续 ReadFailure——已多次踩坑）。
+        // 与 Collector 的 Global\ 互斥同模式：Windows 服务（Session 0）与交互会话互斥生效；
+        // WaitOne(0) 语义在前实例崩溃（abandoned）时正常接管启动。
+        using var singleInstanceMutex = TryAcquireSingleton(@"Global\Kanban.PlcSimulator.SingleInstance");
+        if (singleInstanceMutex is null)
+        {
+            Console.Error.WriteLine("PlcSimulator 已在运行（单实例保护），本实例退出。");
+            return;
+        }
+
         // 强制控制台输出为 UTF-8，避免中文日志重定向到文件时出现 GBK 乱码
         try { Console.OutputEncoding = Encoding.UTF8; } catch { }
 
@@ -763,6 +774,34 @@ internal class Program
         if (Console.IsInputRedirected) return;
         Console.WriteLine("按任意键退出...");
         try { Console.ReadKey(); } catch { }
+    }
+
+    /// <summary>
+    /// 单实例互斥获取（健壮版，与 Kanban.Collector 同模式）：非阻塞尝试取得命名互斥所有权。
+    /// - 前实例崩溃遗留（AbandonedMutexException）→ 接管所有权，正常启动；
+    /// - 已有实例持有 → 返回 null，调用方退出；
+    /// - Global\ 前缀权限不足（UnauthorizedAccessException）→ 返回 null 保守退出，
+    ///   避免无保护运行导致双监听抢端口。
+    /// </summary>
+    private static Mutex? TryAcquireSingleton(string name)
+    {
+        var mutex = new Mutex(false, name);
+        try
+        {
+            if (mutex.WaitOne(TimeSpan.Zero))
+                return mutex; // 取得所有权
+            mutex.Dispose();
+            return null; // 已有实例持有
+        }
+        catch (AbandonedMutexException)
+        {
+            return mutex; // 前实例崩溃，已接管所有权
+        }
+        catch (UnauthorizedAccessException)
+        {
+            mutex.Dispose();
+            return null;
+        }
     }
 
     private static List<DeviceConfig> CreateDefaultDevices()

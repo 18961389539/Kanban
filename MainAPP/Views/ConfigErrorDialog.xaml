@@ -23,7 +23,7 @@
 
         <TextBlock
             Grid.Row="0"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             FontWeight="Medium"
             Foreground="{StaticResource PrimaryTextBrush}"
             Text="{x:Static resources:Strings.K141}" />
@@ -31,7 +31,7 @@
         <TextBlock
             Grid.Row="1"
             Margin="0,4,0,8"
-            FontSize="12"
+            FontSize="{DynamicResource FontSizeHint}"
             Foreground="{DynamicResource SecondaryTextBrush}"
             Text="{x:Static resources:Strings.K142}" />
 

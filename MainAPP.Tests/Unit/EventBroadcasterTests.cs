@@ -162,4 +162,115 @@ public class EventBroadcasterTests
         var reader = await SubscribeStatusAsync(bc, afterSeq: 1);
         Assert.Equal(2, (await reader.ReadAsync(CancellationToken.None)).Seq);
     }
+
+    // ──────────── ServerEpoch（Collector 重启后客户端游标重置依据） ────────────
+
+    [Fact]
+    public async Task PublishedAlarmEvent_CarriesServerEpoch()
+    {
+        var bc = CreateBroadcaster();
+        var reader = await SubscribeAlarmAsync(bc, 0);
+
+        bc.PublishAlarmEvent(Alarm());
+
+        var evt = await reader.ReadAsync(CancellationToken.None);
+        Assert.Equal(bc.ServerEpoch, evt.ServerEpoch);
+        Assert.NotEqual(0, bc.ServerEpoch); // TickCount64 进程级纪元非零
+    }
+
+    [Fact]
+    public async Task PublishedStatusEvent_CarriesServerEpoch()
+    {
+        // 回归：状态流此前未 stamp ServerEpoch（半成品），Collector 重启后客户端
+        // 无法区分"新进程低 Seq 事件"，旧游标会把新进程事件全部过滤（漏报）。
+        var bc = CreateBroadcaster();
+        var reader = await SubscribeStatusAsync(bc, 0);
+
+        bc.PublishStatusEvent(Status());
+
+        var evt = await reader.ReadAsync(CancellationToken.None);
+        Assert.Equal(bc.ServerEpoch, evt.ServerEpoch);
+        Assert.NotEqual(0, bc.ServerEpoch);
+    }
+
+    [Fact]
+    public async Task StatusReplay_AlsoCarriesServerEpoch()
+    {
+        // 补拉路径（环形缓冲补发）同样必须带 epoch，否则断线重连补发的事件
+        // 无法参与客户端纪元判断。
+        var bc = CreateBroadcaster();
+        bc.PublishStatusEvent(Status()); // seq=1（订阅前）
+
+        var reader = await SubscribeStatusAsync(bc, afterSeq: 0);
+        var evt = await reader.ReadAsync(CancellationToken.None);
+        Assert.Equal(bc.ServerEpoch, evt.ServerEpoch);
+        Assert.Equal(1, evt.Seq);
+    }
+
+    // ──────────── 背压语义：有界 Channel + DropOldest（#3 重构成果回归） ────────────
+
+    /// <summary>
+    /// 慢订阅者（注册后暂停消费）：发布量超过 channel 容量（4096）时丢最旧保最新，
+    /// 恢复消费后收到的是**连续无缺号**的最新 4096 条——既不 OOM（有界）也不出现空洞。
+    /// 回归背景：曾有实现用无界缓冲（慢/停流客户端可 OOM 拖垮采集进程）。
+    /// </summary>
+    [Fact]
+    public async Task SlowSubscriber_BoundedChannel_DropsOldest_KeepsLatest()
+    {
+        const int capacity = EventBroadcaster.RetentionCount; // 4096
+        var bc = CreateBroadcaster();
+        var enumerator = bc.WatchAlarmEventsAsync(0, CancellationToken.None).GetAsyncEnumerator();
+
+        // 首次 MoveNext：完成订阅注册（补发为空），并消费 seq=1
+        var first = enumerator.MoveNextAsync();
+        bc.PublishAlarmEvent(Alarm()); // seq=1
+        Assert.True(await first);
+        Assert.Equal(1, enumerator.Current.Seq);
+
+        // 暂停消费（模拟慢/停流客户端）：快速发布直至远超容量
+        for (var i = 2; i <= 5000; i++)
+            bc.PublishAlarmEvent(Alarm());
+
+        // 恢复消费：channel 容量 4096，丢最旧（seq 2..904 被丢弃），剩余 905..5000 连续无缺号
+        // prev 初值 = 首条序号 905 的前一条（904 = 5000-4096），否则第一条连续性断言必失败
+        long prev = 5000 - capacity;
+        for (var i = 0; i < capacity; i++)
+        {
+            Assert.True(await enumerator.MoveNextAsync());
+            var seq = enumerator.Current.Seq;
+            Assert.Equal(prev + 1, seq); // 连续性：不丢中间、不重号
+            prev = seq;
+        }
+        Assert.Equal(5000, prev);                                     // 最新一条保留
+        Assert.Equal(5000 - capacity + 1, 905);                      // 首条序号 = 5000-4096+1 = 905
+        Assert.Equal(5000 - capacity + 1, prev - (capacity - 1));     // 与收到的第一条一致
+        await enumerator.DisposeAsync();
+    }
+
+    /// <summary>
+    /// 环形缓冲保留最近 4096 条：晚订阅（afterSeq=0）补拉只含保留段（最旧已淘汰），
+    /// 与 channel DropOldest 语义对齐——补拉窗口 = 实时容量的覆盖范围。
+    /// </summary>
+    [Fact]
+    public async Task Ring_RetainsLatestRetentionCount_ReplayGetsOnlyRetainedWindow()
+    {
+        const int capacity = EventBroadcaster.RetentionCount; // 4096
+        var bc = CreateBroadcaster();
+        for (var i = 1; i <= 4200; i++)
+            bc.PublishAlarmEvent(Alarm()); // seq=1..4200（无订阅者，仅入 ring）
+
+        // 晚订阅 afterSeq=0：补发 ring 保留的最近 4096 条（seq 105..4200）
+        var reader = await SubscribeAlarmAsync(bc, afterSeq: 0);
+        var first = await reader.ReadAsync(CancellationToken.None);
+        Assert.Equal(4200 - capacity + 1, first.Seq); // 105：最旧一条已被淘汰
+
+        long prev = first.Seq;
+        for (var i = 1; i < capacity; i++)
+        {
+            var evt = await reader.ReadAsync(CancellationToken.None);
+            Assert.Equal(prev + 1, evt.Seq);
+            prev = evt.Seq;
+        }
+        Assert.Equal(4200, prev); // 最新一条在补拉尾部
+    }
 }

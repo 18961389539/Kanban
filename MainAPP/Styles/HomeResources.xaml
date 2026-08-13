@@ -8,8 +8,16 @@
           在 XAML 加载阶段通过 StaticResource 查找时无法跨 UserControl 边界访问父级资源，
           必须放到全局资源字典才能正确解析。  -->
 
-    <!--  仪表板卡片：基于 MainCard，主页 6 个卡片统一外观  -->
+    <!--  仪表板卡片：基于 MainCard，主页 6 个卡片统一外观。
+         大卡立体感微增强：深色主题下黑阴影在近黑背景上对比度低（原 0.35 几乎不可见），
+         此处提高不透明度/加深投影/扩大模糊，让大卡相对页面有更明显的悬浮感；
+         内部小卡（KpiCardSecondary）不受影响。  -->
     <Style x:Key="DashboardCard" TargetType="Border" BasedOn="{StaticResource MainCard}">
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="18" Direction="270" Opacity="0.5" ShadowDepth="5" Color="#000000" />
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!--  卡片标题图标：基于 SectionTitleIcon  -->

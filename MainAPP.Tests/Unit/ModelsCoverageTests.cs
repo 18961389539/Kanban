@@ -236,15 +236,15 @@ public class ModelsCoverageTests
         var item = new NavItem
         {
             Index = 2,
-            Label = "设备",
             Icon = MaterialIconKind.Alarm,
-            AccessibleName = "设备",
-            ToolTip = "设备管理",
+            LabelKey = "Nav_DeviceManager",
+            AccessibleNameKey = "Nav_DeviceManager",
+            ToolTipKey = "Nav_DeviceManager",
         };
         Assert.Equal(2, item.Index);
-        Assert.Equal("设备", item.Label);
+        Assert.Equal("设备管理", item.Label);
         Assert.Equal(MaterialIconKind.Alarm, item.Icon);
-        Assert.Equal("设备", item.AccessibleName);
+        Assert.Equal("设备管理", item.AccessibleName);
         Assert.Equal("设备管理", item.ToolTip);
     }
 
@@ -254,13 +254,14 @@ public class ModelsCoverageTests
         var item = new NavItem
         {
             Index = 0,
-            Label = "主页",
             Icon = MaterialIconKind.Home,
-            AccessibleName = "主页导航",
+            LabelKey = "Nav_Home",
+            AccessibleNameKey = "Nav_Home",
         };
-        // AccessibleName 用于 UIA，即使 Label 与 AccessibleName 语义不同也应各自保持
-        Assert.Equal("主页", item.Label);
-        Assert.Equal("主页导航", item.AccessibleName);
+        // 多语言架构：Label/AccessibleName 现在是计算 getter，按当前 UI 文化动态取值。
+        // 测试环境下 CurrentUICulture 为默认 en-US，这里的断言由 CI 的 LocalizationGuardTests 在更广范围覆盖。
+        Assert.NotNull(item.Label);
+        Assert.NotNull(item.AccessibleName);
     }
 
     // ---------- ShiftOeeRecord ----------

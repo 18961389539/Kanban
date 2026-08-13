@@ -8,6 +8,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -65,6 +66,53 @@ public class SettingsViewModelTests : IDisposable
 
     private SettingsViewModel NewVm() => new(_appSettings, _conn, _dialog, _licenseGate, _services);
 
+    /// <summary>
+    /// 保存后审计前后值应反映「上次已保存」与「本次草稿」的真实差异，
+    /// 而非把已编辑的草稿误记为 before（P1 修复回归测试）。
+    /// </summary>
+    [Fact]
+    public void Save_AuditBeforeReflectsLastSavedNotEditedDraft()
+    {
+        _appSettings.PlcConfig.IpAddress = "192.168.1.2";
+        var auditService = NSubstitute.Substitute.For<IAuditService>();
+        AuditLog.ResetForTest();
+        AuditLog.Initialize(auditService, () => "tester");
+        try
+        {
+            var vm = NewVm(); // 构造时基线 = 192.168.1.2
+            vm.DraftSettings.PlcConfig.IpAddress = "10.0.0.99"; // 编辑草稿
+            vm.SaveCommand.Execute(null);
+
+            var call = Assert.Single(auditService.ReceivedCalls());
+            var args = call.GetArguments();
+            Assert.Equal("Settings.Update", args[0]);
+            Assert.Contains("192.168.1.2", (string)args[6]!); // before = 上次已保存的旧 IP
+            Assert.Contains("10.0.0.99", (string)args[7]!);   // after = 本次保存的新 IP
+        }
+        finally
+        {
+            AuditLog.ResetForTest();
+        }
+    }
+
+    /// <summary>
+    /// 回归：CopySettings 必须拷贝 DataMode/RunMode/CollectorHubUrl，否则保存后改动被静默丢弃（审查修复 2026-08-13）。
+    /// </summary>
+    [Fact]
+    public void Save_DataModeRunModeAndHubUrl_AreCopiedToAppSettings()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.DataMode = KanbanDataMode.Remote;
+        vm.DraftSettings.RunMode = KanbanRunMode.Viewer;
+        vm.DraftSettings.CollectorHubUrl = "http://192.168.1.50:5129/hubs/kanban";
+
+        vm.SaveCommand.Execute(null);
+
+        Assert.Equal(KanbanDataMode.Remote, _appSettings.DataMode);
+        Assert.Equal(KanbanRunMode.Viewer, _appSettings.RunMode);
+        Assert.Equal("http://192.168.1.50:5129/hubs/kanban", _appSettings.CollectorHubUrl);
+    }
+
     // ───────────── 校验失败分支 ─────────────
 
     [Fact]
@@ -76,6 +124,96 @@ public class SettingsViewModelTests : IDisposable
         Assert.NotEmpty(_dialog.Warning);
         Assert.Contains("IP 地址不能为空", _dialog.Warning[0]);
         Assert.Empty(_dialog.Success);
+    }
+
+    // ───────────── 测试连接：单连接限制提示 ─────────────
+
+    private SettingsViewModel NewVmWithTestFactory(ISharedPlcDriverFactory factory)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(factory);
+        return new SettingsViewModel(_appSettings, _conn, _dialog, _licenseGate, services.BuildServiceProvider());
+    }
+
+    [Fact]
+    public async Task TestConnection_RefusedWhileAcquisitionConnected_SameEndpoint_ShowsSingleConnectionHint()
+    {
+        // 主采集已连接同一端点
+        _appSettings.PlcConfig.IpAddress = "10.0.0.8";
+        _appSettings.PlcConfig.Port = 6000;
+        _conn.EnsureConnected();
+        Assert.True(_conn.IsConnected);
+
+        // 测试连接工厂返回"连接被拒绝（TCP 拒绝）"的临时驱动
+        var factory = Substitute.For<ISharedPlcDriverFactory>();
+        var testDriver = new FakePlcDriver { ShouldFailConnect = true, ConnectFailureKind = PlcErrorKind.ConnectionLost };
+        factory.Create(Arg.Any<PlcConfig>()).Returns(testDriver);
+        var vm = NewVmWithTestFactory(factory);
+
+        await vm.TestConnectionCommand.ExecuteAsync(null);
+
+        Assert.Equal("Error", vm.TestConnectionResultType);
+        Assert.Contains("仅允许单个连接", vm.TestConnectionResult);
+    }
+
+    [Fact]
+    public async Task TestConnection_RefusedWithoutAcquisition_ShowsGenericError()
+    {
+        // 主采集未连接：即使连接被拒绝也走通用失败文案，不提示单连接限制
+        _appSettings.PlcConfig.IpAddress = "10.0.0.8";
+        _appSettings.PlcConfig.Port = 6000;
+
+        var factory = Substitute.For<ISharedPlcDriverFactory>();
+        var testDriver = new FakePlcDriver { ShouldFailConnect = true, ConnectFailureKind = PlcErrorKind.ConnectionLost };
+        factory.Create(Arg.Any<PlcConfig>()).Returns(testDriver);
+        var vm = NewVmWithTestFactory(factory);
+
+        await vm.TestConnectionCommand.ExecuteAsync(null);
+
+        Assert.Equal("Error", vm.TestConnectionResultType);
+        Assert.Contains("连接失败", vm.TestConnectionResult);
+        Assert.DoesNotContain("仅允许单个连接", vm.TestConnectionResult);
+    }
+
+    [Fact]
+    public async Task TestConnection_RefusedWhileAcquisitionConnected_DifferentEndpoint_ShowsGenericError()
+    {
+        // 主采集连着 A，测试连接的是 B（端点不同）：不是单连接限制，走通用文案
+        _appSettings.PlcConfig.IpAddress = "10.0.0.8";
+        _appSettings.PlcConfig.Port = 6000;
+        _conn.EnsureConnected();
+
+        var factory = Substitute.For<ISharedPlcDriverFactory>();
+        var testDriver = new FakePlcDriver { ShouldFailConnect = true, ConnectFailureKind = PlcErrorKind.ConnectionLost };
+        factory.Create(Arg.Any<PlcConfig>()).Returns(testDriver);
+        var vm = NewVmWithTestFactory(factory);
+        vm.DraftSettings.PlcConfig.IpAddress = "10.0.0.9"; // 草稿端点与运行实例不同
+
+        await vm.TestConnectionCommand.ExecuteAsync(null);
+
+        Assert.Equal("Error", vm.TestConnectionResultType);
+        Assert.Contains("连接失败", vm.TestConnectionResult);
+        Assert.DoesNotContain("仅允许单个连接", vm.TestConnectionResult);
+    }
+
+    [Fact]
+    public async Task TestConnection_TimeoutWhileAcquisitionConnected_SameEndpoint_ShowsGenericError()
+    {
+        // 超时（非 ConnectionLost）不触发单连接提示
+        _appSettings.PlcConfig.IpAddress = "10.0.0.8";
+        _appSettings.PlcConfig.Port = 6000;
+        _conn.EnsureConnected();
+
+        var factory = Substitute.For<ISharedPlcDriverFactory>();
+        var testDriver = new FakePlcDriver { ShouldFailConnect = true, ConnectFailureKind = PlcErrorKind.Timeout };
+        factory.Create(Arg.Any<PlcConfig>()).Returns(testDriver);
+        var vm = NewVmWithTestFactory(factory);
+
+        await vm.TestConnectionCommand.ExecuteAsync(null);
+
+        Assert.Equal("Error", vm.TestConnectionResultType);
+        Assert.Contains("连接失败", vm.TestConnectionResult);
+        Assert.DoesNotContain("仅允许单个连接", vm.TestConnectionResult);
     }
 
     [Fact]

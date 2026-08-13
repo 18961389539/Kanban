@@ -48,6 +48,38 @@ public class AppSettingsValidationTests : IDisposable
     }
 
     [Fact]
+    public void KeyenceBrand_UsesMcDefaultPortAndPreservesCustomPort()
+    {
+        var config = new Kanban.Core.Models.PlcConfig();
+
+        config.Brand = Kanban.Core.Models.PlcBrand.Keyence;
+        Assert.Equal(5000, config.Port);
+
+        config.Port = 8501;
+        config.Brand = Kanban.Core.Models.PlcBrand.Mitsubishi;
+        Assert.Equal(8501, config.Port);
+    }
+
+    [Fact]
+    public void KeyenceSnapshot_PreservesConnectionSettings()
+    {
+        var source = new Kanban.Core.Models.PlcConfig
+        {
+            Brand = Kanban.Core.Models.PlcBrand.Keyence,
+            IpAddress = "10.10.0.5",
+            Port = 8501,
+            TimeoutMs = 3500,
+        };
+
+        var snapshot = source.CreateSnapshot();
+
+        Assert.Equal(Kanban.Core.Models.PlcBrand.Keyence, snapshot.Brand);
+        Assert.Equal("10.10.0.5", snapshot.IpAddress);
+        Assert.Equal(8501, snapshot.Port);
+        Assert.Equal(3500, snapshot.TimeoutMs);
+    }
+
+    [Fact]
     public void DefaultShifts_CoversDayAndNight()
     {
         var defaults = AppSettings.GetDefaultShifts();

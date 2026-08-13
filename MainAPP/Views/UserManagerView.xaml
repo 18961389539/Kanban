@@ -1,0 +1,196 @@
+<UserControl
+    x:Class="MainAPP.Views.UserManagerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:models="clr-namespace:Kanban.Core.Models;assembly=Kanban.Collector.Core"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    d:DesignHeight="500"
+    d:DesignWidth="700"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <ObjectDataProvider
+            x:Key="UserRoleValues"
+            MethodName="GetValues"
+            ObjectType="{x:Type sys:Enum}"
+            xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:UserRole" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </UserControl.Resources>
+
+    <Grid Margin="24,16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+
+        <!--  用户列表  -->
+        <Border
+            Grid.Column="0"
+            Padding="0"
+            Background="{StaticResource SecondaryRegionBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+            <DockPanel>
+                <TextBlock
+                    Margin="16,12,16,8"
+                    DockPanel.Dock="Top"
+                    FontSize="{DynamicResource FontSizeKpiLabel}"
+                    FontWeight="Bold"
+                    Foreground="{StaticResource PrimaryTextBrush}"
+                    Text="{x:Static resources:Strings.M320}" />
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    BorderThickness="0"
+                    CanUserAddRows="False"
+                    CanUserDeleteRows="False"
+                    GridLinesVisibility="Horizontal"
+                    HeadersVisibility="Column"
+                    HorizontalGridLinesBrush="{StaticResource DividerBrush}"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding Users}"
+                    SelectedItem="{Binding SelectedUser}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn
+                            Binding="{Binding Username}"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Header="{x:Static resources:Strings.M316}" />
+                        <DataGridTextColumn
+                            Binding="{Binding DisplayName}"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Header="{x:Static resources:Strings.M330}" />
+                        <DataGridTextColumn
+                            Binding="{Binding Role}"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Header="{x:Static resources:Strings.M321}" />
+                        <DataGridCheckBoxColumn
+                            Binding="{Binding IsActive}"
+                            Header="{x:Static resources:Strings.M331}"
+                            IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <!--  右侧操作面板  -->
+        <DockPanel Grid.Column="2" LastChildFill="True">
+            <!--  编辑选中用户  -->
+            <Border
+                Padding="16"
+                Background="{StaticResource SecondaryRegionBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                DockPanel.Dock="Top"
+                Visibility="{Binding SelectedUser, Converter={StaticResource NullToVisibilityConverter}}">
+                <StackPanel DataContext="{Binding SelectedUser}">
+                    <TextBlock
+                        Margin="0,0,0,12"
+                        FontSize="{DynamicResource FontSizeKpiLabel}"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource PrimaryTextBrush}"
+                        Text="{Binding DisplayLabel}" />
+
+                    <hc:TextBox
+                        Margin="0,0,0,12"
+                        hc:InfoElement.Title="{x:Static resources:Strings.M330}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        Style="{StaticResource TextBoxExtend}"
+                        Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <hc:ComboBox
+                        Margin="0,0,0,12"
+                        hc:InfoElement.Title="{x:Static resources:Strings.M321}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        ItemsSource="{Binding Source={StaticResource UserRoleValues}}"
+                        SelectedItem="{Binding Role, UpdateSourceTrigger=PropertyChanged}"
+                        Style="{StaticResource ComboBoxExtend}" />
+
+                    <CheckBox
+                        Margin="0,0,0,12"
+                        Content="{x:Static resources:Strings.M331}"
+                        IsChecked="{Binding IsActive, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding DataContext.UpdateUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Content="{x:Static resources:Strings.Common_Save}"
+                        Style="{StaticResource ButtonPrimary}" />
+
+                    <Button
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Stretch"
+                        Click="OnResetPasswordClick"
+                        Content="{x:Static resources:Strings.M324}"
+                        Style="{StaticResource ButtonDefault}" />
+
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Content="{x:Static resources:Strings.M323}"
+                        Style="{StaticResource ButtonDanger}" />
+                </StackPanel>
+            </Border>
+
+            <!--  添加新用户  -->
+            <Border
+                Padding="16"
+                Background="{StaticResource SecondaryRegionBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel>
+                    <TextBlock
+                        Margin="0,0,0,12"
+                        FontSize="{DynamicResource FontSizeKpiLabel}"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource PrimaryTextBrush}"
+                        Text="{x:Static resources:Strings.M322}" />
+
+                    <hc:TextBox
+                        x:Name="NewUsernameBox"
+                        Margin="0,0,0,12"
+                        hc:InfoElement.Title="{x:Static resources:Strings.M316}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        Style="{StaticResource TextBoxExtend}"
+                        Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <hc:TextBox
+                        Margin="0,0,0,12"
+                        hc:InfoElement.Title="{x:Static resources:Strings.M330}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        Style="{StaticResource TextBoxExtend}"
+                        Text="{Binding NewDisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <hc:ComboBox
+                        Margin="0,0,0,12"
+                        hc:InfoElement.Title="{x:Static resources:Strings.M321}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        ItemsSource="{Binding Source={StaticResource UserRoleValues}}"
+                        SelectedItem="{Binding NewUserRole, UpdateSourceTrigger=PropertyChanged}"
+                        Style="{StaticResource ComboBoxExtend}" />
+
+                    <PasswordBox
+                        x:Name="NewPasswordBox"
+                        Margin="0,0,0,12"
+                        Padding="8,6"
+                        FontSize="{DynamicResource FontSizeHint}" />
+
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Click="OnAddUserClick"
+                        Content="{x:Static resources:Strings.M322}"
+                        Style="{StaticResource ButtonPrimary}" />
+                </StackPanel>
+            </Border>
+        </DockPanel>
+    </Grid>
+</UserControl>

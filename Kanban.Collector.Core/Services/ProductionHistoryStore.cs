@@ -43,10 +43,14 @@ public sealed class ProductionHistoryStore(DatabaseProvider db, ILogger<Producti
             context.ProductionLogs, from, to, deviceId, shiftName,
             nameof(ProductionLog.Timestamp), nameof(ProductionLog.DeviceId), nameof(ProductionLog.ShiftName));
         var total = query.Count();
+        var offset = HistoryPagination.Offset(page, pageSize);
+        var (_, size) = HistoryPagination.Normalize(page, pageSize);
         var items = query
             .OrderBy(log => log.Timestamp)
-            .Skip((Math.Max(1, page) - 1) * Math.Max(1, pageSize))
-            .Take(Math.Max(1, pageSize))
+            // 稳定次级键：同轮采集各设备共享同一 Timestamp，仅按时间排序翻页会重复/漏行（审查修复 2026-08-13）
+            .ThenBy(log => log.Id)
+            .Skip(offset)
+            .Take(size)
             .AsNoTracking()
             .ToList();
         return (items, total);
@@ -98,6 +102,20 @@ public sealed class ProductionHistoryStore(DatabaseProvider db, ILogger<Producti
             logger.LogWarning(ex, "批量查询工单生产快照失败");
             return [];
         }
+    }
+
+    /// <inheritdoc cref="IWorkOrderProductionBatchQuery.QueryProductionLogsByDeviceWindowsBatch" />
+    public Dictionary<int, List<ProductionLog>> QueryProductionLogsByDeviceWindowsBatch(
+        IReadOnlyList<(int WorkOrderId, string DeviceId, DateTime From, DateTime To)> windows)
+    {
+        var result = new Dictionary<int, List<ProductionLog>>();
+        foreach (var (workOrderId, deviceId, from, to) in windows)
+        {
+            // Local 模式：SQLite 本地查询廉价，逐窗口执行（与原逐条回退路径同构，无网络往返问题）
+            var logs = QueryProductionLogs(from, to, deviceId);
+            if (logs.Count > 0) result[workOrderId] = logs;
+        }
+        return result;
     }
 
     public ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName)

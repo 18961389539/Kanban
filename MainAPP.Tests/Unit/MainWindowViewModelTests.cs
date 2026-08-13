@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using LicenseManager.Services;
 using Kanban.Core.Data;
+using Kanban.Core.Models;
 using Kanban.Core.Services;
+using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.Tests;
 using MainAPP.ViewModels;
@@ -90,12 +92,19 @@ public class MainWindowViewModelTests : IDisposable
 
     /// <summary>
     /// 构造被测对象：所有依赖 ViewModel 都用真实实现构造，确保构造函数订阅事件路径被覆盖。
+    /// 使用已登录 Admin 角色的 UserSession，确保所有受权限保护的页面（设置/运行监控/设备管理/用户管理）可访问。
     /// </summary>
-    private MainWindowViewModel NewVm()
+    private MainWindowViewModel NewVm(UserSession? session = null, ILoginDialogService? loginDialogService = null)
     {
+        var userSession = session ?? new UserSession();
+        if (!userSession.IsLoggedIn)
+            userSession.Login(new User { Username = "admin", DisplayName = "管理员", Role = UserRole.Admin });
+
         var alarmCsvIO = new AlarmCsvIOService(_dialog);
+        var defectCsvIO = new DefectCsvIOService(_dialog);
+        var countAlarmCsvIO = new CountAlarmCsvIOService(_dialog);
         var workOrderService = new WorkOrderService(_workOrderRepo, _deviceRepo, _dialog, _historyService);
-        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, _workOrderRepo, workOrderService);
+        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, defectCsvIO, countAlarmCsvIO, _workOrderRepo, workOrderService, userSession);
         var historyQueryVm = new HistoryQueryViewModel(_historyService, _deviceRepo, _appSettings, _dialog);
         var homeVm = new HomeViewModel(_deviceRepo, _conn, _appSettings, null!, _selection);
         var productionLineVm = new ProductionLineViewModel(_deviceRepo, _selection, null, _appSettings);
@@ -105,10 +114,22 @@ public class MainWindowViewModelTests : IDisposable
             Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceDetailViewModel>.Instance,
             _workOrderRepo, workOrderService);
         var settingsVm = new SettingsViewModel(_appSettings, _conn, _dialog, _licenseGate, _services);
-        var workOrderVm = new WorkOrderManagerViewModel(_workOrderRepo, workOrderService, _deviceRepo, _dialog);
+        var workOrderVm = new WorkOrderManagerViewModel(_workOrderRepo, workOrderService, _deviceRepo, _dialog, userSession);
+        // 页面 VM 懒加载（2026-08-11）：MainWindowViewModel 经 IServiceProvider 惰性解析页面 VM，
+        // 测试把预先构造的真实 VM 实例注册进临时容器，属性首次访问时解析。
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddSingleton(deviceManagerVm);
+        services.AddSingleton(historyQueryVm);
+        services.AddSingleton(homeVm);
+        services.AddSingleton(productionLineVm);
+        services.AddSingleton(alarmCenterVm);
+        services.AddSingleton(overviewVm);
+        services.AddSingleton(deviceDetailVm);
+        services.AddSingleton(workOrderVm);
+        services.AddSingleton(settingsVm);
         return new MainWindowViewModel(
-            _appSettings, deviceManagerVm, historyQueryVm, homeVm,
-            productionLineVm, alarmCenterVm, overviewVm, deviceDetailVm, workOrderVm, settingsVm, _conn, _licenseGate);
+            _appSettings, services.BuildServiceProvider(),
+            _conn, _licenseGate, userSession, loginDialogService: loginDialogService);
     }
 
     // ───────────── 构造函数初始化 ─────────────
@@ -131,12 +152,12 @@ public class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void NavItems_HasNineItems()
+    public void NavItems_HasTenItems()
     {
         var vm = NewVm();
-        // 主页/产线/报警中心/设备管理/工单/历史查询/生产复盘/设置/运行监控 共 9 项
+        // 主页/产线/报警中心/设备管理/工单/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理 共 12 项
         // 设备详情页是上下文页面，不作为侧边栏常驻项（入口在主页"查看详情"按钮）
-        Assert.Equal(9, vm.NavItems.Count);
+        Assert.Equal(12, vm.NavItems.Count);
     }
 
     [Fact]
@@ -192,32 +213,130 @@ public class MainWindowViewModelTests : IDisposable
         Assert.Equal(7, vm.SelectedIndex);
     }
 
+    [Fact]
+    public void SelectPageCommand_OperatorRole_BlocksGatedPages_AllowsOpenPages()
+    {
+        // 回归（审查修复 2026-08-13）：Ctrl+1~8 快捷键必须走与 Navigate 相同的角色门禁，
+        // Operator 不能直达设备管理（Engineer）/设置、运行监控（Admin）。
+        var session = new UserSession();
+        session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
+        var vm = NewVm(session);
+        vm.SelectedIndex = NavigationPageCatalog.Home.Index;
+
+        vm.SelectPageCommand.Execute("3"); // 设备管理 → 被拦
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("7"); // 设置 → 被拦
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("8"); // 运行监控 → 被拦
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("1"); // 产线（无角色要求）→ 放行
+        Assert.Equal(NavigationPageCatalog.ProductionLine.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectPageCommand_AdminRole_NavigatesByShortcut()
+    {
+        var vm = NewVm(); // 默认 Admin 会话
+
+        vm.SelectPageCommand.Execute("3");
+
+        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectPageCommand_ViewerMode_BlocksNonWhitelistedPages()
+    {
+        // 回归（审查修复 2026-08-13）：Viewer 模式白名单 = Home/ProductionLine/AlarmCenter/DeviceDetail，
+        // 快捷键不能绕过白名单进入其他页面。
+        _appSettings.RunMode = KanbanRunMode.Viewer;
+        var vm = NewVm();
+        vm.SelectedIndex = NavigationPageCatalog.Home.Index;
+
+        vm.SelectPageCommand.Execute("3"); // 设备管理 → 被拦
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("7"); // 设置 → 被拦
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("1"); // 产线（白名单内）→ 放行
+        Assert.Equal(NavigationPageCatalog.ProductionLine.Index, vm.SelectedIndex);
+
+        _appSettings.RunMode = KanbanRunMode.Full; // 还原，避免影响同集合其他用例
+    }
+
+    [Fact]
+    public void SwitchUserCommand_SuccessfulDowngrade_RefreshesIdentityAndReturnsHome()
+    {
+        var session = new UserSession();
+        session.Login(new User { Username = "admin", DisplayName = "管理员", Role = UserRole.Admin });
+        var loginDialog = new FakeLoginDialogService(() =>
+        {
+            session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
+            return true;
+        });
+        var vm = NewVm(session, loginDialog);
+        vm.SelectedIndex = NavigationPageCatalog.Settings.Index;
+
+        vm.SwitchUserCommand.Execute(null);
+
+        Assert.Equal("操作员", vm.CurrentUserDisplay);
+        Assert.Equal(MainAPP.Resources.Strings.M332, vm.CurrentRoleText);
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        Assert.DoesNotContain(vm.NavItems, item => item.Index == NavigationPageCatalog.Settings.Index);
+    }
+
+    [Fact]
+    public void SwitchUserCommand_Cancelled_PreservesCurrentUserAndPage()
+    {
+        var session = new UserSession();
+        session.Login(new User { Username = "admin", DisplayName = "管理员", Role = UserRole.Admin });
+        var vm = NewVm(session, new FakeLoginDialogService(() => false));
+        vm.SelectedIndex = NavigationPageCatalog.Settings.Index;
+
+        vm.SwitchUserCommand.Execute(null);
+
+        Assert.Equal("admin", session.CurrentUser?.Username);
+        Assert.Equal(NavigationPageCatalog.Settings.Index, vm.SelectedIndex);
+    }
+
+    private sealed class FakeLoginDialogService : ILoginDialogService
+    {
+        private readonly Func<bool> _showDialog;
+
+        public FakeLoginDialogService(Func<bool> showDialog)
+        {
+            _showDialog = showDialog;
+        }
+
+        public bool ShowDialog() => _showDialog();
+    }
+
     // ───────────── 跨页跳转事件 ─────────────
 
     [Fact]
-    public void ProductionLineViewModel_FocusDeviceRequested_SetsSelectedIndexZero()
+    public void ProductionLineViewModel_FocusDeviceRequested_SetsSelectedIndexToDeviceDetail()
     {
         var vm = NewVm();
         vm.SelectedIndex = 1; // 模拟当前停留在产线页
 
-        // 产线页"跳转主页"请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
-        // MainWindowViewModel 订阅后置 SelectedIndex=0
+        // 产线页点击设备卡片请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
+        // MainWindowViewModel 订阅后跳转到设备详情页（SelectedIndex=9）
         vm.ProductionLineViewModel.FocusDeviceCommand.Execute("any-device-id");
 
-        Assert.Equal(0, vm.SelectedIndex);
+        Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, vm.SelectedIndex);
     }
 
     [Fact]
-    public void OverviewViewModel_FocusDeviceRequested_SetsSelectedIndexZero()
+    public void OverviewViewModel_FocusDeviceRequested_SetsSelectedIndexToDeviceDetail()
     {
         var vm = NewVm();
         vm.SelectedIndex = 5; // 模拟当前停留在概览页（索引 5 = 生产复盘）
 
-        // 概览页"跳转主页"请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
-        // MainWindowViewModel 订阅后置 SelectedIndex=0
+        // 概览页点击设备行请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
+        // MainWindowViewModel 订阅后跳转到设备详情页（SelectedIndex=9）
         vm.OverviewViewModel.FocusDeviceCommand.Execute("any-device-id");
 
-        Assert.Equal(0, vm.SelectedIndex);
+        Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, vm.SelectedIndex);
     }
 
     [Fact]

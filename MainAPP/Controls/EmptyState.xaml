@@ -21,7 +21,7 @@
             Margin="0,18,0,0"
             HorizontalAlignment="Center"
             Style="{StaticResource EmptyStateMessageText}"
-            Text="{Binding Message, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=暂无数据}" />
+            Text="{Binding Message, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue={x:Static resources:Strings.K583}}" />
         <TextBlock
             Margin="0,6,0,0"
             HorizontalAlignment="Center"

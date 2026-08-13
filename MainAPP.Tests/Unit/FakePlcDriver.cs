@@ -20,6 +20,12 @@ internal sealed class FakePlcDriver : IPlcDriver
     /// <summary>M 位地址 → 当前值（bool）</summary>
     private readonly Dictionary<string, bool> _boolValues = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>DWord 地址 → 当前值（float）</summary>
+    private readonly Dictionary<string, float> _floatValues = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>DWord 地址 → 当前字符串值</summary>
+    private readonly Dictionary<string, string> _stringValues = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>配置为读取失败的地址集合（按地址模拟故障）</summary>
     private readonly HashSet<string> _failingAddresses = new(StringComparer.OrdinalIgnoreCase);
 
@@ -57,6 +63,9 @@ internal sealed class FakePlcDriver : IPlcDriver
 
     /// <summary>设置为 true 时 Connect 返回失败，模拟 PLC 不可达</summary>
     public bool ShouldFailConnect { get; set; }
+
+    /// <summary>ShouldFailConnect 时返回的失败类型（默认 Unknown；可设 ConnectionLost 模拟 TCP 拒绝）。</summary>
+    public PlcErrorKind ConnectFailureKind { get; set; } = PlcErrorKind.Unknown;
 
     /// <summary>
     /// 设置后 Connect() 将抛出指定异常（而非返回 Fail），用于模拟 HslCommunication 透传异常的场景，
@@ -96,7 +105,7 @@ internal sealed class FakePlcDriver : IPlcDriver
         if (ShouldFailConnect)
         {
             IsConnected = false;
-            return PlcOperationResult.Fail("FakePlcDriver: 配置为连接失败");
+            return PlcOperationResult.Fail("FakePlcDriver: 配置为连接失败", ConnectFailureKind);
         }
         IsConnected = true;
         return PlcOperationResult.Success();
@@ -189,6 +198,44 @@ internal sealed class FakePlcDriver : IPlcDriver
         return PlcOperationResult<bool[]>.Success(values);
     }
 
+    public PlcOperationResult<float> ReadFloat(string address)
+    {
+        if (_failingAddresses.Contains(address))
+            return PlcOperationResult<float>.Fail($"FakePlcDriver: {address} 配置为读取失败");
+        if (_floatValues.TryGetValue(address, out var v))
+            return PlcOperationResult<float>.Success(v);
+        return PlcOperationResult<float>.Fail($"FakePlcDriver: {address} 未预设值");
+    }
+
+    public PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length)
+    {
+        if (ReadInt32Exception is not null)
+            throw ReadInt32Exception;
+        var parsed = PlcAddressParser.Parse(address);
+        if (!parsed.IsValid || parsed.Type != PlcAddressType.DWord)
+            return PlcOperationResult<float[]>.Fail($"FakePlcDriver: {address} 不是有效的 D 地址");
+
+        var values = new float[length];
+        for (var index = 0; index < length; index++)
+        {
+            var itemAddress = $"{parsed.AddressGroup}{parsed.AddressOffset + index * parsed.AddressStride}";
+            if (_failingAddresses.Contains(itemAddress))
+                return PlcOperationResult<float[]>.Fail($"FakePlcDriver: {itemAddress} 配置为读取失败");
+            if (!_floatValues.TryGetValue(itemAddress, out values[index]))
+                return PlcOperationResult<float[]>.Fail($"FakePlcDriver: {itemAddress} 未预设值");
+        }
+        return PlcOperationResult<float[]>.Success(values);
+    }
+
+    public PlcOperationResult<string> ReadString(string address, ushort length)
+    {
+        if (_failingAddresses.Contains(address))
+            return PlcOperationResult<string>.Fail($"FakePlcDriver: {address} 配置为读取失败");
+        if (_stringValues.TryGetValue(address, out var v))
+            return PlcOperationResult<string>.Success(v.Length > length ? v[..length] : v);
+        return PlcOperationResult<string>.Fail($"FakePlcDriver: {address} 未预设值");
+    }
+
     public PlcOperationResult WriteUInt16(string address, ushort value)
     {
         _intValues[address] = value;
@@ -210,6 +257,20 @@ internal sealed class FakePlcDriver : IPlcDriver
         return PlcOperationResult.Success();
     }
 
+    public PlcOperationResult WriteFloat(string address, float value)
+    {
+        _floatValues[address] = value;
+        WriteHistory.Add(new WriteRecord(address, value, DateTime.Now));
+        return PlcOperationResult.Success();
+    }
+
+    public PlcOperationResult WriteString(string address, string value)
+    {
+        _stringValues[address] = value;
+        WriteHistory.Add(new WriteRecord(address, value, DateTime.Now));
+        return PlcOperationResult.Success();
+    }
+
     // ──────────── 测试辅助方法 ────────────
 
     /// <summary>预设 D 字地址的当前值，后续 ReadInt32 返回此值</summary>
@@ -217,6 +278,12 @@ internal sealed class FakePlcDriver : IPlcDriver
 
     /// <summary>预设 M 位地址的当前值，后续 ReadBool 返回此值</summary>
     public void SetBool(string address, bool value) => _boolValues[address] = value;
+
+    /// <summary>预设 D 字地址的当前浮点值，后续 ReadFloat 返回此值</summary>
+    public void SetFloat(string address, float value) => _floatValues[address] = value;
+
+    /// <summary>预设 D 字地址的当前字符串值，后续 ReadString 返回此值</summary>
+    public void SetString(string address, string value) => _stringValues[address] = value;
 
     /// <summary>配置指定地址读取时返回失败，模拟 PLC 抖动/超时</summary>
     public void SetFailing(string address) => _failingAddresses.Add(address);

@@ -3,18 +3,36 @@ using Kanban.Core.Models;
 
 namespace Kanban.Core.Services;
 
+/// <summary>
+/// PLC 错误分类门面：把错误码/消息分类委托给品牌描述符（<see cref="IPlcBrandDescriptor.ClassifyError"/>），
+/// 保持原有公共 API 不变。新增品牌可在描述符中提供协议错误码表，无需修改本类。
+/// Socket 层错误码（10060/10051/10054/10061 等）为所有协议共用，仍在本类处理。
+/// </summary>
 public static class PlcErrorClassifier
 {
+    private static readonly IPlcBrandRegistry DefaultRegistry = PlcBrandDescriptors.CreateDefault();
+
     public static PlcErrorKind FromResult(PlcBrand brand, int? errorCode, string? message)
     {
-        if (errorCode is int code && code != 0)
+        try
         {
-            var codeKind = FromErrorCode(brand, code);
-            if (codeKind.HasValue)
-                return codeKind.Value;
+            return DefaultRegistry.Resolve(brand).ClassifyError(errorCode, message);
         }
-        return FromMessage(message);
+        catch (InvalidOperationException)
+        {
+            // 未注册品牌：回退到消息分类，避免抛出影响业务路径
+            return FromMessage(message);
+        }
     }
+
+    /// <summary>Socket 层错误码分类（品牌无关）。返回 null 表示不是已知 socket 错误码。</summary>
+    public static PlcErrorKind? ClassifySocketErrorCode(int errorCode) => errorCode switch
+    {
+        // WSAETIMEDOUT=10060, WSAENETUNREACH=10051, WSAECONNRESET=10054, WSAECONNREFUSED=10061
+        10060 => PlcErrorKind.Timeout,
+        10051 or 10054 or 10061 => PlcErrorKind.ConnectionLost,
+        _ => null,
+    };
 
     public static PlcErrorKind FromMessage(string? message)
     {
@@ -35,12 +53,5 @@ public static class PlcErrorClassifier
         IOException => PlcErrorKind.ConnectionLost,
         ObjectDisposedException => PlcErrorKind.ConnectionLost,
         _ => PlcErrorKind.Unknown,
-    };
-
-    private static PlcErrorKind? FromErrorCode(PlcBrand brand, int errorCode) => errorCode switch
-    {
-        10060 => PlcErrorKind.Timeout,
-        10051 or 10054 or 10061 => PlcErrorKind.ConnectionLost,
-        _ => null,
     };
 }

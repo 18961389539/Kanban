@@ -5,25 +5,32 @@ using System.Runtime.ExceptionServices;
 
 namespace Kanban.Core.Services;
 
-internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
+public abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
     where TClient : class
 {
     private readonly object _sync = new();
     private readonly ILogger _logger;
+    private readonly IPlcBrandRegistry _brandRegistry;
     private TClient _client;
     private PlcConfig _config;
     private string _configurationKey;
     private bool _disposed;
 
-    protected HslNetworkPlcDriver(PlcConfig config, ILogger logger)
+    protected HslNetworkPlcDriver(PlcConfig config, ILogger logger, IPlcBrandRegistry? brandRegistry = null)
     {
         _config = CloneConfig(config);
         _logger = logger;
+        _brandRegistry = brandRegistry ?? PlcBrandDescriptors.CreateDefault();
         _client = CreateClient(_config);
         _configurationKey = BuildConfigurationKey(_config);
     }
 
-    public abstract BatchReadCapabilities BatchReadCapabilities { get; }
+    /// <summary>
+    /// 批读能力单一事实源：委托品牌描述符计算，与 <see cref="IPlcRuntimeProfileProvider"/>
+    /// 使用同一实现，避免驱动内重复定义与参数漂移。
+    /// </summary>
+    public BatchReadCapabilities BatchReadCapabilities =>
+        _brandRegistry.Resolve(_config.Brand).GetBatchReadCapabilities(_config);
 
     protected TClient Client => _client;
     protected PlcConfig Configuration => _config;
@@ -36,9 +43,14 @@ internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
     protected abstract OperateResult<int[]> ReadInt32BatchCore(TClient client, string address, ushort length);
     protected abstract OperateResult<bool> ReadBoolCore(TClient client, string address);
     protected abstract OperateResult<bool[]> ReadBoolBatchCore(TClient client, string address, ushort length);
+    protected abstract OperateResult<float> ReadFloatCore(TClient client, string address);
+    protected abstract OperateResult<float[]> ReadFloatBatchCore(TClient client, string address, ushort length);
+    protected abstract OperateResult<string> ReadStringCore(TClient client, string address, ushort length);
     protected abstract OperateResult WriteUInt16Core(TClient client, string address, ushort value);
     protected abstract OperateResult WriteInt32Core(TClient client, string address, int value);
     protected abstract OperateResult WriteBoolCore(TClient client, string address, bool value);
+    protected abstract OperateResult WriteFloatCore(TClient client, string address, float value);
+    protected abstract OperateResult WriteStringCore(TClient client, string address, string value);
 
     public void Configure(string endpoint, int port)
     {
@@ -85,6 +97,15 @@ internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
     public PlcOperationResult<bool[]> ReadBoolBatch(string address, ushort length) => Execute(
         () => ReadBoolBatchCore(_client, address, length));
 
+    public PlcOperationResult<float> ReadFloat(string address) => Execute(
+        () => ReadFloatCore(_client, address));
+
+    public PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length) => Execute(
+        () => ReadFloatBatchCore(_client, address, length));
+
+    public PlcOperationResult<string> ReadString(string address, ushort length) => Execute(
+        () => ReadStringCore(_client, address, length));
+
     public PlcOperationResult WriteUInt16(string address, ushort value) => Execute(
         () => WriteUInt16Core(_client, address, value));
 
@@ -93,6 +114,12 @@ internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
 
     public PlcOperationResult WriteBool(string address, bool value) => Execute(
         () => WriteBoolCore(_client, address, value));
+
+    public PlcOperationResult WriteFloat(string address, float value) => Execute(
+        () => WriteFloatCore(_client, address, value));
+
+    public PlcOperationResult WriteString(string address, string value) => Execute(
+        () => WriteStringCore(_client, address, value));
 
     private PlcOperationResult Execute(Func<OperateResult> action)
     {
@@ -137,8 +164,7 @@ internal abstract class HslNetworkPlcDriver<TClient> : IPlcDriver
         return failure(exception.Message, PlcErrorClassifier.FromException(exception));
     }
 
-    private string BuildConfigurationKey(PlcConfig config) =>
-        $"{config.Brand}|{config.IpAddress}|{config.Port}|{config.TimeoutMs}|{config.SiemensModel}|{config.SiemensRack}|{config.SiemensSlot}|{config.SiemensDataFormat}|{config.SiemensBatchInt32Limit}|{config.OmronReadSplits}|{config.ModbusUnitId}|{config.ModbusAddressStartWithZero}|{config.ModbusRegisterFunction}|{config.ModbusBitFunction}|{config.ModbusDataFormat}";
+    private string BuildConfigurationKey(PlcConfig config) => config.GetConfigurationSignature();
 
     private static PlcConfig CloneConfig(PlcConfig source) => source.CreateSnapshot();
 

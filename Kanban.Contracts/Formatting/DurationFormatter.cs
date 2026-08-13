@@ -8,15 +8,18 @@ namespace Kanban.Contracts.Formatting;
 public static class DurationFormatter
 {
     /// <summary>
-    /// 紧凑时长（班次/工单场景）：≥1h → "Xh Ym"，否则 → "Xm"。
-    /// 对齐 HomeViewModel/ShiftProgressProvider 的 FormatShiftTime 口径。
+    /// 紧凑时长（班次/工单/状态查询场景）：≥1d → "Xd Yh"，≥1h → "Xh Ym"，否则 → "Xm"。
+    /// 对齐 HomeViewModel/ShiftProgressProvider 的 FormatShiftTime 口径；
+    /// ≥24h 分支吸收 StatusQueryViewModel 旧 FormatDuration 的 "Xd Yh" 语义（跨天状态查询）。
     /// </summary>
     public static string FormatCompact(double seconds)
     {
         var ts = TimeSpan.FromSeconds(Math.Max(0, seconds));
-        return ts.TotalHours >= 1
-            ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
-            : $"{ts.Minutes}m";
+        return ts.TotalDays >= 1
+            ? $"{(int)ts.TotalDays}d {ts.Hours}h"
+            : ts.TotalHours >= 1
+                ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
+                : $"{ts.Minutes}m";
     }
 
     /// <summary>

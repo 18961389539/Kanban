@@ -1,0 +1,54 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div id="@ChartId" class="echart-host" style="height:@Height"></div>
+
+@code {
+    /// <summary>ECharts option 对象（JSON 可序列化：Dictionary/数组 嵌套，camelCase 键）。</summary>
+    [Parameter] public object? Option { get; set; }
+
+    /// <summary>图表高度（CSS 尺寸）。宽度撑满容器。</summary>
+    [Parameter] public string Height { get; set; } = "320px";
+
+    private string ChartId { get; } = "echart_" + Guid.NewGuid().ToString("N");
+
+    /// <summary>已推送给 JS 的 option 序列化快照：OnAfterRenderAsync 每次渲染都会触发，
+    /// 用 JSON 比较跳过未变化的重复推送（页面其它状态刷新时图表不重建）。</summary>
+    private string? _pushedJson;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_disposed || Option is null) return;
+        var json = System.Text.Json.JsonSerializer.Serialize(Option);
+        if (json == _pushedJson) return;
+
+        try
+        {
+            // 渲染生命周期异常（JS 互操作失败等）会直接触发 Blazor 全局 error UI，
+            // 图表失败不应拖垮整个页面——记录并继续（下次 Option 变化会重试）。
+            if (firstRender)
+                await JS.InvokeVoidAsync("KanbanECharts.init", ChartId, Option);
+            else
+                await JS.InvokeVoidAsync("KanbanECharts.setOption", ChartId, Option);
+            _pushedJson = json;
+        }
+        catch (Exception)
+        {
+            // 图表渲染失败：静默降级（页面其余功能不受影响）
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        try
+        {
+            await JS.InvokeVoidAsync("KanbanECharts.dispose", ChartId);
+        }
+        catch (Exception)
+        {
+            // 页面卸载/JS 运行时不可用时静默（无引用可泄漏的兜底）
+        }
+    }
+}

@@ -34,10 +34,10 @@ public static class DeviceConfigValidator
         foreach (var device in deviceList)
         {
             List<string> missing = [];
-            if (string.IsNullOrWhiteSpace(device.OkCountAddress)) missing.Add("OK数量地址");
-            if (string.IsNullOrWhiteSpace(device.NgCountAddress)) missing.Add("NG数量地址");
-            if (string.IsNullOrWhiteSpace(device.StatusCountAddress)) missing.Add("状态地址");
-            if (string.IsNullOrWhiteSpace(device.ProductionResetAddress)) missing.Add("OEE清零地址");
+            if (string.IsNullOrWhiteSpace(device.OkCountAddress)) missing.Add(Strings.M228);
+            if (string.IsNullOrWhiteSpace(device.NgCountAddress)) missing.Add(Strings.M229);
+            if (string.IsNullOrWhiteSpace(device.StatusCountAddress)) missing.Add(Strings.M230);
+            if (string.IsNullOrWhiteSpace(device.ProductionResetAddress)) missing.Add(Strings.M231);
             if (missing.Count > 0)
                 errors.Add(new DeviceConfigError
                 {
@@ -46,11 +46,11 @@ public static class DeviceConfigValidator
                     Message = string.Format(Strings.F203, device.Name, string.Join("、", missing)),
                 });
 
-            AddAddressError(errors, device, addressCodec, device.OkCountAddress, PlcAddressType.DWord, 0, "OK 数量地址");
-            AddAddressError(errors, device, addressCodec, device.NgCountAddress, PlcAddressType.DWord, 0, "NG 数量地址");
-            AddAddressError(errors, device, addressCodec, device.StatusCountAddress, PlcAddressType.DWord, 0, "状态地址");
-            AddAddressError(errors, device, addressCodec, device.ProductionResetAddress, PlcAddressType.DWord, 0, "OEE 清零地址");
-            AddAddressError(errors, device, addressCodec, device.RecipeAddress, PlcAddressType.DWord, 0, "配方地址");
+            AddAddressError(errors, device, addressCodec, device.OkCountAddress, PlcAddressType.DWord, 0, Strings.M232);
+            AddAddressError(errors, device, addressCodec, device.NgCountAddress, PlcAddressType.DWord, 0, Strings.M233);
+            AddAddressError(errors, device, addressCodec, device.StatusCountAddress, PlcAddressType.DWord, 0, Strings.M230);
+            AddAddressError(errors, device, addressCodec, device.ProductionResetAddress, PlcAddressType.DWord, 0, Strings.M234);
+            AddAddressError(errors, device, addressCodec, device.RecipeAddress, PlcAddressType.DWord, 0, Strings.M235);
             foreach (var alarm in device.Alarms)
                 AddAddressError(errors, device, addressCodec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
             foreach (var defect in device.Defects)
@@ -124,17 +124,9 @@ public static class DeviceConfigValidator
                     Message = string.Format(Strings.F205, device.Name, dupDefect.Key),
                 });
 
-            // 计数报警阈值上限必须 > 0：MaxValue=0 时 IsTriggered => CurrentValue > 0 永远触发，新建未配置即误报
-            foreach (var c in device.CountAlarms)
-            {
-                if (c.MaxValue <= 0)
-                    errors.Add(new DeviceConfigError
-                    {
-                        Device = device,
-                        TargetTabIndex = 3,
-                        Message = string.Format(Strings.F206, device.Name, c.Name, c.MaxValue),
-                    });
-            }
+            // 计数报警阈值上限允许为 0：语义为「仅记录不触发」（IsTriggered => MaxValue > 0 && CurrentValue > MaxValue，
+            // 0 值永不触发，运行时天然安全）。样本数据即预置 0 值报警（"仅记录不停机"），故不做阻断校验。
+            // 若未来要求必须配置阈值，应改为「警告」而非错误，避免合法配置无法保存。
         }
 
         // 跨设备地址冲突（两台及以上设备共用同一 PLC 地址，会导致产量/状态数据串台）

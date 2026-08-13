@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using MainAPP.Resources;
 using MainAPP.Helpers;
 using System.ComponentModel;
@@ -37,6 +37,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private readonly IWorkOrderService _workOrderService;
     private readonly DeviceRepository _deviceRepo;
     private readonly IDialogService _dialog;
+    private readonly UserSession _userSession;
 
     /// <summary>工单集合（直接绑定到 Repository 的 ObservableCollection）。</summary>
     public ObservableCollection<WorkOrder> WorkOrders => _workOrderRepo.WorkOrders;
@@ -109,42 +110,44 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<WorkOrderSortOption> SortOptions { get; } =
     [
-        new(WorkOrderSortMode.ScheduleStart, "计划开始时间"),
-        new(WorkOrderSortMode.ScheduleEnd, "计划结束时间"),
-        new(WorkOrderSortMode.StatusThenSchedule, "状态 + 计划时间"),
-        new(WorkOrderSortMode.CreatedAt, "创建时间"),
+        new(WorkOrderSortMode.ScheduleStart, Strings.M080),
+        new(WorkOrderSortMode.ScheduleEnd, Strings.M081),
+        new(WorkOrderSortMode.StatusThenSchedule, Strings.M082),
+        new(WorkOrderSortMode.CreatedAt, Strings.M083),
     ];
 
     public string StartActionReason => SelectedWorkOrder == null
-        ? "请选择工单"
+        ? Strings.M084
         : SelectedWorkOrder.Status != WorkOrderStatus.Pending
-            ? "仅待开始工单可启动"
+            ? Strings.M085
             : HasRunningWorkOrderOnDevice(SelectedWorkOrder)
-                ? "该设备已有进行中工单"
-                : "启动工单";
+                ? Strings.M086
+                : Strings.M087;
 
     public string CompleteActionReason => SelectedWorkOrder == null
-        ? "请选择工单"
+        ? Strings.M084
         : SelectedWorkOrder.Status != WorkOrderStatus.Running
-            ? "仅进行中工单可完成"
-            : "完成工单并保存产量快照";
+            ? Strings.M088
+            : Strings.M089;
 
     public string AbortActionReason => SelectedWorkOrder == null
-        ? "请选择工单"
+        ? Strings.M084
         : SelectedWorkOrder.Status is not (WorkOrderStatus.Pending or WorkOrderStatus.Running)
-            ? "已完成或已中止工单不可中止"
-            : "中止后不可恢复为进行中";
+            ? Strings.M090
+            : Strings.M091;
 
     public WorkOrderManagerViewModel(
         WorkOrderRepository workOrderRepo,
         IWorkOrderService workOrderService,
         DeviceRepository deviceRepo,
-        IDialogService dialog)
+        IDialogService dialog,
+        UserSession userSession)
     {
         _workOrderRepo = workOrderRepo;
         _workOrderService = workOrderService;
         _deviceRepo = deviceRepo;
         _dialog = dialog;
+        _userSession = userSession;
 
         // 创建独立的 ListCollectionView（不能用 GetDefaultView，否则与其他 ViewModel 共享同一视图导致 Filter 互相覆盖）
         FilteredView = new ListCollectionView(_workOrderRepo.WorkOrders);
@@ -419,21 +422,25 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private static string GetScheduleStatusText(WorkOrder workOrder, double achievementRate)
     {
         if (workOrder.Status == WorkOrderStatus.Completed)
-            return achievementRate >= 1 ? "已达标完成" : "未达标完成";
+            return achievementRate >= 1 ? Strings.M092 : Strings.M093;
         if (workOrder.Status == WorkOrderStatus.Aborted)
             return Strings.M031;
         if (achievementRate >= 1.0)
             return Strings.M032;
         if (workOrder.PlannedEnd < DateTime.Now)
             return Strings.M033;
-        return GetProgressDeviation(workOrder, achievementRate) < -0.1 ? "进度落后" : "正常生产";
+        return GetProgressDeviation(workOrder, achievementRate) < -0.1 ? Strings.M094 : Strings.M095;
     }
 
     [RelayCommand]
     private async Task Add()
     {
         var saved = await _workOrderService.AddWorkOrderAsync(null);
-        if (saved != null) SelectedWorkOrder = saved;
+        if (saved != null)
+        {
+            SelectedWorkOrder = saved;
+            AuditLog.Record("WorkOrder.Add", "WorkOrder", saved.OrderNo, detail: $"产品={saved.ProductCode} 目标={saved.TargetQuantity}");
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]
@@ -460,8 +467,12 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private async Task Delete()
     {
         if (SelectedWorkOrder == null) return;
+        var orderNo = SelectedWorkOrder.OrderNo;
         if (await _workOrderService.DeleteWorkOrderAsync(SelectedWorkOrder))
+        {
+            AuditLog.Record("WorkOrder.Delete", "WorkOrder", orderNo);
             SelectedWorkOrder = null;
+        }
     }
 
     private bool CanDelete() => SelectedWorkOrder != null;
@@ -470,8 +481,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private async Task Start()
     {
         if (SelectedWorkOrder == null) return;
+        var statusBefore = SelectedWorkOrder.Status;
         var saved = await _workOrderService.StartWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
+        if (saved != null)
+        {
+            SelectedWorkOrder = saved;
+            AuditLog.Record("WorkOrder.Start", "WorkOrder", saved.OrderNo,
+                before: new { Status = statusBefore.ToString() },
+                after: new { Status = saved.Status.ToString() });
+        }
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
     }
@@ -482,8 +500,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private async Task Complete()
     {
         if (SelectedWorkOrder == null) return;
+        var statusBefore = SelectedWorkOrder.Status;
         var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
+        if (saved != null)
+        {
+            SelectedWorkOrder = saved;
+            AuditLog.Record("WorkOrder.Complete", "WorkOrder", saved.OrderNo,
+                before: new { Status = statusBefore.ToString() },
+                after: new { Status = saved.Status.ToString() });
+        }
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
     }
@@ -494,8 +519,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private async Task Abort()
     {
         if (SelectedWorkOrder == null) return;
+        var statusBefore = SelectedWorkOrder.Status;
         var saved = await _workOrderService.AbortWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
+        if (saved != null)
+        {
+            SelectedWorkOrder = saved;
+            AuditLog.Record("WorkOrder.Abort", "WorkOrder", saved.OrderNo,
+                before: new { Status = statusBefore.ToString() },
+                after: new { Status = saved.Status.ToString() });
+        }
         RefreshStatusCounts();
         NotifyActionReasonsChanged();
     }
@@ -518,15 +550,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         }
 
         var defaultFileName = $"工单列表_{DateTime.Now:yyyyMMddHHmm}.csv";
-        var path = _dialog.ShowSaveFileDialog("导出工单列表", defaultFileName, "CSV 文件|*.csv|所有文件|*.*");
+        var path = _dialog.ShowSaveFileDialog(Strings.M_ExportWorkOrders, defaultFileName, Strings.M310);
         if (string.IsNullOrEmpty(path)) return;
 
         try
         {
             // UTF-8 with BOM：Excel 打开中文不乱码
             using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
-            // 表头
-            writer.WriteLine("工单号,产品编码,产品名称,设备名,计划产量,计划开始,计划结束,状态,备注,创建时间,更新时间");
+            // 表头（多语言资源；文件名模板有意保留中文，跨语言归档稳定）
+            writer.WriteLine(Strings.M346);
             foreach (var w in filtered)
             {
                 var statusText = w.Status switch
@@ -568,17 +600,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     /// 是否为 DEBUG 编译版本。绑定到"生成样本工单"按钮的 Visibility，
     /// 避免发布版暴露虚拟数据生成功能。Release 编译时按钮折叠。
     /// </summary>
-    public bool IsDebugBuild
-    {
-        get
-        {
-#if DEBUG
-            return true;
-#else
-            return false;
-#endif
-        }
-    }
+    public bool IsDebugBuild => MainAPP.Helpers.BuildInfo.IsDebug;
 
     /// <summary>
     /// 生成样本工单用于 UI 预览/调试。读取当前设备列表，为每台设备生成 2-3 个工单，
@@ -594,16 +616,18 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             return;
         }
 
-        // 密码确认：防止误触生成虚拟数据
-        const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput(Strings.M001, "请输入密码以生成样本工单：");
-        if (password != expectedPassword) return;
+        // 权限验证：生成虚拟数据需工程师或以上角色
+        if (!_userSession.IsEngineerOrAbove)
+        {
+            _dialog.NotifyWarning(Strings.M336);
+            return;
+        }
 
         if (WorkOrders.Count > 0)
         {
             var confirm = _dialog.Show(
                 string.Format(Strings.F121, WorkOrders.Count, devices.Count * 3),
-                "生成样本工单", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                Strings.M345, MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
 

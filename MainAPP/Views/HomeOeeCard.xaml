@@ -77,15 +77,13 @@
                             <oxy:PlotView Grid.Column="0" Model="{Binding AvailabilityRingChart}"
                                           Width="54" Height="54" Background="Transparent" />
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K321}" />
-                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
-                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                                               Foreground="{Binding AvailabilityRate, Converter={StaticResource OeeThreshold}}"
-                                               Text="{Binding AvailabilityRateDisplay}" />
-                                </DockPanel>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K321}" />
+                                <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           Foreground="{Binding AvailabilityRate, Converter={StaticResource OeeThreshold}}"
+                                           Text="{Binding AvailabilityRateDisplay}" />
                                 <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
                                            Foreground="{StaticResource ThirdlyTextBrush}"
                                            Text="{Binding AvailabilityFormulaText}" />
@@ -103,15 +101,13 @@
                             <oxy:PlotView Grid.Column="0" Model="{Binding PerformanceRingChart}"
                                           Width="54" Height="54" Background="Transparent" />
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K322}" />
-                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
-                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                                               Foreground="{Binding PerformanceRate, Converter={StaticResource OeeThreshold}}"
-                                               Text="{Binding PerformanceRateDisplay}" />
-                                </DockPanel>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K322}" />
+                                <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           Foreground="{Binding PerformanceRate, Converter={StaticResource OeeThreshold}}"
+                                           Text="{Binding PerformanceRateDisplay}" />
                                 <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
                                            Foreground="{StaticResource ThirdlyTextBrush}"
                                            Text="{Binding PerformanceFormulaText}" />
@@ -129,15 +125,13 @@
                             <oxy:PlotView Grid.Column="0" Model="{Binding QualityRingChart}"
                                           Width="54" Height="54" Background="Transparent" />
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
-                                    <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right"
-                                               VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                                               Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
-                                               Text="{Binding QualityRateDisplay}" />
-                                </DockPanel>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
+                                <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                                           Text="{Binding QualityRateDisplay}" />
                                 <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
                                            Foreground="{StaticResource ThirdlyTextBrush}"
                                            Text="{Binding QualityFormulaText}" />

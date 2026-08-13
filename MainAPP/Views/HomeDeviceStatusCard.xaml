@@ -66,7 +66,7 @@
                                    Text="{Binding RecipeName}" />
                         <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{Binding RecipeValue, StringFormat=配方值 {0}}" />
+                                   Text="{Binding RecipeValue, Converter={StaticResource LocFormatConverter}, ConverterParameter=F264}" />
                     </StackPanel>
                 </StackPanel>
 

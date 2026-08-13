@@ -34,6 +34,13 @@ public sealed class DashboardState : IAsyncDisposable
     private bool _initialized;
     private CancellationTokenSource? _retryCts;
     private DateTime _invokeFailedUntil;
+    // 订阅单飞（single-flight，审查修复 2026-08-13）：重连事件与初始化路径可能并发触发订阅刷新，
+    // 无互斥时服务端收到两条长驻订阅、每个快照推两次（速度队列双写、CPU 翻倍）。
+    // 仅 runner 执行；其余调用只置"重跑"标记，由 runner 在本次结束后按最新连接状态再跑一次。
+    private bool _subscribeRunnerActive;
+    private bool _subscribeRerunRequested;
+    private bool _metaRunnerActive;
+    private bool _metaRerunRequested;
 
     public DashboardState(
         KanbanDataClient client,
@@ -54,11 +61,11 @@ public sealed class DashboardState : IAsyncDisposable
         _client.Reconnecting += (_, _) => StateChanged?.Invoke();
         _client.Reconnected += (_, _) =>
         {
-            // 重连成功：恢复快照订阅（游标补拉由 Collector 侧 Seq 保证）
+            // 重连成功：恢复快照订阅（游标补拉由 Collector 侧 Seq 保证）；单飞防与初始化路径双订阅
             _ = SubscribeAndRefreshAsync();
         };
-        // 元数据连接重连成功后：重新订阅 Meta（长驻订阅随连接断开而结束）
-        _metaClient.Reconnected += (_, _) => _ = SubscribeMetaSafeAsync();
+        // 元数据连接重连成功后：重新订阅 Meta（长驻订阅随连接断开而结束）；单飞防双订阅
+        _metaClient.Reconnected += (_, _) => _ = RequestMetaSubscribeAsync();
     }
 
     /// <summary>连接状态变化通知（UI 刷新连接指示器）。</summary>
@@ -196,6 +203,80 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
+    /// <summary>设备配置列表（历史查询等管理页面的设备下拉数据源；与 QueryHistoryAsync 同走独立 Invoke 连接）。</summary>
+    public async Task<IReadOnlyList<DeviceConfigDto>> QueryDevicesAsync(CancellationToken ct = default)
+    {
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.GetDevicesAsync(ct);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>采集进程诊断快照（运行监控页数据源；与 QueryHistoryAsync 同走独立 Invoke 连接）。</summary>
+    public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
+    {
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.GetDiagnosticsAsync(ct);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>工单列表（只读工单页数据源）。</summary>
+    public Task<IReadOnlyList<WorkOrderDto>> QueryWorkOrdersAsync(CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.GetWorkOrdersAsync(token), ct);
+
+    /// <summary>配方列表（只读配方页数据源）。</summary>
+    public Task<IReadOnlyList<RecipeDto>> QueryRecipesAsync(CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.GetRecipesAsync(token), ct);
+
+    /// <summary>采集设置快照（只读设置页数据源）。</summary>
+    public Task<CollectorSettingsDto> GetCollectorSettingsAsync(CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.GetCollectorSettingsAsync(token), ct);
+
+    /// <summary>审计日志分页查询（只读审计页数据源）。</summary>
+    public Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request, CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.QueryAuditLogsAsync(request, token), ct);
+
+    /// <summary>Invoke 统一守卫：独立连接 + 失败 30s 冷却（避免连续失败风暴）。</summary>
+    private async Task<T> InvokeWithGuardAsync<T>(
+        Func<KanbanDataClient, CancellationToken, Task<T>> invoke, CancellationToken ct)
+    {
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await invoke(client, ct);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
     private KanbanDataClient GetInvokeClient()
     {
         lock (_lock)
@@ -281,6 +362,19 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>快照回调：更新内存字典 + 数据新鲜度 + 速度趋势历史 + 汇总脏标记（不触达 UI）。</summary>
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
+        try
+        {
+            OnSnapshotReceivedCore(snapshot);
+        }
+        catch (Exception ex)
+        {
+            // 订阅回调不得抛：异常会沿 SignalR 消息循环冒泡成未处理异常（触发 Blazor error UI）
+            _logger.LogError(ex, "快照回调异常（已隔离）");
+        }
+    }
+
+    private void OnSnapshotReceivedCore(DeviceSnapshotDto snapshot)
+    {
         // tombstone：Collector 设备配置删除广播，从内存移除该设备（快照流只有 upsert 语义，删除须显式表达）
         if (snapshot.Removed)
         {
@@ -334,6 +428,18 @@ public sealed class DashboardState : IAsyncDisposable
     /// 服务端 MetaPublisher 无变更时复用同一快照实例，此处 Equals 判定自然跳过写入）。</summary>
     private void OnMetaReceived(MetaStateDto meta)
     {
+        try
+        {
+            OnMetaReceivedCore(meta);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Meta 回调异常（已隔离）");
+        }
+    }
+
+    private void OnMetaReceivedCore(MetaStateDto meta)
+    {
         // 数据新鲜度：Meta 约 5s 一帧，快照增量发布后静止设备不再触发 OnSnapshot，
         // 必须由 Meta 维持 LastDataAt 前进（否则全厂静止时"数据更新"时间戳卡住）
         _client.MarkDataReceived();
@@ -359,7 +465,8 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。
+    /// <summary>
+    /// 订阅快照流 + 元数据流 + 拉取一次当前全量快照（覆盖 Collector 重启导致的内存清空）。
     /// 全量拉取采用**替换**语义（清空后写入）：服务端返回的就是当前完整设备集，
     /// 配合 tombstone 保证设备删除后本机收敛（只 upsert 会导致被删设备永远残留）。
     ///
@@ -367,8 +474,55 @@ public sealed class DashboardState : IAsyncDisposable
     /// 顺序 dispatch）——长驻订阅（SubscribeSnapshotsAsync/SubscribeMetaAsync）一旦发出，
     /// 同连接的后续 Invoke（GetCurrentSnapshotsAsync/GetServerVersionAsync 等）会**无限排队**。
     /// 因此所有"客户端→服务端"Invoke 必须在发起订阅**之前**完成（实测复现并锁定于
-    /// KanbanDataClientIntegrationTests.ConcurrentInvoke_WhileLongRunningSubscribePending_StillWorks）。</summary>
+    /// KanbanDataClientIntegrationTests.ConcurrentInvoke_WhileLongRunningSubscribePending_StillWorks）。
+    ///
+    /// 单飞（single-flight，审查修复 2026-08-13）：重连事件与初始化路径可能并发调用本方法——
+    /// 只有 runner 执行完整流程；并发调用置重跑标记，runner 本次结束后按最新连接状态再跑，
+    /// 避免服务端收到两条长驻订阅（每个快照推两次）。
+    /// </summary>
     private async Task SubscribeAndRefreshAsync()
+    {
+        lock (_lock)
+        {
+            _subscribeRerunRequested = true;
+            if (_subscribeRunnerActive) return; // 已有 runner：由它消费重跑标记
+            _subscribeRunnerActive = true;
+        }
+        try
+        {
+            do
+            {
+                lock (_lock) _subscribeRerunRequested = false;
+                await SubscribeAndRefreshCoreAsync();
+            }
+            while (TakeSubscribeRerunFlag());
+        }
+        finally
+        {
+            // lost-wakeup 修复（审查修复 2026-08-13 复查）：循环退出与 active=false 之间存在窗口，
+            // 该窗口内到达的重跑请求会置标记后因 runner 仍 active 而返回——若不在此消费，
+            // 标记将永久遗留且无 runner 消费（重连后的订阅恢复被吞）。发现遗留标记则自再入。
+            bool rerun;
+            lock (_lock)
+            {
+                _subscribeRunnerActive = false;
+                rerun = _subscribeRerunRequested;
+            }
+            if (rerun) _ = SubscribeAndRefreshAsync();
+        }
+    }
+
+    private bool TakeSubscribeRerunFlag()
+    {
+        lock (_lock)
+        {
+            if (!_subscribeRerunRequested) return false;
+            _subscribeRerunRequested = false;
+            return true;
+        }
+    }
+
+    private async Task SubscribeAndRefreshCoreAsync()
     {
         // ① 先做 Invoke（连接空闲，不会被长驻订阅阻塞）
         try
@@ -424,8 +578,49 @@ public sealed class DashboardState : IAsyncDisposable
         }
 
         // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）
-        _ = SubscribeSnapshotsSafeAsync(); // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
-        _ = SubscribeMetaSafeAsync();      // 元数据订阅走元数据连接（每连接单长驻订阅约束）
+        _ = SubscribeSnapshotsSafeAsync();   // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
+        _ = RequestMetaSubscribeAsync();     // 元数据订阅走元数据连接（每连接单长驻订阅约束；单飞防双订阅）
+    }
+
+    /// <summary>元数据订阅单飞入口：与 Reconnected 处理器共用，防并发双订阅（审查修复 2026-08-13）。</summary>
+    private async Task RequestMetaSubscribeAsync()
+    {
+        lock (_lock)
+        {
+            _metaRerunRequested = true;
+            if (_metaRunnerActive) return;
+            _metaRunnerActive = true;
+        }
+        try
+        {
+            do
+            {
+                lock (_lock) _metaRerunRequested = false;
+                await SubscribeMetaSafeAsync();
+            }
+            while (TakeMetaRerunFlag());
+        }
+        finally
+        {
+            // lost-wakeup 修复（与快照订阅单飞同构）：发现遗留标记则自再入
+            bool rerun;
+            lock (_lock)
+            {
+                _metaRunnerActive = false;
+                rerun = _metaRerunRequested;
+            }
+            if (rerun) _ = RequestMetaSubscribeAsync();
+        }
+    }
+
+    private bool TakeMetaRerunFlag()
+    {
+        lock (_lock)
+        {
+            if (!_metaRerunRequested) return false;
+            _metaRerunRequested = false;
+            return true;
+        }
     }
 
     /// <summary>快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），观察异常防全局错误 UI。</summary>

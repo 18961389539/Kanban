@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- ValidationMessages (ja-JP) -->
+  <data name="PlcIpEmpty" xml:space="preserve">
+    <value>PLC IP アドレスが空です</value>
+  </data>
+  <data name="PlcIpInvalid" xml:space="preserve">
+    <value>PLC IP アドレス '{0}' は有効な IPv4 アドレスではありません</value>
+  </data>
+  <data name="PlcPortOutOfRange" xml:space="preserve">
+    <value>PLC ポート {0} が範囲外です (1-65535)</value>
+  </data>
+  <data name="PlcBrandInvalid" xml:space="preserve">
+    <value>無効な PLC ブランド: {0}</value>
+  </data>
+  <data name="PlcTimeoutOutOfRange" xml:space="preserve">
+    <value>PLC 接続タイムアウト {0}ms が範囲外です (100-60000)</value>
+  </data>
+  <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
+    <value>Modbus UnitId {0} が範囲外です (1-247)</value>
+  </data>
+  <data name="ModbusRegisterFunctionInvalid" xml:space="preserve">
+    <value>Modbus レジスタ機能コード {0} が無効です、3 または 4 を指定してください</value>
+  </data>
+  <data name="ModbusBitFunctionInvalid" xml:space="preserve">
+    <value>Modbus ビット機能コード {0} が無効です、1 または 2 を指定してください</value>
+  </data>
+  <data name="ModbusDataFormatInvalid" xml:space="preserve">
+    <value>無効な Modbus データ形式: {0}</value>
+  </data>
+  <data name="SiemensDataFormatInvalid" xml:space="preserve">
+    <value>無効な Siemens データ形式: {0}</value>
+  </data>
+  <data name="SiemensModelUnsupported" xml:space="preserve">
+    <value>サポートされていない Siemens モデル: {0}</value>
+  </data>
+  <data name="SiemensRackOutOfRange" xml:space="preserve">
+    <value>Siemens Rack {0} が範囲外です (0-7)</value>
+  </data>
+  <data name="SiemensSlotOutOfRange" xml:space="preserve">
+    <value>Siemens Slot {0} が範囲外です (0-31)</value>
+  </data>
+  <data name="SiemensBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Siemens バッチ Int32 上限 {0} が範囲外です (1-55)</value>
+  </data>
+  <data name="ModbusBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Modbus バッチ Int32 上限 {0} が範囲外です (1-2000)</value>
+  </data>
+  <data name="PollingIntervalInvalid" xml:space="preserve">
+    <value>PLC データ収集ポーリング間隔 {0}ms が無効です。10〜60000ms の範囲である必要があります</value>
+  </data>
+  <data name="HistoryWriteIntervalInvalid" xml:space="preserve">
+    <value>履歴データ書き込み間隔 {0} 回が無効です。1〜3600 回の範囲である必要があります</value>
+  </data>
+  <data name="DashboardRefreshIntervalInvalid" xml:space="preserve">
+    <value>ダッシュボード更新間隔 {0}ms が無効です、≥ 1ms が必要です</value>
+  </data>
+  <data name="NoShiftsConfigured" xml:space="preserve">
+    <value>シフトが設定されていません</value>
+  </data>
+  <data name="ShiftNameEmpty" xml:space="preserve">
+    <value>シフト #{0} の名称が空です</value>
+  </data>
+  <data name="ShiftStartEndEqual" xml:space="preserve">
+    <value>シフト '{0}' の開始・終了時刻が同じです（{1}）</value>
+  </data>
+  <!-- ConnectionStatusMessages (ja-JP) -->
+  <data name="Conn_Connected" xml:space="preserve">
+    <value>接続済</value>
+  </data>
+  <data name="Conn_Disconnected" xml:space="preserve">
+    <value>未接続</value>
+  </data>
+  <data name="Conn_ConnectionLost" xml:space="preserve">
+    <value>接続切断</value>
+  </data>
+  <data name="Conn_DisconnectedWithRetry" xml:space="preserve">
+    <value>未接続 (再試行間隔{0:F0}s)</value>
+  </data>
+  <data name="Conn_ConnectingPrefix" xml:space="preserve">
+    <value>接続中</value>
+  </data>
+  <data name="Conn_ConnectingSuffix" xml:space="preserve">
+    <value>... (試行 #{0})</value>
+  </data>
+  <data name="Conn_RemoteConnecting" xml:space="preserve">
+    <value>収集サービス (試行 #{0})</value>
+  </data>
+  <data name="PlcBatchReadMaxLengthInvalid" xml:space="preserve">
+    <value>PLC一括読取長の上限 {0} が無効です。1〜1024 の範囲である必要があります</value>
+  </data>
+  <data name="PlcBatchReadMaxGapSlotsInvalid" xml:space="preserve">
+    <value>PLC一括読取のギャップ上限 {0} が無効です。0〜256 の範囲である必要があります</value>
+  </data>
+  <!-- RecipeValidationMessages（レシピ検証/適用） -->
+  <data name="RecipeNull" xml:space="preserve">
+    <value>レシピを空にすることはできません</value>
+  </data>
+  <data name="RecipeNameEmpty" xml:space="preserve">
+    <value>レシピ名を入力してください</value>
+  </data>
+  <data name="RecipeItemsEmpty" xml:space="preserve">
+    <value>レシピには少なくとも1つのパラメータが必要です</value>
+  </data>
+  <data name="RecipeParamNameEmpty" xml:space="preserve">
+    <value>パラメータ名を入力してください</value>
+  </data>
+  <data name="RecipeAddressEmpty" xml:space="preserve">
+    <value>アドレスを入力してください</value>
+  </data>
+  <data name="RecipeAddressDuplicate" xml:space="preserve">
+    <value>アドレス {0} はレシピ内の他のパラメータと重複しています</value>
+  </data>
+  <data name="RecipeAddressUnresolvable" xml:space="preserve">
+    <value>アドレス {0} を解析できません</value>
+  </data>
+  <data name="RecipeAddressTypeMismatch" xml:space="preserve">
+    <value>アドレスタイプが一致しません：{0} には {1} エリアが必要です</value>
+  </data>
+  <data name="RecipeValueInvalid" xml:space="preserve">
+    <value>値 "{0}" は有効な {1} ではありません</value>
+  </data>
+  <data name="RecipeBelowMin" xml:space="preserve">
+    <value>値 {0} は下限 {1} を下回っています</value>
+  </data>
+  <data name="RecipeAboveMax" xml:space="preserve">
+    <value>値 {0} は上限 {1} を超えています</value>
+  </data>
+  <data name="RecipeTypeInt32" xml:space="preserve">
+    <value>32ビット整数</value>
+  </data>
+  <data name="RecipeTypeFloat" xml:space="preserve">
+    <value>32ビット浮動小数点</value>
+  </data>
+  <data name="RecipeTypeBool" xml:space="preserve">
+    <value>ビット(0/1)</value>
+  </data>
+  <data name="RecipeTypeString" xml:space="preserve">
+    <value>文字列</value>
+  </data>
+  <data name="RecipeTypeUInt16" xml:space="preserve">
+    <value>16ビット整数</value>
+  </data>
+  <data name="RecipeDeviceOrRecipeEmpty" xml:space="preserve">
+    <value>設備またはレシピが空です</value>
+  </data>
+  <data name="RecipePlcNotConnected" xml:space="preserve">
+    <value>PLC 未接続のため、レシピを適用できません</value>
+  </data>
+  <data name="RecipeReadBackupFailed" xml:space="preserve">
+    <value>アドレス {0} の現在値バックアップ読み取りに失敗しました</value>
+  </data>
+  <data name="RecipeBackupAbort" xml:space="preserve">
+    <value>適用前のバックアップに失敗したため、中止しました</value>
+  </data>
+  <data name="RecipeValueParseFailed" xml:space="preserve">
+    <value>値 "{0}" を解析できません</value>
+  </data>
+  <data name="RecipeValueParseAbort" xml:space="preserve">
+    <value>パラメータ {0} の値解析に失敗したため、中止しました</value>
+  </data>
+  <data name="RecipeWriteFailed" xml:space="preserve">
+    <value>書き込み失敗：{0}</value>
+  </data>
+  <data name="RecipeWriteRollback" xml:space="preserve">
+    <value>パラメータ {0} の書き込みに失敗し、ロールバックしました</value>
+  </data>
+  <data name="RecipeReadBackFailed" xml:space="preserve">
+    <value>読み戻し検証に失敗しました</value>
+  </data>
+  <data name="RecipeReadBackRollback" xml:space="preserve">
+    <value>パラメータ {0} の読み戻しに失敗し、ロールバックしました</value>
+  </data>
+  <data name="RecipeReadBackMismatch" xml:space="preserve">
+    <value>読み戻し検証が一致しません（期待値 {0}、読取値 {1}）</value>
+  </data>
+  <data name="RecipeMismatchRollback" xml:space="preserve">
+    <value>パラメータ {0} の検証が一致せず、ロールバックしました</value>
+  </data>
+  <data name="RecipeApplySuccess" xml:space="preserve">
+    <value>レシピの適用に成功しました</value>
+  </data>
+  <data name="RecipeApplyException" xml:space="preserve">
+    <value>適用例外：{0}</value>
+  </data>
+  <data name="RecipeUnsupportedType" xml:space="preserve">
+    <value>サポートされていないデータ型 {0}</value>
+  </data>
+  <data name="RecipeWriteVerified" xml:space="preserve">
+    <value>書き込み・検証済み</value>
+  </data>
+  <data name="RecipeAddressReadonly" xml:space="preserve">
+    <value>アドレス {0} のエリアは読み取り専用のため、書き込みはできません</value>
+  </data>
+  <data name="RecipeNameDuplicate" xml:space="preserve">
+    <value>レシピ名 "{0}" はこの機種で既に存在します</value>
+  </data>
+  <data name="RecipeMinMaxInverted" xml:space="preserve">
+    <value>下限 {0} が上限 {1} を超えています</value>
+  </data>
+  <data name="RecipeStringTooLong" xml:space="preserve">
+    <value>文字列の値が最大長 {0} 文字を超えています</value>
+  </data>
+  <data name="RecipeDeviceNotFound" xml:space="preserve">
+    <value>設備が見つかりません：{0}</value>
+  </data>
+  <data name="RecipeNotFound" xml:space="preserve">
+    <value>レシピが見つかりません：{0}</value>
+  </data>
+  <data name="RecipeApplyCancelled" xml:space="preserve">
+    <value>適用をキャンセルし、ロールバックしました</value>
+  </data>
+  <data name="RecipeWriteInProgress" xml:space="preserve">
+    <value>パラメータ {0} を書き込み中…</value>
+  </data>
+</root>

@@ -32,6 +32,15 @@ public interface IPlcDriver : IDeviceTransport
     /// <summary>从连续地址读取多个布尔值，由具体协议驱动实现。</summary>
     PlcOperationResult<bool[]> ReadBoolBatch(string address, ushort length);
 
+    /// <summary>读取 32 位浮点数（占用 DWord 字区地址）。</summary>
+    PlcOperationResult<float> ReadFloat(string address);
+
+    /// <summary>从连续地址读取多个 32 位浮点数。</summary>
+    PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length);
+
+    /// <summary>读取字符串（length 为最大字符数，协议驱动自行处理编码/截断）。</summary>
+    PlcOperationResult<string> ReadString(string address, ushort length);
+
     /// <summary>
     /// 写入 16 位无符号整数。
     /// </summary>
@@ -46,6 +55,12 @@ public interface IPlcDriver : IDeviceTransport
     /// 写入布尔值。
     /// </summary>
     PlcOperationResult WriteBool(string address, bool value);
+
+    /// <summary>写入 32 位浮点数。</summary>
+    PlcOperationResult WriteFloat(string address, float value);
+
+    /// <summary>写入字符串。</summary>
+    PlcOperationResult WriteString(string address, string value);
 }
 
 public enum PlcErrorKind

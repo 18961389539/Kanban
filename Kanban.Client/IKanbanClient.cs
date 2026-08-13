@@ -19,6 +19,15 @@ public interface IKanbanMonitoringClient
     Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default);
     Task SubscribeMetaAsync(CancellationToken ct = default);
     Task<string> GetServerVersionAsync(CancellationToken ct = default);
+
+    /// <summary>工单列表（只读管理页数据源）。</summary>
+    Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync(CancellationToken ct = default);
+
+    /// <summary>采集设置快照（只读设置页数据源）。</summary>
+    Task<CollectorSettingsDto> GetCollectorSettingsAsync(CancellationToken ct = default);
+
+    /// <summary>审计日志分页查询（只读审计页数据源）。</summary>
+    Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -31,4 +40,7 @@ public interface IKanbanAdminClient
     Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default);
     Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default);
     Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default);
+    Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default);
+    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default);
+    Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default);
 }

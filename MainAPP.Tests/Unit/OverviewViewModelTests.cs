@@ -85,6 +85,18 @@ public class OverviewViewModelTests
         }
     }
 
+    /// <summary>
+    /// 带死线的轮询等待（审查修复 2026-08-13）：原 while(IsLoading) + Task.Delay 无超时，
+    /// IsLoading 卡死时测试无限挂起（整个测试进程被拖死）。
+    /// </summary>
+    private static async Task WaitUntilNotLoadingAsync(OverviewViewModel vm, int timeoutMs = 10000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (vm.IsLoading && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
+        Assert.False(vm.IsLoading, $"等待 IsLoading 复位超时（{timeoutMs}ms）");
+    }
+
     /// <summary>通过反射设置私有字段，用于测试 IsLoading 重入保护。</summary>
     private static void SetField<T>(OverviewViewModel vm, string fieldName, T value)
     {
@@ -536,11 +548,9 @@ public class OverviewViewModelTests
             try
             {
                 vm.SelectedTimeRange = OverviewTimeRange.Days7;
-                while (vm.IsLoading)
-                    await Task.Delay(10);
+                await WaitUntilNotLoadingAsync(vm);
                 await vm.RefreshCommand.ExecuteAsync(null);
-                while (vm.IsLoading)
-                    await Task.Delay(10);
+                await WaitUntilNotLoadingAsync(vm);
 
                 // (180-100) + (50-20) + (90-40) + (25-10) = 175
                 Assert.Equal(175, vm.TotalOk);
@@ -861,8 +871,7 @@ public class OverviewViewModelTests
             try
             {
                 vm.SelectedDeviceId = "dev-2";
-                while (vm.IsLoading)
-                    await Task.Delay(10);
+                await WaitUntilNotLoadingAsync(vm);
                 await vm.RefreshCommand.ExecuteAsync(null);
 
                 Assert.Equal("长停机设备", vm.LongestDowntimeDevice);

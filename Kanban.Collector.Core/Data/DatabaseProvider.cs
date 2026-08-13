@@ -29,6 +29,7 @@ public class DatabaseProvider(AppSettings appSettings)
         "status_transitions.db",
         "work_orders.db",
         "defect_history.db",
+        "audit_logs.db",
     ];
 
     public AppSettings AppSettings => _appSettings;
@@ -38,6 +39,7 @@ public class DatabaseProvider(AppSettings appSettings)
     public StatusTransitionDbContext CreateStatusTransitionContext() => new(_appSettings);
     public WorkOrderDbContext CreateWorkOrderContext() => new(_appSettings);
     public DefectHistoryDbContext CreateDefectHistoryContext() => new(_appSettings);
+    public AuditDbContext CreateAuditContext() => new(_appSettings);
 
     /// <summary>
     /// 启动期数据库 schema 初始化。
@@ -69,6 +71,11 @@ public class DatabaseProvider(AppSettings appSettings)
         // 缺陷历史为新增独立数据库，使用 EnsureCreated 兼容首次部署和已有配置目录。
         using (var defectContext = CreateDefectHistoryContext())
             defectContext.Database.EnsureCreated();
+        // 操作审计为独立数据库。EnsureCreated 负责首次建表；幂等补丁负责从 MVP 旧库
+        // 升级到含 BeforeJson/AfterJson 的结构（EnsureCreated 不会修改已存在的表）。
+        using (var auditContext = CreateAuditContext())
+            auditContext.Database.EnsureCreated();
+        ApplyAuditSchemaPatches();
     }
 
     private void MigrateContext<TContext>(
@@ -115,6 +122,18 @@ public class DatabaseProvider(AppSettings appSettings)
             if (context.Database.GetPendingMigrations().Any())
                 BackupDatabase(databasePath);
             context.Database.Migrate();
+
+            // 迁移可能被“事后修改”（例如把新列手工补进 InitialSchema 迁移）：
+            // 已将其记录为“已应用”的既有库不会因 Migrate() 重跑而拿到新列，
+            // 从而读写报 “no such column”。这里在 Migrate 之后统一再补一遍，
+            // EnsureColumn / EnsureUniqueIndex 均幂等，对全新库与无历史旧库都是空操作。
+            using (var patchConn = new SqliteConnection($"Data Source={databasePath};Cache=Shared"))
+            {
+                patchConn.Open();
+                using var patchTx = patchConn.BeginTransaction();
+                applyLegacyPatch(patchConn, patchTx);
+                patchTx.Commit();
+            }
         }
     }
 
@@ -133,12 +152,29 @@ public class DatabaseProvider(AppSettings appSettings)
     {
         EnsureColumn(connection, transaction, "ProductionLogs", "WorkOrderId", "INTEGER");
         EnsureIndex(connection, transaction, "IX_ProductionLogs_WorkOrderId", "ProductionLogs", "WorkOrderId");
+        // EventId 幂等键（恢复文件回放去重）：旧库无此列时补列 + 唯一索引
+        EnsureColumn(connection, transaction, "ProductionLogs", "EventId", "TEXT");
+        EnsureUniqueIndex(connection, transaction, "IX_ProductionLogs_EventId", "ProductionLogs", "EventId");
     }
 
     private static void ApplyWorkOrderLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
     {
         EnsureColumn(connection, transaction, "WorkOrders", "CompletedOkCount", "INTEGER");
         EnsureColumn(connection, transaction, "WorkOrders", "CompletedNgCount", "INTEGER");
+    }
+
+    private void ApplyAuditSchemaPatches()
+    {
+        using var context = CreateAuditContext();
+        var databasePath = context.Database.GetDbConnection().DataSource;
+        using var connection = new SqliteConnection($"Data Source={databasePath};Cache=Shared");
+        connection.Open();
+        if (!TableExists(connection, "AuditEntries")) return;
+
+        using var transaction = connection.BeginTransaction();
+        EnsureColumn(connection, transaction, "AuditEntries", "BeforeJson", "TEXT");
+        EnsureColumn(connection, transaction, "AuditEntries", "AfterJson", "TEXT");
+        transaction.Commit();
     }
 
     private static bool TableExists(SqliteConnection connection, string tableName)
@@ -247,6 +283,14 @@ public class DatabaseProvider(AppSettings appSettings)
         index.ExecuteNonQuery();
     }
 
+    private static void EnsureUniqueIndex(SqliteConnection connection, SqliteTransaction transaction, string indexName, string tableName, string columnName)
+    {
+        using var index = connection.CreateCommand();
+        index.Transaction = transaction;
+        index.CommandText = $"CREATE UNIQUE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" (\"{columnName}\")";
+        index.ExecuteNonQuery();
+    }
+
     /// <summary>
     /// 对所有 SQLite 数据库文件执行启动期初始化：
     /// - journal_mode=WAL：数据库级别的持久化设置（写入 db 头部），只需执行一次。
@@ -302,6 +346,45 @@ public class DatabaseProvider(AppSettings appSettings)
             // PASSIVE：不阻塞并发读写，只合并已完成的 WAL 帧；TRUNCATE 在 PASSIVE 后截断 WAL 文件
             cmd.CommandText = "PRAGMA wal_checkpoint(PASSIVE);";
             cmd.ExecuteNonQuery();
+        }
+    }
+
+    /// <summary>
+    /// 生产历史库可写性探测（readiness 探针用）：PRAGMA quick_check 校验库完整性 +
+    /// BEGIN IMMEDIATE 事务获取写锁并回滚（不产生任何数据变更），
+    /// 可同时发现库损坏、磁盘只读/满、WAL 写锁无法获取等问题。
+    /// 返回 null 表示可写；否则返回错误描述。
+    /// </summary>
+    public string? ProbeWriteAccess()
+    {
+        try
+        {
+            _appSettings.EnsureDirectory();
+            var path = _appSettings.GetFilePath("production_logs.db");
+            using var conn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={path};Cache=Shared");
+            conn.Open();
+            using (var check = conn.CreateCommand())
+            {
+                check.CommandText = "PRAGMA quick_check;";
+                var result = (string?)check.ExecuteScalar();
+                if (!string.IsNullOrEmpty(result) && !string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
+                    return $"production_logs.db 完整性检查失败：{result}";
+            }
+            using (var writeLock = conn.CreateCommand())
+            {
+                writeLock.CommandText = "BEGIN IMMEDIATE;";
+                writeLock.ExecuteNonQuery();
+                using (var rollback = conn.CreateCommand())
+                {
+                    rollback.CommandText = "ROLLBACK;";
+                    rollback.ExecuteNonQuery();
+                }
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
         }
     }
 }

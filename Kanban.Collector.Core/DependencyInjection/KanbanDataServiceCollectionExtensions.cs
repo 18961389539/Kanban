@@ -36,10 +36,23 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<WorkOrderRepository>();
         services.AddSingleton<IWorkOrderRepository>(sp => sp.GetRequiredService<WorkOrderRepository>());
         services.AddSingleton<DefectHistoryStore>();
+        // 配方库：recipes.json 存储 + 下发执行（写 PLC/读回校验/回滚）
+        services.AddSingleton<RecipeStore>();
+        services.AddSingleton<IRecipeStore>(sp => sp.GetRequiredService<RecipeStore>());
+        services.AddSingleton<RecipeApplier>();
+        // 操作审计：批量追加写 audit_logs.db + 分页查询 + 30 天滚动清理
+        services.AddSingleton<AuditService>();
+        services.AddSingleton<IAuditService>(sp => sp.GetRequiredService<AuditService>());
         // 运行模式判定（Local/Remote 统一入口，避免散落 DataMode 判断）
         services.AddSingleton<IRuntimeMode, RuntimeMode>();
 
         // ──────────── PLC 驱动 / 连接 / 采集 ────────────
+        services.AddSingleton<IPlcBrandDescriptor, MitsubishiPlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, SiemensPlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, ModbusTcpPlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, OmronPlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandDescriptor, KeyencePlcBrandDescriptor>();
+        services.AddSingleton<IPlcBrandRegistry, PlcBrandRegistry>();
         services.AddSingleton<ISharedPlcDriverFactory, HslSharedPlcDriverFactory>();
         services.AddSingleton<IPlcAddressCodecResolver, PlcAddressCodecResolver>();
         services.AddSingleton<IPlcRuntimeProfileProvider, PlcRuntimeProfileProvider>();
@@ -71,6 +84,7 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<IProductionHistoryWriter>(sp => sp.GetRequiredService<ProductionHistoryWriter>());
         services.AddSingleton<HistoryService>();
         services.AddSingleton<IHistoryService>(sp => sp.GetRequiredService<HistoryService>());
+        services.AddSingleton<IHistoryQueryExecutor>(sp => sp.GetRequiredService<HistoryService>());
         services.AddSingleton<ProductionHistoryStore>();
         services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<ProductionHistoryStore>());
         services.AddSingleton<AlarmHistoryStore>();

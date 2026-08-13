@@ -19,6 +19,9 @@ public interface IKanbanHubClient
 
     /// <summary>推送低频元数据包（约 5s 一次：全部设备当前工单 + 班次进度）</summary>
     Task OnMeta(MetaStateDto meta);
+
+    /// <summary>配方下发进度推送（ApplyRecipeAsync 执行期间逐项推送，最终结果仍由 Invoke 返回值承载）</summary>
+    Task OnRecipeApplyProgress(RecipeApplyProgressDto progress);
 }
 
 /// <summary>
@@ -46,6 +49,12 @@ public interface IKanbanHubServer
     /// <summary>历史查询（Unary）</summary>
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request);
 
+    /// <summary>
+    /// 批量历史查询（Unary）：多个子查询一次往返，服务端对每个子查询做全量翻页聚合。
+    /// 用于生产复盘等「多设备 × 多类型」批查场景，避免逐设备逐页串行往返的分钟级延迟。
+    /// </summary>
+    Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(BatchHistoryQueryRequest request);
+
     /// <summary>拉取设备配置（Remote 模式屏端零配置：设备列表从此获取，不依赖本地 devices.json）</summary>
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync();
 
@@ -72,6 +81,15 @@ public interface IKanbanHubServer
     /// 屏端零配置——多语言由服务端统一控制，所有屏端跟随，避免逐屏配置。
     /// </summary>
     Task<int> GetLanguageAsync();
+
+    /// <summary>工单列表（只读；WEB 只读管理页数据源。写操作仍走 IKanbanAdminServer）。</summary>
+    Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync();
+
+    /// <summary>采集设置快照（只读；WEB 设置页展示数据源，写操作仍走 SaveCollectorSettingsAsync）。</summary>
+    Task<CollectorSettingsDto> GetCollectorSettingsAsync();
+
+    /// <summary>审计日志分页查询（只读；服务端 Count + Skip/Take，与历史查询同构）。</summary>
+    Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request);
 }
 
 /// <summary>
@@ -95,4 +113,16 @@ public interface IKanbanAdminServer
     /// 解决"Remote 模式下设置改了采集进程无感知"的配置分裂问题。
     /// </summary>
     Task SaveCollectorSettingsAsync(CollectorSettingsDto settings);
+
+    /// <summary>同步全部配方（Remote 模式：MainAPP 配方管理保存时推给 Collector 落盘 recipes.json）。
+    /// 参数用 List&lt;RecipeDto&gt;：MessagePack 对 IReadOnlyList&lt;T&gt; 只读包装无 formatter，SignalR 会序列化失败。</summary>
+    Task SaveRecipesAsync(List<RecipeDto> recipes);
+
+    /// <summary>拉取全部配方（Remote 模式：MainAPP 启动/页面加载时从 Collector 获取配方库）。</summary>
+    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync();
+
+    /// <summary>
+    /// 下发配方到指定设备（Remote 模式：写 PLC 由持有连接的 Collector 执行，返回逐项结果，失败已回滚）。
+    /// </summary>
+    Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId);
 }

@@ -1,0 +1,20 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <nav class="topnav">
+        <NavLink class="topnav-link" href="/" Match="NavLinkMatch.All">@L.T("Nav_Dashboard")</NavLink>
+        <NavLink class="topnav-link" href="/line">@L.T("Nav_Line")</NavLink>
+        <NavLink class="topnav-link" href="/history">@L.T("Nav_History")</NavLink>
+        <NavLink class="topnav-link" href="/alarms">@L.T("Nav_AlarmCenter")</NavLink>
+        <NavLink class="topnav-link" href="/monitoring">@L.T("Nav_Monitoring")</NavLink>
+        <NavLink class="topnav-link" href="/review">@L.T("Nav_Review")</NavLink>
+        <NavLink class="topnav-link" href="/devices">@L.T("Nav_Devices")</NavLink>
+        <NavLink class="topnav-link" href="/workorders">@L.T("Nav_WorkOrders")</NavLink>
+        <NavLink class="topnav-link" href="/recipes">@L.T("Nav_Recipes")</NavLink>
+        <NavLink class="topnav-link" href="/settings">@L.T("Nav_Settings")</NavLink>
+        <NavLink class="topnav-link" href="/audit">@L.T("Nav_Audit")</NavLink>
+    </nav>
+    <main class="app-body">
+        @Body
+    </main>
+</div>

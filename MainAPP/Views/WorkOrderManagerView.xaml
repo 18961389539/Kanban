@@ -13,70 +13,7 @@
     d:DesignWidth="1100"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
-        <!--  工单状态 → 显示文本 + 色点画刷（DataTrigger 内联，避免新建转换器）  -->
-        <Style x:Key="StatusDot" TargetType="Ellipse">
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Height" Value="8" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                    <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                    <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="StatusText" TargetType="TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-            <Setter Property="Text" Value="—" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K010}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K011}" />
-                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K012}" />
-                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
-                    <Setter Property="Text" Value="{x:Static resources:Strings.K013}" />
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <!--  状态筛选 chip：单选分段按钮风格，选中时高亮  -->
-        <Style x:Key="StatusFilterChip" TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Margin" Value="0,0,6,0" />
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Foreground" Value="White" />
-                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <!--  工单状态色点/文本/筛选 chip 已全局化至 Styles/Components.xaml（StatusDot/StatusText/TimePresetChip）  -->
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -150,13 +87,13 @@
                 <!--  状态分布概览：一眼看到各状态工单数量，点击切换筛选（RadioButton 单选互斥）  -->
                 <StackPanel Grid.Row="3" Margin="18,0,18,8" Orientation="Horizontal">
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K004}"
-                                 Content="{x:Static resources:Strings.K004}" Style="{StaticResource StatusFilterChip}">
+                                 Content="{x:Static resources:Strings.K004}" Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K004}" />
                         </RadioButton.IsChecked>
                     </RadioButton>
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K010}"
-                                 Style="{StaticResource StatusFilterChip}">
+                                 Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K010}" />
                         </RadioButton.IsChecked>
@@ -168,7 +105,7 @@
                         </RadioButton.Content>
                     </RadioButton>
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K011}"
-                                 Style="{StaticResource StatusFilterChip}">
+                                 Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K011}" />
                         </RadioButton.IsChecked>
@@ -180,7 +117,7 @@
                         </RadioButton.Content>
                     </RadioButton>
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K012}"
-                                 Style="{StaticResource StatusFilterChip}">
+                                 Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K012}" />
                         </RadioButton.IsChecked>
@@ -192,7 +129,7 @@
                         </RadioButton.Content>
                     </RadioButton>
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K013}"
-                                 Style="{StaticResource StatusFilterChip}">
+                                 Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
                             <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K013}" />
                         </RadioButton.IsChecked>
@@ -204,15 +141,15 @@
                         </RadioButton.Content>
                     </RadioButton>
                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{Binding FilteredCount, StringFormat=显示 {0} 条}" />
+                               Text="{Binding FilteredCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F259}" />
                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource WarningBrush}"
-                               Text="{Binding OverdueCount, StringFormat=超期 {0}}" />
+                               Text="{Binding OverdueCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F260}" />
                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource SuccessBrush}"
-                               Text="{Binding AchievedCount, StringFormat=达标 {0}}" />
+                               Text="{Binding AchievedCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F261}" />
                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
-                               Text="{Binding NgWorkOrderCount, StringFormat=有NG {0}}" />
+                               Text="{Binding NgWorkOrderCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F262}" />
                     <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource WarningBrush}"
-                               Text="{Binding ScheduleConflictCount, StringFormat=计划冲突 {0}}" />
+                               Text="{Binding ScheduleConflictCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F263}" />
                 </StackPanel>
 
                 <!--  列表表头  -->
@@ -434,7 +371,7 @@
                                            FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
-                                           Text="{Binding SelectedWorkOrder.TargetQuantity, StringFormat={}{0:N0} 件}" />
+                                           Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </DockPanel>
                             <!--  实际产量统计（SelectedProduction 非 null 时显示）  -->
                             <StackPanel Margin="0,0,0,12"
@@ -444,14 +381,14 @@
                                                FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K047}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource SuccessBrush}"
-                                               Text="{Binding SelectedProduction.OkCount, StringFormat={}{0:N0} 件}" />
+                                               Text="{Binding SelectedProduction.OkCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
                                                FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K575}" />
                                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                Foreground="{StaticResource DangerBrush}"
-                                               Text="{Binding SelectedProduction.NgCount, StringFormat={}{0:N0} 件}" />
+                                               Text="{Binding SelectedProduction.NgCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                                 </DockPanel>
                                 <DockPanel Margin="0,0,0,6">
                                     <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"

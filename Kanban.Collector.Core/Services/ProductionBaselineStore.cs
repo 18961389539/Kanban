@@ -21,12 +21,19 @@ namespace Kanban.Core.Services;
 /// 与 devices.json / settings.json 同一套原子写入机制，避免断电/崩溃导致 baselines.json 损坏。
 ///
 /// 线程安全：GetOrCreate/ClearDevice/ClearAll/SaveBaselines 在锁内更新字典与 BaselineShiftId，
-/// 序列化+原子写盘在锁外执行（P1-6：避免慢盘阻塞轮询线程对其他设备基线的读取）。
+/// 序列化+原子写盘在锁外执行（P1-6：避免慢盘阻塞轮询线程对其他设备基线的读取），
+/// 写盘完成后回锁复查版本号，并发写者乱序落盘时以最新快照重写直至收敛（审查修复 2026-08-13）。
 /// </summary>
-public sealed class ProductionBaselineStore(AppSettings appSettings)
+public class ProductionBaselineStore(AppSettings appSettings)
 {
     private readonly object _lock = new();
     private readonly string _filePath = appSettings.GetFilePath("baselines.json");
+
+    /// <summary>
+    /// 写盘版本号：锁内每次变更 ++；写者携带捕获版本落盘后回锁复查，
+    /// 版本已前进说明期间有更新的变更，需用最新快照重写，杜绝乱序写盘丢失更新。
+    /// </summary>
+    private long _saveVersion;
 
     /// <summary>本会话活动缓存（等价于旧 _cumulativeBase）。</summary>
     private Dictionary<string, int> _baselines = new();
@@ -89,8 +96,8 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     /// - 活动缓存已有该 key 且 raw &lt; baseline（PLC 计数器回退/外部清零）：以 raw 为新基线。
     /// - 其余情况直接返回活动缓存中的基线。
     /// 基线发生变更时立即持久化（原子写），保证每班次/每次校正都落盘。
-    /// 持久化在锁外执行：锁内仅更新字典与 BaselineShiftId 并捕获快照，锁外做 JSON 序列化+写盘，
-    /// 避免慢盘阻塞轮询线程对其他设备基线的并发读取。
+    /// 持久化在锁外执行：锁内仅更新字典与 BaselineShiftId 并捕获快照+版本号，锁外做 JSON 序列化+写盘，
+    /// 避免慢盘阻塞轮询线程对其他设备基线的并发读取；写盘后回锁复查版本，乱序时重写最新快照。
     /// </summary>
     /// <param name="key">基线 key，形如 "{deviceId}_ok_base"。</param>
     /// <param name="raw">本次读取到的 PLC 累计值。</param>
@@ -100,6 +107,7 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     {
         string? shiftIdToSave = null;
         Dictionary<string, int>? snapshotToSave = null;
+        long versionToSave = 0;
         int baseline;
         lock (_lock)
         {
@@ -133,12 +141,13 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
                 shiftIdToSave = currentShiftId;
                 // 复制一份快照，在锁外序列化写盘，避免持有锁期间阻塞其他读基线操作
                 snapshotToSave = new Dictionary<string, int>(_baselines);
+                versionToSave = ++_saveVersion;
             }
         }
 
         // 锁外序列化+原子写盘：慢盘不影响其他设备基线的并发读取
         if (snapshotToSave != null)
-            SaveToFile(snapshotToSave, shiftIdToSave);
+            SaveWithRecheck(snapshotToSave, shiftIdToSave, versionToSave);
         return baseline;
     }
 
@@ -150,16 +159,17 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     {
         var prefix = deviceId + "_";
         string? shiftIdToSave;
-        Dictionary<string, int>? snapshotToSave;
+        Dictionary<string, int> snapshotToSave;
+        long versionToSave;
         lock (_lock)
         {
             RemovePrefixed(_baselines, prefix);
             RemovePrefixed(_loadedBaselines, prefix);
             shiftIdToSave = BaselineShiftId;
             snapshotToSave = new Dictionary<string, int>(_baselines);
+            versionToSave = ++_saveVersion;
         }
-        if (snapshotToSave != null)
-            SaveToFile(snapshotToSave, shiftIdToSave);
+        SaveWithRecheck(snapshotToSave, shiftIdToSave, versionToSave);
     }
 
     /// <summary>
@@ -169,14 +179,16 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     public void ClearAll(string? shiftId)
     {
         Dictionary<string, int> emptySnapshot;
+        long versionToSave;
         lock (_lock)
         {
             _baselines.Clear();
             _loadedBaselines.Clear();
             BaselineShiftId = shiftId;
             emptySnapshot = new Dictionary<string, int>(_baselines);
+            versionToSave = ++_saveVersion;
         }
-        SaveToFile(emptySnapshot, shiftId);
+        SaveWithRecheck(emptySnapshot, shiftId, versionToSave);
     }
 
     /// <summary>
@@ -186,13 +198,15 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     public void SaveBaselines(Dictionary<string, int> baselines, string? shiftId)
     {
         Dictionary<string, int> snapshot;
+        long versionToSave;
         lock (_lock)
         {
             _baselines = new Dictionary<string, int>(baselines);
             BaselineShiftId = shiftId;
             snapshot = new Dictionary<string, int>(_baselines);
+            versionToSave = ++_saveVersion;
         }
-        SaveToFile(snapshot, shiftId);
+        SaveWithRecheck(snapshot, shiftId, versionToSave);
     }
 
     /// <summary>
@@ -222,10 +236,32 @@ public sealed class ProductionBaselineStore(AppSettings appSettings)
     }
 
     /// <summary>
+    /// 锁外写盘 + 版本复查收敛：写完后回锁比对捕获版本，期间有新变更则取最新快照重写，
+    /// 直至落盘内容确认为最新状态。并发写者乱序（先捕获的旧快照后落盘）时由复查循环纠正
+    /// （审查修复 2026-08-13：修复旧快照覆盖新快照导致基线丢失/复活的竞态）。
+    /// </summary>
+    private void SaveWithRecheck(Dictionary<string, int> snapshot, string? shiftId, long version)
+    {
+        while (true)
+        {
+            SaveToFile(snapshot, shiftId);
+            lock (_lock)
+            {
+                if (_saveVersion == version)
+                    return;
+                snapshot = new Dictionary<string, int>(_baselines);
+                shiftId = BaselineShiftId;
+                version = _saveVersion;
+            }
+        }
+    }
+
+    /// <summary>
     /// 原子写入 baselines.json（复用 AppSettings.WriteFileAtomically：临时文件 + 重命名 + .bak 备份）。
     /// 在锁外调用：调用方需在锁内捕获快照副本后释放锁再调用本方法。
+    /// internal virtual：供测试子类注入写盘延迟，构造确定性的乱序写场景（回归测试用）。
     /// </summary>
-    private void SaveToFile(Dictionary<string, int> baselines, string? shiftId)
+    internal virtual void SaveToFile(Dictionary<string, int> baselines, string? shiftId)
     {
         var file = new BaselineFile { ShiftId = shiftId, Baselines = baselines };
         var json = JsonSerializer.Serialize(file, AppSettings.JsonOptions);

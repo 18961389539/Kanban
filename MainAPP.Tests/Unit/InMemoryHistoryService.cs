@@ -14,7 +14,7 @@ namespace MainAPP.Tests.Unit;
 /// （真实 HistoryService 通过 SQLite 连接池/事务保证线程安全，桩需对齐）。
 /// 公开 List 属性保留可写，便于非并发测试通过 AddRange 批量注入数据。
 /// </summary>
-internal sealed class InMemoryHistoryService : IHistoryService
+internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProductionBatchQuery
 {
     private readonly object _lock = new();
 
@@ -22,6 +22,7 @@ internal sealed class InMemoryHistoryService : IHistoryService
     public List<ProductionLog> ProductionLogs { get; } = new();
     public List<StatusTransitionRecord> StatusTransitions { get; } = new();
     public List<AlarmEventRecord> AlarmEvents { get; } = new();
+    public List<DefectSnapshotRecord> DefectSnapshots { get; } = new();
 
     public List<ProductionLog> QueryProductionLogs(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
     {
@@ -56,6 +57,30 @@ internal sealed class InMemoryHistoryService : IHistoryService
             .Where(p => p.WorkOrderId == workOrderId)
             .OrderBy(p => p.Timestamp)
             .ToList();
+    }
+
+    public Dictionary<int, List<ProductionLog>> QueryProductionLogsByWorkOrderBatch(IReadOnlyList<int> workOrderIds)
+    {
+        if (workOrderIds.Count == 0) return [];
+        var ids = workOrderIds.ToHashSet();
+        List<ProductionLog> snapshot;
+        lock (_lock) snapshot = ProductionLogs.ToList();
+        return snapshot
+            .Where(p => p.WorkOrderId.HasValue && ids.Contains(p.WorkOrderId.Value))
+            .GroupBy(p => p.WorkOrderId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(p => p.Timestamp).ToList());
+    }
+
+    public Dictionary<int, List<ProductionLog>> QueryProductionLogsByDeviceWindowsBatch(
+        IReadOnlyList<(int WorkOrderId, string DeviceId, DateTime From, DateTime To)> windows)
+    {
+        var result = new Dictionary<int, List<ProductionLog>>();
+        foreach (var (workOrderId, deviceId, from, to) in windows)
+        {
+            var logs = QueryProductionLogs(from, to, deviceId);
+            if (logs.Count > 0) result[workOrderId] = logs;
+        }
+        return result;
     }
 
     public ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName)
@@ -102,6 +127,38 @@ internal sealed class InMemoryHistoryService : IHistoryService
             .Where(e => shiftName == null || e.ShiftName == shiftName)
             .OrderBy(e => e.EventTime)
             .ToList();
+    }
+
+    public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
+        => QueryAlarmEvents(from, to, deviceId, shiftName);
+
+    public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+    {
+        var filtered = QueryAlarmEvents(from, to, deviceId, shiftName).OrderByDescending(e => e.EventTime).ToList();
+        var (p, s) = HistoryPagination.Normalize(page, pageSize);
+        return (filtered.Skip((p - 1) * s).Take(s).ToList(), filtered.Count);
+    }
+
+    public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
+        string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)
+    {
+        var filtered = QueryStatusTransitions(deviceId, from, to, shiftName).OrderByDescending(s => s.EventTime).ToList();
+        var (p, s) = HistoryPagination.Normalize(page, pageSize);
+        return (filtered.Skip((p - 1) * s).Take(s).ToList(), filtered.Count);
+    }
+
+    public (List<DefectSnapshotRecord> Items, int Total) QueryDefectSnapshotsPaged(
+        DateTime from, DateTime to, string deviceId, int page, int pageSize)
+    {
+        List<DefectSnapshotRecord> snapshot;
+        lock (_lock) snapshot = DefectSnapshots.ToList();
+        var filtered = snapshot
+            .Where(d => d.DeviceId == deviceId && d.Timestamp >= from && d.Timestamp <= to)
+            .OrderByDescending(d => d.Timestamp)
+            .ToList();
+        var (p, s) = HistoryPagination.Normalize(page, pageSize);
+        return (filtered.Skip((p - 1) * s).Take(s).ToList(), filtered.Count);
     }
 
     public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)

@@ -17,8 +17,13 @@ public sealed class NavigationPageModule<TView, TViewModel> : INavigationPageMod
 {
     public NavigationPage Page { get; }
 
-    public NavigationPageModule(NavigationPageDefinition definition, Func<TView> viewFactory, TViewModel viewModel)
+    public NavigationPageModule(
+        NavigationPageDefinition definition,
+        Func<TView> viewFactory,
+        Func<TViewModel> viewModelFactory)
     {
-        Page = new NavigationPage(definition, () => viewFactory(), viewModel);
+        // ViewModel 延迟到页面进入/可见时创建（NavigationPage 内部 Lazy），
+        // 避免 MainWindow 构造时全量实例化 10+ 页面 ViewModel 拖慢启动。
+        Page = new NavigationPage(definition, () => viewFactory(), () => viewModelFactory());
     }
 }

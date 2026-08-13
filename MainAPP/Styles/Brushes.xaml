@@ -50,6 +50,9 @@
     <SolidColorBrush x:Key="StatusPauseBrush" Color="#FBBF24" />
     <SolidColorBrush x:Key="StatusPauseSoftBrush" Color="#FBBF24" Opacity="0.15" />
 
+    <SolidColorBrush x:Key="StatusWarnBrush" Color="#FB923C" />
+    <SolidColorBrush x:Key="StatusWarnSoftBrush" Color="#FB923C" Opacity="0.15" />
+
     <SolidColorBrush x:Key="StatusIdleBrush" Color="#9CA3AF" />
     <SolidColorBrush x:Key="StatusIdleSoftBrush" Color="#9CA3AF" Opacity="0.15" />
 
@@ -64,6 +67,9 @@
     <SolidColorBrush x:Key="PrimarySoftBrush" Color="#263040" />
     <!--  HoverBrush：列表项悬停底色  -->
     <SolidColorBrush x:Key="HoverBrush" Color="#1F2733" />
+    <!--  PrimaryContrastBrush：主色填充上的深色对比前景（侧边栏工业风选中项图标/文字、
+          Logo 方块内图标），与主色块配套使用，避免硬编码色值。  -->
+    <SolidColorBrush x:Key="PrimaryContrastBrush" Color="#10141B" />
 
     <!--  ============ 覆盖层（加载/遮罩） ============ -->
     <!--  OverlayBackgroundBrush：50% 透明背景色，用于 LoadingOverlay 等。

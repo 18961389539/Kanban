@@ -1,8 +1,6 @@
 ﻿using HslCommunication.Profinet.Siemens;
 using Kanban.Core.Models;
-using MainAPP.Models;
 using Kanban.Core.Services;
-using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -15,6 +13,12 @@ namespace MainAPP.Tests.Integration;
 /// 让真实的 <see cref="HslSiemensPlcDriver"/> 通过 TCP 回环连接，验证 S7 协议下的
 /// 连接 / 读写 / 批量读 / 断开 / 配置切换 / 不可达失败 等真实行为。
 ///
+/// 通用契约（连接/写读往返/批读/断线/配置切换/释放/能力一致性）由
+/// <see cref="PlcDriverContractTestBase{TDriver, TServer}"/> 统一执行，
+/// 本类只保留品牌特有断言（服务器预置读回、批读上限随配置、S7 能力轮廓）。
+/// 地址约定：Siemens M 存储区（Int32/UInt16/Bool），地址格式如 M100、M20.0；
+/// M 区 Int32 按 4 字节寻址，故 Int32AddressStride=4。
+///
 /// 注意：<see cref="SiemensS7Server"/> 文档标注“仅限商业授权用户使用”；HslCommunication 对未授权的
 /// 网络通信提供 24 小时宽限期，开发/测试环境通常可在宽限期内运行。若 CI 因授权失败报错，
 /// 可通过 <c>dotnet test --filter FullyQualifiedName!~HslSiemensPlcDriverSimulation</c> 临时跳过，
@@ -23,14 +27,13 @@ namespace MainAPP.Tests.Integration;
 [Trait("Category","Simulation")]
 [Trait("Speed","Slow")]
 [Trait("Requires","Network")]
-public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBase<SiemensS7Server>
+public sealed class HslSiemensPlcDriverSimulationTests : PlcDriverContractTestBase<SiemensS7Server>
 {
-    /// <summary>创建指向 127.0.0.1:Port 的 Siemens 驱动（S7-1200, Rack=0, Slot=1, 超时 3000ms）。</summary>
-    private HslSiemensPlcDriver CreateDriver() => new(
-        BuildLiveConfig(),
-        NullLogger<HslSiemensPlcDriver>.Instance);
+    protected override PlcBrand Brand => PlcBrand.Siemens;
+    protected override IPlcDriver CreateDriver(PlcConfig config) =>
+        new HslSiemensPlcDriver(config, NullLogger<HslSiemensPlcDriver>.Instance);
 
-    private PlcConfig BuildLiveConfig() => new()
+    protected override PlcConfig BuildLiveConfig() => new()
     {
         Brand = PlcBrand.Siemens,
         IpAddress = "127.0.0.1",
@@ -41,14 +44,27 @@ public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBas
         SiemensSlot = 1,
     };
 
-    // ──────────── BatchReadCapabilities ────────────
+    protected override string Int32Address => "M100";
+    protected override string UInt16Address => "M200";
+    protected override string BoolAddress => "M10";
+    protected override int Int32BatchBaseOffset => 300;
+    protected override int Int32AddressStride => 4;
+    protected override string Int32BatchAddressTemplate => "M{0}";
+    protected override string BoolBatchStartAddress => "M20";
+    protected override string FormatBoolBitAddress(int index) => $"M20.{index}";
+    protected override string StringAddress => "M500";
+    protected override BatchReadCapabilities GetDriverBatchCapabilities(PlcConfig config)
+    {
+        using var driver = new HslSiemensPlcDriver(config, NullLogger<HslSiemensPlcDriver>.Instance);
+        return driver.BatchReadCapabilities;
+    }
+
+    // ──────────── 品牌特有：批读能力轮廓 ────────────
 
     [Fact]
     public void BatchReadCapabilities_MatchesExpectedSiemensProfile()
     {
-        using var driver = CreateDriver();
-
-        var caps = driver.BatchReadCapabilities;
+        var caps = GetDriverBatchCapabilities(BuildLiveConfig());
 
         Assert.True(caps.SupportsInt32);
         Assert.Equal((ushort)55, caps.MaxInt32Length);
@@ -68,51 +84,14 @@ public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBas
         Assert.Equal((ushort)20, driver.BatchReadCapabilities.MaxInt32Length);
     }
 
-    // ──────────── Connect / Disconnect ────────────
-
-    [Fact]
-    public void Connect_ToLiveServer_Succeeds()
-    {
-        using var driver = CreateDriver();
-
-        var result = driver.Connect();
-
-        Assert.True(result.IsSuccess, result.Message);
-    }
-
-    [Fact]
-    public void Disconnect_AfterConnect_Succeeds()
-    {
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        var result = driver.Disconnect();
-
-        Assert.True(result.IsSuccess, result.Message);
-    }
-
-    [Fact]
-    public void Connect_ToUnreachableServer_ReturnsFailure()
-    {
-        // 指向一个没有服务器监听的端口 → 连接被拒绝
-        var deadPort = AllocateFreePort();
-        var config = BuildLiveConfig();
-        config.Port = deadPort;
-        using var driver = new HslSiemensPlcDriver(config, NullLogger<HslSiemensPlcDriver>.Instance);
-
-        var result = driver.Connect();
-
-        Assert.False(result.IsSuccess);
-    }
-
-    // ──────────── Read ────────────
+    // ──────────── 品牌特有：服务器预置读回 ────────────
 
     [Fact]
     public void ReadInt32_ReturnsPresetValue()
     {
         const int expected = 123456;
         PresetInt32("M100", expected);
-        using var driver = CreateDriver();
+        using var driver = CreateDriver(BuildLiveConfig());
         driver.Connect();
 
         var result = driver.ReadInt32("M100");
@@ -126,7 +105,7 @@ public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBas
     {
         const ushort expected = 47831;
         PresetUInt16("M200", expected);
-        using var driver = CreateDriver();
+        using var driver = CreateDriver(BuildLiveConfig());
         driver.Connect();
 
         var result = driver.ReadUInt16("M200");
@@ -139,7 +118,7 @@ public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBas
     public void ReadBool_ReturnsPresetValue()
     {
         PresetBool("M10", true);
-        using var driver = CreateDriver();
+        using var driver = CreateDriver(BuildLiveConfig());
         driver.Connect();
 
         var result = driver.ReadBool("M10");
@@ -149,130 +128,16 @@ public sealed class HslSiemensPlcDriverSimulationTests : HslPlcSimulationTestBas
     }
 
     [Fact]
-    public void ReadInt32_Fails_AfterNetworkDisconnect()
-    {
-        // HslCommunication 客户端在 ConnectClose() 后会自动重连，
-        // 因此不能用 driver.Disconnect() 测试断线——必须通过 CutConnection 切断网络。
-        PresetInt32("M100", 42);
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        CutConnection();  // 切断 TCP 代理，模拟网络断线
-
-        var result = driver.ReadInt32("M100");
-
-        Assert.False(result.IsSuccess);
-    }
-
-    // ──────────── Batch Read ────────────
-
-    [Fact]
     public void ReadInt32Batch_ReturnsPresetValues()
     {
         var expected = new[] { 100, 200, 300 };
         PresetInt32Array("M300", expected);
-        using var driver = CreateDriver();
+        using var driver = CreateDriver(BuildLiveConfig());
         driver.Connect();
 
         var result = driver.ReadInt32Batch("M300", (ushort)expected.Length);
 
         Assert.True(result.IsSuccess, result.Message);
         Assert.Equal(expected, result.Content);
-    }
-
-    [Fact]
-    public void WriteAndReadBoolBatch_RoundTrips()
-    {
-        // SiemensS7Server 不支持 Write(address, bool[])，通过驱动逐位写入再批量读。
-        // ReadBoolBatch("M20", 4) 读取 M20.0~M20.3 共 4 个连续位。
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        var expected = new[] { true, false, true, false };
-        for (var i = 0; i < expected.Length; i++)
-        {
-            var w = driver.WriteBool($"M20.{i}", expected[i]);
-            Assert.True(w.IsSuccess, w.Message);
-        }
-
-        var result = driver.ReadBoolBatch("M20", (ushort)expected.Length);
-
-        Assert.True(result.IsSuccess, result.Message);
-        Assert.Equal(expected, result.Content);
-    }
-
-    // ──────────── Write（驱动写 → 驱动读回，避免字节序差异） ────────────
-
-    [Fact]
-    public void WriteInt32_ThenReadBack_ReturnsWrittenValue()
-    {
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        var write = driver.WriteInt32("M100", 778899);
-        Assert.True(write.IsSuccess, write.Message);
-
-        var read = driver.ReadInt32("M100");
-        Assert.True(read.IsSuccess, read.Message);
-        Assert.Equal(778899, read.Content);
-    }
-
-    [Fact]
-    public void WriteUInt16_ThenReadBack_ReturnsWrittenValue()
-    {
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        var write = driver.WriteUInt16("M200", 12345);
-        Assert.True(write.IsSuccess, write.Message);
-
-        var read = driver.ReadUInt16("M200");
-        Assert.True(read.IsSuccess, read.Message);
-        Assert.Equal((ushort)12345, read.Content);
-    }
-
-    [Fact]
-    public void WriteBool_ThenReadBack_ReturnsWrittenValue()
-    {
-        using var driver = CreateDriver();
-        driver.Connect();
-
-        var write = driver.WriteBool("M10", true);
-        Assert.True(write.IsSuccess, write.Message);
-
-        var read = driver.ReadBool("M10");
-        Assert.True(read.IsSuccess, read.Message);
-        Assert.True(read.Content);
-    }
-
-    // ──────────── Configure ────────────
-
-    [Fact]
-    public void Configure_ToNewEndpoint_RecreatesClientAndConnectsToLiveServer()
-    {
-        // 初始指向无服务器端口，连接失败
-        var deadPort = AllocateFreePort();
-        var deadConfig = BuildLiveConfig();
-        deadConfig.Port = deadPort;
-        using var driver = new HslSiemensPlcDriver(deadConfig, NullLogger<HslSiemensPlcDriver>.Instance);
-
-        Assert.False(driver.Connect().IsSuccess);
-
-        // 切换到运行中的虚拟服务器，连接应成功
-        driver.Configure("127.0.0.1", Port);
-
-        Assert.True(driver.Connect().IsSuccess);
-    }
-
-    // ──────────── Dispose ────────────
-
-    [Fact]
-    public void Dispose_CalledTwice_DoesNotThrow()
-    {
-        var driver = CreateDriver();
-        driver.Connect();
-
-        driver.Dispose();
-        driver.Dispose();  // 重复释放不应抛异常
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
@@ -37,7 +37,7 @@ public class ProductionLineRenderTests : WpfTestHost
         var lineVm = new ProductionLineViewModel(repo, selection);
 
         Assert.Equal(2, lineVm.LineDevices.Count);
-        Assert.True(lineVm.IsLargeCardsLayout);
+        Assert.True(lineVm.IsDetailedLayout);
 
         RunOnSta(app =>
         {
@@ -62,7 +62,7 @@ public class ProductionLineRenderTests : WpfTestHost
         var lineVm = new ProductionLineViewModel(repo, selection);
 
         Assert.True(lineVm.HasNoDevices);
-        Assert.True(lineVm.IsLargeCardsLayout);
+        Assert.True(lineVm.IsDetailedLayout);
 
         RunOnSta(app =>
         {

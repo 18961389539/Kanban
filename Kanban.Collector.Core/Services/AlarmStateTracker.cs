@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -48,7 +49,8 @@ internal sealed class AlarmStateTracker
         ILogger logger,
         IAlarmNotificationChannel? notificationChannel = null,
         int maxBatchReadLength = 64,
-        int maxGapSlots = 1)
+        int maxGapSlots = 1,
+        Action<AlarmEventDto>? onAlarmEdge = null)
     {
         var deviceList = devices.ToList();
         var batchValues = PrepareBatchValues(deviceList, adapter, logger, maxBatchReadLength, maxGapSlots);
@@ -157,6 +159,32 @@ internal sealed class AlarmStateTracker
 
                 logger.LogInformation("报警 {Alarm} {Edge}（设备={Device}）",
                     alarm.Name, edgeType == AlarmEventType.Triggered ? "触发" : "恢复", device.Name);
+
+                // 边沿事件广播：成功落库后向 EventBroadcaster 推送（修复 Remote 事件流缺口——
+                // 此前 AlarmStateTracker 仅写 DB + 报警铃，从未喂 EventBroadcaster）。
+                // 包 try/catch：广播失败不能破坏采集循环。
+                if (onAlarmEdge != null)
+                {
+                    try
+                    {
+                        onAlarmEdge(new AlarmEventDto
+                        {
+                            DeviceId = device.Id,
+                            DeviceName = device.Name,
+                            AlarmId = alarm.Id,
+                            AlarmName = alarm.Name,
+                            PlcAddress = addr,
+                            EventType = (Kanban.Contracts.Enums.AlarmEventType)(int)edgeType.Value,
+                            Level = (Kanban.Contracts.Enums.AlarmLevel)(int)alarm.Level,
+                            EventTime = eventTime,
+                            ShiftName = shiftName,
+                        });
+                    }
+                    catch (System.Exception ex)
+                    {
+                        logger.LogWarning(ex, "报警边沿事件广播失败（设备={Device} 报警={Alarm}）", device.Name, alarm.Name);
+                    }
+                }
 
                 if (edgeType == AlarmEventType.Triggered)
                 {
@@ -270,9 +298,10 @@ internal sealed class AlarmStateTracker
         ILogger logger,
         IAlarmNotificationChannel? notificationChannel = null,
         int maxBatchReadLength = 64,
-        int maxGapSlots = 1)
+        int maxGapSlots = 1,
+        Action<AlarmEventDto>? onAlarmEdge = null)
         => ScanAlarms(devices, new PlcDeviceAdapter(plc), historyService, shiftName, logger,
-            notificationChannel, maxBatchReadLength, maxGapSlots);
+            notificationChannel, maxBatchReadLength, maxGapSlots, onAlarmEdge);
 
     /// <summary>
     /// 同步遍历当前仍触发中的报警（_prevAlarmStates 值为 true），

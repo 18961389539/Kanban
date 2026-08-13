@@ -18,15 +18,17 @@ public interface IPlcRuntimeProfileProvider
 public sealed class PlcRuntimeProfileProvider : IPlcRuntimeProfileProvider
 {
     private readonly object _sync = new();
-    private readonly IPlcAddressCodecResolver _codecResolver;
+    private readonly IPlcBrandRegistry _brandRegistry;
     private PlcRuntimeProfile _current;
     private long _version;
 
     public PlcRuntimeProfileProvider(
         AppSettings settings,
-        IPlcAddressCodecResolver codecResolver)
+        IPlcAddressCodecResolver codecResolver,
+        IPlcBrandRegistry? brandRegistry = null)
     {
-        _codecResolver = codecResolver;
+        _ = codecResolver;
+        _brandRegistry = brandRegistry ?? PlcBrandDescriptors.CreateDefault();
         _current = Build(settings.PlcConfig, ++_version);
     }
 
@@ -47,21 +49,25 @@ public sealed class PlcRuntimeProfileProvider : IPlcRuntimeProfileProvider
     private PlcRuntimeProfile Build(PlcConfig config, long version)
     {
         var snapshot = config.CreateSnapshot();
+        var descriptor = _brandRegistry.Resolve(snapshot.Brand);
         return new(
-        snapshot.Brand,
-        config.Brand == PlcBrand.ModbusTcp
-            ? new ModbusTcpAddressCodec(snapshot)
-            : _codecResolver.Resolve(snapshot.Brand),
-        BatchReadCapabilitiesFor(snapshot.Brand, snapshot.SiemensBatchInt32Limit, snapshot.OmronReadSplits),
-        version,
-        snapshot);
+            snapshot.Brand,
+            descriptor.CreateAddressCodec(snapshot),
+            descriptor.GetBatchReadCapabilities(snapshot),
+            version,
+            snapshot);
     }
 
-    public static BatchReadCapabilities BatchReadCapabilitiesFor(PlcBrand brand, int siemensBatchInt32Limit = 55, int omronReadSplits = 500) => brand switch
+    public static BatchReadCapabilities BatchReadCapabilitiesFor(
+        PlcBrand brand,
+        int siemensBatchInt32Limit = 55,
+        int omronReadSplits = 500,
+        int modbusBatchInt32Limit = 62)
     {
-        PlcBrand.Siemens => new(true, (ushort)Math.Clamp(siemensBatchInt32Limit, 1, 55), 4, true, 2000, 1),
-        PlcBrand.ModbusTcp => new(true, 62, 2, true, 2000, 1),
-        PlcBrand.Omron => new(true, (ushort)Math.Clamp(omronReadSplits / 2, 1, 499), 2, true, 2000, 1),
-        _ => new(true, 480, 2, true, 2000, 1),
-    };
+        var config = new PlcConfig { Brand = brand };
+        config.Siemens.BatchInt32Limit = siemensBatchInt32Limit;
+        config.Omron.ReadSplits = omronReadSplits;
+        config.ModbusTcp.BatchInt32Limit = modbusBatchInt32Limit;
+        return PlcBrandDescriptors.CreateDefault().Resolve(brand).GetBatchReadCapabilities(config);
+    }
 }

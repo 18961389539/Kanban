@@ -7,8 +7,12 @@ namespace MainAPP.UIAutomation;
 
 /// <summary>
 /// 启动与主导航端到端测试。
-/// 主导航 ListBox（AutomationProperties.Name="主导航"）包含 8 项：主页/产线/报警中心/设备管理/历史查询/生产复盘/设置/工单管理。
-/// 通过 item.Select() 切换页面，验证各页面标题/关键控件可见。
+/// MainAPP 启动时自动登录内置 admin（App.xaml.cs 自动登录逻辑），侧边栏显示全部 12 项：
+/// 主页/产线总览/报警中心/设备管理/工单管理/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理。
+/// 导航断言策略：UIA 树中页面内容 TextBlock 默认不暴露 Name（无 AutomationProperties.Name），
+/// 故用"主导航 ListBox 选中项 = 目标页"断言导航生效（SelectedIndex 双向绑定）；
+/// 页面 View 的真实渲染由 E2E 层视觉树断言覆盖（MainAPP.E2E.NavigationFlowTests）。
+/// 角色过滤（Operator 仅 6 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
 /// </summary>
 [Collection("UIA")]
 public class NavigationFlowTests : IDisposable
@@ -18,19 +22,6 @@ public class NavigationFlowTests : IDisposable
     public NavigationFlowTests() => _fixture = new();
 
     public void Dispose() => _fixture.Dispose();
-
-    /// <summary>页面名称 → 切换后应可见的关键文本（用于断言页面已渲染）</summary>
-    private static readonly (string NavName, string ExpectedText)[] s_allPages =
-    [
-        ("主页", "生产仪表板"),
-        ("产线", "按设备名搜索"),
-        ("报警中心", "活跃报警列表"),
-        ("设备管理", "设备列表"),
-        ("历史查询", "历史数据查询"),
-        ("生产复盘", "时间范围选择"),
-        ("设置", "PLC 连接配置"),
-        ("工单管理", "工单"),  // 工单管理页无 AutomationProperties.Name，用"工单"文本兜底
-    ];
 
     [Fact]
     public void AppLaunches_MainWindow_TitleAndHomeContentVisible()
@@ -51,7 +42,19 @@ public class NavigationFlowTests : IDisposable
     public void SidebarToggle_Click_CollapsesAndExpands()
     {
         var window = _fixture.MainWindow;
+        // 全屏启动时侧边栏 Collapsed，"折叠展开侧边栏"按钮在侧边栏内不可见；
+        // 先点悬浮菜单按钮展开侧边栏（与 NavigateToPage 相同的前置处理）
         var toggle = window.FindFirstDescendant(cf => cf.ByName("折叠展开侧边栏"));
+        if (toggle == null)
+        {
+            var menuButton = window.FindFirstDescendant(cf => cf.ByName("显示导航菜单"))?.AsButton();
+            if (menuButton != null)
+            {
+                menuButton.SafeInvoke();
+                Thread.Sleep(800);
+            }
+            toggle = window.FindFirstDescendant(cf => cf.ByName("折叠展开侧边栏"));
+        }
         Assert.NotNull(toggle);
 
         // 折叠
@@ -94,7 +97,7 @@ public class NavigationFlowTests : IDisposable
         var window = _fixture.MainWindow;
         string[] expectedTexts =
         {
-            "生产仪表板", "设备状态", "生产概览", "实时故障",
+            "生产仪表板", "设备状态", "当前生产状态", "实时故障",
             "OEE 综合效率", "缺陷帕累托（TOP5）"
         };
         foreach (var text in expectedTexts)
@@ -105,28 +108,83 @@ public class NavigationFlowTests : IDisposable
     }
 
     /// <summary>
-    /// 遍历全部 8 个导航页面，验证切换后关键文本可见。
-    /// 这是导航完整性的端到端断言：确保每页 ContentControl 都正确渲染了对应 View。
+    /// 遍历全部 12 个导航页面：断言侧边栏选中项切换成功。
+    /// 页面内容区 TextBlock 在 UIA 树中不暴露 Name（无 AutomationProperties.Name），
+    /// 页面 View 渲染由 E2E 视觉树断言覆盖；主页为初始页，额外断言内容可见。
     /// </summary>
     [Theory]
-    [InlineData("主页", "生产仪表板")]
-    [InlineData("产线", "按设备名搜索")]
-    [InlineData("报警中心", "活跃报警列表")]
-    [InlineData("设备管理", "设备列表")]
-    [InlineData("历史查询", "历史数据查询")]
-    [InlineData("生产复盘", "时间范围选择")]
-    [InlineData("设置", "PLC 连接配置")]
-    [InlineData("工单管理", "工单")]
-    public void NavigateToAllPages_PageContentVisible(string navName, string expectedText)
+    [InlineData("主页")]
+    [InlineData("产线总览")]
+    [InlineData("报警中心")]
+    [InlineData("设备管理")]
+    [InlineData("工单管理")]
+    [InlineData("历史查询")]
+    [InlineData("生产复盘")]
+    [InlineData("设置")]
+    [InlineData("运行监控")]
+    [InlineData("用户管理")]
+    [InlineData("审计日志")]
+    [InlineData("配方管理")]
+    public void NavigateToAllPages_SelectionChanges(string navName)
     {
         var window = _fixture.MainWindow;
         var automation = _fixture.Automation;
 
         UiaTestHelpers.NavigateToPage(window, automation, navName);
 
-        // 切换后验证页面关键文本可见（证明 View 已渲染）
-        var el = window.FindFirstDescendant(cf => cf.ByName(expectedText));
-        Assert.True(el != null, $"导航到「{navName}」后未找到文本「{expectedText}」");
+        // 导航生效断言：主导航 ListBox 选中项 = 目标页（SelectedIndex 双向绑定到 VM）
+        var navList = window.FindFirstDescendant(cf => cf.ByName("主导航"))?.AsListBox();
+        Assert.NotNull(navList);
+        var selected = navList!.SelectedItem?.Name ?? navList.SelectedItem?.Text ?? "";
+        Assert.True(selected.Contains(navName),
+            $"导航到「{navName}」后选中项为「{selected}」");
+
+        // 主页为初始页：内容在 UIA 树可见（TextBlock 直接暴露），断言渲染完整
+        if (navName == "主页")
+        {
+            var title = window.FindFirstDescendant(cf => cf.ByName("生产仪表板"));
+            Assert.NotNull(title);
+        }
+    }
+
+    /// <summary>
+    /// MainAPP 启动自动登录内置 admin（App.xaml.cs），侧边栏应显示全部 12 个导航项
+    /// （含角色受限页：设备管理/配方管理=Engineer，设置/运行监控/用户管理/审计日志=Admin）。
+    /// 这是"自动登录 + 角色过滤"在真实进程的回归断言——若侧边栏缺项，说明登录/过滤链路失效。
+    /// Operator 视角的过滤行为（仅 6 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
+    /// </summary>
+    [Fact]
+    public void RoleGatedPages_VisibleForAdminAutoLogin()
+    {
+        var window = _fixture.MainWindow;
+        var automation = _fixture.Automation;
+
+        var navList = window.FindFirstDescendant(cf => cf.ByName("主导航"))?.AsListBox();
+        if (navList == null)
+        {
+            // 全屏启动适配：展开侧边栏（与 NavigateToPage 相同的前置处理）
+            var menuButton = window.FindFirstDescendant(cf => cf.ByName("显示导航菜单"))?.AsButton();
+            if (menuButton != null)
+            {
+                menuButton.SafeInvoke();
+                Thread.Sleep(800);
+                navList = window.FindFirstDescendant(cf => cf.ByName("主导航"))?.AsListBox();
+            }
+        }
+        Assert.NotNull(navList);
+
+        var visibleNames = navList!.Items
+            .Select(item => item.Name ?? item.Text ?? string.Empty)
+            .ToList();
+        Assert.True(visibleNames.Count > 0, "侧边栏导航项为空");
+
+        // Admin 自动登录视角：12 项全部可见（含 6 个角色受限页）
+        foreach (var expected in new[] { "主页", "产线总览", "报警中心", "设备管理", "工单管理", "历史查询",
+            "生产复盘", "设置", "运行监控", "用户管理", "审计日志", "配方管理" })
+        {
+            Assert.True(visibleNames.Any(n => n.Contains(expected)),
+                $"Admin 视角下侧边栏缺少「{expected}」，实际导航项：{string.Join(" / ", visibleNames)}");
+        }
     }
 
     /// <summary>

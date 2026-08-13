@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- ValidationMessages（zh-CN 默认） -->
+  <data name="PlcIpEmpty" xml:space="preserve">
+    <value>PLC IP 地址为空</value>
+  </data>
+  <data name="PlcIpInvalid" xml:space="preserve">
+    <value>PLC IP 地址 '{0}' 不是合法的 IPv4 地址</value>
+  </data>
+  <data name="PlcPortOutOfRange" xml:space="preserve">
+    <value>PLC 端口 {0} 不在合法范围 (1-65535)</value>
+  </data>
+  <data name="PlcBrandInvalid" xml:space="preserve">
+    <value>PLC 品牌无效：{0}</value>
+  </data>
+  <data name="PlcTimeoutOutOfRange" xml:space="preserve">
+    <value>PLC 连接超时 {0}ms 不在合法范围 (100-60000)</value>
+  </data>
+  <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
+    <value>Modbus UnitId {0} 不在合法范围 (1-247)</value>
+  </data>
+  <data name="ModbusRegisterFunctionInvalid" xml:space="preserve">
+    <value>Modbus 寄存器功能码 {0} 无效，应为 3 或 4</value>
+  </data>
+  <data name="ModbusBitFunctionInvalid" xml:space="preserve">
+    <value>Modbus 位功能码 {0} 无效，应为 1 或 2</value>
+  </data>
+  <data name="ModbusDataFormatInvalid" xml:space="preserve">
+    <value>Modbus 数据格式无效：{0}</value>
+  </data>
+  <data name="SiemensDataFormatInvalid" xml:space="preserve">
+    <value>Siemens 数据格式无效：{0}</value>
+  </data>
+  <data name="SiemensModelUnsupported" xml:space="preserve">
+    <value>Siemens 型号不受支持：{0}</value>
+  </data>
+  <data name="SiemensRackOutOfRange" xml:space="preserve">
+    <value>Siemens Rack {0} 不在合法范围 (0-7)</value>
+  </data>
+  <data name="SiemensSlotOutOfRange" xml:space="preserve">
+    <value>Siemens Slot {0} 不在合法范围 (0-31)</value>
+  </data>
+  <data name="SiemensBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Siemens 批量 Int32 上限 {0} 不在合法范围 (1-55)</value>
+  </data>
+  <data name="ModbusBatchInt32LimitOutOfRange" xml:space="preserve">
+    <value>Modbus 批量 Int32 上限 {0} 不在合法范围 (1-2000)</value>
+  </data>
+  <data name="PollingIntervalInvalid" xml:space="preserve">
+    <value>PLC 数据采集轮询间隔 {0}ms 无效，必须在 10-60000ms 之间</value>
+  </data>
+  <data name="HistoryWriteIntervalInvalid" xml:space="preserve">
+    <value>历史数据写入间隔 {0} 次无效，必须在 1-3600 次之间</value>
+  </data>
+  <data name="DashboardRefreshIntervalInvalid" xml:space="preserve">
+    <value>主页仪表板刷新间隔 {0}ms 无效，必须 ≥ 1ms</value>
+  </data>
+  <data name="NoShiftsConfigured" xml:space="preserve">
+    <value>未配置任何班次</value>
+  </data>
+  <data name="ShiftNameEmpty" xml:space="preserve">
+    <value>第 {0} 个班次名称为空</value>
+  </data>
+  <data name="ShiftStartEndEqual" xml:space="preserve">
+    <value>班次 '{0}' 起止时间相同（{1}）</value>
+  </data>
+  <!-- ConnectionStatusMessages（zh-CN 默认） -->
+  <data name="Conn_Connected" xml:space="preserve">
+    <value>已连接</value>
+  </data>
+  <data name="Conn_Disconnected" xml:space="preserve">
+    <value>未连接</value>
+  </data>
+  <data name="Conn_ConnectionLost" xml:space="preserve">
+    <value>连接断开</value>
+  </data>
+  <data name="Conn_DisconnectedWithRetry" xml:space="preserve">
+    <value>未连接 (重试间隔{0:F0}s)</value>
+  </data>
+  <data name="Conn_ConnectingPrefix" xml:space="preserve">
+    <value>正在连接</value>
+  </data>
+  <data name="Conn_ConnectingSuffix" xml:space="preserve">
+    <value>... (第{0}次)</value>
+  </data>
+  <data name="Conn_RemoteConnecting" xml:space="preserve">
+    <value>采集服务 (第{0}次)</value>
+  </data>
+  <data name="PlcBatchReadMaxLengthInvalid" xml:space="preserve">
+    <value>PLC 批量读取长度上限 {0} 无效，必须在 1-1024 之间</value>
+  </data>
+  <data name="PlcBatchReadMaxGapSlotsInvalid" xml:space="preserve">
+    <value>PLC 批量读取空洞上限 {0} 无效，必须在 0-256 之间</value>
+  </data>
+  <!-- RecipeValidationMessages（配方校验/下发，zh-CN 默认） -->
+  <data name="RecipeNull" xml:space="preserve">
+    <value>配方不能为空</value>
+  </data>
+  <data name="RecipeNameEmpty" xml:space="preserve">
+    <value>配方名称不能为空</value>
+  </data>
+  <data name="RecipeItemsEmpty" xml:space="preserve">
+    <value>配方至少需要一项参数</value>
+  </data>
+  <data name="RecipeParamNameEmpty" xml:space="preserve">
+    <value>参数名称不能为空</value>
+  </data>
+  <data name="RecipeAddressEmpty" xml:space="preserve">
+    <value>地址不能为空</value>
+  </data>
+  <data name="RecipeAddressDuplicate" xml:space="preserve">
+    <value>地址 {0} 与配方内其他参数重复</value>
+  </data>
+  <data name="RecipeAddressUnresolvable" xml:space="preserve">
+    <value>地址 {0} 无法解析</value>
+  </data>
+  <data name="RecipeAddressTypeMismatch" xml:space="preserve">
+    <value>地址类型不匹配：{0} 需要 {1} 区域</value>
+  </data>
+  <data name="RecipeValueInvalid" xml:space="preserve">
+    <value>值 "{0}" 不是有效的 {1}</value>
+  </data>
+  <data name="RecipeBelowMin" xml:space="preserve">
+    <value>值 {0} 低于下限 {1}</value>
+  </data>
+  <data name="RecipeAboveMax" xml:space="preserve">
+    <value>值 {0} 高于上限 {1}</value>
+  </data>
+  <data name="RecipeTypeInt32" xml:space="preserve">
+    <value>32 位整数</value>
+  </data>
+  <data name="RecipeTypeFloat" xml:space="preserve">
+    <value>32 位浮点</value>
+  </data>
+  <data name="RecipeTypeBool" xml:space="preserve">
+    <value>位(0/1)</value>
+  </data>
+  <data name="RecipeTypeString" xml:space="preserve">
+    <value>字符串</value>
+  </data>
+  <data name="RecipeTypeUInt16" xml:space="preserve">
+    <value>16 位整数</value>
+  </data>
+  <data name="RecipeDeviceOrRecipeEmpty" xml:space="preserve">
+    <value>设备或配方为空</value>
+  </data>
+  <data name="RecipePlcNotConnected" xml:space="preserve">
+    <value>PLC 未连接，无法下发配方</value>
+  </data>
+  <data name="RecipeReadBackupFailed" xml:space="preserve">
+    <value>读取地址 {0} 备份当前值失败</value>
+  </data>
+  <data name="RecipeBackupAbort" xml:space="preserve">
+    <value>下发前备份失败，已中止</value>
+  </data>
+  <data name="RecipeValueParseFailed" xml:space="preserve">
+    <value>值 "{0}" 无法解析</value>
+  </data>
+  <data name="RecipeValueParseAbort" xml:space="preserve">
+    <value>参数 {0} 值解析失败，已中止</value>
+  </data>
+  <data name="RecipeWriteFailed" xml:space="preserve">
+    <value>写入失败：{0}</value>
+  </data>
+  <data name="RecipeWriteRollback" xml:space="preserve">
+    <value>参数 {0} 写入失败，已回滚</value>
+  </data>
+  <data name="RecipeReadBackFailed" xml:space="preserve">
+    <value>读回校验失败</value>
+  </data>
+  <data name="RecipeReadBackRollback" xml:space="preserve">
+    <value>参数 {0} 读回失败，已回滚</value>
+  </data>
+  <data name="RecipeReadBackMismatch" xml:space="preserve">
+    <value>读回校验不一致（期望 {0}，读到 {1}）</value>
+  </data>
+  <data name="RecipeMismatchRollback" xml:space="preserve">
+    <value>参数 {0} 校验不一致，已回滚</value>
+  </data>
+  <data name="RecipeApplySuccess" xml:space="preserve">
+    <value>配方下发成功</value>
+  </data>
+  <data name="RecipeApplyException" xml:space="preserve">
+    <value>下发异常：{0}</value>
+  </data>
+  <data name="RecipeUnsupportedType" xml:space="preserve">
+    <value>不支持的数据类型 {0}</value>
+  </data>
+  <data name="RecipeWriteVerified" xml:space="preserve">
+    <value>写入并校验通过</value>
+  </data>
+  <data name="RecipeAddressReadonly" xml:space="preserve">
+    <value>地址 {0} 所属区域只读，不支持写入</value>
+  </data>
+  <data name="RecipeNameDuplicate" xml:space="preserve">
+    <value>配方名 "{0}" 在当前机型下已存在</value>
+  </data>
+  <data name="RecipeMinMaxInverted" xml:space="preserve">
+    <value>下限 {0} 大于上限 {1}</value>
+  </data>
+  <data name="RecipeStringTooLong" xml:space="preserve">
+    <value>字符串值超过最大长度 {0} 字符</value>
+  </data>
+  <data name="RecipeDeviceNotFound" xml:space="preserve">
+    <value>设备不存在：{0}</value>
+  </data>
+  <data name="RecipeNotFound" xml:space="preserve">
+    <value>配方不存在：{0}</value>
+  </data>
+  <data name="RecipeApplyCancelled" xml:space="preserve">
+    <value>下发已取消，已回滚</value>
+  </data>
+  <data name="RecipeWriteInProgress" xml:space="preserve">
+    <value>参数 {0} 写入中…</value>
+  </data>
+</root>

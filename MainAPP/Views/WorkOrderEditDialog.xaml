@@ -36,7 +36,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K008}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K008}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding OrderNo, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -48,7 +48,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K019}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K019}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -60,7 +60,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K020}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K020}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -73,7 +73,7 @@
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K041}"
             DisplayMemberPath="Name"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             ItemsSource="{Binding AvailableDevices}"
             SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay}"
             SelectedValuePath="Id"
@@ -87,7 +87,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K553}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K035}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding TargetQuantityText, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -99,7 +99,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K119}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K119}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             SelectedDateTime="{Binding PlannedStart, Mode=TwoWay}"
             Style="{StaticResource DateTimePickerExtend}" />
 
@@ -111,7 +111,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K120}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K120}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             SelectedDateTime="{Binding PlannedEnd, Mode=TwoWay}"
             Style="{StaticResource DateTimePickerExtend}" />
 
@@ -123,7 +123,7 @@
             hc:InfoElement.Title="{x:Static resources:Strings.K021}"
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K021}"
-            FontSize="14"
+            FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding Remark, UpdateSourceTrigger=PropertyChanged}" />
 

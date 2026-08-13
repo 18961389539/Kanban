@@ -304,13 +304,13 @@
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K281}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding ProductionQuery.TotalOk, StringFormat={}{0:N0} 件}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding ProductionQuery.TotalOk, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K282}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding ProductionQuery.TotalNg, StringFormat={}{0:N0} 件}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding ProductionQuery.TotalNg, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
@@ -329,7 +329,7 @@
                         Visibility="{Binding ProductionQuery.ProductionInsight, Converter={StaticResource NullToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ProductionQuery.ProductionInsight}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ProductionQuery.ProductionInsight}" />
                         </StackPanel>
                     </Border>
 
@@ -459,7 +459,7 @@
                         Visibility="{Binding StatusQuery.StatusInsight, Converter={StaticResource NullToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding StatusQuery.StatusInsight}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding StatusQuery.StatusInsight}" />
                         </StackPanel>
                     </Border>
 
@@ -575,19 +575,19 @@
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K299}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmQuery.AlarmTriggerCount, StringFormat={}{0} 次}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmQuery.AlarmTriggerCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K300}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding AlarmQuery.AlarmRecoverCount, StringFormat={}{0} 次}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding AlarmQuery.AlarmRecoverCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K301}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, StringFormat={}{0} 次}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -600,7 +600,7 @@
                         Visibility="{Binding AlarmQuery.AlarmInsight, Converter={StaticResource NullToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AlarmQuery.AlarmInsight}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AlarmQuery.AlarmInsight}" />
                         </StackPanel>
                     </Border>
 
@@ -763,7 +763,7 @@
                         Visibility="{Binding OeeQuery.OeeInsight, Converter={StaticResource NullToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OeeQuery.OeeInsight}" />
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OeeQuery.OeeInsight}" />
                         </StackPanel>
                     </Border>
 
@@ -772,13 +772,13 @@
                         <Border Style="{StaticResource KpiCardSecondary}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K311}" />
-                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeOkProduction, StringFormat={}{0} 件}" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K312}" />
-                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeNgProduction, StringFormat={}{0} 件}" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}">
@@ -790,7 +790,7 @@
                         <Border Style="{StaticResource KpiCardSecondary}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K017}" />
-                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, StringFormat={}{0} 件/h}" />
+                                <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>

@@ -1,9 +1,11 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:hc="https://handyorg.github.io/handycontrol"
-    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF">
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:entities="clr-namespace:Kanban.Core.Entities;assembly=Kanban.Collector.Core"
+    xmlns:resources="clr-namespace:MainAPP.Resources">
 
     <!--  取代 HandyControl 默认 Validation.ErrorTemplate：用转换器安全读取首条错误，
           保留错误文本显示，但集合为空时返回空串、不再抛异常。  -->
@@ -22,6 +24,13 @@
     <!--  加载中覆盖层样式（hc:LoadingCircle）  -->
     <Style x:Key="LoadingDefault" TargetType="hc:LoadingCircle">
         <Setter Property="DotBorderBrush" Value="{StaticResource PrimaryBrush}" />
+    </Style>
+
+    <!--  通知（Growl）文字可读性：HC 默认 Info/Warning/Error 前景在浅底气泡上对比度差（截图复现：
+          "查询采集服务失败: SignalR 连接尚未建立" 等文本呈浅蓝/白，几乎不可读）。
+          强制深色前景确保可读（Growl 气泡背景仍由 HC 主题控制，保持不变）。  -->
+    <Style TargetType="hc:Growl">
+        <Setter Property="Foreground" Value="#1F2937" />
     </Style>
 
     <Style x:Key="TouchFocusVisual" TargetType="Control">
@@ -46,6 +55,17 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding DataContext.IsSidebarCollapsed, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
                 <Setter Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  侧边栏导航项文本：继承 SidebarLabel（折叠隐藏），选中时加粗强化大屏远距辨识。
+          模板内 TextBlock 通过 RelativeSource 绑定宿主 ListBoxItem 的 IsSelected。  -->
+    <Style x:Key="SidebarNavTextStyle" TargetType="TextBlock" BasedOn="{StaticResource SidebarLabel}">
+        <Setter Property="FontWeight" Value="Normal" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                <Setter Property="FontWeight" Value="Bold" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -138,10 +158,11 @@
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
                                     </Trigger>
+                                    <!--  工业风选中态：整块主色填充 + 深色前景，远距离高对比  -->
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
-                                        <Setter TargetName="Bd" Property="BorderThickness" Value="3,0,0,0" />
-                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter TargetName="Bd" Property="BorderThickness" Value="0" />
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryContrastBrush}" />
                                     </Trigger>
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}" />
@@ -150,6 +171,12 @@
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
+                    <!--  折叠态（72px）：导航项图标水平居中，避免图标挤在左侧  -->
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.IsSidebarCollapsed, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
             </Setter.Value>
         </Setter>
@@ -168,7 +195,7 @@
                 Margin="12,0,0,0"
                 VerticalAlignment="Center"
                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
-                Style="{StaticResource SidebarLabel}"
+                Style="{StaticResource SidebarNavTextStyle}"
                 Text="{Binding Label}" />
         </StackPanel>
     </DataTemplate>
@@ -212,11 +239,98 @@
         <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
         <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
     </Style>
+
+    <!--  时间预设 chip（今天/近 N 小时/近 N 天等高频范围一键切换）：
+         单选分段按钮风格，选中时主色填充。审计页/复盘页共用。  -->
+    <Style x:Key="TimePresetChip" TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="Margin" Value="0,0,6,0" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Style.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  工单状态 → 色点（WorkOrderManagerView / DeviceManagerWorkOrdersTab 共用；
+         DataTrigger 按应用处 DataContext.Status 解析）  -->
+    <Style x:Key="StatusDot" TargetType="Ellipse">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
+                <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
+                <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
+                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
+                <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  工单状态 → 显示文本（K010-K013 三语资源；与 StatusDot 配套）  -->
+    <Style x:Key="StatusText" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+        <Setter Property="Text" Value="—" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Pending}">
+                <Setter Property="Text" Value="{x:Static resources:Strings.K010}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Running}">
+                <Setter Property="Text" Value="{x:Static resources:Strings.K011}" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Completed}">
+                <Setter Property="Text" Value="{x:Static resources:Strings.K012}" />
+                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static entities:WorkOrderStatus.Aborted}">
+                <Setter Property="Text" Value="{x:Static resources:Strings.K013}" />
+                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
     <Style x:Key="IconButtonWarning" TargetType="Button" BasedOn="{StaticResource ButtonWarning}">
         <Setter Property="MinHeight" Value="40" />
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
         <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+        <!--  HC 深色主题下 ButtonWarning 默认背景与文字同色系浅色，对比度不足。
+              显式覆盖：深橙红背景 + 白色文字，保持警示语义且清晰可读。  -->
+        <Setter Property="Background" Value="#C2410C" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="BorderBrush" Value="#9A3412" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#B45309" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#9A3412" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="#5C2E0A" />
+                <Setter Property="Foreground" Value="#9CA3AF" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!--  ============ 统一 DataGrid 样式（看板表格） ============  -->
@@ -266,9 +380,11 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Style.Triggers>
+            <!--  选中态：半透明主色底 + 主色文字，保留行内状态色条/级别徽章可见。
+                  原实心 PrimaryBrush 底+白字会盖掉状态色，看板场景需对比行而非高亮单元格。  -->
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
-                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
             </Trigger>
         </Style.Triggers>

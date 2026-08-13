@@ -10,7 +10,7 @@
         </div>
         <div class="conn-badge @(Dashboard.IsConnected ? "conn-ok" : "conn-bad")">
             <span class="dot"></span>
-            @(Dashboard.IsConnected ? L.T("conn_live") : L.T("conn_down"))
+            @(Dashboard.IsConnected ? L.T("Conn_Live") : L.T("Conn_Disconnected"))
         </div>
         <select class="device-select" @bind="SelectedDeviceId">
             @foreach (var dev in Dashboard.Snapshots)
@@ -22,72 +22,70 @@
 
     @if (Dashboard.Snapshots.Count == 0)
     {
-        <div class="empty-state">
-            <div class="empty-title">@(Dashboard.IsConnected ? L.T("no_device_data") : L.T("waiting_conn"))</div>
-            <div class="empty-sub">@L.T("empty_hint")</div>
-        </div>
+        <EmptyState Title="@(Dashboard.IsConnected ? L.T("Msg_NoDeviceData") : L.T("Msg_WaitingConn"))"
+                    Hint="@L.T("Msg_EmptyHint")"
+                    Icon="@(Dashboard.IsConnected ? "📋" : "🔌")" />
     }
     else
     {
         <div class="summary-bar">
-            <span class="sum-item run"><span class="dot"></span>@L.T("st_running") <b>@Dashboard.StatusSummary.Running</b></span>
-            <span class="sum-item alarm"><span class="dot"></span>@L.T("st_alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
-            <span class="sum-item paused"><span class="dot"></span>@L.T("st_paused") <b>@Dashboard.StatusSummary.Paused</b></span>
-            <span class="sum-item idle"><span class="dot"></span>@L.T("st_idle") <b>@Dashboard.StatusSummary.Idle</b></span>
-            <span class="sum-item">@L.T("dev_count") <b>@Dashboard.DeviceCount</b></span>
+            <span class="sum-item run"><span class="dot"></span>@L.T("Status_Running") <b>@Dashboard.StatusSummary.Running</b></span>
+            <span class="sum-item alarm"><span class="dot"></span>@L.T("Status_Alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
+            <span class="sum-item paused"><span class="dot"></span>@L.T("Status_Paused") <b>@Dashboard.StatusSummary.Paused</b></span>
+            <span class="sum-item idle"><span class="dot"></span>@L.T("Status_Idle") <b>@Dashboard.StatusSummary.Idle</b></span>
+            <span class="sum-item">@L.T("Card_DevCount") <b>@Dashboard.DeviceCount</b></span>
         </div>
     }
 
     @if (SelectedSnapshot is null)
     {
-        <div class="empty-state">
-            <div class="empty-title">@L.T("no_dev_selected")</div>
-            <div class="empty-sub">@L.T("select_hint")</div>
-        </div>
+        <EmptyState Title="@L.T("Msg_NoDevSelected")"
+                    Hint="@L.T("Msg_SelectHint")"
+                    Icon="🖱️" />
     }
     else
     {
         <main class="grid">
             <section class="card">
-                <div class="card-title">@L.T("card_dev_status")</div>
+                <div class="card-title">@L.T("Card_DevStatus")</div>
                 <div class="dev-head">
                     <span class="dev-name">@SelectedSnapshot.DeviceName</span>
                     <span class="status-badge @Status.Class">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div><span class="kpi-label">@L.T("lbl_run")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
                 </div>
                 <div class="time-bar">
                     <div class="seg run" style="width:@RunRatio%"></div>
                     <div class="seg alarm" style="width:@AlarmRatio%"></div>
                     <div class="seg paused" style="width:@PauseRatio%"></div>
                 </div>
-                <div class="meta-line">@L.T("meta_statusword", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
+                <div class="meta-line">@L.T("Meta_StatusWord", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_prod_status")</div>
+                <div class="card-title">@L.T("Card_ProdStatus")</div>
                 <div class="big-number">@RealtimeSpeedText</div>
-                <div class="big-label">@L.T("real_time_speed")</div>
+                <div class="big-label">@L.T("Lbl_RealTimeSpeed")</div>
                 <div class="metric-grid">
-                    <div><span class="kpi-label">@L.T("lbl_target_cycle")</span><span class="kpi-value">@TargetCycleText</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_actual_cycle")</span><span class="kpi-value">@ActualCycleText</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_total_output")</span><span class="kpi-value">@TotalOutputText</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_ng_rate")</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@TargetCycleText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_ActualCycle")</span><span class="kpi-value">@ActualCycleText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@TotalOutputText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
                 </div>
                 <div class="speed-meter">
                     <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
-                    <span class="meter-text">@L.T("lbl_achievement") @SpeedAchievementRateText</span>
+                    <span class="meter-text">@L.T("Lbl_Achievement") @SpeedAchievementRateText</span>
                 </div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_alarms") <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
+                <div class="card-title">@L.T("Card_Alarms") <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
                 @if (SelectedSnapshot.ActiveAlarms.Count == 0)
                 {
-                    <div class="no-data">@L.T("val_no_alarms")</div>
+                    <div class="no-data">@L.T("Val_NoAlarms")</div>
                 }
                 else
                 {
@@ -105,40 +103,40 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_oee")</div>
+                <div class="card-title">@L.T("Card_Oee")</div>
                 <div class="ring-row">
                     <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="#34D399" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("lbl_availability")" Color="#378ADD" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("lbl_performance")" Color="#BA7517" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("lbl_quality")" Color="#639922" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
                 </div>
                 <div class="oee-formula">@Pct(SelectedSnapshot.AvailabilityRate) × @Pct(SelectedSnapshot.PerformanceRate) × @Pct(SelectedSnapshot.QualityRate)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_output")</div>
+                <div class="card-title">@L.T("Card_Output")</div>
                 <div class="quality-row">
                     <div class="quality-block">
                         <div class="quality-num ok">@SelectedSnapshot.TotalOkProduction.ToString("N0")</div>
-                        <div class="quality-label">@L.T("lbl_ok")</div>
+                        <div class="quality-label">@L.T("Lbl_Ok")</div>
                     </div>
                     <div class="quality-block">
                         <div class="quality-num ng">@SelectedSnapshot.TotalNgProduction.ToString("N0")</div>
-                        <div class="quality-label">@L.T("lbl_ng")</div>
+                        <div class="quality-label">@L.T("Lbl_Ng")</div>
                     </div>
                 </div>
                 <div class="time-bar">
                     <div class="seg ok" style="width:@OkRatio%"></div>
                     <div class="seg ng" style="width:@NgRatio%"></div>
                 </div>
-                <div class="meta-line">@L.T("meta_quality_rate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
+                <div class="meta-line">@L.T("Meta_QualityRate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_workorder")</div>
+                <div class="card-title">@L.T("Card_WorkOrder")</div>
                 @if (CurrentWorkOrder is null)
                 {
-                    <div class="no-data">@L.T("val_no_workorder")</div>
+                    <div class="no-data">@L.T("Val_NoWorkOrder")</div>
                 }
                 else
                 {
@@ -151,30 +149,30 @@
                     <div class="time-bar">
                         <div class="seg wo" style="width:@WoProgressRatio%"></div>
                     </div>
-                    <div class="meta-line">@L.T("meta_plan_wo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
+                    <div class="meta-line">@L.T("Meta_PlanWo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_trend") <span class="badge-soft">@L.T("badge_recent_1min")</span></div>
+                <div class="card-title">@L.T("Card_Trend") <span class="badge-soft">@L.T("Badge_Recent1Min")</span></div>
                 @if (SpeedPointsText is null)
                 {
-                    <div class="no-data">@L.T("val_wait_data")</div>
+                    <div class="no-data">@L.T("Val_WaitData")</div>
                 }
                 else
                 {
                     <svg class="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
                         <polyline points="@SpeedPointsText" fill="none" stroke="#34D399" stroke-width="1.5" />
                     </svg>
-                    <div class="meta-line">@L.T("meta_trend_current", RealtimeSpeedText)</div>
+                    <div class="meta-line">@L.T("Meta_TrendCurrent", RealtimeSpeedText)</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_shift")</div>
+                <div class="card-title">@L.T("Card_Shift")</div>
                 @if (Dashboard.ShiftProgress is null)
                 {
-                    <div class="no-data">@L.T("val_no_data")</div>
+                    <div class="no-data">@L.T("Val_NoData")</div>
                 }
                 else
                 {
@@ -186,24 +184,24 @@
                         <div class="seg shift" style="width:@(Dashboard.ShiftProgress.Ratio * 100)%"></div>
                     </div>
                     <div class="duration-row">
-                        <div><span class="kpi-label">@L.T("lbl_elapsed")</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
-                        <div><span class="kpi-label">@L.T("lbl_remaining")</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_Elapsed")</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_Remaining")</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
                     </div>
-                    <div class="meta-line">@L.T("meta_shift_auto")</div>
+                    <div class="meta-line">@L.T("Meta_ShiftAuto")</div>
                 }
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("card_source")</div>
+                <div class="card-title">@L.T("Card_Source")</div>
                 <div class="info-list">
-                    <div><span class="kpi-label">@L.T("lbl_conn_status")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("val_connected") : L.T("val_disconnected"))</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_dev_total")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_data_fresh")</span><span class="kpi-value">@FreshnessText</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_snap_seq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
-                    <div><span class="kpi-label">@L.T("lbl_svc_addr")</span><span class="kpi-value mono">@L.T("val_dyn_addr")</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_ConnStatus")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_DevTotal")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_DataFresh")</span><span class="kpi-value">@FreshnessText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_SvcAddr")</span><span class="kpi-value mono">@L.T("Val_DynAddr")</span></div>
                     @if (!string.IsNullOrEmpty(Dashboard.ServerVersion))
                     {
-                        <div><span class="kpi-label">@L.T("lbl_svc_version")</span><span class="kpi-value mono">@Dashboard.ServerVersion</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_SvcVersion")</span><span class="kpi-value mono">@Dashboard.ServerVersion</span></div>
                     }
                 </div>
             </section>
@@ -264,12 +262,30 @@
         }
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
         // 渲染节流：2s 统一重渲染（推送 500ms 只更新内存，避免 render tree 高频 diff）
-        _renderTimer = new System.Threading.Timer(_ => InvokeAsync(OnRenderTick), null, 2000, 2000);
+        _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 2000, 2000);
         await Task.CompletedTask;
     }
 
     /// <summary>渲染 tick：2s 统一重渲染（工单/班次由 Collector 推送，无需轮询）。</summary>
-    private void OnRenderTick()
+        /// <summary>
+    /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
+    /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
+    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// </summary>
+    private async Task SafeTickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(OnRenderTick);
+        }
+        catch (Exception)
+        {
+            // 组件已释放的竞态：忽略（页面生命周期正常结束）
+        }
+    }
+
+private void OnRenderTick()
     {
         if (_disposed) return; // Dispose 后 Timer 残留回调守卫
         StateHasChanged();
@@ -288,18 +304,18 @@
     private (string Text, string Class) Status
         => SelectedSnapshot?.Status switch
         {
-            DeviceStatus.Running => (L.T("st_running"), "run"),
-            DeviceStatus.Alarm => (L.T("st_alarm"), "alarm"),
-            DeviceStatus.Paused => (L.T("st_paused"), "paused"),
-            _ => (L.T("st_idle"), "idle"),
+            DeviceStatus.Running => (L.T("Status_Running"), "run"),
+            DeviceStatus.Alarm => (L.T("Status_Alarm"), "alarm"),
+            DeviceStatus.Paused => (L.T("Status_Paused"), "paused"),
+            _ => (L.T("Status_Idle"), "idle"),
         };
 
     private string WoStatusText => CurrentWorkOrder?.Status switch
     {
-        WorkOrderStatus.Running => L.T("wo_running"),
-        WorkOrderStatus.Completed => L.T("wo_completed"),
-        WorkOrderStatus.Aborted => L.T("wo_aborted"),
-        _ => L.T("wo_pending"),
+        WorkOrderStatus.Running => L.T("Wo_Running"),
+        WorkOrderStatus.Completed => L.T("Wo_Completed"),
+        WorkOrderStatus.Aborted => L.T("Wo_Aborted"),
+        _ => L.T("Wo_Pending"),
     };
 
     private string WoStatusClass => CurrentWorkOrder?.Status switch
@@ -319,8 +335,8 @@
             if (wo is null) return "";
             var target = wo.TargetQuantity > 0 ? wo.TargetQuantity.ToString("N0") : "--";
             return wo.Status == WorkOrderStatus.Running
-                ? L.T("wo_progress", (SelectedSnapshot?.TotalOkProduction ?? 0).ToString("N0"), target)
-                : L.T("wo_progress_pending", target);
+                ? L.T("Wo_Progress", (SelectedSnapshot?.TotalOkProduction ?? 0).ToString("N0"), target)
+                : L.T("Wo_ProgressPending", target);
         }
     }
 
@@ -340,13 +356,13 @@
     {
         get
         {
-            if (Dashboard.LastDataAt is not { } last) return L.T("fresh_none");
+            if (Dashboard.LastDataAt is not { } last) return L.T("Fresh_None");
             var secs = (int)(DateTime.Now - last).TotalSeconds;
             return secs switch
             {
-                < 3 => L.T("fresh_live"),
-                < 60 => L.T("fresh_secs", secs),
-                _ => L.T("fresh_mins", secs / 60),
+                < 3 => L.T("Fresh_Live"),
+                < 60 => L.T("Fresh_Secs", secs),
+                _ => L.T("Fresh_Mins", secs / 60),
             };
         }
     }

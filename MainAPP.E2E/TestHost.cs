@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -323,11 +323,14 @@ public sealed class TestHost : IDisposable
         catch { }
     }
 
-    /// <summary>测试用桩 DialogService，避免 MessageBox/Growl 阻塞 E2E 测试。</summary>
+    /// <summary>测试用桩 DialogService，避免 MessageBox/Growl 阻塞 E2E 测试。
+    /// YesNo 类确认对话框自动返回 Yes（配方下发/删除等流程需要用户确认的场景在 E2E 中自动放行）。</summary>
     private sealed class StubDialogService : IDialogService
     {
         public MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
-            => MessageBoxResult.OK;
+            => buttons is MessageBoxButton.YesNo or MessageBoxButton.YesNoCancel
+                ? MessageBoxResult.Yes
+                : MessageBoxResult.OK;
         public void NotifySuccess(string message) { }
         public void NotifyWarning(string message) { }
         public void NotifyError(string message) { }

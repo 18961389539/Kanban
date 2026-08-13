@@ -1,8 +1,9 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Threading.Channels;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Core.Services;
@@ -12,6 +13,14 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     private const int FlushIntervalMs = 5000;
     private const int BatchSize = 200;
     private const int MaxQueueLength = 10000;
+    /// <summary>恢复文件大小上限：超过后停止回放并告警（防止异常写入把文件撑到 GB 级导致启动/回放卡死）。</summary>
+    private const long MaxRecoveryFileBytes = 200 * 1024 * 1024;
+    /// <summary>回放失败退避间隔：DB 持续不可写时避免每 5s 全量重读恢复文件并持锁插库拖停采集链路（审查修复 2026-08-13）。</summary>
+    private static readonly TimeSpan ReplayRetryDelay = TimeSpan.FromSeconds(30);
+    /// <summary>上次回放失败时刻（仅 flush 循环线程读写）；非 null 且在退避窗口内时跳过回放。</summary>
+    private DateTime? _lastReplayFailureAt;
+    /// <summary>测试用：覆盖恢复文件大小上限（生产保持 <see cref="MaxRecoveryFileBytes"/>；审查修复 2026-08-13 新增）。</summary>
+    internal long MaxRecoveryFileBytesOverride { get; set; } = MaxRecoveryFileBytes;
     private readonly DatabaseProvider _db;
     private readonly ILogger<ProductionHistoryWriter> _logger;
     private readonly string _recoveryFilePath;
@@ -24,6 +33,8 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     private DateTime? _lastFlushAt;
     private int _flushFailureCount;
     private int _totalFlushedCount;
+    /// <summary>恢复文件当前行数（增量维护，避免诊断快照每轮全文件数行）。</summary>
+    private long _recoveryLineCount;
 
     public ProductionHistoryWriter(DatabaseProvider db, AppSettings settings, ILogger<ProductionHistoryWriter> logger)
     {
@@ -45,6 +56,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
                 PendingCount = _channel.Reader.Count,
                 RecoveryFileExists = recoveryBytes > 0,
                 RecoveryFileBytes = recoveryBytes,
+                RecoveryFileLines = _recoveryLineCount,
                 LastFlushAt = _lastFlushAt,
                 FlushFailureCount = _flushFailureCount,
                 TotalFlushedCount = _totalFlushedCount,
@@ -86,12 +98,15 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             }
         }
 
+        // 停机排空：通道内剩余批次全部落库后再回放恢复文件（此前仅在循环内回放，
+        // 若停机时通道已空、恢复文件仍有数据（上次批写失败转存），会遗留到下次启动才回放）
         while (reader.Count > 0)
         {
             var before = reader.Count;
             await FlushPendingAsync(CancellationToken.None);
             if (reader.Count >= before) break;
         }
+        await ReplayRecoveryAsync(CancellationToken.None);
     }
 
     private async Task FlushPendingAsync(CancellationToken ct)
@@ -141,55 +156,197 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             lock (_recoveryLock)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(_recoveryFilePath)!);
+                // 追加前大小上限检查（审查修复 2026-08-13）：此前上限只在回放入口检查，
+                // DB 持续不可写时文件可无限增长到 GB 级——超限停止追加并告警，
+                // CollectorReadinessCheck 会把 RecoveryFileBytes 超限转为 Degraded 健康态（人工介入）。
+                if (File.Exists(_recoveryFilePath))
+                {
+                    var newBytes = lines.Sum(l => System.Text.Encoding.UTF8.GetByteCount(l) + 1);
+                    if (new FileInfo(_recoveryFilePath).Length + newBytes > MaxRecoveryFileBytesOverride)
+                    {
+                        _logger.LogError("恢复文件超过上限（{Max:N0} 字节），停止追加转存；请人工处理 {Path}",
+                            MaxRecoveryFileBytesOverride, _recoveryFilePath);
+                        return;
+                    }
+                }
                 File.AppendAllLines(_recoveryFilePath, lines);
+                lock (_diagnosticsLock) _recoveryLineCount += lines.Count;
             }
         }
         catch (Exception ex) { _logger.LogError(ex, "生产快照恢复文件写入失败"); }
     }
 
+    /// <summary>
+    /// 恢复文件回放（幂等 + 分块落库 + 原子收尾）：
+    /// - 按批（<see cref="BatchSize"/>）处理，不再一次性 AddRange 整个文件；
+    /// - 按 EventId 唯一索引去重，回放失败重试/回放后崩溃不会重复落库；
+    /// - 处理完成后删除恢复文件（回放期间有新追加则保留，留待下一轮回放）；
+    /// - 超过 <see cref="MaxRecoveryFileBytes"/> 时停止回放并告警（防异常写入撑爆内存/IO）；
+    /// - 失败退避 <see cref="ReplayRetryDelay"/>：DB 不可用时不再每 5s 全量重读+持锁插库（审查修复 2026-08-13）。
+    /// </summary>
     private Task ReplayRecoveryAsync(CancellationToken ct)
     {
         if (!File.Exists(_recoveryFilePath)) return Task.CompletedTask;
+
+        // 失败退避：上次回放失败后 30s 内不再重试（成功路径会清零标记）
+        if (_lastReplayFailureAt is { } lastFailure && DateTime.UtcNow - lastFailure < ReplayRetryDelay)
+            return Task.CompletedTask;
+
         try
         {
+            // 阶段 1（锁内）：读取文件快照——锁只保护"读取与收尾删除"的原子性，
+            // DB 插入（慢 IO，busy_timeout 最长 5s）移出锁外，通道满时 PersistRecoveryLogs 不再被插库阻塞（审查修复 2026-08-13）
+            string[] allLines;
+            DateTime fileLastWriteUtc;
             lock (_recoveryLock)
             {
-                var badLines = new List<string>();
-                var logs = File.ReadAllLines(_recoveryFilePath).Select(line =>
+                if (new FileInfo(_recoveryFilePath).Length > MaxRecoveryFileBytesOverride)
                 {
-                    try { return JsonSerializer.Deserialize<ProductionLog>(line); }
+                    _logger.LogError("恢复文件超过上限（{Max:N0} 字节），停止回放；请人工处理 {Path}",
+                        MaxRecoveryFileBytesOverride, _recoveryFilePath);
+                    return Task.CompletedTask;
+                }
+
+                allLines = File.ReadAllLines(_recoveryFilePath);
+                if (allLines.Length == 0)
+                {
+                    File.Delete(_recoveryFilePath);
+                    return Task.CompletedTask;
+                }
+                fileLastWriteUtc = File.GetLastWriteTimeUtc(_recoveryFilePath);
+            }
+
+            // 阶段 2（锁外）：解析 + 幂等插库
+            var badLines = new List<string>();
+            var totalReplayed = 0;
+            var processed = 0;
+
+            while (processed < allLines.Length)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var batch = new List<ProductionLog>(BatchSize);
+                var scanned = 0;
+                while (processed < allLines.Length && scanned < BatchSize)
+                {
+                    var line = allLines[processed++];
+                    scanned++;
+                    try
+                    {
+                        var log = JsonSerializer.Deserialize<ProductionLog>(line);
+                        if (log is null) { badLines.Add(line); continue; }
+                        batch.Add(log);
+                    }
                     catch (JsonException ex)
                     {
                         badLines.Add(line);
                         _logger.LogError(ex, "恢复文件存在损坏记录，已转存 .bad 文件");
-                        return null;
                     }
-                }).Where(log => log is not null).Cast<ProductionLog>().ToList();
-                ct.ThrowIfCancellationRequested();
-                if (logs.Count > 0)
-                {
-                    using var context = _db.CreateProductionLogContext();
-                    context.ProductionLogs.AddRange(logs);
-                    context.SaveChanges();
                 }
 
-                if (badLines.Count > 0)
+                if (batch.Count > 0)
                 {
-                    File.AppendAllLines(_recoveryFilePath + ".bad", badLines);
+                    InsertBatchIdempotent(batch);
+                    totalReplayed += batch.Count;
+                }
+            }
+
+            // 阶段 3（重取锁收尾）：回放期间可能又有新追加（通道满转存）——
+            // 写时间戳变化则跳过删除，文件留待下一轮回放处理新尾部，避免丢数据
+            lock (_recoveryLock)
+            {
+                if (File.Exists(_recoveryFilePath) && File.GetLastWriteTimeUtc(_recoveryFilePath) != fileLastWriteUtc)
+                {
+                    _logger.LogInformation("回放期间恢复文件有新追加，保留文件留待下一轮回放");
+                    _lastReplayFailureAt = null;
+                    return Task.CompletedTask;
+                }
+
+                // 原子收尾：
+                // - 全部处理成功且无坏行 → 删除恢复文件（回放完成）；
+                // - 存在坏行 → 坏行追加转存 .bad，恢复文件只保留"未处理的有效尾部"（断点续传语义，
+                //   坏行不回写恢复文件，否则每次回放都会反复失败）。
+                if (badLines.Count == 0)
+                {
                     File.Delete(_recoveryFilePath);
+                    lock (_diagnosticsLock) _recoveryLineCount = 0;
+                    if (totalReplayed > 0)
+                        _logger.LogInformation("恢复文件回放完成：共 {Total} 条", totalReplayed);
                 }
                 else
                 {
+                    try { File.AppendAllLines(_recoveryFilePath + ".bad", badLines); }
+                    catch (Exception ex) { _logger.LogError(ex, "恢复文件损坏记录转存 .bad 失败"); }
+                    _logger.LogWarning("恢复文件 {Count} 条损坏记录已转存 .bad 文件", badLines.Count);
                     File.Delete(_recoveryFilePath);
+                    lock (_diagnosticsLock) _recoveryLineCount = 0;
                 }
             }
+
+            // 回放成功：清除退避标记
+            _lastReplayFailureAt = null;
         }
         catch (OperationCanceledException) { throw; }
-        catch (Exception ex) { _logger.LogWarning(ex, "生产快照恢复文件回放失败"); }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "生产快照恢复文件回放失败，{Delay}s 后重试", (int)ReplayRetryDelay.TotalSeconds);
+            _lastReplayFailureAt = DateTime.UtcNow;
+        }
         return Task.CompletedTask;
     }
 
+    /// <summary>原子重写恢复文件（临时文件 + 替换），避免断电/崩溃留下半写文件。</summary>
+    private void WriteRecoveryFileAtomic(List<string> lines)
+    {
+        var tmp = _recoveryFilePath + ".tmp";
+        File.WriteAllLines(tmp, lines);
+        File.Move(tmp, _recoveryFilePath, overwrite: true);
+    }
+
+    /// <summary>
+    /// 幂等批量插入：按 EventId 去重（已存在则跳过），同 EventId 不会重复落库。
+    /// 旧数据 EventId 为 null 的不参与去重（数量有限，容忍重复；不阻塞回放）。
+    /// </summary>
+    private void InsertBatchIdempotent(List<ProductionLog> batch)
+    {
+        var eventIds = batch
+            .Where(log => log.EventId.HasValue)
+            .Select(log => log.EventId!.Value)
+            .ToList();
+        var existing = QueryExistingEventIds(eventIds);
+
+        var toInsert = batch.Where(log => !log.EventId.HasValue || (existing is not null && !existing.Contains(log.EventId.Value))).ToList();
+        if (toInsert.Count == 0) return;
+
+        using var insertContext = _db.CreateProductionLogContext();
+        using var transaction = insertContext.Database.BeginTransaction();
+        insertContext.ProductionLogs.AddRange(toInsert);
+        insertContext.SaveChanges();
+        transaction.Commit();
+    }
+
+    /// <summary>查询批次中已在库的 EventId（空批次返回 null）。</summary>
+    private HashSet<Guid>? QueryExistingEventIds(List<Guid> eventIds)
+    {
+        if (eventIds.Count == 0) return null;
+        using var context = _db.CreateProductionLogContext();
+        return context.ProductionLogs
+            .Where(log => eventIds.Contains(log.EventId!.Value))
+            .Select(log => log.EventId!.Value)
+            .ToHashSet();
+    }
+
     internal int PendingChannelCountForTest => _channel.Reader.Count;
+
+    /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
+    internal Task ReplayRecoveryForTestAsync(CancellationToken ct = default)
+        => ReplayRecoveryAsync(ct);
+
+    /// <summary>测试入口：直接触发恢复文件追加（验证大小上限；生产路径由通道满/批写失败触发）。</summary>
+    internal void PersistRecoveryLogsForTest(params ProductionLog[] logs) => PersistRecoveryLogs(logs);
+
+    /// <summary>测试入口：上次回放失败时刻（验证失败退避生效）。</summary>
+    internal DateTime? LastReplayFailureAtForTest => _lastReplayFailureAt;
 
     public void Dispose()
     {
@@ -215,6 +372,7 @@ public sealed record ProductionWriterDiagnosticsSnapshot
     public int PendingCount { get; init; }
     public bool RecoveryFileExists { get; init; }
     public long RecoveryFileBytes { get; init; }
+    public long RecoveryFileLines { get; init; }
     public DateTime? LastFlushAt { get; init; }
     public int FlushFailureCount { get; init; }
     public int TotalFlushedCount { get; init; }

@@ -7,7 +7,7 @@ using Xunit;
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
-/// IPlcAddressCodec 契约测试：验证所有地址编解码器实现（Mitsubishi/Siemens/ModbusTcp）
+/// IPlcAddressCodec 契约测试：验证所有已注册 PLC 品牌的地址编解码器实现
 /// 对同一接口的行为一致性。
 ///
 /// 契约覆盖：
@@ -138,6 +138,7 @@ public class IPlcAddressCodecContractTests
             PlcBrand.Siemens => "DB1.DBD0",
             PlcBrand.ModbusTcp => "HR100",
             PlcBrand.Omron => "D100",
+            PlcBrand.Keyence => "DM100",
             _ => throw new InvalidOperationException($"未覆盖品牌 {codec.Brand} 的测试地址"),
         };
 

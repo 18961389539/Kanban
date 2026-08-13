@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using System.Windows.Media;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using System.Windows.Threading;
@@ -45,6 +46,22 @@ public partial class MainWindow : Window
 
         ActivatePage(viewModel.SelectedIndex);
 
+        // 关键：ObservableProperty 在值不变时不触发 PropertyChanged，而构造时 SelectedIndex
+        // 已经是默认 0。手动同步一次所有 NavigationPage.IsCurrent，否则启动时所有 host 都
+        // 保持 IsCurrent=false（默认）→ Visibility=Collapsed → Content=null → 黑屏。
+        foreach (var p in Pages)
+        {
+            p.IsCurrent = p.Definition.Index == viewModel.SelectedIndex;
+        }
+
+        // XAML 已设 WindowStyle=None + ResizeMode=NoResize + WindowState=Maximized，
+        // 初始即为无边框全屏，无需 Loaded 时 ToggleFullscreen 切换（避免 Show 期间 HWND 重建导致黑屏）。
+        // 初始化"退出全屏"恢复状态，供 F11 → ExitFullscreen 使用。
+        _isFullscreen = true;
+        _windowStyleBeforeFullscreen = WindowStyle.SingleBorderWindow;
+        _resizeModeBeforeFullscreen = ResizeMode.CanResize;
+        _windowStateBeforeFullscreen = WindowState.Maximized;
+
         // ContentRendered 是窗口首帧实际渲染完成的时刻，
         // 从 Show() 到 ContentRendered 的差值即为用户感知的"白屏到可交互"时间
         ContentRendered += OnContentRendered;
@@ -59,9 +76,20 @@ public partial class MainWindow : Window
 
     private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedIndex)
-            && sender is MainWindowViewModel viewModel)
-            ActivatePage(viewModel.SelectedIndex);
+        if (sender is MainWindowViewModel viewModel)
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.SelectedIndex))
+            {
+                // 忽略 ListBox 初始化时通过 TwoWay Binding 写回的 -1（这是 ListBox 自身的
+                // 初始选中态副作用，不应触发页面 IsCurrent 重置）。
+                if (viewModel.SelectedIndex < 0) return;
+                ActivatePage(viewModel.SelectedIndex);
+                foreach (var p in Pages)
+                {
+                    p.IsCurrent = p.Definition.Index == viewModel.SelectedIndex;
+                }
+            }
+        }
     }
 
     private void ActivatePage(int index)
@@ -234,8 +262,10 @@ public partial class MainWindow : Window
         _restoringNavigation = true;
         try
         {
+            // 脏检查拒绝离开：回退页面索引并恢复侧边栏选中项（SelectedItem 为 NavItem 引用，
+            // 不能用视觉 SelectedIndex——列表位置与页面 Index 存在错位，见 MainWindowViewModel.SelectedNavItem）
             vm.SelectedIndex = oldItem.Index;
-            NavListBox.SelectedIndex = oldItem.Index;
+            NavListBox.SelectedItem = oldItem;
         }
         finally
         {
@@ -246,12 +276,15 @@ public partial class MainWindow : Window
     private void OnContentRendered(object? sender, EventArgs e)
     {
         ContentRendered -= OnContentRendered;
+        Serilog.Log.Information("MainWindow.ContentRendered 首帧渲染完成");
     }
 
     private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnMainWindowLoaded;
-        ToggleFullscreen();
+        Serilog.Log.Information("MainWindow.Loaded 事件触发");
+        // 不再在此处调用 ToggleFullscreen：XAML 已设 WindowStyle=None + WindowState=Maximized，
+        // 初始即为全屏无边框，Loaded 时切换 WindowStyle 会触发 HWND 重建导致黑屏。
         // 只等待当前页面首帧完成；其余页面由 NavigationPageHost 在首次进入时按需创建。
         WarmupViewsAsync().ContinueWith(t =>
         {

@@ -12,8 +12,16 @@
     <NeutralLanguage>zh-CN</NeutralLanguage>
   </PropertyGroup>
 
+  <!-- 编译前自动从 Strings.resx 重新生成 Strings.cs（多语言单一源） -->
+  <Target Name="GenerateStrings" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="Generating Strings.cs from Strings.resx…" />
+    <Exec Command="python $(ProjectDir)..\ci\generate_wpf_strings.py"
+          WorkingDirectory="$(ProjectDir).."
+          ContinueOnError="false" />
+  </Target>
+
   <!-- 多语言资源：Strings.resx（中文默认）+ Strings.en.resx + Strings.ja.resx；
-       强类型访问走手写 Resources/Strings.cs（ResourceManager 包装），CLI 构建不依赖 VS 代码生成器 -->
+       强类型访问走自动生成 Resources/Strings.cs（ResourceManager 包装） -->
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx" />
     <EmbeddedResource Update="Resources\Strings.en.resx">
@@ -36,9 +44,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="OxyPlot.Wpf" />
-    <PackageReference Include="OxyPlot.Core" />
-    <PackageReference Include="OxyPlot.SkiaSharp" />
     <PackageReference Include="PdfSharpCore" />
     <!-- SignalR 客户端：Remote 模式连接 Kanban.Collector；MessagePack 与 Collector 服务端协议对齐 -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
@@ -53,6 +58,14 @@
     <Reference Include="HslCommunication">
       <HintPath>DLLS\HslCommunication.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- OxyPlot 使用本地源码（oxyplot\Source）替代 NuGet 包，便于调试/修改渲染行为。
+         Wpf 目标框架最高 net8.0-windows7.0（net10.0-windows 可向下引用）；Core/SkiaSharp 支持 net10.0。
+         Core 由 Wpf/SkiaSharp 传递引用，不显式列出避免双 TFM 版本冲突。 -->
+    <ProjectReference Include="..\oxyplot\Source\OxyPlot.Wpf\OxyPlot.Wpf.csproj" />
+    <ProjectReference Include="..\oxyplot\Source\OxyPlot.SkiaSharp\OxyPlot.SkiaSharp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

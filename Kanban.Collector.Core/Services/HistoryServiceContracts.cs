@@ -40,6 +40,13 @@ public interface IAlarmHistoryService
     bool LogAlarmEvent(string deviceId, string deviceName, string alarmId,
         string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime,
         string? shiftName = null);
+
+    /// <summary>严格查询：数据库异常向调用方抛出（区别于容错版本的空结果回退）。</summary>
+    List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
+
+    /// <summary>分页查询报警事件（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。</summary>
+    (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize);
 }
 
 /// <summary>
@@ -53,4 +60,8 @@ public interface IStatusTransitionHistoryService
     bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
         string? shiftName = null);
+
+    /// <summary>分页查询状态转换记录（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。</summary>
+    (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
+        string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize);
 }

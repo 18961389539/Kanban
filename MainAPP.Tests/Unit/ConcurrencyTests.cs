@@ -90,9 +90,15 @@ public class ConcurrencyTests
             Task.WaitAll(tasks);
         }, "PlcConnectionManager.MarkDisconnected × EnsureConnected");
 
-        // 并发结束后状态应一致：IsConnected 与 TotalDisconnectCount 可读且不抛异常（无中间态损坏）
-        var _ = mgr.IsConnected;
-        Assert.True(mgr.TotalDisconnectCount >= 0);
+        // 并发结束后验证计数器无损坏（审查修复 2026-08-13：原断言 TotalDisconnectCount >= 0 恒真——
+        // int 不可能为负，未验证任何行为）。真实行为断言：MarkDisconnected 仅在"已连接→断开"下降沿累加，
+        // 连发两次第二次必然 no-op，计数不得重复累加。
+        var before = mgr.TotalDisconnectCount;
+        mgr.MarkDisconnected();
+        var afterOne = mgr.TotalDisconnectCount;
+        Assert.InRange(afterOne, before, before + 1); // 至多 +1（下降沿）
+        mgr.MarkDisconnected();                       // 已断开 → no-op
+        Assert.Equal(afterOne, mgr.TotalDisconnectCount);
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -519,8 +525,8 @@ public class ConcurrencyTests
             var store = new ProductionBaselineStore(appSettings);
             store.Load();
 
-            // 生产并发模型：基线更新由单一轮询线程串行触发，多线程并发 GetOrCreate 会触发磁盘写竞争
-            // （SaveToFile 使用同一 .tmp 文件，非线程安全）。
+            // 生产并发模型：基线更新由单一轮询线程串行触发，多线程并发 GetOrCreate 会触发磁盘写竞争。
+            // 乱序写盘已由 ProductionBaselineStore 的版本复查循环收敛（见 ProductionBaselineStoreConcurrencyTests），
             // 故此处仅测试"基线值未变时不触发磁盘写"的路径，确保 GetOrCreate 的内存路径线程安全。
             // 先预置基线
             store.GetOrCreate("dev-0", 100, "白班");

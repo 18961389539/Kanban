@@ -22,6 +22,11 @@ public static class MainAppServiceCollectionExtensions
         // ──────────── 采集/存储核心服务（单一共享入口，与 Kanban.Collector 复用，避免漏注册） ────────────
         services.AddKanbanDataServices(appSettings);
 
+        // ──────────── 用户与权限（RBAC）────────────
+        services.AddSingleton<UserStore>();
+        services.AddSingleton<UserSession>();
+        services.AddSingleton<IAuthorizationService, AuthorizationService>();
+
         services.AddSingleton<LicenseManager.Services.LicenseStore>();
         services.AddSingleton<LicenseManager.Services.TrialRegistryBackup>();
         services.AddSingleton<LicenseManager.Services.TrialTracker>();
@@ -53,6 +58,9 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<DeviceConfigIOService>();
         services.AddSingleton<DevicePlcCommandHandler>();
         services.AddSingleton<AlarmCsvIOService>();
+        services.AddSingleton<DefectCsvIOService>();
+        services.AddSingleton<CountAlarmCsvIOService>();
+        services.AddSingleton<RecipeJsonIOService>();
 
         // ──────────── Remote 模式数据链路（展示端瘦身） ────────────
         // KanbanDataClient 来自共享库 Kanban.Client（构造解耦：只收 HubUrl 字符串，不依赖 AppSettings/WPF）

@@ -25,6 +25,13 @@ on:
       - 'MainAPP/DLLS/**'
       - 'MainAPP/Data/Migrations/**'
       - '.editorconfig'
+      - 'Kanban.Collector/**'
+      - 'Kanban.Collector.Core/**'
+      - 'Kanban.Contracts/**'
+      - 'Kanban.Client/**'
+      - 'Kanban.Web/**'
+      - 'ci/**'
+      - 'Kanban.Web/Localization.cs'
       - '.github/workflows/tests.yml'
   pull_request:
     branches: [main, master]
@@ -43,6 +50,13 @@ on:
       - 'MainAPP/DLLS/**'
       - 'MainAPP/Data/Migrations/**'
       - '.editorconfig'
+      - 'Kanban.Collector/**'
+      - 'Kanban.Collector.Core/**'
+      - 'Kanban.Contracts/**'
+      - 'Kanban.Client/**'
+      - 'Kanban.Web/**'
+      - 'ci/**'
+      - 'Kanban.Web/Localization.cs'
       - '.github/workflows/tests.yml'
   workflow_dispatch:
 
@@ -108,6 +122,13 @@ jobs:
             --report-xunit-trx `
             --report-xunit-trx-filename mainapp-e2e.trx
 
+      - name: Verify Strings.cs & L.cs are up-to-date (single source guard)
+        shell: powershell
+        run: |
+          python ci/generate_wpf_strings.py --check
+          python ci/generate_web_loc.py --check
+          python ci/scan_bare_stringformat.py
+
       - name: Build Release (verify Obfuscar + Release config)
         shell: powershell
         run: dotnet build Kanban.slnx -c Release --nologo
@@ -162,7 +183,8 @@ jobs:
               exit 1
             }
           } else {
-            Write-Host "No coverage file found"
+            Write-Host "::error::No coverage file found (coverage gate cannot run)"
+            exit 1
           }
 
       - name: Upload test results
@@ -193,3 +215,73 @@ jobs:
           path: TestResults/Benchmarks/**/*
           if-no-files-found: ignore
           retention-days: 30
+
+  publish-bundle:
+    name: Publish Self-Contained Deployment Bundle
+    runs-on: windows-2022
+    timeout-minutes: 60
+    needs: test  # only build the deployment bundle after unit/integration/E2E pass
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install wasm-tools workload (for WASM publish)
+        shell: powershell
+        run: dotnet workload install wasm-tools --nologo
+
+      - name: Restore
+        shell: powershell
+        run: dotnet restore Kanban.slnx --nologo
+
+      - name: Publish all programs (self-contained) into one dir
+        shell: powershell
+        run: .\ci\publish-all.ps1 -Configuration Release -SelfContained -Runtime win-x64 -OutputDir artifacts/publish
+
+      - name: Upload self-contained bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kanban-bundle-selfcontained-${{ github.sha }}
+          path: artifacts/publish/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: WASM smoke (boot the published bundle + headless Edge assertions)
+        # Runs the bundle's Collector with an isolated DataRoot, then invokes ci/wasm-smoke.js
+        # via playwright-core + system Edge to verify the WASM big-screen boots and renders.
+        # 正式门禁：WASM 展示端是发布形态的核心产物，启动失败/smoke 断言失败即视为不合格
+        # （此前 best-effort 允许失败会掩盖发布包损坏）。完整数据流 smoke（设备/OEE）本地跑：
+        #   copy run-demo/data Config to a temp dir, start the bundle's Collector+Sim, then
+        #   node ci/wasm-smoke.js http://127.0.0.1:5129/ 45  for the complete 16-assertion smoke.
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $repoRoot = $env:GITHUB_WORKSPACE
+          $bundle = Join-Path $repoRoot "artifacts\publish"
+          $collExe = Join-Path $bundle "Collector\Kanban.Collector.exe"
+          $smokeData = Join-Path $repoRoot "artifacts\smoke-data"
+          $wsDir = Join-Path $env:HOME ".workbuddy\binaries\node\workspace"
+          if (-not (Test-Path $collExe)) { Write-Host "::error::bundle Collector missing"; exit 1 }
+          if (Test-Path $smokeData) { Remove-Item $smokeData -Recurse -Force }
+          New-Item -ItemType Directory -Path (Join-Path $smokeData "Config") -Force | Out-Null
+          # Start the published Collector with an isolated DataRoot (no devices -> structural smoke)
+          $env:KANBAN_DATA_DIR = $smokeData
+          $coll = Start-Process -FilePath $collExe -WorkingDirectory (Split-Path $collExe) -PassThru
+          Start-Sleep -Seconds 8
+          $health = try { (Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 "http://127.0.0.1:5129/healthz").StatusCode } catch { 0 }
+          if ($health -ne 200) { Write-Host "::error::bundle Collector healthz=$health, WASM smoke aborted"; Stop-Process -Id $coll.Id -Force -ErrorAction SilentlyContinue; exit 1 }
+          # playwright-core lives in the managed node workspace; copy smoke script alongside it
+          Copy-Item -Path (Join-Path $repoRoot "ci\wasm-smoke.js") -Destination $wsDir -Force
+          Push-Location $wsDir
+          $env:KANBAN_REPO = $repoRoot -replace '\\','/'
+          try {
+            node wasm-smoke.js http://127.0.0.1:5129/ 35
+          } finally {
+            Pop-Location
+            Stop-Process -Id $coll.Id -Force -ErrorAction SilentlyContinue
+          }

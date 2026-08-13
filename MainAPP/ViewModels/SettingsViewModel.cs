@@ -40,6 +40,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// 上次已保存的 PLC 配置（用于检测本次保存是否改变连接参数）
     /// </summary>
     private string _lastSavedPlcConfigSignature = string.Empty;
+    private SettingsAuditSnapshot _lastSavedAuditSnapshot = new(string.Empty, 0, 0);
     private PlcBrand _draftBrand;
 
     /// <summary>上次已保存的界面语言（检测本次保存是否变更语言 → 提示重启生效）。</summary>
@@ -61,7 +62,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _hasUnsavedChanges;
 
-    public string UnsavedChangesText => HasUnsavedChanges ? "有未保存修改" : "已保存";
+    public string UnsavedChangesText => HasUnsavedChanges ? Strings.M074 : Strings.M075;
 
     public bool IsPlcConnected => _connectionManager.IsConnected;
     public string PlcConnectionStatus => _connectionManager.ConnectionStatus;
@@ -72,7 +73,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isTestingConnection;
 
-    public string TestConnectionButtonText => IsTestingConnection ? "测试中..." : "测试连接";
+    public string TestConnectionButtonText => IsTestingConnection ? Strings.M076 : Strings.M077;
 
     // ──────────── 数据源与运行模式（[连接向导]）────────────
 
@@ -132,7 +133,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isTestingCollectorConnection;
 
-    public string TestCollectorButtonText => IsTestingCollectorConnection ? "测试中..." : "测试连接";
+    public string TestCollectorButtonText => IsTestingCollectorConnection ? Strings.M076 : Strings.M077;
 
     /// <summary>测试采集服务连接结果文案。</summary>
     [ObservableProperty]
@@ -158,7 +159,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var url = DraftSettings.CollectorHubUrl;
         if (string.IsNullOrWhiteSpace(url))
         {
-            CollectorTestResult = "请输入采集服务地址";
+            CollectorTestResult = Strings.M064;
             CollectorTestResultType = "Error";
             return;
         }
@@ -172,7 +173,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             var builder = new HubConnectionBuilder().WithUrl(url);
             await using var connection = builder.Build();
             await connection.StartAsync(cts.Token);
-            CollectorTestResult = "连接成功（采集服务可达）";
+            CollectorTestResult = Strings.M065;
             CollectorTestResultType = "Success";
         }
         catch (Exception ex)
@@ -194,7 +195,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _isSaving;
 
-    public string SaveButtonText => IsSaving ? "保存中..." : "保存设置";
+    public string SaveButtonText => IsSaving ? Strings.M078 : Strings.M079;
 
     /// <summary>IsSaving 变化时刷新 SaveCommand CanExecute。</summary>
     partial void OnIsSavingChanged(bool value)
@@ -230,7 +231,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         // 前置校验（复用 Save 的校验逻辑，避免无效参数发起网络请求）
         if (string.IsNullOrWhiteSpace(ip) || !IPAddress.TryParse(ip, out _))
         {
-            TestConnectionResult = "IP 地址无效";
+            TestConnectionResult = Strings.M299;
             TestConnectionResultType = "Error";
             return;
         }
@@ -268,6 +269,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 TestConnectionResult = string.Format(Strings.F225, ip, port);
                 TestConnectionResultType = "Success";
             }
+            else if (IsSingleConnectionRefused(ip, port, result))
+            {
+                // 目标 PLC 单连接限制：连接被拒绝（TCP RST/10061）且主采集正连着同一端点
+                // → 极可能是 PLC 并发连接数上限（如 S7-1200 默认仅 1 个 S7 连接），
+                //   给出可执行提示而不是黑盒的"目标计算机拒绝"。
+                TestConnectionResult = Strings.K636;
+                TestConnectionResultType = "Error";
+            }
             else
             {
                 TestConnectionResult = string.Format(Strings.F223, result.Message);
@@ -293,6 +302,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private bool CanTestConnection() => !IsTestingConnection;
 
     /// <summary>
+    /// 单连接限制判定：连接被拒绝（ConnectionLost，如 TCP RST/WSAECONNREFUSED）
+    /// 且主采集链路当前正连接同一 IP:Port——目标 PLC 极可能只允许一个并发连接。
+    /// </summary>
+    private bool IsSingleConnectionRefused(string ip, int port, PlcOperationResult result)
+    {
+        if (result.ErrorKind != PlcErrorKind.ConnectionLost || !_connectionManager.IsConnected)
+            return false;
+        var running = AppSettings.PlcConfig;
+        return string.Equals(running.IpAddress, ip, StringComparison.OrdinalIgnoreCase) && running.Port == port;
+    }
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     public SettingsViewModel(
@@ -312,11 +333,17 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         DraftSettings = CloneSettings(appSettings);
         _draftBrand = DraftSettings.PlcConfig.Brand;
         _lastSavedPlcConfigSignature = GetPlcConfigSignature(DraftSettings.PlcConfig);
+        _lastSavedAuditSnapshot = CreateAuditSnapshot(DraftSettings);
         _lastSavedShiftsSignature = GetShiftsSignature(DraftSettings);
         _lastSavedLanguage = DraftSettings.Language;
         WireDraftEvents();
         _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
     }
+
+    private sealed record SettingsAuditSnapshot(string PlcIp, int PlcPort, int ShiftCount);
+
+    private static SettingsAuditSnapshot CreateAuditSnapshot(AppSettings settings)
+        => new(settings.PlcConfig.IpAddress, settings.PlcConfig.Port, settings.Shifts.Count);
 
     private static AppSettings CloneSettings(AppSettings source)
     {
@@ -392,7 +419,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             OnPropertyChanged(nameof(PlcConnectionStatus));
     }
 
-    // ──────────── 授权管理（P1-2）────────────
+    // ──────────── 授权管理 ────────────
 
     /// <summary>当前授权状态枚举（UI 用 DataTrigger 切换颜色/文本）</summary>
     public LicenseStatus LicenseStatus => _licenseGate.CurrentStatus;
@@ -416,13 +443,13 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             {
                 LicenseStatus.Active when _licenseGate.CurrentLicense?.IsPermanent == false
                     => string.Format(Strings.F113, _licenseGate.CurrentLicense.ExpireDate),
-                LicenseStatus.Active => "已激活 · 永久授权",
+                LicenseStatus.Active => Strings.License_ActivePermanent,
                 LicenseStatus.Trial => string.Format(Strings.F212, RemainingTrialDays ?? 0),
-                LicenseStatus.TrialExpired => "试用期已过期",
-                LicenseStatus.TrialManipulated => "试用期异常（检测到时间篡改）",
-                LicenseStatus.Expired => "授权已过期",
-                LicenseStatus.MachineMismatch => "授权与当前机器不匹配",
-                _ => "未激活",
+                LicenseStatus.TrialExpired => Strings.License_TrialExpired,
+                LicenseStatus.TrialManipulated => Strings.License_TrialManipulated,
+                LicenseStatus.Expired => Strings.License_Expired,
+                LicenseStatus.MachineMismatch => Strings.License_MachineMismatch,
+                _ => Strings.License_Inactive,
             };
         }
     }
@@ -434,7 +461,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             var status = _licenseGate.CurrentStatus;
             if (status == LicenseStatus.Active && _licenseGate.CurrentLicense != null)
-                return _licenseGate.CurrentLicense.IsPermanent ? "永久授权" : "限期授权";
+                return _licenseGate.CurrentLicense.IsPermanent ? Strings.M293 : Strings.M294;
             if (status == LicenseStatus.Trial) return Strings.M015;
             return "—";
         }
@@ -457,7 +484,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             if (_licenseGate.CurrentLicense == null) return "—";
             return _licenseGate.CurrentLicense.IsPermanent
-                ? "永久"
+                ? Strings.M339
                 : _licenseGate.CurrentLicense.ExpireDate!.Value.ToLocalTime().ToString("yyyy-MM-dd");
         }
     }
@@ -499,12 +526,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         // 根据当前状态设置提示消息
         activationVm.StatusMessage = _licenseGate.CurrentStatus switch
         {
-            LicenseStatus.Active => "输入新的激活码以替换当前授权。",
+            LicenseStatus.Active => Strings.M340,
             LicenseStatus.Trial => string.Format(Strings.F213, RemainingTrialDays ?? 0),
-            LicenseStatus.TrialExpired => "试用期已过期，请输入激活码继续使用。",
-            LicenseStatus.Expired => "授权已过期，请输入新的激活码。",
-            LicenseStatus.MachineMismatch => "授权与当前机器不匹配，请重新激活。",
-            _ => "请输入激活码以继续使用。",
+            LicenseStatus.TrialExpired => Strings.M341,
+            LicenseStatus.Expired => Strings.M342,
+            LicenseStatus.MachineMismatch => Strings.M343,
+            _ => Strings.M344,
         };
 
         if (dialog.ShowDialog() == true)
@@ -626,9 +653,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return;
         }
 
-        var currentIp = DraftSettings.PlcConfig.IpAddress;
-        var currentPort = DraftSettings.PlcConfig.Port;
         var plcConfigChanged = GetPlcConfigSignature(DraftSettings.PlcConfig) != _lastSavedPlcConfigSignature;
+        var auditBefore = _lastSavedAuditSnapshot;
+        var auditAfter = CreateAuditSnapshot(DraftSettings);
 
         // 检测班次配置是否变化（用 SequenceEqual 比较两个 record 列表）
         var currentShiftsSig = GetShiftsSignature(DraftSettings);
@@ -639,12 +666,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (shiftsChanged)
         {
             var result = _dialog.Show(
-                "班次配置已修改。\n\n" +
-                "新配置将立即生效，若当前正处于班次进行中，\n" +
-                "可能导致班次切换检测误判并清零当前累计数据。\n\n" +
-                "建议在班次切换时刻再修改。\n\n" +
-                "是否继续保存？",
-                "班次配置变更提示",
+                Strings.F_ShiftConfigChanged,
+                Strings.M_ShiftConfigChangedTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
@@ -656,6 +679,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             CopySettings(DraftSettings, AppSettings);
             AppSettings.Save();
             _profileProvider?.Refresh(AppSettings.PlcConfig);
+            // 前后值摘要：只取关键字段，PLC 密码/完整配置不落审计库
+            AuditLog.Record("Settings.Update", "Settings", null,
+                before: auditBefore,
+                after: auditAfter,
+                detail: $"PLC={DraftSettings.PlcConfig.IpAddress}:{DraftSettings.PlcConfig.Port} 班次={DraftSettings.Shifts.Count}");
+            _lastSavedAuditSnapshot = auditAfter;
 
             if (plcConfigChanged)
             {
@@ -717,6 +746,27 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 PlcIpAddress = AppSettings.PlcConfig.IpAddress,
                 PlcPort = AppSettings.PlcConfig.Port,
                 PlcTimeoutMs = AppSettings.PlcConfig.TimeoutMs,
+                Siemens = new SiemensSettingsDto
+                {
+                    Model = AppSettings.PlcConfig.Siemens.Model,
+                    Rack = AppSettings.PlcConfig.Siemens.Rack,
+                    Slot = AppSettings.PlcConfig.Siemens.Slot,
+                    DataFormat = (int)AppSettings.PlcConfig.Siemens.DataFormat,
+                    BatchInt32Limit = AppSettings.PlcConfig.Siemens.BatchInt32Limit,
+                },
+                ModbusTcp = new ModbusTcpSettingsDto
+                {
+                    UnitId = AppSettings.PlcConfig.ModbusTcp.UnitId,
+                    AddressStartWithZero = AppSettings.PlcConfig.ModbusTcp.AddressStartWithZero,
+                    RegisterFunction = AppSettings.PlcConfig.ModbusTcp.RegisterFunction,
+                    BitFunction = AppSettings.PlcConfig.ModbusTcp.BitFunction,
+                    DataFormat = (int)AppSettings.PlcConfig.ModbusTcp.DataFormat,
+                    BatchInt32Limit = AppSettings.PlcConfig.ModbusTcp.BatchInt32Limit,
+                },
+                Omron = new OmronFinsSettingsDto
+                {
+                    ReadSplits = AppSettings.PlcConfig.Omron.ReadSplits,
+                },
                 Shifts = AppSettings.Shifts.Select(s => new ShiftConfigDto
                 {
                     Name = s.Name,
@@ -743,7 +793,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [RelayCommand]
     private void RestoreDefaults()
     {
-        var result = _dialog.Show(Strings.M026, "恢复默认设置", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var result = _dialog.Show(Strings.M026, Strings.M_RestoreDefaults, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
         ReplaceDraft(new AppSettings());
         _dialog.NotifyInfo(Strings.M027);
@@ -768,6 +818,11 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     private static void CopySettings(AppSettings source, AppSettings target)
     {
+        // 数据源/运行模式/采集服务地址是可编辑设置（SelectedDataMode/SelectedRunMode/TestCollectorConnectionAsync
+        // 均读写草稿），漏拷会导致保存后改动被静默丢弃（审查修复 2026-08-13）。
+        target.DataMode = source.DataMode;
+        target.RunMode = source.RunMode;
+        target.CollectorHubUrl = source.CollectorHubUrl;
         target.PlcConfig = new PlcConfig
         {
             Brand = source.PlcConfig.Brand,
@@ -798,8 +853,15 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.EnableAlarmSound = source.EnableAlarmSound;
         target.EnableAutomaticDailyReport = source.EnableAutomaticDailyReport;
         target.AutomaticDailyReportTime = source.AutomaticDailyReportTime;
-        target.Shifts = new System.Collections.ObjectModel.ObservableCollection<ShiftConfig>(
-            source.Shifts.Select(s => new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime }));
+        // 审查修复 2026-08-13：改为锁内原地更新而非替换集合实例——
+        // ①ProductionLineViewModel 等订阅方挂在旧实例上，替换会使其订阅永久失效（僵尸引用）；
+        // ②本地模式下采集轮询线程也会枚举 Shifts，与 UI 线程原地写入用同一把锁互斥。
+        lock (target.ShiftsLock)
+        {
+            target.Shifts.Clear();
+            foreach (var s in source.Shifts)
+                target.Shifts.Add(new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime });
+        }
     }
 
     /// <summary>

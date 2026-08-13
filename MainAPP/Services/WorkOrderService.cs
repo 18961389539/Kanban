@@ -8,6 +8,7 @@ using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MainAPP.Services;
 
@@ -129,12 +130,28 @@ public class WorkOrderService(
     WorkOrderRepository workOrderRepo,
     DeviceRepository deviceRepo,
     IDialogService dialog,
-    IProductionHistoryReader historyService) : IWorkOrderService
+    IProductionHistoryReader historyService,
+    IRuntimeMode? runtimeMode = null,
+    ILogger<WorkOrderService>? logger = null) : IWorkOrderService
 {
     private readonly WorkOrderRepository _workOrderRepo = workOrderRepo;
     private readonly DeviceRepository _deviceRepo = deviceRepo;
     private readonly IDialogService _dialog = dialog;
     private readonly IProductionHistoryReader _historyService = historyService;
+    private readonly IRuntimeMode? _runtimeMode = runtimeMode;
+    private readonly ILogger<WorkOrderService> _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<WorkOrderService>.Instance;
+
+    /// <summary>
+    /// Remote 模式禁用同步包装器：RemoteUpsertHook 走 SignalR 真正异步，UI 线程同步等待
+    /// （GetAwaiter().GetResult()）会经典死锁。生产调用方一律使用 Async 变体；
+    /// 本守卫仅拦截测试/误用路径（测试不传 runtimeMode 时为 null，不拦截）。
+    /// </summary>
+    private void EnsureSyncApiAllowed()
+    {
+        if (_runtimeMode?.IsRemote == true)
+            throw new InvalidOperationException(
+                "Sync API is not available in Remote mode (may deadlock); use the Async variant.");
+    }
 
     public IReadOnlyDictionary<int, WorkOrderProductionSummary> GetProductionSummaries(IReadOnlyList<WorkOrder> workOrders)
     {
@@ -143,6 +160,19 @@ public class WorkOrderService(
         Dictionary<int, List<ProductionLog>>? batch = null;
         if (_historyService is IWorkOrderProductionBatchQuery batchQuery && pending.Count > 0)
             batch = batchQuery.QueryProductionLogsByWorkOrderBatch(pending.Select(w => w.Id).Where(id => id > 0).ToList());
+
+        // 回退窗口批量（审查修复 2026-08-13）：未按 WorkOrderId 命中的工单（老数据无关联 / 未落库新工单）
+        // 走 DeviceId+时间窗口回退——Remote 模式此前逐条 GetProductionSummary 产生 N+1 次
+        // UI 线程同步 SignalR 往返（每次最长 10s），现合并为按窗口的批量请求（每批 ≤32 个子查询）
+        var fallbackWindows = new List<(int WorkOrderId, string DeviceId, DateTime From, DateTime To)>();
+        foreach (var w in pending)
+        {
+            if (batch != null && batch.TryGetValue(w.Id, out var linkedLogs) && linkedLogs.Count > 0) continue;
+            fallbackWindows.Add((w.Id, w.DeviceId, FallbackFrom(w), FallbackTo(w)));
+        }
+        Dictionary<int, List<ProductionLog>>? windowBatch = null;
+        if (_historyService is IWorkOrderProductionBatchQuery windowQuery && fallbackWindows.Count > 0)
+            windowBatch = windowQuery.QueryProductionLogsByDeviceWindowsBatch(fallbackWindows);
 
         foreach (var workOrder in workOrders)
         {
@@ -153,9 +183,19 @@ public class WorkOrderService(
             }
 
             if (batch != null && batch.TryGetValue(workOrder.Id, out var logs) && logs.Count > 0)
+            {
                 result[workOrder.Id] = CalculateProductionSummary(workOrder, logs);
-            else
-                result[workOrder.Id] = GetProductionSummary(workOrder);
+                continue;
+            }
+            if (windowBatch != null && windowBatch.TryGetValue(workOrder.Id, out var wLogs))
+            {
+                result[workOrder.Id] = wLogs.Count > 0
+                    ? CalculateProductionSummary(workOrder, wLogs)
+                    : new WorkOrderProductionSummary();
+                continue;
+            }
+            // 兜底：历史服务未实现批量能力（旧测试桩）时逐条查询（与原行为一致）
+            result[workOrder.Id] = GetProductionSummary(workOrder);
         }
         return result;
     }
@@ -164,6 +204,15 @@ public class WorkOrderService(
         => workOrder.Status is WorkOrderStatus.Completed or WorkOrderStatus.Aborted
             && workOrder.CompletedOkCount.HasValue
             && workOrder.CompletedNgCount.HasValue;
+
+    /// <summary>工单回退查询窗口起点（前后各扩 5 分钟，避免工单开始/结束边界处丢失快照）。</summary>
+    private static DateTime FallbackFrom(WorkOrder workOrder) => workOrder.PlannedStart.AddMinutes(-5);
+
+    /// <summary>工单回退查询窗口终点（未配置结束时间时取当前时刻）。</summary>
+    private static DateTime FallbackTo(WorkOrder workOrder)
+        => workOrder.PlannedEnd > workOrder.PlannedStart
+            ? workOrder.PlannedEnd.AddMinutes(5)
+            : DateTime.Now;
 
     /// <inheritdoc />
     public IReadOnlyList<(string Id, string Name)> GetAvailableDevices()
@@ -191,7 +240,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? AddWorkOrder(WorkOrder? template = null)
-        => AddWorkOrderCore(template).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return AddWorkOrderCore(template).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> AddWorkOrderAsync(WorkOrder? template = null)
@@ -209,7 +261,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? CopyWorkOrder(WorkOrder source)
-        => CopyWorkOrderCore(source).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return CopyWorkOrderCore(source).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> CopyWorkOrderAsync(WorkOrder source)
@@ -237,7 +292,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? EditWorkOrder(WorkOrder source)
-        => EditWorkOrderCore(source).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return EditWorkOrderCore(source).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> EditWorkOrderAsync(WorkOrder source)
@@ -256,7 +314,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public bool DeleteWorkOrder(WorkOrder target)
-        => DeleteWorkOrderCore(target).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return DeleteWorkOrderCore(target).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<bool> DeleteWorkOrderAsync(WorkOrder target)
@@ -266,7 +327,7 @@ public class WorkOrderService(
     {
         var r = _dialog.Show(
             string.Format(Strings.F174, target.OrderNo, target.ProductName),
-            "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            Strings.M_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return false;
         await _workOrderRepo.DeleteAsync(target.Id);
         _dialog.NotifySuccess(Strings.M006);
@@ -302,7 +363,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? StartWorkOrder(WorkOrder target)
-        => StartWorkOrderCore(target).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return StartWorkOrderCore(target).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> StartWorkOrderAsync(WorkOrder target)
@@ -335,7 +399,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? CompleteWorkOrder(WorkOrder target)
-        => CompleteWorkOrderCore(target).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return CompleteWorkOrderCore(target).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> CompleteWorkOrderAsync(WorkOrder target)
@@ -366,7 +433,10 @@ public class WorkOrderService(
 
     /// <inheritdoc />
     public WorkOrder? AbortWorkOrder(WorkOrder target)
-        => AbortWorkOrderCore(target).GetAwaiter().GetResult();
+    {
+        EnsureSyncApiAllowed();
+        return AbortWorkOrderCore(target).GetAwaiter().GetResult();
+    }
 
     /// <inheritdoc />
     public async Task<WorkOrder?> AbortWorkOrderAsync(WorkOrder target)
@@ -387,7 +457,7 @@ public class WorkOrderService(
         }
         var r = _dialog.Show(
             string.Format(Strings.F173, target.OrderNo),
-            "确认中止", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            Strings.M_ConfirmAbort, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (r != MessageBoxResult.Yes) return null;
         // 中止也写入产量快照（Running 中止时已有部分产量，需保留）
         // 注意：此处用 target.Status 判定原状态，updated 已被 Abort() 改为 Aborted
@@ -433,11 +503,7 @@ public class WorkOrderService(
             if (logs.Count == 0)
             {
                 // 时间窗口扩展前后各 5 分钟，避免工单开始/结束边界处丢失快照
-                var from = workOrder.PlannedStart.AddMinutes(-5);
-                var to = workOrder.PlannedEnd > workOrder.PlannedStart
-                    ? workOrder.PlannedEnd.AddMinutes(5)
-                    : DateTime.Now;
-                logs = _historyService.QueryProductionLogs(from, to, workOrder.DeviceId);
+                logs = _historyService.QueryProductionLogs(FallbackFrom(workOrder), FallbackTo(workOrder), workOrder.DeviceId);
             }
 
             if (logs.Count == 0)
@@ -495,8 +561,11 @@ public class WorkOrderService(
                 DefectRate = defectRate,
             };
         }
-        catch
+        catch (Exception ex)
         {
+            // 查询失败（Remote 模式 SignalR 故障等）与"真无数据"区分：记录日志后返回空摘要，
+            // 避免达成率 0% 无法区分故障/无数据（用户可据日志排查）
+            _logger.LogWarning(ex, "工单产量聚合查询失败，返回空摘要 WorkOrder={WorkOrderId}", workOrder.Id);
             return new WorkOrderProductionSummary();
         }
     }

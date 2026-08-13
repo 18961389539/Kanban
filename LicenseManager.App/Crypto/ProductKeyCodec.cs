@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 using LicenseManager.Models;
 
@@ -17,7 +16,9 @@ namespace LicenseManager.Crypto;
 /// 最终格式化为 5 组 × 5 字符（最后一组末位为校验位）：
 ///   XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 /// </remarks>
-[Obfuscation(Exclude = false, ApplyToMembers = true)]
+/// <remarks>
+/// 不混淆：LicenseIssuer.* 工具直接引用此类，混淆重命名会导致外部程序集 TypeLoadException。
+/// </remarks>
 public static class ProductKeyCodec
 {
     /// <summary>永久授权的过期日期编码值</summary>

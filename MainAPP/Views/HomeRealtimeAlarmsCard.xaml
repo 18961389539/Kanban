@@ -40,7 +40,7 @@
                             </Style>
                         </Border.Style>
                         <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="White"
-                                   Text="{Binding ActiveAlarms.Count, StringFormat={}{0} 次}" />
+                                   Text="{Binding ActiveAlarms.Count, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                     </Border>
                 </StackPanel>
 
@@ -142,7 +142,10 @@
             </DockPanel>
 
             <Grid Grid.Row="1">
-                <!-- 卡片式故障列表（绑定过滤视图） -->
+                <!-- 卡片式故障列表（绑定过滤视图）。
+                     看板为大屏场景，卡片随首页 Row 1（* 网格，占视口一半高度）自然撑满，
+                     因此不设 MaxHeight 上限：列表区域 Stretch 占满卡片可用高度，
+                     报警多时内部滚动，卡片高度始终有界于所在网格行，不会顶出第二行。 -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                     <ItemsControl ItemsSource="{Binding FilteredActiveAlarms}"
                                   VirtualizingStackPanel.IsVirtualizing="True"
@@ -175,61 +178,68 @@
                                         </Style>
                                     </Border.Style>
                                     <Grid>
-                                        <DockPanel>
-                                            <!-- 左侧级别色条 -->
-                                            <Border DockPanel.Dock="Left" Width="4" Margin="0,0,10,0"
-                                                    CornerRadius="2"
-                                                    Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}" />
-                                            <!-- 右侧持续时间 -->
-                                            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
-                                                       FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                                       Text="{Binding DurationText}" />
-                                            <StackPanel>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <!-- 类型/级别图标 -->
-                                                    <materialIcons:MaterialIcon Width="16" Height="16"
-                                                                                VerticalAlignment="Center"
-                                                                                Foreground="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
-                                                        <materialIcons:MaterialIcon.Style>
-                                                            <Style TargetType="materialIcons:MaterialIcon">
-                                                                <Setter Property="Kind" Value="AlertCircleOutline" />
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Kind}" Value="Count">
-                                                                        <Setter Property="Kind" Value="Counter" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Level}" Value="High">
-                                                                        <Setter Property="Kind" Value="AlertOctagon" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding Level}" Value="Medium">
-                                                                        <Setter Property="Kind" Value="Alert" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </materialIcons:MaterialIcon.Style>
-                                                    </materialIcons:MaterialIcon>
-                                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-                                                               FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                                               Foreground="{StaticResource PrimaryTextBrush}"
-                                                               Text="{Binding AlarmName}"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               ToolTip="{Binding AlarmName}" />
-                                                    <!-- 级别徽章：与设备管理页一致，色条+文字双重显示，色盲友好 -->
-                                                    <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
-                                                            VerticalAlignment="Center"
-                                                            Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
-                                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="White"
-                                                                   Text="{Binding Level, Converter={StaticResource AlarmLevelToTextConverter}}" />
-                                                    </Border>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="4" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- 左侧级别色条 -->
+                                                <Border Grid.Column="0" Width="4" Margin="0,0,10,0"
+                                                        CornerRadius="2"
+                                                        Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}" />
+                                                <!-- 中间内容（报警名 + 级别 + 时间 + 设备）撑满 -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <!-- 类型/级别图标 -->
+                                                        <materialIcons:MaterialIcon Width="16" Height="16"
+                                                                                    VerticalAlignment="Center"
+                                                                                    Foreground="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
+                                                            <materialIcons:MaterialIcon.Style>
+                                                                <Style TargetType="materialIcons:MaterialIcon">
+                                                                    <Setter Property="Kind" Value="AlertCircleOutline" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Kind}" Value="Count">
+                                                                            <Setter Property="Kind" Value="Counter" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Level}" Value="High">
+                                                                            <Setter Property="Kind" Value="AlertOctagon" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Level}" Value="Medium">
+                                                                            <Setter Property="Kind" Value="Alert" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </materialIcons:MaterialIcon.Style>
+                                                        </materialIcons:MaterialIcon>
+                                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                   FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                                                   Text="{Binding AlarmName}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   ToolTip="{Binding AlarmName}" />
+                                                        <!-- 级别徽章：与设备管理页一致，色条+文字双重显示，色盲友好 -->
+                                                        <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
+                                                                VerticalAlignment="Center"
+                                                                Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
+                                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="White"
+                                                                       Text="{Binding Level, Converter={StaticResource AlarmLevelToTextConverter}}" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
+                                                        <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                                   Text="{Binding EventTime, StringFormat={}{0:HH:mm:ss}}" />
+                                                        <TextBlock Margin="10,0,0,0" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                                                   Text="{Binding DeviceName}" />
+                                                    </StackPanel>
                                                 </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
-                                                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                               Text="{Binding EventTime, StringFormat={}{0:HH:mm:ss}}" />
-                                                    <TextBlock Margin="10,0,0,0" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                                               Foreground="{StaticResource ThirdlyTextBrush}"
-                                                               Text="{Binding DeviceName}" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </DockPanel>
+                                                <!-- 右侧持续时间（对齐到右边缘） -->
+                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                           Margin="12,0,0,0"
+                                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                                           Text="{Binding DurationText}" />
+                                            </Grid>
 
                                         <!-- 独立脉冲层：只改变边框透明度，不影响卡片文字可读性 -->
                                         <Border IsHitTestVisible="False"

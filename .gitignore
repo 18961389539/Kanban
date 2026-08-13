@@ -30,6 +30,17 @@ calib_run.log
 screenshots/
 CalibResults/
 
+# ── 发布产物与本地演示运行目录（勿入库） ──
+publish/
+run-demo/
+
+# ── 前端依赖（wasm-smoke.js 用 playwright-core，node_modules 勿入库） ──
+node_modules/
+
+# ── 中间/输出重定向目录（*.tmpbin* 含历史误配置的
+#    "SourceCodeKanban0731Kanban.tmpbin 2Debug" 类目录） ──
+*tmpbin*
+
 # ── 工具数据（编辑器/工作台） ──
 .arts/
 
@@ -41,3 +52,16 @@ Config/
 
 # ── 工作台工具数据 ──
 .workbuddy/
+
+# ── AI 代理运行时数据（会话事件流/快照/任务锁，勿入库） ──
+.reasonix/
+.zcode/
+.codeartsdoer/temp/
+
+# ── 代理记忆/工作笔记（本地工作区产物，勿入库） ──
+memory/
+
+# ── 授权签发产物（明文激活码/撤销记录，含密钥敏感性，严禁入库） ──
+issued/
+revoked/
+LicenseIssuer.CLI/issued/

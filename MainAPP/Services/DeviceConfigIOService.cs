@@ -21,7 +21,8 @@ namespace MainAPP.Services;
 /// </summary>
 public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogService dialog)
 {
-    private const string DeviceFileFilter = "JSON 文件|*.json|所有文件|*.*";
+    // 文件对话框过滤器（三语资源，与 RecipeJsonIOService 同源 K695）
+    private static string DeviceFileFilter => Strings.K695;
 
     private readonly DeviceRepository _deviceRepository = deviceRepository;
     private readonly IDialogService _dialog = dialog;
@@ -35,7 +36,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     /// <returns>是否导出成功（用户取消或写盘失败返回 false）。</returns>
     public bool ExportConfig(int deviceCount)
     {
-        var path = _dialog.ShowSaveFileDialog("导出设备配置", "devices.json", DeviceFileFilter);
+        var path = _dialog.ShowSaveFileDialog(Strings.M226, "devices.json", DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
@@ -59,7 +60,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     /// <returns>导入的设备列表；用户取消、解析失败或文件为空时返回 null。</returns>
     public List<Device>? ImportConfig(int currentDeviceCount)
     {
-        var path = _dialog.ShowOpenFileDialog("导入设备配置", DeviceFileFilter);
+        var path = _dialog.ShowOpenFileDialog(Strings.M227, DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return null;
 
         List<Device>? imported;
@@ -83,7 +84,7 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         // 二次确认：替换会丢弃当前内存中的设备配置（含未保存改动）
         var confirm = _dialog.Show(
             string.Format(Strings.F089, imported.Count, currentDeviceCount),
-            "确认导入", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            Strings.M119, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return null;
 
         _deviceRepository.ReplaceAll(imported);

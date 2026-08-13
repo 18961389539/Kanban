@@ -89,10 +89,12 @@ public class EmptyStateTests : WpfTestHost
             win.Show();
             win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
             win.UpdateLayout();
-            // 查找 Hint 对应的 TextBlock 应为 Collapsed
+            // 真实断言（审查修复 2026-08-13：原实现只 Assert.NotEmpty，与测试名"Hint 折叠"无关）：
+            // 消息 TextBlock 可见；Hint 为空 → Hint TextBlock 应 Collapsed
             var textBlocks = FindVisualDescendants<TextBlock>(state);
             win.Close();
-            Assert.NotEmpty(textBlocks);
+            Assert.Contains(textBlocks, tb => tb.Text == "空" && tb.Visibility == Visibility.Visible);
+            Assert.Contains(textBlocks, tb => tb.Text == "" && tb.Visibility == Visibility.Collapsed);
         });
     }
 

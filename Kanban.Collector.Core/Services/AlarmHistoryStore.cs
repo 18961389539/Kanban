@@ -57,6 +57,31 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
         return query.OrderBy(e => e.EventTime).AsNoTracking().ToList();
     }
 
+    /// <summary>
+    /// 分页查询报警事件（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。
+    /// 供历史查询页使用——此前全量 ToList 后客户端内存分页，长时间范围可一次拉取数十万条。
+    /// </summary>
+    public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+    {
+        using var ctx = db.CreateAlarmEventContext();
+        var query = HistoryQueryFilter.ApplyRange(
+            ctx.AlarmEvents, from, to, deviceId, shiftName,
+            nameof(AlarmEventRecord.EventTime), nameof(AlarmEventRecord.DeviceId), nameof(AlarmEventRecord.ShiftName));
+        var total = query.Count();
+        var offset = HistoryPagination.Offset(page, pageSize);
+        var (_, size) = HistoryPagination.Normalize(page, pageSize);
+        var items = query
+            .OrderByDescending(e => e.EventTime)
+            // 稳定次级键：同轮采集多个报警事件可能共享同一 EventTime，仅按时间排序翻页会重复/漏行（审查修复 2026-08-13）
+            .ThenByDescending(e => e.Id)
+            .Skip(offset)
+            .Take(size)
+            .AsNoTracking()
+            .ToList();
+        return (items, total);
+    }
+
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId)
     {
         try

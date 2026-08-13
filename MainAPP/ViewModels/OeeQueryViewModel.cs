@@ -80,9 +80,13 @@ public partial class OeeQueryViewModel : ObservableObject
         _appSettings = appSettings;
     }
 
+    /// <summary>是否已完成过一次查询（审查修复 2026-08-13：BuildCsv 以此区分"未查询"与"零绩效合法结果"）。</summary>
+    private bool _hasQueried;
+
     public (int TotalCount, int TotalPages) Query(
         string? deviceId, DateTime from, DateTime to, string? shiftName)
     {
+        _hasQueried = false;
         OeeQualityRate = 0; OeePerformanceRate = 0; OeeAvailabilityRate = 0; OeeValue = 0;
         OeeOkProduction = 0; OeeNgProduction = 0; OeeRunTime = 0; OeeAlarmTime = 0; OeeTargetCycle = 0;
         OeeInsight = null;
@@ -144,11 +148,12 @@ public partial class OeeQueryViewModel : ObservableObject
 
             OeeInsight = BuildOeeInsight(OeeQualityRate, OeePerformanceRate, OeeAvailabilityRate, perShiftOee);
 
+            _hasQueried = true;
             return (1, 1);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "OEE 查询失败: {Message}", ex.Message);
+            Log.Error(ex, "OEE 查询失败");
             QueryError = string.Format(Strings.F007, ex.Message);
             return (0, 0);
         }
@@ -180,23 +185,25 @@ public partial class OeeQueryViewModel : ObservableObject
 
     public string? BuildCsv(string? deviceId)
     {
-        if (OeeValue == 0 && OeeOkProduction == 0) return null;
+        // 审查修复 2026-08-13：原判断"OeeValue==0 && Ok==0"把整班次全停机/全 NG 的合法零绩效结果
+        // 误判为"未查询"拒绝导出（用户无法导出这份零绩效证据）——改用显式查询完成标志
+        if (!_hasQueried) return null;
 
         List<OeeCsvRow> rows = [
             new() { Metric = Strings.M046, Value = OeeQualityRate.ToString("F4", CultureInfo.InvariantCulture) },
             new() { Metric = Strings.M047, Value = OeePerformanceRate.ToString("F4", CultureInfo.InvariantCulture) },
             new() { Metric = Strings.M048, Value = OeeAvailabilityRate.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = "OEE综合", Value = OeeValue.ToString("F4", CultureInfo.InvariantCulture) },
-            new() { Metric = "OK产量", Value = OeeOkProduction.ToString(CultureInfo.InvariantCulture) },
-            new() { Metric = "NG产量", Value = OeeNgProduction.ToString(CultureInfo.InvariantCulture) },
-            new() { Metric = "运行时长(s)", Value = OeeRunTime.ToString("F0", CultureInfo.InvariantCulture) },
-            new() { Metric = "报警时长(s)", Value = OeeAlarmTime.ToString("F0", CultureInfo.InvariantCulture) },
-            new() { Metric = "目标节拍(件/小时)", Value = OeeTargetCycle.ToString(CultureInfo.InvariantCulture) }
+            new() { Metric = Strings.M347, Value = OeeValue.ToString("F4", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M348, Value = OeeOkProduction.ToString(CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M349, Value = OeeNgProduction.ToString(CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M350, Value = OeeRunTime.ToString("F0", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M351, Value = OeeAlarmTime.ToString("F0", CultureInfo.InvariantCulture) },
+            new() { Metric = Strings.M352, Value = OeeTargetCycle.ToString(CultureInfo.InvariantCulture) }
         ];
 
         return HistoryQueryHelper.BuildCsv(rows,
-            $"# 设备：{deviceId}",
-            $"# {OeeInsight ?? "无洞察"}");
+            string.Format(Strings.M353, deviceId),
+            $"# {OeeInsight ?? Strings.M176}");
     }
 
     private List<ShiftOeeRecord> ComputePerShiftOee(

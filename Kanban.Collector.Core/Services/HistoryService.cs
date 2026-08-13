@@ -11,6 +11,7 @@ public sealed record HistoryDiagnosticsSnapshot
     public int PendingProductionCount { get; init; }
     public bool RecoveryFileExists { get; init; }
     public long RecoveryFileBytes { get; init; }
+    public long RecoveryFileLines { get; init; }
     public DateTime? LastFlushAt { get; init; }
     public int FlushFailureCount { get; init; }
     public int TotalFlushedCount { get; init; }
@@ -25,6 +26,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     private readonly ProductionHistoryWriter _productionWriter;
     private readonly AlarmHistoryStore _alarmStore;
     private readonly StatusTransitionHistoryStore _statusStore;
+    private readonly DefectHistoryStore _defectStore;
     private readonly HistoryStorageDiagnostics _storageDiagnostics;
     private readonly bool _ownsWriter;
     private readonly bool _ownsStorageDiagnostics;
@@ -37,6 +39,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         ProductionHistoryWriter? productionWriter = null,
         AlarmHistoryStore? alarmStore = null,
         StatusTransitionHistoryStore? statusStore = null,
+        DefectHistoryStore? defectStore = null,
         HistoryStorageDiagnostics? storageDiagnostics = null)
     {
         _db = db;
@@ -45,6 +48,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _productionWriter = productionWriter ?? new ProductionHistoryWriter(db, settings, NullLogger<ProductionHistoryWriter>.Instance);
         _alarmStore = alarmStore ?? new AlarmHistoryStore(db, NullLogger<AlarmHistoryStore>.Instance);
         _statusStore = statusStore ?? new StatusTransitionHistoryStore(db, NullLogger<StatusTransitionHistoryStore>.Instance);
+        _defectStore = defectStore ?? new DefectHistoryStore(db, NullLogger<DefectHistoryStore>.Instance);
         _storageDiagnostics = storageDiagnostics ?? new HistoryStorageDiagnostics(settings);
         _ownsWriter = productionWriter is null;
         _ownsStorageDiagnostics = storageDiagnostics is null;
@@ -63,6 +67,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
             PendingProductionCount = writer.PendingCount,
             RecoveryFileExists = writer.RecoveryFileExists,
             RecoveryFileBytes = writer.RecoveryFileBytes,
+            RecoveryFileLines = writer.RecoveryFileLines,
             LastFlushAt = writer.LastFlushAt,
             FlushFailureCount = writer.FlushFailureCount,
             TotalFlushedCount = writer.TotalFlushedCount,
@@ -78,6 +83,9 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _productionStore.QueryProductionLogsByWorkOrder(workOrderId);
     public Dictionary<int, List<ProductionLog>> QueryProductionLogsByWorkOrderBatch(IReadOnlyList<int> ids)
         => _productionStore.QueryProductionLogsByWorkOrderBatch(ids);
+    public Dictionary<int, List<ProductionLog>> QueryProductionLogsByDeviceWindowsBatch(
+        IReadOnlyList<(int WorkOrderId, string DeviceId, DateTime From, DateTime To)> windows)
+        => _productionStore.QueryProductionLogsByDeviceWindowsBatch(windows);
     public ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName)
         => _productionStore.GetLatestProductionBefore(deviceId, before, shiftName);
     public List<ProductionLog> QueryProductionLogsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
@@ -105,6 +113,9 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _alarmStore.QueryAlarmEvents(from, to, deviceId, shiftName);
     public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
         => _alarmStore.QueryAlarmEventsStrict(from, to, deviceId, shiftName);
+    public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        => _alarmStore.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize);
     public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _alarmStore.QueryAlarmEventsBatch(from, to, ids);
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId) => _alarmStore.GetLatestAlarmEvent(alarmId);
@@ -117,6 +128,9 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _statusStore.QueryStatusTransitions(deviceId, from, to, shiftName);
     public List<StatusTransitionRecord> QueryStatusTransitionsStrict(string deviceId, DateTime from, DateTime to, string? shiftName = null)
         => _statusStore.QueryStatusTransitionsStrict(deviceId, from, to, shiftName);
+    public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
+        string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)
+        => _statusStore.QueryStatusTransitionsPaged(deviceId, from, to, shiftName, page, pageSize);
     public Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _statusStore.QueryStatusTransitionsBatch(from, to, ids);
     public StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName = null)
@@ -125,10 +139,31 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _statusStore.GetLatestStatusBeforeStrict(deviceId, before, shiftName);
     public int CleanupOldStatusTransitions(int retentionDays = 365) => _statusStore.CleanupOldStatusTransitions(retentionDays);
 
+    /// <summary>分页查询缺陷快照（SQL 层 Count + Skip/Take；异常向调用方抛出）。</summary>
+    public (List<DefectSnapshotRecord> Items, int Total) QueryDefectSnapshotsPaged(
+        DateTime from, DateTime to, string deviceId, int page, int pageSize)
+        => _defectStore.QueryDefectSnapshotsPaged(from, to, deviceId, page, pageSize);
+
     private void CheckpointWal()
     {
         try { _db.CheckpointAll(); }
         catch (Exception ex) { _logger.LogWarning(ex, "WAL checkpoint 失败"); }
+    }
+
+    /// <summary>
+    /// 按保留天数分批清理四类历史数据（生产/报警/状态/缺陷），返回各类删除数量合计。
+    /// 供 Collector 的保留策略服务启动与定时调用；0 或负数表示禁用清理。
+    /// </summary>
+    public int CleanupOldHistory(int retentionDays)
+    {
+        if (retentionDays <= 0) return 0;
+        var total = 0;
+        total += CleanupOldProductionLogs(retentionDays);
+        total += CleanupOldAlarmEvents(retentionDays);
+        total += CleanupOldStatusTransitions(retentionDays);
+        total += _defectStore.CleanupOldSnapshots(retentionDays);
+        CheckpointWal();
+        return total;
     }
 
     public void Dispose()

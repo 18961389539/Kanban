@@ -17,14 +17,26 @@ namespace MainAPP.Tests.Integration;
 [Trait("Category","Integration")]
 [Trait("Speed","Slow")]
 [Trait("Requires","STA")]
-public class SettingsViewRenderTests : WpfTestHost
+public class SettingsViewRenderTests : WpfTestHost, IDisposable
 {
+    private readonly List<string> _tempDirs = new();
+
     public SettingsViewRenderTests(WpfStaFixture fixture) : base(fixture) { }
 
-    private static (AppSettings settings, SettingsViewModel vm) BuildViewModel()
+    /// <summary>渲染测试临时目录统一清理（审查修复 2026-08-13：此前每次 BuildViewModel 泄漏一个临时目录）。</summary>
+    public void Dispose()
+    {
+        foreach (var dir in _tempDirs)
+        {
+            try { if (System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, true); } catch { }
+        }
+    }
+
+    private (AppSettings settings, SettingsViewModel vm) BuildViewModel()
     {
         var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "KanbanSettingsUITests_" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(tempDir);
+        _tempDirs.Add(tempDir);
         var appSettings = new AppSettings { ConfigDirectory = tempDir };
         var plc = new FakePlcDriver();
         var conn = new PlcConnectionManager(plc, appSettings);

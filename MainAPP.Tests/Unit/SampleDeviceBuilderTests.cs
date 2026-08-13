@@ -55,14 +55,11 @@ public class SampleDeviceBuilderTests
     }
 
     [Fact]
-    public void BuildSampleDevices_NoStructuralValidationErrorsExceptZeroThresholdCounters()
+    public void BuildSampleDevices_NoStructuralValidationErrors()
     {
         var devices = SampleDeviceBuilder.BuildSampleDevices();
+        // 样本数据允许计数报警阈值=0（仅记录不触发），不应产生任何结构性校验错误
         var errors = DeviceConfigValidator.CollectValidationErrors(devices);
-        // 样本数据允许计数报警阈值=0（仅记录不停机），过滤该类后不应有结构性错误
-        var unexpected = errors
-            .Where(e => !e.Message.Contains("阈值上限必须 > 0"))
-            .ToList();
-        Assert.Empty(unexpected);
+        Assert.Empty(errors);
     }
 }

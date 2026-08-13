@@ -5,9 +5,8 @@
 
     <!--  转换器  -->
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
-    <converters:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
     <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
-    <converters:PageSelectionVisibilityConverter x:Key="PageSelectionVisibilityConverter" />
+    <converters:FirstCharacterConverter x:Key="FirstCharacterConverter" />
     <converters:StateToTextConverter x:Key="StateToTextConverter" />
     <converters:StateToBrushConverter x:Key="StateToBrushConverter" />
     <converters:AlarmLevelToBrushConverter x:Key="AlarmLevelToBrushConverter" />
@@ -18,18 +17,23 @@
     <converters:EventTypeToTextConverter x:Key="EventTypeToTextConverter" />
     <converters:ComparisonConverter x:Key="ComparisonConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <converters:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
 
     <!--  全局统一注册的转换器（原各 View 局部声明，避免重复实例化）  -->
     <converters:OeeThresholdConverter x:Key="OeeThreshold" />
+    <converters:QualityThresholdConverter x:Key="QualityThreshold" />
     <converters:RatioThresholdConverter x:Key="RatioThreshold" />
     <converters:InverseRatioThresholdConverter x:Key="InverseRatioThreshold" />
     <converters:RatioToWidthConverter x:Key="RatioToWidthConverter" />
     <converters:EqualityConverter x:Key="EqualityConverter" />
+    <converters:JsonPrettyPrintConverter x:Key="JsonPrettyPrintConverter" />
     <converters:TimeSpanToTimeStringConverter x:Key="TimeSpanConverter" />
     <converters:TimeSpanToDateTimeConverter x:Key="TimeSpanToDateTimeConverter" />
     <converters:DoubleToInvariantStringConverter x:Key="DoubleToInvariantStringConverter" />
+    <converters:StringFormatConverter x:Key="LocFormatConverter" />
     <converters:ProgressToStrokeDashArrayConverter x:Key="ProgressToStrokeDashArrayConverter" />
     <converters:RatioToGridLengthConverter x:Key="RatioToGridLengthConverter" />
+    <converters:DurationToTextConverter x:Key="DurationToTextConverter" />
 
     <!--  安全校验错误模板：避免直接索引 (Validation.Errors)[0] 在集合为空时抛
           ArgumentOutOfRangeException（调试输出 "Error 17" 噪音）。  -->

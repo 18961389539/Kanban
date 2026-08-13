@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace LicenseManager.Crypto;
 
 /// <summary>
@@ -25,7 +23,10 @@ namespace LicenseManager.Crypto;
 ///   [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 ///   [Convert]::ToBase64String($bytes)
 /// </remarks>
-[Obfuscation(Exclude = false, ApplyToMembers = true)]
+/// <remarks>
+/// 不混淆：LicenseIssuer.* 工具直接引用此类的常量（TotalSize/PayloadSize 等），混淆重命名会导致外部程序集 TypeLoadException。
+/// HMAC 密钥保护依赖环境变量注入（KANBAN_HMAC_KEY），而非混淆。
+/// </remarks>
 public static class EmbeddedKey
 {
     /// <summary>环境变量名：用于外部加载 HMAC 密钥（Base64 编码 32 字节）</summary>

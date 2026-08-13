@@ -261,7 +261,7 @@ public class OverviewFlowTests
     }
 
     [Fact]
-    public void FocusDeviceCommand_NavigatesToHome()
+    public void FocusDeviceCommand_NavigatesToDeviceDetail()
     {
         _host.ResetState();
         _host.InitializeDatabases();
@@ -286,8 +286,8 @@ public class OverviewFlowTests
             overviewVm.FocusDeviceCommand.Execute("ovr-A");
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
-            // 事件链：FocusDeviceRequested → MainWindowViewModel.SelectedIndex = 0
-            Assert.Equal(0, mainVm.SelectedIndex);
+            // 事件链：FocusDeviceRequested → MainWindowViewModel 跳转设备详情页（Index 9）
+            Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, mainVm.SelectedIndex);
             Assert.Equal("ovr-A", selection.SelectedDeviceId);
 
             window.Hide();

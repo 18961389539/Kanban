@@ -181,6 +181,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    [Trait("Contract", "SignalROrdering")]
     public async Task ConcurrentInvoke_WhileLongRunningSubscribePending_IsQueued()
     {
         // ⚠️ 架构约束回归测试：SignalR 服务端对同一连接**按序处理 invocation**
@@ -188,6 +189,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         // 无限排队（不返回、不报错）。因此客户端设计必须"Invoke 全部在订阅前完成"
         // （WASM DashboardState 已按此修复）。若未来 SignalR 升级为并发 dispatch，
         // 此测试将失败并提示重新评估该约束。
+        // Contract=SignalROrdering 标记（审查修复 2026-08-13）：显式声明本用例锁定的
+        // 是库行为契约而非缺陷固化，便于 SignalR 升级时定位需重估的用例。
         await using var client = CreateClient();
         await client.ConnectAsync();
 
@@ -204,6 +207,44 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         {
             await client.DisposeAsync(); // 断开连接以终止长驻订阅
             try { await subscribeTask; } catch { } // 观察：断连后长驻 Invoke fault 属正常
+        }
+    }
+
+    [Fact]
+    public async Task OnSnapshot_RegisteredTwice_HandlerFiresOnce()
+    {
+        // 审查修复 2026-08-13：回调注册按连接实例去重——部分失败重试路径对同一连接重复注册
+        // On* 会导致同一消息双回调（速度趋势队列双写等）；本测试验证重复注册被忽略。
+        await using var client = CreateClient();
+        await client.ConnectAsync();
+
+        var count = 0;
+        void Handler(DeviceSnapshotDto _) => System.Threading.Interlocked.Increment(ref count);
+        client.OnSnapshot(Handler);
+        client.OnSnapshot(Handler); // 重复注册（模拟重试路径）→ 应被忽略
+
+        var hub = _app.Services.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<TestHub>>();
+        var subscribeTask = client.SubscribeSnapshotsAsync();
+        try
+        {
+            await hub.Clients.All.SendAsync("OnSnapshot", new DeviceSnapshotDto
+            {
+                DeviceId = "dev-1",
+                DeviceName = "注塑机-1",
+                Status = DeviceStatus.Running,
+                TotalOkProduction = 1,
+            });
+
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (System.Threading.Volatile.Read(ref count) < 1 && DateTime.UtcNow < deadline)
+                await Task.Delay(50);
+            await Task.Delay(200); // 给潜在的第二次回调留出窗口
+            Assert.Equal(1, count);
+        }
+        finally
+        {
+            await client.DisposeAsync();
+            try { await subscribeTask; } catch { }
         }
     }
 

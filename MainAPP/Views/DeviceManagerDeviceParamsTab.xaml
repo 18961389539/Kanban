@@ -244,7 +244,7 @@
                     AutomationProperties.Name="{x:Static resources:Strings.K211}"
                     Command="{Binding DataContext.ResetProductionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Content="{x:Static resources:Strings.K212}"
-                    Style="{StaticResource IconButtonWarning}"
+                    Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
                     ToolTip="{x:Static resources:Strings.K213}"
                     ToolTipService.ShowOnDisabled="True" />
@@ -280,7 +280,7 @@
             <DockPanel Margin="0,4,0,16">
                 <TextBlock
                     VerticalAlignment="Center"
-                    FontSize="12"
+                    FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
                     Text="{Binding DataContext.RecipeStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Button

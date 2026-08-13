@@ -22,12 +22,8 @@ public partial class ProductionLineView : UserControl
     {
         if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
-            if (FindVisualChild<TextBox>(LineSearchBar) is { } searchBox)
-            {
-                searchBox.Focus();
-                Keyboard.Focus(searchBox);
-                e.Handled = true;
-            }
+            // Ctrl+F（搜索框已移除，无操作）
+            e.Handled = true;
         }
     }
 

@@ -42,6 +42,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// <summary>产量趋势/工单产量聚合查询的取消令牌（与报警查询独立，避免互相取消）。</summary>
     private CancellationTokenSource? _productionCts;
 
+    /// <summary>工单产量聚合查询的取消令牌：设备切换/Dispose 时取消，防止旧设备结果覆盖（审查修复 2026-08-13）。</summary>
+    private CancellationTokenSource? _workOrderSummaryCts;
+
+    /// <summary>工单产量聚合节流：上次查询时刻与工单 Id（采集周期每秒触发，Remote 模式每次查询是一次 SignalR 往返）。</summary>
+    private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private int? _lastSummaryOrderId;
+
     public DeviceDetailViewModel(
         DeviceRepository deviceRepository,
         IHistoryService historyService,
@@ -152,10 +159,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _todayAlarmCount;
     [ObservableProperty] private int _activeAlarmCount;
     [ObservableProperty] private int _actualCycle;
-    [ObservableProperty] private string _statusText = "初始";
+    [ObservableProperty] private string _statusText = Strings.Status_Initial;
     [ObservableProperty] private string _statusBrushKey = "StatusIdleBrush";
-    [ObservableProperty] private string _dataScopeText = "实时数据 · 今日报警 · 近24小时产量";
-    [ObservableProperty] private string _refreshStatusText = "就绪";
+    [ObservableProperty] private string _dataScopeText = Strings.M063;
+    [ObservableProperty] private string _refreshStatusText = Strings.M062;
     [ObservableProperty] private bool _isRefreshing;
 
     // ──────────── 设备配置（从 Device 读取） ────────────
@@ -219,7 +226,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// <summary>缺陷占比饼图。</summary>
     [ObservableProperty] private PlotModel? _defectPieChart;
     [ObservableProperty] private int _hourlyRangeHours = 24;
-    [ObservableProperty] private string _hourlyRangeText = "近24小时";
+    [ObservableProperty] private string _hourlyRangeText = Strings.K025;
     [ObservableProperty] private int _defectTotal;
     [ObservableProperty] private int _defectTypeCount;
     [ObservableProperty] private string _topDefectText = "—";
@@ -269,6 +276,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         var device = _deviceRepository.Devices.FirstOrDefault(d => d.Id == deviceId);
         var runtime = _deviceRepository.Runtimes.FirstOrDefault(r => r.DeviceId == deviceId);
 
+        // 取消旧设备的在途工单聚合查询并重置节流，防旧结果覆盖新设备（审查修复 2026-08-13）
+        _workOrderSummaryCts?.Cancel();
+        _workOrderSummaryCts?.Dispose();
+        _workOrderSummaryCts = null;
+        _lastSummaryOrderId = null;
+        _lastSummaryQueryUtc = DateTime.MinValue;
+
         CurrentDevice = device;
         CurrentRuntime = runtime;
         HasDevice = device != null;
@@ -299,7 +313,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         AlarmTimeHours = 0;
         PausedTimeHours = 0;
         ActualCycle = 0;
-        StatusText = "初始";
+        StatusText = Strings.Status_Initial;
         StatusBrushKey = "StatusIdleBrush";
 
         // 设备配置
@@ -338,11 +352,22 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     // ──────────── 实时数据刷新 ────────────
 
+    /// <summary>KPI 刷新已排程（脏标记合并：同一轮询周期内多次 Runtime 属性变更只排程一次全量刷新）。</summary>
+    private bool _kpiRefreshScheduled;
+
     private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Runtime 属性在 PLC 采集后台线程被修改，必须切回 UI 线程才能更新绑定集合
-        // （ObservableCollection 不允许跨线程修改，否则抛 NotSupportedException）
-        DispatchOnUi(RefreshKpis);
+        // （ObservableCollection 不允许跨线程修改，否则抛 NotSupportedException）。
+        // 每个采集周期每台设备触发 3~7 次属性变更：脏标记合并后只排程一次 RefreshKpis，
+        // 避免 BeginInvoke 排队淹没 UI 线程（每次全刷含仓储查询 + 报警/缺陷集合重建）。
+        if (_kpiRefreshScheduled) return;
+        _kpiRefreshScheduled = true;
+        DispatchOnUi(() =>
+        {
+            _kpiRefreshScheduled = false;
+            RefreshKpis();
+        });
     }
 
     private void OnDevicePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -453,6 +478,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         _recentAlarmsCts?.Dispose();
         _productionCts?.Cancel();
         _productionCts?.Dispose();
+        _workOrderSummaryCts?.Cancel();
+        _workOrderSummaryCts?.Dispose();
     }
 
     /// <summary>刷新 KPI 与状态（从 Runtime 实时读取）。</summary>
@@ -582,26 +609,66 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         // 产量聚合：Running 工单查询实际产量，Pending 工单无产量
         if (order.Status == WorkOrderStatus.Running)
         {
-            try
+            // 节流：同一工单 2s 内（采集周期 1 次/秒）复用上次结果——底层数据按
+            // HistoryWriteIntervalScans 才变化，无需每秒重复查询（Remote 模式每次是一次 SignalR 往返）。
+            if (_lastSummaryOrderId == order.Id && (DateTime.UtcNow - _lastSummaryQueryUtc).TotalSeconds < 2)
+                return;
+
+            // 查询移出 UI 线程：Local 模式为 SQLite 查询，Remote 模式 GetProductionSummary
+            // 内部经 Task.Run+GetResult 同步阻塞，最长 RemoteCallTimeout（30s）——原来在 UI 线程执行会整窗卡死。
+            _workOrderSummaryCts?.Cancel();
+            _workOrderSummaryCts?.Dispose();
+            var cts = _workOrderSummaryCts = new CancellationTokenSource();
+            var token = cts.Token;
+            _lastSummaryOrderId = order.Id;
+            _lastSummaryQueryUtc = DateTime.UtcNow;
+
+            Task.Run(() =>
             {
-                var summary = _workOrderService.GetProductionSummary(order);
-                CompletedQuantity = summary.OkCount;
-                WorkOrderProgress = order.TargetQuantity > 0
-                    ? Math.Clamp((double)summary.OkCount / order.TargetQuantity, 0, 1)
-                    : 0;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
-                CompletedQuantity = 0;
-                WorkOrderProgress = 0;
-            }
+                int okCount;
+                try
+                {
+                    okCount = _workOrderService.GetProductionSummary(order).OkCount;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
+                    okCount = 0; // 降级显示 0（与原同步路径行为一致）
+                }
+                if (token.IsCancellationRequested) return;
+                DispatchWorkOrderSummary(order, okCount);
+            }, token).Forget(_logger);
         }
         else
         {
             CompletedQuantity = 0;
             WorkOrderProgress = 0;
         }
+    }
+
+    /// <summary>
+    /// 把工单产量聚合结果封送回 UI 线程。Dispatcher 不可用（单元测试环境）或应用关闭中时直接执行，
+    /// 生产环境经 BeginInvoke 封送（审查修复 2026-08-13）。
+    /// </summary>
+    private void DispatchWorkOrderSummary(WorkOrder order, int okCount)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
+        {
+            ApplyWorkOrderSummary(order, okCount);
+            return;
+        }
+        dispatcher.BeginInvoke(() => ApplyWorkOrderSummary(order, okCount));
+    }
+
+    private void ApplyWorkOrderSummary(WorkOrder order, int okCount)
+    {
+        // 设备已切换或工单已变化时丢弃过期结果（防旧设备数据覆盖新设备）
+        if (CurrentDevice?.Id != order.DeviceId) return;
+        CompletedQuantity = okCount;
+        WorkOrderProgress = order.TargetQuantity > 0
+            ? Math.Clamp((double)okCount / order.TargetQuantity, 0, 1)
+            : 0;
     }
 
     /// <summary>
@@ -700,10 +767,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     {
         var explanation = metric switch
         {
-            "Availability" => "时间稼动率 = 运行时间 / 计划时间",
-            "Performance" => "性能达标率 = 实际产量 / 理论产量",
-            "Quality" => "良品率 = 合格产量 / (合格产量 + 不合格产量)",
-            _ => "OEE = 时间稼动率 × 性能达标率 × 良品率",
+            "Availability" => Strings.M150,
+            "Performance" => Strings.M151,
+            "Quality" => Strings.M152,
+            _ => Strings.M153,
         };
         _dialog.NotifyInfo(explanation);
     }
@@ -725,7 +792,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             RecentAlarms.Clear();
             TodayAlarmCount = 0;
             IsRefreshing = false;
-            RefreshStatusText = "暂无设备";
+            RefreshStatusText = Strings.M160;
             return;
         }
 
@@ -750,7 +817,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                         RecentAlarms.Add(r);
                     TodayAlarmCount = records.Count(r => r.EventType == AlarmEventType.Triggered);
                     IsRefreshing = false;
-                    RefreshStatusText = "刷新完成";
+                    RefreshStatusText = Strings.M155;
                 });
             }
             catch (OperationCanceledException)
@@ -763,7 +830,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 DispatchOnUi(() =>
                 {
                     IsRefreshing = false;
-                    RefreshStatusText = "刷新失败";
+                    RefreshStatusText = Strings.M157;
                 });
                 DispatchOnUi(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
             }
@@ -777,7 +844,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     private void Refresh()
     {
         IsRefreshing = true;
-        RefreshStatusText = "正在刷新";
+        RefreshStatusText = Strings.M156;
         RefreshKpis();
         RefreshRecentAlarms();
     }
@@ -788,7 +855,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// </summary>
     public void RefreshOnEnter()
     {
-        RefreshStatusText = "正在加载";
+        RefreshStatusText = Strings.M159;
         RefreshHourlyProduction();
     }
 
@@ -798,7 +865,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         if (!int.TryParse(hoursText, out var hours) || hours is not (8 or 24))
             return;
         HourlyRangeHours = hours;
-        HourlyRangeText = hours == 8 ? "近8小时" : "近24小时";
+        HourlyRangeText = hours == 8 ? Strings.M109 : Strings.K025;
         RefreshHourlyProduction();
     }
 
@@ -876,9 +943,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                     }
                 }
 
-                // 累计转增量（负差分置零，班次切换重置场景）
-                var okDiff = DiffCumulative(okCumulative);
-                var ngDiff = DiffCumulative(ngCumulative);
+                // 累计转增量（负差分置零，班次切换重置场景）。
+                // 首桶基线（审查修复 2026-08-13）：首桶直接取窗口内首条累计值会把窗口开始前的历史产量
+                // 计入第一个小时（设备长期未上传时首柱虚高几千件）——查窗口前最后一条快照作基线
+                var baseline = _historyService.QueryProductionLogs(from.AddHours(-24), from, deviceId)
+                    .LastOrDefault();
+                var okDiff = DiffCumulative(okCumulative, baseline?.OkProduction ?? 0);
+                var ngDiff = DiffCumulative(ngCumulative, baseline?.NgProduction ?? 0);
 
                 var chart = ChartService.BuildHourlyProductionBarChart(buckets, okDiff, ngDiff, targetCycle);
                 token.ThrowIfCancellationRequested();
@@ -888,7 +959,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                     if (!token.IsCancellationRequested)
                     {
                         HourlyProductionChart = chart;
-                        RefreshStatusText = "加载完成";
+                        RefreshStatusText = Strings.M154;
                     }
                 });
             }
@@ -901,47 +972,27 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 _logger.LogError(ex, "查询设备 {DeviceId} 按小时产量失败", deviceId);
                 DispatchOnUi(() =>
                 {
-                    RefreshStatusText = "加载失败";
+                    RefreshStatusText = Strings.M158;
                     _dialog.NotifyError(string.Format(Strings.F153, ex.Message));
                 });
             }
         }, token).Forget(_logger);
     }
 
-    // ──────────── 按小时桶聚合辅助（参考 OverviewViewModel） ────────────
+    // ──────────── 按小时桶聚合辅助（委托 HistoryQueryHelper 单源，与 OverviewViewModel 桶逻辑同源） ────────────
 
     private static DateTime[] BuildHourlyBuckets(DateTime from, DateTime to)
-    {
-        List<DateTime> list = [];
-        var cur = new DateTime(from.Year, from.Month, from.Day, from.Hour, 0, 0);
-        while (cur <= to)
-        {
-            list.Add(cur);
-            cur = cur.AddHours(1);
-        }
-        return list.ToArray();
-    }
+        => ViewModels.HistoryQueryHelper.BuildHourlyBuckets(from, to);
 
     private static int GetBucketIndex(DateTime[] buckets, DateTime time)
-    {
-        var aligned = new DateTime(time.Year, time.Month, time.Day, time.Hour, 0, 0);
-        for (int i = 0; i < buckets.Length; i++)
-        {
-            if (buckets[i] == aligned) return i;
-        }
-        for (int i = 0; i < buckets.Length; i++)
-        {
-            if (buckets[i] >= aligned) return i;
-        }
-        return -1;
-    }
+        => ViewModels.HistoryQueryHelper.GetBucketIndex(buckets, time);
 
-    /// <summary>累计值转增量：后一桶减前一桶，负数置零（班次切换重置场景）。</summary>
-    private static int[] DiffCumulative(int[] cumulative)
+    /// <summary>累计值转增量：后一桶减前一桶，负数置零（班次切换重置场景）；首桶扣 <paramref name="baseline"/>。</summary>
+    private static int[] DiffCumulative(int[] cumulative, int baseline = 0)
     {
         if (cumulative.Length == 0) return cumulative;
         var result = new int[cumulative.Length];
-        result[0] = Math.Max(0, cumulative[0]);
+        result[0] = Math.Max(0, cumulative[0] - baseline);
         for (int i = 1; i < cumulative.Length; i++)
         {
             result[i] = Math.Max(0, cumulative[i] - cumulative[i - 1]);
@@ -976,9 +1027,9 @@ public class AlarmConfigRow
     public TimeSpan Duration { get; set; }
     public string LevelText => Level switch
     {
-        AlarmLevel.High => "高",
-        AlarmLevel.Medium => "中",
-        _ => "低",
+        AlarmLevel.High => Strings.Level_High,
+        AlarmLevel.Medium => Strings.Level_Medium,
+        _ => Strings.Level_Low,
     };
     /// <summary>持续时间文本（活跃报警显示累计时长）。</summary>
     public string DurationText => Duration.TotalSeconds > 0

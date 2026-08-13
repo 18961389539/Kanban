@@ -11,6 +11,22 @@ public enum HistoryQueryType
     AlarmEvent = 1,
     StatusTransition = 2,
     DefectSnapshot = 3,
+
+    /// <summary>缺陷快照按小时分组下推（每组取小时末值 + 窗口前基线），供复盘页缺陷集中度使用。</summary>
+    DefectSnapshotHourly = 4,
+}
+
+/// <summary>
+/// 历史查询错误码（跨进程契约）：客户端据此渲染本地化错误文案，
+/// Error 字段只承载服务端调试细节（客户端不得直接展示，避免多语言界面收到中文回显）。
+/// </summary>
+public enum HistoryErrorCode
+{
+    /// <summary>无错误（正常结果或真实空数据）</summary>
+    None = 0,
+
+    /// <summary>服务端查询失败（落库/IO/参数异常，细节在 Error 字段，仅进服务端/客户端日志）</summary>
+    QueryFailed = 1,
 }
 
 /// <summary>
@@ -51,8 +67,12 @@ public sealed record HistoryQueryRequest
 /// </summary>
 public sealed record HistoryQueryResponse
 {
+    /// <summary>查询错误码（None=成功/空数据；QueryFailed=服务端失败，见 Error 细节）。客户端按码渲染本地化文案。</summary>
+    public HistoryErrorCode ErrorCode { get; init; }
+
     /// <summary>查询错误消息（null=成功）。服务端把落库/IO 异常转为结构化错误返回，
-    /// 客户端据此区分"真实空数据"与"查询失败"，避免把故障当空结果显示。</summary>
+    /// 客户端据此区分"真实空数据"与"查询失败"，避免把故障当空结果显示。
+    /// 仅用于服务端/客户端日志；用户可见文案由客户端按 <see cref="ErrorCode"/> 本地化渲染。</summary>
     public string? Error { get; init; }
 
     public int Total { get; init; }
@@ -118,4 +138,24 @@ public sealed record DefectSnapshotRecordDto
     public required string ShiftName { get; init; }
     public int Count { get; init; }
     public DateTime Timestamp { get; init; }
+}
+
+/// <summary>
+/// 批量历史查询请求：多个子查询一次 SignalR 往返（生产复盘页多设备批查用）。
+/// 服务端对每个子查询执行服务端全量翻页聚合（分页语义下 Total 收齐），
+/// 客户端一次 Invoke 即拿全量，避免「逐设备 × 逐页」串行往返。
+/// </summary>
+public sealed record BatchHistoryQueryRequest
+{
+    public required IReadOnlyList<HistoryQueryRequest> Queries { get; init; }
+}
+
+/// <summary>
+/// 批量历史查询响应：Results 与请求 Queries 顺序一一对应。
+/// 任一子查询失败时该项 ErrorCode=QueryFailed（其余子查询结果仍有效），
+/// 客户端按「任一失败即整体失败」语义处理，与单查 Strict 行为一致。
+/// </summary>
+public sealed record BatchHistoryQueryResponse
+{
+    public required IReadOnlyList<HistoryQueryResponse> Results { get; init; }
 }

@@ -1,4 +1,9 @@
 <Solution>
+  <!-- OxyPlot 本地源码（MainAPP 以 ProjectReference 引用，见 MainAPP.csproj） -->
+  <Project Path="oxyplot/Source/OxyPlot/OxyPlot.csproj" />
+  <Project Path="oxyplot/Source/OxyPlot.Wpf.Shared/OxyPlot.Wpf.Shared.csproj" />
+  <Project Path="oxyplot/Source/OxyPlot.Wpf/OxyPlot.Wpf.csproj" />
+  <Project Path="oxyplot/Source/OxyPlot.SkiaSharp/OxyPlot.SkiaSharp.csproj" />
   <Project Path="MainAPP/MainAPP.csproj" />
   <Project Path="Kanban.Contracts/Kanban.Contracts.csproj" />
   <Project Path="Kanban.Client/Kanban.Client.csproj" />

@@ -1,0 +1,152 @@
+@page "/workorders"
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Web.Services
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <span class="brand-title">@L.T("Wo_Title")</span>
+            <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
+        </div>
+        <button class="btn" disabled="@IsLoading" @onclick="LoadAsync">@L.T("Hq_Search")</button>
+    </div>
+
+    @if (Error is not null)
+    {
+        <div class="msg-banner msg-error">@Error</div>
+    }
+    @if (IsLoading)
+    {
+        <div class="loading-row">@L.T("Hq_Loading")…</div>
+    }
+    else if (Rows.Count == 0 && Loaded)
+    {
+        <EmptyState Title="@L.T("Wo_None")" Hint="" Icon="📋" />
+    }
+    else if (Rows.Count > 0)
+    {
+        <section class="card">
+            <div class="card-title">@L.T("Wo_List") <span class="badge-soft">@PageSummaryText</span></div>
+            <table class="hq-table">
+                <thead>
+                    <tr>
+                        <th>@L.T("Wo_OrderNo")</th>
+                        <th>@L.T("Wo_Product")</th>
+                        <th>@L.T("Ac_Device")</th>
+                        <th class="num">@L.T("Wo_PlanQty")</th>
+                        <th class="num">@L.T("Wo_DoneOk")</th>
+                        <th class="num">@L.T("Wo_DoneNg")</th>
+                        <th>@L.T("Wo_PlanStart")</th>
+                        <th>@L.T("Wo_PlanEnd")</th>
+                        <th>@L.T("Wo_Status")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var w in Rows)
+                    {
+                        <tr>
+                            <td class="mono">@w.OrderNo</td>
+                            <td>@w.ProductCode · @w.ProductName</td>
+                            <td>@w.DeviceName</td>
+                            <td class="num">@w.TargetQuantity.ToString("N0")</td>
+                            <td class="num kpi-ok">@(w.CompletedOkCount?.ToString("N0") ?? "—")</td>
+                            <td class="num kpi-ng">@(w.CompletedNgCount?.ToString("N0") ?? "—")</td>
+                            <td>@w.PlannedStart.ToString("MM-dd HH:mm")</td>
+                            <td>@w.PlannedEnd.ToString("MM-dd HH:mm")</td>
+                            <td><span class="status-badge @WoClass(w.Status)">@WoText(w.Status)</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="pager">
+                <button class="btn" disabled="@(Page <= 1)" @onclick="PrevPage">@L.T("Hq_PrevPage")</button>
+                <span class="pager-info">@PageSummaryText</span>
+                <button class="btn" disabled="@(Page >= TotalPages)" @onclick="NextPage">@L.T("Hq_NextPage")</button>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private const int PageSize = 50;
+
+    private List<WorkOrderDto> All { get; set; } = [];
+    private List<WorkOrderDto> Rows { get; set; } = [];
+    private int Page { get; set; } = 1;
+    private int TotalPages { get; set; }
+    private bool Loaded { get; set; }
+    private bool IsLoading { get; set; }
+    private string? Error { get; set; }
+
+    private string PageSummaryText => PageSummary(Page, TotalPages, All.Count);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        try
+        {
+            All = [.. await Dashboard.QueryWorkOrdersAsync()];
+            All = All.OrderByDescending(w => w.PlannedStart).ToList();
+            ApplyPage();
+            Loaded = true;
+        }
+        catch (Exception)
+        {
+            Error = L.T("Hq_QueryFailed");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ApplyPage()
+    {
+        TotalPages = ProductionAnalysis.CalcTotalPages(All.Count, PageSize);
+        if (Page > TotalPages) Page = Math.Max(1, TotalPages);
+        Rows = All.Skip((Page - 1) * PageSize).Take(PageSize).ToList();
+    }
+
+    private void PrevPage()
+    {
+        if (Page <= 1) return;
+        Page--;
+        ApplyPage();
+    }
+
+    private void NextPage()
+    {
+        if (Page >= TotalPages) return;
+        Page++;
+        ApplyPage();
+    }
+
+    private static string WoText(WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.Running => L.T("Wo_Running"),
+        WorkOrderStatus.Completed => L.T("Wo_Completed"),
+        WorkOrderStatus.Aborted => L.T("Wo_Aborted"),
+        _ => L.T("Wo_Pending"),
+    };
+
+    private static string WoClass(WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.Running => "wo-running",
+        WorkOrderStatus.Completed => "wo-completed",
+        WorkOrderStatus.Aborted => "wo-aborted",
+        _ => "wo-pending",
+    };
+
+    private static string PageSummary(int page, int totalPages, int total)
+        => L.T("Hq_PageInfo", page, totalPages, total);
+}

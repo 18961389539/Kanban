@@ -24,6 +24,8 @@ public sealed class PlcAddressCapabilityTests
     [InlineData(PlcBrand.Siemens, "DB1.DBD100")]
     [InlineData(PlcBrand.ModbusTcp, "IR100")]
     [InlineData(PlcBrand.ModbusTcp, "DI10")]
+    [InlineData(PlcBrand.Keyence, "DM100")]
+    [InlineData(PlcBrand.Keyence, "MR10")]
     public void ValidAddresses_AreReadable(PlcBrand brand, string address)
     {
         var codec = Resolve(brand);
@@ -40,6 +42,8 @@ public sealed class PlcAddressCapabilityTests
     [InlineData(PlcBrand.Siemens, "QD100")]
     [InlineData(PlcBrand.ModbusTcp, "HR100")]
     [InlineData(PlcBrand.ModbusTcp, "C10")]
+    [InlineData(PlcBrand.Keyence, "DM100")]
+    [InlineData(PlcBrand.Keyence, "MR10")]
     public void WritableAddresses_AreWritable(PlcBrand brand, string address)
     {
         var codec = Resolve(brand);

@@ -1,0 +1,96 @@
+AlarmCsvIOService.cs	CSV 文件|*.csv|所有文件|*.*
+AlarmCsvIOService.cs	CSV 文件中没有报警数据
+AlarmCsvIOService.cs	报警_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv
+AlarmQueryViewModel.cs	# 触发：{AlarmTriggerCount} 次，恢复：{AlarmRecoverCount} 次，待恢复：{AlarmPendingCount} 条
+AlarmQueryViewModel.cs	PLC地址
+AlarmQueryViewModel.cs	事件时间
+AlarmQueryViewModel.cs	事件类型
+AlarmQueryViewModel.cs	事件类型文本
+AlarmQueryViewModel.cs	报警ID
+AlarmQueryViewModel.cs	报警名称
+AlarmQueryViewModel.cs	设备ID
+AlarmQueryViewModel.cs	设备名称
+AuditQueryViewModel.cs	CSV 文件|*.csv|所有文件|*.*
+AuditQueryViewModel.cs	JSON 文件|*.json|所有文件|*.*
+AuditQueryViewModel.cs	审计归档 {items.Count} 条
+DeviceConfigIOService.cs	JSON 文件|*.json|所有文件|*.*
+HistoryQueryViewModel.cs	{TotalCount} 条，Tab={SelectedTabIndex}
+HistoryQueryViewModel.cs	产量_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv
+HistoryQueryViewModel.cs	全部报警
+HistoryQueryViewModel.cs	报警_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv
+HistoryQueryViewModel.cs	状态时长_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv
+MainWindowViewModel.cs	初始
+OeeQueryViewModel.cs	# 设备：{deviceId}
+OeeQueryViewModel.cs	NG产量
+OeeQueryViewModel.cs	OEE综合
+OeeQueryViewModel.cs	OK产量
+OeeQueryViewModel.cs	值
+OeeQueryViewModel.cs	报警时长(s)
+OeeQueryViewModel.cs	指标
+OeeQueryViewModel.cs	目标节拍(件/小时)
+OeeQueryViewModel.cs	运行时长(s)
+OverviewViewModel.cs	CSV 文件|*.csv|所有文件|*.*
+OverviewViewModel.cs	PDF 文件|*.pdf|所有文件|*.*
+OverviewViewModel.cs	仅供测试/旧调用适配；生产路径使用分层构造器
+OverviewViewModel.cs	生产复盘 PDF
+OverviewViewModel.cs	生产复盘_{DateTime.Now:yyyyMMddHHmm}.csv
+OverviewViewModel.cs	生产复盘_{DateTime.Now:yyyyMMddHHmm}.pdf
+OverviewViewModel.cs	生产复盘报表
+ProductionDailyReportService.cs	生产日报_{reportDate:yyyyMMdd}_{safeName}.pdf
+ProductionLineViewModel.cs	ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}, LayoutMode={Mode}
+ProductionLineViewModel.cs	ProductionLineViewModel 构造：Devices.Count={DeviceCount}, Runtimes.Count={RuntimeCount}
+ProductionLineViewModel.cs	TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}
+ProductionLineViewModel.cs	TryAddLineDevice 跳过：设备 {Name}({Id}) 未找到对应 Runtime
+ProductionLineViewModel.cs	未匹配班次
+ProductionLineViewModel.cs	未配置班次
+ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，C良品率：{QualityRate:P2}
+ProductionQueryViewModel.cs	# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}
+ProductionQueryViewModel.cs	NG产量
+ProductionQueryViewModel.cs	OK产量
+ProductionQueryViewModel.cs	时间
+ProductionQueryViewModel.cs	状态字
+ProductionQueryViewModel.cs	班次
+ProductionQueryViewModel.cs	设备ID
+ProductionQueryViewModel.cs	设备名称
+ProductionReviewHealthScoreService.cs	报警突增
+ProductionReviewHealthScoreService.cs	缺陷率突增
+ProductionReviewHealthScoreService.cs	运行无产量
+RuntimeMonitoringState.cs	离线/未知
+SettingsViewModel.cs	PLC={DraftSettings.PlcConfig.IpAddress}:{DraftSettings.PlcConfig.Port} 班次={DraftSettings.Shifts.Coun
+SettingsViewModel.cs	授权与当前机器不匹配，请重新激活。
+SettingsViewModel.cs	授权已过期，请输入新的激活码。
+SettingsViewModel.cs	永久
+SettingsViewModel.cs	试用期已过期，请输入激活码继续使用。
+SettingsViewModel.cs	请输入激活码以继续使用。
+SettingsViewModel.cs	输入新的激活码以替换当前授权。
+StatusQueryViewModel.cs	# 运行时长：{RunTimeSeconds / 3600:F2}h，报警时长：{AlarmTimeSeconds / 3600:F2}h，待机时长：{PausedTimeSeconds / 3600
+StatusQueryViewModel.cs	事件时间
+StatusQueryViewModel.cs	前一状态
+StatusQueryViewModel.cs	前一状态文本
+StatusQueryViewModel.cs	当前状态
+StatusQueryViewModel.cs	当前状态文本
+StatusQueryViewModel.cs	设备ID
+StatusQueryViewModel.cs	设备名称
+TaskExtensions.cs	Fire-and-forget Task 发生未观察异常
+UserManagerViewModel.cs	角色={user.Role}
+WorkOrderManagerViewModel.cs	CSV 文件|*.csv|所有文件|*.*
+WorkOrderManagerViewModel.cs	产品={saved.ProductCode} 目标={saved.TargetQuantity}
+WorkOrderManagerViewModel.cs	传感器模组
+WorkOrderManagerViewModel.cs	因设备故障中止
+WorkOrderManagerViewModel.cs	外壳组件A
+WorkOrderManagerViewModel.cs	外壳组件B
+WorkOrderManagerViewModel.cs	客户加急订单
+WorkOrderManagerViewModel.cs	工单列表_{DateTime.Now:yyyyMMddHHmm}.csv
+WorkOrderManagerViewModel.cs	工单号,产品编码,产品名称,设备名,计划产量,计划开始,计划结束,状态,备注,创建时间,更新时间
+WorkOrderManagerViewModel.cs	已完成交付
+WorkOrderManagerViewModel.cs	常规生产批次
+WorkOrderManagerViewModel.cs	支架组件
+WorkOrderManagerViewModel.cs	散热片
+WorkOrderManagerViewModel.cs	生成样本工单
+WorkOrderManagerViewModel.cs	电路板模组
+WorkOrderManagerViewModel.cs	端子台
+WorkOrderManagerViewModel.cs	试产验证
+WorkOrderManagerViewModel.cs	返工批次
+WorkOrderManagerViewModel.cs	连接器
+ChartService.cs	停机时长(分钟)
+ProductionLineViewModel.cs	ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}

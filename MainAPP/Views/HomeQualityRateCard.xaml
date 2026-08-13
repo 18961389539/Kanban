@@ -58,12 +58,16 @@
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <!-- 主体区 *（2026-08-11 布局修正）：弹性行 + 内容垂直居中——空白在饼图上下
+                     对称分布且被大饼图压缩，班次区紧贴底部（Auto 模式会把空白留在班次区下方） -->
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,12" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="CheckCircle" />
                 <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K328}" />
+                <!-- 良品率状态 chip 已移除（2026-08-11 用户要求）：达标状态由大数字与
+                     距目标差距行的 QualityThreshold 着色表达（≥95% 绿 / 未达红） -->
                 <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
@@ -77,9 +81,9 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- 左侧：小饼图 + 中心合格率 -->
-                <Grid Grid.Column="0" Width="130" Height="130" HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <oxy:PlotView Width="130" Height="130" Model="{Binding QualityPieChart}" Background="Transparent">
+                <!-- 左侧：小饼图 + 中心合格率（2026-08-11：160→180 继续放大，垂直居中与右侧文本对称平衡） -->
+                <Grid Grid.Column="0" Width="180" Height="180" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <oxy:PlotView Width="180" Height="180" Model="{Binding QualityPieChart}" Background="Transparent">
                         <oxy:PlotView.Style>
                             <Style TargetType="oxy:PlotView">
                                 <Style.Triggers>
@@ -92,7 +96,7 @@
                     </oxy:PlotView>
                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                               Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                               Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
                                Text="{Binding QualityRateDisplay}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -120,7 +124,9 @@
                 </Grid>
 
                 <!-- 右侧：指标明细。HorizontalAlignment=Stretch 让其在列1(* 宽)内铺满，
-                     内部 DockPanel 右对齐的数字贴右边界，避免溢出卡片。 -->
+                     内部 DockPanel 右对齐的数字贴右边界，避免溢出卡片。
+                     VerticalAlignment=Center（2026-08-11）：饼图放大到 160 后与右侧文本
+                     均垂直居中，左右对称平衡。 -->
                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center"
                             HorizontalAlignment="Stretch">
                     <!-- 合格率 -->
@@ -129,9 +135,14 @@
                                    Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeHero}" FontWeight="Bold"
-                                   Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                                   Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
                                    Text="{Binding QualityRateDisplay}" />
                     </DockPanel>
+                    <!-- 距目标差距（2026-08-11）：+0.6% 超目标（绿）/ -0.5% 还差（红），阈值与 chip 同源 -->
+                    <TextBlock Margin="0,2,0,0" HorizontalAlignment="Right"
+                               FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold"
+                               Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
+                               Text="{Binding QualityGapText}" />
 
                     <!-- 总产量 -->
                     <DockPanel Margin="0,10,0,0">
@@ -148,33 +159,8 @@
                         </StackPanel>
                     </DockPanel>
 
-                    <!-- OK / NG 双列 -->
-                    <Grid Margin="0,10,0,0" Width="220">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <!-- OK -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource StatusRunBrush}" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="OK" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding TotalOkProductionDisplay}" />
-                        </StackPanel>
-                        <!-- NG -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource StatusAlarmBrush}" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="NG" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding TotalNgProductionDisplay}" />
-                        </StackPanel>
-                    </Grid>
+                    <!-- OK / NG 双列：2026-08-11 按用户要求移除（主体区只保留合格率/总产量/不良率，
+                         班次对比区仍有 OK/NG 明细） -->
 
                     <!-- 不良率：使用 InverseRatioThreshold（低=好），避免高不良率被染绿 -->
                     <DockPanel Margin="0,10,0,0">
@@ -188,8 +174,8 @@
                 </StackPanel>
             </Grid>
 
-            <!-- 班次产量对比：本班次 vs 上班次 -->
-            <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <!-- 班次产量对比：本班次 vs 上班次（顶部间距 12→4，2026-08-11 按用户要求上移贴近主体区） -->
+            <StackPanel Grid.Row="2" Margin="0,4,0,0">
                 <!-- 本班次 -->
                 <Border Padding="10,6" CornerRadius="6"
                         Background="{StaticResource SecondaryRegionBrush}">
@@ -214,7 +200,7 @@
                                        Foreground="{StaticResource SecondaryTextBrush}" Text="OK" />
                             <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
                                        FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding ShiftOkProductionDisplay, StringFormat={}{0} 件}" />
+                                       Text="{Binding ShiftOkProductionDisplay, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             <TextBlock Style="{StaticResource OkDiffBadge}"
                                        Text="{Binding ShiftOutputDiffText}" />
                         </StackPanel>
@@ -226,17 +212,16 @@
                                        Foreground="{StaticResource SecondaryTextBrush}" Text="NG" />
                             <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
                                        FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding ShiftNgProductionDisplay, StringFormat={}{0} 件}" />
+                                       Text="{Binding ShiftNgProductionDisplay, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             <TextBlock Style="{StaticResource NgDiffBadge}"
                                        Text="{Binding ShiftNgDiffText}" />
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- 上班次 -->
+                <!-- 上班次：始终显示；无数据时标签只显示"上班次"、OK/NG 显示 0（2026-08-11 用户要求） -->
                 <Border Margin="0,6,0,0" Padding="10,6" CornerRadius="6"
-                        Background="{StaticResource SecondaryRegionBrush}"
-                        Visibility="{Binding HasLastShift, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        Background="{StaticResource SecondaryRegionBrush}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -248,7 +233,7 @@
                                      Fill="{StaticResource ThirdlyTextBrush}" />
                             <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                        Foreground="{StaticResource SecondaryTextBrush}"
-                                       Text="{Binding LastShiftName, StringFormat=上班次·{0}}" />
+                                       Text="{Binding LastShiftLabel}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                             <Ellipse Width="8" Height="8" VerticalAlignment="Center"
@@ -257,7 +242,7 @@
                                        Foreground="{StaticResource SecondaryTextBrush}" Text="OK" />
                             <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
                                        FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding LastShiftOk, StringFormat={}{0} 件}" />
+                                       Text="{Binding LastShiftOk, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
                             <Ellipse Width="8" Height="8" VerticalAlignment="Center"
@@ -266,7 +251,7 @@
                                        Foreground="{StaticResource SecondaryTextBrush}" Text="NG" />
                             <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
                                        FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding LastShiftNg, StringFormat={}{0} 件}" />
+                                       Text="{Binding LastShiftNg, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                         </StackPanel>
                     </Grid>
                 </Border>

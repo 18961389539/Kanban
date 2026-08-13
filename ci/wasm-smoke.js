@@ -29,6 +29,28 @@ try {
     }
     if (dictBroken) process.exitCode = 1;
     console.log(`[静态] Localization.cs 三语字典 ${rows.length} 条 key 校验 ${dictBroken === 0 ? 'PASS' : 'FAIL'}`);
+
+    // 反向校验（审查修复 2026-08-13）：Kanban.Web 源码中 L.T/localize 的字面量 key 必须存在于字典，
+    // 否则 L.T 缺失回退会直接显示原始 key 文本（历史案例：Mo_ConnStatus/Mo_Freshness/Hq_ShiftChange）。
+    const dictKeys = new Set(rows.map(m => m[1]));
+    const usageRe = /(?:L\.T|localize)\(\s*"([\w]+)"/g;
+    const srcRoot = path.join(repoDir, 'Kanban.Web');
+    const missing = new Set();
+    const walk = (dir) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) { if (entry.name !== 'bin' && entry.name !== 'obj') walk(full); continue; }
+            if (!/\.(razor|cs)$/.test(entry.name) || full === locPath) continue;
+            const text = fs.readFileSync(full, 'utf-8');
+            for (const m of text.matchAll(usageRe)) if (!dictKeys.has(m[1])) missing.add(`${m[1]}（${path.relative(repoDir, full)}）`);
+        }
+    };
+    walk(srcRoot);
+    if (missing.size) {
+        for (const item of missing) console.log(`  ✗ 源码使用了不在字典中的 key: ${item}`);
+        process.exitCode = 1;
+    }
+    console.log(`[静态] 源码 L.T/localize 用词 ∈ 字典 ${missing.size === 0 ? 'PASS' : 'FAIL'}`);
 } catch (e) {
     console.log(`  ⚠ 字典静态校验跳过: ${e.message}`);
 }
@@ -245,9 +267,354 @@ try {
     if (/^[\d.]+%$|^—$/.test(dom.ngRate ?? '')) ok(`不良率: ${dom.ngRate}`);
     else fail(`不良率格式异常: ${dom.ngRate}`);
 
+    // ──── 历史查询页 /history（多页面路由回归：SPA fallback + 筛选/KPI/图表/表格） ────
+    {
+        const base = url.replace(/\/+$/, '');
+        console.log(`OPEN ${base}/history`);
+        await page.goto(`${base}/history`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(10000); // WASM 启动 + 连接 + 设备加载
+
+        // 顶栏导航：两个链接（看板/历史查询），按三语候选逐个包含匹配（导航是全文本，非单选）
+        const navText = await page.evaluate(() => document.querySelector('.topnav')?.textContent?.trim() ?? '');
+        const navHas = (cands) => cands.some(c => navText.includes(c));
+        if (navHas(['看板', 'Dashboard', 'ダッシュボード']) && navHas(['历史查询', 'History Query', '履歴照会']))
+            ok('历史页顶栏导航');
+        else fail(`历史页导航缺失: ${navText}`);
+
+        // 筛选栏：3 个下拉 + 2 个 datetime-local
+        const filterOk = await page.evaluate(() => {
+            const s = document.querySelectorAll('.filter-bar select').length;
+            const i = document.querySelectorAll('.filter-bar input[type=datetime-local]').length;
+            return s >= 3 && i === 2;
+        });
+        if (filterOk) ok('历史页筛选栏（设备/快捷/班次 + 起止时间）');
+        else fail('历史页筛选栏缺失');
+
+        // 设备下拉有真实选项（演示环境 ≥2 台；空环境跳过不判失败）
+        const devOptions = await page.evaluate(() =>
+            document.querySelectorAll('.filter-bar select:first-of-type option').length);
+        if (devOptions >= 2) ok(`历史页设备下拉 ${devOptions} 项`);
+        else warn(`历史页设备下拉仅 ${devOptions} 项（Collector 未就绪或环境无设备）`);
+
+        // 点击查询（三语候选定位按钮）
+        const clicked = await page.evaluate(() => {
+            const btns = [...document.querySelectorAll('.filter-actions button')];
+            const b = btns.find(x => ['查询', 'Search', '検索'].some(t => (x.textContent ?? '').includes(t)));
+            if (!b) return false;
+            b.click();
+            return true;
+        });
+        if (clicked) ok('历史页触发查询');
+        else fail('历史页未找到查询按钮');
+        await page.waitForTimeout(8000); // 窗口全量拉取 + 表格页
+
+        // KPI 卡 3 张
+        const kpiCount = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+        if (kpiCount === 3) ok('历史页 KPI 卡 ×3');
+        else warn(`历史页 KPI 卡 ${kpiCount}/3（无数据时仅空态，属正常）`);
+
+        // 结果表格有行（有数据时）
+        const rowCount = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+        if (rowCount > 0) ok(`历史页结果表格 ${rowCount} 行`);
+        else warn('历史页结果表格空（查询区间无数据时正常）');
+
+        // 分页信息（三语候选）
+        const pagerText = await page.evaluate(() => document.querySelector('.pager-info')?.textContent?.trim() ?? '');
+        if (/第|Page|ページ/.test(pagerText)) ok(`历史页分页信息: ${pagerText}`);
+        else warn(`历史页分页信息缺失: ${pagerText}`);
+
+        // ECharts canvas（有数据时渲染）
+        const hasCanvas = await page.evaluate(() => !!document.querySelector('.echart-host canvas'));
+        if (hasCanvas) ok('历史页 ECharts 图表 canvas');
+        else warn('历史页图表 canvas 缺失（无数据/未渲染）');
+
+        // ── 状态/报警/OEE Tab（需先选设备：状态/报警/OEE 按单设备查询，与 WPF 口径一致） ──
+        const selectDevice = async () => {
+            await page.selectOption('.filter-bar select:first-of-type', { index: 1 }); // 第一台设备
+            await page.waitForTimeout(300);
+        };
+        const clickTab = async (cands) => {
+            return page.evaluate((cs) => {
+                const btns = [...document.querySelectorAll('.tab-btn')];
+                const b = btns.find(x => cs.some(t => (x.textContent ?? '').includes(t)));
+                if (!b) return false;
+                b.click();
+                return true;
+            }, cands);
+        };
+        const clickSearch = async () => {
+            return page.evaluate(() => {
+                const btns = [...document.querySelectorAll('.filter-actions button')];
+                const b = btns.find(x => ['查询', 'Search', '検索'].some(t => (x.textContent ?? '').includes(t)));
+                if (!b) return false;
+                b.click();
+                return true;
+            });
+        };
+
+        // 状态 Tab
+        if (await clickTab(['状态', 'Status', '状態'])) {
+            await page.waitForTimeout(300);
+            await selectDevice();
+            await clickSearch();
+            await page.waitForTimeout(10000);
+            const stKpi = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+            const stCharts = await page.evaluate(() => document.querySelectorAll('.chart-grid .echart-host canvas').length);
+            const stRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+            if (stKpi === 3) ok(`状态 Tab KPI ×3（运行/报警/待机时长）`);
+            else warn(`状态 Tab KPI ${stKpi}/3`);
+            if (stCharts === 3) ok('状态 Tab 图表 ×3（饼图/按天堆叠/甘特）');
+            else warn(`状态 Tab 图表 ${stCharts}/3（无数据时正常）`);
+            if (stRows > 0) ok(`状态 Tab 转换记录 ${stRows} 行`);
+            else warn('状态 Tab 表格空（无数据时正常）');
+        } else {
+            warn('未找到状态 Tab 按钮');
+        }
+
+        // 报警 Tab
+        if (await clickTab(['报警', 'Alarm', '警報'])) {
+            await page.waitForTimeout(300);
+            await clickSearch();
+            await page.waitForTimeout(8000);
+            const alKpi = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+            const alCanvas = await page.evaluate(() => document.querySelectorAll('.echart-host canvas').length);
+            const alRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+            if (alKpi === 3) ok('报警 Tab KPI ×3（触发/恢复/待恢复）');
+            else warn(`报警 Tab KPI ${alKpi}/3`);
+            if (alCanvas >= 1) ok('报警 Tab 频次排行图表');
+            else warn('报警 Tab 图表缺失（无数据时正常）');
+            if (alRows > 0) ok(`报警 Tab 事件 ${alRows} 行`);
+            else warn('报警 Tab 表格空（无数据时正常）');
+        } else {
+            warn('未找到报警 Tab 按钮');
+        }
+
+        // OEE Tab
+        if (await clickTab(['OEE'])) {
+            await page.waitForTimeout(300);
+            await clickSearch();
+            await page.waitForTimeout(10000);
+            const oeRings = await page.evaluate(() => document.querySelectorAll('.ring-row .ring').length);
+            const oeCanvas = await page.evaluate(() => document.querySelectorAll('.echart-host canvas').length);
+            const oeRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+            if (oeRings === 4) ok('OEE Tab 四率环 ×4');
+            else warn(`OEE Tab 环 ${oeRings}/4`);
+            if (oeCanvas >= 1) ok('OEE Tab 班次趋势图表');
+            else warn('OEE Tab 趋势图表缺失（无数据时正常）');
+            if (oeRows > 0) ok(`OEE Tab 班次明细 ${oeRows} 行`);
+            else warn('OEE Tab 明细空（无数据时正常）');
+        } else {
+            warn('未找到 OEE Tab 按钮');
+        }
+
+        // 切回产量 Tab（恢复默认视图，避免影响后续复用）
+        await clickTab(['产量', 'Production', '生産']);
+    }
+
+    // ──── 报警中心页 /alarms（实时活跃报警 + 统计排行） ────
+    {
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/alarms`);
+        await page.goto(`${url.replace(/\/+$/, '')}/alarms`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(10000); // WASM 启动 + 统计拉取
+
+        // KPI 汇总卡 ×5
+        const kpiCount = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+        if (kpiCount === 5) ok('报警中心 KPI ×5（活跃/设备/今日触发/恢复/最长）');
+        else warn(`报警中心 KPI ${kpiCount}/5`);
+
+        // 级别筛选 chips
+        const chips = await page.evaluate(() => document.querySelectorAll('.chip-btn').length);
+        if (chips === 3) ok('报警中心级别筛选 ×3');
+        else warn(`报警中心级别筛选 ${chips}/3`);
+
+        // 活跃报警列表或空态（三语候选）
+        const activeState = await page.evaluate(() => {
+            const items = document.querySelectorAll('.alarm-item').length;
+            const empty = document.querySelector('.no-data')?.textContent?.trim() ?? '';
+            return { items, empty };
+        });
+        if (activeState.items > 0) ok(`报警中心活跃报警 ${activeState.items} 条`);
+        else if (activeState.empty) ok('报警中心活跃报警空态');
+        else fail('报警中心活跃报警区缺失');
+
+        // 统计表（排行 + 最近事件）
+        const statTables = await page.evaluate(() => document.querySelectorAll('.chart-grid.two table.hq-table').length);
+        if (statTables === 2) ok('报警中心统计表 ×2（排行/最近事件）');
+        else warn(`报警中心统计表 ${statTables}/2`);
+    }
+
+    // ──── 运行监控页 /monitoring（设备实时卡 + 采集诊断） ────
+    {
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/monitoring`);
+        await page.goto(`${url.replace(/\/+$/, '')}/monitoring`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(12000); // WASM 启动 + 诊断拉取
+
+        // 采集健康 KPI ×5
+        const kpiCount = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+        if (kpiCount === 5) ok('监控页采集健康 KPI ×5');
+        else warn(`监控页 KPI ${kpiCount}/5`);
+
+        // 设备实时卡（每设备一张：状态/速度/OEE 环/新鲜度）
+        const devCards = await page.evaluate(() => document.querySelectorAll('.mon-card').length);
+        if (devCards >= 1) ok(`监控页设备实时卡 ${devCards} 张`);
+        else fail('监控页设备实时卡缺失');
+
+        // 诊断区块（采集循环 + 历史落库 + 耗时图）
+        const diagItems = await page.evaluate(() => document.querySelectorAll('.diag-item').length);
+        if (diagItems >= 8) ok(`监控页诊断指标 ${diagItems} 项`);
+        else warn(`监控页诊断指标 ${diagItems}/8`);
+
+        const timingCanvas = await page.evaluate(() => !!document.querySelector('.echart-host canvas'));
+        if (timingCanvas) ok('监控页耗时分解图表');
+        else warn('监控页耗时分解图表缺失');
+    }
+
+    // ──── 生产复盘页 /review（健康评分 + 结论 + 周期对比 + 图表） ────
+    {
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/review`);
+        await page.goto(`${url.replace(/\/+$/, '')}/review`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(10000); // WASM 启动 + 设备加载
+
+        // 选设备 + 查询
+        await page.selectOption('.filter-bar select:first-of-type', { index: 1 });
+        await page.waitForTimeout(300);
+        const clicked = await page.evaluate(() => {
+            const btns = [...document.querySelectorAll('.filter-actions button')];
+            const b = btns.find(x => ['查询', 'Search', '検索'].some(t => (x.textContent ?? '').includes(t)));
+            if (!b) return false;
+            b.click();
+            return true;
+        });
+        if (clicked) ok('复盘页触发查询');
+        else fail('复盘页未找到查询按钮');
+        await page.waitForTimeout(15000); // 复盘数据量大（窗口 + 对比周期多路拉取）
+
+        // 摘要条（健康分/OEE/良品率/总产量/报警/班次）
+        const summary = await page.evaluate(() => document.querySelectorAll('.review-summary .rs-item').length);
+        if (summary === 6) ok('复盘页摘要条 ×6');
+        else warn(`复盘页摘要条 ${summary}/6`);
+
+        // 健康评分 + 结论
+        const healthScore = await page.evaluate(() => document.querySelector('.health-score')?.textContent?.trim() ?? '');
+        if (/^\d+$/.test(healthScore) && parseInt(healthScore, 10) >= 0 && parseInt(healthScore, 10) <= 100) ok(`复盘页健康评分 ${healthScore}`);
+        else warn(`复盘页健康评分异常: ${healthScore}`);
+        const conclusions = await page.evaluate(() => document.querySelectorAll('.conclusion-row').length);
+        if (conclusions >= 1) ok(`复盘页结论 ${conclusions} 条`);
+        else warn('复盘页结论缺失（无数据时正常）');
+
+        // 核心指标 KPI + 周期对比
+        const kpiCount = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+        if (kpiCount >= 3) ok(`复盘页指标卡 ${kpiCount} 张`);
+        else warn(`复盘页指标卡 ${kpiCount} 张`);
+
+        // 图表（趋势 + 报警排行 + 时间线）
+        const canvases = await page.evaluate(() => document.querySelectorAll('.echart-host canvas').length);
+        if (canvases >= 2) ok(`复盘页图表 ${canvases} 张`);
+        else warn(`复盘页图表 ${canvases} 张（无数据时正常）`);
+
+        // 班次明细表
+        const shiftRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+        if (shiftRows > 0) ok(`复盘页班次明细 ${shiftRows} 行`);
+        else warn('复盘页班次明细空（无数据时正常）');
+    }
+
+    // ──── 产线预览页 /line（设备卡片网格 + 汇总 + 筛选） ────
+    {
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/line`);
+        await page.goto(`${url.replace(/\/+$/, '')}/line`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(10000);
+
+        // 汇总 KPI（运行/报警/待机/空闲/产量/加权OEE）
+        const kpiCount = await page.evaluate(() => document.querySelectorAll('.kpi-card').length);
+        if (kpiCount === 6) ok('产线页汇总 KPI ×6');
+        else warn(`产线页汇总 KPI ${kpiCount}/6`);
+
+        // 设备卡片（每设备一张）
+        const cards = await page.evaluate(() => document.querySelectorAll('.line-card').length);
+        if (cards >= 1) ok(`产线页设备卡 ${cards} 张`);
+        else fail('产线页设备卡缺失');
+
+        // 卡片内有 OEE 环（每卡 4 环）
+        const rings = await page.evaluate(() => document.querySelectorAll('.line-card .ring').length);
+        if (rings >= 4) ok(`产线页 OEE 环 ${rings} 个`);
+        else warn(`产线页 OEE 环 ${rings} 个`);
+
+        // 状态筛选 chips + 搜索框
+        const chips = await page.evaluate(() => document.querySelectorAll('.chip-btn').length);
+        const search = await page.evaluate(() => !!document.querySelector('.line-search'));
+        if (chips === 5 && search) ok('产线页筛选（状态×5 + 搜索）');
+        else warn(`产线页筛选 chips=${chips} search=${search}`);
+
+        // 状态筛选交互：点"报警" chip，卡片数变化或保持（有报警设备时）
+        await page.evaluate(() => {
+            const chips = [...document.querySelectorAll('.chip-btn')];
+            chips.find(c => ['报警', 'Alarm', '警報'].some(t => (c.textContent ?? '').includes(t)))?.click();
+        });
+        await page.waitForTimeout(500);
+        const alarmCards = await page.evaluate(() => document.querySelectorAll('.line-card').length);
+        ok(`产线页报警筛选后卡片 ${alarmCards} 张`);
+    }
+
+    // ──── 只读管理页（设备/工单/配方/设置/审计） ────
+    {
+        // 设备（列表 + 详情面板）
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/devices`);
+        await page.goto(`${url.replace(/\/+$/, '')}/devices`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(8000);
+        const devCards = await page.evaluate(() => document.querySelectorAll('.line-card').length);
+        if (devCards >= 1) ok(`设备页列表 ${devCards} 台`);
+        else fail('设备页列表缺失');
+        await page.evaluate(() => document.querySelector('.line-card')?.click());
+        await page.waitForTimeout(500);
+        const hasDetail = await page.evaluate(() => {
+            const t = document.body.innerText;
+            return t.includes('地址配置') || t.includes('Address Config') || t.includes('アドレス設定');
+        });
+        if (hasDetail) ok('设备页详情面板（地址/报警/缺陷配置）');
+        else warn('设备页详情面板缺失');
+
+        // 工单（表格 + 分页）
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/workorders`);
+        await page.goto(`${url.replace(/\/+$/, '')}/workorders`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(6000);
+        const woRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+        if (woRows > 0) ok(`工单页表格 ${woRows} 行`);
+        else warn('工单页表格空（无工单时正常）');
+
+        // 配方（卡片 + 参数）
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/recipes`);
+        await page.goto(`${url.replace(/\/+$/, '')}/recipes`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(6000);
+        const rcCards = await page.evaluate(() => document.querySelectorAll('.line-card').length);
+        if (rcCards >= 1) ok(`配方页卡片 ${rcCards} 张`);
+        else warn('配方页卡片空（无配方时正常）');
+
+        // 设置（采集/PLC 参数 + 班次）
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/settings`);
+        await page.goto(`${url.replace(/\/+$/, '')}/settings`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(6000);
+        const stItems = await page.evaluate(() => document.querySelectorAll('.diag-item').length);
+        if (stItems >= 4) ok(`设置页参数 ${stItems} 项`);
+        else warn(`设置页参数 ${stItems} 项`);
+
+        // 审计（表格 + 筛选）
+        console.log(`OPEN ${url.replace(/\/+$/, '')}/audit`);
+        await page.goto(`${url.replace(/\/+$/, '')}/audit`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForTimeout(6000);
+        const auRows = await page.evaluate(() => document.querySelectorAll('.hq-table tbody tr').length);
+        if (auRows > 0) ok(`审计页记录 ${auRows} 行`);
+        else warn('审计页记录空（无审计数据时正常）');
+        const auFilters = await page.evaluate(() => document.querySelectorAll('.filter-bar input, .filter-bar select').length);
+        if (auFilters >= 3) ok('审计页筛选（操作人/操作类型/结果）');
+        else warn(`审计页筛选 ${auFilters}/3`);
+    }
+
     // ──── 控制台错误 ────
     errors.forEach(e => { if (!e.includes('favicon')) console.log(`  ⚠ ${e}`); });
-    const fatal = errors.filter(e => !e.includes('favicon.ico') && !e.includes('favicon.png'));
+    // 环境伪影白名单：favicon 404（模板默认）、ResizeObserver loop（浏览器内部机制，
+    // ECharts ResizeObserver 触发时的已知无害警告，非页面错误）
+    const envNoise = e => e.includes('favicon.ico') || e.includes('favicon.png') || e.includes('ResizeObserver loop');
+    const fatal = errors.filter(e => !envNoise(e));
     if (fatal.length) { console.log('FATAL ERRORS:'); fatal.forEach(e => console.log('  ' + e)); failCount += fatal.length; }
     warnings.forEach(w => console.log(`  ⚠ ${w}`));
 

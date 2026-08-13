@@ -8,8 +8,14 @@ namespace Kanban.Contracts.Dtos;
 /// </summary>
 public sealed record AlarmEventDto
 {
-    /// <summary>服务端单调递增序号（断线补拉游标）</summary>
+    /// <summary>服务端单调递增序号（断线补拉游标；仅在 <see cref="ServerEpoch"/> 不变时有效）</summary>
     public long Seq { get; init; }
+
+    /// <summary>
+    /// 服务端事件纪元（进程启动时刻的 TickCount）。Collector 重启后 Seq 会从 1 重新计数，
+    /// 客户端必须在此值变化时重置补拉游标，否则旧游标会把新进程的低 Seq 事件全部过滤掉（漏报）。
+    /// </summary>
+    public long ServerEpoch { get; init; }
 
     public required string DeviceId { get; init; }
     public required string DeviceName { get; init; }

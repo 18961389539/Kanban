@@ -5,8 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>MainAPP</RootNamespace>
+    <RootNamespace>Kanban.Collector.Core</RootNamespace>
     <AssemblyName>Kanban.Collector.Core</AssemblyName>
+    <!-- RootNamespace 与程序集名统一：资源命名 Kanban.Collector.Core.Resources.Messages
+         （ValidationMessages/ConnectionStatusMessages 的 ResourceManager 字符串依赖此约定） -->
     <!-- UseWPF：DeviceRepository/WorkOrderRepository 用 BindingOperations.EnableCollectionSynchronization 注册集合绑定同步锁 -->
     <UseWPF>true</UseWPF>
     <!-- 展示端瘦身：采集/存储/领域模型迁入此类库，MainAPP 与 Kanban.Collector 共同引用 -->
@@ -36,6 +38,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+  </ItemGroup>
+
+  <!-- 多语言资源：Messages.resx（中文默认）+ Messages.en.resx + Messages.ja.resx；
+       ValidationMessages/ConnectionStatusMessages 通过 ResourceManager 读取，作为 Core 共享文案单一源 -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Messages.resx" />
+    <EmbeddedResource Update="Resources\Messages.en.resx">
+      <DependentUpon>Messages.resx</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Messages.ja.resx">
+      <DependentUpon>Messages.resx</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

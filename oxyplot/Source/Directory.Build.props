@@ -1,0 +1,21 @@
+<Project>
+  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
+  <ItemGroup>
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1" PrivateAssets="All"/>
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- Kanban 仓库根目录开启 Central Package Management；OxyPlot 源码自带 Version 属性，
+         关闭本子树中心管理避免 NU1008（本地源码集成适配，勿删） -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <!-- OxyPlot 源码自带手写 Properties/AssemblyInfo.cs（版本特性）；
+         官方 CI 由 GitVersion 自动关闭 SDK 生成，本地集成需显式关闭，否则 CS0579 特性重复 -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- 同 Kanban 根：排除 obj*/bin* 中间目录（本地集成可能产生 obj_fresh 等重定向目录） -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/obj*/**;**/bin*/**</DefaultItemExcludes>
+    <Copyright>Copyright (c) 2014-2022 OxyPlot Contributors</Copyright>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/oxyplot/oxyplot.git</RepositoryUrl>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>

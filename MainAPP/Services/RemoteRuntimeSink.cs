@@ -31,6 +31,16 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly ILogger<RemoteRuntimeSink> _logger;
     private readonly Dispatcher _dispatcher;
 
+    // ── Dispatcher 节流合并 ──
+    // 快照 500ms/设备（30 台 ≈60 帧/秒）+ 报警/状态边沿事件若逐条 InvokeAsync，UI 线程
+    // 繁忙（OxyPlot 重建/页面切换）时 Dispatcher 队列无界积压（内存上升 + 数据滞后）。
+    // 统一走 500ms 批量闸：SignalR 回调线程只入队（廉价），UI 线程定时批量应用。
+    private readonly object _batchGate = new();
+    private readonly SnapshotBatchMerger _snapshotMerger = new();
+    private readonly List<AlarmEventDto> _pendingAlarmEvents = new();
+    private readonly List<StatusEventDto> _pendingStatusEvents = new();
+    private readonly System.Windows.Threading.DispatcherTimer _batchTimer;
+
     public RemoteRuntimeSink(
         KanbanDataClient client,
         DeviceRepository deviceRepository,
@@ -46,6 +56,14 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 事件连接：与快照连接分开，保证报警是事件连接的第一个长驻订阅（实时不延迟）
         _eventsClient = new KanbanDataClient(
             client.HubUrl, loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: true);
+        // 节流定时器（500ms 批量闸）：Tick 在 _dispatcher 线程执行 → 批量应用免再封送；
+        // 构造即启动：回调先于 Start() 到达时仍会被 500ms 内下一 tick 消费。
+        _batchTimer = new System.Windows.Threading.DispatcherTimer(DispatcherPriority.Background, _dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(500),
+        };
+        _batchTimer.Tick += (_, _) => FlushBatch();
+        _batchTimer.Start();
     }
 
     /// <summary>启动订阅。调用方须确保主 KanbanDataClient 已连接（事件连接在内部连接）。</summary>
@@ -54,9 +72,9 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 连接后先拉一次当前快照（覆盖 Collector 重启导致的内存清空）
         _client.OnSnapshot(OnSnapshotReceived);
         _client.Reconnected += (_, _) => { _ = OnReconnectedAsync(); };
-        // 事件连接：报警（第一个长驻）+ Meta（工单/班次，第二个长驻）
-        _eventsClient.OnAlarmEvent(OnAlarmEventReceived);
-        _eventsClient.OnMeta(OnMetaReceived);
+        // 事件连接的回调注册延后到事件连接建立之后（On* 依赖连接已建立，EnsureConnected 会抛）：
+        // 首次连接由 StartEventLinkAsync 在 ConnectAsync 成功后注册；
+        // 首次失败后的后台重连成功路径由 OnEventsReconnectedAsync 兜底补注册。
         _eventsClient.Reconnected += (_, _) => { _ = OnEventsReconnectedAsync(); };
 
         _ = RefreshAsync();
@@ -64,7 +82,20 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         _ = StartEventLinkAsync();
     }
 
-    /// <summary>建立事件连接并订阅报警（第一个长驻）+ Meta（第二个长驻，一次性延迟可接受）。</summary>
+    /// <summary>注册事件连接回调（幂等：KanbanDataClient 按连接实例去重，审查修复 2026-08-13——
+    /// 重试路径对同一连接重复调用不会双注册；连接实例重建后回调丢失，必须重新调用以重挂）。</summary>
+    private void EnsureEventsCallbacksRegistered()
+    {
+        // 直接调用 On*：客户端层已按连接实例幂等（同连接重复注册被跳过、新连接自动重挂），
+        // 原 bool 守卫在新连接场景会漏挂（回调随旧连接实例销毁）。
+        _eventsClient.OnAlarmEvent(OnAlarmEventReceived);
+        _eventsClient.OnStatusEvent(OnStatusEventReceived);
+        _eventsClient.OnMeta(OnMetaReceived);
+    }
+
+    /// <summary>建立事件连接并订阅报警（第一个长驻）+ 状态 + Meta。
+    /// 三个长驻订阅必须**并行**启动：报警订阅在连接正常时永不返回，串行 await 会让
+    /// 后续订阅永远不可达。连接失败进入 5s 后台重连循环，成功后补注册回调并订阅（自愈）。</summary>
     private async Task StartEventLinkAsync()
     {
         try
@@ -73,26 +104,103 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "事件连接建立失败：报警事件与工单/班次推送不可用（快照链路不受影响）");
+            _logger.LogWarning(ex, "事件连接建立失败：报警/状态/工单/班次推送不可用（快照链路不受影响，转入后台重连自愈）");
+            StartEventsRetryLoop();
             return;
         }
-        await SubscribeAlarmEventsWithResumeAsync();
-        await SubscribeMetaSafeAsync();
+        EnsureEventsCallbacksRegistered();
+        // 订阅（含失败重试循环，见 StartSubscribeRetryLoop）
+        StartSubscribeRetryLoop();
     }
 
-    /// <summary>报警事件游标：已消费的最大 Seq。断线重连后从此处补拉，避免漏报。</summary>
-    private long _lastAlarmSeq;
+    private bool _eventsRetryLoopStarted;
+    private readonly object _eventsRetryGate = new();
 
-    /// <summary>订阅报警事件流：带游标断线续传（服务端环形缓冲按 afterSeq 补发）。</summary>
-    private async Task SubscribeAlarmEventsWithResumeAsync()
+    /// <summary>
+    /// 事件连接首次连接失败后的后台重连循环（5s 间隔，单实例保证）。
+    /// 重连成功后补齐事件连接的回调注册与长驻订阅；运行中连接断开时由 WithAutomaticReconnect
+    /// + <see cref="OnEventsReconnectedAsync"/> 恢复，本循环只负责"从未连上过"的启动期场景。
+    /// </summary>
+    private void StartEventsRetryLoop()
+    {
+        lock (_eventsRetryGate)
+        {
+            if (_eventsRetryLoopStarted) return;
+            _eventsRetryLoopStarted = true;
+        }
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await _eventsClient.ConnectAsync();
+                    EnsureEventsCallbacksRegistered();
+                    StartSubscribeRetryLoop();
+                    _logger.LogInformation("事件连接后台重连成功，报警/状态/元数据订阅已恢复");
+                    return;
+                }
+                catch (OperationCanceledException)
+                {
+                    return; // 连接被释放
+                }
+                catch (Exception retryEx)
+                {
+                    _logger.LogWarning(retryEx, "事件连接后台重连失败，5s 后重试");
+                }
+            }
+        });
+    }
+
+    /// <summary>报警事件游标：已消费的最大 Seq。断线重连后从此处补拉，避免漏报。
+    /// 仅在 <see cref="_lastAlarmEpoch"/> 不变时有效；Collector 重启（epoch 变化）时归零，
+    /// 避免旧游标过滤掉新进程从 1 重新计数的事件（漏报）。</summary>
+    private long _lastAlarmSeq;
+    /// <summary>状态事件游标：与报警游标同语义（各自独立计数）。</summary>
+    private long _lastStatusSeq;
+    /// <summary>报警流纪元（审查修复 2026-08-13）：报警/状态回调并发于不同线程，
+    /// 共享同一纪元字段存在竞态——报警先到更新共享纪元后，后到的状态事件走"同纪元"分支不归零游标，
+    /// 导致重连后旧状态游标过滤掉新进程低 Seq 事件。改为每流独立纪元、各自归零自己的游标。</summary>
+    private long _lastAlarmEpoch;
+    private long _lastStatusEpoch;
+
+    /// <summary>订阅报警事件流：带游标断线续传（服务端环形缓冲按 afterSeq 补发）。
+    /// 返回是否成功——失败由 <see cref="StartSubscribeRetryLoop"/> 退避重试，避免事件永久丢失。</summary>
+    private async Task<bool> SubscribeAlarmEventsWithResumeAsync()
     {
         try
         {
             await _eventsClient.SubscribeAlarmEventsAsync(_lastAlarmSeq);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false; // 连接被释放
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "订阅报警事件流失败（游标 {Seq}）", _lastAlarmSeq);
+            _logger.LogWarning(ex, "订阅报警事件流失败（游标 {Seq}），5s 后重试", _lastAlarmSeq);
+            return false;
+        }
+    }
+
+    /// <summary>订阅状态事件流：带游标断线续传（与报警流同构，Collector 重启归零）。</summary>
+    private async Task<bool> SubscribeStatusEventsWithResumeAsync()
+    {
+        try
+        {
+            await _eventsClient.SubscribeStatusEventsAsync(_lastStatusSeq);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "订阅状态事件流失败（游标 {Seq}），5s 后重试", _lastStatusSeq);
+            return false;
         }
     }
 
@@ -109,6 +217,60 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         }
     }
 
+    private bool _subscribeRetryLoopStarted;
+    private readonly object _subscribeRetryGate = new();
+
+    /// <summary>
+    /// 订阅层失败重试循环（单实例守卫）：报警/状态订阅任一失败（协议错误/服务端故障等非连接类异常）
+    /// 即 5s 退避重试，全部成功后退出——旧实现只 LogWarning 无重试（重试仅挂在 Reconnected 上），
+    /// 非连接类故障会让报警/状态事件永久漏掉。连接断开场景由连接层 Reconnected 重新触发本循环。
+    /// </summary>
+    private void StartSubscribeRetryLoop()
+    {
+        lock (_subscribeRetryGate)
+        {
+            if (_subscribeRetryLoopStarted) return;
+            _subscribeRetryLoopStarted = true;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (true)
+                {
+                    try
+                    {
+                        // 三个长驻订阅必须**并行**启动（审查修复 2026-08-13）：报警订阅在连接正常时永不返回，
+                        // 原实现串行 await 使状态/元数据订阅永远不可达（Remote 模式状态事件流与工单元数据从未建立）。
+                        var alarmTask = SubscribeAlarmEventsWithResumeAsync();
+                        var statusTask = SubscribeStatusEventsWithResumeAsync();
+                        var metaTask = SubscribeMetaSafeAsync();
+                        // WhenAll(Task<bool>, Task<bool>, Task) 命中 params Task[] 重载返回 Task（await 为 void，不能 var 接），
+                        // 故分开取值：三个订阅一起结束后再读报警/状态结果。
+                        await Task.WhenAll(alarmTask, statusTask, metaTask);
+                        // 连接断开时三个长驻订阅一起结束（正常生命周期），由连接层 Reconnected 重启本循环；
+                        // 非连接类失败（返回 false）才需要本循环 5s 退避重试。
+                        if (await alarmTask && await statusTask)
+                            return;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return; // 连接被释放
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "事件订阅重试循环异常，5s 后重试");
+                    }
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+            }
+            finally
+            {
+                lock (_subscribeRetryGate) _subscribeRetryLoopStarted = false;
+            }
+        });
+    }
+
     /// <summary>主连接重连成功：恢复快照订阅 + 按游标补拉报警事件。</summary>
     private async Task OnReconnectedAsync()
     {
@@ -123,12 +285,13 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         }
     }
 
-    /// <summary>事件连接重连成功：恢复报警 + 元数据订阅。</summary>
+    /// <summary>事件连接重连成功：恢复报警 + 状态 + 元数据订阅（首次失败的后台重连路径在此补注册回调）。</summary>
     private async Task OnEventsReconnectedAsync()
     {
-        _logger.LogInformation("事件连接重连成功，恢复报警/元数据订阅");
-        await SubscribeAlarmEventsWithResumeAsync();
-        await SubscribeMetaSafeAsync();
+        _logger.LogInformation("事件连接重连成功，恢复报警/状态/元数据订阅");
+        EnsureEventsCallbacksRegistered();
+        // 订阅（含失败重试循环：非连接类故障不丢事件）
+        StartSubscribeRetryLoop();
     }
 
     private async Task RefreshAsync()
@@ -149,19 +312,9 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     {
         // 数据新鲜度：收到实时数据即刷新时间戳（采集停滞监控依据）
         _client.MarkDataReceived();
-        // 快照频率 500ms，直接跑在 SignalR 回调线程；设备运行时状态非绑定主源（Runtimes 已注册集合同步锁），
-        // 但 Alarm.StartTime/EndTime 绑定 UI，走 Dispatcher 封送，避免跨线程绑定异常。
-        _dispatcher.InvokeAsync(() =>
-        {
-            try
-            {
-                ApplySnapshot(snapshot);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "应用快照失败 Device={DeviceId}", snapshot.DeviceId);
-            }
-        });
+        // 节流合并：快照是全量状态（最终一致），同设备旧帧可安全丢弃——只保留最新一帧，
+        // 由 500ms 定时器在 UI 线程批量应用（替代逐条 InvokeAsync，防 Dispatcher 队列无界积压）。
+        _snapshotMerger.Add(snapshot);
     }
 
     private void ApplySnapshot(DeviceSnapshotDto snapshot)
@@ -182,6 +335,27 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
             snapshot.OkProduction, snapshot.NgProduction, snapshot.StatusWord,
             snapshot.TotalOkProduction, snapshot.TotalNgProduction,
             snapshot.RunTime, snapshot.AlarmTime, snapshot.PausedTime);
+
+        // 快照携带"当前活跃报警"（服务端权威）：以快照为准重建报警显示状态。
+        // 覆盖场景：Collector 重启后事件流 Seq 归零、触发边沿不再补发，靠快照恢复仍在触发的报警；
+        // 同时纠正"恢复事件丢包但报警仍显示触发中"的残留。
+        var activeIds = snapshot.ActiveAlarms.Select(a => a.AlarmId).ToHashSet(StringComparer.Ordinal);
+        foreach (var alarm in device.Alarms)
+        {
+            if (activeIds.Contains(alarm.Id))
+            {
+                // 快照 StartTime 缺失（default）时保留现有 StartTime，避免覆盖已恢复的正确值
+                var startTime = snapshot.ActiveAlarms.First(a => a.AlarmId == alarm.Id).StartTime;
+                if (startTime != default)
+                    alarm.StartTime = startTime;
+                alarm.EndTime = default;
+            }
+            else if (alarm.EndTime == default && alarm.StartTime != default)
+            {
+                // 快照确认已恢复：补 EndTime（不重复覆盖用户已确认的结束时间）
+                alarm.EndTime = snapshot.Timestamp;
+            }
+        }
     }
 
     private void OnAlarmEventReceived(AlarmEventDto evt)
@@ -189,34 +363,136 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 数据新鲜度：报警事件也是实时数据信号
         _client.MarkDataReceived();
         // 更新游标：无论 UI 应用是否成功，事件已消费（防止补拉风暴）
-        Interlocked.Exchange(ref _lastAlarmSeq, evt.Seq);
-        _dispatcher.InvokeAsync(() =>
+        // Collector 重启（ServerEpoch 变化）时归零游标：新进程 Seq 从 1 重新计数，
+        // 旧游标会过滤掉新进程低 Seq 的事件（漏报）；归零后从新进程起点重新订阅。
+        // 每流独立纪元（见字段注释）：只在报警流自己的纪元变化时归零报警游标。
+        var epoch = Volatile.Read(ref _lastAlarmEpoch);
+        if (evt.ServerEpoch != epoch)
+        {
+            if (epoch != 0 && evt.ServerEpoch != 0)
+                _logger.LogWarning("检测到采集服务重启（报警事件纪元 {Old} -> {New}），重置报警补拉游标", epoch, evt.ServerEpoch);
+            Interlocked.Exchange(ref _lastAlarmEpoch, evt.ServerEpoch);
+            Interlocked.Exchange(ref _lastAlarmSeq, 0);
+        }
+        else
+        {
+            Interlocked.Exchange(ref _lastAlarmSeq, evt.Seq);
+        }
+        // UI 应用入队（保序），由 500ms 定时器批量应用——游标已在此推进，不随 UI 延迟
+        lock (_batchGate)
+            _pendingAlarmEvents.Add(evt);
+    }
+
+    /// <summary>
+    /// 状态转换事件（边沿流）：更新本地设备运行状态字。
+    /// 快照（500ms）最终会携带同一状态，但事件流让状态变化立即反映（无需等下一帧快照）。
+    /// 游标/纪元语义与报警流一致：Collector 重启（epoch 变化）时归零，避免旧游标漏掉新进程低 Seq 事件。
+    /// </summary>
+    private void OnStatusEventReceived(StatusEventDto evt)
+    {
+        // 数据新鲜度：状态事件也是实时数据信号
+        _client.MarkDataReceived();
+        // 每流独立纪元（见字段注释）：只在状态流自己的纪元变化时归零状态游标，
+        // 不再交叉归零报警游标（报警流由自己的回调独立判定，消除共享纪元的竞态窗口）。
+        var epoch = Volatile.Read(ref _lastStatusEpoch);
+        if (evt.ServerEpoch != epoch)
+        {
+            if (epoch != 0 && evt.ServerEpoch != 0)
+                _logger.LogWarning("检测到采集服务重启（状态事件纪元 {Old} -> {New}），重置状态补拉游标", epoch, evt.ServerEpoch);
+            Interlocked.Exchange(ref _lastStatusEpoch, evt.ServerEpoch);
+            Interlocked.Exchange(ref _lastStatusSeq, 0);
+        }
+        else
+        {
+            Interlocked.Exchange(ref _lastStatusSeq, evt.Seq);
+        }
+        // UI 应用入队（保序），由 500ms 定时器批量应用
+        lock (_batchGate)
+            _pendingStatusEvents.Add(evt);
+    }
+
+    /// <summary>
+    /// 批量闸 Tick（UI 线程）：一次性应用 500ms 窗口内积压的快照（每设备最新一帧）+
+    /// 报警事件 + 状态事件。先快照后事件的顺序保证：快照先恢复报警显示态，
+    /// 事件边沿再覆盖最新变化（与原逐条 InvokeAsync 的先后语义一致）。
+    /// </summary>
+    private void FlushBatch()
+    {
+        var snapshots = _snapshotMerger.Drain();
+        List<AlarmEventDto> alarms;
+        List<StatusEventDto> statuses;
+        lock (_batchGate)
+        {
+            alarms = _pendingAlarmEvents.Count > 0 ? new List<AlarmEventDto>(_pendingAlarmEvents) : [];
+            _pendingAlarmEvents.Clear();
+            statuses = _pendingStatusEvents.Count > 0 ? new List<StatusEventDto>(_pendingStatusEvents) : [];
+            _pendingStatusEvents.Clear();
+        }
+        if (snapshots.Count == 0 && alarms.Count == 0 && statuses.Count == 0)
+            return;
+
+        foreach (var snapshot in snapshots)
         {
             try
             {
-                var device = _deviceRepository.GetDeviceById(evt.DeviceId);
-                if (device is null) return;
-
-                var alarm = device.Alarms.FirstOrDefault(a => a.Id == evt.AlarmId);
-                if (alarm is null) return;
-
-                switch (evt.EventType)
-                {
-                    case AlarmEventType.Triggered:
-                    case AlarmEventType.ShiftChange:
-                        alarm.StartTime = evt.EventTime;
-                        alarm.EndTime = default;
-                        break;
-                    case AlarmEventType.Recovered:
-                        alarm.EndTime = evt.EventTime;
-                        break;
-                }
+                ApplySnapshot(snapshot);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "应用快照失败 Device={DeviceId}", snapshot.DeviceId);
+            }
+        }
+        foreach (var evt in alarms)
+        {
+            try
+            {
+                ApplyAlarmEvent(evt);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "应用报警事件失败 Alarm={AlarmId}", evt.AlarmId);
             }
-        });
+        }
+        foreach (var evt in statuses)
+        {
+            try
+            {
+                ApplyStatusEvent(evt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "应用状态事件失败 Device={DeviceId}", evt.DeviceId);
+            }
+        }
+    }
+
+    private void ApplyAlarmEvent(AlarmEventDto evt)
+    {
+        var device = _deviceRepository.GetDeviceById(evt.DeviceId);
+        if (device is null) return;
+
+        var alarm = device.Alarms.FirstOrDefault(a => a.Id == evt.AlarmId);
+        if (alarm is null) return;
+
+        switch (evt.EventType)
+        {
+            case AlarmEventType.Triggered:
+            case AlarmEventType.ShiftChange:
+                alarm.StartTime = evt.EventTime;
+                alarm.EndTime = default;
+                break;
+            case AlarmEventType.Recovered:
+                alarm.EndTime = evt.EventTime;
+                break;
+        }
+    }
+
+    private void ApplyStatusEvent(StatusEventDto evt)
+    {
+        // 状态事件只更新已存在运行状态的设备（与快照灌入同语义；设备尚未同步时跳过）
+        if (!_deviceRepository.RuntimeMap.TryGetValue(evt.DeviceId, out var runtime))
+            return;
+        runtime.StatusWord = (int)evt.CurrentState;
     }
 
     /// <summary>
@@ -264,6 +540,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _batchTimer.Stop();
         await _eventsClient.DisposeAsync();
         // 主连接由 KanbanDataClient 统一释放（StartupCoordinator/退出流程）
     }

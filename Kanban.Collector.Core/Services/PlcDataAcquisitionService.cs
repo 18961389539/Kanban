@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -60,8 +61,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly ProductionBaselineStore _baselineStore;
     private readonly WorkOrderRepository? _workOrderRepo;
     private readonly IAlarmNotificationChannel? _alarmNotificationChannel;
+    private readonly Action<AlarmEventDto>? _onAlarmEdge;
+    private readonly Action<StatusEventDto>? _onStatusEdge;
     private readonly DefectHistoryStore? _defectHistoryStore;
     private readonly AcquisitionDiagnosticsStore _diagnostics = new();
+
+    /// <summary>缺陷快照降频：记录上次落库的（Count, ShiftName），无变化不写（键 = 设备Id|缺陷Id）。</summary>
+    private readonly Dictionary<string, (int Count, string ShiftName)> _lastDefectSnapshot = new();
     private CancellationTokenSource? _cts;
     /// <summary>
     /// 轮询循环的 Task 引用，用于 StopAsync 中等待循环真正退出，确保后续保存数据时采集线程已停止。
@@ -124,6 +130,12 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     }
 
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
+    /// <summary>报警边沿事件（成功落库后触发）。订阅方：Collector 的 EventBroadcaster.PublishAlarmEvent。</summary>
+    public event Action<AlarmEventDto>? AlarmEdgeDetected;
+
+    /// <summary>状态转换边沿事件（成功落库后触发，含离线转换）。订阅方：EventBroadcaster.PublishStatusEvent。</summary>
+    public event Action<StatusEventDto>? StatusEdgeDetected;
+
     public PlcDataAcquisitionService(
         IPlcDriver plc,
         PlcConnectionManager connectionManager,
@@ -137,7 +149,9 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         IDeviceAdapterResolver? adapterResolver = null,
         WorkOrderRepository? workOrderRepo = null,
         IAlarmNotificationChannel? alarmNotificationChannel = null,
-        DefectHistoryStore? defectHistoryStore = null)
+        DefectHistoryStore? defectHistoryStore = null,
+        Action<AlarmEventDto>? onAlarmEdge = null,
+        Action<StatusEventDto>? onStatusEdge = null)
     {
         _plc = plc;
         _connectionManager = connectionManager;
@@ -152,10 +166,14 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _workOrderRepo = workOrderRepo;
         _alarmNotificationChannel = alarmNotificationChannel;
         _defectHistoryStore = defectHistoryStore;
+        _onAlarmEdge = onAlarmEdge;
+        _onStatusEdge = onStatusEdge;
         // 扫描子系统：批量读缓存 + 报警/缺陷/计数报警扫描（班次名经委托取当前值，避免组件间循环依赖）
+        // onAlarmEdge 把内部 tracker 回调桥接到本服务的 AlarmEdgeDetected 事件（供 Collector 订阅）。
         _scanPipeline = new PlcScanPipeline(
             _adapterResolver, _deviceRepository, _alarmHistory, _appSettings,
-            () => GetCurrentShiftName(), _logger, _alarmNotificationChannel);
+            () => GetCurrentShiftName(), _logger, _alarmNotificationChannel,
+            dto => AlarmEdgeDetected?.Invoke(dto));
     }
 
     public PlcDataAcquisitionService(
@@ -663,7 +681,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         if (result.IsSuccess)
         {
             runtime.StatusWord = result.Content;
-            _statusTracker.ReadAndUpdate(device, result.Content, _statusHistory, GetCurrentShiftName(), _logger);
+            _statusTracker.ReadAndUpdate(device, result.Content, _statusHistory, GetCurrentShiftName(), _logger, dto => StatusEdgeDetected?.Invoke(dto));
             return ReadResult.Success;
         }
         return ReadResult.Failed;
@@ -677,7 +695,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 若设备已处于离线(0)或从未有过状态记录，则跳过。
     /// </summary>
     internal void LogOfflineTransition(Models.Device device)
-        => _statusTracker.LogOfflineTransition(device, _statusHistory, GetCurrentShiftName(), _logger);
+        => _statusTracker.LogOfflineTransition(device, _statusHistory, GetCurrentShiftName(), _logger, dto => StatusEdgeDetected?.Invoke(dto));
 
 
     /// <summary>
@@ -716,10 +734,23 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 OkProduction = runtime.TotalOkProduction,
                 NgProduction = runtime.TotalNgProduction,
                 StatusWord = runtime.StatusWord,
-                Timestamp = timestamp
+                Timestamp = timestamp,
+                // 稳定事件标识：恢复文件回放幂等键（同 EventId 不重复落库）
+                EventId = Guid.NewGuid(),
             });
             foreach (var defect in device.Defects)
             {
+                // 缺陷快照降频：累计值无变化且班次未变时不落库（帕累托增量差分只需变化点）。
+                // 此前每采集轮次全量写（约 8.5 条/秒 → 73 万条/天），导致复盘页查询
+                // 2 天窗口 27 万条全量物化（15~18s）。变化才写后写入量降到变化频率。
+                var defectKey = $"{device.Id}|{defect.Id}";
+                var defectCount = Math.Max(0, defect.Count);
+                if (_lastDefectSnapshot.TryGetValue(defectKey, out var lastDefect)
+                    && lastDefect.Count == defectCount
+                    && lastDefect.ShiftName == shiftName)
+                    continue;
+                _lastDefectSnapshot[defectKey] = (defectCount, shiftName);
+
                 defectSnapshots.Add(new DefectSnapshotRecord
                 {
                     DeviceId = device.Id,
@@ -729,7 +760,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     Severity = defect.Severity,
                     Category = defect.Category,
                     ShiftName = shiftName,
-                    Count = Math.Max(0, defect.Count),
+                    Count = defectCount,
                     Timestamp = timestamp,
                 });
             }
@@ -737,11 +768,6 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
 
         _defectHistoryStore?.Append(defectSnapshots);
-
-        if (count > 0)
-        {
-            _logger.LogInformation("已入队 {Count} 条生产快照（班次={Shift}）", count, shiftName);
-        }
     }
 
     // ──────────── 扫描子系统 facade（转发 PlcScanPipeline，维持 internal 接口不变——测试与历史调用方零改动） ────────────
@@ -861,7 +887,12 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 起始落在昨天，使重建范围正确覆盖整个夜班。
     /// </summary>
     internal DateTime GetCurrentShiftStart(DateTime now)
-        => _shiftContext.CurrentStart(now, _appSettings.Shifts);
+    {
+        // 班次集合锁内快照：与 ConfigSyncHandler/CopySettings 的原地写入互斥（审查修复 2026-08-13）
+        List<ShiftConfig> snapshot;
+        lock (_appSettings.ShiftsLock) snapshot = _appSettings.Shifts.ToList();
+        return _shiftContext.CurrentStart(now, snapshot);
+    }
 
     /// <summary>
     /// 上班次产量汇总的只读快照（线程安全拷贝）。
@@ -1039,7 +1070,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// </summary>
     internal void DetectShiftChange()
     {
-        var newShift = _shiftContext.DetectChange(_appSettings.Shifts);
+        // 班次集合锁内快照：与 ConfigSyncHandler/CopySettings 的原地写入互斥（审查修复 2026-08-13）
+        List<ShiftConfig> snapshot;
+        lock (_appSettings.ShiftsLock) snapshot = _appSettings.Shifts.ToList();
+        var newShift = _shiftContext.DetectChange(snapshot);
         if (newShift is null) return;
 
         _logger.LogInformation("班次切换：{Old} → {New}，触发 ResetShift", _shiftContext.CurrentName, newShift.Name);

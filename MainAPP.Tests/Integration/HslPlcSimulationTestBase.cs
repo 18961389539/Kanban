@@ -25,9 +25,9 @@ namespace MainAPP.Tests.Integration;
 /// - <b>超时约束</b>：派生类构建 <c>PlcConfig.TimeoutMs=3000</c>，符合项目硬约束
 ///   "PLC 驱动连接/接收超时 3000ms 防止 UI 阻塞"。
 /// </summary>
-/// <typeparam name="TServer">HslCommunication 虚拟服务器类型，必须有无参构造。</typeparam>
+/// <typeparam name="TServer">HslCommunication 虚拟服务器类型；若无参构造可访问，默认工厂直接实例化，否则派生类重写 <see cref="CreateServer"/>。</typeparam>
 public abstract class HslPlcSimulationTestBase<TServer> : IDisposable
-    where TServer : NetworkDataServerBase, new()
+    where TServer : NetworkDataServerBase
 {
     private readonly TServer _server;
     private readonly SimulationTcpRelay _relay;
@@ -37,13 +37,21 @@ public abstract class HslPlcSimulationTestBase<TServer> : IDisposable
     {
         Port = AllocateFreePort();            // 代理公开端口（驱动连接此处）
         InternalPort = AllocateFreePort();     // 服务器内部端口
-        _server = new TServer();
+        _server = CreateServer();
         // ServerStart 返回 void；端口被占时会抛异常，构造函数失败使测试明确报错。
         _server.ServerStart(InternalPort);
         // 启动 TCP 代理：监听公开端口，转发到内部服务器端口
         _relay = new SimulationTcpRelay(Port, InternalPort);
         _relay.Start();
     }
+
+    /// <summary>
+    /// 创建虚拟服务器实例。默认实现用 <see cref="Activator.CreateInstance{T}"/> 调用无参构造
+    /// （适用 SiemensS7Server / ModbusTcpServer / OmronFinsServer 等有无参构造的服务器）。
+    /// 派生类可重写以调用带参构造，例如 MelsecMcServer 需通过 <c>new MelsecMcServer(true)</c>
+    /// 显式指定二进制帧格式。
+    /// </summary>
+    protected virtual TServer CreateServer() => Activator.CreateInstance<TServer>();
 
     /// <summary>代理公开端口，驱动通过此端口连接（经代理转发到内部服务器）。</summary>
     protected int Port { get; }

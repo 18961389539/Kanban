@@ -3,6 +3,8 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
 
 namespace MainAPP.Services;
@@ -20,14 +22,20 @@ public sealed record SystemResourceSnapshot(
 
 public sealed class SystemResourceMonitor : IDisposable
 {
+    private readonly ILogger<SystemResourceMonitor> _logger;
     private readonly Process _process = Process.GetCurrentProcess();
     private readonly GpuUsageMonitor _gpuUsageMonitor;
     private TimeSpan _lastCpuTime;
     private DateTime _lastSampleAt = DateTime.Now;
+    // 可用内存计数器缓存：每次 Sample 新建/Dispose 是高频重复分配（采样周期 1s），
+    // 缓存后仅在失败时重建（照 GpuUsageMonitor.EnsureCounters 模式）
+    private PerformanceCounter? _availableMemoryCounter;
+    private bool _memoryCounterFailureLogged;
 
-    public SystemResourceMonitor(GpuUsageMonitor gpuUsageMonitor)
+    public SystemResourceMonitor(GpuUsageMonitor gpuUsageMonitor, ILogger<SystemResourceMonitor>? logger = null)
     {
         _gpuUsageMonitor = gpuUsageMonitor;
+        _logger = logger ?? NullLogger<SystemResourceMonitor>.Instance;
         _lastCpuTime = _process.TotalProcessorTime;
     }
 
@@ -58,39 +66,49 @@ public sealed class SystemResourceMonitor : IDisposable
 
     public void Dispose()
     {
+        _availableMemoryCounter?.Dispose();
         _gpuUsageMonitor.Dispose();
         _process.Dispose();
     }
 
-    private static double TryGetAvailableMemoryMb()
+    private double TryGetAvailableMemoryMb()
     {
         try
         {
-            using var counter = new PerformanceCounter("Memory", "Available MBytes");
-            return counter.NextValue();
+            _availableMemoryCounter ??= new PerformanceCounter("Memory", "Available MBytes");
+            return _availableMemoryCounter.NextValue();
         }
-        catch { return 0; }
+        catch (Exception ex)
+        {
+            // 首败记录一次 Warning（性能计数器不可用），避免每秒刷屏；降级返回 0
+            if (!_memoryCounterFailureLogged)
+            {
+                _memoryCounterFailureLogged = true;
+                _logger.LogWarning(ex, "可用内存性能计数器不可用，可用内存显示为 0");
+            }
+            return 0;
+        }
     }
 
     private int TryGetThreadCount()
     {
         try { return _process.Threads.Count; }
-        catch { return 0; }
+        catch (Exception ex) { _logger.LogDebug(ex, "读取进程线程数失败"); return 0; }
     }
 
     private long TryGetHandleCount()
     {
         try { return _process.HandleCount; }
-        catch { return 0; }
+        catch (Exception ex) { _logger.LogDebug(ex, "读取进程句柄数失败"); return 0; }
     }
 
-    private static double TryGetFreeDiskGb()
+    private double TryGetFreeDiskGb()
     {
         try
         {
             var root = Path.GetPathRoot(AppContext.BaseDirectory);
             return string.IsNullOrWhiteSpace(root) ? 0 : new DriveInfo(root).AvailableFreeSpace / 1024d / 1024d / 1024d;
         }
-        catch { return 0; }
+        catch (Exception ex) { _logger.LogDebug(ex, "读取磁盘剩余空间失败"); return 0; }
     }
 }

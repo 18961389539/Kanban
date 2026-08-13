@@ -100,7 +100,7 @@
                 </StackPanel>
             </StackPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, StringFormat=刷新于 {0:HH:mm:ss}}" />
+                <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F284}" />
                 <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}" ToolTip="{x:Static resources:Strings.K422}" />
             </StackPanel>
         </DockPanel>
@@ -128,7 +128,7 @@
                 <StackPanel>
                     <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="{x:Static resources:Strings.K423}" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding LastFailureMessage}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding LastFailureAt, StringFormat=最近发生：{0:HH:mm:ss}}" />
+                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding LastFailureAt, Converter={StaticResource LocFormatConverter}, ConverterParameter=F279}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K424}" />
@@ -152,21 +152,21 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K425}" />
                     <TextBlock Style="{StaticResource HealthKpiValue}" Text="{Binding HealthText}" />
-                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding IsAcquisitionRunning, StringFormat=采集服务运行：{0}}" />
+                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding IsAcquisitionRunning, Converter={StaticResource LocFormatConverter}, ConverterParameter=F280}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K426}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding LastCycleMilliseconds, StringFormat={}{0} ms}" />
-                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding AverageCycleMilliseconds, StringFormat=平均 {0:F1} ms}" />
+                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding AverageCycleMilliseconds, Converter={StaticResource LocFormatConverter}, ConverterParameter=F281}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource KpiCard}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K100}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding TotalDisconnectCount}" />
-                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding FailedCycles, StringFormat=失败轮询 {0:N0} 次}" />
+                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding FailedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F282}" />
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -202,7 +202,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K428}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, StringFormat={}{0:N0} 次}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K429}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding AverageCycleMilliseconds, StringFormat={}{0:F1} ms}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K430}" />
@@ -210,7 +210,7 @@
                         <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K431}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PollingIntervalMs, StringFormat={}{0} ms}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K432}" />
-                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, StringFormat=每 {0} 次轮询}" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, Converter={StaticResource LocFormatConverter}, ConverterParameter=F283}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K433}" />
@@ -237,9 +237,9 @@
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K436}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulDevices}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K437}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue=暂无}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
                         <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K438}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding FailedCycles, StringFormat={}{0:N0} 次}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding FailedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K439}" />
@@ -266,9 +266,9 @@
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K442}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DisconnectDurationText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K443}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ConsecutiveFailures, StringFormat={}{0} 次}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ConsecutiveFailures, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                         <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K100}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDisconnectCount, StringFormat={}{0} 次}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDisconnectCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -321,7 +321,7 @@
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K452}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding RecoveryFileText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K453}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:HH:mm:ss}, TargetNullValue=暂无}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
                         <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K454}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushFailureCount}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K455}" />

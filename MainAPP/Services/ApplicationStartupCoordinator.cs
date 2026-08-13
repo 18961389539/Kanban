@@ -7,6 +7,7 @@ using Kanban.Core.Entities;
 using Kanban.Core.Mapping;
 using System.Windows;
 using MainAPP.ViewModels;
+using MainAPP.Resources;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -23,7 +24,7 @@ public sealed class ApplicationStartupCoordinator(
     {
         try
         {
-            runtime.SetState(ApplicationRuntimeState.LoadingConfiguration, "正在加载配置");
+            runtime.SetState(ApplicationRuntimeState.LoadingConfiguration, Strings.M123);
             var settings = services.GetRequiredService<AppSettings>();
             settings.Load();
             Log.Information("AppSettings.Load 完成");
@@ -45,9 +46,9 @@ public sealed class ApplicationStartupCoordinator(
             {
                 Log.Warning("配置验证发现 {Count} 个错误", configErrors.Count);
                 HandyControl.Controls.MessageBox.Show(
-                    "配置文件存在以下问题，部分功能可能不可用：\n\n" + string.Join("\n", configErrors) +
-                    "\n\n建议进入「设置」页修改后保存。",
-                    "配置验证警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Strings.M131 + "\n\n" + string.Join("\n", configErrors) +
+                    "\n\n" + Strings.M132,
+                    Strings.M121, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
             var deviceRepository = services.GetRequiredService<DeviceRepository>();
@@ -59,7 +60,7 @@ public sealed class ApplicationStartupCoordinator(
             if (!string.IsNullOrEmpty(deviceRepository.LoadErrorMessage))
             {
                 HandyControl.Controls.MessageBox.Show(
-                    deviceRepository.LoadErrorMessage, "配置文件损坏",
+                    deviceRepository.LoadErrorMessage, Strings.M122,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 Log.Warning("DeviceRepository.LoadAll 警告: {Message}", deviceRepository.LoadErrorMessage);
             }
@@ -68,7 +69,11 @@ public sealed class ApplicationStartupCoordinator(
             services.GetRequiredService<DeviceManagerViewModel>().RefreshDeviceList();
             Log.Information("DeviceList 刷新完成");
 
-            runtime.SetState(ApplicationRuntimeState.MigratingDatabase, "正在升级历史数据库");
+            // 配方库启动加载（与设备/工单同模式；Remote 模式随后 StartDataLinkAsync 拉取覆盖）
+            services.GetRequiredService<IRecipeStore>().LoadAll();
+            Log.Information("RecipeStore.LoadAll 完成");
+
+            runtime.SetState(ApplicationRuntimeState.MigratingDatabase, Strings.M127);
             var databaseProvider = services.GetRequiredService<DatabaseProvider>();
             // 数据库表结构初始化：必须在 MainWindow.Show() 之前完成，
             // 否则 ViewModel 在 Loaded/Dispatcher.BeginInvoke 中立即查询会命中空库，
@@ -92,7 +97,7 @@ public sealed class ApplicationStartupCoordinator(
             }
 
             runtime.IsDatabaseReady = true;
-            runtime.SetState(ApplicationRuntimeState.Ready, "数据库已就绪");
+            runtime.SetState(ApplicationRuntimeState.Ready, Strings.M126);
 
             // 获取 MainWindow（DI 会传递构造 MainWindowViewModel → 各子 ViewModel →
             // PlcConnectionManager/PlcDataAcquisitionService/HistoryService，含 HslCommunication 与 EF Core 首次 JIT）
@@ -109,7 +114,7 @@ public sealed class ApplicationStartupCoordinator(
 
     public async Task StartRuntimeAsync()
     {
-        runtime.SetState(ApplicationRuntimeState.StartingAcquisition, "正在启动数据采集");
+        runtime.SetState(ApplicationRuntimeState.StartingAcquisition, Strings.M124);
         try
         {
             var settings = services.GetRequiredService<AppSettings>();
@@ -119,7 +124,7 @@ public sealed class ApplicationStartupCoordinator(
             {
                 await StartRemoteDataLinkAsync();
                 runtime.IsAcquisitionRunning = true;
-                runtime.SetState(ApplicationRuntimeState.Running, "运行中（远程采集）");
+                runtime.SetState(ApplicationRuntimeState.Running, Strings.M125);
                 return;
             }
 
@@ -136,12 +141,12 @@ public sealed class ApplicationStartupCoordinator(
                 Log.Information("历史清理和 PLC 采集启动完成，耗时 {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
             });
             runtime.IsAcquisitionRunning = true;
-            runtime.SetState(ApplicationRuntimeState.Running, "运行中");
+            runtime.SetState(ApplicationRuntimeState.Running, Strings.M129);
         }
         catch (Exception exception)
         {
             runtime.SetFailure(exception);
-            runtime.SetState(ApplicationRuntimeState.Degraded, "部分功能不可用");
+            runtime.SetState(ApplicationRuntimeState.Degraded, Strings.M128);
             throw;
         }
     }
@@ -159,7 +164,7 @@ public sealed class ApplicationStartupCoordinator(
         {
             // 桥接到 PlcConnectionManager 状态，复用全局连接状态横幅（MainWindowViewModel 绑定）
             if (connected)
-                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected("采集服务已连接");
+                services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.M134);
             else
                 services.GetRequiredService<PlcConnectionManager>().MarkDisconnected(DisconnectionReason.ReadFailure);
         };
@@ -170,9 +175,28 @@ public sealed class ApplicationStartupCoordinator(
             services.GetRequiredService<PlcConnectionManager>().SyncRemoteReconnecting(attempt);
         };
 
-        await client.ConnectAsync();
-        // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection）
-        sink.Start();
+        // 首次连接：失败不阻塞启动——转入单实例后台重连循环（5s 间隔，主连接重连唯一所有者；
+        // 运行中断线由 KanbanDataClient 内部 WithAutomaticReconnect 自愈，Reconnected 触发
+        // EnsureSinkStarted 兜底完成订阅初始化）。
+        var sinkStarted = false;
+        void EnsureSinkStarted()
+        {
+            if (sinkStarted) return;
+            sinkStarted = true;
+            sink.Start();
+        }
+        client.Reconnected += (_, _) => EnsureSinkStarted();
+        try
+        {
+            await client.ConnectAsync();
+            // 仅连接成功才初始化（sink.Start 内部 On* 依赖连接已建立）
+            EnsureSinkStarted();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "首次连接采集服务失败，转入后台重连循环（5s 间隔）");
+            StartRemoteRetryLoop(client, EnsureSinkStarted);
+        }
 
         // 版本握手：升级兼容性观测——Collector 版本与本地记录不一致时打警告（方法签名变化前可提前发现）
         try
@@ -199,6 +223,11 @@ public sealed class ApplicationStartupCoordinator(
             return true;
         };
 
+        // 配方库：写操作委托 Collector 落盘 recipes.json；启动时从 Collector 拉取（与设备同源）
+        var recipeStore = services.GetRequiredService<IRecipeStore>();
+        recipeStore.RemotePersistenceHook = recipes =>
+            client.SaveRecipesAsync(Kanban.Core.Mapping.RecipeMapper.ToDtos(recipes).ToList());
+
         // 屏端零配置：设备列表从 Collector 拉取（屏端无 devices.json 也能启动）。
         // 失败（服务未就绪等）时保留本地已加载配置，不影响启动。
         try
@@ -208,6 +237,8 @@ public sealed class ApplicationStartupCoordinator(
             {
                 var entities = DeviceMapper.ToEntities(remoteDevices);
                 deviceRepo.ReplaceAll(entities);
+                // Remote 配置整体替换后同步设备页审计基线（首次拉取时 VM 尚未构造，故不依赖 VM 初始化）
+                services.GetRequiredService<ViewModels.DeviceManagerViewModel>().SyncAuditBaseline();
                 Log.Information("Remote 设备配置已从采集服务加载：{Count} 台", entities.Count);
             }
         }
@@ -216,6 +247,65 @@ public sealed class ApplicationStartupCoordinator(
             Log.Warning(ex, "远程设备配置加载失败，使用本地配置");
         }
 
+        // 配方库 Remote 拉取（与设备配置同模式；失败或服务端为空保留本地配方——
+        // 首次切换 Remote 时 Collector 的 recipes.json 还不存在，空列表覆盖会静默清空本地配方库）
+        try
+        {
+            var remoteRecipes = await client.GetRecipesAsync();
+            if (remoteRecipes.Count > 0)
+            {
+                recipeStore.ReplaceAll(Kanban.Core.Mapping.RecipeMapper.ToEntities(remoteRecipes));
+                Log.Information("Remote 配方已从采集服务加载：{Count} 条", remoteRecipes.Count);
+            }
+            else
+            {
+                Log.Information("Remote 配方为空，保留本地配方");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "远程配方加载失败，使用本地配方");
+        }
+
         Log.Information("Remote 模式数据链路已建立：{Url}", services.GetRequiredService<AppSettings>().CollectorHubUrl);
+    }
+
+    private bool _remoteRetryLoopStarted;
+    private readonly object _remoteRetryGate = new();
+
+    /// <summary>
+    /// 主连接首次连接失败后的后台重连循环（5s 间隔，单实例保证）。
+    /// 重连成功后启动 sink（EnsureSinkStarted 幂等）；运行中连接断开由 KanbanDataClient
+    /// 内部 WithAutomaticReconnect 自愈，本循环只负责"从未连上过"的启动期场景。
+    /// </summary>
+    private void StartRemoteRetryLoop(KanbanDataClient client, Action onConnected)
+    {
+        lock (_remoteRetryGate)
+        {
+            if (_remoteRetryLoopStarted) return;
+            _remoteRetryLoopStarted = true;
+        }
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await client.ConnectAsync();
+                    Log.Information("采集服务后台重连成功，启动数据同步");
+                    onConnected();
+                    return;
+                }
+                catch (OperationCanceledException)
+                {
+                    return; // 应用退出
+                }
+                catch (Exception retryEx)
+                {
+                    Log.Warning(retryEx, "采集服务后台重连失败，5s 后重试");
+                }
+            }
+        });
     }
 }

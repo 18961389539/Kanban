@@ -322,10 +322,68 @@ public class WorkOrderServiceTests : IDisposable
             => throw new InvalidOperationException("测试异常");
         public AlarmEventRecord? GetLatestAlarmEvent(string alarmId)
             => throw new InvalidOperationException("测试异常");
+        public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
+            => throw new InvalidOperationException("测试异常");
+        public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
+            DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+            => throw new InvalidOperationException("测试异常");
+        public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
+            string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)
+            => throw new InvalidOperationException("测试异常");
+        public (List<DefectSnapshotRecord> Items, int Total) QueryDefectSnapshotsPaged(
+            DateTime from, DateTime to, string deviceId, int page, int pageSize)
+            => throw new InvalidOperationException("测试异常");
         public void LogProduction(ProductionLog log) => throw new InvalidOperationException("测试异常");
         public bool LogAlarmEvent(string deviceId, string deviceName, string alarmId, string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime, string? shiftName = null)
             => throw new InvalidOperationException("测试异常");
         public bool LogStatusTransition(string deviceId, string deviceName, int previousState, int currentState, DateTime eventTime, string? shiftName = null)
             => throw new InvalidOperationException("测试异常");
+    }
+
+    // ───────────── 回退窗口批量（审查修复 2026-08-13） ─────────────
+
+    [Fact]
+    public void GetProductionSummaries_FallbackWindowBatch_CoversOrdersWithoutWorkOrderLinks()
+    {
+        // 老数据（无 WorkOrderId 关联）+ 未落库新工单走 DeviceId+时间窗口回退批量查询，
+        // 与按 WorkOrderId 批量命中的工单一起在 GetProductionSummaries 内一次聚合
+        var svc = CreateService();
+        var now = DateTime.Now;
+        var linked = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-LINKED",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            TargetQuantity = 1000,
+            PlannedStart = now.AddHours(-2),
+            PlannedEnd = now.AddHours(2),
+        });
+        var legacy = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-LEGACY",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-2",
+            TargetQuantity = 1000,
+            PlannedStart = now.AddHours(-2),
+            PlannedEnd = now.AddHours(2),
+        });
+
+        // 关联日志：WorkOrderId 命中批量；老数据日志：无 WorkOrderId，仅窗口命中（不同设备隔离，避免窗口扫到关联日志）
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "A", OkProduction = 100, NgProduction = 0, Timestamp = now.AddMinutes(-60), WorkOrderId = linked.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "A", OkProduction = 160, NgProduction = 5, Timestamp = now.AddMinutes(-30), WorkOrderId = linked.Id },
+            new ProductionLog { DeviceId = "dev-2", ShiftName = "B", OkProduction = 10, NgProduction = 0, Timestamp = now.AddMinutes(-60), WorkOrderId = null },
+            new ProductionLog { DeviceId = "dev-2", ShiftName = "B", OkProduction = 50, NgProduction = 2, Timestamp = now.AddMinutes(-30), WorkOrderId = null },
+        });
+
+        var results = svc.GetProductionSummaries([linked, legacy]);
+
+        // 关联工单：班次 A 差分 60（Ok）/5（Ng）
+        Assert.Equal(60, results[linked.Id].OkCount);
+        Assert.Equal(5, results[linked.Id].NgCount);
+        // 老数据工单：班次 B 差分 40（Ok）/2（Ng）——经窗口批量命中而非逐条回退
+        Assert.Equal(40, results[legacy.Id].OkCount);
+        Assert.Equal(2, results[legacy.Id].NgCount);
     }
 }

@@ -104,7 +104,8 @@
     <Copy SourceFiles="$(ObfuscarOutput)"
           DestinationFiles="$(TargetDir)$(AssemblyName).dll" />
 
-    <!-- 同步覆盖 .pdb（混淆后的符号文件），便于 Release 排查崩溃 -->
+    <!-- 同步覆盖 .pdb（混淆后的符号文件），便于本地 Release 排查崩溃；
+         发布边界由 ci/publish-all.ps1 统一剥离 *.pdb（授权设计文档：符号不得随发布包外发，审查修复 2026-08-13） -->
     <Copy SourceFiles="$(TargetDir)Obfuscated\$(AssemblyName).pdb"
           DestinationFiles="$(TargetDir)$(AssemblyName).pdb"
           Condition="Exists('$(TargetDir)Obfuscated\$(AssemblyName).pdb')" />

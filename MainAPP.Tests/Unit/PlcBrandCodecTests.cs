@@ -19,6 +19,12 @@ public sealed class PlcBrandCodecTests
     [InlineData(PlcBrand.Siemens, "DB1.DBX0.3", PlcAddressType.MBit)]
     [InlineData(PlcBrand.ModbusTcp, "HR100", PlcAddressType.DWord)]
     [InlineData(PlcBrand.ModbusTcp, "C10", PlcAddressType.MBit)]
+    [InlineData(PlcBrand.Omron, "D100", PlcAddressType.DWord)]
+    [InlineData(PlcBrand.Omron, "CIO10", PlcAddressType.DWord)]
+    [InlineData(PlcBrand.Keyence, "DM100", PlcAddressType.DWord)]
+    [InlineData(PlcBrand.Keyence, "MR10", PlcAddressType.MBit)]
+    [InlineData(PlcBrand.Keyence, "D100", PlcAddressType.DWord)]
+    [InlineData(PlcBrand.Keyence, "M10", PlcAddressType.MBit)]
     public void Codec_ParsesBrandAddress(PlcBrand brand, string address, PlcAddressType type)
     {
         var settings = new AppSettings();
@@ -39,6 +45,19 @@ public sealed class PlcBrandCodecTests
         var codec = new PlcAddressCodecResolver(settings).Current;
 
         Assert.Equal("DB1.DBD104", codec.Add("DB1.DBD100", 1));
+    }
+
+    [Fact]
+    public void KeyenceCodec_NormalizesAndAddsNativeAddresses()
+    {
+        var settings = new AppSettings();
+        settings.PlcConfig.Brand = PlcBrand.Keyence;
+        var codec = new PlcAddressCodecResolver(settings).Current;
+
+        Assert.Equal("DM100", codec.Normalize(" dm100 "));
+        Assert.Equal("DM102", codec.Add("DM100", 1));
+        Assert.Equal("MR11", codec.Add("MR10", 1));
+        Assert.Equal("W1A2", codec.Add("W1A0", 1));
     }
 
     [Fact]

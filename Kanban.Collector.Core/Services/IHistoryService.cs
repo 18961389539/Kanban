@@ -11,6 +11,9 @@ public interface IHistoryService :
     IAlarmHistoryService,
     IStatusTransitionHistoryService
 {
+    /// <summary>分页查询缺陷快照（SQL 层 Count + Skip/Take；异常向调用方抛出）。</summary>
+    (List<Entities.DefectSnapshotRecord> Items, int Total) QueryDefectSnapshotsPaged(
+        DateTime from, DateTime to, string deviceId, int page, int pageSize);
 }
 
 /// <summary>

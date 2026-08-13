@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -51,6 +51,14 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private readonly PlcConnectionManager? _connectionManager;
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
+    private readonly UserSession _userSession;
+    private DeviceAuditSnapshot _lastSavedDeviceAuditSnapshot = new(0, []);
+
+    private sealed record DeviceAuditItem(
+        string Id, string Name, int TargetCycle,
+        string OkAddress, string NgAddress, string StatusAddress);
+
+    private sealed record DeviceAuditSnapshot(int Count, IReadOnlyList<DeviceAuditItem> Devices);
 
     // 设备列表由 DeviceRepository（DI 单例）持有，ViewModel 直接引用
     public ObservableCollection<Device> Devices => _deviceRepository.Devices;
@@ -191,7 +199,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         new() { Value = DeviceStatusFilter.Running, Label = Strings.Status_Running },
         new() { Value = DeviceStatusFilter.Alarm, Label = Strings.Status_Alarm },
         new() { Value = DeviceStatusFilter.Paused, Label = Strings.Status_Paused },
-        new() { Value = DeviceStatusFilter.Offline, Label = "初始/未连接" },
+        new() { Value = DeviceStatusFilter.Offline, Label = Strings.M165 },
     ];
 
     /// <summary>
@@ -230,8 +238,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         DeviceConfigIOService configIO,
         DevicePlcCommandHandler plcCommands,
         AlarmCsvIOService alarmCsvIO,
+        DefectCsvIOService defectCsvIO,
+        CountAlarmCsvIOService countAlarmCsvIO,
         WorkOrderRepository workOrderRepo,
         IWorkOrderService workOrderService,
+        UserSession userSession,
         PlcConnectionManager? connectionManager = null,
         IPlcAddressCodecResolver? addressCodecResolver = null,
         IPlcRuntimeProfileProvider? profileProvider = null)
@@ -243,6 +254,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _plcCommands = plcCommands;
         _workOrderRepo = workOrderRepo;
         _workOrderService = workOrderService;
+        _userSession = userSession;
         _connectionManager = connectionManager;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
@@ -250,10 +262,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         // 构造子 VM（报警/缺陷/计数报警管理），传入各自所需的共享依赖与父级宿主引用。
         // 子 VM 通过 IDeviceManagerHost 订阅 SelectedDevice/IsLoading 变化并回写脏标记，
-        // 实现跨 Tab 联动而无需双向引用。alarmCsvIO 仅用于构造报警子 VM，父级不再直接持有。
+        // 实现跨 Tab 联动而无需双向引用。CSV IO 服务仅用于构造对应子 VM，父级不再直接持有。
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
-        DefectManagerVm = new DeviceDefectManagerViewModel(this);
-        CountAlarmManagerVm = new DeviceCountAlarmManagerViewModel(dialog, plcCommands, this);
+        DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
+        CountAlarmManagerVm = new DeviceCountAlarmManagerViewModel(dialog, plcCommands, countAlarmCsvIO, this);
 
         // 当前设备工单过滤视图：按 SelectedDevice.DeviceId 过滤，Running 优先排序
         // 使用独立的 ListCollectionView（不能用 GetDefaultView，否则与 WorkOrderManagerViewModel 共享同一视图导致 Filter 互相覆盖）
@@ -271,6 +283,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         foreach (var rt in _deviceRepository.Runtimes) AttachRuntime(rt);
 
         // 初始计算跨设备地址冲突标记（LoadAll 已在 ViewModel 构造前完成）
+        _lastSavedDeviceAuditSnapshot = CreateDeviceAuditSnapshot();
         RefreshAddressConflictFlag();
         if (_connectionManager != null)
             _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
@@ -285,6 +298,22 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         Log.Information("DeviceManagerViewModel.RefreshDeviceList：Devices.Count={Count}, FilteredDevices.Filter={Filter}",
             Devices.Count, FilteredDevices.Filter == null ? "null" : "set");
     }
+
+    /// <summary>设备关键配置审计快照（名称/节拍/产量与状态地址，最多 20 台）。</summary>
+    private DeviceAuditSnapshot CreateDeviceAuditSnapshot()
+    {
+        var items = Devices.Take(20).Select(d => new DeviceAuditItem(
+            d.Id, d.Name, d.TargetCycle,
+            d.OkCountAddress ?? string.Empty, d.NgCountAddress ?? string.Empty,
+            d.StatusCountAddress ?? string.Empty)).ToArray();
+        return new DeviceAuditSnapshot(Devices.Count, items);
+    }
+
+    /// <summary>
+    /// 外部整体替换设备列表（Remote 拉取 / 导入 / 恢复备份 / 样本数据）后同步审计基线，
+    /// 避免下一次保存把「上一次保存」误记为「替换前状态」。调用点须在替换完成后调用。
+    /// </summary>
+    public void SyncAuditBaseline() => _lastSavedDeviceAuditSnapshot = CreateDeviceAuditSnapshot();
 
     partial void OnSearchKeywordChanged(string value) => ApplyFilter();
 
@@ -363,6 +392,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SearchKeyword = string.Empty;
         SelectedDevice = newDevice;
         MarkDirty();
+        // 注意：不在此处刷新审计基线——基线语义是「上次已保存」状态，
+        // 新增后尚未保存，下一次保存的 before 应反映「新增前」的持久化状态。
     }
 
     /// <summary>
@@ -411,7 +442,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     // 保存按钮的启用条件：至少有一个设备。
     // 不依赖 SelectedDevice，避免删除选中设备后 SelectedDevice=null 导致 Save 按钮变灰无法持久化删除操作
-    private bool CanSave() => Devices.Count > 0;
+    // 保存期间 IsLoading=true（防双击并发保存 + 禁用 PLC 写命令），故 CanSave 需排除 IsLoading
+    private bool CanSave() => Devices.Count > 0 && !IsLoading;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveDevice(Device? device)
@@ -422,7 +454,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 使用 HC MessageBox（深色主题）进行 YesNo 确认，返回 MessageBoxResult 与原 API 一致。
         var result = _dialog.Show(
             string.Format(Strings.F175, target.Name),
-            "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
 
         // 报警/缺陷/计数报警的选中状态由各子 VM 订阅 SelectedDevice 变化自动清空
@@ -443,6 +475,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         _dialog.NotifySuccess(Strings.M008);
         MarkDirty();
+        // 不在此处刷新审计基线：删除尚未保存，before 应反映「删除前」的持久化状态。
     }
 
     /// <summary>
@@ -567,10 +600,15 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             return;
         }
 
+        // 防重入：保存期间置 IsLoading（禁用 PLC 写命令 + Save 自身），防止双击/并发触发两次保存
+        IsLoading = true;
         try
         {
             // 保存内部会回填子项 DeviceId（触发属性变更），临时抑制脏标记避免自我触发。
             // Remote 模式下 SaveAllAsync 经 SignalR 推给 Collector 落盘（异步，不阻塞 UI 线程）
+            // 前后值摘要：仅关键配置字段（名称/节拍/OK/NG/状态地址），且只取前 20 台，避免整配置落审计库。
+            var before = _lastSavedDeviceAuditSnapshot;
+            var after = CreateDeviceAuditSnapshot();
             _suppressDirty = true;
             await _deviceRepository.SaveAllAsync();
 
@@ -578,16 +616,27 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             foreach (var device in Devices)
                 _deviceRepository.SyncTargetCycle(device.Id, device.TargetCycle);
 
-            _dialog.NotifySuccess(Strings.M009);
+            _lastSavedDeviceAuditSnapshot = after;
+            // 非阻断提示：0 值阈值报警（仅记录不触发）仍可正常保存，但提醒用户其不会触发报警
+            var zeroThresholdCount = Devices.Sum(d => d.CountAlarms.Count(c => c.MaxValue <= 0));
+            _dialog.NotifySuccess(zeroThresholdCount > 0
+                ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
+                : Strings.M009);
             IsDirty = false;
+            AuditLog.Record("Device.Update", "Device", null,
+                before: before,
+                after: after,
+                detail: string.Format(Strings.F_DevicesSaved, after.Count));
         }
         catch (System.Exception ex)
         {
             _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
+            Log.Error(ex, "保存设备配置失败");
         }
         finally
         {
             _suppressDirty = false;
+            IsLoading = false;
         }
     }
 
@@ -633,7 +682,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     private static string ExtractConflictAddress(string message)
     {
-        const string prefix = "地址冲突「";
+        string prefix = Strings.M166;
         var start = message.IndexOf(prefix, StringComparison.Ordinal);
         if (start < 0) return string.Empty;
         start += prefix.Length;
@@ -691,12 +740,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [RelayCommand(CanExecute = nameof(CanRollbackToBackup))]
     private void RollbackToBackup()
     {
-        // 安全验证：恢复上一版本会覆盖当前未保存的设备配置，需密码确认防止误触
-        const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput(Strings.M001, "恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：");
-        if (password != expectedPassword)
+        // 权限验证：恢复上一版本会覆盖当前未保存的设备配置，需工程师或以上角色
+        if (!_userSession.IsEngineerOrAbove)
         {
-            _dialog.NotifyWarning(Strings.M010);
+            _dialog.NotifyWarning(Strings.M336);
             return;
         }
 
@@ -717,17 +764,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 是否为 DEBUG 编译版本。绑定到"生成虚拟设备"按钮的 Visibility，
     /// 避免发布版暴露虚拟数据生成功能。Release 编译时按钮折叠。
     /// </summary>
-    public bool IsDebugBuild
-    {
-        get
-        {
-#if DEBUG
-            return true;
-#else
-            return false;
-#endif
-        }
-    }
+    public bool IsDebugBuild => MainAPP.Helpers.BuildInfo.IsDebug;
 
     /// <summary>
     /// 生成 20 台虚拟设备用于 UI 预览/调试。覆盖 4 个 Tab 的所有字段：
@@ -738,17 +775,18 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [RelayCommand]
     private void SeedSampleDevices()
     {
-        // 密码确认：防止误触生成虚拟数据
-        const string expectedPassword = "123456";
-        var password = _dialog.ShowPasswordInput(Strings.M001, "请输入密码以生成虚拟设备：");
-        if (password != expectedPassword)
+        // 权限验证：生成虚拟数据需工程师或以上角色
+        if (!_userSession.IsEngineerOrAbove)
+        {
+            _dialog.NotifyWarning(Strings.M336);
             return;
+        }
 
         if (Devices.Count > 0)
         {
             var confirm = _dialog.Show(
                 string.Format(Strings.F092, Devices.Count),
-                "生成虚拟设备", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                Strings.M169, MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes) return;
         }
 
@@ -789,13 +827,14 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     partial void OnIsLoadingChanged(bool value)
     {
         // IsLoading 变化时刷新 PLC 写入类与设备编辑类命令可用状态，避免并发写入或删除
+        SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         WriteRecipeCommand.NotifyCanExecuteChanged();
         ResetProductionCommand.NotifyCanExecuteChanged();
         ReadPlcValueCommand.NotifyCanExecuteChanged();
         if (value)
         {
-            PlcOperationStatus = "正在执行 PLC 操作...";
+            PlcOperationStatus = Strings.M170;
             PlcOperationStatusType = "Progress";
         }
         // 报警 CSV 导入/导出与计数报警清空命令由各子 VM 订阅 IsLoading 变化自行刷新
@@ -827,6 +866,14 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             if (result.Status == PlcOpStatus.Warning || result.Status == PlcOpStatus.Error)
                 NotifyPlcResult(result);
         }
+        catch (Exception ex)
+        {
+            // _plcCommands 内部已兜底返回 PlcOpResult，此处兜住链路外异常（状态机/通知等），避免静默流失
+            Log.Error(ex, "写配方命令异常");
+            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatusType = "Error";
+            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
+        }
         finally
         {
             IsLoading = false;
@@ -850,7 +897,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                 SelectedDevice,
                 device => _dialog.Show(
                     string.Format(Strings.F176, device.Name),
-                    "确认 OEE 清零", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
+                    Strings.M171, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
 
             // Cancelled = 用户拒绝确认，不弹通知；其他状态照常通知
             if (result.Status != PlcOpStatus.Cancelled)
@@ -858,6 +905,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                 SetPlcOperationStatus(result);
                 NotifyPlcResult(result);
             }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "OEE 清零命令异常");
+            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatusType = "Error";
+            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
         }
         finally
         {
@@ -878,6 +932,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             var result = await _plcCommands.ReadPlcValueAsync(address);
             SetPlcOperationStatus(result);
             NotifyPlcResult(result);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "读 PLC 值命令异常");
+            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
+            PlcOperationStatusType = "Error";
+            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
         }
         finally
         {
@@ -1002,7 +1063,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             PlcOpStatus.Info => result.Message,
             PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
             PlcOpStatus.Error => string.Format(Strings.F087, result.Message),
-            PlcOpStatus.Cancelled => "已取消",
+            PlcOpStatus.Cancelled => Strings.M172,
             _ => result.Message,
         };
         PlcOperationStatusType = result.Status switch
@@ -1135,8 +1196,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (!IsDirty) return true;
         var result = _dialog.Show(
-            "设备配置有未保存的修改，确定退出吗？\n未保存的修改将在退出后丢失。",
-            "未保存的修改",
+            Strings.M173,
+            Strings.M174,
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         return result == MessageBoxResult.Yes;
@@ -1149,8 +1210,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (!IsDirty) return true;
         var result = _dialog.Show(
-            "设备配置有未保存的修改，确定离开设备管理页吗？\n修改会保留在当前会话中，返回设备管理页后仍可继续保存。",
-            "未保存的修改",
+            Strings.M_UnsavedChangesLeave,
+            Strings.M174,
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return false;
