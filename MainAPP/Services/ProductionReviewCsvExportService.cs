@@ -5,7 +5,7 @@ using Kanban.Core.Entities;
 using System.Globalization;
 using System.Text;
 using MainAPP.ViewModels;
-using MainAPP.Helpers;
+using Kanban.Analysis;
 using MainAPP.Resources;
 
 namespace MainAPP.Services;

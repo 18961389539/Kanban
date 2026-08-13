@@ -1,38 +1,17 @@
+using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 
 namespace Kanban.Web.Services;
 
 /// <summary>
 /// OEE 历史分析（Web 端）：从 WPF OeeQueryViewModel + OeeCalculator 移植。
-/// 四率公式（合格/性能/可用/OEE）、窗口差分产量、状态时长、分班次 OEE（Web 无班次配置 API，走
-/// WPF 的"无配置回退路径"：班次范围 = 实例首条/末条时间）、洞察（短板因子 / 班次对比）。
+/// 四率公式（合格/性能/可用/OEE）**委托 Kanban.Analysis.OeeCalculator**（ADR-4 单源，
+/// 2026-08-13 收敛——此前在本地复制，Core 因 WPF 依赖无法被 WASM 引用，现已去 WPF 化）；
+/// 窗口差分产量、状态时长、分班次 OEE（Web 无班次配置 API，走 WPF 的"无配置回退路径"：
+/// 班次范围 = 实例首条/末条时间）、洞察（短板因子 / 班次对比）。
 /// </summary>
 public static class OeeAnalysis
 {
-    public static double CalculateQualityRate(int ok, int ng)
-    {
-        var total = ok + ng;
-        return total > 0 ? Clamp((double)ok / total) : 0;
-    }
-
-    /// <summary>性能率 = 累计实际产量 /（目标节拍 × 运行小时）。</summary>
-    public static double CalculatePerformanceRate(int totalOk, int totalNg, int targetCycle, double runTimeSeconds)
-    {
-        if (targetCycle <= 0 || runTimeSeconds <= 0) return 0;
-        var idealOutput = targetCycle * (runTimeSeconds / 3600.0);
-        return idealOutput > 0 ? Clamp((totalOk + totalNg) / idealOutput) : 0;
-    }
-
-    /// <summary>可用率 = 运行时间 /（运行时间 + 报警时间）；业务口径不含待机。</summary>
-    public static double CalculateAvailabilityRate(double runTime, double alarmTime)
-    {
-        var denom = runTime + alarmTime;
-        return denom > 0 ? Clamp(runTime / denom) : 0;
-    }
-
-    public static double CalculateOee(double q, double p, double a) => Clamp(q * p * a);
-
-    private static double Clamp(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);
 
     /// <summary>分班次 OEE 记录。</summary>
     public sealed record ShiftOee(DateTime ShiftTime, string ShiftName, double Quality, double Performance, double Availability, double Oee);
@@ -85,10 +64,10 @@ public static class OeeAnalysis
 
             var durations = StatusAnalysis.CalculateStateDurations(subTrans, shiftFrom, shiftTo, initState);
 
-            double quality = CalculateQualityRate(ok, ng);
-            double perf = CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
-            double avail = CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
-            double oee = CalculateOee(quality, perf, avail);
+            double quality = OeeCalculator.CalculateQualityRate(ok, ng);
+            double perf = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
+            double avail = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
+            double oee = OeeCalculator.CalculateOee(quality, perf, avail);
 
             result.Add(new ShiftOee(shiftFrom, shiftName, quality, perf, avail, oee));
         }

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- 共享分析层（2026-08-13）：纯托管 net10.0，WPF/WASM/Collector 共同引用的单源计算层
+         （ADR-4 落地）。WASM（net10.0-browser）无法引用 Core（net10.0 + HslCommunication 等），
+         此前 OEE 公式/CSV 转义在 Web 侧被复制（OeeAnalysis/ProductionAnalysis.CsvEscape），
+         本库为唯一实现，各端委托。 -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Kanban.Analysis</RootNamespace>
+    <AssemblyName>Kanban.Analysis</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using MainAPP.Resources;
-using MainAPP.Helpers;
+using Kanban.Analysis;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;

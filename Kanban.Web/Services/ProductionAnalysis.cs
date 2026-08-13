@@ -1,3 +1,4 @@
+using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 
 namespace Kanban.Web.Services;
@@ -171,13 +172,9 @@ public static class ProductionAnalysis
         return main;
     }
 
-    /// <summary>RFC 4180 转义（与 WPF CsvUtil.Escape 同口径；CsvUtil 在 MainAPP 不可被 Web 引用，暂本地实现）。</summary>
-    public static string CsvEscape(string? value)
-    {
-        if (string.IsNullOrEmpty(value)) return string.Empty;
-        if (value.IndexOfAny([',', '"', '\r', '\n']) < 0) return value;
-        return "\"" + value.Replace("\"", "\"\"") + "\"";
-    }
+    /// <summary>RFC 4180 转义——委托 Kanban.Analysis.CsvUtil（ADR-4 单源，2026-08-13 收敛；
+    /// 此前 CsvUtil 在 MainAPP 不可被 Web 引用而本地复制，Core 去 WPF 化后共享分析层已可被 WASM 引用）。</summary>
+    public static string CsvEscape(string? value) => CsvUtil.Escape(value);
 
     public static int CalcTotalPages(int totalCount, int pageSize)
         => totalCount <= 0 ? 0 : (totalCount + pageSize - 1) / pageSize;

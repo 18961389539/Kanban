@@ -1,3 +1,4 @@
+using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 using Kanban.Web.Services;
 using Microsoft.JSInterop;
@@ -95,10 +96,10 @@ public partial class HistoryQuery
             OeAlarmSeconds = durations.AlarmTime;
 
             // 3) 四率
-            OeQ = OeeAnalysis.CalculateQualityRate(ok, ng);
-            OeP = OeeAnalysis.CalculatePerformanceRate(ok, ng, OeTargetCycle, durations.RunTime);
-            OeA = OeeAnalysis.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
-            OeValue = OeeAnalysis.CalculateOee(OeQ, OeP, OeA);
+            OeQ = OeeCalculator.CalculateQualityRate(ok, ng);
+            OeP = OeeCalculator.CalculatePerformanceRate(ok, ng, OeTargetCycle, durations.RunTime);
+            OeA = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
+            OeValue = OeeCalculator.CalculateOee(OeQ, OeP, OeA);
 
             // 4) 分班次 OEE + 趋势图 + 洞察
             OeShifts = OeeAnalysis.ComputePerShiftOee(window, OeTargetCycle, trans, initialState, from, to);

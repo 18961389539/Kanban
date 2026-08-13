@@ -25,6 +25,8 @@
   <ItemGroup>
     <!-- 共享 SignalR 客户端：WASM 端 useMessagePack=false 走 JSON（Collector 双协议并存） -->
     <ProjectReference Include="..\Kanban.Client\Kanban.Client.csproj" />
+    <!-- 共享分析层（ADR-4 单源）：OEE 公式/CSV 转义不再在 Web 侧复制（此前 OeeAnalysis/ProductionAnalysis 本地实现） -->
+    <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
   </ItemGroup>
 
 </Project>

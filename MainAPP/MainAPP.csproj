@@ -80,6 +80,7 @@
     <ProjectReference Include="..\Kanban.Client\Kanban.Client.csproj" />
     <!-- 展示端瘦身过渡期：采集/存储/领域模型已迁入 Core，MainAPP 经项目引用继续使用（第 4 步改为客户端代理后移除） -->
     <ProjectReference Include="..\Kanban.Collector.Core\Kanban.Collector.Core.csproj" />
+    <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
   </ItemGroup>
 
 </Project>

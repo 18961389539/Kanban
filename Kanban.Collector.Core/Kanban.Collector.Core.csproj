@@ -39,6 +39,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+    <!-- 共享分析层：OEE 四率公式单源（本库 OeeCalculator 门面委托） -->
+    <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
   </ItemGroup>
 
   <!-- 多语言资源：Messages.resx（中文默认）+ Messages.en.resx + Messages.ja.resx；

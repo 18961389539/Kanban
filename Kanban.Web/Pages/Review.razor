@@ -2,6 +2,7 @@
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using System.Globalization
+@using Kanban.Analysis
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
 @using Kanban.Web.Services
@@ -395,13 +396,13 @@
             var (ok, ng) = ProductionAnalysis.SumWindowProduction(prod, baseline, from);
             r.TotalOk = ok;
             r.TotalNg = ng;
-            r.QualityRate = OeeAnalysis.CalculateQualityRate(ok, ng);
+            r.QualityRate = OeeCalculator.CalculateQualityRate(ok, ng);
             var effectiveTo = to > DateTime.Now ? DateTime.Now : to;
             var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState);
             var targetCycle = device?.TargetCycle ?? 0;
-            r.PerformanceRate = OeeAnalysis.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
-            r.Oee = OeeAnalysis.CalculateOee(r.QualityRate, r.PerformanceRate,
-                OeeAnalysis.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime));
+            r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
+            r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate,
+                OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime));
 
             // ── 报警统计 ──
             r.AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered);
@@ -441,11 +442,11 @@
                 compInitial = (int)compLastBefore[0].CurrentState;
             var compOkNg = ProductionAnalysis.SumWindowProduction(compProdL, [], comparisonFrom);
             r.BaselineOutput = compOkNg.Ok + compOkNg.Ng;
-            r.BaselineQuality = OeeAnalysis.CalculateQualityRate(compOkNg.Ok, compOkNg.Ng);
+            r.BaselineQuality = OeeCalculator.CalculateQualityRate(compOkNg.Ok, compOkNg.Ng);
             var compDurations = StatusAnalysis.CalculateStateDurations(compTransL, comparisonFrom, from, compInitial);
-            var compPerf = OeeAnalysis.CalculatePerformanceRate(compOkNg.Ok, compOkNg.Ng, targetCycle, compDurations.RunTime);
-            r.BaselineOee = OeeAnalysis.CalculateOee(r.BaselineQuality, compPerf,
-                OeeAnalysis.CalculateAvailabilityRate(compDurations.RunTime, compDurations.AlarmTime));
+            var compPerf = OeeCalculator.CalculatePerformanceRate(compOkNg.Ok, compOkNg.Ng, targetCycle, compDurations.RunTime);
+            r.BaselineOee = OeeCalculator.CalculateOee(r.BaselineQuality, compPerf,
+                OeeCalculator.CalculateAvailabilityRate(compDurations.RunTime, compDurations.AlarmTime));
 
             // ── 健康分 + 结论 ──
             var prevAlarmCount = compAlarmL.Count(e => e.EventType == AlarmEventType.Triggered);

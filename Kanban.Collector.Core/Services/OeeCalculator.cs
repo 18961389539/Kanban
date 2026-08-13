@@ -1,59 +1,31 @@
 using Kanban.Core.Models;
 using Kanban.Core.Entities;
+using OeeFormulas = Kanban.Analysis.OeeCalculator;
 
 namespace Kanban.Core.Services;
 
 /// <summary>
-/// OEE（设备综合效率）计算器。
-/// 从 Device 模型中提取计算逻辑，独立可测试。
-/// 所有比率（合格率/性能率/可用率/OEE）均限制在 [0, 1] 范围内，
-/// 避免出现 > 100% 的异常值（如设备超速运转、节拍设置过保守等场景）。
+/// OEE 计算门面（Core 侧）：四率公式**全部委托** <see cref="Kanban.Analysis.OeeCalculator"/>
+/// （ADR-4 单源，2026-08-13 收敛——此前 WASM 在 OeeAnalysis 复制公式，现 Web 直接调用 Analysis）。
+/// 本类保留依赖 Core 实体的 <see cref="CalculateStateDurations"/>（状态转换记录 → 各状态时长），
+/// 供采集/历史链路使用。
 /// </summary>
 public static class OeeCalculator
 {
-    /// <summary>
-    /// 将比率限制在 [0, 1] 范围内
-    /// </summary>
-    private static double Clamp(double value) =>
-        value < 0 ? 0 : (value > 1 ? 1 : value);
+    /// <summary>合格率 = OK / (OK + NG)，委托单源实现（Clamp [0,1]）</summary>
+    public static double CalculateQualityRate(int ok, int ng) => OeeFormulas.CalculateQualityRate(ok, ng);
 
-    /// <summary>
-    /// 合格率 = OK / (OK + NG)
-    /// </summary>
-    public static double CalculateQualityRate(int ok, int ng)
-    {
-        var total = ok + ng;
-        return total > 0 ? Clamp((double)ok / total) : 0;
-    }
-
-    /// <summary>
-    /// 性能率 = 累计实际产量 / 理想产量
-    /// 理想产量 = 目标节拍(件/小时) × 运行时间(小时)
-    /// </summary>
+    /// <summary>性能率 = 累计实际产量 / 理想产量，委托单源实现（Clamp [0,1]）</summary>
     public static double CalculatePerformanceRate(int totalOk, int totalNg, int targetCycle, double runTimeSeconds)
-    {
-        if (targetCycle <= 0 || runTimeSeconds <= 0) return 0;
-        var idealOutput = targetCycle * (runTimeSeconds / 3600.0);
-        return idealOutput > 0 ? Clamp((totalOk + totalNg) / idealOutput) : 0;
-    }
+        => OeeFormulas.CalculatePerformanceRate(totalOk, totalNg, targetCycle, runTimeSeconds);
 
-    /// <summary>
-    /// 可用率 = 运行时间 / (运行时间 + 报警时间)
-    /// 注意：按业务设计不含 PausedTime（见 project_memory.md）
-    /// </summary>
+    /// <summary>可用率 = 运行时间 / (运行时间 + 报警时间)，委托单源实现；业务口径不含 PausedTime</summary>
     public static double CalculateAvailabilityRate(double runTime, double alarmTime)
-    {
-        var denom = runTime + alarmTime;
-        return denom > 0 ? Clamp(runTime / denom) : 0;
-    }
+        => OeeFormulas.CalculateAvailabilityRate(runTime, alarmTime);
 
-    /// <summary>
-    /// OEE = 合格率 × 性能率 × 可用率
-    /// </summary>
+    /// <summary>OEE = 合格率 × 性能率 × 可用率，委托单源实现（Clamp [0,1]）</summary>
     public static double CalculateOee(double qualityRate, double performanceRate, double availabilityRate)
-    {
-        return Clamp(qualityRate * performanceRate * availabilityRate);
-    }
+        => OeeFormulas.CalculateOee(qualityRate, performanceRate, availabilityRate);
 
     /// <summary>
     /// 从状态转换记录中计算各状态累计时长。
