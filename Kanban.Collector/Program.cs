@@ -27,7 +27,12 @@ public static class Program
         // 用 Global\ 前缀：Windows 服务跑在 Session 0，与交互会话（屏端控制台）互斥检测生效。
         // 用 WaitOne(0) 而非 new Mutex(true,...) + createdNew：前者在前实例崩溃（互斥遗留 abandoned）
         // 时能正常接管所有权启动，后者会误判"已在运行"拒绝启动。
-        using var singleInstanceMutex = TryAcquireSingleton(@"Global\Kanban.Collector.SingleInstance");
+        // KANBAN_INSTANCE_ID 非空时以实例名后缀隔离互斥（并行开发/压测实例与生产服务共存）。
+        var instanceId = Environment.GetEnvironmentVariable("KANBAN_INSTANCE_ID");
+        var mutexName = string.IsNullOrEmpty(instanceId)
+            ? @"Global\Kanban.Collector.SingleInstance"
+            : $@"Global\Kanban.Collector.SingleInstance.{instanceId}";
+        using var singleInstanceMutex = TryAcquireSingleton(mutexName);
         if (singleInstanceMutex is null)
         {
             Console.Error.WriteLine("Kanban.Collector 已在运行（单实例保护），本实例退出。");
@@ -57,8 +62,12 @@ public static class Program
             var builder = WebApplication.CreateBuilder(appOptions);
             // 单端口部署：默认监听 0.0.0.0:5129（与 KanbanHubPaths.DefaultPort / 屏端默认地址一致）。
             // 不设此值时 Kestrel 默认 http://localhost:5000，发布形态会与客户端默认地址（127.0.0.1:5129）错位。
-            // 部署方可用 ASPNETCORE_URLS / --urls 覆盖。
-            builder.WebHost.UseUrls($"http://0.0.0.0:{Kanban.Contracts.KanbanHubPaths.DefaultPort}");
+            // 部署方可用 ASPNETCORE_URLS 环境变量覆盖（UseUrls 会压过命令行 --urls，故只认环境变量）。
+            var overrideUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+            builder.WebHost.UseUrls(
+                string.IsNullOrEmpty(overrideUrls)
+                    ? $"http://0.0.0.0:{Kanban.Contracts.KanbanHubPaths.DefaultPort}"
+                    : overrideUrls);
             // Windows 服务宿主：作为服务安装后由 SCM 拉起（开机自启 + 崩溃自动重启策略由脚本配置）；
             // 未安装服务时以控制台方式正常运行，行为不变。
             builder.Host.UseWindowsService(options => options.ServiceName = "KanbanCollector");
@@ -92,6 +101,10 @@ public static class Program
                 // QueryHistoryBatchAsync）在服务端排队永不执行、客户端挂起。
                 // 调大并行数，让查询/管理调用与订阅流并行处理。
                 options.MaximumParallelInvocationsPerClient = 16;
+                // 管理写接口（SaveDevicesAsync 等）批量同步可达数百 KB（设备含报警/缺陷全量配置），
+                // 默认 32KB 接收上限会拒收导致客户端连接被服务端关闭（WPF Remote 同步同路径）。
+                // 10MB 覆盖全部管理写接口的最大请求体。
+                options.MaximumReceiveMessageSize = 10 * 1024 * 1024;
             }).AddMessagePackProtocol();
             // /health/live 只反映进程存活；/health/ready 走业务级 readiness（初始化/采集活性/库可写）
             builder.Services.AddHealthChecks()

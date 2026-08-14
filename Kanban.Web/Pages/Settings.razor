@@ -135,10 +135,11 @@
 
     private static string PlcBrandText(int? brand) => brand switch
     {
-        0 => "Mitsubishi",
-        1 => "Siemens",
-        2 => "Modbus TCP",
-        3 => "Omron FINS",
+        1 => "Mitsubishi",
+        2 => "Siemens",
+        3 => "Modbus TCP",
+        4 => "Omron FINS",
+        5 => "Keyence",
         _ => brand?.ToString() ?? "—",
     };
 }
