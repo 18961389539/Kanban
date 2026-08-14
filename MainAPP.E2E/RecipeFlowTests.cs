@@ -63,7 +63,7 @@ public class RecipeFlowTests
             recipeVm.EditName = "配方A";
             recipeVm.EditMachineType = "注塑机";
             recipeVm.EditRemark = "E2E 端到端";
-            recipeVm.EditItems.Add(new RecipeItem
+            recipeVm.EditItems.Add(new RecipeEditItemRow(new RecipeItem
             {
                 ParamName = "节拍",
                 PlcAddress = "D108",
@@ -72,7 +72,7 @@ public class RecipeFlowTests
                 Min = 0,
                 Max = 200,
                 Unit = "件/h",
-            });
+            }));
 
             // ── 保存落库 ──
             recipeVm.SaveRecipeCommand.Execute(null);
@@ -96,7 +96,7 @@ public class RecipeFlowTests
             Assert.True(recipeVm.ApplyRecipeCommand.CanExecute(null), "下发命令应可执行");
             recipeVm.ApplyRecipeCommand.Execute(null);
             Assert.True(recipeVm.IsApplying, "下发命令应已开始执行");
-            PumpUntil(window, () => recipeVm.ApplyStatusKind == "Error", "下发失败提示");
+            PumpUntil(window, () => recipeVm.ApplyStatusKind == MainAPP.ViewModels.ApplyStatusKind.Error, "下发失败提示");
             Assert.Contains("失败", recipeVm.ApplyStatus);
             Assert.False(recipeVm.IsApplying);
 
@@ -143,13 +143,13 @@ public class RecipeFlowTests
             recipeVm.EditItems.Clear();
             recipeVm.EditName = "原始配方";
             recipeVm.EditMachineType = "注塑机";
-            recipeVm.EditItems.Add(new RecipeItem
+            recipeVm.EditItems.Add(new RecipeEditItemRow(new RecipeItem
             {
                 ParamName = "节拍",
                 PlcAddress = "D108",
                 DataType = PlcDataType.Int32,
                 Value = "50",
-            });
+            }));
             recipeVm.SaveRecipeCommand.Execute(null);
             PumpUntil(window, () => store.Recipes.Count == 1, "保存原配方");
             var original = store.Recipes[0];

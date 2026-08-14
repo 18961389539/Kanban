@@ -18,6 +18,16 @@ public class UserStore
 {
     private const string UsersFileName = "users.json";
 
+    /// <summary>连续登录失败达到该次数后锁定账号。</summary>
+    public const int MaxFailedAttempts = 5;
+
+    /// <summary>锁定持续时间。</summary>
+    public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(10);
+
+    /// <summary>默认账号口令（安全体检检测"默认口令未改"用；源码不含其它明文口令）。</summary>
+    public const string DefaultAdminPassword = "gly";
+    public const string DefaultEngineerPassword = "gcs";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -111,6 +121,8 @@ public class UserStore
     /// <summary>
     /// 验证登录凭据。成功时更新 LastLoginAt 并持久化，返回用户对象；失败返回 null。
     /// PasswordHash 为空表示免密账号（如默认 Operator），任意密码（含空）均可通过。
+    /// 锁定策略：连续失败 <see cref="MaxFailedAttempts"/> 次锁定 <see cref="LockoutDuration"/>，
+    /// 计数与锁定时间持久化（重启不失效）；锁定期间直接拒绝。
     /// </summary>
     public User? Authenticate(string username, string password)
     {
@@ -119,12 +131,55 @@ public class UserStore
             var user = _users.FirstOrDefault(u =>
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
             if (user is null || !user.IsActive) return null;
+            // 锁定期间拒绝（计数不清零，解锁/重置密码时清零）
+            if (user.LockedUntil is { } until && until > DateTime.UtcNow) return null;
             // PasswordHash 为空 = 免密账号，跳过密码验证
             if (string.IsNullOrEmpty(user.PasswordHash)) return FinalizeLogin(user);
-            if (!PasswordHasher.Verify(password, user.PasswordHash)) return null;
-
+            if (!PasswordHasher.Verify(password, user.PasswordHash))
+            {
+                user.FailedAttempts++;
+                if (user.FailedAttempts >= MaxFailedAttempts)
+                {
+                    user.LockedUntil = DateTime.UtcNow.Add(LockoutDuration);
+                    user.FailedAttempts = 0;
+                    Log.Warning("账号 {Username} 连续失败 {Count} 次，已锁定 {Minutes} 分钟",
+                        username, MaxFailedAttempts, (int)LockoutDuration.TotalMinutes);
+                }
+                Save();
+                return null;
+            }
+            user.FailedAttempts = 0;
             return FinalizeLogin(user);
         }
+    }
+
+    /// <summary>账号当前锁定剩余时间（未锁定/账号不存在返回 null）。</summary>
+    public TimeSpan? GetLockRemaining(string username)
+    {
+        lock (_lock)
+        {
+            var user = _users.FirstOrDefault(u =>
+                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
+            if (user?.LockedUntil is not { } until) return null;
+            var remaining = until - DateTime.UtcNow;
+            return remaining > TimeSpan.Zero ? remaining : null;
+        }
+    }
+
+    /// <summary>解锁账号（清零失败计数与锁定时间），供管理员操作。</summary>
+    public bool Unlock(string username)
+    {
+        lock (_lock)
+        {
+            var user = _users.FirstOrDefault(u =>
+                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
+            if (user is null) return false;
+            user.FailedAttempts = 0;
+            user.LockedUntil = null;
+            Save();
+        }
+        UsersChanged?.Invoke();
+        return true;
     }
 
     /// <summary>登录成功收尾：更新 LastLoginAt 并持久化。</summary>
@@ -149,7 +204,8 @@ public class UserStore
         return true;
     }
 
-    /// <summary>更新用户（角色、显示名、启用状态）。用户名不可改。</summary>
+    /// <summary>更新用户（角色、显示名、启用状态）。用户名不可改。
+    /// 与 <see cref="Remove"/> 同口径的全局不变量：不允许把最后一个启用的 Admin 禁用或降级（防止锁死系统）。</summary>
     public bool Update(string username, UserRole role, string displayName, bool isActive)
     {
         lock (_lock)
@@ -157,6 +213,13 @@ public class UserStore
             var user = _users.FirstOrDefault(u =>
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
             if (user is null) return false;
+            if (user.Role == UserRole.Admin && user.IsActive &&
+                (role != UserRole.Admin || !isActive) &&
+                _users.Count(u => u.Role == UserRole.Admin && u.IsActive) <= 1)
+            {
+                Log.Warning("拒绝禁用/降级最后一个管理员账号 {Username}", username);
+                return false;
+            }
             user.Role = role;
             user.DisplayName = displayName;
             user.IsActive = isActive;
@@ -166,7 +229,7 @@ public class UserStore
         return true;
     }
 
-    /// <summary>重置用户密码。</summary>
+    /// <summary>重置用户密码（同时解除锁定与失败计数）。</summary>
     public bool ResetPassword(string username, string newPassword)
     {
         lock (_lock)
@@ -175,6 +238,8 @@ public class UserStore
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
             if (user is null) return false;
             user.PasswordHash = PasswordHasher.Hash(newPassword);
+            user.FailedAttempts = 0;
+            user.LockedUntil = null;
             Save();
         }
         UsersChanged?.Invoke();
@@ -218,7 +283,7 @@ public class UserStore
                 Username = "admin",
                 DisplayName = "管理员",
                 Role = UserRole.Admin,
-                PasswordHash = PasswordHasher.Hash("gly"),
+                PasswordHash = PasswordHasher.Hash(DefaultAdminPassword),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
             },
@@ -227,7 +292,7 @@ public class UserStore
                 Username = "engineer",
                 DisplayName = "工程师",
                 Role = UserRole.Engineer,
-                PasswordHash = PasswordHasher.Hash("gcs"),
+                PasswordHash = PasswordHasher.Hash(DefaultEngineerPassword),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
             },

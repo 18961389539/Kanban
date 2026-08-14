@@ -579,15 +579,15 @@ internal class Program
             }
 
             // 计数报警：数量多时只显示非零的 + 总数摘要
-            var nonZeroCountAlarms = dev.CountAlarms.Where(ca => !string.IsNullOrEmpty(ca.PlcAddress) && ReadInt(ca.PlcAddress) > 0).ToList();
-            if (dev.CountAlarms.Count > 10)
+            var nonZeroCounterAlarms = dev.CounterAlarms.Where(ca => !string.IsNullOrEmpty(ca.PlcAddress) && ReadInt(ca.PlcAddress) > 0).ToList();
+            if (dev.CounterAlarms.Count > 10)
             {
-                Console.WriteLine($"  计数报警: {nonZeroCountAlarms.Count}/{dev.CountAlarms.Count} 个非零"
-                    + (nonZeroCountAlarms.Count > 0 ? $" → {string.Join(", ", nonZeroCountAlarms.Select(ca => $"{ca.Name}={ReadInt(ca.PlcAddress)}/{ca.MaxValue}"))}" : ""));
+                Console.WriteLine($"  计数报警: {nonZeroCounterAlarms.Count}/{dev.CounterAlarms.Count} 个非零"
+                    + (nonZeroCounterAlarms.Count > 0 ? $" → {string.Join(", ", nonZeroCounterAlarms.Select(ca => $"{ca.Name}={ReadInt(ca.PlcAddress)}/{ca.MaxValue}"))}" : ""));
             }
             else
             {
-                foreach (var ca in dev.CountAlarms)
+                foreach (var ca in dev.CounterAlarms)
                     if (!string.IsNullOrEmpty(ca.PlcAddress))
                         Console.WriteLine($"  计数报警[{ca.Name}] ({ca.PlcAddress}): {ReadInt(ca.PlcAddress)} (阈值{ca.MaxValue})");
             }
@@ -635,10 +635,10 @@ internal class Program
             else if (dev.Defects.Count > 0)
                 Console.WriteLine($"  缺陷: {string.Join(", ", dev.Defects.Select(d => $"{d.Name}@{d.PlcAddress}"))}");
 
-            if (dev.CountAlarms.Count > 10)
-                Console.WriteLine($"  计数报警: {dev.CountAlarms.Count} 个 ({dev.CountAlarms.First().PlcAddress}..{dev.CountAlarms.Last().PlcAddress}, 阈值={dev.CountAlarms.First().MaxValue})");
-            else if (dev.CountAlarms.Count > 0)
-                Console.WriteLine($"  计数报警: {string.Join(", ", dev.CountAlarms.Select(c => $"{c.Name}@{c.PlcAddress}(≤{c.MaxValue})"))}");
+            if (dev.CounterAlarms.Count > 10)
+                Console.WriteLine($"  计数报警: {dev.CounterAlarms.Count} 个 ({dev.CounterAlarms.First().PlcAddress}..{dev.CounterAlarms.Last().PlcAddress}, 阈值={dev.CounterAlarms.First().MaxValue})");
+            else if (dev.CounterAlarms.Count > 0)
+                Console.WriteLine($"  计数报警: {string.Join(", ", dev.CounterAlarms.Select(c => $"{c.Name}@{c.PlcAddress}(≤{c.MaxValue})"))}");
         }
     }
 
@@ -671,7 +671,7 @@ internal class Program
             AddIfNotEmpty(dev.RecipeAddress);
             foreach (var a in dev.Alarms) AddIfNotEmpty(a.PlcAddress);
             foreach (var d in dev.Defects) AddIfNotEmpty(d.PlcAddress);
-            foreach (var c in dev.CountAlarms) AddIfNotEmpty(c.PlcAddress);
+            foreach (var c in dev.CounterAlarms) AddIfNotEmpty(c.PlcAddress);
         }
 
         var conflicts = new List<string>();
@@ -696,7 +696,7 @@ internal class Program
         Console.WriteLine($"  班次曲线: {(_scenario.EnableShiftCurve ? "启用" : "禁用")}");
         Console.WriteLine($"  开机预热: {(_scenario.EnableWarmup ? $"启用 (前{_scenario.WarmupPieces}件 NG率={_scenario.WarmupNgRate * 100:F0}% 节拍x{_scenario.WarmupCycleFactor:F1})" : "禁用")}");
         Console.WriteLine($"  缺料停机: {(_scenario.EnableMaterialShortage ? $"启用 (每tick {_scenario.ShortageChancePerTick * 100:F4}%, 持续 {_scenario.ShortageMinSec}-{_scenario.ShortageMaxSec}s)" : "禁用")}");
-        Console.WriteLine($"  阈值触发: {(_scenario.EnableCountAlarmThreshold ? "启用" : "禁用")} (报警持续 {_scenario.ThresholdAlarmSec}s)");
+        Console.WriteLine($"  阈值触发: {(_scenario.EnableCounterAlarmThreshold ? "启用" : "禁用")} (报警持续 {_scenario.ThresholdAlarmSec}s)");
         // 新特性
         Console.WriteLine($"  物料批次: {(_scenario.EnableMaterialBatchVariance ? $"启用 (每{_scenario.MaterialBatchMinSec/60}-{_scenario.MaterialBatchMaxSec/60}分钟切换, NG率{_scenario.MaterialBatchNgRateMin*100:F1}-{_scenario.MaterialBatchNgRateMax*100:F1}%)" : "禁用")}");
         Console.WriteLine($"  设备老化: {(_scenario.EnableEquipmentAging ? $"启用 (阈值{_scenario.AgingThresholdHours}h, NG+{_scenario.AgingNgRatePenalty*100:F0}%, 漂移x{_scenario.AgingDriftMultiplier:F1})" : "禁用")}");
@@ -828,7 +828,7 @@ internal class Program
                     new() { Name = "毛边", PlcAddress = "D110" },
                     new() { Name = "缩水", PlcAddress = "D112" },
                 },
-                CountAlarms = new()
+                CounterAlarms = new()
                 {
                     new() { Name = "连续不良计数", PlcAddress = "D114", MaxValue = 10 },
                 },
@@ -852,7 +852,7 @@ internal class Program
                 {
                     new() { Name = "划痕", PlcAddress = "D210" },
                 },
-                CountAlarms = new()
+                CounterAlarms = new()
                 {
                     new() { Name = "停机次数", PlcAddress = "D212", MaxValue = 5 },
                 },
@@ -876,7 +876,7 @@ internal class Program
                     new() { Name = "漏装", PlcAddress = "D310" },
                     new() { Name = "错装", PlcAddress = "D312" },
                 },
-                CountAlarms = new()
+                CounterAlarms = new()
                 {
                     new() { Name = "连续NG", PlcAddress = "D314", MaxValue = 8 },
                 },

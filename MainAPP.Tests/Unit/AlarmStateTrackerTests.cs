@@ -373,6 +373,37 @@ public class AlarmStateTrackerTests
         Assert.True(tracker.GetPrevAlarmStatesSnapshot()[alarm.Id]);
         // 重建时不应产生新事件
         Assert.Single(history.AlarmEvents);
+        // 回填窗口内：StartTime 应保持历史触发时间（与历史记录一致）
+        Assert.Equal(history.AlarmEvents[0].EventTime, device.Alarms[0].StartTime);
+    }
+
+    [Fact]
+    public void ScanAlarms_StateMissingAndLastEventTriggeredStale_RebuildsAsInactive()
+    {
+        // 回归（审查修复）：历史 Triggered 超过回填窗口（如 8 小时前、上次运行遗留）时不得回填 StartTime，
+        // 否则实时故障卡持续时长虚高（如显示 8h）。陈旧 Triggered 按未触发处理，PLC ON 走正常触发沿。
+        var tracker = new AlarmStateTracker();
+        var (device, alarm) = BuildDeviceWithAlarm();
+        var plc = new FakePlcDriver();
+        plc.SetBool(alarm.PlcAddress, true);
+        var history = new InMemoryHistoryService();
+        var devices = new ObservableCollection<Device> { device };
+
+        // 预置历史：8 小时前的 Triggered（上次运行遗留，早于回填窗口）
+        history.AlarmEvents.Add(new AlarmEventRecord
+        {
+            AlarmId = alarm.Id,
+            EventType = AlarmEventType.Triggered,
+            EventTime = DateTime.Now.AddHours(-8)
+        });
+
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
+
+        // 陈旧 Triggered 不回填 → PLC ON 触发新的上升沿（StartTime = now）
+        Assert.Equal(2, history.AlarmEvents.Count);
+        Assert.Equal(AlarmEventType.Triggered, history.AlarmEvents[1].EventType);
+        Assert.True(tracker.GetPrevAlarmStatesSnapshot()[alarm.Id]);
+        Assert.True(DateTime.Now - device.Alarms[0].StartTime < TimeSpan.FromMinutes(1));
     }
 
     [Fact]

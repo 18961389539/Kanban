@@ -509,7 +509,7 @@
                                             Text="{x:Static resources:Strings.K070}" />
                                     </StackPanel>
                                 </TabItem.Header>
-                                <views:DeviceManagerCountAlarmsTab DataContext="{Binding CountAlarmManagerVm}" />
+                                <views:DeviceManagerCounterAlarmsTab DataContext="{Binding CounterAlarmManagerVm}" />
                             </TabItem>
 
                             <!--  ============ Tab 5：工单 ============  -->

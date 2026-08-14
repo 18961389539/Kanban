@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Kanban.Core.Data;
@@ -189,7 +189,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     [Fact]
-    public void ScanCountAlarms_FirstObservationDoesNotNotify_ButLaterRisingEdgeDoes()
+    public void ScanCounterAlarms_FirstObservationDoesNotNotify_ButLaterRisingEdgeDoes()
     {
         var notifications = new RecordingNotificationChannel();
         var service = new PlcDataAcquisitionService(
@@ -202,7 +202,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             NullLogger<PlcDataAcquisitionService>.Instance,
             alarmNotificationChannel: notifications);
         var device = AddDevice();
-        var countAlarm = new CountAlarm
+        var counterAlarm = new CounterAlarm
         {
             Id = "count-1",
             DeviceId = device.Id,
@@ -211,19 +211,19 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             MaxValue = 10,
             Enabled = true,
         };
-        device.CountAlarms.Add(countAlarm);
+        device.CounterAlarms.Add(counterAlarm);
 
-        _plc.SetInt32(countAlarm.PlcAddress, 20);
-        service.ScanCountAlarms();
+        _plc.SetInt32(counterAlarm.PlcAddress, 20);
+        service.ScanCounterAlarms();
         Assert.Empty(notifications.Notifications);
 
-        _plc.SetInt32(countAlarm.PlcAddress, 5);
-        service.ScanCountAlarms();
-        _plc.SetInt32(countAlarm.PlcAddress, 20);
-        service.ScanCountAlarms();
+        _plc.SetInt32(counterAlarm.PlcAddress, 5);
+        service.ScanCounterAlarms();
+        _plc.SetInt32(counterAlarm.PlcAddress, 20);
+        service.ScanCounterAlarms();
 
         var notification = Assert.Single(notifications.Notifications);
-        Assert.Equal(countAlarm.Id, notification.AlarmId);
+        Assert.Equal(counterAlarm.Id, notification.AlarmId);
         Assert.Equal(AlarmLevel.Medium, notification.Level);
     }
 
@@ -855,7 +855,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     [Fact]
-    public void RefreshDeviceData_UnifiesDWordBatchForStatusDefectAndCountAlarm()
+    public void RefreshDeviceData_UnifiesDWordBatchForStatusDefectAndCounterAlarm()
     {
         var device = AddDevice(
             okAddr: "D10",
@@ -869,7 +869,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             PlcAddress = "D16",
         };
         device.Defects.Add(defect);
-        var countAlarm = new CountAlarm
+        var counterAlarm = new CounterAlarm
         {
             DeviceId = device.Id,
             Name = "计数超限",
@@ -877,7 +877,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             Enabled = true,
             MaxValue = 100,
         };
-        device.CountAlarms.Add(countAlarm);
+        device.CounterAlarms.Add(counterAlarm);
 
         _plc.SetInt32("D10", 100);
         _plc.SetInt32("D12", 5);
@@ -887,13 +887,13 @@ public class PlcDataAcquisitionServiceTests : IDisposable
 
         var success = _service.RefreshDeviceData(out var noDevices);
         var defectsOk = _service.ScanDefects();
-        _service.ScanCountAlarms();
+        _service.ScanCounterAlarms();
 
         Assert.False(noDevices);
         Assert.Contains(device.Id, success);
         Assert.True(defectsOk);
         Assert.Equal(7, defect.Count);
-        Assert.Equal(8, countAlarm.CurrentValue);
+        Assert.Equal(8, counterAlarm.CurrentValue);
         Assert.Equal((int)DeviceStatus.Running, _deviceRepository.RuntimeMap[device.Id].StatusWord);
         Assert.Equal(1, _plc.ReadInt32BatchCallCount);
         Assert.Equal(("D10", (ushort)5), Assert.Single(_plc.ReadInt32BatchHistory));
@@ -1266,7 +1266,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     //  - 业务异常（NullReference/InvalidOperation 等）→ 不调 MarkDisconnected，仅记 LogError
     //  - TryScan(Func<bool>) 异常时返回 false（保留原有返回值语义）
     //  - 关键异常（OutOfMemoryException）重抛，不被 TryScan 吞掉
-    //  - 实际场景：FakePlcDriver.ReadInt32Exception 在 ScanAlarms/ScanDefects/ScanCountAlarms 读取阶段抛出
+    //  - 实际场景：FakePlcDriver.ReadInt32Exception 在 ScanAlarms/ScanDefects/ScanCounterAlarms 读取阶段抛出
     // ════════════════════════════════════════════════════════════════
 
     [Fact]
@@ -1353,11 +1353,11 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     [Fact]
-    public void TryScan_ScanCountAlarms_CommunicationException_TriggersMarkDisconnected()
+    public void TryScan_ScanCounterAlarms_CommunicationException_TriggersMarkDisconnected()
     {
-        // 验证：ScanCountAlarms（void 重载）抛 IOException 时，TryScan 触发 MarkDisconnected(ScanException)
+        // 验证：ScanCounterAlarms（void 重载）抛 IOException 时，TryScan 触发 MarkDisconnected(ScanException)
         var device = AddDevice();
-        device.CountAlarms.Add(new CountAlarm
+        device.CounterAlarms.Add(new CounterAlarm
         {
             DeviceId = device.Id,
             Name = "产量超限",
@@ -1376,7 +1376,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         };
 
         // void 重载无返回值，仅验证不抛异常 + 触发 MarkDisconnected
-        _service.TryScanForTest(() => _service.ScanCountAlarms(), "ScanCountAlarms");
+        _service.TryScanForTest(() => _service.ScanCounterAlarms(), "ScanCounterAlarms");
 
         Assert.NotNull(disconnectEvent);
         Assert.Equal(DisconnectionReason.ScanException, disconnectEvent!.Reason);

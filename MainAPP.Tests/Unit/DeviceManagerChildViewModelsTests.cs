@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Kanban.Core.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
@@ -6,17 +6,22 @@ using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using MainAPP.Tests.Integration;
 
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
 /// 设备管理器三个子 Tab VM 测试（审查修复 2026-08-13 补 0 覆盖盲区）：
-/// DeviceAlarmManager / DeviceDefectManager / DeviceCountAlarmManager——
+/// DeviceAlarmManager / DeviceDefectManager / DeviceCounterAlarmManager——
 /// 覆盖选中设备同步、增删命令、CanExecute 依赖、Detach 解绑与 CSV 导出取消路径。
+/// 加入 WpfUi 集合：子 VM 的宿主同步在 Application.Current 存在时经 Application.Dispatcher
+/// 异步封送（DeviceAlarmManagerViewModel），与 WpfUi 集合串行可保证 STA 消息循环空闲即执行，
+/// 消除全量并行下"回调排队被渲染测试占用"的时序脆弱（2026-08-14 实测修复）。
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
 [Trait("Requires", "None")]
+[Collection("WpfUi")]
 public class DeviceManagerChildViewModelsTests
 {
     private static IDeviceManagerHost CreateHost(Device? selected, bool isLoading = false)
@@ -94,10 +99,15 @@ public class DeviceManagerChildViewModelsTests
             host, new PropertyChangedEventArgs(nameof(IDeviceManagerHost.SelectedDevice)));
 
         // Application.Current 存在时（WpfUi collection 并行运行）回调经 Dispatcher.InvokeAsync 异步封送，
-        // 轮询等待同步完成（审查修复 2026-08-13：全量并行跑时的时序修正）
-        var deadline = DateTime.UtcNow.AddSeconds(5);
+        // 测试线程无消息循环，需显式 pump 队列（Invoke 同步执行会先处理已排队的 Normal 项），
+        // 否则回调永不执行（审查修复 2026-08-13 的 5s 轮询不足以覆盖并行负载变化）。
+        var deadline = DateTime.UtcNow.AddSeconds(15);
         while (!ReferenceEquals(vm.SelectedDevice, device) && DateTime.UtcNow < deadline)
+        {
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.Background);
             await Task.Delay(10);
+        }
         Assert.Same(device, vm.SelectedDevice);
     }
 
@@ -172,10 +182,10 @@ public class DeviceManagerChildViewModelsTests
         Assert.Null(vm.SelectedDevice);
     }
 
-    // ──────────── DeviceCountAlarmManagerViewModel ────────────
+    // ──────────── DeviceCounterAlarmManagerViewModel ────────────
 
     [Fact]
-    public void CountAlarmManager_AddAndRemoveCountAlarm()
+    public void CounterAlarmManager_AddAndRemoveCounterAlarm()
     {
         var device = new Device { Id = "dev-1", Name = "设备1" };
         var host = CreateHost(device);
@@ -183,35 +193,35 @@ public class DeviceManagerChildViewModelsTests
             new MainAPP.Tests.Unit.FakePlcDriver(),
             new PlcConnectionManager(new MainAPP.Tests.Unit.FakePlcDriver(), new AppSettings()),
             null!);
-        var vm = new DeviceCountAlarmManagerViewModel(
+        var vm = new DeviceCounterAlarmManagerViewModel(
             new MainAPP.Tests.Unit.FakeDialogService(),
             plcCommands,
-            new CountAlarmCsvIOService(new MainAPP.Tests.Unit.FakeDialogService()),
+            new CounterAlarmCsvIOService(new MainAPP.Tests.Unit.FakeDialogService()),
             host);
         vm.SelectedDevice = device;
 
-        vm.AddCountAlarmCommand.Execute(null);
-        Assert.Single(device.CountAlarms);
+        vm.AddCounterAlarmCommand.Execute(null);
+        Assert.Single(device.CounterAlarms);
 
-        var target = device.CountAlarms[0];
-        vm.RemoveCountAlarmCommand.Execute(target);
-        Assert.Empty(device.CountAlarms);
+        var target = device.CounterAlarms[0];
+        vm.RemoveCounterAlarmCommand.Execute(target);
+        Assert.Empty(device.CounterAlarms);
         host.Received(2).MarkDirty();
     }
 
     [Fact]
-    public void CountAlarmManager_NoDevice_CommandsDisabled()
+    public void CounterAlarmManager_NoDevice_CommandsDisabled()
     {
-        var vm = new DeviceCountAlarmManagerViewModel(
+        var vm = new DeviceCounterAlarmManagerViewModel(
             new MainAPP.Tests.Unit.FakeDialogService(),
             new DevicePlcCommandHandler(
                 new MainAPP.Tests.Unit.FakePlcDriver(),
                 new PlcConnectionManager(new MainAPP.Tests.Unit.FakePlcDriver(), new AppSettings()),
                 null!),
-            new CountAlarmCsvIOService(new MainAPP.Tests.Unit.FakeDialogService()),
+            new CounterAlarmCsvIOService(new MainAPP.Tests.Unit.FakeDialogService()),
             CreateHost(null));
 
-        Assert.False(vm.AddCountAlarmCommand.CanExecute(null));
-        Assert.False(vm.RemoveCountAlarmCommand.CanExecute(null));
+        Assert.False(vm.AddCounterAlarmCommand.CanExecute(null));
+        Assert.False(vm.RemoveCounterAlarmCommand.CanExecute(null));
     }
 }

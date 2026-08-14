@@ -45,7 +45,7 @@ public static class DeviceMapper
             Severity = (Kanban.Contracts.Enums.DefectSeverity)x.Severity,
             Category = (Kanban.Contracts.Enums.DefectCategory)x.Category,
         }).ToList(),
-        CountAlarms = d.CountAlarms.Select(c => new CountAlarmConfigDto
+        CounterAlarms = d.CounterAlarms.Select(c => new CounterAlarmConfigDto
         {
             Id = c.Id,
             DeviceId = c.DeviceId,
@@ -102,9 +102,9 @@ public static class DeviceMapper
                 Category = (Kanban.Core.Models.DefectCategory)x.Category,
             });
         }
-        foreach (var c in dto.CountAlarms ?? [])
+        foreach (var c in dto.CounterAlarms ?? [])
         {
-            device.CountAlarms.Add(new CountAlarm
+            device.CounterAlarms.Add(new CounterAlarm
             {
                 Id = c.Id,
                 DeviceId = c.DeviceId,

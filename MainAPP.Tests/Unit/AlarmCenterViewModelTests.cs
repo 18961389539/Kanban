@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -15,7 +15,7 @@ namespace MainAPP.Tests.Unit;
 /// AlarmCenterViewModel 单元测试：覆盖实时活跃报警收集、级别筛选、KPI 聚合。
 ///
 /// 测试策略：
-/// - 使用真实 DeviceRepository + 内存设备配置（含 Alarms/CountAlarms）
+/// - 使用真实 DeviceRepository + 内存设备配置（含 Alarms/CounterAlarms）
 /// - 使用 InMemoryHistoryService 注入报警事件
 /// - 使用 FakeDialogService
 /// - 不启动 DispatcherTimer（构造函数仅创建定时器但不 Start），避免 STA 线程依赖
@@ -140,10 +140,10 @@ public class AlarmCenterViewModelTests : IDisposable
     }
 
     [Fact]
-    public void RefreshAll_CollectsTriggeredCountAlarms()
+    public void RefreshAll_CollectsTriggeredCounterAlarms()
     {
         var device = new Device { Id = "d1", Name = "设备1" };
-        device.CountAlarms.Add(new CountAlarm
+        device.CounterAlarms.Add(new CounterAlarm
         {
             Name = "不合格计数超限", Enabled = true, MaxValue = 50, CurrentValue = 100,
         });
@@ -165,10 +165,10 @@ public class AlarmCenterViewModelTests : IDisposable
     }
 
     [Fact]
-    public void RefreshAll_FiltersDisabledCountAlarms()
+    public void RefreshAll_FiltersDisabledCounterAlarms()
     {
         var device = new Device { Id = "d1", Name = "设备1" };
-        device.CountAlarms.Add(new CountAlarm
+        device.CounterAlarms.Add(new CounterAlarm
         {
             Name = "已禁用计数", Enabled = false, MaxValue = 50, CurrentValue = 100,
         });

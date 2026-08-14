@@ -103,7 +103,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private long _dwordReadMilliseconds;
     [ObservableProperty] private long _alarmReadMilliseconds;
     [ObservableProperty] private long _defectReadMilliseconds;
-    [ObservableProperty] private long _countAlarmReadMilliseconds;
+    [ObservableProperty] private long _counterAlarmReadMilliseconds;
     [ObservableProperty] private long _historyWriteMilliseconds;
     [ObservableProperty] private double _availableMemoryMb;
     [ObservableProperty] private int _processThreadCount;
@@ -127,7 +127,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string ProcessUptimeText => ProcessUptime.ToString(@"d\.hh\:mm\:ss");
     public string ReadDetailText => string.Format(Strings.F024, EstimatedReadOperations, ConfiguredReadAddressCount);
     public string HistoryStorageText => string.Format(Strings.F118, FormatBytes(ProductionDatabaseBytes), FormatBytes(ProductionWalBytes));
-    public string StageTimingText => string.Format(Strings.F002, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CountAlarmReadMilliseconds, HistoryWriteMilliseconds);
+    public string StageTimingText => string.Format(Strings.F002, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CounterAlarmReadMilliseconds, HistoryWriteMilliseconds);
     public string BatchPlanText => string.Format(Strings.F236, BatchPlanRebuilds, BatchPlanBuildMilliseconds);
     public string ProcessResourceText => string.Format(Strings.F186, ProcessThreadCount, ProcessHandleCount);
     public string SystemMemoryText => string.Format(Strings.F221, MemoryMb, AvailableMemoryMb);
@@ -234,7 +234,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         DwordReadMilliseconds = snapshot.DWordReadMilliseconds;
         AlarmReadMilliseconds = snapshot.AlarmReadMilliseconds;
         DefectReadMilliseconds = snapshot.DefectReadMilliseconds;
-        CountAlarmReadMilliseconds = snapshot.CountAlarmReadMilliseconds;
+        CounterAlarmReadMilliseconds = snapshot.CounterAlarmReadMilliseconds;
         HistoryWriteMilliseconds = snapshot.HistoryWriteMilliseconds;
 
         UpdateResourceMetrics();
@@ -311,7 +311,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             DwordReadMilliseconds = d.DWordReadMilliseconds;
             AlarmReadMilliseconds = d.AlarmReadMilliseconds;
             DefectReadMilliseconds = d.DefectReadMilliseconds;
-            CountAlarmReadMilliseconds = d.CountAlarmReadMilliseconds;
+            CounterAlarmReadMilliseconds = d.CounterAlarmReadMilliseconds;
             HistoryWriteMilliseconds = d.HistoryWriteMilliseconds;
 
             UpdateResourceMetrics();

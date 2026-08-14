@@ -17,40 +17,40 @@ namespace MainAPP.ViewModels;
 /// 持有计数报警 CRUD 命令、清空当前值（PLC 写）命令、CSV 导入/导出与选中状态；
 /// 通过 IDeviceManagerHost 获取选中设备、共享 IsLoading 并回写脏标记。
 /// </summary>
-public partial class DeviceCountAlarmManagerViewModel : ObservableObject
+public partial class DeviceCounterAlarmManagerViewModel : ObservableObject
 {
     private readonly IDeviceManagerHost _host;
     private readonly IDialogService _dialog;
     private readonly DevicePlcCommandHandler _plcCommands;
-    private readonly CountAlarmCsvIOService _countAlarmCsvIO;
+    private readonly CounterAlarmCsvIOService _counterAlarmCsvIO;
 
     /// <summary>
     /// 当前选中设备（由父 VM 的 SelectedDevice 同步）。
     /// 内层 Grid 重设 DataContext={Binding SelectedDevice} 切换到当前设备，
-    /// 供计数报警列表 ItemsSource={Binding CountAlarms} 等绑定使用。
+    /// 供计数报警列表 ItemsSource={Binding CounterAlarms} 等绑定使用。
     /// </summary>
     [ObservableProperty]
     private Device? _selectedDevice;
 
     [ObservableProperty]
-    private CountAlarm? _selectedCountAlarm;
+    private CounterAlarm? _selectedCounterAlarm;
 
     /// <summary>
     /// 计数报警 CSV 导入/导出进行中标志：绑定到计数报警 Tab 工具条按钮 IsEnabled=false，
     /// 避免大文件 CSV 解析/写入期间用户重复点击。
     /// </summary>
     [ObservableProperty]
-    private bool _isBusyCountAlarmsCsv;
+    private bool _isBusyCounterAlarmsCsv;
 
-    public DeviceCountAlarmManagerViewModel(
+    public DeviceCounterAlarmManagerViewModel(
         IDialogService dialog,
         DevicePlcCommandHandler plcCommands,
-        CountAlarmCsvIOService countAlarmCsvIO,
+        CounterAlarmCsvIOService counterAlarmCsvIO,
         IDeviceManagerHost host)
     {
         _dialog = dialog;
         _plcCommands = plcCommands;
-        _countAlarmCsvIO = countAlarmCsvIO;
+        _counterAlarmCsvIO = counterAlarmCsvIO;
         _host = host;
         _host.PropertyChanged += OnHostPropertyChanged;
     }
@@ -73,27 +73,27 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
             SelectedDevice = _host.SelectedDevice;
         else if (e.PropertyName == nameof(IDeviceManagerHost.IsLoading))
         {
-            AddCountAlarmCommand.NotifyCanExecuteChanged();
-            RemoveCountAlarmCommand.NotifyCanExecuteChanged();
-            ResetCountAlarmValueCommand.NotifyCanExecuteChanged();
-            ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
-            ImportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+            AddCounterAlarmCommand.NotifyCanExecuteChanged();
+            RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
+            ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+            ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+            ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         }
         else if (e.PropertyName == nameof(IDeviceManagerHost.IsPlcConnected))
         {
-            ResetCountAlarmValueCommand.NotifyCanExecuteChanged();
+            ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
         }
     }
 
     partial void OnSelectedDeviceChanged(Device? value)
     {
         // 切换设备时清空计数报警选中，避免残留旧设备的引用
-        SelectedCountAlarm = null;
-        AddCountAlarmCommand.NotifyCanExecuteChanged();
-        RemoveCountAlarmCommand.NotifyCanExecuteChanged();
-        ResetCountAlarmValueCommand.NotifyCanExecuteChanged();
-        ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
-        ImportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+        SelectedCounterAlarm = null;
+        AddCounterAlarmCommand.NotifyCanExecuteChanged();
+        RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
+        ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
     }
 
     // 选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）
@@ -106,22 +106,22 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
     private bool CanExecutePlcWrite() => SelectedDevice != null && !_host.IsLoading && _host.IsPlcConnected;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
-    private void AddCountAlarm()
+    private void AddCounterAlarm()
     {
         if (SelectedDevice == null) return;
-        var baseName = string.Format(Strings.F198, SelectedDevice.CountAlarms.Count + 1);
-        var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CountAlarms.Select(c => c.Name));
-        var alarm = new CountAlarm { Name = newName };
-        SelectedDevice.CountAlarms.Add(alarm);
+        var baseName = string.Format(Strings.F198, SelectedDevice.CounterAlarms.Count + 1);
+        var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CounterAlarms.Select(c => c.Name));
+        var alarm = new CounterAlarm { Name = newName };
+        SelectedDevice.CounterAlarms.Add(alarm);
         // 不立即 SaveAll：统一由 Save 按钮校验（含报警地址唯一性）后持久化，避免绕过校验写入非法配置
         _host.MarkDirty();
     }
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
-    private void RemoveCountAlarm(CountAlarm alarm)
+    private void RemoveCounterAlarm(CounterAlarm alarm)
     {
-        if (SelectedCountAlarm == alarm) SelectedCountAlarm = null;
-        SelectedDevice?.CountAlarms.Remove(alarm);
+        if (SelectedCounterAlarm == alarm) SelectedCounterAlarm = null;
+        SelectedDevice?.CounterAlarms.Remove(alarm);
         // 不立即 SaveAll：统一由 Save 按钮持久化，与 AddAlarm/RemoveAlarm/Defect 行为一致
         _host.MarkDirty();
     }
@@ -131,7 +131,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
     /// IsLoading 由父级共享，PLC 写入期间驱动父级加载覆盖层。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
-    private async Task ResetCountAlarmValueAsync(CountAlarm alarm)
+    private async Task ResetCounterAlarmValueAsync(CounterAlarm alarm)
     {
         if (!_host.IsPlcConnected) return;
         var confirm = _dialog.Show(
@@ -142,7 +142,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
         _host.IsLoading = true;
         try
         {
-            var result = await _plcCommands.ResetCountAlarmValueAsync(alarm);
+            var result = await _plcCommands.ResetCounterAlarmValueAsync(alarm);
             _host.ReportPlcOperation(result);
             NotifyPlcResult(result);
         }
@@ -180,23 +180,23 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
 
     /// <summary>
     /// 导出当前选中设备的全部计数报警到 CSV 文件。
-    /// 异步执行避免大列表阻塞 UI；失败由 CountAlarmCsvIOService 弹通知。
+    /// 异步执行避免大列表阻塞 UI；失败由 CounterAlarmCsvIOService 弹通知。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
-    private async Task ExportCountAlarmsCsvAsync()
+    private async Task ExportCounterAlarmsCsvAsync()
     {
-        if (SelectedDevice == null || IsBusyCountAlarmsCsv) return;
-        IsBusyCountAlarmsCsv = true;
-        ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+        if (SelectedDevice == null || IsBusyCounterAlarmsCsv) return;
+        IsBusyCounterAlarmsCsv = true;
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         try
         {
             var device = SelectedDevice;
-            await Task.Run(() => _countAlarmCsvIO.ExportCountAlarms(device)).ConfigureAwait(true);
+            await Task.Run(() => _counterAlarmCsvIO.ExportCounterAlarms(device)).ConfigureAwait(true);
         }
         finally
         {
-            IsBusyCountAlarmsCsv = false;
-            ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+            IsBusyCounterAlarmsCsv = false;
+            ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -207,22 +207,22 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
     /// 流程：UI 线程选文件 → 后台解析校验 → UI 线程二次确认 → UI 线程应用到设备。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
-    private async Task ImportCountAlarmsCsvAsync()
+    private async Task ImportCounterAlarmsCsvAsync()
     {
-        if (SelectedDevice == null || IsBusyCountAlarmsCsv) return;
-        IsBusyCountAlarmsCsv = true;
-        ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
-        ImportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+        if (SelectedDevice == null || IsBusyCounterAlarmsCsv) return;
+        IsBusyCounterAlarmsCsv = true;
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         try
         {
             var device = SelectedDevice;
 
             // 阶段 1：UI 线程弹文件选择对话框
-            var path = _countAlarmCsvIO.PickImportPath();
+            var path = _counterAlarmCsvIO.PickImportPath();
             if (string.IsNullOrEmpty(path)) return; // 用户取消
 
             // 阶段 2：后台线程读取+解析+校验
-            var result = await Task.Run(() => _countAlarmCsvIO.ParseAndValidate(path)).ConfigureAwait(true);
+            var result = await Task.Run(() => _counterAlarmCsvIO.ParseAndValidate(path)).ConfigureAwait(true);
 
             if (result.Imported.Count == 0)
             {
@@ -231,7 +231,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
             }
 
             // 阶段 3：UI 线程二次确认
-            var existingCount = device.CountAlarms.Count;
+            var existingCount = device.CounterAlarms.Count;
             var msg = result.HasErrors
                 ? string.Format(Strings.F001, result.Imported.Count + result.Errors.Count, result.Errors.Count) +
                   string.Format(Strings.F306, result.Imported.Count, existingCount) +
@@ -245,7 +245,7 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
             var replace = choice == MessageBoxResult.Yes;
 
             // 阶段 4：UI 线程应用到设备
-            _countAlarmCsvIO.ApplyImportedCountAlarms(device, result.Imported, replace);
+            _counterAlarmCsvIO.ApplyImportedCounterAlarms(device, result.Imported, replace);
 
             _host.MarkDirty();
 
@@ -263,9 +263,9 @@ public partial class DeviceCountAlarmManagerViewModel : ObservableObject
         }
         finally
         {
-            IsBusyCountAlarmsCsv = false;
-            ExportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
-            ImportCountAlarmsCsvCommand.NotifyCanExecuteChanged();
+            IsBusyCounterAlarmsCsv = false;
+            ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+            ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         }
     }
 }

@@ -88,7 +88,18 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                 // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
                 .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
             if (_useMessagePack)
-                builder.AddMessagePackProtocol();
+                builder.AddMessagePackProtocol(options =>
+                {
+                    // 时区漂移修复（P1）：保留 DateTime.Kind（默认 resolver 会把 DateTime 转
+                    // UTC 序列化（值 -8h）且 Kind=Utc，WPF 直接 StringFormat 渲染早 8 小时）。
+                    // 必须用 CompositeResolver 组合：NativeDateTimeResolver 只处理 DateTime，
+                    // 其余类型（DTO/枚举等）回退 ContractlessStandardResolver——直接替换 resolver
+                    // 会丢 Contractless 导致 FormatterNotRegisteredException（快照/事件推送失败）。
+                    options.SerializerOptions = MessagePack.MessagePackSerializerOptions.Standard
+                        .WithResolver(MessagePack.Resolvers.CompositeResolver.Create(
+                            MessagePack.Resolvers.NativeDateTimeResolver.Instance,
+                            MessagePack.Resolvers.ContractlessStandardResolver.Instance));
+                });
             created = builder.Build();
             _connection = created;
             // 新连接实例：已注册回调作废（回调挂在旧实例上，新实例需重新注册——按连接实例去重语义）

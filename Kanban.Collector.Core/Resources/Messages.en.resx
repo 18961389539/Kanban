@@ -223,6 +223,11 @@
     <value>Apply cancelled, rolled back</value>
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>
+String parameters were not auto-rolled back (to avoid truncated values overwriting real data); please verify manually
+</value>
+  </data>
     <value>Writing parameter {0}…</value>
   </data>
 </root>

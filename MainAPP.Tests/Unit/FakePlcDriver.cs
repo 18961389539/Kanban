@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Services;
+using Kanban.Core.Services;
 using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
@@ -75,7 +75,7 @@ internal sealed class FakePlcDriver : IPlcDriver
 
     /// <summary>
     /// 设置后 ReadInt32() 将抛出指定异常（而非返回 Fail），用于模拟 HslCommunication
-    /// 在 ScanAlarms/ScanDefects/ScanCountAlarms 读取阶段透传通信异常的场景，
+    /// 在 ScanAlarms/ScanDefects/ScanCounterAlarms 读取阶段透传通信异常的场景，
     /// 验证 TryScan 的异常分类与 MarkDisconnected(ScanException) 触发逻辑。
     /// 其他读方法（ReadUInt16/ReadBool）不受此属性影响。
     /// </summary>

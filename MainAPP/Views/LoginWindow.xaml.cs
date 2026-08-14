@@ -24,6 +24,21 @@ public partial class LoginWindow : Window
         _viewModel.LoginCommand.Execute(PasswordBox.Password);
         if (_viewModel.LoginSucceeded)
         {
+            // 首次登录强制改密：改密成功后才放行登录
+            if (_viewModel.NeedsPasswordChange)
+            {
+                var changeDialog = new ChangePasswordDialog(
+                    MainAPP.Resources.Strings.M377, MainAPP.Resources.Strings.M368);
+                changeDialog.Owner = this;
+                if (changeDialog.ShowDialog() != true)
+                {
+                    _viewModel.LogoutAfterPasswordChangeDeclined();
+                    DialogResult = false;
+                    Close();
+                    return;
+                }
+                _viewModel.CompletePasswordChange(changeDialog.Password);
+            }
             DialogResult = true;
             Close();
         }

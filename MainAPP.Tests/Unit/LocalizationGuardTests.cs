@@ -342,7 +342,7 @@ public sealed class LocalizationGuardTests
             "../../../../MainAPP/Services/ProductionReviewCsvExportService.cs",
             "../../../../MainAPP/Services/AlarmCsvIOService.cs",
             "../../../../MainAPP/Services/DefectCsvIOService.cs",
-            "../../../../MainAPP/Services/CountAlarmCsvIOService.cs",
+            "../../../../MainAPP/Services/CounterAlarmCsvIOService.cs",
             "../../../../MainAPP/Services/RecipeJsonIOService.cs",
         };
 

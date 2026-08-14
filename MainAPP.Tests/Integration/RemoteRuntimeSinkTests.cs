@@ -141,10 +141,17 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
     {
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{_port}");
-        // 与生产 Collector 一致：16 并发/客户端（事件连接上报警/状态/Meta 三个长驻订阅并行处理，
-        // 默认 1 会永久排队）+ MessagePack 协议（Sink 的事件客户端 useMessagePack=true，
-        // 服务端无此协议时握手失败且 SignalR 客户端不会自动降级 JSON）。
-        builder.Services.AddSignalR(o => o.MaximumParallelInvocationsPerClient = 16).AddMessagePackProtocol();
+        // 与生产 Collector 协议对齐：AddMessagePackProtocol 配置 NativeDateTimeResolver +
+        // StandardResolver 组合（Native 仅覆盖 DateTime 保留 Kind；其余类型回退 Standard），
+        // 避免测试环境与生产的 DateTime 语义/可序列化范围不一致。
+        builder.Services.AddSignalR(o => o.MaximumParallelInvocationsPerClient = 16)
+            .AddMessagePackProtocol(options =>
+            {
+                options.SerializerOptions = MessagePack.MessagePackSerializerOptions.Standard
+                    .WithResolver(MessagePack.Resolvers.CompositeResolver.Create(
+                        MessagePack.Resolvers.NativeDateTimeResolver.Instance,
+                        MessagePack.Resolvers.ContractlessStandardResolver.Instance));
+            });
         var app = builder.Build();
         app.MapHub<SinkTestHub>("/hubs/sink");
         return app;

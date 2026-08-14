@@ -68,8 +68,10 @@ public partial class Device : ObservableObject
     public ObservableCollection<Defect> Defects { get; private set; } = new();
 
     /// <summary>
-    /// 计数报警列表（数值阈值判断，private set 防止外部替换集合导致事件订阅丢失）
+    /// 计数器报警列表（数值阈值判断，private set 防止外部替换集合导致事件订阅丢失）。
+    /// JSON 字段名保留历史 "CountAlarms"：兼容旧版 devices.json 配置（改名仅限代码/UI，落盘格式不变）。
     /// </summary>
     [JsonInclude]
-    public ObservableCollection<CountAlarm> CountAlarms { get; private set; } = new();
+    [JsonPropertyName("CountAlarms")]
+    public ObservableCollection<CounterAlarm> CounterAlarms { get; private set; } = new();
 }

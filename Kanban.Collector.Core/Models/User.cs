@@ -31,9 +31,17 @@ public partial class User : ObservableObject
     /// <summary>创建时间（UTC）。</summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>最后登录时间（UTC，本地显示时转换）。</summary>
-    [JsonIgnore]
+    /// <summary>最后登录时间（UTC，本地显示时转换）。持久化到 users.json。</summary>
     public DateTime? LastLoginAt { get; set; }
+
+    /// <summary>连续登录失败次数（达到阈值触发锁定；登录成功/解锁/重置密码时清零）。</summary>
+    public int FailedAttempts { get; set; }
+
+    /// <summary>锁定截止时间（UTC）。null = 未锁定。</summary>
+    public DateTime? LockedUntil { get; set; }
+
+    /// <summary>首次登录必须修改密码（登录成功后强制弹改密对话框）。</summary>
+    public bool MustChangePassword { get; set; }
 
     /// <summary>界面显示名（DisplayName 为空时回退 Username）。</summary>
     [JsonIgnore]

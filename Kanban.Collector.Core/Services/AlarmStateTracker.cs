@@ -37,6 +37,15 @@ internal sealed class AlarmStateTracker
     private readonly object _lock = new();
 
     /// <summary>
+    /// 状态重建回填窗口：进程重启/PLC 重连后，仅当历史库中该报警最后一次事件是
+    /// 最近 <see cref="RebuildBackfillWindow"/> 内的 Triggered 时才回填 StartTime（延续持续时长）。
+    /// 更早的 Triggered 视为陈旧残留（跨运行时段/跨班次遗留），按"重新触发"处理——
+    /// 避免 StartTime 回填到几小时甚至几天前，导致实时故障卡持续时长虚高（如 8h）。
+    /// 窗口覆盖采集重连退避（最长 30s）+ 进程重启恢复余量。
+    /// </summary>
+    private static readonly TimeSpan RebuildBackfillWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>
     /// 遍历所有报警，读取 PLC 位状态并检测边沿（用 Alarm.Id 作为状态字典 key）。
     /// 边沿事件同步入库，防止 PLC 断线期间内存状态丢失导致事件遗漏。
     /// 返回 false 表示至少一次读取失败。
@@ -111,8 +120,11 @@ internal sealed class AlarmStateTracker
                 else
                 {
                     // 从 AlarmEvents 历史表重建状态，避免断线期间边沿事件丢失导致 Duration 计算虚高。
+                    // 仅回填最近窗口内的 Triggered：陈旧 Triggered（上次运行遗留）按未触发处理，
+                    // 当前 ON 会走正常触发沿（StartTime=now 并写新事件），防止时长虚高（如 8h）。
                     var latest = historyService.GetLatestAlarmEvent(alarm.Id);
-                    if (latest != null && latest.EventType == AlarmEventType.Triggered)
+                    if (latest != null && latest.EventType == AlarmEventType.Triggered
+                        && DateTime.Now - latest.EventTime <= RebuildBackfillWindow)
                     {
                         prevState = true;
                         alarm.StartTime = latest.EventTime;

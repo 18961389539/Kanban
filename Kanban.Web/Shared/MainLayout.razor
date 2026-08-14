@@ -18,3 +18,14 @@
         @Body
     </main>
 </div>
+
+@code {
+    /// <summary>
+    /// 嵌套用法（审查修复 2026-08-14）：App.razor 的 NotFound 分支以 <see cref="App.razor"/>
+    /// <c>&lt;MainLayout&gt;&lt;div&gt;404&lt;/div&gt;&lt;/MainLayout&gt;</c> 形式嵌套内容——
+    /// 缺少本参数时任何未知路由都会抛"MainLayout does not have ChildContent"渲染崩溃，
+    /// 404 页面无法优雅显示。与 @Body 并存：RouteView 注入的页面走 @Body，嵌套内容走 ChildContent。
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

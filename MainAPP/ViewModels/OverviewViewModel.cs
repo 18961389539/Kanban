@@ -18,6 +18,7 @@ using OxyPlot.Axes;
 using OxyPlot.Legends;
 using OxyPlot.Series;
 using Serilog;
+using MainAPP.Helpers;
 using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
@@ -259,24 +260,26 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         if (string.IsNullOrWhiteSpace(path)) return;
 
         var (from, to) = GetTimeRange();
-        var csv = _csvExportService.Build(new ProductionReviewCsvData(
-            from,
-            to,
-            CurrentShiftName,
-            TotalOk,
-            TotalNg,
-            QualityRate,
-            Oee,
-            RunTimeHours,
-            PausedTimeHours,
-            AlarmDurationHours,
-            AlarmCount,
-            DeviceSummaries.ToList(),
-            ShiftComparisons.ToList(),
-            TopAlarms.ToList()));
+        // IsExporting 前置 + CSV 构建移后台（审查修复 2026-08-13）：原 Build 在 UI 线程
+        // 同步执行、IsExportingReport 置位在构建之后——双击窗口可并发构建两次 + 大窗口卡 UI
         IsExportingReport = true;
         try
         {
+            var csv = await Task.Run(() => _csvExportService.Build(new ProductionReviewCsvData(
+                from,
+                to,
+                CurrentShiftName,
+                TotalOk,
+                TotalNg,
+                QualityRate,
+                Oee,
+                RunTimeHours,
+                PausedTimeHours,
+                AlarmDurationHours,
+                AlarmCount,
+                DeviceSummaries.ToList(),
+                ShiftComparisons.ToList(),
+                TopAlarms.ToList())));
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
             AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: "生产复盘报表");
             _dialog.NotifySuccess(string.Format(Strings.F168, Path.GetFileName(path)));
@@ -965,37 +968,17 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 try
                 {
                     if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
-                    DeviceSummaries.Clear();
-                foreach (var ds in sortedSummaries)
-                    DeviceSummaries.Add(ds);
-
-                TopAlarms.Clear();
-                foreach (var a in topAlarms)
-                    TopAlarms.Add(a);
-
-                ShiftComparisons.Clear();
-                foreach (var s in shiftComparisons)
-                    ShiftComparisons.Add(s);
-
-                DefectParetos.Clear();
-                foreach (var d in defectParetos)
-                    DefectParetos.Add(d);
-
-                StatusTimeline.Clear();
-                foreach (var segment in statusTimeline)
-                    StatusTimeline.Add(segment);
-
-                HeatmapBuckets.Clear();
-                foreach (var bucket in HeatmapBucketBuilder.Build(statusTimeline))
-                    HeatmapBuckets.Add(bucket);
-
-                HealthIssues.Clear();
-                foreach (var issue in healthIssues)
-                    HealthIssues.Add(issue);
-
-                ReviewConclusions.Clear();
-                foreach (var conclusion in reviewConclusions)
-                    ReviewConclusions.Add(conclusion);
+                    // 差分同步（审查修复 2026-08-13）：原 7 个集合全量 Clear+逐项 Add，
+                    // 60s 定时刷新 + 切设备/时间范围都会触发一次，列表闪烁、滚动位置丢失、GC 压力大；
+                    // 改用 ObservableCollectionSyncHelper.Sync 按引用差分（与 HomeViewModel 同源）
+                    ObservableCollectionSyncHelper.Sync(DeviceSummaries, sortedSummaries);
+                    ObservableCollectionSyncHelper.Sync(TopAlarms, topAlarms);
+                    ObservableCollectionSyncHelper.Sync(ShiftComparisons, shiftComparisons);
+                    ObservableCollectionSyncHelper.Sync(DefectParetos, defectParetos);
+                    ObservableCollectionSyncHelper.Sync(StatusTimeline, statusTimeline);
+                    ObservableCollectionSyncHelper.Sync(HeatmapBuckets, HeatmapBucketBuilder.Build(statusTimeline));
+                    ObservableCollectionSyncHelper.Sync(HealthIssues, healthIssues);
+                    ObservableCollectionSyncHelper.Sync(ReviewConclusions, reviewConclusions);
 
                 // 图表签名比对：数据未变时跳过 PlotModel 重建（避免 60s 定时刷新的无谓 CPU 开销与 UI 闪烁）
                 // 时间戳不纳入签名（允许时间标签最多滞后一个刷新周期），仅比较产量/率值/设备明细

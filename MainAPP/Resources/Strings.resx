@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -412,10 +412,10 @@
     <value>删除报警</value>
   </data>
   <data name="K056" xml:space="preserve">
-    <value>新增计数报警</value>
+    <value>新增计数器报警</value>
   </data>
   <data name="K057" xml:space="preserve">
-    <value>删除计数报警</value>
+    <value>删除计数器报警</value>
   </data>
   <data name="K058" xml:space="preserve">
     <value>新增缺陷</value>
@@ -454,7 +454,7 @@
     <value>缺陷管理</value>
   </data>
   <data name="K070" xml:space="preserve">
-    <value>计数报警</value>
+    <value>计数器报警</value>
   </data>
   <data name="K071" xml:space="preserve">
     <value>工单</value>
@@ -766,22 +766,22 @@
     <value>报警 PLC 地址</value>
   </data>
   <data name="K174" xml:space="preserve">
-    <value>计数报警列表</value>
+    <value>计数器报警列表</value>
   </data>
   <data name="K175" xml:space="preserve">
-    <value>计数报警名称</value>
+    <value>计数器报警名称</value>
   </data>
   <data name="K176" xml:space="preserve">
     <value>PLC 地址（如 D300）</value>
   </data>
   <data name="K177" xml:space="preserve">
-    <value>计数报警 PLC 地址</value>
+    <value>计数器报警 PLC 地址</value>
   </data>
   <data name="K178" xml:space="preserve">
     <value>阈值上限</value>
   </data>
   <data name="K179" xml:space="preserve">
-    <value>计数报警阈值上限</value>
+    <value>计数器报警阈值上限</value>
   </data>
   <data name="K180" xml:space="preserve">
     <value>单位</value>
@@ -790,7 +790,7 @@
     <value>计数单位</value>
   </data>
   <data name="K182" xml:space="preserve">
-    <value>计数报警描述</value>
+    <value>计数器报警描述</value>
   </data>
   <data name="K183" xml:space="preserve">
     <value>当前值：</value>
@@ -799,7 +799,7 @@
     <value>已超限</value>
   </data>
   <data name="K185" xml:space="preserve">
-    <value>清空计数报警当前值</value>
+    <value>清空计数器报警当前值</value>
   </data>
   <data name="K186" xml:space="preserve">
     <value>清空当前值</value>
@@ -2135,7 +2135,7 @@
 </value>
   </data>
   <data name="F002" xml:space="preserve">
-    <value>DWord {0} ms · M位 {1} ms · 缺陷 {2} ms · 计数报警 {3} ms · 历史 {4} ms</value>
+    <value>DWord {0} ms · M位 {1} ms · 缺陷 {2} ms · 计数器报警 {3} ms · 历史 {4} ms</value>
   </data>
   <data name="F003" xml:space="preserve">
     <value>Modbus UnitId 必须在 1-247 之间，当前值: {0}</value>
@@ -2674,14 +2674,14 @@
     <value>确定删除工单「{0}」（{1}）吗？此操作不可恢复。</value>
   </data>
   <data name="F175" xml:space="preserve">
-    <value>确定删除设备「{0}」吗？关联的报警、缺陷和计数报警将一并移除。此操作不可撤销。</value>
+    <value>确定删除设备「{0}」吗？关联的报警、缺陷和计数器报警将一并移除。此操作不可撤销。</value>
   </data>
   <data name="F176" xml:space="preserve">
     <value>确定手动清零「{0}」的 OEE 吗？
 将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。</value>
   </data>
   <data name="F177" xml:space="preserve">
-    <value>确定清空计数报警「{0}」的当前值吗？
+    <value>确定清空计数器报警「{0}」的当前值吗？
 将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。</value>
   </data>
   <data name="F178" xml:space="preserve">
@@ -2747,10 +2747,10 @@
     <value>警告：{0}</value>
   </data>
   <data name="F198" xml:space="preserve">
-    <value>计数报警{0}</value>
+    <value>计数器报警{0}</value>
   </data>
   <data name="F199" xml:space="preserve">
-    <value>计数报警「{0}」地址</value>
+    <value>计数器报警「{0}」地址</value>
   </data>
   <data name="F200" xml:space="preserve">
     <value>设备「{0}」的计划时间与工单 {1} 重叠（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）</value>
@@ -2771,7 +2771,7 @@
     <value>设备「{0}」缺陷名重复：「{1}」</value>
   </data>
   <data name="F206" xml:space="preserve">
-    <value>设备「{0}」计数报警「{1}」阈值上限必须 &gt; 0（当前 {2}）</value>
+    <value>设备「{0}」计数器报警「{1}」阈值上限必须 &gt; 0（当前 {2}）</value>
   </data>
   <data name="F207" xml:space="preserve">
     <value>设备「{0}」重复报警 PLC 地址：「{1}」，同一设备内报警地址必须唯一</value>
@@ -3072,29 +3072,29 @@
     <value>CSV 文件中没有缺陷数据</value>
   </data>
   <data name="F304" xml:space="preserve">
-    <value>已导出 {0} 条计数报警 → {1}</value>
+    <value>已导出 {0} 条计数器报警 → {1}</value>
   </data>
   <data name="F305" xml:space="preserve">
-    <value>将导入 {0} 条计数报警到当前设备（现有 {1} 条）。
+    <value>将导入 {0} 条计数器报警到当前设备（现有 {1} 条）。
 </value>
   </data>
   <data name="F306" xml:space="preserve">
-    <value>有效 {0} 条计数报警将导入到当前设备（现有 {1} 条）。
+    <value>有效 {0} 条计数器报警将导入到当前设备（现有 {1} 条）。
 </value>
   </data>
   <data name="F307" xml:space="preserve">
-    <value>未导入任何计数报警：
+    <value>未导入任何计数器报警：
   · {0}</value>
   </data>
   <data name="F308" xml:space="preserve">
-    <value>已导入 {0} 条计数报警（{1} 行跳过）。
+    <value>已导入 {0} 条计数器报警（{1} 行跳过）。
 </value>
   </data>
   <data name="F309" xml:space="preserve">
-    <value>已导入 {0} 条计数报警，请点击保存以持久化</value>
+    <value>已导入 {0} 条计数器报警，请点击保存以持久化</value>
   </data>
   <data name="F310" xml:space="preserve">
-    <value>第 {0} 行：计数报警名称为空</value>
+    <value>第 {0} 行：计数器报警名称为空</value>
   </data>
   <data name="F311" xml:space="preserve">
     <value>第 {0} 行：阈值上限 '{1}' 不是有效整数</value>
@@ -3106,7 +3106,7 @@
     <value>第 {0} 行：PLC 地址 '{1}' 应为 DWord 类型，当前为 {2}</value>
   </data>
   <data name="F314" xml:space="preserve">
-    <value>CSV 文件中没有计数报警数据</value>
+    <value>CSV 文件中没有计数器报警数据</value>
   </data>
   <data name="F315" xml:space="preserve">
     <value>{0:N0}</value>
@@ -3493,7 +3493,7 @@
     <value>未保存的修改</value>
   </data>
   <data name="M175" xml:space="preserve">
-    <value>确认清空计数报警</value>
+    <value>确认清空计数器报警</value>
   </data>
   <data name="M176" xml:space="preserve">
     <value>无洞察</value>
@@ -4060,10 +4060,10 @@
     <value>导入缺陷配置</value>
   </data>
   <data name="M313" xml:space="preserve">
-    <value>导出计数报警配置</value>
+    <value>导出计数器报警配置</value>
   </data>
   <data name="M314" xml:space="preserve">
-    <value>导入计数报警配置</value>
+    <value>导入计数器报警配置</value>
   </data>
   <data name="M315" xml:space="preserve">
     <value>登录</value>
@@ -4115,6 +4115,69 @@
   </data>
   <data name="M331" xml:space="preserve">
     <value>启用</value>
+  </data>
+  <data name="M360" xml:space="preserve">
+    <value>不能禁用或降级最后一个管理员账号</value>
+  </data>
+  <data name="M361" xml:space="preserve">
+    <value>不能修改自己的角色或禁用自己</value>
+  </data>
+  <data name="M362" xml:space="preserve">
+    <value>有未保存的修改</value>
+  </data>
+  <data name="M363" xml:space="preserve">
+    <value>最后登录</value>
+  </data>
+  <data name="M364" xml:space="preserve">
+    <value>密码至少 8 位</value>
+  </data>
+  <data name="M365" xml:space="preserve">
+    <value>两次输入的密码不一致</value>
+  </data>
+  <data name="M366" xml:space="preserve">
+    <value>账号已锁定，剩余 {0} 分钟</value>
+  </data>
+  <data name="M367" xml:space="preserve">
+    <value>解锁</value>
+  </data>
+  <data name="M368" xml:space="preserve">
+    <value>首次登录必须改密</value>
+  </data>
+  <data name="M369" xml:space="preserve">
+    <value>密码强度：弱</value>
+  </data>
+  <data name="M370" xml:space="preserve">
+    <value>密码强度：中</value>
+  </data>
+  <data name="M371" xml:space="preserve">
+    <value>密码强度：强</value>
+  </data>
+  <data name="M372" xml:space="preserve">
+    <value>安全提醒</value>
+  </data>
+  <data name="M373" xml:space="preserve">
+    <value>默认口令</value>
+  </data>
+  <data name="M374" xml:space="preserve">
+    <value>免密账号</value>
+  </data>
+  <data name="M375" xml:space="preserve">
+    <value>从未登录</value>
+  </data>
+  <data name="M376" xml:space="preserve">
+    <value>锁定</value>
+  </data>
+  <data name="M377" xml:space="preserve">
+    <value>修改密码</value>
+  </data>
+  <data name="M378" xml:space="preserve">
+    <value>禁用</value>
+  </data>
+  <data name="M379" xml:space="preserve">
+    <value>搜索用户名 / 显示名</value>
+  </data>
+  <data name="M380" xml:space="preserve">
+    <value>无匹配用户</value>
   </data>
   <data name="M332" xml:space="preserve">
     <value>操作员</value>
@@ -4210,16 +4273,16 @@
     <value>从 CSV 文件导入缺陷（追加或替换当前设备缺陷列表）</value>
   </data>
   <data name="K609" xml:space="preserve">
-    <value>导出计数报警 CSV</value>
+    <value>导出计数器报警 CSV</value>
   </data>
   <data name="K610" xml:space="preserve">
-    <value>导出当前设备全部计数报警到 CSV 文件（可用 Excel 编辑）</value>
+    <value>导出当前设备全部计数器报警到 CSV 文件（可用 Excel 编辑）</value>
   </data>
   <data name="K611" xml:space="preserve">
-    <value>导入计数报警 CSV</value>
+    <value>导入计数器报警 CSV</value>
   </data>
   <data name="K612" xml:space="preserve">
-    <value>从 CSV 文件导入计数报警（追加或替换当前设备计数报警列表）</value>
+    <value>从 CSV 文件导入计数器报警（追加或替换当前设备计数器报警列表）</value>
   </data>
   <data name="Nav_Audit" xml:space="preserve">
     <value>审计日志</value>
@@ -4339,7 +4402,7 @@
     <value>该操作无前后值对比</value>
   </data>
   <data name="K651" xml:space="preserve">
-    <value>已保存 {0} 台设备配置（{1} 条计数报警阈值为 0，仅记录不触发）</value>
+    <value>已保存 {0} 台设备配置（{1} 条计数器报警阈值为 0，仅记录不触发）</value>
   </data>
   <data name="K652" xml:space="preserve">
     <value>未配置</value>
@@ -4971,7 +5034,7 @@
     <value>缺陷</value>
   </data>
   <data name="Web_Mo_TmCountAlarm" xml:space="preserve">
-    <value>计数报警</value>
+    <value>计数器报警</value>
   </data>
   <data name="Web_Mo_TmHistory" xml:space="preserve">
     <value>历史写入</value>
@@ -5190,7 +5253,7 @@
     <value>缺陷 {0} 条</value>
   </data>
   <data name="Web_Dv_CountAlarmCount" xml:space="preserve">
-    <value>计数报警 {0} 条</value>
+    <value>计数器报警 {0} 条</value>
   </data>
   <data name="Web_Dv_Detail" xml:space="preserve">
     <value>{0} 配置详情</value>
@@ -5220,7 +5283,7 @@
     <value>缺陷配置</value>
   </data>
   <data name="Web_Dv_CountAlarmConfig" xml:space="preserve">
-    <value>计数报警配置</value>
+    <value>计数器报警配置</value>
   </data>
   <data name="Web_Dv_None" xml:space="preserve">
     <value>无配置</value>
@@ -5398,6 +5461,36 @@
   </data>
   <data name="K696" xml:space="preserve">
     <value>取消下发</value>
+  </data>
+  <data name="K697" xml:space="preserve">
+    <value>搜索配方名 / 参数名</value>
+  </data>
+  <data name="K698" xml:space="preserve">
+    <value>通用</value>
+  </data>
+  <data name="K699" xml:space="preserve">
+    <value>{0:N0} 项参数</value>
+  </data>
+  <data name="K700" xml:space="preserve">
+    <value>无匹配配方，试试调整关键词或机型筛选</value>
+  </data>
+  <data name="K701" xml:space="preserve">
+    <value>更新于 {0:MM-dd HH:mm}</value>
+  </data>
+  <data name="K702" xml:space="preserve">
+    <value>配方机型 {0} 与设备机型 {1} 不匹配，仍要下发？</value>
+  </data>
+  <data name="K703" xml:space="preserve">
+    <value>下发超时（90 秒），已终止等待</value>
+  </data>
+  <data name="K704" xml:space="preserve">
+    <value>校验</value>
+  </data>
+  <data name="K705" xml:space="preserve">
+    <value>调整配方列表与编辑区的宽度</value>
+  </data>
+  <data name="K706" xml:space="preserve">
+    <value>配方编辑</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>

@@ -77,20 +77,28 @@ public sealed class ProductionReviewAlarmAnalysisService : IProductionReviewAlar
     {
         if (grouped is null || grouped.Count == 0) return 0;
         double seconds = 0;
-        var consumed = new HashSet<AlarmEventRecord>();
-        for (var index = 0; index < grouped.Count; index++)
+        var end = windowTo < DateTime.Now ? windowTo : DateTime.Now;
+        // 队列 FIFO 单趟扫描（审查修复 2026-08-13）：原对每个 Triggered 向后线性扫未消费的 Recovered，
+        // 高频报警组（数万条且恢复稀疏）退化为 O(n²)——此处 O(n)。
+        // 语义与原实现完全一致：每条 Recovered 只消费**最早**一条未配对 Triggered（FIFO）；
+        // 末尾未配对的 Triggered 按截断值计。
+        var pending = new Queue<AlarmEventRecord>();
+        foreach (var e in grouped) // 调用方已按 EventTime 排序（AnalyzeAlarms 内 OrderBy）
         {
-            if (grouped[index].EventType != AlarmEventType.Triggered) continue;
-            var end = windowTo < DateTime.Now ? windowTo : DateTime.Now;
-            for (var next = index + 1; next < grouped.Count; next++)
+            if (e.EventType == AlarmEventType.Triggered)
             {
-                if (grouped[next].EventType == AlarmEventType.Recovered && consumed.Add(grouped[next]))
-                {
-                    end = grouped[next].EventTime;
-                    break;
-                }
+                pending.Enqueue(e);
             }
-            seconds += Math.Max(0, (end - grouped[index].EventTime).TotalSeconds);
+            else if (e.EventType == AlarmEventType.Recovered && pending.Count > 0)
+            {
+                var t = pending.Dequeue();
+                seconds += Math.Max(0, (e.EventTime - t.EventTime).TotalSeconds);
+            }
+        }
+        while (pending.Count > 0)
+        {
+            var t = pending.Dequeue();
+            seconds += Math.Max(0, (end - t.EventTime).TotalSeconds);
         }
         return seconds / 3600.0;
     }

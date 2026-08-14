@@ -86,8 +86,8 @@ public class ScenarioConfig
     /// <summary>缺料持续最长秒数</summary>
     public int ShortageMaxSec { get; init; } = 180;
 
-    // ── CountAlarm 阈值触发 ──
-    public bool EnableCountAlarmThreshold { get; init; } = true;
+    // ── CounterAlarm 阈值触发 ──
+    public bool EnableCounterAlarmThreshold { get; init; } = true;
 
     /// <summary>阈值触发报警的持续秒数（较随机报警更长，模拟需人工干预）</summary>
     public int ThresholdAlarmSec { get; init; } = 60;

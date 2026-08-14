@@ -105,7 +105,21 @@ public static class Program
                 // 默认 32KB 接收上限会拒收导致客户端连接被服务端关闭（WPF Remote 同步同路径）。
                 // 10MB 覆盖全部管理写接口的最大请求体。
                 options.MaximumReceiveMessageSize = 10 * 1024 * 1024;
-            }).AddMessagePackProtocol();
+            }).AddMessagePackProtocol(options =>
+            {
+                // 时区漂移修复（P1）：MessagePack-CSharp 默认 StandardResolver 把 DateTime
+                // 序列化为 int64 ticks 且不保留 Kind，反序列化一律得到 Kind=Utc——
+                // WPF 端渲染时隐式 ToLocalTime(+8h)，导致报警/快照/事件时间戳全部漂移。
+                // NativeDateTimeResolver 改用 ext 类型编码并保留 Kind：
+                // 服务端写 DateTime.Now（Kind=Local）→ 客户端读回 Kind=Local，展示零漂移。
+                // 必须与 StandardResolver 组合（CompositeResolver）：Native 仅覆盖 DateTime，
+                // 其余类型（DeviceSnapshotDto 等业务 DTO）回退 Standard——直接替换 resolver
+                // 会抛 FormatterNotRegisteredException 导致推送失败/连接中止（2026-08-14 实测）。
+                options.SerializerOptions = MessagePack.MessagePackSerializerOptions.Standard
+                    .WithResolver(MessagePack.Resolvers.CompositeResolver.Create(
+                        MessagePack.Resolvers.NativeDateTimeResolver.Instance,
+                        MessagePack.Resolvers.ContractlessStandardResolver.Instance));
+            });
             // /health/live 只反映进程存活；/health/ready 走业务级 readiness（初始化/采集活性/库可写）
             builder.Services.AddHealthChecks()
                 .AddTypeActivatedCheck<CollectorReadinessCheck>("collector_readiness");

@@ -63,13 +63,12 @@ public sealed class RecipeApplier(IServiceProvider services)
             {
                 writeIndex++;
                 ct.ThrowIfCancellationRequested();
-                progress?.Invoke(new RecipeApplyProgressDto(item.ParamName, writeIndex, total, false,
-                    string.Format(RecipeValidationMessages.RecipeWriteInProgress, item.ParamName)));
 
                 if (!RecipeValidator.TryConvert(item, out var intValue, out var floatValue, out var boolValue, out var stringValue, out var uint16Value))
                 {
-                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false,
-                        string.Format(RecipeValidationMessages.RecipeValueParseFailed, item.Value)));
+                    var parseMsg = string.Format(RecipeValidationMessages.RecipeValueParseFailed, item.Value);
+                    progress?.Invoke(new RecipeApplyProgressDto(item.ParamName, writeIndex, total, false, parseMsg));
+                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false, parseMsg));
                     return new RecipeApplyResultDto(false,
                         string.Format(RecipeValidationMessages.RecipeValueParseAbort, item.ParamName), itemResults);
                 }
@@ -77,11 +76,13 @@ public sealed class RecipeApplier(IServiceProvider services)
                 var write = WriteValue(adapter, item, intValue, floatValue, boolValue, stringValue, uint16Value);
                 if (!write.IsSuccess)
                 {
-                    Rollback(adapter, backups);
-                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false,
-                        string.Format(RecipeValidationMessages.RecipeWriteFailed, write.Message)));
+                    // 逐项失败也推送进度（Single-Channel：进度回调即最终结果行）
+                    var failMsg = string.Format(RecipeValidationMessages.RecipeWriteFailed, write.Message);
+                    progress?.Invoke(new RecipeApplyProgressDto(item.ParamName, writeIndex, total, false, failMsg));
+                    var skippedString = Rollback(adapter, backups);
+                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false, failMsg));
                     return new RecipeApplyResultDto(false,
-                        string.Format(RecipeValidationMessages.RecipeWriteRollback, item.ParamName), itemResults);
+                        WithRollbackNote(string.Format(RecipeValidationMessages.RecipeWriteRollback, item.ParamName), skippedString), itemResults);
                 }
             }
 
@@ -94,19 +95,22 @@ public sealed class RecipeApplier(IServiceProvider services)
 
                 if (!TryRead(adapter, item, out var readBack, out _))
                 {
-                    Rollback(adapter, backups);
-                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false, RecipeValidationMessages.RecipeReadBackFailed));
+                    var readFailMsg = RecipeValidationMessages.RecipeReadBackFailed;
+                    progress?.Invoke(new RecipeApplyProgressDto(item.ParamName, verifyIndex, total, false, readFailMsg));
+                    var skippedString = Rollback(adapter, backups);
+                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false, readFailMsg));
                     return new RecipeApplyResultDto(false,
-                        string.Format(RecipeValidationMessages.RecipeReadBackRollback, item.ParamName), itemResults);
+                        WithRollbackNote(string.Format(RecipeValidationMessages.RecipeReadBackRollback, item.ParamName), skippedString), itemResults);
                 }
 
                 if (!ValuesEqual(item, readBack))
                 {
-                    Rollback(adapter, backups);
-                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false,
-                        string.Format(RecipeValidationMessages.RecipeReadBackMismatch, item.Value, readBack)));
+                    var mismatchMsg = string.Format(RecipeValidationMessages.RecipeReadBackMismatch, item.Value, readBack);
+                    progress?.Invoke(new RecipeApplyProgressDto(item.ParamName, verifyIndex, total, false, mismatchMsg));
+                    var skippedString = Rollback(adapter, backups);
+                    itemResults.Add(new RecipeItemResultDto(item.ParamName, false, mismatchMsg));
                     return new RecipeApplyResultDto(false,
-                        string.Format(RecipeValidationMessages.RecipeMismatchRollback, item.ParamName), itemResults);
+                        WithRollbackNote(string.Format(RecipeValidationMessages.RecipeMismatchRollback, item.ParamName), skippedString), itemResults);
                 }
 
                 itemResults.Add(new RecipeItemResultDto(item.ParamName, true, RecipeValidationMessages.RecipeWriteVerified));
@@ -119,26 +123,41 @@ public sealed class RecipeApplier(IServiceProvider services)
         catch (OperationCanceledException)
         {
             // 取消：回滚已写项，向调用方明确"已取消"而非失败
-            try { Rollback(adapter, backups); } catch { /* 回滚自身失败不掩盖取消原因 */ }
+            Rollback(adapter, backups);
             return new RecipeApplyResultDto(false, RecipeValidationMessages.RecipeApplyCancelled, itemResults);
         }
         catch (Exception ex)
         {
-            try { Rollback(adapter, backups); } catch { /* 回滚自身失败不掩盖原始异常 */ }
+            Rollback(adapter, backups);
             return new RecipeApplyResultDto(false, string.Format(RecipeValidationMessages.RecipeApplyException, ex.Message), itemResults);
         }
     }
 
-    private void Rollback(IDeviceAdapter adapter, List<(RecipeItem Item, string Value)> backups)
+    /// <summary>
+    /// 回滚写前备份值。返回是否有 String 项被跳过回滚。
+    /// String 参数备份按"目标值长度+1"读回：PLC 现值更长时会被截断，
+    /// 回滚写回截断值会覆盖真实数据——因此 String 项不回滚，由失败消息提示人工处理。
+    /// </summary>
+    private bool Rollback(IDeviceAdapter adapter, List<(RecipeItem Item, string Value)> backups)
     {
+        var skippedString = false;
         // 回滚必须写回「写入前的备份值」而非配方目标值：TryConvert 解析 backups 元组中的 value。
         foreach (var (item, value) in backups)
         {
+            if (item.DataType == Kanban.Contracts.Enums.PlcDataType.String)
+            {
+                skippedString = true;
+                continue;
+            }
             if (!RecipeValidator.TryConvert(item, value, out var iv, out var fv, out var bv, out var sv, out var uv))
                 continue;
             try { WriteValue(adapter, item, iv, fv, bv, sv, uv); } catch { /* 尽力回滚 */ }
         }
+        return skippedString;
     }
+
+    private static string WithRollbackNote(string message, bool skippedString)
+        => skippedString ? message + "；" + RecipeValidationMessages.RecipeStringNotRolledBack : message;
 
     private static bool TryRead(IDeviceAdapter adapter, RecipeItem item, out string value, out string error)
     {

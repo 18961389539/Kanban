@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using MainAPP.Converters;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
@@ -318,9 +318,9 @@ public class ModelsCoverageTests
     }
 
     [Fact]
-    public void CountAlarm_Serialization_ExcludesRuntimeFields()
+    public void CounterAlarm_Serialization_ExcludesRuntimeFields()
     {
-        var ca = new CountAlarm
+        var ca = new CounterAlarm
         {
             Id = "test_ca",
             DeviceId = "test",

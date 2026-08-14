@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -412,10 +412,10 @@
     <value>Delete Alarm</value>
   </data>
   <data name="K056" xml:space="preserve">
-    <value>Add Count Alarm</value>
+    <value>Add Counter Alarm</value>
   </data>
   <data name="K057" xml:space="preserve">
-    <value>Delete Count Alarm</value>
+    <value>Delete Counter Alarm</value>
   </data>
   <data name="K058" xml:space="preserve">
     <value>Add Defect</value>
@@ -454,7 +454,7 @@
     <value>Defect Management</value>
   </data>
   <data name="K070" xml:space="preserve">
-    <value>Count Alarm</value>
+    <value>Counter Alarm</value>
   </data>
   <data name="K071" xml:space="preserve">
     <value>Work Order</value>
@@ -766,22 +766,22 @@
     <value>Alarm PLC Address</value>
   </data>
   <data name="K174" xml:space="preserve">
-    <value>Count Alarm List</value>
+    <value>Counter Alarm List</value>
   </data>
   <data name="K175" xml:space="preserve">
-    <value>Count Alarm Name</value>
+    <value>Counter Alarm Name</value>
   </data>
   <data name="K176" xml:space="preserve">
     <value>PLC Address (e.g. D300)</value>
   </data>
   <data name="K177" xml:space="preserve">
-    <value>Count Alarm PLC Address</value>
+    <value>Counter Alarm PLC Address</value>
   </data>
   <data name="K178" xml:space="preserve">
     <value>Upper Threshold</value>
   </data>
   <data name="K179" xml:space="preserve">
-    <value>Count Alarm Upper Threshold</value>
+    <value>Counter Alarm Upper Threshold</value>
   </data>
   <data name="K180" xml:space="preserve">
     <value>Unit</value>
@@ -790,7 +790,7 @@
     <value>Count Unit</value>
   </data>
   <data name="K182" xml:space="preserve">
-    <value>Count Alarm Description</value>
+    <value>Counter Alarm Description</value>
   </data>
   <data name="K183" xml:space="preserve">
     <value>Current value: </value>
@@ -799,7 +799,7 @@
     <value>Exceeded</value>
   </data>
   <data name="K185" xml:space="preserve">
-    <value>Clear Count Alarm Value</value>
+    <value>Clear Counter Alarm Value</value>
   </data>
   <data name="K186" xml:space="preserve">
     <value>Clear Value</value>
@@ -2674,14 +2674,14 @@ Trial expired; please activate</value>
     <value>Delete work order "{0}" ({1})? This cannot be undone.</value>
   </data>
   <data name="F175" xml:space="preserve">
-    <value>Delete device "{0}"? Its alarms, defects and count alarms will be removed too. This cannot be undone.</value>
+    <value>Delete device "{0}"? Its alarms, defects and counter alarms will be removed too. This cannot be undone.</value>
   </data>
   <data name="F176" xml:space="preserve">
     <value>Manually reset OEE for "{0}"?
 OK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.</value>
   </data>
   <data name="F177" xml:space="preserve">
-    <value>Clear the current value of count alarm "{0}"?
+    <value>Clear the current value of counter alarm "{0}"?
 A reset command will be written to the PLC and the software-side value cleared; this cannot be undone.</value>
   </data>
   <data name="F178" xml:space="preserve">
@@ -2771,7 +2771,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Device "{0}": duplicate defect name "{1}"</value>
   </data>
   <data name="F206" xml:space="preserve">
-    <value>Device "{0}" count alarm "{1}" upper limit must be &gt; 0 (current {2})</value>
+    <value>Device "{0}" counter alarm "{1}" upper limit must be &gt; 0 (current {2})</value>
   </data>
   <data name="F207" xml:space="preserve">
     <value>Device "{0}": duplicate alarm PLC address "{1}"; alarm addresses must be unique within a device</value>
@@ -3072,29 +3072,29 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>No defect data in CSV file</value>
   </data>
   <data name="F304" xml:space="preserve">
-    <value>Exported {0} count alarms → {1}</value>
+    <value>Exported {0} counter alarms → {1}</value>
   </data>
   <data name="F305" xml:space="preserve">
-    <value>{0} count alarms will be imported to the current device ({1} existing).
+    <value>{0} counter alarms will be imported to the current device ({1} existing).
 </value>
   </data>
   <data name="F306" xml:space="preserve">
-    <value>{0} valid count alarms will be imported to the current device ({1} existing).
+    <value>{0} valid counter alarms will be imported to the current device ({1} existing).
 </value>
   </data>
   <data name="F307" xml:space="preserve">
-    <value>No count alarms imported:
+    <value>No counter alarms imported:
   · {0}</value>
   </data>
   <data name="F308" xml:space="preserve">
-    <value>Imported {0} count alarms ({1} rows skipped).
+    <value>Imported {0} counter alarms ({1} rows skipped).
 </value>
   </data>
   <data name="F309" xml:space="preserve">
-    <value>Imported {0} count alarms, click Save to persist</value>
+    <value>Imported {0} counter alarms, click Save to persist</value>
   </data>
   <data name="F310" xml:space="preserve">
-    <value>Row {0}: count alarm name is empty</value>
+    <value>Row {0}: counter alarm name is empty</value>
   </data>
   <data name="F311" xml:space="preserve">
     <value>Row {0}: max value '{1}' is not a valid integer</value>
@@ -3106,7 +3106,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Row {0}: PLC address '{1}' should be DWord type, got {2}</value>
   </data>
   <data name="F314" xml:space="preserve">
-    <value>No count alarm data in CSV file</value>
+    <value>No counter alarm data in CSV file</value>
   </data>
   <data name="F315" xml:space="preserve">
     <value>{0:N0}</value>
@@ -3493,7 +3493,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Unsaved Changes</value>
   </data>
   <data name="M175" xml:space="preserve">
-    <value>Confirm Clear Count Alarm</value>
+    <value>Confirm Clear Counter Alarm</value>
   </data>
   <data name="M176" xml:space="preserve">
     <value>No Insights</value>
@@ -4060,10 +4060,10 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Import Defects Configuration</value>
   </data>
   <data name="M313" xml:space="preserve">
-    <value>Export Count Alarms Configuration</value>
+    <value>Export Counter Alarms Configuration</value>
   </data>
   <data name="M314" xml:space="preserve">
-    <value>Import Count Alarms Configuration</value>
+    <value>Import Counter Alarms Configuration</value>
   </data>
   <data name="M315" xml:space="preserve">
     <value>Login</value>
@@ -4115,6 +4115,69 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M331" xml:space="preserve">
     <value>Active</value>
+  </data>
+  <data name="M360" xml:space="preserve">
+    <value>Cannot disable or demote the last administrator account</value>
+  </data>
+  <data name="M361" xml:space="preserve">
+    <value>Cannot change your own role or disable yourself</value>
+  </data>
+  <data name="M362" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="M363" xml:space="preserve">
+    <value>Last Login</value>
+  </data>
+  <data name="M364" xml:space="preserve">
+    <value>Password must be at least 8 characters</value>
+  </data>
+  <data name="M365" xml:space="preserve">
+    <value>The two passwords do not match</value>
+  </data>
+  <data name="M366" xml:space="preserve">
+    <value>Account locked, {0} minutes remaining</value>
+  </data>
+  <data name="M367" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="M368" xml:space="preserve">
+    <value>Must change password on first login</value>
+  </data>
+  <data name="M369" xml:space="preserve">
+    <value>Password strength: weak</value>
+  </data>
+  <data name="M370" xml:space="preserve">
+    <value>Password strength: medium</value>
+  </data>
+  <data name="M371" xml:space="preserve">
+    <value>Password strength: strong</value>
+  </data>
+  <data name="M372" xml:space="preserve">
+    <value>Security reminders</value>
+  </data>
+  <data name="M373" xml:space="preserve">
+    <value>Default password</value>
+  </data>
+  <data name="M374" xml:space="preserve">
+    <value>Passwordless account</value>
+  </data>
+  <data name="M375" xml:space="preserve">
+    <value>Never logged in</value>
+  </data>
+  <data name="M376" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="M377" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="M378" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="M379" xml:space="preserve">
+    <value>Search username / display name</value>
+  </data>
+  <data name="M380" xml:space="preserve">
+    <value>No matching users</value>
   </data>
   <data name="M332" xml:space="preserve">
     <value>Operator</value>
@@ -4210,16 +4273,16 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Import defects from CSV (append or replace current device defects)</value>
   </data>
   <data name="K609" xml:space="preserve">
-    <value>Export Count Alarms CSV</value>
+    <value>Export Counter Alarms CSV</value>
   </data>
   <data name="K610" xml:space="preserve">
-    <value>Export all count alarms of current device to CSV (editable in Excel)</value>
+    <value>Export all counter alarms of current device to CSV (editable in Excel)</value>
   </data>
   <data name="K611" xml:space="preserve">
-    <value>Import Count Alarms CSV</value>
+    <value>Import Counter Alarms CSV</value>
   </data>
   <data name="K612" xml:space="preserve">
-    <value>Import count alarms from CSV (append or replace current device count alarms)</value>
+    <value>Import counter alarms from CSV (append or replace current device counter alarms)</value>
   </data>
   <data name="Nav_Audit" xml:space="preserve">
     <value>Audit Log</value>
@@ -4972,7 +5035,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Defect</value>
   </data>
   <data name="Web_Mo_TmCountAlarm" xml:space="preserve">
-    <value>Count Alarm</value>
+    <value>Counter Alarm</value>
   </data>
   <data name="Web_Mo_TmHistory" xml:space="preserve">
     <value>History Write</value>
@@ -5191,7 +5254,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>{0} defects</value>
   </data>
   <data name="Web_Dv_CountAlarmCount" xml:space="preserve">
-    <value>{0} count alarms</value>
+    <value>{0} counter alarms</value>
   </data>
   <data name="Web_Dv_Detail" xml:space="preserve">
     <value>{0} Config Details</value>
@@ -5221,7 +5284,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Defect Config</value>
   </data>
   <data name="Web_Dv_CountAlarmConfig" xml:space="preserve">
-    <value>Count Alarm Config</value>
+    <value>Counter Alarm Config</value>
   </data>
   <data name="Web_Dv_None" xml:space="preserve">
     <value>None</value>
@@ -5399,6 +5462,36 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="K696" xml:space="preserve">
     <value>Cancel Apply</value>
+  </data>
+  <data name="K697" xml:space="preserve">
+    <value>Search recipe name / parameter</value>
+  </data>
+  <data name="K698" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="K699" xml:space="preserve">
+    <value>{0:N0} params</value>
+  </data>
+  <data name="K700" xml:space="preserve">
+    <value>No matching recipes. Adjust keywords or machine-type filters.</value>
+  </data>
+  <data name="K701" xml:space="preserve">
+    <value>Updated {0:MM-dd HH:mm}</value>
+  </data>
+  <data name="K702" xml:space="preserve">
+    <value>Recipe machine type {0} does not match device type {1}. Apply anyway?</value>
+  </data>
+  <data name="K703" xml:space="preserve">
+    <value>Apply timed out (90s), waiting aborted</value>
+  </data>
+  <data name="K704" xml:space="preserve">
+    <value>Validation</value>
+  </data>
+  <data name="K705" xml:space="preserve">
+    <value>Adjust the width of recipe list and editor</value>
+  </data>
+  <data name="K706" xml:space="preserve">
+    <value>Recipe Editor</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>

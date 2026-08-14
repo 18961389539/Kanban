@@ -826,26 +826,30 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     {
         if (IsExporting) return; // 防重复点击
 
-        var (fileName, csv) = SelectedTabIndex switch
-        {
-            0 => ($"产量_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv", ProductionQuery.BuildCsv(FromDate, ToDate)),
-            1 => ($"状态时长_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv", StatusQuery.BuildCsv()),
-            2 => ($"报警_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv", AlarmQuery.BuildCsv()),
-            3 => ($"OEE_{FromDate:yyyyMMdd}_{ToDate:yyyyMMdd}.csv", OeeQuery.BuildCsv(SelectedDeviceId)),
-            _ => (null, null as string)
-        };
-
-        if (fileName == null || string.IsNullOrEmpty(csv))
-        {
-            _dialog.NotifyInfo(Strings.M011);
-            Log.Debug("导出取消：Tab={TabIndex}，无数据", SelectedTabIndex);
-            return;
-        }
-
+        // IsExporting 前置（审查修复 2026-08-13）：原置位于 CSV 构建之后，构建期间的
+        // 双击窗口可并发触发两次构建；且 BuildCsv 在 UI 线程同步执行，10 万行大表卡 UI 数秒
         IsExporting = true;
         ExportCommand.NotifyCanExecuteChanged();
         try
         {
+            var tabIndex = SelectedTabIndex;
+            var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
+            var (fileName, csv) = await Task.Run(() => tabIndex switch
+            {
+                0 => ($"产量_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", ProductionQuery.BuildCsv(from, to)),
+                1 => ($"状态时长_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", StatusQuery.BuildCsv()),
+                2 => ($"报警_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", AlarmQuery.BuildCsv()),
+                3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
+                _ => (null, null as string)
+            }).ConfigureAwait(true);
+
+            if (fileName == null || string.IsNullOrEmpty(csv))
+            {
+                _dialog.NotifyInfo(Strings.M011);
+                Log.Debug("导出取消：Tab={TabIndex}，无数据", tabIndex);
+                return;
+            }
+
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
             var exportDir = Path.Combine(AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");
             Directory.CreateDirectory(exportDir);
@@ -857,7 +861,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Log.Information("已导出 {Count} 条 → {Path}", TotalCount, fullPath);
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"{TotalCount} 条，Tab={SelectedTabIndex}");
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"{TotalCount} 条，Tab={tabIndex}");
             _dialog.NotifySuccess(string.Format(Strings.F104, TotalCount, fullPath));
         }
         catch (Exception ex)

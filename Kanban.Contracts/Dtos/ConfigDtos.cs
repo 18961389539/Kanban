@@ -24,8 +24,8 @@ public sealed record DefectConfigDto
     public required DefectCategory Category { get; init; }
 }
 
-/// <summary>计数报警配置 DTO（对齐 MainAPP.Models.CountAlarm 的序列化字段）</summary>
-public sealed record CountAlarmConfigDto
+/// <summary>计数报警配置 DTO（对齐 MainAPP.Models.CounterAlarm 的序列化字段）</summary>
+public sealed record CounterAlarmConfigDto
 {
     public required string Id { get; init; }
     public required string DeviceId { get; init; }
@@ -57,7 +57,7 @@ public sealed record DeviceConfigDto
     public int TargetCycle { get; init; }
     public IReadOnlyList<AlarmConfigDto> Alarms { get; init; } = [];
     public IReadOnlyList<DefectConfigDto> Defects { get; init; } = [];
-    public IReadOnlyList<CountAlarmConfigDto> CountAlarms { get; init; } = [];
+    public IReadOnlyList<CounterAlarmConfigDto> CounterAlarms { get; init; } = [];
 }
 
 /// <summary>

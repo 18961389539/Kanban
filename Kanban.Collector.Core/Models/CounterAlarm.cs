@@ -6,9 +6,9 @@ namespace Kanban.Core.Models;
 
 /// <summary>
 /// 计数报警：从 PLC 读取数值，超过阈值时触发报警。
-/// 区别于 Alarm（M 位边沿检测），CountAlarm 基于数值阈值判断。
+/// 区别于 Alarm（M 位边沿检测），CounterAlarm 基于数值阈值判断。
 /// </summary>
-public partial class CountAlarm : ObservableObject
+public partial class CounterAlarm : ObservableObject
 {
     /// <summary>唯一标识</summary>
     [ObservableProperty]

@@ -284,15 +284,20 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
         DateTime value,
         ProductionReviewBucketSize bucketSize)
     {
+        if (buckets.Count == 0) return -1;
         var aligned = AlignToBucket(value, bucketSize);
-        for (var index = 0; index < buckets.Count; index++)
+        // 二分查找（审查修复 2026-08-13）：原两轮线性扫描 O(n)——2 天 5 分钟桶（577 桶）× 万级日志
+        // ≈ 千万次比较。桶虽等距对齐，但 Day 桶跨夏令时会出现 23/25 小时桶，算术秒差索引会错位，
+        // 二分保持 O(log n) 且 DST 安全。语义不变：精确命中优先，否则返回首个 >= aligned 的桶（插入点）。
+        int lo = 0, hi = buckets.Count - 1;
+        while (lo <= hi)
         {
-            if (buckets[index] == aligned) return index;
+            var mid = (lo + hi) / 2;
+            var cmp = buckets[mid].CompareTo(aligned);
+            if (cmp == 0) return mid;
+            if (cmp < 0) lo = mid + 1;
+            else hi = mid - 1;
         }
-        for (var index = 0; index < buckets.Count; index++)
-        {
-            if (buckets[index] >= aligned) return index;
-        }
-        return -1;
+        return lo < buckets.Count ? lo : -1;
     }
 }

@@ -158,7 +158,7 @@
 | `BatchHistoryQueryRequest/Response` | 批量历史查询（≤32 子查询一次往返） | `Queries` / `Results` 按序一一对应 |
 | `CollectorSettingsDto` | 采集设置热同步（Remote） | `PollingIntervalMs/PlcBrand/PlcIpAddress/...` + `Siemens?/ModbusTcp?/Omron?/Shifts?`（可空=部分更新） |
 | `CollectorDiagnosticsDto` | Collector 诊断快照 | 采集循环/历史写入/连接状态三类计数与耗时 |
-| `ConfigDtos`（DeviceConfigDto/AlarmConfigDto/DefectConfigDto/CountAlarmConfigDto/WorkOrderDto） | 配置与工单管理域 DTO | 见名知义；`DeviceConfigDto` 不含运行时状态 |
+| `ConfigDtos`（DeviceConfigDto/AlarmConfigDto/DefectConfigDto/CounterAlarmConfigDto/WorkOrderDto） | 配置与工单管理域 DTO | 见名知义；`DeviceConfigDto` 不含运行时状态 |
 | `HistoryErrorCode` | 历史查询错误码 | `None=0` / `QueryFailed=1`（客户端按码渲染本地化文案） |
 
 #### 3.1.2 枚举（`Enums/`）
@@ -213,7 +213,7 @@
 | `HslKeyenceMcDriver` | 基恩士（`KeyenceMcNet`） |
 | `PlcConnectionManager` | 连接状态机：`EnsureConnected`（指数退避重连 1s→30s）、`MarkDisconnected(DisconnectionReason)`、`IsConnected/ConnectionStatus/TotalDisconnectCount`；双锁设计 |
 | `PlcDataAcquisitionService` | 采集总调度（facade）：`PollingLoopAsync` 轮询（约 200ms）驱动班次检测/重连/产量读取/OEE 累计/历史快照写入；`Start/StopAsync/ResetShift/GetDiagnosticsSnapshot`；内部装配 `PlcScanPipeline/DeviceStatusTracker/BaselineResetCoordinator/ShiftContext` |
-| `PlcScanPipeline` | 扫描子系统：`PrepareDWordBatchValues`（批量读+轮内缓存）、`ScanAlarms/ScanDefects/ScanCountAlarms`、`ClearAlarmsOnDisconnect` |
+| `PlcScanPipeline` | 扫描子系统：`PrepareDWordBatchValues`（批量读+轮内缓存）、`ScanAlarms/ScanDefects/ScanCounterAlarms`、`ClearAlarmsOnDisconnect` |
 | `PlcBatchReadPlanner` | 静态批量读规划：离散 DWord 地址聚合成连续读块（空洞合并 `maxGapSlots`、长度上限），配套 `PlcBatchReadPlanCache` |
 | `SharedPlcDriverRouter` | 共享驱动路由器：全局唯一活动 PLC 连接，品牌变更时经 `ISharedPlcDriverFactory` 替换驱动；实现 `IPlcDriver` 委托转发 |
 | `DeviceAdapter` / `PlcDeviceAdapter` / `DeviceAdapterResolver` | 协议适配层：先经 Codec 解析校验地址类型/读写权限，再转传输地址调 `IPlcDriver`；`Resolve(device)` 按运行时品牌解析 |
@@ -253,7 +253,7 @@
 
 | 模型 | 要点 |
 |---|---|
-| `Device` | 设备配置（ObservableObject，持久化）：产量/状态/复位/配方地址 + `Alarms/Defects/CountAlarms` 子集合 |
+| `Device` | 设备配置（ObservableObject，持久化）：产量/状态/复位/配方地址 + `Alarms/Defects/CounterAlarms` 子集合 |
 | `DeviceRuntime` | 运行时状态（纯内存）：PLC 原始值 + 班次会话累计 + OEE 计算属性（**全部委托 `OeeCalculator`**）；`ResetShift/UpdateFromCollector` |
 | `DeviceCapabilities` | record：`For(device)` 从配置派生（SupportsAlarmRead/WriteCommand/...），不持久化 |
 | `DeviceStatus` / `DeviceStatusWord` | `Unknown=0/Running=1/Alarm=2/Paused=3`；状态字同义枚举（Offline/Running/Alarm/Standby） |
@@ -261,7 +261,7 @@
 | `PLCConfig` | PLC 连接配置：根级 Brand/IP/Port/Timeout + 各品牌嵌套选项；`GetDefaultPort`、`GetConfigurationSignature`、兼容旧字段的 JSON Converter |
 | `Alarm` | 报警项：`Id = DeviceId_PlcAddress` 确定性生成；运行时 `StartTime/Duration` |
 | `Defect` | 缺陷项：`Severity/Category` + 运行时 `Count` |
-| `CountAlarm` | 计数报警：`IsTriggered => MaxValue>0 && CurrentValue>MaxValue`（数值阈值，区别于 M 位边沿） |
+| `CounterAlarm` | 计数报警：`IsTriggered => MaxValue>0 && CurrentValue>MaxValue`（数值阈值，区别于 M 位边沿） |
 | `User` / `UserRole` | 用户与角色（admin/gly、engineer/gcs、operator） |
 | `AppSettings` | 应用设置（JSON 原子写 + .bak/.corrupt 备份），构造默认中文语言 |
 
@@ -356,7 +356,7 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 | `ChartService` | 静态 OxyPlot 图表构建（统一深色主题，中文 "Microsoft YaHei" 字体） |
 | `DeviceConfigValidator` | 静态校验：地址完整性/名称唯一/报警缺陷阈值/跨设备地址冲突 → `List<DeviceConfigError>` |
 | `SampleDeviceBuilder` | DEBUG 构建"生成虚拟设备"：20 台样本 + 地址段分配 + `AssertNoDuplicateAddresses` |
-| `DevicePlcCommandHandler` | 设备 PLC 命令：`WriteRecipeAsync/ResetOeeAsync/ReadPlcValueAsync/ResetCountAlarmAsync`（统一返回 `PlcOpResult`） |
+| `DevicePlcCommandHandler` | 设备 PLC 命令：`WriteRecipeAsync/ResetOeeAsync/ReadPlcValueAsync/ResetCounterAlarmAsync`（统一返回 `PlcOpResult`） |
 | `Localization` | 语言文化应用（zh-CN/en-US/ja-JP，`CaptureCulture` 防运行期混合） |
 | `INavigationService` | 页面导航抽象（`Navigate(pageKey)`） |
 
@@ -434,7 +434,7 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 - 职责：基于 HslCommunication `MelsecMcServer`（三菱 MC 协议）托管虚拟 PLC，按 `devices.json` 地址为每台设备运行状态机，模拟真实生产（节拍产出、NG/OK、报警、缺陷、停机、断线），供联调/压力测试/演示/故障演练
 - 模式：`host`（默认，内部 port+1 + `TcpRelay` 代理公开端口 4999，代理断线仿真不触发 Hsl 未处理异常崩溃）；`--client IP PORT`（连接外部虚拟 PLC）
 - 命令行：`--speed N`（0.1-100）、`--scenario`（normal/stress/demo/fault/counteralarm/disconnect）、`--fresh`、`--noauto`；运行时命令 start/stop/pause/alarm/reset/read/scenario/reload 等；单实例互斥
-- 关键类：`DeviceSimulator`（单设备状态机 `Tick`，节拍漂移/NG 分级/随机报警/缺料停机/操作员行为/通信抖动等）；`ScenarioConfig`（约 40 参数 + 6 预设场景）；`DeviceConfig`（PLC 地址模型 + CountAlarmKind）；`SimLog`（控制台 + sim_log.txt）
+- 关键类：`DeviceSimulator`（单设备状态机 `Tick`，节拍漂移/NG 分级/随机报警/缺料停机/操作员行为/通信抖动等）；`ScenarioConfig`（约 40 参数 + 6 预设场景）；`DeviceConfig`（PLC 地址模型 + CounterAlarmKind）；`SimLog`（控制台 + sim_log.txt）
 - 辅助：`check_db.csx`（统计 4 库行数）；默认 3 台设备（注塑机1/2、组装机1），默认 10 倍速
 
 ---
@@ -471,7 +471,7 @@ PlcDataAcquisitionService (200ms 轮询)
 | 采集调度 | `Kanban.Collector.Core/Services/PlcDataAcquisitionService.cs`、`PlcScanPipeline.cs`、`CollectorWorker.cs`（Collector） |
 | PLC 通信 | `Kanban.Collector.Core/Services/IPlcDriver.cs`、`HslNetworkPlcDriver.cs`、`HslPlcDriver.cs`、`HslSiemensPlcDriver.cs`、`HslModbusTcpDriver.cs`、`HslOmronFinsDriver.cs`、`HslKeyenceMcDriver.cs`、`PlcConnectionManager.cs`、`SharedPlcDriverRouter.cs` |
 | 地址处理 | `PlcAddressParser.cs`、`PlcAddressCodecs.cs`、`KeyenceAddressCodec.cs`、`OmronAddressCodec.cs`、`PlcBatchReadPlanner.cs`、`PlcBatchReadPlanCache.cs` |
-| 设备模型 | `Kanban.Collector.Core/Models/Device.cs`、`DeviceRuntime.cs`、`DeviceCapabilities.cs`、`PLCConfig.cs`、`ShiftConfig.cs`、`Alarm.cs`、`Defect.cs`、`CountAlarm.cs` |
+| 设备模型 | `Kanban.Collector.Core/Models/Device.cs`、`DeviceRuntime.cs`、`DeviceCapabilities.cs`、`PLCConfig.cs`、`ShiftConfig.cs`、`Alarm.cs`、`Defect.cs`、`CounterAlarm.cs` |
 | 历史存储 | `Kanban.Collector.Core/Services/HistoryService.cs`、`AlarmHistoryStore.cs`、`DefectHistoryStore.cs`、`ProductionHistoryStore.cs`、`ProductionHistoryWriter.cs`、`StatusTransitionHistoryStore.cs` |
 | 数据库 | `Kanban.Collector.Core/Data/DatabaseProvider.cs`（含基类）、`*DbContext.cs` ×6、`KanbanDbContextFactory.cs`、`DeviceRepository.cs`、`WorkOrderRepository.cs` |
 | 契约/单源 | `Kanban.Contracts/Dtos/*.cs`、`KanbanHubPaths.cs`、`Metrics/SnapshotMetrics.cs`、`Formatting/DurationFormatter.cs` |

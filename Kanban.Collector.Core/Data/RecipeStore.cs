@@ -121,6 +121,10 @@ public sealed class RecipeStore : IRecipeStore
                             continue;
                         }
                         r.MachineType = (r.MachineType ?? "").Trim();
+                        // 历史数据修复：早期版本/手工构造的配方未写时间戳（0001-01-01），
+                        // 加载时回填当前时间，避免 UI"更新于"显示 01-01 00:00（下次保存时落盘修正）。
+                        if (r.CreatedAt == default) r.CreatedAt = DateTime.Now;
+                        if (r.UpdatedAt == default) r.UpdatedAt = DateTime.Now;
                         Recipes.Add(r);
                         _recipeMap[r.Id] = r;
                     }
@@ -179,6 +183,7 @@ public sealed class RecipeStore : IRecipeStore
     public Recipe Upsert(Recipe recipe)
     {
         recipe.UpdatedAt = DateTime.Now;
+        if (recipe.CreatedAt == default) recipe.CreatedAt = DateTime.Now; // 导入/手工构造数据兜底
         recipe.MachineType = (recipe.MachineType ?? "").Trim();
         lock (_collectionLock)
         {

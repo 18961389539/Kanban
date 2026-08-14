@@ -19,7 +19,7 @@ public class DeviceConfig
     // ── 子项 ──
     public List<AlarmConfig> Alarms { get; set; } = new();
     public List<DefectConfig> Defects { get; set; } = new();
-    public List<CountAlarmConfig> CountAlarms { get; set; } = new();
+    public List<CounterAlarmConfig> CounterAlarms { get; set; } = new();
 }
 
 public class AlarmConfig
@@ -35,7 +35,7 @@ public class DefectConfig
     public string PlcAddress { get; set; } = "";
 }
 
-public class CountAlarmConfig
+public class CounterAlarmConfig
 {
     public string Name { get; set; } = "";
     public string PlcAddress { get; set; } = "";
@@ -45,11 +45,11 @@ public class CountAlarmConfig
     /// 计数报警类别。未指定时按名称推断（含"停机"→Stop，否则→ConsecutiveNg），
     /// 保持对旧 devices.json 的兼容。
     /// </summary>
-    public CountAlarmKind Kind { get; set; } = CountAlarmKind.Auto;
+    public CounterAlarmKind Kind { get; set; } = CounterAlarmKind.Auto;
 }
 
 /// <summary>计数报警类别：停机次数 / 连续不良。</summary>
-public enum CountAlarmKind
+public enum CounterAlarmKind
 {
     /// <summary>按名称推断：含"停机"视为 Stop，否则视为 ConsecutiveNg。</summary>
     Auto = 0,

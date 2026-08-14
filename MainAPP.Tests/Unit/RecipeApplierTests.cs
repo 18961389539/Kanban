@@ -167,9 +167,10 @@ public class RecipeApplierTests
     }
 
     [Fact]
-    public void Apply_ReadBackMismatch_StringItem_RollsBackBackupValue()
+    public void Apply_ReadBackMismatch_StringItem_IsNotRolledBack()
     {
-        // 回归：String 项备份值 ≠ 新值时，回滚应写回备份字符串而非配方新值。
+        // 回归（审查修复）：String 备份按目标值长度读回，PLC 现值更长时会被截断——
+        // 回滚写回截断值会覆盖真实数据，因此 String 项跳过回滚并在失败消息中明示。
         var (applier, adapter) = CreateApplier();
         var recipe = new Recipe
         {
@@ -190,9 +191,9 @@ public class RecipeApplierTests
 
         Assert.False(result.Success);
         Assert.Contains("校验不一致", result.Message);
-        adapter.Received(1).WriteString("D200", "NEW-BATCH");  // 下发
-        adapter.Received(1).WriteString("D200", "OLD-BATCH");  // 回滚写回备份值
-        adapter.Received(2).WriteInt32("D108", 50);            // Int32 项下发 1 次 + 回滚 1 次（遍历全部备份）
+        Assert.Contains("字符串参数未自动回滚", result.Message); // 跳过回滚的明示提示
+        adapter.Received(1).WriteString("D200", "NEW-BATCH");  // String 仅下发，不回滚
+        adapter.Received(2).WriteInt32("D108", 50);            // Int32 项下发 1 次 + 回滚 1 次（回滚仅跳过 String）
     }
 
     [Fact]

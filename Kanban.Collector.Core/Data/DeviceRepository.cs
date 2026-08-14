@@ -126,7 +126,7 @@ public class DeviceRepository : IDeviceRepository
                 {
                     foreach (var a in device.Alarms) a.DeviceId = device.Id;
                     foreach (var d in device.Defects) d.DeviceId = device.Id;
-                    foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                    foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
                 }
                 remoteSnapshot = Devices.ToList();
             }
@@ -216,7 +216,7 @@ public class DeviceRepository : IDeviceRepository
                 {
                     foreach (var a in device.Alarms) a.DeviceId = device.Id;
                     foreach (var d in device.Defects) d.DeviceId = device.Id;
-                    foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                    foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
                 }
                 remoteSnapshot = Devices.ToList();
             }
@@ -237,7 +237,7 @@ public class DeviceRepository : IDeviceRepository
             {
                 foreach (var a in device.Alarms) a.DeviceId = device.Id;
                 foreach (var d in device.Defects) d.DeviceId = device.Id;
-                foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
             }
             snapshot = Devices.ToList();
         }
@@ -261,7 +261,7 @@ public class DeviceRepository : IDeviceRepository
             {
                 foreach (var a in device.Alarms) a.DeviceId = device.Id;
                 foreach (var d in device.Defects) d.DeviceId = device.Id;
-                foreach (var c in device.CountAlarms) c.DeviceId = device.Id;
+                foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
             }
             snapshot = Devices.ToList();
         }

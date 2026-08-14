@@ -25,7 +25,7 @@ internal sealed class AcquisitionDiagnosticsStore
     private long _dwordReadMilliseconds;
     private long _alarmReadMilliseconds;
     private long _defectReadMilliseconds;
-    private long _countAlarmReadMilliseconds;
+    private long _counterAlarmReadMilliseconds;
     private long _historyWriteMilliseconds;
     private DateTime? _lastSuccessfulAt;
     private HashSet<string> _lastSuccessfulDeviceIds = [];
@@ -63,7 +63,7 @@ internal sealed class AcquisitionDiagnosticsStore
                 DWordReadMilliseconds = _dwordReadMilliseconds,
                 AlarmReadMilliseconds = _alarmReadMilliseconds,
                 DefectReadMilliseconds = _defectReadMilliseconds,
-                CountAlarmReadMilliseconds = _countAlarmReadMilliseconds,
+                CounterAlarmReadMilliseconds = _counterAlarmReadMilliseconds,
                 HistoryWriteMilliseconds = _historyWriteMilliseconds,
                 LastSuccessfulDeviceIds = _lastSuccessfulDeviceIds.ToFrozenSet(),
                 LastCycleSucceeded = _lastCycleSucceeded,
@@ -124,7 +124,7 @@ internal sealed class AcquisitionDiagnosticsStore
         long dwordReadMilliseconds,
         long alarmReadMilliseconds,
         long defectReadMilliseconds,
-        long countAlarmReadMilliseconds,
+        long counterAlarmReadMilliseconds,
         long historyWriteMilliseconds)
     {
         lock (_sync)
@@ -132,7 +132,7 @@ internal sealed class AcquisitionDiagnosticsStore
             _dwordReadMilliseconds = dwordReadMilliseconds;
             _alarmReadMilliseconds = alarmReadMilliseconds;
             _defectReadMilliseconds = defectReadMilliseconds;
-            _countAlarmReadMilliseconds = countAlarmReadMilliseconds;
+            _counterAlarmReadMilliseconds = counterAlarmReadMilliseconds;
             _historyWriteMilliseconds = historyWriteMilliseconds;
         }
     }

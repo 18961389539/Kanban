@@ -29,6 +29,9 @@ public partial class LoginViewModel : ObservableObject
     /// <summary>登录成功时设为 true，供窗口关闭逻辑判断。</summary>
     public bool LoginSucceeded { get; private set; }
 
+    /// <summary>登录成功但账号要求首次改密（MustChangePassword）——登录窗口在关闭前弹出改密对话框。</summary>
+    public bool NeedsPasswordChange { get; private set; }
+
     /// <summary>可选用户名列表，绑定到下拉框供选择。</summary>
     public ObservableCollection<User> AvailableUsers { get; } = new();
 
@@ -80,13 +83,38 @@ public partial class LoginViewModel : ObservableObject
         if (user is null)
         {
             AuditLog.Record("Auth.Login", "User", SelectedUser.Username, succeeded: false, detail: Strings.M_LoginFailed);
-            ErrorMessage = Strings.M319;
+            // 失败原因区分：账号锁定 vs 密码错误（锁定给出剩余时间）
+            var remaining = _userStore.GetLockRemaining(SelectedUser.Username);
+            ErrorMessage = remaining is { } r
+                ? string.Format(Strings.M366, Math.Ceiling(r.TotalMinutes))
+                : Strings.M319;
             return;
         }
 
         _session.Login(user);
         AuditLog.Record("Auth.Login", "User", user.Username, succeeded: true);
         LoginSucceeded = true;
+        NeedsPasswordChange = user.MustChangePassword;
+    }
+
+    /// <summary>完成首次强制改密：重置密码并清除标记（由登录窗口在改密对话框成功后调用）。</summary>
+    public void CompletePasswordChange(string newPassword)
+    {
+        if (NeedsPasswordChange && _session.CurrentUser is { } user)
+        {
+            _userStore.ResetPassword(user.Username, newPassword);
+            user.MustChangePassword = false;
+            _userStore.Save();
+            AuditLog.Record("Auth.PasswordChange", "User", user.Username);
+        }
+    }
+
+    /// <summary>用户拒绝强制改密：退出本次登录（登录窗口据此关闭对话框）。</summary>
+    public void LogoutAfterPasswordChangeDeclined()
+    {
+        _session.Logout();
+        LoginSucceeded = false;
+        NeedsPasswordChange = false;
     }
 
     private bool CanLogin() => SelectedUser is not null;

@@ -171,53 +171,61 @@ public partial class AuditQueryViewModel : ObservableObject
 
     /// <summary>
     /// 按当前过滤条件拉取全部审计记录（归档用，最多 10000 条）。
-    /// 命中上限时返回 null 表示「归档不完整」，由调用方明确提示用户，禁止无感知的截断归档。
+    /// 后台线程安全：命中上限时返回 Truncated=true，由调用方在 UI 线程提示，禁止无感知的截断归档。
     /// </summary>
-    private List<AuditEntry>? QueryAllForExport()
+    private (List<AuditEntry>? Items, bool Truncated, int Total) QueryAllForExportCore()
     {
         var (items, total) = _auditService.QueryAll(
             From, To, OperatorFilter, ActionFilter, null, CurrentSucceededFilter);
-        if (total <= items.Count) return items;
-
-        Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, items.Count);
-        _dialog.NotifyWarning(string.Format(Strings.K635, total, items.Count));
-        return null;
+        if (total <= items.Count) return (items, false, total);
+        return (null, true, total);
     }
 
     /// <summary>导出当前过滤结果为 CSV（表格视角，含前后值 JSON 列）。</summary>
     [RelayCommand]
     private async Task ExportCsvAsync()
     {
-        var items = QueryAllForExport();
-        if (items is null || items.Count == 0)
-        {
-            if (items is null) return; // 截断提示已由 QueryAllForExport 弹出
-            _dialog.NotifyInfo(Strings.K634);
-            return;
-        }
-
         var path = _dialog.ShowSaveFileDialog(
             Strings.K633,
             $"audit_{DateTime.Now:yyyyMMddHHmm}.csv",
             Strings.M310);
         if (string.IsNullOrWhiteSpace(path)) return;
 
+        IsLoading = true;
         try
         {
-            var rows = items.Select(e => new AuditCsvRow
+            // 后台执行（审查修复 2026-08-13）：此前 QueryAllForExport（同步 EF 全量 10000 条）
+            // 与 CSV 构建都在 UI 线程，大审计库导出瞬间卡死 UI；IsLoading 接线一并修复
+            var (items, truncated, total) = await Task.Run(QueryAllForExportCore);
+            if (truncated)
             {
-                Timestamp = e.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
-                // 用户可控文本（操作人/对象标识/详情）做公式注入防护
-                Operator = HistoryQueryHelper.SanitizeCsvCell(e.Operator),
-                Action = HistoryQueryHelper.SanitizeCsvCell(e.Action),
-                TargetType = HistoryQueryHelper.SanitizeCsvCell(e.TargetType),
-                TargetId = HistoryQueryHelper.SanitizeCsvCell(e.TargetId),
-                Succeeded = e.Succeeded ? "Success" : "Failed",
-                Detail = HistoryQueryHelper.SanitizeCsvCell(e.Detail),
-                Before = HistoryQueryHelper.SanitizeCsvCell(e.BeforeJson),
-                After = HistoryQueryHelper.SanitizeCsvCell(e.AfterJson),
-            }).ToList();
-            var csv = HistoryQueryHelper.BuildCsv(rows);
+                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, total);
+                _dialog.NotifyWarning(string.Format(Strings.K635, total, total));
+                return;
+            }
+            if (items is null || items.Count == 0)
+            {
+                _dialog.NotifyInfo(Strings.K634);
+                return;
+            }
+
+            var csv = await Task.Run(() =>
+            {
+                var rows = items.Select(e => new AuditCsvRow
+                {
+                    Timestamp = e.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
+                    // 用户可控文本（操作人/对象标识/详情）做公式注入防护
+                    Operator = HistoryQueryHelper.SanitizeCsvCell(e.Operator),
+                    Action = HistoryQueryHelper.SanitizeCsvCell(e.Action),
+                    TargetType = HistoryQueryHelper.SanitizeCsvCell(e.TargetType),
+                    TargetId = HistoryQueryHelper.SanitizeCsvCell(e.TargetId),
+                    Succeeded = e.Succeeded ? "Success" : "Failed",
+                    Detail = HistoryQueryHelper.SanitizeCsvCell(e.Detail),
+                    Before = HistoryQueryHelper.SanitizeCsvCell(e.BeforeJson),
+                    After = HistoryQueryHelper.SanitizeCsvCell(e.AfterJson),
+                }).ToList();
+                return HistoryQueryHelper.BuildCsv(rows);
+            });
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
             AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: $"审计归档 {items.Count} 条");
             _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
@@ -227,30 +235,41 @@ public partial class AuditQueryViewModel : ObservableObject
             Log.Error(ex, "审计 CSV 导出失败");
             _dialog.NotifyError(string.Format(Strings.K632, ex.Message));
         }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     /// <summary>导出当前过滤结果为 JSON（完整归档，保留结构化前后值，供后续导入/审计系统消费）。</summary>
     [RelayCommand]
     private async Task ExportJsonAsync()
     {
-        var items = QueryAllForExport();
-        if (items is null || items.Count == 0)
-        {
-            if (items is null) return; // 截断提示已由 QueryAllForExport 弹出
-            _dialog.NotifyInfo(Strings.K634);
-            return;
-        }
-
         var path = _dialog.ShowSaveFileDialog(
             Strings.K633,
             $"audit_{DateTime.Now:yyyyMMddHHmm}.json",
             Strings.K695);
         if (string.IsNullOrWhiteSpace(path)) return;
 
+        IsLoading = true;
         try
         {
-            var json = JsonSerializer.Serialize(items,
-                new JsonSerializerOptions { WriteIndented = true });
+            // 后台执行（审查修复 2026-08-13）：此前 10000 条大 JSON 序列化在 UI 线程
+            var (items, truncated, total) = await Task.Run(QueryAllForExportCore);
+            if (truncated)
+            {
+                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, total);
+                _dialog.NotifyWarning(string.Format(Strings.K635, total, total));
+                return;
+            }
+            if (items is null || items.Count == 0)
+            {
+                _dialog.NotifyInfo(Strings.K634);
+                return;
+            }
+
+            var json = await Task.Run(() => JsonSerializer.Serialize(items,
+                new JsonSerializerOptions { WriteIndented = true }));
             await Task.Run(() => File.WriteAllText(path, json, new UTF8Encoding(true)));
             AuditLog.Record("Export.Json", "Export", Path.GetFileName(path), detail: $"审计归档 {items.Count} 条");
             _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
@@ -259,6 +278,10 @@ public partial class AuditQueryViewModel : ObservableObject
         {
             Log.Error(ex, "审计 JSON 导出失败");
             _dialog.NotifyError(string.Format(Strings.K632, ex.Message));
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -275,41 +298,72 @@ public partial class AuditQueryViewModel : ObservableObject
         [Name("After")] public string? After { get; init; }
     }
 
+    /// <summary>查询版本号（审查修复 2026-08-13）：后台查询返回时校验，旧查询结果直接丢弃防覆盖新查询。</summary>
+    private int _queryVersion;
+
+    /// <summary>封送回 UI 线程（Dispatcher 缺失/关闭时直接执行，兼容测试环境）。</summary>
+    private void Dispatch(Action action)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
+        {
+            action();
+            return;
+        }
+        dispatcher.BeginInvoke(action);
+    }
+
     private void RunQuery()
     {
+        // 后台执行（审查修复 2026-08-13）：审计查询是同步 EF/SQLite，此前在 UI 线程执行，
+        // 大审计库翻页/查询可卡死 UI；_isLoading 声明后从未接线一并修复
         QueryError = null;
-        try
+        IsLoading = true;
+        var requestVersion = ++_queryVersion;
+        var from = From; var to = To;
+        var op = OperatorFilter; var action = ActionFilter; var succeeded = CurrentSucceededFilter;
+        var page = Page; var pageSize = PageSize;
+        Task.Run(() =>
         {
-            var (items, total) = _auditService.QueryPaged(
-                From, To,
-                OperatorFilter, ActionFilter, null, CurrentSucceededFilter,
-                Page, PageSize);
+            try
+            {
+                var (items, total) = _auditService.QueryPaged(from, to, op, action, null, succeeded, page, pageSize);
+                Dispatch(() =>
+                {
+                    if (requestVersion != _queryVersion) return;
+                    Entries.Clear();
+                    foreach (var item in items)
+                        Entries.Add(item);
 
-            Entries.Clear();
-            foreach (var item in items)
-                Entries.Add(item);
+                    PageSucceeded = items.Count(item => item.Succeeded);
+                    PageFailed = items.Count - PageSucceeded;
+                    OnPropertyChanged(nameof(PageSuccessRate));
 
-            PageSucceeded = items.Count(item => item.Succeeded);
-            PageFailed = items.Count - PageSucceeded;
-            OnPropertyChanged(nameof(PageSuccessRate));
-
-            Total = total;
-            TotalPages = Math.Max(1, (total + PageSize - 1) / PageSize);
-            OnPropertyChanged(nameof(HasPreviousPage));
-            OnPropertyChanged(nameof(HasNextPage));
-            OnPropertyChanged(nameof(PageSummary));
-            PreviousPageCommand.NotifyCanExecuteChanged();
-            NextPageCommand.NotifyCanExecuteChanged();
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "审计查询失败");
-            QueryError = ex.Message;
-            Total = 0;
-            TotalPages = 1;
-            OnPropertyChanged(nameof(HasPreviousPage));
-            OnPropertyChanged(nameof(HasNextPage));
-            OnPropertyChanged(nameof(PageSummary));
-        }
+                    Total = total;
+                    TotalPages = Math.Max(1, (total + pageSize - 1) / pageSize);
+                    OnPropertyChanged(nameof(HasPreviousPage));
+                    OnPropertyChanged(nameof(HasNextPage));
+                    OnPropertyChanged(nameof(PageSummary));
+                    PreviousPageCommand.NotifyCanExecuteChanged();
+                    NextPageCommand.NotifyCanExecuteChanged();
+                    IsLoading = false;
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatch(() =>
+                {
+                    if (requestVersion != _queryVersion) return;
+                    Log.Error(ex, "审计查询失败");
+                    QueryError = ex.Message;
+                    Total = 0;
+                    TotalPages = 1;
+                    OnPropertyChanged(nameof(HasPreviousPage));
+                    OnPropertyChanged(nameof(HasNextPage));
+                    OnPropertyChanged(nameof(PageSummary));
+                    IsLoading = false;
+                });
+            }
+        });
     }
 }

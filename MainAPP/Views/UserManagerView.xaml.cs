@@ -4,7 +4,7 @@ using MainAPP.ViewModels;
 namespace MainAPP.Views;
 
 /// <summary>
-/// 用户管理页面。密码通过 PasswordBox 获取（不绑定到 ViewModel，避免明文留在内存）。
+/// 用户管理页面。密码经 PasswordBox 获取（不绑定 ViewModel，避免明文留在内存）。
 /// </summary>
 public partial class UserManagerView : System.Windows.Controls.UserControl
 {
@@ -20,22 +20,17 @@ public partial class UserManagerView : System.Windows.Controls.UserControl
         {
             vm.AddUserCommand.Execute(NewPasswordBox.Password);
             NewPasswordBox.Clear();
+            ConfirmPasswordBox.Clear();
+            vm.UpdatePasswordInput("", "");
         }
     }
 
-    /// <summary>重置密码：弹密码输入框，传给 ViewModel 命令。</summary>
-    private void OnResetPasswordClick(object sender, RoutedEventArgs e)
+    /// <summary>密码/确认框内容变化：实时同步强度条与一致性到 ViewModel。</summary>
+    private void OnNewPasswordChanged(object sender, RoutedEventArgs e)
     {
-        if (DataContext is UserManagerViewModel vm && vm.SelectedUser is not null)
+        if (DataContext is UserManagerViewModel vm)
         {
-            // 复用现有 PasswordInputDialog 收集新密码
-            var dialog = new PasswordInputDialog(MainAPP.Resources.Strings.M335, MainAPP.Resources.Strings.M335);
-            if (Application.Current?.MainWindow is Window owner)
-                dialog.Owner = owner;
-            if (dialog.ShowDialog() == true)
-            {
-                vm.ResetPasswordCommand.Execute(dialog.Password);
-            }
+            vm.UpdatePasswordInput(NewPasswordBox.Password, ConfirmPasswordBox.Password);
         }
     }
 }

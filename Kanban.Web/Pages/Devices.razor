@@ -33,7 +33,7 @@
                         <div><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
                         <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@d.TargetCycle 件/h</span></div>
                     </div>
-                    <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CountAlarms.Count)</div>
+                    <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CounterAlarmCount", d.CounterAlarms.Count)</div>
                 </div>
             }
         </div>
@@ -114,8 +114,8 @@
                     </table>
                 }
 
-                <div class="card-title sub">@L.T("Dv_CountAlarmConfig")</div>
-                @if (sel.CountAlarms.Count == 0)
+                <div class="card-title sub">@L.T("Dv_CounterAlarmConfig")</div>
+                @if (sel.CounterAlarms.Count == 0)
                 {
                     <div class="no-data">@L.T("Dv_None")</div>
                 }
@@ -130,7 +130,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var c in sel.CountAlarms)
+                            @foreach (var c in sel.CounterAlarms)
                             {
                                 <tr>
                                     <td>@c.Name</td>

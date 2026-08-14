@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -412,10 +412,10 @@
     <value>アラーム削除</value>
   </data>
   <data name="K056" xml:space="preserve">
-    <value>カウントアラーム追加</value>
+    <value>カカカウンタアラーム追加</value>
   </data>
   <data name="K057" xml:space="preserve">
-    <value>カウントアラーム削除</value>
+    <value>カカカウンタアラーム削除</value>
   </data>
   <data name="K058" xml:space="preserve">
     <value>不良追加</value>
@@ -454,7 +454,7 @@
     <value>不良管理</value>
   </data>
   <data name="K070" xml:space="preserve">
-    <value>カウントアラーム</value>
+    <value>カカカウンタアラーム</value>
   </data>
   <data name="K071" xml:space="preserve">
     <value>工単</value>
@@ -700,10 +700,10 @@
     <value>PLCリアルタイム値</value>
   </data>
   <data name="K152" xml:space="preserve">
-    <value>OKカウント</value>
+    <value>OKカカウント</value>
   </data>
   <data name="K153" xml:space="preserve">
-    <value>NGカウント</value>
+    <value>NGカカウント</value>
   </data>
   <data name="K154" xml:space="preserve">
     <value>製品</value>
@@ -766,31 +766,31 @@
     <value>アラームPLCアドレス</value>
   </data>
   <data name="K174" xml:space="preserve">
-    <value>カウントアラーム一覧</value>
+    <value>カカカウンタアラーム一覧</value>
   </data>
   <data name="K175" xml:space="preserve">
-    <value>カウントアラーム名</value>
+    <value>カカカウンタアラーム名</value>
   </data>
   <data name="K176" xml:space="preserve">
     <value>PLCアドレス（例：D300）</value>
   </data>
   <data name="K177" xml:space="preserve">
-    <value>カウントアラームPLCアドレス</value>
+    <value>カカカウンタアラームPLCアドレス</value>
   </data>
   <data name="K178" xml:space="preserve">
     <value>閾値上限</value>
   </data>
   <data name="K179" xml:space="preserve">
-    <value>カウントアラーム閾値上限</value>
+    <value>カカカウンタアラーム閾値上限</value>
   </data>
   <data name="K180" xml:space="preserve">
     <value>単位</value>
   </data>
   <data name="K181" xml:space="preserve">
-    <value>カウント単位</value>
+    <value>カカカウント単位</value>
   </data>
   <data name="K182" xml:space="preserve">
-    <value>カウントアラーム説明</value>
+    <value>カカカウンタアラーム説明</value>
   </data>
   <data name="K183" xml:space="preserve">
     <value>現在値：</value>
@@ -799,7 +799,7 @@
     <value>上限超過</value>
   </data>
   <data name="K185" xml:space="preserve">
-    <value>カウントアラーム現在値をクリア</value>
+    <value>カカカウンタアラーム現在値をクリア</value>
   </data>
   <data name="K186" xml:space="preserve">
     <value>現在値をクリア</value>
@@ -874,7 +874,7 @@
     <value>OEEクリアPLCアドレス</value>
   </data>
   <data name="K210" xml:space="preserve">
-    <value>シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカウンタをクリア</value>
+    <value>シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカカウンタをクリア</value>
   </data>
   <data name="K211" xml:space="preserve">
     <value>手動OEEクリア</value>
@@ -2135,7 +2135,7 @@
 </value>
   </data>
   <data name="F002" xml:space="preserve">
-    <value>DWord {0} ms · Mビット {1} ms · 不良 {2} ms · カウントアラーム {3} ms · 履歴 {4} ms</value>
+    <value>DWord {0} ms · Mビット {1} ms · 不良 {2} ms · カカカウンタアラーム {3} ms · 履歴 {4} ms</value>
   </data>
   <data name="F003" xml:space="preserve">
     <value>Modbus UnitId は 1〜247 の範囲である必要があります。現在値: {0}</value>
@@ -2674,14 +2674,14 @@
     <value>工単「{0}」（{1}）を削除しますか？この操作は元に戻せません。</value>
   </data>
   <data name="F175" xml:space="preserve">
-    <value>デバイス「{0}」を削除しますか？関連するアラーム、不良、カウントアラームも削除されます。この操作は元に戻せません。</value>
+    <value>デバイス「{0}」を削除しますか？関連するアラーム、不良、カカカウンタアラームも削除されます。この操作は元に戻せません。</value>
   </data>
   <data name="F176" xml:space="preserve">
     <value>「{0}」の OEE を手動リセットしますか？
 OK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。</value>
   </data>
   <data name="F177" xml:space="preserve">
-    <value>カウントアラーム「{0}」の現在値をクリアしますか？
+    <value>カカカウンタアラーム「{0}」の現在値をクリアしますか？
 PLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。</value>
   </data>
   <data name="F178" xml:space="preserve">
@@ -2747,10 +2747,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>警告: {0}</value>
   </data>
   <data name="F198" xml:space="preserve">
-    <value>カウントアラーム {0}</value>
+    <value>カカカウンタアラーム {0}</value>
   </data>
   <data name="F199" xml:space="preserve">
-    <value>カウントアラーム「{0}」アドレス</value>
+    <value>カカカウンタアラーム「{0}」アドレス</value>
   </data>
   <data name="F200" xml:space="preserve">
     <value>デバイス「{0}」の予定時間が工単 {1} と重複しています（{2:MM-dd HH:mm} ~ {3:MM-dd HH:mm}）</value>
@@ -2771,7 +2771,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>デバイス「{0}」: 不良名「{1}」が重複しています</value>
   </data>
   <data name="F206" xml:space="preserve">
-    <value>デバイス「{0}」のカウントアラーム「{1}」上限は 0 より大きい必要があります（現在 {2}）</value>
+    <value>デバイス「{0}」のカカカウンタアラーム「{1}」上限は 0 より大きい必要があります（現在 {2}）</value>
   </data>
   <data name="F207" xml:space="preserve">
     <value>デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります</value>
@@ -3072,29 +3072,29 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>CSV ファイルに欠陥データがありません</value>
   </data>
   <data name="F304" xml:space="preserve">
-    <value>{0} 件のカウントアラームをエクスポート → {1}</value>
+    <value>{0} 件のカカカウンタアラームをエクスポート → {1}</value>
   </data>
   <data name="F305" xml:space="preserve">
-    <value>{0} 件のカウントアラームを現在のデバイスにインポートします（既存 {1} 件）。
+    <value>{0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。
 </value>
   </data>
   <data name="F306" xml:space="preserve">
-    <value>有効な {0} 件のカウントアラームを現在のデバイスにインポートします（既存 {1} 件）。
+    <value>有効な {0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。
 </value>
   </data>
   <data name="F307" xml:space="preserve">
-    <value>カウントアラームはインポートされませんでした：
+    <value>カカカウンタアラームはインポートされませんでした：
   · {0}</value>
   </data>
   <data name="F308" xml:space="preserve">
-    <value>{0} 件のカウントアラームをインポート（{1} 行スキップ）。
+    <value>{0} 件のカカカウンタアラームをインポート（{1} 行スキップ）。
 </value>
   </data>
   <data name="F309" xml:space="preserve">
-    <value>{0} 件のカウントアラームをインポートしました。保存をクリックして永続化してください</value>
+    <value>{0} 件のカカカウンタアラームをインポートしました。保存をクリックして永続化してください</value>
   </data>
   <data name="F310" xml:space="preserve">
-    <value>行 {0}：カウントアラーム名が空です</value>
+    <value>行 {0}：カカカウンタアラーム名が空です</value>
   </data>
   <data name="F311" xml:space="preserve">
     <value>行 {0}：閾値上限 '{1}' は有効な整数ではありません</value>
@@ -3106,7 +3106,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>行 {0}：PLC アドレス '{1}' は DWord 型である必要があります（現在 {2}）</value>
   </data>
   <data name="F314" xml:space="preserve">
-    <value>CSV ファイルにカウントアラームデータがありません</value>
+    <value>CSV ファイルにカカカウンタアラームデータがありません</value>
   </data>
   <data name="F315" xml:space="preserve">
     <value>{0:N0}</value>
@@ -3493,7 +3493,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>未保存の変更</value>
   </data>
   <data name="M175" xml:space="preserve">
-    <value>カウント警報クリア確認</value>
+    <value>カカカウント警報クリア確認</value>
   </data>
   <data name="M176" xml:space="preserve">
     <value>洞察なし</value>
@@ -4060,10 +4060,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥設定インポート</value>
   </data>
   <data name="M313" xml:space="preserve">
-    <value>カウントアラーム設定エクスポート</value>
+    <value>カカカウンタアラーム設定エクスポート</value>
   </data>
   <data name="M314" xml:space="preserve">
-    <value>カウントアラーム設定インポート</value>
+    <value>カカカウンタアラーム設定インポート</value>
   </data>
   <data name="M315" xml:space="preserve">
     <value>ログイン</value>
@@ -4078,7 +4078,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>ログイン</value>
   </data>
   <data name="M319" xml:space="preserve">
-    <value>ユーザー名またはパスワードが正しくないか、アカウントが無効です</value>
+    <value>ユーザー名またはパスワードが正しくないか、アカカウントが無効です</value>
   </data>
   <data name="M320" xml:space="preserve">
     <value>ユーザー管理</value>
@@ -4096,13 +4096,13 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>パスワードリセット</value>
   </data>
   <data name="M325" xml:space="preserve">
-    <value>アカウントが無効です</value>
+    <value>アカカウントが無効です</value>
   </data>
   <data name="M326" xml:space="preserve">
     <value>ユーザー名は既に存在します</value>
   </data>
   <data name="M327" xml:space="preserve">
-    <value>最後の管理者アカウントは削除できません</value>
+    <value>最後の管理者アカカウントは削除できません</value>
   </data>
   <data name="M328" xml:space="preserve">
     <value>現在のユーザー</value>
@@ -4115,6 +4115,69 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M331" xml:space="preserve">
     <value>有効</value>
+  </data>
+  <data name="M360" xml:space="preserve">
+    <value>最後の管理者を無効化または降格できません</value>
+  </data>
+  <data name="M361" xml:space="preserve">
+    <value>自分のロールを変更したり自分自身を無効化したりできません</value>
+  </data>
+  <data name="M362" xml:space="preserve">
+    <value>未保存の変更があります</value>
+  </data>
+  <data name="M363" xml:space="preserve">
+    <value>最終ログイン</value>
+  </data>
+  <data name="M364" xml:space="preserve">
+    <value>パスワードは 8 文字以上必要です</value>
+  </data>
+  <data name="M365" xml:space="preserve">
+    <value>入力したパスワードが一致しません</value>
+  </data>
+  <data name="M366" xml:space="preserve">
+    <value>アカカウントがロックされています。残り {0} 分</value>
+  </data>
+  <data name="M367" xml:space="preserve">
+    <value>ロック解除</value>
+  </data>
+  <data name="M368" xml:space="preserve">
+    <value>初回ログイン時にパスワード変更必須</value>
+  </data>
+  <data name="M369" xml:space="preserve">
+    <value>パスワード強度：弱</value>
+  </data>
+  <data name="M370" xml:space="preserve">
+    <value>パスワード強度：中</value>
+  </data>
+  <data name="M371" xml:space="preserve">
+    <value>パスワード強度：強</value>
+  </data>
+  <data name="M372" xml:space="preserve">
+    <value>セキュリティ注意</value>
+  </data>
+  <data name="M373" xml:space="preserve">
+    <value>デフォルトパスワード</value>
+  </data>
+  <data name="M374" xml:space="preserve">
+    <value>パスワードなしアカカウント</value>
+  </data>
+  <data name="M375" xml:space="preserve">
+    <value>未ログイン</value>
+  </data>
+  <data name="M376" xml:space="preserve">
+    <value>ロック中</value>
+  </data>
+  <data name="M377" xml:space="preserve">
+    <value>パスワード変更</value>
+  </data>
+  <data name="M378" xml:space="preserve">
+    <value>無効</value>
+  </data>
+  <data name="M379" xml:space="preserve">
+    <value>ユーザー名 / 表示名を検索</value>
+  </data>
+  <data name="M380" xml:space="preserve">
+    <value>一致するユーザーがいません</value>
   </data>
   <data name="M332" xml:space="preserve">
     <value>オペレーター</value>
@@ -4141,7 +4204,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>テーブル表示</value>
   </data>
   <data name="K585" xml:space="preserve">
-    <value>カード表示</value>
+    <value>コード表示</value>
   </data>
   <data name="K587" xml:space="preserve">
     <value>OEE</value>
@@ -4210,16 +4273,16 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>CSV から欠陥をインポート（現在のデバイスの欠陥リストを追加または置換）</value>
   </data>
   <data name="K609" xml:space="preserve">
-    <value>カウントアラーム CSV エクスポート</value>
+    <value>カカカウンタアラーム CSV エクスポート</value>
   </data>
   <data name="K610" xml:space="preserve">
-    <value>現在のデバイスの全カウントアラームを CSV にエクスポート（Excel で編集可能）</value>
+    <value>現在のデバイスの全カカカウンタアラームを CSV にエクスポート（Excel で編集可能）</value>
   </data>
   <data name="K611" xml:space="preserve">
-    <value>カウントアラーム CSV インポート</value>
+    <value>カカカウンタアラーム CSV インポート</value>
   </data>
   <data name="K612" xml:space="preserve">
-    <value>CSV からカウントアラームをインポート（現在のデバイスのカウントアラームリストを追加または置換）</value>
+    <value>CSV からカカカウンタアラームをインポート（現在のデバイスのカカカウンタアラームリストを追加または置換）</value>
   </data>
   <data name="Nav_Audit" xml:space="preserve">
     <value>監査ログ</value>
@@ -4339,7 +4402,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>この操作には前後値の比較はありません</value>
   </data>
   <data name="K651" xml:space="preserve">
-    <value>{0} 台のデバイス構成を保存しました（{1} 件のカウンタアラームが閾値 0：記録のみで発報しません）</value>
+    <value>{0} 台のデバイス構成を保存しました（{1} 件のカカカウンタアラームが閾値 0：記録のみで発報しません）</value>
   </data>
   <data name="K652" xml:space="preserve">
     <value>未設定</value>
@@ -4972,7 +5035,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥</value>
   </data>
   <data name="Web_Mo_TmCountAlarm" xml:space="preserve">
-    <value>カウント警報</value>
+    <value>カカカウント警報</value>
   </data>
   <data name="Web_Mo_TmHistory" xml:space="preserve">
     <value>履歴書込</value>
@@ -5191,7 +5254,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥 {0} 件</value>
   </data>
   <data name="Web_Dv_CountAlarmCount" xml:space="preserve">
-    <value>カウント警報 {0} 件</value>
+    <value>カカカウント警報 {0} 件</value>
   </data>
   <data name="Web_Dv_Detail" xml:space="preserve">
     <value>{0} 設定詳細</value>
@@ -5200,10 +5263,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>アドレス設定</value>
   </data>
   <data name="Web_Dv_OkCountAddr" xml:space="preserve">
-    <value>OK カウントアドレス</value>
+    <value>OK カカカウントアドレス</value>
   </data>
   <data name="Web_Dv_NgCountAddr" xml:space="preserve">
-    <value>NG カウントアドレス</value>
+    <value>NG カカカウントアドレス</value>
   </data>
   <data name="Web_Dv_StatusAddr" xml:space="preserve">
     <value>状態語アドレス</value>
@@ -5221,7 +5284,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥設定</value>
   </data>
   <data name="Web_Dv_CountAlarmConfig" xml:space="preserve">
-    <value>カウント警報設定</value>
+    <value>カカカウント警報設定</value>
   </data>
   <data name="Web_Dv_None" xml:space="preserve">
     <value>設定なし</value>
@@ -5399,6 +5462,36 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="K696" xml:space="preserve">
     <value>適用をキャンセル</value>
+  </data>
+  <data name="K697" xml:space="preserve">
+    <value>レシピ名 / パラメータ名を検索</value>
+  </data>
+  <data name="K698" xml:space="preserve">
+    <value>共通</value>
+  </data>
+  <data name="K699" xml:space="preserve">
+    <value>パラメータ {0:N0} 件</value>
+  </data>
+  <data name="K700" xml:space="preserve">
+    <value>一致するレシピがありません。キーワードまたは機種フィルタを変更してください</value>
+  </data>
+  <data name="K701" xml:space="preserve">
+    <value>更新 {0:MM-dd HH:mm}</value>
+  </data>
+  <data name="K702" xml:space="preserve">
+    <value>レシピの機種 {0} はデバイス機種 {1} と一致しません。それでも適用しますか？</value>
+  </data>
+  <data name="K703" xml:space="preserve">
+    <value>適用がタイムアウトしました（90 秒）。待機を終了します</value>
+  </data>
+  <data name="K704" xml:space="preserve">
+    <value>チェック</value>
+  </data>
+  <data name="K705" xml:space="preserve">
+    <value>レシピリストと編集エリアの幅を調整</value>
+  </data>
+  <data name="K706" xml:space="preserve">
+    <value>レシピ編集</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？</value>

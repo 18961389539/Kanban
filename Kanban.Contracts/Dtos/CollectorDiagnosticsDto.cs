@@ -26,7 +26,7 @@ public sealed record CollectorDiagnosticsDto
     public long DWordReadMilliseconds { get; init; }
     public long AlarmReadMilliseconds { get; init; }
     public long DefectReadMilliseconds { get; init; }
-    public long CountAlarmReadMilliseconds { get; init; }
+    public long CounterAlarmReadMilliseconds { get; init; }
     public long HistoryWriteMilliseconds { get; init; }
 
     // ── 历史写入 ──

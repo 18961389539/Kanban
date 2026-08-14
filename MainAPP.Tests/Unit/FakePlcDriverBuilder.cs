@@ -127,7 +127,7 @@ internal sealed class FakePlcDriverBuilder
     public static FakePlcDriverBuilder WithSocketErrorOnReadBool()
         => new FakePlcDriverBuilder().WithReadBoolException(new SocketException(10054));
 
-    /// <summary>场景：ScanDefects / ScanCountAlarms 阶段抛 ObjectDisposedException，
+    /// <summary>场景：ScanDefects / ScanCounterAlarms 阶段抛 ObjectDisposedException，
     /// 模拟 HslCommunication 客户端被释放后读取。</summary>
     public static FakePlcDriverBuilder WithObjectDisposedOnReadInt32()
         => new FakePlcDriverBuilder().WithReadInt32Exception(new ObjectDisposedException("MelsecMcNet"));

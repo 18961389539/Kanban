@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
@@ -188,6 +189,160 @@ public class RecipeManagerViewModelTests : IDisposable
         _recipeStore.ReplaceAll([MakeRecipe("r1", "配方A")]); // 触发 CollectionChanged
 
         Assert.Single(vm.AvailableRecipes);
+    }
+
+    [Fact]
+    public void SearchText_FiltersByName_AndByParameterName()
+    {
+        _recipeStore.ReplaceAll([
+            MakeRecipe("r1", "高温 PP 料", "注塑机1"),
+            new Recipe { Id = "r2", Name = "透明 ABS", MachineType = "注塑机2", Items = { new RecipeItem { ParamName = "冷却时间" } } },
+        ]);
+        var vm = CreateVm();
+        var filtered = () => vm.FilteredRecipes.Cast<Recipe>().ToList();
+
+        vm.RecipeSearchText = "ABS";
+        Assert.Single(filtered());
+        Assert.Equal("r2", filtered()[0].Id);
+
+        vm.RecipeSearchText = "冷却时间"; // 匹配参数名
+        Assert.Single(filtered());
+        Assert.Equal("r2", filtered()[0].Id);
+
+        vm.RecipeSearchText = "";
+        Assert.Equal(2, filtered().Count);
+        Assert.Equal(2, vm.FilteredCount);
+    }
+
+    [Fact]
+    public void MachineFilterChips_BuiltWithGeneralFirst_AndAllChipCount()
+    {
+        _recipeStore.ReplaceAll([
+            MakeRecipe("r1", "通用配方"), // 空机型 = 通用
+            MakeRecipe("r2", "配方B", "注塑机1"),
+            MakeRecipe("r3", "配方C", "注塑机1"),
+        ]);
+        var vm = CreateVm();
+
+        Assert.Equal(3, vm.MachineTypeFilters.Count); // 全部 + 通用 + 注塑机1
+        Assert.Equal(RecipeManagerViewModel.AllMachineTypesFilter, vm.MachineTypeFilters[0].MachineType);
+        Assert.Equal(3, vm.MachineTypeFilters[0].Count);
+        Assert.Equal("", vm.MachineTypeFilters[1].MachineType); // 通用
+        Assert.Equal(1, vm.MachineTypeFilters[1].Count);
+        Assert.Equal("注塑机1", vm.MachineTypeFilters[2].MachineType);
+        Assert.Equal(2, vm.MachineTypeFilters[2].Count);
+        Assert.True(vm.MachineTypeFilters[0].IsSelected); // 默认全部选中
+    }
+
+    [Fact]
+    public void SelectMachineFilter_IncludesGeneralRecipes_AlignsWithGetByMachineType()
+    {
+        _recipeStore.ReplaceAll([
+            MakeRecipe("r1", "通用配方"), // 空机型 = 通用
+            MakeRecipe("r2", "配方B", "注塑机1"),
+            MakeRecipe("r3", "配方C", "注塑机1"),
+        ]);
+        var vm = CreateVm();
+        var filtered = () => vm.FilteredRecipes.Cast<Recipe>().ToList();
+
+        vm.SelectMachineFilterCommand.Execute(vm.MachineTypeFilters[2]); // 注塑机1
+        Assert.Equal("注塑机1", vm.SelectedMachineFilter);
+        // 语义对齐 GetByMachineType：通用配方对任意机型可用，筛选具体机型时一并展示
+        Assert.Equal(3, filtered().Count);
+        Assert.Contains(filtered(), r => r.Id == "r1");
+        Assert.False(vm.MachineTypeFilters[0].IsSelected);
+        Assert.True(vm.MachineTypeFilters[2].IsSelected);
+
+        vm.SelectMachineFilterCommand.Execute(vm.MachineTypeFilters[1]); // 通用（空机型）
+        Assert.Equal(1, filtered().Count);
+        Assert.Equal("r1", filtered()[0].Id);
+
+        vm.SelectMachineFilterCommand.Execute(vm.MachineTypeFilters[0]); // 全部
+        Assert.Equal(3, filtered().Count);
+        Assert.Equal(3, vm.FilteredCount);
+    }
+
+    [Fact]
+    public async Task SaveThenEdit_DoesNotDirtyStoreRecipe()
+    {
+        _recipeStore.ReplaceAll([MakeRecipe("r1", "配方A")]);
+        var vm = CreateVm();
+        vm.SelectedRecipe = vm.AvailableRecipes[0];
+
+        vm.EditItems[0].Value = "80";
+        await vm.SaveRecipeCommand.ExecuteAsync(null);
+
+        // 保存后编辑区与库隔离：继续编辑编辑区不得污染库中对象
+        vm.EditItems[0].Value = "999";
+        Assert.Equal("80", _recipeStore.Recipes[0].Items[0].Value);
+        // 保存时入库的是深拷贝：库中参数项与编辑行对象无引用共享
+        Assert.NotSame(vm.EditItems[0].Item, _recipeStore.Recipes[0].Items[0]);
+    }
+
+    [Fact]
+    public async Task SaveRecipe_ResetsFilters_SoNewRecipeIsVisible()
+    {
+        _recipeStore.ReplaceAll([MakeRecipe("r1", "配方A", "注塑机1")]);
+        var vm = CreateVm();
+        vm.SelectMachineFilterCommand.Execute(vm.MachineTypeFilters[1]); // 注塑机1
+        vm.NewRecipeCommand.Execute(null);
+        vm.EditName = "新配方";
+        vm.EditItems[0].ParamName = "节拍";
+        vm.EditItems[0].PlcAddress = "D200";
+        vm.EditItems[0].Value = "60";
+
+        await vm.SaveRecipeCommand.ExecuteAsync(null);
+
+        Assert.Equal(RecipeManagerViewModel.AllMachineTypesFilter, vm.SelectedMachineFilter);
+        Assert.Equal("", vm.RecipeSearchText);
+        Assert.Equal("新配方", vm.SelectedRecipe?.Name);
+        Assert.Contains(vm.FilteredRecipes.Cast<Recipe>(), r => r.Name == "新配方");
+    }
+
+    [Fact]
+    public void Apply_MachineTypeMismatch_ShowsWarningAndAborts()
+    {
+        _recipeStore.ReplaceAll([MakeRecipe("r1", "注塑机1配方", "注塑机1")]);
+        _deviceRepo.ReplaceAll([new Device { Id = "d1", Name = "组装机1", MachineType = "组装机1" }]);
+        var vm = CreateVm();
+        vm.SelectedRecipe = vm.AvailableRecipes[0];
+        vm.SelectedTargetDevice = vm.TargetDevices[0];
+        _dialog.ShowResult = MessageBoxResult.No;
+
+        vm.ApplyRecipeCommand.Execute(null);
+
+        Assert.False(vm.IsApplying);
+        Assert.Contains(_dialog.ShowCalls, c => c.Message.Contains("不匹配") || c.Message.Contains("does not match"));
+        Assert.Empty(vm.ApplyItemResults);
+    }
+
+    [Fact]
+    public void EditRow_InlineValidation_FlagsInvalidValueAndAddress()
+    {
+        var vm = CreateVm();
+        vm.NewRecipeCommand.Execute(null);
+        var row = vm.EditItems[0];
+        row.ParamName = "节拍";
+        row.PlcAddress = "D100";
+        row.DataType = Kanban.Contracts.Enums.PlcDataType.Int32;
+        row.Value = "60";
+        Assert.True(row.IsValid);
+        Assert.Equal("", row.ErrorText);
+
+        row.Value = "abc"; // 非数值
+        Assert.False(row.IsValid);
+        Assert.NotEqual("", row.ErrorText);
+
+        row.Value = "100";
+        row.Min = 0;
+        row.Max = 50; // 越界
+        Assert.False(row.IsValid);
+        Assert.Contains("上限", row.ErrorText);
+
+        row.Max = 200;
+        row.PlcAddress = "X999"; // 地址不可解析
+        Assert.False(row.IsValid);
+        Assert.Contains("解析", row.ErrorText);
     }
 
     [Fact]

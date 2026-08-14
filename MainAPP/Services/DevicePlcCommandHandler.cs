@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Services;
+using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -155,13 +155,13 @@ public class DevicePlcCommandHandler(
     }
 
     /// <summary>
-    /// 清空指定计数报警的当前值：向 PLC 写 0 并同步复位 <see cref="CountAlarm.CurrentValue"/>。
+    /// 清空指定计数报警的当前值：向 PLC 写 0 并同步复位 <see cref="CounterAlarm.CurrentValue"/>。
     /// </summary>
     /// <param name="alarm">要清空的计数报警，必须已配置 PlcAddress。</param>
     /// <returns>
     /// Success=已清空（alarm.CurrentValue 已置 0）；Warning=连接/格式/写入失败；Error=异常。
     /// </returns>
-    public async Task<PlcOpResult> ResetCountAlarmValueAsync(CountAlarm alarm)
+    public async Task<PlcOpResult> ResetCounterAlarmValueAsync(CounterAlarm alarm)
     {
         if (alarm == null || string.IsNullOrWhiteSpace(alarm.PlcAddress))
             return new PlcOpResult(PlcOpStatus.Warning, Strings.M185);

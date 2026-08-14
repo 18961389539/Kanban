@@ -13,9 +13,9 @@ internal static class DWordAddressBatchCollector
             device.StatusCountAddress,
         }
         .Concat(device.Defects.ToList().Select(defect => defect.PlcAddress))
-        .Concat(device.CountAlarms.ToList()
-            .Where(countAlarm => countAlarm.Enabled)
-            .Select(countAlarm => countAlarm.PlcAddress))
+        .Concat(device.CounterAlarms.ToList()
+            .Where(counterAlarm => counterAlarm.Enabled)
+            .Select(counterAlarm => counterAlarm.PlcAddress))
         .Select(adapter.AddressCodec.Parse)
         .Where(parsed => parsed is { IsValid: true, Type: PlcAddressType.DWord })
         .Select(parsed => parsed.Original)

@@ -13,7 +13,7 @@ namespace MainAPP.Tests.Unit;
 /// 单源映射测试（Kanban.Core.Mapping）：Device/WorkOrder ↔ DTO 全字段往返。
 /// 这是"字段新增只改一处"的单源约定——往返断言保证：
 /// - ToDto→ToEntity 不丢字段（漏映射会破坏往返）
-/// - 嵌套集合（Alarms/Defects/CountAlarms）逐字段保持
+/// - 嵌套集合（Alarms/Defects/CounterAlarms）逐字段保持
 /// 此前映射类 0% 覆盖（依赖集成测试间接），本文件直接锁住。
 /// </summary>
 [Trait("Category", "Unit")]
@@ -40,7 +40,7 @@ public class DeviceWorkOrderMapperTests
         };
         device.Alarms.Add(new Alarm { Id = "A1", DeviceId = "dev-001", Name = "过温", PlcAddress = "M100", Description = "温度超限", Level = AlarmLevel.High });
         device.Defects.Add(new Defect { Id = "F1", DeviceId = "dev-001", Name = "划痕", PlcAddress = "D200", Severity = DefectSeverity.Major, Category = DefectCategory.Appearance });
-        device.CountAlarms.Add(new CountAlarm { Id = "C1", DeviceId = "dev-001", Name = "计数超限", PlcAddress = "D300", MaxValue = 100, Enabled = true, Description = "产量上限", Unit = "件" });
+        device.CounterAlarms.Add(new CounterAlarm { Id = "C1", DeviceId = "dev-001", Name = "计数超限", PlcAddress = "D300", MaxValue = 100, Enabled = true, Description = "产量上限", Unit = "件" });
 
         var dto = DeviceMapper.ToDto(device);
         var roundTripped = DeviceMapper.ToEntity(dto);
@@ -66,10 +66,10 @@ public class DeviceWorkOrderMapperTests
         Assert.Equal(DefectSeverity.Major, roundTripped.Defects[0].Severity);
         Assert.Equal(DefectCategory.Appearance, roundTripped.Defects[0].Category);
 
-        Assert.Single(roundTripped.CountAlarms);
-        Assert.Equal(100, roundTripped.CountAlarms[0].MaxValue);
-        Assert.True(roundTripped.CountAlarms[0].Enabled);
-        Assert.Equal("件", roundTripped.CountAlarms[0].Unit);
+        Assert.Single(roundTripped.CounterAlarms);
+        Assert.Equal(100, roundTripped.CounterAlarms[0].MaxValue);
+        Assert.True(roundTripped.CounterAlarms[0].Enabled);
+        Assert.Equal("件", roundTripped.CounterAlarms[0].Unit);
     }
 
     [Fact]

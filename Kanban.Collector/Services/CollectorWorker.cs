@@ -85,6 +85,12 @@ public sealed class CollectorWorker : BackgroundService
         }
         _logger.LogInformation("配置加载完成，DataRoot={DataRoot}", AppSettings.DataRoot);
 
+        // 1.0 刷新 PLC 运行时配置档案：宿主启动时 MetaPublisher 等单例（AddHostedService/AddSingleton）
+        // 可能在 settings.Load() 之前构造 PlcDataAcquisitionService→SharedPlcDriverRouter→PlcRuntimeProfileProvider，
+        // 此时 AppSettings 仍是默认值（192.168.1.2）→ 单例档案被永久污染，采集永远连不上真实 PLC。
+        // Load 完成后显式刷新，保证 EnsureConnected 使用实际配置（回归自 04e8442：MetaPublisher 注入 plcService）。
+        _services.GetRequiredService<IPlcRuntimeProfileProvider>().Refresh(settings.PlcConfig);
+
         // 1.1 应用界面语言（Collector 进程独立应用，与 MainAPP 保持一致）
         // 读取 settings.json 的 Language 字段，覆盖 Kanban.Collector.Core 共享的连接状态文案与校验消息。
         // 确保 Collector 进程在 en/ja 模式下也使用正确语言（不依赖 MainAPP 推送）。

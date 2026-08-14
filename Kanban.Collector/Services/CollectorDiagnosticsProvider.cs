@@ -54,7 +54,7 @@ public sealed class CollectorDiagnosticsProvider
                 DWordReadMilliseconds = acq.DWordReadMilliseconds,
                 AlarmReadMilliseconds = acq.AlarmReadMilliseconds,
                 DefectReadMilliseconds = acq.DefectReadMilliseconds,
-                CountAlarmReadMilliseconds = acq.CountAlarmReadMilliseconds,
+                CounterAlarmReadMilliseconds = acq.CounterAlarmReadMilliseconds,
                 HistoryWriteMilliseconds = acq.HistoryWriteMilliseconds,
                 PendingHistoryCount = hist.PendingProductionCount,
                 RecoveryFileExists = hist.RecoveryFileExists,

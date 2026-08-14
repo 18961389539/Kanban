@@ -60,11 +60,11 @@ public class DeviceManagerViewModelTests
         var plcCommands = new DevicePlcCommandHandler(driver, conn, dataAcq);
         var alarmCsvIO = new AlarmCsvIOService(dialog);
         var defectCsvIO = new DefectCsvIOService(dialog);
-        var countAlarmCsvIO = new CountAlarmCsvIOService(dialog);
+        var counterAlarmCsvIO = new CounterAlarmCsvIOService(dialog);
         var dbProvider = new DatabaseProvider(appSettings);
         var workOrderRepo = new WorkOrderRepository(dbProvider, TestMapper.Instance);
         var workOrderService = new WorkOrderService(workOrderRepo, repo, dialog, history);
-        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, countAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
+        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
         return (vm, dialog, driver, tmp);
     }
 
@@ -170,14 +170,14 @@ public class DeviceManagerViewModelTests
         var (vm, _, _, tmp) = NewVm();
         vm.AddDeviceCommand.Execute(null);
         ConfigureAddresses(vm.SelectedDevice!);
-        // 计数报警 CRUD 已拆分到 CountAlarmManagerVm 子 VM（通过 host.SelectedDevice 同步联动）
-        vm.CountAlarmManagerVm.AddCountAlarmCommand.Execute(null);
+        // 计数报警 CRUD 已拆分到 CounterAlarmManagerVm 子 VM（通过 host.SelectedDevice 同步联动）
+        vm.CounterAlarmManagerVm.AddCounterAlarmCommand.Execute(null);
         // MaxValue 必须 > 0：保存校验会拦截 MaxValue <= 0 的计数报警（IsTriggered 永远为 true 导致误报）
-        vm.SelectedDevice!.CountAlarms[0].MaxValue = 100;
+        vm.SelectedDevice!.CounterAlarms[0].MaxValue = 100;
         vm.SaveCommand.Execute(null); // 持久化，IsDirty=false
         Assert.False(vm.IsDirty);
 
-        var ca = vm.SelectedDevice!.CountAlarms[0];
+        var ca = vm.SelectedDevice!.CounterAlarms[0];
         ca.CurrentValue = 123; // 运行时字段变更（采集线程写入）
         Assert.False(vm.IsDirty); // 不应误报未保存
         Directory.Delete(tmp, true);
@@ -519,7 +519,7 @@ public class DeviceManagerViewModelTests
         src.TargetCycle = 120;
         src.Alarms.Add(new Alarm { Name = "报警1", PlcAddress = "M10", DeviceId = src.Id });
         src.Defects.Add(new Defect { Name = "缺陷1", PlcAddress = "D200", DeviceId = src.Id });
-        src.CountAlarms.Add(new CountAlarm { Name = "计数1", PlcAddress = "D300", DeviceId = src.Id });
+        src.CounterAlarms.Add(new CounterAlarm { Name = "计数1", PlcAddress = "D300", DeviceId = src.Id });
 
         vm.IsDirty = false; // 复位脏标记前置条件
         vm.CopyDeviceCommand.Execute(null);
@@ -536,8 +536,8 @@ public class DeviceManagerViewModelTests
         Assert.NotEqual(src.Alarms[0].Id, copy.Alarms[0].Id);
         Assert.Single(copy.Defects);
         Assert.Equal("D200", copy.Defects[0].PlcAddress);
-        Assert.Single(copy.CountAlarms);
-        Assert.Equal("D300", copy.CountAlarms[0].PlcAddress);
+        Assert.Single(copy.CounterAlarms);
+        Assert.Equal("D300", copy.CounterAlarms[0].PlcAddress);
         Assert.True(vm.IsDirty); // 复制后置脏
         Assert.Equal(copy, vm.SelectedDevice);
         Directory.Delete(tmp, true);

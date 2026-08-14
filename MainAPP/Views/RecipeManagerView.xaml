@@ -5,11 +5,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
     d:DataContext="{d:DesignInstance Type=vm:RecipeManagerViewModel}"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
 
-    <Grid Margin="4">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -30,8 +33,19 @@
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                    Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K683}" />
                         <ComboBox Margin="8,0,0,0" MinWidth="200" VerticalContentAlignment="Center"
-                                  ItemsSource="{Binding TargetDevices}" SelectedItem="{Binding SelectedTargetDevice}"
-                                  DisplayMemberPath="Name" />
+                                  ItemsSource="{Binding TargetDevices}" SelectedItem="{Binding SelectedTargetDevice}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" />
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeHint}"
+                                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{Binding MachineType, TargetNullValue=''}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
@@ -40,7 +54,7 @@
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ApplyStatusKind}" Value="Error">
+                                        <DataTrigger Binding="{Binding ApplyStatusKind}" Value="{x:Static vm:ApplyStatusKind.Error}">
                                             <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -109,65 +123,242 @@
             </Grid>
         </Border>
 
-        <!--  ══ 中部：配方列表 + 编辑表单 ══  -->
-        <Grid Grid.Row="1" Margin="0,12,0,0">
+        <!--  ══ 中部：配方列表 + 编辑表单（参照工单页：MainCard 双卡片 + GridSplitter） ══  -->
+        <Grid Grid.Row="1" Margin="0,16,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.1*" />
-                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="2*" MinWidth="380" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="3*" MinWidth="480" />
             </Grid.ColumnDefinitions>
 
-            <!--  ── 左：配方列表 ──  -->
-            <Grid Grid.Column="0" Margin="0,0,12,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Margin="2,0,0,8" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                           Foreground="{StaticResource PrimaryTextBrush}"
-                           Text="{x:Static resources:Strings.K660}" />
-                <ListBox Grid.Row="1" ItemsSource="{Binding AvailableRecipes}"
-                         SelectedItem="{Binding SelectedRecipe, Mode=TwoWay}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="2">
-                                <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}"
-                                           Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Margin="0,2,0,0" FontSize="{DynamicResource FontSizeHint}"
-                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{Binding MachineType, TargetNullValue=''}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding NewRecipeCommand}"
-                            Content="{x:Static resources:Strings.K662}" />
-                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding CloneRecipeCommand}"
-                            Content="{x:Static resources:Strings.K689}" />
-                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding DeleteRecipeCommand}"
-                            Content="{x:Static resources:Strings.K664}" />
-                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding ExportRecipesCommand}"
-                            Content="{x:Static resources:Strings.K690}" />
-                    <Button Padding="12,6" Cursor="Hand" Command="{Binding ImportRecipesCommand}"
-                            Content="{x:Static resources:Strings.K691}" />
-                </StackPanel>
-            </Grid>
+            <!-- 分隔条（参照工单/设备管理器页样式）：10px 拖拽热区 + 居中 2px 竖条，
+                 悬停高亮变主色加宽；浏览（列表加宽）与编辑（表格加宽）诉求冲突由用户权衡 -->
+            <GridSplitter Grid.Column="1" Width="10" Margin="0,2"
+                          HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="Transparent" Cursor="SizeWE"
+                          ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                          AutomationProperties.Name="{x:Static resources:Strings.K705}">
+                <GridSplitter.Template>
+                    <ControlTemplate TargetType="GridSplitter">
+                        <Grid Background="Transparent">
+                            <Rectangle x:Name="Grip" Width="2"
+                                       HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                       Fill="{StaticResource BorderBrush}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Grip" Property="Fill" Value="{StaticResource PrimaryBrush}" />
+                                <Setter TargetName="Grip" Property="Width" Value="3" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </GridSplitter.Template>
+            </GridSplitter>
 
-            <!--  ── 右：编辑表单 ──  -->
-            <Grid Grid.Column="1" Margin="12,0,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <!--  ── 左：配方列表（MainCard 卡片） ──  -->
+            <Border Grid.Column="0" Padding="0" Style="{StaticResource MainCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- 标题 + 计数 -->
+                    <DockPanel Grid.Row="0" Margin="18,18,18,12">
+                        <materialIcons:MaterialIcon Kind="PackageVariant" Style="{StaticResource SectionTitleIcon}" />
+                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K660}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{Binding AvailableRecipes.Count, StringFormat={}({0})}" />
+                    </DockPanel>
+
+                    <!-- 搜索框（占满，与工单页一致） -->
+                    <hc:TextBox Grid.Row="1" Margin="18,0,18,12"
+                                hc:InfoElement.Placeholder="{x:Static resources:Strings.K697}"
+                                Style="{StaticResource TextBoxExtend}"
+                                Text="{Binding RecipeSearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <!-- 机型筛选胶囊 -->
+                    <ItemsControl Grid.Row="2" Margin="18,0,18,8" ItemsSource="{Binding MachineTypeFilters}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="0,0,6,6" Padding="10,3" Cursor="Hand"
+                                        Command="{Binding DataContext.SelectMachineFilterCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsMouseOver}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Display}" />
+                                        <TextBlock Margin="5,0,0,0" Opacity="0.75" Text="{Binding Count, StringFormat=({0})}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 卡片列表 + 空态覆盖层 -->
+                    <Grid Grid.Row="3">
+                        <ListBox ItemsSource="{Binding FilteredRecipes}"
+                                 SelectedItem="{Binding SelectedRecipe, Mode=TwoWay}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                 VirtualizingStackPanel.ScrollUnit="Pixel"
+                                 BorderThickness="0" Background="Transparent">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Margin" Value="0,0,0,8" />
+                                <Setter Property="Padding" Value="12,10" />
+                                <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                                    SnapsToDevicePixels="True">
+                                                <ContentPresenter />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SecondaryBorderBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeHint}"
+                                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{Binding UpdatedAt, Converter={StaticResource LocFormatConverter}, ConverterParameter=K701}" />
+                                        <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                                   Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                                        <Border Padding="6,1" CornerRadius="999" BorderThickness="1"
+                                                BorderBrush="{StaticResource BorderBrush}">
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding MachineType}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding MachineType}" Value="">
+                                                                <Setter Property="Text" Value="{x:Static resources:Strings.K698}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeHint}"
+                                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{Binding Items.Count, Converter={StaticResource LocFormatConverter}, ConverterParameter=K699}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- 空态：筛选/搜索无结果时显示 -->
+                    <controls:EmptyState IconKind="PackageVariant" Message="{x:Static resources:Strings.K700}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <controls:EmptyState.Style>
+                            <Style TargetType="controls:EmptyState">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilteredCount}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </controls:EmptyState.Style>
+                    </controls:EmptyState>
+                </Grid>
+
+                <!-- 底部操作按钮（图标按钮，参照工单页） -->
+                <DockPanel Grid.Row="4" Margin="18,12,18,18" LastChildFill="False">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding NewRecipeCommand}" Content="{x:Static resources:Strings.K662}" Style="{StaticResource IconButtonPrimary}"
+                                Tag="{x:Static mi:MaterialIconKind.Plus}" ToolTip="{x:Static resources:Strings.K662}" />
+                        <Button Margin="8,0,0,0" Command="{Binding CloneRecipeCommand}" Content="{x:Static resources:Strings.K689}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="{x:Static resources:Strings.K689}" />
+                        <Button Margin="8,0,0,0" Command="{Binding DeleteRecipeCommand}" Content="{x:Static resources:Strings.K664}" Style="{StaticResource IconButtonDanger}"
+                                Tag="{x:Static mi:MaterialIconKind.Delete}" ToolTip="{x:Static resources:Strings.K664}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ExportRecipesCommand}" Content="{x:Static resources:Strings.K690}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.FileExportOutline}" ToolTip="{x:Static resources:Strings.K690}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ImportRecipesCommand}" Content="{x:Static resources:Strings.K691}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.FileImportOutline}" ToolTip="{x:Static resources:Strings.K691}" />
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+            </Border>
+
+            <!--  ── 右：编辑表单（MainCard 卡片） ──  -->
+            <Border Grid.Column="2" Padding="0" Style="{StaticResource MainCard}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- 标题 -->
+                    <DockPanel Grid.Row="0" Margin="18,18,18,12">
+                        <materialIcons:MaterialIcon Kind="PencilOutline" Style="{StaticResource SectionTitleIcon}" />
+                        <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K706}" />
+                    </DockPanel>
 
                 <!-- 基本信息 -->
-                <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid Grid.Row="1" Margin="18,0,18,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -186,7 +377,7 @@
                              Text="{Binding EditMachineType, UpdateSourceTrigger=PropertyChanged}" />
                 </Grid>
 
-                <Grid Grid.Row="1" Margin="0,0,0,8">
+                <Grid Grid.Row="2" Margin="18,0,18,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
@@ -199,7 +390,7 @@
                 </Grid>
 
                 <!-- 参数项表头 -->
-                <Grid Grid.Row="2" Margin="0,4,0,4">
+                <Grid Grid.Row="3" Margin="18,4,18,4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*" />
                         <ColumnDefinition Width="1*" />
@@ -208,6 +399,7 @@
                         <ColumnDefinition Width="0.6*" />
                         <ColumnDefinition Width="0.6*" />
                         <ColumnDefinition Width="0.6*" />
+                        <ColumnDefinition Width="1*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" FontSize="{DynamicResource FontSizeHint}"
@@ -224,10 +416,12 @@
                                Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K670}" />
                     <TextBlock Grid.Column="6" FontSize="{DynamicResource FontSizeHint}"
                                Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K671}" />
+                    <TextBlock Grid.Column="7" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K704}" />
                 </Grid>
 
-                <!-- 参数项表格（ItemsControl 行式编辑） -->
-                <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <!-- 参数项表格（ItemsControl 行式编辑 + 行内实时校验） -->
+                <ScrollViewer Grid.Row="4" Margin="18,0,18,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding EditItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -240,6 +434,7 @@
                                         <ColumnDefinition Width="0.6*" />
                                         <ColumnDefinition Width="0.6*" />
                                         <ColumnDefinition Width="0.6*" />
+                                        <ColumnDefinition Width="1*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBox Grid.Column="0" Margin="0,0,4,0" VerticalContentAlignment="Center"
@@ -283,7 +478,24 @@
                                              Text="{Binding Max, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />
                                     <TextBox Grid.Column="6" Margin="0,0,4,0" VerticalContentAlignment="Center"
                                              Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" />
-                                    <Button Grid.Column="7" Margin="4,0,0,0" Padding="6,3" Cursor="Hand"
+                                    <!-- 行内校验错误（有错误时红色显示，含 ToolTip 全文） -->
+                                    <TextBlock Grid.Column="7" Margin="0,0,4,0" VerticalAlignment="Center"
+                                               Foreground="{StaticResource DangerBrush}"
+                                               FontSize="{DynamicResource FontSizeHint}"
+                                               Text="{Binding ErrorText}" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding ErrorText}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Button Grid.Column="8" Margin="4,0,0,0" Padding="6,3" Cursor="Hand"
                                             Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}">
                                         <materialIcons:MaterialIcon Width="14" Height="14"
@@ -295,15 +507,17 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- 操作按钮 -->
-                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                    <Button Margin="0,0,8,0" Padding="12,6" Cursor="Hand" Command="{Binding AddItemCommand}"
-                            Content="{x:Static resources:Strings.K672}" />
-                    <Button Padding="14,6" Cursor="Hand" Command="{Binding SaveRecipeCommand}"
-                            Background="{StaticResource PrimaryBrush}" Foreground="White" BorderThickness="0"
-                            Content="{x:Static resources:Strings.K663}" />
-                </StackPanel>
+                <!-- 操作按钮（图标按钮，参照工单页） -->
+                <DockPanel Grid.Row="5" Margin="18,12,18,18" LastChildFill="False">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                        <Button Margin="0,0,8,0" Command="{Binding AddItemCommand}" Content="{x:Static resources:Strings.K672}" Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.PlusBoxOutline}" ToolTip="{x:Static resources:Strings.K672}" />
+                        <Button Command="{Binding SaveRecipeCommand}" Content="{x:Static resources:Strings.K663}" Style="{StaticResource IconButtonPrimary}"
+                                Tag="{x:Static mi:MaterialIconKind.ContentSaveOutline}" ToolTip="{x:Static resources:Strings.K663}" />
+                    </StackPanel>
+                </DockPanel>
             </Grid>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

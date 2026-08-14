@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
@@ -35,14 +35,14 @@ public class SampleDeviceBuilderTests
     }
 
     [Fact]
-    public void BuildSampleDevices_EachDeviceHasAlarmsDefectsCountAlarms()
+    public void BuildSampleDevices_EachDeviceHasAlarmsDefectsCounterAlarms()
     {
         var devices = SampleDeviceBuilder.BuildSampleDevices();
         foreach (var d in devices)
         {
             Assert.NotEmpty(d.Alarms);
             Assert.NotEmpty(d.Defects);
-            Assert.NotEmpty(d.CountAlarms);
+            Assert.NotEmpty(d.CounterAlarms);
         }
     }
 

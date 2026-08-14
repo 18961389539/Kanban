@@ -223,6 +223,11 @@
     <value>下发已取消，已回滚</value>
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>
+字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对
+</value>
+  </data>
     <value>参数 {0} 写入中…</value>
   </data>
 </root>

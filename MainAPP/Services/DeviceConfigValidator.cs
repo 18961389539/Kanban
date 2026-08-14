@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Services;
+using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -55,8 +55,8 @@ public static class DeviceConfigValidator
                 AddAddressError(errors, device, addressCodec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
             foreach (var defect in device.Defects)
                 AddAddressError(errors, device, addressCodec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
-            foreach (var countAlarm in device.CountAlarms)
-                AddAddressError(errors, device, addressCodec, countAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, countAlarm.Name));
+            foreach (var counterAlarm in device.CounterAlarms)
+                AddAddressError(errors, device, addressCodec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
 
             // 目标周期必须 > 0：OEE 性能率分母为 TargetCycle，0 会导致性能率恒为 0
             if (device.TargetCycle <= 0)
@@ -211,6 +211,6 @@ public static class DeviceConfigValidator
         yield return d.RecipeAddress;
         foreach (var a in d.Alarms) yield return a.PlcAddress;
         foreach (var def in d.Defects) yield return def.PlcAddress;
-        foreach (var c in d.CountAlarms) yield return c.PlcAddress;
+        foreach (var c in d.CounterAlarms) yield return c.PlcAddress;
     }
 }

@@ -56,6 +56,7 @@ public static class RecipeValidationMessages
     public const string DefaultRecipeNotFound = "配方不存在：{0}";
     public const string DefaultRecipeApplyCancelled = "下发已取消，已回滚";
     public const string DefaultRecipeWriteInProgress = "参数 {0} 写入中…";
+    public const string DefaultRecipeStringNotRolledBack = "字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对";
 
     private static string s_recipeNull = DefaultRecipeNull;
     private static string s_recipeNameEmpty = DefaultRecipeNameEmpty;
@@ -97,6 +98,7 @@ public static class RecipeValidationMessages
     private static string s_recipeNotFound = DefaultRecipeNotFound;
     private static string s_recipeApplyCancelled = DefaultRecipeApplyCancelled;
     private static string s_recipeWriteInProgress = DefaultRecipeWriteInProgress;
+    private static string s_recipeStringNotRolledBack = DefaultRecipeStringNotRolledBack;
 
     public static string RecipeNull => s_recipeNull;
     public static string RecipeNameEmpty => s_recipeNameEmpty;
@@ -138,6 +140,7 @@ public static class RecipeValidationMessages
     public static string RecipeNotFound => s_recipeNotFound;
     public static string RecipeApplyCancelled => s_recipeApplyCancelled;
     public static string RecipeWriteInProgress => s_recipeWriteInProgress;
+    public static string RecipeStringNotRolledBack => s_recipeStringNotRolledBack;
 
     /// <summary>
     /// 简单语言预设：根据三语设置同时覆盖全部文案。传入 null 还原默认中文。
@@ -202,6 +205,7 @@ public static class RecipeValidationMessages
         s_recipeNotFound = s_rm.GetString("RecipeNotFound", culture) ?? DefaultRecipeNotFound;
         s_recipeApplyCancelled = s_rm.GetString("RecipeApplyCancelled", culture) ?? DefaultRecipeApplyCancelled;
         s_recipeWriteInProgress = s_rm.GetString("RecipeWriteInProgress", culture) ?? DefaultRecipeWriteInProgress;
+        s_recipeStringNotRolledBack = s_rm.GetString("RecipeStringNotRolledBack", culture) ?? DefaultRecipeStringNotRolledBack;
     }
 
     private static void RestoreDefaults()
@@ -246,5 +250,6 @@ public static class RecipeValidationMessages
         s_recipeNotFound = DefaultRecipeNotFound;
         s_recipeApplyCancelled = DefaultRecipeApplyCancelled;
         s_recipeWriteInProgress = DefaultRecipeWriteInProgress;
+        s_recipeStringNotRolledBack = DefaultRecipeStringNotRolledBack;
     }
 }

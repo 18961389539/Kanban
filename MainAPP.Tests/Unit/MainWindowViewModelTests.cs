@@ -102,9 +102,9 @@ public class MainWindowViewModelTests : IDisposable
 
         var alarmCsvIO = new AlarmCsvIOService(_dialog);
         var defectCsvIO = new DefectCsvIOService(_dialog);
-        var countAlarmCsvIO = new CountAlarmCsvIOService(_dialog);
+        var counterAlarmCsvIO = new CounterAlarmCsvIOService(_dialog);
         var workOrderService = new WorkOrderService(_workOrderRepo, _deviceRepo, _dialog, _historyService);
-        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, defectCsvIO, countAlarmCsvIO, _workOrderRepo, workOrderService, userSession);
+        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, _workOrderRepo, workOrderService, userSession);
         var historyQueryVm = new HistoryQueryViewModel(_historyService, _deviceRepo, _appSettings, _dialog);
         var homeVm = new HomeViewModel(_deviceRepo, _conn, _appSettings, null!, _selection);
         var productionLineVm = new ProductionLineViewModel(_deviceRepo, _selection, null, _appSettings);

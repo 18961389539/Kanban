@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Contracts.Dtos;
@@ -33,7 +33,7 @@ public sealed record AcquisitionDiagnosticsSnapshot
     public long DWordReadMilliseconds { get; init; }
     public long AlarmReadMilliseconds { get; init; }
     public long DefectReadMilliseconds { get; init; }
-    public long CountAlarmReadMilliseconds { get; init; }
+    public long CounterAlarmReadMilliseconds { get; init; }
     public long HistoryWriteMilliseconds { get; init; }
     public IReadOnlySet<string> LastSuccessfulDeviceIds { get; init; } = new HashSet<string>();
     public bool LastCycleSucceeded { get; init; }
@@ -345,9 +345,9 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     _ = TryScan(() => _scanPipeline.ScanDefects(), nameof(PlcScanPipeline.ScanDefects));
                     var defectReadMilliseconds = defectReadStopwatch.ElapsedMilliseconds;
 
-                    var countAlarmReadStopwatch = Stopwatch.StartNew();
-                    TryScan(_scanPipeline.ScanCountAlarms, nameof(PlcScanPipeline.ScanCountAlarms));
-                    var countAlarmReadMilliseconds = countAlarmReadStopwatch.ElapsedMilliseconds;
+                    var counterAlarmReadStopwatch = Stopwatch.StartNew();
+                    TryScan(_scanPipeline.ScanCounterAlarms, nameof(PlcScanPipeline.ScanCounterAlarms));
+                    var counterAlarmReadMilliseconds = counterAlarmReadStopwatch.ElapsedMilliseconds;
 
                     // 首次启动后从 StatusTransitions 重建 OEE 时间（仅执行一次，依赖采集已落库状态转换）
                     if (!_oeeTimeRebuilt)
@@ -397,7 +397,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         dwordReadMilliseconds,
                         alarmReadMilliseconds,
                         defectReadMilliseconds,
-                        countAlarmReadMilliseconds,
+                        counterAlarmReadMilliseconds,
                         historyWriteMilliseconds);
                 }
                 else
@@ -432,7 +432,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
 
                 // 异常分类：
                 // - HslPlcDriver 已用 try-catch 包裹所有读写方法，把 HslCommunication 异常转成 PlcOperationResult.Fail
-                // - TryScan 内部已对 ScanAlarms/ScanDefects/ScanCountAlarms 做相同隔离处理
+                // - TryScan 内部已对 ScanAlarms/ScanDefects/ScanCounterAlarms 做相同隔离处理
                 // - 因此这里捕获的异常都是非通信异常（UI 跨线程、空引用、业务逻辑 bug 等），
                 //   不应误判为 PLC 断连（否则会触发重连冷却期，掩盖真实业务问题并误导用户）
                 // - 若异常确为通信类（SocketException/ObjectDisposedException 等漏出到此），
@@ -484,7 +484,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             count += codec.Parse(device.StatusCountAddress) is { IsValid: true, Type: PlcAddressType.DWord } ? 1 : 0;
             count += device.Alarms.Count(a => codec.Parse(a.PlcAddress) is { IsValid: true, Type: PlcAddressType.MBit });
             count += device.Defects.Count(d => codec.Parse(d.PlcAddress) is { IsValid: true, Type: PlcAddressType.DWord });
-            count += device.CountAlarms.Count(c => c.Enabled && codec.Parse(c.PlcAddress) is { IsValid: true, Type: PlcAddressType.DWord });
+            count += device.CounterAlarms.Count(c => c.Enabled && codec.Parse(c.PlcAddress) is { IsValid: true, Type: PlcAddressType.DWord });
         }
         return count;
     }
@@ -518,7 +518,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
     }
 
-    /// <summary>TryScan 的 void 重载，用于 ScanCountAlarms 等无返回值扫描。</summary>
+    /// <summary>TryScan 的 void 重载，用于 ScanCounterAlarms 等无返回值扫描。</summary>
     private void TryScan(Action scanAction, string scanName)
     {
         try
@@ -774,7 +774,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
 
     internal bool ScanAlarms() => _scanPipeline.ScanAlarms();
     internal bool ScanDefects() => _scanPipeline.ScanDefects();
-    internal void ScanCountAlarms() => _scanPipeline.ScanCountAlarms();
+    internal void ScanCounterAlarms() => _scanPipeline.ScanCounterAlarms();
     internal void ClearAlarmsOnDisconnect() => _scanPipeline.ClearAlarmsOnDisconnect();
 
     /// <summary>

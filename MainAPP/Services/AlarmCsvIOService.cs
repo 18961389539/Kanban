@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Services;
+using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
@@ -51,7 +51,7 @@ public class AlarmCsvIOService(
     IPlcAddressCodecResolver? codecResolver = null,
     IPlcRuntimeProfileProvider? profileProvider = null)
 {
-    // 文件对话框过滤器（三语资源，与 DefectCsvIOService/CountAlarmCsvIOService 同源 M310）
+    // 文件对话框过滤器（三语资源，与 DefectCsvIOService/CounterAlarmCsvIOService 同源 M310）
     private static string CsvFileFilter => Strings.M310;
 
     private static readonly CsvConfiguration CsvConfig = new(CultureInfo.InvariantCulture)

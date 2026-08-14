@@ -128,7 +128,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     public DeviceDefectManagerViewModel DefectManagerVm { get; }
 
     /// <summary>计数报警管理子 VM（计数报警 CRUD + 清空当前值）。</summary>
-    public DeviceCountAlarmManagerViewModel CountAlarmManagerVm { get; }
+    public DeviceCounterAlarmManagerViewModel CounterAlarmManagerVm { get; }
 
     [ObservableProperty]
     private string _searchKeyword = string.Empty;
@@ -227,8 +227,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         nameof(Alarm.StartTime),
         nameof(Alarm.EndTime),
         nameof(Defect.Count),
-        nameof(CountAlarm.CurrentValue),
-        nameof(CountAlarm.IsTriggered),
+        nameof(CounterAlarm.CurrentValue),
+        nameof(CounterAlarm.IsTriggered),
     };
 
     public DeviceManagerViewModel(
@@ -239,7 +239,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         DevicePlcCommandHandler plcCommands,
         AlarmCsvIOService alarmCsvIO,
         DefectCsvIOService defectCsvIO,
-        CountAlarmCsvIOService countAlarmCsvIO,
+        CounterAlarmCsvIOService counterAlarmCsvIO,
         WorkOrderRepository workOrderRepo,
         IWorkOrderService workOrderService,
         UserSession userSession,
@@ -265,7 +265,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 实现跨 Tab 联动而无需双向引用。CSV IO 服务仅用于构造对应子 VM，父级不再直接持有。
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
         DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
-        CountAlarmManagerVm = new DeviceCountAlarmManagerViewModel(dialog, plcCommands, countAlarmCsvIO, this);
+        CounterAlarmManagerVm = new DeviceCounterAlarmManagerViewModel(dialog, plcCommands, counterAlarmCsvIO, this);
 
         // 当前设备工单过滤视图：按 SelectedDevice.DeviceId 过滤，Running 优先排序
         // 使用独立的 ListCollectionView（不能用 GetDefaultView，否则与 WorkOrderManagerViewModel 共享同一视图导致 Filter 互相覆盖）
@@ -356,7 +356,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
         foreach (var def in d.Defects)
             if ((def.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        foreach (var c in d.CountAlarms)
+        foreach (var c in d.CounterAlarms)
         {
             if ((c.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
             if ((c.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
@@ -553,9 +553,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                 Category = d.Category,
             });
         }
-        foreach (var c in src.CountAlarms)
+        foreach (var c in src.CounterAlarms)
         {
-            copy.CountAlarms.Add(new CountAlarm
+            copy.CounterAlarms.Add(new CounterAlarm
             {
                 DeviceId = copy.Id,
                 Name = c.Name,
@@ -618,7 +618,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
             _lastSavedDeviceAuditSnapshot = after;
             // 非阻断提示：0 值阈值报警（仅记录不触发）仍可正常保存，但提醒用户其不会触发报警
-            var zeroThresholdCount = Devices.Sum(d => d.CountAlarms.Count(c => c.MaxValue <= 0));
+            var zeroThresholdCount = Devices.Sum(d => d.CounterAlarms.Count(c => c.MaxValue <= 0));
             _dialog.NotifySuccess(zeroThresholdCount > 0
                 ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
                 : Strings.M009);
@@ -805,7 +805,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 切换设备时清空工单选中（报警/缺陷/计数报警选中由各子 VM 订阅本属性变化自行清空）
         AlarmManagerVm.SelectedDevice = value;
         DefectManagerVm.SelectedDevice = value;
-        CountAlarmManagerVm.SelectedDevice = value;
+        CounterAlarmManagerVm.SelectedDevice = value;
         SelectedWorkOrder = null;
         OnPropertyChanged(nameof(CurrentDeviceValidationErrors));
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
@@ -950,7 +950,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     // 上述三个 Tab 的 CRUD、CSV 导入导出与清空当前值（PLC 写）已拆分到子 VM：
     //   · AlarmManagerVm       —— 报警 CRUD + CSV 导入导出
     //   · DefectManagerVm      —— 缺陷 CRUD
-    //   · CountAlarmManagerVm  —— 计数报警 CRUD + 清空当前值
+    //   · CounterAlarmManagerVm  —— 计数报警 CRUD + 清空当前值
     // 子 VM 通过 IDeviceManagerHost 订阅 SelectedDevice/IsLoading 变化并回写脏标记，
     // 各 Tab 的 XAML 绑定路径不变（DataContext 由 DeviceManagerView 指向各子 VM）。
 
@@ -1098,10 +1098,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         d.PropertyChanged += OnDevicePropertyChanged;
         d.Alarms.CollectionChanged += OnChildCollectionChanged;
         d.Defects.CollectionChanged += OnChildCollectionChanged;
-        d.CountAlarms.CollectionChanged += OnChildCollectionChanged;
+        d.CounterAlarms.CollectionChanged += OnChildCollectionChanged;
         foreach (var a in d.Alarms) a.PropertyChanged += OnChildItemPropertyChanged;
         foreach (var def in d.Defects) def.PropertyChanged += OnChildItemPropertyChanged;
-        foreach (var c in d.CountAlarms) c.PropertyChanged += OnChildItemPropertyChanged;
+        foreach (var c in d.CounterAlarms) c.PropertyChanged += OnChildItemPropertyChanged;
     }
 
     private void DetachDevice(Device d)
@@ -1109,10 +1109,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         d.PropertyChanged -= OnDevicePropertyChanged;
         d.Alarms.CollectionChanged -= OnChildCollectionChanged;
         d.Defects.CollectionChanged -= OnChildCollectionChanged;
-        d.CountAlarms.CollectionChanged -= OnChildCollectionChanged;
+        d.CounterAlarms.CollectionChanged -= OnChildCollectionChanged;
         foreach (var a in d.Alarms) a.PropertyChanged -= OnChildItemPropertyChanged;
         foreach (var def in d.Defects) def.PropertyChanged -= OnChildItemPropertyChanged;
-        foreach (var c in d.CountAlarms) c.PropertyChanged -= OnChildItemPropertyChanged;
+        foreach (var c in d.CounterAlarms) c.PropertyChanged -= OnChildItemPropertyChanged;
     }
 
     // ──────────── 运行时状态变更（驱动列表色点实时刷新） ────────────
@@ -1178,7 +1178,39 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (_suppressDirty) return;
         IsDirty = true;
-        RefreshAddressConflictFlag();
+        ScheduleAddressConflictRefresh();
+    }
+
+    /// <summary>
+    /// 冲突重算防抖（审查修复 2026-08-13）：编辑输入每击键触发 MarkDirty → 全量跨设备
+    /// 地址冲突重算（两两比较 O(N²·A)），设备多时输入明显卡顿——200ms 防抖合并连续击键。
+    /// 无 Dispatcher 环境（单元测试）同步执行保持原行为。
+    /// </summary>
+    private System.Windows.Threading.DispatcherTimer? _conflictDebounceTimer;
+
+    private void ScheduleAddressConflictRefresh()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted)
+        {
+            RefreshAddressConflictFlag();
+            return;
+        }
+        if (_conflictDebounceTimer == null)
+        {
+            _conflictDebounceTimer = new System.Windows.Threading.DispatcherTimer(
+                System.Windows.Threading.DispatcherPriority.Background, dispatcher)
+            {
+                Interval = TimeSpan.FromMilliseconds(200),
+            };
+            _conflictDebounceTimer.Tick += (_, _) =>
+            {
+                _conflictDebounceTimer.Stop();
+                RefreshAddressConflictFlag();
+            };
+        }
+        _conflictDebounceTimer.Stop();
+        _conflictDebounceTimer.Start();
     }
 
     /// <summary>
@@ -1230,6 +1262,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </remarks>
     public void Dispose()
     {
+        _conflictDebounceTimer?.Stop();
         if (_connectionManager != null)
             _connectionManager.PropertyChanged -= OnConnectionPropertyChanged;
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
@@ -1244,6 +1277,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 解绑子 VM 对父级 PropertyChanged 的订阅，避免僵尸回调
         AlarmManagerVm.Detach();
         DefectManagerVm.Detach();
-        CountAlarmManagerVm.Detach();
+        CounterAlarmManagerVm.Detach();
     }
 }

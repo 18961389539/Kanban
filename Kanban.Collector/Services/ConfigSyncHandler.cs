@@ -402,8 +402,10 @@ public sealed class ConfigSyncHandler
     /// 下发配方到指定设备（Remote 模式）：由持有 PLC 连接的 Collector 执行写 PLC + 读回校验 + 回滚。
     /// 设备/配方不存在时抛异常（客户端按 HubException 提示）。
     /// <paramref name="progress"/> 透传给 <see cref="RecipeApplier"/>，Hub 层包装为客户端进度推送。
+    /// 执行体经 Task.Run 脱离 Hub 请求线程：RecipeApplier.Apply 是同步 PLC IO（写+读回 N 项，单次最多 5s 超时），
+    /// 直接跑在 Hub 线程上会阻塞该连接上的订阅流与其他 Invoke。
     /// </summary>
-    public Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId,
+    public async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId,
         Action<RecipeApplyProgressDto>? progress = null)
     {
         try
@@ -415,11 +417,11 @@ public sealed class ConfigSyncHandler
             if (recipe is null)
                 throw new InvalidOperationException(string.Format(RecipeValidationMessages.RecipeNotFound, recipeId));
 
-            var result = _recipeApplier.Apply(device, recipe, progress);
+            var result = await Task.Run(() => _recipeApplier.Apply(device, recipe, progress)).ConfigureAwait(false);
             _logger.LogInformation("配方下发 {Recipe} -> {Device}：{Result}{Detail}",
                 recipe.Name, device.Name, result.Success ? "成功" : "失败",
                 result.Success ? "" : $"（{result.Message}）");
-            return Task.FromResult(result);
+            return result;
         }
         catch (Exception ex)
         {

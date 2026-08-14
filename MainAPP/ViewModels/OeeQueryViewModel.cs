@@ -215,6 +215,9 @@ public partial class OeeQueryViewModel : ObservableObject
         var now = DateTime.Now;
 
         var allProd = QueryProductionLogs(fromDate, toDate, deviceId, null);
+        // 基线池（审查修复 2026-08-13）：原每班次实例一次"窗口前 1 天"基线查询，
+        // 30 天窗口 × 3 班次 ≈ 90+ 次额外 DB 查询——窗口整体前扩 1 天一次拉取，按班次名复用
+        var baselinePool = QueryProductionLogs(fromDate.AddDays(-1), toDate, deviceId, null);
 
         var shiftGroups = HistoryQueryHelper.SplitShiftInstances(allProd);
 
@@ -253,9 +256,10 @@ public partial class OeeQueryViewModel : ObservableObject
             }
             else
             {
-                // 窗口起点在班次实例内部：取窗口前最近、且属同一班次实例的快照累计值
+                // 窗口起点在班次实例内部：取窗口前最近、且属同一班次实例的快照累计值（复用基线池，
+                // 按 shiftFrom 过滤后再找——池覆盖整个窗口，不过滤会取到窗口内快照当基线）
                 var baseLog = HistoryQueryHelper.FindBaselineBeforeWindow(
-                    QueryProductionLogs(shiftFrom.AddDays(-1), shiftFrom, deviceId, null),
+                    baselinePool.Where(p => p.Timestamp < shiftFrom).ToList(),
                     shiftName);
                 if (baseLog == null)
                 {

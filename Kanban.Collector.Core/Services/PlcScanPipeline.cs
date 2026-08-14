@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
@@ -13,7 +13,7 @@ namespace Kanban.Core.Services;
 /// 承担"批量读缓存 + 三组扫描"职责——
 /// - DWord 批量读计划与轮内缓存（_cycleInt32Values / _dwordPlanCache）：一轮采集内同地址只读一次
 /// - 报警边沿扫描（ScanAlarms，委托 AlarmStateTracker）
-/// - 缺陷扫描（ScanDefects）与计数报警扫描（ScanCountAlarms）
+/// - 缺陷扫描（ScanDefects）与计数报警扫描（ScanCounterAlarms）
 /// - 断线清理（ClearAlarmsOnDisconnect）
 ///
 /// 轮询编排/产量基线（班次语义）/状态机/OEE/历史快照留在 PlcDataAcquisitionService。
@@ -35,7 +35,7 @@ public sealed class PlcScanPipeline
 
     private readonly Dictionary<string, int> _cycleInt32Values = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _initializedCountAlarmIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _initializedCounterAlarmIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly PlcBatchReadPlanCache _dwordPlanCache = new();
     private bool _dwordBatchPrepared;
     private int _cycleBatchReadRequests;
@@ -257,21 +257,21 @@ public sealed class PlcScanPipeline
     }
 
     /// <summary>
-    /// 遍历设备的计数报警，按 D 字地址读取 PLC 当前值并回填到 CountAlarm.CurrentValue。
+    /// 遍历设备的计数报警，按 D 字地址读取 PLC 当前值并回填到 CounterAlarm.CurrentValue。
     /// 计数报警基于数值阈值判断（与 M 位报警的边沿检测不同），不写入 AlarmEvents、不计入 OEE。
     /// 读取失败不影响其他设备/报警的扫描结果。
     /// </summary>
-    public void ScanCountAlarms()
+    public void ScanCounterAlarms()
     {
         var configuredAlarmKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
-        foreach (var ca in device.CountAlarms.ToList())
+        foreach (var ca in device.CounterAlarms.ToList())
         {
             var key = $"{device.Id}:{ca.Id}";
             configuredAlarmKeys.Add(key);
             if (!ca.Enabled)
             {
-                _initializedCountAlarmIds.Remove(key);
+                _initializedCounterAlarmIds.Remove(key);
                 continue;
             }
             var addr = ca.PlcAddress;
@@ -289,7 +289,7 @@ public sealed class PlcScanPipeline
                 var wasTriggered = ca.IsTriggered;
                 ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
                 // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
-                var isFirstObservation = _initializedCountAlarmIds.Add(key);
+                var isFirstObservation = _initializedCounterAlarmIds.Add(key);
                 if (!isFirstObservation && !wasTriggered && ca.IsTriggered)
                     NotifyAlarm(device, ca.Id, ca.Name, AlarmLevel.Medium);
             }
@@ -300,7 +300,7 @@ public sealed class PlcScanPipeline
             }
         }
 
-        _initializedCountAlarmIds.RemoveWhere(key => !configuredAlarmKeys.Contains(key));
+        _initializedCounterAlarmIds.RemoveWhere(key => !configuredAlarmKeys.Contains(key));
     }
 
     /// <summary>
@@ -324,7 +324,7 @@ public sealed class PlcScanPipeline
                 }
             }
             // 计数报警：清零 CurrentValue，使 IsTriggered 计算属性返回 false
-            foreach (var ca in device.CountAlarms.ToList())
+            foreach (var ca in device.CounterAlarms.ToList())
             {
                 ca.CurrentValue = 0;
             }

@@ -65,3 +65,9 @@ memory/
 issued/
 revoked/
 LicenseIssuer.CLI/issued/
+
+# ── GUI 审查产物（勿入库） ──
+gui-test-screenshots/
+
+# ── 预置暂存（勿入库） ──
+.staging/

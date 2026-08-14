@@ -39,14 +39,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 计数报警首次触发时刻缓存（key = device.Id + alarm.Id）。
     /// 避免实时故障列表中计数报警时间每 3 秒跳动为 DateTime.Now。
     /// </summary>
-    private readonly Dictionary<string, DateTime> _countAlarmTriggerTimes = new();
+    private readonly Dictionary<string, DateTime> _counterAlarmTriggerTimes = new();
 
     /// <summary>
     /// 计数报警去抖缓存：key = device.Id + alarm.Id，value = 最近一次不再触发的时刻。
     /// IsTriggered 变 false 后保留 10 秒，避免阈值附近频繁触发/恢复导致列表闪烁。
     /// </summary>
-    private readonly Dictionary<string, DateTime> _countAlarmRecoveryTimes = new();
-    private const double CountAlarmDebounceSeconds = 10;
+    private readonly Dictionary<string, DateTime> _counterAlarmRecoveryTimes = new();
+    private const double CounterAlarmDebounceSeconds = 10;
 
     /// <summary>
     /// 已提示产量达标的工单 Id 集合（去重，每个工单仅弹一次 Growl）。
@@ -545,13 +545,45 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     private void RefreshDataStatus()
     {
-        DataStatusKind = string.IsNullOrEmpty(SelectedDeviceId)
+        var newKind = string.IsNullOrEmpty(SelectedDeviceId)
             ? "NoDevice"
             : !_connectionManager.IsConnected
                 ? "Disconnected"
                 : CurrentRuntime == null ? "NoData" : "Live";
+
+        // 状态档位变化：通知档位文本 + 全部显示（CanDisplayKpiData 随档位翻转）
+        if (newKind != _lastDataStatusKind)
+        {
+            _lastDataStatusKind = newKind;
+            DataStatusKind = newKind;
+            NotifyAllDisplays();
+            _lastDisplaySignature = null; // 强制下次签名重算
+            return;
+        }
+
+        // 档位未变：仅当显示值实际变化时通知（审查修复 2026-08-13：
+        // 原实现每 3s 无条件抛 12+ PropertyChanged——设备待机/无数据时值根本没变，全量空刷新）
+        var signature = string.Join("|",
+            OeeDisplay, AvailabilityRateDisplay, PerformanceRateDisplay, QualityRateDisplay,
+            RealtimeSpeedDisplay, TotalOutputDisplay, TotalOkProductionDisplay, TotalNgProductionDisplay,
+            ShiftOkProductionDisplay, ShiftNgProductionDisplay, TargetCycleDisplay, ActualCycleDisplay);
+        if (signature == _lastDisplaySignature) return;
+        _lastDisplaySignature = signature;
+        NotifyValueDisplays();
+    }
+
+    private string? _lastDataStatusKind;
+    private string? _lastDisplaySignature;
+
+    private void NotifyAllDisplays()
+    {
         OnPropertyChanged(nameof(DataStatusText));
         OnPropertyChanged(nameof(DataStatusTooltip));
+        NotifyValueDisplays();
+    }
+
+    private void NotifyValueDisplays()
+    {
         OnPropertyChanged(nameof(OeeDisplay));
         OnPropertyChanged(nameof(AvailabilityRateDisplay));
         OnPropertyChanged(nameof(PerformanceRateDisplay));
@@ -584,8 +616,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         // 仅数据变化时重建 OxyPlot（避免每 3 秒无意义 new PlotModel）
         var oeeInput = (Math.Round(AvailabilityRate, 3), Math.Round(PerformanceRate, 3), Math.Round(QualityRate, 3));
         if (oeeInput != _lastOeeInput) { BuildOeeRingCharts(); _lastOeeInput = oeeInput; }
-        // 状态时长：秒级粒度 diff（运行时每秒都在增，秒级足够及时且不过频）
-        var statusInput = ((int)RunTime, (int)AlarmTime, (int)PausedTime);
+        // 状态时长：5s 粒度桶 diff（审查修复 2026-08-13：原秒级 diff 使运行时每跨整秒重建一次饼图，
+        // 即"几乎每 tick 重建"；5s 桶将重建频率降 5 倍且显示口径不变）
+        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5));
         if (statusInput != _lastStatusInput) { BuildStatusPieChart(); _lastStatusInput = statusInput; }
         var defectHash = string.Join(",", CurrentDevice?.Defects?.ToList().Select(d => $"{d.Name}={d.Count}") ?? []);
         if (defectHash != _lastDefectHash) { BuildDefectBarChart(); _lastDefectHash = defectHash; }
@@ -870,46 +903,46 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
                 }
             }
 
-            foreach (var ca in device.CountAlarms.ToList())
+            foreach (var ca in device.CounterAlarms.ToList())
             {
                 var key = $"{device.Id}_{ca.Id}";
                 if (ca.Enabled && ca.IsTriggered)
                 {
                     activeKeys.Add(key);
                     // 触发中：清除恢复缓存，首次发现触发时记录时刻
-                    _countAlarmRecoveryTimes.Remove(key);
-                    if (!_countAlarmTriggerTimes.ContainsKey(key))
-                        _countAlarmTriggerTimes[key] = DateTime.Now;
+                    _counterAlarmRecoveryTimes.Remove(key);
+                    if (!_counterAlarmTriggerTimes.ContainsKey(key))
+                        _counterAlarmTriggerTimes[key] = DateTime.Now;
                     // 计数报警无级别字段，统一视为 Medium
-                    desired.Add(new ActiveAlarmInfo(_countAlarmTriggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
+                    desired.Add(new ActiveAlarmInfo(_counterAlarmTriggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
                 }
-                else if (ca.Enabled && _countAlarmTriggerTimes.ContainsKey(key))
+                else if (ca.Enabled && _counterAlarmTriggerTimes.ContainsKey(key))
                 {
                     // 去抖：刚恢复（IsTriggered=false）但仍在去抖窗口内，继续显示
-                    if (!_countAlarmRecoveryTimes.ContainsKey(key))
-                        _countAlarmRecoveryTimes[key] = DateTime.Now;
-                    if ((DateTime.Now - _countAlarmRecoveryTimes[key]).TotalSeconds < CountAlarmDebounceSeconds)
+                    if (!_counterAlarmRecoveryTimes.ContainsKey(key))
+                        _counterAlarmRecoveryTimes[key] = DateTime.Now;
+                    if ((DateTime.Now - _counterAlarmRecoveryTimes[key]).TotalSeconds < CounterAlarmDebounceSeconds)
                     {
                         activeKeys.Add(key);
-                        desired.Add(new ActiveAlarmInfo(_countAlarmTriggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
+                        desired.Add(new ActiveAlarmInfo(_counterAlarmTriggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
                     }
                 }
             }
         }
 
         // 清除已恢复的计数报警时间记录
-        var staleKeys = _countAlarmTriggerTimes.Keys.Where(k => !activeKeys.Contains(k)).ToList();
+        var staleKeys = _counterAlarmTriggerTimes.Keys.Where(k => !activeKeys.Contains(k)).ToList();
         foreach (var k in staleKeys)
         {
-            _countAlarmTriggerTimes.Remove(k);
-            _countAlarmRecoveryTimes.Remove(k);
+            _counterAlarmTriggerTimes.Remove(k);
+            _counterAlarmRecoveryTimes.Remove(k);
         }
         // 清除去抖窗口已过期的恢复记录
-        var expiredRecovery = _countAlarmRecoveryTimes
-            .Where(kv => (DateTime.Now - kv.Value).TotalSeconds >= CountAlarmDebounceSeconds)
+        var expiredRecovery = _counterAlarmRecoveryTimes
+            .Where(kv => (DateTime.Now - kv.Value).TotalSeconds >= CounterAlarmDebounceSeconds)
             .Select(kv => kv.Key).ToList();
         foreach (var k in expiredRecovery)
-            _countAlarmRecoveryTimes.Remove(k);
+            _counterAlarmRecoveryTimes.Remove(k);
 
         // 排序：级别降序 + 触发时间升序
         desired.Sort((a, b) =>

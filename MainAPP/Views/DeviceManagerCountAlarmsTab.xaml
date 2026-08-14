@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="MainAPP.Views.DeviceManagerCountAlarmsTab"
+    x:Class="MainAPP.Views.DeviceManagerCounterAlarmsTab"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -29,7 +29,7 @@
                 Margin="0,0,0,10"
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="{x:Static resources:Strings.K056}"
-                Command="{Binding DataContext.AddCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Command="{Binding DataContext.AddCounterAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Content="{x:Static resources:Strings.K056}"
                 DockPanel.Dock="Top"
                 Style="{StaticResource IconButtonDefault}"
@@ -46,7 +46,7 @@
                 <Grid.Style>
                     <Style TargetType="Grid">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding DataContext.IsBusyCountAlarmsCsv, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                            <DataTrigger Binding="{Binding DataContext.IsBusyCounterAlarmsCsv, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                                 <Setter Property="IsEnabled" Value="False" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -62,7 +62,7 @@
                     Height="40"
                     Padding="10,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K609}"
-                    Command="{Binding DataContext.ExportCountAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.ExportCounterAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Content="{x:Static resources:Strings.K653}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
@@ -72,7 +72,7 @@
                     Height="40"
                     Padding="10,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K611}"
-                    Command="{Binding DataContext.ImportCountAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.ImportCounterAlarmsCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Content="{x:Static resources:Strings.K654}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
@@ -81,8 +81,8 @@
             <ListBox
                 AutomationProperties.Name="{x:Static resources:Strings.K174}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
-                ItemsSource="{Binding CountAlarms}"
-                SelectedItem="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                ItemsSource="{Binding CounterAlarms}"
+                SelectedItem="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Margin="4,6">
@@ -164,8 +164,8 @@
             BorderBrush="{StaticResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="6"
-            Visibility="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}">
-            <StackPanel DataContext="{Binding DataContext.SelectedCountAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            Visibility="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}">
+            <StackPanel DataContext="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
                     hc:InfoElement.Title="{x:Static resources:Strings.K018}"
@@ -304,14 +304,14 @@
                     <Button
                         Margin="0,0,8,0"
                         AutomationProperties.Name="{x:Static resources:Strings.K185}"
-                        Command="{Binding DataContext.ResetCountAlarmValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Command="{Binding DataContext.ResetCounterAlarmValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"
                         Content="{x:Static resources:Strings.K186}"
                         Style="{StaticResource IconButtonDefault}"
                         Tag="{x:Static mi:MaterialIconKind.Refresh}" />
                     <Button
                         AutomationProperties.Name="{x:Static resources:Strings.K057}"
-                        Command="{Binding DataContext.RemoveCountAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Command="{Binding DataContext.RemoveCounterAlarmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         CommandParameter="{Binding}"
                         Content="{x:Static resources:Strings.K057}"
                         Style="{StaticResource IconButtonDanger}"

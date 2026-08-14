@@ -57,11 +57,11 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d1, "缩水", "D203", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d1, "气泡", "D204", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d1, "黑点", "D205", DefectSeverity.Critical, DefectCategory.Appearance);
-        AddSampleCountAlarm(d1, "连续NG次数", "D300", 10, "个", "连续 NG 超过 10 个时停机检查模具");
-        AddSampleCountAlarm(d1, "停机次数", "D301", 5, "次", "班次内异常停机超过 5 次需检修");
-        AddSampleCountAlarm(d1, "模具保养计数", "D302", 10000, "模次", "累计模次达 1 万需保养模具");
-        AddSampleCountAlarm(d1, "班次产量", "D303", 0, "件", "班次产量计数（阈值 0 表示仅记录不停机）");
-        AddSampleCountAlarm(d1, "能耗累计", "D304", 0, "kWh", "能耗累计（阈值 0 表示仅记录不停机）");
+        AddSampleCounterAlarm(d1, "连续NG次数", "D300", 10, "个", "连续 NG 超过 10 个时停机检查模具");
+        AddSampleCounterAlarm(d1, "停机次数", "D301", 5, "次", "班次内异常停机超过 5 次需检修");
+        AddSampleCounterAlarm(d1, "模具保养计数", "D302", 10000, "模次", "累计模次达 1 万需保养模具");
+        AddSampleCounterAlarm(d1, "班次产量", "D303", 0, "件", "班次产量计数（阈值 0 表示仅记录不停机）");
+        AddSampleCounterAlarm(d1, "能耗累计", "D304", 0, "kWh", "能耗累计（阈值 0 表示仅记录不停机）");
         devices.Add(d1);
 
         // ── 设备 2：注塑机A2（中量配置：7 报警 + 5 缺陷 + 4 计数报警） ──
@@ -89,10 +89,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d2, "黑点", "D212", DefectSeverity.Critical, DefectCategory.Appearance);
         AddSampleDefect(d2, "尺寸偏小", "D213", DefectSeverity.Critical, DefectCategory.Dimension);
         AddSampleDefect(d2, "缩水", "D214", DefectSeverity.Major, DefectCategory.Appearance);
-        AddSampleCountAlarm(d2, "连续NG次数", "D310", 8, "个", "连续 NG 超过 8 个时停机检查");
-        AddSampleCountAlarm(d2, "维护计数", "D311", 2000, "次", "累计注塑次数达到 2000 次需保养");
-        AddSampleCountAlarm(d2, "能耗累计", "D312", 0, "kWh", "能耗累计（阈值 0 表示仅记录不停机）");
-        AddSampleCountAlarm(d2, "模具保养计数", "D313", 8000, "模次", "累计模次达 8000 需保养模具");
+        AddSampleCounterAlarm(d2, "连续NG次数", "D310", 8, "个", "连续 NG 超过 8 个时停机检查");
+        AddSampleCounterAlarm(d2, "维护计数", "D311", 2000, "次", "累计注塑次数达到 2000 次需保养");
+        AddSampleCounterAlarm(d2, "能耗累计", "D312", 0, "kWh", "能耗累计（阈值 0 表示仅记录不停机）");
+        AddSampleCounterAlarm(d2, "模具保养计数", "D313", 8000, "模次", "累计模次达 8000 需保养模具");
         devices.Add(d2);
 
         // ── 设备 3：焊接机B1（重配置：8 报警 + 6 缺陷 + 5 计数报警） ──
@@ -123,11 +123,11 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d3, "焊偏", "D223", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d3, "气孔", "D224", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d3, "裂纹", "D225", DefectSeverity.Critical, DefectCategory.Function);
-        AddSampleCountAlarm(d3, "虚焊次数", "D320", 3, "次", "单班次虚焊次数超过 3 次需校准参数");
-        AddSampleCountAlarm(d3, "维护计数", "D321", 5000, "次", "累计焊接次数达到 5000 次需保养");
-        AddSampleCountAlarm(d3, "电极磨损计数", "D322", 800, "次", "电极焊接达 800 次需修磨");
-        AddSampleCountAlarm(d3, "焊穿次数", "D323", 2, "次", "单班次焊穿超 2 次需停机");
-        AddSampleCountAlarm(d3, "电流异常次数", "D324", 3, "次", "单班次电流异常超 3 次需检修");
+        AddSampleCounterAlarm(d3, "虚焊次数", "D320", 3, "次", "单班次虚焊次数超过 3 次需校准参数");
+        AddSampleCounterAlarm(d3, "维护计数", "D321", 5000, "次", "累计焊接次数达到 5000 次需保养");
+        AddSampleCounterAlarm(d3, "电极磨损计数", "D322", 800, "次", "电极焊接达 800 次需修磨");
+        AddSampleCounterAlarm(d3, "焊穿次数", "D323", 2, "次", "单班次焊穿超 2 次需停机");
+        AddSampleCounterAlarm(d3, "电流异常次数", "D324", 3, "次", "单班次电流异常超 3 次需检修");
         devices.Add(d3);
 
         // ── 设备 4：焊接机B2（中量配置：6 报警 + 5 缺陷 + 5 计数报警） ──
@@ -154,11 +154,11 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d4, "焊疤过大", "D232", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d4, "气孔", "D233", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d4, "裂纹", "D234", DefectSeverity.Critical, DefectCategory.Function);
-        AddSampleCountAlarm(d4, "脱焊次数", "D330", 2, "次", "单班次脱焊次数超 2 次需停机");
-        AddSampleCountAlarm(d4, "维护计数", "D331", 1000, "次", "累计焊接次数达到 1000 次需保养");
-        AddSampleCountAlarm(d4, "虚焊次数", "D332", 5, "次", "单班次虚焊次数超 5 次需校准");
-        AddSampleCountAlarm(d4, "电流异常次数", "D333", 3, "次", "单班次电流异常超 3 次需停机");
-        AddSampleCountAlarm(d4, "电极磨损计数", "D334", 600, "次", "电极焊接达 600 次需修磨");
+        AddSampleCounterAlarm(d4, "脱焊次数", "D330", 2, "次", "单班次脱焊次数超 2 次需停机");
+        AddSampleCounterAlarm(d4, "维护计数", "D331", 1000, "次", "累计焊接次数达到 1000 次需保养");
+        AddSampleCounterAlarm(d4, "虚焊次数", "D332", 5, "次", "单班次虚焊次数超 5 次需校准");
+        AddSampleCounterAlarm(d4, "电流异常次数", "D333", 3, "次", "单班次电流异常超 3 次需停机");
+        AddSampleCounterAlarm(d4, "电极磨损计数", "D334", 600, "次", "电极焊接达 600 次需修磨");
         devices.Add(d4);
 
         // ── 设备 5：装配机C1（重配置：7 报警 + 6 缺陷 + 4 计数报警） ──
@@ -187,10 +187,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d5, "滑丝", "D243", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d5, "错位", "D244", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d5, "损伤", "D245", DefectSeverity.Minor, DefectCategory.Appearance);
-        AddSampleCountAlarm(d5, "错件次数", "D340", 0, "个", "错件计数（阈值 0 表示仅记录不触发）");
-        AddSampleCountAlarm(d5, "漏装次数", "D341", 0, "个", "漏装计数（阈值 0 表示仅记录不触发）");
-        AddSampleCountAlarm(d5, "滑丝次数", "D342", 5, "个", "单班次滑丝次数超 5 个需更换螺丝刀头");
-        AddSampleCountAlarm(d5, "维护计数", "D343", 3000, "次", "累计运行达 3000 次需保养");
+        AddSampleCounterAlarm(d5, "错件次数", "D340", 0, "个", "错件计数（阈值 0 表示仅记录不触发）");
+        AddSampleCounterAlarm(d5, "漏装次数", "D341", 0, "个", "漏装计数（阈值 0 表示仅记录不触发）");
+        AddSampleCounterAlarm(d5, "滑丝次数", "D342", 5, "个", "单班次滑丝次数超 5 个需更换螺丝刀头");
+        AddSampleCounterAlarm(d5, "维护计数", "D343", 3000, "次", "累计运行达 3000 次需保养");
         devices.Add(d5);
 
         // ── 设备 6：检测机D1（中量配置：7 报警 + 6 缺陷 + 4 计数报警） ──
@@ -219,10 +219,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d6, "变形", "D253", DefectSeverity.Critical, DefectCategory.Dimension);
         AddSampleDefect(d6, "缺件", "D254", DefectSeverity.Critical, DefectCategory.Function);
         AddSampleDefect(d6, "错件", "D255", DefectSeverity.Critical, DefectCategory.Function);
-        AddSampleCountAlarm(d6, "NG连续", "D350", 5, "个", "连续 NG 超过 5 个需复检相机标定");
-        AddSampleCountAlarm(d6, "复检次数", "D351", 3, "次", "单班次复检超 3 次需校准检测算法");
-        AddSampleCountAlarm(d6, "设备保养计数", "D352", 720, "h", "累计运行 720 小时需保养");
-        AddSampleCountAlarm(d6, "剔除次数", "D353", 50, "次", "单班次剔除超 50 次需检查剔除机构");
+        AddSampleCounterAlarm(d6, "NG连续", "D350", 5, "个", "连续 NG 超过 5 个需复检相机标定");
+        AddSampleCounterAlarm(d6, "复检次数", "D351", 3, "次", "单班次复检超 3 次需校准检测算法");
+        AddSampleCounterAlarm(d6, "设备保养计数", "D352", 720, "h", "累计运行 720 小时需保养");
+        AddSampleCounterAlarm(d6, "剔除次数", "D353", 50, "次", "单班次剔除超 50 次需检查剔除机构");
         devices.Add(d6);
 
         // ── 设备 7：注塑机A3（重配置：7 报警 + 5 缺陷 + 4 计数报警） ──
@@ -251,10 +251,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d7, "缩水", "D262", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d7, "气泡", "D263", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d7, "黑点", "D264", DefectSeverity.Critical, DefectCategory.Appearance);
-        AddSampleCountAlarm(d7, "连续NG次数", "D360", 8, "个", "连续 NG 超过 8 个时停机检查");
-        AddSampleCountAlarm(d7, "停机次数", "D361", 4, "次", "班次内异常停机超 4 次需检修");
-        AddSampleCountAlarm(d7, "模具保养计数", "D362", 12000, "模次", "累计模次达 1.2 万需保养");
-        AddSampleCountAlarm(d7, "班次产量", "D363", 0, "件", "班次产量计数（阈值 0 表示仅记录不停机）");
+        AddSampleCounterAlarm(d7, "连续NG次数", "D360", 8, "个", "连续 NG 超过 8 个时停机检查");
+        AddSampleCounterAlarm(d7, "停机次数", "D361", 4, "次", "班次内异常停机超 4 次需检修");
+        AddSampleCounterAlarm(d7, "模具保养计数", "D362", 12000, "模次", "累计模次达 1.2 万需保养");
+        AddSampleCounterAlarm(d7, "班次产量", "D363", 0, "件", "班次产量计数（阈值 0 表示仅记录不停机）");
         devices.Add(d7);
 
         // ── 设备 8：焊接机B3（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -281,10 +281,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d8, "焊疤过大", "D271", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d8, "焊穿", "D272", DefectSeverity.Critical, DefectCategory.Function);
         AddSampleDefect(d8, "焊偏", "D273", DefectSeverity.Major, DefectCategory.Dimension);
-        AddSampleCountAlarm(d8, "虚焊次数", "D370", 4, "次", "单班次虚焊次数超 4 次需校准");
-        AddSampleCountAlarm(d8, "维护计数", "D371", 4000, "次", "累计焊接次数达 4000 次需保养");
-        AddSampleCountAlarm(d8, "电极磨损计数", "D372", 700, "次", "电极焊接达 700 次需修磨");
-        AddSampleCountAlarm(d8, "焊穿次数", "D373", 1, "次", "单班次焊穿超 1 次需停机检修");
+        AddSampleCounterAlarm(d8, "虚焊次数", "D370", 4, "次", "单班次虚焊次数超 4 次需校准");
+        AddSampleCounterAlarm(d8, "维护计数", "D371", 4000, "次", "累计焊接次数达 4000 次需保养");
+        AddSampleCounterAlarm(d8, "电极磨损计数", "D372", 700, "次", "电极焊接达 700 次需修磨");
+        AddSampleCounterAlarm(d8, "焊穿次数", "D373", 1, "次", "单班次焊穿超 1 次需停机检修");
         devices.Add(d8);
 
         // ── 设备 9：装配机C2（重配置：7 报警 + 5 缺陷 + 4 计数报警） ──
@@ -313,10 +313,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d9, "浮高", "D282", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d9, "滑丝", "D283", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d9, "损伤", "D284", DefectSeverity.Minor, DefectCategory.Appearance);
-        AddSampleCountAlarm(d9, "错件次数", "D380", 0, "个", "错件计数（阈值 0 表示立即停机）");
-        AddSampleCountAlarm(d9, "漏装次数", "D381", 0, "个", "漏装计数（阈值 0 表示立即停机）");
-        AddSampleCountAlarm(d9, "滑丝次数", "D382", 3, "个", "单班次滑丝超 3 个需更换螺丝刀头");
-        AddSampleCountAlarm(d9, "维护计数", "D383", 2500, "次", "累计运行达 2500 次需保养");
+        AddSampleCounterAlarm(d9, "错件次数", "D380", 0, "个", "错件计数（阈值 0 表示立即停机）");
+        AddSampleCounterAlarm(d9, "漏装次数", "D381", 0, "个", "漏装计数（阈值 0 表示立即停机）");
+        AddSampleCounterAlarm(d9, "滑丝次数", "D382", 3, "个", "单班次滑丝超 3 个需更换螺丝刀头");
+        AddSampleCounterAlarm(d9, "维护计数", "D383", 2500, "次", "累计运行达 2500 次需保养");
         devices.Add(d9);
 
         // ── 设备 10：检测机D2（中量配置：6 报警 + 5 缺陷 + 4 计数报警） ──
@@ -344,10 +344,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d10, "脏污", "D292", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d10, "变形", "D293", DefectSeverity.Critical, DefectCategory.Dimension);
         AddSampleDefect(d10, "缺件", "D294", DefectSeverity.Critical, DefectCategory.Function);
-        AddSampleCountAlarm(d10, "NG连续", "D390", 4, "个", "连续 NG 超过 4 个需复检标定");
-        AddSampleCountAlarm(d10, "复检次数", "D391", 2, "次", "单班次复检超 2 次需校准");
-        AddSampleCountAlarm(d10, "设备保养计数", "D392", 600, "h", "累计运行 600 小时需保养");
-        AddSampleCountAlarm(d10, "剔除次数", "D393", 30, "次", "单班次剔除超 30 次需检查剔除机构");
+        AddSampleCounterAlarm(d10, "NG连续", "D390", 4, "个", "连续 NG 超过 4 个需复检标定");
+        AddSampleCounterAlarm(d10, "复检次数", "D391", 2, "次", "单班次复检超 2 次需校准");
+        AddSampleCounterAlarm(d10, "设备保养计数", "D392", 600, "h", "累计运行 600 小时需保养");
+        AddSampleCounterAlarm(d10, "剔除次数", "D393", 30, "次", "单班次剔除超 30 次需检查剔除机构");
         devices.Add(d10);
 
         // ── 设备 11：CNC加工中心E1（重配置：8 报警 + 6 缺陷 + 5 计数报警） ──
@@ -378,11 +378,11 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d11, "振纹", "D603", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d11, "碰伤", "D604", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d11, "位置度超差", "D605", DefectSeverity.Critical, DefectCategory.Dimension);
-        AddSampleCountAlarm(d11, "刀具寿命计数", "D700", 0, "次", "刀具使用次数（阈值 0 表示仅记录）");
-        AddSampleCountAlarm(d11, "主轴保养计数", "D701", 2000, "h", "累计运行 2000 小时保养主轴");
-        AddSampleCountAlarm(d11, "连续NG次数", "D702", 3, "个", "连续 NG 超过 3 个需更换刀具");
-        AddSampleCountAlarm(d11, "急停次数", "D703", 2, "次", "单班次急停超 2 次需检查");
-        AddSampleCountAlarm(d11, "班次产量", "D704", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d11, "刀具寿命计数", "D700", 0, "次", "刀具使用次数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d11, "主轴保养计数", "D701", 2000, "h", "累计运行 2000 小时保养主轴");
+        AddSampleCounterAlarm(d11, "连续NG次数", "D702", 3, "个", "连续 NG 超过 3 个需更换刀具");
+        AddSampleCounterAlarm(d11, "急停次数", "D703", 2, "次", "单班次急停超 2 次需检查");
+        AddSampleCounterAlarm(d11, "班次产量", "D704", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d11);
 
         // ── 设备 12：包装机F1（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -409,10 +409,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d12, "标签偏移", "D611", DefectSeverity.Major, DefectCategory.Packaging);
         AddSampleDefect(d12, "包装破损", "D612", DefectSeverity.Critical, DefectCategory.Packaging);
         AddSampleDefect(d12, "漏封", "D613", DefectSeverity.Major, DefectCategory.Packaging);
-        AddSampleCountAlarm(d12, "连续NG次数", "D710", 5, "个", "连续 NG 超过 5 个需检查封切机构");
-        AddSampleCountAlarm(d12, "维护计数", "D711", 1500, "次", "累计运行达 1500 次需保养");
-        AddSampleCountAlarm(d12, "膜卷更换计数", "D712", 0, "卷", "膜卷使用计数（阈值 0 表示仅记录）");
-        AddSampleCountAlarm(d12, "班次产量", "D713", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d12, "连续NG次数", "D710", 5, "个", "连续 NG 超过 5 个需检查封切机构");
+        AddSampleCounterAlarm(d12, "维护计数", "D711", 1500, "次", "累计运行达 1500 次需保养");
+        AddSampleCounterAlarm(d12, "膜卷更换计数", "D712", 0, "卷", "膜卷使用计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d12, "班次产量", "D713", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d12);
 
         // ── 设备 13：注塑机A4（重配置：7 报警 + 5 缺陷 + 4 计数报警） ──
@@ -441,10 +441,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d13, "缩水", "D622", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d13, "气泡", "D623", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d13, "黑点", "D624", DefectSeverity.Critical, DefectCategory.Appearance);
-        AddSampleCountAlarm(d13, "连续NG次数", "D720", 9, "个", "连续 NG 超过 9 个时停机检查");
-        AddSampleCountAlarm(d13, "停机次数", "D721", 3, "次", "班次内异常停机超 3 次需检修");
-        AddSampleCountAlarm(d13, "模具保养计数", "D722", 9000, "模次", "累计模次达 9000 需保养");
-        AddSampleCountAlarm(d13, "班次产量", "D723", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d13, "连续NG次数", "D720", 9, "个", "连续 NG 超过 9 个时停机检查");
+        AddSampleCounterAlarm(d13, "停机次数", "D721", 3, "次", "班次内异常停机超 3 次需检修");
+        AddSampleCounterAlarm(d13, "模具保养计数", "D722", 9000, "模次", "累计模次达 9000 需保养");
+        AddSampleCounterAlarm(d13, "班次产量", "D723", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d13);
 
         // ── 设备 14：焊接机B4（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -471,10 +471,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d14, "焊疤过大", "D631", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d14, "焊偏", "D632", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d14, "气孔", "D633", DefectSeverity.Major, DefectCategory.Function);
-        AddSampleCountAlarm(d14, "虚焊次数", "D730", 3, "次", "单班次虚焊次数超 3 次需校准");
-        AddSampleCountAlarm(d14, "维护计数", "D731", 6000, "次", "累计焊接次数达 6000 次需保养");
-        AddSampleCountAlarm(d14, "电极磨损计数", "D732", 900, "次", "电极焊接达 900 次需修磨");
-        AddSampleCountAlarm(d14, "班次产量", "D733", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d14, "虚焊次数", "D730", 3, "次", "单班次虚焊次数超 3 次需校准");
+        AddSampleCounterAlarm(d14, "维护计数", "D731", 6000, "次", "累计焊接次数达 6000 次需保养");
+        AddSampleCounterAlarm(d14, "电极磨损计数", "D732", 900, "次", "电极焊接达 900 次需修磨");
+        AddSampleCounterAlarm(d14, "班次产量", "D733", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d14);
 
         // ── 设备 15：装配机C3（重配置：7 报警 + 5 缺陷 + 4 计数报警） ──
@@ -503,10 +503,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d15, "浮高", "D642", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d15, "滑丝", "D643", DefectSeverity.Major, DefectCategory.Function);
         AddSampleDefect(d15, "错位", "D644", DefectSeverity.Major, DefectCategory.Dimension);
-        AddSampleCountAlarm(d15, "错件次数", "D740", 0, "个", "错件计数（阈值 0 表示立即停机）");
-        AddSampleCountAlarm(d15, "漏装次数", "D741", 0, "个", "漏装计数（阈值 0 表示立即停机）");
-        AddSampleCountAlarm(d15, "滑丝次数", "D742", 4, "个", "单班次滑丝超 4 个需更换螺丝刀头");
-        AddSampleCountAlarm(d15, "维护计数", "D743", 3500, "次", "累计运行达 3500 次需保养");
+        AddSampleCounterAlarm(d15, "错件次数", "D740", 0, "个", "错件计数（阈值 0 表示立即停机）");
+        AddSampleCounterAlarm(d15, "漏装次数", "D741", 0, "个", "漏装计数（阈值 0 表示立即停机）");
+        AddSampleCounterAlarm(d15, "滑丝次数", "D742", 4, "个", "单班次滑丝超 4 个需更换螺丝刀头");
+        AddSampleCounterAlarm(d15, "维护计数", "D743", 3500, "次", "累计运行达 3500 次需保养");
         devices.Add(d15);
 
         // ── 设备 16：检测机D3（中量配置：6 报警 + 5 缺陷 + 4 计数报警） ──
@@ -534,10 +534,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d16, "脏污", "D652", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d16, "变形", "D653", DefectSeverity.Critical, DefectCategory.Dimension);
         AddSampleDefect(d16, "错件", "D654", DefectSeverity.Critical, DefectCategory.Function);
-        AddSampleCountAlarm(d16, "NG连续", "D750", 6, "个", "连续 NG 超过 6 个需复检标定");
-        AddSampleCountAlarm(d16, "复检次数", "D751", 4, "次", "单班次复检超 4 次需校准");
-        AddSampleCountAlarm(d16, "设备保养计数", "D752", 800, "h", "累计运行 800 小时需保养");
-        AddSampleCountAlarm(d16, "剔除次数", "D753", 40, "次", "单班次剔除超 40 次需检查剔除机构");
+        AddSampleCounterAlarm(d16, "NG连续", "D750", 6, "个", "连续 NG 超过 6 个需复检标定");
+        AddSampleCounterAlarm(d16, "复检次数", "D751", 4, "次", "单班次复检超 4 次需校准");
+        AddSampleCounterAlarm(d16, "设备保养计数", "D752", 800, "h", "累计运行 800 小时需保养");
+        AddSampleCounterAlarm(d16, "剔除次数", "D753", 40, "次", "单班次剔除超 40 次需检查剔除机构");
         devices.Add(d16);
 
         // ── 设备 17：CNC加工中心E2（重配置：8 报警 + 6 缺陷 + 5 计数报警） ──
@@ -568,11 +568,11 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d17, "振纹", "D663", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d17, "碰伤", "D664", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d17, "同轴度超差", "D665", DefectSeverity.Critical, DefectCategory.Dimension);
-        AddSampleCountAlarm(d17, "刀具寿命计数", "D760", 0, "次", "刀具使用次数（阈值 0 表示仅记录）");
-        AddSampleCountAlarm(d17, "主轴保养计数", "D761", 1800, "h", "累计运行 1800 小时保养主轴");
-        AddSampleCountAlarm(d17, "连续NG次数", "D762", 2, "个", "连续 NG 超过 2 个需更换刀具");
-        AddSampleCountAlarm(d17, "急停次数", "D763", 1, "次", "单班次急停超 1 次需检查");
-        AddSampleCountAlarm(d17, "班次产量", "D764", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d17, "刀具寿命计数", "D760", 0, "次", "刀具使用次数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d17, "主轴保养计数", "D761", 1800, "h", "累计运行 1800 小时保养主轴");
+        AddSampleCounterAlarm(d17, "连续NG次数", "D762", 2, "个", "连续 NG 超过 2 个需更换刀具");
+        AddSampleCounterAlarm(d17, "急停次数", "D763", 1, "次", "单班次急停超 1 次需检查");
+        AddSampleCounterAlarm(d17, "班次产量", "D764", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d17);
 
         // ── 设备 18：包装机F2（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -599,10 +599,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d18, "标签偏移", "D671", DefectSeverity.Major, DefectCategory.Packaging);
         AddSampleDefect(d18, "包装破损", "D672", DefectSeverity.Critical, DefectCategory.Packaging);
         AddSampleDefect(d18, "漏封", "D673", DefectSeverity.Major, DefectCategory.Packaging);
-        AddSampleCountAlarm(d18, "连续NG次数", "D770", 4, "个", "连续 NG 超过 4 个需检查封切机构");
-        AddSampleCountAlarm(d18, "维护计数", "D771", 1200, "次", "累计运行达 1200 次需保养");
-        AddSampleCountAlarm(d18, "膜卷更换计数", "D772", 0, "卷", "膜卷使用计数（阈值 0 表示仅记录）");
-        AddSampleCountAlarm(d18, "班次产量", "D773", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d18, "连续NG次数", "D770", 4, "个", "连续 NG 超过 4 个需检查封切机构");
+        AddSampleCounterAlarm(d18, "维护计数", "D771", 1200, "次", "累计运行达 1200 次需保养");
+        AddSampleCounterAlarm(d18, "膜卷更换计数", "D772", 0, "卷", "膜卷使用计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d18, "班次产量", "D773", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d18);
 
         // ── 设备 19：激光打标机G1（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -629,10 +629,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d19, "标记模糊", "D681", DefectSeverity.Major, DefectCategory.Appearance);
         AddSampleDefect(d19, "位置偏移", "D682", DefectSeverity.Major, DefectCategory.Dimension);
         AddSampleDefect(d19, "标记深浅不一", "D683", DefectSeverity.Minor, DefectCategory.Appearance);
-        AddSampleCountAlarm(d19, "连续NG次数", "D780", 3, "个", "连续 NG 超过 3 个需检查激光器");
-        AddSampleCountAlarm(d19, "维护计数", "D781", 2500, "次", "累计运行达 2500 次需保养");
-        AddSampleCountAlarm(d19, "激光器寿命计数", "D782", 0, "h", "激光器使用小时数（阈值 0 表示仅记录）");
-        AddSampleCountAlarm(d19, "班次产量", "D783", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d19, "连续NG次数", "D780", 3, "个", "连续 NG 超过 3 个需检查激光器");
+        AddSampleCounterAlarm(d19, "维护计数", "D781", 2500, "次", "累计运行达 2500 次需保养");
+        AddSampleCounterAlarm(d19, "激光器寿命计数", "D782", 0, "h", "激光器使用小时数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d19, "班次产量", "D783", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d19);
 
         // ── 设备 20：清洗机H1（中量配置：6 报警 + 4 缺陷 + 4 计数报警） ──
@@ -659,10 +659,10 @@ public static class SampleDeviceBuilder
         AddSampleDefect(d20, "水印", "D691", DefectSeverity.Minor, DefectCategory.Appearance);
         AddSampleDefect(d20, "氧化", "D692", DefectSeverity.Critical, DefectCategory.Appearance);
         AddSampleDefect(d20, "划伤", "D693", DefectSeverity.Major, DefectCategory.Appearance);
-        AddSampleCountAlarm(d20, "连续NG次数", "D790", 5, "个", "连续 NG 超过 5 个需检查喷淋");
-        AddSampleCountAlarm(d20, "维护计数", "D791", 1800, "次", "累计运行达 1800 次需保养");
-        AddSampleCountAlarm(d20, "滤芯更换计数", "D792", 500, "h", "累计运行 500 小时需更换滤芯");
-        AddSampleCountAlarm(d20, "班次产量", "D793", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
+        AddSampleCounterAlarm(d20, "连续NG次数", "D790", 5, "个", "连续 NG 超过 5 个需检查喷淋");
+        AddSampleCounterAlarm(d20, "维护计数", "D791", 1800, "次", "累计运行达 1800 次需保养");
+        AddSampleCounterAlarm(d20, "滤芯更换计数", "D792", 500, "h", "累计运行 500 小时需更换滤芯");
+        AddSampleCounterAlarm(d20, "班次产量", "D793", 0, "件", "班次产量计数（阈值 0 表示仅记录）");
         devices.Add(d20);
 
         AssertNoDuplicateAddresses(devices);
@@ -698,8 +698,8 @@ public static class SampleDeviceBuilder
                 Add(a.PlcAddress, $"{d.Name}.Alarm[{a.Name}]");
             foreach (var def in d.Defects)
                 Add(def.PlcAddress, $"{d.Name}.Defect[{def.Name}]");
-            foreach (var c in d.CountAlarms)
-                Add(c.PlcAddress, $"{d.Name}.CountAlarm[{c.Name}]");
+            foreach (var c in d.CounterAlarms)
+                Add(c.PlcAddress, $"{d.Name}.CounterAlarm[{c.Name}]");
         }
 
         if (duplicates.Count > 0)
@@ -732,9 +732,9 @@ public static class SampleDeviceBuilder
         });
     }
 
-    private static void AddSampleCountAlarm(Device d, string name, string addr, int max, string unit, string desc)
+    private static void AddSampleCounterAlarm(Device d, string name, string addr, int max, string unit, string desc)
     {
-        d.CountAlarms.Add(new CountAlarm
+        d.CounterAlarms.Add(new CounterAlarm
         {
             DeviceId = d.Id,
             Name = name,

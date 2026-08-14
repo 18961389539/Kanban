@@ -223,6 +223,11 @@
     <value>適用をキャンセルし、ロールバックしました</value>
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>
+文字列パラメータは自動ロールバックされません（切り詰め値によるデータ破損を防止）。手動で確認してください
+</value>
+  </data>
     <value>パラメータ {0} を書き込み中…</value>
   </data>
 </root>

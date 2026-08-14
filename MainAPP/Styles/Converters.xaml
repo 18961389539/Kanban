@@ -34,6 +34,7 @@
     <converters:ProgressToStrokeDashArrayConverter x:Key="ProgressToStrokeDashArrayConverter" />
     <converters:RatioToGridLengthConverter x:Key="RatioToGridLengthConverter" />
     <converters:DurationToTextConverter x:Key="DurationToTextConverter" />
+    <converters:UtcToLocalStringConverter x:Key="UtcToLocalConverter" />
 
     <!--  安全校验错误模板：避免直接索引 (Validation.Errors)[0] 在集合为空时抛
           ArgumentOutOfRangeException（调试输出 "Error 17" 噪音）。  -->

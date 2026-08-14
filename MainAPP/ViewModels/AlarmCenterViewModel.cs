@@ -56,7 +56,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     private readonly DispatcherTimer _activeTimer;  // 3s 刷新活跃报警
     private readonly DispatcherTimer _statsTimer;   // 60s 刷新事件流与统计
     private readonly Dispatcher _uiDispatcher = Dispatcher.CurrentDispatcher;
-    private readonly Dictionary<string, DateTime> _countAlarmTriggerTimes = new();
+    private readonly Dictionary<string, DateTime> _counterAlarmTriggerTimes = new();
     private int _statsRefreshVersion;
     private bool _disposed;
 
@@ -198,7 +198,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         _activeTimer.Tick -= OnActiveTimerTick;
         _statsTimer.Tick -= OnStatsTimerTick;
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
-        _countAlarmTriggerTimes.Clear();
+        _counterAlarmTriggerTimes.Clear();
     }
 
     partial void OnSelectedTimeRangeChanged(AlarmCenterTimeRange value) => RefreshStats();
@@ -233,15 +233,15 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 刷新实时活跃报警列表：遍历所有设备的 Alarms 与 CountAlarms，
+    /// 刷新实时活跃报警列表：遍历所有设备的 Alarms 与 CounterAlarms，
     /// 收集 StartTime!=default &amp;&amp; EndTime==default 的 PLC 报警 + IsTriggered 的计数报警。
-    /// 与 HomeViewModel.RefreshActiveAlarms 逻辑一致但简化（无 CountAlarm 去抖）。
+    /// 与 HomeViewModel.RefreshActiveAlarms 逻辑一致但简化（无 CounterAlarm 去抖）。
     /// </summary>
     private void RefreshActiveAlarms()
     {
         var now = DateTime.Now;
         var collected = new List<ActiveAlarmInfo>();
-        var activeCountAlarmKeys = new HashSet<string>();
+        var activeCounterAlarmKeys = new HashSet<string>();
 
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
@@ -257,16 +257,16 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             }
 
             // 计数报警：已触发且启用
-            foreach (var ca in device.CountAlarms)
+            foreach (var ca in device.CounterAlarms)
             {
                 if (ca.Enabled && ca.IsTriggered)
                 {
                     var key = $"{device.Id}_{ca.Id}";
-                    activeCountAlarmKeys.Add(key);
-                    if (!_countAlarmTriggerTimes.TryGetValue(key, out var triggerTime))
+                    activeCounterAlarmKeys.Add(key);
+                    if (!_counterAlarmTriggerTimes.TryGetValue(key, out var triggerTime))
                     {
                         triggerTime = now;
-                        _countAlarmTriggerTimes[key] = triggerTime;
+                        _counterAlarmTriggerTimes[key] = triggerTime;
                     }
                     collected.Add(new ActiveAlarmInfo(
                         triggerTime, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
@@ -274,10 +274,10 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             }
         }
 
-        foreach (var key in _countAlarmTriggerTimes.Keys
-                     .Where(key => !activeCountAlarmKeys.Contains(key))
+        foreach (var key in _counterAlarmTriggerTimes.Keys
+                     .Where(key => !activeCounterAlarmKeys.Contains(key))
                      .ToList())
-            _countAlarmTriggerTimes.Remove(key);
+            _counterAlarmTriggerTimes.Remove(key);
 
         // 排序：级别降序 + 触发时间升序
         collected.Sort((a, b) =>

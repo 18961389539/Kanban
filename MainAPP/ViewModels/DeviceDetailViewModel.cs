@@ -84,13 +84,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 _currentDevice.PropertyChanged -= OnDevicePropertyChanged;
                 _currentDevice.Alarms.CollectionChanged -= OnAlarmsCollectionChanged;
                 _currentDevice.Defects.CollectionChanged -= OnDefectsCollectionChanged;
-                _currentDevice.CountAlarms.CollectionChanged -= OnCountAlarmsCollectionChanged;
+                _currentDevice.CounterAlarms.CollectionChanged -= OnCounterAlarmsCollectionChanged;
                 foreach (var alarm in _currentDevice.Alarms)
                     alarm.PropertyChanged -= OnAlarmPropertyChanged;
                 foreach (var defect in _currentDevice.Defects)
                     defect.PropertyChanged -= OnDefectPropertyChanged;
-                foreach (var alarm in _currentDevice.CountAlarms)
-                    alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+                foreach (var alarm in _currentDevice.CounterAlarms)
+                    alarm.PropertyChanged -= OnCounterAlarmPropertyChanged;
             }
             SetProperty(ref _currentDevice, value);
             if (value != null)
@@ -98,13 +98,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 value.PropertyChanged += OnDevicePropertyChanged;
                 value.Alarms.CollectionChanged += OnAlarmsCollectionChanged;
                 value.Defects.CollectionChanged += OnDefectsCollectionChanged;
-                value.CountAlarms.CollectionChanged += OnCountAlarmsCollectionChanged;
+                value.CounterAlarms.CollectionChanged += OnCounterAlarmsCollectionChanged;
                 foreach (var alarm in value.Alarms)
                     alarm.PropertyChanged += OnAlarmPropertyChanged;
                 foreach (var defect in value.Defects)
                     defect.PropertyChanged += OnDefectPropertyChanged;
-                foreach (var alarm in value.CountAlarms)
-                    alarm.PropertyChanged += OnCountAlarmPropertyChanged;
+                foreach (var alarm in value.CounterAlarms)
+                    alarm.PropertyChanged += OnCounterAlarmPropertyChanged;
             }
         }
     }
@@ -414,21 +414,21 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             DispatchOnUi(RefreshDefectChart);
     }
 
-    private void OnCountAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnCounterAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.OldItems != null)
-            foreach (CountAlarm alarm in e.OldItems)
-                alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+            foreach (CounterAlarm alarm in e.OldItems)
+                alarm.PropertyChanged -= OnCounterAlarmPropertyChanged;
         if (e.NewItems != null)
-            foreach (CountAlarm alarm in e.NewItems)
-                alarm.PropertyChanged += OnCountAlarmPropertyChanged;
+            foreach (CounterAlarm alarm in e.NewItems)
+                alarm.PropertyChanged += OnCounterAlarmPropertyChanged;
         DispatchOnUi(RefreshActiveAlarms);
     }
 
-    private void OnCountAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnCounterAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(CountAlarm.CurrentValue) or nameof(CountAlarm.MaxValue)
-            or nameof(CountAlarm.Enabled))
+        if (e.PropertyName is nameof(CounterAlarm.CurrentValue) or nameof(CounterAlarm.MaxValue)
+            or nameof(CounterAlarm.Enabled))
             DispatchOnUi(RefreshActiveAlarms);
     }
 
@@ -461,13 +461,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             _currentDevice.PropertyChanged -= OnDevicePropertyChanged;
             _currentDevice.Alarms.CollectionChanged -= OnAlarmsCollectionChanged;
             _currentDevice.Defects.CollectionChanged -= OnDefectsCollectionChanged;
-            _currentDevice.CountAlarms.CollectionChanged -= OnCountAlarmsCollectionChanged;
+            _currentDevice.CounterAlarms.CollectionChanged -= OnCounterAlarmsCollectionChanged;
             foreach (var alarm in _currentDevice.Alarms)
                 alarm.PropertyChanged -= OnAlarmPropertyChanged;
             foreach (var defect in _currentDevice.Defects)
                 defect.PropertyChanged -= OnDefectPropertyChanged;
-            foreach (var alarm in _currentDevice.CountAlarms)
-                alarm.PropertyChanged -= OnCountAlarmPropertyChanged;
+            foreach (var alarm in _currentDevice.CounterAlarms)
+                alarm.PropertyChanged -= OnCounterAlarmPropertyChanged;
         }
 
         if (_currentRuntime != null)
@@ -736,7 +736,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 });
             }
         }
-        foreach (var alarm in CurrentDevice.CountAlarms)
+        foreach (var alarm in CurrentDevice.CounterAlarms)
         {
             if (!alarm.Enabled || !alarm.IsTriggered) continue;
             ActiveAlarms.Add(new AlarmConfigRow
@@ -745,7 +745,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 PlcAddress = alarm.PlcAddress,
                 Level = AlarmLevel.Medium,
                 Description = alarm.Description,
-                IsCountAlarm = true,
+                IsCounterAlarm = true,
                 CurrentValue = alarm.CurrentValue,
                 Threshold = alarm.MaxValue,
                 StartTime = now,
@@ -1020,7 +1020,7 @@ public class AlarmConfigRow
     public string PlcAddress { get; set; } = string.Empty;
     public AlarmLevel Level { get; set; }
     public string Description { get; set; } = string.Empty;
-    public bool IsCountAlarm { get; set; }
+    public bool IsCounterAlarm { get; set; }
     public int CurrentValue { get; set; }
     public int Threshold { get; set; }
     public DateTime StartTime { get; set; }
@@ -1035,7 +1035,7 @@ public class AlarmConfigRow
     public string DurationText => Duration.TotalSeconds > 0
         ? $"{(int)Duration.TotalHours}h {Duration.Minutes}m"
         : "—";
-    public string ValueText => IsCountAlarm
+    public string ValueText => IsCounterAlarm
         ? string.Format(Strings.F120, CurrentValue, Threshold)
         : string.Format(Strings.F196, StartTime, PlcAddress);
 }

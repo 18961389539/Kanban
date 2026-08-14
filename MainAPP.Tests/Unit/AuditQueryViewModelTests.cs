@@ -104,7 +104,7 @@ public class AuditQueryViewModelTests
     }
 
     [Fact]
-    public void QueryCountsSucceededAndFailedOnCurrentPage()
+    public async Task QueryCountsSucceededAndFailedOnCurrentPage()
     {
         var entries = new List<AuditEntry>
         {
@@ -119,6 +119,11 @@ public class AuditQueryViewModelTests
 
         var vm = NewVm();
         vm.QueryCommand.Execute(null);
+
+        // 查询已后台化（审查修复 2026-08-13），轮询等待结果回写（无 Dispatcher 环境直接同步回写）
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (vm.PageSucceeded != 2 && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
 
         Assert.Equal(2, vm.PageSucceeded);
         Assert.Equal(1, vm.PageFailed);

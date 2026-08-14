@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Models;
+using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
@@ -10,7 +10,7 @@ namespace MainAPP.Tests.Unit;
 /// DevicePlcCommandHandler 单元测试：覆盖四类 PLC 操作的前置校验与危险操作二次确认分支。
 /// 构造仅依赖 FakePlcDriver（内存桩）+ 可控 IsConnected 的 PlcConnectionManager；
 /// 校验/取消分支均在其成功路径触及 _dataAcquisitionService 之前返回，故该依赖以 null 注入无碍。
-/// 成功写路径（WriteRecipe/ReadPlcValue/ResetCountAlarm）由 FakePlcDriver 承接，不触碰数据服务。
+/// 成功写路径（WriteRecipe/ReadPlcValue/ResetCounterAlarm）由 FakePlcDriver 承接，不触碰数据服务。
 /// </summary>
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
@@ -202,61 +202,61 @@ public class DevicePlcCommandHandlerTests
         Assert.Equal(42, r.ReadValue);
     }
 
-    // ──────────── ResetCountAlarmValueAsync ────────────
+    // ──────────── ResetCounterAlarmValueAsync ────────────
 
     [Fact]
-    public async Task ResetCountAlarm_NullAlarm_ReturnsWarning()
+    public async Task ResetCounterAlarm_NullAlarm_ReturnsWarning()
     {
         var (handler, _, _) = NewHandler(connected: true);
 
-        var r = await handler.ResetCountAlarmValueAsync(null!);
+        var r = await handler.ResetCounterAlarmValueAsync(null!);
 
         Assert.Equal(PlcOpStatus.Warning, r.Status);
         Assert.Contains("地址为空", r.Message);
     }
 
     [Fact]
-    public async Task ResetCountAlarm_EmptyAddress_ReturnsWarning()
+    public async Task ResetCounterAlarm_EmptyAddress_ReturnsWarning()
     {
         var (handler, _, _) = NewHandler(connected: true);
-        var alarm = new CountAlarm { Name = "计数报警", PlcAddress = "" };
+        var alarm = new CounterAlarm { Name = "计数报警", PlcAddress = "" };
 
-        var r = await handler.ResetCountAlarmValueAsync(alarm);
+        var r = await handler.ResetCounterAlarmValueAsync(alarm);
 
         Assert.Equal(PlcOpStatus.Warning, r.Status);
     }
 
     [Fact]
-    public async Task ResetCountAlarm_NotConnected_ReturnsWarning()
+    public async Task ResetCounterAlarm_NotConnected_ReturnsWarning()
     {
         var (handler, _, _) = NewHandler(connected: false);
-        var alarm = new CountAlarm { Name = "计数报警", PlcAddress = "D300" };
+        var alarm = new CounterAlarm { Name = "计数报警", PlcAddress = "D300" };
 
-        var r = await handler.ResetCountAlarmValueAsync(alarm);
+        var r = await handler.ResetCounterAlarmValueAsync(alarm);
 
         Assert.Equal(PlcOpStatus.Warning, r.Status);
         Assert.Contains("未连接", r.Message);
     }
 
     [Fact]
-    public async Task ResetCountAlarm_InvalidAddress_NotDWord_ReturnsWarning()
+    public async Task ResetCounterAlarm_InvalidAddress_NotDWord_ReturnsWarning()
     {
         var (handler, _, _) = NewHandler(connected: true);
-        var alarm = new CountAlarm { Name = "计数报警", PlcAddress = "M300" };
+        var alarm = new CounterAlarm { Name = "计数报警", PlcAddress = "M300" };
 
-        var r = await handler.ResetCountAlarmValueAsync(alarm);
+        var r = await handler.ResetCounterAlarmValueAsync(alarm);
 
         Assert.Equal(PlcOpStatus.Warning, r.Status);
         Assert.Contains("格式无效", r.Message);
     }
 
     [Fact]
-    public async Task ResetCountAlarm_ValidAddress_WritesZeroAndResetsCurrentValue()
+    public async Task ResetCounterAlarm_ValidAddress_WritesZeroAndResetsCurrentValue()
     {
         var (handler, plc, _) = NewHandler(connected: true);
-        var alarm = new CountAlarm { Name = "计数报警", PlcAddress = "D300", CurrentValue = 17 };
+        var alarm = new CounterAlarm { Name = "计数报警", PlcAddress = "D300", CurrentValue = 17 };
 
-        var r = await handler.ResetCountAlarmValueAsync(alarm);
+        var r = await handler.ResetCounterAlarmValueAsync(alarm);
 
         Assert.Equal(PlcOpStatus.Success, r.Status);
         Assert.Equal(0, alarm.CurrentValue);

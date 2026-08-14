@@ -351,7 +351,7 @@ public enum DisconnectionReason
     /// <summary>所有设备读取失败（默认路径，PollingLoopAsync 中 successDevices.Count==0）</summary>
     ReadFailure,
 
-    /// <summary>TryScan 捕获到通信异常（ScanAlarms/ScanDefects/ScanCountAlarms 抛 IOException/SocketException 等）</summary>
+    /// <summary>TryScan 捕获到通信异常（ScanAlarms/ScanDefects/ScanCounterAlarms 抛 IOException/SocketException 等）</summary>
     ScanException,
 }
 

@@ -69,7 +69,7 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<DevicePlcCommandHandler>();
         services.AddSingleton<AlarmCsvIOService>();
         services.AddSingleton<DefectCsvIOService>();
-        services.AddSingleton<CountAlarmCsvIOService>();
+        services.AddSingleton<CounterAlarmCsvIOService>();
         services.AddSingleton<RecipeJsonIOService>();
 
         // ──────────── Remote 模式数据链路（展示端瘦身） ────────────

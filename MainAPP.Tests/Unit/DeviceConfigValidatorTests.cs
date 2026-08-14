@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
@@ -103,11 +103,11 @@ public class DeviceConfigValidatorTests
     }
 
     [Fact]
-    public void CollectValidationErrors_CountAlarmMaxValueZero_AllowedAsNoTrigger()
+    public void CollectValidationErrors_CounterAlarmMaxValueZero_AllowedAsNoTrigger()
     {
         // 0 值阈值 = 仅记录不触发（IsTriggered 已按 MaxValue > 0 防护），保存不应被阻断
         var device = ValidDevice("设备1", "D100");
-        device.CountAlarms.Add(new CountAlarm { DeviceId = device.Id, Name = "计数报警", PlcAddress = "D9", MaxValue = 0 });
+        device.CounterAlarms.Add(new CounterAlarm { DeviceId = device.Id, Name = "计数报警", PlcAddress = "D9", MaxValue = 0 });
         var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
         Assert.DoesNotContain(errors, e => e.Message.Contains("阈值上限必须 > 0"));
     }

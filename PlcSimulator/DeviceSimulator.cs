@@ -9,7 +9,7 @@ namespace PlcSimulator;
 /// - 节拍漂移：每次产出后节拍渐慢（模拟刀具磨损），报警恢复时回收部分漂移（模拟维护）
 /// - 突发不良期：随机进入 30-120s 的高 NG 率期（模拟材料批次问题），结束后恢复正常
 /// - NG 率分级：正常运行 1-3%、报警期 15-30%、突发期 30-60%
-/// - CountAlarm 阈值触发：连续不良/停机次数超 MaxValue 时自动触发报警位
+/// - CounterAlarm 阈值触发：连续不良/停机次数超 MaxValue 时自动触发报警位
 /// - 启动期状态恢复：从 PLC 读取现有产量/状态，不覆盖 MainAPP 已有数据
 /// - 内存维护计数器，直接写入绝对值，避免 Read-Modify-Write 竞态
 ///
@@ -192,11 +192,11 @@ public class DeviceSimulator
         _shortageAlarmName = null;
         _shortageAlarmAddress = null;
 
-        // 恢复停机次数（从首个停机类 CountAlarm 读取，多个停机类时仅用第一个，避免互相覆盖）
-        var stopCountAlarm = _config.CountAlarms.FirstOrDefault(IsStopCountAlarm);
-        if (stopCountAlarm != null)
+        // 恢复停机次数（从首个停机类 CounterAlarm 读取，多个停机类时仅用第一个，避免互相覆盖）
+        var stopCounterAlarm = _config.CounterAlarms.FirstOrDefault(IsStopCounterAlarm);
+        if (stopCounterAlarm != null)
         {
-            _stopCount = TryReadInt(stopCountAlarm.PlcAddress);
+            _stopCount = TryReadInt(stopCounterAlarm.PlcAddress);
         }
 
         // 恢复缺陷计数
@@ -334,7 +334,7 @@ public class DeviceSimulator
             WriteBoolIfNotEmpty(a.PlcAddress, false);
         foreach (var d in _config.Defects)
             WriteIfNotEmpty(d.PlcAddress, 0);
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
             WriteIfNotEmpty(ca.PlcAddress, 0);
 
         // 状态字最后写（与 RestoreFromPlc 一致，确保其他地址已就位后再切状态）
@@ -389,9 +389,9 @@ public class DeviceSimulator
             WriteStatus();
 
             // 停机次数 +1（匹配停机类计数报警，累积不清零）
-            foreach (var ca in _config.CountAlarms)
+            foreach (var ca in _config.CounterAlarms)
             {
-                if (IsStopCountAlarm(ca))
+                if (IsStopCounterAlarm(ca))
                 {
                     _stopCount++;
                     WriteIfNotEmpty(ca.PlcAddress, _stopCount);
@@ -400,7 +400,7 @@ public class DeviceSimulator
             Log?.Invoke($"[{Name}] 运行 → 待机（停机次数={_stopCount}）");
 
             // 检查停机次数阈值
-            if (_scenario.EnableCountAlarmThreshold)
+            if (_scenario.EnableCounterAlarmThreshold)
                 CheckStopCountThreshold(now);
         }
     }
@@ -459,9 +459,9 @@ public class DeviceSimulator
             foreach (var d in _config.Defects)
                 WriteIfNotEmpty(d.PlcAddress, 0);
             // 连续不良类计数清零，停机次数不清零
-            foreach (var ca in _config.CountAlarms)
+            foreach (var ca in _config.CounterAlarms)
             {
-                if (!IsStopCountAlarm(ca))
+                if (!IsStopCounterAlarm(ca))
                     WriteIfNotEmpty(ca.PlcAddress, 0);
             }
             // 清零后重置阈值触发标记，允许再次触发
@@ -516,10 +516,10 @@ public class DeviceSimulator
                 }
                 else
                 {
-                    var countAlarm = _config.CountAlarms.FirstOrDefault(ca => ca.PlcAddress == _commJitterAddress);
-                    if (countAlarm != null)
+                    var counterAlarm = _config.CounterAlarms.FirstOrDefault(ca => ca.PlcAddress == _commJitterAddress);
+                    if (counterAlarm != null)
                     {
-                        int correct = IsStopCountAlarm(countAlarm) ? _stopCount : _consecutiveNg;
+                        int correct = IsStopCounterAlarm(counterAlarm) ? _stopCount : _consecutiveNg;
                         WriteIfNotEmpty(_commJitterAddress, correct);
                     }
                 }
@@ -554,7 +554,7 @@ public class DeviceSimulator
             {
                 _consecutiveNg = 0;
                 _plcConsecutiveNg = 0;
-                WriteConsecutiveNgToCountAlarms(0);
+                WriteConsecutiveNgToCounterAlarms(0);
             }
 
             Status = SimStatus.Running;
@@ -744,16 +744,16 @@ public class DeviceSimulator
         WriteStatus();
 
         // 缺料属于异常停机，递增停机次数计数报警（与手动 Pause 一致）
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
         {
-            if (IsStopCountAlarm(ca))
+            if (IsStopCounterAlarm(ca))
             {
                 _stopCount++;
                 WriteIfNotEmpty(ca.PlcAddress, _stopCount);
             }
         }
         // 检查停机次数阈值
-        if (_scenario.EnableCountAlarmThreshold)
+        if (_scenario.EnableCounterAlarmThreshold)
             CheckStopCountThreshold(now);
 
         Log?.Invoke($"[{Name}] 进入缺料停机（{_shortageAlarmName ?? "无报警位"}，预计 {shortageSec:F0}s，停机次数={_stopCount}）");
@@ -930,11 +930,11 @@ public class DeviceSimulator
             if (!_scenario.EnableBatchUpdate || (_consecutiveNg - _plcConsecutiveNg) >= _scenario.BatchUpdateSize)
             {
                 _plcConsecutiveNg = _consecutiveNg;
-                WriteConsecutiveNgToCountAlarms(_plcConsecutiveNg);
+                WriteConsecutiveNgToCounterAlarms(_plcConsecutiveNg);
             }
 
             // 检查连续不良阈值
-            if (_scenario.EnableCountAlarmThreshold)
+            if (_scenario.EnableCounterAlarmThreshold)
                 CheckConsecutiveNgThreshold(now);
         }
         else
@@ -954,7 +954,7 @@ public class DeviceSimulator
             if (wasNg)
             {
                 _plcConsecutiveNg = 0;
-                WriteConsecutiveNgToCountAlarms(0);
+                WriteConsecutiveNgToCounterAlarms(0);
             }
         }
 
@@ -1017,9 +1017,9 @@ public class DeviceSimulator
     /// </summary>
     private void CheckConsecutiveNgThreshold(DateTime now)
     {
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
         {
-            if (IsStopCountAlarm(ca)) continue;
+            if (IsStopCounterAlarm(ca)) continue;
             if (ca.MaxValue <= 0) continue;
 
             if (_consecutiveNg > ca.MaxValue)
@@ -1037,9 +1037,9 @@ public class DeviceSimulator
     {
         if (_stopAlarmTriggered) return;
 
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
         {
-            if (!IsStopCountAlarm(ca)) continue;
+            if (!IsStopCounterAlarm(ca)) continue;
             if (ca.MaxValue <= 0) continue;
 
             if (_stopCount > ca.MaxValue)
@@ -1303,7 +1303,7 @@ public class DeviceSimulator
         foreach (var d in _config.Defects)
             if (!string.IsNullOrEmpty(d.PlcAddress) && !criticalAddresses.Contains(d.PlcAddress))
                 candidates.Add(d.PlcAddress);
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
             if (!string.IsNullOrEmpty(ca.PlcAddress) && !criticalAddresses.Contains(ca.PlcAddress))
                 candidates.Add(ca.PlcAddress);
         if (candidates.Count == 0) return;
@@ -1326,11 +1326,11 @@ public class DeviceSimulator
     private void WriteStatus() => WriteIfNotEmpty(_config.StatusCountAddress, (int)Status);
 
     /// <summary>将连续不良值写入所有非停机类计数报警地址。</summary>
-    private void WriteConsecutiveNgToCountAlarms(int value)
+    private void WriteConsecutiveNgToCounterAlarms(int value)
     {
-        foreach (var ca in _config.CountAlarms)
+        foreach (var ca in _config.CounterAlarms)
         {
-            if (!IsStopCountAlarm(ca))
+            if (!IsStopCounterAlarm(ca))
                 WriteIfNotEmpty(ca.PlcAddress, value);
         }
     }
@@ -1373,14 +1373,14 @@ public class DeviceSimulator
 
     /// <summary>
     /// 判断计数报警是否为停机次数类。
-    /// 优先用 <see cref="CountAlarmKind"/> 显式类别；Kind=Auto 时按名称推断（含"停机"→Stop）。
+    /// 优先用 <see cref="CounterAlarmKind"/> 显式类别；Kind=Auto 时按名称推断（含"停机"→Stop）。
     /// </summary>
-    private static bool IsStopCountAlarm(CountAlarmConfig ca)
+    private static bool IsStopCounterAlarm(CounterAlarmConfig ca)
     {
         return ca.Kind switch
         {
-            CountAlarmKind.Stop => true,
-            CountAlarmKind.ConsecutiveNg => false,
+            CounterAlarmKind.Stop => true,
+            CounterAlarmKind.ConsecutiveNg => false,
             _ => ca.Name.Contains("停机"),
         };
     }
