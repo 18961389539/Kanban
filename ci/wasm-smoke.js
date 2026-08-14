@@ -117,8 +117,8 @@ try {
             statusBadge: txt('.status-badge'),
             bigNumber: txt('.big-number'),
             targetCycle: label(['目标节拍', 'Target Cycle', '目標タクト']),
-            actualCycle: label(['实际节拍', 'Actual Cycle', '実績タクト']),
-            totalOutput: label(['总产量', 'Total Output', '総生産数']),
+            actualCycle: label(['实际节拍', 'Actual Cycle', '実タクト']),
+            totalOutput: label(['总产量', 'Total Output', '総生産量']),
             ngRate: label(['不良率', 'NG Rate', '不良率']),
             meterText: txt('.speed-meter .meter-text'),
             conn: label(['连接状态', 'Connection', '接続状態']),
@@ -134,7 +134,7 @@ try {
                 value: r.querySelector('.ring-value')?.textContent?.trim() ?? '',
             })),
             woCardTitle: cardTitle(['当前工单', 'Current Work Order', '現在の工単']),
-            shiftCardTitle: cardTitle(['班次进度', 'Shift Progress', '班次進捗']),
+            shiftCardTitle: cardTitle(['班次进度', 'Shift Progress', 'シフト進捗']),
             sums,
         };
     });
@@ -159,8 +159,10 @@ try {
     else ok(`WASM 渲染完成（标题=${brandTitle}）`);
     // 注：无头 Edge 下 #blazor-error-ui 偶现误显示（环境伪影，真实浏览器未复现、功能正常），仅告警不判失败
     if (dom.errVisible) warn('#blazor-error-ui 可见（无头环境伪影，功能不受影响，请人工确认）');
-    if (!dom.text.includes('注塑机')) fail('设备数据缺失');
-    else ok('设备数据存在');
+    // 设备数据存在性：以状态汇总的"设备总数"为准（语言无关；审查修复 2026-08-13：
+    // 原断言 body 含"注塑机"硬编码中文设备名，设备名非"注塑机"的环境即使正常也误报）
+    if (typeof dom.sums.dev === 'number' && dom.sums.dev > 0) ok(`设备数据存在（设备总数=${dom.sums.dev}）`);
+    else fail(`设备数据缺失（设备总数=${dom.sums.dev}）`);
 
     // 工单/班次卡：标题存在且内容非空态（三语候选）
     const woCard = dom.woCardTitle;
@@ -239,8 +241,9 @@ try {
         fail(`达成率文本异常: ${dom.meterText}`);
     }
 
-    // 8. 状态徽标合法（三语全集）
-    if (anyOf(dom.statusBadge, ['运行', '报警', '暂停', '待机', 'Running', 'Alarm', 'Paused', 'Idle', '稼働', 'アラーム', '一時停止', '待機'])) ok(`设备状态: ${dom.statusBadge}`);
+    // 8. 状态徽标合法（三语全集；审查修复 2026-08-13：候选词与字典对齐——
+    // Status_Running/Alarm/Paused/Idle 三语 = 运行/报警/待机/空闲、Running/Alarm/Standby/Idle、稼働中/アラーム/待機/アイドル）
+    if (anyOf(dom.statusBadge, ['运行', '报警', '待机', '空闲', 'Running', 'Alarm', 'Standby', 'Idle', '稼働中', 'アラーム', '待機', 'アイドル'])) ok(`设备状态: ${dom.statusBadge}`);
     else fail(`设备状态徽标异常: ${dom.statusBadge}`);
 
     // 9. ★ OEE 自洽：OEE 环值 == 可用率×性能率×合格率（P0 四舍五入，误差 ≤1%；三语 label 候选）
@@ -266,6 +269,35 @@ try {
     // 10. 不良率格式
     if (/^[\d.]+%$|^—$/.test(dom.ngRate ?? '')) ok(`不良率: ${dom.ngRate}`);
     else fail(`不良率格式异常: ${dom.ngRate}`);
+
+    // 11. 缺陷分布 TOP5 卡（Web 首页补齐：标题 + 空态/数据态二选一）
+    {
+        const bodyText = await page.evaluate(() => document.body.innerText ?? '');
+        const hasDefectCard = ['缺陷分布', 'Defect Top', '欠陥トップ'].some((c) => bodyText.includes(c));
+        if (hasDefectCard) {
+            const hasBars = await page.locator('.defect-row').count();
+            const hasEmpty = ['暂无缺陷数据', 'No defect data', '欠陥データなし'].some((c) => bodyText.includes(c));
+            ok(`缺陷分布卡（rows=${hasBars}${hasEmpty ? ', 空态' : ''}）`);
+        } else {
+            fail('缺陷分布 TOP5 卡缺失');
+        }
+    }
+
+    // 12. 断线横幅：连接正常时不得出现（连接态由数据源卡/徽标另断言）
+    {
+        const bodyText = await page.evaluate(() => document.body.innerText ?? '');
+        const banner = ['连接中断', 'Connection lost', '接続が切れました'].some((c) => bodyText.includes(c));
+        if (banner) fail('断线横幅意外出现（连接正常场景）');
+        else ok('断线横幅未出现（连接正常）');
+    }
+
+    // 13. 配方行：设备配置含配方时渲染（快照 RecipeName 非空；无配方数据时跳过）
+    {
+        const bodyText = await page.evaluate(() => document.body.innerText ?? '');
+        const recipeLine = bodyText.split('\n').find((l) => /配方|Recipe|レシピ/.test(l) && /：|:/.test(l));
+        if (recipeLine) ok(`配方行: ${recipeLine.trim().slice(0, 40)}`);
+        else warn('配方行未渲染（设备无配方配置时正常）');
+    }
 
     // ──── 历史查询页 /history（多页面路由回归：SPA fallback + 筛选/KPI/图表/表格） ────
     {

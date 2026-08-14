@@ -84,6 +84,7 @@ public sealed class SnapshotPublisher
             || a.RunTime != b.RunTime || a.AlarmTime != b.AlarmTime || a.PausedTime != b.PausedTime
             || a.QualityRate != b.QualityRate || a.PerformanceRate != b.PerformanceRate
             || a.AvailabilityRate != b.AvailabilityRate || a.Oee != b.Oee || a.TargetCycle != b.TargetCycle
+            || a.RecipeName != b.RecipeName || a.RecipeValue != b.RecipeValue
             || a.Removed != b.Removed)
             return false;
         if (a.ActiveAlarms.Count != b.ActiveAlarms.Count) return false;
@@ -127,6 +128,8 @@ public sealed class SnapshotPublisher
             AvailabilityRate = runtime?.AvailabilityRate ?? 0,
             Oee = runtime?.Oee ?? 0,
             TargetCycle = device.TargetCycle,
+            RecipeName = device.RecipeName ?? "",
+            RecipeValue = device.RecipeValue,
             ActiveAlarms = activeAlarms,
             Timestamp = DateTime.Now,
             Seq = Interlocked.Increment(ref _seq),

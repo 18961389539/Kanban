@@ -40,6 +40,12 @@ public sealed record DeviceSnapshotDto
     /// <summary>目标周期（个/小时）</summary>
     public int TargetCycle { get; init; }
 
+    /// <summary>当前配方名（空字符串 = 未配置）。与 WPF 设备状态卡同源（设备实体 RecipeName）。</summary>
+    public string RecipeName { get; init; } = "";
+
+    /// <summary>当前配方值（PLC 写入值）。</summary>
+    public int RecipeValue { get; init; }
+
     /// <summary>当前激活的报警列表（触发中的报警）</summary>
     public IReadOnlyList<ActiveAlarmDto> ActiveAlarms { get; init; } = [];
 

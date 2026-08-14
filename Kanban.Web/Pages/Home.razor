@@ -20,6 +20,11 @@
         </select>
     </header>
 
+    @if (!Dashboard.IsConnected)
+    {
+        <div class="conn-banner">@L.T("ConnLost")</div>
+    }
+
     @if (Dashboard.Snapshots.Count == 0)
     {
         <EmptyState Title="@(Dashboard.IsConnected ? L.T("Msg_NoDeviceData") : L.T("Msg_WaitingConn"))"
@@ -63,6 +68,10 @@
                     <div class="seg paused" style="width:@PauseRatio%"></div>
                 </div>
                 <div class="meta-line">@L.T("Meta_StatusWord", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
+                @if (!string.IsNullOrEmpty(SelectedSnapshot.RecipeName))
+                {
+                    <div class="meta-line">@L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue)</div>
+                }
             </section>
 
             <section class="card">
@@ -114,6 +123,28 @@
             </section>
 
             <section class="card">
+                <div class="card-title">@L.T("DefectTop")</div>
+                @if (DefectTop.Count == 0)
+                {
+                    <div class="no-data">@L.T("NoDefectData")</div>
+                }
+                else
+                {
+                    var defectMax = DefectTop.Max(x => x.Count);
+                    <div class="defect-list">
+                        @foreach (var d in DefectTop)
+                        {
+                            <div class="defect-row">
+                                <span class="defect-name" title="@d.DeviceName">@d.Name</span>
+                                <div class="defect-track"><div class="defect-fill" style="width:@(100.0 * d.Count / defectMax)%"></div></div>
+                                <span class="defect-count">@d.Count.ToString("N0")</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="card">
                 <div class="card-title">@L.T("Card_Output")</div>
                 <div class="quality-row">
                     <div class="quality-block">
@@ -130,6 +161,10 @@
                     <div class="seg ng" style="width:@NgRatio%"></div>
                 </div>
                 <div class="meta-line">@L.T("Meta_QualityRate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
+                @if (LastShift is not null)
+                {
+                    <div class="meta-line">@L.T("LastShiftLine", LastShift.ShiftName, LastShift.Ok.ToString("N0"), FmtDiff(SelectedSnapshot.TotalOkProduction - LastShift.Ok), LastShift.Ng.ToString("N0"), FmtDiff(SelectedSnapshot.TotalNgProduction - LastShift.Ng))</div>
+                }
             </section>
 
             <section class="card">
@@ -248,6 +283,17 @@
 
     /// <summary>当前选中设备的工单（Collector 5s 推送缓存，切换设备即时取用）。</summary>
     private WorkOrderDto? CurrentWorkOrder => Dashboard.GetWorkOrder(SelectedDeviceId);
+
+    /// <summary>当前选中设备的缺陷计数 TOP5（Meta 5s 推送；无数据返回空列表）。</summary>
+    private IReadOnlyList<DeviceDefectCountDto> DefectTop
+        => SelectedDeviceId is null ? [] : Dashboard.GetDefectTop(SelectedDeviceId);
+
+    /// <summary>当前选中设备的上一班次汇总（Meta 5s 推送；无缓存返回 null）。</summary>
+    private DeviceShiftSummaryDto? LastShift
+        => SelectedDeviceId is null ? null : Dashboard.GetLastShift(SelectedDeviceId);
+
+    /// <summary>产量差文本（对齐 WPF FormatHelper.FormatDiff：+N / -N / 0）。</summary>
+    private static string FmtDiff(int diff) => diff > 0 ? $"+{diff:N0}" : diff.ToString("N0");
 
     protected override async Task OnInitializedAsync()
     {

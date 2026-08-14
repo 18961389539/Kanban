@@ -129,6 +129,18 @@ public class SnapshotPublisherTests : IDisposable
         Assert.False(SnapshotPublisher.SameSnapshot(a, c));
     }
 
+    [Fact]
+    public void SameSnapshot_RecipeChanged_ReturnsFalse()
+    {
+        var a = MakeSnapshot("dev-1");
+        // 配方名变化 → 必须触发增量发布（Web 首页配方行依赖此判定）
+        Assert.False(SnapshotPublisher.SameSnapshot(a, a with { RecipeName = "配方A" }));
+        // 配方值变化 → 同样触发
+        Assert.False(SnapshotPublisher.SameSnapshot(a, a with { RecipeName = "配方A", RecipeValue = 99 }));
+        // 配方名相同仅 Timestamp/Seq 不同 → true（静止判定不受影响）
+        Assert.True(SnapshotPublisher.SameSnapshot(a, a with { RecipeName = "" }));
+    }
+
     // ──────────── PublishAll 端到端增量行为 ────────────
 
     [Fact]

@@ -31,6 +31,7 @@ public class MetaPublisherTests : IDisposable
     private readonly string _tempDir;
     private readonly AppSettings _appSettings;
     private readonly MetaPublisher _publisher;
+    private readonly ConfigSyncHandler _configSyncHandler;
 
     public MetaPublisherTests()
     {
@@ -53,6 +54,7 @@ public class MetaPublisherTests : IDisposable
             Substitute.For<ILogger<ConfigSyncHandler>>(),
             Substitute.For<IRecipeStore>(),
             null!); // RecipeApplier：Meta 路径不触达
+        _configSyncHandler = handler;
 
         _publisher = new MetaPublisher(
             handler,
@@ -151,5 +153,98 @@ public class MetaPublisherTests : IDisposable
         var reader2 = await SubscribeAsync(_publisher);
         Assert.True(reader2.TryRead(out var meta));
         Assert.Equal("S1", meta.Shift.Name);
+    }
+
+    // ──────────── 缺陷 TOP5 / 上班次汇总聚合（Web 首页补齐：Meta 扩展字段） ────────────
+
+    /// <summary>构造带设备数据（缺陷计数）与班次汇总的 MetaPublisher。</summary>
+    private MetaPublisher CreatePublisherWithData(
+        Action<DeviceRepository> seedDevices,
+        (int Ok, int Ng, string Name)? lastShift = null)
+    {
+        var repo = new DeviceRepository(_appSettings);
+        seedDevices(repo);
+        var plc = Substitute.For<IPlcDataAcquisitionService>();
+        plc.GetLastShiftSummary(Arg.Any<string>())
+            .Returns(lastShift is { } s ? s : (0, 0, ""));
+        return new MetaPublisher(
+            _configSyncHandler,
+            new ShiftProgressProvider(_appSettings),
+            Substitute.For<ILogger<MetaPublisher>>(),
+            repo,
+            plc);
+    }
+
+    [Fact]
+    public void Publish_DefectTop_OnlyPositiveCounts_SortedDesc_Take5()
+    {
+        var publisher = CreatePublisherWithData(repo =>
+        {
+            var d = new Device { Id = "d1", Name = "机1" };
+            d.Defects.Add(new Defect { Name = "毛边", Count = 3 });
+            d.Defects.Add(new Defect { Name = "缺料", Count = 12 });
+            d.Defects.Add(new Defect { Name = "色差", Count = 0 });   // 0 值过滤
+            d.Defects.Add(new Defect { Name = "缩水", Count = 5 });
+            d.Defects.Add(new Defect { Name = "飞边", Count = 8 });
+            d.Defects.Add(new Defect { Name = "暗纹", Count = 1 });   // 第 6 个（Take5 截断）
+            repo.ReplaceAll([d]);
+        });
+
+        publisher.Publish();
+        var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
+        Assert.True(reader.TryRead(out var meta));
+
+        var top = meta.DefectTop;
+        Assert.Equal(5, top.Count);
+        Assert.Equal(["缺料", "飞边", "缩水", "毛边", "暗纹"], top.Select(x => x.Name));
+        Assert.All(top, x => Assert.True(x.Count > 0));
+        Assert.Equal("d1", top[0].DeviceId);
+        Assert.Equal(12, top[0].Count);
+    }
+
+    [Fact]
+    public void Publish_DefectTop_NoPositiveCounts_Empty()
+    {
+        var publisher = CreatePublisherWithData(repo =>
+        {
+            var d = new Device { Id = "d1", Name = "机1" };
+            d.Defects.Add(new Defect { Name = "毛边", Count = 0 });
+            repo.ReplaceAll([d]);
+        });
+
+        publisher.Publish();
+        var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
+        Assert.True(reader.TryRead(out var meta));
+        Assert.Empty(meta.DefectTop);
+    }
+
+    [Fact]
+    public void Publish_LastShifts_FromPlcServiceCache()
+    {
+        var publisher = CreatePublisherWithData(
+            repo => repo.ReplaceAll([new Device { Id = "d1", Name = "机1" }]),
+            lastShift: (45, 3, "白班"));
+
+        publisher.Publish();
+        var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
+        Assert.True(reader.TryRead(out var meta));
+
+        var shift = Assert.Single(meta.LastShifts);
+        Assert.Equal("d1", shift.DeviceId);
+        Assert.Equal("白班", shift.ShiftName);
+        Assert.Equal(45, shift.Ok);
+        Assert.Equal(3, shift.Ng);
+    }
+
+    [Fact]
+    public void Publish_LastShifts_NoCache_Empty()
+    {
+        var publisher = CreatePublisherWithData(repo =>
+            repo.ReplaceAll([new Device { Id = "d1", Name = "机1" }]));
+
+        publisher.Publish();
+        var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
+        Assert.True(reader.TryRead(out var meta));
+        Assert.Empty(meta.LastShifts);
     }
 }

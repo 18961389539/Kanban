@@ -5493,4 +5493,25 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F326" xml:space="preserve">
     <value>進捗基準：デバイスの現シフト累計生産量（作業指示ページの工単集計基準と異なる場合があります）</value>
   </data>
+  <data name="Web_Recipe" xml:space="preserve">
+    <value>レシピ</value>
+  </data>
+  <data name="Web_DefectTop" xml:space="preserve">
+    <value>欠陥トップ5</value>
+  </data>
+  <data name="Web_NoDefectData" xml:space="preserve">
+    <value>欠陥データなし</value>
+  </data>
+  <data name="Web_LastShift" xml:space="preserve">
+    <value>前シフト</value>
+  </data>
+  <data name="Web_LastShiftLine" xml:space="preserve">
+    <value>{0}：OK {1}（{2}）· NG {3}（{4}）</value>
+  </data>
+  <data name="Web_ConnLost" xml:space="preserve">
+    <value>接続が切れました。再接続中…</value>
+  </data>
+  <data name="Web_RecipeInfo" xml:space="preserve">
+    <value>レシピ {0}：{1}</value>
+  </data>
 </root>

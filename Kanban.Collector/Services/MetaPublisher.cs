@@ -1,13 +1,15 @@
 using System.Threading.Channels;
 using Kanban.Contracts.Dtos;
+using Kanban.Core.Data;
+using Kanban.Core.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Services;
 
 /// <summary>
-/// 低频元数据发布器：约 5s 一次组装"全部设备当前工单 + 班次进度"（MetaStateDto）
-/// 并广播给订阅者（展示端经 Hub 订阅 OnMeta）。替代客户端轮询 Invoke——
+/// 低频元数据发布器：约 5s 一次组装"全部设备当前工单 + 班次进度 + 缺陷 TOP5 + 上班次汇总"
+/// （MetaStateDto）并广播给订阅者（展示端经 Hub 订阅 OnMeta）。替代客户端轮询 Invoke——
 /// 数据服务端单源、推给所有人，与快照/事件流的订阅-扇出模型一致。
 /// 订阅者列表 + 扇出（每个订阅者独立 channel），断开自动退订。
 /// 本身为单例 + IHostedService（同一实例）。
@@ -19,6 +21,8 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     private readonly ConfigSyncHandler _configSyncHandler;
     private readonly ShiftProgressProvider _shiftProgressProvider;
     private readonly ILogger<MetaPublisher> _logger;
+    private readonly DeviceRepository? _deviceRepository;
+    private readonly IPlcDataAcquisitionService? _plcService;
     private readonly object _gate = new();
     private readonly List<Channel<MetaStateDto>> _subscribers = new();
     private Timer? _timer;
@@ -30,11 +34,15 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     public MetaPublisher(
         ConfigSyncHandler configSyncHandler,
         ShiftProgressProvider shiftProgressProvider,
-        ILogger<MetaPublisher> logger)
+        ILogger<MetaPublisher> logger,
+        DeviceRepository? deviceRepository = null,
+        IPlcDataAcquisitionService? plcService = null)
     {
         _configSyncHandler = configSyncHandler;
         _shiftProgressProvider = shiftProgressProvider;
         _logger = logger;
+        _deviceRepository = deviceRepository;
+        _plcService = plcService;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -70,6 +78,8 @@ public sealed class MetaPublisher : IHostedService, IDisposable
             {
                 Devices = _cachedWorkOrders!,
                 Shift = _shiftProgressProvider.GetProgress(),
+                DefectTop = BuildDefectTop(),
+                LastShifts = BuildLastShifts(),
             };
             lock (_gate)
             {
@@ -85,6 +95,57 @@ public sealed class MetaPublisher : IHostedService, IDisposable
             Interlocked.Increment(ref CollectorMetrics.PublishErrorCount);
             _logger.LogError(ex, "元数据发布失败");
         }
+    }
+
+    /// <summary>
+    /// 各设备缺陷计数 TOP5（Count&gt;0 才推送）。与 WPF 首页 DefectBarChart 同源：
+    /// 采集循环写入的设备实体缺陷计数（PlcScanPipeline），服务端排序取前 5。
+    /// 5s 低频 + 最多 5 条/设备，推送体积可忽略。
+    /// </summary>
+    private List<DeviceDefectCountDto> BuildDefectTop()
+    {
+        if (_deviceRepository is null) return [];
+        var top = new List<DeviceDefectCountDto>();
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            foreach (var d in device.Defects
+                         .Where(x => x.Count > 0)
+                         .OrderByDescending(x => x.Count)
+                         .Take(5))
+            {
+                top.Add(new DeviceDefectCountDto
+                {
+                    DeviceId = device.Id,
+                    DeviceName = device.Name,
+                    Name = d.Name,
+                    Count = d.Count,
+                });
+            }
+        }
+        return top;
+    }
+
+    /// <summary>
+    /// 各设备上一班次产量汇总（班次切换缓存）。对齐 WPF 首页合格率卡的
+    /// ShiftOutputDiff/ShiftNgDiff 口径（HomeViewModel.RefreshLastShiftComparison）。
+    /// </summary>
+    private List<DeviceShiftSummaryDto> BuildLastShifts()
+    {
+        if (_plcService is null) return [];
+        var list = new List<DeviceShiftSummaryDto>();
+        foreach (var device in _deviceRepository?.GetDevicesSnapshot() ?? [])
+        {
+            var (ok, ng, shiftName) = _plcService.GetLastShiftSummary(device.Id);
+            if (string.IsNullOrEmpty(shiftName)) continue;
+            list.Add(new DeviceShiftSummaryDto
+            {
+                DeviceId = device.Id,
+                ShiftName = shiftName,
+                Ok = ok,
+                Ng = ng,
+            });
+        }
+        return list;
     }
 
     /// <summary>订阅元数据流（补发最新包；连接断开自动退订）。</summary>

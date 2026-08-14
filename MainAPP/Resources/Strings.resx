@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -5491,5 +5491,26 @@
   </data>
   <data name="F326" xml:space="preserve">
     <value>进度口径：设备本班次累计产量（与工单管理页按工单聚合的口径可能不同）</value>
+  </data>
+  <data name="Web_Recipe" xml:space="preserve">
+    <value>配方</value>
+  </data>
+  <data name="Web_DefectTop" xml:space="preserve">
+    <value>缺陷分布 TOP5</value>
+  </data>
+  <data name="Web_NoDefectData" xml:space="preserve">
+    <value>暂无缺陷数据</value>
+  </data>
+  <data name="Web_LastShift" xml:space="preserve">
+    <value>上一班次</value>
+  </data>
+  <data name="Web_LastShiftLine" xml:space="preserve">
+    <value>{0}：OK {1}（{2}）· NG {3}（{4}）</value>
+  </data>
+  <data name="Web_ConnLost" xml:space="preserve">
+    <value>连接中断，正在重连…</value>
+  </data>
+  <data name="Web_RecipeInfo" xml:space="preserve">
+    <value>配方 {0}：{1}</value>
   </data>
 </root>

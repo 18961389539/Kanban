@@ -146,6 +146,34 @@ body {
 
 .meta-line { color: var(--text-3); font-size: 12px; margin-top: auto; }
 
+/* ──────────── 缺陷分布 TOP5 卡 ──────────── */
+
+.defect-list { display: flex; flex-direction: column; gap: 8px; }
+
+.defect-row { display: flex; align-items: center; gap: 8px; }
+
+.defect-name { flex: 0 0 96px; font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.defect-track {
+    flex: 1; height: 8px; border-radius: 4px; overflow: hidden;
+    background: var(--card-2);
+}
+
+.defect-fill { height: 100%; border-radius: 4px; background: var(--orange); }
+
+.defect-count { flex: 0 0 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-1); }
+
+/* ──────────── 断线横幅 ──────────── */
+
+.conn-banner {
+    margin: 10px 0 0; padding: 10px 14px; border-radius: 8px;
+    background: var(--red-soft, rgba(239, 68, 68, 0.12));
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+}
+
 /* ──────────── 生产状态卡 ──────────── */
 
 .big-number { font-size: 38px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }

@@ -5493,4 +5493,25 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="F326" xml:space="preserve">
     <value>Progress basis: device cumulative output for the current shift (may differ from per-work-order aggregation on the Work Order page)</value>
   </data>
+  <data name="Web_Recipe" xml:space="preserve">
+    <value>Recipe</value>
+  </data>
+  <data name="Web_DefectTop" xml:space="preserve">
+    <value>Defect Top 5</value>
+  </data>
+  <data name="Web_NoDefectData" xml:space="preserve">
+    <value>No defect data</value>
+  </data>
+  <data name="Web_LastShift" xml:space="preserve">
+    <value>Last Shift</value>
+  </data>
+  <data name="Web_LastShiftLine" xml:space="preserve">
+    <value>{0}: OK {1} ({2}) · NG {3} ({4})</value>
+  </data>
+  <data name="Web_ConnLost" xml:space="preserve">
+    <value>Connection lost, reconnecting…</value>
+  </data>
+  <data name="Web_RecipeInfo" xml:space="preserve">
+    <value>Recipe {0}: {1}</value>
+  </data>
 </root>
