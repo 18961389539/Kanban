@@ -114,9 +114,11 @@ public class ProductionBaselineStore(AppSettings appSettings)
             bool changed;
             if (!_baselines.TryGetValue(key, out baseline))
             {
-                // 首次读取本会话：磁盘基线班次与当前一致才恢复，否则以当前 raw 为新基线
+                // 首次读取本会话：磁盘基线班次与当前一致才恢复，否则以当前 raw 为新基线。
+                // 恢复时同样检查 raw < saved：PLC 计数器已被外部清零（raw < 磁盘基线）时
+                // 若沿用 saved，当轮 raw - baseline 会算出负产量（审查修复 2026-08-15）。
                 if (BaselineShiftId == currentShiftId && _loadedBaselines.TryGetValue(key, out var saved))
-                    baseline = saved;
+                    baseline = raw < saved ? raw : saved;
                 else
                     baseline = raw;
                 _baselines[key] = baseline;

@@ -803,11 +803,11 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             {
                 var end = DateTime.Now;
                 var start = DateTime.Today;
-                var records = _historyService.QueryAlarmEvents(start, end, deviceId);
+                var ordered = DeviceDetailQueryService.QueryRecentAlarms(_historyService, deviceId, start, end);
                 token.ThrowIfCancellationRequested();
 
-                var list = records.OrderByDescending(r => r.EventTime).Take(50).ToList();
-                token.ThrowIfCancellationRequested();
+                var list = ordered.Take(50).ToList();
+                var todayTrigger = ordered.Count(r => r.EventType == AlarmEventType.Triggered);
 
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
                 {
@@ -815,7 +815,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                     RecentAlarms.Clear();
                     foreach (var r in list)
                         RecentAlarms.Add(r);
-                    TodayAlarmCount = records.Count(r => r.EventType == AlarmEventType.Triggered);
+                    TodayAlarmCount = todayTrigger;
                     IsRefreshing = false;
                     RefreshStatusText = Strings.M155;
                 });
@@ -895,63 +895,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         {
             try
             {
-                var to = DateTime.Now;
-                var from = to.AddHours(-rangeHours);
-                var logs = _historyService.QueryProductionLogs(from, to, deviceId);
-                token.ThrowIfCancellationRequested();
-
-                // 构建按小时桶
-                var buckets = BuildHourlyBuckets(from, to);
-                if (buckets.Length == 0)
-                {
-                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
-                    {
-                        if (!token.IsCancellationRequested) HourlyProductionChart = null;
-                    });
-                    return;
-                }
-
-                var okCumulative = new int[buckets.Length];
-                var ngCumulative = new int[buckets.Length];
-                var hasSample = new bool[buckets.Length];
-                foreach (var log in logs.OrderBy(log => log.Timestamp))
-                {
-                    var idx = GetBucketIndex(buckets, log.Timestamp);
-                    if (idx >= 0 && idx < buckets.Length)
-                    {
-                        // 累计值：桶内保留末条（覆盖写入）
-                        okCumulative[idx] = log.OkProduction;
-                        ngCumulative[idx] = log.NgProduction;
-                        hasSample[idx] = true;
-                    }
-                }
-
-                // 缺少采集记录的小时沿用上一条累计值，避免后续差分把空桶当成归零。
-                var lastOk = 0;
-                var lastNg = 0;
-                for (int i = 0; i < buckets.Length; i++)
-                {
-                    if (hasSample[i])
-                    {
-                        lastOk = okCumulative[i];
-                        lastNg = ngCumulative[i];
-                    }
-                    else
-                    {
-                        okCumulative[i] = lastOk;
-                        ngCumulative[i] = lastNg;
-                    }
-                }
-
-                // 累计转增量（负差分置零，班次切换重置场景）。
-                // 首桶基线（审查修复 2026-08-13）：首桶直接取窗口内首条累计值会把窗口开始前的历史产量
-                // 计入第一个小时（设备长期未上传时首柱虚高几千件）——查窗口前最后一条快照作基线
-                var baseline = _historyService.QueryProductionLogs(from.AddHours(-24), from, deviceId)
-                    .LastOrDefault();
-                var okDiff = DiffCumulative(okCumulative, baseline?.OkProduction ?? 0);
-                var ngDiff = DiffCumulative(ngCumulative, baseline?.NgProduction ?? 0);
-
-                var chart = ChartService.BuildHourlyProductionBarChart(buckets, okDiff, ngDiff, targetCycle);
+                var chart = DeviceDetailQueryService.BuildHourlyProductionChart(
+                    _historyService, deviceId, targetCycle, rangeHours, DateTime.Now);
                 token.ThrowIfCancellationRequested();
 
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
@@ -977,27 +922,6 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 });
             }
         }, token).Forget(_logger);
-    }
-
-    // ──────────── 按小时桶聚合辅助（委托 HistoryQueryHelper 单源，与 OverviewViewModel 桶逻辑同源） ────────────
-
-    private static DateTime[] BuildHourlyBuckets(DateTime from, DateTime to)
-        => ViewModels.HistoryQueryHelper.BuildHourlyBuckets(from, to);
-
-    private static int GetBucketIndex(DateTime[] buckets, DateTime time)
-        => ViewModels.HistoryQueryHelper.GetBucketIndex(buckets, time);
-
-    /// <summary>累计值转增量：后一桶减前一桶，负数置零（班次切换重置场景）；首桶扣 <paramref name="baseline"/>。</summary>
-    private static int[] DiffCumulative(int[] cumulative, int baseline = 0)
-    {
-        if (cumulative.Length == 0) return cumulative;
-        var result = new int[cumulative.Length];
-        result[0] = Math.Max(0, cumulative[0] - baseline);
-        for (int i = 1; i < cumulative.Length; i++)
-        {
-            result[i] = Math.Max(0, cumulative[i] - cumulative[i - 1]);
-        }
-        return result;
     }
 
     /// <summary>返回主页：触发 GoBackRequested 事件，由 MainWindowViewModel 订阅后置 SelectedIndex=0。</summary>

@@ -1,9 +1,11 @@
 using System.IO;
 using System.Management;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using LicenseManager.Crypto;
+using Microsoft.Win32;
 
 namespace LicenseManager.Services;
 
@@ -66,9 +68,58 @@ public static class HardwareFingerprint
     /// <summary>从 WMI 查询硬件信息并计算哈希。</summary>
     private static byte[] ComputeHashFromWmi()
     {
-        var raw = GetCpuId() + "|" + GetBaseBoardSerial() + "|" + GetDiskSerial();
+        var cpu = GetCpuId();
+        var board = GetBaseBoardSerial();
+        var disk = GetDiskSerial();
+        var raw = $"{cpu}|{board}|{disk}";
+
+        // 三项 WMI 全部为空时，此前会退化为 SHA256("||") 固定值，导致同类机器机器码完全相同、授权绑定失效。
+        // 兜底改用 MachineGuid（重装系统前稳定）与网卡 MAC 组合；仍无法取得任何标识时才抛异常，
+        // 避免把退化指纹写入持久化缓存（否则已激活用户全部失效）。
+        if (string.IsNullOrEmpty(cpu) && string.IsNullOrEmpty(board) && string.IsNullOrEmpty(disk))
+        {
+            var machineGuid = GetMachineGuid();
+            var mac = GetMacAddress();
+            if (string.IsNullOrEmpty(machineGuid) && string.IsNullOrEmpty(mac))
+            {
+                throw new InvalidOperationException(
+                    "无法采集任何硬件标识（CPU/主板/磁盘/MachineGuid/MAC 均失败），无法生成机器码。");
+            }
+            raw = $"fallback|{machineGuid}|{mac}";
+        }
+
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
         return hash.AsSpan(0, 5).ToArray();
+    }
+
+    /// <summary>Windows 安装级 MachineGuid（重装系统前稳定；来自注册表 Cryptography 项）。</summary>
+    private static string GetMachineGuid()
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Cryptography");
+            return key?.GetValue("MachineGuid")?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    /// <summary>第一块启用状态非回环网卡的物理地址（十六进制串，无分隔符）。</summary>
+    private static string GetMacAddress()
+    {
+        try
+        {
+            var nic = NetworkInterface.GetAllNetworkInterfaces()
+                .FirstOrDefault(n => n.OperationalStatus == OperationalStatus.Up
+                                     && n.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+            return nic?.GetPhysicalAddress()?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     // ──────────── 持久化缓存（DPAPI 加密）────────────

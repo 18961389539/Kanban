@@ -38,7 +38,7 @@ public static class L
         ["Ac_StatsTitle"] = new[] { "报警统计", "Alarm Statistics", "警報統計" },
         ["Ac_TodayRecover"] = new[] { "今日恢复", "Today Recovered", "今日の復旧" },
         ["Ac_TodayTrigger"] = new[] { "今日触发", "Today Triggered", "今日の発生" },
-        ["Ac_TopTitle"] = new[] { "报警排行", "Alarm Ranking", "警報ランキング" },
+        ["Ac_TopTitle"] = new[] { "触发次数 Top 10", "Trigger Count Top 10", "トリガー回数 TOP 10" },
         ["Ac_TotalDuration"] = new[] { "累计时长", "Total Duration", "累計時間" },
         ["Au_Action"] = new[] { "操作类型", "Action", "操作種別" },
         ["Au_AllResults"] = new[] { "全部结果", "All Results", "全結果" },

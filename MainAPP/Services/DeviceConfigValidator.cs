@@ -136,45 +136,74 @@ public static class DeviceConfigValidator
     }
 
     /// <summary>
-    /// 检测跨设备 PLC 地址冲突：收集所有设备的 PLC 地址（OK/NG/状态/清零/配方 + 报警/缺陷/计数报警地址），
-    /// 若同一地址出现在两台及以上不同设备，记录为冲突。每项携带其中一台冲突设备与目标 Tab 供定位。
+    /// 检测跨设备 PLC 地址冲突（兼容旧签名，返回 <see cref="DeviceConfigError"/> 供校验错误列表使用）。
+    /// 内部委托给 <see cref="CollectCrossDeviceConflictsStructured"/> 后转换，保证单一事实来源。
     /// </summary>
     public static List<DeviceConfigError> CollectCrossDeviceConflicts(
         IEnumerable<Device> devices,
         IPlcAddressCodec? addressCodec = null)
+        => CollectCrossDeviceConflictsStructured(devices, addressCodec)
+            .Select(ToConfigError)
+            .ToList();
+
+    /// <summary>
+    /// 结构化跨设备 PLC 地址冲突：返回冲突地址、涉及设备与应定位的 Tab 索引。
+    /// 与旧实现相比，Tab 索引按地址类别归属（设备参数/报警/缺陷/计数报警）精确定位，
+    /// 不再依赖从本地化错误文案反解地址。
+    /// </summary>
+    public static List<DeviceAddressConflict> CollectCrossDeviceConflictsStructured(
+        IEnumerable<Device> devices,
+        IPlcAddressCodec? addressCodec = null)
     {
-        var byAddress = new Dictionary<string, List<Device>>(StringComparer.OrdinalIgnoreCase);
         var deviceList = devices as IList<Device> ?? devices.ToList();
         addressCodec ??= new MitsubishiAddressCodec();
+
+        var byAddress = new Dictionary<string, (List<Device> Devices, int TabIndex)>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in deviceList)
         {
-            foreach (var addr in GetDeviceAddresses(d))
+            foreach (var (addr, tabIndex) in GetDeviceAddressesWithTabs(d))
             {
                 var normalized = addressCodec.CanonicalKey(addr);
                 if (string.IsNullOrWhiteSpace(normalized)) continue;
-                if (!byAddress.TryGetValue(normalized, out var list))
+                if (!byAddress.TryGetValue(normalized, out var entry))
                 {
-                    list = [];
-                    byAddress[normalized] = list;
+                    entry = ([], tabIndex);
+                    byAddress[normalized] = entry;
                 }
-                if (!list.Contains(d)) list.Add(d);
+                if (!entry.Devices.Contains(d)) entry.Devices.Add(d);
+                byAddress[normalized] = entry;
             }
         }
 
-        List<DeviceConfigError> errors = [];
-        foreach (var kvp in byAddress.Where(k => k.Value.Count > 1))
+        var conflicts = new List<DeviceAddressConflict>();
+        foreach (var kvp in byAddress.Where(k => k.Value.Devices.Count > 1))
+            conflicts.Add(new DeviceAddressConflict(kvp.Key, kvp.Value.Devices, kvp.Value.TabIndex));
+        return conflicts;
+    }
+
+    private static DeviceConfigError ToConfigError(DeviceAddressConflict conflict)
+        => new()
         {
-            var addr = kvp.Key;
-            var list = kvp.Value;
-            errors.Add(new DeviceConfigError
-            {
-                Device = list[1],
-                TargetTabIndex = 0,
-                Message = string.Format(Strings.F080, addr, list.Count) +
-                          string.Join("、", list.Select(x => x.Name)),
-            });
-        }
-        return errors;
+            Device = conflict.Devices[1],
+            TargetTabIndex = conflict.TargetTabIndex,
+            Message = string.Format(Strings.F080, conflict.Address, conflict.Devices.Count) +
+                      string.Join("、", conflict.Devices.Select(x => x.Name)),
+        };
+
+    /// <summary>按地址类别收集单台设备的全部非空 PLC 地址及对应 Tab 索引（0=设备参数,1=报警,2=缺陷,3=计数报警）。</summary>
+    private static IEnumerable<(string Address, int TabIndex)> GetDeviceAddressesWithTabs(Device d)
+    {
+        if (!string.IsNullOrWhiteSpace(d.OkCountAddress)) yield return (d.OkCountAddress!, 0);
+        if (!string.IsNullOrWhiteSpace(d.NgCountAddress)) yield return (d.NgCountAddress!, 0);
+        if (!string.IsNullOrWhiteSpace(d.StatusCountAddress)) yield return (d.StatusCountAddress!, 0);
+        if (!string.IsNullOrWhiteSpace(d.ProductionResetAddress)) yield return (d.ProductionResetAddress!, 0);
+        if (!string.IsNullOrWhiteSpace(d.RecipeAddress)) yield return (d.RecipeAddress!, 0);
+        foreach (var a in d.Alarms)
+            if (!string.IsNullOrWhiteSpace(a.PlcAddress)) yield return (a.PlcAddress!, 1);
+        foreach (var def in d.Defects)
+            if (!string.IsNullOrWhiteSpace(def.PlcAddress)) yield return (def.PlcAddress!, 2);
+        foreach (var c in d.CounterAlarms)
+            if (!string.IsNullOrWhiteSpace(c.PlcAddress)) yield return (c.PlcAddress!, 3);
     }
 
     private static void AddAddressError(
@@ -214,3 +243,9 @@ public static class DeviceConfigValidator
         foreach (var c in d.CounterAlarms) yield return c.PlcAddress;
     }
 }
+
+/// <summary>结构化跨设备地址冲突：冲突地址、涉及设备与应定位的 Tab 索引。</summary>
+public sealed record DeviceAddressConflict(
+    string Address,
+    IReadOnlyList<Device> Devices,
+    int TargetTabIndex);

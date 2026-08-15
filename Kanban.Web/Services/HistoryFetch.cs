@@ -24,7 +24,8 @@ public static class HistoryFetch
         DateTime to,
         string? deviceId,
         string? shiftName,
-        Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
+        Func<HistoryQueryResponse, IReadOnlyList<T>> selector,
+        CancellationToken ct = default)
     {
         const int concurrency = 4; // WASM 单线程：过高并发导致响应积压 + GC 停顿（实测 8 路下 7 天窗口 9 分钟）
         var truncated = false;
@@ -39,7 +40,7 @@ public static class HistoryFetch
             ShiftName = shiftName,
             Page = page,
             PageSize = FetchPageSize,
-        });
+        }, ct);
 
         var first = await QueryAsync(1);
         if (first.ErrorCode != HistoryErrorCode.None)
@@ -65,7 +66,7 @@ public static class HistoryFetch
                 all.AddRange(selector(r));
             }
             // 渲染让路：WASM 单线程上 SignalR 响应处理会饿死渲染帧，批间让出让 loading 指示/表格先渲染
-            await Task.Delay(20);
+            await Task.Delay(20, ct);
         }
         sw.Stop();
         Console.WriteLine($"[HistoryFetch] {type} 全量拉取完成 {all.Count} 条，{totalPages} 页，{concurrency} 路并发，耗时 {sw.ElapsedMilliseconds}ms");
@@ -79,7 +80,8 @@ public static class HistoryFetch
         DateTime before,
         string? deviceId,
         string? shiftName,
-        Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
+        Func<HistoryQueryResponse, IReadOnlyList<T>> selector,
+        CancellationToken ct = default)
     {
         var resp = await dashboard.QueryHistoryAsync(new HistoryQueryRequest
         {
@@ -90,7 +92,7 @@ public static class HistoryFetch
             LatestFirst = true,
             Page = 1,
             PageSize = 1,
-        });
+        }, ct);
         if (resp.ErrorCode != HistoryErrorCode.None)
             throw new InvalidOperationException(resp.Error ?? "history query failed");
         return selector(resp).ToList();

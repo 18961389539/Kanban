@@ -82,12 +82,15 @@ public static class DeviceMapper
         {
             device.Alarms.Add(new Alarm
             {
-                Id = a.Id,
                 DeviceId = a.DeviceId,
                 Name = a.Name,
+                // 先赋 PlcAddress（会触发 OnPlcAddressChanged 生成确定性 Id），
+                // 最后显式赋 DTO 的 Id 覆盖之——Remote 同步必须尊重配置中的原 Id，
+                // 否则自定义 GUID 的报警经一次同步后 Id 被改写，历史事件关联断裂（审查修复 2026-08-15）。
                 PlcAddress = a.PlcAddress,
                 Description = a.Description,
                 Level = (Kanban.Core.Models.AlarmLevel)a.Level,
+                Id = a.Id,
             });
         }
         foreach (var x in dto.Defects ?? [])

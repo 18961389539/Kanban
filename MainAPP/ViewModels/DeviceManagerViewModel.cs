@@ -45,25 +45,17 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private readonly DeviceRepository _deviceRepository;
     private readonly IDialogService _dialog;
     private readonly DeviceConfigIOService _configIO;
-    private readonly DevicePlcCommandHandler _plcCommands;
-    private readonly WorkOrderRepository _workOrderRepo;
-    private readonly IWorkOrderService _workOrderService;
     private readonly PlcConnectionManager? _connectionManager;
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
     private readonly UserSession _userSession;
     private DeviceAuditSnapshot _lastSavedDeviceAuditSnapshot = new(0, []);
 
-    private sealed record DeviceAuditItem(
-        string Id, string Name, int TargetCycle,
-        string OkAddress, string NgAddress, string StatusAddress);
-
-    private sealed record DeviceAuditSnapshot(int Count, IReadOnlyList<DeviceAuditItem> Devices);
-
     // 设备列表由 DeviceRepository（DI 单例）持有，ViewModel 直接引用
     public ObservableCollection<Device> Devices => _deviceRepository.Devices;
 
-    public ICollectionView FilteredDevices { get; }
+    /// <summary>设备列表子 VM（搜索/状态筛选/摘要与过滤视图）。</summary>
+    public DeviceListViewModel DeviceList { get; }
 
     /// <summary>设备 Id 到冲突 PLC 地址的摘要，供列表项显示和点击定位。</summary>
     public IReadOnlyDictionary<string, string> AddressConflictSummaries { get; private set; } =
@@ -84,43 +76,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [ObservableProperty]
     private string _focusedAddressConflict = string.Empty;
 
-    /// <summary>
-    /// 设备列表摘要：总数及各运行状态数量，供标题区快速判断当前产线配置状态。
-    /// </summary>
-    public string DeviceSummaryText
-    {
-        get
-        {
-            var running = 0;
-            var alarm = 0;
-            var paused = 0;
-            var initial = 0;
-            foreach (var device in Devices)
-            {
-                var status = _deviceRepository.RuntimeMap.TryGetValue(device.Id, out var runtime)
-                    ? runtime.StatusWord
-                    : (int)DeviceStatus.Unknown;
-                switch (status)
-                {
-                    case (int)DeviceStatus.Running:
-                        running++;
-                        break;
-                    case (int)DeviceStatus.Alarm:
-                        alarm++;
-                        break;
-                    case (int)DeviceStatus.Paused:
-                        paused++;
-                        break;
-                    default:
-                        initial++;
-                        break;
-                }
-            }
-
-            return string.Format(Strings.F023, Devices.Count, running, alarm, paused, initial);
-        }
-    }
-
     /// <summary>报警管理子 VM（报警 CRUD + CSV 导入导出）。</summary>
     public DeviceAlarmManagerViewModel AlarmManagerVm { get; }
 
@@ -130,26 +85,14 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// <summary>计数报警管理子 VM（计数报警 CRUD + 清空当前值）。</summary>
     public DeviceCounterAlarmManagerViewModel CounterAlarmManagerVm { get; }
 
-    [ObservableProperty]
-    private string _searchKeyword = string.Empty;
+    /// <summary>工单管理子 VM（按设备过滤 + 6 个工单命令）。</summary>
+    public DeviceWorkOrderViewModel WorkOrders { get; }
+
+    /// <summary>PLC 命令子 VM（写配方 / OEE 清零 / 读地址 + 状态栏）。</summary>
+    public DevicePlcCommandViewModel PlcCommands { get; }
 
     [ObservableProperty]
     private Device? _selectedDevice;
-
-    /// <summary>
-    /// 当前选中设备的工单过滤视图（按 SelectedDevice.DeviceId 过滤，Running 优先排序）。
-    /// 绑定到设备管理页"工单"Tab 的列表。
-    /// </summary>
-    public ICollectionView SelectedDeviceWorkOrders { get; }
-
-    /// <summary>工单 Tab 中当前选中的工单。</summary>
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(EditWorkOrderCommand))]
-    [NotifyCanExecuteChangedFor(nameof(DeleteWorkOrderCommand))]
-    [NotifyCanExecuteChangedFor(nameof(StartWorkOrderCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CompleteWorkOrderCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AbortWorkOrderCommand))]
-    private WorkOrder? _selectedWorkOrder;
 
     /// <summary>
     /// PLC 写入中标志：写入配方 / 清空计数报警当前值期间为 true，UI 显示加载覆盖层。
@@ -157,12 +100,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     [ObservableProperty]
     private bool _isLoading;
-
-    [ObservableProperty]
-    private string _plcOperationStatus = string.Empty;
-
-    [ObservableProperty]
-    private string _plcOperationStatusType = "None";
 
     /// <summary>
     /// 是否有未保存到磁盘的改动。任意设备配置（名称/地址/子项增删等）变更后置 true，
@@ -186,23 +123,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private int _addressConflictCount;
 
     /// <summary>
-    /// 设备状态筛选条件。与搜索关键字叠加生效；变更后实时刷新列表（含按状态筛选时同步过滤）。
-    /// </summary>
-    [ObservableProperty]
-    private DeviceStatusFilter _statusFilter = DeviceStatusFilter.All;
-
-    /// <summary>
-    /// 状态筛选下拉选项（全部 / 运行 / 报警 / 待机 / 离线）。
-    /// </summary>
-    public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
-        new() { Value = DeviceStatusFilter.All, Label = Strings.M040 },
-        new() { Value = DeviceStatusFilter.Running, Label = Strings.Status_Running },
-        new() { Value = DeviceStatusFilter.Alarm, Label = Strings.Status_Alarm },
-        new() { Value = DeviceStatusFilter.Paused, Label = Strings.Status_Paused },
-        new() { Value = DeviceStatusFilter.Offline, Label = Strings.M165 },
-    ];
-
-    /// <summary>
     /// 设备详情选项卡当前索引（0=设备参数, 1=报警管理, 2=缺陷管理, 3=计数报警）。
     /// 供保存校验错误"定位"时切换到出错项所在选项卡；与 XAML TabControl.SelectedIndex 双向绑定。
     /// </summary>
@@ -216,20 +136,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     public IDictionary<string, DeviceRuntime> DeviceRuntimeMap => _deviceRepository.RuntimeMap;
 
-    // 保存过程中临时抑制脏标记（SaveAll 会回填子项 DeviceId 触发属性变更）
-    private bool _suppressDirty;
-
-    /// <summary>
-    /// 运行时字段（仅由采集线程写入、不持久化），其 PropertyChanged 不计入未保存标记。
-    /// </summary>
-    private static readonly HashSet<string> RuntimeProperties = new(StringComparer.Ordinal)
-    {
-        nameof(Alarm.StartTime),
-        nameof(Alarm.EndTime),
-        nameof(Defect.Count),
-        nameof(CounterAlarm.CurrentValue),
-        nameof(CounterAlarm.IsTriggered),
-    };
+    private readonly DirtyTracker _dirtyTracker;
 
     public DeviceManagerViewModel(
         DeviceRepository deviceRepository,
@@ -251,14 +158,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _dataAcquisitionService = dataAcquisitionService;
         _dialog = dialog;
         _configIO = configIO;
-        _plcCommands = plcCommands;
-        _workOrderRepo = workOrderRepo;
-        _workOrderService = workOrderService;
         _userSession = userSession;
         _connectionManager = connectionManager;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
-        FilteredDevices = CollectionViewSource.GetDefaultView(Devices);
+        DeviceList = new DeviceListViewModel(deviceRepository);
 
         // 构造子 VM（报警/缺陷/计数报警管理），传入各自所需的共享依赖与父级宿主引用。
         // 子 VM 通过 IDeviceManagerHost 订阅 SelectedDevice/IsLoading 变化并回写脏标记，
@@ -266,17 +170,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
         DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
         CounterAlarmManagerVm = new DeviceCounterAlarmManagerViewModel(dialog, plcCommands, counterAlarmCsvIO, this);
-
-        // 当前设备工单过滤视图：按 SelectedDevice.DeviceId 过滤，Running 优先排序
-        // 使用独立的 ListCollectionView（不能用 GetDefaultView，否则与 WorkOrderManagerViewModel 共享同一视图导致 Filter 互相覆盖）
-        SelectedDeviceWorkOrders = new ListCollectionView(_workOrderRepo.WorkOrders);
-        SelectedDeviceWorkOrders.Filter = FilterWorkOrderByDevice;
-        SelectedDeviceWorkOrders.SortDescriptions.Add(
-            new SortDescription(nameof(WorkOrder.Status), ListSortDirection.Descending));
+        WorkOrders = new DeviceWorkOrderViewModel(dialog, this, workOrderRepo, workOrderService);
+        PlcCommands = new DevicePlcCommandViewModel(dialog, this, plcCommands);
 
         // 订阅设备集合与每个设备的属性/子集合变更，用于维护脏标记
+        _dirtyTracker = new DirtyTracker(() => { IsDirty = true; ScheduleAddressConflictRefresh(); });
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
-        foreach (var d in Devices) AttachDevice(d);
+        foreach (var d in Devices) _dirtyTracker.AttachDevice(d);
 
         // 订阅运行时集合与每个运行时的状态变更，用于驱动设备列表状态色点实时刷新
         _deviceRepository.Runtimes.CollectionChanged += OnRuntimesCollectionChanged;
@@ -289,96 +189,14 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
     }
 
-    /// <summary>
-    /// 强制刷新设备列表视图（LoadAll 后 CollectedView 可能未立即响应 Reset + Add 序列）
-    /// </summary>
-    public void RefreshDeviceList()
-    {
-        FilteredDevices.Refresh();
-        Log.Information("DeviceManagerViewModel.RefreshDeviceList：Devices.Count={Count}, FilteredDevices.Filter={Filter}",
-            Devices.Count, FilteredDevices.Filter == null ? "null" : "set");
-    }
-
-    /// <summary>设备关键配置审计快照（名称/节拍/产量与状态地址，最多 20 台）。</summary>
-    private DeviceAuditSnapshot CreateDeviceAuditSnapshot()
-    {
-        var items = Devices.Take(20).Select(d => new DeviceAuditItem(
-            d.Id, d.Name, d.TargetCycle,
-            d.OkCountAddress ?? string.Empty, d.NgCountAddress ?? string.Empty,
-            d.StatusCountAddress ?? string.Empty)).ToArray();
-        return new DeviceAuditSnapshot(Devices.Count, items);
-    }
+    /// <summary>设备全量配置审计快照（全字段、全设备），委托 <see cref="DeviceAuditService"/> 生成。</summary>
+    private DeviceAuditSnapshot CreateDeviceAuditSnapshot() => DeviceAuditService.CreateSnapshot(Devices);
 
     /// <summary>
     /// 外部整体替换设备列表（Remote 拉取 / 导入 / 恢复备份 / 样本数据）后同步审计基线，
     /// 避免下一次保存把「上一次保存」误记为「替换前状态」。调用点须在替换完成后调用。
     /// </summary>
     public void SyncAuditBaseline() => _lastSavedDeviceAuditSnapshot = CreateDeviceAuditSnapshot();
-
-    partial void OnSearchKeywordChanged(string value) => ApplyFilter();
-
-    partial void OnStatusFilterChanged(DeviceStatusFilter value) => ApplyFilter();
-
-    /// <summary>
-    /// 组合「搜索关键字 + 状态筛选」应用过滤。两者为空/全部时清空过滤（null）以保证所有项可见。
-    /// </summary>
-    private void ApplyFilter()
-    {
-        var keyword = (SearchKeyword ?? string.Empty).Trim();
-        if (string.IsNullOrEmpty(keyword) && StatusFilter == DeviceStatusFilter.All)
-        {
-            FilteredDevices.Filter = null;
-            return;
-        }
-
-        var filter = StatusFilter;
-        FilteredDevices.Filter = item => item is Device d
-            && (string.IsNullOrEmpty(keyword) || DeviceMatchesKeyword(d, keyword))
-            && StatusMatches(d, filter);
-    }
-
-    /// <summary>
-    /// 搜索关键字是否命中设备：匹配设备名、各 PLC 地址、报警名/地址、缺陷名、计数报警名/地址（不区分大小写）。
-    /// 便于在设备较多时按地址或报警名快速定位设备。
-    /// </summary>
-    private static bool DeviceMatchesKeyword(Device d, string keyword)
-    {
-        if ((d.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        if ((d.OkCountAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        if ((d.NgCountAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        if ((d.StatusCountAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        if ((d.ProductionResetAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        if ((d.RecipeAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        foreach (var a in d.Alarms)
-        {
-            if ((a.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-            if ((a.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        }
-        foreach (var def in d.Defects)
-            if ((def.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        foreach (var c in d.CounterAlarms)
-        {
-            if ((c.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-            if ((c.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
-        }
-        return false;
-    }
-
-    private bool StatusMatches(Device d, DeviceStatusFilter filter)
-    {
-        if (filter == DeviceStatusFilter.All) return true;
-        int status = (int)DeviceStatus.Unknown;
-        if (_deviceRepository.RuntimeMap.TryGetValue(d.Id, out var rt))
-            status = rt.StatusWord;
-        return filter switch
-        {
-            DeviceStatusFilter.Running => status == (int)DeviceStatus.Running,
-            DeviceStatusFilter.Alarm => status == (int)DeviceStatus.Alarm,
-            DeviceStatusFilter.Paused => status == (int)DeviceStatus.Paused,
-            DeviceStatusFilter.Offline => status == (int)DeviceStatus.Unknown,
-            _ => true,
-        };
-    }
 
     [RelayCommand]
     private void AddDevice()
@@ -389,7 +207,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         var newDevice = new Device { Name = newName };
         Devices.Add(newDevice);
         _deviceRepository.AddRuntime(newDevice);
-        SearchKeyword = string.Empty;
+        DeviceList.SearchKeyword = string.Empty;
         SelectedDevice = newDevice;
         MarkDirty();
         // 注意：不在此处刷新审计基线——基线语义是「上次已保存」状态，
@@ -414,14 +232,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     // 删除按钮的启用条件：必须选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）
     private bool CanEditSelected() => SelectedDevice != null && !IsLoading;
 
-    /// <summary>
-    /// PLC 写入/读取类命令的可用性：选中设备且不在加载中。
-    /// IsLoading 期间禁用可避免并发写入与 UI 重入。
-    /// </summary>
-    private bool CanExecutePlcWrite() => SelectedDevice != null
-        && !IsLoading
-        && (_connectionManager?.IsConnected ?? true);
-
     public bool IsPlcConnected => _connectionManager?.IsConnected ?? true;
 
     private void OnConnectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -435,9 +245,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
 
         OnPropertyChanged(nameof(IsPlcConnected));
-        WriteRecipeCommand.NotifyCanExecuteChanged();
-        ResetProductionCommand.NotifyCanExecuteChanged();
-        ReadPlcValueCommand.NotifyCanExecuteChanged();
     }
 
     // 保存按钮的启用条件：至少有一个设备。
@@ -606,10 +413,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         {
             // 保存内部会回填子项 DeviceId（触发属性变更），临时抑制脏标记避免自我触发。
             // Remote 模式下 SaveAllAsync 经 SignalR 推给 Collector 落盘（异步，不阻塞 UI 线程）
-            // 前后值摘要：仅关键配置字段（名称/节拍/OK/NG/状态地址），且只取前 20 台，避免整配置落审计库。
+            // 前后值摘要：全设备 + 全配置字段（DeviceAuditService.CreateSnapshot）。
             var before = _lastSavedDeviceAuditSnapshot;
             var after = CreateDeviceAuditSnapshot();
-            _suppressDirty = true;
+            _dirtyTracker.IsSuppressed = true;
             await _deviceRepository.SaveAllAsync();
 
             // 保存后同步所有设备运行时的 TargetCycle
@@ -635,7 +442,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
         finally
         {
-            _suppressDirty = false;
+            _dirtyTracker.IsSuppressed = false;
             IsLoading = false;
         }
     }
@@ -645,31 +452,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     private void RefreshAddressConflictFlag()
     {
-        var conflicts = DeviceConfigValidator.CollectCrossDeviceConflicts(Devices);
-        var summaries = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var conflict in conflicts)
-        {
-            var address = ExtractConflictAddress(conflict.Message);
-            if (string.IsNullOrEmpty(address)) continue;
-            var devicesWithAddress = Devices.Where(d => DeviceConfigValidator.GetDeviceAddresses(d)
-                .Any(a => string.Equals(a?.Trim(), address, StringComparison.OrdinalIgnoreCase)));
-            foreach (var device in devicesWithAddress)
-            {
-                if (!summaries.TryGetValue(device.Id, out var addresses))
-                {
-                    addresses = [];
-                    summaries[device.Id] = addresses;
-                }
-                if (!addresses.Contains(address, StringComparer.OrdinalIgnoreCase))
-                    addresses.Add(address);
-            }
-        }
-        AddressConflictSummaries = summaries.ToDictionary(
-            pair => pair.Key,
-            pair => string.Join(", ", pair.Value),
-            StringComparer.OrdinalIgnoreCase);
-        AddressConflictCount = conflicts.Count;
-        HasAddressConflicts = conflicts.Count > 0;
+        var report = AddressConflictService.Compute(Devices);
+        AddressConflictSummaries = report.Summaries;
+        AddressConflictCount = report.ConflictCount;
+        HasAddressConflicts = report.ConflictCount > 0;
         OnPropertyChanged(nameof(AddressConflictSummaries));
     }
 
@@ -678,16 +464,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (error == null) return;
         NavigateToError(error);
-    }
-
-    private static string ExtractConflictAddress(string message)
-    {
-        string prefix = Strings.M166;
-        var start = message.IndexOf(prefix, StringComparison.Ordinal);
-        if (start < 0) return string.Empty;
-        start += prefix.Length;
-        var end = message.IndexOf('」', start);
-        return end > start ? message[start..end] : string.Empty;
     }
 
     /// <summary>
@@ -728,7 +504,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SelectedDevice = Devices.FirstOrDefault();
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
-        RefreshDeviceList();
+        DeviceList.RefreshDeviceList();
+        SyncAuditBaseline();
         MarkDirty();
     }
 
@@ -753,8 +530,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SelectedDevice = Devices.FirstOrDefault();
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
-        RefreshDeviceList();
+        DeviceList.RefreshDeviceList();
         RefreshAddressConflictFlag();
+        SyncAuditBaseline();
         MarkDirty();
     }
 
@@ -795,288 +573,31 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SelectedDevice = Devices.FirstOrDefault();
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
-        RefreshDeviceList();
+        DeviceList.RefreshDeviceList();
+        SyncAuditBaseline();
         MarkDirty();
         _dialog.NotifySuccess(string.Format(Strings.F114, samples.Count));
     }
 
     partial void OnSelectedDeviceChanged(Device? value)
     {
-        // 切换设备时清空工单选中（报警/缺陷/计数报警选中由各子 VM 订阅本属性变化自行清空）
-        AlarmManagerVm.SelectedDevice = value;
-        DefectManagerVm.SelectedDevice = value;
-        CounterAlarmManagerVm.SelectedDevice = value;
-        SelectedWorkOrder = null;
+        // 各子 VM（报警/缺陷/计数报警/工单/PLC）通过 DeviceChildManagerViewModel 订阅宿主 PropertyChanged 自动同步 SelectedDevice，无需在此手动赋值。
         OnPropertyChanged(nameof(CurrentDeviceValidationErrors));
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
-        // 刷新当前设备工单过滤视图
-        SelectedDeviceWorkOrders.Refresh();
-        // 选中设备变化时刷新依赖 SelectedDevice 的命令可用状态（报警/缺陷/计数报警命令在各子 VM 内刷新）
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
-        WriteRecipeCommand.NotifyCanExecuteChanged();
-        ResetProductionCommand.NotifyCanExecuteChanged();
-        ReadPlcValueCommand.NotifyCanExecuteChanged();
-        AddWorkOrderCommand.NotifyCanExecuteChanged();
     }
-
-    /// <summary>工单过滤：仅显示当前选中设备的工单。</summary>
-    private bool FilterWorkOrderByDevice(object obj)
-        => obj is WorkOrder w && SelectedDevice != null && w.DeviceId == SelectedDevice.Id;
 
     partial void OnIsLoadingChanged(bool value)
     {
-        // IsLoading 变化时刷新 PLC 写入类与设备编辑类命令可用状态，避免并发写入或删除
+        // IsLoading 变化时刷新设备编辑类命令可用状态；PLC 命令可用状态由 PlcCommands 子 VM 订阅 IsLoading 自行刷新
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
-        WriteRecipeCommand.NotifyCanExecuteChanged();
-        ResetProductionCommand.NotifyCanExecuteChanged();
-        ReadPlcValueCommand.NotifyCanExecuteChanged();
-        if (value)
-        {
-            PlcOperationStatus = Strings.M170;
-            PlcOperationStatusType = "Progress";
-        }
-        // 报警 CSV 导入/导出与计数报警清空命令由各子 VM 订阅 IsLoading 变化自行刷新
     }
 
-    [ObservableProperty]
-    private string _recipeStatus = string.Empty;
+    public void ReportPlcOperation(PlcOpResult result) => PlcCommands.ReportPlcOperation(result);
 
-    [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
-    private async Task WriteRecipeAsync()
-    {
-        if (SelectedDevice == null) return;
-
-        IsLoading = true;
-        try
-        {
-            var result = await _plcCommands.WriteRecipeAsync(SelectedDevice);
-            RecipeStatus = result.Status switch
-            {
-                PlcOpStatus.Success => string.Format(Strings.F072, System.DateTime.Now),
-                PlcOpStatus.Info => result.Message,        // 未配置配方地址等跳过提示
-                PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
-                PlcOpStatus.Error => string.Format(Strings.F237, result.Message),
-                _ => result.Message,
-            };
-            SetPlcOperationStatus(result);
-
-            // 交互策略：Success/Info 仅更新 RecipeStatus（不打断用户）；Warning/Error 才弹 Growl 通知
-            if (result.Status == PlcOpStatus.Warning || result.Status == PlcOpStatus.Error)
-                NotifyPlcResult(result);
-        }
-        catch (Exception ex)
-        {
-            // _plcCommands 内部已兜底返回 PlcOpResult，此处兜住链路外异常（状态机/通知等），避免静默流失
-            Log.Error(ex, "写配方命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
-            PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// 手动触发选中设备的 OEE 清零：触发 PLC 清零 + 同步软件侧 OEE 累计清零（产量+时间+报警）+ 基线清零窗口。
-    /// 与班次切换自动触发的清零逻辑一致，此处仅做手动即时触发且只作用于选中设备。
-    /// 该操作会清零当前产量/时间/报警累计且不可撤销，属危险写操作，需二次确认。
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
-    private async Task ResetProductionAsync()
-    {
-        if (SelectedDevice == null) return;
-
-        IsLoading = true;
-        try
-        {
-            var result = await _plcCommands.ResetProductionAsync(
-                SelectedDevice,
-                device => _dialog.Show(
-                    string.Format(Strings.F176, device.Name),
-                    Strings.M171, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
-
-            // Cancelled = 用户拒绝确认，不弹通知；其他状态照常通知
-            if (result.Status != PlcOpStatus.Cancelled)
-            {
-                SetPlcOperationStatus(result);
-                NotifyPlcResult(result);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "OEE 清零命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
-            PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// 从 PLC 读取指定地址的当前值（D 字地址），用于调试/验证地址配置是否正确。
-    /// CommandParameter 为 PLC 地址字符串。
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
-    private async Task ReadPlcValueAsync(string? address)
-    {
-        IsLoading = true;
-        try
-        {
-            var result = await _plcCommands.ReadPlcValueAsync(address);
-            SetPlcOperationStatus(result);
-            NotifyPlcResult(result);
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "读 PLC 值命令异常");
-            PlcOperationStatus = string.Format(Strings.F237, ex.Message);
-            PlcOperationStatusType = "Error";
-            _dialog.NotifyError(string.Format(Strings.F237, ex.Message));
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    // ──────────── 报警 / 缺陷 / 计数报警管理 ────────────
-    // 上述三个 Tab 的 CRUD、CSV 导入导出与清空当前值（PLC 写）已拆分到子 VM：
-    //   · AlarmManagerVm       —— 报警 CRUD + CSV 导入导出
-    //   · DefectManagerVm      —— 缺陷 CRUD
-    //   · CounterAlarmManagerVm  —— 计数报警 CRUD + 清空当前值
-    // 子 VM 通过 IDeviceManagerHost 订阅 SelectedDevice/IsLoading 变化并回写脏标记，
-    // 各 Tab 的 XAML 绑定路径不变（DataContext 由 DeviceManagerView 指向各子 VM）。
-
-    // ──────────── 工单管理（设备维度） ────────────
-    // 业务逻辑（弹窗、状态机校验、二次确认、落库）已抽取到 IWorkOrderService，
-    // 本区域仅负责命令转发与 SelectedWorkOrder 同步。
-
-    /// <summary>新增工单按钮可用性：选中设备即可新增（预填当前设备）。</summary>
-    private bool CanAddWorkOrder() => SelectedDevice != null;
-
-    /// <summary>
-    /// 新增工单：以当前选中设备预填模板打开编辑对话框（Id=0 表示新增）。
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanAddWorkOrder))]
-    private async Task AddWorkOrder()
-    {
-        if (SelectedDevice == null) return;
-        // 预填当前设备的模板（Id=0 → 对话框显示"新增工单"标题）
-        var template = new WorkOrder
-        {
-            DeviceId = SelectedDevice.Id,
-            DeviceName = SelectedDevice.Name,
-        };
-        var saved = await _workOrderService.AddWorkOrderAsync(template);
-        if (saved != null) SelectedWorkOrder = saved;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanEditWorkOrder))]
-    private async Task EditWorkOrder()
-    {
-        if (SelectedWorkOrder == null) return;
-        var saved = await _workOrderService.EditWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
-    }
-
-    private bool CanEditWorkOrder() => SelectedWorkOrder != null;
-
-    [RelayCommand(CanExecute = nameof(CanDeleteWorkOrder))]
-    private async Task DeleteWorkOrder()
-    {
-        if (SelectedWorkOrder == null) return;
-        if (await _workOrderService.DeleteWorkOrderAsync(SelectedWorkOrder))
-            SelectedWorkOrder = null;
-    }
-
-    private bool CanDeleteWorkOrder() => SelectedWorkOrder != null;
-
-    [RelayCommand(CanExecute = nameof(CanStartWorkOrder))]
-    private async Task StartWorkOrder()
-    {
-        if (SelectedWorkOrder == null) return;
-        var saved = await _workOrderService.StartWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
-    }
-
-    private bool CanStartWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
-
-    [RelayCommand(CanExecute = nameof(CanCompleteWorkOrder))]
-    private async Task CompleteWorkOrder()
-    {
-        if (SelectedWorkOrder == null) return;
-        var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
-    }
-
-    private bool CanCompleteWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Running;
-
-    [RelayCommand(CanExecute = nameof(CanAbortWorkOrder))]
-    private async Task AbortWorkOrder()
-    {
-        if (SelectedWorkOrder == null) return;
-        var saved = await _workOrderService.AbortWorkOrderAsync(SelectedWorkOrder);
-        if (saved != null) SelectedWorkOrder = saved;
-    }
-
-    private bool CanAbortWorkOrder() => SelectedWorkOrder != null
-        && (SelectedWorkOrder.Status == WorkOrderStatus.Running || SelectedWorkOrder.Status == WorkOrderStatus.Pending);
-
-    /// <summary>
-    /// 将 PLC 命令结果按 Status 映射到对应级别的通知（Success→Growl.Success / Info→Info /
-    /// Warning→Warning / Error→Error）。Cancelled 由调用方过滤，不应传入此方法。
-    /// </summary>
-    private void NotifyPlcResult(PlcOpResult result)
-    {
-        switch (result.Status)
-        {
-            case PlcOpStatus.Success:
-                _dialog.NotifySuccess(result.Message);
-                break;
-            case PlcOpStatus.Info:
-                _dialog.NotifyInfo(result.Message);
-                break;
-            case PlcOpStatus.Warning:
-                _dialog.NotifyWarning(result.Message);
-                break;
-            case PlcOpStatus.Error:
-                _dialog.NotifyError(result.Message);
-                break;
-            case PlcOpStatus.Cancelled:
-                // 调用方应已过滤；不弹通知
-                break;
-        }
-    }
-
-    private void SetPlcOperationStatus(PlcOpResult result)
-    {
-        PlcOperationStatus = result.Status switch
-        {
-            PlcOpStatus.Success => string.Format(Strings.F125, result.Message),
-            PlcOpStatus.Info => result.Message,
-            PlcOpStatus.Warning => string.Format(Strings.F197, result.Message),
-            PlcOpStatus.Error => string.Format(Strings.F087, result.Message),
-            PlcOpStatus.Cancelled => Strings.M172,
-            _ => result.Message,
-        };
-        PlcOperationStatusType = result.Status switch
-        {
-            PlcOpStatus.Success => "Success",
-            PlcOpStatus.Warning => "Warning",
-            PlcOpStatus.Error => "Error",
-            PlcOpStatus.Cancelled => "None",
-            _ => "Info",
-        };
-    }
-
-    public void ReportPlcOperation(PlcOpResult result) => SetPlcOperationStatus(result);
+    public void ReportPlcOperationStarted() => PlcCommands.ReportPlcOperationStarted();
 
     // ──────────── 脏标记维护 ────────────
 
@@ -1086,33 +607,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (e.Action == NotifyCollectionChangedAction.Move) return;
 
         if (e.NewItems != null)
-            foreach (Device d in e.NewItems) AttachDevice(d);
+            foreach (Device d in e.NewItems) _dirtyTracker.AttachDevice(d);
         if (e.OldItems != null)
-            foreach (Device d in e.OldItems) DetachDevice(d);
+            foreach (Device d in e.OldItems) _dirtyTracker.DetachDevice(d);
         // 不在此 MarkDirty：避免启动时 LoadAll 的批量 Add 误报未保存；
         // 集合增删的脏标记由各增删命令显式调用 MarkDirty()。
-    }
-
-    private void AttachDevice(Device d)
-    {
-        d.PropertyChanged += OnDevicePropertyChanged;
-        d.Alarms.CollectionChanged += OnChildCollectionChanged;
-        d.Defects.CollectionChanged += OnChildCollectionChanged;
-        d.CounterAlarms.CollectionChanged += OnChildCollectionChanged;
-        foreach (var a in d.Alarms) a.PropertyChanged += OnChildItemPropertyChanged;
-        foreach (var def in d.Defects) def.PropertyChanged += OnChildItemPropertyChanged;
-        foreach (var c in d.CounterAlarms) c.PropertyChanged += OnChildItemPropertyChanged;
-    }
-
-    private void DetachDevice(Device d)
-    {
-        d.PropertyChanged -= OnDevicePropertyChanged;
-        d.Alarms.CollectionChanged -= OnChildCollectionChanged;
-        d.Defects.CollectionChanged -= OnChildCollectionChanged;
-        d.CounterAlarms.CollectionChanged -= OnChildCollectionChanged;
-        foreach (var a in d.Alarms) a.PropertyChanged -= OnChildItemPropertyChanged;
-        foreach (var def in d.Defects) def.PropertyChanged -= OnChildItemPropertyChanged;
-        foreach (var c in d.CounterAlarms) c.PropertyChanged -= OnChildItemPropertyChanged;
     }
 
     // ──────────── 运行时状态变更（驱动列表色点实时刷新） ────────────
@@ -1125,7 +624,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             foreach (DeviceRuntime rt in e.OldItems) DetachRuntime(rt);
         // 运行时集合变更（设备增删）→ 通知列表色点刷新（新设备默认离线）
         OnPropertyChanged(nameof(DeviceRuntimeMap));
-        OnPropertyChanged(nameof(DeviceSummaryText));
     }
 
     private void AttachRuntime(DeviceRuntime rt) => rt.PropertyChanged += OnRuntimePropertyChanged;
@@ -1137,49 +635,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 仅状态字变化才驱动刷新（采集线程每轮轮询；稳态下 CommunityToolkit 不会重复抛事件）
         if (e.PropertyName != nameof(DeviceRuntime.StatusWord)) return;
         OnPropertyChanged(nameof(DeviceRuntimeMap)); // 列表色点实时刷新
-        OnPropertyChanged(nameof(DeviceSummaryText));
-        // 若正在按状态筛选，状态变化需同步过滤结果；CollectionView.Refresh 必须在 UI 线程执行
-        if (StatusFilter != DeviceStatusFilter.All)
-        {
-            var view = FilteredDevices;
-            var app = Application.Current;
-            if (app == null || app.Dispatcher.HasShutdownStarted) return;
-            if (app.Dispatcher.CheckAccess())
-                view.Refresh();
-            else
-                // BeginInvoke 避免阻塞采集后台线程：Invoke 同步等待 UI 线程执行 Refresh，
-                // 高频状态变更时会让采集线程被 UI 排队任务卡住，影响轮询节拍稳定性。
-                app.Dispatcher.BeginInvoke(new Action(view.Refresh));
-        }
     }
 
-    private void OnDevicePropertyChanged(object? sender, PropertyChangedEventArgs e) => MarkDirty();
-
-    private void OnChildCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (e.NewItems != null)
-            foreach (var item in e.NewItems)
-                if (item is INotifyPropertyChanged np) np.PropertyChanged += OnChildItemPropertyChanged;
-        if (e.OldItems != null)
-            foreach (var item in e.OldItems)
-                if (item is INotifyPropertyChanged np) np.PropertyChanged -= OnChildItemPropertyChanged;
-        // 集合增删的脏标记由对应命令显式标记，此处仅维护事件订阅
-    }
-
-    private void OnChildItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // 运行时字段（计数/当前值等）由采集线程写入，不计入未保存标记
-        if (e.PropertyName != null && RuntimeProperties.Contains(e.PropertyName))
-            return;
-        MarkDirty();
-    }
-
-    private void MarkDirty()
-    {
-        if (_suppressDirty) return;
-        IsDirty = true;
-        ScheduleAddressConflictRefresh();
-    }
+    private void MarkDirty() => _dirtyTracker.MarkDirty();
 
     /// <summary>
     /// 冲突重算防抖（审查修复 2026-08-13）：编辑输入每击键触发 MarkDirty → 全量跨设备
@@ -1215,7 +673,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     /// <summary>
     /// IDeviceManagerHost.MarkDirty 的显式实现：供报警/缺陷/计数报警子 VM 回写脏标记。
-    /// 路由到私有 MarkDirty，复用 _suppressDirty 抑制逻辑（保存期间子项回填触发的变更不计入）。
+    /// 路由到私有 MarkDirty，复用 DirtyTracker 抑制逻辑（保存期间子项回填触发的变更不计入）。
     /// </summary>
     void IDeviceManagerHost.MarkDirty() => MarkDirty();
 
@@ -1268,15 +726,18 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged -= OnRuntimesCollectionChanged;
 
-        foreach (var d in Devices)
-            DetachDevice(d);
+        _dirtyTracker.DetachAll(Devices);
 
         foreach (var rt in _deviceRepository.Runtimes)
             DetachRuntime(rt);
+
+        DeviceList.Dispose();
 
         // 解绑子 VM 对父级 PropertyChanged 的订阅，避免僵尸回调
         AlarmManagerVm.Detach();
         DefectManagerVm.Detach();
         CounterAlarmManagerVm.Detach();
+        WorkOrders.Detach();
+        PlcCommands.Detach();
     }
 }

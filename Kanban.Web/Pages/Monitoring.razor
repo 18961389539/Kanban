@@ -143,9 +143,11 @@
 
     private string ConnText => Diag is { IsConnected: true } ? L.T("Conn_Connected") : L.T("Conn_Disconnected");
     private string AcqText => Diag is { IsRunning: true } ? L.T("Mo_AcqRunning") : L.T("Mo_AcqStopped");
-    private string SuccessRateText => Diag is null ? "—" : (Diag.CompletedCycles + Diag.FailedCycles) > 0
-        ? $"{100.0 * Diag.SuccessfulCycles / (Diag.CompletedCycles + Diag.FailedCycles):F1}%"
-        : "—";
+    // 成功率分母 = CompletedCycles（总轮次）：采集侧 FailedCycles 是 CompletedCycles 的子集
+    // （CompleteCycle 每轮都 +1，失败轮再单独 +FailedCycles），原公式把失败重复计入分母导致
+    // 成功率系统性偏低（如 8 成 2 败显示 66.7% 而非 80%）（审查修复 2026-08-15）
+    private string SuccessRateText => Diag is null || Diag.CompletedCycles <= 0 ? "—"
+        : $"{100.0 * Diag.SuccessfulCycles / Diag.CompletedCycles:F1}%";
     private string ConsecutiveFailText => Diag?.ConsecutiveFailures.ToString() ?? "—";
     private string PendingText => Diag?.PendingHistoryCount.ToString("N0") ?? "—";
 

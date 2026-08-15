@@ -151,17 +151,13 @@
 
     private sealed record ActiveItem(string DeviceName, string AlarmName, AlarmLevel Level, DateTime StartTime);
 
-    /// <summary>活跃报警（全部，未筛选）：快照内嵌 ActiveAlarms（StartTime 已设置 = 触发中），与 WPF 口径一致。</summary>
-    private List<ActiveItem> AllActiveAlarms
-        => Dashboard.Snapshots
+    /// <summary>活跃报警缓存：仅在渲染 tick（3s）刷新，避免 AllActiveAlarms 被多个属性重复 SelectMany 物化。</summary>
+    private List<ActiveItem> _allActiveAlarms = [];
+
+    private void RefreshActiveCache()
+        => _allActiveAlarms = Dashboard.Snapshots
             .SelectMany(s => s.ActiveAlarms.Select(a => new ActiveItem(s.DeviceName, a.Name, a.Level, a.StartTime)))
             .ToList();
-
-    private List<ActiveItem> VisibleActiveAlarms => AllActiveAlarms
-        .Where(a => IsLevelVisible(a.Level))
-        .Where(a => string.IsNullOrEmpty(SelectedDeviceId) || a.DeviceName == Dashboard.GetSnapshot(SelectedDeviceId)?.DeviceName)
-        .Take(MaxActiveAlarms)
-        .ToList();
 
     private bool IsLevelVisible(AlarmLevel level) => level switch
     {
@@ -170,19 +166,36 @@
         _ => ShowLow,
     };
 
-    private int ActiveCount => AllActiveAlarms.Count;
-    private int AffectedDeviceCount => AllActiveAlarms.Select(a => a.DeviceName).Distinct().Count();
+    /// <summary>级别/设备过滤后的活跃报警（KPI 与列表共用，与 WPF 口径一致；审查修复 2026-08-15）。</summary>
+    private List<ActiveItem> FilteredActiveAlarms
+    {
+        get
+        {
+            var deviceName = string.IsNullOrEmpty(SelectedDeviceId)
+                ? null
+                : Dashboard.GetSnapshot(SelectedDeviceId)?.DeviceName;
+            return _allActiveAlarms
+                .Where(a => IsLevelVisible(a.Level))
+                .Where(a => deviceName is null || a.DeviceName == deviceName)
+                .ToList();
+        }
+    }
+
+    private List<ActiveItem> VisibleActiveAlarms => FilteredActiveAlarms.Take(MaxActiveAlarms).ToList();
+
+    private int ActiveCount => _allActiveAlarms.Count;
+    private int AffectedDeviceCount => FilteredActiveAlarms.Select(a => a.DeviceName).Distinct().Count();
     private string ActiveCountText => ActiveCount.ToString("N0");
     private string AffectedDeviceCountText => AffectedDeviceCount.ToString("N0");
 
-    /// <summary>最长持续：最早触发的活跃报警（WPF 口径：按触发时间升序第一条）。</summary>
+    /// <summary>最长持续：过滤后最早触发的活跃报警（与 WPF 口径一致：基于过滤后列表）。</summary>
     private string LongestText
     {
         get
         {
-            var all = AllActiveAlarms;
-            if (all.Count == 0) return "—";
-            var oldest = all.MinBy(a => a.StartTime)!;
+            var filtered = FilteredActiveAlarms;
+            if (filtered.Count == 0) return "—";
+            var oldest = filtered.MinBy(a => a.StartTime)!;
             return $"{FmtDuration((DateTime.Now - oldest.StartTime).TotalSeconds)} · {oldest.DeviceName} · {oldest.AlarmName}";
         }
     }
@@ -236,6 +249,7 @@
         {
             // 配置不可用：级别回退 Medium（LookupAlarmLevel 兜底）
         }
+        RefreshActiveCache(); // 首屏活跃报警缓存（后续由 3s tick 刷新）
         _ = RefreshStatsAsync(); // 首屏统计（fire-and-forget，失败由横幅提示）
         _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
         await Task.CompletedTask;
@@ -262,12 +276,13 @@
 private void OnRenderTick()
     {
         if (_disposed) return; // Dispose 后 Timer 残留回调守卫
+        RefreshActiveCache();  // 3s 刷新活跃报警缓存（快照推送后触发重渲染）
         StateHasChanged();     // 活跃报警列表 + 持续时长 3s 刷新
     }
 
     /// <summary>
-    /// 统计刷新：范围事件全量（Top 排行 + 最近事件）+ 今日 KPI（独立小窗口）。
-    /// 事件型数据量小，全量并发拉取与 WPF Remote 模式一致。
+    /// 统计刷新：单次拉取 [min(窗口起点, 今日0点), now]（Top 排行 + 最近事件 + 今日 KPI），
+    /// 内存切分窗口与今日事件。事件型数据量小，与 WPF Remote 模式一致。
     /// </summary>
     private async Task RefreshStatsAsync()
     {
@@ -278,13 +293,15 @@ private void OnRenderTick()
         {
             var now = DateTime.Now;
             var from = now.AddHours(-RangeHours);
+            var todayStart = now.Date;
 
-            var (events, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
-                Dashboard, HistoryQueryType.AlarmEvent, from, now, null, null, r => r.AlarmEvents);
+            // 单次拉取 [min(窗口起点, 今日0点), now]，内存切分窗口事件与今日事件（审查修复 2026-08-14，
+            // 原实现每次刷新两次全量拉取，24h 范围时高度重叠）
+            var (allEvents, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
+                Dashboard, HistoryQueryType.AlarmEvent, from < todayStart ? from : todayStart, now, null, null, r => r.AlarmEvents);
 
-            // 今日 KPI（按日期过滤，不受时间范围影响；独立小窗口查询）
-            var (todayEvents, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
-                Dashboard, HistoryQueryType.AlarmEvent, now.Date, now, null, null, r => r.AlarmEvents);
+            var windowEvents = allEvents.Where(e => e.EventTime >= from).ToList();
+            var todayEvents = allEvents.Where(e => e.EventTime >= todayStart).ToList();
 
             // 版本守卫：期间已有更新的刷新发起（如再次切换范围），本次结果作废
             if (version != _statsVersion) return;
@@ -292,8 +309,8 @@ private void OnRenderTick()
             TodayTrigger = todayEvents.Count(e => e.EventType == AlarmEventType.Triggered);
             TodayRecover = todayEvents.Count(e => e.EventType == AlarmEventType.Recovered);
 
-            // Top 排行（按累计时长降序，WPF 口径）
-            var top = AlarmAnalysis.BuildTopStats(events).Take(TopAlarmsCount).ToList();
+            // Top 排行（按触发次数降序，与 WPF 口径一致）
+            var top = AlarmAnalysis.BuildTopStats(windowEvents).Take(TopAlarmsCount).ToList();
             TopAlarms = top.Select((t, i) => (
                 Rank: i + 1,
                 t.AlarmName,
@@ -302,7 +319,7 @@ private void OnRenderTick()
                 t.TriggerCount,
                 t.TotalDurationMinutes)).ToList();
 
-            RecentEvents = events.OrderByDescending(e => e.EventTime).Take(MaxRecentEvents).ToList();
+            RecentEvents = windowEvents.OrderByDescending(e => e.EventTime).Take(MaxRecentEvents).ToList();
             StatsLoaded = true;
         }
         catch (Exception)

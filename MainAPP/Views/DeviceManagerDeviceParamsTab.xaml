@@ -41,18 +41,18 @@
 
             <Border Margin="0,0,0,16" Padding="10,8" Background="{StaticResource SecondaryRegionBrush}"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                <TextBlock Text="{Binding DataContext.PlcOperationStatus, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <TextBlock Text="{Binding DataContext.PlcCommands.PlcOperationStatus, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding DataContext.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Success">
+                                <DataTrigger Binding="{Binding DataContext.PlcCommands.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Success">
                                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding DataContext.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Error">
+                                <DataTrigger Binding="{Binding DataContext.PlcCommands.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Error">
                                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding DataContext.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Progress">
+                                <DataTrigger Binding="{Binding DataContext.PlcCommands.PlcOperationStatusType, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Progress">
                                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -142,7 +142,7 @@
                     Grid.Column="2"
                     Margin="0,16,0,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K201}"
-                    Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding OkCountAddress}"
                     Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
@@ -175,7 +175,7 @@
                     Grid.Column="2"
                     Margin="0,16,0,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K204}"
-                    Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding NgCountAddress}"
                     Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
@@ -208,7 +208,7 @@
                     Grid.Column="2"
                     Margin="0,16,0,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K207}"
-                    Command="{Binding DataContext.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.PlcCommands.ReadPlcValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding StatusCountAddress}"
                     Content="{x:Static resources:Strings.K031}"
                     Style="{StaticResource IconButtonPrimary}"
@@ -242,7 +242,7 @@
                     Grid.Column="2"
                     Margin="0,16,0,0"
                     AutomationProperties.Name="{x:Static resources:Strings.K211}"
-                    Command="{Binding DataContext.ResetProductionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.PlcCommands.ResetProductionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Content="{x:Static resources:Strings.K212}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
@@ -282,11 +282,11 @@
                     VerticalAlignment="Center"
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{Binding DataContext.RecipeStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    Text="{Binding DataContext.PlcCommands.RecipeStatus, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <Button
                     HorizontalAlignment="Right"
                     AutomationProperties.Name="{x:Static resources:Strings.K219}"
-                    Command="{Binding DataContext.WriteRecipeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Command="{Binding DataContext.PlcCommands.WriteRecipeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     Content="{x:Static resources:Strings.K220}"
                     Style="{StaticResource IconButtonPrimary}"
                     Tag="{x:Static mi:MaterialIconKind.Upload}"

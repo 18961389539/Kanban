@@ -287,26 +287,13 @@ public partial class App : Application
         List<string> errors = [];
         try
         {
-            // 退出全程用 try/catch/finally 保护：任何步骤抛异常都不能阻断 base.OnExit 与互斥锁释放，
-            // 否则 Host 托管资源泄漏、互斥锁残留导致下次启动误判为"已存在实例"。
-            // Remote 模式：释放 Collector 连接，不执行本地采集停止（本地采集未启动）
-            if (_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
+            // 退出顺序约束（审查修复 2026-08-15）：
+            // - 本地模式：先停止采集循环，避免保存设备/历史数据时采集线程仍在并发修改 Runtime 状态、入队 HistoryService。
+            //   StopAsync 会写入离线状态转换记录，避免停机时段被算进上一状态导致重启后 OEE 历史虚高。
+            // - Remote 模式：先经 SignalR 推送设备配置保存（SaveAllAsync），再释放 Collector 连接；
+            //   此前先释放连接再保存，SaveAllAsync 因连接已断开必然失败丢失设备配置。
+            if (!_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
             {
-                try
-                {
-                    var client = _host.Services.GetRequiredService<KanbanDataClient>();
-                    if (client is IAsyncDisposable disposable)
-                        await disposable.DisposeAsync();
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(string.Format(Strings.F235, ex.Message));
-                }
-            }
-            else
-            {
-                // 先停止采集循环，避免保存设备/历史数据时采集线程仍在并发修改 Runtime 状态、入队 HistoryService。
-                // StopAsync 会写入离线状态转换记录，避免停机时段被算进上一状态导致重启后 OEE 历史虚高。
                 try
                 {
                     await _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync();
@@ -334,6 +321,21 @@ public partial class App : Application
             catch (Exception ex)
             {
                 errors.Add(string.Format(Strings.F210, ex.Message));
+            }
+
+            // Remote 模式：释放 Collector 连接（必须在 SaveAllAsync 之后，见上方退出顺序约束）
+            if (_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
+            {
+                try
+                {
+                    var client = _host.Services.GetRequiredService<KanbanDataClient>();
+                    if (client is IAsyncDisposable disposable)
+                        await disposable.DisposeAsync();
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(string.Format(Strings.F235, ex.Message));
+                }
             }
             try
             {

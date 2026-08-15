@@ -658,7 +658,7 @@
     <value>アラーム履歴を表示</value>
   </data>
   <data name="K138" xml:space="preserve">
-    <value>累積時間トップ10</value>
+    <value>トリガー回数 TOP 10</value>
   </data>
   <data name="K139" xml:space="preserve">
     <value>アラームランキング</value>
@@ -4918,7 +4918,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>直近24時間</value>
   </data>
   <data name="Web_Ac_TopTitle" xml:space="preserve">
-    <value>警報ランキング</value>
+    <value>トリガー回数 TOP 10</value>
   </data>
   <data name="Web_Ac_RecentTitle" xml:space="preserve">
     <value>最近のイベント</value>
@@ -5493,6 +5493,12 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K706" xml:space="preserve">
     <value>レシピ編集</value>
   </data>
+  <data name="K707" xml:space="preserve">
+    <value>最も頻発したアラーム（{0}）</value>
+  </data>
+  <data name="K708" xml:space="preserve">
+    <value>先頭 {0} 件のみ表示</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？</value>
   </data>
@@ -5585,6 +5591,18 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="F326" xml:space="preserve">
     <value>進捗基準：デバイスの現シフト累計生産量（作業指示ページの工単集計基準と異なる場合があります）</value>
+  </data>
+  <data name="F327" xml:space="preserve">
+    <value>生産量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F328" xml:space="preserve">
+    <value>状態時間_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F329" xml:space="preserve">
+    <value>警報_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F330" xml:space="preserve">
+    <value>{0} 件、Tab={1}</value>
   </data>
   <data name="Web_Recipe" xml:space="preserve">
     <value>レシピ</value>

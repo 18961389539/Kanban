@@ -62,7 +62,7 @@
                         VerticalAlignment="Center"
                         FontSize="{DynamicResource FontSizeHint}"
                         Foreground="{StaticResource ThirdlyTextBrush}"
-                        Text="{Binding DeviceSummaryText}" />
+                        Text="{Binding DeviceList.DeviceSummaryText}" />
                     <TextBlock
                         DockPanel.Dock="Right"
                         Margin="8,0,0,0"
@@ -89,7 +89,7 @@
                     Margin="18,0,18,10"
                     AutomationProperties.Name="{x:Static resources:Strings.K223}"
                     Style="{StaticResource SearchBarExtend}"
-                    Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
+                    Text="{Binding DeviceList.SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
 
                 <!--  状态筛选  -->
                 <hc:ComboBox
@@ -101,8 +101,8 @@
                     hc:InfoElement.Placeholder="{x:Static resources:Strings.K225}"
                     hc:InfoElement.Title="{x:Static resources:Strings.K003}"
                     DisplayMemberPath="Label"
-                    ItemsSource="{Binding StatusFilterOptions}"
-                    SelectedValue="{Binding StatusFilter}"
+                    ItemsSource="{Binding DeviceList.StatusFilterOptions}"
+                    SelectedValue="{Binding DeviceList.StatusFilter}"
                     SelectedValuePath="Value"
                     Style="{StaticResource ComboBoxExtend}" />
 
@@ -115,7 +115,7 @@
                     DragOver="OnListDragOver"
                     Drop="OnListDrop"
                     ItemContainerStyle="{StaticResource CardListItemStyle}"
-                    ItemsSource="{Binding FilteredDevices}"
+                    ItemsSource="{Binding DeviceList.FilteredDevices}"
                     PreviewMouseLeftButtonDown="OnListPreviewMouseLeftButtonDown"
                     PreviewMouseMove="OnListPreviewMouseMove"
                     SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
@@ -219,7 +219,7 @@
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding FilteredDevices.Count}" Value="0">
+                                <DataTrigger Binding="{Binding DeviceList.FilteredDevices.Count}" Value="0">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -527,7 +527,7 @@
                                             Text="{x:Static resources:Strings.K071}" />
                                     </StackPanel>
                                 </TabItem.Header>
-                                <views:DeviceManagerWorkOrdersTab />
+                                <views:DeviceManagerWorkOrdersTab DataContext="{Binding WorkOrders}" />
                             </TabItem>
                         </TabControl>
                     </Border>

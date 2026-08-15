@@ -658,7 +658,7 @@
     <value>View Alarm History</value>
   </data>
   <data name="K138" xml:space="preserve">
-    <value>Cumulative Duration Top 10</value>
+    <value>Trigger Count Top 10</value>
   </data>
   <data name="K139" xml:space="preserve">
     <value>Alarm Ranking List</value>
@@ -4918,7 +4918,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Last 24 Hours</value>
   </data>
   <data name="Web_Ac_TopTitle" xml:space="preserve">
-    <value>Alarm Ranking</value>
+    <value>Trigger Count Top 10</value>
   </data>
   <data name="Web_Ac_RecentTitle" xml:space="preserve">
     <value>Recent Events</value>
@@ -5493,6 +5493,12 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="K706" xml:space="preserve">
     <value>Recipe Editor</value>
   </data>
+  <data name="K707" xml:space="preserve">
+    <value>Most Frequent Alarm ({0})</value>
+  </data>
+  <data name="K708" xml:space="preserve">
+    <value>Showing first {0} only</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>
   </data>
@@ -5585,6 +5591,18 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="F326" xml:space="preserve">
     <value>Progress basis: device cumulative output for the current shift (may differ from per-work-order aggregation on the Work Order page)</value>
+  </data>
+  <data name="F327" xml:space="preserve">
+    <value>Output_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F328" xml:space="preserve">
+    <value>StateDuration_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F329" xml:space="preserve">
+    <value>Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F330" xml:space="preserve">
+    <value>{0} rows, Tab={1}</value>
   </data>
   <data name="Web_Recipe" xml:space="preserve">
     <value>Recipe</value>

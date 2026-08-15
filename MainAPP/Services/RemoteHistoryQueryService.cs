@@ -306,22 +306,29 @@ public sealed class RemoteHistoryQueryService :
         if (!IsRemote)
             return _local.QueryProductionLogsByWorkOrderBatch(workOrderIds);
 
-        var request = new BatchHistoryQueryRequest
-        {
-            Queries = workOrderIds
-                .Select(id => new HistoryQueryRequest
-                {
-                    QueryType = HistoryQueryType.ProductionLog,
-                    WorkOrderId = id,
-                    Page = 1,
-                    PageSize = FetchAllPageSize,
-                })
-                .ToList(),
-        };
-        var response = InvokeBatch(request);
+        // 审查修复 2026-08-15：与 QueryProductionLogsByDeviceWindowsBatch 一致，按 MaxBatchQueries=32 分块。
+        // 服务端 HistoryQueryHandler.MaxBatchQueries 会对超限子查询截断，此前一次性提交全部工单时，
+        // 工单数 >32 会导致 response.Results 被截断、此处 Results[i] 越界抛 IndexOutOfRangeException。
         var result = new Dictionary<int, List<ProductionLog>>();
-        for (var i = 0; i < workOrderIds.Count; i++)
-            result[workOrderIds[i]] = MapDtos<ProductionLog>(response.Results[i]);
+        for (var offset = 0; offset < workOrderIds.Count; offset += MaxBatchQueries)
+        {
+            var chunk = workOrderIds.Skip(offset).Take(MaxBatchQueries).ToList();
+            var request = new BatchHistoryQueryRequest
+            {
+                Queries = chunk
+                    .Select(id => new HistoryQueryRequest
+                    {
+                        QueryType = HistoryQueryType.ProductionLog,
+                        WorkOrderId = id,
+                        Page = 1,
+                        PageSize = FetchAllPageSize,
+                    })
+                    .ToList(),
+            };
+            var response = InvokeBatch(request);
+            for (var i = 0; i < chunk.Count; i++)
+                result[chunk[i]] = MapDtos<ProductionLog>(response.Results[i]);
+        }
         return result;
     }
 

@@ -43,10 +43,29 @@ public sealed class CollectorWorker : BackgroundService
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
                 Interlocked.Increment(ref CollectorMetrics.AcquisitionCycleCount);
-                _snapshotPublisher.PublishAll();
+                try
+                {
+                    _snapshotPublisher.PublishAll();
+                }
+                catch (Exception ex)
+                {
+                    // 单轮发布异常隔离（审查修复 2026-08-15）：任一异常不得终止采集服务——
+                    // 此前异常会跳出循环 → MarkFailed + rethrow，形成"进程活着、采集已死"的假健康。
+                    // 记录错误后继续下一轮；若连续失败，readiness 探针仍可凭诊断新鲜度判不健康。
+                    _logger.LogError(ex, "快照发布失败（已隔离，下一轮重试）");
+                }
                 // 每轮把最新采集诊断写入健康状态（readiness 判活依据；无采集实例时跳过）
                 if (_acquisition is not null)
-                    _healthState.UpdateAcquisition(_acquisition.GetDiagnosticsSnapshot());
+                {
+                    try
+                    {
+                        _healthState.UpdateAcquisition(_acquisition.GetDiagnosticsSnapshot());
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "采集诊断更新失败（已隔离，下一轮重试）");
+                    }
+                }
             }
         }
         catch (OperationCanceledException)

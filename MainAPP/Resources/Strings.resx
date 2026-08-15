@@ -658,7 +658,7 @@
     <value>查看报警历史</value>
   </data>
   <data name="K138" xml:space="preserve">
-    <value>累计持续时间 Top 10</value>
+    <value>触发次数 Top 10</value>
   </data>
   <data name="K139" xml:space="preserve">
     <value>报警排行列表</value>
@@ -4917,7 +4917,7 @@
     <value>近 24 小时</value>
   </data>
   <data name="Web_Ac_TopTitle" xml:space="preserve">
-    <value>报警排行</value>
+    <value>触发次数 Top 10</value>
   </data>
   <data name="Web_Ac_RecentTitle" xml:space="preserve">
     <value>最近事件</value>
@@ -5492,6 +5492,12 @@
   <data name="K706" xml:space="preserve">
     <value>配方编辑</value>
   </data>
+  <data name="K707" xml:space="preserve">
+    <value>最频繁报警（{0}）</value>
+  </data>
+  <data name="K708" xml:space="preserve">
+    <value>仅显示前 {0} 条</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>
   </data>
@@ -5584,6 +5590,18 @@
   </data>
   <data name="F326" xml:space="preserve">
     <value>进度口径：设备本班次累计产量（与工单管理页按工单聚合的口径可能不同）</value>
+  </data>
+  <data name="F327" xml:space="preserve">
+    <value>产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F328" xml:space="preserve">
+    <value>状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F329" xml:space="preserve">
+    <value>报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="F330" xml:space="preserve">
+    <value>{0} 条，Tab={1}</value>
   </data>
   <data name="Web_Recipe" xml:space="preserve">
     <value>配方</value>

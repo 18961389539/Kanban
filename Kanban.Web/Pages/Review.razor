@@ -237,6 +237,9 @@
 
     private List<(string Id, string Name)> DeviceOptions { get; set; } = [];
     private List<DeviceConfigDto> _deviceConfigs = [];
+    // 复盘页并发闸门：限制同时进行的全量历史拉取路数。9 路 FetchAllAsync 全部走同一 SignalR
+    // 查询连接，服务端按序处理 invocation，全并发只会造成 9×内存与请求排队；闸到 2 路降低峰值压力。
+    private readonly SemaphoreSlim _fetchGate = new(2, 2);
     private string DeviceId { get; set; } = "";
     private int QuickIndex { get; set; } = DefaultQuickIndex;
     private string FromText { get; set; } = "";
@@ -358,18 +361,18 @@
             var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId);
             var comparisonFrom = from - (to - from);
 
-            // ── 窗口数据（并行，单源 HistoryFetch） ──
-            var windowProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from, to, deviceId, null, r => r.ProductionLogs);
-            var windowTrans = HistoryFetch.FetchAllAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, from, to, deviceId, null, r => r.StatusTransitions);
-            var windowAlarm = HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, from, to, deviceId, null, r => r.AlarmEvents);
-            var windowDefect = HistoryFetch.FetchAllAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, from, to, deviceId, null, r => r.DefectSnapshots);
-            var baselineProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from.AddDays(-1), from, deviceId, null, r => r.ProductionLogs);
+            // ── 窗口数据（经并发闸门限流，避免 9 路全量查询同时冲击单一查询连接） ──
+            var windowProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from, to, deviceId, null, r => r.ProductionLogs);
+            var windowTrans = FetchGatedAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, from, to, deviceId, null, r => r.StatusTransitions);
+            var windowAlarm = FetchGatedAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, from, to, deviceId, null, r => r.AlarmEvents);
+            var windowDefect = FetchGatedAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, from, to, deviceId, null, r => r.DefectSnapshots);
+            var baselineProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from.AddDays(-1), from, deviceId, null, r => r.ProductionLogs);
 
-            // ── 对比周期数据（并行） ──
-            var compProd = HistoryFetch.FetchAllAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, comparisonFrom, from, deviceId, null, r => r.ProductionLogs);
-            var compTrans = HistoryFetch.FetchAllAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, from, deviceId, null, r => r.StatusTransitions);
-            var compAlarm = HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, comparisonFrom, from, deviceId, null, r => r.AlarmEvents);
-            var compDefect = HistoryFetch.FetchAllAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, comparisonFrom, from, deviceId, null, r => r.DefectSnapshots);
+            // ── 对比周期数据（经并发闸门限流） ──
+            var compProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, comparisonFrom, from, deviceId, null, r => r.ProductionLogs);
+            var compTrans = FetchGatedAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, from, deviceId, null, r => r.StatusTransitions);
+            var compAlarm = FetchGatedAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, comparisonFrom, from, deviceId, null, r => r.AlarmEvents);
+            var compDefect = FetchGatedAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, comparisonFrom, from, deviceId, null, r => r.DefectSnapshots);
 
             await Task.WhenAll(windowProd, windowTrans, windowAlarm, windowDefect, baselineProd, compProd, compTrans, compAlarm, compDefect);
 
@@ -475,6 +478,22 @@
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    /// <summary>经并发闸门执行全量历史拉取：把同时进行的 FetchAllAsync 路数限制在 _fetchGate 上限内。</summary>
+    private async Task<(List<T> Items, bool Truncated)> FetchGatedAsync<T>(
+        DashboardState dashboard, HistoryQueryType type, DateTime from, DateTime to,
+        string? deviceId, string? shiftName, Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
+    {
+        await _fetchGate.WaitAsync();
+        try
+        {
+            return await HistoryFetch.FetchAllAsync<T>(dashboard, type, from, to, deviceId, shiftName, selector);
+        }
+        finally
+        {
+            _fetchGate.Release();
         }
     }
 

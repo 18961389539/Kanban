@@ -14,9 +14,9 @@ namespace LicenseManager.Crypto;
 /// 1. 优先读取环境变量 KANBAN_HMAC_KEY（Base64 编码 32 字节）
 ///    - 用于生产环境：密钥不写入程序集，反编译无法获取
 ///    - 通过系统环境变量或启动脚本注入（如 setx KANBAN_HMAC_KEY "..."）
-/// 2. 环境变量未设置或非法时回退到内嵌常量 HmacKeyBase64
+/// 2. 环境变量未设置或非法时回退到内嵌常量 HmacKeyBase64（仅 DEBUG 构建）
 ///    - 用于开发测试：方便首次运行，不要求配置环境变量
-///    - 正式发布前应替换为随机密钥
+///    - RELEASE 构建禁止回退：未配置/非法时抛异常，防止内嵌密钥随程序集分发被反编译提取
 ///
 /// 密钥生成方式（PowerShell）：
 ///   $bytes = New-Object byte[] 32
@@ -59,15 +59,29 @@ public static class EmbeddedKey
                 {
                     return bytes;
                 }
-                // 长度非法 → 回退到内嵌密钥（不抛异常，保证启动不中断）
+                // 长度非法：Debug 回退到内嵌密钥（开发测试），Release 拒绝（防止误配弱密钥）
+#if !DEBUG
+                throw new InvalidOperationException(
+                    $"环境变量 {EnvKeyName} 已配置但长度非法（期望 32 字节 Base64）。请重新生成密钥后配置。");
+#endif
             }
+#if !DEBUG
+            // Release 禁止回退到随程序集分发的内嵌密钥：反编译程序集即可提取该密钥并伪造任意机器码的有效激活码。
+            // 生产环境必须通过 KANBAN_HMAC_KEY 环境变量注入（密钥不写入程序集）。
+            throw new InvalidOperationException(
+                $"未配置环境变量 {EnvKeyName}。Release 构建禁止使用内嵌回退密钥，生产环境必须注入该环境变量（32 字节 Base64）。");
+#endif
         }
-        catch
+        catch (FormatException)
         {
-            // 环境变量解析失败 → 回退到内嵌密钥
+            // 环境变量不是合法 Base64：Debug 回退内嵌，Release 拒绝
+#if !DEBUG
+            throw new InvalidOperationException(
+                $"环境变量 {EnvKeyName} 不是合法的 Base64 编码。请使用 32 字节随机密钥的 Base64 形式。");
+#endif
         }
 
-        // 2. 回退到内嵌常量
+        // 2. 仅 Debug 回退到内嵌常量（开发测试用；Release 已在上面抛异常）
         return Convert.FromBase64String(HmacKeyBase64);
     }
 

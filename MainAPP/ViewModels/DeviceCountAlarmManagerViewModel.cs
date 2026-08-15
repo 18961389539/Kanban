@@ -1,11 +1,9 @@
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Core.Models;
-using MainAPP.Models;
 using Kanban.Core.Services;
 using MainAPP.Services;
 using MainAPP.Resources;
@@ -15,22 +13,12 @@ namespace MainAPP.ViewModels;
 /// <summary>
 /// 设备管理器「计数报警」Tab 的子 ViewModel。
 /// 持有计数报警 CRUD 命令、清空当前值（PLC 写）命令、CSV 导入/导出与选中状态；
-/// 通过 IDeviceManagerHost 获取选中设备、共享 IsLoading 并回写脏标记。
+/// 宿主状态同步（SelectedDevice / IsLoading / IsPlcConnected 封送）由 <see cref="DeviceChildManagerViewModel"/> 基类提供。
 /// </summary>
-public partial class DeviceCounterAlarmManagerViewModel : ObservableObject
+public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerViewModel
 {
-    private readonly IDeviceManagerHost _host;
-    private readonly IDialogService _dialog;
     private readonly DevicePlcCommandHandler _plcCommands;
     private readonly CounterAlarmCsvIOService _counterAlarmCsvIO;
-
-    /// <summary>
-    /// 当前选中设备（由父 VM 的 SelectedDevice 同步）。
-    /// 内层 Grid 重设 DataContext={Binding SelectedDevice} 切换到当前设备，
-    /// 供计数报警列表 ItemsSource={Binding CounterAlarms} 等绑定使用。
-    /// </summary>
-    [ObservableProperty]
-    private Device? _selectedDevice;
 
     [ObservableProperty]
     private CounterAlarm? _selectedCounterAlarm;
@@ -47,45 +35,13 @@ public partial class DeviceCounterAlarmManagerViewModel : ObservableObject
         DevicePlcCommandHandler plcCommands,
         CounterAlarmCsvIOService counterAlarmCsvIO,
         IDeviceManagerHost host)
+        : base(dialog, host)
     {
-        _dialog = dialog;
         _plcCommands = plcCommands;
         _counterAlarmCsvIO = counterAlarmCsvIO;
-        _host = host;
-        _host.PropertyChanged += OnHostPropertyChanged;
     }
 
-    /// <summary>解绑父级 PropertyChanged 订阅，供父 VM Dispose 时调用。</summary>
-    public void Detach() => _host.PropertyChanged -= OnHostPropertyChanged;
-
-    /// <summary>
-    /// 父级共享状态变更：SelectedDevice 同步到本子 VM；IsLoading 变化时刷新依赖命令可用状态。
-    /// </summary>
-    private void OnHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnHostPropertyChanged(sender, e));
-            return;
-        }
-
-        if (e.PropertyName == nameof(IDeviceManagerHost.SelectedDevice))
-            SelectedDevice = _host.SelectedDevice;
-        else if (e.PropertyName == nameof(IDeviceManagerHost.IsLoading))
-        {
-            AddCounterAlarmCommand.NotifyCanExecuteChanged();
-            RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
-            ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
-            ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
-            ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
-        }
-        else if (e.PropertyName == nameof(IDeviceManagerHost.IsPlcConnected))
-        {
-            ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
-        }
-    }
-
-    partial void OnSelectedDeviceChanged(Device? value)
+    protected override void OnHostSelectedDeviceChanged()
     {
         // 切换设备时清空计数报警选中，避免残留旧设备的引用
         SelectedCounterAlarm = null;
@@ -96,13 +52,22 @@ public partial class DeviceCounterAlarmManagerViewModel : ObservableObject
         ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
     }
 
-    // 选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）
-    private bool CanEditSelected() => SelectedDevice != null && !_host.IsLoading;
+    protected override void OnHostIsLoadingChanged()
+    {
+        AddCounterAlarmCommand.NotifyCanExecuteChanged();
+        RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
+        ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+    }
 
-    /// <summary>
-    /// PLC 写入/读取类命令的可用性：选中设备且不在加载中。
-    /// IsLoading 期间禁用可避免并发写入与 UI 重入。
-    /// </summary>
+    protected override void OnHostOtherPropertyChanged(string? propertyName)
+    {
+        if (propertyName == nameof(IDeviceManagerHost.IsPlcConnected))
+            ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>PLC 写入/读取类命令的可用性：选中设备且不在加载中且 PLC 在线。</summary>
     private bool CanExecutePlcWrite() => SelectedDevice != null && !_host.IsLoading && _host.IsPlcConnected;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
@@ -140,6 +105,7 @@ public partial class DeviceCounterAlarmManagerViewModel : ObservableObject
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
         _host.IsLoading = true;
+        _host.ReportPlcOperationStarted();
         try
         {
             var result = await _plcCommands.ResetCounterAlarmValueAsync(alarm);

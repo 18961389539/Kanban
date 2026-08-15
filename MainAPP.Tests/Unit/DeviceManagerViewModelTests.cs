@@ -191,7 +191,7 @@ public class DeviceManagerViewModelTests
         ConfigureAddresses(vm.SelectedDevice!);
         dialog.ShowResult = System.Windows.MessageBoxResult.No;
 
-        await vm.ResetProductionCommand.ExecuteAsync(null);
+        await vm.PlcCommands.ResetProductionCommand.ExecuteAsync(null);
 
         Assert.Contains(dialog.ShowCalls, c => c.Title == "确认 OEE 清零");
         Assert.DoesNotContain(dialog.Success, s => s.Contains("OEE 清零"));
@@ -207,7 +207,7 @@ public class DeviceManagerViewModelTests
         ConfigureAddresses(vm.SelectedDevice!);
         dialog.ShowResult = System.Windows.MessageBoxResult.Yes;
 
-        await vm.ResetProductionCommand.ExecuteAsync(null);
+        await vm.PlcCommands.ResetProductionCommand.ExecuteAsync(null);
 
         Assert.Contains(dialog.ShowCalls, c => c.Title == "确认 OEE 清零");
         Assert.Contains(dialog.Success, s => s.Contains("OEE 清零"));
@@ -241,21 +241,21 @@ public class DeviceManagerViewModelTests
         vm.DeviceRuntimeMap[dev2.Id].StatusWord = (int)DeviceStatus.Alarm;
 
         // 全部：两条均可见
-        Assert.Equal(2, vm.FilteredDevices.Cast<Device>().Count());
+        Assert.Equal(2, vm.DeviceList.FilteredDevices.Cast<Device>().Count());
 
         // 按「运行」筛选：仅运行设备可见
-        vm.StatusFilter = DeviceStatusFilter.Running;
-        Assert.Single(vm.FilteredDevices.Cast<Device>());
-        Assert.Equal("运行设备", vm.FilteredDevices.Cast<Device>().First().Name);
+        vm.DeviceList.StatusFilter = DeviceStatusFilter.Running;
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal("运行设备", vm.DeviceList.FilteredDevices.Cast<Device>().First().Name);
 
         // 按「报警」筛选：仅报警设备可见
-        vm.StatusFilter = DeviceStatusFilter.Alarm;
-        Assert.Single(vm.FilteredDevices.Cast<Device>());
-        Assert.Equal("报警设备", vm.FilteredDevices.Cast<Device>().First().Name);
+        vm.DeviceList.StatusFilter = DeviceStatusFilter.Alarm;
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal("报警设备", vm.DeviceList.FilteredDevices.Cast<Device>().First().Name);
 
         // 恢复全部：两条均可见
-        vm.StatusFilter = DeviceStatusFilter.All;
-        Assert.Equal(2, vm.FilteredDevices.Cast<Device>().Count());
+        vm.DeviceList.StatusFilter = DeviceStatusFilter.All;
+        Assert.Equal(2, vm.DeviceList.FilteredDevices.Cast<Device>().Count());
         Directory.Delete(tmp, true);
     }
 
@@ -273,10 +273,10 @@ public class DeviceManagerViewModelTests
         vm.DeviceRuntimeMap[dev1.Id].StatusWord = (int)DeviceStatus.Running;
         vm.DeviceRuntimeMap[dev2.Id].StatusWord = (int)DeviceStatus.Running;
 
-        vm.SearchKeyword = "B";
-        vm.StatusFilter = DeviceStatusFilter.Running;
-        Assert.Single(vm.FilteredDevices.Cast<Device>());
-        Assert.Equal("B机", vm.FilteredDevices.Cast<Device>().First().Name);
+        vm.DeviceList.SearchKeyword = "B";
+        vm.DeviceList.StatusFilter = DeviceStatusFilter.Running;
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal("B机", vm.DeviceList.FilteredDevices.Cast<Device>().First().Name);
         Directory.Delete(tmp, true);
     }
 
@@ -295,7 +295,7 @@ public class DeviceManagerViewModelTests
         vm.DeviceRuntimeMap[alarm.Id].StatusWord = (int)DeviceStatus.Alarm;
         vm.DeviceRuntimeMap[paused.Id].StatusWord = (int)DeviceStatus.Paused;
 
-        Assert.Equal("3 台 · 运行 1 · 报警 1 · 待机 1 · 初始 0", vm.DeviceSummaryText);
+        Assert.Equal("3 台 · 运行 1 · 报警 1 · 待机 1 · 初始 0", vm.DeviceList.DeviceSummaryText);
         Directory.Delete(tmp, true);
     }
 
@@ -473,9 +473,9 @@ public class DeviceManagerViewModelTests
         dev.Alarms.Add(new Alarm { Name = "温度过高", DeviceId = dev.Id });
         vm.DeviceRuntimeMap[dev.Id].StatusWord = (int)DeviceStatus.Running;
 
-        vm.SearchKeyword = "温度";
-        Assert.Single(vm.FilteredDevices.Cast<Device>());
-        Assert.Equal("主机", vm.FilteredDevices.Cast<Device>().First().Name);
+        vm.DeviceList.SearchKeyword = "温度";
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal("主机", vm.DeviceList.FilteredDevices.Cast<Device>().First().Name);
         Directory.Delete(tmp, true);
     }
 
@@ -488,9 +488,9 @@ public class DeviceManagerViewModelTests
         dev.Name = "设备X";
         dev.OkCountAddress = "D512";
 
-        vm.SearchKeyword = "D512";
-        Assert.Single(vm.FilteredDevices.Cast<Device>());
-        Assert.Equal("设备X", vm.FilteredDevices.Cast<Device>().First().Name);
+        vm.DeviceList.SearchKeyword = "D512";
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal("设备X", vm.DeviceList.FilteredDevices.Cast<Device>().First().Name);
         Directory.Delete(tmp, true);
     }
 
@@ -501,8 +501,8 @@ public class DeviceManagerViewModelTests
         vm.AddDeviceCommand.Execute(null);
         vm.SelectedDevice!.Name = "设备Y";
 
-        vm.SearchKeyword = "不存在的关键字";
-        Assert.Empty(vm.FilteredDevices.Cast<Device>());
+        vm.DeviceList.SearchKeyword = "不存在的关键字";
+        Assert.Empty(vm.DeviceList.FilteredDevices.Cast<Device>());
         Directory.Delete(tmp, true);
     }
 

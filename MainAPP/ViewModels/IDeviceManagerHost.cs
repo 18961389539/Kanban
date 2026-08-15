@@ -28,6 +28,9 @@ public interface IDeviceManagerHost : INotifyPropertyChanged
     /// <summary>将子 Tab 的 PLC 异步结果汇总到设备参数页状态栏。</summary>
     void ReportPlcOperation(PlcOpResult result);
 
+    /// <summary>标记 PLC 操作开始（供子 Tab 在 IsLoading 置位时同步状态栏为进行中）。</summary>
+    void ReportPlcOperationStarted();
+
     /// <summary>标记设备配置存在未保存改动（由子 VM 的增删/编辑操作回调）。</summary>
     void MarkDirty();
 }

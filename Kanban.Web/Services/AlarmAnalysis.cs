@@ -13,33 +13,47 @@ public static class AlarmAnalysis
     public static List<(string AlarmName, int TriggerCount, double AvgDurationMin)> BuildStats(
         List<AlarmEventRecordDto> events)
     {
-        // 班次切换事件（ShiftChange）表示"报警在新班次重新开始计时"，不是物理恢复。
-        // 仅 Recovered 事件计入时长差分，避免跨班次报警被错误压缩为"在班次切换点恢复"。
-        var allRecovers = events
+        // 每条 Recovered 只消费一次（与 BuildTopStats 同范式，审查修复 2026-08-15）：
+        // 原实现每个 Triggered 用 FirstOrDefault 找其后第一条 Recovered 且不消费，
+        // 重触发/抖动（T1→T2→R）下 T1/T2 共用同一条 R，平均时长被重复累计、T2 被误判为已恢复。
+        var recovers = events
             .Where(e => e.EventType == AlarmEventType.Recovered)
             .GroupBy(e => new { e.DeviceId, e.AlarmId })
-            .ToDictionary(k => k.Key, v => v.OrderBy(e => e.EventTime).ToList());
+            .ToDictionary(k => k.Key, v => new Queue<AlarmEventRecordDto>(v.OrderBy(e => e.EventTime)));
 
-        return events
-            .Where(e => e.EventType == AlarmEventType.Triggered)
-            .GroupBy(e => e.AlarmName)
-            .Select(g =>
+        var acc = new Dictionary<string, (int TriggerCount, double TotalMinutes, int PairedCount)>();
+
+        foreach (var t in events
+                     .Where(e => e.EventType == AlarmEventType.Triggered)
+                     .OrderBy(e => e.EventTime))
+        {
+            if (!acc.TryGetValue(t.AlarmName, out var item))
+                item = (0, 0, 0);
+            item.TriggerCount++;
+
+            var key = new { t.DeviceId, t.AlarmId };
+            if (recovers.TryGetValue(key, out var queue))
             {
-                var triggers = g.OrderBy(e => e.EventTime).ToList();
-                List<double> durations = [];
-                foreach (var t in triggers)
+                // 丢弃早于本次触发的恢复（上次触发已消费或触发前残留）
+                while (queue.Count > 0 && queue.Peek().EventTime <= t.EventTime)
+                    queue.Dequeue();
+                if (queue.Count > 0)
                 {
-                    var key = new { t.DeviceId, t.AlarmId };
-                    if (!allRecovers.TryGetValue(key, out var recList)) continue;
-                    var recovery = recList.FirstOrDefault(r => r.EventTime > t.EventTime);
-                    if (recovery == null) continue;
-                    durations.Add((recovery.EventTime - t.EventTime).TotalMinutes);
+                    var recovery = queue.Dequeue();
+                    item.TotalMinutes += (recovery.EventTime - t.EventTime).TotalMinutes;
+                    item.PairedCount++;
                 }
-                return (
-                    AlarmName: g.Key,
-                    TriggerCount: triggers.Count,
-                    AvgDurationMin: durations.Count > 0 ? durations.Average() : 0);
-            })
+            }
+            acc[t.AlarmName] = item;
+        }
+
+        return acc
+            .Select(kv => (
+                AlarmName: kv.Key,
+                TriggerCount: kv.Value.TriggerCount,
+                AvgDurationMin: kv.Value.PairedCount > 0
+                    ? kv.Value.TotalMinutes / kv.Value.PairedCount
+                    : 0))
             .OrderByDescending(x => x.TriggerCount)
             .ToList();
     }
@@ -151,15 +165,18 @@ public static class AlarmAnalysis
     public sealed record AlarmTop(string AlarmName, string DeviceName, int TriggerCount, double TotalDurationMinutes);
 
     /// <summary>
-    /// Top 排行：按 (报警名, 设备名) 分组统计触发次数与累计持续时长（Triggered→首个后续 Recovered 配对）。
-    /// 与 WPF AlarmCenterViewModel.RefreshStats 的 Top N 逻辑一致（时长口径：同组配对求和）。
+    /// Top 排行：按 (报警名, 设备名) 分组统计触发次数与累计持续时长（Triggered→首个后续 Recovered 配对，
+    /// 每条 Recovered 只消费一次——重触发/抖动场景下避免两条触发配对到同一条恢复导致时长重复累计，
+    /// 与 ReviewAnalysis.CalculateAlarmDurationHours 同范式，审查修复 2026-08-15）。
+    /// 按触发次数降序，与 WPF AlarmCenterViewModel.RefreshStats 的 Top N 口径一致（审查修复 2026-08-14）。
     /// </summary>
     public static List<AlarmTop> BuildTopStats(List<AlarmEventRecordDto> events)
     {
+        // 每个 (DeviceId, AlarmId) 的恢复记录按时间升序入队，消费后出队
         var recovers = events
             .Where(e => e.EventType == AlarmEventType.Recovered)
             .GroupBy(e => new { e.DeviceId, e.AlarmId })
-            .ToDictionary(k => k.Key, v => v.OrderBy(e => e.EventTime).ToList());
+            .ToDictionary(k => k.Key, v => new Queue<AlarmEventRecordDto>(v.OrderBy(e => e.EventTime)));
 
         return events
             .Where(e => e.EventType == AlarmEventType.Triggered)
@@ -170,14 +187,17 @@ public static class AlarmAnalysis
                 foreach (var t in g.OrderBy(e => e.EventTime))
                 {
                     var key = new { t.DeviceId, t.AlarmId };
-                    if (!recovers.TryGetValue(key, out var recList)) continue;
-                    var recovery = recList.FirstOrDefault(r => r.EventTime > t.EventTime);
-                    if (recovery == null) continue;
+                    if (!recovers.TryGetValue(key, out var recQueue)) continue;
+                    // 丢弃早于本次触发的恢复（上次触发已消费或触发前残留）
+                    while (recQueue.Count > 0 && recQueue.Peek().EventTime <= t.EventTime)
+                        recQueue.Dequeue();
+                    if (recQueue.Count == 0) continue;
+                    var recovery = recQueue.Dequeue();  // 消费：每条恢复只配对一次
                     totalMinutes += (recovery.EventTime - t.EventTime).TotalMinutes;
                 }
                 return new AlarmTop(g.Key.AlarmName, g.Key.DeviceName, g.Count(), totalMinutes);
             })
-            .OrderByDescending(x => x.TotalDurationMinutes)
+            .OrderByDescending(x => x.TriggerCount)
             .ToList();
     }
 

@@ -836,9 +836,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
             var (fileName, csv) = await Task.Run(() => tabIndex switch
             {
-                0 => ($"产量_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", ProductionQuery.BuildCsv(from, to)),
-                1 => ($"状态时长_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", StatusQuery.BuildCsv()),
-                2 => ($"报警_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", AlarmQuery.BuildCsv()),
+                0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsv(from, to)),
+                1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsv()),
+                2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsv()),
                 3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
                 _ => (null, null as string)
             }).ConfigureAwait(true);
@@ -861,7 +861,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Log.Information("已导出 {Count} 条 → {Path}", TotalCount, fullPath);
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"{TotalCount} 条，Tab={tabIndex}");
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: string.Format(Strings.F330, TotalCount, tabIndex));
             _dialog.NotifySuccess(string.Format(Strings.F104, TotalCount, fullPath));
         }
         catch (Exception ex)

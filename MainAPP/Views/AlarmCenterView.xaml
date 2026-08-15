@@ -184,10 +184,10 @@
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
-                <!-- 最频繁报警 -->
+                <!-- 最频繁报警（标签带时间范围标注，与"今日"口径区分） -->
                 <Border Style="{StaticResource KpiCell}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K130}" />
+                        <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding MostFrequentLabel}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" FontSize="16"
                                    Text="{Binding MostFrequentAlarm}"
                                    TextTrimming="CharacterEllipsis"
@@ -219,6 +219,23 @@
                                     <TextBlock FontSize="12" FontWeight="Bold" Foreground="White"
                                                Text="{Binding ActiveCount}" />
                                 </Border>
+                                <!-- 截断提示：过滤后条数超过展示上限时显示 -->
+                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                           FontSize="12" FontWeight="Medium"
+                                           Foreground="{StaticResource WarningBrush}"
+                                           Text="{Binding ActiveTruncationHint}"
+                                           ToolTip="{Binding ActiveTruncationHint}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasTruncation}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                             <!-- 级别筛选 chips -->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -353,9 +370,27 @@
                     <!-- 最近事件流 -->
                     <Border Grid.Row="0" Style="{StaticResource MainCard}" Padding="0">
                         <DockPanel>
-                            <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
+                        <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
+                                <!-- DB 故障横幅：事件流/Top/今日 KPI 数据源失败时显示，避免静默显示为"无报警" -->
+                                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
+                                           FontSize="12" FontWeight="Bold"
+                                           Foreground="{StaticResource DangerBrush}"
+                                           Text="{Binding StatsErrorText}"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding StatsErrorText}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </DockPanel>
                             <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
                                 <ItemsControl ItemsSource="{Binding RecentEvents}"

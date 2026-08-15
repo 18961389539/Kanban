@@ -6,7 +6,7 @@
 #
 # 安装内容：
 #   1. KanbanCollector 服务：sc.exe 注册 Kanban.Collector.exe（端口 5129，数据目录 run-demo/data）
-#   2. KanbanPlcSimulator 服务：NSSM 包装 PlcSimulator.exe（端口 4998，避开本机 5000 冲突）
+#   2. KanbanPlcSimulator 服务：NSSM 包装 PlcSimulator.exe（端口 4999，与 settings.json 的 PlcConfig.Port 一致）
 #   3. 崩溃自动重启：Collector 5s/10s/30s 三次；PlcSimulator 5s/10s/30s 三次
 #
 # 卸载：
@@ -72,9 +72,10 @@ switch ($Action) {
             Copy-Item $nssm32.FullName $NssmExe -Force
         }
 
-        # ── 3. PlcSimulator 服务（NSSM 包装，端口 4998 避开本机 5000 冲突）──
-        Write-Step "安装 $ServiceSim 服务（NSSM，端口 4998）"
-        & $NssmExe install $ServiceSim $SimExe 4998 | Out-Null
+        # ── 3. PlcSimulator 服务（NSSM 包装，端口 4999 与 run-demo settings.json 的 PlcConfig.Port 一致；
+        #        审查修复 2026-08-15：原 4998 与配置不一致，装完服务后 Collector 连不上模拟器）──
+        Write-Step "安装 $ServiceSim 服务（NSSM，端口 4999）"
+        & $NssmExe install $ServiceSim $SimExe 4999 | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "NSSM install 失败（exit=$LASTEXITCODE）" }
         & $NssmExe set $ServiceSim AppDirectory (Split-Path $SimExe -Parent) | Out-Null
         & $NssmExe set $ServiceSim AppEnvironmentExtra "KANBAN_DATA_DIR=$DataRoot" | Out-Null

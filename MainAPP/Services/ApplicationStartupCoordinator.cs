@@ -66,7 +66,7 @@ public sealed class ApplicationStartupCoordinator(
             }
 
             // CollectionView 在 ViewModel 构造时订阅空集合，LoadAll 后需手动刷新
-            services.GetRequiredService<DeviceManagerViewModel>().RefreshDeviceList();
+            services.GetRequiredService<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
             Log.Information("DeviceList 刷新完成");
 
             // 配方库启动加载（与设备/工单同模式；Remote 模式随后 StartDataLinkAsync 拉取覆盖）

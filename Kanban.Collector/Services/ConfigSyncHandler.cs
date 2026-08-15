@@ -8,6 +8,7 @@ using Kanban.Core.Models;
 using Kanban.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.ObjectModel;
 using System.Reflection;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 
@@ -284,7 +285,14 @@ public sealed class ConfigSyncHandler
                 draft.PlcConfig.Omron.ReadSplits = omron.ReadSplits.Value;
             if (dto.Shifts is { Count: > 0 })
             {
-                draft.Shifts = [.. dto.Shifts.Select(s => new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime })];
+                var shifts = dto.Shifts.Select(s => new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime }).ToList();
+                // 复用与本地编辑一致的 1440 分钟全覆盖校验（审查修复 2026-08-15）：
+                // 此前只走 draft.Validate()（仅名称非空/起止不等），重叠或留空隙的班次可经 Remote 写入，
+                // 导致 ShiftContext.DetectChange 首个匹配命中、产量归属错乱。
+                var shiftError = ShiftValidator.Validate(shifts);
+                if (shiftError != null)
+                    throw new InvalidOperationException("班次配置校验失败：" + shiftError);
+                draft.Shifts = new ObservableCollection<ShiftConfig>(shifts);
             }
 
             // ② 完整校验：与启动期一致的口径（轮询间隔/班次/PLC 参数/批量读取上下限）

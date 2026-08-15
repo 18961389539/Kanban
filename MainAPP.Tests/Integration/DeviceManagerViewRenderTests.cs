@@ -141,10 +141,10 @@ public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
     {
         var (repo, _, _, vm) = BuildViewModel(deviceCount: 3);
 
-        vm.SearchKeyword = "焊接";
-        vm.FilteredDevices.Refresh();
+        vm.DeviceList.SearchKeyword = "焊接";
+        vm.DeviceList.FilteredDevices.Refresh();
 
-        Assert.Single(vm.FilteredDevices);
+        Assert.Single(vm.DeviceList.FilteredDevices);
     }
 
     /// <summary>不弹窗的 IDialogService 桩，避免测试中 MessageBox/Growl 阻塞。</summary>

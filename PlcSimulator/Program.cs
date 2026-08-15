@@ -101,11 +101,13 @@ internal class Program
 
         // 位置参数 = 排除 -- 开头的参数和带值的 --speed/--scenario 的值
         var skipNext = false;
+        var listenAll = false;  // 审查修复 2026-08-15：默认只绑 127.0.0.1，需局域网访问时显式 --listen-all
         var positional = new List<string>();
         for (int i = 0; i < args.Length; i++)
         {
             if (skipNext) { skipNext = false; continue; }
             if (args[i] == "--speed" || args[i] == "--scenario") { skipNext = true; continue; }
+            if (args[i] == "--listen-all") { listenAll = true; continue; }
             if (args[i].StartsWith("--")) continue;
             positional.Add(args[i]);
         }
@@ -217,11 +219,13 @@ internal class Program
                 return;
             }
             _io = _server;
-            // 启动 TCP 代理：监听公开端口，转发到内部 PLC 端口
-            _relay = new TcpRelay(port, internalPort);
+            // 启动 TCP 代理：监听公开端口，转发到内部 PLC 端口。
+            // 默认绑定 127.0.0.1（局域网内任意主机可读写虚拟 PLC 内存属高危，审查修复 2026-08-15）；
+            // 需要跨主机访问时显式传 --listen-all。
+            _relay = new TcpRelay(port, internalPort, listenAll ? IPAddress.Any : IPAddress.Loopback);
             _relay.Start();
             Console.WriteLine($"[成功] 托管虚拟 PLC 已启动（内部端口 {internalPort}）");
-            Console.WriteLine($"       TCP 代理监听 0.0.0.0:{port} → 127.0.0.1:{internalPort}");
+            Console.WriteLine($"       TCP 代理监听 {(listenAll ? "0.0.0.0" : "127.0.0.1")}:{port} → 127.0.0.1:{internalPort}");
             Console.WriteLine("       MainAPP 可连接到 127.0.0.1:" + port);
         }
 
@@ -897,13 +901,15 @@ internal class Program
         private readonly List<TcpClient> _clients = [];
         private readonly int _listenPort;
         private readonly int _targetPort;
+        private readonly IPAddress _listenAddress;
         private CancellationTokenSource _cts = new();
         private Task? _acceptTask;
 
-        public TcpRelay(int listenPort, int targetPort)
+        public TcpRelay(int listenPort, int targetPort, IPAddress listenAddress)
         {
             _listenPort = listenPort;
             _targetPort = targetPort;
+            _listenAddress = listenAddress;
         }
 
         public void Start()
@@ -912,7 +918,7 @@ internal class Program
             _cts.Dispose();
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
-            _listener = new TcpListener(IPAddress.Any, _listenPort);
+            _listener = new TcpListener(_listenAddress, _listenPort);
             _listener.Start();
             _acceptTask = AcceptLoopAsync(token);
         }

@@ -144,7 +144,9 @@ public partial class HistoryQuery
             ["yAxis"] = new Dictionary<string, object?>
             {
                 ["type"] = "value",
-                ["max"] = 1,
+                // 数据为 Oee*100（0~100），量程必须一致，否则柱高溢出约 100 倍、刻度恒为 1%
+                // （审查修复 2026-08-15：原 max=1 与 series 数据量纲不匹配）
+                ["max"] = 100,
                 ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0", ["formatter"] = "{value}%" },
                 ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
             },

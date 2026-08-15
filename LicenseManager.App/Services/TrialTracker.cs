@@ -80,6 +80,19 @@ public class TrialTracker
             var backupState = _registryBackup.LoadBackupState();
             if (backupState != null)
             {
+                // 恢复路径同样执行回拨检测（审查修复 2026-08-15）：此前直接覆盖 LastLaunchUtc 不做比对，
+                // 攻击者先拨回时钟再删 trial.dat 即可绕过检测——注册表里保存的是拨回前的真实时间，此处可抓住。
+                if ((now - backupState.LastLaunchUtc).TotalSeconds < -ClockDriftToleranceSec)
+                {
+                    CurrentState = backupState;
+                    return LicenseStatus.TrialManipulated;
+                }
+                if (now < backupState.FirstLaunchUtc.AddSeconds(-ClockDriftToleranceSec))
+                {
+                    CurrentState = backupState;
+                    return LicenseStatus.TrialManipulated;
+                }
+
                 // trial.dat 被删除，但注册表有完整备份 → 用注册表状态重建 trial.dat
                 // R-2：恢复完整状态（含 LastLaunchUtc），保留时间回拨检测能力
                 backupState.LastLaunchUtc = now;
