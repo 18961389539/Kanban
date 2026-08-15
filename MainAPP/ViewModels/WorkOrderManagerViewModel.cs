@@ -12,6 +12,7 @@ using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
+using MainAPP.Helpers;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
@@ -25,6 +26,9 @@ public enum WorkOrderSortMode
 }
 
 public sealed record WorkOrderSortOption(WorkOrderSortMode Value, string Label);
+
+/// <summary>工单设备筛选下拉项（按 DeviceId 匹配，显示设备名）。</summary>
+public sealed record DeviceFilterOption(string Id, string Name);
 
 /// <summary>
 /// 工单管理页 ViewModel：提供工单列表查看、新增/编辑/删除、状态切换、筛选。
@@ -58,13 +62,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _searchKeyword = "";
 
-    /// <summary>状态筛选选项（"全部"/"待开始"/"进行中"/"已完成"/"已中止"）。</summary>
+    /// <summary>状态筛选（null = 全部，否则按状态枚举过滤）。</summary>
     [ObservableProperty]
-    private string _statusFilter = Strings.M040;
+    private WorkOrderStatus? _statusFilter;
 
-    /// <summary>设备筛选选项（"全部设备" + 各设备名称）。</summary>
+    /// <summary>设备筛选（存储 DeviceId，空串 = 全部设备）。</summary>
     [ObservableProperty]
-    private string _deviceFilter = Strings.M044;
+    private string _deviceFilter = "";
 
     [ObservableProperty] private DateTime? _filterFromDate;
     [ObservableProperty] private DateTime? _filterToDate;
@@ -73,25 +77,18 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _onlyHasNg;
     [ObservableProperty] private WorkOrderSortMode _sortMode = WorkOrderSortMode.ScheduleStart;
 
-    /// <summary>可选状态筛选值列表（中文标签，绑定到 ComboBox）。</summary>
-    public IReadOnlyList<string> StatusOptions { get; } = new[] { Strings.M040, Strings.M041, Strings.M042, Strings.M043, Strings.M031 };
-
-    /// <summary>可选设备筛选值列表（"全部设备" + 各设备名称，启动时从 DeviceRepository 刷新）。</summary>
-    public ObservableCollection<string> DeviceOptions { get; } = new() { Strings.M044 };
-
-    /// <summary>中文状态标签 → 枚举值映射（过滤时用）。</summary>
-    private static readonly Dictionary<string, WorkOrderStatus?> StatusLabelToEnum = new()
-    {
-        [Strings.M040] = null,
-        [Strings.M041] = WorkOrderStatus.Pending,
-        [Strings.M042] = WorkOrderStatus.Running,
-        [Strings.M043] = WorkOrderStatus.Completed,
-        [Strings.M031] = WorkOrderStatus.Aborted,
-    };
+    /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
+    public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
 
     /// <summary>选中工单的产量聚合（详情页绑定）。null 表示未查询/未选中。</summary>
     [ObservableProperty]
     private WorkOrderProductionSummary? _selectedProduction;
+
+    /// <summary>选中工单产量查询节流 + 取消（Remote 模式 GetProductionSummary 是 SignalR 往返，不能同步查）。</summary>
+    private int? _lastProductionOrderId;
+    private DateTime _lastProductionQueryUtc = DateTime.MinValue;
+    private CancellationTokenSource? _productionCts;
+    private static readonly TimeSpan ProductionThrottle = TimeSpan.FromSeconds(2);
 
     // ──────────── 状态计数（全量，不受筛选影响，供状态筛选下拉显示"进行中(2)"徽标） ────────────
     [ObservableProperty] private int _pendingCount;
@@ -211,6 +208,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _productionCts?.Cancel();
+        _productionCts?.Dispose();
         _workOrderRepo.WorkOrders.CollectionChanged -= OnWorkOrdersCollectionChanged;
         GC.SuppressFinalize(this);
     }
@@ -235,24 +234,24 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         var devices = _deviceRepo.GetDevicesSnapshot();
         var current = DeviceFilter;
         DeviceOptions.Clear();
-        DeviceOptions.Add(Strings.M044);
+        DeviceOptions.Add(new DeviceFilterOption("", Strings.M044));
         foreach (var d in devices)
-            DeviceOptions.Add(d.Name);
+            DeviceOptions.Add(new DeviceFilterOption(d.Id, d.Name));
         // 尝试恢复之前选中的设备筛选（若仍存在）
-        DeviceFilter = DeviceOptions.Contains(current) ? current : Strings.M044;
+        DeviceFilter = DeviceOptions.Any(o => o.Id == current) ? current : "";
     }
 
     /// <summary>过滤条件：关键字 + 状态 + 设备。</summary>
     private bool FilterWorkOrder(object obj)
     {
         if (obj is not WorkOrder w) return false;
-        // 状态筛选（中文标签 → 枚举值）
-        if (StatusLabelToEnum.TryGetValue(StatusFilter ?? Strings.M040, out var expected) && expected.HasValue && w.Status != expected.Value)
+        // 状态筛选
+        if (StatusFilter.HasValue && w.Status != StatusFilter.Value)
             return false;
-        // 设备筛选
-        if (!string.IsNullOrEmpty(DeviceFilter) && DeviceFilter != Strings.M044)
+        // 设备筛选（按 DeviceId，避免设备改名后历史工单匹配不到）
+        if (!string.IsNullOrEmpty(DeviceFilter))
         {
-            if (w.DeviceName != DeviceFilter) return false;
+            if (w.DeviceId != DeviceFilter) return false;
         }
         // 关键字筛选（工单号/产品编码/产品名称/设备名）
         if (!string.IsNullOrWhiteSpace(SearchKeyword))
@@ -275,7 +274,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     }
 
     partial void OnSearchKeywordChanged(string value) => RefreshFilteredView();
-    partial void OnStatusFilterChanged(string value) => RefreshFilteredView();
+    partial void OnStatusFilterChanged(WorkOrderStatus? value) => RefreshFilteredView();
     partial void OnDeviceFilterChanged(string value) => RefreshFilteredView();
     partial void OnFilterFromDateChanged(DateTime? value) => RefreshFilteredView();
     partial void OnFilterToDateChanged(DateTime? value) => RefreshFilteredView();
@@ -368,15 +367,50 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         => _workOrderRepo.GetRunningByDevice(workOrder.DeviceId) is { } running
             && running.Id != workOrder.Id;
 
-    /// <summary>查询选中工单的产量聚合并更新 SelectedProduction 属性。</summary>
+    /// <summary>查询选中工单的产量聚合并更新 SelectedProduction 属性（后台查询 + 2s 节流）。</summary>
     private void RefreshSelectedProduction()
     {
-        if (SelectedWorkOrder == null)
+        var order = SelectedWorkOrder;
+        if (order == null)
         {
+            _productionCts?.Cancel();
+            _productionCts?.Dispose();
+            _productionCts = null;
+            _lastProductionOrderId = null;
             SelectedProduction = null;
             return;
         }
-        SelectedProduction = _workOrderService.GetProductionSummary(SelectedWorkOrder);
+
+        // 节流：同一工单 2s 内复用上次结果（Remote 模式为 SignalR 往返）
+        if (_lastProductionOrderId == order.Id && DateTime.UtcNow - _lastProductionQueryUtc < ProductionThrottle)
+            return;
+
+        _productionCts?.Cancel();
+        _productionCts?.Dispose();
+        var cts = _productionCts = new CancellationTokenSource();
+        var token = cts.Token;
+        _lastProductionOrderId = order.Id;
+        _lastProductionQueryUtc = DateTime.UtcNow;
+
+        Task.Run(() =>
+        {
+            WorkOrderProductionSummary? summary;
+            try
+            {
+                summary = _workOrderService.GetProductionSummary(order);
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
+                return;
+            }
+            if (token.IsCancellationRequested) return;
+            UiDispatcher.Dispatch(() =>
+            {
+                if (token.IsCancellationRequested || SelectedWorkOrder?.Id != order.Id) return;
+                SelectedProduction = summary;
+            });
+        }, token).Forget();
     }
 
     /// <summary>
@@ -402,8 +436,9 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         }
         // 触发列表刷新让绑定更新
         RefreshStatusCounts();
-        // 同步更新详情页选中工单的产量
-        RefreshSelectedProduction();
+        // 同步更新详情页选中工单的产量（直接取批量结果，避免再发一次单工单查询）
+        if (SelectedWorkOrder != null && summaries.TryGetValue(SelectedWorkOrder.Id, out var selSummary))
+            SelectedProduction = selSummary;
         _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
     }
 
@@ -490,8 +525,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
                 before: new { Status = statusBefore.ToString() },
                 after: new { Status = saved.Status.ToString() });
         }
-        RefreshStatusCounts();
-        NotifyActionReasonsChanged();
     }
 
     private bool CanStart() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
@@ -509,8 +542,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
                 before: new { Status = statusBefore.ToString() },
                 after: new { Status = saved.Status.ToString() });
         }
-        RefreshStatusCounts();
-        NotifyActionReasonsChanged();
     }
 
     private bool CanComplete() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Running;
@@ -528,8 +559,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
                 before: new { Status = statusBefore.ToString() },
                 after: new { Status = saved.Status.ToString() });
         }
-        RefreshStatusCounts();
-        NotifyActionReasonsChanged();
     }
 
     private bool CanAbort() => SelectedWorkOrder != null
@@ -593,7 +622,6 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>CSV 字段转义：含逗号、双引号或换行时用双引号包裹，内部双引号翻倍。</summary>
     // ──────────── 样本数据生成（DEBUG） ────────────
 
     /// <summary>
@@ -631,103 +659,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             if (confirm != MessageBoxResult.Yes) return;
         }
 
-        var samples = BuildSampleWorkOrders(devices);
+        var samples = WorkOrderSampleBuilder.BuildSampleWorkOrders(devices);
         foreach (var wo in samples)
             await _workOrderRepo.UpsertAsync(wo);
 
         _dialog.NotifySuccess(string.Format(Strings.F115, samples.Count));
-    }
-
-    /// <summary>
-    /// 为每台设备生成 3 个样本工单：1 个 Running、1 个 Pending、1 个 Completed 或 Aborted。
-    /// 产品名称/工单号使用合理的模拟数据，计划时间围绕当前时间分布。
-    /// </summary>
-    private static List<WorkOrder> BuildSampleWorkOrders(IReadOnlyList<Device> devices)
-    {
-        var now = DateTime.Now;
-        var products = new[]
-        {
-            ("P-1001", "外壳组件A"),
-            ("P-1002", "外壳组件B"),
-            ("P-2001", "电路板模组"),
-            ("P-2002", "传感器模组"),
-            ("P-3001", "连接器"),
-            ("P-3002", "端子台"),
-            ("P-4001", "散热片"),
-            ("P-4002", "支架组件"),
-        };
-
-        var remarks = new[]
-        {
-            "常规生产批次",
-            "客户加急订单",
-            "试产验证",
-            "返工批次",
-            null,
-        };
-
-        List<WorkOrder> result = [];
-        var rng = new Random(42); // 固定种子确保可复现
-
-        for (var i = 0; i < devices.Count; i++)
-        {
-            var dev = devices[i];
-            var product = products[i % products.Length];
-            var dayOffset = i / 4; // 每 4 台设备错开一天
-
-            // 1. Running 工单（当前进行中，计划时间覆盖现在）
-            result.Add(new WorkOrder
-            {
-                OrderNo = $"WO-{now:yyyyMMdd}-{(i + 1):D3}-R",
-                ProductCode = product.Item1,
-                ProductName = product.Item2,
-                DeviceId = dev.Id,
-                DeviceName = dev.Name,
-                TargetQuantity = 500 + rng.Next(0, 10) * 100,
-                PlannedStart = now.AddDays(-dayOffset).AddHours(-6),
-                PlannedEnd = now.AddDays(-dayOffset).AddHours(2),
-                Status = WorkOrderStatus.Running,
-                Remark = remarks[i % remarks.Length],
-                CreatedAt = now.AddDays(-dayOffset).AddHours(-8),
-                UpdatedAt = now.AddDays(-dayOffset).AddHours(-6),
-            });
-
-            // 2. Pending 工单（待开始，计划时间在未来）
-            result.Add(new WorkOrder
-            {
-                OrderNo = $"WO-{now:yyyyMMdd}-{(i + 1):D3}-P",
-                ProductCode = product.Item1,
-                ProductName = product.Item2,
-                DeviceId = dev.Id,
-                DeviceName = dev.Name,
-                TargetQuantity = 800 + rng.Next(0, 8) * 100,
-                PlannedStart = now.AddDays(1 + dayOffset).Date.AddHours(8),
-                PlannedEnd = now.AddDays(1 + dayOffset).Date.AddHours(20),
-                Status = WorkOrderStatus.Pending,
-                Remark = remarks[(i + 2) % remarks.Length],
-                CreatedAt = now.AddDays(-1),
-                UpdatedAt = now.AddDays(-1),
-            });
-
-            // 3. 已结束工单（Completed 或 Aborted，计划时间在过去）
-            var completed = i % 3 != 0; // 2/3 为 Completed，1/3 为 Aborted
-            result.Add(new WorkOrder
-            {
-                OrderNo = $"WO-{now:yyyyMMdd}-{(i + 1):D3}-{(completed ? "C" : "A")}",
-                ProductCode = product.Item1,
-                ProductName = product.Item2,
-                DeviceId = dev.Id,
-                DeviceName = dev.Name,
-                TargetQuantity = 1000 + rng.Next(0, 6) * 100,
-                PlannedStart = now.AddDays(-2 - dayOffset).Date.AddHours(8),
-                PlannedEnd = now.AddDays(-2 - dayOffset).Date.AddHours(20),
-                Status = completed ? WorkOrderStatus.Completed : WorkOrderStatus.Aborted,
-                Remark = completed ? "已完成交付" : "因设备故障中止",
-                CreatedAt = now.AddDays(-3 - dayOffset),
-                UpdatedAt = now.AddDays(-2 - dayOffset).Date.AddHours(20),
-            });
-        }
-
-        return result;
     }
 }

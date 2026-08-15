@@ -241,7 +241,7 @@ public class HomeViewModelTests : IDisposable
     {
         var device = CreateDevice(id, name, targetCycle);
         _deviceRepository.Devices.Add(device);
-        _deviceRepository.Runtimes.Add(new DeviceRuntime(device));
+        _deviceRepository.AddRuntime(device); // 同时维护 Runtimes + RuntimeMap
         return device;
     }
 
@@ -274,7 +274,7 @@ public class HomeViewModelTests : IDisposable
             Log("夜班", baseTime.AddHours(-3), 50),
         };
 
-        var last = HomeViewModel.FindLastOtherShiftLog(logs, "白班");
+        var last = LastShiftComparisonProvider.FindLastOtherShiftLog(logs, "白班");
 
         Assert.NotNull(last);
         Assert.Equal("夜班", last!.ShiftName);
@@ -290,7 +290,7 @@ public class HomeViewModelTests : IDisposable
             Log("白班", new DateTime(2026, 8, 11, 9, 0, 0), 50),
         };
 
-        Assert.Null(HomeViewModel.FindLastOtherShiftLog(logs, "白班"));
+        Assert.Null(LastShiftComparisonProvider.FindLastOtherShiftLog(logs, "白班"));
     }
 
     [Fact]
@@ -302,7 +302,7 @@ public class HomeViewModelTests : IDisposable
             Log("夜班", new DateTime(2026, 8, 11, 2, 0, 0), 77),
         };
 
-        var last = HomeViewModel.FindLastOtherShiftLog(logs, null);
+        var last = LastShiftComparisonProvider.FindLastOtherShiftLog(logs, null);
 
         Assert.NotNull(last);
         Assert.Equal("白班", last!.ShiftName);

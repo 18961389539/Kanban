@@ -139,10 +139,13 @@ public static class Program
             app.UseCors();
 
             // 健康检查：
-            // - /healthz：兼容旧探针（进程存活语义，保持对外契约）
+            // - /healthz：兼容旧探针（进程存活语义，保持对外契约）——纯存活，不跑业务 readiness
             // - /health/live：进程存活（Kestrel 可响应即 Healthy）
             // - /health/ready：业务就绪（初始化完成 + 采集活性 + 历史库可写；采集停止时返回 503）
-            app.MapHealthChecks("/healthz");
+            app.MapHealthChecks("/healthz", new HealthCheckOptions
+            {
+                Predicate = _ => false, // 纯存活：与 /health/live 一致，启动初始化窗口期也返回 200
+            });
             app.MapHealthChecks("/health/live", new HealthCheckOptions
             {
                 Predicate = _ => false, // 无注册检查 → 恒 Healthy（纯存活探针）

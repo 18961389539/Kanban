@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using Kanban.Core.Entities;
 using MainAPP.ViewModels;
 
 namespace MainAPP.Views;
@@ -15,16 +16,14 @@ public partial class WorkOrderManagerView : UserControl
     }
 
     /// <summary>
-    /// 状态筛选 chip 点击：将 RadioButton.Tag（中文状态标签）写入 ViewModel.StatusFilter。
+    /// 状态筛选 chip 点击：将 RadioButton.Tag（WorkOrderStatus?，null=全部）写入 ViewModel.StatusFilter。
     /// IsChecked 通过 OneWay 绑定 + EqualityConverter 同步显示态，此处仅负责写入。
     /// </summary>
     private void OnStatusChipClick(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe
-            && fe.Tag is string status
-            && DataContext is WorkOrderManagerViewModel vm)
+        if (sender is FrameworkElement fe && DataContext is WorkOrderManagerViewModel vm)
         {
-            vm.StatusFilter = status;
+            vm.StatusFilter = fe.Tag as WorkOrderStatus?;
         }
     }
 }

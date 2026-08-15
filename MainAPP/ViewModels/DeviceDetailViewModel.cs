@@ -9,6 +9,7 @@ using Kanban.Core.Entities;
 using Kanban.Core.Models;
 using MainAPP.Models;
 using Kanban.Core.Services;
+using MainAPP.Helpers;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
 using OxyPlot;
@@ -712,20 +713,26 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// <summary>
     /// 刷新活跃报警列表：从设备配置筛选未恢复的报警
     /// （已触发 StartTime &gt; MinValue 且未恢复 EndTime &lt; StartTime）。
-    /// 活跃报警的 Duration 用 Now - StartTime 动态计算（Alarm.Duration 在活跃态返回 Zero）。
+    /// 差分更新复用已有行，仅更新 Duration/CurrentValue/Threshold/StartTime，避免 Clear+Add 闪烁。
     /// </summary>
     private void RefreshActiveAlarms()
     {
-        ActiveAlarms.Clear();
-        if (CurrentDevice == null) return;
+        if (CurrentDevice == null)
+        {
+            ActiveAlarms.Clear();
+            ActiveAlarmCount = 0;
+            return;
+        }
 
         var now = DateTime.Now;
+        var desired = new List<AlarmConfigRow>();
+
         foreach (var a in CurrentDevice.Alarms)
         {
             // 活跃判断：已触发（StartTime > MinValue）且未恢复（EndTime < StartTime）
             if (a.StartTime > DateTime.MinValue && a.EndTime < a.StartTime)
             {
-                ActiveAlarms.Add(new AlarmConfigRow
+                desired.Add(new AlarmConfigRow
                 {
                     Name = a.Name,
                     PlcAddress = a.PlcAddress,
@@ -739,7 +746,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         foreach (var alarm in CurrentDevice.CounterAlarms)
         {
             if (!alarm.Enabled || !alarm.IsTriggered) continue;
-            ActiveAlarms.Add(new AlarmConfigRow
+            desired.Add(new AlarmConfigRow
             {
                 Name = alarm.Name,
                 PlcAddress = alarm.PlcAddress,
@@ -748,10 +755,25 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                 IsCounterAlarm = true,
                 CurrentValue = alarm.CurrentValue,
                 Threshold = alarm.MaxValue,
-                StartTime = now,
+                // 计数报警无触发时间戳：不显示 StartTime，Duration 保持 0（DurationText 显示 "—"）
+                StartTime = default,
                 Duration = TimeSpan.Zero,
             });
         }
+
+        // 复用已有实例：保留引用稳定，只更新可变字段
+        for (int i = 0; i < desired.Count; i++)
+        {
+            var existing = ActiveAlarms.FirstOrDefault(a => a.Equals(desired[i]));
+            if (existing == null) continue;
+            existing.StartTime = desired[i].StartTime;
+            existing.Duration = desired[i].Duration;
+            existing.CurrentValue = desired[i].CurrentValue;
+            existing.Threshold = desired[i].Threshold;
+            desired[i] = existing;
+        }
+
+        ObservableCollectionSyncHelper.Sync(ActiveAlarms, desired);
         ActiveAlarmCount = ActiveAlarms.Count;
     }
 
@@ -938,28 +960,52 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
 // ──────────── 配置行数据模型 ────────────
 
-public class AlarmConfigRow
+public partial class AlarmConfigRow : ObservableObject
 {
-    public string Name { get; set; } = string.Empty;
-    public string PlcAddress { get; set; } = string.Empty;
-    public AlarmLevel Level { get; set; }
-    public string Description { get; set; } = string.Empty;
-    public bool IsCounterAlarm { get; set; }
-    public int CurrentValue { get; set; }
-    public int Threshold { get; set; }
-    public DateTime StartTime { get; set; }
-    public TimeSpan Duration { get; set; }
+    public string Name { get; init; } = string.Empty;
+    public string PlcAddress { get; init; } = string.Empty;
+    public AlarmLevel Level { get; init; }
+    public string Description { get; init; } = string.Empty;
+    public bool IsCounterAlarm { get; init; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValueText))]
+    private int _currentValue;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValueText))]
+    private int _threshold;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValueText))]
+    private DateTime _startTime;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DurationText))]
+    private TimeSpan _duration;
+
     public string LevelText => Level switch
     {
         AlarmLevel.High => Strings.Level_High,
         AlarmLevel.Medium => Strings.Level_Medium,
         _ => Strings.Level_Low,
     };
+
     /// <summary>持续时间文本（活跃报警显示累计时长）。</summary>
     public string DurationText => Duration.TotalSeconds > 0
         ? $"{(int)Duration.TotalHours}h {Duration.Minutes}m"
         : "—";
+
     public string ValueText => IsCounterAlarm
         ? string.Format(Strings.F120, CurrentValue, Threshold)
         : string.Format(Strings.F196, StartTime, PlcAddress);
+
+    /// <summary>同值判定（身份 = 名称 + 地址 + 报警类型，用于差分复用）。</summary>
+    public override bool Equals(object? obj)
+        => obj is AlarmConfigRow other
+           && Name == other.Name
+           && PlcAddress == other.PlcAddress
+           && IsCounterAlarm == other.IsCounterAlarm;
+
+    public override int GetHashCode() => HashCode.Combine(Name, PlcAddress, IsCounterAlarm);
 }

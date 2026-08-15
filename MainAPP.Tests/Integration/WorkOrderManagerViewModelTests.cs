@@ -428,7 +428,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-002", status: WorkOrderStatus.Running));
         _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-003", status: WorkOrderStatus.Completed));
 
-        vm.StatusFilter = "进行中";
+        vm.StatusFilter = WorkOrderStatus.Running;
         var filtered = vm.FilteredView.Cast<WorkOrder>().ToList();
         Assert.Single(filtered);
         Assert.Equal("WO-002", filtered[0].OrderNo);
@@ -454,7 +454,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-001", status: WorkOrderStatus.Pending));
         _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-002", status: WorkOrderStatus.Running));
 
-        vm.StatusFilter = "全部";
+        vm.StatusFilter = null;
         var filtered = vm.FilteredView.Cast<WorkOrder>().ToList();
         Assert.Equal(2, filtered.Count);
     }

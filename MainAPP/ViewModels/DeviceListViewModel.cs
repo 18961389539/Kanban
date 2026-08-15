@@ -1,10 +1,10 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
+using MainAPP.Helpers;
 using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;
@@ -142,7 +142,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             foreach (DeviceRuntime rt in e.NewItems) AttachRuntime(rt);
         if (e.OldItems != null)
             foreach (DeviceRuntime rt in e.OldItems) DetachRuntime(rt);
-        DispatchOnUi(() => OnPropertyChanged(nameof(DeviceSummaryText)));
+        UiDispatcher.Dispatch(() => OnPropertyChanged(nameof(DeviceSummaryText)));
     }
 
     private void AttachRuntime(DeviceRuntime rt) => rt.PropertyChanged += OnRuntimePropertyChanged;
@@ -152,26 +152,12 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
     private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(DeviceRuntime.StatusWord)) return;
-        DispatchOnUi(() =>
+        UiDispatcher.Dispatch(() =>
         {
             OnPropertyChanged(nameof(DeviceSummaryText));
             if (StatusFilter != DeviceStatusFilter.All)
                 FilteredDevices.Refresh();
         });
-    }
-
-    private static void DispatchOnUi(Action action)
-    {
-        var app = Application.Current;
-        if (app == null || app.Dispatcher.HasShutdownStarted)
-        {
-            action();
-            return;
-        }
-        if (app.Dispatcher.CheckAccess())
-            action();
-        else
-            app.Dispatcher.BeginInvoke(action);
     }
 
     public void Dispose()

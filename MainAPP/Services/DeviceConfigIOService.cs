@@ -1,15 +1,12 @@
-using Kanban.Core.Services;
-using MainAPP.Resources;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
+using Kanban.Core.Services;
 using MainAPP.Models;
+using MainAPP.Resources;
 
 namespace MainAPP.Services;
 
@@ -24,9 +21,6 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     // 文件对话框过滤器（三语资源，与 RecipeJsonIOService 同源 K695）
     private static string DeviceFileFilter => Strings.K695;
 
-    private readonly DeviceRepository _deviceRepository = deviceRepository;
-    private readonly IDialogService _dialog = dialog;
-
     /// <summary>
     /// 导出当前全部设备配置到用户选择的 JSON 文件（原子写入，备份上一版本）。
     /// 仅导出内存中的配置、不触发持久化或脏标记变化（导出是只读操作）。
@@ -36,18 +30,18 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     /// <returns>是否导出成功（用户取消或写盘失败返回 false）。</returns>
     public bool ExportConfig(int deviceCount)
     {
-        var path = _dialog.ShowSaveFileDialog(Strings.M226, "devices.json", DeviceFileFilter);
+        var path = dialog.ShowSaveFileDialog(Strings.M226, "devices.json", DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
         {
-            _deviceRepository.ExportToFile(path);
-            _dialog.NotifySuccess(string.Format(Strings.F105, deviceCount, Path.GetFileName(path)));
+            deviceRepository.ExportToFile(path);
+            dialog.NotifySuccess(string.Format(Strings.F105, deviceCount, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+            dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
     }
@@ -60,35 +54,35 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     /// <returns>导入的设备列表；用户取消、解析失败或文件为空时返回 null。</returns>
     public List<Device>? ImportConfig(int currentDeviceCount)
     {
-        var path = _dialog.ShowOpenFileDialog(Strings.M227, DeviceFileFilter);
+        var path = dialog.ShowOpenFileDialog(Strings.M227, DeviceFileFilter);
         if (string.IsNullOrEmpty(path)) return null;
 
         List<Device>? imported;
         try
         {
             var json = File.ReadAllText(path);
-            imported = _deviceRepository.ImportFromJson(json);
+            imported = deviceRepository.ImportFromJson(json);
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F134, ex.Message));
+            dialog.NotifyError(string.Format(Strings.F134, ex.Message));
             return null;
         }
 
         if (imported == null || imported.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.M003);
+            dialog.NotifyWarning(Strings.M003);
             return null;
         }
 
         // 二次确认：替换会丢弃当前内存中的设备配置（含未保存改动）
-        var confirm = _dialog.Show(
+        var confirm = dialog.Show(
             string.Format(Strings.F089, imported.Count, currentDeviceCount),
             Strings.M119, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirm != MessageBoxResult.Yes) return null;
 
-        _deviceRepository.ReplaceAll(imported);
-        _dialog.NotifySuccess(string.Format(Strings.F101, imported.Count));
+        deviceRepository.ReplaceAll(imported);
+        dialog.NotifySuccess(string.Format(Strings.F101, imported.Count));
         return imported;
     }
 
@@ -101,10 +95,10 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
     /// <returns>恢复的设备列表；备份不存在、解析失败时返回 null。</returns>
     public List<Device>? RollbackToBackup()
     {
-        var backupPath = _deviceRepository.FilePath + ".bak";
+        var backupPath = deviceRepository.FilePath + ".bak";
         if (!File.Exists(backupPath))
         {
-            _dialog.NotifyWarning(Strings.M004);
+            dialog.NotifyWarning(Strings.M004);
             return null;
         }
 
@@ -112,25 +106,25 @@ public class DeviceConfigIOService(DeviceRepository deviceRepository, IDialogSer
         try
         {
             var json = File.ReadAllText(backupPath);
-            restored = _deviceRepository.ImportFromJson(json);
+            restored = deviceRepository.ImportFromJson(json);
         }
         catch (Exception ex)
         {
-            _dialog.NotifyError(string.Format(Strings.F084, ex.Message));
+            dialog.NotifyError(string.Format(Strings.F084, ex.Message));
             return null;
         }
 
         if (restored == null || restored.Count == 0)
         {
-            _dialog.NotifyWarning(Strings.M005);
+            dialog.NotifyWarning(Strings.M005);
             return null;
         }
 
-        _deviceRepository.ReplaceAll(restored);
-        _dialog.NotifySuccess(string.Format(Strings.F108, restored.Count));
+        deviceRepository.ReplaceAll(restored);
+        dialog.NotifySuccess(string.Format(Strings.F108, restored.Count));
         return restored;
     }
 
     /// <summary>是否存在可恢复的 .bak 备份文件。</summary>
-    public bool HasBackup => File.Exists(_deviceRepository.FilePath + ".bak");
+    public bool HasBackup => File.Exists(deviceRepository.FilePath + ".bak");
 }

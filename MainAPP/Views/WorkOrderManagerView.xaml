@@ -63,7 +63,9 @@
                                  FontSize="{DynamicResource FontSizeCaption}"
                                  hc:InfoElement.Placeholder="{x:Static resources:Strings.K002}"
                                  ItemsSource="{Binding DeviceOptions}"
-                                 SelectedItem="{Binding DeviceFilter, Mode=TwoWay}"
+                                 DisplayMemberPath="Name"
+                                 SelectedValuePath="Id"
+                                 SelectedValue="{Binding DeviceFilter, Mode=TwoWay}"
                                  Style="{StaticResource ComboBoxExtend}" />
                 </Grid>
 
@@ -86,16 +88,16 @@
 
                 <!--  状态分布概览：一眼看到各状态工单数量，点击切换筛选（RadioButton 单选互斥）  -->
                 <StackPanel Grid.Row="3" Margin="18,0,18,8" Orientation="Horizontal">
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K004}"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Null}"
                                  Content="{x:Static resources:Strings.K004}" Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K004}" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Null}" />
                         </RadioButton.IsChecked>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K010}"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static entities:WorkOrderStatus.Pending}"
                                  Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K010}" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static entities:WorkOrderStatus.Pending}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -104,10 +106,10 @@
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K011}"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static entities:WorkOrderStatus.Running}"
                                  Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K011}" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static entities:WorkOrderStatus.Running}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -116,10 +118,10 @@
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K012}"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static entities:WorkOrderStatus.Completed}"
                                  Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K012}" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static entities:WorkOrderStatus.Completed}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -128,10 +130,10 @@
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static resources:Strings.K013}"
+                    <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Static entities:WorkOrderStatus.Aborted}"
                                  Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
-                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static resources:Strings.K013}" />
+                            <Binding Path="StatusFilter" Mode="OneWay" Converter="{StaticResource EqualityConverter}" ConverterParameter="{x:Static entities:WorkOrderStatus.Aborted}" />
                         </RadioButton.IsChecked>
                         <RadioButton.Content>
                             <StackPanel Orientation="Horizontal">
