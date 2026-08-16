@@ -3,7 +3,7 @@ using Kanban.Contracts.Enums;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 配方（按机型归属的配方库条目，持久化到 recipes.json）。

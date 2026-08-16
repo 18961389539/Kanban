@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:conv="clr-namespace:MainAPP.Converters"
-    xmlns:models="clr-namespace:Kanban.Core.Models;assembly=Kanban.Collector.Core"
+    xmlns:models="clr-namespace:Kanban.Collector.Core.Models;assembly=Kanban.Collector.Core"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     mc:Ignorable="d"
     d:DesignHeight="600"

@@ -1,4 +1,4 @@
-namespace Kanban.Core.Entities;
+namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
 /// 设备状态转换记录，用于 OEE 历史回溯。

@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Controls;

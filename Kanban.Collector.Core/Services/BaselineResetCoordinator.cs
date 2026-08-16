@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 产量基线清零协调器：拥有 <see cref="_pendingBaselineClearAt"/> 与 <see cref="_pendingPlcResetOnReconnect"/>

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
-using AlarmEventType = Kanban.Core.Entities.AlarmEventType;
-using AlarmLevel = Kanban.Core.Models.AlarmLevel;
+using AlarmEventType = Kanban.Collector.Core.Entities.AlarmEventType;
+using AlarmLevel = Kanban.Collector.Core.Models.AlarmLevel;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// PLC 扫描子系统（从 PlcDataAcquisitionService 拆出的协作组件之一）：

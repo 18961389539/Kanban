@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
 

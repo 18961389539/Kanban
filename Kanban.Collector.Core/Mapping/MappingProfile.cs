@@ -1,7 +1,7 @@
 using AutoMapper;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Mapping;
+namespace Kanban.Collector.Core.Mapping;
 
 /// <summary>
 /// AutoMapper 映射配置。

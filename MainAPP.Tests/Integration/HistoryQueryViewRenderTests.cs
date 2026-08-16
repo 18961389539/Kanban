@@ -1,8 +1,8 @@
 ﻿using System.Windows;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using MainAPP.Views;
@@ -153,6 +153,6 @@ public class HistoryQueryViewRenderTests : WpfTestHost, IDisposable
         public string? ShowOpenFileDialog(string title, string filter) => null;
         public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
         public string? ShowPasswordInput(string title, string message) => null;
-        public Kanban.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Core.Entities.WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+        public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
     }
 }

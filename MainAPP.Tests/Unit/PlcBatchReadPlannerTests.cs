@@ -1,6 +1,6 @@
-﻿using Kanban.Core.Services;
+﻿using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Xunit;
 
@@ -98,7 +98,7 @@ public sealed class PlcBatchReadPlannerTests
     public void Plan_SiemensDWord_UsesCodecAndFourByteStride()
     {
         var settings = new AppSettings();
-        settings.PlcConfig.Brand = Kanban.Core.Models.PlcBrand.Siemens;
+        settings.PlcConfig.Brand = Kanban.Collector.Core.Models.PlcBrand.Siemens;
         var codec = new PlcAddressCodecResolver(settings).Current;
 
         var blocks = PlcBatchReadPlanner.Plan(

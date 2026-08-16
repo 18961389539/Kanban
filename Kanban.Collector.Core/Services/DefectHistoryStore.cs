@@ -1,11 +1,11 @@
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 缺陷历史快照存储。采集线程写入短事务，复盘页按时间范围读取。

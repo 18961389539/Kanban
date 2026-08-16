@@ -2,10 +2,10 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Serilog;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 用户账号存储：持久化到 users.json，复用 AppSettings.WriteFileAtomically 原子写入。

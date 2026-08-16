@@ -1,6 +1,6 @@
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
 using System.Collections.Generic;
 using System.Globalization;

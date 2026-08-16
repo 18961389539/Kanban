@@ -1,4 +1,4 @@
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 public sealed record PlcReadBlock(string StartAddress, ushort Length, PlcAddressType Type);
 

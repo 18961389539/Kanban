@@ -1,8 +1,8 @@
 using Kanban.Collector.Core.Localization;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// PLC 品牌能力的单一扩展点。新增品牌时注册一个描述符即可向驱动工厂、地址解析、

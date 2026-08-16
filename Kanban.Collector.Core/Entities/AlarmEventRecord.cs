@@ -1,4 +1,4 @@
-namespace Kanban.Core.Entities;
+namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
 /// 报警事件查询结果记录

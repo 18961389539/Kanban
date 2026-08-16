@@ -1,8 +1,8 @@
 using System.Windows;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;

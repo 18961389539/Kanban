@@ -1,5 +1,5 @@
-using Kanban.Core.Services;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;

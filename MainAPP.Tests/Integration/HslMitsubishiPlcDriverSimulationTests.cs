@@ -1,6 +1,6 @@
 using HslCommunication.Profinet.Melsec;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

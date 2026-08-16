@@ -8,8 +8,8 @@ using LicenseManager.Services;
 using LicenseManager.ViewModels;
 using LicenseManager.Views;
 using Kanban.Client;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -159,8 +159,8 @@ public partial class App : Application
 
             // 操作审计门面初始化：必须在任何用户登录/保存等可审计操作之前。
             // operatorProvider 提供当前操作人显示名；未登录（Viewer）时为空串。
-            Kanban.Core.Services.AuditLog.Initialize(
-                _host.Services.GetService<Kanban.Core.Services.IAuditService>(),
+            Kanban.Collector.Core.Services.AuditLog.Initialize(
+                _host.Services.GetService<Kanban.Collector.Core.Services.IAuditService>(),
                 () => _host.Services.GetService<Services.UserSession>()?.CurrentUserDisplay ?? string.Empty);
 
             var appSettingsForLogin = _host.Services.GetRequiredService<AppSettings>();
@@ -172,7 +172,7 @@ public partial class App : Application
                 if (adminUser is not null)
                 {
                     userSession.Login(adminUser);
-                    Kanban.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", adminUser.Username, detail: "启动自动登录");
+                    Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", adminUser.Username, detail: "启动自动登录");
                     Log($"默认以管理员自动登录：{adminUser.Username}");
                 }
                 else
@@ -182,7 +182,7 @@ public partial class App : Application
                     if (operatorUser is not null)
                     {
                         userSession.Login(operatorUser);
-                        Kanban.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", operatorUser.Username, detail: "启动自动登录（管理员账号缺失，回退 Operator）");
+                        Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", operatorUser.Username, detail: "启动自动登录（管理员账号缺失，回退 Operator）");
                         Log($"管理员账号缺失，回退以 Operator 自动登录：{operatorUser.Username}");
                     }
                     else

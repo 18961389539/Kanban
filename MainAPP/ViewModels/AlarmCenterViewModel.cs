@@ -5,12 +5,12 @@ using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Helpers;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Serilog;
 

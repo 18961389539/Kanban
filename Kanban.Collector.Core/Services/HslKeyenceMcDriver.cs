@@ -1,9 +1,9 @@
 using HslCommunication;
 using HslCommunication.Profinet.Keyence;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 基恩士 MC 协议驱动：QnA 兼容 3E 帧、Binary 格式。

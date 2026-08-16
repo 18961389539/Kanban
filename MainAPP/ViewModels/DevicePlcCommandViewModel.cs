@@ -1,7 +1,7 @@
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Resources;
 using Serilog;

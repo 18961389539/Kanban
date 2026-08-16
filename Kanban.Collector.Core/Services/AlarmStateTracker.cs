@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 报警状态追踪器：拥有 <see cref="_prevAlarmStates"/> 与 <see cref="_shiftChangeFailedAlarms"/>

@@ -1,5 +1,5 @@
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -77,8 +77,8 @@ public class SettingsPersistenceFlowTests
         {
             var s = _host.AppSettings;
             s.Shifts.Clear();
-            s.Shifts.Add(new Kanban.Core.Models.ShiftConfig { Name = "早班", StartTime = new System.TimeSpan(0, 0, 0), EndTime = new System.TimeSpan(12, 0, 0) });
-            s.Shifts.Add(new Kanban.Core.Models.ShiftConfig { Name = "晚班", StartTime = new System.TimeSpan(12, 0, 0), EndTime = new System.TimeSpan(0, 0, 0) });
+            s.Shifts.Add(new Kanban.Collector.Core.Models.ShiftConfig { Name = "早班", StartTime = new System.TimeSpan(0, 0, 0), EndTime = new System.TimeSpan(12, 0, 0) });
+            s.Shifts.Add(new Kanban.Collector.Core.Models.ShiftConfig { Name = "晚班", StartTime = new System.TimeSpan(12, 0, 0), EndTime = new System.TimeSpan(0, 0, 0) });
             s.Save();
         });
 
@@ -125,7 +125,7 @@ public class SettingsPersistenceFlowTests
         try
         {
             var repo = new DeviceRepository(new AppSettings { ConfigDirectory = dir });
-            repo.Devices.Add(new Kanban.Core.Models.Device { Id = "dev-reset", Name = "复位设备", ProductionResetAddress = "D999" });
+            repo.Devices.Add(new Kanban.Collector.Core.Models.Device { Id = "dev-reset", Name = "复位设备", ProductionResetAddress = "D999" });
             repo.SaveAll();
 
             var reloaded = new DeviceRepository(new AppSettings { ConfigDirectory = dir });

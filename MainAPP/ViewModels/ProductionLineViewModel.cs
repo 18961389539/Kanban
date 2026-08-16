@@ -5,11 +5,11 @@ using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using MainAPP.Helpers;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Serilog;
 

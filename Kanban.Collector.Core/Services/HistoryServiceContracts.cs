@@ -1,6 +1,6 @@
-﻿using Kanban.Core.Entities;
+﻿using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 生产快照查询能力。查询调用方只依赖此接口，不需要知道写入管线。

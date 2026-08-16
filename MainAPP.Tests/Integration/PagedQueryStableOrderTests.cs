@@ -1,10 +1,10 @@
 using System.IO;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using AlarmEventType = Kanban.Core.Entities.AlarmEventType;
+using AlarmEventType = Kanban.Collector.Core.Entities.AlarmEventType;
 
 namespace MainAPP.Tests.Integration;
 

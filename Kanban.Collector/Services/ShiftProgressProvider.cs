@@ -1,6 +1,6 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 
 namespace Kanban.Collector.Services;
 
@@ -23,7 +23,7 @@ public sealed class ShiftProgressProvider
     {
         var now = DateTime.Now;
         // 锁内快照枚举：与 ConfigSyncHandler 的原地写入互斥（审查修复 2026-08-13）
-        List<Kanban.Core.Models.ShiftConfig> shifts;
+        List<Kanban.Collector.Core.Models.ShiftConfig> shifts;
         lock (_appSettings.ShiftsLock) shifts = _appSettings.Shifts.ToList();
         if (shifts.Count == 0)
             return new ShiftProgressDto { Name = "非班次时段" };

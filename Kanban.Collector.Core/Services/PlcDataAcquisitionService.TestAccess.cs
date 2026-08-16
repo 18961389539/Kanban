@@ -1,6 +1,6 @@
-﻿using Kanban.Core.Entities;
+﻿using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// <see cref="PlcDataAcquisitionService"/> 的测试访问助手（partial）。

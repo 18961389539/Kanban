@@ -1,13 +1,13 @@
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kanban.Core.Data;
+namespace Kanban.Collector.Core.Data;
 
 public sealed class DefectHistoryDbContext : KanbanDbContextBase
 {
     public DbSet<DefectSnapshotRecord> DefectSnapshots => Set<DefectSnapshotRecord>();
 
-    public DefectHistoryDbContext(Kanban.Core.Services.AppSettings appSettings)
+    public DefectHistoryDbContext(Kanban.Collector.Core.Services.AppSettings appSettings)
         : base(appSettings, "defect_history.db")
     {
     }

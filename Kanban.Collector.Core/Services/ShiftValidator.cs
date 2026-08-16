@@ -1,6 +1,6 @@
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 班次配置校验器（纯函数，无副作用，便于单元测试）。

@@ -1,5 +1,5 @@
 using System.IO;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;

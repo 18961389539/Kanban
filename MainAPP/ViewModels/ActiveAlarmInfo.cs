@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
 namespace MainAPP.ViewModels;
 

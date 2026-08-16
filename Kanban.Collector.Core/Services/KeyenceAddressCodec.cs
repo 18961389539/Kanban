@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// Keyence MC-3E 地址编解码器。

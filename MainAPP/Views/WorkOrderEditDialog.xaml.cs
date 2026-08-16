@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
 
 namespace MainAPP.Views;

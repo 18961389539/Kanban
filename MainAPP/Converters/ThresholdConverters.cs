@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Converters;

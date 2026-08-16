@@ -4,7 +4,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
-    xmlns:entities="clr-namespace:Kanban.Core.Entities;assembly=Kanban.Collector.Core"
+    xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
     xmlns:resources="clr-namespace:MainAPP.Resources">
 
     <!--  取代 HandyControl 默认 Validation.ErrorTemplate：用转换器安全读取首条错误，

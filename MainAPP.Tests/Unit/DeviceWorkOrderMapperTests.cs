@@ -1,16 +1,16 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Entities;
-using Kanban.Core.Mapping;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
+using Kanban.Collector.Core.Models;
 using Xunit;
-using AlarmLevel = Kanban.Core.Models.AlarmLevel;
-using DefectSeverity = Kanban.Core.Models.DefectSeverity;
-using DefectCategory = Kanban.Core.Models.DefectCategory;
+using AlarmLevel = Kanban.Collector.Core.Models.AlarmLevel;
+using DefectSeverity = Kanban.Collector.Core.Models.DefectSeverity;
+using DefectCategory = Kanban.Collector.Core.Models.DefectCategory;
 
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
-/// 单源映射测试（Kanban.Core.Mapping）：Device/WorkOrder ↔ DTO 全字段往返。
+/// 单源映射测试（Kanban.Collector.Core.Mapping）：Device/WorkOrder ↔ DTO 全字段往返。
 /// 这是"字段新增只改一处"的单源约定——往返断言保证：
 /// - ToDto→ToEntity 不丢字段（漏映射会破坏往返）
 /// - 嵌套集合（Alarms/Defects/CounterAlarms）逐字段保持
@@ -135,6 +135,6 @@ public class DeviceWorkOrderMapperTests
             Status = Kanban.Contracts.Enums.WorkOrderStatus.Pending,
         };
         var entity = WorkOrderMapper.ToEntity(dto);
-        Assert.Equal(Kanban.Core.Entities.WorkOrderStatus.Pending, entity.Status);
+        Assert.Equal(Kanban.Collector.Core.Entities.WorkOrderStatus.Pending, entity.Status);
     }
 }

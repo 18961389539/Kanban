@@ -1,4 +1,4 @@
-﻿using Kanban.Core.Services;
+﻿using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

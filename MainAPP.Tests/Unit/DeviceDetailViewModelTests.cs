@@ -1,10 +1,10 @@
 ﻿using System.IO;
 using System.Linq;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;

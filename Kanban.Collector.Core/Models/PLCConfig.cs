@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 public enum PlcBrand
 {
@@ -140,13 +140,11 @@ public partial class PlcConfig : ObservableObject
 
     /// <summary>
     /// 全字段配置签名：驱动重建客户端与"配置是否变化需热切换"判断的单一事实源。
-    /// 新增品牌参数时需同步补充（与 <see cref="PlcConfigJsonConverter"/> 一致）。
+    /// 直接复用 <see cref="PlcConfigJsonConverter"/> 的 Write（全字段含嵌套品牌 Options 已在转换器单一维护），
+    /// 新增品牌参数只需改转换器一处，签名自动覆盖——消除"签名/转换器/快照三处手工同步"的遗漏风险。
     /// </summary>
-    public string GetConfigurationSignature() =>
-        $"{Brand}|{IpAddress}|{Port}|{TimeoutMs}|" +
-        $"{Siemens.Model}|{Siemens.Rack}|{Siemens.Slot}|{Siemens.DataFormat}|{Siemens.BatchInt32Limit}|" +
-        $"{Omron.ReadSplits}|{ModbusTcp.UnitId}|{ModbusTcp.AddressStartWithZero}|" +
-        $"{ModbusTcp.RegisterFunction}|{ModbusTcp.BitFunction}|{ModbusTcp.DataFormat}|{ModbusTcp.BatchInt32Limit}";
+    public string GetConfigurationSignature()
+        => JsonSerializer.Serialize(this);
 
     partial void OnBrandChanged(PlcBrand value)
     {

@@ -1,7 +1,7 @@
 using System.IO;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// PLC 错误分类门面：把错误码/消息分类委托给品牌描述符（<see cref="IPlcBrandDescriptor.ClassifyError"/>），

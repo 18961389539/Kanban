@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// PLC 采集运行诊断快照。
@@ -725,7 +725,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             // 未启动工单或 _workOrderRepo 未注入（测试场景）时为 null，历史记录仍可写入。
             var workOrderId = _workOrderRepo?.GetRunningByDevice(device.Id)?.Id;
 
-            _productionWriter.LogProduction(new Kanban.Core.Entities.ProductionLog
+            _productionWriter.LogProduction(new Kanban.Collector.Core.Entities.ProductionLog
             {
                 DeviceId = device.Id,
                 DeviceName = device.Name,

@@ -1,6 +1,6 @@
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 共享 PLC 驱动路由器：应用始终只有一个活动 PLC 连接；品牌变更时替换该连接槽位中的驱动。

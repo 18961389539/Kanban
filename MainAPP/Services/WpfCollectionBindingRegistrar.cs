@@ -1,4 +1,4 @@
-using Kanban.Core.Data;
+using Kanban.Collector.Core.Data;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Windows.Data;

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 internal interface ISettingsMigration
 {
@@ -58,11 +58,11 @@ internal sealed class SettingsMigrationRunner
         public JsonObject Migrate(JsonObject settings)
         {
             var plc = settings["PlcConfig"] as JsonObject ?? new JsonObject();
-            plc["Brand"] ??= (int)Kanban.Core.Models.PlcBrand.Mitsubishi;
+            plc["Brand"] ??= (int)Kanban.Collector.Core.Models.PlcBrand.Mitsubishi;
             if (plc["Port"] is null)
             {
-                var brand = plc["Brand"]?.GetValue<int>() ?? (int)Kanban.Core.Models.PlcBrand.Mitsubishi;
-                plc["Port"] = Kanban.Core.Models.PlcConfig.GetDefaultPort((Kanban.Core.Models.PlcBrand)brand);
+                var brand = plc["Brand"]?.GetValue<int>() ?? (int)Kanban.Collector.Core.Models.PlcBrand.Mitsubishi;
+                plc["Port"] = Kanban.Collector.Core.Models.PlcConfig.GetDefaultPort((Kanban.Collector.Core.Models.PlcBrand)brand);
             }
             plc["TimeoutMs"] ??= 5000;
             plc["SiemensModel"] ??= "S1200";
@@ -84,8 +84,8 @@ internal sealed class SettingsMigrationRunner
             plc["ModbusAddressStartWithZero"] ??= true;
             plc["ModbusRegisterFunction"] ??= 3;
             plc["ModbusBitFunction"] ??= 1;
-            plc["ModbusDataFormat"] ??= (int)Kanban.Core.Models.PlcDataFormat.ABCD;
-            plc["SiemensDataFormat"] ??= (int)Kanban.Core.Models.PlcDataFormat.ABCD;
+            plc["ModbusDataFormat"] ??= (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD;
+            plc["SiemensDataFormat"] ??= (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD;
             settings["PlcConfig"] = plc;
             return settings;
         }
@@ -151,7 +151,7 @@ internal sealed class SettingsMigrationRunner
                 ["Model"] = ReadOrDefault(plc, "SiemensModel", "S1200"),
                 ["Rack"] = ReadOrDefault(plc, "SiemensRack", 0),
                 ["Slot"] = ReadOrDefault(plc, "SiemensSlot", 1),
-                ["DataFormat"] = ReadOrDefault(plc, "SiemensDataFormat", (int)Kanban.Core.Models.PlcDataFormat.ABCD),
+                ["DataFormat"] = ReadOrDefault(plc, "SiemensDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD),
                 ["BatchInt32Limit"] = ReadOrDefault(plc, "SiemensBatchInt32Limit", 55),
             };
             plc["ModbusTcp"] = new JsonObject
@@ -160,7 +160,7 @@ internal sealed class SettingsMigrationRunner
                 ["AddressStartWithZero"] = ReadOrDefault(plc, "ModbusAddressStartWithZero", true),
                 ["RegisterFunction"] = ReadOrDefault(plc, "ModbusRegisterFunction", 3),
                 ["BitFunction"] = ReadOrDefault(plc, "ModbusBitFunction", 1),
-                ["DataFormat"] = ReadOrDefault(plc, "ModbusDataFormat", (int)Kanban.Core.Models.PlcDataFormat.ABCD),
+                ["DataFormat"] = ReadOrDefault(plc, "ModbusDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD),
                 ["BatchInt32Limit"] = ReadOrDefault(plc, "ModbusBatchInt32Limit", 62),
             };
             plc["Omron"] = new JsonObject

@@ -1,8 +1,8 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Mapping;
+namespace Kanban.Collector.Core.Mapping;
 
 /// <summary>
 /// 设备配置实体 ↔ DTO 映射（**全局唯一实现**）。
@@ -89,7 +89,7 @@ public static class DeviceMapper
                 // 否则自定义 GUID 的报警经一次同步后 Id 被改写，历史事件关联断裂（审查修复 2026-08-15）。
                 PlcAddress = a.PlcAddress,
                 Description = a.Description,
-                Level = (Kanban.Core.Models.AlarmLevel)a.Level,
+                Level = (Kanban.Collector.Core.Models.AlarmLevel)a.Level,
                 Id = a.Id,
             });
         }
@@ -101,8 +101,8 @@ public static class DeviceMapper
                 DeviceId = x.DeviceId,
                 Name = x.Name,
                 PlcAddress = x.PlcAddress,
-                Severity = (Kanban.Core.Models.DefectSeverity)x.Severity,
-                Category = (Kanban.Core.Models.DefectCategory)x.Category,
+                Severity = (Kanban.Collector.Core.Models.DefectSeverity)x.Severity,
+                Category = (Kanban.Collector.Core.Models.DefectCategory)x.Category,
             });
         }
         foreach (var c in dto.CounterAlarms ?? [])

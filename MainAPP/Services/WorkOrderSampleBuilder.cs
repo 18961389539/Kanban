@@ -1,5 +1,5 @@
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 
 namespace MainAPP.Services;
 

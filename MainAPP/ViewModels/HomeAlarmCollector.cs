@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Helpers;
 
 namespace MainAPP.ViewModels;

@@ -1,7 +1,7 @@
 using System.IO;
 using Kanban.Collector.Services;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;

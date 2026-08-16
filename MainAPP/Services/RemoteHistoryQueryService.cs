@@ -1,8 +1,8 @@
 using Kanban.Client;
-using Kanban.Core.Services;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using MainAPP.Models;
@@ -123,7 +123,7 @@ public sealed class RemoteHistoryQueryService :
     }
 
     public bool LogAlarmEvent(string deviceId, string deviceName, string alarmId,
-        string alarmName, string plcAddress, Kanban.Core.Entities.AlarmEventType eventType, DateTime eventTime,
+        string alarmName, string plcAddress, Kanban.Collector.Core.Entities.AlarmEventType eventType, DateTime eventTime,
         string? shiftName = null)
     {
         if (IsRemote)
@@ -623,7 +623,7 @@ public sealed class RemoteHistoryQueryService :
                     AlarmId = dto.AlarmId,
                     AlarmName = dto.AlarmName,
                     PlcAddress = dto.PlcAddress,
-                    EventType = (Kanban.Core.Entities.AlarmEventType)dto.EventType,
+                    EventType = (Kanban.Collector.Core.Entities.AlarmEventType)dto.EventType,
                     EventTime = dto.EventTime,
                     ShiftName = dto.ShiftName,
                 }).ToList();
@@ -650,8 +650,8 @@ public sealed class RemoteHistoryQueryService :
                     DeviceName = dto.DeviceName,
                     DefectId = dto.DefectId,
                     DefectName = dto.DefectName,
-                    Severity = (Kanban.Core.Models.DefectSeverity)(int)dto.Severity,
-                    Category = (Kanban.Core.Models.DefectCategory)(int)dto.Category,
+                    Severity = (Kanban.Collector.Core.Models.DefectSeverity)(int)dto.Severity,
+                    Category = (Kanban.Collector.Core.Models.DefectCategory)(int)dto.Category,
                     ShiftName = dto.ShiftName,
                     Count = dto.Count,
                     Timestamp = dto.Timestamp,

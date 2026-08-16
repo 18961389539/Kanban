@@ -1,6 +1,6 @@
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 internal static class DWordAddressBatchCollector
 {

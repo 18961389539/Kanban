@@ -1,8 +1,8 @@
 using Kanban.Collector.Hubs;
 using Kanban.Collector.Services;
-using Kanban.Core.DependencyInjection;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.DependencyInjection;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;

@@ -2,8 +2,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using MainAPP.Helpers;
 using MainAPP.Resources;
 

@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// PLC 数据采集服务抽象接口：定义外部调用方（ViewModel / DevicePlcCommandHandler 等）

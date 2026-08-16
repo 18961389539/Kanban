@@ -1,6 +1,6 @@
 using System.Net.Sockets;
 using System.IO;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
 

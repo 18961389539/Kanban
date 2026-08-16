@@ -36,7 +36,7 @@
        这里显式引用同一份 DLL，供 PLC 仿真测试（SiemensS7Server / ModbusTcpServer）使用。 -->
   <ItemGroup>
     <Reference Include="HslCommunication">
-      <HintPath>..\MainAPP\DLLS\HslCommunication.dll</HintPath>
+      <HintPath>..\lib\HslCommunication\HslCommunication.dll</HintPath>
     </Reference>
   </ItemGroup>
 

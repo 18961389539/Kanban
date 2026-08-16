@@ -1,8 +1,8 @@
 using System.IO;
 using System.Reflection;
 using Kanban.Collector.Services;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

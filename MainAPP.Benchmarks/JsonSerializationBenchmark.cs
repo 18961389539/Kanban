@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using System.Collections.ObjectModel;
 using System.Text.Json;

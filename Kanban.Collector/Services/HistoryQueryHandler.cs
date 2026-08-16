@@ -1,7 +1,7 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Entities;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using DefectSeverity = Kanban.Contracts.Enums.DefectSeverity;

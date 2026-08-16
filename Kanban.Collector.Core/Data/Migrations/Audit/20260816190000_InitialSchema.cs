@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Kanban.Core.Data.Migrations.Audit
+namespace Kanban.Collector.Core.Data.Migrations.Audit
 {
     /// <inheritdoc />
     public partial class InitialSchema : Migration

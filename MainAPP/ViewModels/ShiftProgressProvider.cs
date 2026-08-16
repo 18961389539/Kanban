@@ -1,5 +1,5 @@
 using Kanban.Contracts.Formatting;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
 
 namespace MainAPP.ViewModels;

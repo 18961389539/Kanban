@@ -1,5 +1,5 @@
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;

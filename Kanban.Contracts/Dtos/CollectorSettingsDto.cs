@@ -73,7 +73,7 @@ public sealed record OmronFinsSettingsDto
     public int? ReadSplits { get; init; }
 }
 
-/// <summary>班次配置的跨进程传输形态（Collector 端还原为 Kanban.Core.Models.ShiftConfig）。</summary>
+/// <summary>班次配置的跨进程传输形态（Collector 端还原为 Kanban.Collector.Core.Models.ShiftConfig）。</summary>
 public sealed record ShiftConfigDto
 {
     public string Name { get; init; } = "";

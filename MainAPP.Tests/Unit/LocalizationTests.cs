@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
 using MainAPP.Services;
 using Xunit;

@@ -1,7 +1,7 @@
 using System.Threading.Channels;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 新报警通知内容。通知通道只接收领域事件，不依赖 WPF 页面生命周期。

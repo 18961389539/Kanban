@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 设备运行时状态（纯内存，不持久化）。

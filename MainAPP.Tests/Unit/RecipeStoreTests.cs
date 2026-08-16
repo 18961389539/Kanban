@@ -1,7 +1,7 @@
 ﻿using Kanban.Contracts.Enums;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using System.IO;
 using System.Text.Json;
 using Xunit;

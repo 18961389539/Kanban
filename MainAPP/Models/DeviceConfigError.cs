@@ -1,4 +1,4 @@
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 namespace MainAPP.Models;
 
 /// <summary>

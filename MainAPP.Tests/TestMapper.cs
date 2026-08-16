@@ -1,5 +1,5 @@
 using AutoMapper;
-using Kanban.Core.Mapping;
+using Kanban.Collector.Core.Mapping;
 
 namespace MainAPP.Tests;
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Kanban.Core.Data.Migrations.AlarmEvents
+namespace Kanban.Collector.Core.Data.Migrations.AlarmEvents
 {
     /// <inheritdoc />
     public partial class InitialSchema : Migration

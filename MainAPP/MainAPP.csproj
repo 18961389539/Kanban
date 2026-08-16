@@ -56,7 +56,7 @@
 
   <ItemGroup>
     <Reference Include="HslCommunication">
-      <HintPath>DLLS\HslCommunication.dll</HintPath>
+      <HintPath>..\lib\HslCommunication\HslCommunication.dll</HintPath>
     </Reference>
   </ItemGroup>
 

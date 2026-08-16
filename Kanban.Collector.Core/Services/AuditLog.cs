@@ -1,4 +1,4 @@
-﻿namespace Kanban.Core.Services;
+﻿namespace Kanban.Collector.Core.Services;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

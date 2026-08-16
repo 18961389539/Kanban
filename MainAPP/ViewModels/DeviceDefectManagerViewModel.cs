@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Services;
 using MainAPP.Resources;
 

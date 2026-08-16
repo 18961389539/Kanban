@@ -1,9 +1,9 @@
 using System.Globalization;
 using Kanban.Collector.Core.Localization;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 配方校验（**全局唯一实现**，ADR-4 单源约定）：

@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 设备配置类（持久化到数据库）。

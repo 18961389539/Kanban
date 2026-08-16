@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 using MainAPP.ViewModels;
 
 namespace MainAPP.Views;

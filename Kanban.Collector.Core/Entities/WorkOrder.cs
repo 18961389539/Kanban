@@ -1,4 +1,4 @@
-﻿namespace Kanban.Core.Entities;
+﻿namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
 /// 工单状态枚举。状态机：Pending → Running → Completed/Aborted。

@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Windows.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using MainAPP.Resources;
 

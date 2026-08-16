@@ -1,4 +1,4 @@
-namespace Kanban.Core.Entities;
+namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
 /// 操作审计记录：谁在何时对什么做了什么、结果如何。

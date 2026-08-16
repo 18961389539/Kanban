@@ -5,12 +5,12 @@ using System.Windows.Data;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using MainAPP.Helpers;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Kanban.Contracts.Metrics;
 using OxyPlot;
@@ -419,7 +419,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Core.Services.ProductionHistoryStore? historyStore = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -776,7 +776,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void CheckWorkOrderCompletionTarget()
     {
         if (_dialog == null || CurrentWorkOrder == null) return;
-        if (CurrentWorkOrder.Status != Kanban.Core.Entities.WorkOrderStatus.Running) return;
+        if (CurrentWorkOrder.Status != Kanban.Collector.Core.Entities.WorkOrderStatus.Running) return;
         if (_notifiedWorkOrderIds.Contains(CurrentWorkOrder.Id)) return;
         var produced = _currentWorkOrderOk;
         if (CurrentWorkOrder.TargetQuantity > 0 && produced >= CurrentWorkOrder.TargetQuantity)

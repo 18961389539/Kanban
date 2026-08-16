@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Serilog;
 
-namespace Kanban.Core.Data;
+namespace Kanban.Collector.Core.Data;
 
 /// <summary>
 /// 设备仓储抽象接口：供 ViewModel / Service 依赖，解耦具体实现。

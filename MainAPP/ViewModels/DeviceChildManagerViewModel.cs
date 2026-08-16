@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;

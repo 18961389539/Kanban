@@ -1,6 +1,6 @@
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 缺陷历史快照读取能力。采集侧写入走 <see cref="DefectHistoryStore.Append"/>，

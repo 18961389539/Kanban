@@ -1,7 +1,7 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Mapping;
+namespace Kanban.Collector.Core.Mapping;
 
 /// <summary>
 /// 配方实体 ↔ DTO 映射（**全局唯一实现**，ADR-4 单源约定）。

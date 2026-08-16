@@ -1,7 +1,7 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;

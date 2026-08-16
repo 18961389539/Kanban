@@ -4,10 +4,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Localization;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Serilog;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 数据采集模式。
@@ -49,7 +49,7 @@ public partial class AppSettings : ObservableObject
 {
     public const int CurrentSchemaVersion = SettingsMigrationRunner.CurrentVersion;
 
-    internal static readonly JsonSerializerOptions JsonOptions = new()
+    public static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
@@ -223,7 +223,7 @@ public partial class AppSettings : ObservableObject
     /// 临时文件名用 <see cref="Path.GetRandomFileName"/> 生成唯一串，进一步消除冲突窗口。
     /// 备份失败与临时文件写入失败均记录 Serilog 警告但不阻断主流程（避免磁盘短暂故障导致整体不可用）。
     /// </remarks>
-    internal static void WriteFileAtomically(string path, string content)
+    public static void WriteFileAtomically(string path, string content)
     {
         // 取（或创建）该 path 专属的锁对象，不同 path 互不阻塞
         object? pathLock;

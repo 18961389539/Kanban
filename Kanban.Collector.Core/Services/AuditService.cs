@@ -1,10 +1,10 @@
 using System.Threading.Channels;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 操作审计服务：有界 Channel + 后台批量落库。

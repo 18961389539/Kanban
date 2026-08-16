@@ -7,11 +7,11 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Helpers;
 using MainAPP.Services;
 

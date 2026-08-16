@@ -1,4 +1,4 @@
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Services;
 using Xunit;
 

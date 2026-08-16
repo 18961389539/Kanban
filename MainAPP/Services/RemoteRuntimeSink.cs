@@ -1,9 +1,9 @@
 using Kanban.Client;
-using Kanban.Core.Services;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Mapping;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using AlarmEventType = Kanban.Contracts.Enums.AlarmEventType;

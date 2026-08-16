@@ -1,9 +1,9 @@
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 public sealed class StatusTransitionHistoryStore(DatabaseProvider db, ILogger<StatusTransitionHistoryStore> logger) : IStatusTransitionHistoryService
 {

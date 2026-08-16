@@ -8,7 +8,7 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
-    xmlns:entities="clr-namespace:Kanban.Core.Entities;assembly=Kanban.Collector.Core"
+    xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
     d:DesignHeight="700"
     d:DesignWidth="1100"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">

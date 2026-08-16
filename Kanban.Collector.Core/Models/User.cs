@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 系统用户账号。密码以 PBKDF2-SHA256 + 随机 salt 哈希存储，源码不含明文密码。

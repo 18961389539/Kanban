@@ -1,4 +1,4 @@
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 运行模式查询（数据模式 Local/Remote 的统一判定入口）。

@@ -1,5 +1,5 @@
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -115,8 +115,8 @@ public sealed class CollectorWorker : BackgroundService
         // 确保 Collector 进程在 en/ja 模式下也使用正确语言（不依赖 MainAPP 推送）。
         var langCode = settings.Language switch
         {
-            Kanban.Core.Services.AppLanguage.En => "en-US",
-            Kanban.Core.Services.AppLanguage.Ja => "ja-JP",
+            Kanban.Collector.Core.Services.AppLanguage.En => "en-US",
+            Kanban.Collector.Core.Services.AppLanguage.Ja => "ja-JP",
             _ => "zh-CN",
         };
         Kanban.Collector.Core.Localization.ConnectionStatusMessages.ApplyLanguage(langCode);

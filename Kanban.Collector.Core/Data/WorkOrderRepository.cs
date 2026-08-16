@@ -1,11 +1,11 @@
 using AutoMapper;
 using System.Collections.ObjectModel;
-using Kanban.Core.Entities;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
-namespace Kanban.Core.Data;
+namespace Kanban.Collector.Core.Data;
 
 /// <summary>
 /// 工单仓储抽象接口：供 ViewModel / Service 依赖，解耦具体实现。

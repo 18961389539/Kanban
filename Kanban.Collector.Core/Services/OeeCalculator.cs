@@ -1,8 +1,8 @@
-using Kanban.Core.Models;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Entities;
 using OeeFormulas = Kanban.Analysis.OeeCalculator;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// OEE 计算门面（Core 侧）：四率公式**全部委托** <see cref="Kanban.Analysis.OeeCalculator"/>

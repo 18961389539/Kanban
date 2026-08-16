@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
 
@@ -37,7 +37,7 @@ public class AppSettingsValidationTests : IDisposable
         var s = new AppSettings();
         Assert.Equal("192.168.1.2", s.PlcConfig.IpAddress);
         Assert.Equal(4999, s.PlcConfig.Port);
-        Assert.Equal(Kanban.Core.Models.PlcBrand.Mitsubishi, s.PlcConfig.Brand);
+        Assert.Equal(Kanban.Collector.Core.Models.PlcBrand.Mitsubishi, s.PlcConfig.Brand);
         Assert.Equal(5000, s.PlcConfig.TimeoutMs);
         Assert.Equal(200, s.PollingIntervalMs);
         Assert.Equal(25, s.HistoryWriteIntervalScans);
@@ -50,22 +50,22 @@ public class AppSettingsValidationTests : IDisposable
     [Fact]
     public void KeyenceBrand_UsesMcDefaultPortAndPreservesCustomPort()
     {
-        var config = new Kanban.Core.Models.PlcConfig();
+        var config = new Kanban.Collector.Core.Models.PlcConfig();
 
-        config.Brand = Kanban.Core.Models.PlcBrand.Keyence;
+        config.Brand = Kanban.Collector.Core.Models.PlcBrand.Keyence;
         Assert.Equal(5000, config.Port);
 
         config.Port = 8501;
-        config.Brand = Kanban.Core.Models.PlcBrand.Mitsubishi;
+        config.Brand = Kanban.Collector.Core.Models.PlcBrand.Mitsubishi;
         Assert.Equal(8501, config.Port);
     }
 
     [Fact]
     public void KeyenceSnapshot_PreservesConnectionSettings()
     {
-        var source = new Kanban.Core.Models.PlcConfig
+        var source = new Kanban.Collector.Core.Models.PlcConfig
         {
-            Brand = Kanban.Core.Models.PlcBrand.Keyence,
+            Brand = Kanban.Collector.Core.Models.PlcBrand.Keyence,
             IpAddress = "10.10.0.5",
             Port = 8501,
             TimeoutMs = 3500,
@@ -73,7 +73,7 @@ public class AppSettingsValidationTests : IDisposable
 
         var snapshot = source.CreateSnapshot();
 
-        Assert.Equal(Kanban.Core.Models.PlcBrand.Keyence, snapshot.Brand);
+        Assert.Equal(Kanban.Collector.Core.Models.PlcBrand.Keyence, snapshot.Brand);
         Assert.Equal("10.10.0.5", snapshot.IpAddress);
         Assert.Equal(8501, snapshot.Port);
         Assert.Equal(3500, snapshot.TimeoutMs);
@@ -99,20 +99,20 @@ public class AppSettingsValidationTests : IDisposable
     {
         _settings.PlcConfig.IpAddress = "10.0.0.99";
         _settings.PlcConfig.Port = 6000;
-        _settings.PlcConfig.Brand = Kanban.Core.Models.PlcBrand.ModbusTcp;
+        _settings.PlcConfig.Brand = Kanban.Collector.Core.Models.PlcBrand.ModbusTcp;
         _settings.PlcConfig.TimeoutMs = 8000;
         _settings.PlcConfig.ModbusUnitId = 7;
         _settings.PlcConfig.ModbusAddressStartWithZero = false;
         _settings.PlcConfig.ModbusRegisterFunction = 4;
         _settings.PlcConfig.ModbusBitFunction = 2;
-        _settings.PlcConfig.ModbusDataFormat = Kanban.Core.Models.PlcDataFormat.CDAB;
-        _settings.PlcConfig.SiemensDataFormat = Kanban.Core.Models.PlcDataFormat.BADC;
+        _settings.PlcConfig.ModbusDataFormat = Kanban.Collector.Core.Models.PlcDataFormat.CDAB;
+        _settings.PlcConfig.SiemensDataFormat = Kanban.Collector.Core.Models.PlcDataFormat.BADC;
         _settings.PollingIntervalMs = 500;
         _settings.HistoryWriteIntervalScans = 50;
         _settings.DashboardRefreshIntervalMs = 5000;
         _settings.IsDarkTheme = true;
         _settings.Shifts.Clear();
-        _settings.Shifts.Add(new Kanban.Core.Models.ShiftConfig { Name = "早班", StartTime = new System.TimeSpan(0, 0, 0), EndTime = new System.TimeSpan(12, 0, 0) });
+        _settings.Shifts.Add(new Kanban.Collector.Core.Models.ShiftConfig { Name = "早班", StartTime = new System.TimeSpan(0, 0, 0), EndTime = new System.TimeSpan(12, 0, 0) });
 
         _settings.Save();
         Assert.True(File.Exists(_settings.SettingsFilePath));
@@ -122,14 +122,14 @@ public class AppSettingsValidationTests : IDisposable
 
         Assert.Equal("10.0.0.99", loaded.PlcConfig.IpAddress);
         Assert.Equal(6000, loaded.PlcConfig.Port);
-        Assert.Equal(Kanban.Core.Models.PlcBrand.ModbusTcp, loaded.PlcConfig.Brand);
+        Assert.Equal(Kanban.Collector.Core.Models.PlcBrand.ModbusTcp, loaded.PlcConfig.Brand);
         Assert.Equal(8000, loaded.PlcConfig.TimeoutMs);
         Assert.Equal((byte)7, loaded.PlcConfig.ModbusUnitId);
         Assert.False(loaded.PlcConfig.ModbusAddressStartWithZero);
         Assert.Equal(4, loaded.PlcConfig.ModbusRegisterFunction);
         Assert.Equal(2, loaded.PlcConfig.ModbusBitFunction);
-        Assert.Equal(Kanban.Core.Models.PlcDataFormat.CDAB, loaded.PlcConfig.ModbusDataFormat);
-        Assert.Equal(Kanban.Core.Models.PlcDataFormat.BADC, loaded.PlcConfig.SiemensDataFormat);
+        Assert.Equal(Kanban.Collector.Core.Models.PlcDataFormat.CDAB, loaded.PlcConfig.ModbusDataFormat);
+        Assert.Equal(Kanban.Collector.Core.Models.PlcDataFormat.BADC, loaded.PlcConfig.SiemensDataFormat);
         Assert.Equal(500, loaded.PollingIntervalMs);
         Assert.Equal(50, loaded.HistoryWriteIntervalScans);
         Assert.Equal(5000, loaded.DashboardRefreshIntervalMs);

@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using MainAPP.Views;

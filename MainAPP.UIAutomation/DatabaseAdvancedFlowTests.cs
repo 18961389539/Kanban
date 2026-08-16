@@ -128,7 +128,7 @@ public class DatabaseAdvancedFlowTests : IDisposable
     /// <summary>
     /// 预置旧版 production_logs.db（缺少 WorkOrderId 列） → 启动 MainAPP →
     /// EnsureSchemaUpgrades 应自动添加 WorkOrderId 列。
-    /// 验证 <see cref="Kanban.Core.Data.DatabaseProvider.EnsureSchemaUpgrades"/> 的补列逻辑。
+    /// 验证 <see cref="Kanban.Collector.Core.Data.DatabaseProvider.EnsureSchemaUpgrades"/> 的补列逻辑。
     /// </summary>
     [Fact]
     public void OldSchema_ProductionLogs_EnsureSchemaUpgrades_AddsWorkOrderIdColumn()
@@ -175,7 +175,7 @@ public class DatabaseAdvancedFlowTests : IDisposable
     /// <summary>
     /// 预置 2 条过期 Completed 工单（UpdatedAt > 365天前） + 1 条近期 Completed 工单 →
     /// 启动 MainAPP → CleanupOldWorkOrders 应删除过期的 2 条，保留近期的 1 条。
-    /// 验证 <see cref="Kanban.Core.Data.WorkOrderRepository.CleanupOldWorkOrders"/> 的保留逻辑。
+    /// 验证 <see cref="Kanban.Collector.Core.Data.WorkOrderRepository.CleanupOldWorkOrders"/> 的保留逻辑。
     /// </summary>
     [Fact]
     [Trait("Category", "LongRunning")]

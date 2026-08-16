@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Kanban.Client;
-using Kanban.Core.Services;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Mapping;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
 using System.Windows;
 using MainAPP.ViewModels;
 using MainAPP.Resources;
@@ -232,7 +232,7 @@ public sealed class ApplicationStartupCoordinator(
         // 配方库：写操作委托 Collector 落盘 recipes.json；启动时从 Collector 拉取（与设备同源）
         var recipeStore = services.GetRequiredService<IRecipeStore>();
         recipeStore.RemotePersistenceHook = recipes =>
-            client.SaveRecipesAsync(Kanban.Core.Mapping.RecipeMapper.ToDtos(recipes).ToList());
+            client.SaveRecipesAsync(Kanban.Collector.Core.Mapping.RecipeMapper.ToDtos(recipes).ToList());
 
         // 屏端零配置：设备列表从 Collector 拉取（屏端无 devices.json 也能启动）。
         // 失败（服务未就绪等）时保留本地已加载配置，不影响启动。
@@ -260,7 +260,7 @@ public sealed class ApplicationStartupCoordinator(
             var remoteRecipes = await client.GetRecipesAsync();
             if (remoteRecipes.Count > 0)
             {
-                recipeStore.ReplaceAll(Kanban.Core.Mapping.RecipeMapper.ToEntities(remoteRecipes));
+                recipeStore.ReplaceAll(Kanban.Collector.Core.Mapping.RecipeMapper.ToEntities(remoteRecipes));
                 Log.Information("Remote 配方已从采集服务加载：{Count} 条", remoteRecipes.Count);
             }
             else

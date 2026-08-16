@@ -1,6 +1,6 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Services;
@@ -84,7 +84,7 @@ public sealed class CollectorDiagnosticsProvider
         }
     }
 
-    private static int CountConfiguredAddresses(Kanban.Core.Models.Device device)
+    private static int CountConfiguredAddresses(Kanban.Collector.Core.Models.Device device)
     {
         var primary = new[]
         {

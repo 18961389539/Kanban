@@ -1,5 +1,5 @@
 using System.Globalization;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 
 namespace MainAPP.Services;
 

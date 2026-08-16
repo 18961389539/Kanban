@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
 using OxyPlot.Axes;

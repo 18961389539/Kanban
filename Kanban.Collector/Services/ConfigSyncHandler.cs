@@ -1,11 +1,11 @@
 using Kanban.Collector.Core.Localization;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Mapping;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
@@ -187,11 +187,11 @@ public sealed class ConfigSyncHandler
             var pendingByDevice = new Dictionary<string, WorkOrder>();
             foreach (var w in snapshot)
             {
-                if (w.Status == Kanban.Core.Entities.WorkOrderStatus.Running)
+                if (w.Status == Kanban.Collector.Core.Entities.WorkOrderStatus.Running)
                 {
                     runningByDevice.TryAdd(w.DeviceId, w);
                 }
-                else if (w.Status == Kanban.Core.Entities.WorkOrderStatus.Pending)
+                else if (w.Status == Kanban.Collector.Core.Entities.WorkOrderStatus.Pending)
                 {
                     if (!pendingByDevice.TryGetValue(w.DeviceId, out var current) || w.PlannedStart < current.PlannedStart)
                         pendingByDevice[w.DeviceId] = w;

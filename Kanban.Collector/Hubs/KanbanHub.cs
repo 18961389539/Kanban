@@ -1,10 +1,10 @@
 using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Services;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Mapping;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
+using Kanban.Collector.Core.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -290,7 +290,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         };
     }
 
-    private List<Kanban.Core.Models.ShiftConfig> LockedShifts()
+    private List<Kanban.Collector.Core.Models.ShiftConfig> LockedShifts()
     {
         lock (_appSettings.ShiftsLock)
             return _appSettings.Shifts.ToList();

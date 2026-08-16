@@ -1,7 +1,7 @@
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Mapping;
+namespace Kanban.Collector.Core.Mapping;
 
 /// <summary>
 /// 工单实体 ↔ DTO 映射（**全局唯一实现**）。
@@ -40,7 +40,7 @@ public static class WorkOrderMapper
         TargetQuantity = dto.TargetQuantity,
         PlannedStart = dto.PlannedStart,
         PlannedEnd = dto.PlannedEnd,
-        Status = (Kanban.Core.Entities.WorkOrderStatus)dto.Status,
+        Status = (Kanban.Collector.Core.Entities.WorkOrderStatus)dto.Status,
         CompletedOkCount = dto.CompletedOkCount,
         CompletedNgCount = dto.CompletedNgCount,
         Remark = dto.Remark,

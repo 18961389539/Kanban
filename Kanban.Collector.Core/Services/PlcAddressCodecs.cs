@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 public interface IPlcAddressCodec
 {
@@ -38,7 +38,7 @@ public sealed class PlcAddressCodecResolver : IPlcAddressCodecResolver
         _brandRegistry.Resolve(brand).CreateAddressCodec(_settings.PlcConfig);
 }
 
-internal sealed class MitsubishiAddressCodec : IPlcAddressCodec
+public sealed class MitsubishiAddressCodec : IPlcAddressCodec
 {
     public PlcBrand Brand => PlcBrand.Mitsubishi;
     public PlcAddressParseResult Parse(string? address)

@@ -1,8 +1,8 @@
 using System.IO;
 using Kanban.Client;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -113,7 +113,7 @@ public class RemoteHistoryQueryServiceTests : IDisposable
             ctx.AlarmEvents.Add(new AlarmEventRecord
             {
                 DeviceId = "dev-1", DeviceName = "注塑机-1", AlarmId = "A1", AlarmName = "过温",
-                EventType = Kanban.Core.Entities.AlarmEventType.Triggered,
+                EventType = Kanban.Collector.Core.Entities.AlarmEventType.Triggered,
                 EventTime = new DateTime(2026, 8, 1, 10, 30, 0), ShiftName = "白班",
             });
             ctx.SaveChanges();

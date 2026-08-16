@@ -1,5 +1,5 @@
 ﻿using System;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Xunit;
 

@@ -1,8 +1,8 @@
 using System.Globalization;
-using Kanban.Core.Services;
-using Kanban.Core.Models;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
 using Material.Icons;
 using Material.Icons.WPF;

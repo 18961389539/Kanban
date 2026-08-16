@@ -1,9 +1,9 @@
 ﻿using Kanban.Collector.Core.Localization;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 配方下发执行器：把配方参数项写入 PLC，写后读回校验，失败自动回滚。

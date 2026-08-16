@@ -2,9 +2,9 @@ using System.IO;
 using System.Text.Json;
 using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -313,6 +313,30 @@ public class ConfigSyncHandlerTests : IDisposable
 
         Assert.Equal(64, _appSettings.PlcBatchReadMaxLength);
         Assert.False(File.Exists(Path.Combine(_tempDir, "Config", "settings.json")));
+    }
+
+    [Fact]
+    public async Task SaveCollectorSettings_DiskWriteFailure_RunningInstanceAndDriverUnchanged()
+    {
+        // 制造磁盘写失败：用同名文件占据 Config 目录路径，EnsureDirectory 的 Directory.CreateDirectory 会抛 IOException
+        // （对应"先落盘③→后生效④"的落盘失败分支：磁盘写失败时运行实例与 PLC 驱动必须保持原状）
+        File.WriteAllText(Path.Combine(_tempDir, "Config"), "block-config-dir");
+
+        await Assert.ThrowsAsync<IOException>(() =>
+            _handler.SaveCollectorSettingsAsync(new CollectorSettingsDto
+            {
+                PollingIntervalMs = 900,
+                PlcIpAddress = "10.0.0.9",
+                PlcPort = 7000,
+            }));
+
+        // 运行实例保持原状（不落内存）
+        Assert.Equal(200, _appSettings.PollingIntervalMs);
+        Assert.Equal("192.168.1.2", _appSettings.PlcConfig.IpAddress);
+        Assert.Equal(4999, _appSettings.PlcConfig.Port);
+        // PLC 驱动不热切换
+        _profileProvider.DidNotReceive().Refresh(Arg.Any<PlcConfig>());
+        _connectionManager.DidNotReceive().Disconnect();
     }
 
     [Fact]

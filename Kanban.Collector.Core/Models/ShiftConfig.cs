@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using NodaTime;
 using System.Text.Json.Serialization;
 
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 班次配置（时间部分，不绑定具体日期，仅表示每日班次起止时刻）

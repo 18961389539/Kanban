@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
-using Kanban.Core.Models;
+using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 设备状态字追踪器：拥有 <see cref="_prevStatusWords"/> 字典及其专用锁。职责：

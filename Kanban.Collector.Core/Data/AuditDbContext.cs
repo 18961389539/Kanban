@@ -1,8 +1,8 @@
-using Kanban.Core.Entities;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kanban.Core.Data;
+namespace Kanban.Collector.Core.Data;
 
 /// <summary>
 /// 操作审计数据库（audit_logs.db）：只追加写入，与业务库隔离，避免审计膨胀影响生产库。

@@ -4,8 +4,8 @@ using Kanban.Collector.Hubs;
 using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,10 +70,10 @@ public sealed class KanbanHubQueriesTests : IDisposable
         // 历史服务替代：查询路径返回空数据（未配置返回时 NSubstitute 默认 null → 处理器 NRE 转 Error）
         var historyService = Substitute.For<IHistoryService>();
         historyService.QueryProductionLogs(Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>())
-            .Returns(new List<Kanban.Core.Entities.ProductionLog>());
+            .Returns(new List<Kanban.Collector.Core.Entities.ProductionLog>());
         historyService.QueryProductionLogsPaged(
                 Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>())
-            .Returns((new List<Kanban.Core.Entities.ProductionLog>(), 0));
+            .Returns((new List<Kanban.Collector.Core.Entities.ProductionLog>(), 0));
 
         _hub = new KanbanHub(
             _aggregator,
@@ -144,7 +144,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
         lock (_settings.ShiftsLock)
         {
             _settings.Shifts.Clear();
-            _settings.Shifts.Add(new Kanban.Core.Models.ShiftConfig
+            _settings.Shifts.Add(new Kanban.Collector.Core.Models.ShiftConfig
             {
                 Name = "全天班",
                 StartTime = TimeSpan.Zero,

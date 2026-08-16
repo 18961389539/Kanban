@@ -1,6 +1,6 @@
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 操作审计服务：追加写入 audit_logs.db，并提供分页查询与保留期清理。

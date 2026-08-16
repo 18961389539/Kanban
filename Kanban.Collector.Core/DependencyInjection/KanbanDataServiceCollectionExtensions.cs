@@ -1,10 +1,10 @@
-using Kanban.Core.Data;
-using Kanban.Core.Mapping;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Mapping;
+using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Kanban.Core.DependencyInjection;
+namespace Kanban.Collector.Core.DependencyInjection;
 
 /// <summary>
 /// 采集/存储核心服务的共享 DI 注册。

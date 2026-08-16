@@ -33,7 +33,7 @@
 
   <ItemGroup>
     <Reference Include="HslCommunication">
-      <HintPath>..\MainAPP\DLLS\HslCommunication.dll</HintPath>
+      <HintPath>..\lib\HslCommunication\HslCommunication.dll</HintPath>
     </Reference>
   </ItemGroup>
 
@@ -60,8 +60,6 @@
     <InternalsVisibleTo Include="MainAPP.Benchmarks" />
     <InternalsVisibleTo Include="MainAPP.E2E" />
     <InternalsVisibleTo Include="Kanban.Collector" />
-    <!-- 过渡期：MainAPP 仍直接使用采集核心的 internal 成员（JsonOptions/RuntimeMap/MitsubishiAddressCodec），第 4 步瘦身后移除 -->
-    <InternalsVisibleTo Include="MainAPP" />
   </ItemGroup>
 
 </Project>

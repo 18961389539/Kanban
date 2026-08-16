@@ -2,8 +2,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Kanban.Core.Data;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using MainAPP.Views;
@@ -339,6 +339,6 @@ public sealed class TestHost : IDisposable
         public string? ShowOpenFileDialog(string title, string filter) => null;
         public string? ShowPasswordInput(string title, string message) => null;
         public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
-        public Kanban.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Core.Entities.WorkOrder? template, System.Collections.Generic.IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+        public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, System.Collections.Generic.IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
     }
 }

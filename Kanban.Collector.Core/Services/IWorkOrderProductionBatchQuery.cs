@@ -1,6 +1,6 @@
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 历史服务的可选批量能力，旧测试桩未实现时由工单服务回退逐条查询。

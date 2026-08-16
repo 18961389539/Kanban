@@ -1,4 +1,4 @@
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 历史查询分页参数归一化：防止客户端传入的 Page/PageSize 造成

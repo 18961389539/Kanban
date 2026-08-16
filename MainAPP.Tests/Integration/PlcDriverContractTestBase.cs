@@ -1,6 +1,6 @@
 using HslCommunication.Core.Net;
-using Kanban.Core.Models;
-using Kanban.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Xunit;
 
 namespace MainAPP.Tests.Integration;

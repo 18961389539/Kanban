@@ -1,9 +1,9 @@
-﻿using Kanban.Core.Models;
-using Kanban.Core.Services;
+﻿using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
-using Kanban.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
-namespace Kanban.Core.Data;
+namespace Kanban.Collector.Core.Data;
 
 /// <summary>
 /// 生产快照数据库上下文（独立数据库文件 production_logs.db）。

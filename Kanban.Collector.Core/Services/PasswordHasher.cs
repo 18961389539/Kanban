@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Kanban.Core.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// 密码哈希服务：PBKDF2-SHA256 + 随机 salt（100,000 迭代，可配置）。

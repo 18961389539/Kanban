@@ -1,4 +1,4 @@
-namespace Kanban.Core.Models;
+namespace Kanban.Collector.Core.Models;
 
 /// <summary>
 /// 用户角色（权限分级）。
