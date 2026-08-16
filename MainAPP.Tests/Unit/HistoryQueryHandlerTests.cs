@@ -183,8 +183,9 @@ public class HistoryQueryHandlerTests
     [Fact]
     public async Task QueryBatchAsync_WideWindow_TruncatedToRecent7Days()
     {
-        // 30 天窗口超限：截断为最近 7 天（To 保持不变，From 前移）
-        var from = DateTime.Now.AddDays(-30);
+        // 超限窗口截断为 MaxQueryWindow（31 天，覆盖 WPF/Web 近30天/本月快捷档），
+        // To 保持不变，From 前移；30 天窗口不超限不会被截断。
+        var from = DateTime.Now.AddDays(-40);
         var to = DateTime.Now;
         _executor.QueryProductionLogsStrict(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
             .Returns(new List<ProductionLog> { MakeLog(1, "dev1") });
@@ -199,7 +200,7 @@ public class HistoryQueryHandlerTests
 
         Assert.Equal(HistoryErrorCode.None, Assert.Single(response.Results).ErrorCode);
         _executor.Received(1).QueryProductionLogsStrict(
-            Arg.Is<DateTime>(f => f >= to.AddDays(-7).AddMinutes(-1) && f <= to.AddDays(-7).AddMinutes(1)),
+            Arg.Is<DateTime>(f => f >= to.AddDays(-31).AddMinutes(-1) && f <= to.AddDays(-31).AddMinutes(1)),
             Arg.Is<DateTime>(t => t == to),
             "dev1", null);
     }

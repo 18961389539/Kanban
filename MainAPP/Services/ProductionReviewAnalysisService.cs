@@ -2,9 +2,6 @@
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Entities;
-using Kanban.Core.Data;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.Resources;
 
@@ -41,7 +38,6 @@ public sealed record ReviewDefectConcentrationData(
 public sealed record ProductionReviewAnalysisResult(
     IReadOnlyList<ReviewAlarmAnalysisData> Alarms,
     IReadOnlyList<ReviewStatusSegmentData> StatusTimeline,
-    IReadOnlyList<ReviewDefectConcentrationData> DefectConcentrations,
     IReadOnlyList<string> HealthIssues,
     int HealthScore,
     string WorkOrderText,
@@ -147,7 +143,6 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
         return new ProductionReviewAnalysisResult(
             alarmAnalysis,
             timeline,
-            concentrations,
             health.Issues,
             health.Score,
             runningWorkOrder == null
@@ -161,6 +156,10 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
                 : $"{device.RecipeName} · {device.RecipeValue:N0}");
     }
 
+/// <summary>
+    /// 缺陷集中度（按小时增量）：仅作为健康分输入（DefectSpike 判定），不对外暴露——
+    /// 页面帕累托由 OverviewViewModel.BuildDefectParetos 独立聚合，两者口径已统一为"窗口内增量"。
+    /// </summary>
     private List<ReviewDefectConcentrationData> BuildDefectConcentrations(Device device, DateTime from, DateTime to)
     {
         if (_defectHistoryStore == null) return [];
@@ -174,8 +173,10 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             foreach (var snapshot in group.Where(snapshot => snapshot.Timestamp >= from && snapshot.Timestamp <= to)
                 .OrderBy(snapshot => snapshot.Timestamp))
             {
+                // 口径统一（2026-08-16）：按窗口内增量算——无基线的首条快照增量无法推算取 0
+                //（原实现 Math.Max(0, snapshot.Count) 把累计值当增量，会高估）。
                 var count = previous == null
-                    ? Math.Max(0, snapshot.Count)
+                    ? 0
                     : Math.Max(0, snapshot.Count - previous.Count);
                 if (count > 0)
                 {

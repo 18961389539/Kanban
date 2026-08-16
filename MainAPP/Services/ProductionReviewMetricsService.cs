@@ -2,8 +2,6 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 
@@ -182,7 +180,9 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
             int shiftAlarmCount = 0;
             double runSeconds = 0;
             double alarmSeconds = 0;
-            double targetSeconds = 0;
+            // 目标产量（件）：avgTargetCycle(件/秒) × 时段时长(秒)，与达成率分母同量纲——
+            // 命名曾误作 targetSeconds（2026-08-16 修正）。
+            double targetOutput = 0;
 
             foreach (var device in devices)
             {
@@ -225,11 +225,13 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                         initialState);
                     runSeconds += durations.RunTime;
                     alarmSeconds += durations.AlarmTime;
-                    targetSeconds += avgTargetCycle * Math.Max(0, (rangeTo - rangeFrom).TotalHours);
+                    targetOutput += avgTargetCycle * Math.Max(0, (rangeTo - rangeFrom).TotalHours);
                 }
             }
 
             var quality = OeeCalculator.CalculateQualityRate(shiftOk, shiftNg);
+            // (int)avgTargetCycle：CalculatePerformanceRate 形参为 int（节拍为整数值域），
+            // 均值小数部分截断，误差 <1 件/秒，可接受。
             var performance = OeeCalculator.CalculatePerformanceRate(
                 shiftOk,
                 shiftNg,
@@ -245,7 +247,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                 OeeCalculator.CalculateOee(quality, performance, availability),
                 runSeconds / 3600.0,
                 alarmSeconds / 3600.0,
-                targetSeconds > 0 ? Math.Clamp(total / targetSeconds, 0, 1) : 0));
+                targetOutput > 0 ? Math.Clamp(total / targetOutput, 0, 1) : 0));
         }
         return result;
     }

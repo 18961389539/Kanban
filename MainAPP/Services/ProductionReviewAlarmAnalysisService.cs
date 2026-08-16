@@ -2,7 +2,6 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Entities;
 
 namespace MainAPP.Services;
 
@@ -29,15 +28,19 @@ public sealed class ProductionReviewAlarmAnalysisService : IProductionReviewAlar
     {
         // 预排序一次：产量差分二分定位（2026-08-11 性能修复，原每 trigger 全量扫描 1.3 万条 → 9.2s）
         var sortedLogs = productionLogs.OrderBy(log => log.Timestamp).ToList();
+        // 先按设备过滤，再做时长预分组：防止同名设备（不同 DeviceId）的报警串入同一 (名,设备) 组
+        var scopedEvents = deviceId == null ? events : events.Where(e => e.DeviceId == deviceId).ToList();
         // 报警时长：按 (报警名, 设备) 预分组一次，避免每组对全量事件重复过滤+排序
-        var durationGroups = events
+        var durationGroups = scopedEvents
             .GroupBy(e => (e.AlarmName, e.DeviceName))
             .ToDictionary(g => g.Key, g => g.OrderBy(e => e.EventTime).ToList());
 
-        return events
+        return scopedEvents
             .Where(e => e.EventType == AlarmEventType.Triggered)
-            .Where(e => deviceId == null || e.DeviceId == deviceId)
-            .GroupBy(e => new { e.AlarmName, e.DeviceName, e.PlcAddress })
+            // 口径统一（2026-08-16）：输出分组与时长聚合同为 (报警名, 设备)——
+            // 原按 (名, 设备, 地址) 分行会让同报警名多地址的每一行都携带同一份全量时长，
+            // 时长被重复计入。PlcAddress 取该组首个触发事件的地址（UI 未展示该列，仅 CSV/PDF 保留）。
+            .GroupBy(e => new { e.AlarmName, e.DeviceName })
             .Select(group =>
             {
                 var triggers = group.OrderBy(e => e.EventTime).ToList();
@@ -47,7 +50,7 @@ public sealed class ProductionReviewAlarmAnalysisService : IProductionReviewAlar
                 return new ReviewAlarmAnalysisData(
                     group.Key.AlarmName,
                     group.Key.DeviceName,
-                    group.Key.PlcAddress,
+                    triggers[0].PlcAddress,
                     triggers.Count,
                     averageInterval,
                     triggers.Count >= 3 || (triggers.Count >= 2 && averageInterval <= 30),

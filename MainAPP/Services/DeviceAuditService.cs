@@ -14,6 +14,7 @@ public static class DeviceAuditService
         var items = devices.Select(d => new DeviceAuditItem(
             d.Id,
             d.Name ?? string.Empty,
+            d.MachineType ?? string.Empty,
             d.TargetCycle,
             d.OkCountAddress ?? string.Empty,
             d.NgCountAddress ?? string.Empty,
@@ -52,6 +53,7 @@ public sealed record DeviceAuditSnapshot(int Count, IReadOnlyList<DeviceAuditIte
 public sealed record DeviceAuditItem(
     string Id,
     string Name,
+    string MachineType,
     int TargetCycle,
     string OkAddress,
     string NgAddress,

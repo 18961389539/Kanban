@@ -79,9 +79,14 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         ? Math.Clamp((double)Runtime.TotalOkProduction / ShiftTargetQuantity, 0, 1)
         : 0;
 
-    /// <summary>班次进度文本："1,284 / 1,600 件"；无目标时为空。</summary>
+    /// <summary>班次进度文本："1,284 / 1,600"（不含单位）；无目标时为空。</summary>
     public string ShiftProgressText => ShiftTargetQuantity > 0
-        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0} 件"
+        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0}"
+        : string.Empty;
+
+    /// <summary>班次进度完整文本："1,284 / 1,600 件 · 80.3%"；无目标时为空。</summary>
+    public string ShiftProgressFullText => ShiftTargetQuantity > 0
+        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0} 件 · {ShiftProgressRatio:P1}"
         : string.Empty;
 
     /// <summary>是否有班次目标（进度条可见性）。</summary>
@@ -128,6 +133,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
                 OnPropertyChanged(nameof(ShiftTargetQuantity)); // 目标产能变化影响班次目标
                 OnPropertyChanged(nameof(ShiftProgressRatio));
                 OnPropertyChanged(nameof(ShiftProgressText));
+                OnPropertyChanged(nameof(ShiftProgressFullText));
                 OnPropertyChanged(nameof(HasShiftTarget));
                 break;
             case nameof(DeviceRuntime.RunTime):
@@ -147,6 +153,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
                 // 班次进度（本班次 OK 变化；班次切换瞬间产量清零也经此路径刷新目标）
                 OnPropertyChanged(nameof(ShiftProgressRatio));
                 OnPropertyChanged(nameof(ShiftProgressText));
+                OnPropertyChanged(nameof(ShiftProgressFullText));
                 break;
         }
     }

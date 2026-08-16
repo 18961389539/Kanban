@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Client;
+using Kanban.Contracts.Dtos;
 using Kanban.Core.Data;
 using Kanban.Core.Models;
 using MainAPP.Models;
@@ -19,7 +20,8 @@ internal static class RuntimeHealthText
 {
     public static string Format(bool isConnected, bool isRunning, bool lastCycleSucceeded, int consecutiveFailures)
     {
-        if (!isConnected) return Strings.M013;
+        // 通信中断修复 2026-08-15：断开时必须返回 K419（通信中断），否则 UI 红色触发器永不命中
+        if (!isConnected) return Strings.K419;
         if (!isRunning) return Strings.M014;
         return lastCycleSucceeded ? Strings.K418 : string.Format(Strings.F227, consecutiveFailures);
     }
@@ -64,6 +66,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private bool _isAcquisitionRunning;
     [ObservableProperty] private string _connectionStatus = Strings.Conn_Disconnected;
+    [ObservableProperty] private DateTime? _disconnectedAt;
+    [ObservableProperty] private bool _isCollectorUnreachable;
     [ObservableProperty] private int _consecutiveFailures;
     [ObservableProperty] private int _totalDisconnectCount;
     [ObservableProperty] private int _completedCycles;
@@ -115,7 +119,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public ObservableCollection<DeviceAcquisitionStatusItem> DeviceStatuses { get; } = new();
 
     public string PlcEndpoint => $"{_appSettings.PlcConfig.IpAddress}:{_appSettings.PlcConfig.Port}";
-    public string DisconnectDurationText => _connectionManager.DisconnectedAt is { } disconnectedAt
+    public string DisconnectDurationText => DisconnectedAt is { } disconnectedAt
         ? FormatDuration(DateTime.Now - disconnectedAt)
         : Strings.M049;
     public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : Strings.M052;
@@ -136,7 +140,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
     public int TotalDeviceCount => _deviceRepository.GetDevicesSnapshot().Count;
     public string HealthText => RuntimeHealthText.Format(IsConnected, IsAcquisitionRunning, LastCycleSucceeded, ConsecutiveFailureCycles);
-    public bool HasActiveFailure => !LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage);
+    public bool HasActiveFailure => !IsConnected || (!LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage));
+    /// <summary>是否已有轮询趋势数据（用于空状态提示）。</summary>
+    public bool HasPollingTrendData => _pollingTrendPoints.Count > 0;
 
     public RuntimeMonitoringViewModel(
         IPlcConnectionManager connectionManager,
@@ -195,8 +201,10 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     {
         var snapshot = _acquisitionService.GetDiagnosticsSnapshot();
         IsConnected = _connectionManager.IsConnected;
+        IsCollectorUnreachable = false;
         IsAcquisitionRunning = _acquisitionService.IsRunning;
         ConnectionStatus = _connectionManager.ConnectionStatus;
+        DisconnectedAt = _connectionManager.DisconnectedAt;
         TotalDisconnectCount = _connectionManager.TotalDisconnectCount;
         ConsecutiveFailures = _connectionManager.ConsecutiveFailures;
         OnPropertyChanged(nameof(DisconnectDurationText));
@@ -241,6 +249,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         MaybeUpdateConsistencyMetrics();
         UpdateDeviceStatuses(snapshot.LastSuccessfulDeviceIds);
         UpdatePollingTrend();
+        OnPropertyChanged(nameof(HasPollingTrendData));
         LastRefreshTime = DateTime.Now;
         OnPropertyChanged(nameof(HealthText));
         OnPropertyChanged(nameof(HasActiveFailure));
@@ -275,10 +284,12 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             var d = await _remoteClient!.GetDiagnosticsAsync();
             if (refreshVersion != Volatile.Read(ref _refreshVersion)) return; // 已有更新的刷新，丢弃过期响应
             IsConnected = d.IsConnected;
+            IsCollectorUnreachable = false;
             // 采集状态用真值（CollectorDiagnosticsDto.IsRunning）：连接正常 ≠ 采集运行中，
             // 原先用 IsConnected 会在"连接正常但采集停止"时误报"运行中"。
             IsAcquisitionRunning = d.IsRunning;
             ConnectionStatus = d.ConnectionStatus;
+            DisconnectedAt = d.DisconnectedAt;
             TotalDisconnectCount = d.TotalDisconnectCount;
             ConsecutiveFailures = d.ConsecutiveFailures;
             OnPropertyChanged(nameof(DisconnectDurationText));
@@ -299,6 +310,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
                 ? 0
                 : d.SuccessfulCycles * 100.0 / d.CompletedCycles;
             EstimatedReadOperations = d.EstimatedReadOperations;
+            ConfiguredReadAddressCount = d.ConfiguredReadAddressCount;
             PendingHistoryCount = d.PendingHistoryCount;
             RecoveryFileExists = d.RecoveryFileExists;
             RecoveryFileBytes = d.RecoveryFileBytes;
@@ -316,6 +328,10 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
             UpdateResourceMetrics();
             MaybeUpdateConsistencyMetrics();
+            // Remote 模式也刷新周期趋势；设备明细列表待诊断 DTO 补充成功后同步（审查修复 2026-08-15 第一步）
+            UpdatePollingTrend();
+            UpdateDeviceStatusesFromRemote(d.DeviceStatuses);
+            OnPropertyChanged(nameof(HasPollingTrendData));
             LastRefreshTime = DateTime.Now;
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(HasActiveFailure));
@@ -343,9 +359,15 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             // Collector 未连接：显示离线状态，不崩溃。旧请求失败不覆盖在途的新请求（版本守卫）。
             if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
             IsConnected = false;
+            IsCollectorUnreachable = true;
             IsAcquisitionRunning = false;
             ConnectionStatus = Strings.M050;
+            DisconnectedAt = DateTime.Now;
+            LastFailureMessage = ex.Message;
+            LastFailureAt = DateTime.Now;
+            OnPropertyChanged(nameof(DisconnectDurationText));
             OnPropertyChanged(nameof(HealthText));
+            OnPropertyChanged(nameof(HasActiveFailure));
             OnPropertyChanged(nameof(PlcEndpoint));
         }
     }
@@ -376,6 +398,26 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         }
     }
 
+    private void UpdateDeviceStatusesFromRemote(IReadOnlyList<CollectorDeviceStatusDto> devices)
+    {
+        var desired = new List<DeviceAcquisitionStatusItem>(devices.Count);
+        foreach (var d in devices)
+        {
+            desired.Add(new DeviceAcquisitionStatusItem
+            {
+                DeviceName = d.DeviceName,
+                StatusText = RuntimeDeviceStatusText.Format(d.StatusWord),
+                AcquisitionText = d.ConfiguredAddressCount == 0
+                    ? Strings.M162
+                    : d.LastCycleSucceeded ? Strings.M163 : Strings.M164,
+                ConfiguredAddressCount = d.ConfiguredAddressCount,
+                OkProduction = d.OkProduction,
+                NgProduction = d.NgProduction,
+            });
+        }
+        DeviceStatusCollectionSynchronizer.Synchronize(DeviceStatuses, desired);
+    }
+
     private void UpdateDeviceStatuses(IReadOnlySet<string> lastSuccessfulDeviceIds)
     {
         var devices = _deviceRepository.GetDevicesSnapshot();
@@ -404,7 +446,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         var points = _pollingTrendPoints.Add(now, LastCycleMilliseconds);
         _pollingTrendSeries.Points.Clear();
         _pollingTrendSeries.Points.AddRange(points);
-        PollingTrend.InvalidatePlot(true);
+        PollingTrend.InvalidatePlot(false);
     }
 
     private static PlotModel CreatePollingTrendModel()
@@ -465,8 +507,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     {
         OnPageExit();
         _refreshTimer.Tick -= OnRefreshTimerTick;
-        _systemResourceMonitor.Dispose();
         _pollingTrendPoints.Clear();
+        // 注意：不释放 _systemResourceMonitor——它是 DI 容器持有的单例（级联单例 GpuUsageMonitor），
+        // 生命周期归容器管，由页面 VM 释放属所有权违规（host.Dispose 统一释放）。
     }
 
     private readonly PollingTrendBuffer _pollingTrendPoints = new();

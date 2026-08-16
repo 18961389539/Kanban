@@ -101,6 +101,18 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                 <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F284}" />
+                <Button Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="{x:Static resources:Strings.Rtmon_RetryConnect}" Tag="{x:Static mi:MaterialIconKind.Refresh}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource IconButtonWarning}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
                 <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}" ToolTip="{x:Static resources:Strings.K422}" />
             </StackPanel>
         </DockPanel>
@@ -238,8 +250,6 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulDevices}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K437}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K438}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding FailedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K439}" />
@@ -267,8 +277,6 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DisconnectDurationText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K443}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ConsecutiveFailures, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K100}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDisconnectCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -293,8 +301,6 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ReadDetailText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K447}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DeviceReadSummary}" />
-                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K448}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding MaxCycleMilliseconds, StringFormat={}{0} ms}" />
                     </Grid>
                     <ProgressBar Style="{StaticResource MetricProgressBar}" Value="{Binding SuccessRatePercent}" Maximum="100" />
                     <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K449}" />
@@ -374,7 +380,8 @@
             <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K467}" />
-                    <ListView Margin="0,12,0,0" Height="220" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
+                    <Grid>
+                        <ListView Margin="0,12,0,0" Height="220" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
                         <ListView.View>
                             <GridView ColumnHeaderContainerStyle="{StaticResource MetricColumnHeader}">
                                 <GridViewColumn Header="{x:Static resources:Strings.K002}" Width="150" DisplayMemberBinding="{Binding DeviceName}" />
@@ -388,7 +395,23 @@
                                 </GridViewColumn>
                             </GridView>
                         </ListView.View>
-                    </ListView>
+                        </ListView>
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="0,12,0,0"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.K583}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DeviceStatuses.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -396,7 +419,23 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K470}" />
                     <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K471}" />
-                    <oxy:PlotView Height="220" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
+                    <Grid>
+                        <oxy:PlotView Height="220" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.K583}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasPollingTrendData}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                 </StackPanel>
             </Border>
         </Grid>

@@ -1,45 +1,28 @@
 namespace LicenseManager.Crypto;
 
 /// <summary>
-/// HMAC 密钥来源：优先环境变量，回退到内嵌常量。
+/// HMAC 密钥来源：从环境变量 KANBAN_HMAC_KEY 加载，不写入程序集。
 /// </summary>
 /// <remarks>
 /// 安全说明：
 /// - 这是 HMAC 对称密钥，签发工具（LicenseIssuer.CLI）和客户端（LicenseManager.App）共享同一密钥。
-/// - 客户端反编译可获取此密钥，对应"标准强度"防护等级（防普通用户复制，不防专业破解）。
-/// - 配合 Obfuscar 混淆可提升逆向难度。
-/// - 实际部署时应替换为自行生成的随机密钥，并在签发工具中同步更新。
-///
-/// 密钥来源（P3-1）：
-/// 1. 优先读取环境变量 KANBAN_HMAC_KEY（Base64 编码 32 字节）
-///    - 用于生产环境：密钥不写入程序集，反编译无法获取
-///    - 通过系统环境变量或启动脚本注入（如 setx KANBAN_HMAC_KEY "..."）
-/// 2. 环境变量未设置或非法时回退到内嵌常量 HmacKeyBase64（仅 DEBUG 构建）
-///    - 用于开发测试：方便首次运行，不要求配置环境变量
-///    - RELEASE 构建禁止回退：未配置/非法时抛异常，防止内嵌密钥随程序集分发被反编译提取
-///
-/// 密钥生成方式（PowerShell）：
-///   $bytes = New-Object byte[] 32
-///   [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-///   [Convert]::ToBase64String($bytes)
+/// - 密钥**必须**通过环境变量注入，绝不写入程序集——否则反编译即可提取密钥并离线自签任意机器码的激活码。
+/// - 生成方式（PowerShell）：
+///     $bytes = New-Object byte[] 32
+///     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+///     [Convert]::ToBase64String($bytes)
+/// - 生产与开发环境都需注入（不再提供内嵌回退密钥）。
 /// </remarks>
 /// <remarks>
 /// 不混淆：LicenseIssuer.* 工具直接引用此类的常量（TotalSize/PayloadSize 等），混淆重命名会导致外部程序集 TypeLoadException。
-/// HMAC 密钥保护依赖环境变量注入（KANBAN_HMAC_KEY），而非混淆。
 /// </remarks>
 public static class EmbeddedKey
 {
     /// <summary>环境变量名：用于外部加载 HMAC 密钥（Base64 编码 32 字节）</summary>
     public const string EnvKeyName = "KANBAN_HMAC_KEY";
 
-    /// <summary>内嵌 HMAC-SHA256 密钥（32 字节，Base64 编码，44 字符含 padding）。
-    /// 默认值仅供开发测试，正式发布前必须替换。
-    /// 生产环境应通过 KANBAN_HMAC_KEY 环境变量注入，避免密钥写入程序集。</summary>
-    public const string HmacKeyBase64 = "zUMnUR03aZR3jMzKkEUHf8iANX1nifFf725jv6LgONE=";
-
     /// <summary>
-    /// 解码后的 HMAC 密钥字节。
-    /// 优先从 KANBAN_HMAC_KEY 环境变量加载，未设置或非法时回退到内嵌常量。
+    /// 解码后的 HMAC 密钥字节（32 字节）。从 KANBAN_HMAC_KEY 环境变量加载；未配置或非法时抛异常。
     /// 进程内缓存（Lazy 保证只解析一次）。
     /// </summary>
     public static byte[] HmacKey => _hmacKeyLazy.Value;
@@ -48,41 +31,31 @@ public static class EmbeddedKey
 
     private static byte[] LoadKey()
     {
-        // 1. 优先尝试环境变量
+        var envValue = Environment.GetEnvironmentVariable(EnvKeyName);
+        if (string.IsNullOrWhiteSpace(envValue))
+        {
+            throw new InvalidOperationException(
+                $"未配置环境变量 {EnvKeyName}。HMAC 密钥必须通过环境变量注入（32 字节 Base64），禁止写入程序集（防反编译自签）。");
+        }
+
+        byte[] bytes;
         try
         {
-            var envValue = Environment.GetEnvironmentVariable(EnvKeyName);
-            if (!string.IsNullOrWhiteSpace(envValue))
-            {
-                var bytes = Convert.FromBase64String(envValue);
-                if (bytes.Length == 32)
-                {
-                    return bytes;
-                }
-                // 长度非法：Debug 回退到内嵌密钥（开发测试），Release 拒绝（防止误配弱密钥）
-#if !DEBUG
-                throw new InvalidOperationException(
-                    $"环境变量 {EnvKeyName} 已配置但长度非法（期望 32 字节 Base64）。请重新生成密钥后配置。");
-#endif
-            }
-#if !DEBUG
-            // Release 禁止回退到随程序集分发的内嵌密钥：反编译程序集即可提取该密钥并伪造任意机器码的有效激活码。
-            // 生产环境必须通过 KANBAN_HMAC_KEY 环境变量注入（密钥不写入程序集）。
-            throw new InvalidOperationException(
-                $"未配置环境变量 {EnvKeyName}。Release 构建禁止使用内嵌回退密钥，生产环境必须注入该环境变量（32 字节 Base64）。");
-#endif
+            bytes = Convert.FromBase64String(envValue);
         }
         catch (FormatException)
         {
-            // 环境变量不是合法 Base64：Debug 回退内嵌，Release 拒绝
-#if !DEBUG
             throw new InvalidOperationException(
                 $"环境变量 {EnvKeyName} 不是合法的 Base64 编码。请使用 32 字节随机密钥的 Base64 形式。");
-#endif
         }
 
-        // 2. 仅 Debug 回退到内嵌常量（开发测试用；Release 已在上面抛异常）
-        return Convert.FromBase64String(HmacKeyBase64);
+        if (bytes.Length != 32)
+        {
+            throw new InvalidOperationException(
+                $"环境变量 {EnvKeyName} 长度非法（期望 32 字节 Base64，实际 {bytes.Length} 字节）。请重新生成密钥后配置。");
+        }
+
+        return bytes;
     }
 
     /// <summary>当前密钥来源描述（用于日志/调试）</summary>
@@ -91,22 +64,24 @@ public static class EmbeddedKey
         get
         {
             var envValue = Environment.GetEnvironmentVariable(EnvKeyName);
-            return !string.IsNullOrWhiteSpace(envValue) ? $"环境变量 {EnvKeyName}" : "内嵌常量";
+            return string.IsNullOrWhiteSpace(envValue)
+                ? "未配置"
+                : $"环境变量 {EnvKeyName}";
         }
     }
 
     /// <summary>激活码负载长度（字节）：5 机器码哈希 + 2 过期日期 = 7 字节</summary>
     public const int PayloadSize = 7;
 
-    /// <summary>HMAC 标签长度（字节）：截断到 8 字节（64 位），提供 2^64 抗碰撞</summary>
-    public const int TagSize = 8;
+    /// <summary>HMAC 标签长度（字节）：截断到 16 字节（128 位），提供 2^128 抗碰撞</summary>
+    public const int TagSize = 16;
 
-    /// <summary>完整激活码字节数：负载 + HMAC 标签 = 15 字节</summary>
+    /// <summary>完整激活码字节数：负载 + HMAC 标签 = 23 字节</summary>
     public const int TotalSize = PayloadSize + TagSize;
 
-    /// <summary>Base32 编码后字符数：15 字节 → 24 字符</summary>
-    public const int EncodedLength = 24;
+    /// <summary>Base32 编码后字符数：23 字节 → 37 字符</summary>
+    public const int EncodedLength = 37;
 
-    /// <summary>分组后的激活码字符数：5 组 × 5 字符 = 25 字符（含 1 个校验位）</summary>
-    public const int FormattedLength = 25;
+    /// <summary>分组后的激活码字符数：37 字符 + 1 个校验位 = 38 字符</summary>
+    public const int FormattedLength = 38;
 }

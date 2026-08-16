@@ -45,4 +45,22 @@ public sealed record CollectorDiagnosticsDto
     public string ConnectionStatus { get; init; } = string.Empty;
     public int TotalDisconnectCount { get; init; }
     public int ConsecutiveFailures { get; init; }
+    /// <summary>最近一次断开时刻（用于显示断开持续时长）。</summary>
+    public DateTime? DisconnectedAt { get; init; }
+    /// <summary>Collector 侧配置的可读地址数（Remote 模式不再读本地配置）。</summary>
+    public int ConfiguredReadAddressCount { get; init; }
+    /// <summary>设备级采集状态明细。</summary>
+    public IReadOnlyList<CollectorDeviceStatusDto> DeviceStatuses { get; init; } = Array.Empty<CollectorDeviceStatusDto>();
+}
+
+/// <summary>Remote 模式下单台设备的采集状态明细。</summary>
+public sealed record CollectorDeviceStatusDto
+{
+    public string DeviceId { get; init; } = string.Empty;
+    public string DeviceName { get; init; } = string.Empty;
+    public int StatusWord { get; init; }
+    public int OkProduction { get; init; }
+    public int NgProduction { get; init; }
+    public int ConfiguredAddressCount { get; init; }
+    public bool LastCycleSucceeded { get; init; }
 }

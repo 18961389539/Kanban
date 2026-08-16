@@ -70,6 +70,12 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveDefect(Defect defect)
     {
+        if (defect == null) return;
+        var confirm = _dialog.Show(
+            string.Format(Strings.F502, defect.Name),
+            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
         if (SelectedDefect == defect) SelectedDefect = null;
         SelectedDevice?.Defects.Remove(defect);
         _host.MarkDirty();

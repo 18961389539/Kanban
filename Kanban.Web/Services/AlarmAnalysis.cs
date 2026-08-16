@@ -107,12 +107,14 @@ public static class AlarmAnalysis
         for (int i = 0; i < triggers.Count; i++)
         {
             var seed = triggers[i];
+            var seen = new HashSet<string> { seed.AlarmName ?? "?" };
             List<string> chain = [seed.AlarmName ?? "?"];
             for (int j = i + 1; j < triggers.Count; j++)
             {
                 if (triggers[j].EventTime - seed.EventTime > window) break;
                 var name = triggers[j].AlarmName ?? "?";
-                if (!chain.Contains(name)) chain.Add(name);
+                // O(1) 去重（原 List.Contains 为 O(k)，最坏退化为 O(n²)）
+                if (seen.Add(name)) chain.Add(name);
             }
             if (chain.Count >= 2) chains.Add(chain);
         }

@@ -55,6 +55,25 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         _logger = logger;
     }
 
+    /// <summary>
+    /// 解析远程写操作的操作人：无认证（有意设计，局域网查看），操作人由客户端经连接查询串
+    /// <c>operator</c> 传入；未提供时回退空串（审计页会显示为空，可据此区分来源缺失）。
+    /// 单元测试直接实例化 Hub 时 Context 为 null、或非 HTTP 传输时 GetHttpContext 不可用，均回退空串。
+    /// </summary>
+    private string ResolveOperator()
+    {
+        try
+        {
+            var http = Context.GetHttpContext();
+            var fromQuery = http?.Request.Query["operator"].ToString();
+            return string.IsNullOrWhiteSpace(fromQuery) ? string.Empty : fromQuery;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
     /// <inheritdoc />
     public Task<IReadOnlyList<DeviceSnapshotDto>> GetCurrentSnapshotsAsync()
         => _snapshotAggregator.GetCurrentSnapshotsAsync(Context.ConnectionAborted);
@@ -114,11 +133,11 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         {
             await _configSyncHandler.SaveDevicesAsync(devices);
             AuditLog.Record("Device.SaveBatch", "Device", null,
-                detail: $"保存 {devices.Count} 台设备配置");
+                detail: $"保存 {devices.Count} 台设备配置", @operator: ResolveOperator());
         }
         catch (Exception ex)
         {
-            AuditLog.Record("Device.SaveBatch", "Device", null, succeeded: false, detail: ex.Message);
+            AuditLog.Record("Device.SaveBatch", "Device", null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }
@@ -135,13 +154,13 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
             var saved = await _configSyncHandler.UpsertWorkOrderAsync(workOrder);
             AuditLog.Record("WorkOrder.Upsert", "WorkOrder", saved.Id > 0 ? saved.Id.ToString() : null,
                 after: new { saved.OrderNo, saved.DeviceId, saved.TargetQuantity, saved.Status },
-                detail: workOrder.Id > 0 ? "更新工单" : "新增工单");
+                detail: workOrder.Id > 0 ? "更新工单" : "新增工单", @operator: ResolveOperator());
             return saved;
         }
         catch (Exception ex)
         {
             AuditLog.Record("WorkOrder.Upsert", "WorkOrder",
-                workOrder.Id > 0 ? workOrder.Id.ToString() : null, succeeded: false, detail: ex.Message);
+                workOrder.Id > 0 ? workOrder.Id.ToString() : null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }
@@ -152,11 +171,11 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         try
         {
             await _configSyncHandler.DeleteWorkOrderAsync(workOrderId);
-            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), detail: "删除工单");
+            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), detail: "删除工单", @operator: ResolveOperator());
         }
         catch (Exception ex)
         {
-            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), succeeded: false, detail: ex.Message);
+            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }
@@ -195,12 +214,12 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
             await _configSyncHandler.SaveCollectorSettingsAsync(settings);
             AuditLog.Record("CollectorSettings.Update", "Settings", null,
                 after: new { settings.PollingIntervalMs, settings.HistoryWriteIntervalScans, settings.PlcBrand },
-                detail: "远程保存采集设置");
+                detail: "远程保存采集设置", @operator: ResolveOperator());
         }
         catch (Exception ex)
         {
             AuditLog.Record("CollectorSettings.Update", "Settings", null,
-                succeeded: false, detail: ex.Message);
+                succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }
@@ -301,6 +320,8 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
                 TargetId = e.TargetId,
                 Succeeded = e.Succeeded,
                 Detail = e.Detail,
+                BeforeJson = e.BeforeJson,
+                AfterJson = e.AfterJson,
             }).ToList(),
             Total = total,
             Page = request.Page,
@@ -315,11 +336,11 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         {
             await _configSyncHandler.SaveRecipesAsync(recipes);
             AuditLog.Record("Recipe.SaveBatch", "Recipe", null,
-                detail: $"保存 {recipes.Count} 条配方");
+                detail: $"保存 {recipes.Count} 条配方", @operator: ResolveOperator());
         }
         catch (Exception ex)
         {
-            AuditLog.Record("Recipe.SaveBatch", "Recipe", null, succeeded: false, detail: ex.Message);
+            AuditLog.Record("Recipe.SaveBatch", "Recipe", null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }
@@ -346,12 +367,12 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
             var result = await _configSyncHandler.ApplyRecipeAsync(deviceId, recipeId, progress);
             AuditLog.Record("Recipe.Apply", "Recipe", recipeId,
                 detail: $"下发配方到设备 {deviceId}",
-                after: new { result.Success, result.Message });
+                after: new { result.Success, result.Message }, @operator: ResolveOperator());
             return result;
         }
         catch (Exception ex)
         {
-            AuditLog.Record("Recipe.Apply", "Recipe", recipeId, succeeded: false, detail: ex.Message);
+            AuditLog.Record("Recipe.Apply", "Recipe", recipeId, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }

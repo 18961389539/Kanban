@@ -98,10 +98,18 @@
         <Border
             Grid.Column="2"
             Padding="20"
-            Background="{StaticResource SecondaryRegionBrush}"
-            BorderBrush="{StaticResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="6">
+            CornerRadius="10"
+            BorderThickness="1">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#22FFFFFF" Offset="0" />
+                    <GradientStop Color="#0DFFFFFF" Offset="0.5" />
+                    <GradientStop Color="#08FFFFFF" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.BorderBrush>
+                <SolidColorBrush Color="#2AFFFFFF" />
+            </Border.BorderBrush>
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -148,6 +156,19 @@
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductName}" />
                             </DockPanel>
+                            <!--  当前配方 / 模具  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K356}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedRecipeName}" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_MoldType}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedMachineType}" />
+                            </DockPanel>
                             <!--  计划产量  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
@@ -155,6 +176,33 @@
                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
+                            </DockPanel>
+                            <!--  完成进度  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_Progress}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedAchievementText}" />
+                            </DockPanel>
+                            <!--  良品 / 不良  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_OkNg}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                               Foreground="{StaticResource SuccessBrush}" Text="{Binding SelectedOkCountText}" />
+                                    <TextBlock Margin="6,0" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="/" />
+                                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                               Foreground="{StaticResource DangerBrush}" Text="{Binding SelectedNgCountText}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <!--  不良率  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource DangerBrush}" Text="{Binding SelectedDefectRateText}" />
                             </DockPanel>
                             <!--  计划时间  -->
                             <DockPanel Margin="0,0,0,12">
@@ -169,6 +217,38 @@
                                                Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}~ {0:MM-dd HH:mm}}" />
                                 </StackPanel>
                             </DockPanel>
+                            <!--  预计剩余 / 预计完成  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_Remaining}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedRemainingText}" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_Eta}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedEtaText}" />
+                            </DockPanel>
+                            <!--  运行 / 报警 / 待机时长  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K007}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource SuccessBrush}" Text="{Binding WorkOrderRunTimeFull}" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K038}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding WorkOrderAlarmTimeFull}" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K289}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                           Foreground="{StaticResource StatusPauseBrush}" Text="{Binding WorkOrderPausedTimeFull}" />
+                            </DockPanel>
                             <!--  状态  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
@@ -178,6 +258,13 @@
                                     <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" DataContext="{Binding SelectedWorkOrder}" />
                                 </StackPanel>
                             </DockPanel>
+                            <!--  关联设备  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_Device}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.DeviceName}" />
+                            </DockPanel>
                             <!--  备注  -->
                             <DockPanel Margin="0,0,0,12">
                                 <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Top"
@@ -185,6 +272,19 @@
                                 <TextBlock VerticalAlignment="Top" FontSize="{DynamicResource FontSizeCaption}"
                                            Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
                                            Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
+                            </DockPanel>
+                            <!--  创建时间 / 更新时间  -->
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_CreatedAt}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                            </DockPanel>
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Wo_LastStatusChange}" />
+                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                             </DockPanel>
                         </StackPanel>
                     </StackPanel>

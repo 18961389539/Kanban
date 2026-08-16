@@ -444,33 +444,15 @@
                                     <ComboBox Grid.Column="2" Margin="0,0,4,0" VerticalContentAlignment="Center"
                                               ItemsSource="{Binding DataContext.PlcDataTypes, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                               SelectedItem="{Binding DataType, Mode=TwoWay}" />
-                                    <!-- Value 列：Bool 类型显示下拉（True/False/0/1），其余类型文本框 -->
+                                    <!-- Value 列：Bool 类型显示下拉（True/False），其余类型文本框 -->
                                     <Grid Grid.Column="3" Margin="0,0,4,0">
                                         <TextBox VerticalContentAlignment="Center"
-                                                 Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
-                                            <TextBox.Style>
-                                                <Style TargetType="TextBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding DataType}" Value="Bool">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBox.Style>
-                                        </TextBox>
-                                        <ComboBox VerticalContentAlignment="Center" Visibility="Collapsed"
+                                                 Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                 Visibility="{Binding IsBool, Converter={StaticResource InvertedBooleanToVisibilityConverter}}" />
+                                        <ComboBox VerticalContentAlignment="Center"
                                                   ItemsSource="{Binding DataContext.BoolOptions, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                  SelectedItem="{Binding Value, Mode=TwoWay}">
-                                            <ComboBox.Style>
-                                                <Style TargetType="ComboBox">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding DataType}" Value="Bool">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </ComboBox.Style>
-                                        </ComboBox>
+                                                  SelectedItem="{Binding Value, Mode=TwoWay}"
+                                                  Visibility="{Binding IsBool, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                     </Grid>
                                     <TextBox Grid.Column="4" Margin="0,0,4,0" VerticalContentAlignment="Center"
                                              Text="{Binding Min, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}" />

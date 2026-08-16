@@ -44,4 +44,7 @@ public interface IAuditService
 
     /// <summary>清理早于保留期的记录，返回删除条数（默认 30 天）。</summary>
     int CleanupOldEntries(int retentionDays = 30);
+
+    /// <summary>全部未落库条数（队列满丢弃 + 最终写入失败），供 readiness/告警判断审计链完整性。</summary>
+    int DroppedCount { get; }
 }

@@ -13,7 +13,7 @@ namespace MainAPP.Views;
 /// </summary>
 public partial class ChangePasswordDialog : Window
 {
-    public string Title { get; }
+    public new string Title { get; }
     public string Message { get; }
 
     /// <summary>确认成功后的新密码（DialogResult=true 时有效）。</summary>
@@ -21,7 +21,7 @@ public partial class ChangePasswordDialog : Window
 
     public ChangePasswordDialog(string title, string message)
     {
-        Title = title;
+        Title = title; // 有意 new 隐藏 Window.Title：DataContext=this 绑定用属性而非 WPF 依赖属性
         Message = message;
         DataContext = this;
         InitializeComponent();

@@ -38,7 +38,7 @@ public class AuditQueryViewModelTests
     }
 
     [Fact]
-    public void ApplyingTodayPresetSetsRangeAndQueries()
+    public async Task ApplyingTodayPresetSetsRangeAndQueries()
     {
         var vm = NewVm();
 
@@ -47,6 +47,24 @@ public class AuditQueryViewModelTests
         Assert.Equal(1, vm.PresetIndex);
         Assert.Equal(DateTime.Today, vm.From);
         Assert.Equal(1, vm.Page);
+
+        // 查询已后台化（审查修复 2026-08-13），轮询等待后台 QueryPaged 真正执行后再断言调用次数。
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                _audit.Received(1).QueryPaged(Arg.Any<DateTime>(), Arg.Any<DateTime>(),
+                    Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(),
+                    Arg.Any<int>(), Arg.Any<int>());
+                return;
+            }
+            catch
+            {
+                await Task.Delay(10);
+            }
+        }
+
         _audit.Received(1).QueryPaged(Arg.Any<DateTime>(), Arg.Any<DateTime>(),
             Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(),
             Arg.Any<int>(), Arg.Any<int>());

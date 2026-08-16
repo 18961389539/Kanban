@@ -85,6 +85,12 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveCounterAlarm(CounterAlarm alarm)
     {
+        if (alarm == null) return;
+        var confirm = _dialog.Show(
+            string.Format(Strings.F503, alarm.Name),
+            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
         if (SelectedCounterAlarm == alarm) SelectedCounterAlarm = null;
         SelectedDevice?.CounterAlarms.Remove(alarm);
         // 不立即 SaveAll：统一由 Save 按钮持久化，与 AddAlarm/RemoveAlarm/Defect 行为一致

@@ -192,6 +192,126 @@
   <data name="Settings_LanguageHint" xml:space="preserve">
     <value>表示言語（中国語/英語/日本語）。既定は中国語。再起動後に有効。</value>
   </data>
+  <data name="Settings_ExpandDetails" xml:space="preserve">
+    <value>詳細</value>
+  </data>
+  <data name="Settings_CollapseDetails" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="Settings_LicenseDetails" xml:space="preserve">
+    <value>ライセンス詳細</value>
+  </data>
+  <data name="Settings_ConnectionParams" xml:space="preserve">
+    <value>接続パラメータ</value>
+  </data>
+  <data name="Settings_ProtocolParams" xml:space="preserve">
+    <value>プロトコルパラメータ</value>
+  </data>
+  <data name="Settings_ShowHideProductKey" xml:space="preserve">
+    <value>ライセンスキーの表示/非表示</value>
+  </data>
+  <data name="Common_Show" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="Common_Hide" xml:space="preserve">
+    <value>非表示</value>
+  </data>
+  <data name="Settings_DangerConfirmTitle" xml:space="preserve">
+    <value>危険操作の確認</value>
+  </data>
+  <data name="Settings_Warn_PlcChanged" xml:space="preserve">
+    <value>PLC接続パラメータが変更されました。保存すると現在のPLC接続を切断し、新しいパラメータで再接続します。</value>
+  </data>
+  <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
+    <value>データ収集モードが変更されました。保存するとデータソース（ローカル / リモート収集サービス）が切り替わります。</value>
+  </data>
+  <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
+    <value>実行モードが変更されました。保存すると実行モード（フル / 表示のみ）が変更されます。</value>
+  </data>
+  <data name="Settings_ConfirmSave" xml:space="preserve">
+    <value>保存を続行しますか？</value>
+  </data>
+  <data name="Language_Chinese" xml:space="preserve">
+    <value>中国語</value>
+  </data>
+  <data name="Language_English" xml:space="preserve">
+    <value>英語</value>
+  </data>
+  <data name="Language_Japanese" xml:space="preserve">
+    <value>日本語</value>
+  </data>
+  <data name="Settings_DailyReportMaster" xml:space="preserve">
+    <value>日報マスターノード</value>
+  </data>
+  <data name="Settings_DailyReportMasterHint" xml:space="preserve">
+    <value>複数画面構成では、日報を生成する「マスターノード」1台のみでこれを有効にし、他の画面ではオフにして重複PDFを防ぎます。</value>
+  </data>
+  <data name="Csv_LabelRange" xml:space="preserve">
+    <value>集計範囲</value>
+  </data>
+  <data name="Csv_LabelShift" xml:space="preserve">
+    <value>現在のシフト</value>
+  </data>
+  <data name="Export_ReviewCsvFileName" xml:space="preserve">
+    <value>生産レビュー_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Export_ReviewPdfFileName" xml:space="preserve">
+    <value>生産レビュー_{0:yyyyMMddHHmm}.pdf</value>
+  </data>
+  <data name="Export_CsvFilter" xml:space="preserve">
+    <value>CSVファイル|*.csv|すべてのファイル|*.*</value>
+  </data>
+  <data name="Export_PdfFilter" xml:space="preserve">
+    <value>PDFファイル|*.pdf|すべてのファイル|*.*</value>
+  </data>
+  <data name="Um_User" xml:space="preserve">
+    <value>ユーザー</value>
+  </data>
+  <data name="Um_Role" xml:space="preserve">
+    <value>役割</value>
+  </data>
+  <data name="Um_LastLogin" xml:space="preserve">
+    <value>最終ログイン</value>
+  </data>
+  <data name="Um_Security" xml:space="preserve">
+    <value>セキュリティ</value>
+  </data>
+  <data name="Um_Actions" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="Wo_MoldType" xml:space="preserve">
+    <value>金型/型式</value>
+  </data>
+  <data name="Wo_Progress" xml:space="preserve">
+    <value>進捗</value>
+  </data>
+  <data name="Wo_OkNg" xml:space="preserve">
+    <value>良品 / 不良</value>
+  </data>
+  <data name="Wo_Remaining" xml:space="preserve">
+    <value>残り時間（推定）</value>
+  </data>
+  <data name="Wo_Eta" xml:space="preserve">
+    <value>完了予定</value>
+  </data>
+  <data name="Wo_Device" xml:space="preserve">
+    <value>関連設備</value>
+  </data>
+  <data name="Wo_CreatedAt" xml:space="preserve">
+    <value>作成日時</value>
+  </data>
+  <data name="Wo_LastStatusChange" xml:space="preserve">
+    <value>最終状態変更</value>
+  </data>
+  <data name="Home_DeviceHealth" xml:space="preserve">
+    <value>設備健全性</value>
+  </data>
+  <data name="Home_TotalDuration" xml:space="preserve">
+    <value>総時間</value>
+  </data>
+  <data name="Rtmon_RetryConnect" xml:space="preserve">
+    <value>再接続</value>
+  </data>
   <data name="Conn_Live" xml:space="preserve">
     <value>リアルタイム</value>
   </data>
@@ -2684,6 +2804,18 @@ OK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態
     <value>カカカウンタアラーム「{0}」の現在値をクリアしますか？
 PLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。</value>
   </data>
+  <data name="F501" xml:space="preserve">
+    <value>アラーム「{0}」を削除しますか？この操作は元に戻せません。</value>
+  </data>
+  <data name="F502" xml:space="preserve">
+    <value>不良項目「{0}」を削除しますか？この操作は元に戻せません。</value>
+  </data>
+  <data name="F503" xml:space="preserve">
+    <value>カウンタアラーム「{0}」を削除しますか？この操作は元に戻せません。</value>
+  </data>
+  <data name="F504" xml:space="preserve">
+    <value>設備「{0}」のメインアドレス「{1}」が複数の項目で重複しています。生産/状態データが混在する可能性があります。</value>
+  </data>
   <data name="F178" xml:space="preserve">
     <value>起動に失敗しました。アプリを終了します:
 
@@ -4457,6 +4589,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M_UnsavedChangesLeave" xml:space="preserve">
     <value>保存されていない設備構成の変更があります。設備管理ページを離れますか？
 変更は現在のセッションに保持され、戻った後も保存できます。</value>
+  </data>
+  <data name="M_NoSelfDelete" xml:space="preserve">
+    <value>自分のアカウントは削除できません</value>
   </data>
   <data name="M_NoDeviceSelected" xml:space="preserve">
     <value>デバイスが選択されていません</value>

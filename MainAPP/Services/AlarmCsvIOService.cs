@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.Resources;
 

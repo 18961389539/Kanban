@@ -58,25 +58,25 @@ public class ProductKeyCodecTests
 
         var productKey = ProductKeyCodec.Encode(machineHash, expireDate: null);
 
-        // 应为 5 组 × 5 字符，用 - 分隔
-        Assert.Equal(29, productKey.Length);  // 25 字符 + 4 个分隔符
+        // 38 字符按 5 字符分组（末组 3 字符），共 8 组、7 个分隔符
+        Assert.Equal(EmbeddedKey.FormattedLength, productKey.Replace("-", "").Length);
         var groups = productKey.Split('-');
-        Assert.Equal(5, groups.Length);
-        foreach (var group in groups)
-            Assert.Equal(5, group.Length);
+        Assert.Equal(8, groups.Length);
+        for (var i = 0; i < groups.Length - 1; i++)
+            Assert.Equal(5, groups[i].Length);
+        Assert.Equal(3, groups[^1].Length);
     }
 
     [Fact]
     public void TryParseRaw_StripsSeparatorsAndUpperCases()
     {
-        // 输入故意跳过 o（视觉混淆），用 klmnp 而非 klmno
-        var input = "abcde-fghij-klmnp-qrstu-vwxyz";
+        var input = "abcde-fghij-klmno-pqrst-uvwxy-z2345-67abc-def";
 
         var result = ProductKeyCodec.TryParseRaw(input, out var raw);
 
         Assert.True(result);
-        Assert.Equal(25, raw.Length);
-        Assert.Equal("ABCDEFGHIJKLMNPQRSTUVWXYZ", raw);
+        Assert.Equal(EmbeddedKey.FormattedLength, raw.Length);
+        Assert.Equal("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEF", raw);
         Assert.DoesNotContain("-", raw);
     }
 

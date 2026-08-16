@@ -169,6 +169,9 @@ public partial class AuditQueryViewModel : ObservableObject
         _ => null,
     };
 
+    /// <summary>归档导出上限（条）。与 AuditService.QueryAll 默认 maxResults 保持一致。</summary>
+    private const int ExportMaxResults = 10000;
+
     /// <summary>
     /// 按当前过滤条件拉取全部审计记录（归档用，最多 10000 条）。
     /// 后台线程安全：命中上限时返回 Truncated=true，由调用方在 UI 线程提示，禁止无感知的截断归档。
@@ -176,7 +179,7 @@ public partial class AuditQueryViewModel : ObservableObject
     private (List<AuditEntry>? Items, bool Truncated, int Total) QueryAllForExportCore()
     {
         var (items, total) = _auditService.QueryAll(
-            From, To, OperatorFilter, ActionFilter, null, CurrentSucceededFilter);
+            From, To, OperatorFilter, ActionFilter, null, CurrentSucceededFilter, ExportMaxResults);
         if (total <= items.Count) return (items, false, total);
         return (null, true, total);
     }
@@ -199,8 +202,8 @@ public partial class AuditQueryViewModel : ObservableObject
             var (items, truncated, total) = await Task.Run(QueryAllForExportCore);
             if (truncated)
             {
-                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, total);
-                _dialog.NotifyWarning(string.Format(Strings.K635, total, total));
+                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, ExportMaxResults);
+                _dialog.NotifyWarning(string.Format(Strings.K635, total, ExportMaxResults));
                 return;
             }
             if (items is null || items.Count == 0)
@@ -258,8 +261,8 @@ public partial class AuditQueryViewModel : ObservableObject
             var (items, truncated, total) = await Task.Run(QueryAllForExportCore);
             if (truncated)
             {
-                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, total);
-                _dialog.NotifyWarning(string.Format(Strings.K635, total, total));
+                Log.Warning("审计归档截断：匹配 {Total} 条，超过导出上限 {Limit} 条", total, ExportMaxResults);
+                _dialog.NotifyWarning(string.Format(Strings.K635, total, ExportMaxResults));
                 return;
             }
             if (items is null || items.Count == 0)

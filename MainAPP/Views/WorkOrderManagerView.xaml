@@ -81,13 +81,45 @@
                               SelectedValuePath="Value"
                               Style="{StaticResource ComboBoxExtend}"
                               ToolTip="{x:Static resources:Strings.K559}" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K560}" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K561}" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}" />
-                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" Content="{x:Static resources:Strings.K562}" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}" />
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" IsChecked="{Binding OnlyOverdue, Mode=TwoWay}">
+                        <CheckBox.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K560}" />
+                                <Border Margin="5,0,0,0" Padding="5,0" CornerRadius="7" Background="{StaticResource SecondaryRegionBrush}">
+                                    <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OverdueCount}" />
+                                </Border>
+                            </StackPanel>
+                        </CheckBox.Content>
+                    </CheckBox>
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" IsChecked="{Binding OnlyAchieved, Mode=TwoWay}">
+                        <CheckBox.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K561}" />
+                                <Border Margin="5,0,0,0" Padding="5,0" CornerRadius="7" Background="{StaticResource SecondaryRegionBrush}">
+                                    <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AchievedCount}" />
+                                </Border>
+                            </StackPanel>
+                        </CheckBox.Content>
+                    </CheckBox>
+                    <CheckBox Margin="0,0,12,4" VerticalAlignment="Center" IsChecked="{Binding OnlyHasNg, Mode=TwoWay}">
+                        <CheckBox.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K562}" />
+                                <Border Margin="5,0,0,0" Padding="5,0" CornerRadius="7" Background="{StaticResource SecondaryRegionBrush}">
+                                    <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding NgWorkOrderCount}" />
+                                </Border>
+                            </StackPanel>
+                        </CheckBox.Content>
+                    </CheckBox>
                 </WrapPanel>
 
                 <!--  状态分布概览：一眼看到各状态工单数量，点击切换筛选（RadioButton 单选互斥）  -->
-                <StackPanel Grid.Row="3" Margin="18,0,18,8" Orientation="Horizontal">
+                <Grid Grid.Row="3" Margin="18,0,18,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Null}"
                                  Content="{x:Static resources:Strings.K004}" Style="{StaticResource TimePresetChip}">
                         <RadioButton.IsChecked>
@@ -142,17 +174,29 @@
                             </StackPanel>
                         </RadioButton.Content>
                     </RadioButton>
-                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{Binding FilteredCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F259}" />
-                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource WarningBrush}"
-                               Text="{Binding OverdueCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F260}" />
-                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource SuccessBrush}"
-                               Text="{Binding AchievedCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F261}" />
-                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}"
-                               Text="{Binding NgWorkOrderCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F262}" />
-                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource WarningBrush}"
-                               Text="{Binding ScheduleConflictCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F263}" />
-                </StackPanel>
+                    </StackPanel>
+                    <!--  计划冲突告警徽章：>0 高亮，=0 弱化  -->
+                    <Border Grid.Column="1" VerticalAlignment="Center" Padding="8,4" CornerRadius="8" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Setter Property="Opacity" Value="0.5" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ScheduleConflictCount}" Value="0">
+                                        <Setter Property="Opacity" Value="0.45" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14" Foreground="{StaticResource WarningBrush}" />
+                            <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" FontWeight="Bold"
+                                       Foreground="{StaticResource WarningBrush}"
+                                       Text="{Binding ScheduleConflictCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F263}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
                 <!--  列表表头  -->
                 <Grid Grid.Row="4" Margin="18,0,18,4">
@@ -267,6 +311,9 @@
                             Style="{StaticResource IconButtonDefault}"
                             Tag="{x:Static mi:MaterialIconKind.ToyBrickPlus}"
                             ToolTip="{x:Static resources:Strings.K572}" />
+                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
+                               Text="{Binding FilteredCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F259}" />
                 </DockPanel>
             </Grid>
         </Border>
@@ -337,108 +384,111 @@
                     </controls:EmptyState>
 
                     <ScrollViewer Margin="18,0,18,12" VerticalScrollBarVisibility="Auto">
-                        <!--  详情字段（仅在 SelectedWorkOrder 非 null 时显示）  -->
-                        <StackPanel Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
-                            <!--  工单号  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K008}" />
-                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.OrderNo}" />
-                            </DockPanel>
-                            <!--  产品编码  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K019}" />
-                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductCode}" />
-                            </DockPanel>
-                            <!--  产品名称  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K020}" />
-                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.ProductName}" />
-                            </DockPanel>
-                            <!--  绑定设备  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K041}" />
-                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding SelectedWorkOrder.DeviceName}" />
-                            </DockPanel>
-                            <!--  计划产量  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
-                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}"
-                                           Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
-                            </DockPanel>
-                            <!--  实际产量统计（SelectedProduction 非 null 时显示）  -->
-                            <StackPanel Margin="0,0,0,12"
-                                        Visibility="{Binding SelectedProduction, Converter={StaticResource NullToVisibilityConverter}}">
-                                <DockPanel Margin="0,0,0,6">
-                                    <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K047}" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                               Foreground="{StaticResource SuccessBrush}"
-                                               Text="{Binding SelectedProduction.OkCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
-                                </DockPanel>
-                                <DockPanel Margin="0,0,0,6">
-                                    <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K575}" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                               Foreground="{StaticResource DangerBrush}"
-                                               Text="{Binding SelectedProduction.NgCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
-                                </DockPanel>
-                                <DockPanel Margin="0,0,0,6">
-                                    <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K576}" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                               Foreground="{StaticResource PrimaryBrush}"
-                                               Text="{Binding SelectedProduction.AchievementRate, StringFormat={}{0:P1}}" />
-                                </DockPanel>
-                                <DockPanel Margin="0,0,0,6">
-                                    <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                               Foreground="{StaticResource WarningBrush}"
-                                               Text="{Binding SelectedProduction.DefectRate, StringFormat={}{0:P1}}" />
-                                </DockPanel>
-                            </StackPanel>
-                            <!--  计划时间（分别绑定 PlannedStart 与 PlannedEnd，避免原 Bug 两处都显示 PlannedStart）  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                               Foreground="{StaticResource PrimaryTextBrush}"
-                                               Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
-                                    <TextBlock Margin="4,0,4,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="~" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                               Foreground="{StaticResource PrimaryTextBrush}"
-                                               Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                        <!--  详情字段（仅在 SelectedWorkOrder 非 null 时显示，内容块水平居中）  -->
+                        <StackPanel MaxWidth="520" HorizontalAlignment="Center"
+                                    Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
+                            <!--  顶部摘要卡片：工单号 + 产品/设备 + 状态徽章  -->
+                            <Border Margin="0,0,0,12" Padding="16,14" CornerRadius="12"
+                                    Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                                   Text="{Binding SelectedWorkOrder.OrderNo}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeCaption}"
+                                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding SelectedWorkOrder.ProductName}" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.ProductCode}" />
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text=" · " />
+                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.DeviceName}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse Style="{StaticResource StatusDot}" DataContext="{Binding SelectedWorkOrder}" />
+                                        <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" DataContext="{Binding SelectedWorkOrder}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!--  计划信息卡片  -->
+                            <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                                   Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
+                                    </DockPanel>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                            <TextBlock Margin="4,0,4,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource ThirdlyTextBrush}" Text="~" />
+                                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                        </StackPanel>
+                                    </DockPanel>
                                 </StackPanel>
-                            </DockPanel>
-                            <!--  状态  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K003}" />
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Ellipse Style="{StaticResource StatusDot}" DataContext="{Binding SelectedWorkOrder}" />
-                                    <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" DataContext="{Binding SelectedWorkOrder}" />
+                            </Border>
+
+                            <!--  产量统计卡片（SelectedProduction 非 null 时显示）  -->
+                            <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}"
+                                    Visibility="{Binding SelectedProduction, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K047}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource SuccessBrush}"
+                                                   Text="{Binding SelectedProduction.OkCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
+                                    </DockPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K575}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource DangerBrush}"
+                                                   Text="{Binding SelectedProduction.NgCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
+                                    </DockPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K576}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryBrush}"
+                                                   Text="{Binding SelectedProduction.AchievementRate, StringFormat={}{0:P1}}" />
+                                    </DockPanel>
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                   Foreground="{StaticResource WarningBrush}"
+                                                   Text="{Binding SelectedProduction.DefectRate, StringFormat={}{0:P1}}" />
+                                    </DockPanel>
                                 </StackPanel>
-                            </DockPanel>
-                            <!--  备注  -->
-                            <DockPanel Margin="0,0,0,12">
-                                <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Top"
-                                           FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K021}" />
-                                <TextBlock VerticalAlignment="Top" FontSize="{DynamicResource FontSizeCaption}"
-                                           Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
-                                           Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
-                            </DockPanel>
+                            </Border>
+
+                            <!--  备注卡片  -->
+                            <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left" Width="100" VerticalAlignment="Top"
+                                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K021}" />
+                                    <TextBlock VerticalAlignment="Top" FontSize="{DynamicResource FontSizeCaption}"
+                                               Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
+                                               Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
+                                </DockPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

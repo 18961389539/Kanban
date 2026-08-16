@@ -14,6 +14,7 @@ using Kanban.Core.Services;
 using MainAPP.Services;
 using Kanban.Contracts.Metrics;
 using OxyPlot;
+using System.Windows.Media;
 
 namespace MainAPP.ViewModels;
 
@@ -104,6 +105,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 是否显示班次进度区域：无班次配置或非班次时段时为 false，隐藏顶部班次 UI。
     /// </summary>
     [ObservableProperty] private bool _isShiftProgressVisible;
+
+    // ──────────── 设备状态卡右上角：当前班次 + 日期时钟 ────────────
+
+    /// <summary>设备状态卡右上角班次标签，如 "早班 08:00-20:00"。</summary>
+    [ObservableProperty] private string _deviceStatusShiftTag = "";
+    /// <summary>设备状态卡右上角日期时钟，格式 "MM-dd HH:mm"。</summary>
+    [ObservableProperty] private string _deviceStatusClock = "";
 
     // ──────────── 当前工单（顶部栏工单条） ────────────
 
@@ -259,7 +267,22 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _runTimeFormatted = "";
     [ObservableProperty] private string _alarmTimeFormatted = "";
     [ObservableProperty] private string _pausedTimeFormatted = "";
+    [ObservableProperty] private string _runTimeFullFormatted = "";
+    [ObservableProperty] private string _alarmTimeFullFormatted = "";
+    [ObservableProperty] private string _pausedTimeFullFormatted = "";
+    [ObservableProperty] private string _totalTimeFullFormatted = "";
     [ObservableProperty] private PlotModel? _statusPieChart;
+    /// <summary>设备状态卡三根立体柱图（OxyPlot ColumnSeries）。</summary>
+    [ObservableProperty] private PlotModel? _statusColumnChart;
+
+    // ──────────── 设备健康分 ────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DeviceHealthScoreText))]
+    private double _deviceHealthScore;
+    [ObservableProperty] private string _deviceHealthLevel = "—";
+    [ObservableProperty] private Brush _deviceHealthBrush = Brushes.Gray;
+    /// <summary>设备健康分展示文本（0-100），无有效数据时显示 "—"。</summary>
+    public string DeviceHealthScoreText => DeviceHealthScore <= 0 ? "—" : $"{DeviceHealthScore:0}";
 
     /// <summary>运行时长占比 = RunTime / (Run+Alarm+Paused)。总时长为 0 时返回 0。口径见 SnapshotMetrics。</summary>
     public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTime, RunTime, AlarmTime, PausedTime);
@@ -837,7 +860,55 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTimeFormatted = FormatHelper.FormatDuration(rt.RunTime);
         AlarmTimeFormatted = FormatHelper.FormatDuration(rt.AlarmTime);
         PausedTimeFormatted = FormatHelper.FormatDuration(rt.PausedTime);
+        RunTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime);
+        AlarmTimeFullFormatted = FormatHelper.FormatDurationFull(rt.AlarmTime);
+        PausedTimeFullFormatted = FormatHelper.FormatDurationFull(rt.PausedTime);
+        TotalTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime + rt.AlarmTime + rt.PausedTime);
+        UpdateDeviceHealth();
         UpdateOeeFormulas(rt, dev);
+    }
+
+    /// <summary>
+    /// 计算设备健康分：A/P/Q 三率 + 报警稳定性加权，0-100。
+    /// 无有效运行数据时显示 "—"。
+    /// </summary>
+    private void UpdateDeviceHealth()
+    {
+        if (RunTime + AlarmTime + PausedTime <= 0)
+        {
+            DeviceHealthScore = 0;
+            DeviceHealthLevel = "—";
+            DeviceHealthBrush = Brushes.Gray;
+            return;
+        }
+
+        var stability = Math.Clamp(1 - AlarmTimeRatio, 0, 1);
+        var score = 100 * (0.30 * AvailabilityRate
+                          + 0.20 * PerformanceRate
+                          + 0.25 * QualityRate
+                          + 0.25 * stability);
+        DeviceHealthScore = Math.Clamp(score, 0, 100);
+
+        if (DeviceHealthScore >= 85)
+        {
+            DeviceHealthLevel = "健康";
+            DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x34, 0xD3, 0x99));
+        }
+        else if (DeviceHealthScore >= 70)
+        {
+            DeviceHealthLevel = "良好";
+            DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x60, 0xA5, 0xFA));
+        }
+        else if (DeviceHealthScore >= 60)
+        {
+            DeviceHealthLevel = "关注";
+            DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24));
+        }
+        else
+        {
+            DeviceHealthLevel = "异常";
+            DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xF8, 0x71, 0x71));
+        }
     }
 
     /// <summary>
@@ -882,6 +953,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;
         RecipeName = ""; RecipeValue = 0;
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";
+        RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; TotalTimeFullFormatted = "";
+        DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
         OeeFormulaText = ""; AvailabilityFormulaText = "";
         PerformanceFormulaText = ""; QualityFormulaText = "";
         // 图表始终渲染：无数据时构建灰色占位图，与"始终显示图表"策略一致
@@ -895,7 +968,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
 
     private void BuildStatusPieChart()
-        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
+    {
+        StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
+        StatusColumnChart = ChartService.BuildStatusColumnChart(RunTime, AlarmTime, PausedTime);
+    }
 
     private void BuildOeeRingCharts()
     {
@@ -973,12 +1049,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     private void UpdateShiftProgress()
     {
-        var snap = _shiftProgress.Compute(DateTime.Now);
+        var now = DateTime.Now;
+        var snap = _shiftProgress.Compute(now);
         IsShiftProgressVisible = snap.IsVisible;
         ShiftProgressName = snap.Name;
         ShiftProgressText = snap.Text;
         ShiftProgressRatio = snap.Ratio;
         ShiftProgressPct = snap.Pct;
+
+        // 设备状态卡右上角：当前班次 + 日期时钟
+        var shift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now);
+        DeviceStatusShiftTag = shift.Shift == null
+            ? string.Empty
+            : $"{shift.Shift.Name} {shift.Start:hh\\:mm}-{shift.End:hh\\:mm}";
+        DeviceStatusClock = now.ToString("MM-dd HH:mm");
     }
 
     public void Dispose()

@@ -2,7 +2,6 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using OxyPlot;
@@ -66,6 +65,17 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         IReadOnlyList<ShiftConfig> shifts,
         OverviewChartPalette palette)
     {
+        // 空桶防护：无任何时间桶时直接返回空模型，避免 buckets[0]/buckets[^1] 越界
+        // （与 BuildHeatmap 的空桶早退保持一致）。
+        if (buckets.Length == 0)
+            return new PlotModel
+            {
+                Background = OxyColors.Transparent,
+                PlotAreaBackground = OxyColors.Transparent,
+                TextColor = palette.Text,
+                DefaultFont = ChineseFontFamily,
+            };
+
         var model = new PlotModel
         {
             Background = OxyColors.Transparent,

@@ -1,7 +1,6 @@
 using Kanban.Core.Models;
 using MainAPP.Resources;
 using Kanban.Core.Services;
-using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using MainAPP.Models;
@@ -608,25 +607,75 @@ public static class ChartService
         var model = CreateBaseModel();
         var series = new PieSeries
         {
-            // 百分比显示在扇区内部（2026-08-12 用户要求），外侧标签关闭避免与内部重复
-            InsideLabelFormat = "{2:F0}%",
+            // 状态环上不显示任何文字（2026-08-15 用户要求），由右侧图例承载名称/时长/占比
+            InsideLabelFormat = "",
             OutsideLabelFormat = "",
-            StrokeThickness = 1, Stroke = _borderColor,
+            StrokeThickness = 0, Stroke = _borderColor,
+            // 内凹环形仪表：让状态图呈现中空圆环，中心由 UI 叠加显示总时长
+            InnerDiameter = 0.62,
         };
         if (total <= 0)
         {
-            // 无数据占位：单个灰色扇区，不显示标签避免与图例重复
-            series.InsideLabelFormat = "";
-            series.OutsideLabelFormat = "";
-            series.Slices.Add(new PieSlice(Strings.Status_Initial, 1) { Fill = _idleColor });
+            // 无数据占位：单个灰色扇区，标签清空避免出现连接线/白色刻度
+            series.Slices.Add(new PieSlice("", 1) { Fill = _idleColor });
         }
         else
         {
-            series.Slices.Add(new PieSlice(Strings.Status_Running, runTime) { Fill = _runColor });
-            series.Slices.Add(new PieSlice(Strings.M207, alarmTime) { Fill = _alarmColor });
-            series.Slices.Add(new PieSlice(Strings.M208, pausedTime) { Fill = _pauseColor });
+            series.Slices.Add(new PieSlice("", runTime) { Fill = _runColor });
+            series.Slices.Add(new PieSlice("", alarmTime) { Fill = _alarmColor });
+            series.Slices.Add(new PieSlice("", pausedTime) { Fill = _pauseColor });
         }
         model.Series.Add(series);
+        return model;
+    }
+
+    /// <summary>
+    /// 构建设备状态卡的三根独立立体柱（待机 / 运行 / 报警），使用 OxyPlot ColumnSeries。
+    /// 值为占比（0~100），三根柱分别着色，无数据时返回三根零值占位柱。
+    /// </summary>
+    public static PlotModel BuildStatusColumnChart(double runTime, double alarmTime, double pausedTime)
+    {
+        var model = CreateBaseModel();
+        model.Legends.Clear();
+
+        var total = runTime + alarmTime + pausedTime;
+        double runPct = total > 0 ? runTime / total * 100.0 : 0;
+        double alarmPct = total > 0 ? alarmTime / total * 100.0 : 0;
+        double pausePct = total > 0 ? pausedTime / total * 100.0 : 0;
+
+        var categoryAxis = new CategoryAxis
+        {
+            Position = AxisPosition.Bottom,
+            IsAxisVisible = false,
+            ItemsSource = new[] { Strings.K006, Strings.K005, Strings.K016 },
+        };
+        var valueAxis = new LinearAxis
+        {
+            Position = AxisPosition.Left,
+            IsAxisVisible = false,
+            Minimum = 0,
+            Maximum = 100,
+            MinimumPadding = 0,
+            MaximumPadding = 0,
+        };
+        categoryAxis.Key = "category";
+        valueAxis.Key = "value";
+        model.Axes.Add(categoryAxis);
+        model.Axes.Add(valueAxis);
+
+        // OxyPlot 2.x 无 ColumnSeries；纵向柱用 BarSeries，且 YAxisKey 指向 CategoryAxis。
+        // 三根柱用 BarItem 的 Color 字段分别着色。
+        var series = new BarSeries
+        {
+            XAxisKey = "value",
+            YAxisKey = "category",
+            StrokeThickness = 1,
+        };
+        series.Items.Add(new BarItem(pausePct) { Color = _pauseColor });
+        series.Items.Add(new BarItem(runPct) { Color = _runColor });
+        series.Items.Add(new BarItem(alarmPct) { Color = _alarmColor });
+        model.Series.Add(series);
+
         return model;
     }
 

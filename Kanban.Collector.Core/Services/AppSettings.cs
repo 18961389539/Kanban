@@ -165,6 +165,10 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty]
     private TimeSpan _automaticDailyReportTime = new(23, 59, 0);
 
+    /// <summary>日报主节点标识：多屏部署时仅在标记为主节点的实例生成日报，避免重复 PDF。默认开启（单机无感知）。</summary>
+    [ObservableProperty]
+    private bool _automaticDailyReportIsMaster = true;
+
     /// <summary>
     /// 数据采集模式：Local（本进程采集，默认）/ Remote（连 Kanban.Collector 服务进程）。
     /// </summary>

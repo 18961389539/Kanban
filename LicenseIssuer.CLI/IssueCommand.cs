@@ -30,11 +30,12 @@ public static class IssueCommand
             return;
         }
 
-        // 2. 计算过期日期（UTC，到当天结束）
+        // 2. 计算过期日期：expire 为本地日期，"有效至当天结束"。
+        //    Date.AddDays(1) 得"次日零点"（本地），编码时转 UTC 并向上取整到天，避免本地时区提前失效。
         DateTime? expireUtc = null;
         if (expire.HasValue)
         {
-            expireUtc = expire.Value.Date.AddDays(1);  // 到指定日期的 23:59:59 UTC
+            expireUtc = expire.Value.Date.AddDays(1);
         }
 
         // 3. 生成激活码

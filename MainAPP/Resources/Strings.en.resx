@@ -192,6 +192,126 @@
   <data name="Settings_LanguageHint" xml:space="preserve">
     <value>UI language (Chinese/English/Japanese). Default Chinese. Takes effect after restart.</value>
   </data>
+  <data name="Settings_ExpandDetails" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Settings_CollapseDetails" xml:space="preserve">
+    <value>Collapse</value>
+  </data>
+  <data name="Settings_LicenseDetails" xml:space="preserve">
+    <value>License details</value>
+  </data>
+  <data name="Settings_ConnectionParams" xml:space="preserve">
+    <value>Connection parameters</value>
+  </data>
+  <data name="Settings_ProtocolParams" xml:space="preserve">
+    <value>Protocol parameters</value>
+  </data>
+  <data name="Settings_ShowHideProductKey" xml:space="preserve">
+    <value>Show or hide product key</value>
+  </data>
+  <data name="Common_Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Common_Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="Settings_DangerConfirmTitle" xml:space="preserve">
+    <value>Dangerous Operation Confirmation</value>
+  </data>
+  <data name="Settings_Warn_PlcChanged" xml:space="preserve">
+    <value>PLC connection parameters changed. Saving will disconnect the current PLC and reconnect with the new parameters.</value>
+  </data>
+  <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
+    <value>Data acquisition mode changed. Saving will switch the data source (local / remote collector service).</value>
+  </data>
+  <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
+    <value>Run mode changed. Saving will change the run mode (full / viewer only).</value>
+  </data>
+  <data name="Settings_ConfirmSave" xml:space="preserve">
+    <value>Continue saving?</value>
+  </data>
+  <data name="Language_Chinese" xml:space="preserve">
+    <value>Chinese</value>
+  </data>
+  <data name="Language_English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language_Japanese" xml:space="preserve">
+    <value>Japanese</value>
+  </data>
+  <data name="Settings_DailyReportMaster" xml:space="preserve">
+    <value>Daily report master node</value>
+  </data>
+  <data name="Settings_DailyReportMasterHint" xml:space="preserve">
+    <value>In multi-screen deployments, enable this only on the single master node that should generate daily reports; keep it off on other screens to avoid duplicate PDFs.</value>
+  </data>
+  <data name="Csv_LabelRange" xml:space="preserve">
+    <value>Range</value>
+  </data>
+  <data name="Csv_LabelShift" xml:space="preserve">
+    <value>Current shift</value>
+  </data>
+  <data name="Export_ReviewCsvFileName" xml:space="preserve">
+    <value>ProductionReview_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Export_ReviewPdfFileName" xml:space="preserve">
+    <value>ProductionReview_{0:yyyyMMddHHmm}.pdf</value>
+  </data>
+  <data name="Export_CsvFilter" xml:space="preserve">
+    <value>CSV files|*.csv|All files|*.*</value>
+  </data>
+  <data name="Export_PdfFilter" xml:space="preserve">
+    <value>PDF files|*.pdf|All files|*.*</value>
+  </data>
+  <data name="Um_User" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="Um_Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Um_LastLogin" xml:space="preserve">
+    <value>Last login</value>
+  </data>
+  <data name="Um_Security" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="Um_Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Wo_MoldType" xml:space="preserve">
+    <value>Mold / model</value>
+  </data>
+  <data name="Wo_Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="Wo_OkNg" xml:space="preserve">
+    <value>OK / NG</value>
+  </data>
+  <data name="Wo_Remaining" xml:space="preserve">
+    <value>Est. remaining</value>
+  </data>
+  <data name="Wo_Eta" xml:space="preserve">
+    <value>Est. completion</value>
+  </data>
+  <data name="Wo_Device" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="Wo_CreatedAt" xml:space="preserve">
+    <value>Created at</value>
+  </data>
+  <data name="Wo_LastStatusChange" xml:space="preserve">
+    <value>Last status change</value>
+  </data>
+  <data name="Home_DeviceHealth" xml:space="preserve">
+    <value>Device health</value>
+  </data>
+  <data name="Home_TotalDuration" xml:space="preserve">
+    <value>Total duration</value>
+  </data>
+  <data name="Rtmon_RetryConnect" xml:space="preserve">
+    <value>Retry connection</value>
+  </data>
   <data name="Conn_Live" xml:space="preserve">
     <value>Live</value>
   </data>
@@ -2684,6 +2804,18 @@ OK/NG output, accumulated run/alarm/pause time and alarm status will be cleared;
     <value>Clear the current value of counter alarm "{0}"?
 A reset command will be written to the PLC and the software-side value cleared; this cannot be undone.</value>
   </data>
+  <data name="F501" xml:space="preserve">
+    <value>Delete alarm "{0}"? This action cannot be undone.</value>
+  </data>
+  <data name="F502" xml:space="preserve">
+    <value>Delete defect "{0}"? This action cannot be undone.</value>
+  </data>
+  <data name="F503" xml:space="preserve">
+    <value>Delete counter alarm "{0}"? This action cannot be undone.</value>
+  </data>
+  <data name="F504" xml:space="preserve">
+    <value>The primary address "{1}" of device "{0}" is reused by multiple fields, which may mix production/status data.</value>
+  </data>
   <data name="F178" xml:space="preserve">
     <value>Startup failed; the app will exit:
 
@@ -4457,6 +4589,9 @@ Continue saving?</value>
   <data name="M_UnsavedChangesLeave" xml:space="preserve">
     <value>There are unsaved device configuration changes. Leave the device manager?
 Changes are kept in the current session and can still be saved after returning.</value>
+  </data>
+  <data name="M_NoSelfDelete" xml:space="preserve">
+    <value>You cannot delete your own account</value>
   </data>
   <data name="M_NoDeviceSelected" xml:space="preserve">
     <value>No device selected</value>

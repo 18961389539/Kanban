@@ -45,16 +45,6 @@ public sealed class UserRoleToTextConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>账号是否锁定中（User → bool，配合 BooleanToVisibilityConverter 控制解锁按钮）。</summary>
-public sealed class UserIsLockedToBoolConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is User { LockedUntil: { } until } && until > DateTime.UtcNow;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
 /// <summary>账号锁定中 → Visible（解锁按钮显隐，User 直接转 Visibility）。</summary>
 public sealed class UserIsLockedToVisibilityConverter : IValueConverter
 {

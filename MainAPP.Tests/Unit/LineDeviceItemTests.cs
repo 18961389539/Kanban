@@ -96,7 +96,8 @@ public void ShiftProgress_ComputesAgainstShiftCapacity()
     Assert.Equal(4800, item.ShiftTargetQuantity); // 400 × 12h
     Assert.True(item.HasShiftTarget);
     Assert.Equal(0.5, item.ShiftProgressRatio, 3);
-    Assert.Equal("2,400 / 4,800 件", item.ShiftProgressText);
+    // ShiftProgressText 不含单位（单一“件”单位由 ShiftProgressFullText 拼接），对齐当前实现
+    Assert.Equal("2,400 / 4,800", item.ShiftProgressText);
 }
 
 [Fact]

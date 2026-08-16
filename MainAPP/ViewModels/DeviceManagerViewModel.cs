@@ -170,7 +170,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
         DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
         CounterAlarmManagerVm = new DeviceCounterAlarmManagerViewModel(dialog, plcCommands, counterAlarmCsvIO, this);
-        WorkOrders = new DeviceWorkOrderViewModel(dialog, this, workOrderRepo, workOrderService);
+        WorkOrders = new DeviceWorkOrderViewModel(dialog, this, workOrderRepo, workOrderService, deviceRepository);
         PlcCommands = new DevicePlcCommandViewModel(dialog, this, plcCommands);
 
         // 订阅设备集合与每个设备的属性/子集合变更，用于维护脏标记
@@ -232,7 +232,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     // 删除按钮的启用条件：必须选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）
     private bool CanEditSelected() => SelectedDevice != null && !IsLoading;
 
-    public bool IsPlcConnected => _connectionManager?.IsConnected ?? true;
+    // 未注入连接管理器（本地/单机或测试场景）视为未连接，PLC 写命令应禁用，
+    // 避免离线时误执行写配方/清零点/OEE 清零等操作（审查修复 2026-08-15）。
+    public bool IsPlcConnected => _connectionManager?.IsConnected ?? false;
 
     private void OnConnectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

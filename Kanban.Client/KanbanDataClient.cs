@@ -30,6 +30,20 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         _logger = logger;
     }
 
+    /// <summary>
+    /// 当前操作人（用于远程管理写操作的审计溯源）。连接时经查询串 operator 传给 Collector Hub
+    /// （Hub 无认证，属有意设计的局域网查看；操作人由客户端显式提供）。
+    /// </summary>
+    public string OperatorName { get; set; } = string.Empty;
+
+    /// <summary>连接用 URL：未设置操作人时用原始 HubUrl，否则追加 operator 查询参数。</summary>
+    private string BuildConnectionUrl()
+    {
+        if (string.IsNullOrEmpty(OperatorName)) return _hubUrl;
+        var sep = _hubUrl.Contains('?') ? "&" : "?";
+        return _hubUrl + sep + "operator=" + Uri.EscapeDataString(OperatorName);
+    }
+
     /// <summary>连接状态变化事件（IsConnected = SignalR 传输层状态）</summary>
     public event EventHandler<bool>? ConnectionStateChanged;
 
@@ -84,7 +98,7 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             _reconnectCts?.Dispose();
             _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var builder = new HubConnectionBuilder()
-                .WithUrl(_hubUrl)
+                .WithUrl(BuildConnectionUrl())
                 // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
                 .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
             if (_useMessagePack)

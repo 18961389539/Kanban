@@ -143,10 +143,10 @@ public class ProductionBaselineStoreTests : IDisposable
         // 先落盘 BaselineFile：ShiftId=S1, dev-001_ok_base=100
         _store.SaveBaselines(new() { ["dev-001_ok_base"] = 100 }, "S1");
 
-        // Shift 匹配 → 恢复磁盘基线 100（而非以 raw 50 为新基线）
+        // Shift 匹配 → 恢复磁盘基线 100（raw=150 ≥ saved=100，非计数器回退）
         var store = new ProductionBaselineStore(_appSettings);
         store.Load();
-        Assert.Equal(100, store.GetOrCreate("dev-001_ok_base", 50, "S1"));
+        Assert.Equal(100, store.GetOrCreate("dev-001_ok_base", 150, "S1"));
 
         // 不同 Shift → 以 raw 50 为新基线（不误恢复旧班次，避免串账）
         var store2 = new ProductionBaselineStore(_appSettings);

@@ -1,13 +1,21 @@
+using System.Globalization;
 using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
-using Kanban.Core.Entities;
 using Kanban.Core.Entities;
 
 namespace MainAPP.Services;
 
 internal static class ProductionReviewCalculations
 {
+    /// <summary>正数加 "+" 号，千分位整数（InvariantCulture，与 CSV/PDF 导出口径一致）。ViewModel/PDF 共用。</summary>
+    public static string FormatSigned(int value)
+        => value > 0 ? $"+{value:N0}" : value.ToString("N0", CultureInfo.InvariantCulture);
+
+    /// <summary>正数加 "+" 号的百分比增量（InvariantCulture）。</summary>
+    public static string FormatSignedPercentage(double value)
+        => value > 0 ? $"+{value:P1}" : value.ToString("P1", CultureInfo.InvariantCulture);
+
     /// <summary>
     /// 计算窗口内产量差分（按班次实例首尾差分）。内部自动排序——高频调用场景（每报警/每状态段）
     /// 请改用 <see cref="CalculateProductionDeltaSorted"/> 并预排序一次，避免重复全量扫描。

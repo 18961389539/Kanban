@@ -35,4 +35,14 @@ public static class DurationFormatter
                 ? $"{ts.Minutes}m {ts.Seconds}s"
                 : $"{ts.Seconds}s";
     }
+
+    /// <summary>
+    /// 完整时长：始终显示时分秒，小时不足时补 0h。用于对精度有要求的设备状态卡。
+    /// 例：0h 16m 25s、1h 57m 08s。
+    /// </summary>
+    public static string FormatFull(double seconds)
+    {
+        var ts = TimeSpan.FromSeconds(Math.Max(0, seconds));
+        return $"{(int)ts.TotalHours}h {ts.Minutes}m {ts.Seconds}s";
+    }
 }

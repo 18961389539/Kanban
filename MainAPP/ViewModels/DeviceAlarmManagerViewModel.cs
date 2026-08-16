@@ -76,6 +76,12 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveAlarm(Alarm alarm)
     {
+        if (alarm == null) return;
+        var confirm = _dialog.Show(
+            string.Format(Strings.F501, alarm.Name),
+            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
         if (SelectedAlarm == alarm) SelectedAlarm = null;
         // 清理采集服务中该报警的内存状态（_prevAlarmStates），避免内存泄漏
         _dataAcquisitionService.RemoveAlarmState(alarm.Id);

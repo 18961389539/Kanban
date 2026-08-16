@@ -8,8 +8,8 @@ namespace MainAPP.Tests.Unit;
 
 /// <summary>
 /// License 边界测试：对应审查发现的**绕过/容错**路径（正常路径已由 LicenseGateTests 覆盖）。
-/// - 非法 KANBAN_HMAC_KEY 环境变量 → 静默回退内嵌密钥，不崩溃（已知问题 ②）
-/// - 损坏/篡改的 license.dat → 不崩溃、不误判 Active（已知问题 ⑥ 空 catch 与 ① 对称密钥）
+/// - HMAC 密钥必须来自 KANBAN_HMAC_KEY 环境变量（修复 #2：已移除内嵌回退密钥）
+/// - 损坏/篡改的 license.dat → 不崩溃、不误判 Active
 /// 这些是"攻击面"回归：测试在，篡改路径就不会在重构中悄悄改变行为。
 /// </summary>
 [Trait("Category", "Unit")]
@@ -46,17 +46,12 @@ public class LicenseBoundaryTests : IDisposable
     private LicenseGate CreateGate() => new(_store, _trialTracker, _attemptTracker);
 
     [Fact]
-    public void InvalidHmacEnvVariable_FallsBackToEmbeddedKey_DoesNotCrash()
+    public void HmacKey_IsLoadedFromEnvironmentVariable_NotEmbedded()
     {
-        // 已知问题 ②：非法环境变量应静默回退内嵌常量，不抛异常、不影响授权流程
-        // （EmbeddedKey.LoadKey 对非 Base64/非 32 字节值回退内嵌密钥；KeySource 为 Lazy 静态缓存，
-        // 同一测试进程内已被其他用例初始化，此处只断言行为不崩溃、不误判 Active）
-        Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, "!!!not-a-valid-base64-key!!!");
-
-        var gate = CreateGate();
-        var status = gate.CheckStatus(); // 不应抛异常
-
-        Assert.NotEqual(LicenseStatus.Active, status);
+        // 修复 #2 后：密钥不再内嵌回退，必须来自 KANBAN_HMAC_KEY（由 TestModuleInitializer 注入）。
+        var key = EmbeddedKey.HmacKey;
+        Assert.Equal(32, key.Length);
+        Assert.Contains(EmbeddedKey.EnvKeyName, EmbeddedKey.KeySource);
     }
 
     [Fact]

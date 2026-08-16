@@ -16,6 +16,7 @@
       <SolidColorBrush x:Key="BorderBrush" Color="#344052" />
       <SolidColorBrush x:Key="SecondaryBorderBrush" Color="#465467" />
       <SolidColorBrush x:Key="DividerBrush" Color="#303B4B" />
+      <SolidColorBrush x:Key="GlassBorderBrush" Color="#64748B" Opacity="0.29" />
 
     <!--  文本  -->
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F1F5F9" />

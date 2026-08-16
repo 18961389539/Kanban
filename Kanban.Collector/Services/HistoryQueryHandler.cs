@@ -19,8 +19,8 @@ public sealed class HistoryQueryHandler
 {
     /// <summary>单次批量查询子查询数上限：防无鉴权/异常客户端一次发起数十个全表查询拖垮 SQLite（资源耗尽向量）。</summary>
     private const int MaxBatchQueries = 32;
-    /// <summary>单查询最大时间跨度：超限截断为最近窗口，防 MinValue..MaxValue 全表扫描。</summary>
-    private static readonly TimeSpan MaxQueryWindow = TimeSpan.FromDays(7);
+    /// <summary>单查询最大时间跨度：覆盖 WPF/Web 的 近30天/本月 快捷档，避免静默截断造成对账错误。</summary>
+    private static readonly TimeSpan MaxQueryWindow = TimeSpan.FromDays(31);
     /// <summary>未指定时间范围时的默认窗口（最近 24 小时），替代全表（MinValue..MaxValue）。</summary>
     private static readonly TimeSpan DefaultQueryWindow = TimeSpan.FromHours(24);
 

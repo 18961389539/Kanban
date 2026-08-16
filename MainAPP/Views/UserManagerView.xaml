@@ -6,6 +6,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:resources="clr-namespace:MainAPP.Resources"
@@ -119,13 +120,13 @@
                                             <Setter Property="BorderThickness" Value="1" />
                                             <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMouseOver}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                     <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
                                                     <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                                                     <Setter Property="Foreground" Value="White" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsMouseOver}" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource HoverBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -152,7 +153,18 @@
                         HorizontalGridLinesBrush="{StaticResource DividerBrush}"
                         IsReadOnly="True"
                         ItemsSource="{Binding FilteredUsers}"
-                        SelectedItem="{Binding SelectedUser}">
+                        SelectedItem="{Binding SelectedUser}"
+                        CellStyle="{StaticResource KanbanDataGridCell}">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource DividerBrush}" />
+                                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                <Setter Property="Padding" Value="8,6" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
                                 <Setter Property="Background" Value="Transparent" />
@@ -176,32 +188,68 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn
-                                Binding="{Binding Username}"
-                                FontSize="{DynamicResource FontSizeHint}"
-                                FontWeight="Bold"
-                                Header="{x:Static resources:Strings.M316}" />
-                            <DataGridTextColumn
-                                Binding="{Binding DisplayName}"
-                                FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.M330}" />
-                            <DataGridTemplateColumn Header="{x:Static resources:Strings.M321}">
+                            <DataGridTemplateColumn Width="180">
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="AccountGroup" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Um_User}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Border Padding="8,2" CornerRadius="10"
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Border Width="30" Height="30" CornerRadius="15"
+                                                    Background="{Binding Role, Converter={StaticResource UserRoleToBrushConverter}}">
+                                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           FontWeight="Bold" Foreground="{StaticResource PrimaryContrastBrush}"
+                                                           Text="{Binding Username, Converter={StaticResource FirstCharacterConverter}}" />
+                                            </Border>
+                                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                                           Text="{Binding Username}" />
+                                                <TextBlock FontSize="{DynamicResource FontSizeHint}"
+                                                           Foreground="{StaticResource SecondaryTextBrush}"
+                                                           Text="{Binding DisplayName}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="ShieldKeyOutline" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Um_Role}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="8,0" CornerRadius="9" HorizontalAlignment="Center"
                                                 BorderThickness="1"
                                                 BorderBrush="{Binding Role, Converter={StaticResource UserRoleToBrushConverter}}">
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold"
+                                                       VerticalAlignment="Center"
                                                        Foreground="{Binding Role, Converter={StaticResource UserRoleToBrushConverter}}"
                                                        Text="{Binding Role, Converter={StaticResource UserRoleToTextConverter}}" />
                                         </Border>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="{x:Static resources:Strings.M331}">
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.K003}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock FontSize="{DynamicResource FontSizeHint}"
+                                                   VerticalAlignment="Center" HorizontalAlignment="Center"
                                                    Foreground="{Binding Converter={StaticResource UserStatusToBrushConverter}}"
                                                    Text="{Binding Converter={StaticResource UserStatusToTextConverter}}" />
                                     </DataTemplate>
@@ -209,40 +257,81 @@
                             </DataGridTemplateColumn>
                             <DataGridTextColumn
                                 Binding="{Binding LastLoginAt, Converter={StaticResource UtcToLocalConverter}}"
-                                FontSize="{DynamicResource FontSizeHint}"
-                                Header="{x:Static resources:Strings.M363}" />
-                            <DataGridTemplateColumn Header="{x:Static resources:Strings.M372}">
+                                FontSize="{DynamicResource FontSizeHint}">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="History" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Um_LastLogin}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="ShieldCheckOutline" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Um_Security}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock FontSize="{DynamicResource FontSizeHint}"
-                                                   Foreground="{StaticResource DangerBrush}"
+                                                   VerticalAlignment="Center" HorizontalAlignment="Center"
                                                    Text="{Binding Converter={StaticResource UserRiskToTextConverter}}"
-                                                   ToolTip="{Binding Converter={StaticResource UserRiskToTextConverter}}" />
+                                                   ToolTip="{Binding Converter={StaticResource UserRiskToTextConverter}}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Converter={StaticResource UserRiskToTextConverter}}" Value="">
+                                                                    <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             <DataGridTemplateColumn Width="110">
+                                <DataGridTemplateColumn.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon Kind="Cog" Width="14" Height="14" VerticalAlignment="Center"
+                                                                    Foreground="{StaticResource SecondaryTextBrush}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{x:Static resources:Strings.Um_Actions}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataGridTemplateColumn.Header>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Padding="4,2" Margin="0,0,4,0" Cursor="Hand"
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Button Padding="8,6" Margin="0,0,4,0" Cursor="Hand"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.M324}"
                                                     ToolTip="{x:Static resources:Strings.M324}"
                                                     Command="{Binding DataContext.ResetPasswordForCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Width="13" Height="13" Kind="KeyVariantOutline" />
+                                                <materialIcons:MaterialIcon Width="16" Height="16" Kind="Key" />
                                             </Button>
-                                            <Button Padding="4,2" Margin="0,0,4,0" Cursor="Hand"
+                                            <Button Padding="8,6" Margin="0,0,4,0" Cursor="Hand"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.M367}"
                                                     ToolTip="{x:Static resources:Strings.M367}"
                                                     Command="{Binding DataContext.UnlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
                                                     Visibility="{Binding Converter={StaticResource UserIsLockedToVisibilityConverter}}">
-                                                <materialIcons:MaterialIcon Width="13" Height="13" Kind="LockOpenVariantOutline" />
+                                                <materialIcons:MaterialIcon Width="16" Height="16" Kind="LockOpenVariantOutline" />
                                             </Button>
-                                            <Button Padding="4,2" Cursor="Hand"
+                                            <Button Padding="8,6" Cursor="Hand"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.M323}"
                                                     ToolTip="{x:Static resources:Strings.M323}"
                                                     Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Width="13" Height="13" Foreground="{StaticResource DangerBrush}" Kind="DeleteOutline" />
+                                                <materialIcons:MaterialIcon Width="16" Height="16" Foreground="{StaticResource DangerBrush}" Kind="DeleteOutline" />
                                             </Button>
                                         </StackPanel>
                                     </DataTemplate>
@@ -252,11 +341,14 @@
                     </DataGrid>
 
                     <!-- 空态 -->
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{x:Static resources:Strings.M380}">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
+                    <controls:EmptyState
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IconKind="AccountGroup"
+                        Message="{x:Static resources:Strings.M380}"
+                        Hint="{x:Static resources:Strings.M322}">
+                        <controls:EmptyState.Style>
+                            <Style TargetType="controls:EmptyState">
                                 <Setter Property="Visibility" Value="Collapsed" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding FilteredCount}" Value="0">
@@ -264,8 +356,8 @@
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                        </controls:EmptyState.Style>
+                    </controls:EmptyState>
                 </Grid>
             </Grid>
         </Border>
@@ -295,66 +387,98 @@
         <!--  ══ 右：操作区（Tab：编辑选中用户 / 添加新用户） ══  -->
         <Border Grid.Column="2" Padding="0" Style="{StaticResource MainCard}">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
                 <!-- Tab 头 -->
-                <StackPanel Grid.Row="0" Margin="16,16,16,0" Orientation="Horizontal">
-                    <Border Padding="14,6" CornerRadius="6,6,0,0" BorderThickness="1,1,1,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
+                <StackPanel Grid.Row="0" Margin="16,16,16,-1" Orientation="Horizontal">
+                    <Button Margin="0,0,2,0" Padding="14,6" BorderThickness="1,1,1,0" Cursor="Hand"
+                            Command="{Binding ShowEditTabCommand}">
+                        <Button.FocusVisualStyle>
+                            <Style>
+                                <Setter Property="Control.Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="1.5"
+                                                    CornerRadius="6,6,0,0" Margin="-1.5" />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.FocusVisualStyle>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6,6,0,0"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Style>
+                            <Style TargetType="Button">
                                 <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsEditMode}" Value="True">
                                         <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
                                         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter Property="Foreground" Value="White" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </Border.Style>
-                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                   Foreground="{StaticResource SecondaryTextBrush}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEditMode}" Value="True">
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                            <Run Text="✎ " /><Run Text="{x:Static resources:Strings.M320}" />
-                        </TextBlock>
-                    </Border>
-                    <Border Padding="14,6" CornerRadius="6,6,0,0" BorderThickness="1,1,1,0">
-                        <Border.Style>
-                            <Style TargetType="Border">
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="✎ " /><TextBlock Text="{x:Static resources:Strings.M320}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="2,0,0,0" Padding="14,6" BorderThickness="1,1,1,0" Cursor="Hand"
+                            Command="{Binding ShowAddTabCommand}">
+                        <Button.FocusVisualStyle>
+                            <Style>
+                                <Setter Property="Control.Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="1.5"
+                                                    CornerRadius="6,6,0,0" Margin="-1.5" />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.FocusVisualStyle>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6,6,0,0"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Style>
+                            <Style TargetType="Button">
                                 <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsEditMode}" Value="False">
                                         <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
                                         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter Property="Foreground" Value="White" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </Border.Style>
-                        <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                   Foreground="{StaticResource SecondaryTextBrush}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEditMode}" Value="False">
-                                            <Setter Property="Foreground" Value="White" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                            <Run Text="＋ " /><Run Text="{x:Static resources:Strings.M322}" />
-                        </TextBlock>
-                    </Border>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="＋ " /><TextBlock Text="{x:Static resources:Strings.M322}" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- 编辑面板（选中用户时显示） -->
-                <Border Margin="16,0,16,16" Padding="16" CornerRadius="0,6,6,6"
+                <Border Grid.Row="1" Margin="16,0,16,16" Padding="16" CornerRadius="0,6,6,6"
                         Background="{StaticResource SecondaryRegionBrush}"
                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                     <Border.Style>
@@ -367,10 +491,11 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
                         <TextBlock
                             Margin="0,0,0,12"
-                            FontSize="{DynamicResource FontSizeKpiLabel}"
+                            FontSize="{DynamicResource FontSizeCaption}"
                             FontWeight="Bold"
                             Foreground="{StaticResource PrimaryTextBrush}"
                             Text="{Binding SelectedUser.DisplayLabel}" />
@@ -444,10 +569,11 @@
                             Content="{x:Static resources:Strings.M323}"
                             Style="{StaticResource ButtonDanger}" />
                     </StackPanel>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- 添加面板（未选中用户时显示） -->
-                <Border Margin="16,0,16,16" Padding="16" CornerRadius="0,6,6,6"
+                <Border Grid.Row="1" Margin="16,0,16,16" Padding="16" CornerRadius="0,6,6,6"
                         Background="{StaticResource SecondaryRegionBrush}"
                         BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                     <Border.Style>
@@ -460,7 +586,8 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
                         <hc:TextBox
                             x:Name="NewUsernameBox"
                             Margin="0,0,0,12"
@@ -490,7 +617,18 @@
                             hc:InfoElement.Title="{x:Static resources:Strings.M317}"
                             hc:InfoElement.TitlePlacement="Top"
                             AutomationProperties.Name="{x:Static resources:Strings.M317}"
-                            PasswordChanged="OnNewPasswordChanged" />
+                            PasswordChanged="OnNewPasswordChanged">
+                            <PasswordBox.Style>
+                                <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                            <Setter Property="BorderThickness" Value="1.5" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </PasswordBox.Style>
+                        </PasswordBox>
 
                         <Grid Margin="0,6,0,0">
                             <Grid.ColumnDefinitions>
@@ -499,7 +637,7 @@
                             </Grid.ColumnDefinitions>
                             <ProgressBar Grid.Column="0" Height="5" VerticalAlignment="Center"
                                          Maximum="100" Minimum="0"
-                                         Value="{Binding NewPasswordStrengthPercent}" />
+                                         Value="{Binding NewPasswordStrengthPercent, Mode=OneWay}" />
                             <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
                                        FontSize="{DynamicResource FontSizeHint}"
                                        Foreground="{StaticResource SecondaryTextBrush}"
@@ -512,7 +650,18 @@
                             hc:InfoElement.Title="{x:Static resources:Strings.M365}"
                             hc:InfoElement.TitlePlacement="Top"
                             AutomationProperties.Name="{x:Static resources:Strings.M365}"
-                            PasswordChanged="OnNewPasswordChanged" />
+                            PasswordChanged="OnNewPasswordChanged">
+                            <PasswordBox.Style>
+                                <Style TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                            <Setter Property="BorderThickness" Value="1.5" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </PasswordBox.Style>
+                        </PasswordBox>
 
                         <CheckBox
                             Margin="0,0,0,12"
@@ -525,6 +674,7 @@
                             Content="{x:Static resources:Strings.M322}"
                             Style="{StaticResource ButtonPrimary}" />
                     </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </Grid>
         </Border>

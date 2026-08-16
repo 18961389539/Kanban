@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Kanban.Core.Models;
 
 /// <summary>
-/// 系统用户账号。密码以 SHA256 + 随机 salt 哈希存储，源码不含明文密码。
+/// 系统用户账号。密码以 PBKDF2-SHA256 + 随机 salt 哈希存储，源码不含明文密码。
 /// 持久化到 users.json（与 settings.json 同目录，复用 AppSettings.WriteFileAtomically 原子写入）。
 /// </summary>
 public partial class User : ObservableObject
@@ -20,8 +20,8 @@ public partial class User : ObservableObject
     private UserRole _role = UserRole.Operator;
 
     /// <summary>
-    /// 密码哈希（Base64）。格式：{saltBase64}:{hashBase64}。
-    /// salt 为 16 字节随机数，hash = SHA256(salt + password)。
+    /// 密码哈希（Base64）。新版格式：pbkdf2${iterations}${saltBase64}${hashBase64}（PBKDF2-SHA256）；
+    /// 兼容旧版格式 {saltBase64}:{hashBase64}（SHA256(salt + password)）。
     /// </summary>
     public string PasswordHash { get; set; } = string.Empty;
 

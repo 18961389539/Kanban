@@ -24,11 +24,6 @@
         <Style x:Key="SettingsSectionTitle" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Horizontal" />
         </Style>
-        <!--  统一信息网格标签列宽，保证多行标签右对齐  -->
-        <Style x:Key="InfoLabel" TargetType="TextBlock" BasedOn="{StaticResource CaptionText}">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextAlignment" Value="Right" />
-        </Style>
         <!--  统一卡片内输入控件间距  -->
         <Style x:Key="SettingsTextBox" TargetType="hc:TextBox" BasedOn="{StaticResource TextBoxExtend}">
             <Setter Property="MinHeight" Value="40" />
@@ -38,33 +33,129 @@
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
-        <Style x:Key="SettingsGroupHeader" TargetType="Border">
-            <Setter Property="Margin" Value="0,4,0,12" />
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="3,0,0,0" />
-            <Setter Property="CornerRadius" Value="4" />
-        </Style>
         <Style x:Key="SettingsGroupTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
-        </Style>
-        <Style x:Key="SettingsGroupHint" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,3,0,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
         </Style>
         <Style x:Key="SettingsActionButton" TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Padding" Value="14,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
         </Style>
+
+        <!--  ============ 方案 C：玻璃拟态美化 ============  -->
+        <!--  页面背景：暗色垂直渐变，为半透明玻璃卡片提供底衬层次  -->
+        <LinearGradientBrush x:Key="SettingsPageBackground" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Offset="0" Color="#151C27" />
+            <GradientStop Offset="0.5" Color="#10151E" />
+            <GradientStop Offset="1" Color="#0D1118" />
+        </LinearGradientBrush>
+
+        <!--  玻璃/胶囊阴影：比 CardDropShadow 更柔、更贴地  -->
+        <DropShadowEffect x:Key="SettingsGlassShadow" BlurRadius="18" Direction="270" Opacity="0.28" ShadowDepth="2" Color="#000000" />
+        <DropShadowEffect x:Key="SettingsCapsuleShadow" BlurRadius="24" Direction="270" Opacity="0.4" ShadowDepth="4" Color="#000000" />
+
+        <!--  玻璃拟态卡片：半透明渐变底 + 浅色钢蓝描边 + 柔和阴影  -->
+        <Style x:Key="SettingsGlassCard" TargetType="Border">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#D92C3847" />
+                        <GradientStop Offset="1" Color="#D91B2330" />
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="BorderBrush" Value="{StaticResource GlassBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Effect" Value="{StaticResource SettingsGlassShadow}" />
+        </Style>
+
+        <!--  分段选择容器：深色胶囊底，容纳一组分段单选  -->
+        <Style x:Key="SegmentedRadioGroup" TargetType="Border">
+            <Setter Property="Background" Value="#33000000" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+
+        <!--  分段单选按钮：容器内胶囊项，选中主色底 + 主色描边 + 加粗  -->
+        <Style x:Key="SegmentedRadio" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border
+                            x:Name="Bd"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--  授权详情展开/收起切换：默认折叠元信息，点击展开  -->
+        <Style x:Key="LicenseExpandToggle" TargetType="ToggleButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="Content" Value="{x:Static resources:Strings.Settings_ExpandDetails}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border
+                            x:Name="Bd"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="10,6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Content" Value="{x:Static resources:Strings.Settings_CollapseDetails}" />
+                    <Setter Property="Foreground" Value="#FFFFFF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
 
-    <Grid Margin="20">
+    <Grid Margin="20" Background="{StaticResource SettingsPageBackground}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -78,10 +169,11 @@
                 <Border
                     x:Name="LicenseSection"
                     Margin="0,0,0,16"
-                    Padding="20"
-                    Style="{StaticResource MainCard}">
+                    Padding="20,16"
+                    Style="{StaticResource SettingsGlassCard}"
+                    ToolTip="{x:Static resources:Strings.K473}">
                     <StackPanel>
-                        <Grid Margin="0,0,0,4">
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -90,13 +182,46 @@
                                 <materialIcons:MaterialIcon
                                     Width="20"
                                     Height="20"
-                                    Margin="0,0,8,0"
+                                    Margin="0,0,10,0"
                                     VerticalAlignment="Center"
                                     Foreground="{StaticResource PrimaryBrush}"
                                     Kind="ShieldKeyOutline" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K472}" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SectionTitleText}"
+                                    Text="{x:Static resources:Strings.K472}" />
+                                <Ellipse
+                                    Width="9"
+                                    Height="9"
+                                    Margin="14,0,7,0"
+                                    VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
+                                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
+                                                    <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="14"
+                                    FontWeight="Medium"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding LicenseStatusText}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <ToggleButton
+                                    x:Name="LicenseDetailsToggle"
+                                    Margin="0,0,8,0"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Settings_LicenseDetails}"
+                                    Style="{StaticResource LicenseExpandToggle}" />
                                 <Button
                                     AutomationProperties.Name="{x:Static resources:Strings.K101}"
                                     Command="{Binding CopyMachineCodeCommand}"
@@ -112,150 +237,100 @@
                                     Tag="{x:Static mi:MaterialIconKind.KeyVariant}" />
                             </StackPanel>
                         </Grid>
-                        <TextBlock Margin="28,0,0,8" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K473}" />
-                        <hc:Divider Margin="0,8" />
+                        <StackPanel>
+                            <StackPanel.Visibility>
+                                <Binding ElementName="LicenseDetailsToggle" Path="IsChecked" Converter="{StaticResource BooleanToVisibilityConverter}" />
+                            </StackPanel.Visibility>
+                            <hc:Divider Margin="0,12" />
 
-                        <!--  状态行  -->
-                        <StackPanel Margin="0,12,0,16" Orientation="Horizontal">
-                            <Ellipse
-                                Width="10"
-                                Height="10"
-                                Margin="0,0,8,0"
-                                VerticalAlignment="Center">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
-                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
-                                                <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="15"
-                                FontWeight="Medium"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding LicenseStatusText}" />
+                            <!--  元信息：紧凑横向排列，自动换行  -->
+                            <WrapPanel>
+                            <StackPanel Margin="0,0,20,8" Orientation="Horizontal">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{x:Static resources:Strings.K474}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Consolas" FontSize="14" FontWeight="Bold"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding MachineCode}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,20,8" Orientation="Horizontal">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{x:Static resources:Strings.K475}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding LicenseTypeText}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,20,8" Orientation="Horizontal">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{x:Static resources:Strings.K476}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding ActivatedAtText}" />
+                            </StackPanel>
+                            <StackPanel Margin="0,0,20,8" Orientation="Horizontal">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{x:Static resources:Strings.K477}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding ExpireDateText}" />
+                            </StackPanel>
+                            <!--  激活码（仅已激活显示）  -->
+                            <StackPanel Margin="0,0,20,8" Orientation="Horizontal">
+                                <StackPanel.Visibility>
+                                    <Binding Path="CurrentLicense">
+                                        <Binding.Converter>
+                                            <conv:NullToVisibilityConverter />
+                                        </Binding.Converter>
+                                    </Binding>
+                                </StackPanel.Visibility>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="{StaticResource ThirdlyTextBrush}"
+                                    Text="{x:Static resources:Strings.K478}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Consolas" FontSize="14" FontWeight="Bold"
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding ProductKeyText}" />
+                                <Button
+                                    Margin="8,0,0,0"
+                                    AutomationProperties.Name="{x:Static resources:Strings.Settings_ShowHideProductKey}"
+                                    Command="{Binding ToggleProductKeyMaskCommand}"
+                                    Content="{Binding ProductKeyToggleText}"
+                                    Style="{StaticResource IconButtonDefault}"
+                                    Tag="{x:Static mi:MaterialIconKind.Eye}" />
+                                <Button
+                                    Margin="8,0,0,0"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K479}"
+                                    Command="{Binding CopyProductKeyCommand}"
+                                    Content="{x:Static resources:Strings.K026}"
+                                    Style="{StaticResource IconButtonDefault}"
+                                    Tag="{x:Static mi:MaterialIconKind.ContentCopy}" />
+                            </StackPanel>
+                        </WrapPanel>
                         </StackPanel>
-
-                        <!--  信息网格：标签列统一 90px 右对齐，多行视觉对齐  -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0" Grid.Column="0"
-                                Style="{StaticResource InfoLabel}"
-                                Text="{x:Static resources:Strings.K474}" />
-                            <TextBlock
-                                Grid.Row="0" Grid.Column="1"
-                                FontFamily="Consolas" FontSize="14" FontWeight="Bold"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding MachineCode}" />
-
-                            <TextBlock
-                                Grid.Row="0" Grid.Column="3"
-                                Style="{StaticResource InfoLabel}"
-                                Text="{x:Static resources:Strings.K475}" />
-                            <TextBlock
-                                Grid.Row="0" Grid.Column="4"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding LicenseTypeText}" />
-
-                            <TextBlock
-                                Grid.Row="1" Grid.Column="0"
-                                Margin="0,8,0,0"
-                                Style="{StaticResource InfoLabel}"
-                                Text="{x:Static resources:Strings.K476}" />
-                            <TextBlock
-                                Grid.Row="1" Grid.Column="1"
-                                Margin="0,8,0,0"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding ActivatedAtText}" />
-
-                            <TextBlock
-                                Grid.Row="1" Grid.Column="3"
-                                Margin="0,8,0,0"
-                                Style="{StaticResource InfoLabel}"
-                                Text="{x:Static resources:Strings.K477}" />
-                            <TextBlock
-                                Grid.Row="1" Grid.Column="4"
-                                Margin="0,8,0,0"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding ExpireDateText}" />
-
-                            <!--  激活码（已激活时显示，跨全行 + 统一复制按钮风格）  -->
-                            <TextBlock
-                                Grid.Row="2" Grid.Column="0"
-                                Margin="0,8,0,0"
-                                Style="{StaticResource InfoLabel}"
-                                Text="{x:Static resources:Strings.K478}">
-                                <TextBlock.Visibility>
-                                    <Binding Path="CurrentLicense">
-                                        <Binding.Converter>
-                                            <conv:NullToVisibilityConverter />
-                                        </Binding.Converter>
-                                    </Binding>
-                                </TextBlock.Visibility>
-                            </TextBlock>
-                            <Border
-                                Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4"
-                                Margin="0,8,0,0"
-                                Padding="8,4"
-                                Background="{StaticResource DarkBrush}"
-                                CornerRadius="4">
-                                <Border.Visibility>
-                                    <Binding Path="CurrentLicense">
-                                        <Binding.Converter>
-                                            <conv:NullToVisibilityConverter />
-                                        </Binding.Converter>
-                                    </Binding>
-                                </Border.Visibility>
-                                <DockPanel>
-                                    <!--  复制激活码：统一 IconButtonDefault 风格，与顶部复制机器码按钮一致  -->
-                                    <Button
-                                        Margin="8,0,0,0"
-                                        AutomationProperties.Name="{x:Static resources:Strings.K479}"
-                                        Command="{Binding CopyProductKeyCommand}"
-                                        Content="{x:Static resources:Strings.K026}"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource IconButtonDefault}"
-                                        Tag="{x:Static mi:MaterialIconKind.ContentCopy}" />
-                                    <!--  显示/隐藏激活码（打码/明文切换）  -->
-                                    <Button
-                                        Margin="8,0,0,0"
-                                        AutomationProperties.Name="显示或隐藏激活码"
-                                        Command="{Binding ToggleProductKeyMaskCommand}"
-                                        Content="{Binding ProductKeyToggleText}"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource IconButtonDefault}"
-                                        Tag="{x:Static mi:MaterialIconKind.Eye}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontFamily="Consolas" FontSize="14" FontWeight="Bold"
-                                        Foreground="{StaticResource PrimaryTextBrush}"
-                                        Text="{Binding ProductKeyText}"
-                                        TextTrimming="CharacterEllipsis" />
-                                </DockPanel>
-                            </Border>
-                        </Grid>
                     </StackPanel>
                 </Border>
 
@@ -264,31 +339,34 @@
                     <hc:TabItem Header="{x:Static resources:Strings.M295}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <!--  数据源与运行模式  -->
+                                <!--  数据来源  -->
                                 <Border
                                     x:Name="DataSourceSection"
                                     Padding="20"
                                     VerticalAlignment="Top"
-                                    Style="{StaticResource MainCard}">
+                                    Style="{StaticResource SettingsGlassCard}">
                                     <StackPanel>
-                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K480}" />
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K482}" />
                                         <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                   Text="{x:Static resources:Strings.K481}" />
+                                                   Text="{x:Static resources:Strings.K483}" />
                                         <hc:Divider Margin="0,8" />
 
-                                        <Border Style="{StaticResource SettingsGroupHeader}">
-                                            <StackPanel>
-                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K482}" />
-                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K483}" />
+                                        <Border Style="{StaticResource SegmentedRadioGroup}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <RadioButton
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K485}"
+                                                    Content="{x:Static resources:Strings.K484}"
+                                                    GroupName="DataModeGroup"
+                                                    IsChecked="{Binding IsLocalMode}"
+                                                    Style="{StaticResource SegmentedRadio}" />
+                                                <RadioButton
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K487}"
+                                                    Content="{x:Static resources:Strings.K486}"
+                                                    GroupName="DataModeGroup"
+                                                    IsChecked="{Binding IsRemoteMode}"
+                                                    Style="{StaticResource SegmentedRadio}" />
                                             </StackPanel>
                                         </Border>
-
-                                        <RadioButton Content="{x:Static resources:Strings.K484}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K485}"
-                                                     IsChecked="{Binding IsLocalMode}" Margin="0,8,0,0" />
-                                        <RadioButton Content="{x:Static resources:Strings.K486}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K487}"
-                                                     IsChecked="{Binding IsRemoteMode}" Margin="0,4,0,0" />
                                         <hc:TextBox
                                             hc:InfoElement.Title="{x:Static resources:Strings.K103}"
                                             hc:InfoElement.TitlePlacement="Top"
@@ -326,30 +404,54 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                         </StackPanel>
-
-                                        <Border Style="{StaticResource SettingsGroupHeader}" Margin="0,16,0,0">
-                                            <StackPanel>
-                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K491}" />
-                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K492}" />
-                                            </StackPanel>
-                                        </Border>
-                                        <RadioButton Content="{x:Static resources:Strings.K493}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K494}"
-                                                     IsChecked="{Binding IsFullMode}" Margin="0,8,0,0" />
-                                        <RadioButton Content="{x:Static resources:Strings.K495}"
-                                                     AutomationProperties.Name="{x:Static resources:Strings.K496}"
-                                                     IsChecked="{Binding IsViewerMode}" Margin="0,4,0,0" />
                                     </StackPanel>
                                 </Border>
 
-                                <!--  显示设置  -->
+                                <!--  运行模式  -->
                                 <Border
-                                    x:Name="DisplaySection"
+                                    x:Name="RunModeSection"
                                     Margin="0,16,0,0"
                                     Padding="20"
-                                    Style="{StaticResource MainCard}">
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource SettingsGlassCard}">
                                     <StackPanel>
-                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Settings_DisplaySettings}" />
+                                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K491}" />
+                                        <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{x:Static resources:Strings.K492}" />
+                                        <hc:Divider Margin="0,8" />
+
+                                        <Border Style="{StaticResource SegmentedRadioGroup}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <RadioButton
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K494}"
+                                                    Content="{x:Static resources:Strings.K493}"
+                                                    GroupName="RunModeGroup"
+                                                    IsChecked="{Binding IsFullMode}"
+                                                    Style="{StaticResource SegmentedRadio}" />
+                                                <RadioButton
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K496}"
+                                                    Content="{x:Static resources:Strings.K495}"
+                                                    GroupName="RunModeGroup"
+                                                    IsChecked="{Binding IsViewerMode}"
+                                                    Style="{StaticResource SegmentedRadio}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </hc:TabItem>
+
+                    <!--  ============ Tab 2: 显示设置 ============  -->
+                    <hc:TabItem Header="{x:Static resources:Strings.Settings_DisplaySettings}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Border
+                                    x:Name="DisplaySection"
+                                    Padding="20"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource SettingsGlassCard}">
+                                    <StackPanel>
                                         <TextBlock
                                             Margin="0,4,0,4"
                                             FontSize="12"
@@ -378,9 +480,9 @@
                                             SelectedValue="{Binding DraftSettings.Language}"
                                             SelectedValuePath="Tag"
                                             ToolTip="{x:Static resources:Strings.Settings_LanguageHint}">
-                                            <ComboBoxItem Content="中文" Tag="{x:Static core:AppLanguage.Zh}" />
-                                            <ComboBoxItem Content="English" Tag="{x:Static core:AppLanguage.En}" />
-                                            <ComboBoxItem Content="日本語" Tag="{x:Static core:AppLanguage.Ja}" />
+                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_Chinese}" Tag="{x:Static core:AppLanguage.Zh}" />
+                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_English}" Tag="{x:Static core:AppLanguage.En}" />
+                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_Japanese}" Tag="{x:Static core:AppLanguage.Ja}" />
                                         </hc:ComboBox>
                                         <TextBlock
                                             Margin="0,-4,0,14"
@@ -412,21 +514,28 @@
                                             Content="{x:Static resources:Strings.K536}"
                                             IsChecked="{Binding DraftSettings.EnableAutomaticDailyReport, Mode=TwoWay}"
                                             ToolTip="{x:Static resources:Strings.K537}" />
-                                        <hc:DateTimePicker
+                                        <hc:TimePicker
                                             hc:InfoElement.Title="{x:Static resources:Strings.K115}"
                                             hc:InfoElement.TitlePlacement="Top"
                                             AutomationProperties.Name="{x:Static resources:Strings.K115}"
                                             IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
-                                            SelectedDateTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                            Style="{StaticResource DateTimePickerExtend}"
+                                            SelectedTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                            MinHeight="40"
                                             ToolTip="{x:Static resources:Strings.K538}" />
+                                        <CheckBox
+                                            Margin="0,16,0,0"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Settings_DailyReportMaster}"
+                                            Content="{x:Static resources:Strings.Settings_DailyReportMaster}"
+                                            IsChecked="{Binding DraftSettings.AutomaticDailyReportIsMaster, Mode=TwoWay}"
+                                            IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
+                                            ToolTip="{x:Static resources:Strings.Settings_DailyReportMasterHint}" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </hc:TabItem>
 
-                    <!--  ============ Tab 2: PLC 连接 ============  -->
+                    <!--  ============ Tab 3: PLC 连接 ============  -->
                     <hc:TabItem Header="{x:Static resources:Strings.M296}"
                          Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -436,19 +545,12 @@
                                     Padding="20"
                                     VerticalAlignment="Top"
                                     Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    Style="{StaticResource MainCard}">
+                                    Style="{StaticResource SettingsGlassCard}">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K497}" />
                                         <TextBlock Margin="0,4,0,4" FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}"
                                                    Text="{x:Static resources:Strings.K498}" />
                                         <hc:Divider Margin="0,8" />
-
-                                        <Border Style="{StaticResource SettingsGroupHeader}">
-                                            <StackPanel>
-                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.K499}" />
-                                                <TextBlock Style="{StaticResource SettingsGroupHint}" Text="{x:Static resources:Strings.K500}" />
-                                            </StackPanel>
-                                        </Border>
 
                                         <hc:ComboBox
                                             hc:InfoElement.Title="{x:Static resources:Strings.K104}"
@@ -458,46 +560,58 @@
                                             SelectedItem="{Binding DraftSettings.PlcConfig.Brand, Mode=TwoWay}"
                                             Style="{StaticResource SettingsComboBox}" />
 
-                                        <hc:TextBox
-                                            hc:InfoElement.Title="{x:Static resources:Strings.K501}"
-                                            hc:InfoElement.TitlePlacement="Top"
-                                            AutomationProperties.Name="{x:Static resources:Strings.K502}"
-                                            Style="{StaticResource SettingsTextBox}"
-                                            Text="{Binding DraftSettings.PlcConfig.IpAddress, UpdateSourceTrigger=PropertyChanged}" />
-                                        <hc:TextBox
-                                            hc:InfoElement.Title="{x:Static resources:Strings.K105}"
-                                            hc:InfoElement.TitlePlacement="Top"
-                                            AutomationProperties.Name="{x:Static resources:Strings.K503}"
-                                            Style="{StaticResource SettingsTextBox}">
-                                            <hc:TextBox.Text>
-                                                <Binding Path="DraftSettings.PlcConfig.Port" UpdateSourceTrigger="PropertyChanged">
-                                                    <Binding.ValidationRules>
-                                                        <conv:IntegerRangeValidationRule
-                                                            FieldName="{x:Static resources:Strings.K105}"
-                                                            MaxValue="65535"
-                                                            MinValue="1" />
-                                                    </Binding.ValidationRules>
-                                                </Binding>
-                                            </hc:TextBox.Text>
-                                        </hc:TextBox>
-                                        <hc:TextBox
-                                            hc:InfoElement.Title="{x:Static resources:Strings.K504}"
-                                            hc:InfoElement.TitlePlacement="Top"
-                                            AutomationProperties.Name="{x:Static resources:Strings.K505}"
-                                            Style="{StaticResource SettingsTextBox}">
-                                            <hc:TextBox.Text>
-                                                <Binding Path="DraftSettings.PlcConfig.TimeoutMs" UpdateSourceTrigger="PropertyChanged">
-                                                    <Binding.ValidationRules>
-                                                        <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K506}" MaxValue="60000" MinValue="100" />
-                                                    </Binding.ValidationRules>
-                                                </Binding>
-                                            </hc:TextBox.Text>
-                                        </hc:TextBox>
-                                        <hc:ComboBox
-                                            hc:InfoElement.Title="{x:Static resources:Strings.K106}"
-                                            hc:InfoElement.TitlePlacement="Top"
-                                            AutomationProperties.Name="{x:Static resources:Strings.K106}"
-                                            ItemsSource="{Binding SiemensModels}"
+                                        <Expander Margin="0,12,0,0" IsExpanded="True">
+                                            <Expander.Header>
+                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.Settings_ConnectionParams}" />
+                                            </Expander.Header>
+                                            <StackPanel>
+                                                <hc:TextBox
+                                                    hc:InfoElement.Title="{x:Static resources:Strings.K501}"
+                                                    hc:InfoElement.TitlePlacement="Top"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K502}"
+                                                    Style="{StaticResource SettingsTextBox}"
+                                                    Text="{Binding DraftSettings.PlcConfig.IpAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                                <hc:TextBox
+                                                    hc:InfoElement.Title="{x:Static resources:Strings.K105}"
+                                                    hc:InfoElement.TitlePlacement="Top"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K503}"
+                                                    Style="{StaticResource SettingsTextBox}">
+                                                    <hc:TextBox.Text>
+                                                        <Binding Path="DraftSettings.PlcConfig.Port" UpdateSourceTrigger="PropertyChanged">
+                                                            <Binding.ValidationRules>
+                                                                <conv:IntegerRangeValidationRule
+                                                                    FieldName="{x:Static resources:Strings.K105}"
+                                                                    MaxValue="65535"
+                                                                    MinValue="1" />
+                                                            </Binding.ValidationRules>
+                                                        </Binding>
+                                                    </hc:TextBox.Text>
+                                                </hc:TextBox>
+                                                <hc:TextBox
+                                                    hc:InfoElement.Title="{x:Static resources:Strings.K504}"
+                                                    hc:InfoElement.TitlePlacement="Top"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K505}"
+                                                    Style="{StaticResource SettingsTextBox}">
+                                                    <hc:TextBox.Text>
+                                                        <Binding Path="DraftSettings.PlcConfig.TimeoutMs" UpdateSourceTrigger="PropertyChanged">
+                                                            <Binding.ValidationRules>
+                                                                <conv:IntegerRangeValidationRule FieldName="{x:Static resources:Strings.K506}" MaxValue="60000" MinValue="100" />
+                                                            </Binding.ValidationRules>
+                                                        </Binding>
+                                                    </hc:TextBox.Text>
+                                                </hc:TextBox>
+                                            </StackPanel>
+                                        </Expander>
+                                        <Expander Margin="0,12,0,0" IsExpanded="False">
+                                            <Expander.Header>
+                                                <TextBlock Style="{StaticResource SettingsGroupTitle}" Text="{x:Static resources:Strings.Settings_ProtocolParams}" />
+                                            </Expander.Header>
+                                            <StackPanel>
+                                                <hc:ComboBox
+                                                    hc:InfoElement.Title="{x:Static resources:Strings.K106}"
+                                                    hc:InfoElement.TitlePlacement="Top"
+                                                    AutomationProperties.Name="{x:Static resources:Strings.K106}"
+                                                    ItemsSource="{Binding SiemensModels}"
                                             SelectedItem="{Binding DraftSettings.PlcConfig.SiemensModel, Mode=TwoWay}"
                                             Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.Siemens}}"
                                             Style="{StaticResource SettingsComboBox}" />
@@ -620,6 +734,8 @@
                                             SelectedItem="{Binding DraftSettings.PlcConfig.ModbusDataFormat, Mode=TwoWay}"
                                             Visibility="{Binding DraftSettings.PlcConfig.Brand, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter={x:Static models:PlcBrand.ModbusTcp}}"
                                             Style="{StaticResource SettingsComboBox}" />
+                                            </StackPanel>
+                                        </Expander>
 
                                         <!--  测试连接：按钮 Content 随 IsTestingConnection 切换为"测试中..."，结果文案着色  -->
                                         <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
@@ -676,7 +792,7 @@
                         </ScrollViewer>
                     </hc:TabItem>
 
-                    <!--  ============ Tab 3: 采集策略 ============  -->
+                    <!--  ============ Tab 4: 采集策略 ============  -->
                     <hc:TabItem Header="{x:Static resources:Strings.M297}"
                          Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -685,7 +801,7 @@
                                     x:Name="AcquisitionSection"
                                     Padding="20"
                                     Visibility="{Binding IsLocalMode, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    Style="{StaticResource MainCard}">
+                                    Style="{StaticResource SettingsGlassCard}">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K510}" />
                                         <TextBlock
@@ -782,14 +898,14 @@
                         </ScrollViewer>
                     </hc:TabItem>
 
-                    <!--  ============ Tab 4: 班次配置 ============  -->
+                    <!--  ============ Tab 5: 班次配置 ============  -->
                     <hc:TabItem Header="{x:Static resources:Strings.M298}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <Border
                                     x:Name="ShiftSection"
                                     Padding="20"
-                                    Style="{StaticResource MainCard}">
+                                    Style="{StaticResource SettingsGlassCard}">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
@@ -874,13 +990,13 @@
                                                                         <ColumnDefinition Width="20" />
                                                                         <ColumnDefinition Width="*" />
                                                                     </Grid.ColumnDefinitions>
-                                                                    <hc:DateTimePicker
+                                                                    <hc:TimePicker
                                                                         Grid.Column="0"
                                                                         hc:InfoElement.Title="{x:Static resources:Strings.K036}"
                                                                         hc:InfoElement.TitlePlacement="Top"
                                                                         AutomationProperties.Name="{x:Static resources:Strings.K543}"
-                                                                        SelectedDateTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                                                        Style="{StaticResource DateTimePickerExtend}"
+                                                                        SelectedTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        MinHeight="40"
                                                                         ToolTip="{x:Static resources:Strings.K118}" />
                                                                     <TextBlock
                                                                         Grid.Column="1"
@@ -889,13 +1005,13 @@
                                                                         FontSize="18"
                                                                         Foreground="{StaticResource ThirdlyTextBrush}"
                                                                         Text="—" />
-                                                                    <hc:DateTimePicker
+                                                                    <hc:TimePicker
                                                                         Grid.Column="2"
                                                                         hc:InfoElement.Title="{x:Static resources:Strings.K544}"
                                                                         hc:InfoElement.TitlePlacement="Top"
                                                                         AutomationProperties.Name="{x:Static resources:Strings.K545}"
-                                                                        SelectedDateTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
-                                                                        Style="{StaticResource DateTimePickerExtend}"
+                                                                        SelectedTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        MinHeight="40"
                                                                         ToolTip="{x:Static resources:Strings.K118}" />
                                                                 </Grid>
                                                             </StackPanel>
@@ -931,34 +1047,50 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!--  保存按钮：Content 随 IsSaving 切换为"保存中..."，IsSaving 时禁用  -->
-        <Border Grid.Row="1" Margin="0,12,0,0" Padding="16,10" Background="{StaticResource RegionBrush}"
-            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6">
-        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-            <TextBlock Margin="0,0,16,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding UnsavedChangesText}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-            <Button Content="{x:Static resources:Strings.K548}" Command="{Binding CancelChangesCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
-            <Button Content="{x:Static resources:Strings.K549}" Command="{Binding RestoreDefaultsCommand}" Margin="0,0,8,0" Style="{StaticResource SettingsActionButton}" />
-            <Button
-            Content="{Binding SaveButtonText}"
-            Width="140"
-            Margin="0"
-            AutomationProperties.Name="{x:Static resources:Strings.K550}"
-            Command="{Binding SaveCommand}"
-            Style="{StaticResource IconButtonPrimary}"
-            Tag="{x:Static mi:MaterialIconKind.ContentSave}"
-            ToolTip="{x:Static resources:Strings.K551}" />
-        </StackPanel>
+        <!--  底部操作胶囊：吸底 + 未保存状态 + 取消/恢复默认/保存，保存中禁用  -->
+        <Border
+            Grid.Row="1"
+            Margin="0,16,0,0"
+            Padding="12,8"
+            HorizontalAlignment="Right"
+            Background="#D91A2029"
+            BorderBrush="{StaticResource GlassBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="14"
+            Effect="{StaticResource SettingsCapsuleShadow}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="4,0,16,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding UnsavedChangesText}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button
+                    Margin="0,0,8,0"
+                    Command="{Binding CancelChangesCommand}"
+                    Content="{x:Static resources:Strings.K548}"
+                    Style="{StaticResource SettingsActionButton}" />
+                <Button
+                    Margin="0,0,8,0"
+                    Command="{Binding RestoreDefaultsCommand}"
+                    Content="{x:Static resources:Strings.K549}"
+                    Style="{StaticResource SettingsActionButton}" />
+                <Button
+                    Width="140"
+                    Margin="0"
+                    AutomationProperties.Name="{x:Static resources:Strings.K550}"
+                    Command="{Binding SaveCommand}"
+                    Content="{Binding SaveButtonText}"
+                    Style="{StaticResource IconButtonPrimary}"
+                    Tag="{x:Static mi:MaterialIconKind.ContentSave}"
+                    ToolTip="{x:Static resources:Strings.K551}" />
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

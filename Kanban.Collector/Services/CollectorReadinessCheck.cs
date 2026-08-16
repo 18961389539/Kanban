@@ -11,7 +11,8 @@ namespace Kanban.Collector.Services;
 /// - 采集循环已停止（进程存活但采集挂掉）→ Unhealthy；
 /// - 连续采集失败或长时间无成功采集（且已配置设备）→ Unhealthy；
 /// - 生产历史库不可写（磁盘满/库损坏）→ Unhealthy；
-/// - 恢复文件超过上限（回放被挂起，数据积压）→ Degraded。
+/// - 恢复文件超过上限（回放被挂起，数据积压）→ Degraded；
+/// - 审计丢弃（队列满 DropWrite 或落库失败）→ Degraded。
 /// /health/live 只反映进程存活（Kestrel 能响应即 Healthy），不反映业务状态。
 /// </summary>
 public sealed class CollectorReadinessCheck : IHealthCheck
@@ -25,6 +26,7 @@ public sealed class CollectorReadinessCheck : IHealthCheck
     private readonly CollectorHealthState _healthState;
     private readonly IPlcDataAcquisitionService _acquisition;
     private readonly DatabaseProvider _db;
+    private readonly IAuditService? _auditService;
     private readonly Func<int> _configuredDeviceCount;
     private readonly Func<HistoryDiagnosticsSnapshot> _historyDiagnostics;
     private readonly ILogger<CollectorReadinessCheck> _logger;
@@ -34,12 +36,14 @@ public sealed class CollectorReadinessCheck : IHealthCheck
         IPlcDataAcquisitionService acquisition,
         DatabaseProvider db,
         ILogger<CollectorReadinessCheck> logger,
+        IAuditService? auditService = null,
         Func<int>? configuredDeviceCount = null,
         Func<HistoryDiagnosticsSnapshot>? historyDiagnostics = null)
     {
         _healthState = healthState;
         _acquisition = acquisition;
         _db = db;
+        _auditService = auditService;
         _logger = logger;
         _configuredDeviceCount = configuredDeviceCount ?? (() => 0);
         _historyDiagnostics = historyDiagnostics ?? (() => new HistoryDiagnosticsSnapshot());
@@ -92,6 +96,12 @@ public sealed class CollectorReadinessCheck : IHealthCheck
             {
                 _logger.LogWarning(ex, "读取历史诊断失败（跳过恢复文件积压检查）");
             }
+
+            // 6. 审计丢弃告警（队列满 DropWrite 或最终落库失败 → 审计数据丢失，审计链完整性受损）
+            var auditDropped = _auditService?.DroppedCount ?? 0;
+            if (auditDropped > 0)
+                return Task.FromResult(HealthCheckResult.Degraded(
+                    $"审计已丢弃 {auditDropped} 条记录（队列满或落库失败，审计链完整性受损）"));
 
             return Task.FromResult(HealthCheckResult.Healthy());
         }

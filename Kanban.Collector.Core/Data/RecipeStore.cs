@@ -222,6 +222,8 @@ public sealed class RecipeStore : IRecipeStore
             foreach (var recipe in list)
             {
                 recipe.MachineType = (recipe.MachineType ?? "").Trim();
+                if (recipe.CreatedAt == default) recipe.CreatedAt = DateTime.Now;
+                if (recipe.UpdatedAt == default) recipe.UpdatedAt = DateTime.Now;
                 Recipes.Add(recipe);
                 _recipeMap[recipe.Id] = recipe;
             }

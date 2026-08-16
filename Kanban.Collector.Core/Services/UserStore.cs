@@ -104,7 +104,8 @@ public class UserStore
     {
         lock (_lock)
         {
-            return _users.AsReadOnly();
+            // 返回快照副本，避免调用方在锁释放后因内部集合改动抛"集合已修改"
+            return _users.ToList().AsReadOnly();
         }
     }
 
@@ -126,16 +127,28 @@ public class UserStore
     /// </summary>
     public User? Authenticate(string username, string password)
     {
+        User? result = null;
+        var changed = false;
         lock (_lock)
         {
             var user = _users.FirstOrDefault(u =>
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
-            if (user is null || !user.IsActive) return null;
-            // 锁定期间拒绝（计数不清零，解锁/重置密码时清零）
-            if (user.LockedUntil is { } until && until > DateTime.UtcNow) return null;
-            // PasswordHash 为空 = 免密账号，跳过密码验证
-            if (string.IsNullOrEmpty(user.PasswordHash)) return FinalizeLogin(user);
-            if (!PasswordHasher.Verify(password, user.PasswordHash))
+            if (user is null || !user.IsActive)
+            {
+                result = null;
+            }
+            else if (user.LockedUntil is { } until && until > DateTime.UtcNow)
+            {
+                // 锁定期间拒绝（计数不清零，解锁/重置密码时清零）
+                result = null;
+            }
+            else if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                // PasswordHash 为空 = 免密账号，跳过密码验证
+                result = FinalizeLogin(user);
+                changed = true;
+            }
+            else if (!PasswordHasher.Verify(password, user.PasswordHash))
             {
                 user.FailedAttempts++;
                 if (user.FailedAttempts >= MaxFailedAttempts)
@@ -146,11 +159,20 @@ public class UserStore
                         username, MaxFailedAttempts, (int)LockoutDuration.TotalMinutes);
                 }
                 Save();
-                return null;
+                result = null;
+                changed = true;
             }
-            user.FailedAttempts = 0;
-            return FinalizeLogin(user);
+            else
+            {
+                user.FailedAttempts = 0;
+                result = FinalizeLogin(user);
+                changed = true;
+            }
         }
+
+        // 锁外统一派发：避免在锁内触发事件导致重入/跨线程问题；Front UI 层负责封送
+        if (changed) UsersChanged?.Invoke();
+        return result;
     }
 
     /// <summary>账号当前锁定剩余时间（未锁定/账号不存在返回 null）。</summary>

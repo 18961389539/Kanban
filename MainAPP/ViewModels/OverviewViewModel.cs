@@ -124,8 +124,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     public string ComparisonSummaryText =>
         string.Format(Strings.F021, ComparisonLabel, FormatSigned(OutputDelta), FormatPercentageDelta(QualityRateDelta), FormatPercentageDelta(OeeDelta));
 
-    public const double QualityTarget = 0.95;
-    public const double OeeTarget = 0.85;
+    // 阈值唯一源（2026-08-16）：引用 KpiThresholds，与 Converter/ChartService 着色共用，改一处全局生效。
+    public const double QualityTarget = KpiThresholds.QualityGood;
+    public const double OeeTarget = KpiThresholds.OeeGood;
 
     public bool HasProductionData => TotalOk > 0 || TotalNg > 0;
     public bool HasAlarmData => AlarmCount > 0;
@@ -140,8 +141,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
                 : Strings.M105;
     public string TargetStatusText => string.Format(Strings.F192, QualityRate, QualityTarget, Oee, OeeTarget);
 
-    private static string FormatSigned(int value) => value > 0 ? $"+{value:N0}" : value.ToString("N0");
-    private static string FormatPercentageDelta(double value) => value > 0 ? $"+{value:P1}" : value.ToString("P1");
+    private static string FormatSigned(int value) => Services.ProductionReviewCalculations.FormatSigned(value);
+    private static string FormatPercentageDelta(double value) => Services.ProductionReviewCalculations.FormatSignedPercentage(value);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHour1))]
@@ -255,8 +256,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     {
         var path = _dialog.ShowSaveFileDialog(
             Strings.M116,
-            $"生产复盘_{DateTime.Now:yyyyMMddHHmm}.csv",
-            "CSV 文件|*.csv|所有文件|*.*");
+            string.Format(Strings.Export_ReviewCsvFileName, DateTime.Now),
+            Strings.Export_CsvFilter);
         if (string.IsNullOrWhiteSpace(path)) return;
 
         var (from, to) = GetTimeRange();
@@ -301,8 +302,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         if (_pdfService == null) return;
         var path = _dialog.ShowSaveFileDialog(
             Strings.M117,
-            $"生产复盘_{DateTime.Now:yyyyMMddHHmm}.pdf",
-            "PDF 文件|*.pdf|所有文件|*.*");
+            string.Format(Strings.Export_ReviewPdfFileName, DateTime.Now),
+            Strings.Export_PdfFilter);
         if (string.IsNullOrWhiteSpace(path)) return;
 
         var range = GetTimeRange();
@@ -664,7 +665,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
         var bucketNg = new int[buckets.Length];
 
         List<DeviceOverviewSummary> deviceSummaries = [];
-        List<AlarmEventRecord> allAlarmEvents = [];
 
         int totalOk = 0, totalNg = 0;
         double totalRunSec = 0, totalAlarmSec = 0, totalPauseSec = 0;
@@ -750,7 +750,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             // ── 报警事件 ──
             alarmByDevice.TryGetValue(device.Id, out var alarmEvents);
             alarmEvents ??= [];
-            allAlarmEvents.AddRange(alarmEvents);
             int devAlarmCount = alarmEvents.Count(e => e.EventType == AlarmEventType.Triggered);
             totalAlarmCount += devAlarmCount;
 
@@ -759,6 +758,10 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             totalPendingAlarmCount += pendingCount;
 
             // 最长停机报警（按报警 Id 分组，计算 Triggered 到 Recovered 的时长；未恢复按窗口终点截断）
+            // 口径说明（2026-08-16）：此处刻意用「事件配对」而非状态段时长——本指标要回答"哪一条报警
+            // 拖得最久"，需要把时长归因到具体报警名/设备，状态段时长只能给出聚合值无法归因。
+            // 与下方 TotalDowntimeHours 等聚合指标（状态段口径，重叠报警不重复计时）口径不同：
+            // 重叠报警下两者数值可能不一致，属预期而非 bug。
             var (topAlarmName, topDurationSec) = FindLongestAlarm(alarmEvents, to);
             if (topDurationSec > maxDowntimeSec)
             {
@@ -896,6 +899,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             OutputDelta = totalOk + totalNg - baselineTotalOutput;
             QualityRateDelta = quality - baselineMetrics.QualityRate;
             OeeDelta = oee - baselineMetrics.Oee;
+            // 聚合停机/报警指标统一用状态段口径（CalculateStateDurations：重叠报警不重复计时）。
+            // 注意与 LongestDowntimeHours（事件配对口径，需归因到具体报警名）不同，见设备循环内注释。
             TotalDowntimeHours = (totalAlarmSec + totalPauseSec) / 3600.0;
             AverageAlarmDurationMinutes = totalAlarmCount > 0
                 ? totalAlarmSec / totalAlarmCount / 60.0
@@ -1321,9 +1326,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             var first = window[0];
             var last = window[^1];
             var baseline = ordered.LastOrDefault(snapshot => snapshot.Timestamp < from);
+            // 口径统一（2026-08-16）：一律按窗口内增量算——
+            // 有窗口前基线用 末值-基线（完整窗口增量）；无基线用 窗口内末值-首值；
+            // 窗口内仅一条且无基线时增量无法推算，取 0（原实现把累计值当增量，会高估）。
             var count = baseline != null
                 ? Math.Max(0, last.Count - baseline.Count)
-                : window.Count > 1 ? Math.Max(0, last.Count - first.Count) : Math.Max(0, last.Count);
+                : Math.Max(0, last.Count - first.Count);
             if (count <= 0) continue;
             list.Add(new DefectParetoSummary
             {

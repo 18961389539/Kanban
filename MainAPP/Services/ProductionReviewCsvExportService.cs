@@ -38,11 +38,11 @@ public sealed class ProductionReviewCsvExportService : IProductionReviewCsvExpor
         var builder = new StringBuilder();
         builder.AppendLine(Strings.M239);
         builder.AppendLine(string.Format("{0},{1},{2}",
-            Strings.F187.Split('：')[0] + "：",
+            Strings.Csv_LabelRange,
             CsvUtil.Escape(data.From.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
             CsvUtil.Escape(data.To.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))));
         builder.AppendLine(string.Format("{0},{1}",
-            Strings.F122.Split('：')[0] + "：",
+            Strings.Csv_LabelShift,
             CsvUtil.Escape(data.ShiftName)));
         builder.AppendLine();
         builder.AppendLine(Strings.M240);

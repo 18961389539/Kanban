@@ -124,25 +124,31 @@ public static class ReviewAnalysis
             .ToList();
     }
 
-    /// <summary>报警触发→恢复配对时长：未恢复按 min(now, windowTo) 截断；每个 Recovered 只消费一次。与 WPF 一致。</summary>
+    /// <summary>报警触发→恢复配对时长：未恢复按 min(now, windowTo) 截断；每个 Recovered 只消费一次。与 WPF 一致。
+    /// O(n)：用 Recovered 游标顺序消费替代原「每 Triggered 内层前扫 + HashSet」，消除 O(n²)。</summary>
     private static double CalculateAlarmDurationHours(List<AlarmEventRecordDto>? grouped, DateTime windowTo)
     {
         if (grouped is null || grouped.Count == 0) return 0;
+        var cutoff = windowTo < DateTime.Now ? windowTo : DateTime.Now;
         double seconds = 0;
-        var consumed = new HashSet<AlarmEventRecordDto>();
-        for (var index = 0; index < grouped.Count; index++)
+
+        // Recovered 按时间升序，游标只前进——等价于原「consumed HashSet + 内层 for」，但 O(n)
+        var recovers = grouped.Where(e => e.EventType == AlarmEventType.Recovered).ToList();
+        var r = 0;
+
+        foreach (var t in grouped.Where(e => e.EventType == AlarmEventType.Triggered))
         {
-            if (grouped[index].EventType != AlarmEventType.Triggered) continue;
-            var end = windowTo < DateTime.Now ? windowTo : DateTime.Now;
-            for (var next = index + 1; next < grouped.Count; next++)
+            while (r < recovers.Count && recovers[r].EventTime < t.EventTime)
+                r++;
+            if (r < recovers.Count)
             {
-                if (grouped[next].EventType == AlarmEventType.Recovered && consumed.Add(grouped[next]))
-                {
-                    end = grouped[next].EventTime;
-                    break;
-                }
+                seconds += Math.Max(0, (recovers[r].EventTime - t.EventTime).TotalSeconds);
+                r++; // 消费该 Recovered
             }
-            seconds += Math.Max(0, (end - grouped[index].EventTime).TotalSeconds);
+            else
+            {
+                seconds += Math.Max(0, (cutoff - t.EventTime).TotalSeconds);
+            }
         }
         return seconds / 3600.0;
     }

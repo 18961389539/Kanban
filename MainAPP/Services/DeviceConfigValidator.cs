@@ -131,6 +131,9 @@ public static class DeviceConfigValidator
         // 跨设备地址冲突（两台及以上设备共用同一 PLC 地址，会导致产量/状态数据串台）
         errors.AddRange(CollectCrossDeviceConflicts(deviceList, addressCodec));
 
+        // 同设备内主地址重复（OK/NG/状态/复位/配方互指同一地址，同样会串台）
+        errors.AddRange(CollectSameDevicePrimaryAddressConflicts(deviceList, addressCodec));
+
         return errors;
     }
 
@@ -178,6 +181,47 @@ public static class DeviceConfigValidator
         foreach (var kvp in byAddress.Where(k => k.Value.Devices.Count > 1))
             conflicts.Add(new DeviceAddressConflict(kvp.Key, kvp.Value.Devices, kvp.Value.TabIndex));
         return conflicts;
+    }
+
+    /// <summary>
+    /// 检测同一设备内主地址重复：OK/NG/状态/复位/配方五个 DWord 地址互相指向同一地址。
+    /// 旧版跨设备冲突只按设备去重，无法发现该问题。
+    /// </summary>
+    public static List<DeviceConfigError> CollectSameDevicePrimaryAddressConflicts(
+        IEnumerable<Device> devices,
+        IPlcAddressCodec? addressCodec = null)
+    {
+        var list = new List<DeviceConfigError>();
+        var codec = addressCodec ?? new MitsubishiAddressCodec();
+
+        foreach (var device in devices)
+        {
+            var fields = new[]
+            {
+                device.OkCountAddress,
+                device.NgCountAddress,
+                device.StatusCountAddress,
+                device.ProductionResetAddress,
+                device.RecipeAddress,
+            };
+
+            var duplicates = fields
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .GroupBy(f => codec.CanonicalKey(f!.Trim()), StringComparer.OrdinalIgnoreCase)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key) && g.Count() > 1);
+
+            foreach (var g in duplicates)
+            {
+                list.Add(new DeviceConfigError
+                {
+                    Device = device,
+                    TargetTabIndex = 0,
+                    Message = string.Format(Strings.F504, device.Name, g.Key),
+                });
+            }
+        }
+
+        return list;
     }
 
     private static DeviceConfigError ToConfigError(DeviceAddressConflict conflict)

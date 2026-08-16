@@ -1,4 +1,5 @@
 using Kanban.Contracts.Dtos;
+using Kanban.Core.Data;
 using Kanban.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -12,17 +13,20 @@ public sealed class CollectorDiagnosticsProvider
     private readonly PlcDataAcquisitionService _acquisition;
     private readonly HistoryService _history;
     private readonly PlcConnectionManager _connectionManager;
+    private readonly IDeviceRepository _deviceRepository;
     private readonly ILogger<CollectorDiagnosticsProvider> _logger;
 
     public CollectorDiagnosticsProvider(
         PlcDataAcquisitionService acquisition,
         HistoryService history,
         PlcConnectionManager connectionManager,
+        IDeviceRepository deviceRepository,
         ILogger<CollectorDiagnosticsProvider> logger)
     {
         _acquisition = acquisition;
         _history = history;
         _connectionManager = connectionManager;
+        _deviceRepository = deviceRepository;
         _logger = logger;
     }
 
@@ -68,6 +72,9 @@ public sealed class CollectorDiagnosticsProvider
                 ConnectionStatus = _connectionManager.ConnectionStatus,
                 TotalDisconnectCount = _connectionManager.TotalDisconnectCount,
                 ConsecutiveFailures = _connectionManager.ConsecutiveFailures,
+                DisconnectedAt = _connectionManager.DisconnectedAt,
+                ConfiguredReadAddressCount = _deviceRepository.GetDevicesSnapshot().Sum(CountConfiguredAddresses),
+                DeviceStatuses = BuildDeviceStatuses(acq.LastSuccessfulDeviceIds),
             };
         }
         catch (Exception ex)
@@ -75,5 +82,42 @@ public sealed class CollectorDiagnosticsProvider
             _logger.LogError(ex, "生成 Collector 诊断快照失败");
             return new CollectorDiagnosticsDto();
         }
+    }
+
+    private static int CountConfiguredAddresses(Kanban.Core.Models.Device device)
+    {
+        var primary = new[]
+        {
+            device.OkCountAddress,
+            device.NgCountAddress,
+            device.StatusCountAddress,
+            device.ProductionResetAddress,
+            device.RecipeAddress,
+        }.Count(address => !string.IsNullOrWhiteSpace(address));
+
+        return primary
+               + device.Alarms.Count(a => !string.IsNullOrWhiteSpace(a.PlcAddress))
+               + device.Defects.Count(d => !string.IsNullOrWhiteSpace(d.PlcAddress))
+               + device.CounterAlarms.Count(c => !string.IsNullOrWhiteSpace(c.PlcAddress));
+    }
+
+    private IReadOnlyList<CollectorDeviceStatusDto> BuildDeviceStatuses(IReadOnlySet<string> lastSuccessfulDeviceIds)
+    {
+        var result = new List<CollectorDeviceStatusDto>();
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            _deviceRepository.RuntimeMap.TryGetValue(device.Id, out var runtime);
+            result.Add(new CollectorDeviceStatusDto
+            {
+                DeviceId = device.Id,
+                DeviceName = device.Name,
+                StatusWord = runtime?.StatusWord ?? 0,
+                OkProduction = runtime?.OkProduction ?? 0,
+                NgProduction = runtime?.NgProduction ?? 0,
+                ConfiguredAddressCount = CountConfiguredAddresses(device),
+                LastCycleSucceeded = lastSuccessfulDeviceIds.Contains(device.Id),
+            });
+        }
+        return result;
     }
 }

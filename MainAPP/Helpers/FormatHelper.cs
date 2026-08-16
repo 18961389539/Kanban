@@ -26,4 +26,10 @@ public static class FormatHelper
     /// <remarks>口径委托 Kanban.Contracts.DurationFormatter.FormatStandard（跨进程单源，勿在此内联）。</remarks>
     public static string FormatDuration(double secs)
         => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(secs);
+
+    /// <summary>
+    /// 完整时长（始终含时分秒）：设备状态卡等需要秒级精度的场景。
+    /// </summary>
+    public static string FormatDurationFull(double secs)
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatFull(secs);
 }

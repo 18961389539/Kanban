@@ -45,8 +45,6 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
     public ObservableCollection<UserRoleFilterOption> RoleFilters { get; } = new();
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteUserCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ResetPasswordForCommand))]
     [NotifyCanExecuteChangedFor(nameof(UpdateUserCommand))]
     private User? _selectedUser;
 
@@ -78,7 +76,10 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _newMustChangePassword;
 
     /// <summary>新密码强度等级（0=弱 1=中 2=强，code-behind 实时更新）。</summary>
-    [ObservableProperty] private int _newPasswordStrength;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NewPasswordStrengthPercent))]
+    [NotifyPropertyChangedFor(nameof(NewPasswordStrengthText))]
+    private int _newPasswordStrength;
 
     /// <summary>强度进度（0/50/100，供 ProgressBar）。</summary>
     public int NewPasswordStrengthPercent => NewPasswordStrength * 50;
@@ -130,6 +131,12 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
 
     private void OnUsersChanged()
     {
+        // UsersChanged 现在由 UserStore 锁外派发，可能来自后台登录线程；统一封送到 UI 线程刷新集合
+        if (System.Windows.Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            dispatcher.BeginInvoke(RefreshUsers);
+            return;
+        }
         RefreshUsers();
     }
 
@@ -215,6 +222,21 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
     {
         if (option is null) return;
         SelectedRoleFilter = option.Role;
+    }
+
+    /// <summary>切换到「编辑」Tab：若未选中用户则默认选中第一个用户。</summary>
+    [RelayCommand]
+    private void ShowEditTab()
+    {
+        if (SelectedUser is null && Users.Count > 0)
+            SelectedUser = Users[0];
+    }
+
+    /// <summary>切换到「添加」Tab：清空选中用户。</summary>
+    [RelayCommand]
+    private void ShowAddTab()
+    {
+        SelectedUser = null;
     }
 
     private static string RoleText(UserRole role) => role switch
@@ -373,7 +395,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
         // 不能删除自己
         if (string.Equals(target.Username, _session.CurrentUser?.Username, StringComparison.OrdinalIgnoreCase))
         {
-            _dialog.NotifyWarning(Strings.M327);
+            _dialog.NotifyWarning(Strings.M_NoSelfDelete);
             return;
         }
 

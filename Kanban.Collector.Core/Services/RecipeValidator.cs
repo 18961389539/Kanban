@@ -29,7 +29,7 @@ public static class RecipeValidator
         if (string.IsNullOrWhiteSpace(recipe.Name))
             errors.Add(RecipeValidationMessages.RecipeNameEmpty);
         else if (existing != null && existing.Any(r =>
-            r.Id != recipe.Id &&
+            !string.Equals(r.Id, recipe.Id, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(r.Name, recipe.Name, StringComparison.OrdinalIgnoreCase) &&
             string.Equals((r.MachineType ?? "").Trim(), (recipe.MachineType ?? "").Trim(), StringComparison.OrdinalIgnoreCase)))
             errors.Add(string.Format(RecipeValidationMessages.RecipeNameDuplicate, recipe.Name));
@@ -70,7 +70,7 @@ public static class RecipeValidator
                 errors.Add($"{prefix}({item.ParamName}) {string.Format(RecipeValidationMessages.RecipeAddressTypeMismatch, item.DataType, expectedType)}");
 
             // 字符串参数值超长（写 PLC 可能超缓冲区，读回长度也可能截断）
-            if (item.DataType == PlcDataType.String && item.Value.Length > MaxStringLength)
+            if (item.DataType == PlcDataType.String && (item.Value?.Length ?? 0) > MaxStringLength)
                 errors.Add($"{prefix}({item.ParamName}) {string.Format(RecipeValidationMessages.RecipeStringTooLong, MaxStringLength)}");
 
             // 值按类型解析 + 范围校验

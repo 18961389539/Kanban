@@ -4,7 +4,6 @@ using Kanban.Core.Data;
 using Kanban.Core.Entities;
 using System;
 using System.Threading.Tasks;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.Resources;
 

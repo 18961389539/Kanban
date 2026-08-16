@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using MainAPP.ViewModels;
 
 namespace MainAPP.Views;
@@ -11,6 +12,14 @@ public partial class UserManagerView : System.Windows.Controls.UserControl
     public UserManagerView()
     {
         InitializeComponent();
+        // ScrollViewer 内键盘 Tab 切换字段时自动把聚焦控件滚入可视区
+        AddHandler(Keyboard.GotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler(OnGotKeyboardFocus), true);
+    }
+
+    private void OnGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (e.NewFocus is System.Windows.FrameworkElement element)
+            element.BringIntoView();
     }
 
     /// <summary>添加用户：把 PasswordBox 密码传给 ViewModel 命令。</summary>

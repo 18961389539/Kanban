@@ -123,6 +123,8 @@ public sealed class ApplicationStartupCoordinator(
             if (services.GetRequiredService<IRuntimeMode>().IsRemote)
             {
                 await StartRemoteDataLinkAsync();
+                // Remote 模式同样支持按设定时刻自动生成上一自然日日报（历史查询经 SignalR 路由到 Collector）
+                services.GetRequiredService<ProductionDailyReportService>().Start();
                 runtime.IsAcquisitionRunning = true;
                 runtime.SetState(ApplicationRuntimeState.Running, Strings.M125);
                 return;
@@ -159,6 +161,10 @@ public sealed class ApplicationStartupCoordinator(
     {
         var client = services.GetRequiredService<KanbanDataClient>();
         var sink = services.GetRequiredService<RemoteRuntimeSink>();
+
+        // 远程写操作审计溯源：把当前登录用户作为 operator 经连接查询串传给 Collector Hub
+        // （Hub 无认证，属有意设计的局域网查看；Collector 侧从查询串解析操作人）。
+        client.OperatorName = services.GetService<UserSession>()?.CurrentUserDisplay ?? string.Empty;
 
         client.ConnectionStateChanged += (_, connected) =>
         {

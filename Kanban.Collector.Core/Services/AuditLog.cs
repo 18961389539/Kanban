@@ -48,10 +48,10 @@ public static class AuditLog
         }
     }
 
-    /// <summary>记录一条审计事件（未初始化时静默忽略）。</summary>
+    /// <summary>记录一条审计事件（未初始化时静默忽略）。<paramref name="operator"/> 覆盖 operatorProvider（用于 Hub 从连接上下文取操作人）。</summary>
     public static void Record(string action, string? targetType = null, string? targetId = null,
         bool succeeded = true, string? detail = null,
-        object? before = null, object? after = null)
+        object? before = null, object? after = null, string? @operator = null)
     {
         IAuditService? service;
         Func<string>? provider;
@@ -63,7 +63,7 @@ public static class AuditLog
         if (service is null) return;
 
         string operatorName;
-        try { operatorName = provider?.Invoke() ?? string.Empty; }
+        try { operatorName = @operator ?? provider?.Invoke() ?? string.Empty; }
         catch { operatorName = string.Empty; }
 
         try

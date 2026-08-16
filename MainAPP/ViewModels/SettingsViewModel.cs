@@ -550,7 +550,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private bool _isProductKeyMasked = true;
 
     /// <summary>「显示/隐藏」按钮文案。</summary>
-    public string ProductKeyToggleText => IsProductKeyMasked ? "显示" : "隐藏";
+    public string ProductKeyToggleText => IsProductKeyMasked ? Strings.Common_Show : Strings.Common_Hide;
 
     partial void OnIsProductKeyMaskedChanged(bool value)
     {
@@ -742,7 +742,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             var dangerResult = _dialog.Show(
                 BuildDangerConfirmation(plcConfigChanged, dataModeChanged, runModeChanged),
-                "危险操作确认",
+                Strings.Settings_DangerConfirmTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
             if (dangerResult != MessageBoxResult.Yes) return;
@@ -827,10 +827,10 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private static string BuildDangerConfirmation(bool plcChanged, bool dataModeChanged, bool runModeChanged)
     {
         var reasons = new List<string>(3);
-        if (plcChanged) reasons.Add("PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。");
-        if (dataModeChanged) reasons.Add("数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。");
-        if (runModeChanged) reasons.Add("运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。");
-        return string.Join("\n", reasons) + "\n是否继续保存？";
+        if (plcChanged) reasons.Add(Strings.Settings_Warn_PlcChanged);
+        if (dataModeChanged) reasons.Add(Strings.Settings_Warn_DataModeChanged);
+        if (runModeChanged) reasons.Add(Strings.Settings_Warn_RunModeChanged);
+        return string.Join("\n", reasons) + "\n" + Strings.Settings_ConfirmSave;
     }
 
     /// <summary>
@@ -953,6 +953,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.EnableAlarmSound = source.EnableAlarmSound;
         target.EnableAutomaticDailyReport = source.EnableAutomaticDailyReport;
         target.AutomaticDailyReportTime = source.AutomaticDailyReportTime;
+        target.AutomaticDailyReportIsMaster = source.AutomaticDailyReportIsMaster;
         // 审查修复 2026-08-13：改为锁内原地更新而非替换集合实例——
         // ①ProductionLineViewModel 等订阅方挂在旧实例上，替换会使其订阅永久失效（僵尸引用）；
         // ②本地模式下采集轮询线程也会枚举 Shifts，与 UI 线程原地写入用同一把锁互斥。

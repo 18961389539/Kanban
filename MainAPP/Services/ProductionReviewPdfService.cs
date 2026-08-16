@@ -169,8 +169,8 @@ public sealed class ProductionReviewPdfService : IProductionReviewPdfService
         }
     }
 
-    private static string FormatSigned(int value) => value > 0 ? $"+{value:N0}" : value.ToString("N0", CultureInfo.InvariantCulture);
-    private static string FormatSignedPercentage(double value) => value > 0 ? $"+{value:P1}" : value.ToString("P1", CultureInfo.InvariantCulture);
+    private static string FormatSigned(int value) => ProductionReviewCalculations.FormatSigned(value);
+    private static string FormatSignedPercentage(double value) => ProductionReviewCalculations.FormatSignedPercentage(value);
 
     private sealed class WindowsChineseFontResolver : IFontResolver
     {

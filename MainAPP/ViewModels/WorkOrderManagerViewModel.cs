@@ -155,12 +155,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         ApplySort();
         // 订阅集合变化：工单增删/状态切换后重算各状态计数（命名方法，Dispose 时解绑）
         _workOrderRepo.WorkOrders.CollectionChanged += OnWorkOrdersCollectionChanged;
+        // 每分钟兜底刷新时间相关计数（逾期判定随时间变化，无集合事件可订阅）
+        _derivedCountsTimer.Tick += (_, _) => RecalcDerivedCounts();
+        _derivedCountsTimer.Start();
     }
 
-    /// <summary>工单集合变更 → 增量维护各状态计数（命名方法，可精确解绑）。
-    /// 增量路径：Add/Remove/Replace 按新旧项 O(1) 调整计数，避免每次 8 次全量 LINQ Count
-    /// （Remote 模式 Meta 每 5s Upsert 触发 Replace，全量重算在 UI 线程的成本集中在此时）；
-    /// Reset（LoadAll 全量替换）回退全量重算。冲突检测依赖全局关系，仍全量（注释见下）。</summary>
+    /// <summary>工单集合变更 → 增量维护状态计数 + 全量重算时间/产量相关计数。
+    /// 增量路径仅覆盖 Status 四计数（只随集合事件变化，增量安全）；
+    /// 逾期/达标/NG 依赖 DateTime.Now 与回填的 Production（集合事件之外也会变），
+    /// 一律全量重算（工单量百级，Count 开销可忽略），修复口径漂移（2026-08-16）。</summary>
     private void OnWorkOrdersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         switch (e.Action)
@@ -179,14 +182,12 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
                 RefreshStatusCounts();
                 return;
         }
-        // 冲突计数与筛选视图仍需全量（冲突是设备内区间两两关系，增量维护复杂且工单量为百级时
-        // O(n²) 在 5s 周期内可接受；7 个状态计数已增量，主要开销已消除）
-        ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
+        // 时间/产量相关计数全量重算（见方法头注释）；冲突计数同样依赖全局关系，全量。
+        RecalcDerivedCounts();
         RefreshFilteredView();
     }
 
-    /// <summary>按工单的状态/逾期/达标/含不良属性增量调整计数（delta=±1；与全量 Count 口径一致，
-    /// 每个工单恰好贡献 0 或 1——Replace 时先 -1 旧项再 +1 新项即得净变化）。</summary>
+    /// <summary>按状态增量调整四个状态计数（仅 Status——其余计数见 RecalcDerivedCounts）。</summary>
     private void AdjustCounts(WorkOrder w, int delta)
     {
         switch (w.Status)
@@ -196,18 +197,32 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             case WorkOrderStatus.Completed: CompletedCount += delta; break;
             case WorkOrderStatus.Aborted: AbortedCount += delta; break;
         }
-        if (IsOverdue(w)) OverdueCount += delta;
-        if (IsAchieved(w)) AchievedCount += delta;
-        if (HasNgProduction(w)) NgWorkOrderCount += delta;
     }
+
+    /// <summary>全量重算逾期/达标/NG/冲突计数：这些判定随时间流逝（IsOverdue 用 DateTime.Now）
+    /// 与产量回填（Production 属性）变化，集合事件无法覆盖，必须周期性/事件后全量。</summary>
+    private void RecalcDerivedCounts()
+    {
+        OverdueCount = _workOrderRepo.WorkOrders.Count(IsOverdue);
+        AchievedCount = _workOrderRepo.WorkOrders.Count(IsAchieved);
+        NgWorkOrderCount = _workOrderRepo.WorkOrders.Count(HasNgProduction);
+        ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
+    }
+
+    /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。</summary>
+    private readonly System.Windows.Threading.DispatcherTimer _derivedCountsTimer = new()
+    {
+        Interval = TimeSpan.FromMinutes(1),
+    };
 
     private bool _disposed;
 
-    /// <summary>解除集合订阅（遵守事件治理约定：命名方法 + Dispose 解绑，防僵尸回调）。</summary>
+    /// <summary>解除集合订阅与定时器（遵守事件治理约定：命名方法 + Dispose 解绑，防僵尸回调）。</summary>
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+        _derivedCountsTimer.Stop();
         _productionCts?.Cancel();
         _productionCts?.Dispose();
         _workOrderRepo.WorkOrders.CollectionChanged -= OnWorkOrdersCollectionChanged;

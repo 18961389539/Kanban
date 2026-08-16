@@ -834,13 +834,13 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         {
             var tabIndex = SelectedTabIndex;
             var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
-            var (fileName, csv) = await Task.Run(() => tabIndex switch
+            var (fileName, csv) = await Task.Run<(string?, string?)>(() => tabIndex switch
             {
                 0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsv(from, to)),
                 1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsv()),
                 2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsv()),
                 3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
-                _ => (null, null as string)
+                _ => (null, null)
             }).ConfigureAwait(true);
 
             if (fileName == null || string.IsNullOrEmpty(csv))
@@ -849,6 +849,10 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
                 Log.Debug("导出取消：Tab={TabIndex}，无数据", tabIndex);
                 return;
             }
+
+            // 明确标注当前页导出，避免大表被误解为全量导出（审查修复 2026-08-15）
+            fileName = $"{Path.GetFileNameWithoutExtension(fileName)}_page{CurrentPage}{Path.GetExtension(fileName)}";
+            csv += $"\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。";
 
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
             var exportDir = Path.Combine(AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");
@@ -860,9 +864,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
                 File.WriteAllText(fullPath, csv!, new UTF8Encoding(true));
             }).ConfigureAwait(true);
 
-            Log.Information("已导出 {Count} 条 → {Path}", TotalCount, fullPath);
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: string.Format(Strings.F330, TotalCount, tabIndex));
-            _dialog.NotifySuccess(string.Format(Strings.F104, TotalCount, fullPath));
+            Log.Information("已导出当前页 {CurrentPage} → {Path}", CurrentPage, fullPath);
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"当前页导出 Tab={tabIndex} Page={CurrentPage}");
+            _dialog.NotifySuccess($"已导出当前页数据 → {fullPath}");
         }
         catch (Exception ex)
         {

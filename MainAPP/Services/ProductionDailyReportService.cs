@@ -2,9 +2,6 @@ using Kanban.Core.Services;
 using Kanban.Core.Models;
 using Kanban.Core.Data;
 using Kanban.Core.Entities;
-using Kanban.Core.Data;
-using Kanban.Core.Entities;
-using Kanban.Core.Models;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using OxyPlot;
@@ -97,7 +94,9 @@ public sealed class ProductionDailyReportService : IDisposable
 
     internal void RunOnce(DateTime now)
     {
+        // 仅“主节点”实例生成日报（多屏部署只此一台出 PDF，避免重复）。
         if (!_settings.EnableAutomaticDailyReport
+            || !_settings.AutomaticDailyReportIsMaster
             || now.TimeOfDay < _settings.AutomaticDailyReportTime)
             return;
 

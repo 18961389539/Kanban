@@ -17,7 +17,7 @@
     <conv:StateToSoftBrushConverter x:Key="StateSoftBrush" />
 
     <!--  状态色条（卡片左侧 6px 竖条，按 StatusWord 切色，圆角 3 让视觉更柔和）。Layout 1/2 共用。  -->
-    <Style x:Key="StatusStripe" TargetType="Border">
+    <Style x:Key="LineStatusStripe" TargetType="Border">
         <Setter Property="Width" Value="6" />
         <Setter Property="CornerRadius" Value="3" />
         <Setter Property="Background" Value="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
@@ -101,7 +101,7 @@
             </Style>
         </DataTemplate.Resources>
 
-        <Border CornerRadius="12" Padding="24,18" Height="380" Margin="8"
+        <Border CornerRadius="12" Padding="24,18" Height="368" Margin="8"
                 HorizontalAlignment="Stretch" VerticalAlignment="Top"
                 Style="{StaticResource DeviceCardBorder}"
                 AutomationProperties.Name="{Binding Device.Name}">
@@ -316,7 +316,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" Margin="0,0,8,0">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -327,17 +327,19 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <ProgressBar Height="15" Maximum="1"
-                                     Foreground="{StaticResource PrimaryBrush}"
-                                     Background="{StaticResource RegionBrush}"
-                                     Value="{Binding ShiftProgressRatio, Mode=OneWay}" />
-                        <TextBlock HorizontalAlignment="Right" Margin="0,3,0,0"
-                                   FontSize="13" Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{Binding ShiftProgressText}" />
+                        <Grid>
+                            <ProgressBar Height="15" Maximum="1"
+                                         Foreground="{StaticResource PrimaryBrush}"
+                                         Background="{StaticResource RegionBrush}"
+                                         Value="{Binding ShiftProgressRatio, Mode=OneWay}" />
+                            <TextBlock HorizontalAlignment="Right" Margin="0,0,8,0" VerticalAlignment="Center"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="White"
+                                       Text="{Binding ShiftProgressText}" />
+                        </Grid>
                     </StackPanel>
 
                     <Button Grid.Column="1" Height="38" Padding="18,0" Margin="8,0,0,0"
-                            VerticalAlignment="Bottom" Cursor="Hand" FontSize="15"
+                            VerticalAlignment="Center" Cursor="Hand" FontSize="15"
                             Background="{StaticResource SecondaryRegionBrush}"
                             Foreground="{StaticResource PrimaryTextBrush}"
                             BorderBrush="{StaticResource BorderBrush}"

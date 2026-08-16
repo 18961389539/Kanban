@@ -78,8 +78,9 @@
                     Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
                     ToolTip="{x:Static resources:Strings.K612}" />
             </Grid>
-            <ListBox
-                AutomationProperties.Name="{x:Static resources:Strings.K174}"
+            <Grid>
+                <ListBox
+                    AutomationProperties.Name="{x:Static resources:Strings.K174}"
                 ItemContainerStyle="{StaticResource CardListItemStyle}"
                 ItemsSource="{Binding CounterAlarms}"
                 SelectedItem="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
@@ -155,6 +156,21 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{StaticResource ThirdlyTextBrush}"
+                           Text="{x:Static resources:Strings.K583}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CounterAlarms.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
         </DockPanel>
 
         <Border

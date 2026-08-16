@@ -45,7 +45,7 @@ public partial class MainWindow : Window
                 ShowStatus("请选择到期日期，或勾选「永久授权」。", false);
                 return;
             }
-            expireUtc = ExpirePicker.SelectedDate.Value.Date.AddDays(1); // 当天 23:59:59 UTC
+            expireUtc = ExpirePicker.SelectedDate.Value.Date.AddDays(1); // 本地"次日零点"，编码时向上取整到天，避免提前失效
         }
 
         // 3. 生成激活码（与客户端共用同一 HMAC 密钥，客户端可验证通过）

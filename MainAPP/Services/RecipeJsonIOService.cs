@@ -86,20 +86,42 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
         // 逐条校验（existing = 本地 + 已通过校验的导入项，顺带拦截与本地/文件内重复的配方名）
         var existing = new List<Recipe>(_recipeStore.Recipes);
         var valid = new List<Recipe>();
+        var skipped = 0;
+        var seenFileIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var r in imported)
         {
+            // 与保存口径对齐：Name/MachineType 去空格，Bool 值归一化，文件内 Id 去重
+            r.Name = r.Name?.Trim() ?? "";
+            r.MachineType = (r.MachineType ?? "").Trim();
+            foreach (var item in r.Items)
+            {
+                if (item.DataType == Kanban.Contracts.Enums.PlcDataType.Bool)
+                {
+                    var raw = item.Value?.Trim();
+                    if (string.Equals(raw, "0", StringComparison.Ordinal)
+                        || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase))
+                        item.Value = "False";
+                    else if (string.Equals(raw, "1", StringComparison.Ordinal)
+                             || string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase))
+                        item.Value = "True";
+                    else
+                        item.Value = raw ?? string.Empty;
+                }
+            }
+            if (!seenFileIds.Add(r.Id)) { skipped++; continue; }
+
             var errors = RecipeValidator.Validate(r, existing);
             if (errors.Count > 0)
             {
                 _logger.LogWarning("导入配方校验失败，已跳过：{RecipeId} {RecipeName}（{Errors}）",
                     r.Id, r.Name, string.Join("；", errors));
+                skipped++;
                 continue;
             }
             valid.Add(r);
             existing.Add(r);
         }
 
-        var skipped = imported.Count - valid.Count;
         if (valid.Count == 0)
         {
             _dialog.NotifyWarning(string.Format(Strings.F322, imported.Count));
@@ -110,8 +132,20 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
             Strings.K691, MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return 0;
 
+        // 批量合并：保留本地全部配方，按 Id 覆盖/追加导入项；一次 ReplaceAll 触发一次集合刷新，避免逐条 Upsert O(n²)
+        var merged = new List<Recipe>(_recipeStore.Recipes);
         foreach (var r in valid)
-            _recipeStore.Upsert(r);
+        {
+            var index = merged.FindIndex(x => string.Equals(x.Id, r.Id, StringComparison.OrdinalIgnoreCase));
+            if (index >= 0)
+            {
+                // 更新已有配方：无条件保留本地 CreatedAt，避免导入文件的时间戳覆盖原始创建时间
+                r.CreatedAt = merged[index].CreatedAt;
+                merged[index] = r;
+            }
+            else merged.Add(r);
+        }
+        _recipeStore.ReplaceAll(merged);
         await _recipeStore.SaveAllAsync();
         _logger.LogInformation("配方导入完成：{Imported} 条（跳过 {Skipped} 条），来源 {Path}", valid.Count, skipped, path);
         _dialog.NotifySuccess(string.Format(Strings.F318, valid.Count, skipped));

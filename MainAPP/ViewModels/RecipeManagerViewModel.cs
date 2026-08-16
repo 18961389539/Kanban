@@ -95,6 +95,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteRecipeCommand))]
     [NotifyCanExecuteChangedFor(nameof(ApplyRecipeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CloneRecipeCommand))]
     private Recipe? _selectedRecipe;
 
     /// <summary>配方卡片搜索关键词（匹配配方名或参数名）。</summary>
@@ -129,10 +130,15 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ApplyRecipeCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelApplyCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteRecipeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CloneRecipeCommand))]
     private bool _isApplying;
 
     /// <summary>下发中的取消令牌（Local 模式可手动取消；Remote 模式仅作超时链接用）。</summary>
     private CancellationTokenSource? _applyCts;
+
+    /// <summary>本轮下发已处理的进度序号（按 Index 去重，避免同名参数第二行被误吞）。</summary>
+    private readonly HashSet<int> _seenApplyIndexes = new();
 
     /// <summary>下发逐项结果（写/校验每项成败明细，进度回调实时填充，单一通道）。</summary>
     public ObservableCollection<RecipeItemResultDto> ApplyItemResults { get; } = new();
@@ -144,6 +150,10 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
 
     /// <summary>正在编辑的配方（null = 无编辑/新建初始）。</summary>
     private Recipe? _editingRecipe;
+
+    /// <summary>跳过下一次选中变更的未保存确认（New/Clone 主动清空编辑区时使用）。</summary>
+    private bool _skipSelectionGuard;
+    private Recipe? _previousSelectedRecipe;
 
     [ObservableProperty] private string _editName = "";
     [ObservableProperty] private string _editMachineType = "";
@@ -161,17 +171,36 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
     /// <summary>PLC 数据类型选项（参数项"类型"列下拉）。</summary>
     public Array PlcDataTypes => Enum.GetValues<Kanban.Contracts.Enums.PlcDataType>();
 
-    /// <summary>Bool 参数值可选形式（Value 列 Bool 类型下拉引导，兼容 TryConvert 全部可解析形式）。</summary>
-    public string[] BoolOptions => new[] { "True", "False", "0", "1" };
+    /// <summary>Bool 参数值 UI 可选范围（仅 True/False；后台仍兼容历史数据中的 0/1 输入，不用于展示）。</summary>
+    public string[] BoolOptions => new[] { "True", "False" };
 
     /// <summary>从配方库加载全部配方。</summary>
     private void RefreshRecipes()
     {
         var current = SelectedRecipe?.Id;
+        // 保存/恢复守卫：外层若是程序化刷新（如保存流程）会保持 true，此处不清掉，
+        // 避免 RefreshRecipes 内部把外层保护复位后触发未保存确认。
+        var previousGuard = _skipSelectionGuard;
+        _skipSelectionGuard = true;
         AvailableRecipes.Clear();
         foreach (var r in _recipeStore.Recipes) AvailableRecipes.Add(r);
         ApplyFilters();
         SelectedRecipe = AvailableRecipes.FirstOrDefault(r => r.Id == current) ?? AvailableRecipes.FirstOrDefault();
+        _skipSelectionGuard = previousGuard;
+        if (SelectedRecipe is null)
+        {
+            // 程序化刷新后确实无选中项（如删除/远程清空）：清空编辑区，避免残留旧编辑
+            _editingRecipe = null;
+            EditName = "";
+            EditMachineType = "";
+            EditRemark = "";
+            EditItems.Clear();
+        }
+        else if (!IsEditorDirty())
+        {
+            // 被动刷新（Remote 同步等）不覆盖用户未保存的内联编辑；无改动时才重载，保持列表与编辑区一致
+            LoadIntoEditor(SelectedRecipe);
+        }
     }
 
     /// <summary>
@@ -236,6 +265,31 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
 
     partial void OnSelectedRecipeChanged(Recipe? value)
     {
+        if (_skipSelectionGuard)
+        {
+            _previousSelectedRecipe = value;
+            return;
+        }
+
+        var old = _previousSelectedRecipe;
+        _previousSelectedRecipe = value;
+
+        // 切换前未保存确认：避免静默丢弃当前编辑区内容
+        if (value != old && IsEditorDirty())
+        {
+            var keepEditing = _dialog.Show(
+                "切换配方会放弃当前未保存的编辑，是否继续？",
+                "提示", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (keepEditing != MessageBoxResult.Yes)
+            {
+                _skipSelectionGuard = true;
+                SelectedRecipe = old;
+                _skipSelectionGuard = false;
+                _previousSelectedRecipe = old;
+                return;
+            }
+        }
+
         if (value is null)
         {
             _editingRecipe = null;
@@ -262,13 +316,54 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
         ApplyStatusKind = ApplyStatusKind.None;
     }
 
+    /// <summary>当前编辑区相对目标配方是否有未保存改动（切换选中配方法用）。</summary>
+    private static string NormalizeValueForDirty(RecipeItem item)
+    {
+        if (item.DataType != Kanban.Contracts.Enums.PlcDataType.Bool) return item.Value;
+        var raw = item.Value?.Trim();
+        if (string.Equals(raw, "0", StringComparison.Ordinal)
+            || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase)) return "False";
+        if (string.Equals(raw, "1", StringComparison.Ordinal)
+            || string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase)) return "True";
+        return raw ?? string.Empty;
+    }
+
+    private bool IsEditorDirty()
+    {
+        if (_editingRecipe is null)
+            return !string.IsNullOrWhiteSpace(EditName) || EditItems.Count > 0;
+
+        if (!string.Equals(EditName.Trim(), _editingRecipe.Name, StringComparison.Ordinal)
+            || !string.Equals(EditMachineType.Trim(), _editingRecipe.MachineType, StringComparison.Ordinal)
+            || !string.Equals(EditRemark, _editingRecipe.Remark, StringComparison.Ordinal)
+            || EditItems.Count != _editingRecipe.Items.Count)
+            return true;
+
+        for (var i = 0; i < EditItems.Count; i++)
+        {
+            var a = EditItems[i].Item;
+            var b = _editingRecipe.Items[i];
+            if (!string.Equals(a.ParamName, b.ParamName, StringComparison.Ordinal)
+                || !string.Equals(a.PlcAddress, b.PlcAddress, StringComparison.Ordinal)
+                || a.DataType != b.DataType
+                || !string.Equals(NormalizeValueForDirty(a), NormalizeValueForDirty(b), StringComparison.Ordinal)
+                || a.Min != b.Min
+                || a.Max != b.Max
+                || !string.Equals(a.Unit, b.Unit, StringComparison.Ordinal))
+                return true;
+        }
+        return false;
+    }
+
     /// <summary>新建配方：清空编辑区并预置一个参数项。</summary>
     [RelayCommand]
     private void NewRecipe()
     {
-        // 先清选中：SelectedRecipe = null 会触发 OnSelectedRecipeChanged 清空编辑区，
-        // 因此预置参数项必须在清选中之后再添加，否则会被清掉
+        // 主动清空编辑区：跳过切换确认
+        _skipSelectionGuard = true;
         SelectedRecipe = null;
+        _skipSelectionGuard = false;
+        _previousSelectedRecipe = null;
         _editingRecipe = null;
         EditName = "";
         EditMachineType = SelectedTargetDevice?.MachineType ?? "";
@@ -290,7 +385,12 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var recipe = _editingRecipe ?? new Recipe();
+        // 编辑副本防御：先在候选对象上组装并校验，校验通过后再 Upsert，
+        // 避免把 _editingRecipe 指向的库中活对象直接改坏（校验失败时原配方仍完整）。
+        var isNew = _editingRecipe is null;
+        var recipe = isNew
+            ? new Recipe()
+            : new Recipe { Id = _editingRecipe!.Id, CreatedAt = _editingRecipe.CreatedAt };
         recipe.Name = EditName.Trim();
         recipe.MachineType = EditMachineType.Trim();
         recipe.Remark = EditRemark;
@@ -312,6 +412,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
             await _recipeStore.SaveAllAsync();
             _logger.LogInformation("配方已保存：{Name}（{MachineType}）", recipe.Name, recipe.MachineType);
             _dialog.NotifySuccess(string.Format(Strings.K688, recipe.Name));
+            _skipSelectionGuard = true;
             RefreshRecipes();
             SelectedRecipe = AvailableRecipes.FirstOrDefault(r => r.Id == recipe.Id);
             // 新保存的配方必须可见：重置筛选（搜索词 + 机型），避免被过滤隐藏导致"保存了却看不到"
@@ -319,6 +420,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
             SelectedMachineFilter = AllMachineTypesFilter;
             // 重建编辑区副本，彻底隔离与库的引用
             if (SelectedRecipe is not null) LoadIntoEditor(SelectedRecipe);
+            _skipSelectionGuard = false;
         }
         finally
         {
@@ -372,10 +474,15 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
             Strings.K661, MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm != MessageBoxResult.Yes) return;
 
+        // 稳定引用：下发期间捕获选中对象，避免用户切换选择导致结果/审计写错对象
+        var device = SelectedTargetDevice!;
+        var recipe = SelectedRecipe!;
+
         IsApplying = true;
         ApplyStatus = Strings.K686;
         ApplyStatusKind = ApplyStatusKind.None;
         ApplyItemResults.Clear();
+        _seenApplyIndexes.Clear();
         _applyCts = new CancellationTokenSource();
         IDisposable? progressSubscription = null;
         try
@@ -389,39 +496,40 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
                 progressSubscription = _client.OnRecipeApplyProgress(OnApplyProgress);
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(_applyCts.Token);
                 timeoutCts.CancelAfter(RemoteApplyTimeout);
-                result = await _client.ApplyRecipeAsync(SelectedTargetDevice.Id, SelectedRecipe.Id, timeoutCts.Token);
+                result = await _client.ApplyRecipeAsync(device.Id, recipe.Id, timeoutCts.Token);
             }
             else
             {
-                var device = SelectedTargetDevice;
-                var recipe = SelectedRecipe;
                 var ct = _applyCts.Token;
                 result = await Task.Run(() => _recipeApplier.Apply(device, recipe, OnApplyProgress, ct));
-                AuditLog.Record("Recipe.Apply", "Recipe", recipe.Id, succeeded: result.Success,
-                    detail: $"{recipe.Name} -> {device.Name}：{result.Message}");
             }
+
+            AuditLog.Record("Recipe.Apply", "Recipe", recipe.Id, succeeded: result.Success,
+                detail: $"{recipe.Name} -> {device.Name}：{result.Message}");
 
             if (result.Success)
             {
                 ApplyStatus = Strings.K675;
                 ApplyStatusKind = ApplyStatusKind.Success;
                 _dialog.NotifySuccess(string.Format(Strings.K675));
-                _logger.LogInformation("配方下发成功：{Recipe} -> {Device}", SelectedRecipe.Name, SelectedTargetDevice.Name);
+                _logger.LogInformation("配方下发成功：{Recipe} -> {Device}", recipe.Name, device.Name);
             }
             else if (_applyCts.IsCancellationRequested)
             {
                 // 用户主动取消（仅 Local 模式）：显示取消消息，不弹错误对话框
                 ApplyStatus = result.Message;
                 ApplyStatusKind = ApplyStatusKind.None;
-                _logger.LogInformation("配方下发已取消：{Recipe} -> {Device}", SelectedRecipe.Name, SelectedTargetDevice.Name);
+                _logger.LogInformation("配方下发已取消：{Recipe} -> {Device}", recipe.Name, device.Name);
             }
             else
             {
                 ApplyStatus = string.Format(Strings.K676, result.Message);
                 ApplyStatusKind = ApplyStatusKind.Error;
+                if (_runtimeMode.IsRemote && ApplyItemResults.Count == 0)
+                    ApplyItemResults.Add(new RecipeItemResultDto("-", false, result.Message));
                 _dialog.NotifyError(string.Format(Strings.K676, result.Message));
                 _logger.LogWarning("配方下发失败：{Message}（{Recipe} -> {Device}）",
-                    result.Message, SelectedRecipe.Name, SelectedTargetDevice.Name);
+                    result.Message, recipe.Name, device.Name);
             }
         }
         catch (OperationCanceledException)
@@ -430,7 +538,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
             var timeoutMsg = _runtimeMode.IsRemote ? Strings.K703 : Strings.K686;
             ApplyStatus = timeoutMsg;
             ApplyStatusKind = ApplyStatusKind.Error;
-            _logger.LogWarning("配方下发超时/取消：{Recipe} -> {Device}", SelectedRecipe.Name, SelectedTargetDevice.Name);
+            _logger.LogWarning("配方下发超时/取消：{Recipe} -> {Device}", recipe.Name, device.Name);
         }
         catch (Exception ex)
         {
@@ -459,9 +567,9 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
         void OnUi()
         {
             ApplyStatus = $"{p.Index}/{p.Total} {p.ParamName}";
-            // 去重保护：Remote 模式下 Hub 可能重复投递，避免结果行翻倍
-            if (ApplyItemResults.All(r => r.ParamName != p.ParamName))
-                ApplyItemResults.Add(new RecipeItemResultDto(p.ParamName, p.Success, p.Message));
+            // 去重保护：Remote 模式 Hub 可能重复投递，按 Index 去重；同名参数不同行也不会被误吞。
+            if (!_seenApplyIndexes.Add(p.Index)) return;
+            ApplyItemResults.Add(new RecipeItemResultDto(p.ParamName, p.Success, p.Message));
         }
         if (_uiDispatcher.CheckAccess()) OnUi();
         else _uiDispatcher.BeginInvoke(OnUi);
@@ -489,8 +597,11 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
     {
         if (SelectedRecipe is null) return;
         var clone = SelectedRecipe.Clone();
-        // 先清选中（触发 OnSelectedRecipeChanged 清空编辑区），再填充副本——与 NewRecipe 顺序一致
+        // 主动清空编辑区：跳过切换确认
+        _skipSelectionGuard = true;
         SelectedRecipe = null;
+        _skipSelectionGuard = false;
+        _previousSelectedRecipe = null;
         _editingRecipe = null;
         EditName = clone.Name + Strings.K692;
         EditMachineType = clone.MachineType;
@@ -557,6 +668,19 @@ public sealed partial class RecipeEditItemRow : ObservableObject
 
     public RecipeEditItemRow(RecipeItem item)
     {
+        // 历史数据兼容：Bool 值归一化为 True/False（大小写不敏感、容忍首尾空格与 0/1），避免下拉框显示空白
+        if (item.DataType == Kanban.Contracts.Enums.PlcDataType.Bool)
+        {
+            var raw = item.Value?.Trim();
+            if (string.Equals(raw, "0", StringComparison.Ordinal)
+                || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase))
+                item.Value = "False";
+            else if (string.Equals(raw, "1", StringComparison.Ordinal)
+                     || string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase))
+                item.Value = "True";
+            else
+                item.Value = raw ?? string.Empty;
+        }
         Item = item;
         Revalidate();
     }
@@ -576,8 +700,11 @@ public sealed partial class RecipeEditItemRow : ObservableObject
     public Kanban.Contracts.Enums.PlcDataType DataType
     {
         get => Item.DataType;
-        set { Item.DataType = value; OnPropertyChanged(); Revalidate(); }
+        set { Item.DataType = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsBool)); Revalidate(); }
     }
+
+    /// <summary>是否为布尔类型（XAML 用此布尔值切换 值列 的文本框/下拉框，避免枚举 DataTrigger 失效）。</summary>
+    public bool IsBool => DataType == Kanban.Contracts.Enums.PlcDataType.Bool;
 
     public string Value
     {
@@ -632,7 +759,7 @@ public sealed partial class RecipeEditItemRow : ObservableObject
         if (parse.Type != expectedType)
             return string.Format(RecipeValidationMessages.RecipeAddressTypeMismatch, item.DataType, expectedType);
 
-        if (item.DataType == Kanban.Contracts.Enums.PlcDataType.String && item.Value.Length > RecipeValidator.MaxStringLength)
+        if (item.DataType == Kanban.Contracts.Enums.PlcDataType.String && (item.Value?.Length ?? 0) > RecipeValidator.MaxStringLength)
             return string.Format(RecipeValidationMessages.RecipeStringTooLong, RecipeValidator.MaxStringLength);
 
         if (!RecipeValidator.TryParseValue(item, out var numeric))

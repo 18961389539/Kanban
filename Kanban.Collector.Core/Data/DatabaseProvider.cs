@@ -20,6 +20,8 @@ public class DatabaseProvider(AppSettings appSettings)
     private const string AlarmEventInitialMigration = "20260731070831_InitialSchema";
     private const string StatusTransitionInitialMigration = "20260731070839_InitialSchema";
     private const string WorkOrderInitialMigration = "20260731070847_InitialSchema";
+    private const string DefectHistoryInitialMigration = "20260816190001_InitialSchema";
+    private const string AuditInitialMigration = "20260816190000_InitialSchema";
 
     private readonly AppSettings _appSettings = appSettings;
     private static readonly string[] HistoryDatabaseFiles =
@@ -68,14 +70,18 @@ public class DatabaseProvider(AppSettings appSettings)
             "WorkOrders",
             WorkOrderInitialMigration,
             ApplyWorkOrderLegacyPatch);
-        // 缺陷历史为新增独立数据库，使用 EnsureCreated 兼容首次部署和已有配置目录。
-        using (var defectContext = CreateDefectHistoryContext())
-            defectContext.Database.EnsureCreated();
-        // 操作审计为独立数据库。EnsureCreated 负责首次建表；幂等补丁负责从 MVP 旧库
-        // 升级到含 BeforeJson/AfterJson 的结构（EnsureCreated 不会修改已存在的表）。
-        using (var auditContext = CreateAuditContext())
-            auditContext.Database.EnsureCreated();
-        ApplyAuditSchemaPatches();
+        // 缺陷历史/审计统一走 EF 迁移（收敛"EnsureCreated + 手写补丁"双轨制，修复 #15）：
+        // MigrateContext 的 legacy patch 负责把旧 EnsureCreated 库平滑升级到 EF 迁移基线。
+        MigrateContext(
+            CreateDefectHistoryContext(),
+            "DefectSnapshots",
+            DefectHistoryInitialMigration,
+            static (_, _) => { });
+        MigrateContext(
+            CreateAuditContext(),
+            "AuditEntries",
+            AuditInitialMigration,
+            ApplyAuditLegacyPatch);
     }
 
     private void MigrateContext<TContext>(
@@ -119,7 +125,8 @@ public class DatabaseProvider(AppSettings appSettings)
             }
 
             connection.Close();
-            if (context.Database.GetPendingMigrations().Any())
+            var hasPendingMigrations = context.Database.GetPendingMigrations().Any();
+            if (hasPendingMigrations)
                 BackupDatabase(databasePath);
             context.Database.Migrate();
 
@@ -130,6 +137,10 @@ public class DatabaseProvider(AppSettings appSettings)
             using (var patchConn = new SqliteConnection($"Data Source={databasePath};Cache=Shared"))
             {
                 patchConn.Open();
+                // 修复 #13：无待执行迁移时 legacy patch 仍可能补列（手工改坏结构的既有库），
+                // 此时补一次迁移前备份，保证"legacy patch 改库必有备份"。
+                if (!hasPendingMigrations)
+                    BackupDatabase(databasePath);
                 using var patchTx = patchConn.BeginTransaction();
                 applyLegacyPatch(patchConn, patchTx);
                 patchTx.Commit();
@@ -163,18 +174,16 @@ public class DatabaseProvider(AppSettings appSettings)
         EnsureColumn(connection, transaction, "WorkOrders", "CompletedNgCount", "INTEGER");
     }
 
-    private void ApplyAuditSchemaPatches()
+    private static void ApplyAuditLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
     {
-        using var context = CreateAuditContext();
-        var databasePath = context.Database.GetDbConnection().DataSource;
-        using var connection = new SqliteConnection($"Data Source={databasePath};Cache=Shared");
-        connection.Open();
-        if (!TableExists(connection, "AuditEntries")) return;
-
-        using var transaction = connection.BeginTransaction();
+        // 旧 EnsureCreated 库缺 BeforeJson/AfterJson 列与索引（EnsureCreated 不会修改已存在的表），幂等补齐。
+        // 索引也一并补齐，保证 MigrateContext 的 IsSchemaCompatible 对旧库能通过并建立迁移基线。
         EnsureColumn(connection, transaction, "AuditEntries", "BeforeJson", "TEXT");
         EnsureColumn(connection, transaction, "AuditEntries", "AfterJson", "TEXT");
-        transaction.Commit();
+        EnsureIndex(connection, transaction, "IX_AuditEntries_Timestamp", "AuditEntries", "Timestamp");
+        EnsureIndex(connection, transaction, "IX_AuditEntries_Operator", "AuditEntries", "Operator");
+        EnsureIndex(connection, transaction, "IX_AuditEntries_Action", "AuditEntries", "Action");
+        EnsureCompositeIndex(connection, transaction, "IX_AuditEntries_TargetType_TargetId", "AuditEntries", "TargetType", "TargetId");
     }
 
     private static bool TableExists(SqliteConnection connection, string tableName)
@@ -288,6 +297,14 @@ public class DatabaseProvider(AppSettings appSettings)
         using var index = connection.CreateCommand();
         index.Transaction = transaction;
         index.CommandText = $"CREATE UNIQUE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" (\"{columnName}\")";
+        index.ExecuteNonQuery();
+    }
+
+    private static void EnsureCompositeIndex(SqliteConnection connection, SqliteTransaction transaction, string indexName, string tableName, string column1, string column2)
+    {
+        using var index = connection.CreateCommand();
+        index.Transaction = transaction;
+        index.CommandText = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" (\"{column1}\", \"{column2}\")";
         index.ExecuteNonQuery();
     }
 

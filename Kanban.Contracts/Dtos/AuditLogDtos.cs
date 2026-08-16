@@ -36,6 +36,10 @@ public sealed record AuditLogEntryDto
     public string? TargetId { get; init; }
     public bool Succeeded { get; init; } = true;
     public string? Detail { get; init; }
+    /// <summary>变更前对象 JSON 摘要（可为空）。</summary>
+    public string? BeforeJson { get; init; }
+    /// <summary>变更后对象 JSON 摘要（可为空）。</summary>
+    public string? AfterJson { get; init; }
 }
 
 /// <summary>审计日志分页响应（服务端 Count + Skip/Take，与历史查询同构）。</summary>

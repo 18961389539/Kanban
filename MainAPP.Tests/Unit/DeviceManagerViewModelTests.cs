@@ -170,7 +170,9 @@ public class DeviceManagerViewModelTests
         var (vm, _, _, tmp) = NewVm();
         vm.AddDeviceCommand.Execute(null);
         ConfigureAddresses(vm.SelectedDevice!);
-        // 计数报警 CRUD 已拆分到 CounterAlarmManagerVm 子 VM（通过 host.SelectedDevice 同步联动）
+        // 计数报警 CRUD 已拆分到 CounterAlarmManagerVm 子 VM（通过 host.SelectedDevice 同步联动）。
+        // 单元测试无 WPF 消息泵，host 同步可能经 Dispatcher 异步封送而不立即生效，故显式同步子 VM 选中设备。
+        vm.CounterAlarmManagerVm.SelectedDevice = vm.SelectedDevice;
         vm.CounterAlarmManagerVm.AddCounterAlarmCommand.Execute(null);
         // MaxValue 必须 > 0：保存校验会拦截 MaxValue <= 0 的计数报警（IsTriggered 永远为 true 导致误报）
         vm.SelectedDevice!.CounterAlarms[0].MaxValue = 100;
@@ -189,6 +191,8 @@ public class DeviceManagerViewModelTests
         var (vm, dialog, driver, tmp) = NewVm();
         vm.AddDeviceCommand.Execute(null);
         ConfigureAddresses(vm.SelectedDevice!);
+        // 单元测试无 WPF 消息泵，host 的 SelectedDevice 同步可能经 Dispatcher 异步封送，显式同步子 VM。
+        vm.PlcCommands.SelectedDevice = vm.SelectedDevice;
         dialog.ShowResult = System.Windows.MessageBoxResult.No;
 
         await vm.PlcCommands.ResetProductionCommand.ExecuteAsync(null);
@@ -205,6 +209,8 @@ public class DeviceManagerViewModelTests
         var (vm, dialog, driver, tmp) = NewVm();
         vm.AddDeviceCommand.Execute(null);
         ConfigureAddresses(vm.SelectedDevice!);
+        // 单元测试无 WPF 消息泵，host 的 SelectedDevice 同步可能经 Dispatcher 异步封送，显式同步子 VM。
+        vm.PlcCommands.SelectedDevice = vm.SelectedDevice;
         dialog.ShowResult = System.Windows.MessageBoxResult.Yes;
 
         await vm.PlcCommands.ResetProductionCommand.ExecuteAsync(null);

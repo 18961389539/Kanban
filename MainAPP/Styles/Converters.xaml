@@ -18,6 +18,12 @@
     <converters:ComparisonConverter x:Key="ComparisonConverter" />
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
+    <converters:UserIsLockedToVisibilityConverter x:Key="UserIsLockedToVisibilityConverter" />
+    <converters:UserRoleToBrushConverter x:Key="UserRoleToBrushConverter" />
+    <converters:UserRoleToTextConverter x:Key="UserRoleToTextConverter" />
+    <converters:UserStatusToBrushConverter x:Key="UserStatusToBrushConverter" />
+    <converters:UserStatusToTextConverter x:Key="UserStatusToTextConverter" />
+    <converters:UserRiskToTextConverter x:Key="UserRiskToTextConverter" />
 
     <!--  全局统一注册的转换器（原各 View 局部声明，避免重复实例化）  -->
     <converters:OeeThresholdConverter x:Key="OeeThreshold" />

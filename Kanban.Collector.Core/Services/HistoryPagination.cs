@@ -9,8 +9,9 @@ public static class HistoryPagination
     /// <summary>单页上限：超过则截断（防止一次拉取百万行经 SignalR 传输）。</summary>
     public const int MaxPageSize = 500;
 
-    /// <summary>页码上限：与 MaxPageSize 相乘后偏移量仍在 int 安全范围内（5×10^7）。</summary>
-    public const int MaxPage = 100_000;
+    /// <summary>页码上限：与 MaxPageSize 相乘后偏移量限制在约 10 万行内（防深分页 DoS——Skip 为 O(offset)，
+    /// 无鉴权客户端此前可 page=100000 造成 5×10^7 偏移拖垮 SQLite）。与客户端 MaxFetchAllPages=200 对齐。</summary>
+    public const int MaxPage = 200;
 
     /// <summary>归一化页码与页大小（均 Clamp 到安全范围）。</summary>
     public static (int Page, int PageSize) Normalize(int page, int pageSize)

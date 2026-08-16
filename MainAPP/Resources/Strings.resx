@@ -192,6 +192,126 @@
   <data name="Settings_LanguageHint" xml:space="preserve">
     <value>界面语言（中文/英文/日文），默认中文，重启后生效。</value>
   </data>
+  <data name="Settings_ExpandDetails" xml:space="preserve">
+    <value>详情</value>
+  </data>
+  <data name="Settings_CollapseDetails" xml:space="preserve">
+    <value>收起</value>
+  </data>
+  <data name="Settings_LicenseDetails" xml:space="preserve">
+    <value>授权详情</value>
+  </data>
+  <data name="Settings_ConnectionParams" xml:space="preserve">
+    <value>连接参数</value>
+  </data>
+  <data name="Settings_ProtocolParams" xml:space="preserve">
+    <value>协议参数</value>
+  </data>
+  <data name="Settings_ShowHideProductKey" xml:space="preserve">
+    <value>显示或隐藏激活码</value>
+  </data>
+  <data name="Common_Show" xml:space="preserve">
+    <value>显示</value>
+  </data>
+  <data name="Common_Hide" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="Settings_DangerConfirmTitle" xml:space="preserve">
+    <value>危险操作确认</value>
+  </data>
+  <data name="Settings_Warn_PlcChanged" xml:space="preserve">
+    <value>PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。</value>
+  </data>
+  <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
+    <value>数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。</value>
+  </data>
+  <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
+    <value>运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。</value>
+  </data>
+  <data name="Settings_ConfirmSave" xml:space="preserve">
+    <value>是否继续保存？</value>
+  </data>
+  <data name="Language_Chinese" xml:space="preserve">
+    <value>中文</value>
+  </data>
+  <data name="Language_English" xml:space="preserve">
+    <value>英文</value>
+  </data>
+  <data name="Language_Japanese" xml:space="preserve">
+    <value>日文</value>
+  </data>
+  <data name="Settings_DailyReportMaster" xml:space="preserve">
+    <value>日报主节点</value>
+  </data>
+  <data name="Settings_DailyReportMasterHint" xml:space="preserve">
+    <value>多屏部署时，只在一台「主节点」上开启此开关生成日报；其他屏端保持关闭，避免重复生成 PDF。</value>
+  </data>
+  <data name="Csv_LabelRange" xml:space="preserve">
+    <value>统计范围</value>
+  </data>
+  <data name="Csv_LabelShift" xml:space="preserve">
+    <value>当前班次</value>
+  </data>
+  <data name="Export_ReviewCsvFileName" xml:space="preserve">
+    <value>生产复盘_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Export_ReviewPdfFileName" xml:space="preserve">
+    <value>生产复盘_{0:yyyyMMddHHmm}.pdf</value>
+  </data>
+  <data name="Export_CsvFilter" xml:space="preserve">
+    <value>CSV 文件|*.csv|所有文件|*.*</value>
+  </data>
+  <data name="Export_PdfFilter" xml:space="preserve">
+    <value>PDF 文件|*.pdf|所有文件|*.*</value>
+  </data>
+  <data name="Um_User" xml:space="preserve">
+    <value>用户</value>
+  </data>
+  <data name="Um_Role" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="Um_LastLogin" xml:space="preserve">
+    <value>最后登录</value>
+  </data>
+  <data name="Um_Security" xml:space="preserve">
+    <value>安全</value>
+  </data>
+  <data name="Um_Actions" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="Wo_MoldType" xml:space="preserve">
+    <value>模具/机型</value>
+  </data>
+  <data name="Wo_Progress" xml:space="preserve">
+    <value>完成进度</value>
+  </data>
+  <data name="Wo_OkNg" xml:space="preserve">
+    <value>良品 / 不良</value>
+  </data>
+  <data name="Wo_Remaining" xml:space="preserve">
+    <value>预计剩余</value>
+  </data>
+  <data name="Wo_Eta" xml:space="preserve">
+    <value>预计完成</value>
+  </data>
+  <data name="Wo_Device" xml:space="preserve">
+    <value>关联设备</value>
+  </data>
+  <data name="Wo_CreatedAt" xml:space="preserve">
+    <value>创建时间</value>
+  </data>
+  <data name="Wo_LastStatusChange" xml:space="preserve">
+    <value>最近状态变更</value>
+  </data>
+  <data name="Home_DeviceHealth" xml:space="preserve">
+    <value>设备健康</value>
+  </data>
+  <data name="Home_TotalDuration" xml:space="preserve">
+    <value>总时长</value>
+  </data>
+  <data name="Rtmon_RetryConnect" xml:space="preserve">
+    <value>重试连接</value>
+  </data>
   <data name="Conn_Live" xml:space="preserve">
     <value>实时</value>
   </data>
@@ -2684,6 +2804,18 @@
     <value>确定清空计数器报警「{0}」的当前值吗？
 将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。</value>
   </data>
+  <data name="F501" xml:space="preserve">
+    <value>确定删除报警「{0}」吗？此操作不可撤销。</value>
+  </data>
+  <data name="F502" xml:space="preserve">
+    <value>确定删除缺陷「{0}」吗？此操作不可撤销。</value>
+  </data>
+  <data name="F503" xml:space="preserve">
+    <value>确定删除计数器报警「{0}」吗？此操作不可撤销。</value>
+  </data>
+  <data name="F504" xml:space="preserve">
+    <value>设备「{0}」的主地址「{1}」被多个字段重复使用，可能导致产量/状态数据串台。</value>
+  </data>
   <data name="F178" xml:space="preserve">
     <value>程序启动失败，即将退出：
 
@@ -4456,6 +4588,9 @@
   <data name="M_UnsavedChangesLeave" xml:space="preserve">
     <value>设备配置有未保存的修改，确定离开设备管理页吗？
 修改会保留在当前会话中，返回设备管理页后仍可继续保存。</value>
+  </data>
+  <data name="M_NoSelfDelete" xml:space="preserve">
+    <value>不能删除自己的账号</value>
   </data>
   <data name="M_NoDeviceSelected" xml:space="preserve">
     <value>未选择设备</value>

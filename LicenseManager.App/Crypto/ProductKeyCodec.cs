@@ -4,17 +4,16 @@ using LicenseManager.Models;
 namespace LicenseManager.Crypto;
 
 /// <summary>
-/// 激活码编解码：将 { 机器码哈希, 过期日期 } 编码为 25 字符产品密钥。
+/// 激活码编解码：将 { 机器码哈希, 过期日期 } 编码为产品密钥字符串。
 /// </summary>
 /// <remarks>
-/// 激活码结构（15 字节）：
+/// 激活码结构（23 字节）：
 ///   [0..4]  机器码哈希（5 字节，SHA256 截断）
 ///   [5..6]  过期日期（2 字节，自 2025-01-01 起的天数偏移；0xFFFF 表示永久）
-///   [7..14] HMAC-SHA256(负载) 截断到 8 字节
+///   [7..22] HMAC-SHA256(负载) 截断到 16 字节（128 位）
 ///
-/// Base32 编码后 24 字符，加 1 字符校验位（取所有字符 Base32 值之和对 32 取模映射到字母表），
-/// 最终格式化为 5 组 × 5 字符（最后一组末位为校验位）：
-///   XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+/// Base32 编码后 37 字符，加 1 字符校验位（取所有字符 Base32 值之和对 32 取模映射到字母表），
+/// 最终按 5 字符一组格式化（末组末位为校验位）。
 /// </remarks>
 /// <remarks>
 /// 不混淆：LicenseIssuer.* 工具直接引用此类，混淆重命名会导致外部程序集 TypeLoadException。
@@ -41,8 +40,9 @@ public static class ProductKeyCodec
         var payload = new byte[EmbeddedKey.PayloadSize];
         Buffer.BlockCopy(machineCodeHash, 0, payload, 0, 5);
 
+        // 向上取整到天：确保"有效至某日当天结束"不会被截断提前失效（时区偏移导致的分数天被抹掉是旧 bug）。
         var daysSinceEpoch = expireDate.HasValue
-            ? (ushort)Math.Clamp((expireDate.Value.ToUniversalTime() - EpochUtc).TotalDays, 0, PermanentMarker - 1)
+            ? (ushort)Math.Clamp(Math.Ceiling((expireDate.Value.ToUniversalTime() - EpochUtc).TotalDays), 0, PermanentMarker - 1)
             : PermanentMarker;
         payload[5] = (byte)(daysSinceEpoch >> 8);
         payload[6] = (byte)(daysSinceEpoch & 0xFF);
@@ -123,13 +123,18 @@ public static class ProductKeyCodec
         return raw.Length == EmbeddedKey.FormattedLength;
     }
 
-    /// <summary>格式化为 5 组 × 5 字符（XXXXX-XXXXX-XXXXX-XXXXX-XXXXX）。</summary>
+    /// <summary>格式化为 5 字符一组（XXXXX-XXXXX-...）。</summary>
     public static string Format(string raw)
     {
-        if (string.IsNullOrEmpty(raw) || raw.Length != EmbeddedKey.FormattedLength)
-            return raw ?? string.Empty;
+        if (string.IsNullOrEmpty(raw)) return raw ?? string.Empty;
 
-        return $"{raw[..5]}-{raw[5..10]}-{raw[10..15]}-{raw[15..20]}-{raw[20..25]}";
+        var sb = new StringBuilder(raw.Length + raw.Length / 5);
+        for (var i = 0; i < raw.Length; i++)
+        {
+            if (i > 0 && i % 5 == 0) sb.Append('-');
+            sb.Append(raw[i]);
+        }
+        return sb.ToString();
     }
 
     /// <summary>计算校验字符：所有字符 Base32 值之和对 32 取模，映射到字母表。</summary>
