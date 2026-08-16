@@ -119,8 +119,7 @@ public class AppLifecycleTests : IDisposable
             var store = new LicenseStore(tmp);
             var registryBackup = new TrialRegistryBackupStub();
             var now = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
-            var uptime = 100_000L;
-            var tracker = new TrialTracker(store, registryBackup, () => now, () => uptime);
+            var tracker = new TrialTracker(store, registryBackup, () => now);
             var gate = new LicenseGate(store, tracker, new ActivationAttemptTracker(tmp, () => now));
 
             // 首次启动：试用期 → 放行

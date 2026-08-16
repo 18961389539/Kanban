@@ -14,10 +14,6 @@ public class TrialState
     /// <summary>上次启动时间（UTC）。用于检测时间回拨（当前时间不应早于上次启动时间）。</summary>
     public DateTime LastLaunchUtc { get; set; }
 
-    /// <summary>上次记录的系统启动时间（Environment.TickCount64，毫秒）。
-    /// 用于检测系统时间被回拨（系统启动时间不会倒退）。</summary>
-    public long LastSystemUptimeMs { get; set; }
-
     /// <summary>累计启动次数（仅用于统计，不参与授权判断）</summary>
     public int LaunchCount { get; set; }
 }

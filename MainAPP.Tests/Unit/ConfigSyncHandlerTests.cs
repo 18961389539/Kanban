@@ -70,7 +70,7 @@ public class ConfigSyncHandlerTests : IDisposable
             HistoryWriteIntervalScans = 50,
             PlcIpAddress = "192.168.1.99",
             PlcPort = 6000,
-            Shifts = [new ShiftConfigDto { Name = "早班", StartTime = TimeSpan.FromHours(6), EndTime = TimeSpan.FromHours(18) }],
+            Shifts = [new ShiftConfigDto { Name = "早班", StartTime = TimeSpan.Zero, EndTime = TimeSpan.FromHours(24) }],
         };
 
         await _handler.SaveCollectorSettingsAsync(dto);

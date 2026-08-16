@@ -37,7 +37,7 @@ public class LicenseGateTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         _store = new LicenseStore(_tempDir);
         var registryBackup = new TrialRegistryBackupStub();
-        _trialTracker = new TrialTracker(_store, registryBackup, () => DateTime.UtcNow, () => 100_000L);
+        _trialTracker = new TrialTracker(_store, registryBackup, () => DateTime.UtcNow);
         _attemptTracker = new ActivationAttemptTracker(_tempDir, () => DateTime.UtcNow);
         // 获取当前机器码哈希（Base32 编码 8 字符），用于生成有效激活码
         _machineCodeHash = Base32.Encode(HardwareFingerprint.GetMachineCodeHash());

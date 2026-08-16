@@ -1,7 +1,9 @@
 using System.Net;
+using System.Net.Sockets;
 using MainAPP.Resources;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LicenseManager.Models;
@@ -45,6 +47,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     /// <summary>上次已保存的界面语言（检测本次保存是否变更语言 → 提示重启生效）。</summary>
     private AppLanguage _lastSavedLanguage = AppLanguage.Zh;
+
+    /// <summary>上次已保存的数据采集模式（用于危险操作确认：DataMode 变化需二次确认）。</summary>
+    private KanbanDataMode _lastSavedDataMode;
+
+    /// <summary>上次已保存的运行模式（用于危险操作确认：RunMode 变化需二次确认）。</summary>
+    private KanbanRunMode _lastSavedRunMode;
+
+    /// <summary>授权状态定时刷新器（UI 线程 DispatcherTimer，每 60 秒）。</summary>
+    private DispatcherTimer? _licenseRefreshTimer;
+
+    /// <summary>当前用户会话（用于权限门禁）；测试宿主未注册时为 null。</summary>
+    private readonly UserSession? _userSession;
 
     public IReadOnlyList<PlcBrand> PlcBrands { get; } = Enum.GetValues<PlcBrand>();
     public IReadOnlyList<PlcDataFormat> PlcDataFormats { get; } = Enum.GetValues<PlcDataFormat>();
@@ -330,14 +344,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         _licenseGate = licenseGate;
         _services = services;
         _profileProvider = profileProvider;
+        _userSession = services.GetService<UserSession>();
         DraftSettings = CloneSettings(appSettings);
         _draftBrand = DraftSettings.PlcConfig.Brand;
         _lastSavedPlcConfigSignature = GetPlcConfigSignature(DraftSettings.PlcConfig);
         _lastSavedAuditSnapshot = CreateAuditSnapshot(DraftSettings);
         _lastSavedShiftsSignature = GetShiftsSignature(DraftSettings);
         _lastSavedLanguage = DraftSettings.Language;
+        _lastSavedDataMode = DraftSettings.DataMode;
+        _lastSavedRunMode = DraftSettings.RunMode;
         WireDraftEvents();
         _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
+        StartLicenseStatusTimer();
     }
 
     private sealed record SettingsAuditSnapshot(string PlcIp, int PlcPort, int ShiftCount);
@@ -351,7 +369,12 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         return JsonSerializer.Deserialize<AppSettings>(json, AppSettings.JsonOptions) ?? new AppSettings();
     }
 
-    private void OnDraftSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => MarkDraftDirty();
+    private void OnDraftSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppSettings.UiScale))
+            MainAPP.FontSizeManager.ApplyScale(DraftSettings.UiScale);
+        MarkDraftDirty();
+    }
 
     private void OnDraftNestedPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -409,6 +432,24 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     {
         _connectionManager.PropertyChanged -= OnConnectionPropertyChanged;
         UnwireDraftEvents();
+        StopLicenseStatusTimer();
+    }
+
+    /// <summary>启动授权状态定时刷新（60 秒）。仅在有 UI 调度器的宿主下启动。</summary>
+    private void StartLicenseStatusTimer()
+    {
+        if (Application.Current is null) return;
+        _licenseRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+        _licenseRefreshTimer.Tick += (_, _) => RefreshLicenseStatus(recheck: false);
+        _licenseRefreshTimer.Start();
+    }
+
+    /// <summary>停止授权状态定时刷新（释放时调用）。</summary>
+    private void StopLicenseStatusTimer()
+    {
+        if (_licenseRefreshTimer is null) return;
+        _licenseRefreshTimer.Stop();
+        _licenseRefreshTimer = null;
     }
 
     private void OnConnectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -490,18 +531,42 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     }
 
     /// <summary>激活码显示（已激活时返回格式化激活码，否则 "—"）。用户可查看/备份自己的激活码。</summary>
+    /// <remarks>默认打码（前 4 后 4，中间 ****），经 <see cref="IsProductKeyMasked"/> 切换明文。</remarks>
     public string ProductKeyText
     {
         get
         {
             if (_licenseGate.CurrentLicense == null) return "—";
-            return _licenseGate.CurrentLicense.ProductKey;
+            var key = _licenseGate.CurrentLicense.ProductKey;
+            if (!IsProductKeyMasked || string.IsNullOrEmpty(key)) return key;
+            return key.Length <= 8
+                ? new string('*', key.Length)
+                : key.Substring(0, 4) + "****" + key.Substring(key.Length - 4);
         }
     }
 
-    /// <summary>刷新授权状态属性通知（激活成功后调用）</summary>
-    private void RefreshLicenseStatus()
+    /// <summary>激活码是否打码显示（默认 true）。</summary>
+    [ObservableProperty]
+    private bool _isProductKeyMasked = true;
+
+    /// <summary>「显示/隐藏」按钮文案。</summary>
+    public string ProductKeyToggleText => IsProductKeyMasked ? "显示" : "隐藏";
+
+    partial void OnIsProductKeyMaskedChanged(bool value)
     {
+        OnPropertyChanged(nameof(ProductKeyText));
+        OnPropertyChanged(nameof(ProductKeyToggleText));
+    }
+
+    /// <summary>切换激活码打码/明文显示。</summary>
+    [RelayCommand]
+    private void ToggleProductKeyMask() => IsProductKeyMasked = !IsProductKeyMasked;
+
+    /// <summary>刷新授权状态属性通知（激活成功后调用）</summary>
+    private void RefreshLicenseStatus(bool recheck)
+    {
+        if (recheck) _licenseGate.CheckStatus();
+        else _licenseGate.RefreshStatusReadOnly();
         OnPropertyChanged(nameof(LicenseStatus));
         OnPropertyChanged(nameof(MachineCode));
         OnPropertyChanged(nameof(CurrentLicense));
@@ -520,6 +585,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [RelayCommand]
     private void Reactivate()
     {
+        if (!EnsureAdmin()) return;
+
         var activationVm = _services.GetRequiredService<ActivationViewModel>();
         var dialog = new ActivationDialog(activationVm);
 
@@ -537,7 +604,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (dialog.ShowDialog() == true)
         {
             // 激活成功 → 刷新本页授权信息 + 通知主窗口刷新侧边栏状态
-            RefreshLicenseStatus();
+            RefreshLicenseStatus(recheck: true);
             NotifyMainWindowLicenseChanged();
             _dialog.NotifySuccess(Strings.M016);
         }
@@ -654,12 +721,32 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
 
         var plcConfigChanged = GetPlcConfigSignature(DraftSettings.PlcConfig) != _lastSavedPlcConfigSignature;
+        var dataModeChanged = DraftSettings.DataMode != _lastSavedDataMode;
+        var runModeChanged = DraftSettings.RunMode != _lastSavedRunMode;
         var auditBefore = _lastSavedAuditSnapshot;
         var auditAfter = CreateAuditSnapshot(DraftSettings);
+
+        // 权限门禁（下沉到危险项）：非管理员可保存主题/语言/标题等无害设置，但 PLC/数据源/运行模式需管理员
+        if (_userSession is { IsAdmin: false } && (plcConfigChanged || dataModeChanged || runModeChanged))
+        {
+            _dialog.NotifyWarning(Strings.M337);
+            return;
+        }
 
         // 检测班次配置是否变化（用 SequenceEqual 比较两个 record 列表）
         var currentShiftsSig = GetShiftsSignature(DraftSettings);
         var shiftsChanged = !currentShiftsSig.SequenceEqual(_lastSavedShiftsSignature);
+
+        // 危险操作确认：PLC 连接参数 / 数据源 / 运行模式变化会断开连接或切换运行模式，需二次确认。
+        if (plcConfigChanged || dataModeChanged || runModeChanged)
+        {
+            var dangerResult = _dialog.Show(
+                BuildDangerConfirmation(plcConfigChanged, dataModeChanged, runModeChanged),
+                "危险操作确认",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (dangerResult != MessageBoxResult.Yes) return;
+        }
 
         // 班次配置变化时提示用户：修改将立即生效，可能导致当前班次被中断。
         // 使用 HC MessageBox（深色主题）进行 YesNo 确认，返回 MessageBoxResult 与原 API 一致。
@@ -698,6 +785,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 _lastSavedShiftsSignature = currentShiftsSig;
             }
 
+            _lastSavedDataMode = DraftSettings.DataMode;
+            _lastSavedRunMode = DraftSettings.RunMode;
+
             HasUnsavedChanges = false;
             OnPropertyChanged(nameof(UnsavedChangesText));
 
@@ -721,6 +811,27 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     }
 
     private bool CanSave() => !IsSaving;
+
+    /// <summary>
+    /// 权限门禁：设置页危险操作（PLC 配置 / 恢复默认 / 授权管理）仅管理员可用。
+    /// 返回 false 时已通过对话框给出提示。
+    /// </summary>
+    private bool EnsureAdmin()
+    {
+        if (_userSession?.IsAdmin == true) return true;
+        _dialog.NotifyWarning(Strings.M337);
+        return false;
+    }
+
+    /// <summary>构造危险操作确认文案：按实际变化项列出后果，避免无变化的项造成误告警。</summary>
+    private static string BuildDangerConfirmation(bool plcChanged, bool dataModeChanged, bool runModeChanged)
+    {
+        var reasons = new List<string>(3);
+        if (plcChanged) reasons.Add("PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。");
+        if (dataModeChanged) reasons.Add("数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。");
+        if (runModeChanged) reasons.Add("运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。");
+        return string.Join("\n", reasons) + "\n是否继续保存？";
+    }
 
     /// <summary>
     /// Remote 模式：把采集相关参数同步到 Collector（落 Collector 侧 settings.json 并热生效）。
@@ -787,15 +898,20 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private void CancelChanges()
     {
         ReplaceDraft(CloneSettings(AppSettings));
+        HasUnsavedChanges = false;
+        OnPropertyChanged(nameof(UnsavedChangesText));
         _dialog.NotifyInfo(Strings.M025);
     }
 
     [RelayCommand]
     private void RestoreDefaults()
     {
+        if (!EnsureAdmin()) return;
         var result = _dialog.Show(Strings.M026, Strings.M_RestoreDefaults, MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
         ReplaceDraft(new AppSettings());
+        HasUnsavedChanges = true;
+        OnPropertyChanged(nameof(UnsavedChangesText));
         _dialog.NotifyInfo(Strings.M027);
     }
 
@@ -812,8 +928,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         OnPropertyChanged(nameof(SelectedRunMode));
         OnPropertyChanged(nameof(IsFullMode));
         OnPropertyChanged(nameof(IsViewerMode));
-        HasUnsavedChanges = true;
-        OnPropertyChanged(nameof(UnsavedChangesText));
+        // 草稿整体替换后，界面字号预览立即对齐新草稿值（取消/恢复默认均生效）。
+        MainAPP.FontSizeManager.ApplyScale(DraftSettings.UiScale);
     }
 
     private static void CopySettings(AppSettings source, AppSettings target)
@@ -823,24 +939,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.DataMode = source.DataMode;
         target.RunMode = source.RunMode;
         target.CollectorHubUrl = source.CollectorHubUrl;
-        target.PlcConfig = new PlcConfig
-        {
-            Brand = source.PlcConfig.Brand,
-            IpAddress = source.PlcConfig.IpAddress,
-            Port = source.PlcConfig.Port,
-            TimeoutMs = source.PlcConfig.TimeoutMs,
-            SiemensModel = source.PlcConfig.SiemensModel,
-            SiemensRack = source.PlcConfig.SiemensRack,
-            SiemensSlot = source.PlcConfig.SiemensSlot,
-            ModbusUnitId = source.PlcConfig.ModbusUnitId,
-            ModbusAddressStartWithZero = source.PlcConfig.ModbusAddressStartWithZero,
-            ModbusRegisterFunction = source.PlcConfig.ModbusRegisterFunction,
-            ModbusBitFunction = source.PlcConfig.ModbusBitFunction,
-            ModbusDataFormat = source.PlcConfig.ModbusDataFormat,
-            SiemensDataFormat = source.PlcConfig.SiemensDataFormat,
-            SiemensBatchInt32Limit = source.PlcConfig.SiemensBatchInt32Limit,
-            OmronReadSplits = source.PlcConfig.OmronReadSplits,
-        };
+        // 用快照整体复制，避免逐字段漏拷（如 ModbusTcp.BatchInt32Limit）；快照含全部嵌套 Options。
+        target.PlcConfig = source.PlcConfig.CreateSnapshot();
         target.PollingIntervalMs = source.PollingIntervalMs;
         target.HistoryWriteIntervalScans = source.HistoryWriteIntervalScans;
         target.PlcBatchReadMaxLength = source.PlcBatchReadMaxLength;
@@ -877,7 +977,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var ip = settings.PlcConfig.IpAddress;
         if (string.IsNullOrWhiteSpace(ip))
             return Strings.M029;
-        if (!IPAddress.TryParse(ip, out _))
+        if (!IPAddress.TryParse(ip, out var parsedIp) || parsedIp.AddressFamily != AddressFamily.InterNetwork)
             return string.Format(Strings.F136, ip);
 
         // 端口校验

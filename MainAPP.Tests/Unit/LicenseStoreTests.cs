@@ -49,7 +49,6 @@ public class LicenseStoreTests : IDisposable
         {
             FirstLaunchUtc = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc),
             LastLaunchUtc = new DateTime(2026, 7, 26, 0, 0, 0, DateTimeKind.Utc),
-            LastSystemUptimeMs = 12345678L,
             LaunchCount = 5,
         };
     }
@@ -177,7 +176,6 @@ public class LicenseStoreTests : IDisposable
         Assert.NotNull(loaded);
         Assert.Equal(trial.FirstLaunchUtc, loaded!.FirstLaunchUtc);
         Assert.Equal(trial.LastLaunchUtc, loaded.LastLaunchUtc);
-        Assert.Equal(trial.LastSystemUptimeMs, loaded.LastSystemUptimeMs);
         Assert.Equal(trial.LaunchCount, loaded.LaunchCount);
     }
 

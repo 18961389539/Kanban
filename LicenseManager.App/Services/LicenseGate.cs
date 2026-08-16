@@ -106,6 +106,40 @@ public class LicenseGate
     }
 
     /// <summary>
+    /// 只读刷新当前状态：不写 trial.dat / 注册表，仅依据现有 license/trial 数据重算 CurrentStatus。
+    /// 用于设置页定时刷新，避免 60 秒轮询时反复递增试用启动计数。
+    /// </summary>
+    public LicenseStatus RefreshStatusReadOnly()
+    {
+        if (string.IsNullOrEmpty(MachineCode))
+        {
+            var hashBytes = HardwareFingerprint.GetMachineCodeHash();
+            MachineCodeHash = Base32.Encode(hashBytes);
+            MachineCode = MachineCodeHash;
+        }
+
+        var license = _store.LoadLicense();
+        if (license != null)
+        {
+            var revalidated = ProductKeyCodec.TryDecode(license.ProductKey, MachineCodeHash);
+            if (revalidated == null)
+            {
+                CurrentLicense = license;
+                CurrentStatus = LicenseStatus.MachineMismatch;
+                return CurrentStatus;
+            }
+            revalidated.ActivatedAt = license.ActivatedAt;
+            CurrentLicense = revalidated;
+            CurrentStatus = revalidated.IsExpired ? LicenseStatus.Expired : LicenseStatus.Active;
+            return CurrentStatus;
+        }
+
+        CurrentLicense = null;
+        CurrentStatus = _trialTracker.GetReadOnlyStatus();
+        return CurrentStatus;
+    }
+
+    /// <summary>
     /// 尝试用输入的激活码激活。
     /// 成功返回 true，失败返回 false 并通过 out 参数给出错误信息。
     /// 连续错误 5 次后锁定 5 分钟，锁定期间拒绝任何尝试。

@@ -238,6 +238,15 @@
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource IconButtonDefault}"
                                         Tag="{x:Static mi:MaterialIconKind.ContentCopy}" />
+                                    <!--  显示/隐藏激活码（打码/明文切换）  -->
+                                    <Button
+                                        Margin="8,0,0,0"
+                                        AutomationProperties.Name="显示或隐藏激活码"
+                                        Command="{Binding ToggleProductKeyMaskCommand}"
+                                        Content="{Binding ProductKeyToggleText}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource IconButtonDefault}"
+                                        Tag="{x:Static mi:MaterialIconKind.Eye}" />
                                     <TextBlock
                                         VerticalAlignment="Center"
                                         FontFamily="Consolas" FontSize="14" FontWeight="Bold"

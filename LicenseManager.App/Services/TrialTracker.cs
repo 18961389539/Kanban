@@ -28,25 +28,22 @@ public class TrialTracker
     private readonly LicenseStore _store;
     private readonly TrialRegistryBackup _registryBackup;
     private readonly Func<DateTime> _utcNowProvider;
-    private readonly Func<long> _uptimeProvider;
 
     /// <summary>默认构造：使用系统真实时间和启动时间。</summary>
     public TrialTracker(LicenseStore store, TrialRegistryBackup registryBackup)
-        : this(store, registryBackup, () => DateTime.UtcNow, () => Environment.TickCount64)
+        : this(store, registryBackup, () => DateTime.UtcNow)
     {
     }
 
-    /// <summary>测试构造：注入时间和启动时间提供器。</summary>
+    /// <summary>测试构造：注入时间提供器。</summary>
     internal TrialTracker(
         LicenseStore store,
         TrialRegistryBackup registryBackup,
-        Func<DateTime> utcNowProvider,
-        Func<long> uptimeProvider)
+        Func<DateTime> utcNowProvider)
     {
         _store = store;
         _registryBackup = registryBackup;
         _utcNowProvider = utcNowProvider;
-        _uptimeProvider = uptimeProvider;
     }
 
     /// <summary>当前试用状态</summary>
@@ -64,6 +61,34 @@ public class TrialTracker
     }
 
     /// <summary>
+    /// 只读计算当前试用状态：不写 trial.dat / 注册表，不递增 LaunchCount，
+    /// 用于设置页定时刷新，避免每次轮询污染试用状态。
+    /// </summary>
+    public LicenseStatus GetReadOnlyStatus()
+    {
+        var state = _store.LoadTrial() ?? _registryBackup.LoadBackupState();
+        var now = _utcNowProvider();
+
+        if (state == null)
+        {
+            // 全新安装：只读查询没有历史状态，构造临时首启态供剩余天数显示，但不落盘（首次启动仍由 CheckStatus 初始化）。
+            CurrentState = new TrialState { FirstLaunchUtc = now, LastLaunchUtc = now };
+            return LicenseStatus.Trial;
+        }
+
+        var timeDrift = (now - state.LastLaunchUtc).TotalSeconds;
+        if (timeDrift < -ClockDriftToleranceSec || now < state.FirstLaunchUtc.AddSeconds(-ClockDriftToleranceSec))
+        {
+            CurrentState = state;
+            return LicenseStatus.TrialManipulated;
+        }
+
+        var elapsedDays = (now - state.FirstLaunchUtc).TotalDays;
+        CurrentState = state;
+        return elapsedDays > TrialDays ? LicenseStatus.TrialExpired : LicenseStatus.Trial;
+    }
+
+    /// <summary>
     /// 检查试用状态：首次启动初始化试用期，已存在则校验时间回拨。
     /// 返回值决定是否允许进入主程序。
     /// </summary>
@@ -71,7 +96,6 @@ public class TrialTracker
     {
         var state = _store.LoadTrial();
         var now = _utcNowProvider();
-        var uptime = _uptimeProvider();
 
         // 首次启动：trial.dat 不存在
         if (state == null)
@@ -96,7 +120,6 @@ public class TrialTracker
                 // trial.dat 被删除，但注册表有完整备份 → 用注册表状态重建 trial.dat
                 // R-2：恢复完整状态（含 LastLaunchUtc），保留时间回拨检测能力
                 backupState.LastLaunchUtc = now;
-                backupState.LastSystemUptimeMs = uptime;
                 backupState.LaunchCount++;
                 _store.SaveTrial(backupState);
 
@@ -117,7 +140,6 @@ public class TrialTracker
             {
                 FirstLaunchUtc = now,
                 LastLaunchUtc = now,
-                LastSystemUptimeMs = uptime,
                 LaunchCount = 1,
             };
             _store.SaveTrial(state);
@@ -144,13 +166,6 @@ public class TrialTracker
             return LicenseStatus.TrialManipulated;
         }
 
-        if (uptime < state.LastSystemUptimeMs - 1000)  // 容忍 1 秒精度误差
-        {
-            // 系统启动时间倒退 → 判定篡改
-            CurrentState = state;
-            return LicenseStatus.TrialManipulated;
-        }
-
         // 试用期是否已过
         var elapsedDays = (now - state.FirstLaunchUtc).TotalDays;
         if (elapsedDays > TrialDays)
@@ -161,7 +176,6 @@ public class TrialTracker
 
         // 更新状态
         state.LastLaunchUtc = now;
-        state.LastSystemUptimeMs = uptime;
         state.LaunchCount++;
         _store.SaveTrial(state);
         // R-2：同步更新注册表备份，确保 trial.dat 被删除时可恢复完整最新状态

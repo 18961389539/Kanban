@@ -41,7 +41,7 @@ public class TrialTrackerTests : IDisposable
         var now = DateTime.UtcNow;
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker = new TrialTracker(store, backup, () => now, () => 1000L);
+        var tracker = new TrialTracker(store, backup, () => now);
 
         var status = tracker.CheckStatus();
 
@@ -49,7 +49,6 @@ public class TrialTrackerTests : IDisposable
         Assert.NotNull(tracker.CurrentState);
         Assert.Equal(now, tracker.CurrentState!.FirstLaunchUtc);
         Assert.Equal(now, tracker.CurrentState.LastLaunchUtc);
-        Assert.Equal(1000L, tracker.CurrentState.LastSystemUptimeMs);
         Assert.Equal(1, tracker.CurrentState.LaunchCount);
     }
 
@@ -60,22 +59,19 @@ public class TrialTrackerTests : IDisposable
     {
         var startTime = DateTime.UtcNow;
         var nextTime = startTime.AddHours(1);
-        var startUptime = 1000L;
-        var nextUptime = 2000L;
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => startUptime);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();  // 首次启动
 
         // 第二次启动（1 小时后）
-        var tracker2 = new TrialTracker(store, backup, () => nextTime, () => nextUptime);
+        var tracker2 = new TrialTracker(store, backup, () => nextTime);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
         Assert.Equal(2, tracker2.CurrentState!.LaunchCount);
         Assert.Equal(nextTime, tracker2.CurrentState.LastLaunchUtc);
-        Assert.Equal(nextUptime, tracker2.CurrentState.LastSystemUptimeMs);
     }
 
     [Fact]
@@ -86,10 +82,10 @@ public class TrialTrackerTests : IDisposable
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
-        var tracker2 = new TrialTracker(store, backup, () => tenDaysLater, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => tenDaysLater);
         tracker2.CheckStatus();
 
         // 30 - 10 = 20 天
@@ -106,10 +102,10 @@ public class TrialTrackerTests : IDisposable
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
-        var tracker2 = new TrialTracker(store, backup, () => thirtyOneDaysLater, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => thirtyOneDaysLater);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.TrialExpired, status);
@@ -124,10 +120,10 @@ public class TrialTrackerTests : IDisposable
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
-        var tracker2 = new TrialTracker(store, backup, () => thirtyDaysLater, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => thirtyDaysLater);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
@@ -143,10 +139,10 @@ public class TrialTrackerTests : IDisposable
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
-        var tracker2 = new TrialTracker(store, backup, () => earlierTime, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => earlierTime);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.TrialManipulated, status);
@@ -160,31 +156,13 @@ public class TrialTrackerTests : IDisposable
 
         var store = CreateStore();
         var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
-        var tracker2 = new TrialTracker(store, backup, () => slightDrift, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => slightDrift);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
-    }
-
-    [Fact]
-    public void CheckStatus_SystemUptimeMovedBackward_ReturnsTrialManipulated()
-    {
-        var startTime = DateTime.UtcNow;
-        var nextTime = startTime.AddHours(1);
-
-        var store = CreateStore();
-        var backup = CreateRegistryBackup();
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 5000L);
-        tracker1.CheckStatus();
-
-        // 系统启动时间倒退（用户可能改了系统时间后重启）
-        var tracker2 = new TrialTracker(store, backup, () => nextTime, () => 3000L);  // 比 5000 小
-        var status = tracker2.CheckStatus();
-
-        Assert.Equal(LicenseStatus.TrialManipulated, status);
     }
 
     // ──────────── 持久化 ────────────
@@ -196,11 +174,11 @@ public class TrialTrackerTests : IDisposable
         var store = CreateStore();
         var backup = CreateRegistryBackup();
 
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
         // 新实例应加载已保存的状态
-        var tracker2 = new TrialTracker(store, backup, () => startTime.AddHours(1), () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => startTime.AddHours(1));
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
@@ -214,7 +192,7 @@ public class TrialTrackerTests : IDisposable
         var store = CreateStore();
         var backup = CreateRegistryBackup();
 
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
         // 篡改 trial.dat 文件内容（破坏 HMAC 签名）
@@ -226,7 +204,7 @@ public class TrialTrackerTests : IDisposable
 
         // HMAC 验签失败 → LoadTrial 返回 null
         // 注册表有完整备份 → 用注册表状态重建 trial.dat（R-2：LaunchCount 从备份恢复并递增）
-        var tracker2 = new TrialTracker(store, backup, () => startTime.AddHours(1), () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => startTime.AddHours(1));
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
@@ -246,7 +224,7 @@ public class TrialTrackerTests : IDisposable
         var backup = CreateRegistryBackup();
 
         // 首次启动：写入 trial.dat 和注册表
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
         // 删除 trial.dat 模拟用户删除
@@ -254,7 +232,7 @@ public class TrialTrackerTests : IDisposable
         File.Delete(trialPath);
 
         // 10 天后启动：应从注册表恢复 FirstLaunchUtc，剩余 20 天
-        var tracker2 = new TrialTracker(store, backup, () => tenDaysLater, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => tenDaysLater);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
@@ -272,14 +250,14 @@ public class TrialTrackerTests : IDisposable
         var backup = CreateRegistryBackup();
 
         // 首次启动
-        var tracker1 = new TrialTracker(store, backup, () => startTime, () => 1000L);
+        var tracker1 = new TrialTracker(store, backup, () => startTime);
         tracker1.CheckStatus();
 
         // 删除 trial.dat
         File.Delete(Path.Combine(_tempDir, "trial.dat"));
 
         // 31 天后启动：注册表显示已过期
-        var tracker2 = new TrialTracker(store, backup, () => thirtyOneDaysLater, () => 2000L);
+        var tracker2 = new TrialTracker(store, backup, () => thirtyOneDaysLater);
         var status = tracker2.CheckStatus();
 
         Assert.Equal(LicenseStatus.TrialExpired, status);
@@ -292,7 +270,7 @@ public class TrialTrackerTests : IDisposable
         var store = CreateStore();
         var backup = CreateRegistryBackup();  // 空 stub
 
-        var tracker = new TrialTracker(store, backup, () => now, () => 1000L);
+        var tracker = new TrialTracker(store, backup, () => now);
         var status = tracker.CheckStatus();
 
         Assert.Equal(LicenseStatus.Trial, status);
