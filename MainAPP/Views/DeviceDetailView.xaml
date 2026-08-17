@@ -375,18 +375,18 @@
                                 <DataTemplate>
                                     <Border Style="{StaticResource KpiCell}" Margin="2">
                                         <StackPanel>
-                                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding Name}" />
+                                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding DisplayName}" />
                                             <TextBlock
                                                 Margin="0,6,0,0"
                                                 FontSize="22"
                                                 FontFamily="Consolas"
                                                 FontWeight="Bold"
-                                                Text="{Binding CurrentValue}">
+                                                Text="{Binding Value.CurrentValue}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                                                         <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                                            <DataTrigger Binding="{Binding Value.IsTriggered}" Value="True">
                                                                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -397,7 +397,7 @@
                                                 Margin="0,2,0,0"
                                                 FontSize="{DynamicResource FontSizeCaption}"
                                                 Foreground="{StaticResource ThirdlyTextBrush}"
-                                                Text="{Binding Unit, StringFormat=单位：{0}}" />
+                                                Text="{Binding Value.Unit, StringFormat=单位：{0}}" />
                                             <Button
                                                 Margin="0,8,0,0"
                                                 HorizontalAlignment="Left"
@@ -422,7 +422,7 @@
                                     DockPanel.Dock="Left"
                                     FontSize="{DynamicResource FontSizeHint}"
                                     Foreground="{StaticResource SecondaryTextBrush}"
-                                    Text="{Binding SelectedTrendSource.Name, StringFormat=源：{0}}" />
+                                    Text="{Binding SelectedTrendSource.DisplayName, StringFormat=源：{0}}" />
                                 <Button
                                     DockPanel.Dock="Right"
                                     Command="{Binding BackToLiveCommand}"

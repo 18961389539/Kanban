@@ -257,15 +257,22 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     // ──────────── 数据采集源展示（实时卡 / 趋势图） ────────────
 
-    /// <summary>当前设备的启用数据源（实时卡直接绑定 DataSource：Name/Type/Unit/CurrentValue/IsTriggered）。</summary>
-    public ObservableCollection<DataSource> SourceCards { get; } = new();
+    /// <summary>值项实时卡展示行：Value=值项引用，DisplayName=展示名（定时模式值项名带「定时采集」标识）。</summary>
+    public sealed record SourceCardRow(DataSourceValue Value, string DisplayName)
+    {
+        /// <summary>告警态转发（绑定源：实时卡着色与趋势按钮共用）。</summary>
+        public bool IsTriggered => Value.IsTriggered;
+    }
+
+    /// <summary>当前设备的值项实时卡（跨源扁平展示，显示名含采集模式标识）。</summary>
+    public ObservableCollection<SourceCardRow> SourceCards { get; } = new();
 
     /// <summary>是否展示趋势图（true=趋势图，false=实时卡）。</summary>
     [ObservableProperty] private bool _showTrend;
 
     /// <summary>趋势图选中的源（用户点实时卡/趋势源下拉选择）。</summary>
     [ObservableProperty]
-    private DataSource? _selectedTrendSource;
+    private SourceCardRow? _selectedTrendSource;
 
     /// <summary>趋势图模型（OxyPlot，最近 2 小时快照折线）。</summary>
     [ObservableProperty] private PlotModel? _trendPlotModel;
@@ -275,10 +282,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     /// <summary>最近 2 小时快照趋势图：单源折线。</summary>
     [RelayCommand]
-    private void ShowTrendChart(DataSource source)
+    private void ShowTrendChart(SourceCardRow row)
     {
-        if (source == null) return;
-        SelectedTrendSource = source;
+        if (row == null) return;
+        SelectedTrendSource = row;
         ShowTrend = true;
         RefreshTrend();
     }
@@ -297,9 +304,9 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// </summary>
     private void RefreshTrend()
     {
-        var source = SelectedTrendSource;
+        var row = SelectedTrendSource;
         var store = _sourceStore;
-        if (source == null || store == null || CurrentDevice == null)
+        if (row == null || store == null || CurrentDevice == null)
         {
             TrendPlotModel = null;
             return;
@@ -319,12 +326,12 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         }
 
         var points = snapshots
-            .Where(s => s.SourceId == source.Id)
+            .Where(s => s.SourceId == row.Value.Id)
             .OrderBy(s => s.Timestamp)
             .Select(s => new OxyPlot.DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(s.Timestamp), s.Value))
             .ToList();
 
-        var model = new PlotModel { Title = $"{source.Name}（{source.Unit}）", TextColor = OxyColors.Gray };
+        var model = new PlotModel { Title = $"{row.DisplayName}（{row.Value.Unit}）", TextColor = OxyColors.Gray };
         model.Axes.Add(new OxyPlot.Axes.DateTimeAxis { Position = OxyPlot.Axes.AxisPosition.Bottom, StringFormat = "HH:mm" });
         model.Axes.Add(new OxyPlot.Axes.LinearAxis { Position = OxyPlot.Axes.AxisPosition.Left });
         model.Series.Add(new LineSeries
@@ -391,8 +398,11 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         foreach (var source in CurrentDevice.Sources.ToList())
         {
             if (!source.Enabled) continue;
-            source.PropertyChanged += OnSourcePropertyChanged;
-            SourceCards.Add(source);
+            foreach (var value in source.Values.ToList())
+            {
+                value.PropertyChanged += OnValuePropertyChanged;
+                SourceCards.Add(new SourceCardRow(value, value.Name));
+            }
         }
         HasSources = SourceCards.Count > 0;
         if (!HasSources) ShowTrend = false;
@@ -400,8 +410,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     private void ClearSourceCards()
     {
-        foreach (var source in SourceCards)
-            source.PropertyChanged -= OnSourcePropertyChanged;
+        foreach (var row in SourceCards)
+            row.Value.PropertyChanged -= OnValuePropertyChanged;
         SourceCards.Clear();
         SelectedTrendSource = null;
         TrendPlotModel = null;
@@ -412,9 +422,9 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// 空实现仅作封送锚点（DataSource 的 ObservableProperty 通知本身经 WPF 绑定引擎跨线程安全处理，
     /// 此钩子确保属性变更事件在 UI 线程完成，避免绑定集合跨线程访问）。
     /// </summary>
-    private void OnSourcePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(DataSource.CurrentValue) or nameof(DataSource.IsTriggered))) return;
+        if (e.PropertyName is not (nameof(DataSourceValue.CurrentValue) or nameof(DataSourceValue.IsTriggered))) return;
         DispatchOnUi(() => { });
     }
 

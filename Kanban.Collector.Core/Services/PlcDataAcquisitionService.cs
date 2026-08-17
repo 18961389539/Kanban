@@ -787,7 +787,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
     }
 
-    /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的启用源）。</summary>
+    /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的值项；SourceId=值项 Id，按值项聚合）。</summary>
     private List<DataSourceSnapshotRecord> BuildSourceSnapshots(string shiftName, DateTime timestamp)
     {
         var sourceValues = _scanPipeline.GetCycleSourceValues();
@@ -797,20 +797,23 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             foreach (var source in device.Sources.ToList())
             {
                 if (!source.Enabled) continue;
-                var key = $"{device.Id}:{source.Id}";
-                if (!sourceValues.TryGetValue(key, out var value)) continue;
-                snapshots.Add(new DataSourceSnapshotRecord
+                foreach (var value in source.Values.ToList())
                 {
-                    DeviceId = device.Id,
-                    DeviceName = device.Name,
-                    SourceId = source.Id,
-                    SourceName = source.Name,
-                    SourceType = source.Type,
-                    Unit = source.Unit,
-                    Value = value,
-                    ShiftName = shiftName,
-                    Timestamp = timestamp,
-                });
+                    var key = $"{device.Id}:{source.Id}:{value.Id}";
+                    if (!sourceValues.TryGetValue(key, out var v)) continue;
+                    snapshots.Add(new DataSourceSnapshotRecord
+                    {
+                        DeviceId = device.Id,
+                        DeviceName = device.Name,
+                        SourceId = value.Id,
+                        SourceName = value.Name,
+                        SourceType = source.Type,
+                        Unit = value.Unit,
+                        Value = v,
+                        ShiftName = shiftName,
+                        Timestamp = timestamp,
+                    });
+                }
             }
         }
         return snapshots;

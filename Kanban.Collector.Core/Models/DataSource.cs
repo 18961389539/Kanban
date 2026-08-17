@@ -1,31 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Kanban.Collector.Core.Models;
 
 /// <summary>
-/// 枚举取值映射项：非数值型数据源的值 → 显示名（如 0=就绪 1=运行 2=报警）。
-/// 仅用于展示归一化与预期值校验参照，不参与采集逻辑。
-/// </summary>
-public partial class DataSourceEnumValue : ObservableObject
-{
-    [ObservableProperty]
-    private int _value;
-
-    [ObservableProperty]
-    private string _displayName = string.Empty;
-}
-
-/// <summary>
 /// 数据采集源（挂载于 Device.Sources）：同一 PLC 上通过寄存器读取的新维度数据（温湿度/能耗等）。
-/// 两种采集方式：
-/// - 配置了 <see cref="TriggerAddress"/>：电平触发——每轮读触发寄存器，值 == <see cref="TriggerValue"/> 时执行采集，
-///   完成后向同一地址写 <see cref="AckValue"/>（回执），下一轮不再重复触发，等待 PLC 再次置位。
-/// - 未配置触发地址：每轮无条件采集（定时，周期 = 扫描周期）。
-/// 数值型（配置上下限）按上下限 + 滞回 + 延时确认判越限；非数值型（配置预期值）按 当前值≠预期值 判偏离。
+/// 源 = 容器（标识 + 触发配置），采集值在 <see cref="Values"/>（一个源可带多个值项，如温度+湿度）。
+/// 两种采集方式（源级触发，驱动全部值项）：
+/// - 配置了 <see cref="TriggerAddress"/>：电平触发——每轮读触发寄存器，值 == <see cref="TriggerValue"/> 时
+///   执行采集（读全部值项），完成后向同一地址写 <see cref="AckValue"/>（回执），下一轮不再重复触发。
+/// - 未配置触发地址：每轮无条件采集全部值项（定时，周期 = 扫描周期）。
+/// 判定（数值型上下限 / 非数值型预期值）按值项独立配置与告警（见 <see cref="DataSourceValue"/>）。
 /// 数据源告警不参与设备状态机，不污染 OEE。
+/// 兼容：旧版单值格式（PlcAddress/Unit/LimitMin 等在源级平铺）经 <see cref="ExtensionData"/> 捕获，
+/// 由 <see cref="MigrateLegacySingleValue"/> 迁移为 Values[0]（幂等，加载后调用）。
 /// </summary>
 public partial class DataSource : ObservableObject
 {
@@ -53,18 +43,10 @@ public partial class DataSource : ObservableObject
     [ObservableProperty]
     private string _description = string.Empty;
 
-    /// <summary>单位（如 ℃、kWh，仅用于 UI 展示与快照记录）</summary>
-    [ObservableProperty]
-    private string _unit = string.Empty;
-
-    // ──────────── 采集地址配置（参照 CounterAlarm.PlcAddress：D 字地址） ────────────
-
-    /// <summary>采集地址（D 字地址，如 D300）。每轮（或触发后）读取此地址的值。</summary>
-    [ObservableProperty]
-    private string _plcAddress = string.Empty;
+    // ──────────── 触发配置（源级：一个触发位驱动整个源的全部值项） ────────────
 
     /// <summary>
-    /// 触发地址（D 字地址，可选）。配置后为电平触发：每轮读此地址，值 == <see cref="TriggerValue"/> 时采集，
+    /// 触发地址（D 字地址，可选）。配置后为电平触发：每轮读此地址，值 == <see cref="TriggerValue"/> 时采集全部值项，
     /// 完成后向此地址写 <see cref="AckValue"/>（回执地址 = 触发地址，唯一拓扑）。
     /// 未配置 = 每轮无条件采集（定时，周期 = 扫描周期）。
     /// </summary>
@@ -79,91 +61,71 @@ public partial class DataSource : ObservableObject
     [ObservableProperty]
     private int _ackValue = 2;
 
-    // ──────────── 判定配置 ────────────
+    // ──────────── 值项（多值源：一个源一个或多个采集值） ────────────
 
     /// <summary>
-    /// 数值型下限（<see cref="LimitMin"/>）与上限（<see cref="LimitMax"/>）。
-    /// 两者都配置且 LimitMax &gt; LimitMin 时按数值型判定：越出区间（含滞回）触发越限告警。
+    /// 采集值项列表（private set 防止外部替换集合导致事件订阅丢失）。
     /// </summary>
-    [ObservableProperty]
-    private int _limitMin;
+    [JsonInclude]
+    public ObservableCollection<DataSourceValue> Values { get; private set; } = new();
 
-    [ObservableProperty]
-    private int _limitMax;
-
-    /// <summary>滞回：越限后需回落「限值 ∓ 滞回」以内才恢复，防止边界抖动反复报警。</summary>
-    [ObservableProperty]
-    private int _hysteresis;
-
-    /// <summary>延时确认（秒）：越限持续超过该时长才确认报警，防瞬时尖峰误报。默认 5s。</summary>
-    [ObservableProperty]
-    private int _confirmSeconds = 5;
+    // ──────────── 旧版单值格式兼容（重构前 devices.json 平铺字段的捕获区） ────────────
 
     /// <summary>
-    /// 非数值型预期值。配置后按「当前值 ≠ 预期值」判偏离（立即触发，不延时）；
-    /// 回到预期值即恢复。数值型与非数值型判定互斥：配置上下限优先。
+    /// 旧版单值字段捕获（PlcAddress/Unit/LimitMin/LimitMax/Hysteresis/ConfirmSeconds/ExpectedValue/EnumValues）。
+    /// 迁移成功后清空；序列化时无数据则不输出。
     /// </summary>
-    [ObservableProperty]
-    private int? _expectedValue;
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 
     /// <summary>
-    /// 枚举取值映射（可空，仅展示归一化/预期值参照）。
+    /// 旧版单值配置迁移：Values 为空且扩展区含 PlcAddress 时，构造 Values[0]（幂等）。
+    /// 由 DeviceRepository.LoadAll 在反序列化后对每个源调用一次。
     /// </summary>
-    [ObservableProperty]
-    private ObservableCollection<DataSourceEnumValue> _enumValues = new();
-
-    // ──────────── 运行时状态（不持久化） ────────────
-
-    /// <summary>
-    /// PLC 当前值（运行时从 PLC 读取，不持久化；快照写入时取此值）。
-    /// 使用 [property: ...] 语法确保特性应用到源生成器生成的属性而非字段。
-    /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTriggered))]
-    [property: JsonIgnore]
-    [property: NotMapped]
-    private int _currentValue;
-
-    // ──────────── 派生判定属性（计算属性，不持久化） ────────────
-
-    /// <summary>是否配置了数值型上下限（两者均配置且上限大于下限）。</summary>
-    [JsonIgnore]
-    [NotMapped]
-    public bool HasLimits => LimitMax > LimitMin;
-
-    /// <summary>是否配置了非数值型预期值。</summary>
-    [JsonIgnore]
-    [NotMapped]
-    public bool HasExpectedValue => ExpectedValue.HasValue;
-
-    /// <summary>当前值是否越出上下限区间（不含滞回，供扫描状态机判定"进入"时刻）。</summary>
-    [JsonIgnore]
-    [NotMapped]
-    public bool IsOutOfRange => HasLimits && (CurrentValue > LimitMax || CurrentValue < LimitMin);
-
-    /// <summary>当前值是否已回落（含滞回后回到区间内，供状态机判定"恢复"时刻）。</summary>
-    [JsonIgnore]
-    [NotMapped]
-    public bool IsBackInRange
+    public void MigrateLegacySingleValue()
     {
-        get
+        if (Values.Count > 0 || ExtensionData == null) return;
+        if (!ExtensionData.TryGetValue("PlcAddress", out var addr) || string.IsNullOrWhiteSpace(addr.GetString()))
         {
-            if (!HasLimits) return true;
-            var hysteresis = Math.Max(0, Hysteresis);
-            return CurrentValue <= LimitMax - hysteresis && CurrentValue >= LimitMin + hysteresis;
+            // 无旧单值数据：扩展区仅残留运行时字段（CurrentValue 等）或空，直接清理
+            ExtensionData = null;
+            return;
         }
+
+        var value = new DataSourceValue
+        {
+            Name = "值1",
+            PlcAddress = addr.GetString() ?? string.Empty,
+        };
+        if (ExtensionData.TryGetValue("Unit", out var unit)) value.Unit = unit.GetString() ?? string.Empty;
+        if (ExtensionData.TryGetValue("LimitMin", out var min)) value.LimitMin = min.GetInt32();
+        if (ExtensionData.TryGetValue("LimitMax", out var max)) value.LimitMax = max.GetInt32();
+        if (ExtensionData.TryGetValue("Hysteresis", out var hys)) value.Hysteresis = hys.GetInt32();
+        if (ExtensionData.TryGetValue("ConfirmSeconds", out var sec)) value.ConfirmSeconds = sec.GetInt32();
+        if (ExtensionData.TryGetValue("ExpectedValue", out var exp) && exp.ValueKind == JsonValueKind.Number)
+            value.ExpectedValue = exp.GetInt32();
+        if (ExtensionData.TryGetValue("EnumValues", out var enums) && enums.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in enums.EnumerateArray())
+            {
+                var displayName = item.TryGetProperty("DisplayName", out var dn) ? dn.GetString() : null;
+                var v = item.TryGetProperty("Value", out var vv) && vv.ValueKind == JsonValueKind.Number ? vv.GetInt32() : 0;
+                value.EnumValues.Add(new DataSourceEnumValue { Value = v, DisplayName = displayName ?? string.Empty });
+            }
+        }
+
+        Values.Add(value);
+        ExtensionData = null;
     }
 
-    /// <summary>当前值是否偏离预期值（非数值型）。</summary>
+    /// <summary>是否配置了触发地址（电平触发）。</summary>
     [JsonIgnore]
-    [NotMapped]
-    public bool IsDeviatingFromExpected => HasExpectedValue && CurrentValue != ExpectedValue!.Value;
+    public bool HasTrigger => !string.IsNullOrWhiteSpace(TriggerAddress);
 
     /// <summary>
-    /// 是否处于告警态（派生，供 UI 实时着色）。数值型 = 越出区间；非数值型 = 偏离预期。
-    /// 仅反映当前采样值的静态判定，不含延时确认（延时确认由扫描状态机管理）。
+    /// 源展示名：定时模式（无触发地址）的名称附带「定时采集」字样，与触发采集源区分。
+    /// 仅用于展示（源表格/详情），配置名 <see cref="Name"/> 不变（需求 2026-08-17）。
     /// </summary>
     [JsonIgnore]
-    [NotMapped]
-    public bool IsTriggered => IsOutOfRange || IsDeviatingFromExpected;
+    public string DisplayName => HasTrigger ? Name : $"{Name}（定时采集）";
 }

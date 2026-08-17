@@ -167,6 +167,9 @@ public class DeviceRepository : IDeviceRepository
                 {
                     foreach (var d in devices)
                     {
+                        // 旧版单值数据源（重构前平铺格式）迁移为 Values[0]（幂等）
+                        foreach (var source in d.Sources)
+                            source.MigrateLegacySingleValue();
                         Devices.Add(d);
                         DeviceMap[d.Id] = d;
                         var runtime = new DeviceRuntime(d);

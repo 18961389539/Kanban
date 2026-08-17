@@ -18,7 +18,9 @@ internal static class DWordAddressBatchCollector
             .Select(counterAlarm => counterAlarm.PlcAddress))
         .Concat(device.Sources.ToList()
             .Where(source => source.Enabled)
-            .SelectMany(source => new[] { source.PlcAddress, source.TriggerAddress }))
+            .SelectMany(source => source.Values
+                .Select(v => v.PlcAddress)
+                .Append(source.TriggerAddress)))
         .Select(adapter.AddressCodec.Parse)
         .Where(parsed => parsed is { IsValid: true, Type: PlcAddressType.DWord })
         .Select(parsed => parsed.Original)

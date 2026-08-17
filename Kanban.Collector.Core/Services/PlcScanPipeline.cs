@@ -310,11 +310,11 @@ public sealed class PlcScanPipeline
     }
 
     /// <summary>
-    /// 扫描设备数据采集源（设计稿 §1/§3/§4）：
-    /// - 配置了触发地址：每轮读触发寄存器，值 == TriggerValue 时执行采集，完成后向同一地址写回执值（AckValue）。
-    ///   下一轮读到回执值不再触发，等待 PLC 再次置位。回执地址 = 触发地址（唯一拓扑，无沿检测）。
-    /// - 未配置触发地址：每轮无条件采集（定时，周期 = 扫描周期）。
-    /// 读取成功后驱动 DataSourceAlarmTracker 做越限/偏离判定（首采样基线、延时确认、滞回恢复）。
+    /// 扫描设备数据采集源（设计稿 §1/§3/§4，多值重构版）：
+    /// - 触发判定在源级（每轮读触发寄存器一次）：配置了触发地址 → 值 == TriggerValue 时采集全部值项，
+    ///   完成后向同一地址写回执值（AckValue）。未配置触发地址 → 每轮无条件采集全部值项（定时）。
+    /// - 值项逐个读取（各自 PlcAddress），读取成功后驱动 DataSourceAlarmTracker 按值项做越限/偏离判定。
+    /// - 触发命中但值项全部读取失败时不写回执（数据未捕获，PLC 端按超时重发）。
     /// 采集地址与触发地址均参与 DWord 批量读（见 DWordAddressBatchCollector），不增加额外轮询开销。
     /// </summary>
     public void ScanSources()
@@ -325,14 +325,8 @@ public sealed class PlcScanPipeline
             if (!source.Enabled) continue;
             var adapter = _adapterResolver.Resolve(device);
 
-            if (!string.IsNullOrWhiteSpace(source.PlcAddress)
-                && adapter.AddressCodec.Parse(source.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
-            {
-                _logger.LogWarning("数据源 {Source} 采集地址格式无效（需要D字地址）: {Address}", source.Name, source.PlcAddress);
-                continue;
-            }
-
-            int value;
+            // 触发判定（源级一次）
+            var triggered = true;
             if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
             {
                 if (adapter.AddressCodec.Parse(source.TriggerAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
@@ -340,29 +334,46 @@ public sealed class PlcScanPipeline
                     _logger.LogWarning("数据源 {Source} 触发地址格式无效（需要D字地址）: {Address}", source.Name, source.TriggerAddress);
                     continue;
                 }
-
-                // 电平触发：读触发寄存器（命中轮内 DWord 批量缓存免一次 PLC 读）
                 var trigger = ReadInt32Value(device, source.TriggerAddress);
-                _logger.LogDebug("数据源 {Source} 触发寄存器 {Address} = {Value}（触发值 {Trigger}）",
-                    source.Name, source.TriggerAddress, trigger.IsSuccess ? trigger.Content : -1, source.TriggerValue);
                 if (!trigger.IsSuccess)
                 {
                     _logger.LogDebug("数据源 {Source} 触发寄存器读取失败: {Address}", source.Name, source.TriggerAddress);
                     continue;
                 }
                 if (trigger.Content != source.TriggerValue) continue; // 未触发（含回执态）
+            }
 
-                // 触发 → 采集
-                var result = ReadInt32Value(device, source.PlcAddress);
-                if (!result.IsSuccess)
+            // 采集全部值项（各自独立读取，失败不影响其它值项）
+            var anyValueRead = false;
+            foreach (var value in source.Values.ToList())
+            {
+                if (string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
+                if (adapter.AddressCodec.Parse(value.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
                 {
-                    _logger.LogDebug("数据源 {Source} 采集读取失败: {Address}", source.Name, source.PlcAddress);
+                    _logger.LogWarning("数据源 {Source} 值项 {Value} 采集地址格式无效（需要D字地址）: {Address}",
+                        source.Name, value.Name, value.PlcAddress);
                     continue;
                 }
-                value = result.Content;
 
-                // 完成后回执：向同一触发地址写回执值（下一轮读到回执值不再触发，等 PLC 再次置位）。
-                // 写入失败仅记日志：下一轮会再次读到触发值重试采集（同命令至多每轮一次）。
+                var result = ReadInt32Value(device, value.PlcAddress);
+                if (!result.IsSuccess)
+                {
+                    _logger.LogDebug("数据源 {Source} 值项 {Value} 采集读取失败: {Address}",
+                        source.Name, value.Name, value.PlcAddress);
+                    continue;
+                }
+
+                // 驱动告警状态机 + 更新当前值（按值项粒度：首采样基线、延时确认、滞回/预期恢复）
+                _dataSourceTracker.Observe(device, source, value, result.Content, _shiftNameProvider());
+                _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = result.Content;
+                anyValueRead = true;
+            }
+
+            // 完成后回执：向同一触发地址写回执值（下一轮读到回执值不再触发，等 PLC 再次置位）。
+            // 写入失败仅记日志：下一轮会再次读到触发值重试（同命令至多每轮一次）。
+            // 值项全部读取失败时不写回执（数据未捕获，PLC 端超时重发，避免假确认）。
+            if (source.HasTrigger && anyValueRead)
+            {
                 var ack = adapter.WriteInt32(source.TriggerAddress, source.AckValue);
                 if (!ack.IsSuccess)
                 {
@@ -370,21 +381,6 @@ public sealed class PlcScanPipeline
                         source.Name, source.TriggerAddress, ack.Message);
                 }
             }
-            else
-            {
-                // 定时采集：每轮无条件读取
-                var result = ReadInt32Value(device, source.PlcAddress);
-                if (!result.IsSuccess)
-                {
-                    _logger.LogDebug("数据源 {Source} 采集读取失败: {Address}", source.Name, source.PlcAddress);
-                    continue;
-                }
-                value = result.Content;
-            }
-
-            // 驱动告警状态机 + 更新当前值（首采样基线、延时确认、滞回/预期恢复）
-            _dataSourceTracker.Observe(device, source, value, _shiftNameProvider());
-            _cycleSourceValues[$"{device.Id}:{source.Id}"] = value;
         }
     }
 
@@ -423,10 +419,11 @@ public sealed class PlcScanPipeline
             {
                 ca.CurrentValue = 0;
             }
-            // 数据源：清零 CurrentValue + 重置告警状态（重连后由下一轮真实采样重新判定，不写恢复事件）
+            // 数据源：清零值项 CurrentValue + 重置告警状态（重连后由下一轮真实采样重新判定，不写恢复事件）
             foreach (var source in device.Sources.ToList())
             {
-                source.CurrentValue = 0;
+                foreach (var value in source.Values.ToList())
+                    value.CurrentValue = 0;
             }
             _dataSourceTracker.RecoverAllOnDisconnect(shiftName);
         }

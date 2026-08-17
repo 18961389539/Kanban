@@ -37,6 +37,9 @@ public sealed class KanbanAppFixture : IDisposable
             UseShellExecute = false,
         };
         psi.EnvironmentVariables["KANBAN_DATA_DIR"] = TempDir;
+        // 授权 HMAC 密钥：EmbeddedKey 自 2026-08-16 起要求环境变量注入（无内嵌回退），
+        // 缺失会导致 LicenseGate 校验抛异常、MainAPP 启动即崩。测试注入与开发环境一致的共享密钥。
+        psi.EnvironmentVariables["KANBAN_HMAC_KEY"] = "zUMnUR03aZR3jMzKkEUHf8iANX1nifFf725jv6LgONE=";
 
         Automation = new UIA3Automation();
 

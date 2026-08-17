@@ -75,3 +75,13 @@ WorkOrderSampleBuilder.cs	端子台
 WorkOrderSampleBuilder.cs	试产验证
 WorkOrderSampleBuilder.cs	返工批次
 WorkOrderSampleBuilder.cs	连接器
+DeviceDataSourceManagerViewModel.cs	状态{nextValue}
+DeviceDataSourceManagerViewModel.cs	值1
+DeviceDataSourceManagerViewModel.cs	值{next}
+DeviceConfigValidator.cs	采集源「{source.Name}」至少需要配置一个值项
+DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」采集地址格式无效
+DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」滞回不能为负
+DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」延时确认不能为负
+DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同
+DeviceConfigValidator.cs	采集源「{source.Name}」触发地址格式无效
+DeviceDetailViewModel.cs	{value.Name}（定时采集）

@@ -57,6 +57,20 @@ public partial class App : Application
     {
         Log("OnStartup 开始");
 
+        // 全局未捕获异常日志：WPF 运行时异常（XamlParseException 等）在启动流程之外发生时不进 OnStartup 的
+        // try/catch，此前静默崩溃无日志（如设备管理页资源缺失闪退）。此处统一记录到 Serilog 并阻止默认的
+        // 崩溃弹窗（AppDomain 级异常无法拦截进程退出，Dispatcher 级可 Handled=true 保持窗口存活）。
+        DispatcherUnhandledException += (_, args) =>
+        {
+            Serilog.Log.Error(args.Exception, "UI 线程未处理异常（已记录并继续运行）");
+            args.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+                Serilog.Log.Error(ex, "AppDomain 未处理异常（进程将终止）");
+        };
+
         // OnStartup 是 async void，未捕获异常会直接终止进程且无错误提示。
         // 用 try/catch 包裹整个启动流程（Host.StartAsync / Load / EnsureCreated / MainWindow.Show 等），
         // 任一步骤抛异常时记录日志、提示用户并优雅退出，避免无提示崩溃。

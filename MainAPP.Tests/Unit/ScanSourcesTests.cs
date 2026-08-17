@@ -89,13 +89,14 @@ public class ScanSourcesTests
         public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize) => ([], 0);
     }
 
-    private static (PlcScanPipeline Pipeline, FakeAdapter Adapter, Device Device) BuildPipeline(DataSource source)
+    private static (PlcScanPipeline Pipeline, FakeAdapter Adapter, Device Device, DataSourceValue Value) BuildPipeline(DataSource source, DataSourceValue value)
     {
         var settings = new AppSettings { ConfigDirectory = "KanbanScanSourcesTests_" + Guid.NewGuid().ToString("N") };
         var adapter = new FakeAdapter();
         var repository = new DeviceRepository(settings);
         var device = new Device { Id = "dev-001", Name = "注塑机1" };
         source.DeviceId = device.Id;
+        source.Values.Add(value);
         device.Sources.Add(source);
         repository.Devices.Add(device);
 
@@ -106,7 +107,7 @@ public class ScanSourcesTests
             settings,
             () => "白班",
             NullLogger.Instance);
-        return (pipeline, adapter, device);
+        return (pipeline, adapter, device, value);
     }
 
     // ──────────── 定时采集：无触发地址 = 每轮采集 ────────────
@@ -114,16 +115,17 @@ public class ScanSourcesTests
     [Fact]
     public void Periodic_NoTriggerAddress_ReadsEveryScan()
     {
-        var source = new DataSource { Name = "车间温度", PlcAddress = "D300", Unit = "℃" };
-        var (pipeline, adapter, _) = BuildPipeline(source);
+        var value = new DataSourceValue { Name = "车间温度", PlcAddress = "D300", Unit = "℃" };
+        var source = new DataSource { Name = "温湿度" };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
         adapter.Registers["D300"] = 245;
 
         pipeline.ScanSources();
 
-        Assert.Equal(245, source.CurrentValue);
+        Assert.Equal(245, valueItem.CurrentValue);
         var cycleValues = pipeline.GetCycleSourceValues();
-        Assert.True(cycleValues.ContainsKey("dev-001:" + source.Id));
-        Assert.Equal(245, cycleValues["dev-001:" + source.Id]);
+        Assert.True(cycleValues.ContainsKey($"dev-001:{source.Id}:{valueItem.Id}"));
+        Assert.Equal(245, cycleValues[$"dev-001:{source.Id}:{valueItem.Id}"]);
     }
 
     // ──────────── 电平触发：值==触发值 → 采集 + 同址回执 ────────────
@@ -131,22 +133,22 @@ public class ScanSourcesTests
     [Fact]
     public void Triggered_TriggerValueMatches_CollectsAndWritesAck()
     {
+        var value = new DataSourceValue { Name = "温度", PlcAddress = "D300" };
         var source = new DataSource
         {
             Name = "温度采集",
-            PlcAddress = "D300",
             TriggerAddress = "D510",
             TriggerValue = 1,
             AckValue = 2,
         };
-        var (pipeline, adapter, _) = BuildPipeline(source);
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
         adapter.Registers["D300"] = 310;
         adapter.Registers["D510"] = 1; // PLC 置触发
 
         pipeline.ScanSources();
 
         // 采集成功 + 同址回执
-        Assert.Equal(310, source.CurrentValue);
+        Assert.Equal(310, valueItem.CurrentValue);
         Assert.Equal(2, adapter.Registers["D510"]);
         Assert.Contains(adapter.Writes, w => w.Address == "D510" && w.Value == 2);
     }
@@ -156,23 +158,55 @@ public class ScanSourcesTests
     [Fact]
     public void Triggered_AckStateOnTriggerAddress_DoesNotRecollect()
     {
+        var value = new DataSourceValue { Name = "温度", PlcAddress = "D300" };
         var source = new DataSource
         {
             Name = "温度采集",
-            PlcAddress = "D300",
             TriggerAddress = "D510",
             TriggerValue = 1,
             AckValue = 2,
         };
-        var (pipeline, adapter, _) = BuildPipeline(source);
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
         adapter.Registers["D300"] = 245;
         adapter.Registers["D510"] = 2; // 上轮回执态
 
         pipeline.ScanSources();
 
         // 未触发：不采集、不回写
-        Assert.Equal(0, source.CurrentValue);
+        Assert.Equal(0, valueItem.CurrentValue);
         Assert.Empty(adapter.Writes);
+    }
+
+    // ──────────── 多值源：一个触发位驱动全部值项（重构核心语义） ────────────
+
+    [Fact]
+    public void Triggered_MultiValueSource_TriggerOnceCollectsAllValues()
+    {
+        var temp1 = new DataSourceValue { Name = "温度", PlcAddress = "D300" };
+        var temp2 = new DataSourceValue { Name = "湿度", PlcAddress = "D304" };
+        var source = new DataSource
+        {
+            Name = "温湿度采集",
+            TriggerAddress = "D510",
+            TriggerValue = 1,
+            AckValue = 2,
+        };
+        var (pipeline, adapter, _, _) = BuildPipeline(source, temp1);
+        source.Values.Add(temp2);
+        adapter.Registers["D300"] = 245;
+        adapter.Registers["D304"] = 538;
+        adapter.Registers["D510"] = 1; // PLC 置触发
+
+        pipeline.ScanSources();
+
+        // 两个值项都采集到 + 同址回执只写一次
+        Assert.Equal(245, temp1.CurrentValue);
+        Assert.Equal(538, temp2.CurrentValue);
+        Assert.Equal(2, adapter.Registers["D510"]);
+        var cycleValues = pipeline.GetCycleSourceValues();
+        Assert.Equal(2, cycleValues.Count);
+        Assert.Contains($"dev-001:{source.Id}:{temp1.Id}", cycleValues.Keys);
+        Assert.Contains($"dev-001:{source.Id}:{temp2.Id}", cycleValues.Keys);
     }
 
     // ──────────── 禁用源跳过 ────────────
@@ -180,13 +214,14 @@ public class ScanSourcesTests
     [Fact]
     public void DisabledSource_IsSkipped()
     {
-        var source = new DataSource { Name = "车间温度", PlcAddress = "D300", Enabled = false };
-        var (pipeline, adapter, _) = BuildPipeline(source);
+        var value = new DataSourceValue { Name = "车间温度", PlcAddress = "D300" };
+        var source = new DataSource { Name = "温湿度", Enabled = false };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
         adapter.Registers["D300"] = 245;
 
         pipeline.ScanSources();
 
-        Assert.Equal(0, source.CurrentValue);
+        Assert.Equal(0, valueItem.CurrentValue);
         Assert.Empty(pipeline.GetCycleSourceValues());
     }
 }

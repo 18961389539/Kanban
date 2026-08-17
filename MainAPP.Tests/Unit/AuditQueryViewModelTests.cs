@@ -106,7 +106,7 @@ public class AuditQueryViewModelTests
     }
 
     [Fact]
-    public void ResetRestoresDefaultPresetAndReQueries()
+    public async Task ResetRestoresDefaultPresetAndReQueries()
     {
         var vm = NewVm();
         vm.PresetIndex = 3;
@@ -116,6 +116,25 @@ public class AuditQueryViewModelTests
 
         Assert.Equal(2, vm.PresetIndex);
         Assert.Equal(0, vm.ResultFilterIndex);
+
+        // 查询已后台化（审查修复 2026-08-13）：Reset 触发的查询在后台异步执行，
+        // 轮询等待累计 2 次（构造 1 次 + Reset 1 次）后再断言，避免同步断言竞态（flaky 修复 2026-08-17）。
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                _audit.Received(2).QueryPaged(Arg.Any<DateTime>(), Arg.Any<DateTime>(),
+                    Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(),
+                    Arg.Any<int>(), Arg.Any<int>());
+                return;
+            }
+            catch
+            {
+                await Task.Delay(10);
+            }
+        }
+
         _audit.Received(2).QueryPaged(Arg.Any<DateTime>(), Arg.Any<DateTime>(),
             Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(),
             Arg.Any<int>(), Arg.Any<int>());
