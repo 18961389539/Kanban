@@ -36,6 +36,8 @@ public class DeviceSimulator
     /// </summary>
     private double _baseCycleSeconds;
     private readonly double _speedMultiplier;
+    /// <summary>随机源（默认 Random.Shared；测试注入种子以实现确定性驱动，审查修复 2026-08-16）。</summary>
+    private readonly Random _rng;
     /// <summary>
     /// 上次读取配方值的时刻，用于限制 Tick 中的读取频率（避免每 100ms 都读 PLC）。
     /// </summary>
@@ -149,11 +151,13 @@ public class DeviceSimulator
 
     public DeviceSimulator(DeviceConfig config, ScenarioConfig scenario, double speedMultiplier,
         Action<string, int> writeInt, Action<string, bool> writeBool,
-        Func<string, int> readInt, Func<string, bool> readBool)
+        Func<string, int> readInt, Func<string, bool> readBool, Random? rng = null)
     {
         _config = config;
         _scenario = scenario;
         _speedMultiplier = speedMultiplier;
+        // 随机源可注入种子（审查修复 2026-08-16，配合单测确定性驱动），默认 Random.Shared
+        _rng = rng ?? Random.Shared;
         // RecipeValue=50 表示 50件/h，节拍 = 3600/50 = 72秒/件
         _baseCycleSeconds = config.RecipeValue > 0 ? 3600.0 / config.RecipeValue : 60.0;
         _writeInt = writeInt;
@@ -207,8 +211,11 @@ public class DeviceSimulator
         }
 
         // 恢复状态字（1=运行, 2=报警, 3=待机；0 或其他值视为待机）
-        var statusInt = TryReadInt(_config.StatusCountAddress);
-        Status = statusInt switch
+        // 修复（2026-08-16，审查 H3）：用可空读区分「读取失败」与「真实值 0」——
+        // 读取失败时不能按 0 恢复并回写状态字，否则 client 模式断线会把真实 PLC 状态字改写为待机。
+        var statusRead = TryReadIntNullable(_config.StatusCountAddress);
+        var statusReadOk = statusRead.HasValue;
+        Status = statusRead switch
         {
             (int)SimStatus.Running => SimStatus.Running,
             (int)SimStatus.Alarm => SimStatus.Alarm,
@@ -216,10 +223,11 @@ public class DeviceSimulator
         };
 
         // 报警位状态：如果任意报警位为 ON，强制进入报警态。
-        // 仅扫描前 10 个报警位（性能：避免 200 次 TryReadBool，启动耗时数秒）。
-        if (Status != SimStatus.Alarm)
+        // 修复（2026-08-16，审查 M4）：全量扫描所有报警位，不再仅扫前 10 个——
+        // 否则第 11+ 个报警位为 ON 时会误判为待机，且该 M 位因不在扫描范围而永不被清除（孤立报警位）。
+        if (statusReadOk && Status != SimStatus.Alarm)
         {
-            foreach (var a in _config.Alarms.Take(10))
+            foreach (var a in _config.Alarms)
             {
                 if (TryReadBool(a.PlcAddress))
                 {
@@ -274,7 +282,15 @@ public class DeviceSimulator
         }
 
         // 同步状态字（确保 PLC 中状态与 Simulator 一致）
-        WriteStatus();
+        // 修复（2026-08-16，审查 H3）：仅当状态字读取成功时才回写，避免读取失败时把真实 PLC 状态字改写为待机。
+        if (statusReadOk)
+        {
+            WriteStatus();
+        }
+        else
+        {
+            Log?.Invoke($"[{Name}] 状态恢复：PLC 读取失败（{_config.StatusCountAddress}），跳过状态同步");
+        }
 
         Log?.Invoke($"[{Name}] 状态恢复：Status={StatusText(Status)}, OK={_okCount}, NG={_ngCount}, 停机={_stopCount}");
     }
@@ -590,14 +606,20 @@ public class DeviceSimulator
             // 清除缺料报警位（直接用记录的地址，避免遍历 200 个报警位）
             if (!string.IsNullOrEmpty(_shortageAlarmAddress))
                 WriteBoolIfNotEmpty(_shortageAlarmAddress, false);
-            // 恢复状态字为 Running（进入缺料停机时已改为 Idle）
-            Status = SimStatus.Running;
-            WriteStatus();
-            Log?.Invoke($"[{Name}] 缺料恢复 → 继续生产");
             _shortageAlarmName = null;
             _shortageAlarmAddress = null;
-            // 缺料恢复后重新安排产出（避免立即产出，给一个节拍的缓冲）
-            ScheduleNextProduce(now);
+            // 修复（2026-08-16，审查 H2）：缺料期间可能因停机次数阈值进入报警态
+            // （EnterMaterialShortage → CheckStopCountThreshold → DoTriggerThresholdAlarm 置 Status=Alarm）。
+            // 此时不能无条件恢复为 Running，否则会覆盖 Alarm 态，导致报警恢复分支
+            // （连续不良清零/漂移回收/爬坡）永不执行、_alarmEndTime 残留。仅当仍为 Idle 时才恢复运行。
+            if (Status == SimStatus.Idle)
+            {
+                Status = SimStatus.Running;
+                WriteStatus();
+                Log?.Invoke($"[{Name}] 缺料恢复 → 继续生产");
+                // 缺料恢复后重新安排产出（避免立即产出，给一个节拍的缓冲）
+                ScheduleNextProduce(now);
+            }
         }
 
         // 3.5 操作员暂停恢复检查（午休/交接班/换模/抽检/首件检验结束）
@@ -627,13 +649,13 @@ public class DeviceSimulator
 
         // 4.5 PLC 通信抖动触发检查（偶发篡改 PLC 内存值模拟电磁干扰）
         if (_scenario.EnableCommJitter && !_commJitterEndTime.HasValue
-            && Random.Shared.NextDouble() < _scenario.CommJitterChancePerTick)
+            && _rng.NextDouble() < _scenario.CommJitterChancePerTick)
         {
             TriggerCommJitter(now);
         }
 
         // 5. 随机报警触发
-        if (Random.Shared.NextDouble() < _scenario.AlarmChancePerTick)
+        if (_rng.NextDouble() < _scenario.AlarmChancePerTick)
         {
             DoTriggerAlarm(now, manual: false);
             return; // 本次 tick 不产出
@@ -641,10 +663,10 @@ public class DeviceSimulator
 
         // 6. 突发不良期进入检查（当前未在突发期）
         if (!_burstEndTime.HasValue
-            && Random.Shared.NextDouble() < _scenario.BurstChancePerTick)
+            && _rng.NextDouble() < _scenario.BurstChancePerTick)
         {
             var burstSec = _scenario.BurstMinSec
-                + Random.Shared.NextDouble() * (_scenario.BurstMaxSec - _scenario.BurstMinSec);
+                + _rng.NextDouble() * (_scenario.BurstMaxSec - _scenario.BurstMinSec);
             _burstEndTime = now.AddSeconds(burstSec);
             Log?.Invoke($"[{Name}] 进入突发不良期（NG 率={_scenario.BurstNgRate * 100:F0}%，预计 {burstSec:F0}s）");
         }
@@ -652,7 +674,7 @@ public class DeviceSimulator
         // 7. 缺料停机进入检查（当前未在缺料期）
         if (_scenario.EnableMaterialShortage
             && !_shortageEndTime.HasValue
-            && Random.Shared.NextDouble() < _scenario.ShortageChancePerTick)
+            && _rng.NextDouble() < _scenario.ShortageChancePerTick)
         {
             EnterMaterialShortage(now);
             return;
@@ -719,7 +741,7 @@ public class DeviceSimulator
     private void EnterMaterialShortage(DateTime now)
     {
         var shortageSec = _scenario.ShortageMinSec
-            + Random.Shared.NextDouble() * (_scenario.ShortageMaxSec - _scenario.ShortageMinSec);
+            + _rng.NextDouble() * (_scenario.ShortageMaxSec - _scenario.ShortageMinSec);
         _shortageEndTime = now.AddSeconds(shortageSec);
 
         // 查找名称含"缺料"/"断料"的报警位（仅扫描前 20 个，避免遍历 200 个报警位）
@@ -802,7 +824,7 @@ public class DeviceSimulator
         if ((now - _lastMoldChangeTime).TotalSeconds >= _scenario.MoldChangeIntervalSec)
         {
             var moldSec = _scenario.MoldChangeMinSec
-                + Random.Shared.NextDouble() * (_scenario.MoldChangeMaxSec - _scenario.MoldChangeMinSec);
+                + _rng.NextDouble() * (_scenario.MoldChangeMaxSec - _scenario.MoldChangeMinSec);
             _lastMoldChangeTime = now;
             _piecesSinceLastMoldChange = 0; // 重置批次效应计数
             // 换模后标记首件检验（换模完成后在下个 Tick 触发）
@@ -817,7 +839,7 @@ public class DeviceSimulator
         {
             _piecesSinceLastQualityCheck = 0;
             var checkSec = _scenario.QualityCheckMinSec
-                + Random.Shared.NextDouble() * (_scenario.QualityCheckMaxSec - _scenario.QualityCheckMinSec);
+                + _rng.NextDouble() * (_scenario.QualityCheckMaxSec - _scenario.QualityCheckMinSec);
             EnterOperatorPause(now, "质量抽检", checkSec);
             return;
         }
@@ -861,9 +883,11 @@ public class DeviceSimulator
         // NG 率优先级：报警期 > 突发期 > 预热期 > 批次效应 > 正常
         // 正常期 NG 率基线 = 物料批次基线（若启用），否则场景 NgRateBase
         double ngRate;
+        // 注（审查 M1）：本分支当前不可达（ProduceOne 仅在 ProcessRunningStateEvents 的运行态分支被调用），
+        // 保留作防御——若未来从报警期调用产出，应使用报警期 NG 率。
         if (Status == SimStatus.Alarm)
         {
-            ngRate = _scenario.NgRateAlarmBase + Random.Shared.NextDouble() * _scenario.NgRateAlarmJitter;
+            ngRate = _scenario.NgRateAlarmBase + _rng.NextDouble() * _scenario.NgRateAlarmJitter;
         }
         else if (BurstActive)
         {
@@ -872,12 +896,12 @@ public class DeviceSimulator
         else if (WarmupActive)
         {
             // 预热期 NG 率较高（5-10%），加上小抖动
-            ngRate = _scenario.WarmupNgRate + Random.Shared.NextDouble() * 0.05;
+            ngRate = _scenario.WarmupNgRate + _rng.NextDouble() * 0.05;
         }
         else if (_scenario.EnableBatchEffect && _piecesSinceLastMoldChange < _scenario.BatchEffectPieces)
         {
             // 换模后前 N 件 NG 率突高（新材料/模具未稳定）
-            ngRate = _scenario.BatchEffectNgRate + Random.Shared.NextDouble() * 0.05;
+            ngRate = _scenario.BatchEffectNgRate + _rng.NextDouble() * 0.05;
         }
         else
         {
@@ -885,7 +909,7 @@ public class DeviceSimulator
             var baseRate = _scenario.EnableMaterialBatchVariance
                 ? _materialBatchNgRate
                 : _scenario.NgRateBase;
-            ngRate = baseRate + Random.Shared.NextDouble() * _scenario.NgRateJitter;
+            ngRate = baseRate + _rng.NextDouble() * _scenario.NgRateJitter;
         }
 
         // 叠加因素性 NG 率惩罚（不影响报警/突发/预热/批次等状态基线，仅叠加到正常及以上状态）
@@ -905,7 +929,7 @@ public class DeviceSimulator
         // 限制 NG 率上限（避免叠加超过 100%）
         ngRate = Math.Min(ngRate, 0.95);
 
-        bool isNg = Random.Shared.NextDouble() < ngRate;
+        bool isNg = _rng.NextDouble() < ngRate;
 
         if (isNg)
         {
@@ -921,7 +945,7 @@ public class DeviceSimulator
             // 缺陷 +1（随机选一个缺陷类型）
             if (_config.Defects.Count > 0)
             {
-                var defect = _config.Defects[Random.Shared.Next(_config.Defects.Count)];
+                var defect = _config.Defects[_rng.Next(_config.Defects.Count)];
                 _defectCounts[defect.PlcAddress] = _defectCounts.GetValueOrDefault(defect.PlcAddress) + 1;
                 WriteIfNotEmpty(defect.PlcAddress, _defectCounts[defect.PlcAddress]);
             }
@@ -1001,9 +1025,9 @@ public class DeviceSimulator
 
         // 突发卡顿触发：产出后有小概率进入连续卡顿期（脱模不顺/卡料）
         if (_scenario.EnableBurstStall && _burstStallRemaining <= 0
-            && Random.Shared.NextDouble() < _scenario.BurstStallChancePerProduce)
+            && _rng.NextDouble() < _scenario.BurstStallChancePerProduce)
         {
-            _burstStallRemaining = Random.Shared.Next(
+            _burstStallRemaining = _rng.Next(
                 _scenario.BurstStallMinPieces, _scenario.BurstStallMaxPieces + 1);
             Log?.Invoke($"[{Name}] 突发卡顿（剩余{_burstStallRemaining}件，节拍×{_scenario.BurstStallCycleMultiplier}）");
         }
@@ -1083,7 +1107,7 @@ public class DeviceSimulator
         // 随机选一个报警位触发
         if (_config.Alarms.Count > 0)
         {
-            var alarm = _config.Alarms[Random.Shared.Next(_config.Alarms.Count)];
+            var alarm = _config.Alarms[_rng.Next(_config.Alarms.Count)];
             _activeAlarmName = alarm.Name;
             _activeAlarmAddress = alarm.PlcAddress;
             WriteBoolIfNotEmpty(alarm.PlcAddress, true);
@@ -1091,7 +1115,7 @@ public class DeviceSimulator
 
         // 报警持续 AlarmMinSec ~ AlarmMaxSec 秒
         var durationSec = _scenario.AlarmMinSec
-            + Random.Shared.NextDouble() * (_scenario.AlarmMaxSec - _scenario.AlarmMinSec);
+            + _rng.NextDouble() * (_scenario.AlarmMaxSec - _scenario.AlarmMinSec);
         _alarmEndTime = now.AddSeconds(durationSec);
 
         Log?.Invoke($"[{Name}] 运行 → 报警[{_activeAlarmName}]（{(manual ? "手动" : "随机")}触发，预计 {durationSec:F0}s 后恢复）");
@@ -1160,7 +1184,7 @@ public class DeviceSimulator
             * postAlarmRampupFactor * deepNightFactor * pressureFactor
             / shiftFactor;
         // ±10% 随机波动
-        var jitter = effectiveCycle * (0.9 + Random.Shared.NextDouble() * 0.2);
+        var jitter = effectiveCycle * (0.9 + _rng.NextDouble() * 0.2);
         _nextProduceTime = now.AddSeconds(jitter);
     }
 
@@ -1227,10 +1251,10 @@ public class DeviceSimulator
     private void StartNewMaterialBatch(DateTime now)
     {
         var batchSec = _scenario.MaterialBatchMinSec
-            + Random.Shared.NextDouble() * (_scenario.MaterialBatchMaxSec - _scenario.MaterialBatchMinSec);
+            + _rng.NextDouble() * (_scenario.MaterialBatchMaxSec - _scenario.MaterialBatchMinSec);
         _materialBatchEndTime = now.AddSeconds(batchSec);
         _materialBatchNgRate = _scenario.MaterialBatchNgRateMin
-            + Random.Shared.NextDouble() * (_scenario.MaterialBatchNgRateMax - _scenario.MaterialBatchNgRateMin);
+            + _rng.NextDouble() * (_scenario.MaterialBatchNgRateMax - _scenario.MaterialBatchNgRateMin);
     }
 
     /// <summary>
@@ -1283,8 +1307,6 @@ public class DeviceSimulator
     /// </summary>
     private void TriggerCommJitter(DateTime now)
     {
-        _commJitterEndTime = now.AddSeconds(_scenario.CommJitterDurationSec);
-
         // 候选地址：仅缺陷计数和计数报警地址（非关键数据，篡改不影响状态机/产量/OEE）。
         // 排除关键地址：状态字（导致虚假状态转换）、OK/NG 计数（导致产量跳变/虚假工单完成）、
         // 配方地址（导致节拍异常）、清零地址、报警位（导致虚假报警触发/恢复）。
@@ -1308,14 +1330,17 @@ public class DeviceSimulator
                 candidates.Add(ca.PlcAddress);
         if (candidates.Count == 0) return;
 
-        _commJitterAddress = candidates[Random.Shared.Next(candidates.Count)];
+        // 修复（2026-08-16，审查 L3）：无候选地址时直接返回，不设置 _commJitterEndTime，
+        // 避免「抖动空转」——否则设备状态显示 [通信抖动] 3 秒但无任何实际效果。
+        _commJitterEndTime = now.AddSeconds(_scenario.CommJitterDurationSec);
+        _commJitterAddress = candidates[_rng.Next(candidates.Count)];
 
         // 异常值类型：0xFFFF（全 1）、0（清零）、随机大值
-        int jitterValue = Random.Shared.Next(3) switch
+        int jitterValue = _rng.Next(3) switch
         {
             0 => 0xFFFF,
             1 => 0,
-            _ => Random.Shared.Next(10000, 99999),
+            _ => _rng.Next(10000, 99999),
         };
 
         // 直接写 PLC（不修改内存状态，下次正常写入会修正）
@@ -1361,6 +1386,14 @@ public class DeviceSimulator
         if (string.IsNullOrEmpty(address)) return false;
         try { return _readBool(address); }
         catch { return false; }
+    }
+
+    /// <summary>读取 PLC 整数，失败返回 null（与 TryReadInt 的「失败返回 0」语义区分，用于恢复阶段的失败检测）。</summary>
+    private int? TryReadIntNullable(string address)
+    {
+        if (string.IsNullOrEmpty(address)) return null;
+        try { return _readInt(address); }
+        catch { return null; }
     }
 
     private static string StatusText(SimStatus s) => s switch

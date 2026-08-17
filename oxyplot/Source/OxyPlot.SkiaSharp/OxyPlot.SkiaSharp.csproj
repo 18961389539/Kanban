@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <LangVersion>8</LangVersion>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>Copyright (c) 2020 OxyPlot contributors</Copyright>
     <TargetFrameworks>net462;netstandard2.0;net6.0;net8.0;net10.0</TargetFrameworks>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
     <Authors>OxyPlot contributors</Authors>
     <Description>OxyPlot is a plotting library for .NET. This package provides rendering based on SkiaSharp.</Description>
     <PackageTags>plotting plot charting chart skiasharp skia pdf</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>OxyPlot.SkiaSharp.snk</AssemblyOriginatorKeyFile>

@@ -96,7 +96,7 @@ public class DevicePersistenceFlowTests
             repo.Devices.Add(new Device { Name = "产线设备3", TargetCycle = 550 });
             foreach (var d in repo.Devices)
                 repo.Runtimes.Add(new DeviceRuntime(d));
-            _host.Resolve<DeviceManagerViewModel>().RefreshDeviceList();
+            _host.Resolve<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
         });
 
         _host.RunOnSta(app =>

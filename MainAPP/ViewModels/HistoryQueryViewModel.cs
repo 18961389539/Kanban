@@ -534,7 +534,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         if (CurrentPage > 1)
         {
             CurrentPage--;
-            QueryCurrentTab();
+            PageCurrentTab();
         }
     }
 
@@ -546,11 +546,26 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         if (CurrentPage < TotalPages)
         {
             CurrentPage++;
-            QueryCurrentTab();
+            PageCurrentTab();
         }
     }
 
     private bool CanNextPage() => CurrentPage < TotalPages;
+
+    /// <summary>
+    /// 翻页：仅对当前 Tab 的已缓存全量结果做内存分页，不重新查询（KPI/图表不变，避免每次翻页全量重查）。
+    /// OEE Tab 不分页，无需处理。
+    /// </summary>
+    private void PageCurrentTab()
+    {
+        switch (SelectedTabIndex)
+        {
+            case 0: ProductionQuery.Page(CurrentPage, PageSize); break;
+            case 1: StatusQuery.Page(CurrentPage, PageSize); break;
+            case 2: AlarmQuery.Page(CurrentPage, PageSize); break;
+            case 3: break; // OEE 单页
+        }
+    }
 
     /// <summary>
     /// 导出按钮可用性：仅在有查询结果且未在导出中时启用。

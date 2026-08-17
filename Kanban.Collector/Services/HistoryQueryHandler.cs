@@ -1,3 +1,4 @@
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Entities;
@@ -17,13 +18,6 @@ namespace Kanban.Collector.Services;
 /// </summary>
 public sealed class HistoryQueryHandler
 {
-    /// <summary>单次批量查询子查询数上限：防无鉴权/异常客户端一次发起数十个全表查询拖垮 SQLite（资源耗尽向量）。</summary>
-    private const int MaxBatchQueries = 32;
-    /// <summary>单查询最大时间跨度：覆盖 WPF/Web 的 近30天/本月 快捷档，避免静默截断造成对账错误。</summary>
-    private static readonly TimeSpan MaxQueryWindow = TimeSpan.FromDays(31);
-    /// <summary>未指定时间范围时的默认窗口（最近 24 小时），替代全表（MinValue..MaxValue）。</summary>
-    private static readonly TimeSpan DefaultQueryWindow = TimeSpan.FromHours(24);
-
     private readonly IHistoryService _history;
     private readonly IHistoryQueryExecutor _executor;
     private readonly DefectHistoryStore _defectStore;
@@ -59,14 +53,14 @@ public sealed class HistoryQueryHandler
             return new BatchHistoryQueryResponse { Results = [] };
 
         // 子查询数上限：超出截断（保留前 N 个），不拒绝整个请求——正常客户端一次 3~10 个，
-        // 32 上限足够复盘页多设备批查，同时挡住恶意/误用的批量全表请求。
+        // 上限足够复盘页多设备批查，同时挡住恶意/误用的批量全表请求。
         var queries = request.Queries;
-        if (queries.Count > MaxBatchQueries)
+        if (queries.Count > HistoryQueryLimits.MaxBatchQueries)
         {
             _logger.LogWarning(
                 "批量历史查询子查询数 {Count} 超过上限 {Max}，已截断处理（防资源耗尽）",
-                queries.Count, MaxBatchQueries);
-            queries = queries.Take(MaxBatchQueries).ToList();
+                queries.Count, HistoryQueryLimits.MaxBatchQueries);
+            queries = queries.Take(HistoryQueryLimits.MaxBatchQueries).ToList();
         }
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -84,7 +78,7 @@ public sealed class HistoryQueryHandler
                 results.Add(result);
             }
             sw.Stop();
-            _logger.LogInformation("批量历史查询完成：{Count} 个子查询，总耗时 {Elapsed}ms", request.Queries.Count, sw.ElapsedMilliseconds);
+            _logger.LogInformation("批量历史查询完成：{Count} 个子查询，总耗时 {Elapsed}ms", queries.Count, sw.ElapsedMilliseconds);
             return new BatchHistoryQueryResponse { Results = results };
         }, cancellationToken);
     }
@@ -100,7 +94,7 @@ public sealed class HistoryQueryHandler
     {
         try
         {
-            var (from, to) = NormalizeRange(request);
+            var (from, to, truncated) = NormalizeRange(request);
             var deviceId = request.DeviceId;
 
             // 工单过滤：记录量有限，全量拉取（WorkOrderId 语义，翻页路径不适用）
@@ -109,33 +103,27 @@ public sealed class HistoryQueryHandler
                 var logs = _history.QueryProductionLogsByWorkOrder(request.WorkOrderId.Value)
                     .Select(ToDto)
                     .ToList();
-                return Build(logs, request);
+                return BuildProduction(logs, request, isWindowTruncated: truncated);
             }
 
             return request.QueryType switch
             {
-                HistoryQueryType.ProductionLog => Build(
-                    _executor.QueryProductionLogsStrict(from, to, deviceId, request.ShiftName).Select(ToDto).ToList(), request),
-                HistoryQueryType.AlarmEvent => Build(
-                    _executor.QueryAlarmEventsStrict(from, to, deviceId, request.ShiftName).Select(ToDto).ToList(), request),
+                HistoryQueryType.ProductionLog => BuildProduction(
+                    _executor.QueryProductionLogsStrict(from, to, deviceId, request.ShiftName).Select(ToDto).ToList(), request, isWindowTruncated: truncated),
+                HistoryQueryType.AlarmEvent => BuildAlarm(
+                    _executor.QueryAlarmEventsStrict(from, to, deviceId, request.ShiftName).Select(ToDto).ToList(), request, isWindowTruncated: truncated),
                 HistoryQueryType.StatusTransition => deviceId is null
-                    ? Empty(request)
-                    : Build(_executor.QueryStatusTransitionsStrict(deviceId, from, to, request.ShiftName).Select(ToDto).ToList(), request),
-                HistoryQueryType.DefectSnapshot => QueryDefectSnapshotsAll(request, from, to, deviceId),
-                _ => Empty(request),
+                    ? Empty(request, truncated)
+                    : BuildStatus(_executor.QueryStatusTransitionsStrict(deviceId, from, to, request.ShiftName).Select(ToDto).ToList(), request, isWindowTruncated: truncated),
+                HistoryQueryType.DefectSnapshot => QueryDefectSnapshotsAll(request, from, to, deviceId, truncated),
+                _ => Empty(request, truncated),
             };
         }
         catch (Exception ex)
         {
             // 与单查 QueryCore 相同的结构化错误语义：客户端据此区分"真实空数据"与"查询失败"
             _logger.LogError(ex, "批量历史查询失败 QueryType={QueryType} Device={DeviceId}", request.QueryType, request.DeviceId);
-            return new HistoryQueryResponse
-            {
-                ErrorCode = HistoryErrorCode.QueryFailed,
-                Page = request.Page,
-                PageSize = request.PageSize,
-                Error = $"历史查询失败: {ex.Message}",
-            };
+            return Error(request, ex);
         }
     }
 
@@ -145,31 +133,33 @@ public sealed class HistoryQueryHandler
     /// 全量翻页会让复盘页每次查询拉 2 天 27 万条（数百页深分页），是复盘页耗时根因。
     /// DefectSnapshotHourly：按小时分组下推（每组小时末值 + 基线），供缺陷集中度逐小时差分。
     /// </summary>
-    private HistoryQueryResponse QueryDefectSnapshotsAll(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
+    private HistoryQueryResponse QueryDefectSnapshotsAll(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId, bool truncated)
     {
         if (deviceId is null)
-            return Empty(request);
+            return Empty(request, truncated);
 
         var snapshots = request.QueryType == HistoryQueryType.DefectSnapshotHourly
             ? _defectStore.QueryHourlyBounds(from, to, deviceId)
             : _defectStore.QueryWindowBounds(from, to, deviceId);
-        return Build(snapshots.Select(ToDto).ToList(), request);
+        return BuildDefect(snapshots.Select(ToDto).ToList(), request, isWindowTruncated: truncated);
     }
 
     private HistoryQueryResponse QueryCore(HistoryQueryRequest request)
     {
         try
         {
-            var (from, to) = NormalizeRange(request);
+            var (from, to, truncated) = NormalizeRange(request);
             var deviceId = request.DeviceId;
 
             return request.QueryType switch
             {
-                HistoryQueryType.ProductionLog => QueryProductionLogs(request, from, to, deviceId),
-                HistoryQueryType.AlarmEvent => QueryAlarmEvents(request, from, to, deviceId),
-                HistoryQueryType.StatusTransition => QueryStatusTransitions(request, from, to, deviceId),
-                HistoryQueryType.DefectSnapshot => QueryDefectSnapshots(request, from, to, deviceId),
-                _ => Empty(request),
+                HistoryQueryType.ProductionLog => QueryProductionLogs(request, from, to, deviceId, truncated),
+                HistoryQueryType.AlarmEvent => QueryAlarmEvents(request, from, to, deviceId, truncated),
+                HistoryQueryType.StatusTransition => QueryStatusTransitions(request, from, to, deviceId, truncated),
+                HistoryQueryType.DefectSnapshot => QueryDefectSnapshots(request, from, to, deviceId, truncated),
+                // 小时分组下推语义（与批量路径 QueryCoreAll 一致，不再静默落空）
+                HistoryQueryType.DefectSnapshotHourly => QueryDefectSnapshotsAll(request, from, to, deviceId, truncated),
+                _ => Empty(request, truncated),
             };
         }
         catch (Exception ex)
@@ -178,19 +168,13 @@ public sealed class HistoryQueryHandler
             // Error 只承载调试细节（仅进日志），用户可见文案由客户端按 ErrorCode 本地化渲染，
             // 避免多语言界面（en/ja）收到中文回显。
             _logger.LogError(ex, "历史查询失败 QueryType={QueryType} Device={DeviceId}", request.QueryType, request.DeviceId);
-            return new HistoryQueryResponse
-            {
-                ErrorCode = HistoryErrorCode.QueryFailed,
-                Page = request.Page,
-                PageSize = request.PageSize,
-                Error = $"历史查询失败: {ex.Message}",
-            };
+            return Error(request, ex);
         }
     }
 
     // ──────────── 各类型查询（均服务端 SQL 分页 + Strict 异常上抛，数据库故障不再伪装为空数据） ────────────
 
-    private HistoryQueryResponse QueryProductionLogs(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
+    private HistoryQueryResponse QueryProductionLogs(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId, bool truncated)
     {
         // 按工单查询：工单关联记录量有限，全量拉取
         if (request.WorkOrderId.HasValue)
@@ -198,7 +182,7 @@ public sealed class HistoryQueryHandler
             var items = _history.QueryProductionLogsByWorkOrder(request.WorkOrderId.Value)
                 .Select(ToDto)
                 .ToList();
-            return Build(items, request);
+            return BuildProduction(items, request, isWindowTruncated: truncated);
         }
 
         // 服务端分页下推（SQL Skip/Take + Count）：历史查询不再全量 ToList 传输百万级记录；
@@ -209,27 +193,26 @@ public sealed class HistoryQueryHandler
             var items = latest is null
                 ? new List<ProductionLogDto>()
                 : new List<ProductionLogDto> { ToDto(latest) };
-            return Build(items, request);
+            return BuildProduction(items, request, isWindowTruncated: truncated);
         }
 
         var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
         var (pageItems, total) = _history.QueryProductionLogsPaged(
             from, to, deviceId, request.ShiftName, page, pageSize);
-        return Build(pageItems.Select(ToDto).ToList(), request, total);
+        return BuildProduction(pageItems.Select(ToDto).ToList(), request, total, truncated);
     }
 
-    private HistoryQueryResponse QueryAlarmEvents(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
+    private HistoryQueryResponse QueryAlarmEvents(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId, bool truncated)
     {
-        // AlarmId 精确过滤（GetLatestAlarmEvent 语义）：走 Strict 路径，数据库故障向上抛（不伪装空数据）
+        // AlarmId 精确过滤（GetLatestAlarmEvent 语义）：SQL 层 Where(AlarmId)+OrderByDescending+Take(1)，
+        // 不再全量拉窗口内所有报警后在内存过滤；且与 Local 模式 GetLatestAlarmEvent（全局最新）语义对齐。
         if (!string.IsNullOrWhiteSpace(request.AlarmId))
         {
-            var latest = _history.QueryAlarmEventsStrict(from, to, deviceId, request.ShiftName)
-                .Where(e => e.AlarmId == request.AlarmId)
-                .OrderByDescending(e => e.EventTime)
-                .FirstOrDefault();
-            return Build(latest is null
+            var latest = _history.GetLatestAlarmEventStrict(request.AlarmId);
+            var items = latest is null
                 ? new List<AlarmEventRecordDto>()
-                : new List<AlarmEventRecordDto> { ToDto(latest) }, request);
+                : new List<AlarmEventRecordDto> { ToDto(latest) };
+            return BuildAlarm(items, request, isWindowTruncated: truncated);
         }
 
         // 服务端 SQL 分页（Count + OrderByDescending + Skip/Take），替代全量 ToList
@@ -237,100 +220,123 @@ public sealed class HistoryQueryHandler
         if (request.LatestFirst)
         {
             var (latestItems, _) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, 1, 1);
-            var items = latestItems.Select(ToDto).ToList();
-            return Build(items, request, totalOverride: 1);
+            return BuildAlarm(latestItems.Select(ToDto).ToList(), request, totalOverride: 1, isWindowTruncated: truncated);
         }
 
         var (pageItems, total) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, page, pageSize);
-        return Build(pageItems.Select(ToDto).ToList(), request, total);
+        return BuildAlarm(pageItems.Select(ToDto).ToList(), request, total, truncated);
     }
 
-    private HistoryQueryResponse QueryStatusTransitions(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
+    private HistoryQueryResponse QueryStatusTransitions(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId, bool truncated)
     {
         if (deviceId is null)
-            return Empty(request);
+            return Empty(request, truncated);
 
         var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
         if (request.LatestFirst)
         {
             var (latestItems, _) = _history.QueryStatusTransitionsPaged(deviceId, from, to, request.ShiftName, 1, 1);
-            var items = latestItems.Select(ToDto).ToList();
-            return Build(items, request, totalOverride: 1);
+            return BuildStatus(latestItems.Select(ToDto).ToList(), request, totalOverride: 1, isWindowTruncated: truncated);
         }
 
         var (pageItems, total) = _history.QueryStatusTransitionsPaged(deviceId, from, to, request.ShiftName, page, pageSize);
-        return Build(pageItems.Select(ToDto).ToList(), request, total);
+        return BuildStatus(pageItems.Select(ToDto).ToList(), request, total, truncated);
     }
 
-    private HistoryQueryResponse QueryDefectSnapshots(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId)
+    private HistoryQueryResponse QueryDefectSnapshots(HistoryQueryRequest request, DateTime from, DateTime to, string? deviceId, bool truncated)
     {
         if (deviceId is null)
-            return Empty(request);
+            return Empty(request, truncated);
 
         var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
         if (request.LatestFirst)
         {
             var (latestItems, _) = _history.QueryDefectSnapshotsPaged(from, to, deviceId, 1, 1);
-            var items = latestItems.Select(ToDto).ToList();
-            return Build(items, request, totalOverride: 1);
+            return BuildDefect(latestItems.Select(ToDto).ToList(), request, totalOverride: 1, isWindowTruncated: truncated);
         }
 
         var (pageItems, total) = _history.QueryDefectSnapshotsPaged(from, to, deviceId, page, pageSize);
-        return Build(pageItems.Select(ToDto).ToList(), request, total);
+        return BuildDefect(pageItems.Select(ToDto).ToList(), request, total, truncated);
     }
 
     // ──────────── 工具 ────────────
 
-    private (DateTime From, DateTime To) NormalizeRange(HistoryQueryRequest request)
+    private (DateTime From, DateTime To, bool Truncated) NormalizeRange(HistoryQueryRequest request)
     {
-        // 未指定范围 → 最近 24h（替代历史 MinValue..MaxValue 全表扫描）；
-        // 跨度超过 7 天 → 截断为最近 7 天窗口（复盘页正常窗口内，同时挡住恶意全表请求）。
+        // 未指定范围 → 最近 24h（替代历史 MinValue..MaxValue 全表扫描）。
         var to = request.To ?? DateTime.Now;
-        var from = request.From ?? to - DefaultQueryWindow;
-        if (to - from > MaxQueryWindow)
+        var from = request.From ?? to - TimeSpan.FromHours(HistoryQueryLimits.DefaultQueryWindowHours);
+
+        // 兜底：客户端传反 from/to（from > to）时交换，避免静默返回空结果（服务端不依赖客户端 UI 校验）。
+        if (from > to)
+            (from, to) = (to, from);
+
+        // 跨度超过上限 → 截断为最近窗口（复盘页正常窗口内，同时挡住恶意全表请求）；
+        // 截断标记回传给客户端（IsWindowTruncated），客户端可提示"结果已按最近 N 天截断"，避免对账误判。
+        var maxWindow = TimeSpan.FromDays(HistoryQueryLimits.MaxQueryWindowDays);
+        if (to - from > maxWindow)
         {
             _logger.LogWarning(
                 "历史查询时间范围 {From:o}~{To:o} 超过上限 {Days} 天，已截断为最近窗口（防全表扫描）",
-                from, to, MaxQueryWindow.TotalDays);
-            from = to - MaxQueryWindow;
+                from, to, HistoryQueryLimits.MaxQueryWindowDays);
+            from = to - maxWindow;
+            return (from, to, true);
         }
-        return (from, to);
+        return (from, to, false);
     }
 
-    private static HistoryQueryResponse Build<T>(List<T> items, HistoryQueryRequest request, int? totalOverride = null)
+    /// <summary>统一响应装配：回显归一化后的 Page/PageSize（而非客户端原始值），并透传窗口截断标记。</summary>
+    private static HistoryQueryResponse BuildResponse(
+        HistoryQueryRequest request,
+        int? totalOverride,
+        bool isWindowTruncated,
+        List<ProductionLogDto>? productionLogs = null,
+        List<AlarmEventRecordDto>? alarmEvents = null,
+        List<StatusTransitionRecordDto>? statusTransitions = null,
+        List<DefectSnapshotRecordDto>? defectSnapshots = null)
     {
-        var response = new HistoryQueryResponse
+        var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
+        var count = productionLogs?.Count ?? alarmEvents?.Count ?? statusTransitions?.Count ?? defectSnapshots?.Count ?? 0;
+        return new HistoryQueryResponse
         {
             // 分页查询时 totalOverride 为服务端 Count（全量总数）；否则等于本页 items 数量（未分页类型）
-            Total = totalOverride ?? items.Count,
-            Page = request.Page,
-            PageSize = request.PageSize,
+            Total = totalOverride ?? count,
+            Page = page,
+            PageSize = pageSize,
+            IsWindowTruncated = isWindowTruncated,
+            ProductionLogs = productionLogs ?? [],
+            AlarmEvents = alarmEvents ?? [],
+            StatusTransitions = statusTransitions ?? [],
+            DefectSnapshots = defectSnapshots ?? [],
         };
-        switch (items)
-        {
-            case List<ProductionLogDto> logs:
-                response = response with { ProductionLogs = logs };
-                break;
-            case List<AlarmEventRecordDto> alarms:
-                response = response with { AlarmEvents = alarms };
-                break;
-            case List<StatusTransitionRecordDto> transitions:
-                response = response with { StatusTransitions = transitions };
-                break;
-            case List<DefectSnapshotRecordDto> defects:
-                response = response with { DefectSnapshots = defects };
-                break;
-        }
-        return response;
     }
 
-    private static HistoryQueryResponse Empty(HistoryQueryRequest request)
-        => new()
+    private static HistoryQueryResponse BuildProduction(List<ProductionLogDto> items, HistoryQueryRequest request, int? totalOverride = null, bool isWindowTruncated = false)
+        => BuildResponse(request, totalOverride, isWindowTruncated, productionLogs: items);
+
+    private static HistoryQueryResponse BuildAlarm(List<AlarmEventRecordDto> items, HistoryQueryRequest request, int? totalOverride = null, bool isWindowTruncated = false)
+        => BuildResponse(request, totalOverride, isWindowTruncated, alarmEvents: items);
+
+    private static HistoryQueryResponse BuildStatus(List<StatusTransitionRecordDto> items, HistoryQueryRequest request, int? totalOverride = null, bool isWindowTruncated = false)
+        => BuildResponse(request, totalOverride, isWindowTruncated, statusTransitions: items);
+
+    private static HistoryQueryResponse BuildDefect(List<DefectSnapshotRecordDto> items, HistoryQueryRequest request, int? totalOverride = null, bool isWindowTruncated = false)
+        => BuildResponse(request, totalOverride, isWindowTruncated, defectSnapshots: items);
+
+    private static HistoryQueryResponse Empty(HistoryQueryRequest request, bool isWindowTruncated = false)
+        => BuildResponse(request, 0, isWindowTruncated);
+
+    private static HistoryQueryResponse Error(HistoryQueryRequest request, Exception ex)
+    {
+        var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
+        return new HistoryQueryResponse
         {
-            Total = 0,
-            Page = request.Page,
-            PageSize = request.PageSize,
+            ErrorCode = HistoryErrorCode.QueryFailed,
+            Page = page,
+            PageSize = pageSize,
+            Error = $"历史查询失败: {ex.Message}",
         };
+    }
 
     // ──────────── 实体 → DTO ────────────
 

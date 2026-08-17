@@ -80,24 +80,41 @@ internal class Program
         Console.CancelKeyPress += (s, e) =>
         {
             e.Cancel = true;  // 阻止默认终止行为，由 exit 标签统一清理
-            _cts.Cancel();
+            try { _cts.Cancel(); } catch (ObjectDisposedException) { }
         };
 
         var clientMode = args.Contains("--client", StringComparer.OrdinalIgnoreCase);
         var noAuto = args.Contains("--noauto", StringComparer.OrdinalIgnoreCase);
         _freshInit = args.Contains("--fresh", StringComparer.OrdinalIgnoreCase);
 
-        // 解析 --speed
+        // 解析 --speed（InvariantCulture：避免 "2.5" 在逗号小数区域被解析失败）
         var speedIdx = Array.IndexOf(args, "--speed");
-        if (speedIdx >= 0 && speedIdx + 1 < args.Length && double.TryParse(args[speedIdx + 1], out var sp))
+        if (speedIdx >= 0 && speedIdx + 1 < args.Length
+            && double.TryParse(args[speedIdx + 1], System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var sp))
+        {
             _speedMultiplier = Math.Clamp(sp, 0.1, 100);
+        }
+        else if (speedIdx >= 0)
+        {
+            Console.WriteLine("[警告] --speed 参数无效，已使用默认 x10（可用 0.1-100 之间的数字，如 --speed 2.5）");
+        }
 
         // 解析 --scenario
         var scenarioIdx = Array.IndexOf(args, "--scenario");
         string? scenarioName = null;
         if (scenarioIdx >= 0 && scenarioIdx + 1 < args.Length)
             scenarioName = args[scenarioIdx + 1];
+        // 修复（2026-08-16，审查 M3）：未知名场景显式警告（原静默回退 normal，联调时难排查）
+        if (scenarioName != null && !ScenarioConfig.Presets.ContainsKey(scenarioName))
+        {
+            Console.WriteLine($"[警告] 未知名场景 \"{scenarioName}\"，已回退到 normal；可用场景: {string.Join(", ", ScenarioConfig.Presets.Keys)}");
+        }
         _scenario = ScenarioConfig.Get(scenarioName);
+
+        // 修复（2026-08-16，审查 M7）：启动时校验场景参数合法性（自定义场景兜底）
+        foreach (var err in _scenario.Validate())
+            Console.WriteLine($"[警告] 场景配置非法：{err}");
 
         // 位置参数 = 排除 -- 开头的参数和带值的 --speed/--scenario 的值
         var skipNext = false;
@@ -122,6 +139,14 @@ internal class Program
         else if (positional.Count > 0 && int.TryParse(positional[0], out var p2))
         {
             port = p2;
+        }
+
+        // 修复（2026-08-16，审查 L1）：host 模式内部端口 = port+1，port=65535 会溢出为非法端口。
+        if (port < 1 || port > 65534)
+        {
+            Console.WriteLine($"[错误] 端口 {port} 非法（须在 1-65534 之间，因内部端口 = 端口+1）");
+            WaitExit();
+            return;
         }
 
         Console.Title = $"PLC 模拟器 - {(clientMode ? $"client {ip}:{port}" : $"host :{port}")}";
@@ -227,6 +252,12 @@ internal class Program
             Console.WriteLine($"[成功] 托管虚拟 PLC 已启动（内部端口 {internalPort}）");
             Console.WriteLine($"       TCP 代理监听 {(listenAll ? "0.0.0.0" : "127.0.0.1")}:{port} → 127.0.0.1:{internalPort}");
             Console.WriteLine("       MainAPP 可连接到 127.0.0.1:" + port);
+            // 修复（2026-08-16，审查 H1）：--listen-all 时醒目警告，三菱 MC 协议无鉴权，局域网可任意读写虚拟 PLC。
+            if (listenAll)
+            {
+                Console.WriteLine("  ⚠ 警告：--listen-all 已启用，虚拟 PLC 内存以无鉴权方式暴露到局域网，");
+                Console.WriteLine("    任何可访问该主机的设备均可读写全部 PLC 地址（篡改产量/触发报警）。仅限可信网络使用。");
+            }
         }
 
         // 创建每设备的模拟器实例（注入场景配置 + 读写回调）
@@ -378,6 +409,8 @@ internal class Program
 
     private static void StartTickLoop()
     {
+        // 修复（2026-08-16，审查 M6）：创建新 CTS 前释放旧实例，避免字段初始化的 CTS 被替换后句柄泄漏。
+        _cts.Dispose();
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
         _tickTask = Task.Run(() => TickLoopAsync(token));
@@ -442,8 +475,16 @@ internal class Program
         while (!token.IsCancellationRequested)
         {
             var now = DateTime.UtcNow;
+            // 修复（2026-08-16，审查 R2）：per-device 隔离。原 foreach 无 try/catch，
+            // 任一设备抛异常会静默终止整个 tick 循环，所有设备同时"冻产"且无告警。
             foreach (var sim in _simulators)
-                sim.Tick(now);
+            {
+                try { sim.Tick(now); }
+                catch (Exception ex)
+                {
+                    SimLog.Error($"[{sim.Name}] Tick 异常：{ex.Message}（该设备本轮跳过，其余设备继续）");
+                }
+            }
 
             try { await Task.Delay(100, token).ConfigureAwait(false); }
             catch (OperationCanceledException) { break; }
@@ -513,12 +554,18 @@ internal class Program
         }
     }
 
+    /// <summary>
+    /// 读取 PLC 整数。失败时抛异常（审查修复 2026-08-16，H3）：与「真实值 0」区分，
+    /// 供 DeviceSimulator 的 TryReadIntNullable 与清零监听识别读取失败，避免把失败误当 0。
+    /// </summary>
     private static int ReadInt(string address)
     {
         lock (_ioLock)
         {
             var r = _io.ReadInt32(address);
-            return r.IsSuccess ? r.Content : 0;
+            if (!r.IsSuccess)
+                throw new IOException($"读取 {address} 失败：{r.Message}");
+            return r.Content;
         }
     }
 
@@ -527,8 +574,24 @@ internal class Program
         lock (_ioLock)
         {
             var r = _io.ReadBool(address);
-            return r.IsSuccess && r.Content;
+            if (!r.IsSuccess)
+                throw new IOException($"读取 {address} 失败：{r.Message}");
+            return r.Content;
         }
+    }
+
+    /// <summary>读取 PLC 整数（供 read 显示命令用），失败返回 0，避免单次读失败打断整屏输出。</summary>
+    private static int ReadIntSafe(string address)
+    {
+        try { return ReadInt(address); }
+        catch { return 0; }
+    }
+
+    /// <summary>读取 PLC 布尔（供 read 显示命令用），失败返回 false。</summary>
+    private static bool ReadBoolSafe(string address)
+    {
+        try { return ReadBool(address); }
+        catch { return false; }
     }
 
     // ──────────── 显示 ────────────
@@ -539,22 +602,50 @@ internal class Program
         foreach (var dev in _devices)
         {
             Console.WriteLine($"[{dev.Name}]");
+
+            // 修复（2026-08-16，审查 M8）：每地址只读一次并缓存，避免 client 模式同一地址重复读
+            // 导致的 3 倍网络往返，以及多次读到的值不一致（模拟器在跑导致计数跳变）。
+            var intCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var boolCache = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+            int ReadOnce(string? addr)
+            {
+                if (string.IsNullOrEmpty(addr)) return 0;
+                if (!intCache.TryGetValue(addr, out var v))
+                {
+                    v = ReadIntSafe(addr);
+                    intCache[addr] = v;
+                }
+                return v;
+            }
+
+            bool ReadBoolOnce(string? addr)
+            {
+                if (string.IsNullOrEmpty(addr)) return false;
+                if (!boolCache.TryGetValue(addr, out var v))
+                {
+                    v = ReadBoolSafe(addr);
+                    boolCache[addr] = v;
+                }
+                return v;
+            }
+
             if (!string.IsNullOrEmpty(dev.OkCountAddress))
-                Console.WriteLine($"  OK产量 ({dev.OkCountAddress}): {ReadInt(dev.OkCountAddress)}");
+                Console.WriteLine($"  OK产量 ({dev.OkCountAddress}): {ReadOnce(dev.OkCountAddress)}");
             if (!string.IsNullOrEmpty(dev.NgCountAddress))
-                Console.WriteLine($"  NG产量 ({dev.NgCountAddress}): {ReadInt(dev.NgCountAddress)}");
+                Console.WriteLine($"  NG产量 ({dev.NgCountAddress}): {ReadOnce(dev.NgCountAddress)}");
             if (!string.IsNullOrEmpty(dev.StatusCountAddress))
             {
-                var s = ReadInt(dev.StatusCountAddress);
+                var s = ReadOnce(dev.StatusCountAddress);
                 Console.WriteLine($"  状态 ({dev.StatusCountAddress}): {s} ({StatusName(s)})");
             }
             if (!string.IsNullOrEmpty(dev.ProductionResetAddress))
-                Console.WriteLine($"  清零触发位 ({dev.ProductionResetAddress}): {ReadInt(dev.ProductionResetAddress)}");
+                Console.WriteLine($"  清零触发位 ({dev.ProductionResetAddress}): {ReadOnce(dev.ProductionResetAddress)}");
             if (!string.IsNullOrEmpty(dev.RecipeAddress))
-                Console.WriteLine($"  配方 ({dev.RecipeAddress}): {ReadInt(dev.RecipeAddress)}");
+                Console.WriteLine($"  配方 ({dev.RecipeAddress}): {ReadOnce(dev.RecipeAddress)}");
 
             // 报警位：数量多时只显示 ON 的 + 总数摘要（避免 200 行输出）
-            var activeAlarms = dev.Alarms.Where(a => !string.IsNullOrEmpty(a.PlcAddress) && ReadBool(a.PlcAddress)).ToList();
+            var activeAlarms = dev.Alarms.Where(a => !string.IsNullOrEmpty(a.PlcAddress) && ReadBoolOnce(a.PlcAddress)).ToList();
             if (dev.Alarms.Count > 10)
             {
                 Console.WriteLine($"  报警: {activeAlarms.Count}/{dev.Alarms.Count} 个 ON"
@@ -564,36 +655,36 @@ internal class Program
             {
                 foreach (var alarm in dev.Alarms)
                     if (!string.IsNullOrEmpty(alarm.PlcAddress))
-                        Console.WriteLine($"  报警[{alarm.Name}] ({alarm.PlcAddress}): {ReadBool(alarm.PlcAddress)}");
+                        Console.WriteLine($"  报警[{alarm.Name}] ({alarm.PlcAddress}): {ReadBoolOnce(alarm.PlcAddress)}");
             }
 
             // 缺陷：数量多时只显示非零的 + 总数摘要
-            var nonZeroDefects = dev.Defects.Where(d => !string.IsNullOrEmpty(d.PlcAddress) && ReadInt(d.PlcAddress) > 0).ToList();
+            var nonZeroDefects = dev.Defects.Where(d => !string.IsNullOrEmpty(d.PlcAddress) && ReadOnce(d.PlcAddress) > 0).ToList();
             if (dev.Defects.Count > 10)
             {
-                var totalDefects = nonZeroDefects.Sum(d => ReadInt(d.PlcAddress));
+                var totalDefects = nonZeroDefects.Sum(d => ReadOnce(d.PlcAddress));
                 Console.WriteLine($"  缺陷: {nonZeroDefects.Count}/{dev.Defects.Count} 种有计数, 合计={totalDefects}"
-                    + (nonZeroDefects.Count > 0 ? $" → {string.Join(", ", nonZeroDefects.Select(d => $"{d.Name}={ReadInt(d.PlcAddress)}"))}" : ""));
+                    + (nonZeroDefects.Count > 0 ? $" → {string.Join(", ", nonZeroDefects.Select(d => $"{d.Name}={ReadOnce(d.PlcAddress)}"))}" : ""));
             }
             else
             {
                 foreach (var defect in dev.Defects)
                     if (!string.IsNullOrEmpty(defect.PlcAddress))
-                        Console.WriteLine($"  缺陷[{defect.Name}] ({defect.PlcAddress}): {ReadInt(defect.PlcAddress)}");
+                        Console.WriteLine($"  缺陷[{defect.Name}] ({defect.PlcAddress}): {ReadOnce(defect.PlcAddress)}");
             }
 
             // 计数报警：数量多时只显示非零的 + 总数摘要
-            var nonZeroCounterAlarms = dev.CounterAlarms.Where(ca => !string.IsNullOrEmpty(ca.PlcAddress) && ReadInt(ca.PlcAddress) > 0).ToList();
+            var nonZeroCounterAlarms = dev.CounterAlarms.Where(ca => !string.IsNullOrEmpty(ca.PlcAddress) && ReadOnce(ca.PlcAddress) > 0).ToList();
             if (dev.CounterAlarms.Count > 10)
             {
                 Console.WriteLine($"  计数报警: {nonZeroCounterAlarms.Count}/{dev.CounterAlarms.Count} 个非零"
-                    + (nonZeroCounterAlarms.Count > 0 ? $" → {string.Join(", ", nonZeroCounterAlarms.Select(ca => $"{ca.Name}={ReadInt(ca.PlcAddress)}/{ca.MaxValue}"))}" : ""));
+                    + (nonZeroCounterAlarms.Count > 0 ? $" → {string.Join(", ", nonZeroCounterAlarms.Select(ca => $"{ca.Name}={ReadOnce(ca.PlcAddress)}/{ca.MaxValue}"))}" : ""));
             }
             else
             {
                 foreach (var ca in dev.CounterAlarms)
                     if (!string.IsNullOrEmpty(ca.PlcAddress))
-                        Console.WriteLine($"  计数报警[{ca.Name}] ({ca.PlcAddress}): {ReadInt(ca.PlcAddress)} (阈值{ca.MaxValue})");
+                        Console.WriteLine($"  计数报警[{ca.Name}] ({ca.PlcAddress}): {ReadOnce(ca.PlcAddress)} (阈值{ca.MaxValue})");
             }
         }
     }
@@ -607,12 +698,13 @@ internal class Program
         return Path.Combine(dataRoot, "Config");
     }
 
+    /// <summary>状态字显示名。与 DeviceSimulator.SimStatus 及 MainAPP DeviceStatus 对齐：3=待机（Paused），0=初始/未知。</summary>
     private static string StatusName(int status) => status switch
     {
-        0 => "待机",
+        0 => "初始/未知",
         1 => "运行",
         2 => "报警",
-        3 => "待机(3)",
+        3 => "待机",
         _ => $"未知({status})",
     };
 
@@ -649,9 +741,9 @@ internal class Program
     /// <summary>
     /// 检测设备地址冲突：扫描所有设备的所有 PLC 地址，发现被多台设备使用的地址。
     /// 冲突会导致两台设备相互覆盖数据，行为诡异。
-    /// 返回冲突描述列表（空列表表示无冲突）。
+    /// 返回冲突描述列表（空列表表示无冲突）。internal 以支持 PlcSimulator.Tests 单测（审查 2026-08-16）。
     /// </summary>
-    private static List<string> DetectAddressConflicts(List<DeviceConfig> devices)
+    internal static List<string> DetectAddressConflicts(List<DeviceConfig> devices)
     {
         // address → 使用该地址的设备名列表
         var usage = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -725,12 +817,27 @@ internal class Program
             return;
         }
 
+        // 修复（2026-08-16，审查 M3）：reload 未知名场景显式警告（原静默回退 normal）
+        if (!ScenarioConfig.Presets.ContainsKey(name))
+        {
+            Console.WriteLine($"[警告] 未知名场景 \"{name}\"，将回退到 normal；可用场景: {string.Join(", ", ScenarioConfig.Presets.Keys)}");
+        }
         var newScenario = ScenarioConfig.Get(name);
         Console.WriteLine($"场景切换: {_scenario.Name} → {newScenario.Name}");
 
-        // 停止后台循环并释放旧 CTS（StartTickLoop 会创建新 CTS）
+        // 停止后台循环（旧 CTS 由 StartTickLoop 内部统一释放）
         StopTickLoopAsync().GetAwaiter().GetResult();
-        _cts.Dispose();
+
+        // 修复（2026-08-16，审查 H5）：StopTickLoopAsync 最多等 3s，若旧循环仍未退出
+        // （如卡在 IO 锁上），直接重建会导致双 tick 循环并发驱动同一批设备（产量翻倍/节拍错乱）。
+        // 此处校验旧循环确已结束，未结束则放弃本次 reload，避免并发状态污染。
+        if ((_tickTask != null && !_tickTask.IsCompleted)
+            || (_resetWatcherTask != null && !_resetWatcherTask.IsCompleted)
+            || (_disconnectSimTask != null && !_disconnectSimTask.IsCompleted))
+        {
+            Console.WriteLine("[警告] 旧后台循环尚未完全退出，已取消本次场景切换（请稍后重试）");
+            return;
+        }
 
         _scenario = newScenario;
 
@@ -771,6 +878,7 @@ internal class Program
         Console.WriteLine("  --fresh             全新初始化（清零所有 PLC 值）");
         Console.WriteLine("  --noauto            不自动启动设备");
         Console.WriteLine("  --client IP PORT    连接外部虚拟 PLC");
+        Console.WriteLine("  --listen-all        监听 0.0.0.0（默认仅 127.0.0.1；⚠ 局域网可无鉴权读写虚拟 PLC，仅限可信网络）");
     }
 
     private static void WaitExit()

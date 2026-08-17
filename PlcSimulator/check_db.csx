@@ -1,7 +1,10 @@
 using Microsoft.Data.Sqlite;
 using System;
 
-var configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Kanban", "Config");
+var configDir = Path.Combine(
+    Environment.GetEnvironmentVariable("KANBAN_DATA_DIR")
+        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Kanban"),
+    "Config");
 foreach (var db in new[] { "production_logs.db", "alarm_events.db", "status_transitions.db", "work_orders.db" })
 {
     var path = Path.Combine(configDir, db);

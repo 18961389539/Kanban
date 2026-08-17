@@ -3,7 +3,6 @@ using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Serilog;
 
 namespace Kanban.Collector.Core.Services;
 
@@ -30,7 +29,7 @@ public sealed class DefectHistoryStore(
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "写入缺陷历史快照失败，数量={Count}", records.Count);
+            _logger.LogWarning(ex, "写入缺陷历史快照失败，数量={Count}", records.Count);
         }
     }
 

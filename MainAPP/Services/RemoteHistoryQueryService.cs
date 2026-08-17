@@ -3,6 +3,7 @@ using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using MainAPP.Models;
@@ -92,6 +93,11 @@ public sealed class RemoteHistoryQueryService :
         => IsRemote
             ? QueryRemoteAlarmByAlarmId(alarmId)
             : _local.GetLatestAlarmEvent(alarmId);
+
+    public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId)
+        => IsRemote
+            ? QueryRemoteAlarmByAlarmId(alarmId)
+            : _local.GetLatestAlarmEventStrict(alarmId);
 
     // ──────────── IStatusTransitionHistoryService ────────────
 
@@ -233,6 +239,8 @@ public sealed class RemoteHistoryQueryService :
         }
         _logger.LogInformation("Remote 历史分页查询完成 Type={QueryType} Device={DeviceId} 耗时 {Elapsed}ms Page={Page} Total={Total}",
             type, deviceId, sw.ElapsedMilliseconds, page, response.Total);
+        if (response.IsWindowTruncated)
+            _logger.LogWarning("Remote 历史分页查询时间窗口被服务端截断 Type={QueryType} Device={DeviceId}", type, deviceId);
         return (MapDtos<T>(response), response.Total);
     }
 
@@ -264,7 +272,7 @@ public sealed class RemoteHistoryQueryService :
                     To = to,
                     DeviceId = deviceId,
                     Page = 1,
-                    PageSize = FetchAllPageSize,
+                    PageSize = HistoryQueryLimits.MaxPageSize,
                 },
             ],
         };
@@ -292,7 +300,7 @@ public sealed class RemoteHistoryQueryService :
                     To = to,
                     DeviceId = deviceId,
                     Page = 1,
-                    PageSize = FetchAllPageSize,
+                    PageSize = HistoryQueryLimits.MaxPageSize,
                 },
             ],
         };
@@ -306,13 +314,13 @@ public sealed class RemoteHistoryQueryService :
         if (!IsRemote)
             return _local.QueryProductionLogsByWorkOrderBatch(workOrderIds);
 
-        // 审查修复 2026-08-15：与 QueryProductionLogsByDeviceWindowsBatch 一致，按 MaxBatchQueries=32 分块。
-        // 服务端 HistoryQueryHandler.MaxBatchQueries 会对超限子查询截断，此前一次性提交全部工单时，
-        // 工单数 >32 会导致 response.Results 被截断、此处 Results[i] 越界抛 IndexOutOfRangeException。
+        // 审查修复 2026-08-15：与 QueryProductionLogsByDeviceWindowsBatch 一致，按服务端子查询上限分块
+        // （HistoryQueryLimits.MaxBatchQueries）。此前一次性提交全部工单时，工单数超上限会导致
+        // response.Results 被服务端截断、此处 Results[i] 越界抛 IndexOutOfRangeException。
         var result = new Dictionary<int, List<ProductionLog>>();
-        for (var offset = 0; offset < workOrderIds.Count; offset += MaxBatchQueries)
+        for (var offset = 0; offset < workOrderIds.Count; offset += HistoryQueryLimits.MaxBatchQueries)
         {
-            var chunk = workOrderIds.Skip(offset).Take(MaxBatchQueries).ToList();
+            var chunk = workOrderIds.Skip(offset).Take(HistoryQueryLimits.MaxBatchQueries).ToList();
             var request = new BatchHistoryQueryRequest
             {
                 Queries = chunk
@@ -321,7 +329,7 @@ public sealed class RemoteHistoryQueryService :
                         QueryType = HistoryQueryType.ProductionLog,
                         WorkOrderId = id,
                         Page = 1,
-                        PageSize = FetchAllPageSize,
+                        PageSize = HistoryQueryLimits.MaxPageSize,
                     })
                     .ToList(),
             };
@@ -332,21 +340,18 @@ public sealed class RemoteHistoryQueryService :
         return result;
     }
 
-    /// <summary>服务端单批子查询上限（与 HistoryQueryHandler.MaxBatchQueries 对齐，超限会被服务端截断）。</summary>
-    private const int MaxBatchQueries = 32;
-
     public Dictionary<int, List<ProductionLog>> QueryProductionLogsByDeviceWindowsBatch(
         IReadOnlyList<(int WorkOrderId, string DeviceId, DateTime From, DateTime To)> windows)
     {
         if (!IsRemote)
             return (_local as IWorkOrderProductionBatchQuery)?.QueryProductionLogsByDeviceWindowsBatch(windows) ?? [];
 
-        // 审查修复 2026-08-13：工单产量聚合回退路径按窗口批量查询——每批 ≤32 个子查询（服务端上限），
-        // 一次批量 Invoke 取代此前 N 次 UI 线程同步 SignalR 往返
+        // 审查修复 2026-08-13：工单产量聚合回退路径按窗口批量查询——每批 ≤ HistoryQueryLimits.MaxBatchQueries
+        // 个子查询（服务端上限），一次批量 Invoke 取代此前 N 次 UI 线程同步 SignalR 往返
         var result = new Dictionary<int, List<ProductionLog>>();
-        for (var offset = 0; offset < windows.Count; offset += MaxBatchQueries)
+        for (var offset = 0; offset < windows.Count; offset += HistoryQueryLimits.MaxBatchQueries)
         {
-            var chunk = windows.Skip(offset).Take(MaxBatchQueries).ToList();
+            var chunk = windows.Skip(offset).Take(HistoryQueryLimits.MaxBatchQueries).ToList();
             var request = new BatchHistoryQueryRequest
             {
                 Queries = chunk
@@ -357,7 +362,7 @@ public sealed class RemoteHistoryQueryService :
                         To = w.To == DateTime.MaxValue ? null : w.To,
                         DeviceId = w.DeviceId,
                         Page = 1,
-                        PageSize = FetchAllPageSize,
+                        PageSize = HistoryQueryLimits.MaxPageSize,
                     })
                     .ToList(),
             };
@@ -372,12 +377,7 @@ public sealed class RemoteHistoryQueryService :
     }
 
     // ──────────── Remote 查询核心 ────────────
-
-    /// <summary>全量拉取的每页大小：与服务端 HistoryPagination.MaxPageSize（500）对齐，翻页聚合直至 Total 收齐。</summary>
-    private const int FetchAllPageSize = 500;
-
-    /// <summary>全量拉取的最大页数（10 万条上限）：防止服务端 Total 语义异常时无限翻页。</summary>
-    private const int MaxFetchAllPages = 200;
+    // 每页大小/最大页数/批量子查询数均收敛到 Kanban.Contracts.HistoryQueryLimits（跨进程契约单一来源）
 
     private List<T> QueryRemoteList<T>(
         HistoryQueryType type,
@@ -398,7 +398,7 @@ public sealed class RemoteHistoryQueryService :
             LatestFirst = latestFirst,
             WorkOrderId = workOrderId,
             Page = 1,
-            PageSize = FetchAllPageSize,
+            PageSize = HistoryQueryLimits.MaxPageSize,
         };
         return InvokeAndMapAll<T>(request);
     }
@@ -440,6 +440,9 @@ public sealed class RemoteHistoryQueryService :
             }
             _logger.LogInformation("Remote 历史全量查询完成 Type={QueryType} Device={DeviceId} 耗时 {Elapsed}ms Total={Total}",
                 request.QueryType, request.DeviceId, sw.ElapsedMilliseconds, response.Total);
+            if (response.IsWindowTruncated)
+                _logger.LogWarning("Remote 历史查询时间窗口被服务端截断 Type={QueryType} Device={DeviceId}（结果已按最近窗口收窄）",
+                    request.QueryType, request.DeviceId);
             return MapDtos<T>(response);
         }
         catch (OperationCanceledException)
@@ -456,7 +459,7 @@ public sealed class RemoteHistoryQueryService :
     /// <see cref="HistoryQueryResponse.Total"/> 条。Total 语义（HistoryQueryHandler.Build）：
     /// 分页路径 = 服务端 SQL Count（全量总数），未分页路径（WorkOrderId/AlarmId/LatestFirst）= 本页条数——
     /// 两类对该循环均安全：未分页路径首页即收齐。
-    /// 防失控保护：任一页 Error 立即返回（由调用方抛异常）；超过 <see cref="MaxFetchAllPages"/> 页
+    /// 防失控保护：任一页 Error 立即返回（由调用方抛异常）；超过 <see cref="HistoryQueryLimits.MaxFetchAllPages"/> 页
     /// 仍未收齐（服务端 Total 语义异常）则抛异常（审查修复 2026-08-13：此前静默返回部分数据，
     /// 调用方无法区分"已收齐"与"被截断"，复盘/健康评分会基于不完整数据渲染）。
     /// </summary>
@@ -470,7 +473,7 @@ public sealed class RemoteHistoryQueryService :
         var totalReceived = 0;
         HistoryQueryResponse last = null!;
 
-        for (var page = 1; page <= MaxFetchAllPages; page++)
+        for (var page = 1; page <= HistoryQueryLimits.MaxFetchAllPages; page++)
         {
             last = fetchPage(current);
             pages.Add(last);
@@ -482,9 +485,9 @@ public sealed class RemoteHistoryQueryService :
             current = current with { Page = page + 1 };
         }
 
-        if (pages.Count == MaxFetchAllPages && last.Total > totalReceived)
+        if (pages.Count == HistoryQueryLimits.MaxFetchAllPages && last.Total > totalReceived)
         {
-            logger.LogWarning("历史查询翻页达上限 {MaxPages} 页仍未收齐 QueryType={QueryType} Total={Total} 已收={Received}", MaxFetchAllPages, firstRequest.QueryType, last.Total, totalReceived);
+            logger.LogWarning("历史查询翻页达上限 {MaxPages} 页仍未收齐 QueryType={QueryType} Total={Total} 已收={Received}", HistoryQueryLimits.MaxFetchAllPages, firstRequest.QueryType, last.Total, totalReceived);
             throw new InvalidOperationException(MainAPP.Resources.Strings.F325);
         }
         return Merge(pages);
@@ -539,6 +542,9 @@ public sealed class RemoteHistoryQueryService :
             _logger.LogError("Remote 历史查询失败 ErrorCode={ErrorCode} 详情={Detail}", response.ErrorCode, response.Error);
             throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
         }
+        if (response.IsWindowTruncated)
+            _logger.LogWarning("Remote 历史查询时间窗口被服务端截断 QueryType={QueryType} Device={DeviceId}",
+                request.QueryType, request.DeviceId);
         return MapDtos<T>(response);
     }
 
@@ -563,7 +569,7 @@ public sealed class RemoteHistoryQueryService :
                     To = to == DateTime.MaxValue ? null : to,
                     DeviceId = id,
                     Page = 1,
-                    PageSize = FetchAllPageSize,
+                    PageSize = HistoryQueryLimits.MaxPageSize,
                 })
                 .ToList(),
         };
@@ -590,6 +596,8 @@ public sealed class RemoteHistoryQueryService :
                 throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
             }
         }
+        if (response.Results.Any(r => r.IsWindowTruncated))
+            _logger.LogWarning("Remote 批量历史查询存在时间窗口被服务端截断的子查询：{Count} 个", response.Results.Count);
         var counts = string.Join(",", response.Results.Select(r => r.Total));
         _logger.LogInformation("Remote 批量历史查询完成：{Count} 个子查询，耗时 {Elapsed}ms，各 Total=[{Totals}]",
             response.Results.Count, sw.ElapsedMilliseconds, counts);

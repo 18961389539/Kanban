@@ -53,7 +53,7 @@ public class QueryPageFlowTests
             {
                 repo.Devices.Add(new Device { Id = deviceId, Name = "查询设备", TargetCycle = 500 });
                 repo.Runtimes.Add(new DeviceRuntime(repo.Devices.First(d => d.Id == deviceId)));
-                _host.Resolve<DeviceManagerViewModel>().RefreshDeviceList();
+                _host.Resolve<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
             }
             seed(_host.Resolve<DatabaseProvider>());
         });

@@ -37,6 +37,10 @@ public interface IAlarmHistoryService
     List<AlarmEventRecord> QueryAlarmEvents(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
     Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds);
     AlarmEventRecord? GetLatestAlarmEvent(string alarmId);
+
+    /// <summary>严格查询：按 AlarmId 取最新一条（SQL 层 Where(AlarmId)+OrderByDescending+First，异常向调用方抛出）。
+    /// 区别于全量拉取后在内存过滤（历史查询页 AlarmId 过滤曾全量拉窗口内所有报警只为取一条）。</summary>
+    AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId);
     bool LogAlarmEvent(string deviceId, string deviceName, string alarmId,
         string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime,
         string? shiftName = null);

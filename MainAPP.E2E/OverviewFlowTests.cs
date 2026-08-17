@@ -81,7 +81,7 @@ public class OverviewFlowTests
                 repo.Devices.Add(new Device { Id = "ovr-B", Name = "概览设备B", TargetCycle = 500 });
                 repo.Runtimes.Add(new DeviceRuntime(repo.Devices.First(d => d.Id == "ovr-B")));
             }
-            _host.Resolve<DeviceManagerViewModel>().RefreshDeviceList();
+            _host.Resolve<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
 
             var db = _host.Resolve<DatabaseProvider>();
             var now = DateTime.Now;

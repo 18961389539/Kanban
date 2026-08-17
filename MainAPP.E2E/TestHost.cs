@@ -219,7 +219,7 @@ public sealed class TestHost : IDisposable
         {
             var repo = Host.Services.GetRequiredService<DeviceRepository>();
             repo.LoadAll();
-            Host.Services.GetRequiredService<DeviceManagerViewModel>().RefreshDeviceList();
+            Host.Services.GetRequiredService<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
         });
     }
 

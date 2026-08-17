@@ -438,4 +438,64 @@ public class ScenarioConfig
         string.IsNullOrEmpty(name) ? Presets["normal"]
         : Presets.TryGetValue(name, out var s) ? s
         : Presets["normal"];
+
+    /// <summary>
+    /// 校验配置合法性，返回问题描述列表（空表示合法）。
+    /// 用于启动时防御自定义场景（如未来 JSON 外置）；内置预设已保证合法。
+    /// 审查修复 2026-08-16（M7）：Min&gt;Max 会得负区间、概率越界、关键间隔为 0 会死循环。
+    /// </summary>
+    public IReadOnlyList<string> Validate()
+    {
+        var errors = new List<string>();
+
+        void Prob(string name, double v) { if (v < 0 || v > 1) errors.Add($"{name}={v} 应在 [0,1]"); }
+        void MinMax(string name, int min, int max) { if (min > max) errors.Add($"{name}: Min({min}) > Max({max})"); }
+        void Positive(string name, int v) { if (v <= 0) errors.Add($"{name}={v} 应 > 0"); }
+        void NonNegative(string name, int v) { if (v < 0) errors.Add($"{name}={v} 应 >= 0"); }
+
+        Prob(nameof(NgRateBase), NgRateBase);
+        Prob(nameof(NgRateJitter), NgRateJitter);
+        Prob(nameof(NgRateAlarmBase), NgRateAlarmBase);
+        Prob(nameof(NgRateAlarmJitter), NgRateAlarmJitter);
+        Prob(nameof(AlarmChancePerTick), AlarmChancePerTick);
+        Prob(nameof(BurstChancePerTick), BurstChancePerTick);
+        Prob(nameof(BurstNgRate), BurstNgRate);
+        Prob(nameof(CycleDriftMax), CycleDriftMax);
+        Prob(nameof(CycleDriftStep), CycleDriftStep);
+        Prob(nameof(DriftRecoverOnAlarm), DriftRecoverOnAlarm);
+        Prob(nameof(WarmupNgRate), WarmupNgRate);
+        Prob(nameof(ShortageChancePerTick), ShortageChancePerTick);
+        Prob(nameof(BatchEffectNgRate), BatchEffectNgRate);
+        Prob(nameof(BurstStallChancePerProduce), BurstStallChancePerProduce);
+        Prob(nameof(MaterialBatchNgRateMin), MaterialBatchNgRateMin);
+        Prob(nameof(MaterialBatchNgRateMax), MaterialBatchNgRateMax);
+        Prob(nameof(AgingNgRatePenalty), AgingNgRatePenalty);
+        Prob(nameof(PressureThresholdPercent), PressureThresholdPercent);
+        Prob(nameof(PressureNgRatePenalty), PressureNgRatePenalty);
+        Prob(nameof(PostAlarmRampupNgRatePenalty), PostAlarmRampupNgRatePenalty);
+        Prob(nameof(DeepNightNgRatePenalty), DeepNightNgRatePenalty);
+        Prob(nameof(CommJitterChancePerTick), CommJitterChancePerTick);
+
+        MinMax(nameof(AlarmMinSec), AlarmMinSec, AlarmMaxSec);
+        MinMax(nameof(BurstMinSec), BurstMinSec, BurstMaxSec);
+        MinMax(nameof(ShortageMinSec), ShortageMinSec, ShortageMaxSec);
+        MinMax(nameof(MoldChangeMinSec), MoldChangeMinSec, MoldChangeMaxSec);
+        MinMax(nameof(QualityCheckMinSec), QualityCheckMinSec, QualityCheckMaxSec);
+        MinMax(nameof(BurstStallMinPieces), BurstStallMinPieces, BurstStallMaxPieces);
+        MinMax(nameof(MaterialBatchMinSec), MaterialBatchMinSec, MaterialBatchMaxSec);
+
+        Positive(nameof(ThresholdAlarmSec), ThresholdAlarmSec);
+        Positive(nameof(QualityCheckIntervalPieces), QualityCheckIntervalPieces);
+        Positive(nameof(BatchUpdateSize), BatchUpdateSize);
+        Positive(nameof(DisconnectDurationSec), DisconnectDurationSec);
+        NonNegative(nameof(WarmupPieces), WarmupPieces);
+        NonNegative(nameof(DisconnectIntervalSec), DisconnectIntervalSec);
+
+        if (MaterialBatchNgRateMin > MaterialBatchNgRateMax)
+            errors.Add($"{nameof(MaterialBatchNgRateMin)} > {nameof(MaterialBatchNgRateMax)}");
+        if (DeepNightStartHour == DeepNightEndHour)
+            errors.Add($"{nameof(DeepNightStartHour)} == {nameof(DeepNightEndHour)}，深夜疲劳时段为空");
+
+        return errors;
+    }
 }

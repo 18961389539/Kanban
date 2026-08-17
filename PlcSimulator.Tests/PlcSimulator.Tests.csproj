@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+    <PackageReference Include="coverlet.MTP" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PlcSimulator\PlcSimulator.csproj" />
+  </ItemGroup>
+
+  <!-- HslCommunication：PlcSimulator 通过 HintPath 引用本地 DLL，裸 <Reference> 不传递到测试项目。
+       这里显式引用同一份 DLL，确保加载 Program 类型（含 MelsecMcServer 静态字段）时不缺程序集。
+       System.IO.Ports：HslCommunication 服务器类（串口 RTU 支持）的传递依赖。 -->
+  <ItemGroup>
+    <Reference Include="HslCommunication">
+      <HintPath>..\lib\HslCommunication\HslCommunication.dll</HintPath>
+    </Reference>
+    <PackageReference Include="System.IO.Ports" />
+  </ItemGroup>
+
+  <!-- TestResults 输出重定向到系统临时目录，避免源码树累积 GUID 子目录。 -->
+  <PropertyGroup>
+    <TestResultsDirectory>$([System.IO.Path]::GetTempPath())KanbanTestResults\$(MSBuildProjectName)</TestResultsDirectory>
+  </PropertyGroup>
+
+</Project>

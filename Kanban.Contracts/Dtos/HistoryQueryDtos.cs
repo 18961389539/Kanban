@@ -75,6 +75,10 @@ public sealed record HistoryQueryResponse
     /// 仅用于服务端/客户端日志；用户可见文案由客户端按 <see cref="ErrorCode"/> 本地化渲染。</summary>
     public string? Error { get; init; }
 
+    /// <summary>时间窗口是否被服务端截断（请求跨度超过 <see cref="HistoryQueryLimits.MaxQueryWindowDays"/>
+    /// 时静默收窄为最近窗口）。客户端可据此提示"结果已按最近 N 天截断"，避免对账误判。</summary>
+    public bool IsWindowTruncated { get; init; }
+
     public int Total { get; init; }
     public int Page { get; init; }
     public int PageSize { get; init; }

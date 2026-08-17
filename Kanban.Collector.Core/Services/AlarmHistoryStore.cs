@@ -86,18 +86,24 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
     {
         try
         {
-            using var ctx = db.CreateAlarmEventContext();
-            return ctx.AlarmEvents
-                .Where(e => e.AlarmId == alarmId)
-                .OrderByDescending(e => e.EventTime)
-                .AsNoTracking()
-                .FirstOrDefault();
+            return GetLatestAlarmEventStrict(alarmId);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "查询最新报警事件失败");
             return null;
         }
+    }
+
+    public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId)
+    {
+        using var ctx = db.CreateAlarmEventContext();
+        return ctx.AlarmEvents
+            .Where(e => e.AlarmId == alarmId)
+            .OrderByDescending(e => e.EventTime)
+            .ThenByDescending(e => e.Id)
+            .AsNoTracking()
+            .FirstOrDefault();
     }
 
     public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)

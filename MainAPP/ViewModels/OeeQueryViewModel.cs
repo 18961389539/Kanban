@@ -106,12 +106,17 @@ public partial class OeeQueryViewModel : ObservableObject
             OeeTargetCycle = device.TargetCycle;
 
             int okProd = 0, ngProd = 0;
-            var inRange = QueryProductionLogs(from, to, deviceId, shiftName);
+            // 单次全量拉取覆盖 [from-1天, to]，同时派生窗口内（inRange）、窗口前基线（baselineCandidates）
+            // 与按班次实例 OEE 的基线池——把原 4 次生产日志查询合并为 1 次（Remote 下避免 4 次全量 SignalR 翻页）。
+            var fullWindow = QueryProductionLogs(from.AddDays(-1), to, deviceId, null);
+            var inRange = fullWindow
+                .Where(p => p.Timestamp >= from && p.Timestamp <= to && (shiftName == null || p.ShiftName == shiftName))
+                .ToList();
 
             if (inRange.Count > 0)
             {
                 // 窗口基准：窗口起点之前、同班次实例的累计值，用于窗口差分（产量与时间同口径）
-                var baselineCandidates = QueryProductionLogs(from.AddDays(-1), from, deviceId, null);
+                var baselineCandidates = fullWindow.Where(p => p.Timestamp <= from).ToList();
 
                 (okProd, ngProd) = HistoryQueryHelper.SumWindowProduction(inRange, baselineCandidates, from);
             }
@@ -136,7 +141,7 @@ public partial class OeeQueryViewModel : ObservableObject
 
             OeeChart = ChartService.BuildOeeChart(OeeQualityRate, OeePerformanceRate, OeeAvailabilityRate, OeeValue);
 
-            var perShiftOee = ComputePerShiftOee(deviceId, device.TargetCycle, transitions, initialState, from, to);
+            var perShiftOee = ComputePerShiftOee(deviceId, device.TargetCycle, transitions, initialState, from, to, fullWindow);
             OeeTrendChart = ChartService.BuildOeeTrendChart(
                 perShiftOee.Select(s => (s.ShiftTime, s.Oee, s.ShiftName)));
             OeeShiftBarChart = ChartService.BuildOeeShiftBarChart(
@@ -209,15 +214,16 @@ public partial class OeeQueryViewModel : ObservableObject
     private List<ShiftOeeRecord> ComputePerShiftOee(
         string deviceId, int targetCycle,
         List<StatusTransitionRecord> allTransitions, int initialInitialState,
-        DateTime fromDate, DateTime toDate)
+        DateTime fromDate, DateTime toDate,
+        List<ProductionLog> fullWindow)
     {
         List<ShiftOeeRecord> result = [];
         var now = DateTime.Now;
 
-        var allProd = QueryProductionLogs(fromDate, toDate, deviceId, null);
-        // 基线池（审查修复 2026-08-13）：原每班次实例一次"窗口前 1 天"基线查询，
-        // 30 天窗口 × 3 班次 ≈ 90+ 次额外 DB 查询——窗口整体前扩 1 天一次拉取，按班次名复用
-        var baselinePool = QueryProductionLogs(fromDate.AddDays(-1), toDate, deviceId, null);
+        // 复用 Query 已拉取的全量窗口 [fromDate-1天, toDate]，派生窗口内全量（allProd）与基线池（baselinePool），
+        // 不再单独发起两次生产日志查询。
+        var allProd = fullWindow.Where(p => p.Timestamp >= fromDate && p.Timestamp <= toDate).ToList();
+        var baselinePool = fullWindow;
 
         var shiftGroups = HistoryQueryHelper.SplitShiftInstances(allProd);
 

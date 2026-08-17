@@ -119,6 +119,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _alarmStore.QueryAlarmEventsBatch(from, to, ids);
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId) => _alarmStore.GetLatestAlarmEvent(alarmId);
+    public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId) => _alarmStore.GetLatestAlarmEventStrict(alarmId);
     public int CleanupOldAlarmEvents(int retentionDays = 365) => _alarmStore.CleanupOldAlarmEvents(retentionDays);
 
     public bool LogStatusTransition(string deviceId, string deviceName, int previousState, int currentState,

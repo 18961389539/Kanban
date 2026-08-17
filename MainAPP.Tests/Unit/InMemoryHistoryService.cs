@@ -207,6 +207,9 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
             .FirstOrDefault();
     }
 
+    public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId)
+        => GetLatestAlarmEvent(alarmId);
+
     // ──────────── 写入方法 ────────────
     //
     // 写入路径直接 List.Add 并返回 true，模拟 HistoryService 的同步写入成功路径。

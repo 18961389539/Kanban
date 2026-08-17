@@ -1,0 +1,11 @@
+﻿2020 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+2180 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+3856 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+5360 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+5780 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+6728 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+6732 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+6824 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+6860 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+7704 :: dotnet :: C:\Program Files\dotnet\dotnet.exe
+13612 :: dotnet :: C:\Program Files\dotnet\dotnet.exe

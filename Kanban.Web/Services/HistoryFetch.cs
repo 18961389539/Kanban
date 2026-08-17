@@ -1,16 +1,15 @@
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 
 namespace Kanban.Web.Services;
 
 /// <summary>
 /// 历史数据拉取助手（历史查询页/报警中心共用）：
-/// 服务端分页并发拉取全量（8 路并发；单页上限 500；10 万条上限截断）与 LatestFirst 单条语义。
+/// 服务端分页并发拉取全量（4 路并发；单页上限 500；10 万条上限截断）与 LatestFirst 单条语义。
+/// 每页大小/最大页数收敛到 <see cref="HistoryQueryLimits"/>（跨进程契约单一来源）。
 /// </summary>
 public static class HistoryFetch
 {
-    public const int FetchPageSize = 500;
-    public const int MaxFetchPages = 200;
-
     /// <summary>
     /// 并发拉取全量：首页先取 Total，剩余页并发拉取（服务端单页上限 500）。
     /// 大窗口（数万条）下 WASM 单线程是瓶颈：SignalR 响应反序列化 + GC 会冻结 UI，
@@ -39,21 +38,27 @@ public static class HistoryFetch
             DeviceId = deviceId,
             ShiftName = shiftName,
             Page = page,
-            PageSize = FetchPageSize,
+            PageSize = HistoryQueryLimits.MaxPageSize,
         }, ct);
 
         var first = await QueryAsync(1);
         if (first.ErrorCode != HistoryErrorCode.None)
             throw new InvalidOperationException(first.Error ?? "history query failed");
+        // 服务端时间窗口截断（请求跨度超过 31 天被收窄）同样视为结果不完整
+        if (first.IsWindowTruncated)
+        {
+            truncated = true;
+            Console.WriteLine($"[HistoryFetch] {type} 时间窗口被服务端截断");
+        }
 
         var all = new List<T>(first.Total);
         all.AddRange(selector(first));
 
-        var totalPages = ProductionAnalysis.CalcTotalPages(first.Total, FetchPageSize);
-        if (totalPages > MaxFetchPages)
+        var totalPages = ProductionAnalysis.CalcTotalPages(first.Total, HistoryQueryLimits.MaxPageSize);
+        if (totalPages > HistoryQueryLimits.MaxFetchAllPages)
         {
             truncated = true;
-            totalPages = MaxFetchPages;
+            totalPages = HistoryQueryLimits.MaxFetchAllPages;
         }
         for (var start = 2; start <= totalPages; start += concurrency)
         {

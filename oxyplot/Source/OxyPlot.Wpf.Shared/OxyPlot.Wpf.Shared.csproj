@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <LangVersion>14</LangVersion>
     <Description>OxyPlot is a plotting library for .NET. This package is the base for WPF PlotView implementations.</Description>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageTags>plotting plot charting chart wpf</PackageTags>
     <SignAssembly>true</SignAssembly>

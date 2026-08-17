@@ -18,6 +18,9 @@ public partial class ProductionQueryViewModel : ObservableObject
 {
     private readonly IProductionHistoryService _historyService;
 
+    /// <summary>最近一次查询的全量结果（按时间降序缓存，供翻页内存分页复用，避免每次翻页重新全量查询）。</summary>
+    private List<ProductionLog> _allLogs = [];
+
     [ObservableProperty]
     private ObservableCollection<ProductionLog> _productionLogs = new();
 
@@ -61,14 +64,13 @@ public partial class ProductionQueryViewModel : ObservableObject
         {
             var sortedAll = QueryProductionLogs(from, to, deviceId, shiftName);
 
-            var totalCount = sortedAll.Count;
+            // 缓存降序全量（ThenBy Id 稳定次级键），翻页仅内存分页复用，不重新查询
+            _allLogs = sortedAll.OrderByDescending(p => p.Timestamp).ThenByDescending(p => p.Id).ToList();
+
+            var totalCount = _allLogs.Count;
             var totalPages = HistoryQueryHelper.CalcTotalPages(totalCount, pageSize);
 
-            var pageItems = HistoryQueryHelper.PageItems(
-                sortedAll.OrderByDescending(p => p.Timestamp), currentPage, pageSize);
-
-            foreach (var item in pageItems)
-                ProductionLogs.Add(item);
+            Page(currentPage, pageSize);
 
             if (totalCount > 0)
             {
@@ -110,6 +112,15 @@ public partial class ProductionQueryViewModel : ObservableObject
         }
     }
 
+    /// <summary>翻页：从缓存全量结果内存分页，不重新查询（KPI/图表不变）。</summary>
+    public void Page(int currentPage, int pageSize)
+    {
+        var pageItems = HistoryQueryHelper.PageItems(_allLogs, currentPage, pageSize);
+        ProductionLogs.Clear();
+        foreach (var item in pageItems)
+            ProductionLogs.Add(item);
+    }
+
     private List<ProductionLog> QueryProductionLogs(DateTime from, DateTime to, string? deviceId, string? shiftName)
         => _historyService is IHistoryQueryExecutor strict
             ? strict.QueryProductionLogsStrict(from, to, deviceId, shiftName)
@@ -118,6 +129,7 @@ public partial class ProductionQueryViewModel : ObservableObject
     public void Reset()
     {
         ProductionLogs.Clear();
+        _allLogs = [];
         TotalOk = 0; TotalNg = 0; QualityRate = 0;
         ProductionChart = null;
         ProductionInsight = null;

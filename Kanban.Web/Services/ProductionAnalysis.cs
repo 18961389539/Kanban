@@ -1,4 +1,5 @@
 using Kanban.Analysis;
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 
 namespace Kanban.Web.Services;
@@ -11,11 +12,11 @@ namespace Kanban.Web.Services;
 /// </summary>
 public static class ProductionAnalysis
 {
-    /// <summary>全量拉取每页大小（与服务端 HistoryPagination.MaxPageSize 对齐，防止 clamp 截断）。</summary>
-    public const int FetchPageSize = 500;
+    /// <summary>全量拉取每页大小（收敛到跨进程契约 HistoryQueryLimits.MaxPageSize，防止 clamp 截断）。</summary>
+    public const int FetchPageSize = HistoryQueryLimits.MaxPageSize;
 
     /// <summary>全量拉取最大页数（10 万条上限）：防服务端 Total 语义异常时无限翻页；与 WPF Remote 模式一致。</summary>
-    public const int MaxFetchPages = 200;
+    public const int MaxFetchPages = HistoryQueryLimits.MaxFetchAllPages;
 
     public const int TablePageSize = 50;
 

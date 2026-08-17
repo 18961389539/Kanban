@@ -56,7 +56,7 @@ public class HistoryQueryFlowTests
             {
                 repo.Devices.Add(new Device { Id = "dev-001", Name = "测试设备A", TargetCycle = 500 });
                 repo.Runtimes.Add(new DeviceRuntime(repo.Devices.First(d => d.Id == "dev-001")));
-                _host.Resolve<DeviceManagerViewModel>().RefreshDeviceList();
+                _host.Resolve<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
             }
 
             var db = _host.Resolve<DatabaseProvider>();
@@ -221,7 +221,7 @@ public class HistoryQueryFlowTests
             var repo = _host.Resolve<DeviceRepository>();
             repo.Devices.Add(new Device { Name = "测试设备X", TargetCycle = 500 });
             repo.Runtimes.Add(new DeviceRuntime(repo.Devices[0]));
-            _host.Resolve<DeviceManagerViewModel>().RefreshDeviceList();
+            _host.Resolve<DeviceManagerViewModel>().DeviceList.RefreshDeviceList();
         });
 
         _host.RunOnSta(app =>

@@ -18,6 +18,9 @@ public partial class AlarmQueryViewModel : ObservableObject
 {
     private readonly IAlarmHistoryService _historyService;
 
+    /// <summary>最近一次查询的全量结果（按时间降序缓存，供翻页内存分页复用，避免每次翻页重新全量查询）。</summary>
+    private List<AlarmEventRecord> _allEvents = [];
+
     [ObservableProperty]
     private ObservableCollection<AlarmEventRecord> _alarmEvents = new();
 
@@ -65,12 +68,13 @@ public partial class AlarmQueryViewModel : ObservableObject
             if (alarmName != null)
                 list = list.Where(e => e.AlarmName == alarmName).ToList();
 
+            // 缓存降序全量（ThenBy Id 稳定次级键）用于翻页；KPI/图表计算仍用原始 list（不依赖顺序）
+            _allEvents = list.OrderByDescending(e => e.EventTime).ThenByDescending(e => e.Id).ToList();
+
             var totalCount = list.Count;
             var totalPages = HistoryQueryHelper.CalcTotalPages(totalCount, pageSize);
 
-            var pageItems = HistoryQueryHelper.PageItems(list, currentPage, pageSize);
-            foreach (var item in pageItems)
-                AlarmEvents.Add(item);
+            Page(currentPage, pageSize);
 
             AlarmTriggerCount = list.Count(e => e.EventType == AlarmEventType.Triggered);
             AlarmRecoverCount = list.Count(e => e.EventType == AlarmEventType.Recovered);
@@ -139,6 +143,15 @@ public partial class AlarmQueryViewModel : ObservableObject
         }
     }
 
+    /// <summary>翻页：从缓存全量结果内存分页，不重新查询（KPI/图表不变）。</summary>
+    public void Page(int currentPage, int pageSize)
+    {
+        var pageItems = HistoryQueryHelper.PageItems(_allEvents, currentPage, pageSize);
+        AlarmEvents.Clear();
+        foreach (var item in pageItems)
+            AlarmEvents.Add(item);
+    }
+
     private List<AlarmEventRecord> QueryAlarmEvents(DateTime from, DateTime to, string? deviceId, string? shiftName)
         => _historyService is IHistoryQueryExecutor strict
             ? strict.QueryAlarmEventsStrict(from, to, deviceId, shiftName)
@@ -147,6 +160,7 @@ public partial class AlarmQueryViewModel : ObservableObject
     public void Reset()
     {
         AlarmEvents.Clear();
+        _allEvents = [];
         AlarmTriggerCount = 0; AlarmRecoverCount = 0; AlarmPendingCount = 0;
         AlarmChart = null;
         AlarmInsight = null;

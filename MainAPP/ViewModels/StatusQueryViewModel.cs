@@ -17,6 +17,9 @@ public partial class StatusQueryViewModel : ObservableObject
 {
     private readonly IStatusTransitionHistoryService _historyService;
 
+    /// <summary>最近一次查询的全量结果（按时间降序缓存，供翻页内存分页复用，避免每次翻页重新全量查询）。</summary>
+    private List<StatusTransitionRecord> _allTransitions = [];
+
     [ObservableProperty]
     private ObservableCollection<StatusTransitionRecord> _statusTransitions = new();
 
@@ -81,13 +84,13 @@ public partial class StatusQueryViewModel : ObservableObject
         {
             var allInRange = QueryStatusTransitions(deviceId, from, to, shiftName);
 
+            // 缓存降序全量（ThenBy Id 稳定次级键）用于翻页；时长/Gantt 计算仍用原始升序 allInRange
+            _allTransitions = allInRange.OrderByDescending(s => s.EventTime).ThenByDescending(s => s.Id).ToList();
+
             var totalCount = allInRange.Count;
             var totalPages = HistoryQueryHelper.CalcTotalPages(totalCount, pageSize);
 
-            var pageItems = HistoryQueryHelper.PageItems(allInRange, currentPage, pageSize);
-            StatusTransitions.Clear();
-            foreach (var item in pageItems)
-                StatusTransitions.Add(item);
+            Page(currentPage, pageSize);
 
             int initialState = 1;
             var lastBefore = GetLatestStatusBefore(deviceId, from, shiftName);
@@ -119,6 +122,15 @@ public partial class StatusQueryViewModel : ObservableObject
         }
     }
 
+    /// <summary>翻页：从缓存全量结果内存分页，不重新查询（时长/图表不变）。</summary>
+    public void Page(int currentPage, int pageSize)
+    {
+        var pageItems = HistoryQueryHelper.PageItems(_allTransitions, currentPage, pageSize);
+        StatusTransitions.Clear();
+        foreach (var item in pageItems)
+            StatusTransitions.Add(item);
+    }
+
     private List<StatusTransitionRecord> QueryStatusTransitions(string deviceId, DateTime from, DateTime to, string? shiftName)
         => _historyService is IHistoryQueryExecutor strict
             ? strict.QueryStatusTransitionsStrict(deviceId, from, to, shiftName)
@@ -132,6 +144,7 @@ public partial class StatusQueryViewModel : ObservableObject
     public void Reset()
     {
         StatusTransitions.Clear();
+        _allTransitions = [];
         RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0;
         StatusChart = null; StatusBarChart = null; StatusGanttChart = null;
         StatusInsight = null;
