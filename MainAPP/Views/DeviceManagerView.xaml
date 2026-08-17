@@ -512,7 +512,25 @@
                                 <views:DeviceManagerCounterAlarmsTab DataContext="{Binding CounterAlarmManagerVm}" />
                             </TabItem>
 
-                            <!--  ============ Tab 5：工单 ============  -->
+                            <!--  ============ Tab 5：数据采集源 ============  -->
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="数据采集源">
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialIcons:MaterialIcon
+                                            Width="14"
+                                            Height="14"
+                                            VerticalAlignment="Center"
+                                            Kind="Gauge" />
+                                        <TextBlock
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="数据采集源" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                                <views:DeviceManagerSourcesTab DataContext="{Binding DataSourceManagerVm}" />
+                            </TabItem>
+
+                            <!--  ============ Tab 6：工单 ============  -->
                             <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K071}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">

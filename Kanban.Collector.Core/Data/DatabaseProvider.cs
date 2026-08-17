@@ -22,6 +22,7 @@ public class DatabaseProvider(AppSettings appSettings)
     private const string WorkOrderInitialMigration = "20260731070847_InitialSchema";
     private const string DefectHistoryInitialMigration = "20260816190001_InitialSchema";
     private const string AuditInitialMigration = "20260816190000_InitialSchema";
+    private const string DataSourceSnapshotInitialMigration = "20260817120000_InitialSchema";
 
     private readonly AppSettings _appSettings = appSettings;
     private static readonly string[] HistoryDatabaseFiles =
@@ -32,6 +33,7 @@ public class DatabaseProvider(AppSettings appSettings)
         "work_orders.db",
         "defect_history.db",
         "audit_logs.db",
+        "datasource_snapshots.db",
     ];
 
     public AppSettings AppSettings => _appSettings;
@@ -42,6 +44,7 @@ public class DatabaseProvider(AppSettings appSettings)
     public WorkOrderDbContext CreateWorkOrderContext() => new(_appSettings);
     public DefectHistoryDbContext CreateDefectHistoryContext() => new(_appSettings);
     public AuditDbContext CreateAuditContext() => new(_appSettings);
+    public DataSourceSnapshotDbContext CreateDataSourceSnapshotContext() => new(_appSettings);
 
     /// <summary>
     /// 启动期数据库 schema 初始化。
@@ -82,6 +85,11 @@ public class DatabaseProvider(AppSettings appSettings)
             "AuditEntries",
             AuditInitialMigration,
             ApplyAuditLegacyPatch);
+        MigrateContext(
+            CreateDataSourceSnapshotContext(),
+            "DataSourceSnapshots",
+            DataSourceSnapshotInitialMigration,
+            static (_, _) => { });
     }
 
     private void MigrateContext<TContext>(

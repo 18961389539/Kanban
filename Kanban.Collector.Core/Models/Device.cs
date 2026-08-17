@@ -74,4 +74,12 @@ public partial class Device : ObservableObject
     [JsonInclude]
     [JsonPropertyName("CountAlarms")]
     public ObservableCollection<CounterAlarm> CounterAlarms { get; private set; } = new();
+
+    /// <summary>
+    /// 数据采集源列表（同一 PLC 上通过寄存器读取的温湿度/能耗等新维度数据。
+    /// 电平触发或定时采集，越限/偏离告警走 alarm_events，不参与设备状态机。
+    /// private set 防止外部替换集合导致事件订阅丢失）。
+    /// </summary>
+    [JsonInclude]
+    public ObservableCollection<DataSource> Sources { get; private set; } = new();
 }

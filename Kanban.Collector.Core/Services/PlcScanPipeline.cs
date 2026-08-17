@@ -33,9 +33,14 @@ public sealed class PlcScanPipeline
 
     private readonly AlarmStateTracker _alarmTracker = new();
 
+    /// <summary>数据源采集源告警状态机（数值越限/预期偏离 判定，随 ScanSources 驱动）。</summary>
+    private readonly DataSourceAlarmTracker _dataSourceTracker;
+
     private readonly Dictionary<string, int> _cycleInt32Values = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _initializedCounterAlarmIds = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}），供主服务快照落盘过滤（只写本轮成功的源）。</summary>
+    private readonly Dictionary<string, int> _cycleSourceValues = new(StringComparer.OrdinalIgnoreCase);
     private readonly PlcBatchReadPlanCache _dwordPlanCache = new();
     private bool _dwordBatchPrepared;
     private int _cycleBatchReadRequests;
@@ -61,6 +66,7 @@ public sealed class PlcScanPipeline
         _logger = logger;
         _alarmNotificationChannel = alarmNotificationChannel;
         _onAlarmEdge = onAlarmEdge;
+        _dataSourceTracker = new DataSourceAlarmTracker(_alarmHistory, _alarmNotificationChannel, _onAlarmEdge, _logger);
     }
 
     // ──────────── 诊断指标（只读，供主类 GetDiagnosticsSnapshot 聚合） ────────────
@@ -304,6 +310,95 @@ public sealed class PlcScanPipeline
     }
 
     /// <summary>
+    /// 扫描设备数据采集源（设计稿 §1/§3/§4）：
+    /// - 配置了触发地址：每轮读触发寄存器，值 == TriggerValue 时执行采集，完成后向同一地址写回执值（AckValue）。
+    ///   下一轮读到回执值不再触发，等待 PLC 再次置位。回执地址 = 触发地址（唯一拓扑，无沿检测）。
+    /// - 未配置触发地址：每轮无条件采集（定时，周期 = 扫描周期）。
+    /// 读取成功后驱动 DataSourceAlarmTracker 做越限/偏离判定（首采样基线、延时确认、滞回恢复）。
+    /// 采集地址与触发地址均参与 DWord 批量读（见 DWordAddressBatchCollector），不增加额外轮询开销。
+    /// </summary>
+    public void ScanSources()
+    {
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        foreach (var source in device.Sources.ToList())
+        {
+            if (!source.Enabled) continue;
+            var adapter = _adapterResolver.Resolve(device);
+
+            if (!string.IsNullOrWhiteSpace(source.PlcAddress)
+                && adapter.AddressCodec.Parse(source.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
+            {
+                _logger.LogWarning("数据源 {Source} 采集地址格式无效（需要D字地址）: {Address}", source.Name, source.PlcAddress);
+                continue;
+            }
+
+            int value;
+            if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
+            {
+                if (adapter.AddressCodec.Parse(source.TriggerAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
+                {
+                    _logger.LogWarning("数据源 {Source} 触发地址格式无效（需要D字地址）: {Address}", source.Name, source.TriggerAddress);
+                    continue;
+                }
+
+                // 电平触发：读触发寄存器（命中轮内 DWord 批量缓存免一次 PLC 读）
+                var trigger = ReadInt32Value(device, source.TriggerAddress);
+                _logger.LogDebug("数据源 {Source} 触发寄存器 {Address} = {Value}（触发值 {Trigger}）",
+                    source.Name, source.TriggerAddress, trigger.IsSuccess ? trigger.Content : -1, source.TriggerValue);
+                if (!trigger.IsSuccess)
+                {
+                    _logger.LogDebug("数据源 {Source} 触发寄存器读取失败: {Address}", source.Name, source.TriggerAddress);
+                    continue;
+                }
+                if (trigger.Content != source.TriggerValue) continue; // 未触发（含回执态）
+
+                // 触发 → 采集
+                var result = ReadInt32Value(device, source.PlcAddress);
+                if (!result.IsSuccess)
+                {
+                    _logger.LogDebug("数据源 {Source} 采集读取失败: {Address}", source.Name, source.PlcAddress);
+                    continue;
+                }
+                value = result.Content;
+
+                // 完成后回执：向同一触发地址写回执值（下一轮读到回执值不再触发，等 PLC 再次置位）。
+                // 写入失败仅记日志：下一轮会再次读到触发值重试采集（同命令至多每轮一次）。
+                var ack = adapter.WriteInt32(source.TriggerAddress, source.AckValue);
+                if (!ack.IsSuccess)
+                {
+                    _logger.LogWarning("数据源 {Source} 回执写入失败（触发地址 {Address}）: {Message}",
+                        source.Name, source.TriggerAddress, ack.Message);
+                }
+            }
+            else
+            {
+                // 定时采集：每轮无条件读取
+                var result = ReadInt32Value(device, source.PlcAddress);
+                if (!result.IsSuccess)
+                {
+                    _logger.LogDebug("数据源 {Source} 采集读取失败: {Address}", source.Name, source.PlcAddress);
+                    continue;
+                }
+                value = result.Content;
+            }
+
+            // 驱动告警状态机 + 更新当前值（首采样基线、延时确认、滞回/预期恢复）
+            _dataSourceTracker.Observe(device, source, value, _shiftNameProvider());
+            _cycleSourceValues[$"{device.Id}:{source.Id}"] = value;
+        }
+    }
+
+    /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}）。快照落盘时据此过滤。</summary>
+    public IReadOnlyDictionary<string, int> GetCycleSourceValues() => _cycleSourceValues;
+
+    /// <summary>
+    /// 清空自上次落盘以来累积的源采样值（由主服务在快照落盘后调用）。
+    /// 触发采集是稀疏事件（25~45s 一次），若按轮清空会赶不上 5s 落盘节拍；
+    /// 因此采用「自上次落盘以来最新一次成功采样值」语义，落盘后清空。
+    /// </summary>
+    public void ClearCycleSourceValues() => _cycleSourceValues.Clear();
+
+    /// <summary>
     /// PLC 断线时清除所有设备的活跃报警（设置 EndTime + 写入恢复事件），
     /// 并重置报警边沿检测状态与计数报警。避免断线后 UI 仍显示遗留报警。
     /// </summary>
@@ -328,6 +423,12 @@ public sealed class PlcScanPipeline
             {
                 ca.CurrentValue = 0;
             }
+            // 数据源：清零 CurrentValue + 重置告警状态（重连后由下一轮真实采样重新判定，不写恢复事件）
+            foreach (var source in device.Sources.ToList())
+            {
+                source.CurrentValue = 0;
+            }
+            _dataSourceTracker.RecoverAllOnDisconnect(shiftName);
         }
         _alarmTracker.ResetAll();
     }
@@ -348,13 +449,25 @@ public sealed class PlcScanPipeline
     // ──────────── 报警状态维护（主类 ResetShift/设备删除/班次切换委托） ────────────
 
     /// <summary>重置全部报警边沿检测状态（班次切换/软件清零）。</summary>
-    public void ResetAll() => _alarmTracker.ResetAll();
+    public void ResetAll()
+    {
+        _alarmTracker.ResetAll();
+        _dataSourceTracker.ResetAll();
+    }
 
     /// <summary>清理指定设备的报警边沿状态与报警时间戳（设备删除/单设备清零）。</summary>
-    public void RemoveDeviceAlarms(Device device) => _alarmTracker.RemoveDeviceAlarms(device);
+    public void RemoveDeviceAlarms(Device device)
+    {
+        _alarmTracker.RemoveDeviceAlarms(device);
+        _dataSourceTracker.RemoveDevice(device.Id);
+    }
 
     /// <summary>移除单个报警的边沿状态（设备管理删除报警后调用，防内存泄漏）。</summary>
     public void RemoveAlarmState(string alarmId) => _alarmTracker.RemoveAlarmState(alarmId);
+
+    /// <summary>移除单个数据源的告警状态（设备管理删除数据源后调用，防内存泄漏）。</summary>
+    public void RemoveDataSourceState(string deviceId, string sourceId)
+        => _dataSourceTracker.RemoveSource(deviceId, sourceId);
 
     /// <summary>班次切换前为活跃报警写入 EventType=3 事件（须在 ResetAll 清空 _prevAlarmStates 之前调用）。</summary>
     public void LogShiftChangeForActiveAlarms(IReadOnlyList<Device> devices)

@@ -261,10 +261,10 @@ internal class Program
         }
 
         // 创建每设备的模拟器实例（注入场景配置 + 读写回调）
-        _simulators = _devices.Select(d => new DeviceSimulator(
+        _simulators = _devices.Select((d, idx) => new DeviceSimulator(
             d, _scenario, _speedMultiplier,
             WriteIntCallback, WriteBoolCallback,
-            ReadInt, ReadBool)).ToList();
+            ReadInt, ReadBool, registerOffset: idx * 50)).ToList();
         foreach (var sim in _simulators)
             sim.Log += msg => SimLog.Info(msg);
 
@@ -842,10 +842,10 @@ internal class Program
         _scenario = newScenario;
 
         // 重建模拟器（注入新场景），从 PLC 恢复以保留 MainAPP 已有数据
-        _simulators = _devices.Select(d => new DeviceSimulator(
+        _simulators = _devices.Select((d, idx) => new DeviceSimulator(
             d, _scenario, _speedMultiplier,
             WriteIntCallback, WriteBoolCallback,
-            ReadInt, ReadBool)).ToList();
+            ReadInt, ReadBool, registerOffset: idx * 50)).ToList();
         foreach (var sim in _simulators)
         {
             sim.Log += msg => SimLog.Info(msg);

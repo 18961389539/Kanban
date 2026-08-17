@@ -85,6 +85,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// <summary>计数报警管理子 VM（计数报警 CRUD + 清空当前值）。</summary>
     public DeviceCounterAlarmManagerViewModel CounterAlarmManagerVm { get; }
 
+    /// <summary>数据采集源管理子 VM（温湿度/能耗等 CRUD，设计稿《采集模块扩展设计方案》）。</summary>
+    public DeviceDataSourceManagerViewModel DataSourceManagerVm { get; }
+
     /// <summary>工单管理子 VM（按设备过滤 + 6 个工单命令）。</summary>
     public DeviceWorkOrderViewModel WorkOrders { get; }
 
@@ -170,6 +173,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
         DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
         CounterAlarmManagerVm = new DeviceCounterAlarmManagerViewModel(dialog, plcCommands, counterAlarmCsvIO, this);
+        DataSourceManagerVm = new DeviceDataSourceManagerViewModel(dialog, this);
         WorkOrders = new DeviceWorkOrderViewModel(dialog, this, workOrderRepo, workOrderService, deviceRepository);
         PlcCommands = new DevicePlcCommandViewModel(dialog, this, plcCommands);
 
@@ -739,6 +743,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmManagerVm.Detach();
         DefectManagerVm.Detach();
         CounterAlarmManagerVm.Detach();
+        DataSourceManagerVm.Detach();
         WorkOrders.Detach();
         PlcCommands.Detach();
     }

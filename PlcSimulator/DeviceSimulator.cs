@@ -71,6 +71,24 @@ public class DeviceSimulator
     // 节拍漂移（累积，0 ~ CycleDriftMax）
     private double _cycleDrift;
 
+    // ── 数据源模拟（温湿度 + 触发命令字握手）──
+    /// <summary>数据源寄存器偏移（按设备索引错开共享 PLC 地址）。</summary>
+    private readonly int _registerOffset;
+    private int _temperature = 245;              // 温度 ×10（245 = 24.5℃）
+    private bool _tempOverLimit;                 // 是否处于模拟越限窗口
+    private DateTime _nextTempEventTime = DateTime.MinValue;
+    private bool _triggerAwaitingAck;            // 触发命令字置 1，等待 MainAPP 回执
+    private DateTime _triggerSetTime;
+    private DateTime _nextTriggerTime = DateTime.MinValue;
+
+    // 数据源模拟地址约定（三菱 D 地址，MelsecMcServer 任意 D 字可读写）：
+    // D(502+off)=温度(×10, Int32)、D(504+off)=湿度(×10, Int32)、D(510+off)=温度采集触发命令字
+    // 注意：各值寄存器间隔 2 字——Int32 读会拼接相邻字（低地址=低 16 位），相邻字留空避免值污染。
+    private int TemperatureAddress => 502 + _registerOffset;
+    private int HumidityAddress => 504 + _registerOffset;
+    private int TriggerAddress => 510 + _registerOffset;
+    private const int TriggerAckValue = 2;
+
     // 开机预热：启动后前 WarmupPieces 件使用高 NG 率 + 慢节拍
     private int _warmupProduced;
 
@@ -151,13 +169,17 @@ public class DeviceSimulator
 
     public DeviceSimulator(DeviceConfig config, ScenarioConfig scenario, double speedMultiplier,
         Action<string, int> writeInt, Action<string, bool> writeBool,
-        Func<string, int> readInt, Func<string, bool> readBool, Random? rng = null)
+        Func<string, int> readInt, Func<string, bool> readBool, Random? rng = null,
+        int registerOffset = 0)
     {
         _config = config;
         _scenario = scenario;
         _speedMultiplier = speedMultiplier;
         // 随机源可注入种子（审查修复 2026-08-16，配合单测确定性驱动），默认 Random.Shared
         _rng = rng ?? Random.Shared;
+        // 数据源模拟寄存器偏移：多台设备共享同一 PLC 时按设备索引错开地址，避免触发握手互相打架。
+        // 约定（三菱 D 地址）：D(502+off)=温度(×10) D(503+off)=湿度(×10) D(510+off)=温度采集触发命令字
+        _registerOffset = registerOffset;
         // RecipeValue=50 表示 50件/h，节拍 = 3600/50 = 72秒/件
         _baseCycleSeconds = config.RecipeValue > 0 ? 3600.0 / config.RecipeValue : 60.0;
         _writeInt = writeInt;
@@ -497,6 +519,9 @@ public class DeviceSimulator
         {
             // 阶段 1：状态过期/累积（报警恢复、突发期/缺料/操作员暂停退出、批次切换等）
             ProcessExpirations(now);
+
+            // 阶段 1.5：数据源模拟（环境数据不受产线状态影响，独立于缺料/暂停）
+            SimulateDataSources(now);
 
             // 阶段 2：缺料/操作员暂停期间不产出、不触发事件
             if (ShortageActive || (_operatorPauseEndTime.HasValue && now < _operatorPauseEndTime.Value))
@@ -1349,6 +1374,53 @@ public class DeviceSimulator
     }
 
     private void WriteStatus() => WriteIfNotEmpty(_config.StatusCountAddress, (int)Status);
+
+    /// <summary>
+    /// 数据源模拟：写入温度/湿度寄存器 + 维护「触发命令字置 1 → 等 MainAPP 回执 2 → 复位」握手。
+    /// 受 <see cref="SimulateDataSources"/> 节拍驱动，与设备状态机解耦。
+    /// </summary>
+    private void SimulateDataSources(DateTime now)
+    {
+        // 温度：常态 240~246 漂移；随机进入 6~10s 越限窗口（值 315~340，令温度越限告警可被观察）
+        if (_tempOverLimit)
+        {
+            if (now >= _nextTempEventTime)
+            {
+                _tempOverLimit = false;
+                _nextTempEventTime = now.AddSeconds(_rng.Next(45, 90));
+            }
+        }
+        else if (now >= _nextTempEventTime)
+        {
+            _tempOverLimit = true;
+            _nextTempEventTime = now.AddSeconds(_rng.Next(6, 10));
+        }
+        _temperature = _tempOverLimit
+            ? _rng.Next(315, 341)
+            : 240 + _rng.Next(-2, 7);
+        WriteIfNotEmpty($"D{TemperatureAddress}", _temperature);
+        WriteIfNotEmpty($"D{HumidityAddress}", 540 + _rng.Next(-10, 11));
+
+        // 触发命令字握手：每 25~45s 置 1，等 MainAPP 回执 2 后复位；15s 超时保护（MainAPP 未接采集时强制复位）
+        if (_triggerAwaitingAck)
+        {
+            var current = TryReadInt($"D{TriggerAddress}");
+            if (current == TriggerAckValue || now >= _triggerSetTime.AddSeconds(15))
+            {
+                WriteIfNotEmpty($"D{TriggerAddress}", 0);
+                _triggerAwaitingAck = false;
+                _nextTriggerTime = now.AddSeconds(_rng.Next(25, 45));
+                Log?.Invoke($"[{Name}] 触发命令字复位：D{TriggerAddress}=0（回执={current}）");
+            }
+        }
+        else if (now >= _nextTriggerTime)
+        {
+            WriteIfNotEmpty($"D{TriggerAddress}", 1);
+            _triggerAwaitingAck = true;
+            _triggerSetTime = now;
+            Log?.Invoke($"[{Name}] 触发命令字置位：D{TriggerAddress}=1，等待采集回执");
+        }
+    }
 
     /// <summary>将连续不良值写入所有非停机类计数报警地址。</summary>
     private void WriteConsecutiveNgToCounterAlarms(int value)

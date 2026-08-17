@@ -36,6 +36,9 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<WorkOrderRepository>();
         services.AddSingleton<IWorkOrderRepository>(sp => sp.GetRequiredService<WorkOrderRepository>());
         services.AddSingleton<DefectHistoryStore>();
+        // 数据源快照：datasource_snapshots.db（温湿度/能耗等新维度历史）
+        services.AddSingleton<DataSourceSnapshotStore>();
+        services.AddSingleton<IDataSourceSnapshotStore>(sp => sp.GetRequiredService<DataSourceSnapshotStore>());
         // 配方库：recipes.json 存储 + 下发执行（写 PLC/读回校验/回滚）
         services.AddSingleton<RecipeStore>();
         services.AddSingleton<IRecipeStore>(sp => sp.GetRequiredService<RecipeStore>());
@@ -78,7 +81,10 @@ public static class KanbanDataServiceCollectionExtensions
             sp.GetRequiredService<IDeviceAdapterResolver>(),
             sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetService<IAlarmNotificationChannel>(),
-            sp.GetRequiredService<DefectHistoryStore>()));
+            sp.GetRequiredService<DefectHistoryStore>(),
+            onAlarmEdge: null,
+            onStatusEdge: null,
+            sp.GetRequiredService<DataSourceSnapshotStore>()));
         services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
 
         // ──────────── 历史存储（默认实现；MainAPP Remote 模式可整体重定向到远程代理） ────────────

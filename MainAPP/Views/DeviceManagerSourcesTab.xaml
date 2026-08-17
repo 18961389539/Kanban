@@ -1,0 +1,378 @@
+<UserControl
+    x:Class="MainAPP.Views.DeviceManagerSourcesTab"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:conv="clr-namespace:MainAPP.Converters"
+    mc:Ignorable="d"
+    d:DesignHeight="600"
+    d:DesignWidth="800" xmlns:resources="clr-namespace:MainAPP.Resources">
+    <!--
+        设备管理 Tab：数据采集源（温湿度/能耗等，设计稿《采集模块扩展设计方案》）。
+        DataContext 由父级 DeviceManagerView 传入 DeviceManagerViewModel；
+        内层 Grid 重设 DataContext={Binding SelectedDevice} 切换到当前设备。
+        按钮通过 RelativeSource AncestorType=UserControl 找到子 UserControl（其 DataContext 仍是 VM）。
+    -->
+    <Grid Margin="24,16" DataContext="{Binding SelectedDevice}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0" LastChildFill="True">
+            <Button
+                Margin="0,0,0,10"
+                HorizontalAlignment="Stretch"
+                Command="{Binding DataContext.AddSourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Content="新增采集源"
+                DockPanel.Dock="Top"
+                Style="{StaticResource IconButtonDefault}"
+                Tag="{x:Static mi:MaterialIconKind.Plus}" />
+            <Border
+                Height="1"
+                Margin="0,4,0,10"
+                Background="{StaticResource DividerBrush}"
+                DockPanel.Dock="Top" />
+
+            <!--  数据源列表：名称 + 类型 + 当前值  -->
+            <ListBox
+                AutomationProperties.Name="数据采集源列表"
+                DisplayMemberPath="Name"
+                ItemsSource="{Binding Sources}"
+                SelectedItem="{Binding DataContext.SelectedSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Style="{StaticResource CardListStyle}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon
+                                Width="14"
+                                Height="14"
+                                VerticalAlignment="Center"
+                                Kind="Gauge" />
+                            <StackPanel Margin="8,0,0,0">
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Name}" />
+                                <TextBlock
+                                    FontSize="11"
+                                    Foreground="{StaticResource TextBrushSecondary}"
+                                    Text="{Binding Type}" />
+                            </StackPanel>
+                            <Border
+                                Width="8"
+                                Height="8"
+                                Margin="8,0,0,0"
+                                CornerRadius="4"
+                                VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{StaticResource TextBrushSecondary}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                                <Setter Property="Background" Value="#E53935" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!--  右侧编辑区  -->
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,16,16">
+                <TextBlock
+                    Margin="0,0,0,12"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="采集源属性" />
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <!-- 默认启用；未选中数据源时禁用并隐藏编辑区 -->
+                            <Setter Property="IsEnabled" Value="True" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.SelectedSource, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Null}">
+                                    <Setter Property="IsEnabled" Value="False" />
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <StackPanel DataContext="{Binding DataContext.SelectedSource, RelativeSource={RelativeSource AncestorType=UserControl}}" IsEnabled="{Binding IsEnabled}">
+                        <!--  基本  -->
+                        <GroupBox Header="基本">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="名称" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="类型" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="单位" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="描述" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="5"
+                                    VerticalAlignment="Center"
+                                    Content="启用（停用后采集循环跳过此源）"
+                                    IsChecked="{Binding Enabled}" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!--  采集  -->
+                        <GroupBox Header="采集（地址 / 触发）" Margin="0,12,0,0">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="采集地址" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}">
+                                    <TextBox.Text>
+                                        <Binding Path="PlcAddress" UpdateSourceTrigger="PropertyChanged">
+                                            <Binding.ValidationRules>
+                                                <conv:PlcAddressValidationRule ExpectedType="DWord" />
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="触发地址（可选）" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding TriggerAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="触发值" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding TriggerValue, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="回执值" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding AckValue, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="5"
+                                    Foreground="{StaticResource TextBrushSecondary}"
+                                    Text="未配置触发地址 = 每轮采集（定时）；配置后：读触发地址 == 触发值 → 采集 → 同址写回执值"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!--  判定  -->
+                        <GroupBox Header="判定（数值型上下限 / 非数值型预期值）" Margin="0,12,0,0">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="12" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="下限" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding LimitMin, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="上限" />
+                                <TextBox
+                                    Grid.Row="0"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding LimitMax, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="滞回" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding Hysteresis, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="延时确认（秒）" />
+                                <TextBox
+                                    Grid.Row="2"
+                                    Grid.Column="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding ConfirmSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="预期值（非数值型）" />
+                                <TextBox
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    Grid.ColumnSpan="4"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    Text="{Binding ExpectedValue, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Row="6"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="5"
+                                    Foreground="{StaticResource TextBrushSecondary}"
+                                    Text="上下限与预期值二选一：配置上下限按数值型越限判定（含滞回恢复、延时确认）；配置预期值按当前值 ≠ 预期值判定偏离（立即触发）。"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </GroupBox>
+
+                        <!--  运行时  -->
+                        <GroupBox Header="运行时" Margin="0,12,0,0">
+                            <Grid Margin="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="当前值" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Text="{Binding CurrentValue}" />
+                                <TextBlock
+                                    Grid.Column="3"
+                                    VerticalAlignment="Center"
+                                    Text="告警态" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrushSecondary}" />
+                                            <Setter Property="Text" Value="正常" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                                    <Setter Property="Foreground" Value="#E53935" />
+                                                    <Setter Property="Text" Value="越限/偏离" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

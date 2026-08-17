@@ -64,6 +64,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly Action<AlarmEventDto>? _onAlarmEdge;
     private readonly Action<StatusEventDto>? _onStatusEdge;
     private readonly DefectHistoryStore? _defectHistoryStore;
+    private readonly DataSourceSnapshotStore? _dataSourceSnapshotStore;
     private readonly AcquisitionDiagnosticsStore _diagnostics = new();
 
     /// <summary>缺陷快照降频：记录上次落库的（Count, ShiftName），无变化不写（键 = 设备Id|缺陷Id）。</summary>
@@ -151,7 +152,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         IAlarmNotificationChannel? alarmNotificationChannel = null,
         DefectHistoryStore? defectHistoryStore = null,
         Action<AlarmEventDto>? onAlarmEdge = null,
-        Action<StatusEventDto>? onStatusEdge = null)
+        Action<StatusEventDto>? onStatusEdge = null,
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
     {
         _plc = plc;
         _connectionManager = connectionManager;
@@ -168,6 +170,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _defectHistoryStore = defectHistoryStore;
         _onAlarmEdge = onAlarmEdge;
         _onStatusEdge = onStatusEdge;
+        _dataSourceSnapshotStore = dataSourceSnapshotStore;
         // 扫描子系统：批量读缓存 + 报警/缺陷/计数报警扫描（班次名经委托取当前值，避免组件间循环依赖）
         // onAlarmEdge 把内部 tracker 回调桥接到本服务的 AlarmEdgeDetected 事件（供 Collector 订阅）。
         _scanPipeline = new PlcScanPipeline(
@@ -187,9 +190,11 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         IDeviceAdapterResolver? adapterResolver = null,
         WorkOrderRepository? workOrderRepo = null,
         IAlarmNotificationChannel? alarmNotificationChannel = null,
-        DefectHistoryStore? defectHistoryStore = null)
+        DefectHistoryStore? defectHistoryStore = null,
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
         : this(plc, connectionManager, appSettings, historyService, historyService, historyService,
-            deviceRepository, baselineStore, logger, adapterResolver, workOrderRepo, alarmNotificationChannel, defectHistoryStore)
+            deviceRepository, baselineStore, logger, adapterResolver, workOrderRepo, alarmNotificationChannel, defectHistoryStore,
+            onAlarmEdge: null, onStatusEdge: null, dataSourceSnapshotStore: dataSourceSnapshotStore)
     {
     }
 
@@ -348,6 +353,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     var counterAlarmReadStopwatch = Stopwatch.StartNew();
                     TryScan(_scanPipeline.ScanCounterAlarms, nameof(PlcScanPipeline.ScanCounterAlarms));
                     var counterAlarmReadMilliseconds = counterAlarmReadStopwatch.ElapsedMilliseconds;
+
+                    // 数据源扫描（第四组）：温湿度/能耗等。触发位判定/回执写入/定时采集 + 越限/偏离告警状态机。
+                    // 与 ScanCounterAlarms 同级独立 try-catch：单源扫描失败不阻断其他扫描与历史快照写入。
+                    TryScan(_scanPipeline.ScanSources, nameof(PlcScanPipeline.ScanSources));
 
                     // 首次启动后从 StatusTransitions 重建 OEE 时间（仅执行一次，依赖采集已落库状态转换）
                     if (!_oeeTimeRebuilt)
@@ -768,6 +777,43 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
 
         _defectHistoryStore?.Append(defectSnapshots);
+
+        // 数据源快照：仅记录本轮 ScanSources 成功采样的源（设计稿 §5：单表 + device_id，按设备聚合查询）。
+        // 落盘后清空采样累积，使下一落盘周期重新累计（触发源稀疏采样不丢值）。
+        if (_dataSourceSnapshotStore != null)
+        {
+            _dataSourceSnapshotStore.Append(BuildSourceSnapshots(shiftName, timestamp));
+            _scanPipeline.ClearCycleSourceValues();
+        }
+    }
+
+    /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的启用源）。</summary>
+    private List<DataSourceSnapshotRecord> BuildSourceSnapshots(string shiftName, DateTime timestamp)
+    {
+        var sourceValues = _scanPipeline.GetCycleSourceValues();
+        var snapshots = new List<DataSourceSnapshotRecord>();
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            foreach (var source in device.Sources.ToList())
+            {
+                if (!source.Enabled) continue;
+                var key = $"{device.Id}:{source.Id}";
+                if (!sourceValues.TryGetValue(key, out var value)) continue;
+                snapshots.Add(new DataSourceSnapshotRecord
+                {
+                    DeviceId = device.Id,
+                    DeviceName = device.Name,
+                    SourceId = source.Id,
+                    SourceName = source.Name,
+                    SourceType = source.Type,
+                    Unit = source.Unit,
+                    Value = value,
+                    ShiftName = shiftName,
+                    Timestamp = timestamp,
+                });
+            }
+        }
+        return snapshots;
     }
 
     // ──────────── 扫描子系统 facade（转发 PlcScanPipeline，维持 internal 接口不变——测试与历史调用方零改动） ────────────

@@ -56,6 +56,35 @@ public static class DeviceConfigValidator
                 AddAddressError(errors, device, addressCodec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
             foreach (var counterAlarm in device.CounterAlarms)
                 AddAddressError(errors, device, addressCodec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
+            foreach (var source in device.Sources)
+            {
+                AddAddressError(errors, device, addressCodec, source.PlcAddress, PlcAddressType.DWord, 5, $"采集源「{source.Name}」采集地址格式无效");
+                AddAddressError(errors, device, addressCodec, source.TriggerAddress, PlcAddressType.DWord, 5, $"采集源「{source.Name}」触发地址格式无效");
+
+                // 阈值规则（设计稿 §6）：上下限关系、滞回/延时合法、预期值不能与上下限并存
+                if (source.HasLimits && source.Hysteresis < 0)
+                    errors.Add(new DeviceConfigError
+                    {
+                        Device = device,
+                        TargetTabIndex = 5,
+                        Message = $"采集源「{source.Name}」滞回不能为负",
+                    });
+                if (source.HasLimits && source.ConfirmSeconds < 0)
+                    errors.Add(new DeviceConfigError
+                    {
+                        Device = device,
+                        TargetTabIndex = 5,
+                        Message = $"采集源「{source.Name}」延时确认不能为负",
+                    });
+                if (!string.IsNullOrWhiteSpace(source.TriggerAddress)
+                    && string.Equals(source.TriggerAddress?.Trim(), source.PlcAddress?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    errors.Add(new DeviceConfigError
+                    {
+                        Device = device,
+                        TargetTabIndex = 5,
+                        Message = $"采集源「{source.Name}」触发地址不能与采集地址相同",
+                    });
+            }
 
             // 目标周期必须 > 0：OEE 性能率分母为 TargetCycle，0 会导致性能率恒为 0
             if (device.TargetCycle <= 0)
@@ -247,6 +276,11 @@ public static class DeviceConfigValidator
             if (!string.IsNullOrWhiteSpace(def.PlcAddress)) yield return (def.PlcAddress!, 2);
         foreach (var c in d.CounterAlarms)
             if (!string.IsNullOrWhiteSpace(c.PlcAddress)) yield return (c.PlcAddress!, 3);
+        foreach (var s in d.Sources)
+        {
+            if (!string.IsNullOrWhiteSpace(s.PlcAddress)) yield return (s.PlcAddress!, 5);
+            if (!string.IsNullOrWhiteSpace(s.TriggerAddress)) yield return (s.TriggerAddress!, 5);
+        }
     }
 
     private static void AddAddressError(
@@ -284,6 +318,11 @@ public static class DeviceConfigValidator
         foreach (var a in d.Alarms) yield return a.PlcAddress;
         foreach (var def in d.Defects) yield return def.PlcAddress;
         foreach (var c in d.CounterAlarms) yield return c.PlcAddress;
+        foreach (var s in d.Sources)
+        {
+            yield return s.PlcAddress;
+            yield return s.TriggerAddress;
+        }
     }
 }
 

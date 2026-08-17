@@ -13,6 +13,7 @@ using MainAPP.Helpers;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
 using OxyPlot;
+using OxyPlot.Series;
 
 namespace MainAPP.ViewModels;
 /// 设备详情页视图模型：单设备深度监控视图。
@@ -30,6 +31,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     private readonly ILogger<DeviceDetailViewModel> _logger;
     private readonly WorkOrderRepository _workOrderRepo;
     private readonly IWorkOrderService _workOrderService;
+    private readonly IDataSourceSnapshotStore? _sourceStore;
 
     private Device? _currentDevice;
     private DeviceRuntime? _currentRuntime;
@@ -57,7 +59,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         IDialogService dialog,
         ILogger<DeviceDetailViewModel> logger,
         WorkOrderRepository workOrderRepo,
-        IWorkOrderService workOrderService)
+        IWorkOrderService workOrderService,
+        IDataSourceSnapshotStore? sourceStore = null)
     {
         _deviceRepository = deviceRepository;
         _historyService = historyService;
@@ -66,6 +69,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         _logger = logger;
         _workOrderRepo = workOrderRepo;
         _workOrderService = workOrderService;
+        _sourceStore = sourceStore;
 
         _selection.PropertyChanged += OnSelectionServiceChanged;
         // 首次加载：尝试用共享选中设备初始化
@@ -251,6 +255,89 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// <summary>当前活跃报警（从设备配置筛选 IsActive=true）。</summary>
     public ObservableCollection<AlarmConfigRow> ActiveAlarms { get; } = new();
 
+    // ──────────── 数据采集源展示（实时卡 / 趋势图） ────────────
+
+    /// <summary>当前设备的启用数据源（实时卡直接绑定 DataSource：Name/Type/Unit/CurrentValue/IsTriggered）。</summary>
+    public ObservableCollection<DataSource> SourceCards { get; } = new();
+
+    /// <summary>是否展示趋势图（true=趋势图，false=实时卡）。</summary>
+    [ObservableProperty] private bool _showTrend;
+
+    /// <summary>趋势图选中的源（用户点实时卡/趋势源下拉选择）。</summary>
+    [ObservableProperty]
+    private DataSource? _selectedTrendSource;
+
+    /// <summary>趋势图模型（OxyPlot，最近 2 小时快照折线）。</summary>
+    [ObservableProperty] private PlotModel? _trendPlotModel;
+
+    /// <summary>是否配置了数据源（控制详情页数据源区块可见性）。</summary>
+    [ObservableProperty] private bool _hasSources;
+
+    /// <summary>最近 2 小时快照趋势图：单源折线。</summary>
+    [RelayCommand]
+    private void ShowTrendChart(DataSource source)
+    {
+        if (source == null) return;
+        SelectedTrendSource = source;
+        ShowTrend = true;
+        RefreshTrend();
+    }
+
+    /// <summary>切换回实时卡视图。</summary>
+    [RelayCommand]
+    private void BackToLive()
+    {
+        ShowTrend = false;
+        SelectedTrendSource = null;
+    }
+
+    /// <summary>
+    /// 刷新趋势图：查询选中源最近 2 小时快照（datasource_snapshots.db，Local 模式由本进程写入；
+    /// Remote 模式快照在 Collector 侧，本进程库为空则趋势图为空）。
+    /// </summary>
+    private void RefreshTrend()
+    {
+        var source = SelectedTrendSource;
+        var store = _sourceStore;
+        if (source == null || store == null || CurrentDevice == null)
+        {
+            TrendPlotModel = null;
+            return;
+        }
+
+        var from = DateTime.Now.AddHours(-2);
+        List<DataSourceSnapshotRecord> snapshots;
+        try
+        {
+            snapshots = store.Query(CurrentDevice.Id, from, DateTime.Now);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "查询数据源快照趋势失败：设备={Device}", CurrentDevice.Id);
+            TrendPlotModel = null;
+            return;
+        }
+
+        var points = snapshots
+            .Where(s => s.SourceId == source.Id)
+            .OrderBy(s => s.Timestamp)
+            .Select(s => new OxyPlot.DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(s.Timestamp), s.Value))
+            .ToList();
+
+        var model = new PlotModel { Title = $"{source.Name}（{source.Unit}）", TextColor = OxyColors.Gray };
+        model.Axes.Add(new OxyPlot.Axes.DateTimeAxis { Position = OxyPlot.Axes.AxisPosition.Bottom, StringFormat = "HH:mm" });
+        model.Axes.Add(new OxyPlot.Axes.LinearAxis { Position = OxyPlot.Axes.AxisPosition.Left });
+        model.Series.Add(new LineSeries
+        {
+            ItemsSource = points,
+            MarkerType = MarkerType.Circle,
+            MarkerSize = 2,
+            StrokeThickness = 1.5,
+            Color = OxyColor.Parse("#1976D2"),
+        });
+        TrendPlotModel = model;
+    }
+
     /// <summary>最后刷新时间。</summary>
     [ObservableProperty] private DateTime _lastUpdateTime = DateTime.Now;
 
@@ -290,15 +377,55 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
         RefreshKpis();
         RefreshRecentAlarms();
+        RefreshSourceCards();
     }
 
-    /// <summary>清空所有集合数据（活跃报警 + 最近报警事件）。</summary>
+    /// <summary>
+    /// 刷新数据源实时卡：填充当前设备启用源并订阅 PropertyChanged（CurrentValue/IsTriggered 由采集线程更新）。
+    /// Remote 模式下采集在 Collector 侧，本页源值为本进程最后快照（趋势图查询同为空库，见 RefreshTrend）。
+    /// </summary>
+    private void RefreshSourceCards()
+    {
+        ClearSourceCards();
+        if (CurrentDevice == null) return;
+        foreach (var source in CurrentDevice.Sources.ToList())
+        {
+            if (!source.Enabled) continue;
+            source.PropertyChanged += OnSourcePropertyChanged;
+            SourceCards.Add(source);
+        }
+        HasSources = SourceCards.Count > 0;
+        if (!HasSources) ShowTrend = false;
+    }
+
+    private void ClearSourceCards()
+    {
+        foreach (var source in SourceCards)
+            source.PropertyChanged -= OnSourcePropertyChanged;
+        SourceCards.Clear();
+        SelectedTrendSource = null;
+        TrendPlotModel = null;
+    }
+
+    /// <summary>
+    /// 数据源运行时属性在 PLC 采集后台线程被修改。封送回 UI 线程后再触发 UI 刷新；
+    /// 空实现仅作封送锚点（DataSource 的 ObservableProperty 通知本身经 WPF 绑定引擎跨线程安全处理，
+    /// 此钩子确保属性变更事件在 UI 线程完成，避免绑定集合跨线程访问）。
+    /// </summary>
+    private void OnSourcePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(DataSource.CurrentValue) or nameof(DataSource.IsTriggered))) return;
+        DispatchOnUi(() => { });
+    }
+
+    /// <summary>清空所有集合数据（活跃报警 + 最近报警事件 + 数据源卡片）。</summary>
     private void ClearLists()
     {
         ActiveAlarms.Clear();
         RecentAlarms.Clear();
         ActiveAlarmCount = 0;
         TodayAlarmCount = 0;
+        ClearSourceCards();
     }
 
     /// <summary>清空 KPI 数值（产量/率/时长/状态）。</summary>
@@ -470,6 +597,9 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             foreach (var alarm in _currentDevice.CounterAlarms)
                 alarm.PropertyChanged -= OnCounterAlarmPropertyChanged;
         }
+
+        // 解绑数据源运行时属性订阅（与 RefreshSourceCards 对称）
+        ClearSourceCards();
 
         if (_currentRuntime != null)
             _currentRuntime.PropertyChanged -= OnRuntimePropertyChanged;

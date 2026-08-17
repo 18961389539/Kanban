@@ -136,6 +136,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -342,8 +343,102 @@
                 </Border>
             </UniformGrid>
 
+            <!-- ─── 数据采集源：实时卡 / 趋势图（设计稿《采集模块扩展设计方案》） ─── -->
+            <Border
+                Grid.Row="2"
+                Margin="0,0,0,12"
+                Style="{StaticResource MainCard}"
+                Visibility="{Binding HasSources, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
+                        <Border Style="{StaticResource ChartCardTitleBar}" />
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="数据采集源" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="{DynamicResource FontSizeCaption}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="温湿度 / 能耗 / 触发采集（越限走报警中心）" />
+                    </DockPanel>
+                    <Grid>
+                        <!-- 实时卡：每源一张卡片（名称 / 当前值+单位 / 告警态着色） -->
+                        <ItemsControl
+                            Margin="16,0,16,16"
+                            ItemsSource="{Binding SourceCards}"
+                            Visibility="{Binding ShowTrend, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="4" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource KpiCell}" Margin="2">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding Name}" />
+                                            <TextBlock
+                                                Margin="0,6,0,0"
+                                                FontSize="22"
+                                                FontFamily="Consolas"
+                                                FontWeight="Bold"
+                                                Text="{Binding CurrentValue}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsTriggered}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock
+                                                Margin="0,2,0,0"
+                                                FontSize="{DynamicResource FontSizeCaption}"
+                                                Foreground="{StaticResource ThirdlyTextBrush}"
+                                                Text="{Binding Unit, StringFormat=单位：{0}}" />
+                                            <Button
+                                                Margin="0,8,0,0"
+                                                HorizontalAlignment="Left"
+                                                Command="{Binding DataContext.ShowTrendChartCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Content="趋势图"
+                                                Style="{StaticResource ButtonDefault}"
+                                                Padding="10,4"
+                                                FontSize="12" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 趋势图：选中源最近 2 小时快照折线（Local 模式数据源快照；Remote 模式为空库） -->
+                        <DockPanel
+                            Margin="16,0,16,16"
+                            Visibility="{Binding ShowTrend, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <TextBlock
+                                    DockPanel.Dock="Left"
+                                    FontSize="{DynamicResource FontSizeHint}"
+                                    Foreground="{StaticResource SecondaryTextBrush}"
+                                    Text="{Binding SelectedTrendSource.Name, StringFormat=源：{0}}" />
+                                <Button
+                                    DockPanel.Dock="Right"
+                                    Command="{Binding BackToLiveCommand}"
+                                    Content="返回实时卡"
+                                    Style="{StaticResource ButtonDefault}"
+                                    Padding="10,4"
+                                    FontSize="12" />
+                            </DockPanel>
+                            <oxy:PlotView Model="{Binding TrendPlotModel}" Background="Transparent" />
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
+            </Border>
+
             <!-- ─── 三栏：OEE分解 + 活跃报警 + 最近事件 ─── -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10" />
