@@ -381,7 +381,7 @@
                                                 FontSize="22"
                                                 FontFamily="Consolas"
                                                 FontWeight="Bold"
-                                                Text="{Binding Value.CurrentValue}">
+                                                Text="{Binding Value.CurrentDisplayText}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                                                         <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />

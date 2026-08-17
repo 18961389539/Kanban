@@ -209,6 +209,28 @@ public class ScanSourcesTests
         Assert.Contains($"dev-001:{source.Id}:{temp2.Id}", cycleValues.Keys);
     }
 
+    // ──────────── 值项独立启用：禁用值项跳过（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void DisabledValue_IsSkipped_ButSiblingValuesCollected()
+    {
+        var temp1 = new DataSourceValue { Name = "温度", PlcAddress = "D300", Enabled = false };
+        var temp2 = new DataSourceValue { Name = "湿度", PlcAddress = "D304" };
+        var source = new DataSource { Name = "温湿度" };
+        var (pipeline, adapter, _, _) = BuildPipeline(source, temp1);
+        source.Values.Add(temp2);
+        adapter.Registers["D300"] = 245;
+        adapter.Registers["D304"] = 538;
+
+        pipeline.ScanSources();
+
+        Assert.Equal(0, temp1.CurrentValue); // 禁用值项不采集
+        Assert.Equal(538, temp2.CurrentValue); // 同源启用值项正常采集
+        var cycleValues = pipeline.GetCycleSourceValues();
+        Assert.Single(cycleValues);
+        Assert.Contains($"dev-001:{source.Id}:{temp2.Id}", cycleValues.Keys);
+    }
+
     // ──────────── 禁用源跳过 ────────────
 
     [Fact]

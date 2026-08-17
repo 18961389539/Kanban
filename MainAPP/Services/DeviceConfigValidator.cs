@@ -71,6 +71,17 @@ public static class DeviceConfigValidator
                 }
                 foreach (var value in source.Values)
                 {
+                    // 值项空地址：配置期直接拦截（修复 2026-08-17：触发源漏配采集地址会让 PLC 端一直等回执）
+                    if (string.IsNullOrWhiteSpace(value.PlcAddress))
+                    {
+                        errors.Add(new DeviceConfigError
+                        {
+                            Device = device,
+                            TargetTabIndex = 5,
+                            Message = $"采集源「{source.Name}」值项「{value.Name}」未配置采集地址",
+                        });
+                        continue;
+                    }
                     AddAddressError(errors, device, addressCodec, value.PlcAddress, PlcAddressType.DWord, 5, $"采集源「{source.Name}」值项「{value.Name}」采集地址格式无效");
 
                     // 阈值规则（设计稿 §6）：上下限关系、滞回/延时合法
@@ -97,6 +108,20 @@ public static class DeviceConfigValidator
                             Message = $"采集源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同",
                         });
                 }
+
+                // 同源内值项采集地址重复（修复 2026-08-17：大概率是配置错误，读同一地址的多个值项应合并）
+                var dupAddress = source.Values
+                    .Select(v => v.PlcAddress?.Trim())
+                    .Where(a => !string.IsNullOrWhiteSpace(a))
+                    .GroupBy(a => a, StringComparer.OrdinalIgnoreCase)
+                    .FirstOrDefault(g => g.Count() > 1);
+                if (dupAddress != null)
+                    errors.Add(new DeviceConfigError
+                    {
+                        Device = device,
+                        TargetTabIndex = 5,
+                        Message = $"采集源「{source.Name}」有 {dupAddress.Count()} 个值项使用相同采集地址「{dupAddress.Key}」",
+                    });
             }
 
             // 目标周期必须 > 0：OEE 性能率分母为 TargetCycle，0 会导致性能率恒为 0

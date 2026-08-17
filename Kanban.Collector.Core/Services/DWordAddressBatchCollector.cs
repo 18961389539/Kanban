@@ -19,6 +19,7 @@ internal static class DWordAddressBatchCollector
         .Concat(device.Sources.ToList()
             .Where(source => source.Enabled)
             .SelectMany(source => source.Values
+                .Where(v => v.Enabled)
                 .Select(v => v.PlcAddress)
                 .Append(source.TriggerAddress)))
         .Select(adapter.AddressCodec.Parse)

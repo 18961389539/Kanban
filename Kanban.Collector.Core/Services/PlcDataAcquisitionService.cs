@@ -799,6 +799,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 if (!source.Enabled) continue;
                 foreach (var value in source.Values.ToList())
                 {
+                    if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
                     var key = $"{device.Id}:{source.Id}:{value.Id}";
                     if (!sourceValues.TryGetValue(key, out var v)) continue;
                     snapshots.Add(new DataSourceSnapshotRecord

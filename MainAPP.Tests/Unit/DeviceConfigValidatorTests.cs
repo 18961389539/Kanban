@@ -34,6 +34,48 @@ public class DeviceConfigValidatorTests
             ProductionResetAddress = addrPrefix + "6",
         };
 
+// ──────────── 数据源值项校验（修复 2026-08-17：空地址/重复地址） ────────────
+
+    [Fact]
+    public void CollectValidationErrors_SourceValueMissingAddress_ReportsError()
+    {
+        var device = ValidDevice("设备1", "D100");
+        var source = new DataSource { Name = "温湿度" };
+        source.Values.Add(new DataSourceValue { Name = "温度" }); // 无采集地址
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
+
+        Assert.Contains(errors, e => e.Message.Contains("未配置采集地址"));
+    }
+
+    [Fact]
+    public void CollectValidationErrors_DuplicateSourceValueAddress_ReportsError()
+    {
+        var device = ValidDevice("设备1", "D100");
+        var source = new DataSource { Name = "温湿度" };
+        source.Values.Add(new DataSourceValue { Name = "温度", PlcAddress = "D300" });
+        source.Values.Add(new DataSourceValue { Name = "湿度", PlcAddress = "D300" }); // 重复地址
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
+
+        Assert.Contains(errors, e => e.Message.Contains("相同采集地址"));
+    }
+
+    [Fact]
+    public void CollectValidationErrors_ValidSource_NoSourceErrors()
+    {
+        var device = ValidDevice("设备1", "D100");
+        var source = new DataSource { Name = "温湿度", TriggerAddress = "D510" };
+        source.Values.Add(new DataSourceValue { Name = "温度", PlcAddress = "D300" });
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
+
+        Assert.DoesNotContain(errors, e => e.TargetTabIndex == 5);
+    }
+
     [Fact]
     public void CollectValidationErrors_ValidDevice_NoErrors()
     {

@@ -187,6 +187,102 @@ public class DataSourceAlarmTrackerTests
         Assert.False(value.IsTriggered);
     }
 
+// ──────────── 断线恢复事件：活跃告警不悬空"触发中"（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void RecoverAllOnDisconnect_WritesRecoveredEvent_ForActiveAlarms()
+    {
+        var history = new RecordingAlarmHistory();
+        var (device, source, value) = BuildDeviceWithSource(expected: 1);
+        var (tracker, _) = CreateClockTracker(history, new DateTime(2026, 8, 17, 8, 0, 0));
+
+        tracker.Observe(device, source, value, 1, "白班"); // 基线
+        tracker.Observe(device, source, value, 0, "白班"); // 触发
+        Assert.Single(history.Events);
+
+        tracker.RecoverAllOnDisconnect("白班");
+
+        Assert.Equal(2, history.Events.Count);
+        Assert.Equal(AlarmEventType.Recovered, history.Events[1].EventType);
+        Assert.Equal(history.Events[0].AlarmId, history.Events[1].AlarmId); // 同一告警的恢复
+    }
+
+    // ──────────── 班次切换：活跃告警写恢复事件（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void ResetAll_WritesRecoveredEvent_ForActiveAlarms()
+    {
+        var history = new RecordingAlarmHistory();
+        var (device, source, value) = BuildDeviceWithSource(expected: 1);
+        var (tracker, _) = CreateClockTracker(history, new DateTime(2026, 8, 17, 8, 0, 0));
+
+        tracker.Observe(device, source, value, 1, "白班"); // 基线
+        tracker.Observe(device, source, value, 0, "白班"); // 触发
+        Assert.Single(history.Events);
+
+        tracker.ResetAll();
+
+        Assert.Equal(2, history.Events.Count);
+        Assert.Equal(AlarmEventType.Recovered, history.Events[1].EventType);
+    }
+
+    // ──────────── 重连告警丢失窗口（数值型）：重连首采样已越限 → 延时确认后触发（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void Reconnect_FirstSampleOutOfRange_StartsConfirmationInsteadOfBaseline()
+    {
+        var history = new RecordingAlarmHistory();
+        var (device, source, value) = BuildDeviceWithSource(limitMin: 200, limitMax: 300, confirmSeconds: 5);
+        var (tracker, advance) = CreateClockTracker(history, new DateTime(2026, 8, 17, 8, 0, 0));
+
+        // 正常采集一段时间后断线
+        tracker.Observe(device, source, value, 250, "白班");
+        tracker.Observe(device, source, value, 245, "白班");
+        Assert.Empty(history.Events);
+        tracker.RecoverAllOnDisconnect("白班");
+
+        // 重连首采样：值已越限 → 直接进入延时确认（不按冷启动基线静默）
+        tracker.Observe(device, source, value, 350, "白班");
+        Assert.Empty(history.Events); // 进入 pending，未到 5s 不触发
+
+        advance(5);
+        tracker.Observe(device, source, value, 355, "白班"); // 持续越限 ≥5s → 触发
+        Assert.Single(history.Events);
+        Assert.Equal(AlarmEventType.Triggered, history.Events[0].EventType);
+    }
+
+    // ──────────── 重连后值正常：按新基线处理，不误报（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void Reconnect_FirstSampleInRange_StaysSilent()
+    {
+        var history = new RecordingAlarmHistory();
+        var (device, source, value) = BuildDeviceWithSource(limitMin: 200, limitMax: 300);
+        var (tracker, _) = CreateClockTracker(history, new DateTime(2026, 8, 17, 8, 0, 0));
+
+        tracker.Observe(device, source, value, 250, "白班"); // 基线
+        tracker.RecoverAllOnDisconnect("白班");
+
+        tracker.Observe(device, source, value, 240, "白班"); // 重连首采样在限内
+        Assert.Empty(history.Events);
+    }
+
+// ──────────── 枚举展示归一化：CurrentDisplayText（修复 2026-08-17） ────────────
+
+    [Fact]
+    public void CurrentDisplayText_UsesEnumName_WhenMatched()
+    {
+        var (_, _, value) = BuildDeviceWithSource(expected: 1);
+        value.EnumValues.Add(new DataSourceEnumValue { Value = 0, DisplayName = "就绪" });
+        value.EnumValues.Add(new DataSourceEnumValue { Value = 2, DisplayName = "报警" });
+        value.CurrentValue = 2;
+
+        Assert.Equal("报警", value.CurrentDisplayText);
+
+        value.CurrentValue = 9; // 未命中枚举
+        Assert.Equal("9", value.CurrentDisplayText);
+    }
+
     // ──────────── 断线清理：重连后按新基线处理，不残留旧状态 ────────────
 
     [Fact]
@@ -202,8 +298,10 @@ public class DataSourceAlarmTrackerTests
 
         tracker.RecoverAllOnDisconnect("白班");
 
-        // 断线后重新采样（重连）：按首采样基线处理，旧触发状态不再生效（不产生新事件）
+        // 断线写恢复事件 + 重连后值仍偏离预期 → 直接进入判定并立即触发（修复"重连告警丢失窗口"与"告警悬空"）
         tracker.Observe(device, source, value, 0, "白班");
-        Assert.Single(history.Events);
+        Assert.Equal(3, history.Events.Count);
+        Assert.Equal(AlarmEventType.Recovered, history.Events[1].EventType); // 断线恢复
+        Assert.Equal(AlarmEventType.Triggered, history.Events[2].EventType); // 重连重新触发
     }
 }

@@ -169,7 +169,16 @@ public class DeviceRepository : IDeviceRepository
                     {
                         // 旧版单值数据源（重构前平铺格式）迁移为 Values[0]（幂等）
                         foreach (var source in d.Sources)
+                        {
+                            var hadLegacy = source.Values.Count == 0 && source.ExtensionData?.ContainsKey("PlcAddress") == true;
                             source.MigrateLegacySingleValue();
+                            if (hadLegacy)
+                            {
+                                Log.Information(
+                                    "数据源 {Source}（设备 {Device}）已从旧版单值格式迁移为值项格式，值项默认名「值1」，可在设备管理中修改（修复 2026-08-17 迁移提示）",
+                                    source.Name, d.Name);
+                            }
+                        }
                         Devices.Add(d);
                         DeviceMap[d.Id] = d;
                         var runtime = new DeviceRuntime(d);

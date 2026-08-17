@@ -16,7 +16,9 @@ namespace Kanban.Collector.Core.Services;
 /// 规则（设计稿 §4 定稿）：
 /// - 数值型（配置上下限）：值越出 [Min, Max] 且持续 ≥ ConfirmSeconds 才触发；回落「限值∓滞回」以内才恢复。
 /// - 非数值型（配置预期值）：当前值 ≠ 预期值立即触发；回到预期值即恢复。
-/// - 首次有效采样只建立基线，不触发报警（启动时已处于越限不算"进入"）。
+/// - 首次有效采样只建立基线，不触发报警（启动时已处于越限不算"进入"）；
+///   断线重连后例外：重连首采样若已越限直接进入延时确认，避免"重连告警丢失窗口"（修复 2026-08-17）。
+/// - 断线/班次切换时活跃告警写恢复事件（避免报警中心悬空"触发中"，修复 2026-08-17）。
 /// - 告警事件复用 alarm_events（AlarmId 以 "src:" 前缀与 PLC 设备报警区分来源）；
 ///   数据源告警不参与设备状态机、不污染 OEE。
 /// </summary>
@@ -29,6 +31,9 @@ public sealed class DataSourceAlarmTracker
 
     /// <summary>状态键：{deviceId}:{sourceId}:{valueId} → 状态。</summary>
     private readonly Dictionary<string, ValueAlarmState> _states = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>断线后置位：重连后首个采样若已越限/偏离，直接进入判定（不再纯基线）。</summary>
+    private bool _pendingReconnect;
 
     private sealed class ValueAlarmState
     {
@@ -43,6 +48,13 @@ public sealed class DataSourceAlarmTracker
 
         /// <summary>是否已确认触发告警（等待恢复）。</summary>
         public bool Confirmed;
+
+        // ── 触发时捕获的上下文（供断线/班次切换时写恢复事件，无需反查配置） ──
+        public string DeviceId = string.Empty;
+        public string DeviceName = string.Empty;
+        public string AlarmId = string.Empty;
+        public string AlarmName = string.Empty;
+        public string PlcAddress = string.Empty;
     }
 
     public DataSourceAlarmTracker(
@@ -63,7 +75,7 @@ public sealed class DataSourceAlarmTracker
 
     /// <summary>
     /// 注入一次采样（读取成功后调用）。更新值项 CurrentValue 并驱动告警状态机。
-    /// 调用方需保证仅对启用中的源且读取成功后调用（读取失败不驱动状态机，避免瞬时故障误判恢复）。
+    /// 调用方需保证仅对启用中的值项且读取成功后调用（读取失败不驱动状态机，避免瞬时故障误判恢复）。
     /// </summary>
     public void Observe(Device device, DataSource source, DataSourceValue valueItem, int value, string shiftName)
     {
@@ -76,10 +88,16 @@ public sealed class DataSourceAlarmTracker
             _states[key] = state;
         }
 
-        // 首个有效采样只建立基线：应用启动时已处于越限/偏离不算新告警。
         if (!state.FirstSampleSeen)
         {
+            // 首个有效采样：冷启动只建基线；断线重连后若已越限/偏离，直接进入判定（修复"重连告警丢失窗口"）
             state.FirstSampleSeen = true;
+            if (_pendingReconnect)
+            {
+                _pendingReconnect = false;
+                if (valueItem.IsOutOfRange || valueItem.IsDeviatingFromExpected)
+                    EnterAlarm(device, source, valueItem, state, now, shiftName);
+            }
             return;
         }
 
@@ -90,6 +108,20 @@ public sealed class DataSourceAlarmTracker
         else if (valueItem.HasExpectedValue)
         {
             EvaluateExpected(device, source, valueItem, state, now, shiftName);
+        }
+    }
+
+    /// <summary>进入越限/偏离（数值型开始 pending 计时；非数值型立即触发）。</summary>
+    private void EnterAlarm(Device device, DataSource source, DataSourceValue valueItem, ValueAlarmState state, DateTime now, string shiftName)
+    {
+        if (valueItem.HasLimits)
+        {
+            state.PendingOutOfRange = true;
+            state.PendingSince = now;
+        }
+        else if (valueItem.HasExpectedValue && !state.Confirmed)
+        {
+            Trigger(device, source, valueItem, state, now, shiftName);
         }
     }
 
@@ -106,7 +138,7 @@ public sealed class DataSourceAlarmTracker
             else if (!state.Confirmed
                      && (now - state.PendingSince).TotalSeconds >= Math.Max(0, valueItem.ConfirmSeconds))
             {
-                Trigger(device, source, valueItem, now, shiftName);
+                Trigger(device, source, valueItem, state, now, shiftName);
                 state.Confirmed = true;
             }
         }
@@ -115,7 +147,7 @@ public sealed class DataSourceAlarmTracker
             // 回到「限值 ∓ 滞回」以内：解除告警；未确认的 pending 一并取消
             if (state.Confirmed)
             {
-                Recover(device, source, valueItem, now, shiftName);
+                Recover(device, source, valueItem, state, now, shiftName);
             }
             state.PendingOutOfRange = false;
             state.Confirmed = false;
@@ -136,36 +168,41 @@ public sealed class DataSourceAlarmTracker
             // 离散量不做延时：立即触发（设计稿 §4）
             if (!state.Confirmed)
             {
-                Trigger(device, source, valueItem, now, shiftName);
+                Trigger(device, source, valueItem, state, now, shiftName);
                 state.Confirmed = true;
             }
         }
         else if (state.Confirmed)
         {
-            Recover(device, source, valueItem, now, shiftName);
+            Recover(device, source, valueItem, state, now, shiftName);
             state.Confirmed = false;
         }
     }
 
-    private void Trigger(Device device, DataSource source, DataSourceValue valueItem, DateTime now, string shiftName)
+    private void Trigger(Device device, DataSource source, DataSourceValue valueItem, ValueAlarmState state, DateTime now, string shiftName)
     {
-        var alarmId = SourceAlarmId(valueItem.Id);
+        // 捕获上下文，供断线/班次切换时写恢复事件
+        state.DeviceId = device.Id;
+        state.DeviceName = device.Name;
+        state.AlarmId = SourceAlarmId(valueItem.Id);
+        state.AlarmName = $"{source.Name}-{valueItem.Name}";
+        state.PlcAddress = valueItem.PlcAddress;
+
         _alarmHistory.LogAlarmEvent(
-            device.Id, device.Name, alarmId, $"{source.Name}-{valueItem.Name}", valueItem.PlcAddress,
+            device.Id, device.Name, state.AlarmId, state.AlarmName, state.PlcAddress,
             AlarmEventType.Triggered, now, shiftName);
         TryNotify(device, source, valueItem, now);
-        TryPublishEdge(device, source, valueItem, valueItem.PlcAddress, AlarmEventType.Triggered, AlarmLevel.Medium, now, shiftName);
+        TryPublishEdge(device, source, valueItem, state.PlcAddress, AlarmEventType.Triggered, AlarmLevel.Medium, now, shiftName);
         _logger.LogInformation("数据源 {Source} 值项 {Value}（设备 {Device}）触发告警：当前值 {Current}{Unit}",
             source.Name, valueItem.Name, device.Name, valueItem.CurrentValue, valueItem.Unit);
     }
 
-    private void Recover(Device device, DataSource source, DataSourceValue valueItem, DateTime now, string shiftName)
+    private void Recover(Device device, DataSource source, DataSourceValue valueItem, ValueAlarmState state, DateTime now, string shiftName)
     {
-        var alarmId = SourceAlarmId(valueItem.Id);
         _alarmHistory.LogAlarmEvent(
-            device.Id, device.Name, alarmId, $"{source.Name}-{valueItem.Name}", valueItem.PlcAddress,
+            device.Id, device.Name, state.AlarmId, state.AlarmName, state.PlcAddress,
             AlarmEventType.Recovered, now, shiftName);
-        TryPublishEdge(device, source, valueItem, valueItem.PlcAddress, AlarmEventType.Recovered, AlarmLevel.Medium, now, shiftName);
+        TryPublishEdge(device, source, valueItem, state.PlcAddress, AlarmEventType.Recovered, AlarmLevel.Medium, now, shiftName);
         _logger.LogInformation("数据源 {Source} 值项 {Value}（设备 {Device}）告警恢复：当前值 {Current}{Unit}",
             source.Name, valueItem.Name, device.Name, valueItem.CurrentValue, valueItem.Unit);
     }
@@ -210,11 +247,41 @@ public sealed class DataSourceAlarmTracker
         }
     }
 
-    /// <summary>PLC 断线/停止：清空全部状态（重连后按首采样基线重新判定，与 CounterAlarm 断线清理口径一致）。</summary>
-    public void RecoverAllOnDisconnect(string shiftName) => _states.Clear();
+    /// <summary>
+    /// PLC 断线：为所有已触发的值项写恢复事件（避免报警中心悬空"触发中"），清空状态，
+    /// 并置位重连标记——重连后首个采样若已越限/偏离直接进入判定（修复"重连告警丢失窗口"）。
+    /// </summary>
+    public void RecoverAllOnDisconnect(string shiftName)
+    {
+        var now = _nowProvider();
+        foreach (var state in _states.Values.ToList())
+        {
+            if (!state.Confirmed) continue;
+            _alarmHistory.LogAlarmEvent(
+                state.DeviceId, state.DeviceName, state.AlarmId, state.AlarmName, state.PlcAddress,
+                AlarmEventType.Recovered, now, shiftName);
+            _logger.LogInformation("数据源告警 {Alarm}（设备 {Device}）断线恢复", state.AlarmName, state.DeviceName);
+        }
+        _states.Clear();
+        _pendingReconnect = true;
+    }
 
-    /// <summary>班次切换：重置全部状态（已触发告警由下一轮采样按新班次重新判定边界，不写班次切换事件）。</summary>
-    public void ResetAll() => _states.Clear();
+    /// <summary>
+    /// 班次切换：为所有已触发的值项写恢复事件（新班次重新判定边界），清空状态，不置重连标记。
+    /// </summary>
+    public void ResetAll()
+    {
+        var now = _nowProvider();
+        foreach (var state in _states.Values.ToList())
+        {
+            if (!state.Confirmed) continue;
+            _alarmHistory.LogAlarmEvent(
+                state.DeviceId, state.DeviceName, state.AlarmId, state.AlarmName, state.PlcAddress,
+                AlarmEventType.Recovered, now, string.Empty);
+            _logger.LogInformation("数据源告警 {Alarm}（设备 {Device}）班次切换恢复", state.AlarmName, state.DeviceName);
+        }
+        _states.Clear();
+    }
 
     /// <summary>删除设备：清理该设备全部值项状态。</summary>
     public void RemoveDevice(string deviceId)
@@ -248,4 +315,6 @@ public sealed class DataSourceAlarmTracker
             ? (state.PendingOutOfRange, state.PendingSince)
             : null;
     }
+
+    internal bool IsPendingReconnectForTest() => _pendingReconnect;
 }

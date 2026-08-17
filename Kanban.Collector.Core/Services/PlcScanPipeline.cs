@@ -347,6 +347,7 @@ public sealed class PlcScanPipeline
             var anyValueRead = false;
             foreach (var value in source.Values.ToList())
             {
+                if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
                 if (string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
                 if (adapter.AddressCodec.Parse(value.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
                 {

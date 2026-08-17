@@ -85,3 +85,5 @@ DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」延
 DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同
 DeviceConfigValidator.cs	采集源「{source.Name}」触发地址格式无效
 DeviceDetailViewModel.cs	{value.Name}（定时采集）
+DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」未配置采集地址
+DeviceConfigValidator.cs	采集源「{source.Name}」有 {dupAddress.Count()} 个值项使用相同采集地址「{dupAddress.Key}」

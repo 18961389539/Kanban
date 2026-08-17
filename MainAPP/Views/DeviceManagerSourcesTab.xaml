@@ -162,6 +162,10 @@
                     Width="90"
                     Binding="{Binding ExpectedValue, UpdateSourceTrigger=PropertyChanged}"
                     Header="预期值" />
+                <DataGridCheckBoxColumn
+                    Width="60"
+                    Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}"
+                    Header="启用" />
             </DataGrid.Columns>
         </DataGrid>
 
