@@ -42,6 +42,10 @@ public partial class DataSourceValue : ObservableObject
     [ObservableProperty]
     private string _unit = string.Empty;
 
+    /// <summary>是否启用（停用后采集循环与快照跳过此值项，告警状态一并清理）</summary>
+    [ObservableProperty]
+    private bool _enabled = true;
+
     // ──────────── 判定配置（值项级，各自独立） ────────────
 
     /// <summary>
@@ -83,6 +87,7 @@ public partial class DataSourceValue : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTriggered))]
+    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
     [property: JsonIgnore]
     [property: NotMapped]
     private int _currentValue;
@@ -123,10 +128,27 @@ public partial class DataSourceValue : ObservableObject
     public bool IsDeviatingFromExpected => HasExpectedValue && CurrentValue != ExpectedValue!.Value;
 
     /// <summary>
-    /// 是否处于告警态（派生，供 UI 实时着色）。数值型 = 越出区间；非数值型 = 偏离预期。
+    /// 当前值是否处于告警态（派生，供 UI 实时着色）。数值型 = 越出区间；非数值型 = 偏离预期。
     /// 仅反映当前采样值的静态判定，不含延时确认（延时确认由扫描状态机管理）。
     /// </summary>
     [JsonIgnore]
     [NotMapped]
     public bool IsTriggered => IsOutOfRange || IsDeviatingFromExpected;
+
+    /// <summary>
+    /// 当前值展示文本：配置了枚举映射且当前值命中时显示枚举显示名（如 2 → "报警"），
+    /// 否则显示数值本身（枚举展示归一化，设计稿 §2/§4；需求 2026-08-17）。
+    /// </summary>
+    [JsonIgnore]
+    [NotMapped]
+    public string CurrentDisplayText
+    {
+        get
+        {
+            var match = EnumValues.FirstOrDefault(e => e.Value == CurrentValue);
+            return match != null && !string.IsNullOrWhiteSpace(match.DisplayName)
+                ? match.DisplayName
+                : CurrentValue.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
 }
