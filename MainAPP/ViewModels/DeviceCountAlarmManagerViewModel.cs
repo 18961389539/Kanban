@@ -76,7 +76,7 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
         if (SelectedDevice == null) return;
         var baseName = string.Format(Strings.F198, SelectedDevice.CounterAlarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CounterAlarms.Select(c => c.Name));
-        var alarm = new CounterAlarm { Name = newName };
+        var alarm = new CounterAlarm { DeviceId = SelectedDevice.Id, Name = newName };
         SelectedDevice.CounterAlarms.Add(alarm);
         // 不立即 SaveAll：统一由 Save 按钮校验（含报警地址唯一性）后持久化，避免绕过校验写入非法配置
         _host.MarkDirty();

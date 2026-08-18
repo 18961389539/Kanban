@@ -1,4 +1,5 @@
 using Kanban.Collector.Core.Models;
+using MainAPP.Services;
 namespace MainAPP.Models;
 
 /// <summary>
@@ -10,9 +11,7 @@ public sealed record DeviceConfigError
     /// <summary>出错的设备。</summary>
     public Device Device { get; init; } = null!;
 
-    /// <summary>
-    /// 目标选项卡索引：0=设备参数, 1=报警管理, 2=缺陷管理, 3=计数报警。
-    /// </summary>
+    /// <summary>目标选项卡索引。</summary>
     public int TargetTabIndex { get; init; }
 
     /// <summary>面向用户的错误描述。</summary>

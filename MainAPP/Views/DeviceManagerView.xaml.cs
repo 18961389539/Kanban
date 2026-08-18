@@ -191,8 +191,8 @@ public partial class DeviceManagerView : UserControl
         if (e.Data.GetData(typeof(Device)) is not Device dragged) return;
 
         var targetItem = FindListBoxItem(e.OriginalSource);
-        var target = (targetItem?.DataContext as Device) ?? vm.SelectedDevice;
-        if (target != null)
+        // 只接受鼠标实际悬停的设备项；空白区域不应隐式移动到当前选中设备。
+        if (targetItem?.DataContext is Device target)
             vm.MoveDevice(dragged, target);
         e.Handled = true;
     }

@@ -55,15 +55,9 @@ public partial class Alarm : ObservableObject
     private string _plcAddress = string.Empty;
 
     /// <summary>
-    /// PlcAddress 变化时重新生成确定性 Id（DeviceId_PlcAddress），
-    /// 使删除后重新添加同名同地址报警能续接历史数据。
-    /// 仅当 DeviceId 和 PlcAddress 均非空时生效，否则保留随机 GUID。
+    /// 地址编辑不改变业务主键。历史告警事件按 Id 关联，主键必须在对象生命周期内稳定。
+    /// 缺失 Id 的旧配置由仓储在迁移边界生成。
     /// </summary>
-    partial void OnPlcAddressChanged(string value)
-    {
-        if (!string.IsNullOrEmpty(DeviceId) && !string.IsNullOrEmpty(value))
-            Id = $"{DeviceId}_{value}";
-    }
 
     /// <summary>
     /// 报警描述（展示在看板上的提示信息）

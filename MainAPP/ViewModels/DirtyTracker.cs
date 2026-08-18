@@ -18,6 +18,9 @@ public sealed class DirtyTracker
         nameof(Defect.Count),
         nameof(CounterAlarm.CurrentValue),
         nameof(CounterAlarm.IsTriggered),
+        nameof(DataSourceValue.CurrentValue),
+        nameof(DataSourceValue.IsTriggered),
+        nameof(DataSourceValue.CurrentDisplayText),
     };
 
     private readonly Action _markDirty;
@@ -44,9 +47,11 @@ public sealed class DirtyTracker
         d.Alarms.CollectionChanged += OnChildCollectionChanged;
         d.Defects.CollectionChanged += OnChildCollectionChanged;
         d.CounterAlarms.CollectionChanged += OnChildCollectionChanged;
+        d.Sources.CollectionChanged += OnSourceCollectionChanged;
         foreach (var a in d.Alarms) a.PropertyChanged += OnChildItemPropertyChanged;
         foreach (var def in d.Defects) def.PropertyChanged += OnChildItemPropertyChanged;
         foreach (var c in d.CounterAlarms) c.PropertyChanged += OnChildItemPropertyChanged;
+        foreach (var source in d.Sources) AttachSource(source);
     }
 
     public void DetachDevice(Device d)
@@ -55,9 +60,11 @@ public sealed class DirtyTracker
         d.Alarms.CollectionChanged -= OnChildCollectionChanged;
         d.Defects.CollectionChanged -= OnChildCollectionChanged;
         d.CounterAlarms.CollectionChanged -= OnChildCollectionChanged;
+        d.Sources.CollectionChanged -= OnSourceCollectionChanged;
         foreach (var a in d.Alarms) a.PropertyChanged -= OnChildItemPropertyChanged;
         foreach (var def in d.Defects) def.PropertyChanged -= OnChildItemPropertyChanged;
         foreach (var c in d.CounterAlarms) c.PropertyChanged -= OnChildItemPropertyChanged;
+        foreach (var source in d.Sources) DetachSource(source);
     }
 
     public void DetachAll(IEnumerable<Device> devices)
@@ -75,7 +82,7 @@ public sealed class DirtyTracker
         if (e.OldItems != null)
             foreach (var item in e.OldItems)
                 if (item is INotifyPropertyChanged np) np.PropertyChanged -= OnChildItemPropertyChanged;
-        // 集合增删的脏标记由对应命令显式标记，此处仅维护事件订阅
+        MarkDirty();
     }
 
     private void OnChildItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -83,6 +90,67 @@ public sealed class DirtyTracker
         // 运行时字段（计数/当前值等）由采集线程写入，不计入未保存标记
         if (e.PropertyName != null && RuntimeProperties.Contains(e.PropertyName))
             return;
+        MarkDirty();
+    }
+
+    private void OnSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (var item in e.NewItems)
+                if (item is DataSource source) AttachSource(source);
+        if (e.OldItems != null)
+            foreach (var item in e.OldItems)
+                if (item is DataSource source) DetachSource(source);
+        MarkDirty();
+    }
+
+    private void AttachSource(DataSource source)
+    {
+        source.PropertyChanged += OnChildItemPropertyChanged;
+        source.Values.CollectionChanged += OnValueCollectionChanged;
+        foreach (var value in source.Values) AttachValue(value);
+    }
+
+    private void DetachSource(DataSource source)
+    {
+        source.PropertyChanged -= OnChildItemPropertyChanged;
+        source.Values.CollectionChanged -= OnValueCollectionChanged;
+        foreach (var value in source.Values) DetachValue(value);
+    }
+
+    private void OnValueCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (var item in e.NewItems)
+                if (item is DataSourceValue value) AttachValue(value);
+        if (e.OldItems != null)
+            foreach (var item in e.OldItems)
+                if (item is DataSourceValue value) DetachValue(value);
+        MarkDirty();
+    }
+
+    private void AttachValue(DataSourceValue value)
+    {
+        value.PropertyChanged += OnChildItemPropertyChanged;
+        value.EnumValues.CollectionChanged += OnEnumCollectionChanged;
+        foreach (var item in value.EnumValues) item.PropertyChanged += OnChildItemPropertyChanged;
+    }
+
+    private void DetachValue(DataSourceValue value)
+    {
+        value.PropertyChanged -= OnChildItemPropertyChanged;
+        value.EnumValues.CollectionChanged -= OnEnumCollectionChanged;
+        foreach (var item in value.EnumValues) item.PropertyChanged -= OnChildItemPropertyChanged;
+    }
+
+    private void OnEnumCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (var item in e.NewItems)
+                if (item is INotifyPropertyChanged np) np.PropertyChanged += OnChildItemPropertyChanged;
+        if (e.OldItems != null)
+            foreach (var item in e.OldItems)
+                if (item is INotifyPropertyChanged np) np.PropertyChanged -= OnChildItemPropertyChanged;
         MarkDirty();
     }
 }

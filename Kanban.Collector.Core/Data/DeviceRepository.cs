@@ -116,21 +116,10 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public async Task SaveAllAsync()
     {
-        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘
+        // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘。
         if (RemotePersistenceHook != null)
         {
-            List<Device> remoteSnapshot;
-            lock (_collectionLock)
-            {
-                foreach (var device in Devices)
-                {
-                    foreach (var a in device.Alarms) a.DeviceId = device.Id;
-                    foreach (var d in device.Defects) d.DeviceId = device.Id;
-                    foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
-                    foreach (var s in device.Sources) s.DeviceId = device.Id;
-                }
-                remoteSnapshot = Devices.ToList();
-            }
+            var remoteSnapshot = CreateDeepSnapshot();
             await RemotePersistenceHook(remoteSnapshot);
             return;
         }
@@ -146,66 +135,45 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public void LoadAll()
     {
-        lock (_collectionLock)
+        if (!File.Exists(FilePath))
         {
-            Devices.Clear();
-            DeviceMap.Clear();
-            Runtimes.Clear();
-            RuntimeMap.Clear();
-            LoadErrorMessage = null;
+            lock (_collectionLock)
+            {
+                ReplaceStateLocked([]);
+                LoadErrorMessage = null;
+            }
+            return;
         }
-
-        if (!File.Exists(FilePath)) return;
 
         try
         {
             var json = File.ReadAllText(FilePath);
-            var devices = JsonSerializer.Deserialize<List<Device>>(json, JsonOptions);
-            if (devices != null)
+            var devices = JsonSerializer.Deserialize<List<Device>>(json, JsonOptions)
+                          ?? throw new InvalidDataException("设备配置为空或格式无效");
+            NormalizeAndValidate(devices, migrateLegacy: true);
+            lock (_collectionLock)
             {
-                lock (_collectionLock)
-                {
-                    foreach (var d in devices)
-                    {
-                        // 旧版单值数据源（重构前平铺格式）迁移为 Values[0]（幂等）
-                        foreach (var source in d.Sources)
-                        {
-                            var hadLegacy = source.Values.Count == 0 && source.ExtensionData?.ContainsKey("PlcAddress") == true;
-                            source.MigrateLegacySingleValue();
-                            if (hadLegacy)
-                            {
-                                Log.Information(
-                                    "数据源 {Source}（设备 {Device}）已从旧版单值格式迁移为值项格式，值项默认名「值1」，可在设备管理中修改（修复 2026-08-17 迁移提示）",
-                                    source.Name, d.Name);
-                            }
-                        }
-                        Devices.Add(d);
-                        DeviceMap[d.Id] = d;
-                        var runtime = new DeviceRuntime(d);
-                        Runtimes.Add(runtime);
-                        RuntimeMap[d.Id] = runtime;
-                    }
-                }
+                ReplaceStateLocked(devices);
+                LoadErrorMessage = null;
             }
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            // 文件损坏：备份原文件供用户恢复，而非直接覆写导致数据永久丢失
-            Log.Warning(ex, "devices.json 解析失败，将备份原文件并回退空设备列表");
-            var corruptPath = FilePath + ".corrupt";
-            try
-            {
-                if (File.Exists(corruptPath))
-                    File.Delete(corruptPath);
-                File.Move(FilePath, corruptPath);
-            }
-            catch (Exception backupEx)
-            {
-                Log.Warning(backupEx, "devices.json 备份为 .corrupt 失败，原文件保留原位");
-            }
-
-            LoadErrorMessage = $"设备配置文件 devices.json 损坏（{ex.Message}），已备份为 devices.json.corrupt。" +
-                               "已加载空设备列表，请重新配置设备后保存。";
+            HandleCorruptFile(ex);
+        }
+        catch (InvalidDataException ex)
+        {
+            HandleCorruptFile(ex);
+        }
+        catch (IOException ex)
+        {
+            LoadErrorMessage = $"设备配置文件读取失败：{ex.Message}。原文件已保留。";
+            Log.Warning(ex, "读取 devices.json 失败，保留当前内存配置");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            LoadErrorMessage = $"设备配置文件无权访问：{ex.Message}。原文件已保留。";
+            Log.Warning(ex, "访问 devices.json 权限不足，保留当前内存配置");
         }
     }
 
@@ -222,21 +190,8 @@ public class DeviceRepository : IDeviceRepository
         // 常规保存请使用 SaveAllAsync。
         if (RemotePersistenceHook != null)
         {
-            List<Device> remoteSnapshot;
-            lock (_collectionLock)
-            {
-                foreach (var device in Devices)
-                {
-                    foreach (var a in device.Alarms) a.DeviceId = device.Id;
-                    foreach (var d in device.Defects) d.DeviceId = device.Id;
-                    foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
-                    foreach (var s in device.Sources) s.DeviceId = device.Id;
-                }
-                remoteSnapshot = Devices.ToList();
-            }
-            // Task.Run 隔离同步上下文：RemotePersistenceHook 内部走 SignalR（真正异步），
-            // 直接 .GetAwaiter().GetResult() 在 UI 线程调用会死锁。Task.Run 转入线程池执行，
-            // 无 SynchronizationContext 回跳，避免死锁。仅 Remote 模式且需同步保存时命中此分支。
+            var remoteSnapshot = CreateDeepSnapshot();
+            // Task.Run 隔离同步上下文：RemotePersistenceHook 内部走 SignalR（真正异步）。
             Task.Run(() => RemotePersistenceHook(remoteSnapshot)).GetAwaiter().GetResult();
             return;
         }
@@ -269,28 +224,21 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public void ExportToFile(string path)
     {
-        List<Device> snapshot;
-        lock (_collectionLock)
-        {
-            foreach (var device in Devices)
-            {
-                foreach (var a in device.Alarms) a.DeviceId = device.Id;
-                foreach (var d in device.Defects) d.DeviceId = device.Id;
-                foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
-                foreach (var s in device.Sources) s.DeviceId = device.Id;
-            }
-            snapshot = Devices.ToList();
-        }
-
+        var snapshot = CreateDeepSnapshot();
         var json = JsonSerializer.Serialize(snapshot, JsonOptions);
         Services.AppSettings.WriteFileAtomically(path, json);
     }
 
     /// <summary>
-    /// 反序列化导入的 JSON 文本为设备列表；解析失败返回 null（由调用方提示错误）。
+    /// 反序列化导入的 JSON 文本为设备列表；格式或结构无效时返回 null。
     /// </summary>
     public List<Device>? ImportFromJson(string json)
-        => JsonSerializer.Deserialize<List<Device>>(json, JsonOptions);
+    {
+        var devices = JsonSerializer.Deserialize<List<Device>>(json, JsonOptions);
+        if (devices == null) return null;
+        NormalizeAndValidate(devices, migrateLegacy: true);
+        return devices;
+    }
 
     /// <summary>
     /// 用导入的设备列表整体替换内存中的设备配置（导入/导出用）。
@@ -303,46 +251,28 @@ public class DeviceRepository : IDeviceRepository
     public void ReplaceAll(IEnumerable<Device> newDevices)
     {
         var deviceList = newDevices as IList<Device> ?? newDevices.ToList();
+        NormalizeAndValidate(deviceList, migrateLegacy: true);
         lock (_collectionLock)
-        {
-            Devices.Clear();
-            DeviceMap.Clear();
-            Runtimes.Clear();
-            RuntimeMap.Clear();
-
-            foreach (var device in deviceList)
-            {
-                Devices.Add(device);
-                DeviceMap[device.Id] = device;
-                AddRuntime(device);
-            }
-        }
+            ReplaceStateLocked(deviceList);
     }
 
-    /// <summary>
-    /// 同步新增设备的 Runtime
-    /// </summary>
+    /// <summary>同步新增设备的 Runtime；同一设备 Id 已存在时保持幂等。</summary>
     public void AddRuntime(Device device)
     {
-        var runtime = new DeviceRuntime(device);
         lock (_collectionLock)
         {
-            Runtimes.Add(runtime);
+            if (RuntimeMap.ContainsKey(device.Id)) return;
+            AddRuntimeLocked(device);
         }
-        RuntimeMap[device.Id] = runtime;
     }
 
-    /// <summary>
-    /// 同步删除设备的 Runtime
-    /// </summary>
+    /// <summary>同步删除设备的 Runtime。</summary>
     public void RemoveRuntime(string deviceId)
     {
-        if (RuntimeMap.TryRemove(deviceId, out var runtime))
+        lock (_collectionLock)
         {
-            lock (_collectionLock)
-            {
+            if (RuntimeMap.TryRemove(deviceId, out var runtime))
                 Runtimes.Remove(runtime);
-            }
         }
     }
 
@@ -361,17 +291,11 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public DeviceRuntime EnsureRuntime(Device device)
     {
-        if (RuntimeMap.TryGetValue(device.Id, out var existing))
-            return existing;
-
         lock (_collectionLock)
         {
-            if (RuntimeMap.TryGetValue(device.Id, out existing))
+            if (RuntimeMap.TryGetValue(device.Id, out var existing))
                 return existing;
-            var runtime = new DeviceRuntime(device);
-            Runtimes.Add(runtime);
-            RuntimeMap[device.Id] = runtime;
-            return runtime;
+            return AddRuntimeLocked(device);
         }
     }
 
@@ -400,5 +324,153 @@ public class DeviceRepository : IDeviceRepository
     {
         lock (_collectionLock)
             return Runtimes.ToList();
+    }
+
+    private void NormalizeAndValidate(IList<Device> devices, bool migrateLegacy)
+    {
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var device in devices)
+        {
+            if (string.IsNullOrWhiteSpace(device.Id))
+                device.Id = Guid.NewGuid().ToString("N");
+            if (!ids.Add(device.Id))
+                throw new InvalidDataException($"设备 Id 重复：{device.Id}");
+
+            if (migrateLegacy)
+            {
+                foreach (var source in device.Sources)
+                {
+                    try
+                    {
+                        var hadLegacy = source.Values.Count == 0 && source.ExtensionData?.ContainsKey("PlcAddress") == true;
+                        source.MigrateLegacySingleValue();
+                        if (hadLegacy)
+                            Log.Information("数据源 {Source}（设备 {Device}）已从旧版单值格式迁移为值项格式，值项默认名「值1」", source.Name, device.Name);
+                    }
+                    catch (Exception ex) when (ex is FormatException or InvalidOperationException or KeyNotFoundException)
+                    {
+                        throw new InvalidDataException($"数据源「{source.Name}」旧版字段迁移失败", ex);
+                    }
+                }
+            }
+
+            NormalizeChildIds(device);
+            if (migrateLegacy)
+            {
+                /* migration is performed above before child validation */
+            }
+        }
+    }
+
+    private static void NormalizeChildIds(Device device)
+    {
+        var alarmIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var alarm in device.Alarms)
+        {
+            alarm.DeviceId = device.Id;
+            if (string.IsNullOrWhiteSpace(alarm.Id))
+                alarm.Id = !string.IsNullOrWhiteSpace(alarm.PlcAddress)
+                    ? $"{device.Id}_{alarm.PlcAddress}"
+                    : Guid.NewGuid().ToString("N");
+            if (!alarmIds.Add(alarm.Id))
+                throw new InvalidDataException($"设备「{device.Name}」报警 Id 无效或重复");
+        }
+
+        ValidateChildIds(device.Defects, "缺陷", device.Name, x => x.Id = Guid.NewGuid().ToString("N"), x => x.DeviceId = device.Id);
+        ValidateChildIds(device.CounterAlarms, "计数报警", device.Name, x => x.Id = Guid.NewGuid().ToString("N"), x => x.DeviceId = device.Id);
+
+        var sourceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in device.Sources)
+        {
+            source.DeviceId = device.Id;
+            if (string.IsNullOrWhiteSpace(source.Id)) source.Id = Guid.NewGuid().ToString("N");
+            if (!sourceIds.Add(source.Id))
+                throw new InvalidDataException($"设备「{device.Name}」采集源 Id 无效或重复");
+            var valueIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var value in source.Values)
+            {
+                if (string.IsNullOrWhiteSpace(value.Id)) value.Id = Guid.NewGuid().ToString("N");
+                if (!valueIds.Add(value.Id))
+                    throw new InvalidDataException($"采集源「{source.Name}」值项 Id 无效或重复");
+            }
+        }
+    }
+
+    private static void ValidateChildIds<T>(IEnumerable<T> items, string kind, string deviceName, Action<T> assignId, Action<T> assignDevice)
+        where T : class
+    {
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in items)
+        {
+            assignDevice(item);
+            var id = item switch
+            {
+                Defect d => d.Id,
+                CounterAlarm c => c.Id,
+                _ => string.Empty
+            };
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                assignId(item);
+                id = item switch { Defect d => d.Id, CounterAlarm c => c.Id, _ => string.Empty };
+            }
+            if (!ids.Add(id))
+                throw new InvalidDataException($"设备「{deviceName}」{kind} Id 无效或重复");
+        }
+    }
+
+    private void ReplaceStateLocked(IList<Device> devices)
+    {
+        Devices.Clear();
+        DeviceMap.Clear();
+        Runtimes.Clear();
+        RuntimeMap.Clear();
+        foreach (var device in devices)
+        {
+            Devices.Add(device);
+            DeviceMap[device.Id] = device;
+            AddRuntimeLocked(device);
+        }
+    }
+
+    private DeviceRuntime AddRuntimeLocked(Device device)
+    {
+        var runtime = new DeviceRuntime(device);
+        Runtimes.Add(runtime);
+        RuntimeMap[device.Id] = runtime;
+        return runtime;
+    }
+
+    private List<Device> CreateDeepSnapshot()
+    {
+        lock (_collectionLock)
+        {
+            foreach (var device in Devices)
+                NormalizeChildIds(device);
+            var json = JsonSerializer.Serialize(Devices.ToList(), JsonOptions);
+            return JsonSerializer.Deserialize<List<Device>>(json, JsonOptions)
+                   ?? new List<Device>();
+        }
+    }
+
+    private void HandleCorruptFile(Exception ex)
+    {
+        Log.Warning(ex, "devices.json 解析或结构校验失败，将备份原文件");
+        var corruptPath = FilePath + ".corrupt";
+        var backedUp = false;
+        try
+        {
+            if (File.Exists(corruptPath)) File.Delete(corruptPath);
+            File.Move(FilePath, corruptPath);
+            backedUp = true;
+        }
+        catch (Exception backupEx)
+        {
+            Log.Warning(backupEx, "devices.json 备份为 .corrupt 失败，原文件保留原位");
+        }
+
+        LoadErrorMessage = backedUp
+            ? $"设备配置文件 devices.json 无效（{ex.Message}），已备份为 devices.json.corrupt。当前内存配置未改变。"
+            : $"设备配置文件 devices.json 无效（{ex.Message}），备份失败，原文件已保留。当前内存配置未改变。";
     }
 }

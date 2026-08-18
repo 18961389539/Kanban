@@ -214,22 +214,38 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!--  空状态：筛选无结果时覆盖在 ListBox 上  -->
-                <Border Grid.Row="3" Margin="18,0,18,8" Visibility="Collapsed">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding DeviceList.FilteredDevices.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <controls:EmptyState
-                        IconKind="FilterRemoveOutline"
-                        Message="{x:Static resources:Strings.K227}"
-                        Hint="{x:Static resources:Strings.K228}" />
-                </Border>
+                <!-- 空状态：区分尚未配置设备与筛选无结果。 -->
+                <Grid Grid.Row="3" Margin="18,0,18,8">
+                    <Border Visibility="Collapsed">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DeviceList.HasDevices}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <controls:EmptyState IconKind="DevicesOutline" Message="暂无设备" Hint="请点击“新增设备”开始配置" />
+                    </Border>
+                    <Border Visibility="Collapsed">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding DeviceList.HasDevices}" Value="True" />
+                                            <Condition Binding="{Binding DeviceList.IsFiltering}" Value="True" />
+                                            <Condition Binding="{Binding DeviceList.HasFilteredDevices}" Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.K227}" Hint="{x:Static resources:Strings.K228}" />
+                    </Border>
+                </Grid>
 
                 <!--  操作按钮：主操作单行 + 更多下拉菜单承载低频操作  -->
                 <StackPanel

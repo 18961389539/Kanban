@@ -62,7 +62,7 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
         // 缺陷名在所属设备内唯一
         var baseName = string.Format(Strings.F188, SelectedDevice.Defects.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Defects.Select(d => d.Name));
-        var defect = new Defect { Name = newName };
+        var defect = new Defect { DeviceId = SelectedDevice.Id, Name = newName };
         SelectedDevice.Defects.Add(defect);
         _host.MarkDirty();
     }

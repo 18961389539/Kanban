@@ -24,6 +24,7 @@ public static class DeviceAuditService
             d.RecipeName ?? string.Empty,
             d.RecipeValue,
             d.Alarms.Select(a => new AlarmAuditItem(
+                a.Id ?? string.Empty,
                 a.Name ?? string.Empty,
                 a.PlcAddress ?? string.Empty,
                 a.Level,
@@ -39,7 +40,27 @@ public static class DeviceAuditService
                 c.MaxValue,
                 c.Enabled,
                 c.Unit ?? string.Empty,
-                c.Description ?? string.Empty)).ToArray()
+                c.Description ?? string.Empty)).ToArray(),
+            d.Sources.Select(s => new DataSourceAuditItem(
+                s.Id ?? string.Empty,
+                s.Name ?? string.Empty,
+                s.Type ?? string.Empty,
+                s.Enabled,
+                s.TriggerAddress ?? string.Empty,
+                s.TriggerValue,
+                s.AckValue,
+                s.Values.Select(v => new DataSourceValueAuditItem(
+                    v.Id ?? string.Empty,
+                    v.Name ?? string.Empty,
+                    v.PlcAddress ?? string.Empty,
+                    v.Unit ?? string.Empty,
+                    v.Enabled,
+                    v.LimitMin,
+                    v.LimitMax,
+                    v.Hysteresis,
+                    v.ConfirmSeconds,
+                    v.ExpectedValue,
+                    v.EnumValues.Select(e => new DataSourceEnumAuditItem(e.Value, e.DisplayName ?? string.Empty)).ToArray())).ToArray())).ToArray()
         )).ToArray();
 
         return new DeviceAuditSnapshot(items.Length, items);
@@ -64,10 +85,11 @@ public sealed record DeviceAuditItem(
     int RecipeValue,
     IReadOnlyList<AlarmAuditItem> Alarms,
     IReadOnlyList<DefectAuditItem> Defects,
-    IReadOnlyList<CounterAlarmAuditItem> CounterAlarms);
+    IReadOnlyList<CounterAlarmAuditItem> CounterAlarms,
+    IReadOnlyList<DataSourceAuditItem> Sources);
 
 /// <summary>报警配置审计条目。</summary>
-public sealed record AlarmAuditItem(string Name, string PlcAddress, AlarmLevel Level, string Description);
+public sealed record AlarmAuditItem(string Id, string Name, string PlcAddress, AlarmLevel Level, string Description);
 
 /// <summary>缺陷配置审计条目。</summary>
 public sealed record DefectAuditItem(string Name, string PlcAddress, DefectSeverity Severity, DefectCategory Category);
@@ -75,3 +97,28 @@ public sealed record DefectAuditItem(string Name, string PlcAddress, DefectSever
 /// <summary>计数报警配置审计条目。</summary>
 public sealed record CounterAlarmAuditItem(
     string Name, string PlcAddress, int MaxValue, bool Enabled, string Unit, string Description);
+
+public sealed record DataSourceAuditItem(
+    string Id,
+    string Name,
+    string Type,
+    bool Enabled,
+    string TriggerAddress,
+    int TriggerValue,
+    int AckValue,
+    IReadOnlyList<DataSourceValueAuditItem> Values);
+
+public sealed record DataSourceValueAuditItem(
+    string Id,
+    string Name,
+    string PlcAddress,
+    string Unit,
+    bool Enabled,
+    int LimitMin,
+    int LimitMax,
+    int Hysteresis,
+    int ConfirmSeconds,
+    int? ExpectedValue,
+    IReadOnlyList<DataSourceEnumAuditItem> EnumValues);
+
+public sealed record DataSourceEnumAuditItem(int Value, string DisplayName);

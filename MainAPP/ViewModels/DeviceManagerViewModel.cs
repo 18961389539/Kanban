@@ -112,6 +112,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [ObservableProperty]
     private bool _isDirty;
 
+    partial void OnIsDirtyChanged(bool value) => SaveCommand.NotifyCanExecuteChanged();
+
     /// <summary>
     /// 是否存在跨设备 PLC 地址冲突（两台及以上设备共用同一地址，会导致数据串台）。
     /// 编辑时实时刷新，供列表标题区显示冲突警告标记。
@@ -253,10 +255,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(IsPlcConnected));
     }
 
-    // 保存按钮的启用条件：至少有一个设备。
-    // 不依赖 SelectedDevice，避免删除选中设备后 SelectedDevice=null 导致 Save 按钮变灰无法持久化删除操作
-    // 保存期间 IsLoading=true（防双击并发保存 + 禁用 PLC 写命令），故 CanSave 需排除 IsLoading
-    private bool CanSave() => Devices.Count > 0 && !IsLoading;
+    // 只要存在未保存变更就允许保存，空列表也必须能够持久化（删除全部设备）。
+    private bool CanSave() => (IsDirty || Devices.Count > 0) && !IsLoading;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveDevice(Device? device)
@@ -379,6 +379,39 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                 Enabled = c.Enabled,
             });
         }
+        foreach (var source in src.Sources)
+        {
+            var sourceCopy = new DataSource
+            {
+                DeviceId = copy.Id,
+                Name = source.Name,
+                Type = source.Type,
+                Enabled = source.Enabled,
+                Description = source.Description,
+                TriggerAddress = source.TriggerAddress,
+                TriggerValue = source.TriggerValue,
+                AckValue = source.AckValue,
+            };
+            foreach (var value in source.Values)
+            {
+                var valueCopy = new DataSourceValue
+                {
+                    Name = value.Name,
+                    PlcAddress = value.PlcAddress,
+                    Unit = value.Unit,
+                    Enabled = value.Enabled,
+                    LimitMin = value.LimitMin,
+                    LimitMax = value.LimitMax,
+                    Hysteresis = value.Hysteresis,
+                    ConfirmSeconds = value.ConfirmSeconds,
+                    ExpectedValue = value.ExpectedValue,
+                };
+                foreach (var enumValue in value.EnumValues)
+                    valueCopy.EnumValues.Add(new DataSourceEnumValue { Value = enumValue.Value, DisplayName = enumValue.DisplayName });
+                sourceCopy.Values.Add(valueCopy);
+            }
+            copy.Sources.Add(sourceCopy);
+        }
         return copy;
     }
 
@@ -458,7 +491,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     private void RefreshAddressConflictFlag()
     {
-        var report = AddressConflictService.Compute(Devices);
+        var codec = _profileProvider?.Current?.AddressCodec
+                    ?? _addressCodecResolver?.Current
+                    ?? new MitsubishiAddressCodec();
+        var report = AddressConflictService.Compute(Devices, codec);
         AddressConflictSummaries = report.Summaries;
         AddressConflictCount = report.ConflictCount;
         HasAddressConflicts = report.ConflictCount > 0;
@@ -511,7 +547,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         DeviceList.RefreshDeviceList();
-        SyncAuditBaseline();
+        RefreshAddressConflictFlag();
         MarkDirty();
     }
 
@@ -538,7 +574,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         DeviceList.RefreshDeviceList();
         RefreshAddressConflictFlag();
-        SyncAuditBaseline();
         MarkDirty();
     }
 
@@ -580,7 +615,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         DeviceList.RefreshDeviceList();
-        SyncAuditBaseline();
+        RefreshAddressConflictFlag();
         MarkDirty();
         _dialog.NotifySuccess(string.Format(Strings.F114, samples.Count));
     }
@@ -643,7 +678,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(DeviceRuntimeMap)); // 列表色点实时刷新
     }
 
-    private void MarkDirty() => _dirtyTracker.MarkDirty();
+    private void MarkDirty()
+    {
+        _dirtyTracker.MarkDirty();
+        SaveCommand.NotifyCanExecuteChanged();
+    }
 
     /// <summary>
     /// 冲突重算防抖（审查修复 2026-08-13）：编辑输入每击键触发 MarkDirty → 全量跨设备

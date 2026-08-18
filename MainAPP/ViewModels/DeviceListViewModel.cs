@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Data;
@@ -24,6 +25,10 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private DeviceStatusFilter _statusFilter = DeviceStatusFilter.All;
+
+    public bool HasDevices => _deviceRepository.Devices.Count > 0;
+    public bool HasFilteredDevices => FilteredDevices.Cast<object>().Any();
+    public bool IsFiltering => !string.IsNullOrWhiteSpace(SearchKeyword) || StatusFilter != DeviceStatusFilter.All;
 
     /// <summary>状态筛选下拉选项（全部 / 运行 / 报警 / 待机 / 离线）。</summary>
     public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
@@ -66,20 +71,33 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
         _deviceRepository = deviceRepository;
         FilteredDevices = CollectionViewSource.GetDefaultView(_deviceRepository.Devices);
 
+        _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged += OnRuntimesCollectionChanged;
         foreach (var rt in _deviceRepository.Runtimes) AttachRuntime(rt);
     }
 
-    partial void OnSearchKeywordChanged(string value) => ApplyFilter();
+    partial void OnSearchKeywordChanged(string value)
+    {
+        ApplyFilter();
+        NotifyFilterState();
+    }
 
-    partial void OnStatusFilterChanged(DeviceStatusFilter value) => ApplyFilter();
+    partial void OnStatusFilterChanged(DeviceStatusFilter value)
+    {
+        ApplyFilter();
+        NotifyFilterState();
+    }
 
     /// <summary>强制刷新设备列表视图（LoadAll 后 CollectionView 可能未立即响应 Reset + Add 序列）。</summary>
     public void RefreshDeviceList()
     {
-        FilteredDevices.Refresh();
-        Serilog.Log.Information("DeviceListViewModel.RefreshDeviceList：Devices.Count={Count}, FilteredDevices.Filter={Filter}",
-            _deviceRepository.Devices.Count, FilteredDevices.Filter == null ? "null" : "set");
+        UiDispatcher.Dispatch(() =>
+        {
+            FilteredDevices.Refresh();
+            NotifyFilterState();
+            Serilog.Log.Information("DeviceListViewModel.RefreshDeviceList：Devices.Count={Count}, FilteredDevices.Filter={Filter}",
+                _deviceRepository.Devices.Count, FilteredDevices.Filter == null ? "null" : "set");
+        });
     }
 
     private void ApplyFilter()
@@ -117,6 +135,16 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             if ((c.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
             if ((c.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
         }
+        foreach (var source in d.Sources)
+        {
+            if ((source.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+            if ((source.Type ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+            foreach (var value in source.Values)
+            {
+                if ((value.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+                if ((value.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+            }
+        }
         return false;
     }
 
@@ -134,6 +162,23 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             DeviceStatusFilter.Offline => status == (int)DeviceStatus.Unknown,
             _ => true,
         };
+    }
+
+    private void OnDevicesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        UiDispatcher.Dispatch(() =>
+        {
+            FilteredDevices.Refresh();
+            NotifyFilterState();
+            OnPropertyChanged(nameof(DeviceSummaryText));
+        });
+    }
+
+    private void NotifyFilterState()
+    {
+        OnPropertyChanged(nameof(HasDevices));
+        OnPropertyChanged(nameof(HasFilteredDevices));
+        OnPropertyChanged(nameof(IsFiltering));
     }
 
     private void OnRuntimesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -162,6 +207,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged -= OnRuntimesCollectionChanged;
         foreach (var rt in _deviceRepository.Runtimes)
             DetachRuntime(rt);

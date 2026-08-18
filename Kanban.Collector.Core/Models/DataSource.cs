@@ -85,9 +85,11 @@ public partial class DataSource : ObservableObject
     public void MigrateLegacySingleValue()
     {
         if (Values.Count > 0 || ExtensionData == null) return;
-        if (!ExtensionData.TryGetValue("PlcAddress", out var addr) || string.IsNullOrWhiteSpace(addr.GetString()))
+        if (!ExtensionData.TryGetValue("PlcAddress", out var addr)
+            || addr.ValueKind != JsonValueKind.String
+            || string.IsNullOrWhiteSpace(addr.GetString()))
         {
-            // 无旧单值数据：扩展区仅残留运行时字段（CurrentValue 等）或空，直接清理
+            // 无旧单值数据：扩展区仅残留运行时字段或空，直接清理
             ExtensionData = null;
             return;
         }
@@ -95,15 +97,14 @@ public partial class DataSource : ObservableObject
         var value = new DataSourceValue
         {
             Name = "值1",
-            PlcAddress = addr.GetString() ?? string.Empty,
+            PlcAddress = addr.GetString()!,
         };
-        if (ExtensionData.TryGetValue("Unit", out var unit)) value.Unit = unit.GetString() ?? string.Empty;
-        if (ExtensionData.TryGetValue("LimitMin", out var min)) value.LimitMin = min.GetInt32();
-        if (ExtensionData.TryGetValue("LimitMax", out var max)) value.LimitMax = max.GetInt32();
-        if (ExtensionData.TryGetValue("Hysteresis", out var hys)) value.Hysteresis = hys.GetInt32();
-        if (ExtensionData.TryGetValue("ConfirmSeconds", out var sec)) value.ConfirmSeconds = sec.GetInt32();
-        if (ExtensionData.TryGetValue("ExpectedValue", out var exp) && exp.ValueKind == JsonValueKind.Number)
-            value.ExpectedValue = exp.GetInt32();
+        if (TryGetString("Unit", out var unit)) value.Unit = unit;
+        if (TryGetInt("LimitMin", out var min)) value.LimitMin = min;
+        if (TryGetInt("LimitMax", out var max)) value.LimitMax = max;
+        if (TryGetInt("Hysteresis", out var hys)) value.Hysteresis = hys;
+        if (TryGetInt("ConfirmSeconds", out var sec)) value.ConfirmSeconds = sec;
+        if (TryGetInt("ExpectedValue", out var exp)) value.ExpectedValue = exp;
         if (ExtensionData.TryGetValue("EnumValues", out var enums) && enums.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in enums.EnumerateArray())
@@ -116,6 +117,24 @@ public partial class DataSource : ObservableObject
 
         Values.Add(value);
         ExtensionData = null;
+    }
+
+    private bool TryGetString(string key, out string value)
+    {
+        value = string.Empty;
+        return ExtensionData != null
+            && ExtensionData.TryGetValue(key, out var element)
+            && element.ValueKind == JsonValueKind.String
+            && (value = element.GetString() ?? string.Empty) is not null;
+    }
+
+    private bool TryGetInt(string key, out int value)
+    {
+        value = 0;
+        return ExtensionData != null
+            && ExtensionData.TryGetValue(key, out var element)
+            && element.ValueKind == JsonValueKind.Number
+            && element.TryGetInt32(out value);
     }
 
     /// <summary>是否配置了触发地址（电平触发）。</summary>

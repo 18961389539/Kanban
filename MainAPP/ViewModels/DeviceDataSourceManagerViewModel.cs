@@ -84,7 +84,7 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
         if (SelectedDevice == null) return;
         var baseName = string.Format(Strings.F198, SelectedDevice.Sources.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.Sources.Select(s => s.Name));
-        var source = new DataSource { Name = newName };
+        var source = new DataSource { DeviceId = SelectedDevice.Id, Name = newName };
         source.Values.Add(new DataSourceValue { Name = "值1" });
         SelectedDevice.Sources.Add(source);
         // 不立即 SaveAll：统一由 Save 按钮校验（含阈值/地址规则）后持久化

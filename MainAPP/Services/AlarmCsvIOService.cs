@@ -239,12 +239,8 @@ public class AlarmCsvIOService(
         // 追加模式：同 canonical PLC 地址覆盖现有项（CSV 内若重复，后行覆盖前行）
         foreach (var alarm in imported)
         {
-            // 先注入 DeviceId，再重新赋值 PlcAddress 触发 OnPlcAddressChanged 生成确定性 Id
-            // （Alarm 模型仅有 OnPlcAddressChanged，无 OnDeviceIdChanged，故需手动重触发）
+            // 导入对象使用自身稳定 Id；已有同地址报警在下方覆盖时保留其历史 Id。
             alarm.DeviceId = device.Id;
-            var addr = alarm.PlcAddress;
-            alarm.PlcAddress = string.Empty;
-            alarm.PlcAddress = addr;
 
             var canonicalAddress = codec.CanonicalKey(alarm.PlcAddress);
             if (existingByCanonicalAddress.TryGetValue(canonicalAddress, out var existing))
