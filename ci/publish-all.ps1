@@ -22,7 +22,8 @@ param(
     [string]$Runtime = "win-x64",
     [switch]$SelfContained,
     [switch]$SkipWeb,
-    [switch]$SkipSim
+    [switch]$SkipSim,
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -52,6 +53,16 @@ function Invoke-Publish {
 }
 
 try {
+    $resolvedOutput = [System.IO.Path]::GetFullPath($OutputDir)
+    $resolvedRepo = [System.IO.Path]::GetFullPath($repoRoot).TrimEnd('\')
+    $resolvedUser = [System.IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\')
+    $root = [System.IO.Path]::GetPathRoot($resolvedOutput).TrimEnd('\')
+    if ($resolvedOutput -eq $resolvedRepo -or $resolvedOutput -eq $resolvedUser -or $resolvedOutput -eq $root) {
+        throw "refusing unsafe output directory: $resolvedOutput"
+    }
+    if ((Test-Path $OutputDir) -and -not $Force) {
+        throw "output directory exists; pass -Force to replace it: $resolvedOutput"
+    }
     if (Test-Path $OutputDir) { Remove-Item $OutputDir -Recurse -Force }
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 
@@ -112,6 +123,14 @@ try {
     # 4) ship the service installer next to the output for convenience
     $installer = Join-Path $repoRoot "ci\install-collector-service.ps1"
     if (Test-Path $installer) { Copy-Item $installer $OutputDir -Force }
+
+    $manifest = Join-Path $OutputDir "publish-manifest.sha256"
+    Get-ChildItem -Path $OutputDir -Recurse -File |
+        Where-Object { $_.FullName -ne $manifest } |
+        Get-FileHash -Algorithm SHA256 |
+        ForEach-Object { "$($_.Hash)  $($_.Path.Substring($resolvedOutput.Length).TrimStart('\','/'))" } |
+        Set-Content -Path $manifest -Encoding ASCII
+    if (-not (Test-Path $manifest)) { throw "publish manifest was not created" }
 
     Write-Host ""
     Write-Host "==> publish complete: $OutputDir"

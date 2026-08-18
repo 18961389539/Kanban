@@ -574,10 +574,31 @@ public sealed class RemoteHistoryQueryService :
                 .ToList(),
         };
         var response = InvokeBatch(request);
-        var result = new Dictionary<string, List<T>>(deviceIds.Count);
+        if (response.Results.Count != deviceIds.Count)
+            throw new InvalidOperationException("远程历史查询返回数量与请求不一致");
+        var result = new Dictionary<string, List<T>>(deviceIds.Count, StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < deviceIds.Count; i++)
-            result[deviceIds[i]] = MapDtos<T>(response.Results[i]);
+        {
+            var item = response.Results[i];
+            if (!ResponseMatchesDevice(item, request.Queries[i].QueryType, deviceIds[i]))
+                throw new InvalidOperationException("远程历史查询返回顺序或设备标识不一致");
+            if (!result.TryAdd(deviceIds[i], MapDtos<T>(item)))
+                throw new InvalidOperationException("远程历史查询返回重复设备");
+        }
         return result;
+    }
+
+    private static bool ResponseMatchesDevice(HistoryQueryResponse response, HistoryQueryType type, string deviceId)
+    {
+        IEnumerable<string> ids = type switch
+        {
+            HistoryQueryType.ProductionLog => response.ProductionLogs.Select(x => x.DeviceId),
+            HistoryQueryType.AlarmEvent => response.AlarmEvents.Select(x => x.DeviceId),
+            HistoryQueryType.StatusTransition => response.StatusTransitions.Select(x => x.DeviceId),
+            HistoryQueryType.DefectSnapshot or HistoryQueryType.DefectSnapshotHourly => response.DefectSnapshots.Select(x => x.DeviceId),
+            _ => []
+        };
+        return ids.All(id => string.Equals(id, deviceId, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>批量请求执行 + 整体失败判定：任一子查询失败即整体抛异常（Strict 语义）。</summary>

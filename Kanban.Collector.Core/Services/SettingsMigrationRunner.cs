@@ -146,27 +146,24 @@ internal sealed class SettingsMigrationRunner
         public JsonObject Migrate(JsonObject settings)
         {
             var plc = settings["PlcConfig"] as JsonObject ?? new JsonObject();
-            plc["Siemens"] = new JsonObject
-            {
-                ["Model"] = ReadOrDefault(plc, "SiemensModel", "S1200"),
-                ["Rack"] = ReadOrDefault(plc, "SiemensRack", 0),
-                ["Slot"] = ReadOrDefault(plc, "SiemensSlot", 1),
-                ["DataFormat"] = ReadOrDefault(plc, "SiemensDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD),
-                ["BatchInt32Limit"] = ReadOrDefault(plc, "SiemensBatchInt32Limit", 55),
-            };
-            plc["ModbusTcp"] = new JsonObject
-            {
-                ["UnitId"] = ReadOrDefault(plc, "ModbusUnitId", 1),
-                ["AddressStartWithZero"] = ReadOrDefault(plc, "ModbusAddressStartWithZero", true),
-                ["RegisterFunction"] = ReadOrDefault(plc, "ModbusRegisterFunction", 3),
-                ["BitFunction"] = ReadOrDefault(plc, "ModbusBitFunction", 1),
-                ["DataFormat"] = ReadOrDefault(plc, "ModbusDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD),
-                ["BatchInt32Limit"] = ReadOrDefault(plc, "ModbusBatchInt32Limit", 62),
-            };
-            plc["Omron"] = new JsonObject
-            {
-                ["ReadSplits"] = ReadOrDefault(plc, "OmronReadSplits", 500),
-            };
+            var siemens = plc["Siemens"] as JsonObject ?? new JsonObject();
+            siemens["Model"] ??= ReadOrDefault(plc, "SiemensModel", "S1200");
+            siemens["Rack"] ??= ReadOrDefault(plc, "SiemensRack", 0);
+            siemens["Slot"] ??= ReadOrDefault(plc, "SiemensSlot", 1);
+            siemens["DataFormat"] ??= ReadOrDefault(plc, "SiemensDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD);
+            siemens["BatchInt32Limit"] ??= ReadOrDefault(plc, "SiemensBatchInt32Limit", 55);
+            plc["Siemens"] = siemens;
+            var modbus = plc["ModbusTcp"] as JsonObject ?? new JsonObject();
+            modbus["UnitId"] ??= ReadOrDefault(plc, "ModbusUnitId", 1);
+            modbus["AddressStartWithZero"] ??= ReadOrDefault(plc, "ModbusAddressStartWithZero", true);
+            modbus["RegisterFunction"] ??= ReadOrDefault(plc, "ModbusRegisterFunction", 3);
+            modbus["BitFunction"] ??= ReadOrDefault(plc, "ModbusBitFunction", 1);
+            modbus["DataFormat"] ??= ReadOrDefault(plc, "ModbusDataFormat", (int)Kanban.Collector.Core.Models.PlcDataFormat.ABCD);
+            modbus["BatchInt32Limit"] ??= ReadOrDefault(plc, "ModbusBatchInt32Limit", 62);
+            plc["ModbusTcp"] = modbus;
+            var omron = plc["Omron"] as JsonObject ?? new JsonObject();
+            omron["ReadSplits"] ??= ReadOrDefault(plc, "OmronReadSplits", 500);
+            plc["Omron"] = omron;
 
             foreach (var property in new[]
             {

@@ -27,6 +27,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     private readonly Channel<ProductionLog> _channel = Channel.CreateBounded<ProductionLog>(
         new BoundedChannelOptions(MaxQueueLength) { FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false });
     private readonly object _recoveryLock = new();
+    private readonly SemaphoreSlim _replayGate = new(1, 1);
     private readonly object _diagnosticsLock = new();
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _flushTask;
@@ -169,8 +170,12 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
                         return;
                     }
                 }
-                File.AppendAllLines(_recoveryFilePath, lines);
-                lock (_diagnosticsLock) _recoveryLineCount += lines.Count;
+                var existingLines = File.Exists(_recoveryFilePath)
+                    ? File.ReadAllLines(_recoveryFilePath).ToList()
+                    : [];
+                existingLines.AddRange(lines);
+                WriteRecoveryFileAtomic(existingLines);
+                lock (_diagnosticsLock) _recoveryLineCount = existingLines.Count;
             }
         }
         catch (Exception ex) { _logger.LogError(ex, "生产快照恢复文件写入失败"); }
@@ -184,7 +189,21 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     /// - 超过 <see cref="MaxRecoveryFileBytes"/> 时停止回放并告警（防异常写入撑爆内存/IO）；
     /// - 失败退避 <see cref="ReplayRetryDelay"/>：DB 不可用时不再每 5s 全量重读+持锁插库（审查修复 2026-08-13）。
     /// </summary>
-    private Task ReplayRecoveryAsync(CancellationToken ct)
+    private async Task ReplayRecoveryAsync(CancellationToken ct)
+    {
+        if (!File.Exists(_recoveryFilePath)) return;
+        await _replayGate.WaitAsync(ct);
+        try
+        {
+            await ReplayRecoveryCoreAsync(ct);
+        }
+        finally
+        {
+            _replayGate.Release();
+        }
+    }
+
+    private Task ReplayRecoveryCoreAsync(CancellationToken ct)
     {
         if (!File.Exists(_recoveryFilePath)) return Task.CompletedTask;
 
@@ -197,7 +216,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             // 阶段 1（锁内）：读取文件快照——锁只保护"读取与收尾删除"的原子性，
             // DB 插入（慢 IO，busy_timeout 最长 5s）移出锁外，通道满时 PersistRecoveryLogs 不再被插库阻塞（审查修复 2026-08-13）
             string[] allLines;
-            DateTime fileLastWriteUtc;
+            long snapshotLength;
             lock (_recoveryLock)
             {
                 if (new FileInfo(_recoveryFilePath).Length > MaxRecoveryFileBytesOverride)
@@ -207,13 +226,13 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
                     return Task.CompletedTask;
                 }
 
+                snapshotLength = new FileInfo(_recoveryFilePath).Length;
                 allLines = File.ReadAllLines(_recoveryFilePath);
                 if (allLines.Length == 0)
                 {
                     File.Delete(_recoveryFilePath);
                     return Task.CompletedTask;
                 }
-                fileLastWriteUtc = File.GetLastWriteTimeUtc(_recoveryFilePath);
             }
 
             // 阶段 2（锁外）：解析 + 幂等插库
@@ -255,10 +274,18 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             // 写时间戳变化则跳过删除，文件留待下一轮回放处理新尾部，避免丢数据
             lock (_recoveryLock)
             {
-                if (File.Exists(_recoveryFilePath) && File.GetLastWriteTimeUtc(_recoveryFilePath) != fileLastWriteUtc)
+                if (!File.Exists(_recoveryFilePath))
+                    return Task.CompletedTask;
+                var currentLength = new FileInfo(_recoveryFilePath).Length;
+                if (currentLength > snapshotLength)
                 {
                     _logger.LogInformation("回放期间恢复文件有新追加，保留文件留待下一轮回放");
                     _lastReplayFailureAt = null;
+                    return Task.CompletedTask;
+                }
+                if (currentLength < snapshotLength)
+                {
+                    _logger.LogWarning("恢复文件在回放期间被替换或截断，保留现有文件避免丢失");
                     return Task.CompletedTask;
                 }
 
@@ -275,8 +302,18 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
                 }
                 else
                 {
-                    try { File.AppendAllLines(_recoveryFilePath + ".bad", badLines); }
-                    catch (Exception ex) { _logger.LogError(ex, "恢复文件损坏记录转存 .bad 失败"); }
+                    var badPath = _recoveryFilePath + ".bad";
+                    try
+                    {
+                        var existingBad = File.Exists(badPath) ? File.ReadAllLines(badPath).ToList() : [];
+                        existingBad.AddRange(badLines);
+                        WriteRecoveryFileAtomicTo(badPath, existingBad);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "恢复文件损坏记录转存 .bad 失败，保留原恢复文件");
+                        return Task.CompletedTask;
+                    }
                     _logger.LogWarning("恢复文件 {Count} 条损坏记录已转存 .bad 文件", badLines.Count);
                     File.Delete(_recoveryFilePath);
                     lock (_diagnosticsLock) _recoveryLineCount = 0;
@@ -296,11 +333,15 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     }
 
     /// <summary>原子重写恢复文件（临时文件 + 替换），避免断电/崩溃留下半写文件。</summary>
-    private void WriteRecoveryFileAtomic(List<string> lines)
+    private void WriteRecoveryFileAtomic(List<string> lines) => WriteRecoveryFileAtomicTo(_recoveryFilePath, lines);
+
+    private static void WriteRecoveryFileAtomicTo(string path, List<string> lines)
     {
-        var tmp = _recoveryFilePath + ".tmp";
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+        var tmp = path + ".tmp";
         File.WriteAllLines(tmp, lines);
-        File.Move(tmp, _recoveryFilePath, overwrite: true);
+        File.Move(tmp, path, overwrite: true);
     }
 
     /// <summary>
@@ -315,7 +356,12 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             .ToList();
         var existing = QueryExistingEventIds(eventIds);
 
-        var toInsert = batch.Where(log => !log.EventId.HasValue || (existing is not null && !existing.Contains(log.EventId.Value))).ToList();
+        var toInsert = batch
+            .GroupBy(log => log.EventId)
+            .SelectMany(group => group.Key.HasValue && existing?.Contains(group.Key.Value) == true
+                ? []
+                : group.Take(1))
+            .ToList();
         if (toInsert.Count == 0) return;
 
         using var insertContext = _db.CreateProductionLogContext();
@@ -353,6 +399,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         _channel.Writer.TryComplete();
         try { _cts.Cancel(); _flushTask.Wait(TimeSpan.FromSeconds(3)); } catch (Exception ex) { _logger.LogWarning(ex, "释放生产写入器超时"); }
         _cts.Dispose();
+        _replayGate.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -362,7 +409,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         try { _cts.Cancel(); await _flushTask.WaitAsync(TimeSpan.FromSeconds(3)); }
         catch (TimeoutException) { _logger.LogWarning("异步释放生产写入器超时"); }
         catch (OperationCanceledException) { }
-        finally { _cts.Dispose(); }
+        finally { _cts.Dispose(); _replayGate.Dispose(); }
         GC.SuppressFinalize(this);
     }
 }

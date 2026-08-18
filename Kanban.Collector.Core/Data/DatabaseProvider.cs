@@ -437,9 +437,12 @@ internal sealed class SqlitePragmaInterceptor : DbConnectionInterceptor
         cmd.ExecuteNonQuery();
     }
 
-    // 复用同步实现：PRAGMA 必须在连接打开后立即执行，不能省略
     public override Task ConnectionOpenedAsync(DbConnection connection, ConnectionEndEventData eventData, CancellationToken cancellationToken = default)
-        => Task.Run(() => ConnectionOpened(connection, eventData), cancellationToken);
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ConnectionOpened(connection, eventData);
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>

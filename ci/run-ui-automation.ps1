@@ -21,6 +21,7 @@
 [CmdletBinding()]
 param(
     [switch]$WithWinAppDriver,
+    [switch]$Ci,
     [string]$Configuration = "Debug"
 )
 
@@ -52,6 +53,7 @@ function Start-WinAppDriver {
         return $null
     }
     if (-not (Test-WinAppDriverInstalled)) {
+        if ($Ci) { throw "WinAppDriver is required in CI mode but was not found" }
         Write-Host "[WAD] 未安装 WinAppDriver，跳过启动（Appium 测试将自动 Skip）。" -ForegroundColor Yellow
         Write-Host "[WAD] 安装方法：choco install winappdriver -y 或访问 https://github.com/microsoft/WinAppDriver/releases" -ForegroundColor Yellow
         return $null
@@ -117,6 +119,7 @@ if ($LASTEXITCODE -ne 0) { Write-Host "构建失败" -ForegroundColor Red; exit 
 if ($WithWinAppDriver) {
     $wadProcess = Start-WinAppDriver
     if ($null -eq $wadProcess) {
+        if ($Ci) { Write-Host "[WAD] CI 模式要求 WinAppDriver 可用。" -ForegroundColor Red; exit 1 }
         Write-Host "[WAD] 未启用 WinAppDriver；Appium 用例将 Skip。" -ForegroundColor Yellow
     } else {
         # 设置环境变量：通知 WinAppDriverSmokeTests 真正运行 Appium 测试

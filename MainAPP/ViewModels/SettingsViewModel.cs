@@ -76,6 +76,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _hasUnsavedChanges;
 
+    [ObservableProperty]
+    private bool _collectorSyncPending;
+
+    [ObservableProperty]
+    private string _collectorSyncStatus = string.Empty;
+
+    private readonly CancellationTokenSource _disposeCts = new();
+
     public string UnsavedChangesText => HasUnsavedChanges ? Strings.M074 : Strings.M075;
 
     public bool IsPlcConnected => _connectionManager.IsConnected;
@@ -430,9 +438,11 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// </summary>
     public void Dispose()
     {
+        _disposeCts.Cancel();
         _connectionManager.PropertyChanged -= OnConnectionPropertyChanged;
         UnwireDraftEvents();
         StopLicenseStatusTimer();
+        _disposeCts.Dispose();
     }
 
     /// <summary>启动授权状态定时刷新（60 秒）。仅在有 UI 调度器的宿主下启动。</summary>
@@ -711,7 +721,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     ///   提示后用户可选择接受（保存生效，当前班次可能被中断）或取消（不保存）。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanSave))]
-    private void Save()
+    private async Task SaveAsync()
     {
         var error = Validate(DraftSettings);
         if (error != null)
@@ -798,7 +808,16 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 _lastSavedLanguage = DraftSettings.Language;
                 _dialog.NotifyInfo(Resources.Strings.Common_RestartRequired);
             }
-            SyncCollectorSettingsAsync(); // Remote 模式：采集参数同步到 Collector（热生效）
+            var syncResult = await SyncCollectorSettingsAsync(_disposeCts.Token); // Remote 模式：采集参数同步到 Collector（热生效）
+            var remoteMode = _services.GetService<IRuntimeMode>()?.IsRemote == true;
+            CollectorSyncPending = remoteMode && !syncResult.IsSuccess;
+            CollectorSyncStatus = syncResult.IsSuccess ? "Collector 已确认" : remoteMode ? "Collector 待同步" : "本地模式";
+            if (CollectorSyncPending)
+            {
+                HasUnsavedChanges = true;
+                OnPropertyChanged(nameof(UnsavedChangesText));
+                _dialog.NotifyWarning(syncResult.ErrorMessage ?? "Collector 尚未确认设置");
+            }
         }
         catch (Exception ex)
         {
@@ -839,14 +858,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// （UI 设置），采集参数经 SignalR 推给 Collector。失败仅提示，不阻断保存。
     /// 全部用 GetService（可空）+ try/catch：测试宿主未注册 Remote 链路时静默跳过。
     /// </summary>
-    private async void SyncCollectorSettingsAsync()
+    private async Task<CollectorSyncResult> SyncCollectorSettingsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var runtimeMode = _services.GetService<IRuntimeMode>();
-            if (runtimeMode is null || !runtimeMode.IsRemote) return;
+            if (runtimeMode is null || !runtimeMode.IsRemote) return CollectorSyncResult.NotAttempted;
             var client = _services.GetService<KanbanDataClient>();
-            if (client is null || !client.IsConnected) return; // 未连接时本地保存仍生效，连接恢复后由用户再保存一次
+            if (client is null || !client.IsConnected) return CollectorSyncResult.NotAttempted; // 未连接时本地保存仍生效，连接恢复后由用户再保存一次
             var dto = new CollectorSettingsDto
             {
                 PollingIntervalMs = AppSettings.PollingIntervalMs,
@@ -885,13 +904,21 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                     EndTime = s.EndTime,
                 }).ToList(),
             };
-            await client.SaveCollectorSettingsAsync(dto);
+            await client.SaveCollectorSettingsAsync(dto, cancellationToken);
             _dialog?.NotifySuccess(Strings.M024);
+            return CollectorSyncResult.Success;
         }
         catch (Exception ex)
         {
-            _dialog?.NotifyWarning(string.Format(Strings.F231, ex.Message));
+            return CollectorSyncResult.Failed(string.Format(Strings.F231, ex.Message));
         }
+    }
+
+    private readonly record struct CollectorSyncResult(bool WasAttempted, bool IsSuccess, string? ErrorMessage)
+    {
+        public static CollectorSyncResult NotAttempted => new(false, true, null);
+        public static CollectorSyncResult Success => new(true, true, null);
+        public static CollectorSyncResult Failed(string message) => new(true, false, message);
     }
 
     [RelayCommand]

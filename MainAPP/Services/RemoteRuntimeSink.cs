@@ -30,6 +30,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly WorkOrderRepository _workOrderRepository;
     private readonly ILogger<RemoteRuntimeSink> _logger;
     private readonly Dispatcher _dispatcher;
+    private readonly CancellationTokenSource _shutdownCts = new();
+    private CancellationToken _cancellationToken => _shutdownCts.Token;
 
     // ── Dispatcher 节流合并 ──
     // 快照 500ms/设备（30 台 ≈60 帧/秒）+ 报警/状态边沿事件若逐条 InvokeAsync，UI 线程
@@ -134,8 +136,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                    await _eventsClient.ConnectAsync();
+                    await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
+                    await _eventsClient.ConnectAsync(_cancellationToken);
                     EnsureEventsCallbacksRegistered();
                     StartSubscribeRetryLoop();
                     _logger.LogInformation("事件连接后台重连成功，报警/状态/元数据订阅已恢复");
@@ -261,7 +263,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
                     {
                         _logger.LogWarning(ex, "事件订阅重试循环异常，5s 后重试");
                     }
-                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
                 }
             }
             finally
@@ -540,8 +542,10 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _shutdownCts.Cancel();
         _batchTimer.Stop();
         await _eventsClient.DisposeAsync();
+        _shutdownCts.Dispose();
         // 主连接由 KanbanDataClient 统一释放（StartupCoordinator/退出流程）
     }
 }

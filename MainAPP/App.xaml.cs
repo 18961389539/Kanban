@@ -301,6 +301,9 @@ public partial class App : Application
         List<string> errors = [];
         try
         {
+            try { await _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>().DisposeAsync(); }
+            catch (Exception ex) { errors.Add($"停止启动协调器失败: {ex.Message}"); }
+
             // 退出顺序约束（审查修复 2026-08-15）：
             // - 本地模式：先停止采集循环，避免保存设备/历史数据时采集线程仍在并发修改 Runtime 状态、入队 HistoryService。
             //   StopAsync 会写入离线状态转换记录，避免停机时段被算进上一状态导致重启后 OEE 历史虚高。

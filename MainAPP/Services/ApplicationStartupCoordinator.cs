@@ -18,10 +18,14 @@ namespace MainAPP.Services;
 /// </summary>
 public sealed class ApplicationStartupCoordinator(
     IServiceProvider services,
-    ApplicationRuntime runtime)
+    ApplicationRuntime runtime) : IAsyncDisposable
 {
-    public async Task<Window> PrepareAsync()
+    private readonly CancellationTokenSource _shutdownCts = new();
+
+    public async Task<Window> PrepareAsync(CancellationToken cancellationToken = default)
     {
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
+        cancellationToken = linkedCts.Token;
         try
         {
             runtime.SetState(ApplicationRuntimeState.LoadingConfiguration, Strings.M123);
@@ -112,8 +116,9 @@ public sealed class ApplicationStartupCoordinator(
         }
     }
 
-    public async Task StartRuntimeAsync()
+    public async Task StartRuntimeAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         runtime.SetState(ApplicationRuntimeState.StartingAcquisition, Strings.M124);
         try
         {
@@ -122,7 +127,7 @@ public sealed class ApplicationStartupCoordinator(
             // Remote 模式：不启动本地 PLC 采集，改为连接 Collector 采集服务进程
             if (services.GetRequiredService<IRuntimeMode>().IsRemote)
             {
-                await StartRemoteDataLinkAsync();
+                await StartRemoteDataLinkAsync(cancellationToken);
                 // Remote 模式同样支持按设定时刻自动生成上一自然日日报（历史查询经 SignalR 路由到 Collector）
                 services.GetRequiredService<ProductionDailyReportService>().Start();
                 runtime.IsAcquisitionRunning = true;
@@ -157,7 +162,7 @@ public sealed class ApplicationStartupCoordinator(
     /// Remote 模式：连接 Kanban.Collector，订阅快照/事件并灌回本地内存状态。
     /// 同时挂接设备/工单写操作的远程持久化钩子（Collector 作为唯一写者落盘/落库）。
     /// </summary>
-    private async Task StartRemoteDataLinkAsync()
+    private async Task StartRemoteDataLinkAsync(CancellationToken cancellationToken)
     {
         var client = services.GetRequiredService<KanbanDataClient>();
         var sink = services.GetRequiredService<RemoteRuntimeSink>();
@@ -194,14 +199,14 @@ public sealed class ApplicationStartupCoordinator(
         client.Reconnected += (_, _) => EnsureSinkStarted();
         try
         {
-            await client.ConnectAsync();
+            await client.ConnectAsync(cancellationToken);
             // 仅连接成功才初始化（sink.Start 内部 On* 依赖连接已建立）
             EnsureSinkStarted();
         }
         catch (Exception ex)
         {
             Log.Warning(ex, "首次连接采集服务失败，转入后台重连循环（5s 间隔）");
-            StartRemoteRetryLoop(client, EnsureSinkStarted);
+            StartRemoteRetryLoop(client, EnsureSinkStarted, cancellationToken);
         }
 
         // 版本握手：升级兼容性观测——Collector 版本与本地记录不一致时打警告（方法签名变化前可提前发现）
@@ -278,27 +283,28 @@ public sealed class ApplicationStartupCoordinator(
 
     private bool _remoteRetryLoopStarted;
     private readonly object _remoteRetryGate = new();
+    private Task? _remoteRetryTask;
 
     /// <summary>
     /// 主连接首次连接失败后的后台重连循环（5s 间隔，单实例保证）。
     /// 重连成功后启动 sink（EnsureSinkStarted 幂等）；运行中连接断开由 KanbanDataClient
     /// 内部 WithAutomaticReconnect 自愈，本循环只负责"从未连上过"的启动期场景。
     /// </summary>
-    private void StartRemoteRetryLoop(KanbanDataClient client, Action onConnected)
+    private void StartRemoteRetryLoop(KanbanDataClient client, Action onConnected, CancellationToken cancellationToken)
     {
         lock (_remoteRetryGate)
         {
             if (_remoteRetryLoopStarted) return;
             _remoteRetryLoopStarted = true;
         }
-        _ = Task.Run(async () =>
+        _remoteRetryTask = Task.Run(async () =>
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                    await client.ConnectAsync();
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    await client.ConnectAsync(cancellationToken);
                     Log.Information("采集服务后台重连成功，启动数据同步");
                     onConnected();
                     return;
@@ -313,5 +319,17 @@ public sealed class ApplicationStartupCoordinator(
                 }
             }
         });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _shutdownCts.Cancel();
+        if (_remoteRetryTask != null)
+        {
+            try { await _remoteRetryTask.WaitAsync(TimeSpan.FromSeconds(3)); }
+            catch (OperationCanceledException) { }
+            catch (TimeoutException) { Log.Warning("远程重连任务停止超时"); }
+        }
+        _shutdownCts.Dispose();
     }
 }

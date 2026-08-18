@@ -872,7 +872,13 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
             var exportDir = Path.Combine(AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");
             Directory.CreateDirectory(exportDir);
-            var fullPath = Path.Combine(exportDir, fileName);
+            var safeFileName = Path.GetFileName(fileName);
+            if (string.IsNullOrWhiteSpace(safeFileName) || safeFileName != fileName)
+                throw new InvalidDataException("导出文件名无效");
+            var fullPath = Path.GetFullPath(Path.Combine(exportDir, safeFileName));
+            var exportRoot = Path.GetFullPath(exportDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!fullPath.StartsWith(exportRoot, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("导出路径越界");
 
             await Task.Run(() =>
             {
