@@ -32,6 +32,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly Dispatcher _dispatcher;
     private readonly CancellationTokenSource _shutdownCts = new();
     private CancellationToken _cancellationToken => _shutdownCts.Token;
+    private readonly List<Task> _backgroundTasks = new();
+    private readonly object _taskGate = new();
 
     // ── Dispatcher 节流合并 ──
     // 快照 500ms/设备（30 台 ≈60 帧/秒）+ 报警/状态边沿事件若逐条 InvokeAsync，UI 线程
@@ -79,9 +81,9 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 首次失败后的后台重连成功路径由 OnEventsReconnectedAsync 兜底补注册。
         _eventsClient.Reconnected += (_, _) => { _ = OnEventsReconnectedAsync(); };
 
-        _ = RefreshAsync();
-        _ = _client.SubscribeSnapshotsAsync();
-        _ = StartEventLinkAsync();
+        TrackTask(RefreshAsync());
+        TrackTask(_client.SubscribeSnapshotsAsync());
+        TrackTask(StartEventLinkAsync());
     }
 
     /// <summary>注册事件连接回调（幂等：KanbanDataClient 按连接实例去重，审查修复 2026-08-13——
@@ -540,10 +542,21 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         });
     }
 
+    private void TrackTask(Task task)
+    {
+        lock (_taskGate) _backgroundTasks.Add(task);
+        _ = task.ContinueWith(t => _logger.LogError(t.Exception, "RemoteRuntimeSink 后台任务失败"), TaskContinuationOptions.OnlyOnFaulted);
+    }
+
     public async ValueTask DisposeAsync()
     {
         _shutdownCts.Cancel();
         _batchTimer.Stop();
+        Task[] tasks;
+        lock (_taskGate) tasks = _backgroundTasks.ToArray();
+        try { await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(3)); }
+        catch (OperationCanceledException) { }
+        catch (TimeoutException) { _logger.LogWarning("RemoteRuntimeSink 后台任务停止超时"); }
         await _eventsClient.DisposeAsync();
         _shutdownCts.Dispose();
         // 主连接由 KanbanDataClient 统一释放（StartupCoordinator/退出流程）

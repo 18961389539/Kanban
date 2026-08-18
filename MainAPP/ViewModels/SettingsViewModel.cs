@@ -810,13 +810,13 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             }
             var syncResult = await SyncCollectorSettingsAsync(_disposeCts.Token); // Remote 模式：采集参数同步到 Collector（热生效）
             var remoteMode = _services.GetService<IRuntimeMode>()?.IsRemote == true;
-            CollectorSyncPending = remoteMode && !syncResult.IsSuccess;
-            CollectorSyncStatus = syncResult.IsSuccess ? "Collector 已确认" : remoteMode ? "Collector 待同步" : "本地模式";
+            CollectorSyncPending = remoteMode && (!syncResult.WasAttempted || !syncResult.IsSuccess);
+            CollectorSyncStatus = !remoteMode ? "本地模式" : syncResult.IsSuccess ? "Collector 已确认" : "Collector 待同步";
             if (CollectorSyncPending)
             {
                 HasUnsavedChanges = true;
                 OnPropertyChanged(nameof(UnsavedChangesText));
-                _dialog.NotifyWarning(syncResult.ErrorMessage ?? "Collector 尚未确认设置");
+                _dialog.NotifyWarning(syncResult.ErrorMessage ?? "Collector 尚未连接，设置将在连接恢复后同步");
             }
         }
         catch (Exception ex)
@@ -916,7 +916,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     private readonly record struct CollectorSyncResult(bool WasAttempted, bool IsSuccess, string? ErrorMessage)
     {
-        public static CollectorSyncResult NotAttempted => new(false, true, null);
+        public static CollectorSyncResult NotAttempted => new(false, false, "Collector 尚未连接");
         public static CollectorSyncResult Success => new(true, true, null);
         public static CollectorSyncResult Failed(string message) => new(true, false, message);
     }

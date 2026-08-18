@@ -229,7 +229,16 @@ public sealed class RemoteHistoryQueryService :
         };
         var sw = System.Diagnostics.Stopwatch.StartNew();
         using var timeoutCts = new CancellationTokenSource(RemoteCallTimeout);
-        var response = Task.Run(() => _client.QueryHistoryAsync(request, timeoutCts.Token)).GetAwaiter().GetResult();
+        HistoryQueryResponse response;
+        try
+        {
+            response = Task.Run(() => _client.QueryHistoryAsync(request, timeoutCts.Token)).GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Remote 历史查询超时 Type={QueryType} Device={DeviceId}", type, deviceId);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed, ex);
+        }
         sw.Stop();
         if (!string.IsNullOrEmpty(response.Error))
         {
@@ -559,10 +568,12 @@ public sealed class RemoteHistoryQueryService :
     private Dictionary<string, List<T>> QueryBatchByDevice<T>(
         HistoryQueryType type, DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
     {
-        var request = new BatchHistoryQueryRequest
+        var result = new Dictionary<string, List<T>>(deviceIds.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var chunk in deviceIds.Chunk(HistoryQueryLimits.MaxBatchQueries))
         {
-            Queries = deviceIds
-                .Select(id => new HistoryQueryRequest
+            var chunkRequest = new BatchHistoryQueryRequest
+            {
+                Queries = chunk.Select(id => new HistoryQueryRequest
                 {
                     QueryType = type,
                     From = from == DateTime.MinValue ? null : from,
@@ -570,20 +581,19 @@ public sealed class RemoteHistoryQueryService :
                     DeviceId = id,
                     Page = 1,
                     PageSize = HistoryQueryLimits.MaxPageSize,
-                })
-                .ToList(),
-        };
-        var response = InvokeBatch(request);
-        if (response.Results.Count != deviceIds.Count)
-            throw new InvalidOperationException("远程历史查询返回数量与请求不一致");
-        var result = new Dictionary<string, List<T>>(deviceIds.Count, StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < deviceIds.Count; i++)
-        {
-            var item = response.Results[i];
-            if (!ResponseMatchesDevice(item, request.Queries[i].QueryType, deviceIds[i]))
-                throw new InvalidOperationException("远程历史查询返回顺序或设备标识不一致");
-            if (!result.TryAdd(deviceIds[i], MapDtos<T>(item)))
-                throw new InvalidOperationException("远程历史查询返回重复设备");
+                }).ToList(),
+            };
+            var response = InvokeBatch(chunkRequest);
+            if (response.Results.Count != chunk.Length)
+                throw new InvalidOperationException("远程历史查询返回数量与请求不一致");
+            for (var i = 0; i < chunk.Length; i++)
+            {
+                var item = response.Results[i];
+                if (!ResponseMatchesDevice(item, type, chunk[i]))
+                    throw new InvalidOperationException("远程历史查询返回顺序或设备标识不一致");
+                if (!result.TryAdd(chunk[i], MapDtos<T>(item)))
+                    throw new InvalidOperationException("远程历史查询返回重复设备");
+            }
         }
         return result;
     }

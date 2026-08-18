@@ -297,14 +297,15 @@ public sealed class ApplicationStartupCoordinator(
             if (_remoteRetryLoopStarted) return;
             _remoteRetryLoopStarted = true;
         }
+        var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
         _remoteRetryTask = Task.Run(async () =>
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!linked.Token.IsCancellationRequested)
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-                    await client.ConnectAsync(cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(5), linked.Token);
+                    await client.ConnectAsync(linked.Token);
                     Log.Information("采集服务后台重连成功，启动数据同步");
                     onConnected();
                     return;
@@ -318,7 +319,7 @@ public sealed class ApplicationStartupCoordinator(
                     Log.Warning(retryEx, "采集服务后台重连失败，5s 后重试");
                 }
             }
-        });
+        }).ContinueWith(_ => linked.Dispose(), TaskScheduler.Default);
     }
 
     public async ValueTask DisposeAsync()

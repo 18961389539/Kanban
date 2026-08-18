@@ -216,7 +216,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             // 阶段 1（锁内）：读取文件快照——锁只保护"读取与收尾删除"的原子性，
             // DB 插入（慢 IO，busy_timeout 最长 5s）移出锁外，通道满时 PersistRecoveryLogs 不再被插库阻塞（审查修复 2026-08-13）
             string[] allLines;
-            long snapshotLength;
+            RecoveryFileStamp snapshotStamp;
             lock (_recoveryLock)
             {
                 if (new FileInfo(_recoveryFilePath).Length > MaxRecoveryFileBytesOverride)
@@ -226,7 +226,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
                     return Task.CompletedTask;
                 }
 
-                snapshotLength = new FileInfo(_recoveryFilePath).Length;
+                snapshotStamp = CaptureRecoveryFileStamp();
                 allLines = File.ReadAllLines(_recoveryFilePath);
                 if (allLines.Length == 0)
                 {
@@ -276,14 +276,14 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             {
                 if (!File.Exists(_recoveryFilePath))
                     return Task.CompletedTask;
-                var currentLength = new FileInfo(_recoveryFilePath).Length;
-                if (currentLength > snapshotLength)
+                var currentStamp = CaptureRecoveryFileStamp();
+                if (currentStamp.Length > snapshotStamp.Length)
                 {
                     _logger.LogInformation("回放期间恢复文件有新追加，保留文件留待下一轮回放");
                     _lastReplayFailureAt = null;
                     return Task.CompletedTask;
                 }
-                if (currentLength < snapshotLength)
+                if (currentStamp.Length < snapshotStamp.Length || currentStamp.Hash != snapshotStamp.Hash || currentStamp.LastWriteUtc != snapshotStamp.LastWriteUtc)
                 {
                     _logger.LogWarning("恢复文件在回放期间被替换或截断，保留现有文件避免丢失");
                     return Task.CompletedTask;
@@ -331,6 +331,18 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         }
         return Task.CompletedTask;
     }
+
+    private RecoveryFileStamp CaptureRecoveryFileStamp()
+    {
+        var info = new FileInfo(_recoveryFilePath);
+        using var stream = File.OpenRead(_recoveryFilePath);
+        var buffer = new byte[Math.Min(4096, (int)Math.Max(1, info.Length))];
+        var read = stream.Read(buffer, 0, buffer.Length);
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(buffer.AsSpan(0, read)));
+        return new RecoveryFileStamp(info.Length, info.LastWriteTimeUtc, hash);
+    }
+
+    private readonly record struct RecoveryFileStamp(long Length, DateTime LastWriteUtc, string Hash);
 
     /// <summary>原子重写恢复文件（临时文件 + 替换），避免断电/崩溃留下半写文件。</summary>
     private void WriteRecoveryFileAtomic(List<string> lines) => WriteRecoveryFileAtomicTo(_recoveryFilePath, lines);

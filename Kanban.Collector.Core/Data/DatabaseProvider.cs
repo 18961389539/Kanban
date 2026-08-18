@@ -137,6 +137,12 @@ public class DatabaseProvider(AppSettings appSettings)
             if (hasPendingMigrations)
                 BackupDatabase(databasePath);
             context.Database.Migrate();
+            using (var verifyConnection = new SqliteConnection($"Data Source={databasePath};Cache=Shared"))
+            {
+                verifyConnection.Open();
+                if (!TableExists(verifyConnection, userTableName))
+                    throw new InvalidOperationException($"数据库 {databasePath} 迁移后缺少关键表 {userTableName}，已停止启动以避免数据写入异常。");
+            }
 
             // 迁移可能被“事后修改”（例如把新列手工补进 InitialSchema 迁移）：
             // 已将其记录为“已应用”的既有库不会因 Migrate() 重跑而拿到新列，
