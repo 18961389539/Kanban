@@ -6232,22 +6232,25 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Confirmar senha</value>
   </data>
   <data name="Ux_DeviceWizardAddressHint" xml:space="preserve">
-    <value>Configure enderecos PLC de producao e status. Pode pular e adicionar depois.</value>
+    <value>Preencha os quatro enderecos PLC (todos obrigatorios).</value>
   </data>
   <data name="Ux_DeviceWizardAddressRequired" xml:space="preserve">
-    <value>Configure pelo menos um endereco PLC ou volte.</value>
+    <value>Preencha os quatro enderecos PLC.</value>
   </data>
   <data name="Ux_DeviceWizardBack" xml:space="preserve">
     <value>Voltar</value>
   </data>
   <data name="Ux_DeviceWizardCreated" xml:space="preserve">
-    <value>Dispositivo '{0}' criado</value>
+    <value>Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao.</value>
   </data>
   <data name="Ux_DeviceWizardFinish" xml:space="preserve">
     <value>Concluir</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>Informe os dados basicos do dispositivo. Em seguida configure os enderecos PLC.</value>
+    <value>Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.</value>
+  </data>
+  <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
+    <value>O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar.</value>
   </data>
   <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
     <value>Tipo de maquina</value>
@@ -6274,7 +6277,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Revisao</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
-    <value>Ciclo alvo usado na taxa de performance OEE (milissegundos).</value>
+    <value>Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
     <value>Ciclo alvo deve ser maior que 0</value>
@@ -6332,13 +6335,13 @@ Changes are kept in the current session and can still be saved after returning.<
 Alarmes: tratar
 Historico e Revisao: relatorios
 Dispositivos, Detalhe e Configuracoes: permissao
-? na barra lateral ou F1: manual</value>
+Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
     <value>Quando precisar de ajuda</value>
   </data>
   <data name="Ux_FirstRunFinishBody" xml:space="preserve">
-    <value>Clique em ? ou F1 para o manual completo. Idioma e tamanho da fonte em Configuracoes.</value>
+    <value>Manual do usuario (F1) no rodape da barra lateral ou tecla F1 para o manual completo. Idioma e tamanho da fonte em Configuracoes.</value>
   </data>
   <data name="Ux_FirstRunOpenManual" xml:space="preserve">
     <value>Abrir manual</value>

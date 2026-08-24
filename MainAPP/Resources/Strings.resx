@@ -6232,22 +6232,25 @@
     <value>确认密码</value>
   </data>
   <data name="Ux_DeviceWizardAddressHint" xml:space="preserve">
-    <value>配置产量、状态等 PLC 地址。可跳过，稍后在设备管理中补充。</value>
+    <value>请填写全部四个 PLC 地址（均为必填）。</value>
   </data>
   <data name="Ux_DeviceWizardAddressRequired" xml:space="preserve">
-    <value>请至少配置一个 PLC 地址，或返回上一步。</value>
+    <value>请填写全部四个 PLC 地址。</value>
   </data>
   <data name="Ux_DeviceWizardBack" xml:space="preserve">
     <value>上一步</value>
   </data>
   <data name="Ux_DeviceWizardCreated" xml:space="preserve">
-    <value>已创建设备「{0}」</value>
+    <value>已创建设备「{0}」，请点击保存写入配置。</value>
   </data>
   <data name="Ux_DeviceWizardFinish" xml:space="preserve">
     <value>完成</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>填写设备基本信息。完成后可继续配置 PLC 地址。</value>
+    <value>填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。</value>
+  </data>
+  <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
+    <value>完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。</value>
   </data>
   <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
     <value>机型</value>
@@ -6274,7 +6277,7 @@
     <value>确认</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
-    <value>目标周期用于 OEE 性能率计算，单位毫秒。</value>
+    <value>用于 OEE 性能率与速度对比，单位：个/小时。</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
     <value>目标周期必须大于 0</value>
@@ -6332,7 +6335,7 @@
 报警中心：处理报警
 历史查询/生产复盘：追溯与报表
 设备管理/设备详情/系统设置：需相应权限
-侧边栏顶部 ? 或按 F1：打开使用手册</value>
+侧边栏底部「使用手册」或按 F1：打开手册</value>
   </data>
   <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
     <value>需要帮助时</value>

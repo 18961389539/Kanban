@@ -6232,22 +6232,25 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Confirm password</value>
   </data>
   <data name="Ux_DeviceWizardAddressHint" xml:space="preserve">
-    <value>Configure production and status PLC addresses. You can skip and add them later.</value>
+    <value>Fill in all four PLC addresses (all required).</value>
   </data>
   <data name="Ux_DeviceWizardAddressRequired" xml:space="preserve">
-    <value>Configure at least one PLC address or go back.</value>
+    <value>Fill in all four PLC addresses.</value>
   </data>
   <data name="Ux_DeviceWizardBack" xml:space="preserve">
     <value>Back</value>
   </data>
   <data name="Ux_DeviceWizardCreated" xml:space="preserve">
-    <value>Created device '{0}'</value>
+    <value>Created device '{0}'. Click Save to persist the configuration.</value>
   </data>
   <data name="Ux_DeviceWizardFinish" xml:space="preserve">
     <value>Finish</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>Enter basic device information. You can configure PLC addresses next.</value>
+    <value>Enter the device name and target cycle (both required). PLC addresses are configured on the next step.</value>
+  </data>
+  <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
+    <value>The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.</value>
   </data>
   <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
     <value>Machine type</value>
@@ -6274,7 +6277,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Review</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
-    <value>Target cycle is used for OEE performance rate (milliseconds).</value>
+    <value>Used for OEE performance rate and speed comparison (pieces per hour).</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
     <value>Target cycle must be greater than 0</value>
@@ -6332,13 +6335,13 @@ Changes are kept in the current session and can still be saved after returning.<
 Alarm Center: handle alarms
 History &amp; Review: traceability and reports
 Device Manager, Device Detail &amp; Settings: role required
-Sidebar ? or F1: open user manual</value>
+Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
     <value>When You Need Help</value>
   </data>
   <data name="Ux_FirstRunFinishBody" xml:space="preserve">
-    <value>Click ? (top-right) or press F1 for the full illustrated manual. Change language and font size in Settings anytime.</value>
+    <value>Click User Manual (F1) at the bottom of the sidebar or press F1 for the full illustrated manual. Change language and font size in System Settings anytime.</value>
   </data>
   <data name="Ux_FirstRunOpenManual" xml:space="preserve">
     <value>Open User Manual</value>

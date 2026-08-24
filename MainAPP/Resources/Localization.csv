@@ -2319,12 +2319,13 @@ Wpf,Settings_CollectorNotConnected,Collector 未连接,Collector not connected,C
 Wpf,Settings_CollectorNotConnectedPending,Collector 未连接，配置已保存但未同步,Collector not connected; settings saved but not synced,Collector 未接続。設定は保存済みですが未同期です,Collector desconectado; configuracoes salvas mas nao sincronizadas
 Wpf,Settings_CollectorPending,待同步到 Collector,Pending sync to Collector,Collector 同期待ち,Sincronizacao com Collector pendente
 Wpf,Ux_ConfirmPassword,确认密码,Confirm password,パスワード確認,Confirmar senha
-Wpf,Ux_DeviceWizardAddressHint,配置产量、状态等 PLC 地址。可跳过，稍后在设备管理中补充。,Configure production and status PLC addresses. You can skip and add them later.,生産・状態などの PLC アドレスを設定します。後から追加も可能です。,Configure enderecos PLC de producao e status. Pode pular e adicionar depois.
-Wpf,Ux_DeviceWizardAddressRequired,请至少配置一个 PLC 地址，或返回上一步。,Configure at least one PLC address or go back.,少なくとも 1 つの PLC アドレスを設定するか、戻ってください。,Configure pelo menos um endereco PLC ou volte.
+Wpf,Ux_DeviceWizardAddressHint,请填写全部四个 PLC 地址（均为必填）。,Fill in all four PLC addresses (all required).,4 つの PLC アドレスをすべて入力してください（すべて必須）。,Preencha os quatro enderecos PLC (todos obrigatorios).
+Wpf,Ux_DeviceWizardAddressRequired,请填写全部四个 PLC 地址。,Fill in all four PLC addresses.,4 つの PLC アドレスをすべて入力してください。,Preencha os quatro enderecos PLC.
 Wpf,Ux_DeviceWizardBack,上一步,Back,戻る,Voltar
-Wpf,Ux_DeviceWizardCreated,已创建设备「{0}」,Created device '{0}',設備「{0}」を作成しました,Dispositivo '{0}' criado
+Wpf,Ux_DeviceWizardCreated,已创建设备「{0}」，请点击保存写入配置。,"Created device '{0}'. Click Save to persist the configuration.",設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。,"Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao."
 Wpf,Ux_DeviceWizardFinish,完成,Finish,完了,Concluir
-Wpf,Ux_DeviceWizardIntro,填写设备基本信息。完成后可继续配置 PLC 地址。,Enter basic device information. You can configure PLC addresses next.,設備の基本情報を入力します。次に PLC アドレスを設定できます。,Informe os dados basicos do dispositivo. Em seguida configure os enderecos PLC.
+Wpf,Ux_DeviceWizardIntro,填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。,Enter the device name and target cycle (both required). PLC addresses are configured on the next step.,設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。,Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.
+Wpf,Ux_DeviceWizardSaveReminder,完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。,"The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.",完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。,"O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar."
 Wpf,Ux_DeviceWizardMachineType,机型,Machine type,機種,Tipo de maquina
 Wpf,Ux_DeviceWizardNameDuplicate,设备名称已存在,Device name already exists,設備名は既に存在します,Nome do dispositivo ja existe
 Wpf,Ux_DeviceWizardNameRequired,设备名称不能为空,Device name is required,設備名は必須です,Nome do dispositivo obrigatorio
@@ -2333,7 +2334,7 @@ Wpf,Ux_DeviceWizardReviewHint,确认信息无误后点击完成创建设备。,"
 Wpf,Ux_DeviceWizardStepAddresses,PLC 地址,PLC addresses,PLC アドレス,Enderecos PLC
 Wpf,Ux_DeviceWizardStepBasic,基本信息,Basic info,基本情報,Informacoes basicas
 Wpf,Ux_DeviceWizardStepReview,确认,Review,確認,Revisao
-Wpf,Ux_DeviceWizardTargetCycleHint,目标周期用于 OEE 性能率计算，单位毫秒。,Target cycle is used for OEE performance rate (milliseconds).,目標サイクルは OEE 性能率計算に使用します（ミリ秒）。,Ciclo alvo usado na taxa de performance OEE (milissegundos).
+Wpf,Ux_DeviceWizardTargetCycleHint,用于 OEE 性能率与速度对比，单位：个/小时。,Used for OEE performance rate and speed comparison (pieces per hour).,OEE 性能率と速度比較に使用します（単位：個/時間）。,Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).
 Wpf,Ux_DeviceWizardTargetCycleInvalid,目标周期必须大于 0,Target cycle must be greater than 0,目標サイクルは 0 より大きくする必要があります,Ciclo alvo deve ser maior que 0
 Wpf,Ux_DeviceWizardTitle,新建设备向导,New Device Wizard,新規設備ウィザード,Assistente de novo dispositivo
 Wpf,Ux_QueryFinished,查询完成，共 {0} 条记录,"Query finished, {0} records",照会完了、{0} 件,"Consulta concluida, {0} registros"

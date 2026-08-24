@@ -49,6 +49,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
     private readonly UserSession _userSession;
+    private readonly IDeviceSetupWizardService? _deviceSetupWizard;
     private DeviceAuditSnapshot _lastSavedDeviceAuditSnapshot = new(0, []);
 
     // 设备列表由 DeviceRepository（DI 单例）持有，ViewModel 直接引用
@@ -157,13 +158,15 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         UserSession userSession,
         PlcConnectionManager? connectionManager = null,
         IPlcAddressCodecResolver? addressCodecResolver = null,
-        IPlcRuntimeProfileProvider? profileProvider = null)
+        IPlcRuntimeProfileProvider? profileProvider = null,
+        IDeviceSetupWizardService? deviceSetupWizard = null)
     {
         _deviceRepository = deviceRepository;
         _dataAcquisitionService = dataAcquisitionService;
         _dialog = dialog;
         _configIO = configIO;
         _userSession = userSession;
+        _deviceSetupWizard = deviceSetupWizard;
         _connectionManager = connectionManager;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
@@ -204,21 +207,33 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     public void SyncAuditBaseline() => _lastSavedDeviceAuditSnapshot = CreateDeviceAuditSnapshot();
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAddDevice))]
     private void AddDevice()
     {
-        // 保证新设备名唯一：若默认名冲突则追加数字后缀
-        var baseName = string.Format(Strings.F135, Devices.Count + 1);
-        var newName = EnsureUniqueName(baseName, Devices.Select(d => d.Name));
-        var newDevice = new Device { Name = newName };
+        if (IsLoading) return;
+        var newDevice = _deviceSetupWizard?.Show(Devices.ToArray(), ResolveAddressCodec());
+        if (newDevice == null)
+        {
+            // 测试宿主或未启用窗口服务时保留原有的内存创建路径；生产宿主始终注册向导。
+            if (_deviceSetupWizard != null) return;
+            var baseName = string.Format(Strings.F135, Devices.Count + 1);
+            var newName = EnsureUniqueName(baseName, Devices.Select(d => d.Name));
+            newDevice = new Device { Name = newName };
+        }
+
         Devices.Add(newDevice);
         _deviceRepository.AddRuntime(newDevice);
         DeviceList.SearchKeyword = string.Empty;
         SelectedDevice = newDevice;
+        SelectedTabIndex = (int)DeviceManagerTab.Parameters;
         MarkDirty();
+        if (_deviceSetupWizard != null)
+            _dialog.NotifySuccess(string.Format(Strings.Ux_DeviceWizardCreated, newDevice.Name));
         // 注意：不在此处刷新审计基线——基线语义是「上次已保存」状态，
         // 新增后尚未保存，下一次保存的 before 应反映「新增前」的持久化状态。
     }
+
+    private bool CanAddDevice() => !IsLoading;
 
     /// <summary>
     /// 生成不与 existing 冲突的唯一名称：若 baseName 已存在则追加 " (2)"、" (3)"...
@@ -498,15 +513,18 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     private void RefreshAddressConflictFlag()
     {
-        var codec = _profileProvider?.Current?.AddressCodec
-                    ?? _addressCodecResolver?.Current
-                    ?? new MitsubishiAddressCodec();
+        var codec = ResolveAddressCodec();
         var report = AddressConflictService.Compute(Devices, codec);
         AddressConflictSummaries = report.Summaries;
         AddressConflictCount = report.ConflictCount;
         HasAddressConflicts = report.ConflictCount > 0;
         OnPropertyChanged(nameof(AddressConflictSummaries));
     }
+
+    private IPlcAddressCodec ResolveAddressCodec()
+        => _profileProvider?.Current?.AddressCodec
+           ?? _addressCodecResolver?.Current
+           ?? new MitsubishiAddressCodec();
 
     [RelayCommand]
     private void FocusValidationError(DeviceConfigError? error)
@@ -633,6 +651,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(CurrentDeviceValidationErrors));
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
         SaveCommand.NotifyCanExecuteChanged();
+        AddDeviceCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
     }
 
@@ -640,6 +659,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         // IsLoading 变化时刷新设备编辑类命令可用状态；PLC 命令可用状态由 PlcCommands 子 VM 订阅 IsLoading 自行刷新
         SaveCommand.NotifyCanExecuteChanged();
+        AddDeviceCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
     }
 

@@ -41,7 +41,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Nav_Settings"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "设置", ["en-US"] = "Settings", ["ja-JP"] = "設定", ["pt-BR"] = "Configurações"
+            ["zh-CN"] = "系统设置", ["en-US"] = "Settings", ["ja-JP"] = "設定", ["pt-BR"] = "Configurações"
         },
         ["Wpf|Nav_UserManager"] = new Dictionary<string, string>
         {
@@ -6073,7 +6073,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Nav_DataSourceMonitoring"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "数据源监控", ["en-US"] = "Data Source Monitor", ["ja-JP"] = "データソース監視", ["pt-BR"] = "Monitor de fontes de dados"
+            ["zh-CN"] = "数据监控", ["en-US"] = "Data Source Monitor", ["ja-JP"] = "データソース監視", ["pt-BR"] = "Monitor de fontes de dados"
         },
         ["Wpf|Web_Nav_Dashboard"] = new Dictionary<string, string>
         {
@@ -8573,11 +8573,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardAddressHint"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "配置产量、状态等 PLC 地址。可跳过，稍后在设备管理中补充。", ["en-US"] = "Configure production and status PLC addresses. You can skip and add them later.", ["ja-JP"] = "生産・状態などの PLC アドレスを設定します。後から追加も可能です。", ["pt-BR"] = "Configure enderecos PLC de producao e status. Pode pular e adicionar depois."
+            ["zh-CN"] = "请填写全部四个 PLC 地址（均为必填）。", ["en-US"] = "Fill in all four PLC addresses (all required).", ["ja-JP"] = "4 つの PLC アドレスをすべて入力してください（すべて必須）。", ["pt-BR"] = "Preencha os quatro enderecos PLC (todos obrigatorios)."
         },
         ["Wpf|Ux_DeviceWizardAddressRequired"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "请至少配置一个 PLC 地址，或返回上一步。", ["en-US"] = "Configure at least one PLC address or go back.", ["ja-JP"] = "少なくとも 1 つの PLC アドレスを設定するか、戻ってください。", ["pt-BR"] = "Configure pelo menos um endereco PLC ou volte."
+            ["zh-CN"] = "请填写全部四个 PLC 地址。", ["en-US"] = "Fill in all four PLC addresses.", ["ja-JP"] = "4 つの PLC アドレスをすべて入力してください。", ["pt-BR"] = "Preencha os quatro enderecos PLC."
         },
         ["Wpf|Ux_DeviceWizardBack"] = new Dictionary<string, string>
         {
@@ -8585,7 +8585,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardCreated"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已创建设备「{0}」", ["en-US"] = "Created device '{0}'", ["ja-JP"] = "設備「{0}」を作成しました", ["pt-BR"] = "Dispositivo '{0}' criado"
+            ["zh-CN"] = "已创建设备「{0}」，请点击保存写入配置。", ["en-US"] = "Created device '{0}'. Click Save to persist the configuration.", ["ja-JP"] = "設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。", ["pt-BR"] = "Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao."
         },
         ["Wpf|Ux_DeviceWizardFinish"] = new Dictionary<string, string>
         {
@@ -8593,7 +8593,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardIntro"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "填写设备基本信息。完成后可继续配置 PLC 地址。", ["en-US"] = "Enter basic device information. You can configure PLC addresses next.", ["ja-JP"] = "設備の基本情報を入力します。次に PLC アドレスを設定できます。", ["pt-BR"] = "Informe os dados basicos do dispositivo. Em seguida configure os enderecos PLC."
+            ["zh-CN"] = "填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。", ["en-US"] = "Enter the device name and target cycle (both required). PLC addresses are configured on the next step.", ["ja-JP"] = "設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。", ["pt-BR"] = "Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa."
+        },
+        ["Wpf|Ux_DeviceWizardSaveReminder"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。", ["en-US"] = "The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.", ["ja-JP"] = "完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。", ["pt-BR"] = "O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar."
         },
         ["Wpf|Ux_DeviceWizardMachineType"] = new Dictionary<string, string>
         {
@@ -8629,7 +8633,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardTargetCycleHint"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标周期用于 OEE 性能率计算，单位毫秒。", ["en-US"] = "Target cycle is used for OEE performance rate (milliseconds).", ["ja-JP"] = "目標サイクルは OEE 性能率計算に使用します（ミリ秒）。", ["pt-BR"] = "Ciclo alvo usado na taxa de performance OEE (milissegundos)."
+            ["zh-CN"] = "用于 OEE 性能率与速度对比，单位：个/小时。", ["en-US"] = "Used for OEE performance rate and speed comparison (pieces per hour).", ["ja-JP"] = "OEE 性能率と速度比較に使用します（単位：個/時間）。", ["pt-BR"] = "Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora)."
         },
         ["Wpf|Ux_DeviceWizardTargetCycleInvalid"] = new Dictionary<string, string>
         {
@@ -8662,6 +8666,66 @@ public static class LocalizationCatalog
         ["Wpf|Ux_StatusUnsaved"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "有未保存的更改", ["en-US"] = "Unsaved changes", ["ja-JP"] = "未保存の変更があります", ["pt-BR"] = "Alteracoes nao salvas"
+        },
+        ["Wpf|Ux_HelpTooltip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "使用手册 (F1)", ["en-US"] = "User Manual (F1)", ["ja-JP"] = "使用手册 (F1)", ["pt-BR"] = "Manual do usuario (F1)"
+        },
+        ["Wpf|Ux_HelpWindowTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "使用手册", ["en-US"] = "User Manual", ["ja-JP"] = "使用手册", ["pt-BR"] = "Manual do usuario"
+        },
+        ["Wpf|Ux_HelpManualMissing"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "未找到使用手册文件：{0}", ["en-US"] = "User manual file not found: {0}", ["ja-JP"] = "使用手册ファイルが見つかりません：{0}", ["pt-BR"] = "Arquivo do manual nao encontrado: {0}"
+        },
+        ["Wpf|Ux_FirstRunTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "欢迎使用 Kanban", ["en-US"] = "Welcome to Kanban", ["ja-JP"] = "Kanban へようこそ", ["pt-BR"] = "Bem-vindo ao Kanban"
+        },
+        ["Wpf|Ux_FirstRunWelcomeTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "快速了解系统", ["en-US"] = "Quick Overview", ["ja-JP"] = "システム概要", ["pt-BR"] = "Visao geral rapida"
+        },
+        ["Wpf|Ux_FirstRunWelcomeBody"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "MainAPP 用于集中查看产线设备状态、产量、报警与 OEE。左侧导航可切换页面；左下角圆点表示 PLC 连接状态。", ["en-US"] = "MainAPP centralizes device status", ["ja-JP"] = " output", ["pt-BR"] = " alarms"
+        },
+        ["Wpf|Ux_FirstRunPlcTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "先确认 PLC 连接", ["en-US"] = "Check PLC Connection First", ["ja-JP"] = "まず PLC 接続を確認", ["pt-BR"] = "Confirme a conexao PLC"
+        },
+        ["Wpf|Ux_FirstRunPlcBody"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "首次使用前请管理员确认 PLC IP、端口与网络。打开「系统设置」检查连接配置；绿色圆点表示已连接。", ["en-US"] = "Ask your administrator to confirm PLC IP", ["ja-JP"] = " port", ["pt-BR"] = " and network. Open Settings to review connection; a green dot means connected."
+        },
+        ["Wpf|Ux_FirstRunNavTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "常用页面", ["en-US"] = "Key Pages", ["ja-JP"] = "主要ページ", ["pt-BR"] = "Paginas principais"
+        },
+        ["Wpf|Ux_FirstRunNavBody"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "主页/产线总览：实时状态\r\n报警中心：处理报警\r\n历史查询/生产复盘：追溯与报表\r\n设备管理/设备详情/系统设置：需相应权限\r\n侧边栏底部「使用手册」或按 F1：打开手册", ["en-US"] = "Home & Production Line: live status\r\nAlarm Center: handle alarms\r\nHistory & Review: traceability and reports\r\nDevice Manager, Device Detail & Settings: role required\r\nSidebar footer User Manual or F1: open manual", ["ja-JP"] = "ホーム/ライン：リアルタイム\r\nアラームセンター：対応\r\n履歴/レビュー：分析\r\n設備管理/設備詳細/設定：権限が必要\r\nサイドバー下部「使用手册」または F1", ["pt-BR"] = "Inicio e Linha: tempo real\r\nAlarmes: tratar\r\nHistorico e Revisao: relatorios\r\nDispositivos, Detalhe e Configuracoes: permissao\r\nManual no rodape da barra lateral ou F1"
+        },
+        ["Wpf|Ux_FirstRunFinishTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "需要帮助时", ["en-US"] = "When You Need Help", ["ja-JP"] = "困ったとき", ["pt-BR"] = "Quando precisar de ajuda"
+        },
+        ["Wpf|Ux_FirstRunFinishBody"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "点击左侧导航栏最下方「使用手册 (F1)」或按 F1 打开完整使用手册（含截图）。可随时在系统设置中调整语言与字号。", ["en-US"] = "Click User Manual (F1) at the bottom of the sidebar or press F1 for the full illustrated manual. Change language and font size in System Settings anytime.", ["ja-JP"] = "サイドバー下部の「使用手册 (F1)」または F1 で手册を開けます。設定で言語と文字サイズを変更できます。", ["pt-BR"] = "Manual do usuario (F1) no rodape da barra lateral ou tecla F1 para o manual completo. Idioma e tamanho da fonte em Configuracoes."
+        },
+        ["Wpf|Ux_FirstRunOpenManual"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打开使用手册", ["en-US"] = "Open User Manual", ["ja-JP"] = "使用手册を開く", ["pt-BR"] = "Abrir manual"
+        },
+        ["Wpf|Ux_FirstRunGoSettings"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打开系统设置", ["en-US"] = "Open Settings", ["ja-JP"] = "設定を開く", ["pt-BR"] = "Abrir configuracoes"
+        },
+        ["Wpf|Ux_FirstRunSkip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "跳过", ["en-US"] = "Skip", ["ja-JP"] = "スキップ", ["pt-BR"] = "Pular"
         },
         ["Wpf|Validator_AlarmKind"] = new Dictionary<string, string>
         {

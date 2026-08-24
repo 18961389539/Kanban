@@ -6232,22 +6232,25 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>パスワード確認</value>
   </data>
   <data name="Ux_DeviceWizardAddressHint" xml:space="preserve">
-    <value>生産・状態などの PLC アドレスを設定します。後から追加も可能です。</value>
+    <value>4 つの PLC アドレスをすべて入力してください（すべて必須）。</value>
   </data>
   <data name="Ux_DeviceWizardAddressRequired" xml:space="preserve">
-    <value>少なくとも 1 つの PLC アドレスを設定するか、戻ってください。</value>
+    <value>4 つの PLC アドレスをすべて入力してください。</value>
   </data>
   <data name="Ux_DeviceWizardBack" xml:space="preserve">
     <value>戻る</value>
   </data>
   <data name="Ux_DeviceWizardCreated" xml:space="preserve">
-    <value>設備「{0}」を作成しました</value>
+    <value>設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。</value>
   </data>
   <data name="Ux_DeviceWizardFinish" xml:space="preserve">
     <value>完了</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>設備の基本情報を入力します。次に PLC アドレスを設定できます。</value>
+    <value>設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。</value>
+  </data>
+  <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
+    <value>完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。</value>
   </data>
   <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
     <value>機種</value>
@@ -6274,7 +6277,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>確認</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
-    <value>目標サイクルは OEE 性能率計算に使用します（ミリ秒）。</value>
+    <value>OEE 性能率と速度比較に使用します（単位：個/時間）。</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
     <value>目標サイクルは 0 より大きくする必要があります</value>
@@ -6332,13 +6335,13 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
 アラームセンター：対応
 履歴/レビュー：分析
 設備管理/設備詳細/設定：権限が必要
-サイドバー ? または F1：手册</value>
+サイドバー下部「使用手册」または F1</value>
   </data>
   <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
     <value>困ったとき</value>
   </data>
   <data name="Ux_FirstRunFinishBody" xml:space="preserve">
-    <value>右上の ? または F1 で手册を開けます。設定で言語と文字サイズを変更できます。</value>
+    <value>サイドバー下部の「使用手册 (F1)」または F1 で手册を開けます。設定で言語と文字サイズを変更できます。</value>
   </data>
   <data name="Ux_FirstRunOpenManual" xml:space="preserve">
     <value>使用手册を開く</value>
