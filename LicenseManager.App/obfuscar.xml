@@ -5,9 +5,9 @@
   策略说明：
   - MarkedOnly=true：仅混淆标注了 [Obfuscation(Exclude=false)] 的类型
   - 标注范围：LicenseManager.Services.HardwareFingerprint（机器码计算逻辑）
-  - 不标注：LicenseManager.Crypto 命名空间下的所有类型（EmbeddedKey/ProductKeyCodec/HmacValidator/Base32）
+  - 不标注：LicenseManager.Crypto 命名空间下的所有类型（含 LicenseSigningKey/ProductKeyCodec/HmacValidator/Base32）
     原因：LicenseIssuer.* 工具直接引用这些类型，混淆重命名会导致外部程序集 TypeLoadException。
-    HMAC 密钥保护依赖环境变量注入（KANBAN_HMAC_KEY），而非混淆。
+    新版正式授权使用内置公钥验签；旧 HMAC 兼容路径仍依赖环境变量注入（KANBAN_HMAC_KEY）。
   - 不标注：LicenseGate/LicenseStore/TrialTracker 等公共门面与模型（MainAPP 直接引用，必须保留公共 API）
 
   安全收益：
@@ -24,7 +24,7 @@
   <!-- 仅处理标注 [Obfuscation(Exclude=false)] 的类型 -->
   <Var name="MarkedOnly" value="true" />
 
-  <!-- 字符串加密：保护内嵌 HMAC 密钥 -->
+  <!-- 字符串加密：仅保护标记类型范围内的字符串；正式签名私钥不在客户端 -->
   <Var name="HideStrings" value="true" />
 
   <!-- 重命名策略：保留属性/事件名（避免破坏反射与序列化），重命名字段 -->

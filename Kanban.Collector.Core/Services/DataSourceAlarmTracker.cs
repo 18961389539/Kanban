@@ -78,8 +78,11 @@ public sealed class DataSourceAlarmTracker
     /// 调用方需保证仅对启用中的值项且读取成功后调用（读取失败不驱动状态机，避免瞬时故障误判恢复）。
     /// </summary>
     public void Observe(Device device, DataSource source, DataSourceValue valueItem, int value, string shiftName)
+        => Observe(device, source, valueItem, new DataSourceRuntimeValue(DataSourceValueType.Int32, Int32Value: value), shiftName);
+
+    public void Observe(Device device, DataSource source, DataSourceValue valueItem, DataSourceRuntimeValue value, string shiftName)
     {
-        valueItem.CurrentValue = value;
+        valueItem.SetRuntimeValue(value);
         var now = _nowProvider();
         var key = GetKey(device.Id, source.Id, valueItem.Id);
         if (!_states.TryGetValue(key, out var state))

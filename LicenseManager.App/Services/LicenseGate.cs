@@ -74,7 +74,7 @@ public class LicenseGate
         if (license != null)
         {
             // 重新验证激活码（防止文件被篡改或机器码变化）。
-            // 关键：使用 revalidated 而非 store 加载的 license —— ProductKey 中的字段经过 HMAC 签名保护，
+            // 关键：使用 revalidated 而非 store 加载的 license —— ProductKey 中的字段经过签名保护，
             // 是可信的；而 license.dat 中的 ExpireDate 等字段可被篡改（DPAPI 同用户跨机器同步时可能解密成功）。
             // 若用 store 的 license.IsExpired 判断，攻击者可将 ExpireDate 改到未来绕过过期检查。
             var revalidated = ProductKeyCodec.TryDecode(license.ProductKey, MachineCodeHash);

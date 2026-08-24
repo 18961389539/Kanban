@@ -35,6 +35,7 @@ public class DataSourceSnapshotDbContext : KanbanDbContextBase
             e.Property(p => p.SourceType).HasMaxLength(64);
             e.Property(p => p.Unit).HasMaxLength(32);
             e.Property(p => p.ShiftName).HasMaxLength(64);
+            e.Property(p => p.StringValue).HasMaxLength(1024);
         });
     }
 }

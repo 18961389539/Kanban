@@ -26,8 +26,15 @@ public class DataSourceSnapshotRecord
     /// <summary>单位快照（如 ℃、kWh）</summary>
     public string Unit { get; set; } = string.Empty;
 
-    /// <summary>采集值（D 字地址读到的 Int32；非数值型 = 状态码）</summary>
+    /// <summary>兼容旧版 Int32 采集值。</summary>
     public int Value { get; set; }
+
+    /// <summary>值项数据类型（0=Int32,1=Float32,2=Bool,3=String）。</summary>
+    public int DataType { get; set; }
+
+    public float? FloatValue { get; set; }
+    public bool? BoolValue { get; set; }
+    public string? StringValue { get; set; }
 
     /// <summary>采样有效性（读取成功为 true）</summary>
     public bool IsValid { get; set; } = true;

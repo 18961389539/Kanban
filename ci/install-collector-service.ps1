@@ -2,6 +2,7 @@
 #
 # 用法（需管理员权限）：
 #   .\install-collector-service.ps1 -Action Install -DataRoot "D:\KanbanData"
+#   .\install-collector-service.ps1 -Action Install -DataRoot "D:\KanbanData" -HmacKey "<32字节Base64密钥>"
 #   .\install-collector-service.ps1 -Action Status
 #   .\install-collector-service.ps1 -Action Uninstall
 #
@@ -16,11 +17,13 @@ param(
     [ValidateSet("Install", "Uninstall", "Status")]
     [string]$Action = "Install",
     [string]$DataRoot = "",
-    [string]$CollectorExe = ""
+    [string]$CollectorExe = "",
+    [string]$HmacKey = ""
 )
 
 $ErrorActionPreference = "Stop"
 $ServiceName = "KanbanCollector"
+$HmacEnvName = "KANBAN_HMAC_KEY"
 
 # 未指定时按约定路径自动查找（Debug/Release 均可）
 if (-not $CollectorExe) {
@@ -39,6 +42,33 @@ function Test-Admin {
 
 function Write-Step($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 
+function Resolve-HmacKey([string]$provided) {
+    $candidate = $provided
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        $candidate = $env:KANBAN_HMAC_KEY
+    }
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        $candidate = [Environment]::GetEnvironmentVariable($HmacEnvName, [EnvironmentVariableTarget]::Machine)
+    }
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        throw "未配置 $HmacEnvName。请先运行 .\ci\configure-hmac-key.ps1 -HmacKey <与LicenseIssuer相同的32字节Base64密钥>；仅开发/演示环境可使用 -Generate。"
+    }
+
+    $candidate = $candidate.Trim()
+    try { $bytes = [Convert]::FromBase64String($candidate) }
+    catch { throw "$HmacEnvName 不是合法的 Base64 编码。" }
+    if ($bytes.Length -ne 32) {
+        throw "$HmacEnvName 长度非法：必须是 32 字节随机密钥的 Base64 形式。"
+    }
+    return $candidate
+}
+
+function Set-MachineHmacKey([string]$key) {
+    [Environment]::SetEnvironmentVariable($HmacEnvName, $key, [EnvironmentVariableTarget]::Machine)
+    # 让本次 PowerShell 会话后续启动的进程立即继承密钥；机器环境变量供新登录/新进程使用。
+    $env:KANBAN_HMAC_KEY = $key
+}
+
 switch ($Action) {
     "Install" {
         if (-not (Test-Admin)) { throw "安装服务需要管理员权限，请用管理员 PowerShell 运行。" }
@@ -48,8 +78,12 @@ switch ($Action) {
         if (-not $DataRoot) {
             throw "-DataRoot 必填：服务账户与 MainAPP 用户 %APPDATA% 不同，必须显式指定共用数据目录。"
         }
+        $HmacKey = Resolve-HmacKey $HmacKey
         $DataRoot = [IO.Path]::GetFullPath($DataRoot)
         if (-not (Test-Path $DataRoot)) { New-Item -ItemType Directory -Path $DataRoot -Force | Out-Null }
+
+        Write-Step "配置机器级 $HmacEnvName（不显示密钥内容）"
+        Set-MachineHmacKey $HmacKey
 
         Write-Step "创建服务 $ServiceName"
         sc.exe create $ServiceName binPath= "`"$CollectorExe`"" start= auto DisplayName= "Kanban 采集服务" | Out-Null
@@ -60,6 +94,7 @@ switch ($Action) {
         $envKey = "HKLM:\SYSTEM\CurrentControlSet\Services\$ServiceName\Environment"
         if (-not (Test-Path $envKey)) { New-Item -Path $envKey -Force | Out-Null }
         Set-ItemProperty -Path $envKey -Name "KANBAN_DATA_DIR" -Value $DataRoot
+        Set-ItemProperty -Path $envKey -Name $HmacEnvName -Value $HmacKey
 
         # 崩溃自动重启：5s/10s/30s 三次，24 小时内不复位
         Write-Step "配置崩溃自动重启策略"
@@ -89,7 +124,11 @@ switch ($Action) {
         if (Test-Path $envKey) {
             $dataRoot = (Get-ItemProperty -Path $envKey -Name "KANBAN_DATA_DIR" -ErrorAction SilentlyContinue).KANBAN_DATA_DIR
             Write-Host "数据目录: $dataRoot"
+            $serviceKey = (Get-ItemProperty -Path $envKey -Name $HmacEnvName -ErrorAction SilentlyContinue).$HmacEnvName
+            Write-Host "HMAC 密钥: $(if ([string]::IsNullOrWhiteSpace($serviceKey)) { '未配置' } else { '已配置（不显示）' })"
         }
+        $machineKey = [Environment]::GetEnvironmentVariable($HmacEnvName, [EnvironmentVariableTarget]::Machine)
+        Write-Host "机器 HMAC 密钥: $(if ([string]::IsNullOrWhiteSpace($machineKey)) { '未配置' } else { '已配置（不显示）' })"
         sc.exe qfailure $ServiceName
     }
 }

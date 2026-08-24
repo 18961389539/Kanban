@@ -790,7 +790,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的值项；SourceId=值项 Id，按值项聚合）。</summary>
     private List<DataSourceSnapshotRecord> BuildSourceSnapshots(string shiftName, DateTime timestamp)
     {
-        var sourceValues = _scanPipeline.GetCycleSourceValues();
+        var sourceValues = _scanPipeline.GetCycleSourceRuntimeValues();
         var snapshots = new List<DataSourceSnapshotRecord>();
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
@@ -810,7 +810,11 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         SourceName = value.Name,
                         SourceType = source.Type,
                         Unit = value.Unit,
-                        Value = v,
+                        Value = v.Type == DataSourceValueType.Int32 ? v.Int32Value : 0,
+                        DataType = (int)v.Type,
+                        FloatValue = v.Type == DataSourceValueType.Float32 ? v.Float32Value : null,
+                        BoolValue = v.Type == DataSourceValueType.Bool ? v.BoolValue : null,
+                        StringValue = v.Type == DataSourceValueType.String ? v.StringValue : null,
                         ShiftName = shiftName,
                         Timestamp = timestamp,
                     });

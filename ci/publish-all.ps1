@@ -38,10 +38,12 @@ $webTemp = Join-Path $OutputDir "_wasm_tmp"
 function Invoke-Publish {
     param([string]$Project, [string]$Out)
     Write-Host "==> publish $Project -> $Out"
-    $args = @("publish", $Project, "-c", $Configuration, "-o", $Out, "--nologo", "-v", "minimal")
-    if ($SelfContained) { $args += @("-r", $Runtime, "--self-contained") }
-    else { $args += "--no-self-contained" }
-    & dotnet @args
+    if ($SelfContained) {
+        & dotnet publish $Project -c $Configuration -o $Out --nologo -v minimal -r $Runtime --self-contained
+    }
+    else {
+        & dotnet publish $Project -c $Configuration -o $Out --nologo -v minimal --no-self-contained
+    }
     if ($LASTEXITCODE -ne 0) { throw "publish failed: $Project (exit $LASTEXITCODE)" }
 
     # 发布剥离调试符号（授权设计文档 checklist：pdb 不得随发布包外发；审查修复 2026-08-13）
@@ -120,9 +122,15 @@ try {
         Write-Host "==> -SkipWeb set: WASM not included; Collector will not serve the big-screen."
     }
 
-    # 4) ship the service installer next to the output for convenience
+    # 4) ship deployment helpers next to the output for convenience
     $installer = Join-Path $repoRoot "ci\install-collector-service.ps1"
     if (Test-Path $installer) { Copy-Item $installer $OutputDir -Force }
+    $hmacConfigurator = Join-Path $repoRoot "ci\configure-hmac-key.ps1"
+    if (Test-Path $hmacConfigurator) { Copy-Item $hmacConfigurator $OutputDir -Force }
+    $mainAppLauncher = Join-Path $repoRoot "ci\start-mainapp.ps1"
+    if (Test-Path $mainAppLauncher) { Copy-Item $mainAppLauncher $OutputDir -Force }
+    $mainAppLauncherCmd = Join-Path $repoRoot "ci\start-mainapp.cmd"
+    if (Test-Path $mainAppLauncherCmd) { Copy-Item $mainAppLauncherCmd $OutputDir -Force }
 
     $manifest = Join-Path $OutputDir "publish-manifest.sha256"
     Get-ChildItem -Path $OutputDir -Recurse -File |
@@ -140,6 +148,8 @@ try {
     if (-not $SkipSim) { Write-Host "    PlcSim    : $simOut\PlcSimulator.exe  (host 4999)" }
     Write-Host ""
     Write-Host "    Install service: .\install-collector-service.ps1 -Action Install -DataRoot <shared-data-dir>"
+    Write-Host "    Configure HMAC : .\configure-hmac-key.ps1 -HmacKey <same key as LicenseIssuer>"
+    Write-Host "    Start MainAPP  : .\start-mainapp.cmd"
 }
 finally {
     if (Test-Path $webTemp) { Remove-Item $webTemp -Recurse -Force }

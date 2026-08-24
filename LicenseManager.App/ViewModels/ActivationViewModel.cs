@@ -1,6 +1,7 @@
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LicenseManager.Crypto;
 using LicenseManager.Models;
 using LicenseManager.Services;
 
@@ -34,7 +35,7 @@ public partial class ActivationViewModel : ObservableObject
     /// <summary>试用剩余天数（试用期内显示）</summary>
     public int? RemainingTrialDays => _gate.RemainingTrialDays;
 
-    /// <summary>用户输入的激活码（自动格式化为 XXXXX-XXXXX-XXXXX-XXXXX-XXXXX）</summary>
+    /// <summary>用户输入的激活码（自动格式化，兼容旧 HMAC 和新 ECDSA 格式）</summary>
     public string ProductKey
     {
         get => _productKey;
@@ -135,7 +136,8 @@ public partial class ActivationViewModel : ObservableObject
         }
 
         var raw = cleaned.ToString();
-        if (raw.Length > 25) raw = raw[..25];
+        if (raw.Length > ProductKeyCodec.SignedRawLength)
+            raw = raw[..ProductKeyCodec.SignedRawLength];
 
         var sb = new StringBuilder(raw.Length + 4);
         for (var i = 0; i < raw.Length; i++)

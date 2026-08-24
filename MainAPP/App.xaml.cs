@@ -19,13 +19,18 @@ namespace MainAPP;
 
 public partial class App : Application
 {
+    private const string SingleInstanceMutexName = @"Global\Kanban.MainAPP.SingleInstance";
+    private static readonly TimeSpan ExitTimeout = TimeSpan.FromSeconds(30);
     private readonly IHost _host;
     private Mutex? _singleInstanceMutex;
     private bool _isFirstInstance;
+    private string? _singleInstanceError;
+    private bool _hostStarted;
+    private int _exitStarted;
 
     public App()
     {
-        _singleInstanceMutex = new Mutex(true, "Kanban.MainAPP.SingleInstance", out _isFirstInstance);
+        AcquireSingleInstance();
         var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
         _host = Host.CreateDefaultBuilder()
             .UseSerilog((context, loggerConfiguration) =>
@@ -98,6 +103,18 @@ public partial class App : Application
             Kanban.Collector.Core.Localization.RecipeValidationMessages.ApplyLanguage(
                 Services.Localization.GetCultureName(appSettings.Language));
             Log($"界面语言已应用：{appSettings.Language}");
+
+            if (_singleInstanceError is not null)
+            {
+                Log($"无法建立全局单实例互斥体：{_singleInstanceError}");
+                HandyControl.Controls.MessageBox.Show(
+                    _singleInstanceError,
+                    MainAPP.Resources.Strings.M130,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Shutdown();
+                return;
+            }
 
             // 禁止多开：非首个实例直接提示并退出，不启动 Host/采集/PLC，避免所有副作用。
             if (!_isFirstInstance)
@@ -209,6 +226,7 @@ public partial class App : Application
             }
 
             await _host.StartAsync();
+            _hostStarted = true;
             Log("Host.StartAsync 完成");
             var startupCoordinator = _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>();
 
@@ -274,11 +292,6 @@ public partial class App : Application
                 Strings.M130,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-            // IHost 实现 IAsyncDisposable，但 .NET 10 中 DisposeAsync 通过 IAsyncDisposable 接口提供。
-            // 显式转换为 IAsyncDisposable 后调用 DisposeAsync，避免依赖扩展方法。
-            try { (_host as IAsyncDisposable)?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); }
-            catch (Exception disposeEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Host.DisposeAsync 失败: {disposeEx.Message}"); }
-            SafeReleaseMutex();
             Shutdown();
             return;
         }
@@ -286,34 +299,80 @@ public partial class App : Application
         Log("OnStartup 结束");
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    protected override void OnExit(ExitEventArgs e)
     {
-        // 非首个实例（被禁止多开而退出）不做任何持久化，避免空内存数据覆盖首个实例的文件。
-        if (!_isFirstInstance)
+        if (Interlocked.Exchange(ref _exitStarted, 1) != 0)
         {
-            SafeReleaseMutex();
             base.OnExit(e);
             return;
         }
 
-        // 退出全程用 try/catch/finally 保护：任何步骤抛异常都不能阻断 base.OnExit 与互斥锁释放，
-        // 否则 Host 托管资源泄漏、互斥锁残留导致下次启动误判为"已存在实例"。
+        var shutdownCompleted = true;
+        try
+        {
+            // Secondary instances never start the host, but still dispose the host built by the constructor.
+            if (!_isFirstInstance)
+            {
+                try { _host.Dispose(); }
+                catch (Exception ex) { Debug.WriteLine($"[OnExit] secondary host dispose failed: {ex}"); }
+            }
+            else
+            {
+                var shutdownTask = Task.Run(ShutdownCoreAsync);
+                if (shutdownTask.Wait(ExitTimeout))
+                {
+                    var errors = shutdownTask.GetAwaiter().GetResult();
+                    if (errors.Count > 0)
+                    {
+                        HandyControl.Controls.MessageBox.Show(
+                            Strings.M355 + "\n\n" + string.Join("\n", errors),
+                            Strings.M356,
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                    }
+                }
+                else
+                {
+                    shutdownCompleted = false;
+                    Debug.WriteLine($"[OnExit] shutdown exceeded {ExitTimeout.TotalSeconds:0}s; process exit will release resources");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            try { Serilog.Log.Error(ex, "OnExit 异常"); }
+            catch (Exception logEx) { Debug.WriteLine($"[OnExit] Serilog 记录失败: {logEx.Message}"); }
+        }
+        finally
+        {
+            // If cleanup timed out, do not release the mutex or close logging while the cleanup task may still use them.
+            if (shutdownCompleted)
+            {
+                SafeReleaseMutex();
+                Serilog.Log.CloseAndFlush();
+            }
+
+            base.OnExit(e);
+        }
+    }
+
+    private async Task<List<string>> ShutdownCoreAsync()
+    {
         List<string> errors = [];
         try
         {
-            try { await _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>().DisposeAsync(); }
+            if (!_hostStarted)
+                return errors;
+
+            try { await _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>().DisposeAsync().ConfigureAwait(false); }
             catch (Exception ex) { errors.Add($"停止启动协调器失败: {ex.Message}"); }
 
-            // 退出顺序约束（审查修复 2026-08-15）：
-            // - 本地模式：先停止采集循环，避免保存设备/历史数据时采集线程仍在并发修改 Runtime 状态、入队 HistoryService。
-            //   StopAsync 会写入离线状态转换记录，避免停机时段被算进上一状态导致重启后 OEE 历史虚高。
-            // - Remote 模式：先经 SignalR 推送设备配置保存（SaveAllAsync），再释放 Collector 连接；
-            //   此前先释放连接再保存，SaveAllAsync 因连接已断开必然失败丢失设备配置。
-            if (!_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
+            var isRemote = _host.Services.GetRequiredService<IRuntimeMode>().IsRemote;
+            if (!isRemote)
             {
                 try
                 {
-                    await _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync();
+                    await _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -322,7 +381,7 @@ public partial class App : Application
 
                 try
                 {
-                    await _host.Services.GetRequiredService<Services.ProductionDailyReportService>().StopAsync();
+                    await _host.Services.GetRequiredService<Services.ProductionDailyReportService>().StopAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -332,28 +391,14 @@ public partial class App : Application
 
             try
             {
-                // Remote 模式经 SignalR 推送 Collector 落盘（async 等待避免退出时丢数据）
-                await _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync();
+                // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector。
+                await _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 errors.Add(string.Format(Strings.F210, ex.Message));
             }
 
-            // Remote 模式：释放 Collector 连接（必须在 SaveAllAsync 之后，见上方退出顺序约束）
-            if (_host.Services.GetRequiredService<IRuntimeMode>().IsRemote)
-            {
-                try
-                {
-                    var client = _host.Services.GetRequiredService<KanbanDataClient>();
-                    if (client is IAsyncDisposable disposable)
-                        await disposable.DisposeAsync();
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(string.Format(Strings.F235, ex.Message));
-                }
-            }
             try
             {
                 _host.Services.GetRequiredService<AppSettings>().Save();
@@ -363,80 +408,63 @@ public partial class App : Application
                 errors.Add(string.Format(Strings.F119, ex.Message));
             }
 
-            // HistoryService.Dispose 改用 DisposeAsync，避免在 UI 线程同步阻塞最多 3 秒。
             try
             {
-                await _host.Services.GetRequiredService<HistoryService>().DisposeAsync();
+                await _host.StopAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                errors.Add(string.Format(Strings.F076, ex.Message));
+                errors.Add($"停止 Host 失败: {ex.Message}");
             }
-
-            if (errors.Count > 0)
-            {
-                // 退出阶段：用 HC MessageBox 模态阻塞，确保用户在应用关闭前看到保存失败信息
-                // （Growl 是非模态通知，应用关闭时会被立即销毁，用户来不及看到）
-                HandyControl.Controls.MessageBox.Show(
-                    Strings.M355 + "\n\n" + string.Join("\n", errors),
-                    Strings.M356,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
-
-            await _host.StopAsync();
         }
         catch (Exception ex)
         {
-            // 退出阶段任何未预期异常都记录到 Serilog（CloseAndFlush 之前），不阻断 finally 清理
-            try { Serilog.Log.Error(ex, "OnExit 异常"); }
-            catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnExit] Serilog 记录失败: {logEx.Message}"); }
+            errors.Add($"退出清理失败: {ex.Message}");
         }
         finally
         {
-            // 在 Serilog.Log.CloseAndFlush 之前显式释放关键 IDisposable 服务：
-            // _host.Dispose 会在最后调用，但其日志在 CloseAndFlush 之后无法落盘，
-            // 这里提前释放以确保 Dispose 阶段日志可被捕获，便于追踪关闭阶段资源泄漏。
-            foreach (var disposable in new object?[]
+            try
             {
-                _host.Services.GetService<ViewModels.HomeViewModel>(),
-                _host.Services.GetService<IPlcDriver>(), // HslPlcDriver：释放 PLC socket
-            })
-            {
-                if (disposable is IDisposable d)
-                {
-                    try { d.Dispose(); }
-                    catch (Exception ex)
-                    {
-                        try { Serilog.Log.Warning(ex, "退出阶段显式释放 {Type} 失败", d.GetType().Name); }
-                        catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnExit] Serilog 记录释放 {d.GetType().Name} 失败失败: {logEx.Message}"); }
-                    }
-                }
+                if (_host is IAsyncDisposable asyncHost)
+                    await asyncHost.DisposeAsync().ConfigureAwait(false);
+                else
+                    _host.Dispose();
             }
-
-            // 退出前冲刷 Serilog 异步缓冲（确保运行期日志落盘）
-            Serilog.Log.CloseAndFlush();
-
-            // _host.Dispose 释放所有 DI 注册的 IDisposable 单例（含未在上面显式释放的服务）。
-            // 此时 Serilog 已 CloseAndFlush，catch 中的日志无法落盘，用 Debug.WriteLine 兜底输出到调试器。
-            try { _host.Dispose(); }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[OnExit] _host.Dispose 抛异常: {ex}");
+                errors.Add($"释放 Host 失败: {ex.Message}");
             }
-
-            // 释放单实例互斥锁（仅在持有所有权的首个实例上执行）
-            // SafeReleaseMutex 内部处理未持有所有权的情况，避免 ApplicationException 二次崩溃
-            SafeReleaseMutex();
-
-            // base.OnExit 必须执行，否则 WPF 关闭流程不完整
-            base.OnExit(e);
+            _hostStarted = false;
         }
+
+        return errors;
     }
 
     private static void Log(string message)
     {
         Serilog.Log.Information("{Message}", message);
+    }
+
+    private void AcquireSingleInstance()
+    {
+        try
+        {
+            _singleInstanceMutex = new Mutex(false, SingleInstanceMutexName);
+            try
+            {
+                _isFirstInstance = _singleInstanceMutex.WaitOne(0);
+            }
+            catch (AbandonedMutexException)
+            {
+                _isFirstInstance = true;
+                Debug.WriteLine("[App] 接管已废弃的全局单实例互斥体");
+            }
+        }
+        catch (Exception ex)
+        {
+            _singleInstanceError = $"无法建立 MainAPP 全局单实例互斥体：{ex.Message}";
+            Debug.WriteLine($"[App] {_singleInstanceError}");
+        }
     }
 
     /// <summary>
@@ -445,8 +473,8 @@ public partial class App : Application
     /// <remarks>
     /// Mutex.ReleaseMutex 仅在当前线程通过 WaitOne 取得所有权时合法，
     /// 否则抛 ApplicationException: "Object synchronization method was called from an unsynchronized block of code."
-    /// 构造时 new Mutex(true, ...) 在 createdNew=true 时隐式获得所有权，但异常路径可能跳过获取；
-    /// 直接 Dispose 由 OS 回收，无需显式 ReleaseMutex。
+    /// AcquireSingleInstance 只在 WaitOne 成功或接管 abandoned mutex 时标记为首实例；
+    /// 其他路径只 Dispose 句柄，由 OS 回收互斥体。
     /// </remarks>
     private void SafeReleaseMutex()
     {

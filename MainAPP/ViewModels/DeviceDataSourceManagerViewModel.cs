@@ -27,6 +27,8 @@ public partial class DeviceDataSourceManagerViewModel : DeviceChildManagerViewMo
     [ObservableProperty]
     private DataSourceEnumValue? _selectedEnumValue;
 
+    public IReadOnlyList<DataSourceValueType> DataSourceValueTypes { get; } = Enum.GetValues<DataSourceValueType>();
+
     public DeviceDataSourceManagerViewModel(
         IDialogService dialog,
         IDeviceManagerHost host)

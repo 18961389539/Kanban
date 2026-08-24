@@ -55,11 +55,18 @@ public static class DeviceAuditService
                     v.PlcAddress ?? string.Empty,
                     v.Unit ?? string.Empty,
                     v.Enabled,
+                    v.DataType,
+                    v.StringLength,
                     v.LimitMin,
                     v.LimitMax,
+                    v.FloatLimitMin,
+                    v.FloatLimitMax,
                     v.Hysteresis,
                     v.ConfirmSeconds,
                     v.ExpectedValue,
+                    v.FloatExpectedValue,
+                    v.BoolExpectedValue,
+                    v.StringExpectedValue,
                     v.EnumValues.Select(e => new DataSourceEnumAuditItem(e.Value, e.DisplayName ?? string.Empty)).ToArray())).ToArray())).ToArray()
         )).ToArray();
 
@@ -114,11 +121,18 @@ public sealed record DataSourceValueAuditItem(
     string PlcAddress,
     string Unit,
     bool Enabled,
+    DataSourceValueType DataType,
+    int StringLength,
     int LimitMin,
     int LimitMax,
+    float FloatLimitMin,
+    float FloatLimitMax,
     int Hysteresis,
     int ConfirmSeconds,
     int? ExpectedValue,
+    float? FloatExpectedValue,
+    bool? BoolExpectedValue,
+    string? StringExpectedValue,
     IReadOnlyList<DataSourceEnumAuditItem> EnumValues);
 
 public sealed record DataSourceEnumAuditItem(int Value, string DisplayName);

@@ -15,6 +15,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
 [Trait("Requires", "License")]
+[Collection("LicenseEnvironment")]
 public class LicenseBoundaryTests : IDisposable
 {
     private readonly string _tempDir;

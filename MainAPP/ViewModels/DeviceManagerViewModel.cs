@@ -400,11 +400,18 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
                     PlcAddress = value.PlcAddress,
                     Unit = value.Unit,
                     Enabled = value.Enabled,
+                    DataType = value.DataType,
+                    StringLength = value.StringLength,
                     LimitMin = value.LimitMin,
                     LimitMax = value.LimitMax,
+                    FloatLimitMin = value.FloatLimitMin,
+                    FloatLimitMax = value.FloatLimitMax,
                     Hysteresis = value.Hysteresis,
                     ConfirmSeconds = value.ConfirmSeconds,
                     ExpectedValue = value.ExpectedValue,
+                    FloatExpectedValue = value.FloatExpectedValue,
+                    BoolExpectedValue = value.BoolExpectedValue,
+                    StringExpectedValue = value.StringExpectedValue,
                 };
                 foreach (var enumValue in value.EnumValues)
                     valueCopy.EnumValues.Add(new DataSourceEnumValue { Value = enumValue.Value, DisplayName = enumValue.DisplayName });

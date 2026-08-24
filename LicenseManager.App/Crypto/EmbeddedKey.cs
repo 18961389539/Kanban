@@ -1,17 +1,17 @@
 namespace LicenseManager.Crypto;
 
 /// <summary>
-/// HMAC 密钥来源：从环境变量 KANBAN_HMAC_KEY 加载，不写入程序集。
+/// 旧版 HMAC 密钥来源：从环境变量 KANBAN_HMAC_KEY 加载，不写入程序集。
 /// </summary>
 /// <remarks>
 /// 安全说明：
-/// - 这是 HMAC 对称密钥，签发工具（LicenseIssuer.CLI）和客户端（LicenseManager.App）共享同一密钥。
+/// - 这是旧版 HMAC 对称密钥，旧签发工具和客户端共享同一密钥。
 /// - 密钥**必须**通过环境变量注入，绝不写入程序集——否则反编译即可提取密钥并离线自签任意机器码的激活码。
 /// - 生成方式（PowerShell）：
 ///     $bytes = New-Object byte[] 32
 ///     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 ///     [Convert]::ToBase64String($bytes)
-/// - 生产与开发环境都需注入（不再提供内嵌回退密钥）。
+/// - 新版 ECDSA 正式激活不依赖此密钥；它只用于旧激活码和兼容的 HMAC 状态文件。
 /// </remarks>
 /// <remarks>
 /// 不混淆：LicenseIssuer.* 工具直接引用此类的常量（TotalSize/PayloadSize 等），混淆重命名会导致外部程序集 TypeLoadException。
@@ -20,6 +20,39 @@ public static class EmbeddedKey
 {
     /// <summary>环境变量名：用于外部加载 HMAC 密钥（Base64 编码 32 字节）</summary>
     public const string EnvKeyName = "KANBAN_HMAC_KEY";
+
+    /// <summary>
+    /// 尝试读取 HMAC 密钥。试用期可以在没有密钥的全新机器上运行，
+    /// 因此试用状态持久化不能直接访问会抛异常的 <see cref="HmacKey"/>。
+    /// 旧版 HMAC 激活码验签仍使用 <see cref="HmacKey"/>；新版 ECDSA 激活不需要环境变量。
+    /// </summary>
+    public static bool TryGetHmacKey(out byte[] key)
+    {
+        var envValue = Environment.GetEnvironmentVariable(EnvKeyName);
+        if (string.IsNullOrWhiteSpace(envValue))
+        {
+            key = Array.Empty<byte>();
+            return false;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(envValue.Trim());
+            if (bytes.Length != 32)
+            {
+                key = Array.Empty<byte>();
+                return false;
+            }
+
+            key = bytes;
+            return true;
+        }
+        catch (FormatException)
+        {
+            key = Array.Empty<byte>();
+            return false;
+        }
+    }
 
     /// <summary>
     /// 解码后的 HMAC 密钥字节（32 字节）。从 KANBAN_HMAC_KEY 环境变量加载；未配置或非法时抛异常。

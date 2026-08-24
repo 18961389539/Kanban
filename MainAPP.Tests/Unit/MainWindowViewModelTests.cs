@@ -345,15 +345,67 @@ public class MainWindowViewModelTests : IDisposable
         var vm = NewVm();
         Assert.Equal(0, vm.SelectedIndex); // 前置：默认在主页
 
-        // 设备未配置时 SelectedDeviceId 为 null，ViewDeviceDetailCommand.CanExecute 返回 false。
-        // 直接设置 SelectedDeviceId 模拟用户选中设备，使命令可执行。
         vm.HomeViewModel.SelectedDeviceId = "any-device-id";
         Assert.True(vm.HomeViewModel.ViewDeviceDetailCommand.CanExecute(null));
-
-        // 主页"查看设备详情"请求：通过 ViewDeviceDetailCommand 触发 ViewDeviceDetailRequested 事件，
-        // MainWindowViewModel 订阅后置 SelectedIndex=9（设备详情页上下文索引）
         vm.HomeViewModel.ViewDeviceDetailCommand.Execute(null);
 
-        Assert.Equal(9, vm.SelectedIndex);
+        Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void HomeViewModel_ViewWorkOrderManagerRequested_NavigatesToWorkOrders()
+    {
+        var vm = NewVm();
+        vm.SelectedIndex = NavigationPageCatalog.Home.Index;
+
+        vm.HomeViewModel.ViewWorkOrderManagerCommand.Execute(null);
+
+        Assert.Equal(NavigationPageCatalog.WorkOrder.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void DeviceDetailViewModel_GoBackRequested_NavigatesHome()
+    {
+        var vm = NewVm();
+        _ = vm.DeviceDetailViewModel; // 强制懒加载并完成事件订阅
+        vm.SelectedIndex = NavigationPageCatalog.DeviceDetail.Index;
+
+        vm.DeviceDetailViewModel.GoBackCommand.Execute(null);
+
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void AlarmCenterViewModel_ViewAlarmHistoryRequested_NavigatesToHistory()
+    {
+        var device = new Device { Id = "device-1", Name = "设备一" };
+        _deviceRepo.Devices.Add(device);
+        var vm = NewVm();
+        var alarm = new ActiveAlarmInfo(DateTime.Now, device.Name, "高温报警", AlarmLevel.High, AlarmKind.Plc);
+
+        vm.AlarmCenterViewModel.ViewAlarmHistoryCommand.Execute(alarm);
+
+        Assert.Equal(NavigationPageCatalog.HistoryQuery.Index, vm.SelectedIndex);
+        Assert.NotNull(vm.HistoryQueryViewModel);
+    }
+
+    [Fact]
+    public void LazyLoadedPageEvents_AreUnsubscribedOnDispose()
+    {
+        var vm = NewVm();
+        _ = vm.HomeViewModel;
+        _ = vm.ProductionLineViewModel;
+        _ = vm.DeviceDetailViewModel;
+        _ = vm.AlarmCenterViewModel;
+        vm.SelectedIndex = NavigationPageCatalog.Home.Index;
+        vm.Dispose();
+
+        vm.HomeViewModel.ViewWorkOrderManagerCommand.Execute(null);
+        vm.DeviceDetailViewModel.GoBackCommand.Execute(null);
+        vm.ProductionLineViewModel.FocusDeviceCommand.Execute("device-1");
+        vm.AlarmCenterViewModel.ViewAlarmHistoryCommand.Execute(null);
+
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        vm.Dispose();
     }
 }

@@ -34,6 +34,22 @@ public partial class DataSourceValue : ObservableObject
     [ObservableProperty]
     private string _name = string.Empty;
 
+    /// <summary>采集数据类型；缺省 Int32 兼容旧配置。</summary>
+    [ObservableProperty]
+    private DataSourceValueType _dataType = DataSourceValueType.Int32;
+
+    /// <summary>字符串值项最大字符数。</summary>
+    [ObservableProperty]
+    private int _stringLength = 32;
+
+    /// <summary>Float32 下限。</summary>
+    [ObservableProperty]
+    private float _floatLimitMin;
+
+    /// <summary>Float32 上限。</summary>
+    [ObservableProperty]
+    private float _floatLimitMax;
+
     /// <summary>采集地址（D 字地址，如 D300）。源触发（或无触发=每轮）时读取此地址。</summary>
     [ObservableProperty]
     private string _plcAddress = string.Empty;
@@ -66,12 +82,21 @@ public partial class DataSourceValue : ObservableObject
     [ObservableProperty]
     private int _confirmSeconds = 5;
 
-    /// <summary>
-    /// 非数值型预期值。配置后按「当前值 ≠ 预期值」判偏离（立即触发，不延时）；
-    /// 回到预期值即恢复。数值型与非数值型判定互斥：配置上下限优先。
-    /// </summary>
+    /// <summary>Int32/枚举预期值。</summary>
     [ObservableProperty]
     private int? _expectedValue;
+
+    /// <summary>Float32 预期值。</summary>
+    [ObservableProperty]
+    private float? _floatExpectedValue;
+
+    /// <summary>Bool 预期值。</summary>
+    [ObservableProperty]
+    private bool? _boolExpectedValue;
+
+    /// <summary>String 预期值。</summary>
+    [ObservableProperty]
+    private string? _stringExpectedValue;
 
     /// <summary>
     /// 枚举取值映射（可空，仅展示归一化/预期值参照）。
@@ -92,22 +117,55 @@ public partial class DataSourceValue : ObservableObject
     [property: NotMapped]
     private int _currentValue;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTriggered))]
+    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private float _currentFloatValue;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTriggered))]
+    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private bool _currentBoolValue;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTriggered))]
+    [NotifyPropertyChangedFor(nameof(CurrentDisplayText))]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private string _currentStringValue = string.Empty;
+
     // ──────────── 派生判定属性（计算属性，不持久化） ────────────
 
     /// <summary>是否配置了数值型上下限（两者均配置且上限大于下限）。</summary>
     [JsonIgnore]
     [NotMapped]
-    public bool HasLimits => LimitMax > LimitMin;
+    public bool HasLimits => DataType == DataSourceValueType.Float32
+        ? FloatLimitMax > FloatLimitMin
+        : DataType == DataSourceValueType.Int32 && LimitMax > LimitMin;
 
     /// <summary>是否配置了非数值型预期值。</summary>
     [JsonIgnore]
     [NotMapped]
-    public bool HasExpectedValue => ExpectedValue.HasValue;
+    public bool HasExpectedValue => DataType switch
+    {
+        DataSourceValueType.Float32 => FloatExpectedValue.HasValue,
+        DataSourceValueType.Bool => BoolExpectedValue.HasValue,
+        DataSourceValueType.String => StringExpectedValue != null,
+        _ => ExpectedValue.HasValue,
+    };
 
     /// <summary>当前值是否越出上下限区间（不含滞回，供扫描状态机判定"进入"时刻）。</summary>
     [JsonIgnore]
     [NotMapped]
-    public bool IsOutOfRange => HasLimits && (CurrentValue > LimitMax || CurrentValue < LimitMin);
+    public bool IsOutOfRange => DataType switch
+    {
+        DataSourceValueType.Float32 => HasLimits && (CurrentFloatValue > FloatLimitMax || CurrentFloatValue < FloatLimitMin),
+        _ => HasLimits && (CurrentValue > LimitMax || CurrentValue < LimitMin),
+    };
 
     /// <summary>当前值是否已回落（含滞回后回到区间内，供状态机判定"恢复"时刻）。</summary>
     [JsonIgnore]
@@ -117,15 +175,26 @@ public partial class DataSourceValue : ObservableObject
         get
         {
             if (!HasLimits) return true;
-            var hysteresis = Math.Max(0, Hysteresis);
-            return CurrentValue <= LimitMax - hysteresis && CurrentValue >= LimitMin + hysteresis;
+            if (DataType == DataSourceValueType.Float32)
+            {
+                var hysteresis = Math.Max(0, Hysteresis);
+                return CurrentFloatValue <= FloatLimitMax - hysteresis && CurrentFloatValue >= FloatLimitMin + hysteresis;
+            }
+            var intHysteresis = Math.Max(0, Hysteresis);
+            return CurrentValue <= LimitMax - intHysteresis && CurrentValue >= LimitMin + intHysteresis;
         }
     }
 
     /// <summary>当前值是否偏离预期值（非数值型）。</summary>
     [JsonIgnore]
     [NotMapped]
-    public bool IsDeviatingFromExpected => HasExpectedValue && CurrentValue != ExpectedValue!.Value;
+    public bool IsDeviatingFromExpected => DataType switch
+    {
+        DataSourceValueType.Float32 => HasExpectedValue && Math.Abs(CurrentFloatValue - FloatExpectedValue!.Value) > 0.0001f,
+        DataSourceValueType.Bool => HasExpectedValue && CurrentBoolValue != BoolExpectedValue!.Value,
+        DataSourceValueType.String => HasExpectedValue && !string.Equals(CurrentStringValue, StringExpectedValue, StringComparison.Ordinal),
+        _ => HasExpectedValue && CurrentValue != ExpectedValue!.Value,
+    };
 
     /// <summary>
     /// 当前值是否处于告警态（派生，供 UI 实时着色）。数值型 = 越出区间；非数值型 = 偏离预期。
@@ -134,6 +203,27 @@ public partial class DataSourceValue : ObservableObject
     [JsonIgnore]
     [NotMapped]
     public bool IsTriggered => IsOutOfRange || IsDeviatingFromExpected;
+
+    [JsonIgnore]
+    [NotMapped]
+    public DataSourceRuntimeValue RuntimeValue => DataType switch
+    {
+        DataSourceValueType.Float32 => new(DataType, Float32Value: CurrentFloatValue),
+        DataSourceValueType.Bool => new(DataType, BoolValue: CurrentBoolValue),
+        DataSourceValueType.String => new(DataType, StringValue: CurrentStringValue),
+        _ => new(DataType, Int32Value: CurrentValue),
+    };
+
+    public void SetRuntimeValue(DataSourceRuntimeValue value)
+    {
+        switch (value.Type)
+        {
+            case DataSourceValueType.Float32: CurrentFloatValue = value.Float32Value; break;
+            case DataSourceValueType.Bool: CurrentBoolValue = value.BoolValue; break;
+            case DataSourceValueType.String: CurrentStringValue = value.StringValue ?? string.Empty; break;
+            default: CurrentValue = value.Int32Value; break;
+        }
+    }
 
     /// <summary>
     /// 当前值展示文本：配置了枚举映射且当前值命中时显示枚举显示名（如 2 → "报警"），
@@ -145,6 +235,8 @@ public partial class DataSourceValue : ObservableObject
     {
         get
         {
+            if (DataType != DataSourceValueType.Int32)
+                return RuntimeValue.DisplayText;
             var match = EnumValues.FirstOrDefault(e => e.Value == CurrentValue);
             return match != null && !string.IsNullOrWhiteSpace(match.DisplayName)
                 ? match.DisplayName

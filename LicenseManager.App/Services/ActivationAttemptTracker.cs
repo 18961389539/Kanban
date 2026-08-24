@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using LicenseManager.Crypto;
@@ -15,10 +16,12 @@ namespace LicenseManager.Services;
 /// - 锁定期间任何激活尝试都被拒绝
 /// - 锁定过期后重置错误计数，但保留 LockoutCount 以递增下次锁定时间
 /// - 激活成功后重置所有计数
-/// - 计数持久化到本地文件（HMAC 签名保护，防篡改）
+/// - 计数持久化到本地文件（有 HMAC 时签名；新电脑无 HMAC 时使用当前用户 DPAPI）
 /// </remarks>
 public class ActivationAttemptTracker
 {
+    private const string ProtectedPrefix = "dpapi|";
+
     /// <summary>最大错误次数（达到后锁定）</summary>
     public const int MaxAttempts = 5;
 
@@ -85,8 +88,26 @@ public class ActivationAttemptTracker
         try
         {
             var content = File.ReadAllText(_attemptFilePath);
+
+            if (content.StartsWith(ProtectedPrefix, StringComparison.Ordinal))
+            {
+                var protectedBytes = Convert.FromBase64String(content[ProtectedPrefix.Length..]);
+                var jsonBytes = ProtectedData.Unprotect(
+                    protectedBytes,
+                    optionalEntropy: null,
+                    scope: DataProtectionScope.CurrentUser);
+                LoadRecord(JsonSerializer.Deserialize<AttemptRecord>(jsonBytes));
+                return;
+            }
+
             var parts = content.Split('|');
-            if (parts.Length != 2) return;
+            if (parts.Length != 2 || !EmbeddedKey.TryGetHmacKey(out _))
+            {
+                CurrentAttempts = 0;
+                LockoutUntil = null;
+                LockoutCount = 0;
+                return;
+            }
 
             var signature = Convert.FromBase64String(parts[1]);
             var data = Encoding.UTF8.GetBytes(parts[0]);
@@ -99,13 +120,7 @@ public class ActivationAttemptTracker
                 return;
             }
 
-            var record = JsonSerializer.Deserialize<AttemptRecord>(parts[0]);
-            if (record != null)
-            {
-                CurrentAttempts = record.Attempts;
-                LockoutUntil = record.LockoutUntil;
-                LockoutCount = record.LockoutCount;
-            }
+            LoadRecord(JsonSerializer.Deserialize<AttemptRecord>(parts[0]));
         }
         catch
         {
@@ -166,12 +181,33 @@ public class ActivationAttemptTracker
         };
         var json = JsonSerializer.Serialize(record);
         var data = Encoding.UTF8.GetBytes(json);
-        var signature = HmacValidator.ComputeTag(data);
-        var content = json + "|" + Convert.ToBase64String(signature);
+        string content;
+        if (EmbeddedKey.TryGetHmacKey(out _))
+        {
+            var signature = HmacValidator.ComputeTag(data);
+            content = json + "|" + Convert.ToBase64String(signature);
+        }
+        else
+        {
+            var protectedBytes = ProtectedData.Protect(
+                data,
+                optionalEntropy: null,
+                scope: DataProtectionScope.CurrentUser);
+            content = ProtectedPrefix + Convert.ToBase64String(protectedBytes);
+        }
+
         // 原子写入：防断电时 attempts.dat 被截断为半写状态导致 HMAC 验签失败（误重置计数）
         var tmp = _attemptFilePath + ".tmp";
         File.WriteAllText(tmp, content);
         File.Move(tmp, _attemptFilePath, overwrite: true);
+    }
+
+    private void LoadRecord(AttemptRecord? record)
+    {
+        if (record == null) return;
+        CurrentAttempts = record.Attempts;
+        LockoutUntil = record.LockoutUntil;
+        LockoutCount = record.LockoutCount;
     }
 
     private class AttemptRecord

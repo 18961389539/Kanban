@@ -134,6 +134,11 @@
                     Width="*"
                     Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                     Header="名称" />
+                <DataGridComboBoxColumn
+                    Width="90"
+                    Header="类型"
+                    SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
+                    ItemsSource="{Binding DataContext.DataSourceValueTypes, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"

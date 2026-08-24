@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using LicenseManager.Crypto;
 using LicenseManager.Models;
 using LicenseManager.Services;
 using Xunit;
@@ -15,6 +16,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","License")]
+[Collection("LicenseEnvironment")]
 public class LicenseStoreTests : IDisposable
 {
     private readonly string _tempDir;
@@ -177,6 +179,31 @@ public class LicenseStoreTests : IDisposable
         Assert.Equal(trial.FirstLaunchUtc, loaded!.FirstLaunchUtc);
         Assert.Equal(trial.LastLaunchUtc, loaded.LastLaunchUtc);
         Assert.Equal(trial.LaunchCount, loaded.LaunchCount);
+    }
+
+    [Fact]
+    public void SaveTrial_WithoutHmacKey_UsesCurrentUserDpapi()
+    {
+        var previousKey = Environment.GetEnvironmentVariable(EmbeddedKey.EnvKeyName);
+        try
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, null);
+            var store = CreateStore();
+            var trial = CreateSampleTrial();
+
+            store.SaveTrial(trial);
+
+            var content = File.ReadAllText(Path.Combine(_tempDir, "trial.dat"));
+            Assert.StartsWith("dpapi|", content, StringComparison.Ordinal);
+            var loaded = store.LoadTrial();
+            Assert.NotNull(loaded);
+            Assert.Equal(trial.FirstLaunchUtc, loaded!.FirstLaunchUtc);
+            Assert.Equal(trial.LaunchCount, loaded.LaunchCount);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, previousKey);
+        }
     }
 
     [Fact]

@@ -21,6 +21,7 @@ public sealed class ApplicationStartupCoordinator(
     ApplicationRuntime runtime) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
+    private int _disposeStarted;
 
     public async Task<Window> PrepareAsync(CancellationToken cancellationToken = default)
     {
@@ -324,6 +325,9 @@ public sealed class ApplicationStartupCoordinator(
 
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposeStarted, 1) != 0)
+            return;
+
         _shutdownCts.Cancel();
         if (_remoteRetryTask != null)
         {

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.Win32;
 using LicenseManager.Crypto;
 using LicenseManager.Models;
@@ -13,7 +14,8 @@ namespace LicenseManager.Services;
 ///           trial.dat 被删除后可恢复完整状态，保留时间回拨检测能力。
 /// R-3 增强：HKLM 写入失败（非管理员）时回退到 HKCU，至少有当前用户级备份。
 ///
-/// 注册表值用 HMAC 签名保护，防止用户直接修改。
+/// 配置 HMAC 密钥时注册表值用 HMAC 签名保护；全新未激活机器尚未配置密钥时，
+/// 使用当前用户 DPAPI 保护，避免试用初始化因缺少签名密钥失败。
 /// 旧版本只备份 FirstLaunchUtc（TrialFirstLaunch 值），新版本备份完整 JSON（TrialStateJson 值）。
 /// 读取时优先读新格式，回退到旧格式以保持兼容。
 /// </remarks>
@@ -22,6 +24,7 @@ public class TrialRegistryBackup
     private const string RegistryKeyPath = @"SOFTWARE\Kanban";
     private const string StateValueName = "TrialStateJson";
     private const string SignatureValueName = "TrialSignature";
+    private const string ProtectedStateValueName = "TrialStateDpapi";
 
     // 旧版字段名（向后兼容读取）
     private const string LegacyFirstLaunchValueName = "TrialFirstLaunch";
@@ -74,15 +77,28 @@ public class TrialRegistryBackup
 
             var json = key.GetValue(StateValueName) as string;
             var signatureStr = key.GetValue(SignatureValueName) as string;
-            if (string.IsNullOrEmpty(json) || string.IsNullOrEmpty(signatureStr)) return null;
+            if (!string.IsNullOrEmpty(json) && !string.IsNullOrEmpty(signatureStr) &&
+                EmbeddedKey.TryGetHmacKey(out _))
+            {
+                // 已配置密钥时优先验证兼容的 HMAC 格式。
+                var data = System.Text.Encoding.UTF8.GetBytes(json);
+                var expectedSig = HmacValidator.ComputeTag(data);
+                var actualSig = Convert.FromBase64String(signatureStr);
+                if (HmacValidator.ConstantTimeEquals(expectedSig, actualSig))
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<TrialState>(json);
+                }
+            }
 
-            // 验证 HMAC 签名
-            var data = System.Text.Encoding.UTF8.GetBytes(json);
-            var expectedSig = HmacValidator.ComputeTag(data);
-            var actualSig = Convert.FromBase64String(signatureStr);
-            if (!HmacValidator.ConstantTimeEquals(expectedSig, actualSig)) return null;
+            var protectedState = key.GetValue(ProtectedStateValueName) as string;
+            if (string.IsNullOrEmpty(protectedState)) return null;
 
-            return System.Text.Json.JsonSerializer.Deserialize<TrialState>(json);
+            var protectedBytes = Convert.FromBase64String(protectedState);
+            var unprotected = ProtectedData.Unprotect(
+                protectedBytes,
+                optionalEntropy: null,
+                scope: DataProtectionScope.CurrentUser);
+            return System.Text.Json.JsonSerializer.Deserialize<TrialState>(unprotected);
         }
         catch
         {
@@ -99,10 +115,25 @@ public class TrialRegistryBackup
 
             var json = System.Text.Json.JsonSerializer.Serialize(state);
             var data = System.Text.Encoding.UTF8.GetBytes(json);
-            var signature = HmacValidator.ComputeTag(data);
 
-            key.SetValue(StateValueName, json, RegistryValueKind.String);
-            key.SetValue(SignatureValueName, Convert.ToBase64String(signature), RegistryValueKind.String);
+            if (EmbeddedKey.TryGetHmacKey(out _))
+            {
+                var signature = HmacValidator.ComputeTag(data);
+                key.SetValue(StateValueName, json, RegistryValueKind.String);
+                key.SetValue(SignatureValueName, Convert.ToBase64String(signature), RegistryValueKind.String);
+                key.DeleteValue(ProtectedStateValueName, throwOnMissingValue: false);
+            }
+            else
+            {
+                var protectedBytes = ProtectedData.Protect(
+                    data,
+                    optionalEntropy: null,
+                    scope: DataProtectionScope.CurrentUser);
+                key.SetValue(ProtectedStateValueName, Convert.ToBase64String(protectedBytes), RegistryValueKind.String);
+                key.DeleteValue(StateValueName, throwOnMissingValue: false);
+                key.DeleteValue(SignatureValueName, throwOnMissingValue: false);
+            }
+
             return true;
         }
         catch

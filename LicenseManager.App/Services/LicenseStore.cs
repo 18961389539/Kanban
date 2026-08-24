@@ -15,6 +15,7 @@ public class LicenseStore
 {
     private const string LicenseFileName = "license.dat";
     private const string TrialFileName = "trial.dat";
+    private const string ProtectedTrialPrefix = "dpapi|";
 
     private readonly string _licenseFilePath;
     private readonly string _trialFilePath;
@@ -71,8 +72,21 @@ public class LicenseStore
         try
         {
             var content = File.ReadAllText(_trialFilePath);
+
+            // 新电脑首次试用可能尚未配置激活码签名密钥，使用当前用户 DPAPI
+            // 保存试用状态；配置 HMAC 后仍兼容并优先使用原有签名格式。
+            if (content.StartsWith(ProtectedTrialPrefix, StringComparison.Ordinal))
+            {
+                var protectedBytes = Convert.FromBase64String(content[ProtectedTrialPrefix.Length..]);
+                var jsonBytes = ProtectedData.Unprotect(
+                    protectedBytes,
+                    optionalEntropy: null,
+                    scope: DataProtectionScope.CurrentUser);
+                return JsonSerializer.Deserialize<TrialState>(jsonBytes);
+            }
+
             var parts = content.Split('|');
-            if (parts.Length != 2) return null;
+            if (parts.Length != 2 || !EmbeddedKey.TryGetHmacKey(out _)) return null;
 
             var signature = Convert.FromBase64String(parts[1]);
             var data = Encoding.UTF8.GetBytes(parts[0]);
@@ -93,8 +107,22 @@ public class LicenseStore
     {
         var json = JsonSerializer.Serialize(state);
         var data = Encoding.UTF8.GetBytes(json);
-        var signature = HmacValidator.ComputeTag(data);
-        var content = json + "|" + Convert.ToBase64String(signature);
+
+        string content;
+        if (EmbeddedKey.TryGetHmacKey(out _))
+        {
+            var signature = HmacValidator.ComputeTag(data);
+            content = json + "|" + Convert.ToBase64String(signature);
+        }
+        else
+        {
+            var protectedBytes = ProtectedData.Protect(
+                data,
+                optionalEntropy: null,
+                scope: DataProtectionScope.CurrentUser);
+            content = ProtectedTrialPrefix + Convert.ToBase64String(protectedBytes);
+        }
+
         AtomicWriteText(_trialFilePath, content);
     }
 

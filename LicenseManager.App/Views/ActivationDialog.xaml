@@ -109,9 +109,9 @@
                 Foreground="#E5E7EB"
                 BorderBrush="#2A323F"
                 CharacterCasing="Upper"
-                MaxLength="29"
+                MaxLength="140"
                 Text="{Binding ProductKey, UpdateSourceTrigger=PropertyChanged}"
-                hc:InfoElement.Placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" />
+                hc:InfoElement.Placeholder="粘贴激活码（支持旧版和新版格式）" />
         </StackPanel>
 
         <!--  错误提示  -->

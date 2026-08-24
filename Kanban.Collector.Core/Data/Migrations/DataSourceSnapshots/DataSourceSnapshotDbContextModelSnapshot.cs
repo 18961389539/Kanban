@@ -33,6 +33,19 @@ namespace Kanban.Collector.Core.Data.Migrations.DataSourceSnapshots
                     .HasMaxLength(128)
                     .HasColumnType("TEXT");
 
+                b.Property<int>("DataType")
+                    .HasColumnType("INTEGER");
+
+                b.Property<float?>("FloatValue")
+                    .HasColumnType("REAL");
+
+                b.Property<bool?>("BoolValue")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("StringValue")
+                    .HasMaxLength(1024)
+                    .HasColumnType("TEXT");
+
                 b.Property<bool>("IsValid")
                     .HasColumnType("INTEGER");
 

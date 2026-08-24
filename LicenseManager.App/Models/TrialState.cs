@@ -4,7 +4,8 @@ namespace LicenseManager.Models;
 
 /// <summary>
 /// 试用期跟踪状态：持久化到本地，用于检测时间回拨和计算剩余天数。
-/// 文件本身由 <see cref="LicenseManager.Services.LicenseStore"/> 用 DPAPI 加密 + HMAC 签名保护，防篡改。
+/// 配置 HMAC 密钥时由 <see cref="LicenseManager.Services.LicenseStore"/> 用 HMAC 签名保护；
+/// 新电脑首次试用尚未配置密钥时，使用当前用户 DPAPI 保护。
 /// </summary>
 public class TrialState
 {

@@ -39,7 +39,7 @@ public static class IssueCommand
         }
 
         // 3. 生成激活码
-        var productKey = ProductKeyCodec.Encode(machineHashBytes, expireUtc);
+        var productKey = ProductKeyCodec.EncodeSigned(machineHashBytes, expireUtc);
 
         // 4. 写入签发记录
         var record = new IssuedRecord

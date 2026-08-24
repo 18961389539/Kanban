@@ -9,12 +9,12 @@ namespace LicenseIssuer;
 /// </summary>
 /// <remarks>
 /// 用法：
-///   LicenseIssuer.exe verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX              # 仅验证签名/格式
-///   LicenseIssuer.exe verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX --machine ABCD1234  # 同时校验机器绑定
+///   LicenseIssuer.exe verify --key <activation-code>                         # 仅验证签名/格式
+///   LicenseIssuer.exe verify --key <activation-code> --machine ABCD1234       # 同时校验机器绑定
 ///
 /// 验证内容：
-/// 1. 激活码格式（25 字符，分组校验位）
-/// 2. HMAC 签名（防篡改）
+/// 1. 激活码格式和分组校验位（兼容旧 HMAC 与新 ECDSA 长度）
+/// 2. 签名（新码使用 ECDSA；旧码使用 HMAC）
 /// 3. 机器码绑定（如指定 --machine）
 /// 4. 过期状态（基于当前 UTC 时间）
 /// 5. 撤销状态（查询 issued/ 和 revoked/ 目录，匹配 ProductKey）
@@ -28,46 +28,32 @@ public static class VerifyCommand
 
     public static int Handle(string productKey, string? machine)
     {
-        // 1. 校验激活码格式与 HMAC 签名
-        if (!ProductKeyCodec.TryParseRaw(productKey, out var raw) || raw.Length != EmbeddedKey.FormattedLength)
+        // 1. 校验激活码格式与签名
+        if (!ProductKeyCodec.TryParseRaw(productKey, out var raw))
         {
-            PrintFail("激活码格式非法：必须为 25 字符（XXXXX-XXXXX-XXXXX-XXXXX-XXXXX）。");
+            PrintFail("激活码格式非法或长度不正确。");
             return 2;
         }
 
         var formattedKey = ProductKeyCodec.Format(raw);
 
-        // 解码出负载和标签（不依赖机器码即可验签）
-        if (!Base32.TryDecode(raw[..^1], out var bytes) || bytes.Length != EmbeddedKey.TotalSize)
+        // 先从签名载荷提取绑定机器码，再让 ProductKeyCodec 统一验证旧 HMAC 或新 ECDSA 格式。
+        if (!Base32.TryDecode(raw[..^1], out var bytes) || bytes.Length < EmbeddedKey.PayloadSize)
         {
             PrintFail("激活码解码失败：Base32 数据长度不正确。");
             return 2;
         }
 
-        // 校验位验证
-        var expectedCheck = ComputeCheckChar(raw[..^1]);
-        if (expectedCheck != raw[^1])
+        var machineHashInKey = Base32.Encode(bytes.AsSpan(0, 5));
+        var verifiedLicense = ProductKeyCodec.TryDecode(formattedKey, machineHashInKey);
+        if (verifiedLicense == null)
         {
-            PrintFail("激活码校验位不匹配：可能输入错误或被篡改。");
-            return 2;
-        }
-
-        var payload = bytes.AsSpan(0, EmbeddedKey.PayloadSize);
-        var tag = bytes.AsSpan(EmbeddedKey.PayloadSize, EmbeddedKey.TagSize);
-        var expectedTag = HmacValidator.ComputeTag(payload);
-
-        if (!HmacValidator.ConstantTimeEquals(tag, expectedTag))
-        {
-            PrintFail("HMAC 签名验证失败：激活码已被篡改。");
+            PrintFail("激活码签名验证失败：激活码已被篡改、格式不支持或签发密钥不匹配。");
             return 2;
         }
 
         // 2. 解析激活码中的机器码哈希和过期日期
-        var machineHashInKey = Base32.Encode(payload[..5]);
-        var daysSinceEpoch = (ushort)((payload[5] << 8) | payload[6]);
-        DateTime? expireDate = daysSinceEpoch == ProductKeyCodec.PermanentMarker
-            ? null
-            : ProductKeyCodec.EpochUtc.AddDays(daysSinceEpoch);
+        var expireDate = verifiedLicense.ExpireDate;
 
         // 3. 机器码绑定校验（如指定 --machine）
         var machineMatch = true;
@@ -238,17 +224,4 @@ public static class VerifyCommand
         Console.ResetColor();
     }
 
-    /// <summary>计算校验字符（与 ProductKeyCodec.ComputeCheckChar 保持一致）。</summary>
-    private static char ComputeCheckChar(string encoded)
-    {
-        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-        var sum = 0;
-        foreach (var c in encoded)
-        {
-            var idx = alphabet.IndexOf(c);
-            if (idx < 0) idx = 0;
-            sum += idx;
-        }
-        return alphabet[sum % 32];
-    }
 }

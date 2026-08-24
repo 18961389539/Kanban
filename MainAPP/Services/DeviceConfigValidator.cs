@@ -108,7 +108,8 @@ public static class DeviceConfigValidator
                         });
                         continue;
                     }
-                    AddAddressError(errors, device, addressCodec, value.PlcAddress, PlcAddressType.DWord, (int)DeviceManagerTab.Sources, $"采集源「{source.Name}」值项「{value.Name}」采集地址格式无效");
+                    var expectedValueAddressType = value.DataType == DataSourceValueType.Bool ? PlcAddressType.MBit : PlcAddressType.DWord;
+                AddAddressError(errors, device, addressCodec, value.PlcAddress, expectedValueAddressType, (int)DeviceManagerTab.Sources, $"采集源「{source.Name}」值项「{value.Name}」采集地址格式无效");
 
                     // 阈值规则（设计稿 §6）：上下限关系、滞回/延时合法
                     if (value.HasLimits && value.Hysteresis < 0)
@@ -368,8 +369,17 @@ public static class DeviceConfigValidator
             {
                 if (string.IsNullOrWhiteSpace(value.Id))
                     errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」存在空 Id 值项" });
-                var hasLimitFields = value.LimitMin != 0 || value.LimitMax != 0;
-                if (hasLimitFields && value.LimitMax <= value.LimitMin)
+                if (value.DataType == DataSourceValueType.String && (value.StringLength < 1 || value.StringLength > 1024))
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」字符串长度必须在 1~1024 之间" });
+                if (value.DataType == DataSourceValueType.Float32 && (float.IsNaN(value.FloatLimitMin) || float.IsNaN(value.FloatLimitMax) || float.IsInfinity(value.FloatLimitMin) || float.IsInfinity(value.FloatLimitMax)))
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」浮点限值无效" });
+                var hasLimitFields = value.DataType == DataSourceValueType.Float32
+                    ? value.FloatLimitMin != 0 || value.FloatLimitMax != 0
+                    : value.LimitMin != 0 || value.LimitMax != 0;
+                var limitInvalid = value.DataType == DataSourceValueType.Float32
+                    ? value.FloatLimitMax <= value.FloatLimitMin
+                    : value.LimitMax <= value.LimitMin;
+                if (hasLimitFields && limitInvalid)
                     errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」上限必须大于下限" });
                 if (value.HasLimits && value.ExpectedValue.HasValue)
                     errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」不能同时配置上下限和预期值" });

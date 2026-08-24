@@ -405,14 +405,15 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 | `LicenseGate` | 授权门禁：`CheckStatus()`（机器码缓存 → LoadLicense → **ProductKeyCodec 重新验签**（防篡改 ExpireDate）→ 判定 Active/Expired/MachineMismatch，无记录则委托 TrialTracker）；`TryActivate(productKey, out error)`（验签→绑定→过期→SaveLicense + 成功/失败计数） |
 | `LicenseStatus` | `Unlicensed/Trial/TrialExpired/TrialManipulated/Active/Expired/MachineMismatch` |
 | `TrialTracker` | 30 天试用：首启写 trial.dat + **注册表备份**（`TrialRegistryBackup`，HKLM/HKCU `SOFTWARE\Kanban`，防删文件重置）；**三重时间回拨检测**（当前时间 vs LastLaunchUtc / FirstLaunchUtc / 系统启动时间） |
-| `LicenseStore` | 存储：目录优先级（构造参数 → KANBAN_DATA_DIR → %AppData%\Kanban\）；`license.dat` DPAPI(CurrentUser) 加密 + 原子写；`trial.dat` 明文 JSON + HMAC 签名 |
+| `LicenseStore` | 存储：目录优先级（构造参数 → KANBAN_DATA_DIR → %AppData%\Kanban\）；`license.dat` DPAPI(CurrentUser) 加密 + 原子写；`trial.dat` 在配置旧 HMAC 密钥时使用 HMAC，否则使用当前用户 DPAPI |
 | `ActivationAttemptTracker` | 激活防暴力：连续错 5 次锁定，锁定时长指数递增 5min→…→24h |
 
 #### 3.7.2 加密体系（`LicenseManager.App/Crypto/`）
 
-- `ProductKeyCodec`：激活码载荷 15 字节 = [5B 机器码哈希] + [2B 过期日期（2025-01-01 偏移，0xFFFF=永久）] + [8B HMAC-SHA256 截断]；Base32(RFC 4648, 去 0/1/O/I) → 24 字符 + 1 校验字符，格式 `XXXXX-XXXXX-XXXXX-XXXXX-XXXXX`；`Encode/TryDecode(含机器码绑定)`
-- `EmbeddedKey`：HMAC 密钥——环境变量 `KANBAN_HMAC_KEY` 优先，回退内嵌常量（Lazy 解析）；密钥对称，"防普通用户不防专业破解"
-- `HmacValidator`：`ComputeTag`（HMACSHA256 截 8B）+ `ConstantTimeEquals`（常量时间比较防时序攻击）
+- `ProductKeyCodec`：兼容旧版 HMAC 激活码和新版 ECDSA 激活码。旧码为 23 字节负载，原始 38 字符；新码为 7 字节机器/日期负载 + 1 字节版本 + 64 字节 P-256 IEEE P1363 签名，共 72 字节，原始 117 字符、格式化后 140 字符；两者均使用 Base32 和末尾校验字符，并校验机器绑定。
+- `LicenseSigningKey`：MainAPP 只内置 SubjectPublicKeyInfo 公钥；LicenseIssuer 从签发机 `%APPDATA%\Kanban\license-signing-key.pem` 加载 P-256 私钥。私钥必须备份在受控位置，不能进入客户端发布包。
+- `EmbeddedKey`：旧版 HMAC 密钥从环境变量 `KANBAN_HMAC_KEY` 注入；值必须是 32 字节密钥的 Base64 形式，不提供内嵌回退。新版 ECDSA 正式激活不需要此环境变量。
+- `HmacValidator`：旧版兼容路径使用 HMAC-SHA256 标签和常量时间比较；缺少旧 HMAC 密钥时不影响新版 ECDSA 激活或新机器试用。
 - `Base32`：RFC 4648 编解码
 - `HardwareFingerprint`：机器码 = WMI（`Win32_Processor.ProcessorId` + `Win32_BaseBoard.SerialNumber` + `Win32_DiskDrive(0)`）→ SHA256 截 5B → Base32 8 字符；进程级缓存 + DPAPI 持久化缓存 `hwid.dat`；标注 `[Obfuscation]`
 
@@ -427,7 +428,7 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 
 #### 3.7.4 混淆（`LicenseManager.App/obfuscar.xml`）
 
-仅 Release 构建（csproj `ObfuscateRelease` Target，AfterTargets=Build）：`MarkedOnly`（只混淆标注 `[Obfuscation]` 的类型，即 HardwareFingerprint）+ `HideStrings`（保护内嵌 HMAC 密钥）+ `UseUnicodeNames` + `SuppressIldasm`；**明确不混淆** `LicenseManager.Crypto` 命名空间与 MainAPP 直接引用的公共 API。
+仅 Release 构建（csproj `ObfuscateRelease` Target，AfterTargets=Build）：`MarkedOnly`（只混淆标注 `[Obfuscation]` 的类型，即 HardwareFingerprint）+ `HideStrings`（保护混淆范围内的字符串）+ `UseUnicodeNames` + `SuppressIldasm`；HMAC 密钥不写入程序集，**明确不混淆** `LicenseManager.Crypto` 命名空间与 MainAPP 直接引用的公共 API。
 
 ### 3.8 PlcSimulator — 虚拟 PLC 模拟器（`PlcSimulator/`）
 
@@ -550,6 +551,13 @@ dotnet build Kanban.slnx -c Release   # 验证 Obfuscar + Release 配置
 
 ### 6.3 运行主程序（Local 模式，默认）
 
+MainAPP 使用新版 ECDSA 激活码时不需要配置 `KANBAN_HMAC_KEY`。新电脑没有激活码时会进入 30 天试用；取得激活码后，在激活对话框中直接粘贴即可。`KANBAN_HMAC_KEY` 只在验证旧版 HMAC 激活码或读取旧 HMAC 状态时需要，已有旧码必须使用签发时的原密钥，不能在每台电脑重新生成：
+
+```powershell
+# 仅兼容旧 HMAC 激活码：使用签发旧码时的原密钥
+.\ci\configure-hmac-key.ps1 -HmacKey "<签发旧版激活码时使用的 32 字节 Base64 密钥>"
+```
+
 ```powershell
 dotnet run --project MainAPP\MainAPP.csproj
 ```
@@ -574,7 +582,7 @@ dotnet run --project Kanban.Collector\Kanban.Collector.csproj   # 控制台方�
 - 注册为 Windows 服务：
 
 ```powershell
-.\ci\install-collector-service.ps1 -Action Install -DataRoot D:\KanbanData   # 开机自启 + 崩溃重启
+.\ci\install-collector-service.ps1 -Action Install -DataRoot D:\KanbanData   # 先配置 KANBAN_HMAC_KEY；开机自启 + 崩溃重启
 ```
 
 ### 6.5 运行屏端（开发）
@@ -600,7 +608,9 @@ dotnet run --project LicenseIssuer.CLI\LicenseIssuer.CLI.csproj -- issue --machi
 dotnet run --project LicenseIssuer.CLI\LicenseIssuer.CLI.csproj -- verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
 ```
 
-生产环境建议通过环境变量 `KANBAN_HMAC_KEY` 注入密钥（否则用内嵌默认密钥）。
+新版正式激活不需要在生产目标机注入密钥。签发机必须保管 `%APPDATA%\Kanban\license-signing-key.pem`，并在签发工具所在机器以受控方式备份；发布 MainAPP 前确认 `LicenseSigningKey` 中的内置公钥与该私钥匹配。旧版 HMAC 激活码仍需通过 `configure-hmac-key.ps1` 注入原 32 字节 Base64 密钥；不要把任何私钥或 HMAC 密钥写入程序集或发布目录。
+
+签发私钥的首次初始化属于发布准备工作：生成 P-256 密钥对，将 SubjectPublicKeyInfo 公钥 Base64 写入 `LicenseSigningKey`，再构建并发布 MainAPP；当前生产私钥必须作为原始 PEM 备份。恢复时只能复制备份的原始 PEM 到 `%APPDATA%\Kanban\license-signing-key.pem`，不能重新生成替代密钥。LicenseIssuer 会在签发时拒绝与客户端内置公钥不匹配的私钥；密钥轮换必须同步修改公钥并重新发布客户端，旧客户端不会接受新密钥签发的激活码。
 
 ### 6.8 一键发布（部署包）
 
@@ -609,6 +619,14 @@ dotnet run --project LicenseIssuer.CLI\LicenseIssuer.CLI.csproj -- verify --key 
 ```
 
 产物结构：`<Out>/Collector`（含 WASM wwwroot）、`<Out>/MainAPP`、`<Out>/PlcSimulator`、`SHA256SUMS.txt`。
+
+新电脑首次启动 MainAPP 时无需预配置 HMAC 密钥，直接运行 `start-mainapp.cmd` 或 `MainAPP.exe` 即可进入试用；正式授权时在激活对话框中直接粘贴新版 ECDSA 激活码。若收到的是旧版 HMAC 激活码，再在发布包根目录以管理员身份运行：
+
+```powershell
+.\configure-hmac-key.ps1 -HmacKey "<签发旧版激活码时使用的 32 字节 Base64 密钥>"
+```
+
+也可以直接双击发布包根目录的 `start-mainapp.cmd`。如果环境变量尚未配置，启动器会遮罩询问密钥，并且只把密钥注入本次 MainAPP 进程；需要持久化到机器环境时，使用上面的配置脚本，或在管理员 PowerShell 中运行 `.\start-mainapp.cmd -PersistMachine`。
 
 ### 6.9 测试
 

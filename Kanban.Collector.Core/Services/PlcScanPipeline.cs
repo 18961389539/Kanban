@@ -40,7 +40,7 @@ public sealed class PlcScanPipeline
     private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _initializedCounterAlarmIds = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}），供主服务快照落盘过滤（只写本轮成功的源）。</summary>
-    private readonly Dictionary<string, int> _cycleSourceValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DataSourceRuntimeValue> _cycleSourceValues = new(StringComparer.OrdinalIgnoreCase);
     private readonly PlcBatchReadPlanCache _dwordPlanCache = new();
     private bool _dwordBatchPrepared;
     private int _cycleBatchReadRequests;
@@ -349,24 +349,25 @@ public sealed class PlcScanPipeline
             {
                 if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
                 if (string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
-                if (adapter.AddressCodec.Parse(value.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
+                var expectedAddressType = value.DataType == DataSourceValueType.Bool ? PlcAddressType.MBit : PlcAddressType.DWord;
+                if (adapter.AddressCodec.Parse(value.PlcAddress) is not { IsValid: true, Type: var actualType } || actualType != expectedAddressType)
                 {
-                    _logger.LogWarning("数据源 {Source} 值项 {Value} 采集地址格式无效（需要D字地址）: {Address}",
-                        source.Name, value.Name, value.PlcAddress);
+                    _logger.LogWarning("数据源 {Source} 值项 {Value} 地址类型无效（需要{Type}）: {Address}",
+                        source.Name, value.Name, expectedAddressType, value.PlcAddress);
                     continue;
                 }
 
-                var result = ReadInt32Value(device, value.PlcAddress);
-                if (!result.IsSuccess)
+                var result = ReadSourceValue(adapter, value);
+                if (!result.IsValid)
                 {
                     _logger.LogDebug("数据源 {Source} 值项 {Value} 采集读取失败: {Address}",
                         source.Name, value.Name, value.PlcAddress);
                     continue;
                 }
 
-                // 驱动告警状态机 + 更新当前值（按值项粒度：首采样基线、延时确认、滞回/预期恢复）
-                _dataSourceTracker.Observe(device, source, value, result.Content, _shiftNameProvider());
-                _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = result.Content;
+                value.SetRuntimeValue(result);
+                _dataSourceTracker.Observe(device, source, value, result, _shiftNameProvider());
+                _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = result;
                 anyValueRead = true;
             }
 
@@ -385,8 +386,31 @@ public sealed class PlcScanPipeline
         }
     }
 
-    /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}）。快照落盘时据此过滤。</summary>
-    public IReadOnlyDictionary<string, int> GetCycleSourceValues() => _cycleSourceValues;
+    private static DataSourceRuntimeValue ReadSourceValue(IDeviceAdapter adapter, DataSourceValue value)
+    {
+        return value.DataType switch
+        {
+            DataSourceValueType.Float32 => ToRuntime(adapter.ReadFloat(value.PlcAddress), value.DataType),
+            DataSourceValueType.Bool => ToRuntime(adapter.ReadBool(value.PlcAddress), value.DataType),
+            DataSourceValueType.String => ToRuntime(adapter.ReadString(value.PlcAddress, (ushort)Math.Clamp(value.StringLength, 1, ushort.MaxValue)), value.DataType),
+            _ => ToRuntime(adapter.ReadInt32(value.PlcAddress), value.DataType),
+        };
+    }
+
+    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<int> result, DataSourceValueType type) =>
+        new(type, Int32Value: result.IsSuccess ? result.Content : 0, IsValid: result.IsSuccess);
+    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<float> result, DataSourceValueType type) =>
+        new(type, Float32Value: result.IsSuccess ? result.Content : 0, IsValid: result.IsSuccess && float.IsFinite(result.Content));
+    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<bool> result, DataSourceValueType type) =>
+        new(type, BoolValue: result.IsSuccess, IsValid: result.IsSuccess);
+    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<string> result, DataSourceValueType type) =>
+        new(type, StringValue: result.IsSuccess ? result.Content : string.Empty, IsValid: result.IsSuccess);
+
+    /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}:{valueId}）。</summary>
+    public IReadOnlyDictionary<string, int> GetCycleSourceValues() =>
+        _cycleSourceValues.ToDictionary(pair => pair.Key, pair => pair.Value.Int32Value, StringComparer.OrdinalIgnoreCase);
+
+    public IReadOnlyDictionary<string, DataSourceRuntimeValue> GetCycleSourceRuntimeValues() => _cycleSourceValues;
 
     /// <summary>
     /// 清空自上次落盘以来累积的源采样值（由主服务在快照落盘后调用）。

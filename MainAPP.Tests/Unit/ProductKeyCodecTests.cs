@@ -9,6 +9,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","None")]
+[Collection("LicenseEnvironment")]
 public class ProductKeyCodecTests
 {
     // ──────────── 编解码往返 ────────────
@@ -28,6 +29,28 @@ public class ProductKeyCodecTests
         Assert.Null(info.ExpireDate);  // 永久授权
         Assert.True(info.IsPermanent);
         Assert.False(info.IsExpired);
+    }
+
+    [Fact]
+    public void TryDecode_SignedLicense_WithoutHmacKey_ReturnsInfo()
+    {
+        const string signedKey = "SBWYV-CNJ77-7QDAA-M5XER-234AE-QDOUB-2746N-YEXYO-L4T56-ITNF2-Q6Z66-47VGD-XBUGV-C2DXG-PGXGV-EULBX-TWVDS-JEWM6-U3I7Y-AO5L3-I3BM6-TV2GT-2UQOA-QY";
+        var previousKey = Environment.GetEnvironmentVariable(EmbeddedKey.EnvKeyName);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, null);
+
+            var info = ProductKeyCodec.TryDecode(signedKey, "SBWYVCNJ");
+
+            Assert.NotNull(info);
+            Assert.Equal("SBWYVCNJ", info!.MachineCodeHash);
+            Assert.Null(info.ExpireDate);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, previousKey);
+        }
     }
 
     [Fact]

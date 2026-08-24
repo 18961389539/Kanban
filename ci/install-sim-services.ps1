@@ -2,7 +2,7 @@
 #
 # 用法（必须以管理员身份运行）：
 #   右键"以管理员身份运行" PowerShell，然后：
-#   .\ci\install-sim-services.ps1
+#   .\ci\install-sim-services.ps1 -HmacKey "<与LicenseIssuer相同的32字节Base64密钥>"
 #
 # 安装内容：
 #   1. KanbanCollector 服务：sc.exe 注册 Kanban.Collector.exe（端口 5129，数据目录 run-demo/data）
@@ -14,7 +14,8 @@
 
 param(
     [ValidateSet("Install", "Uninstall", "Status")]
-    [string]$Action = "Install"
+    [string]$Action = "Install",
+    [string]$HmacKey = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,6 +26,7 @@ $SimExe = Join-Path $RepoRoot "PlcSimulator\bin\Debug\net10.0-windows\PlcSimulat
 $NssmExe = Join-Path $RepoRoot "ci\nssm.exe"
 $ServiceCollector = "KanbanCollector"
 $ServiceSim = "KanbanPlcSimulator"
+$HmacEnvName = "KANBAN_HMAC_KEY"
 
 function Test-Admin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -33,6 +35,32 @@ function Test-Admin {
 }
 
 function Write-Step($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
+
+function Resolve-HmacKey([string]$provided) {
+    $candidate = $provided
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        $candidate = $env:KANBAN_HMAC_KEY
+    }
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        $candidate = [Environment]::GetEnvironmentVariable($HmacEnvName, [EnvironmentVariableTarget]::Machine)
+    }
+    if ([string]::IsNullOrWhiteSpace($candidate)) {
+        throw "未配置 $HmacEnvName。请先运行 .\ci\configure-hmac-key.ps1 -HmacKey <与LicenseIssuer相同的32字节Base64密钥>；仅开发/演示环境可使用 -Generate。"
+    }
+
+    $candidate = $candidate.Trim()
+    try { $bytes = [Convert]::FromBase64String($candidate) }
+    catch { throw "$HmacEnvName 不是合法的 Base64 编码。" }
+    if ($bytes.Length -ne 32) {
+        throw "$HmacEnvName 长度非法：必须是 32 字节随机密钥的 Base64 形式。"
+    }
+    return $candidate
+}
+
+function Set-MachineHmacKey([string]$key) {
+    [Environment]::SetEnvironmentVariable($HmacEnvName, $key, [EnvironmentVariableTarget]::Machine)
+    $env:KANBAN_HMAC_KEY = $key
+}
 
 if (-not (Test-Path $CollectorExe)) { throw "未找到 $CollectorExe，请先构建 Kanban.Collector（Debug）。" }
 if (-not (Test-Path $SimExe)) { throw "未找到 $SimExe，请先构建 PlcSimulator（Debug）。" }
@@ -49,6 +77,13 @@ if (-not (Test-Admin)) { throw "需要管理员权限：请右键 PowerShell 以
 
 switch ($Action) {
     "Install" {
+        $HmacKey = Resolve-HmacKey $HmacKey
+        Write-Step "配置机器级 $HmacEnvName（不显示密钥内容）"
+        Set-MachineHmacKey $HmacKey
+        if (-not (Test-Path $DataRoot)) { New-Item -ItemType Directory -Path $DataRoot -Force | Out-Null }
+        $logDir = Join-Path $DataRoot "Config\Logs"
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+
         # ── 1. Collector 服务（用官方脚本逻辑，避免依赖 ps1 路径）──
         Write-Step "安装 $ServiceCollector 服务"
         sc.exe create $ServiceCollector binPath= "`"$CollectorExe`"" start= auto DisplayName= "Kanban 采集服务" | Out-Null
@@ -56,6 +91,7 @@ switch ($Action) {
         $envKey = "HKLM:\SYSTEM\CurrentControlSet\Services\$ServiceCollector\Environment"
         if (-not (Test-Path $envKey)) { New-Item -Path $envKey -Force | Out-Null }
         Set-ItemProperty -Path $envKey -Name "KANBAN_DATA_DIR" -Value $DataRoot
+        Set-ItemProperty -Path $envKey -Name $HmacEnvName -Value $HmacKey
         sc.exe failure $ServiceCollector reset= 86400 actions= restart/5000/restart/10000/restart/30000 | Out-Null
         sc.exe start $ServiceCollector | Out-Null
 
@@ -78,7 +114,7 @@ switch ($Action) {
         & $NssmExe install $ServiceSim $SimExe 4999 | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "NSSM install 失败（exit=$LASTEXITCODE）" }
         & $NssmExe set $ServiceSim AppDirectory (Split-Path $SimExe -Parent) | Out-Null
-        & $NssmExe set $ServiceSim AppEnvironmentExtra "KANBAN_DATA_DIR=$DataRoot" | Out-Null
+        & $NssmExe set $ServiceSim AppEnvironmentExtra "KANBAN_DATA_DIR=$DataRoot" "KANBAN_HMAC_KEY=$HmacKey" | Out-Null
         & $NssmExe set $ServiceSim AppStdout (Join-Path $DataRoot "Config\Logs\plcsim_service.log") | Out-Null
         & $NssmExe set $ServiceSim AppStderr (Join-Path $DataRoot "Config\Logs\plcsim_service_err.log") | Out-Null
         & $NssmExe set $ServiceSim AppExitAction Restart | Out-Null
@@ -93,7 +129,7 @@ switch ($Action) {
         sc.exe query $ServiceSim
         Write-Host ""
         Write-Host "已安装完成。数据目录: $DataRoot" -ForegroundColor Green
-        Write-Host "验证: curl http://127.0.0.1:5129/healthz 应为 Healthy" -ForegroundColor Green
+        Write-Host "验证: curl http://127.0.0.1:5129/health/ready 应为 Healthy" -ForegroundColor Green
     }
     "Uninstall" {
         Write-Step "卸载服务"
@@ -105,6 +141,8 @@ switch ($Action) {
     }
     "Status" {
         Get-Service -Name $ServiceCollector, $ServiceSim -ErrorAction SilentlyContinue | Select-Object Name, Status, StartType | Format-Table
+        $machineKey = [Environment]::GetEnvironmentVariable($HmacEnvName, [EnvironmentVariableTarget]::Machine)
+        Write-Host "机器 HMAC 密钥: $(if ([string]::IsNullOrWhiteSpace($machineKey)) { '未配置' } else { '已配置（不显示）' })"
         sc.exe qfailure $ServiceCollector 2>&1 | Out-Null
         sc.exe qfailure $ServiceSim 2>&1 | Out-Null
     }

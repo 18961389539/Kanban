@@ -48,10 +48,10 @@ public partial class MainWindow : Window
             expireUtc = ExpirePicker.SelectedDate.Value.Date.AddDays(1); // 本地"次日零点"，编码时向上取整到天，避免提前失效
         }
 
-        // 3. 生成激活码（与客户端共用同一 HMAC 密钥，客户端可验证通过）
+        // 3. 使用签发端私钥生成激活码；客户端只需内置公钥即可验证。
         try
         {
-            var productKey = ProductKeyCodec.Encode(machineHashBytes, expireUtc);
+            var productKey = ProductKeyCodec.EncodeSigned(machineHashBytes, expireUtc);
 
             var record = new IssuedRecord
             {
@@ -69,7 +69,12 @@ public partial class MainWindow : Window
             var typeText = expireUtc.HasValue
                 ? $"限期授权（到期 {ExpirePicker.SelectedDate:yyyy-MM-dd}）"
                 : "永久授权";
-            ShowStatus($"已生成{typeText}，记录已保存：{savedPath}", true);
+            var copied = TryCopyToClipboard(productKey);
+            ShowStatus(
+                copied
+                    ? $"已生成{typeText}，激活码已复制到剪贴板。记录已保存：{savedPath}"
+                    : $"已生成{typeText}，记录已保存：{savedPath}；剪贴板暂不可用，请点击“复制”。",
+                true);
         }
         catch (Exception ex)
         {
@@ -80,8 +85,27 @@ public partial class MainWindow : Window
     private void Copy_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(ActivationCodeBox.Text)) return;
-        Clipboard.SetText(ActivationCodeBox.Text);
-        ShowStatus("激活码已复制到剪贴板。", true);
+        if (TryCopyToClipboard(ActivationCodeBox.Text))
+        {
+            ShowStatus("激活码已复制到剪贴板。", true);
+        }
+        else
+        {
+            ShowStatus("剪贴板暂不可用，请稍后重试。", false);
+        }
+    }
+
+    private static bool TryCopyToClipboard(string text)
+    {
+        try
+        {
+            Clipboard.SetText(text);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private void ShowStatus(string message, bool ok)

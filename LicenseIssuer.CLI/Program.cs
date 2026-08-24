@@ -5,7 +5,7 @@ namespace LicenseIssuer;
 
 /// <summary>
 /// 激活码签发工具（CLI）。
-/// 内网管理员机器运行，使用 LicenseManager.App 同一份 HMAC 密钥生成激活码。
+/// 内网管理员机器运行，使用签发机私钥生成 ECDSA 激活码；客户端只需内置公钥即可验签。
 /// </summary>
 /// <remarks>
 /// 用法示例：
@@ -15,8 +15,8 @@ namespace LicenseIssuer;
 ///   LicenseIssuer.exe list --machine ABCD1234                      # 按机器码过滤
 ///   LicenseIssuer.exe revoke --machine ABCD1234                    # 撤销指定机器码的所有签发
 ///   LicenseIssuer.exe revoke --machine ABCD1234 --reason "测试机"  # 撤销并记录原因
-///   LicenseIssuer.exe verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX              # 验证激活码签名/格式
-///   LicenseIssuer.exe verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX --machine ABCD1234  # 同时校验机器绑定
+///   LicenseIssuer.exe verify --key <activation-code>                         # 验证激活码签名/格式
+///   LicenseIssuer.exe verify --key <activation-code> --machine ABCD1234       # 同时校验机器绑定
 /// </remarks>
 internal class Program
 {
@@ -70,7 +70,7 @@ internal class Program
         // ──────────── verify 命令（U-2）────────────
         var keyOption = new Option<string>(
             name: "--key",
-            description: "待验证的激活码（XXXXX-XXXXX-XXXXX-XXXXX-XXXXX）")
+            description: "待验证的激活码（兼容旧版短码和新版 ECDSA 长码）")
         { IsRequired = true };
 
         var verifyMachineOption = new Option<string?>(

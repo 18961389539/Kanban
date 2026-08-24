@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using LicenseManager.Crypto;
 using LicenseManager.Services;
 using Xunit;
 
@@ -10,6 +11,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","None")]
+[Collection("LicenseEnvironment")]
 public class ActivationAttemptTrackerTests : IDisposable
 {
     private readonly string _tempDir;
@@ -133,6 +135,30 @@ public class ActivationAttemptTrackerTests : IDisposable
         var tracker2 = CreateTracker();
         tracker2.Load();
         Assert.Equal(2, tracker2.CurrentAttempts);
+    }
+
+    [Fact]
+    public void RecordFailure_WithoutHmacKey_UsesCurrentUserDpapi()
+    {
+        var previousKey = Environment.GetEnvironmentVariable(EmbeddedKey.EnvKeyName);
+        try
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, null);
+            var tracker1 = CreateTracker();
+            tracker1.Load();
+            tracker1.RecordFailure();
+
+            var attemptPath = Path.Combine(_tempDir, "activation_attempts.dat");
+            Assert.StartsWith("dpapi|", File.ReadAllText(attemptPath), StringComparison.Ordinal);
+
+            var tracker2 = CreateTracker();
+            tracker2.Load();
+            Assert.Equal(1, tracker2.CurrentAttempts);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, previousKey);
+        }
     }
 
     [Fact]

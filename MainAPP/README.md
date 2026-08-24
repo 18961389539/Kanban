@@ -2,28 +2,34 @@
 
 `MainAPP` 是 Kanban 工业看板的 WPF 主应用，负责设备采集、生产数据、报警、状态历史、工单、OEE 看板和运行监控。
 
-## 技术栈
-
-- .NET 10 / `net10.0-windows`
-- WPF
-- CommunityToolkit.Mvvm
 - Microsoft.Extensions.Hosting 和 Dependency Injection
 - Entity Framework Core + SQLite
 - HslCommunication 三菱 MC PLC 通信
 - HandyControl、Material.Icons.WPF、OxyPlot
 - Serilog 文件日志
 
-## 构建与启动
-
-从仓库根目录执行：
-
 ```powershell
 dotnet restore Kanban.slnx
 dotnet build MainAPP\MainAPP.csproj
-dotnet run --project MainAPP\MainAPP.csproj
+# 仅验证旧版 HMAC 激活码时需要：
+.\ci\configure-hmac-key.ps1 -HmacKey "<签发旧版激活码时使用的 32 字节 Base64 密钥>"
 ```
 
 主应用是 Windows GUI 程序，必须在 Windows 环境运行。项目通过 `MainAPP\DLLS\HslCommunication.dll` 引用 PLC 通信库，部署或构建前请确认该文件存在。
+
+正式授权使用 ECDSA 非对称签名。签发机持有 `%APPDATA%\Kanban\license-signing-key.pem` 私钥，MainAPP 只内置公钥；新电脑不需要配置 `KANBAN_HMAC_KEY`，直接粘贴新版激活码即可完成正式激活。没有激活码的新电脑也会直接进入 30 天试用。
+
+`KANBAN_HMAC_KEY` 只用于兼容旧版 HMAC 激活码或旧 HMAC 状态数据。若需要验证旧激活码，该值必须是 32 字节随机密钥的 Base64 形式，并且必须与旧 LicenseIssuer 使用的密钥一致：
+
+```powershell
+.\configure-hmac-key.ps1 -HmacKey "<与 LicenseIssuer 相同的 32 字节 Base64 密钥>"
+```
+
+`configure-hmac-key.ps1` 需要管理员权限，会写入机器级环境变量且不会输出密钥。不要在客户端生成新密钥来替代旧密钥。签发私钥只能保存在签发机并使用受控方式备份，绝不能复制到 MainAPP 发布包。
+
+发布包也提供 `start-mainapp.cmd`。直接双击它即可启动；如果没有检测到 HMAC 环境变量，它会以无 HMAC 模式启动并使用当前用户 DPAPI 保存试用/激活状态。只有使用旧版 HMAC 激活码时，才需要先配置原 LicenseIssuer 密钥。
+
+签发机密钥维护：首次发布时生成一对 P-256 密钥，将公钥写入 `LicenseSigningKey` 后再构建 MainAPP；私钥只保存在签发机 `%APPDATA%\Kanban\license-signing-key.pem`，并备份到受控位置。恢复时必须还原这份原始 PEM，不能重新生成一把替代旧密钥。LicenseIssuer 会在签发前检查私钥与客户端内置公钥是否匹配；更换密钥必须同步更新公钥并重新发布客户端。
 
 ## 启动流程
 

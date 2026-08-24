@@ -23,6 +23,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","License")]
+[Collection("LicenseEnvironment")]
 public class LicenseGateTests : IDisposable
 {
     private readonly string _tempDir;
@@ -59,6 +60,26 @@ public class LicenseGateTests : IDisposable
         var status = gate.CheckStatus();
         // 首次启动应进入试用期
         Assert.Equal(LicenseStatus.Trial, status);
+    }
+
+    [Fact]
+    public void CheckStatus_NoLicenseFile_WithoutHmacKey_ReturnsTrial()
+    {
+        var previousKey = Environment.GetEnvironmentVariable(EmbeddedKey.EnvKeyName);
+        try
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, null);
+            var gate = CreateGate();
+
+            var status = gate.CheckStatus();
+
+            Assert.Equal(LicenseStatus.Trial, status);
+            Assert.StartsWith("dpapi|", File.ReadAllText(Path.Combine(_tempDir, "trial.dat")), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(EmbeddedKey.EnvKeyName, previousKey);
+        }
     }
 
     [Fact]

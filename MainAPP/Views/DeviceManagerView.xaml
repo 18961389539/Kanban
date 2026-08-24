@@ -226,7 +226,7 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <controls:EmptyState IconKind="DevicesOutline" Message="暂无设备" Hint="请点击“新增设备”开始配置" />
+                        <controls:EmptyState IconKind="ServerOutline" Message="暂无设备" Hint="请点击“新增设备”开始配置" />
                     </Border>
                     <Border Visibility="Collapsed">
                         <Border.Style>
