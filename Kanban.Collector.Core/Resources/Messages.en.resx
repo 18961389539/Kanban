@@ -27,6 +27,39 @@
   <data name="PlcTimeoutOutOfRange" xml:space="preserve">
     <value>PLC connection timeout {0}ms is out of range (100-60000)</value>
   </data>
+  <data name="ConnectionProfileEmpty" xml:space="preserve">
+    <value>Connection profile #{0} is empty</value>
+  </data>
+  <data name="ConnectionProfileIdEmpty" xml:space="preserve">
+    <value>Connection profile #{0} Id cannot be empty</value>
+  </data>
+  <data name="ConnectionProfileIdDuplicate" xml:space="preserve">
+    <value>Duplicate connection profile Id: {0}</value>
+  </data>
+  <data name="ConnectionProfileNameEmpty" xml:space="preserve">
+    <value>Connection profile {0} name cannot be empty</value>
+  </data>
+  <data name="ConnectionProfileConfigMissing" xml:space="preserve">
+    <value>Connection profile {0} configuration cannot be empty</value>
+  </data>
+  <data name="ConnectionProfileIdRequired" xml:space="preserve">
+    <value>Connection profile Id cannot be empty</value>
+  </data>
+  <data name="ConnectionProfileEntryNull" xml:space="preserve">
+    <value>Connection profile cannot be empty.</value>
+  </data>
+  <data name="DeviceConnectionProfileMissing" xml:space="preserve">
+    <value>Device {0} references a missing connection profile {1}.</value>
+  </data>
+  <data name="ConnectionProfileAdapterAmbiguous" xml:space="preserve">
+    <value>Connection profile {0} has multiple adapters registered for protocol {1} and brand {2}: {3}</value>
+  </data>
+  <data name="ConnectionProfileAdapterNotFound" xml:space="preserve">
+    <value>No adapter found for connection profile {0}, protocol {1}, brand {2}.</value>
+  </data>
+  <data name="DataSourceProtocolKeyEmpty" xml:space="preserve">
+    <value>Protocol key cannot be empty.</value>
+  </data>
   <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
     <value>Modbus UnitId {0} is out of range (1-247)</value>
   </data>
@@ -221,5 +254,8 @@
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
     <value>Writing parameter {0}…</value>
+  </data>
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually</value>
   </data>
 </root>

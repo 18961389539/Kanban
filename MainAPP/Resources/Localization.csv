@@ -1690,6 +1690,7 @@ Wpf,K686,正在下发配方…,Applying recipe…,適用中…,Aplicando receita
 Wpf,K687,请先在左侧选择设备,Select a device first,先に設備を選択してください,Select a device first
 Wpf,K688,配方 {0} 已保存,Recipe {0} saved,レシピ {0} を保存しました,Recipe {0} saved
 Wpf,Nav_RecipeManager,配方管理,Recipes,レシピ管理,Recipes
+Wpf,Nav_DataSourceMonitoring,数据源监控,Data Source Monitor,データソース監視,Monitor de fontes de dados
 Wpf,Web_Nav_Dashboard,看板,Dashboard,ダッシュボード,Dashboard
 Wpf,Web_Nav_History,历史查询,History Query,履歴照会,History Query
 Wpf,Web_Hq_Device,设备,Device,デバイス,Device
@@ -2046,6 +2047,17 @@ Core,PlcIpInvalid,PLC IP 地址 '{0}' 不是合法的 IPv4 地址,PLC IP address
 Core,PlcPortOutOfRange,PLC 端口 {0} 不在合法范围 (1-65535),PLC port {0} is out of range (1-65535),PLC ポート {0} が範囲外です (1-65535),PLC port {0} is out of range (1-65535)
 Core,PlcBrandInvalid,PLC 品牌无效：{0},Invalid PLC brand: {0},無効な PLC ブランド: {0},Invalid PLC brand: {0}
 Core,PlcTimeoutOutOfRange,PLC 连接超时 {0}ms 不在合法范围 (100-60000),PLC connection timeout {0}ms is out of range (100-60000),PLC 接続タイムアウト {0}ms が範囲外です (100-60000),PLC connection timeout {0}ms is out of range (100-60000)
+Core,ConnectionProfileEmpty,第 {0} 个连接档案为空,Connection profile #{0} is empty,接続プロファイル #{0} が空です,Perfil de conexão #{0} está vazio
+Core,ConnectionProfileIdEmpty,第 {0} 个连接档案 Id 不能为空,Connection profile #{0} Id cannot be empty,接続プロファイル #{0} の Id を入力してください,O Id do perfil de conexão #{0} não pode estar vazio
+Core,ConnectionProfileIdDuplicate,连接档案 Id 重复：{0},Duplicate connection profile Id: {0},接続プロファイル Id が重複しています: {0},Id de perfil de conexão duplicado: {0}
+Core,ConnectionProfileNameEmpty,连接档案 {0} 名称不能为空,Connection profile {0} name cannot be empty,接続プロファイル {0} の名称を入力してください,O nome do perfil de conexão {0} não pode estar vazio
+Core,ConnectionProfileConfigMissing,连接档案 {0} 配置不能为空,Connection profile {0} configuration cannot be empty,接続プロファイル {0} の設定を入力してください,A configuração do perfil de conexão {0} não pode estar vazia
+Core,ConnectionProfileIdRequired,连接档案 Id 不能为空,Connection profile Id cannot be empty,接続プロファイル Id を入力してください,O Id do perfil de conexão não pode estar vazio
+Core,ConnectionProfileEntryNull,连接档案不能为空。,Connection profile cannot be empty.,接続プロファイルを空にすることはできません。,O perfil de conexão não pode estar vazio.
+Core,DeviceConnectionProfileMissing,设备 {0} 引用了不存在的连接档案 {1}。,Device {0} references a missing connection profile {1}.,設備 {0} が存在しない接続プロファイル {1} を参照しています。,O dispositivo {0} referencia um perfil de conexão inexistente {1}.
+Core,ConnectionProfileAdapterAmbiguous,连接档案 {0} 的协议 {1} 与品牌 {2} 注册了多个适配器：{3},"Connection profile {0} has multiple adapters registered for protocol {1} and brand {2}: {3}",接続プロファイル {0} のプロトコル {1} とブランド {2} に複数のアダプターが登録されています: {3},"O perfil de conexão {0} tem vários adaptadores registrados para o protocolo {1} e a marca {2}: {3}"
+Core,ConnectionProfileAdapterNotFound,连接档案 {0} 未找到协议 {1} / 品牌 {2} 的适配器。,"No adapter found for connection profile {0}, protocol {1}, brand {2}.",接続プロファイル {0} にプロトコル {1} / ブランド {2} のアダプターが見つかりません。,"Nenhum adaptador encontrado para o perfil de conexão {0}, protocolo {1}, marca {2}."
+Core,DataSourceProtocolKeyEmpty,协议键不能为空。,Protocol key cannot be empty.,プロトコルキーを入力してください。,A chave de protocolo não pode estar vazia.
 Core,ModbusUnitIdOutOfRange,Modbus UnitId {0} 不在合法范围 (1-247),Modbus UnitId {0} is out of range (1-247),Modbus UnitId {0} が範囲外です (1-247),Modbus UnitId {0} is out of range (1-247)
 Core,ModbusRegisterFunctionInvalid,Modbus 寄存器功能码 {0} 无效，应为 3 或 4,"Modbus register function code {0} is invalid, expected 3 or 4",Modbus レジスタ機能コード {0} が無効です、3 または 4 を指定してください,"Modbus register function code {0} is invalid, expected 3 or 4"
 Core,ModbusBitFunctionInvalid,Modbus 位功能码 {0} 无效，应为 1 或 2,"Modbus bit function code {0} is invalid, expected 1 or 2",Modbus ビット機能コード {0} が無効です、1 または 2 を指定してください,"Modbus bit function code {0} is invalid, expected 1 or 2"
@@ -2111,6 +2123,7 @@ Core,RecipeDeviceNotFound,设备不存在：{0},Device not found: {0},設備が�
 Core,RecipeNotFound,配方不存在：{0},Recipe not found: {0},レシピが見つかりません：{0},Recipe not found: {0}
 Core,RecipeApplyCancelled,下发已取消，已回滚,"Apply cancelled, rolled back",適用をキャンセルし、ロールバックしました,"Apply cancelled, rolled back"
 Core,RecipeWriteInProgress,参数 {0} 写入中…,Writing parameter {0}…,パラメータ {0} を書き込み中…,Writing parameter {0}…
+Core,RecipeStringNotRolledBack,字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对,"String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually",文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください,"Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente"
 Wpf,Language_Portuguese,葡萄牙语,Portuguese,ポルトガル語,Português
 Wpf,Alarm_LocalizedNames,多语言名称,Localized names,多言語名称,Nomes localizados
 Wpf,Alarm_NameEn,名称(EN),Name (EN),名前(EN),Nome (EN)

@@ -27,6 +27,39 @@
   <data name="PlcTimeoutOutOfRange" xml:space="preserve">
     <value>PLC 接続タイムアウト {0}ms が範囲外です (100-60000)</value>
   </data>
+  <data name="ConnectionProfileEmpty" xml:space="preserve">
+    <value>接続プロファイル #{0} が空です</value>
+  </data>
+  <data name="ConnectionProfileIdEmpty" xml:space="preserve">
+    <value>接続プロファイル #{0} の Id を入力してください</value>
+  </data>
+  <data name="ConnectionProfileIdDuplicate" xml:space="preserve">
+    <value>接続プロファイル Id が重複しています: {0}</value>
+  </data>
+  <data name="ConnectionProfileNameEmpty" xml:space="preserve">
+    <value>接続プロファイル {0} の名称を入力してください</value>
+  </data>
+  <data name="ConnectionProfileConfigMissing" xml:space="preserve">
+    <value>接続プロファイル {0} の設定を入力してください</value>
+  </data>
+  <data name="ConnectionProfileIdRequired" xml:space="preserve">
+    <value>接続プロファイル Id を入力してください</value>
+  </data>
+  <data name="ConnectionProfileEntryNull" xml:space="preserve">
+    <value>接続プロファイルを空にすることはできません。</value>
+  </data>
+  <data name="DeviceConnectionProfileMissing" xml:space="preserve">
+    <value>設備 {0} が存在しない接続プロファイル {1} を参照しています。</value>
+  </data>
+  <data name="ConnectionProfileAdapterAmbiguous" xml:space="preserve">
+    <value>接続プロファイル {0} のプロトコル {1} とブランド {2} に複数のアダプターが登録されています: {3}</value>
+  </data>
+  <data name="ConnectionProfileAdapterNotFound" xml:space="preserve">
+    <value>接続プロファイル {0} にプロトコル {1} / ブランド {2} のアダプターが見つかりません。</value>
+  </data>
+  <data name="DataSourceProtocolKeyEmpty" xml:space="preserve">
+    <value>プロトコルキーを入力してください。</value>
+  </data>
   <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
     <value>Modbus UnitId {0} が範囲外です (1-247)</value>
   </data>
@@ -221,5 +254,8 @@
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
     <value>パラメータ {0} を書き込み中…</value>
+  </data>
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください</value>
   </data>
 </root>

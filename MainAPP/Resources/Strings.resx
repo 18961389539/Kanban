@@ -4601,6 +4601,9 @@
   <data name="Nav_RecipeManager" xml:space="preserve">
     <value>配方管理</value>
   </data>
+  <data name="Nav_DataSourceMonitoring" xml:space="preserve">
+    <value>数据源监控</value>
+  </data>
   <data name="Web_Nav_Dashboard" xml:space="preserve">
     <value>看板</value>
   </data>

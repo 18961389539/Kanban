@@ -6,7 +6,8 @@ namespace Kanban.Collector.Core.Localization;
 /// <summary>
 /// 进程间共享的连接状态文案（被 Kanban.Collector 和 MainAPP 共同依赖的 Kanban.Collector.Core 使用）。
 /// 默认值是中文以保留向后兼容；MainAPP 启动时根据用户界面语言整体覆盖一次（Collected/MainAPP 都生效）。
-/// en/ja 文案从 Resources/Messages.{en,ja}.resx 卫星程序集读取，resx 为 Core 共享文案的单一源。
+    /// en/ja/pt-BR 文案从 Resources/Messages.{en,ja,pt-BR}.resx 卫星程序集读取；
+    /// 这些 RESX 由统一 Localization.csv 在编译前生成。
 /// </summary>
 public static class ConnectionStatusMessages
 {
@@ -64,8 +65,8 @@ public static class ConnectionStatusMessages
     }
 
     /// <summary>
-    /// 简单语言预设：根据三语设置同时覆盖全部文案。传入 null 还原默认中文。
-    /// en/ja 文案从 Messages.{en,ja}.resx 卫星程序集读取，避免硬编码副本。
+    /// 简单语言预设：根据语言文化代码覆盖全部文案。传入 null 还原默认中文。
+    /// 非中文文案从生成的 Messages.{en,ja,pt-BR}.resx 卫星程序集读取，避免硬编码副本。
     /// </summary>
     public static void ApplyLanguage(string? langCode)
     {
@@ -94,5 +95,24 @@ public static class ConnectionStatusMessages
             connectingPrefix: s_rm.GetString("Conn_ConnectingPrefix", culture),
             connectingSuffix: s_rm.GetString("Conn_ConnectingSuffix", culture),
             remoteConnecting: s_rm.GetString("Conn_RemoteConnecting", culture));
+        ApplyExternalOverrides(culture);
+    }
+
+    private static void ApplyExternalOverrides(CultureInfo culture)
+    {
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_Connected", culture, out var connected))
+            s_connected = connected;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_Disconnected", culture, out var disconnected))
+            s_disconnected = disconnected;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_ConnectionLost", culture, out var connectionLost))
+            s_connectionLost = connectionLost;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_DisconnectedWithRetry", culture, out var disconnectedWithRetry))
+            s_disconnectedWithRetry = disconnectedWithRetry;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_ConnectingPrefix", culture, out var connectingPrefix))
+            s_connectingPrefix = connectingPrefix;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_ConnectingSuffix", culture, out var connectingSuffix))
+            s_connectingSuffix = connectingSuffix;
+        if (LocalizationOverrideStore.TryGet("Core", "Conn_RemoteConnecting", culture, out var remoteConnecting))
+            s_remoteConnecting = remoteConnecting;
     }
 }

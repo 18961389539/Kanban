@@ -6,7 +6,8 @@ namespace Kanban.Collector.Core.Localization;
 /// <summary>
 /// 配方校验/下发错误消息（被 Kanban.Collector 和 MainAPP 共同依赖的 Kanban.Collector.Core 使用）。
 /// 默认值是中文以保留向后兼容；MainAPP / Collector 启动时根据用户界面语言调用 ApplyLanguage 整体覆盖。
-/// en/ja 文案从 Resources/Messages.{en,ja}.resx 卫星程序集读取（与 <see cref="ValidationMessages"/> 同源）。
+/// en/ja/pt-BR 文案从生成的 Resources/Messages.{en,ja,pt-BR}.resx 卫星程序集读取
+/// （与 <see cref="ValidationMessages"/> 同源）。
 /// 模板中使用 {0}/{1} 占位符，由调用方通过 string.Format 填充。
 /// </summary>
 public static class RecipeValidationMessages
@@ -143,8 +144,8 @@ public static class RecipeValidationMessages
     public static string RecipeStringNotRolledBack => s_recipeStringNotRolledBack;
 
     /// <summary>
-    /// 简单语言预设：根据三语设置同时覆盖全部文案。传入 null 还原默认中文。
-    /// en/ja 文案从 Messages.{en,ja}.resx 卫星程序集读取，避免硬编码副本。
+    /// 简单语言预设：根据语言文化代码覆盖全部文案。传入 null 还原默认中文。
+    /// 非中文文案从生成的 Messages.{en,ja,pt-BR}.resx 卫星程序集读取，避免硬编码副本。
     /// 与 <see cref="ValidationMessages.ApplyLanguage"/> 行为一致。
     /// </summary>
     public static void ApplyLanguage(string? langCode)
@@ -206,6 +207,24 @@ public static class RecipeValidationMessages
         s_recipeApplyCancelled = s_rm.GetString("RecipeApplyCancelled", culture) ?? DefaultRecipeApplyCancelled;
         s_recipeWriteInProgress = s_rm.GetString("RecipeWriteInProgress", culture) ?? DefaultRecipeWriteInProgress;
         s_recipeStringNotRolledBack = s_rm.GetString("RecipeStringNotRolledBack", culture) ?? DefaultRecipeStringNotRolledBack;
+        ApplyExternalOverrides(culture);
+    }
+
+    private static void ApplyExternalOverrides(CultureInfo culture)
+    {
+        var flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Static;
+        foreach (var property in typeof(RecipeValidationMessages).GetProperties(
+                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static))
+        {
+            if (property.PropertyType != typeof(string)
+                || !LocalizationOverrideStore.TryGet("Core", property.Name, culture, out var value))
+                continue;
+
+            var fieldName = "s_" + char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
+            typeof(RecipeValidationMessages).GetField(fieldName, flags)?.SetValue(null, value);
+        }
     }
 
     private static void RestoreDefaults()

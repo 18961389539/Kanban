@@ -27,6 +27,39 @@
   <data name="PlcTimeoutOutOfRange" xml:space="preserve">
     <value>PLC connection timeout {0}ms is out of range (100-60000)</value>
   </data>
+  <data name="ConnectionProfileEmpty" xml:space="preserve">
+    <value>Perfil de conexão #{0} está vazio</value>
+  </data>
+  <data name="ConnectionProfileIdEmpty" xml:space="preserve">
+    <value>O Id do perfil de conexão #{0} não pode estar vazio</value>
+  </data>
+  <data name="ConnectionProfileIdDuplicate" xml:space="preserve">
+    <value>Id de perfil de conexão duplicado: {0}</value>
+  </data>
+  <data name="ConnectionProfileNameEmpty" xml:space="preserve">
+    <value>O nome do perfil de conexão {0} não pode estar vazio</value>
+  </data>
+  <data name="ConnectionProfileConfigMissing" xml:space="preserve">
+    <value>A configuração do perfil de conexão {0} não pode estar vazia</value>
+  </data>
+  <data name="ConnectionProfileIdRequired" xml:space="preserve">
+    <value>O Id do perfil de conexão não pode estar vazio</value>
+  </data>
+  <data name="ConnectionProfileEntryNull" xml:space="preserve">
+    <value>O perfil de conexão não pode estar vazio.</value>
+  </data>
+  <data name="DeviceConnectionProfileMissing" xml:space="preserve">
+    <value>O dispositivo {0} referencia um perfil de conexão inexistente {1}.</value>
+  </data>
+  <data name="ConnectionProfileAdapterAmbiguous" xml:space="preserve">
+    <value>O perfil de conexão {0} tem vários adaptadores registrados para o protocolo {1} e a marca {2}: {3}</value>
+  </data>
+  <data name="ConnectionProfileAdapterNotFound" xml:space="preserve">
+    <value>Nenhum adaptador encontrado para o perfil de conexão {0}, protocolo {1}, marca {2}.</value>
+  </data>
+  <data name="DataSourceProtocolKeyEmpty" xml:space="preserve">
+    <value>A chave de protocolo não pode estar vazia.</value>
+  </data>
   <data name="ModbusUnitIdOutOfRange" xml:space="preserve">
     <value>Modbus UnitId {0} is out of range (1-247)</value>
   </data>
@@ -221,5 +254,8 @@
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
     <value>Writing parameter {0}…</value>
+  </data>
+  <data name="RecipeStringNotRolledBack" xml:space="preserve">
+    <value>Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente</value>
   </data>
 </root>

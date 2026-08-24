@@ -4601,6 +4601,9 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Nav_RecipeManager" xml:space="preserve">
     <value>Recipes</value>
   </data>
+  <data name="Nav_DataSourceMonitoring" xml:space="preserve">
+    <value>Monitor de fontes de dados</value>
+  </data>
   <data name="Web_Nav_Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>

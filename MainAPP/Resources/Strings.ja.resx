@@ -4601,6 +4601,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Nav_RecipeManager" xml:space="preserve">
     <value>レシピ管理</value>
   </data>
+  <data name="Nav_DataSourceMonitoring" xml:space="preserve">
+    <value>データソース監視</value>
+  </data>
   <data name="Web_Nav_Dashboard" xml:space="preserve">
     <value>ダッシュボード</value>
   </data>
