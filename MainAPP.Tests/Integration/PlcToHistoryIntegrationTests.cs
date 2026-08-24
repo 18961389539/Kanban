@@ -207,7 +207,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
         Assert.Equal(2, alarmEvents.Count);
         Assert.Equal(AlarmEventType.Triggered, alarmEvents[0].EventType);
         Assert.Equal(AlarmEventType.Recovered, alarmEvents[1].EventType);
-        Assert.Equal("dev-001_M100", alarmEvents[0].AlarmId);
+        Assert.Equal(dev1.Alarms[0].Id, alarmEvents[0].AlarmId);
         Assert.Equal("白班", alarmEvents[0].ShiftName);
 
         // ── 6. 验证 StatusTransitionRecord：每台设备首次读取都写 0→status ──
@@ -218,7 +218,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
         Assert.Equal((int)DeviceStatus.Running, dev1Transitions[0].CurrentState);
 
         // ── 7. 验证 GetLatestAlarmEvent：重启后可查最新报警 ──
-        var latestAlarm = history2.GetLatestAlarmEvent("dev-001_M100");
+        var latestAlarm = history2.GetLatestAlarmEvent(dev1.Alarms[0].Id);
         Assert.NotNull(latestAlarm);
         Assert.Equal(AlarmEventType.Recovered, latestAlarm!.EventType);
 

@@ -257,8 +257,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     // ──────────── 数据采集源展示（实时卡 / 趋势图） ────────────
 
-    /// <summary>值项实时卡展示行：Value=值项引用，DisplayName=展示名（定时模式值项名带「定时采集」标识）。</summary>
-    public sealed record SourceCardRow(DataSourceValue Value, string DisplayName)
+    /// <summary>值项实时卡展示行：保留父源 Id，趋势查询按设备+源+值定位。</summary>
+    public sealed record SourceCardRow(string SourceId, DataSourceValue Value, string DisplayName)
     {
         /// <summary>告警态转发（绑定源：实时卡着色与趋势按钮共用）。</summary>
         public bool IsTriggered => Value.IsTriggered;
@@ -316,7 +316,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         List<DataSourceSnapshotRecord> snapshots;
         try
         {
-            snapshots = store.Query(CurrentDevice.Id, from, DateTime.Now);
+            snapshots = store.Query(CurrentDevice.Id, row.SourceId, row.Value.Id, from, DateTime.Now);
         }
         catch (Exception ex)
         {
@@ -326,9 +326,9 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         }
 
         var points = snapshots
-            .Where(s => s.SourceId == row.Value.Id)
             .OrderBy(s => s.Timestamp)
-            .Select(s => new OxyPlot.DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(s.Timestamp), s.Value))
+            .Where(s => s.NumericValue is { })
+            .Select(s => new OxyPlot.DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(s.Timestamp), s.NumericValue!.Value))
             .ToList();
 
         var model = new PlotModel { Title = $"{row.DisplayName}（{row.Value.Unit}）", TextColor = OxyColors.Gray };
@@ -401,7 +401,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
             foreach (var value in source.Values.ToList())
             {
                 value.PropertyChanged += OnValuePropertyChanged;
-                SourceCards.Add(new SourceCardRow(value, value.Name));
+                SourceCards.Add(new SourceCardRow(source.Id, value, value.Name));
             }
         }
         HasSources = SourceCards.Count > 0;
@@ -424,7 +424,11 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// </summary>
     private void OnValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(DataSourceValue.CurrentValue) or nameof(DataSourceValue.IsTriggered))) return;
+        if (e.PropertyName is not (nameof(DataSourceValue.CurrentValue)
+            or nameof(DataSourceValue.CurrentFloatValue)
+            or nameof(DataSourceValue.CurrentBoolValue)
+            or nameof(DataSourceValue.CurrentStringValue)
+            or nameof(DataSourceValue.IsTriggered))) return;
         DispatchOnUi(() => { });
     }
 

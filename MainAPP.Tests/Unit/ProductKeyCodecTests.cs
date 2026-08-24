@@ -111,6 +111,40 @@ public class ProductKeyCodecTests
     }
 
     [Fact]
+    public void NormalizeForDisplay_RemovesWhitespaceAndLimitsLength()
+    {
+        var input = "abcde\r\nfghij" + new string('k', ProductKeyCodec.SignedRawLength);
+
+        var formatted = ProductKeyCodec.NormalizeForDisplay(input);
+
+        Assert.Equal(ProductKeyCodec.SignedFormattedLength, formatted.Length);
+        Assert.DoesNotContain('\r', formatted);
+        Assert.DoesNotContain('\n', formatted);
+        Assert.Equal(formatted, formatted.ToUpperInvariant());
+    }
+
+    [Fact]
+    public void TryDecodeMachineCode_CanonicalizesValidCode()
+    {
+        var machineHash = new byte[] { 0x12, 0x34, 0x56, 0x78, 0x9A };
+
+        var result = ProductKeyCodec.TryDecodeMachineCode(
+            Base32.Encode(machineHash).ToLowerInvariant(),
+            out var decoded);
+
+        Assert.True(result);
+        Assert.Equal(machineHash, decoded);
+    }
+
+    [Fact]
+    public void TryDecodeMachineCode_RejectsWrongLength()
+    {
+        var result = ProductKeyCodec.TryDecodeMachineCode("ABCDE", out _);
+
+        Assert.False(result);
+    }
+
+    [Fact]
     public void Format_CorrectlyGroups()
     {
         var raw = "ABCDEFGHIJKLMNOPQRSTUVWXY";

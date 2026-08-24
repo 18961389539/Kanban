@@ -9,6 +9,7 @@ obj/
 *.exe
 *.deps.json
 *.runtimeconfig.json
+BenchmarkDotNet.Artifacts/
 
 # ── 测试输出 ──
 TestResults/
@@ -64,7 +65,6 @@ memory/
 # ── 授权签发产物（明文激活码/撤销记录，含密钥敏感性，严禁入库） ──
 issued/
 revoked/
-LicenseIssuer.CLI/issued/
 
 # ── GUI 审查产物（勿入库） ──
 gui-test-screenshots/

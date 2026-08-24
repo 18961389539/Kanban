@@ -18,7 +18,7 @@ public sealed class LastShiftComparisonProvider : IDisposable
     private readonly ProductionHistoryStore? _historyStore;
     private readonly AppSettings _appSettings;
 
-    private DateTime _fallbackAttemptAt = DateTime.MinValue;
+    private readonly Dictionary<string, DateTime> _fallbackAttemptAtByKey = new(StringComparer.OrdinalIgnoreCase);
     private CancellationTokenSource? _cts;
 
     public LastShiftComparisonProvider(
@@ -48,17 +48,23 @@ public sealed class LastShiftComparisonProvider : IDisposable
             return;
         }
 
-        if (_historyStore == null || _runtimeMode.IsRemote
-            || DateTime.Now - _fallbackAttemptAt < FallbackRetryInterval)
+        if (_historyStore == null || _runtimeMode.IsRemote)
         {
             onResult(new LastShiftSnapshot("", 0, 0));
             return;
         }
 
-        // 兜底查询在后台线程执行（本地模式 SQLite 24 小时历史查询，不能在 UI 线程同步跑）
-        _fallbackAttemptAt = DateTime.Now;
+        // 兜底查询在后台线程执行（本地模式 SQLite 24 小时历史查询，不能在 UI 线程同步跑）。
         var now = DateTime.Now;
         var currentShift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now).Shift;
+        var fallbackKey = BuildFallbackKey(deviceId, currentShift?.Name);
+        if (_fallbackAttemptAtByKey.TryGetValue(fallbackKey, out var lastAttempt)
+            && now - lastAttempt < FallbackRetryInterval)
+        {
+            onResult(new LastShiftSnapshot("", 0, 0));
+            return;
+        }
+        _fallbackAttemptAtByKey[fallbackKey] = now;
 
         _cts?.Cancel();
         _cts?.Dispose();
@@ -98,6 +104,9 @@ public sealed class LastShiftComparisonProvider : IDisposable
     }
 
     public void Dispose() => Cancel();
+
+    internal static string BuildFallbackKey(string deviceId, string? shiftName)
+        => $"{deviceId}|{shiftName ?? string.Empty}";
 
     /// <summary>
     /// 在日志列表中找"时间上最近的、班次不同于当前班次"的最后一条快照（上班次产量回填用）。

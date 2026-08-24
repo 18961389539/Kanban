@@ -1,5 +1,17 @@
 namespace Kanban.Contracts.Dtos;
 
+/// <summary>远程审计写入请求。操作人由 Collector 管理 Hub 从连接上下文解析。</summary>
+public sealed record AuditLogRecordRequest
+{
+    public string Action { get; init; } = string.Empty;
+    public string? TargetType { get; init; }
+    public string? TargetId { get; init; }
+    public bool Succeeded { get; init; } = true;
+    public string? Detail { get; init; }
+    public string? BeforeJson { get; init; }
+    public string? AfterJson { get; init; }
+}
+
 /// <summary>审计日志查询请求（只读，管理页/审计页使用）。</summary>
 public sealed record AuditLogQueryRequest
 {

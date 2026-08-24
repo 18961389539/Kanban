@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>RESX ↔ CSV 转换工具</title>
+<title>本地化 CSV 维护工具</title>
 <style>
   :root {
     --bg: #f6f7f9; --panel: #ffffff; --border: #d9dee5; --text: #1f2937;
@@ -77,8 +77,8 @@
 </head>
 <body>
 <header>
-  <h1>RESX ↔ CSV 转换工具</h1>
-  <span class="sub">多语言资源互转 · 本地运行 · 支持预览与编辑</span>
+  <h1>本地化 CSV 维护工具</h1>
+  <span class="sub">支持 Localization.csv 与 RESX · 本地运行 · 支持预览与编辑</span>
   <div class="toolbar" style="margin-left:auto">
     <button onclick="openFile(false)">📄 加载 .resx</button>
     <button onclick="openFile(true)">📊 加载 .csv</button>
@@ -90,7 +90,7 @@
 </header>
 
 <div class="dropzone" id="dz">
-  将 <b>.resx</b>（可多选，自动按 Key 对齐）或 <b>.csv</b>（首列 Key，其余列为语言）拖到这里，或点击加载文件
+  将 <b>Localization.csv</b>（Resource,Key,语言代码…）、旧式 <b>.csv</b> 或 <b>.resx</b> 拖到这里，或点击加载文件
 </div>
 
 <div class="stats" id="stats"></div>
@@ -112,10 +112,9 @@
   <div class="side">
     <h3>使用说明</h3>
     <ol>
-      <li><b>resx → CSV</b>：加载多个 resx（如 Strings.resx / Strings.en.resx / Strings.ja.resx），
-          自动按 Key 合并，导出为 <code>Key,Strings,Strings.en,Strings.ja</code> 一列一语言。</li>
-      <li><b>CSV → resx</b>：加载 CSV（首行表头：<code>Key,语言名…</code>），
-          每个语言列导出为一份 <code>语言名.resx</code>。</li>
+        <li><b>项目 CSV</b>：加载或导出 <code>Resource,Key,zh-CN,en-US,…</code>；语言列使用文化代码，Resource 只能是 <code>Wpf</code> 或 <code>Core</code>。</li>
+        <li><b>resx → CSV</b>：加载多个 resx（如 Strings.resx / Strings.en.resx / Strings.ja.resx），自动按 Key 对齐，导出为旧式 CSV；需要维护项目资源时请使用项目 CSV 格式。</li>
+        <li><b>CSV → resx</b>：加载项目 CSV 或旧式 CSV，每个语言列导出为一份 <code>语言名.resx</code>。</li>
       <li>表格中可直接<b>编辑单元格</b>；<span style="color:var(--danger)">红底 ⚠ 空值</span>、
           <span style="color:var(--warn)">＋ 缺语言</span> 高亮提示；支持搜索、增删行。</li>
       <li>所有处理均在浏览器本地完成，文件不会上传。</li>
@@ -136,7 +135,7 @@
   <textarea id="rawText" readonly spellcheck="false"></textarea>
 </div>
 
-<div class="footer">Key 排序保持加载顺序；同一语言重复 Key 取最后一个。生成 RESX 含标准 resheader，兼容 .NET ResXResourceReader。</div>
+  <div class="footer">项目 CSV 使用 Resource,Key,语言代码…；Key 排序保持加载顺序；同一语言重复 Key 取最后一个。生成 RESX 含标准 resheader，兼容 .NET ResXResourceReader。</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -145,6 +144,7 @@
 let langs = [];            // 语言列名数组（不含 Key）
 let rows = [];             // { key: string, vals: string[] }（vals[i] 对应 langs[i]，未填为 ""）
 let sourceName = "";
+let projectCsv = false;   // true = Resource,Key,<language-code>... 项目源格式
 
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
@@ -195,17 +195,24 @@ function loadResx(files) {
   Promise.all(reads).then(parsed => {
     const dupInfo = parsed.filter(p => p.dup.size).map(p => p.label + ":" + [...p.dup].slice(0, 5).join(","));
     if (dupInfo.length) toast("⚠ 重复 Key（取最后一个）：" + dupInfo.join("；"));
+    projectCsv = false;
     langs = parsed.map(p => p.label);
     const order = [];
     for (const p of parsed) for (const k of p.map.keys()) if (!order.includes(k)) order.push(k);
-    rows = order.map(k => ({ key: k, vals: parsed.map(p => p.map.get(k) ?? "") }));
+    rows = order.map(k => ({ resource: "Wpf", key: k, vals: parsed.map(p => p.map.get(k) ?? "") }));
     sourceName = files[0].name.replace(/\.resx$/i, "") + "_merged";
     refresh();
   }).catch(e => toast("❌ " + e.message));
 }
 
 /* ---------- CSV 解析（RFC 4180） ---------- */
-function parseCsv(text) {
+function detectCsvDelimiter(text) {
+  const header = text.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0] || "";
+  return [",", ";", "\t"].sort((a, b) =>
+    [...header].filter(c => c === b).length - [...header].filter(c => c === a).length)[0];
+}
+
+function parseCsv(text, delimiter = ",") {
   text = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const out = []; let row = [], field = "", inQ = false;
   for (let i = 0; i < text.length; i++) {
@@ -215,7 +222,7 @@ function parseCsv(text) {
         if (text[i+1] === '"') { field += '"'; i++; } else inQ = false;
       } else field += c;
     } else if (c === '"') inQ = true;
-    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === delimiter) { row.push(field); field = ""; }
     else if (c === "\n") { row.push(field); out.push(row); row = []; field = ""; }
     else field += c;
   }
@@ -226,15 +233,21 @@ function parseCsv(text) {
 function loadCsv(files) {
   const f = files[0];
   f.text().then(t => {
-    const data = parseCsv(t);
+    const data = parseCsv(t, detectCsvDelimiter(t));
     if (data.length < 2) { toast("❌ CSV 至少需要表头 + 一行数据"); return; }
     const header = data[0].map(h => h.trim());
     const keyIdx = header.findIndex(h => h.toLowerCase() === "key");
     if (keyIdx < 0) { toast("❌ 未找到 Key 列（表头第一列应为 Key）"); return; }
-    langs = header.filter((_, i) => i !== keyIdx);
+    projectCsv = header[0].toLowerCase() === "resource" && keyIdx === 1;
+    if (projectCsv && header.length < 3) { toast("❌ 项目 CSV 至少需要 Resource、Key 和一个语言列"); return; }
+    langs = projectCsv ? header.slice(2) : header.filter((_, i) => i !== keyIdx);
+    const languageIndexes = projectCsv
+      ? langs.map((_, i) => i + 2)
+      : langs.map(lang => header.indexOf(lang));
     rows = data.slice(1).filter(r => r[keyIdx]?.trim()).map(r => ({
+      resource: projectCsv ? (r[0]?.trim() || "Wpf") : "Wpf",
       key: r[keyIdx].trim(),
-      vals: langs.map((_, li) => r[header.indexOf(langs[li])] ?? "").map(v => v ?? ""),
+      vals: languageIndexes.map(index => r[index] ?? "").map(v => v ?? ""),
     }));
     sourceName = f.name.replace(/\.csv$/i, "") + "_imported";
     refresh();
@@ -250,7 +263,7 @@ function refresh() {
 function render() {
   const q = $("search").value.trim().toLowerCase();
   const thead = $("thead"), tbody = $("tbody");
-  thead.innerHTML = "<tr><th>Key</th>" + langs.map(l => `<th>${esc(l)}</th>`).join("") + "<th></th></tr>";
+  thead.innerHTML = "<tr>" + (projectCsv ? "<th>Resource</th>" : "") + "<th>Key</th>" + langs.map(l => `<th>${esc(l)}</th>`).join("") + "<th></th></tr>";
   tbody.innerHTML = "";
   let shown = 0;
   rows.forEach((r, ri) => {
@@ -259,13 +272,14 @@ function render() {
     const tr = document.createElement("tr");
     const missing = r.vals.some(v => !v.trim());
     if (missing) tr.classList.add("missing");
-    tr.innerHTML = `<td class="key">${esc(r.key)}</td>` +
+    tr.innerHTML = (projectCsv ? `<td class="cell" contenteditable="true" data-ri="${ri}" data-field="resource">${esc(r.resource || "Wpf")}</td>` : "") +
+      `<td class="key">${esc(r.key)}</td>` +
       r.vals.map((v, vi) => `<td class="cell${v.trim() ? "" : " empty"}" contenteditable="true"
           data-ri="${ri}" data-vi="${vi}" title="双击编辑">${esc(v)}</td>`).join("") +
       `<td><button class="del" data-ri="${ri}" title="删除此行">✕</button></td>`;
     tbody.appendChild(tr);
   });
-  if (!shown) tbody.innerHTML = `<tr><td colspan="${langs.length + 2}" style="color:var(--muted);padding:16px">无匹配行</td></tr>`;
+  if (!shown) tbody.innerHTML = `<tr><td colspan="${langs.length + 2 + (projectCsv ? 1 : 0)}" style="color:var(--muted);padding:16px">无匹配行</td></tr>`;
 }
 
 function renderStats() {
@@ -283,7 +297,12 @@ function renderStats() {
 $("tbody").addEventListener("input", e => {
   const td = e.target.closest("td.cell");
   if (!td) return;
-  rows[+td.dataset.ri].vals[+td.dataset.vi] = td.textContent;
+  const row = rows[+td.dataset.ri];
+  if (td.dataset.field === "resource") {
+    row.resource = td.textContent.trim() || "Wpf";
+    return;
+  }
+  row.vals[+td.dataset.vi] = td.textContent;
   td.classList.toggle("empty", !td.textContent.trim());
 });
 $("tbody").addEventListener("click", e => {
@@ -296,7 +315,7 @@ $("tbody").addEventListener("click", e => {
 function addRow() {
   let base = "K", n = 1;
   while (rows.some(r => r.key === base + n)) n++;
-  rows.push({ key: base + n, vals: langs.map(() => "") });
+  rows.push({ resource: "Wpf", key: base + n, vals: langs.map(() => "") });
   render(); renderStats();
   toast("已新增 " + base + n + "（请填写各语言内容）");
 }
@@ -304,8 +323,9 @@ function addRow() {
 /* ============ 导出 ============ */
 function toCsv() {
   const quote = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
-  const head = ["Key", ...langs];
-  return [head.map(quote).join(","), ...rows.map(r => [r.key, ...r.vals].map(quote).join(","))].join("\r\n");
+  const head = projectCsv ? ["Resource", "Key", ...langs] : ["Key", ...langs];
+  const values = rows.map(r => (projectCsv ? [r.resource || "Wpf", r.key, ...r.vals] : [r.key, ...r.vals]));
+  return [head.map(quote).join(","), ...values.map(row => row.map(quote).join(","))].join("\r\n");
 }
 
 function download(name, content, mime) {
@@ -326,7 +346,7 @@ function exportCsv() {
 function exportResx() {
   if (!rows.length) return;
   const xmlEscape = s => esc(s);
-  const resx = (langIdx) => {
+  const resx = (langIdx, exportRows) => {
     const head = [
       '<?xml version="1.0" encoding="utf-8"?>',
       '<root>',
@@ -335,13 +355,33 @@ function exportResx() {
       '  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>',
       '  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>',
     ];
-    for (const r of rows)
+    for (const r of exportRows)
       head.push(`  <data name="${xmlEscape(r.key)}" xml:space="preserve">`, `    <value>${xmlEscape(r.vals[langIdx] ?? "")}</value>`, '  </data>');
     head.push('</root>');
     return head.join("\n");
   };
-  langs.forEach((l, i) => download((l.endsWith(".resx") ? l : l + ".resx"), resx(i), "application/xml"));
-  toast("已导出 " + langs.length + " 个 RESX 文件");
+  if (!projectCsv) {
+    langs.forEach((l, i) => download((l.endsWith(".resx") ? l : l + ".resx"), resx(i, rows), "application/xml"));
+    toast("已导出 " + langs.length + " 个 RESX 文件");
+    return;
+  }
+
+  const resources = [...new Set(rows.map(r => r.resource || "Wpf"))];
+  if (resources.some(resource => resource !== "Wpf" && resource !== "Core")) {
+    toast("❌ Resource 只能是 Wpf 或 Core");
+    return;
+  }
+  const fileBase = resource => resource === "Core" ? "Messages" : "Strings";
+  const suffix = language => ({ "zh-CN": "", "en-US": "en", "ja-JP": "ja", "pt-BR": "pt-BR" }[language] ?? language);
+  for (const resource of resources) {
+    const exportRows = rows.filter(row => (row.resource || "Wpf") === resource);
+    langs.forEach((language, index) => {
+      const suffixText = suffix(language);
+      const fileName = `${fileBase(resource)}${suffixText ? "." + suffixText : ""}.resx`;
+      download(fileName, resx(index, exportRows), "application/xml");
+    });
+  }
+  toast("已按 Wpf/Core 导出 " + resources.length * langs.length + " 个 RESX 文件");
 }
 
 function toggleRaw() {
@@ -350,7 +390,7 @@ function toggleRaw() {
   if (box.classList.contains("open")) $("rawText").value = rows.length ? toCsv() : "";
 }
 function clearAll() {
-  langs = []; rows = []; sourceName = ""; $("search").value = "";
+  langs = []; rows = []; sourceName = ""; projectCsv = false; $("search").value = "";
   $("thead").innerHTML = ""; $("tbody").innerHTML = ""; $("stats").innerHTML = "";
   $("btnCsv").disabled = $("btnResx").disabled = true; $("rawBox").classList.remove("open");
 }

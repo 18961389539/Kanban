@@ -3,7 +3,7 @@ using Kanban.Collector.Core.Models;
 namespace Kanban.Collector.Core.Services;
 
 /// <summary>
-/// 共享 PLC 驱动路由器：应用始终只有一个活动 PLC 连接；品牌变更时替换该连接槽位中的驱动。
+/// PLC 驱动路由器：品牌变更时替换该连接槽位中的驱动。
 /// </summary>
 public sealed class SharedPlcDriverRouter : IPlcDriver
 {
@@ -19,12 +19,21 @@ public sealed class SharedPlcDriverRouter : IPlcDriver
         ISharedPlcDriverFactory factory,
         AppSettings settings,
         IPlcRuntimeProfileProvider profileProvider)
+        : this(factory, settings.PlcConfig, profileProvider)
     {
+    }
+
+    public SharedPlcDriverRouter(
+        ISharedPlcDriverFactory factory,
+        PlcConfig config,
+        IPlcRuntimeProfileProvider profileProvider)
+    {
+        ArgumentNullException.ThrowIfNull(config);
         _factory = factory;
         _profileProvider = profileProvider;
-        _current = factory.Create(settings.PlcConfig);
-        _currentConfig = CloneConfig(settings.PlcConfig);
-        _currentBrand = settings.PlcConfig.Brand;
+        _current = factory.Create(config);
+        _currentConfig = CloneConfig(config);
+        _currentBrand = config.Brand;
     }
 
     public void Configure(string endpoint, int port)

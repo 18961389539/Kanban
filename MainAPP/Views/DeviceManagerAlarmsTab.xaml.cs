@@ -1,3 +1,8 @@
+using System;
+using System.Linq;
+using Kanban.Collector.Core.Models;
+using MainAPP.ViewModels;
+
 namespace MainAPP.Views;
 
 /// <summary>
@@ -9,5 +14,22 @@ public partial class DeviceManagerAlarmsTab
     public DeviceManagerAlarmsTab()
     {
         InitializeComponent();
+    }
+
+    public void FocusAddress(string address)
+    {
+        if (DataContext is not DeviceAlarmManagerViewModel vm || vm.SelectedDevice is not { } device)
+            return;
+
+        var alarm = vm.SelectedAlarm;
+        if (alarm == null || !string.Equals(alarm.PlcAddress.Trim(), address.Trim(), StringComparison.OrdinalIgnoreCase))
+            alarm = device.Alarms.FirstOrDefault(item =>
+                string.Equals(item.PlcAddress.Trim(), address.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (alarm == null) return;
+
+        vm.SelectedAlarm = alarm;
+        Dispatcher.BeginInvoke(
+            new Action(() => DeviceManagerAddressFocus.FocusTextBox(this, alarm!.PlcAddress)),
+            System.Windows.Threading.DispatcherPriority.Input);
     }
 }

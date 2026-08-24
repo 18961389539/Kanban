@@ -41,7 +41,7 @@ public class SnapshotAggregatorTests
         agg.Publish(Snapshot("dev-1", 1));
         agg.Publish(Snapshot("dev-2", 2));
 
-        var reader = await agg.SubscribeAsync(CancellationToken.None);
+        var reader = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
 
         Assert.True(reader.TryRead(out var s1));
         Assert.Equal("dev-1", s1.DeviceId);
@@ -55,7 +55,7 @@ public class SnapshotAggregatorTests
     {
         var agg = CreateAggregator();
 
-        var reader = await agg.SubscribeAsync(CancellationToken.None);
+        var reader = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
 
         Assert.False(reader.TryRead(out _));
     }
@@ -70,7 +70,7 @@ public class SnapshotAggregatorTests
     public async Task SlowSubscriber_BoundedChannel_DropsOldest_KeepsLatest()
     {
         var agg = CreateAggregator();
-        var reader = await agg.SubscribeAsync(CancellationToken.None);
+        var reader = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
 
         // 暂停消费：快速发布直至远超容量（同设备：Seq 递增标识先后）
         for (var i = 1; i <= 300; i++)
@@ -93,7 +93,7 @@ public class SnapshotAggregatorTests
     public async Task SlowSubscriber_LatestPublishWins()
     {
         var agg = CreateAggregator();
-        var reader = await agg.SubscribeAsync(CancellationToken.None);
+        var reader = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
 
         for (var i = 1; i <= 200; i++)
             agg.Publish(Snapshot("dev-a", i));
@@ -113,7 +113,7 @@ public class SnapshotAggregatorTests
     {
         var agg = CreateAggregator();
         agg.Publish(Snapshot("dev-1", 1));
-        var reader = await agg.SubscribeAsync(CancellationToken.None);
+        var reader = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
         Assert.True(reader.TryRead(out _)); // 补发的 dev-1
 
         agg.RemoveDevice("dev-1");
@@ -123,24 +123,27 @@ public class SnapshotAggregatorTests
         Assert.Equal("dev-1", tomb.DeviceId);
         Assert.False(reader.TryRead(out _));
 
-        var current = await agg.GetCurrentSnapshotsAsync();
+        var current = await agg.GetCurrentSnapshotsAsync(TestContext.Current.CancellationToken);
         Assert.DoesNotContain(current, s => s.DeviceId == "dev-1");
     }
 
     // ──────────── 退订 / 多订阅者 / upsert ────────────
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "xUnit", "xUnit1051",
+        Justification = "This test intentionally cancels an independent linked token to verify unsubscription.")]
     [Fact]
     public async Task CancelSubscription_Unsubscribes_NoThrowOnPublish()
     {
         var agg = CreateAggregator();
-        using var cts = new CancellationTokenSource();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         var reader = await agg.SubscribeAsync(cts.Token);
         cts.Cancel();
 
         agg.Publish(Snapshot("dev-1", 1)); // 不抛（退订后的扇出不触达已取消订阅者）
 
         // 新订阅者不受影响：补发正常
-        var reader2 = await agg.SubscribeAsync(CancellationToken.None);
+        var reader2 = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
         Assert.True(reader2.TryRead(out var snap));
         Assert.Equal(1, snap.Seq);
     }
@@ -149,8 +152,8 @@ public class SnapshotAggregatorTests
     public async Task MultipleSubscribers_AllReceiveSameSnapshots()
     {
         var agg = CreateAggregator();
-        var r1 = await agg.SubscribeAsync(CancellationToken.None);
-        var r2 = await agg.SubscribeAsync(CancellationToken.None);
+        var r1 = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
+        var r2 = await agg.SubscribeAsync(TestContext.Current.CancellationToken);
 
         agg.Publish(Snapshot("dev-1", 1));
 
@@ -167,7 +170,7 @@ public class SnapshotAggregatorTests
         agg.Publish(Snapshot("dev-1", 1));
         agg.Publish(Snapshot("dev-1", 2)); // 同设备更新
 
-        var current = await agg.GetCurrentSnapshotsAsync();
+        var current = await agg.GetCurrentSnapshotsAsync(TestContext.Current.CancellationToken);
         var snap = Assert.Single(current);
         Assert.Equal("dev-1", snap.DeviceId);
         Assert.Equal(2, snap.Seq);

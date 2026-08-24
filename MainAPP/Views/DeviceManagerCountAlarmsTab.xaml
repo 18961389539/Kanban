@@ -90,7 +90,7 @@
                             <TextBlock
                                 VerticalAlignment="Center"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Text="{Binding Name}"
+                                Text="{Binding Converter={StaticResource LocalizedNameToTextConverter}}"
                                 TextTrimming="CharacterEllipsis" />
                             <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                                 <Ellipse
@@ -181,7 +181,9 @@
             BorderThickness="1"
             CornerRadius="6"
             Visibility="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}">
-            <StackPanel DataContext="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}">
+            <StackPanel
+                DataContext="{Binding DataContext.SelectedCounterAlarm, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                IsEnabled="{Binding DataContext.CanManageDevices, RelativeSource={RelativeSource AncestorType=UserControl}}">
                 <hc:TextBox
                     Margin="0,0,0,16"
                     hc:InfoElement.Title="{x:Static resources:Strings.K018}"
@@ -228,6 +230,34 @@
                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto" />
+                <!--  多语言名称：NameEn/NameJa/NamePt 为空时显示回退主名称 Name  -->
+                <TextBlock
+                    Margin="0,4,0,8"
+                    FontSize="{DynamicResource FontSizeHint}"
+                    FontWeight="Medium"
+                    Foreground="{StaticResource SecondaryTextBrush}"
+                    Text="{x:Static resources:Strings.Alarm_LocalizedNames}" />
+                <hc:TextBox
+                    Margin="0,0,0,12"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Alarm_NameEn}"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="{x:Static resources:Strings.Alarm_NameEn}"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding NameEn, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Margin="0,0,0,12"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Alarm_NameJa}"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="{x:Static resources:Strings.Alarm_NameJa}"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding NameJa, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Margin="0,0,0,16"
+                    hc:InfoElement.Title="{x:Static resources:Strings.Alarm_NamePt}"
+                    hc:InfoElement.TitlePlacement="Top"
+                    AutomationProperties.Name="{x:Static resources:Strings.Alarm_NamePt}"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}" />
                 <Border
                     Margin="0,0,0,16"
                     Padding="10,8"

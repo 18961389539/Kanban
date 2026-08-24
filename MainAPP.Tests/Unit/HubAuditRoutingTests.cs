@@ -18,7 +18,7 @@ public sealed class AuditLogStateCollection;
 
 /// <summary>
 /// Remote 审计路由回归测试：Collector 侧 AuditLog 门面接通（CollectorWorker 初始化）
-/// + KanbanHub 四个管理写接口（设备/工单/采集设置）触发审计落库。
+/// + KanbanAdminHub 管理写接口（设备/工单/采集设置）触发审计落库。
 /// 历史修复背景：Hub 此前无任何 Audit 调用，Remote 模式管理操作零审计。
 /// </summary>
 [Trait("Category", "Unit")]
@@ -29,6 +29,7 @@ public sealed class HubAuditRoutingTests : IDisposable
     private readonly string _tempDir;
     private readonly AppSettings _settings;
     private readonly AuditService _audit;
+    private IServiceProvider? _serviceProvider;
 
     public HubAuditRoutingTests()
     {
@@ -45,6 +46,7 @@ public sealed class HubAuditRoutingTests : IDisposable
     {
         AuditLog.ResetForTest();
         _audit.Dispose();
+        (_serviceProvider as IDisposable)?.Dispose();
         try { Directory.Delete(_tempDir, recursive: true); } catch { }
     }
 
@@ -56,37 +58,21 @@ public sealed class HubAuditRoutingTests : IDisposable
         Assert.True(_audit.FlushedCount >= expected, $"审计落库超时: Flushed={_audit.FlushedCount} 期望={expected}");
     }
 
-    private KanbanHub CreateHub()
+    private KanbanAdminHub CreateHub()
     {
         var db = new DatabaseProvider(_settings);
         var services = new ServiceCollection();
         services.AddSingleton(_settings);
-        using var provider = services.BuildServiceProvider();
+        _serviceProvider = services.BuildServiceProvider();
 
         var aggregator = new SnapshotAggregator();
         var deviceRepo = new DeviceRepository(_settings);
         var workOrderRepo = new WorkOrderRepository(db, Substitute.For<AutoMapper.IMapper>());
         var configSync = new ConfigSyncHandler(
-            deviceRepo, workOrderRepo, aggregator, _settings, provider, NullLogger<ConfigSyncHandler>.Instance,
+            deviceRepo, workOrderRepo, aggregator, _settings, _serviceProvider, NullLogger<ConfigSyncHandler>.Instance,
             null!, null!); // IRecipeStore/RecipeApplier：本测试只验证写接口审计路由，不触达配方
 
-        // 写接口不触碰诊断/历史链路，用最小替代避免构造重型依赖
-        return new KanbanHub(
-            aggregator,
-            new EventBroadcaster(NullLogger<EventBroadcaster>.Instance),
-            new HistoryQueryHandler(
-                Substitute.For<IHistoryService>(),
-                Substitute.For<IHistoryQueryExecutor>(),
-                new DefectHistoryStore(db),
-                NullLogger<HistoryQueryHandler>.Instance),
-            null!, // CollectorDiagnosticsProvider：本测试不调用诊断接口
-            configSync,
-            new ShiftProgressProvider(_settings),
-            new MetaPublisher(configSync, new ShiftProgressProvider(_settings), NullLogger<MetaPublisher>.Instance),
-            workOrderRepo,
-            _settings,
-            _audit,
-            NullLogger<KanbanHub>.Instance);
+        return new KanbanAdminHub(configSync, _audit, NullLogger<KanbanAdminHub>.Instance);
     }
 
     [Fact]
@@ -95,7 +81,7 @@ public sealed class HubAuditRoutingTests : IDisposable
         var hub = CreateHub();
         await hub.SaveDevicesAsync(
         [
-            new DeviceConfigDto { Id = "dev-1", Name = "注塑机1", OkCountAddress = "D100", NgCountAddress = "D102", StatusCountAddress = "D104", ProductionResetAddress = "D106", RecipeName = "A", RecipeAddress = "D110" },
+            new DeviceConfigDto { Id = "dev-1", Name = "注塑机1", OkCountAddress = "D100", NgCountAddress = "D102", StatusCountAddress = "D104", ProductionResetAddress = "D106", TargetCycle = 600, RecipeName = "A", RecipeAddress = "D110" },
         ]);
 
         await WaitFlushAsync(1);

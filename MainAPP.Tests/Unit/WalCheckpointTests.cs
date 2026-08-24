@@ -222,7 +222,7 @@ public class WalCheckpointTests : IDisposable
                 }
             }
             catch (Exception ex) { exceptions.Enqueue(ex); }
-        });
+        }, TestContext.Current.CancellationToken);
 
         var readTask = System.Threading.Tasks.Task.Run(() =>
         {
@@ -236,7 +236,7 @@ public class WalCheckpointTests : IDisposable
                 }
             }
             catch (Exception ex) { exceptions.Enqueue(ex); }
-        });
+        }, TestContext.Current.CancellationToken);
 
         await System.Threading.Tasks.Task.WhenAll(writeTask, readTask);
 

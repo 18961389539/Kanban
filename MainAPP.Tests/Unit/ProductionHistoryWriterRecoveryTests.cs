@@ -72,7 +72,7 @@ public class ProductionHistoryWriterRecoveryTests : IDisposable
         var writer = new ProductionHistoryWriter(_db, _settings, NullLogger<ProductionHistoryWriter>.Instance);
         try
         {
-            await writer.ReplayRecoveryForTestAsync();
+            await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
             Assert.Equal(2, CountRows());
             Assert.False(File.Exists(_recoveryPath));
         }
@@ -93,7 +93,7 @@ public class ProductionHistoryWriterRecoveryTests : IDisposable
         var writer = new ProductionHistoryWriter(_db, _settings, NullLogger<ProductionHistoryWriter>.Instance);
         try
         {
-            await writer.ReplayRecoveryForTestAsync();
+            await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
             Assert.Equal(2, CountRows()); // 坏行不阻塞其余行
             Assert.True(File.Exists(_recoveryPath + ".bad"));
             Assert.Equal(1, File.ReadAllLines(_recoveryPath + ".bad").Length);
@@ -119,8 +119,8 @@ public class ProductionHistoryWriterRecoveryTests : IDisposable
         var writer = new ProductionHistoryWriter(_db, _settings, NullLogger<ProductionHistoryWriter>.Instance);
         try
         {
-            await writer.ReplayRecoveryForTestAsync();
-            await writer.ReplayRecoveryForTestAsync(); // 文件已删 → 第二次无操作（幂等）
+            await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
+            await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken); // 文件已删 → 第二次无操作（幂等）
             Assert.Equal(2, CountRows());
         }
         finally
@@ -145,7 +145,7 @@ public class ProductionHistoryWriterRecoveryTests : IDisposable
         var writer = new ProductionHistoryWriter(_db, _settings, NullLogger<ProductionHistoryWriter>.Instance);
         try
         {
-            await writer.ReplayRecoveryForTestAsync();
+            await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
             Assert.Equal(1, CountRows()); // 去重后不重复落库
             Assert.False(File.Exists(_recoveryPath));
         }
@@ -203,12 +203,12 @@ public class ProductionHistoryWriterRecoveryTests : IDisposable
             using (new FileStream(dbPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             {
                 // 第一次回放：打开数据库失败 → 记录失败时刻，文件保留
-                await writer.ReplayRecoveryForTestAsync();
+                await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
                 Assert.True(File.Exists(_recoveryPath), "回放失败后恢复文件应保留");
                 Assert.NotNull(writer.LastReplayFailureAtForTest);
 
                 // 退避窗口内第二次回放：直接跳过（文件仍在、行数不变）
-                await writer.ReplayRecoveryForTestAsync();
+                await writer.ReplayRecoveryForTestAsync(TestContext.Current.CancellationToken);
                 Assert.True(File.Exists(_recoveryPath), "退避窗口内不应重试回放");
             }
 

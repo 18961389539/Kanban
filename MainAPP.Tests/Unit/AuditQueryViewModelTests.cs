@@ -61,7 +61,7 @@ public class AuditQueryViewModelTests
             }
             catch
             {
-                await Task.Delay(10);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
             }
         }
 
@@ -131,7 +131,7 @@ public class AuditQueryViewModelTests
             }
             catch
             {
-                await Task.Delay(10);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
             }
         }
 
@@ -160,7 +160,7 @@ public class AuditQueryViewModelTests
         // 查询已后台化（审查修复 2026-08-13），轮询等待结果回写（无 Dispatcher 环境直接同步回写）
         var deadline = DateTime.UtcNow.AddSeconds(5);
         while (vm.PageSucceeded != 2 && DateTime.UtcNow < deadline)
-            await Task.Delay(10);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, vm.PageSucceeded);
         Assert.Equal(1, vm.PageFailed);

@@ -63,8 +63,11 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<IPlcDriver>(sp => sp.GetRequiredService<SharedPlcDriverRouter>());
         services.AddSingleton<PlcConnectionManager>();
         services.AddSingleton<IPlcConnectionManager>(sp => sp.GetRequiredService<PlcConnectionManager>());
+        services.AddSingleton<IPlcRuntimeSessionManager, PlcRuntimeSessionManager>();
         services.AddSingleton<IDeviceAdapter, PlcDeviceAdapter>();
         services.AddSingleton<IDeviceAdapterResolver, DeviceAdapterResolver>();
+        services.AddSingleton<IDataSourceReader, PlcDataSourceReader>();
+        services.AddSingleton<IDataSourceReaderRegistry, DataSourceReaderRegistry>();
         // 注：IAlarmNotificationChannel 默认不注册——声音实现（SystemAlarmNotificationChannel）依赖
         // WPF 的 SystemSounds，位于 MainAPP（AddMainAppCoreServices 中注册，后注册胜出）；
         // 无头 Collector 不注册，采集管线中该参数为 null（静默）。
@@ -84,7 +87,9 @@ public static class KanbanDataServiceCollectionExtensions
             sp.GetRequiredService<DefectHistoryStore>(),
             onAlarmEdge: null,
             onStatusEdge: null,
-            sp.GetRequiredService<DataSourceSnapshotStore>()));
+            sp.GetRequiredService<DataSourceSnapshotStore>(),
+            sp.GetRequiredService<IDataSourceReaderRegistry>(),
+            sp.GetRequiredService<IPlcRuntimeSessionManager>()));
         services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
 
         // ──────────── 历史存储（默认实现；MainAPP Remote 模式可整体重定向到远程代理） ────────────

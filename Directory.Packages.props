@@ -11,12 +11,17 @@
 
   <!-- ============ MainAPP ============ -->
   <ItemGroup>
-    <PackageVersion Include="AutoMapper" Version="14.0.0" />
+    <PackageVersion Include="AutoMapper" Version="15.1.1" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="HandyControl" Version="3.5.1" />
     <PackageVersion Include="Material.Icons.WPF" Version="3.0.2" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <!-- SQLitePCLRaw 2.1.11 携带的原生 SQLite 低于 3.50.2；统一锁定到已更新的 native provider。 -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
+    <PackageVersion Include="SQLitePCLRaw.core" Version="3.0.5" />
+    <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
+    <PackageVersion Include="SQLitePCLRaw.provider.e_sqlite3" Version="3.0.5" />
     <!-- NodaTime 3.3.3：当前最新稳定版（4.x 尚未发布） -->
     <PackageVersion Include="NodaTime" Version="3.3.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
@@ -27,13 +32,14 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <!-- OxyPlot 已切换为本地源码引用（MainAPP.csproj ProjectReference → oxyplot\Source），版本由源码项目自带 -->
     <PackageVersion Include="PdfSharpCore" Version="1.3.67" />
+    <!-- PdfSharpCore 1.3.67 固定带入 ImageSharp 1.0.4；2.1.11 是仍兼容 2.x 的最新修复版。 -->
+    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.11" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="8.0.0" />
     <PackageVersion Include="Serilog.Sinks.Async" Version="2.1.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="System.IO.Ports" Version="9.0.0" />
     <PackageVersion Include="System.Management" Version="9.0.5" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <!-- SignalR：Collector 服务端（框架内）与 MainAPP 客户端（包）共用 -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.10" />

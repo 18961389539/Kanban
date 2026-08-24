@@ -18,15 +18,16 @@ public interface IDeviceRepository
     ObservableCollection<DeviceRuntime> Runtimes { get; }
     string FilePath { get; }
     string? LoadErrorMessage { get; }
-    Func<IReadOnlyList<Device>, Task>? RemotePersistenceHook { get; set; }
     Task SaveAllAsync();
     void LoadAll();
     void SaveAll();
     void ExportToFile(string path);
     List<Device>? ImportFromJson(string json);
     void ReplaceAll(IEnumerable<Device> newDevices);
+    void ReplaceAllAndSave(IEnumerable<Device> newDevices);
     void AddRuntime(Device device);
     void RemoveRuntime(string deviceId);
+    void RemoveDevice(string deviceId);
     void SyncTargetCycle(string deviceId, int targetCycle);
     DeviceRuntime EnsureRuntime(Device device);
     List<Device> GetDevicesSnapshot();
@@ -89,6 +90,7 @@ public class DeviceRepository : IDeviceRepository
     public ConcurrentDictionary<string, Device> DeviceMap { get; } = new();
 
     private readonly AppSettings _appSettings;
+    private readonly IRemoteDeviceConfigurationStore? _remoteStore;
 
     public string FilePath => _appSettings.GetFilePath("devices.json");
 
@@ -97,18 +99,15 @@ public class DeviceRepository : IDeviceRepository
     /// </summary>
     public string? LoadErrorMessage { get; private set; }
 
-    public DeviceRepository(AppSettings appSettings)
+    public DeviceRepository(
+        AppSettings appSettings,
+        IRemoteDeviceConfigurationStore? remoteStore = null)
     {
         _appSettings = appSettings;
+        _remoteStore = remoteStore;
         // 注：WPF 绑定同步锁（EnableCollectionSynchronization）不在此注册——那是 UI 进程关注点，
         // 由 MainAPP 的 WpfCollectionBindingRegistrar 在宿主启动时经 SyncRoot 注册（Core 不依赖 WPF）。
     }
-
-    /// <summary>
-    /// 设备配置远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落盘 devices.json）。
-    /// Local 模式为 null。异步签名避免 UI 线程阻塞等待网络。
-    /// </summary>
-    public Func<IReadOnlyList<Device>, Task>? RemotePersistenceHook { get; set; }
 
     /// <summary>
     /// 异步保存全部设备。Remote 模式下委托 Collector 落盘（不写本地）；
@@ -117,10 +116,10 @@ public class DeviceRepository : IDeviceRepository
     public async Task SaveAllAsync()
     {
         // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘。
-        if (RemotePersistenceHook != null)
+        if (_remoteStore?.IsEnabled == true)
         {
             var remoteSnapshot = CreateDeepSnapshot();
-            await RemotePersistenceHook(remoteSnapshot);
+            await _remoteStore.SaveDevicesAsync(remoteSnapshot);
             return;
         }
 
@@ -181,20 +180,15 @@ public class DeviceRepository : IDeviceRepository
     /// 将内存中所有设备全量写入 devices.json。
     /// 写入前回填子项的 DeviceId，确保 JSON 中数据完整。
     /// 采用原子写入（写临时文件 → 重命名），避免写入过程中崩溃导致文件损坏。
-    /// Remote 模式下若设置了 <see cref="RemotePersistenceHook"/>，改为委托 Collector 落盘（MainAPP 不写本地）。
+    /// Remote 模式下改为委托 Collector 落盘（MainAPP 不写本地）。
     /// </summary>
     public void SaveAll()
     {
         // Remote 模式：Collector 是唯一写者，设备配置经 SignalR 推送落盘。
         // 同步版本仅用于退出/迁移等同步上下文：阻塞等待推送完成，避免 fire-and-forget 丢数据。
         // 常规保存请使用 SaveAllAsync。
-        if (RemotePersistenceHook != null)
-        {
-            var remoteSnapshot = CreateDeepSnapshot();
-            // Task.Run 隔离同步上下文：RemotePersistenceHook 内部走 SignalR（真正异步）。
-            Task.Run(() => RemotePersistenceHook(remoteSnapshot)).GetAwaiter().GetResult();
-            return;
-        }
+        if (_remoteStore?.IsEnabled == true)
+            throw new InvalidOperationException("Remote 模式不支持同步保存设备配置，请使用 SaveAllAsync。");
 
         _appSettings.EnsureDirectory();
 
@@ -256,6 +250,32 @@ public class DeviceRepository : IDeviceRepository
             ReplaceStateLocked(deviceList);
     }
 
+    /// <summary>
+    /// 将候选设备配置原子写入磁盘后再替换内存状态。
+    /// 写入失败时不改变当前 Devices/Runtimes，避免内存配置与 devices.json 分叉。
+    /// </summary>
+    public void ReplaceAllAndSave(IEnumerable<Device> newDevices)
+    {
+        var deviceList = newDevices as IList<Device> ?? newDevices.ToList();
+        NormalizeAndValidate(deviceList, migrateLegacy: true);
+        _appSettings.EnsureDirectory();
+
+        lock (_collectionLock)
+        {
+            foreach (var device in deviceList)
+            {
+                foreach (var alarm in device.Alarms) alarm.DeviceId = device.Id;
+                foreach (var defect in device.Defects) defect.DeviceId = device.Id;
+                foreach (var counterAlarm in device.CounterAlarms) counterAlarm.DeviceId = device.Id;
+                foreach (var source in device.Sources) source.DeviceId = device.Id;
+            }
+
+            var json = JsonSerializer.Serialize(deviceList, JsonOptions);
+            Services.AppSettings.WriteFileAtomically(FilePath, json);
+            ReplaceStateLocked(deviceList);
+        }
+    }
+
     /// <summary>同步新增设备的 Runtime；同一设备 Id 已存在时保持幂等。</summary>
     public void AddRuntime(Device device)
     {
@@ -271,6 +291,20 @@ public class DeviceRepository : IDeviceRepository
     {
         lock (_collectionLock)
         {
+            if (RuntimeMap.TryRemove(deviceId, out var runtime))
+                Runtimes.Remove(runtime);
+        }
+    }
+
+    /// <summary>仅从内存配置移除设备（Remote tombstone 使用，不触发本地文件持久化）。</summary>
+    public void RemoveDevice(string deviceId)
+    {
+        lock (_collectionLock)
+        {
+            if (!DeviceMap.TryRemove(deviceId, out var device))
+                device = Devices.FirstOrDefault(item => item.Id == deviceId);
+            if (device is null) return;
+            Devices.Remove(device);
             if (RuntimeMap.TryRemove(deviceId, out var runtime))
                 Runtimes.Remove(runtime);
         }
@@ -335,6 +369,11 @@ public class DeviceRepository : IDeviceRepository
                 device.Id = Guid.NewGuid().ToString("N");
             if (!ids.Add(device.Id))
                 throw new InvalidDataException($"设备 Id 重复：{device.Id}");
+
+            if (string.IsNullOrWhiteSpace(device.ConnectionProfileId))
+                device.ConnectionProfileId = ConnectionProfile.DefaultId;
+            else
+                device.ConnectionProfileId = device.ConnectionProfileId.Trim();
 
             if (migrateLegacy)
             {

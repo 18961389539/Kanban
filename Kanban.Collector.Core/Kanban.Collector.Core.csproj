@@ -43,14 +43,24 @@
     <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
   </ItemGroup>
 
-  <!-- 多语言资源：Messages.resx（中文默认）+ Messages.en.resx + Messages.ja.resx；
-       ValidationMessages/ConnectionStatusMessages 通过 ResourceManager 读取，作为 Core 共享文案单一源 -->
+  <!-- 编译前从统一 Localization.csv 生成 Core 多语言 Messages 资源。 -->
+  <Target Name="GenerateCoreLocalization" BeforeTargets="AssignCulture">
+    <Message Importance="high" Text="Generating Core localization resources from Localization.csv…" />
+    <Exec Command="python $(ProjectDir)..\ci\generate_localization.py --core"
+          WorkingDirectory="$(ProjectDir).."
+          ContinueOnError="false" />
+    <ItemGroup>
+      <EmbeddedResource Remove="Resources\Messages*.resx" />
+      <EmbeddedResource Include="Resources\Messages.resx" />
+      <EmbeddedResource Include="Resources\Messages.*.resx">
+        <DependentUpon>Messages.resx</DependentUpon>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+
+  <!-- 多语言资源：Localization.csv 的全部语言列生成 Messages.*.resx，不能只枚举固定语言。 -->
   <ItemGroup>
-    <EmbeddedResource Update="Resources\Messages.resx" />
-    <EmbeddedResource Update="Resources\Messages.en.resx">
-      <DependentUpon>Messages.resx</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Resources\Messages.ja.resx">
+    <EmbeddedResource Update="Resources\Messages.*.resx">
       <DependentUpon>Messages.resx</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using MainAPP.Resources;
@@ -13,6 +14,8 @@ using LicenseManager.Views;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Localization;
+using Kanban.Collector.Core.Mapping;
 using MainAPP.Services;
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
@@ -37,6 +40,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private readonly LicenseGate _licenseGate;
     private readonly IServiceProvider _services;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
+    private readonly IPlcRuntimeSessionManager? _runtimeSessions;
 
     /// <summary>
     /// 上次已保存的 PLC 配置（用于检测本次保存是否改变连接参数）
@@ -46,7 +50,24 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private PlcBrand _draftBrand;
 
     /// <summary>上次已保存的界面语言（检测本次保存是否变更语言 → 提示重启生效）。</summary>
-    private AppLanguage _lastSavedLanguage = AppLanguage.Zh;
+    private string _lastSavedLanguageCode = LocalizationCatalog.DefaultLanguage;
+
+    /// <summary>由 CSV 表头动态生成的语言选项；不再把语言列表写死在 XAML 中。</summary>
+    public IReadOnlyList<LanguageOption> LanguageOptions { get; } =
+        LocalizationCatalog.LanguageCodes
+            .Select(code => new LanguageOption(code, GetLanguageDisplayName(code)))
+            .ToArray();
+
+    public sealed record LanguageOption(string Code, string DisplayName);
+
+    private static string GetLanguageDisplayName(string code)
+    {
+        var displayCulture = CultureInfo.CurrentUICulture.Name;
+        var resourceName = LocalizationCatalog.Get("Wpf", "Language_" + code.Replace('-', '_'), displayCulture);
+        if (!string.IsNullOrWhiteSpace(resourceName)) return resourceName;
+        try { return CultureInfo.GetCultureInfo(code).NativeName; }
+        catch (CultureNotFoundException) { return code; }
+    }
 
     /// <summary>上次已保存的数据采集模式（用于危险操作确认：DataMode 变化需二次确认）。</summary>
     private KanbanDataMode _lastSavedDataMode;
@@ -76,6 +97,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private bool _hasUnsavedChanges;
 
+    /// <summary>设置页统一的页面内操作反馈。</summary>
+    public OperationFeedback Feedback { get; } = new();
+
     [ObservableProperty]
     private bool _collectorSyncPending;
 
@@ -85,6 +109,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private readonly CancellationTokenSource _disposeCts = new();
 
     public string UnsavedChangesText => HasUnsavedChanges ? Strings.M074 : Strings.M075;
+
+    partial void OnHasUnsavedChangesChanged(bool value)
+    {
+        if (IsSaving) return;
+        if (value) Feedback.Warning(Strings.Ux_StatusUnsaved);
+        else if (Feedback.Kind != OperationFeedbackKind.Error)
+            Feedback.Success(Strings.Ux_StatusSaved);
+    }
 
     public bool IsPlcConnected => _connectionManager.IsConnected;
     public string PlcConnectionStatus => _connectionManager.ConnectionStatus;
@@ -344,7 +376,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         IDialogService dialog,
         LicenseGate licenseGate,
         IServiceProvider services,
-        IPlcRuntimeProfileProvider? profileProvider = null)
+        IPlcRuntimeProfileProvider? profileProvider = null,
+        IPlcRuntimeSessionManager? runtimeSessions = null)
     {
         AppSettings = appSettings;
         _connectionManager = connectionManager;
@@ -352,13 +385,14 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         _licenseGate = licenseGate;
         _services = services;
         _profileProvider = profileProvider;
+        _runtimeSessions = runtimeSessions;
         _userSession = services.GetService<UserSession>();
         DraftSettings = CloneSettings(appSettings);
         _draftBrand = DraftSettings.PlcConfig.Brand;
         _lastSavedPlcConfigSignature = GetPlcConfigSignature(DraftSettings.PlcConfig);
         _lastSavedAuditSnapshot = CreateAuditSnapshot(DraftSettings);
         _lastSavedShiftsSignature = GetShiftsSignature(DraftSettings);
-        _lastSavedLanguage = DraftSettings.Language;
+        _lastSavedLanguageCode = DraftSettings.EffectiveLanguageCode;
         _lastSavedDataMode = DraftSettings.DataMode;
         _lastSavedRunMode = DraftSettings.RunMode;
         WireDraftEvents();
@@ -374,7 +408,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private static AppSettings CloneSettings(AppSettings source)
     {
         var json = JsonSerializer.Serialize(source, AppSettings.JsonOptions);
-        return JsonSerializer.Deserialize<AppSettings>(json, AppSettings.JsonOptions) ?? new AppSettings();
+        var clone = JsonSerializer.Deserialize<AppSettings>(json, AppSettings.JsonOptions) ?? new AppSettings();
+        clone.LanguageCode = source.EffectiveLanguageCode;
+        return clone;
     }
 
     private void OnDraftSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -726,6 +762,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var error = Validate(DraftSettings);
         if (error != null)
         {
+            Feedback.Error(error);
             _dialog.NotifyWarning(error);
             return;
         }
@@ -771,11 +808,15 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
 
         IsSaving = true;
+        Feedback.Working(Strings.Ux_StatusSaving);
         try
         {
             CopySettings(DraftSettings, AppSettings);
             AppSettings.Save();
-            _profileProvider?.Refresh(AppSettings.PlcConfig);
+            if (_runtimeSessions is not null)
+                _runtimeSessions.RefreshFromSettings();
+            else
+                _profileProvider?.Refresh(AppSettings.PlcConfig);
             // 前后值摘要：只取关键字段，PLC 密码/完整配置不落审计库
             AuditLog.Record("Settings.Update", "Settings", null,
                 before: auditBefore,
@@ -786,8 +827,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             if (plcConfigChanged)
             {
                 _lastSavedPlcConfigSignature = GetPlcConfigSignature(DraftSettings.PlcConfig);
-                // 强制断开，触发下次连接使用新参数
-                _connectionManager.Disconnect();
+                // 无 keyed session 时保留旧连接 facade 的强制断开行为。
+                if (_runtimeSessions is null)
+                    _connectionManager.Disconnect();
             }
 
             if (shiftsChanged)
@@ -800,27 +842,30 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
             HasUnsavedChanges = false;
             OnPropertyChanged(nameof(UnsavedChangesText));
+            Feedback.Success(Strings.Ux_StatusSaved);
 
             _dialog.NotifySuccess(Strings.M023);
             // 语言切换：保存到 settings.json，需重启后经 App 启动应用 CultureInfo 生效
-            if (DraftSettings.Language != _lastSavedLanguage)
+            if (!string.Equals(DraftSettings.EffectiveLanguageCode, _lastSavedLanguageCode, StringComparison.OrdinalIgnoreCase))
             {
-                _lastSavedLanguage = DraftSettings.Language;
+                _lastSavedLanguageCode = DraftSettings.EffectiveLanguageCode;
                 _dialog.NotifyInfo(Resources.Strings.Common_RestartRequired);
             }
             var syncResult = await SyncCollectorSettingsAsync(_disposeCts.Token); // Remote 模式：采集参数同步到 Collector（热生效）
             var remoteMode = _services.GetService<IRuntimeMode>()?.IsRemote == true;
             CollectorSyncPending = remoteMode && (!syncResult.WasAttempted || !syncResult.IsSuccess);
-            CollectorSyncStatus = !remoteMode ? "本地模式" : syncResult.IsSuccess ? "Collector 已确认" : "Collector 待同步";
+            CollectorSyncStatus = !remoteMode ? Strings.Settings_CollectorLocalMode : syncResult.IsSuccess ? Strings.Settings_CollectorConfirmed : Strings.Settings_CollectorPending;
             if (CollectorSyncPending)
             {
                 HasUnsavedChanges = true;
                 OnPropertyChanged(nameof(UnsavedChangesText));
-                _dialog.NotifyWarning(syncResult.ErrorMessage ?? "Collector 尚未连接，设置将在连接恢复后同步");
+                Feedback.Warning(syncResult.ErrorMessage ?? Strings.Settings_CollectorNotConnectedPending);
+                _dialog.NotifyWarning(syncResult.ErrorMessage ?? Strings.Settings_CollectorNotConnectedPending);
             }
         }
         catch (Exception ex)
         {
+            Feedback.Error(string.Format(Strings.F066, ex.Message));
             _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
         }
         finally
@@ -864,46 +909,9 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             var runtimeMode = _services.GetService<IRuntimeMode>();
             if (runtimeMode is null || !runtimeMode.IsRemote) return CollectorSyncResult.NotAttempted;
-            var client = _services.GetService<KanbanDataClient>();
+            var client = _services.GetService<KanbanAdminClient>();
             if (client is null || !client.IsConnected) return CollectorSyncResult.NotAttempted; // 未连接时本地保存仍生效，连接恢复后由用户再保存一次
-            var dto = new CollectorSettingsDto
-            {
-                PollingIntervalMs = AppSettings.PollingIntervalMs,
-                HistoryWriteIntervalScans = AppSettings.HistoryWriteIntervalScans,
-                PlcBatchReadMaxLength = AppSettings.PlcBatchReadMaxLength,
-                PlcBatchReadMaxGapSlots = AppSettings.PlcBatchReadMaxGapSlots,
-                PlcBrand = (int)AppSettings.PlcConfig.Brand,
-                PlcIpAddress = AppSettings.PlcConfig.IpAddress,
-                PlcPort = AppSettings.PlcConfig.Port,
-                PlcTimeoutMs = AppSettings.PlcConfig.TimeoutMs,
-                Siemens = new SiemensSettingsDto
-                {
-                    Model = AppSettings.PlcConfig.Siemens.Model,
-                    Rack = AppSettings.PlcConfig.Siemens.Rack,
-                    Slot = AppSettings.PlcConfig.Siemens.Slot,
-                    DataFormat = (int)AppSettings.PlcConfig.Siemens.DataFormat,
-                    BatchInt32Limit = AppSettings.PlcConfig.Siemens.BatchInt32Limit,
-                },
-                ModbusTcp = new ModbusTcpSettingsDto
-                {
-                    UnitId = AppSettings.PlcConfig.ModbusTcp.UnitId,
-                    AddressStartWithZero = AppSettings.PlcConfig.ModbusTcp.AddressStartWithZero,
-                    RegisterFunction = AppSettings.PlcConfig.ModbusTcp.RegisterFunction,
-                    BitFunction = AppSettings.PlcConfig.ModbusTcp.BitFunction,
-                    DataFormat = (int)AppSettings.PlcConfig.ModbusTcp.DataFormat,
-                    BatchInt32Limit = AppSettings.PlcConfig.ModbusTcp.BatchInt32Limit,
-                },
-                Omron = new OmronFinsSettingsDto
-                {
-                    ReadSplits = AppSettings.PlcConfig.Omron.ReadSplits,
-                },
-                Shifts = AppSettings.Shifts.Select(s => new ShiftConfigDto
-                {
-                    Name = s.Name,
-                    StartTime = s.StartTime,
-                    EndTime = s.EndTime,
-                }).ToList(),
-            };
+            var dto = CollectorSettingsMapper.ToDto(AppSettings);
             await client.SaveCollectorSettingsAsync(dto, cancellationToken);
             _dialog?.NotifySuccess(Strings.M024);
             return CollectorSyncResult.Success;
@@ -916,7 +924,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     private readonly record struct CollectorSyncResult(bool WasAttempted, bool IsSuccess, string? ErrorMessage)
     {
-        public static CollectorSyncResult NotAttempted => new(false, false, "Collector 尚未连接");
+        public static CollectorSyncResult NotAttempted => new(false, false, Strings.Settings_CollectorNotConnected);
         public static CollectorSyncResult Success => new(true, true, null);
         public static CollectorSyncResult Failed(string message) => new(true, false, message);
     }
@@ -945,6 +953,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private void ReplaceDraft(AppSettings settings)
     {
         UnwireDraftEvents();
+        settings.LanguageCode = settings.EffectiveLanguageCode;
         DraftSettings = settings;
         _draftBrand = DraftSettings.PlcConfig.Brand;
         WireDraftEvents();
@@ -968,13 +977,15 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         target.CollectorHubUrl = source.CollectorHubUrl;
         // 用快照整体复制，避免逐字段漏拷（如 ModbusTcp.BatchInt32Limit）；快照含全部嵌套 Options。
         target.PlcConfig = source.PlcConfig.CreateSnapshot();
+        target.ConnectionProfiles = source.CreateConnectionProfilesSnapshot();
+        target.EnsureConnectionProfiles();
         target.PollingIntervalMs = source.PollingIntervalMs;
         target.HistoryWriteIntervalScans = source.HistoryWriteIntervalScans;
         target.PlcBatchReadMaxLength = source.PlcBatchReadMaxLength;
         target.PlcBatchReadMaxGapSlots = source.PlcBatchReadMaxGapSlots;
         target.DashboardRefreshIntervalMs = source.DashboardRefreshIntervalMs;
         target.AppTitle = source.AppTitle;
-        target.Language = source.Language;
+        target.LanguageCode = source.EffectiveLanguageCode;
         target.IsDarkTheme = source.IsDarkTheme;
         target.UiScale = source.UiScale;
         target.EnableAlarmSound = source.EnableAlarmSound;

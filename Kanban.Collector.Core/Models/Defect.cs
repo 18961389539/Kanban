@@ -79,6 +79,18 @@ public partial class Defect : ObservableObject
     [ObservableProperty]
     private string _name = string.Empty;
 
+    /// <summary>缺陷名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameEn;
+
+    /// <summary>缺陷名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameJa;
+
+    /// <summary>缺陷名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _namePt;
+
     /// <summary>
     /// 缺陷数量（运行时状态，不持久化）。
     /// 使用 [property: ...] 语法确保特性应用到源生成器生成的属性而非字段。

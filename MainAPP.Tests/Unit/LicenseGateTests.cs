@@ -127,6 +127,21 @@ public class LicenseGateTests : IDisposable
     }
 
     [Fact]
+    public void RefreshStatusReadOnly_WithValidLicense_ReturnsActive()
+    {
+        var productKey = ProductKeyCodec.Encode(HardwareFingerprint.GetMachineCodeHash(), expireDate: null);
+        var license = ProductKeyCodec.TryDecode(productKey, _machineCodeHash);
+        Assert.NotNull(license);
+        _store.SaveLicense(license!);
+
+        var gate = CreateGate();
+        var status = gate.RefreshStatusReadOnly();
+
+        Assert.Equal(LicenseStatus.Active, status);
+        Assert.NotNull(gate.CurrentLicense);
+    }
+
+    [Fact]
     public void CheckStatus_WithMismatchedMachineCode_ReturnsMachineMismatch()
     {
         // 用错误的机器码哈希生成激活码（模拟复制 license.dat 到其他机器）

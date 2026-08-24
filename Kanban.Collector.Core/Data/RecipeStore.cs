@@ -22,10 +22,10 @@ public interface IRecipeStore
     /// <summary>从 recipes.json 加载配方到内存。启动时调用一次；文件损坏时备份 .corrupt 并保持空集合。</summary>
     void LoadAll();
 
-    /// <summary>异步保存全部配方。Remote 模式经 RemotePersistenceHook 委托 Collector 落盘。</summary>
+    /// <summary>异步保存全部配方。Remote 模式经显式远程存储端口委托 Collector 落盘。</summary>
     Task SaveAllAsync();
 
-    /// <summary>同步保存全部配方（退出/迁移等同步上下文；Remote 模式委托 Collector 落盘）。</summary>
+    /// <summary>同步保存全部配方（Local 模式使用；Remote 模式必须使用异步 API）。</summary>
     void SaveAll();
 
     /// <summary>新增或更新配方（按 Id），并返回落库后的实体（UpdatedAt 已刷新）。</summary>
@@ -37,13 +37,11 @@ public interface IRecipeStore
     /// <summary>按 Id 删除配方。</summary>
     bool Delete(string id);
 
-    /// <summary>配方远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落盘 recipes.json）。</summary>
-    Func<IReadOnlyList<Recipe>, Task>? RemotePersistenceHook { get; set; }
 }
 
 /// <summary>
 /// 配方库存储：内存集合 + recipes.json 全量覆写持久化。
-/// 与 DeviceRepository 同模式（原子写 + .corrupt 备份 + RemotePersistenceHook），
+/// 与 DeviceRepository 同模式（原子写 + .corrupt 备份 + 显式远程存储端口），
 /// 遵循 ADR-2 单写者：Remote 模式下写操作委托 Collector 落盘。
 /// </summary>
 public sealed class RecipeStore : IRecipeStore
@@ -55,15 +53,19 @@ public sealed class RecipeStore : IRecipeStore
     };
 
     private readonly AppSettings _appSettings;
+    private readonly IRemoteRecipeStore? _remoteStore;
     private readonly object _collectionLock = new();
 
     /// <summary>集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
     /// BindingOperations.EnableCollectionSynchronization(Recipes, SyncRoot)）。</summary>
     public object SyncRoot => _collectionLock;
 
-    public RecipeStore(AppSettings appSettings)
+    public RecipeStore(
+        AppSettings appSettings,
+        IRemoteRecipeStore? remoteStore = null)
     {
         _appSettings = appSettings;
+        _remoteStore = remoteStore;
         // 注：WPF 绑定同步锁不在此注册（UI 进程关注点，Core 不依赖 WPF），
         // 由 MainAPP.WpfCollectionBindingRegistrar 经 SyncRoot 注册。
     }
@@ -73,8 +75,6 @@ public sealed class RecipeStore : IRecipeStore
     private readonly ConcurrentDictionary<string, Recipe> _recipeMap = new();
 
     public string FilePath => _appSettings.GetFilePath("recipes.json");
-
-    public Func<IReadOnlyList<Recipe>, Task>? RemotePersistenceHook { get; set; }
 
     public Recipe? GetById(string id)
         => _recipeMap.TryGetValue(id, out var recipe) ? recipe : null;
@@ -150,12 +150,12 @@ public sealed class RecipeStore : IRecipeStore
 
     public async Task SaveAllAsync()
     {
-        if (RemotePersistenceHook != null)
+        if (_remoteStore?.IsEnabled == true)
         {
             List<Recipe> snapshot;
             lock (_collectionLock)
                 snapshot = Recipes.ToList();
-            await RemotePersistenceHook(snapshot);
+            await _remoteStore.SaveRecipesAsync(snapshot);
             return;
         }
         SaveAll();
@@ -163,14 +163,8 @@ public sealed class RecipeStore : IRecipeStore
 
     public void SaveAll()
     {
-        if (RemotePersistenceHook != null)
-        {
-            List<Recipe> remoteSnapshot;
-            lock (_collectionLock)
-                remoteSnapshot = Recipes.ToList();
-            Task.Run(() => RemotePersistenceHook(remoteSnapshot)).GetAwaiter().GetResult();
-            return;
-        }
+        if (_remoteStore?.IsEnabled == true)
+            throw new InvalidOperationException("Remote 模式不支持同步保存配方，请使用 SaveAllAsync。");
 
         _appSettings.EnsureDirectory();
         List<Recipe> snapshot;

@@ -106,6 +106,26 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
         OnPropertyChanged(nameof(SelectedMachineType));
     }
 
+    protected override void OnHostIsLoadingChanged()
+    {
+        NotifyWorkOrderCommandsCanExecuteChanged();
+    }
+
+    protected override void OnHostPermissionChanged()
+    {
+        NotifyWorkOrderCommandsCanExecuteChanged();
+    }
+
+    private void NotifyWorkOrderCommandsCanExecuteChanged()
+    {
+        AddWorkOrderCommand.NotifyCanExecuteChanged();
+        EditWorkOrderCommand.NotifyCanExecuteChanged();
+        DeleteWorkOrderCommand.NotifyCanExecuteChanged();
+        StartWorkOrderCommand.NotifyCanExecuteChanged();
+        CompleteWorkOrderCommand.NotifyCanExecuteChanged();
+        AbortWorkOrderCommand.NotifyCanExecuteChanged();
+    }
+
     partial void OnSelectedWorkOrderChanged(WorkOrder? value)
     {
         _selectedProductionCts?.Cancel();
@@ -173,23 +193,32 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
         => obj is WorkOrder w && SelectedDevice != null && w.DeviceId == SelectedDevice.Id;
 
     /// <summary>新增工单按钮可用性：选中设备即可新增（预填当前设备）。</summary>
-    private bool CanAddWorkOrder() => SelectedDevice != null;
+    private bool CanAddWorkOrder() => SelectedDevice != null && !_host.IsLoading && _host.CanManageDevices;
 
-    private bool CanEditWorkOrder() => SelectedWorkOrder != null;
+    private bool CanEditWorkOrder() => SelectedWorkOrder != null && !_host.IsLoading && _host.CanManageDevices;
 
-    private bool CanDeleteWorkOrder() => SelectedWorkOrder != null;
+    private bool CanDeleteWorkOrder() => SelectedWorkOrder != null && !_host.IsLoading && _host.CanManageDevices;
 
-    private bool CanStartWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
+    private bool CanStartWorkOrder() => SelectedWorkOrder != null
+        && !_host.IsLoading
+        && _host.CanManageDevices
+        && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
 
-    private bool CanCompleteWorkOrder() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Running;
+    private bool CanCompleteWorkOrder() => SelectedWorkOrder != null
+        && !_host.IsLoading
+        && _host.CanManageDevices
+        && SelectedWorkOrder.Status == WorkOrderStatus.Running;
 
     private bool CanAbortWorkOrder() => SelectedWorkOrder != null
+        && !_host.IsLoading
+        && _host.CanManageDevices
         && (SelectedWorkOrder.Status == WorkOrderStatus.Running || SelectedWorkOrder.Status == WorkOrderStatus.Pending);
 
     /// <summary>新增工单：以当前选中设备预填模板打开编辑对话框（Id=0 表示新增）。</summary>
     [RelayCommand(CanExecute = nameof(CanAddWorkOrder))]
     private async Task AddWorkOrder()
     {
+        if (!CanAddWorkOrder()) return;
         if (SelectedDevice == null) return;
         var template = new WorkOrder
         {
@@ -203,6 +232,7 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditWorkOrder))]
     private async Task EditWorkOrder()
     {
+        if (!CanEditWorkOrder()) return;
         if (SelectedWorkOrder == null) return;
         var saved = await _workOrderService.EditWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
@@ -211,6 +241,7 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteWorkOrder))]
     private async Task DeleteWorkOrder()
     {
+        if (!CanDeleteWorkOrder()) return;
         if (SelectedWorkOrder == null) return;
         if (await _workOrderService.DeleteWorkOrderAsync(SelectedWorkOrder))
             SelectedWorkOrder = null;
@@ -219,6 +250,7 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanStartWorkOrder))]
     private async Task StartWorkOrder()
     {
+        if (!CanStartWorkOrder()) return;
         if (SelectedWorkOrder == null) return;
         var saved = await _workOrderService.StartWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
@@ -227,6 +259,7 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanCompleteWorkOrder))]
     private async Task CompleteWorkOrder()
     {
+        if (!CanCompleteWorkOrder()) return;
         if (SelectedWorkOrder == null) return;
         var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;
@@ -235,6 +268,7 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanAbortWorkOrder))]
     private async Task AbortWorkOrder()
     {
+        if (!CanAbortWorkOrder()) return;
         if (SelectedWorkOrder == null) return;
         var saved = await _workOrderService.AbortWorkOrderAsync(SelectedWorkOrder);
         if (saved != null) SelectedWorkOrder = saved;

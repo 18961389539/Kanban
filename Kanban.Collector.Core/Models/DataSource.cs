@@ -29,7 +29,23 @@ public partial class DataSource : ObservableObject
 
     /// <summary>名称（展示用）</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
     private string _name = string.Empty;
+
+    /// <summary>名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    private string? _nameEn;
+
+    /// <summary>名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    private string? _nameJa;
+
+    /// <summary>名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    private string? _namePt;
 
     /// <summary>类型标识（温湿度 / 电表 等，仅标识与展示）</summary>
     [ObservableProperty]
@@ -51,6 +67,8 @@ public partial class DataSource : ObservableObject
     /// 未配置 = 每轮无条件采集（定时，周期 = 扫描周期）。
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTrigger))]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
     private string _triggerAddress = string.Empty;
 
     /// <summary>触发值：触发寄存器等于此值时执行采集（默认 1）</summary>

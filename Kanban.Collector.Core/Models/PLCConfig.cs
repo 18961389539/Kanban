@@ -78,10 +78,13 @@ public partial class OmronFinsPlcOptions : ObservableObject
 [JsonConverter(typeof(PlcConfigJsonConverter))]
 public partial class PlcConfig : ObservableObject
 {
+    public const string DefaultProtocolKey = "plc";
+
     private int _lastAutomaticPort = GetDefaultPort(PlcBrand.Mitsubishi);
 
+    [ObservableProperty] private string _protocolKey = DefaultProtocolKey;
     [ObservableProperty] private PlcBrand _brand = PlcBrand.Mitsubishi;
-    [ObservableProperty] private string _ipAddress = "192.168.1.2";
+    [ObservableProperty] private string _ipAddress = "127.0.0.1";
     [ObservableProperty] private int _port = GetDefaultPort(PlcBrand.Mitsubishi);
     [ObservableProperty] private int _timeoutMs = 5000;
 
@@ -129,6 +132,7 @@ public partial class PlcConfig : ObservableObject
 
     public PlcConfig CreateSnapshot() => new()
     {
+        ProtocolKey = ProtocolKey,
         Brand = Brand,
         IpAddress = IpAddress,
         Port = Port,
@@ -151,6 +155,15 @@ public partial class PlcConfig : ObservableObject
         if (Port == _lastAutomaticPort)
             Port = GetDefaultPort(value);
         _lastAutomaticPort = GetDefaultPort(value);
+    }
+
+    partial void OnProtocolKeyChanged(string value)
+    {
+        var normalized = string.IsNullOrWhiteSpace(value)
+            ? DefaultProtocolKey
+            : value.Trim().ToLowerInvariant();
+        if (!string.Equals(value, normalized, StringComparison.Ordinal))
+            ProtocolKey = normalized;
     }
 
     private void SetOption<T>(T current, T value, Action<T> setter, [System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
@@ -177,6 +190,9 @@ public sealed class PlcConfigJsonConverter : System.Text.Json.Serialization.Json
 
         if (TryReadInt(root, "Brand", out var brand) && Enum.IsDefined(typeof(PlcBrand), brand))
             config.Brand = (PlcBrand)brand;
+        if (root["ProtocolKey"] is System.Text.Json.Nodes.JsonValue protocolValue
+            && protocolValue.TryGetValue<string>(out var protocolKey))
+            config.ProtocolKey = protocolKey;
         if (root["IpAddress"] is System.Text.Json.Nodes.JsonValue ipValue && ipValue.TryGetValue<string>(out var ip))
             config.IpAddress = ip;
         if (TryReadInt(root, "Port", out var port))
@@ -224,6 +240,7 @@ public sealed class PlcConfigJsonConverter : System.Text.Json.Serialization.Json
     public override void Write(Utf8JsonWriter writer, PlcConfig value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
+        writer.WriteString("ProtocolKey", value.ProtocolKey);
         writer.WriteNumber("Brand", (int)value.Brand);
         writer.WriteString("IpAddress", value.IpAddress);
         writer.WriteNumber("Port", value.Port);

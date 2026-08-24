@@ -173,7 +173,7 @@ public class AppLifecycleTests : IDisposable
                 NullLogger<PlcDataAcquisitionService>.Instance);
 
             svc.Start();
-            await Task.Delay(100); // 让轮询跑一会
+            await Task.Delay(100, TestContext.Current.CancellationToken); // 让轮询跑一会
 
             var ex = await Record.ExceptionAsync(() => svc.StopAsync());
             Assert.Null(ex); // StopAsync 不应抛出异常
@@ -440,7 +440,7 @@ public class AppLifecycleTests : IDisposable
                 NullLogger<PlcDataAcquisitionService>.Instance);
 
             svc.Start();
-            await Task.Delay(100); // 让轮询跑一会
+            await Task.Delay(100, TestContext.Current.CancellationToken); // 让轮询跑一会
 
             // 空设备列表下 noDevicesToRead 应为 true
             var success = svc.RefreshDeviceData(out var noDevices);

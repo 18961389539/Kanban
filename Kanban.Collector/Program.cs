@@ -2,6 +2,7 @@ using Kanban.Collector.Hubs;
 using Kanban.Collector.Services;
 using Kanban.Collector.Core.DependencyInjection;
 using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -84,8 +85,13 @@ public static class Program
             builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddSingleton<ConfigSyncHandler>();
             builder.Services.AddSingleton<ShiftProgressProvider>();
-            builder.Services.AddSingleton<MetaPublisher>();
             builder.Services.AddSingleton<CollectorHealthState>();
+            builder.Services.AddSingleton<MetaPublisher>(sp => new MetaPublisher(
+                sp.GetRequiredService<ConfigSyncHandler>(),
+                sp.GetRequiredService<ShiftProgressProvider>(),
+                sp.GetRequiredService<ILogger<MetaPublisher>>(),
+                healthState: sp.GetRequiredService<CollectorHealthState>(),
+                services: sp));
             builder.Services.AddHostedService(sp => sp.GetRequiredService<MetaPublisher>()); // 同一实例作为定时发布器
             builder.Services.AddHostedService<CollectorWorker>();
             // 历史保留策略：启动后 30s 首次清理，之后每 24h 一次（KANBAN_HISTORY_RETENTION_DAYS 可调）
@@ -125,6 +131,23 @@ public static class Program
                 .AddTypeActivatedCheck<CollectorReadinessCheck>("collector_readiness");
             // readiness 的采集活性与恢复文件积压检查取真实数据源（可选委托；测试可省略）
             builder.Services.AddSingleton<Func<int>>(sp => () => sp.GetRequiredService<DeviceRepository>().GetDevicesSnapshot().Count);
+            builder.Services.AddSingleton<Func<IReadOnlyCollection<string>>>(sp => () => sp
+                .GetRequiredService<DeviceRepository>()
+                .GetDevicesSnapshot()
+                .Where(device => !string.IsNullOrWhiteSpace(device.OkCountAddress)
+                    || !string.IsNullOrWhiteSpace(device.NgCountAddress)
+                    || !string.IsNullOrWhiteSpace(device.StatusCountAddress)
+                    || device.Alarms.Any(alarm => !string.IsNullOrWhiteSpace(alarm.PlcAddress))
+                    || device.Defects.Any(defect => !string.IsNullOrWhiteSpace(defect.PlcAddress))
+                    || device.CounterAlarms.Any(alarm => !string.IsNullOrWhiteSpace(alarm.PlcAddress))
+                    || device.Sources.Any(source => source.Enabled
+                        && (!string.IsNullOrWhiteSpace(source.TriggerAddress)
+                            || source.Values.Any(value => value.Enabled && !string.IsNullOrWhiteSpace(value.PlcAddress)))))
+                .Select(device => string.IsNullOrWhiteSpace(device.ConnectionProfileId)
+                    ? ConnectionProfile.DefaultId
+                    : device.ConnectionProfileId.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray());
             builder.Services.AddSingleton<Func<HistoryDiagnosticsSnapshot>>(
                 sp => sp.GetRequiredService<HistoryService>().GetDiagnosticsSnapshot);
 
@@ -176,9 +199,15 @@ public static class Program
             app.MapFallbackToFile("index.html");
 
             // 运行指标（运维可观测）：采集/推送/事件计数 + 订阅者峰值 + 错误计数（text/plain）
-            app.MapGet("/metrics", () => Kanban.Collector.Services.CollectorMetrics.Render());
+            app.MapGet("/metrics", (CollectorDiagnosticsProvider diagnostics) =>
+            {
+                // 刷新一次瞬态 gauge 后再渲染，避免 /metrics 只显示进程启动时的零值。
+                diagnostics.GetSnapshot();
+                return Kanban.Collector.Services.CollectorMetrics.Render();
+            });
 
             app.MapHub<KanbanHub>(Kanban.Contracts.KanbanHubPaths.HubPath);
+            app.MapHub<KanbanAdminHub>(Kanban.Contracts.KanbanHubPaths.AdminHubPath);
             await app.RunAsync();
         }
         catch (Exception ex)

@@ -25,6 +25,9 @@ public interface IDeviceManagerHost : INotifyPropertyChanged
     /// <summary>当前 PLC 是否在线；断线时禁止子 Tab 的 PLC 写入命令。</summary>
     bool IsPlcConnected { get; }
 
+    /// <summary>当前用户是否有权修改设备管理配置及工单。</summary>
+    bool CanManageDevices { get; }
+
     /// <summary>将子 Tab 的 PLC 异步结果汇总到设备参数页状态栏。</summary>
     void ReportPlcOperation(PlcOpResult result);
 

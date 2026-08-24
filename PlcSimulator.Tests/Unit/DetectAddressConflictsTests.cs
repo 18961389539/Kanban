@@ -1,3 +1,4 @@
+using Kanban.Contracts.Dtos;
 using Xunit;
 
 namespace PlcSimulator.Tests.Unit;
@@ -43,5 +44,61 @@ public class DetectAddressConflictsTests
             new() { Name = "B", NgCountAddress = "D100" },
         };
         Assert.Single(Program.DetectAddressConflicts(devices));
+    }
+
+    [Fact]
+    public void SourceAddresses_AreCheckedAcrossDevices_ButNotWithinOneDevice()
+    {
+        var devices = new List<DeviceConfig>
+        {
+            new()
+            {
+                Id = "A",
+                Name = "A",
+                Sources = new List<DataSourceConfigDto>
+                {
+                    new()
+                    {
+                        Name = "触发源",
+                        TriggerAddress = "D510",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Name = "温度", PlcAddress = "D500" },
+                        },
+                    },
+                    new()
+                    {
+                        Name = "重复值源",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Name = "同址值", PlcAddress = "D500" },
+                        },
+                    },
+                },
+            },
+            new()
+            {
+                Id = "B",
+                Name = "B",
+                Sources = new List<DataSourceConfigDto>
+                {
+                    new()
+                    {
+                        Name = "另一触发源",
+                        TriggerAddress = "D510",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Name = "另一值", PlcAddress = "D500" },
+                        },
+                    },
+                },
+            },
+        };
+
+        var conflicts = Program.DetectAddressConflicts(devices);
+
+        Assert.Equal(2, conflicts.Count);
+        Assert.Contains(conflicts, conflict => conflict.Contains("D500"));
+        Assert.Contains(conflicts, conflict => conflict.Contains("D510"));
     }
 }

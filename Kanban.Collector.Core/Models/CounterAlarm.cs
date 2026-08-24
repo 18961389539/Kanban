@@ -22,6 +22,18 @@ public partial class CounterAlarm : ObservableObject
     [ObservableProperty]
     private string _name = string.Empty;
 
+    /// <summary>报警名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameEn;
+
+    /// <summary>报警名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameJa;
+
+    /// <summary>报警名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _namePt;
+
     /// <summary>PLC 地址（D 字地址，如 D300）</summary>
     [ObservableProperty]
     private string _plcAddress = string.Empty;

@@ -20,6 +20,13 @@ public abstract partial class DeviceChildManagerViewModel : ObservableObject
     [ObservableProperty]
     private Device? _selectedDevice;
 
+    public bool CanManageDevices => _host.CanManageDevices;
+
+    public bool IsConfigurationReadOnly => !CanManageDevices;
+
+    /// <summary>子 Tab 的 CSV 操作进行中时，连同普通 CRUD 一起锁定。</summary>
+    protected virtual bool IsCsvBusy => false;
+
     protected DeviceChildManagerViewModel(IDialogService dialog, IDeviceManagerHost host)
     {
         _dialog = dialog;
@@ -35,6 +42,9 @@ public abstract partial class DeviceChildManagerViewModel : ObservableObject
 
     /// <summary>父级 IsLoading 变化后的子类钩子（刷新命令可用状态）。</summary>
     protected virtual void OnHostIsLoadingChanged() { }
+
+    /// <summary>父级设备管理权限变化后的子类钩子（刷新命令可用状态）。</summary>
+    protected virtual void OnHostPermissionChanged() { }
 
     /// <summary>子类补充处理父级其它属性变化（如 IsPlcConnected）。</summary>
     protected virtual void OnHostOtherPropertyChanged(string? propertyName) { }
@@ -57,6 +67,12 @@ public abstract partial class DeviceChildManagerViewModel : ObservableObject
         {
             OnHostIsLoadingChanged();
         }
+        else if (e.PropertyName == nameof(IDeviceManagerHost.CanManageDevices))
+        {
+            OnPropertyChanged(nameof(CanManageDevices));
+            OnPropertyChanged(nameof(IsConfigurationReadOnly));
+            OnHostPermissionChanged();
+        }
         else
         {
             OnHostOtherPropertyChanged(e.PropertyName);
@@ -64,5 +80,8 @@ public abstract partial class DeviceChildManagerViewModel : ObservableObject
     }
 
     /// <summary>选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）。</summary>
-    protected bool CanEditSelected() => SelectedDevice != null && !_host.IsLoading;
+    protected bool CanEditSelected() => SelectedDevice != null
+        && !_host.IsLoading
+        && _host.CanManageDevices
+        && !IsCsvBusy;
 }

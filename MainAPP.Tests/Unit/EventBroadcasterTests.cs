@@ -219,7 +219,8 @@ public class EventBroadcasterTests
     {
         const int capacity = EventBroadcaster.RetentionCount; // 4096
         var bc = CreateBroadcaster();
-        var enumerator = bc.WatchAlarmEventsAsync(0, CancellationToken.None).GetAsyncEnumerator();
+        var enumerator = bc.WatchAlarmEventsAsync(0, TestContext.Current.CancellationToken)
+            .GetAsyncEnumerator(TestContext.Current.CancellationToken);
 
         // 首次 MoveNext：完成订阅注册（补发为空），并消费 seq=1
         var first = enumerator.MoveNextAsync();

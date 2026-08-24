@@ -11,11 +11,11 @@ using Microsoft.Extensions.Logging;
 namespace Kanban.Collector.Hubs;
 
 /// <summary>
-/// SignalR 强类型 Hub：实现 <see cref="IKanbanHubServer"/>（监控域）与 <see cref="IKanbanAdminServer"/>（管理域），
+/// SignalR 强类型 Hub：实现 <see cref="IKanbanHubServer"/>（只读监控域），
 /// 客户端回调走 <see cref="IKanbanHubClient"/> 强类型接口。
 /// SignalR 方法签名不含 CancellationToken（见契约说明），取消用 Context.ConnectionAborted。
 /// </summary>
-public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanbanAdminServer
+public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
 {
     private readonly SnapshotAggregator _snapshotAggregator;
     private readonly EventBroadcaster _eventBroadcaster;
@@ -27,7 +27,6 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
     private readonly WorkOrderRepository _workOrderRepository;
     private readonly AppSettings _appSettings;
     private readonly IAuditService _auditService;
-    private readonly ILogger<KanbanHub> _logger;
 
     public KanbanHub(
         SnapshotAggregator snapshotAggregator,
@@ -39,8 +38,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         MetaPublisher metaPublisher,
         WorkOrderRepository workOrderRepository,
         AppSettings appSettings,
-        IAuditService auditService,
-        ILogger<KanbanHub> logger)
+        IAuditService auditService)
     {
         _snapshotAggregator = snapshotAggregator;
         _eventBroadcaster = eventBroadcaster;
@@ -52,26 +50,6 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         _workOrderRepository = workOrderRepository;
         _appSettings = appSettings;
         _auditService = auditService;
-        _logger = logger;
-    }
-
-    /// <summary>
-    /// 解析远程写操作的操作人：无认证（有意设计，局域网查看），操作人由客户端经连接查询串
-    /// <c>operator</c> 传入；未提供时回退空串（审计页会显示为空，可据此区分来源缺失）。
-    /// 单元测试直接实例化 Hub 时 Context 为 null、或非 HTTP 传输时 GetHttpContext 不可用，均回退空串。
-    /// </summary>
-    private string ResolveOperator()
-    {
-        try
-        {
-            var http = Context.GetHttpContext();
-            var fromQuery = http?.Request.Query["operator"].ToString();
-            return string.IsNullOrWhiteSpace(fromQuery) ? string.Empty : fromQuery;
-        }
-        catch
-        {
-            return string.Empty;
-        }
     }
 
     /// <inheritdoc />
@@ -127,58 +105,8 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         => Task.FromResult(_diagnosticsProvider.GetSnapshot());
 
     /// <inheritdoc />
-    public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices)
-    {
-        try
-        {
-            await _configSyncHandler.SaveDevicesAsync(devices);
-            AuditLog.Record("Device.SaveBatch", "Device", null,
-                detail: $"保存 {devices.Count} 台设备配置", @operator: ResolveOperator());
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("Device.SaveBatch", "Device", null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
     public Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync()
         => _configSyncHandler.GetDevicesAsync();
-
-    /// <inheritdoc />
-    public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder)
-    {
-        try
-        {
-            var saved = await _configSyncHandler.UpsertWorkOrderAsync(workOrder);
-            AuditLog.Record("WorkOrder.Upsert", "WorkOrder", saved.Id > 0 ? saved.Id.ToString() : null,
-                after: new { saved.OrderNo, saved.DeviceId, saved.TargetQuantity, saved.Status },
-                detail: workOrder.Id > 0 ? "更新工单" : "新增工单", @operator: ResolveOperator());
-            return saved;
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("WorkOrder.Upsert", "WorkOrder",
-                workOrder.Id > 0 ? workOrder.Id.ToString() : null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteWorkOrderAsync(int workOrderId)
-    {
-        try
-        {
-            await _configSyncHandler.DeleteWorkOrderAsync(workOrderId);
-            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), detail: "删除工单", @operator: ResolveOperator());
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("WorkOrder.Delete", "WorkOrder", workOrderId.ToString(), succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
 
     /// <inheritdoc />
     public Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId)
@@ -207,24 +135,6 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
     }
 
     /// <inheritdoc />
-    public async Task SaveCollectorSettingsAsync(CollectorSettingsDto settings)
-    {
-        try
-        {
-            await _configSyncHandler.SaveCollectorSettingsAsync(settings);
-            AuditLog.Record("CollectorSettings.Update", "Settings", null,
-                after: new { settings.PollingIntervalMs, settings.HistoryWriteIntervalScans, settings.PlcBrand },
-                detail: "远程保存采集设置", @operator: ResolveOperator());
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("CollectorSettings.Update", "Settings", null,
-                succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
     public Task<string> GetServerVersionAsync()
         => Task.FromResult(_configSyncHandler.GetServerVersion());
 
@@ -237,64 +147,30 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
         => Task.FromResult(_configSyncHandler.GetLanguage());
 
     /// <inheritdoc />
+    public Task<string> GetLanguageCodeAsync()
+        => Task.FromResult(_configSyncHandler.GetLanguageCode());
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<LocalizationOverrideDto>> GetLocalizationOverridesAsync()
+        => Task.FromResult<IReadOnlyList<LocalizationOverrideDto>>(
+            Kanban.Collector.Core.Localization.LocalizationOverrideStore.Snapshot()
+                .Select(entry => new LocalizationOverrideDto
+                {
+                    Resource = entry.Resource,
+                    Key = entry.Key,
+                    CultureName = entry.CultureName,
+                    Value = entry.Value,
+                })
+                .ToList());
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync()
         => Task.FromResult<IReadOnlyList<WorkOrderDto>>(
             _workOrderRepository.GetSnapshot().Select(WorkOrderMapper.ToDto).ToList());
 
     /// <inheritdoc />
     public Task<CollectorSettingsDto> GetCollectorSettingsAsync()
-        => Task.FromResult(BuildSettingsSnapshot());
-
-    /// <summary>采集设置快照：AppSettings → CollectorSettingsDto（与 SaveCollectorSettingsAsync 的字段一一对应）。</summary>
-    private CollectorSettingsDto BuildSettingsSnapshot()
-    {
-        var plc = _appSettings.PlcConfig;
-        return new CollectorSettingsDto
-        {
-            PollingIntervalMs = _appSettings.PollingIntervalMs,
-            HistoryWriteIntervalScans = _appSettings.HistoryWriteIntervalScans,
-            PlcBatchReadMaxLength = _appSettings.PlcBatchReadMaxLength,
-            PlcBatchReadMaxGapSlots = _appSettings.PlcBatchReadMaxGapSlots,
-            PlcBrand = (int)plc.Brand,
-            PlcIpAddress = plc.IpAddress,
-            PlcPort = plc.Port,
-            PlcTimeoutMs = plc.TimeoutMs,
-            Siemens = new SiemensSettingsDto
-            {
-                Model = plc.Siemens.Model,
-                Rack = plc.Siemens.Rack,
-                Slot = plc.Siemens.Slot,
-                DataFormat = (int)plc.Siemens.DataFormat,
-                BatchInt32Limit = plc.Siemens.BatchInt32Limit,
-            },
-            ModbusTcp = new ModbusTcpSettingsDto
-            {
-                UnitId = plc.ModbusTcp.UnitId,
-                AddressStartWithZero = plc.ModbusTcp.AddressStartWithZero,
-                RegisterFunction = plc.ModbusTcp.RegisterFunction,
-                BitFunction = plc.ModbusTcp.BitFunction,
-                DataFormat = (int)plc.ModbusTcp.DataFormat,
-                BatchInt32Limit = plc.ModbusTcp.BatchInt32Limit,
-            },
-            Omron = new OmronFinsSettingsDto
-            {
-                ReadSplits = plc.Omron.ReadSplits,
-            },
-            // 锁内快照枚举：与 ConfigSyncHandler 的原地写入互斥（审查修复 2026-08-13）
-            Shifts = LockedShifts().Select(s => new ShiftConfigDto
-            {
-                Name = s.Name,
-                StartTime = s.StartTime,
-                EndTime = s.EndTime,
-            }).ToList(),
-        };
-    }
-
-    private List<Kanban.Collector.Core.Models.ShiftConfig> LockedShifts()
-    {
-        lock (_appSettings.ShiftsLock)
-            return _appSettings.Shifts.ToList();
-    }
+        => Task.FromResult(CollectorSettingsMapper.ToDto(_appSettings));
 
     /// <inheritdoc />
     public Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request)
@@ -330,50 +206,6 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer, IKanban
     }
 
     /// <inheritdoc />
-    public async Task SaveRecipesAsync(List<RecipeDto> recipes)
-    {
-        try
-        {
-            await _configSyncHandler.SaveRecipesAsync(recipes);
-            AuditLog.Record("Recipe.SaveBatch", "Recipe", null,
-                detail: $"保存 {recipes.Count} 条配方", @operator: ResolveOperator());
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("Recipe.SaveBatch", "Recipe", null, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
     public Task<IReadOnlyList<RecipeDto>> GetRecipesAsync()
         => _configSyncHandler.GetRecipesAsync();
-
-    /// <inheritdoc />
-    public async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId)
-    {
-        try
-        {
-            // 进度经强类型客户端方法逐项推送（fire-and-forget：SignalR 每连接串行发送队列，
-            // 不 await 避免拖慢 Apply 循环；最终结果仍由本 Invoke 返回值承载）
-            Action<RecipeApplyProgressDto> progress = p =>
-            {
-                var send = Clients.Caller.OnRecipeApplyProgress(p);
-                _ = send.ContinueWith(t =>
-                {
-                    if (t.IsFaulted) _logger.LogWarning(t.Exception, "配方下发进度推送失败");
-                }, TaskContinuationOptions.OnlyOnFaulted);
-            };
-            var result = await _configSyncHandler.ApplyRecipeAsync(deviceId, recipeId, progress);
-            AuditLog.Record("Recipe.Apply", "Recipe", recipeId,
-                detail: $"下发配方到设备 {deviceId}",
-                after: new { result.Success, result.Message }, @operator: ResolveOperator());
-            return result;
-        }
-        catch (Exception ex)
-        {
-            AuditLog.Record("Recipe.Apply", "Recipe", recipeId, succeeded: false, detail: ex.Message, @operator: ResolveOperator());
-            throw;
-        }
-    }
 }

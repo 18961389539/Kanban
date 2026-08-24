@@ -31,9 +31,12 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     private readonly object _diagnosticsLock = new();
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _flushTask;
+    private readonly Queue<long> _flushDurations = new();
     private DateTime? _lastFlushAt;
     private int _flushFailureCount;
     private int _totalFlushedCount;
+    private long _queuePeak;
+    private long _overflowCount;
     /// <summary>恢复文件当前行数（增量维护，避免诊断快照每轮全文件数行）。</summary>
     private long _recoveryLineCount;
 
@@ -55,12 +58,16 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             return new ProductionWriterDiagnosticsSnapshot
             {
                 PendingCount = _channel.Reader.Count,
+                QueuePeakCount = _queuePeak,
+                OverflowCount = _overflowCount,
                 RecoveryFileExists = recoveryBytes > 0,
                 RecoveryFileBytes = recoveryBytes,
                 RecoveryFileLines = _recoveryLineCount,
                 LastFlushAt = _lastFlushAt,
                 FlushFailureCount = _flushFailureCount,
                 TotalFlushedCount = _totalFlushedCount,
+                FlushP95Milliseconds = Percentile(_flushDurations, 0.95),
+                FlushP99Milliseconds = Percentile(_flushDurations, 0.99),
             };
         }
     }
@@ -69,8 +76,13 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
     {
         if (!_channel.Writer.TryWrite(log))
         {
+            Interlocked.Increment(ref _overflowCount);
             PersistRecoveryLogs([log]);
             _logger.LogWarning("生产快照通道已满，已转存本地恢复文件");
+        }
+        else
+        {
+            UpdateQueuePeak(_channel.Reader.Count);
         }
     }
 
@@ -117,6 +129,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         batch.Add(first);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(10);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             while (batch.Count < BatchSize)
@@ -138,6 +151,8 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             {
                 _lastFlushAt = DateTime.Now;
                 _totalFlushedCount += batch.Count;
+                _flushDurations.Enqueue(stopwatch.ElapsedMilliseconds);
+                while (_flushDurations.Count > 1024) _flushDurations.Dequeue();
             }
         }
         catch (Exception ex)
@@ -394,6 +409,25 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
             .ToHashSet();
     }
 
+    private void UpdateQueuePeak(int pending)
+    {
+        var observed = Interlocked.Read(ref _queuePeak);
+        while (pending > observed)
+        {
+            var previous = Interlocked.CompareExchange(ref _queuePeak, pending, observed);
+            if (previous == observed) return;
+            observed = previous;
+        }
+    }
+
+    private static long Percentile(IEnumerable<long> values, double percentile)
+    {
+        var ordered = values.OrderBy(value => value).ToArray();
+        if (ordered.Length == 0) return 0;
+        var index = (int)Math.Ceiling(ordered.Length * percentile) - 1;
+        return ordered[Math.Clamp(index, 0, ordered.Length - 1)];
+    }
+
     internal int PendingChannelCountForTest => _channel.Reader.Count;
 
     /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
@@ -429,10 +463,14 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
 public sealed record ProductionWriterDiagnosticsSnapshot
 {
     public int PendingCount { get; init; }
+    public long QueuePeakCount { get; init; }
+    public long OverflowCount { get; init; }
     public bool RecoveryFileExists { get; init; }
     public long RecoveryFileBytes { get; init; }
     public long RecoveryFileLines { get; init; }
     public DateTime? LastFlushAt { get; init; }
     public int FlushFailureCount { get; init; }
     public int TotalFlushedCount { get; init; }
+    public long FlushP95Milliseconds { get; init; }
+    public long FlushP99Milliseconds { get; init; }
 }

@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- 当前工作树没有可发布的 Git remote，避免生成空的 SourceLink 映射和误导性源码链接。 -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <!-- 同时关闭 SDK 的 Git 仓库探测；本地工作树没有 remote，探测本身会产生无远程 warning。 -->
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <!-- SDK 默认只排除 **/obj/** 与 **/bin/**；本地集成曾用 obj_fresh/ 等重定向目录
          （不匹配排除模式，残留的生成 .cs 会被当源文件编译导致 CS0579）。
          统一排除所有 obj*/bin* 中间目录。 -->

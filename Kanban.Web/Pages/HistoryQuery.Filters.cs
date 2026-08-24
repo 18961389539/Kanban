@@ -188,7 +188,7 @@ public partial class HistoryQuery
 
     private static string Pct(double v) => $"{v:P0}";
 
-    /// <summary>设备状态字 → 三语文本（对齐 WPF HistoryQueryHelper.GetStateText）。</summary>
+    /// <summary>设备状态字 → 当前语言文本（对齐 WPF HistoryQueryHelper.GetStateText）。</summary>
     private static string StateText(int state) => state switch
     {
         (int)Kanban.Contracts.Enums.DeviceStatus.Running => L.T("Status_Running"),

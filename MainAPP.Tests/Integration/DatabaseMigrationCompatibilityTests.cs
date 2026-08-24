@@ -58,6 +58,38 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
     }
 
     [Fact]
+    public void EnsureCreatedAll_LegacyDataSourceSnapshotDatabase_AddsIdentityAndTimingColumns()
+    {
+        _settings.EnsureDirectory();
+        var path = _settings.GetFilePath("datasource_snapshots.db");
+        using (var connection = new SqliteConnection($"Data Source={path}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TABLE DataSourceSnapshots (Id INTEGER PRIMARY KEY AUTOINCREMENT, DeviceId TEXT NOT NULL, DeviceName TEXT NOT NULL, SourceId TEXT NOT NULL, SourceName TEXT NOT NULL, SourceType TEXT NOT NULL, Unit TEXT NOT NULL, Value INTEGER NOT NULL, IsValid INTEGER NOT NULL, ShiftName TEXT NOT NULL, Timestamp TEXT NOT NULL); CREATE INDEX IX_DataSourceSnapshots_DeviceId ON DataSourceSnapshots (DeviceId); CREATE INDEX IX_DataSourceSnapshots_DeviceId_Timestamp ON DataSourceSnapshots (DeviceId, Timestamp); CREATE INDEX IX_DataSourceSnapshots_SourceId_Timestamp ON DataSourceSnapshots (SourceId, Timestamp); CREATE INDEX IX_DataSourceSnapshots_Timestamp ON DataSourceSnapshots (Timestamp); INSERT INTO DataSourceSnapshots (DeviceId, DeviceName, SourceId, SourceName, SourceType, Unit, Value, IsValid, ShiftName, Timestamp) VALUES ('D1', '设备1', 'legacy-value-1', '温度', 'PLC', '℃', 42, 1, '白班', '2026-08-17 08:00:00');";
+            command.ExecuteNonQuery();
+        }
+
+        new DatabaseProvider(_settings).EnsureCreatedAll();
+
+        using var verify = new SqliteConnection($"Data Source={path}");
+        verify.Open();
+        using var query = verify.CreateCommand();
+        query.CommandText = "SELECT ValueId, Timestamp, PersistedAt FROM DataSourceSnapshots WHERE Id = 1";
+        using (var row = query.ExecuteReader())
+        {
+            Assert.True(row.Read());
+            Assert.Equal(string.Empty, row.GetString(0));
+            Assert.Equal(row.GetString(1), row.GetString(2));
+        }
+
+        query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20260818110000_AddValueIdentityAndTiming'";
+        Assert.Equal(1L, query.ExecuteScalar());
+        query.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'IX_DataSourceSnapshots_DeviceId_SourceId_ValueId_Timestamp'";
+        Assert.Equal(1L, query.ExecuteScalar());
+    }
+
+    [Fact]
     public void EnsureCreatedAll_NewDatabases_CreatesEfMigrationHistoryForAllDatabases()
     {
         _settings.EnsureDirectory();

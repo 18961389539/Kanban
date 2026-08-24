@@ -7,6 +7,7 @@ using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.ViewModels;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -69,6 +70,7 @@ public class HomeViewModelTests : IDisposable
         var device = AddDeviceWithRuntime("d1", "设备1");
         var rt = _deviceRepository.Runtimes.First(r => r.DeviceId == "d1");
         rt.TotalOkProduction = 42;
+        _connectionManager.EnsureConnected();
 
         using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
         Assert.NotNull(vm.CurrentDevice);
@@ -93,7 +95,7 @@ public class HomeViewModelTests : IDisposable
     }
 
     [Fact]
-    public void RefreshActiveAlarms_CollectsFromAllDevices()
+    public void RefreshActiveAlarms_CollectsOnlyFromSelectedDevice()
     {
         var dev1 = CreateDevice("d1", "设备1");
         var dev2 = CreateDevice("d2", "设备2");
@@ -111,11 +113,21 @@ public class HomeViewModelTests : IDisposable
             Id = "a2", Name = "报警B", Level = AlarmLevel.Medium,
             StartTime = DateTime.Now.AddMinutes(-5), EndTime = default
         });
+        _deviceRepository.AddRuntime(dev1);
+        _deviceRepository.AddRuntime(dev2);
+        _connectionManager.EnsureConnected();
 
         using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
 
-        Assert.Equal(2, vm.ActiveAlarms.Count);
+        Assert.Single(vm.ActiveAlarms);
+        Assert.Equal("设备1", vm.ActiveAlarms[0].DeviceName);
         Assert.True(vm.HasHighLevelAlarm);
+
+        vm.SelectedDeviceId = "d2";
+
+        Assert.Single(vm.ActiveAlarms);
+        Assert.Equal("设备2", vm.ActiveAlarms[0].DeviceName);
+        Assert.False(vm.HasHighLevelAlarm);
     }
 
     [Fact]
@@ -159,6 +171,7 @@ public class HomeViewModelTests : IDisposable
         rt.RunTime = 3600;
         rt.AlarmTime = 300;
         rt.PausedTime = 600;
+        _connectionManager.EnsureConnected();
 
         using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
         Assert.Equal(0.95, vm.QualityRate, 3); // 95/(95+5)
@@ -169,6 +182,172 @@ public class HomeViewModelTests : IDisposable
         Assert.Equal("10m 0s", vm.PausedTimeFormatted);
         Assert.Equal(100, vm.TargetSpeed);
         Assert.Equal(36, vm.TargetCycleSec, 1);
+    }
+
+    [Fact]
+    public void StaleAcquisitionData_ShowsNoDataAndHidesCharts()
+    {
+        var device = AddDeviceWithRuntime("stale", "停滞设备");
+        var acquisition = Substitute.For<IPlcDataAcquisitionService>();
+        acquisition.GetDiagnosticsSnapshot().Returns(new AcquisitionDiagnosticsSnapshot
+        {
+            LastSuccessfulAt = DateTime.Now.AddSeconds(-10),
+        });
+        _connectionManager.EnsureConnected();
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings,
+            acquisition, _selection);
+
+        Assert.Equal(HomeDataStatus.NoData, vm.DataStatusKind);
+        Assert.Equal("—", vm.OeeDisplay);
+        Assert.Null(vm.OeeRingChart);
+        Assert.Null(vm.StatusPieChart);
+        Assert.Equal(device.Id, vm.SelectedDeviceId);
+    }
+
+    [Fact]
+    public void PartialAcquisitionFailure_DoesNotShowStaleSelectedDevice()
+    {
+        var device = AddDeviceWithRuntime("d1", "设备1");
+        var acquisition = Substitute.For<IPlcDataAcquisitionService>();
+        acquisition.GetDiagnosticsSnapshot().Returns(new AcquisitionDiagnosticsSnapshot
+        {
+            ConfiguredDevices = 2,
+            LastSuccessfulAt = DateTime.Now,
+            LastSuccessfulDeviceIds = new HashSet<string> { "d2" },
+        });
+        _connectionManager.EnsureConnected();
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings,
+            acquisition, _selection);
+
+        Assert.Equal(HomeDataStatus.NoData, vm.DataStatusKind);
+        Assert.Equal("—", vm.QualityRateDisplay);
+        Assert.Equal(device.Id, vm.SelectedDeviceId);
+    }
+
+    [Fact]
+    public void RemoveDevice_ClearsSelectedRuntimeAndLiveCharts()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+
+        _deviceRepository.RemoveDevice("d1");
+
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        dispatcher?.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+
+        Assert.Null(vm.CurrentDevice);
+        Assert.Null(vm.CurrentRuntime);
+        Assert.Equal(HomeDataStatus.NoDevice, vm.DataStatusKind);
+        Assert.Null(vm.OeeRingChart);
+        Assert.Empty(vm.ActiveAlarms);
+    }
+
+    [Fact]
+    public void WorkOrderSummaryDisplay_UsesOrderScopedValue()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        var order = new WorkOrder
+        {
+            Id = 1,
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+        vm.CurrentWorkOrder = order;
+        vm.ApplyWorkOrderSummaryForTest(order, 42);
+
+        Assert.Contains("42", vm.WorkOrderOkProductionDisplay);
+        Assert.DoesNotContain("100", vm.WorkOrderOkProductionDisplay);
+    }
+
+    [Fact]
+    public async Task WorkOrderSummary_DoesNotStartConcurrentQueries()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callCount = 0;
+        var workOrderService = Substitute.For<IWorkOrderService>();
+        workOrderService.GetProductionSummary(Arg.Any<WorkOrder>()).Returns(_ =>
+        {
+            Interlocked.Increment(ref callCount);
+            entered.SetResult();
+            release.Task.GetAwaiter().GetResult();
+            return new WorkOrderProductionSummary { OkCount = 42 };
+        });
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings,
+            null!, _selection, workOrderService: workOrderService);
+        var order = new WorkOrder
+        {
+            Id = 1,
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+        vm.CurrentWorkOrder = order;
+        await entered.Task.WaitAsync(TestContext.Current.CancellationToken);
+
+        for (var i = 0; i < 5; i++)
+            vm.RefreshWorkOrderSummaryForTest();
+
+        Assert.Equal(1, Volatile.Read(ref callCount));
+        release.SetResult();
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        Assert.Equal(1, Volatile.Read(ref callCount));
+    }
+
+    [Fact]
+    public async Task WorkOrderSummary_CancelsQueryWhenWorkOrderChanges()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var workOrderService = Substitute.For<IWorkOrderService, IAsyncWorkOrderProductionSummary>();
+        var asyncService = (IAsyncWorkOrderProductionSummary)workOrderService;
+        asyncService.GetProductionSummaryAsync(Arg.Any<WorkOrder>(), Arg.Any<CancellationToken>())
+            .Returns(async callInfo =>
+            {
+                started.TrySetResult();
+                try
+                {
+                    await Task.Delay(Timeout.InfiniteTimeSpan, callInfo.Arg<CancellationToken>());
+                }
+                catch (OperationCanceledException)
+                {
+                    cancelled.TrySetResult();
+                    throw;
+                }
+                return new WorkOrderProductionSummary { OkCount = 42 };
+            });
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings,
+            null!, _selection, workOrderService: workOrderService);
+        vm.CurrentWorkOrder = new WorkOrder
+        {
+            Id = 1,
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+        await started.Task.WaitAsync(TestContext.Current.CancellationToken);
+
+        vm.CurrentWorkOrder = new WorkOrder
+        {
+            Id = 2,
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+
+        await cancelled.Task.WaitAsync(TestContext.Current.CancellationToken);
     }
 
     // ──────────── ViewDeviceDetailCommand ────────────
@@ -306,6 +485,17 @@ public class HomeViewModelTests : IDisposable
 
         Assert.NotNull(last);
         Assert.Equal("白班", last!.ShiftName);
+    }
+
+    [Fact]
+    public void FallbackKey_IsolatedByDeviceAndShift()
+    {
+        Assert.NotEqual(
+            LastShiftComparisonProvider.BuildFallbackKey("d1", "白班"),
+            LastShiftComparisonProvider.BuildFallbackKey("d2", "白班"));
+        Assert.NotEqual(
+            LastShiftComparisonProvider.BuildFallbackKey("d1", "白班"),
+            LastShiftComparisonProvider.BuildFallbackKey("d1", "夜班"));
     }
 
     // ═══════════════ 距目标差距（FormatQualityGap，2026-08-11） ═══════════════

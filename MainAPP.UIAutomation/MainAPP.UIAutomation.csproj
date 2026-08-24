@@ -22,6 +22,7 @@
     <PackageReference Include="Appium.WebDriver" />
     <!-- 仿真测试预置 work_orders.db：用 Microsoft.Data.Sqlite 直接创建 SQLite 数据库 -->
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="System.Management" />
   </ItemGroup>
 
   <ItemGroup>

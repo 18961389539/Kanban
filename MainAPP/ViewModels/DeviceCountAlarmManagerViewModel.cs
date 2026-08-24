@@ -1,4 +1,5 @@
 using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,6 +30,8 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     /// </summary>
     [ObservableProperty]
     private bool _isBusyCounterAlarmsCsv;
+
+    protected override bool IsCsvBusy => IsBusyCounterAlarmsCsv;
 
     public DeviceCounterAlarmManagerViewModel(
         IDialogService dialog,
@@ -61,6 +64,24 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
         ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
     }
 
+    protected override void OnHostPermissionChanged()
+    {
+        AddCounterAlarmCommand.NotifyCanExecuteChanged();
+        RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
+        ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsBusyCounterAlarmsCsvChanged(bool value)
+    {
+        AddCounterAlarmCommand.NotifyCanExecuteChanged();
+        RemoveCounterAlarmCommand.NotifyCanExecuteChanged();
+        ResetCounterAlarmValueCommand.NotifyCanExecuteChanged();
+        ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
+    }
+
     protected override void OnHostOtherPropertyChanged(string? propertyName)
     {
         if (propertyName == nameof(IDeviceManagerHost.IsPlcConnected))
@@ -68,11 +89,16 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     }
 
     /// <summary>PLC 写入/读取类命令的可用性：选中设备且不在加载中且 PLC 在线。</summary>
-    private bool CanExecutePlcWrite() => SelectedDevice != null && !_host.IsLoading && _host.IsPlcConnected;
+    private bool CanExecutePlcWrite() => SelectedDevice != null
+        && !_host.IsLoading
+        && _host.IsPlcConnected
+        && _host.CanManageDevices
+        && !IsBusyCounterAlarmsCsv;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void AddCounterAlarm()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
         var baseName = string.Format(Strings.F198, SelectedDevice.CounterAlarms.Count + 1);
         var newName = DeviceManagerViewModel.EnsureUniqueName(baseName, SelectedDevice.CounterAlarms.Select(c => c.Name));
@@ -85,6 +111,7 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveCounterAlarm(CounterAlarm alarm)
     {
+        if (!CanEditSelected()) return;
         if (alarm == null) return;
         var confirm = _dialog.Show(
             string.Format(Strings.F503, alarm.Name),
@@ -104,6 +131,7 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
     private async Task ResetCounterAlarmValueAsync(CounterAlarm alarm)
     {
+        if (!CanExecutePlcWrite()) return;
         if (!_host.IsPlcConnected) return;
         var confirm = _dialog.Show(
             string.Format(Strings.F177, alarm.Name),
@@ -157,13 +185,22 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ExportCounterAlarmsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyCounterAlarmsCsv) return;
         IsBusyCounterAlarmsCsv = true;
         ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();
         try
         {
             var device = SelectedDevice;
-            await Task.Run(() => _counterAlarmCsvIO.ExportCounterAlarms(device)).ConfigureAwait(true);
+            var path = _counterAlarmCsvIO.PickExportPath(device);
+            if (string.IsNullOrEmpty(path)) return;
+
+            var count = await Task.Run(() => _counterAlarmCsvIO.ExportCounterAlarmsToPath(device, path)).ConfigureAwait(true);
+            _dialog.NotifySuccess(string.Format(Strings.F304, count, Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
         finally
         {
@@ -181,6 +218,7 @@ public partial class DeviceCounterAlarmManagerViewModel : DeviceChildManagerView
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ImportCounterAlarmsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyCounterAlarmsCsv) return;
         IsBusyCounterAlarmsCsv = true;
         ExportCounterAlarmsCsvCommand.NotifyCanExecuteChanged();

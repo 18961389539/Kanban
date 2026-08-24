@@ -1,5 +1,5 @@
 # Fix: Collector service (LocalSystem) never had a config under systemprofile
-# -> it always used defaults (Siemens/192.168.1.2) and could never reach the PLC.
+# -> it always used defaults (Mitsubishi/127.0.0.1) and could never reach the PLC.
 # Creates Config/settings.json for the service account and restarts the service.
 # Run elevated. Logs to gui-test-screenshots/svc_cfg_fix.log (UTF-8).
 $ErrorActionPreference = 'Continue'

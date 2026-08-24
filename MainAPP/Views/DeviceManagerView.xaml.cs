@@ -7,6 +7,7 @@ using System.Windows.Media;
 using System.ComponentModel;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
+using MainAPP.Services;
 using MainAPP.ViewModels;
 using Serilog;
 
@@ -41,12 +42,28 @@ public partial class DeviceManagerView : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(DeviceManagerViewModel.FocusedAddressConflict)) return;
+        if (e.PropertyName != nameof(DeviceManagerViewModel.AddressConflictFocusRequest)) return;
         if (sender is not DeviceManagerViewModel vm || string.IsNullOrWhiteSpace(vm.FocusedAddressConflict)) return;
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            if (FindVisualChild<DeviceManagerDeviceParamsTab>(this) is { } tab)
-                tab.FocusAddress(vm.FocusedAddressConflict);
+            switch (vm.SelectedTabIndex)
+            {
+                case (int)DeviceManagerTab.Parameters:
+                    FindVisualChild<DeviceManagerDeviceParamsTab>(this)?.FocusAddress(vm.FocusedAddressConflict);
+                    break;
+                case (int)DeviceManagerTab.Alarms:
+                    FindVisualChild<DeviceManagerAlarmsTab>(this)?.FocusAddress(vm.FocusedAddressConflict);
+                    break;
+                case (int)DeviceManagerTab.Defects:
+                    FindVisualChild<DeviceManagerDefectsTab>(this)?.FocusAddress(vm.FocusedAddressConflict);
+                    break;
+                case (int)DeviceManagerTab.CounterAlarms:
+                    FindVisualChild<DeviceManagerCounterAlarmsTab>(this)?.FocusAddress(vm.FocusedAddressConflict);
+                    break;
+                case (int)DeviceManagerTab.Sources:
+                    FindVisualChild<DeviceManagerSourcesTab>(this)?.FocusAddress(vm.FocusedAddressConflict);
+                    break;
+            }
         }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 

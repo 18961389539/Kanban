@@ -226,7 +226,10 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <controls:EmptyState IconKind="ServerOutline" Message="暂无设备" Hint="请点击“新增设备”开始配置" />
+                        <controls:EmptyState
+                            IconKind="ServerOutline"
+                            Message="{x:Static resources:Strings.K416}"
+                            Hint="{x:Static resources:Strings.Dsm_NoDevicesHint}" />
                     </Border>
                     <Border Visibility="Collapsed">
                         <Border.Style>
@@ -529,7 +532,7 @@
                             </TabItem>
 
                             <!--  ============ Tab 5：数据采集源 ============  -->
-                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="数据采集源">
+                            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.Dsm_DataSourceSectionTitle}">
                                 <TabItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <materialIcons:MaterialIcon
@@ -540,7 +543,7 @@
                                         <TextBlock
                                             Margin="6,0,0,0"
                                             VerticalAlignment="Center"
-                                            Text="数据采集源" />
+                                            Text="{x:Static resources:Strings.Dsm_DataSourceSectionTitle}" />
                                     </StackPanel>
                                 </TabItem.Header>
                                 <views:DeviceManagerSourcesTab DataContext="{Binding DataSourceManagerVm}" />

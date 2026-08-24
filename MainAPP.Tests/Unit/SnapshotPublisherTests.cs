@@ -141,18 +141,88 @@ public class SnapshotPublisherTests : IDisposable
         Assert.True(SnapshotPublisher.SameSnapshot(a, a with { RecipeName = "" }));
     }
 
+    [Fact]
+    public void SameSnapshot_SourceValueChanged_ReturnsFalse()
+    {
+        var sourceValue = new DataSourceValueSnapshotDto
+        {
+            SourceId = "src-1",
+            SourceName = "环境",
+            SourceType = "温湿度",
+            ValueId = "value-1",
+            ValueName = "温度",
+            PlcAddress = "D300",
+            Unit = "°C",
+            DataType = Kanban.Contracts.Enums.DataSourceValueType.Float32,
+            Float32Value = 23.5f,
+            DisplayText = "23.5",
+            IsValid = true,
+        };
+        var a = MakeSnapshot("dev-1") with { SourceValues = [sourceValue] };
+
+        Assert.True(SnapshotPublisher.SameSnapshot(a, a with { SourceValues = [sourceValue with { }] }));
+        Assert.False(SnapshotPublisher.SameSnapshot(a, a with
+        {
+            SourceValues = [sourceValue with { Float32Value = 24.5f, DisplayText = "24.5" }],
+        }));
+    }
+
+    [Fact]
+    public async Task PublishAll_IncludesEnabledDataSourceValues()
+    {
+        var device = MakeDevice("dev-1");
+        var source = new DataSource { Id = "src-1", Name = "环境", Type = "温湿度" };
+        var value = new DataSourceValue
+        {
+            Id = "value-1",
+            Name = "温度",
+            DataType = DataSourceValueType.Float32,
+            PlcAddress = "D300",
+            Unit = "°C",
+        };
+        value.SetRuntimeValue(new DataSourceRuntimeValue(DataSourceValueType.Float32, Float32Value: 23.5f));
+        source.Values.Add(value);
+        device.Sources.Add(source);
+        _repo.ReplaceAll([device]);
+
+        var reader = await _aggregator.SubscribeAsync(TestContext.Current.CancellationToken);
+        _publisher.PublishAll();
+
+        var snapshot = await reader.ReadAsync(TestContext.Current.CancellationToken);
+        var sourceSnapshot = Assert.Single(snapshot.SourceValues);
+        Assert.Equal("src-1", sourceSnapshot.SourceId);
+        Assert.Equal("value-1", sourceSnapshot.ValueId);
+        Assert.Equal(23.5f, sourceSnapshot.Float32Value);
+        Assert.True(sourceSnapshot.IsValid);
+        Assert.NotNull(sourceSnapshot.LastUpdatedAt);
+    }
+
+    [Fact]
+    public void FailedRuntimeValue_MarksInvalidAndPreservesLastGoodValue()
+    {
+        var value = new DataSourceValue { DataType = DataSourceValueType.Int32 };
+        var sampledAt = new DateTime(2026, 8, 18, 12, 0, 0);
+
+        value.SetRuntimeValue(new DataSourceRuntimeValue(DataSourceValueType.Int32, Int32Value: 42), sampledAt);
+        value.SetRuntimeValue(new DataSourceRuntimeValue(DataSourceValueType.Int32, IsValid: false), sampledAt.AddSeconds(1));
+
+        Assert.False(value.IsValid);
+        Assert.Equal(42, value.CurrentValue);
+        Assert.Equal(sampledAt, value.LastUpdatedAt);
+    }
+
     // ──────────── PublishAll 端到端增量行为 ────────────
 
     [Fact]
     public async Task PublishAll_FirstCall_PushesAllDevices()
     {
         _repo.ReplaceAll(new[] { MakeDevice("dev-1"), MakeDevice("dev-2") });
-        var reader = await _aggregator.SubscribeAsync(CancellationToken.None);
+        var reader = await _aggregator.SubscribeAsync(TestContext.Current.CancellationToken);
 
         _publisher.PublishAll();
 
-        var first = await reader.ReadAsync(CancellationToken.None);
-        var second = await reader.ReadAsync(CancellationToken.None);
+        var first = await reader.ReadAsync(TestContext.Current.CancellationToken);
+        var second = await reader.ReadAsync(TestContext.Current.CancellationToken);
         Assert.Equal("dev-1", first.DeviceId);
         Assert.Equal("dev-2", second.DeviceId);
     }
@@ -161,14 +231,14 @@ public class SnapshotPublisherTests : IDisposable
     public async Task PublishAll_NoChange_SecondCall_PushesNothing()
     {
         _repo.ReplaceAll(new[] { MakeDevice("dev-1") });
-        var reader = await _aggregator.SubscribeAsync(CancellationToken.None);
+        var reader = await _aggregator.SubscribeAsync(TestContext.Current.CancellationToken);
 
         _publisher.PublishAll(); // 首帧全量
-        await reader.ReadAsync(CancellationToken.None);
+        await reader.ReadAsync(TestContext.Current.CancellationToken);
 
         // 第二次发布（设备运行时无变化——Runtimes 为空，设备配置未变）→ 增量跳过
         _publisher.PublishAll();
-        await Task.Delay(300); // 给可能的错误推送留窗口
+        await Task.Delay(300, TestContext.Current.CancellationToken); // 给可能的错误推送留窗口
         Assert.False(reader.TryRead(out _), "无变化的第二轮不应推送任何快照（增量跳过）");
     }
 
@@ -176,11 +246,11 @@ public class SnapshotPublisherTests : IDisposable
     public async Task PublishAll_DeviceRuntimeChanged_PushesOnlyThatDevice()
     {
         _repo.ReplaceAll(new[] { MakeDevice("dev-1"), MakeDevice("dev-2") });
-        var reader = await _aggregator.SubscribeAsync(CancellationToken.None);
+        var reader = await _aggregator.SubscribeAsync(TestContext.Current.CancellationToken);
 
         _publisher.PublishAll(); // 首帧
-        await reader.ReadAsync(CancellationToken.None);
-        await reader.ReadAsync(CancellationToken.None);
+        await reader.ReadAsync(TestContext.Current.CancellationToken);
+        await reader.ReadAsync(TestContext.Current.CancellationToken);
 
         // 设备 dev-1 产量变化（模拟运行中）
         var device = _repo.GetDevicesSnapshot().First(d => d.Id == "dev-1");
@@ -190,12 +260,12 @@ public class SnapshotPublisherTests : IDisposable
 
         _publisher.PublishAll();
 
-        var pushed = await reader.ReadAsync(CancellationToken.None);
+        var pushed = await reader.ReadAsync(TestContext.Current.CancellationToken);
         Assert.Equal("dev-1", pushed.DeviceId);
         Assert.Equal(999, pushed.TotalOkProduction);
 
         // dev-2 未变化 → 不应有第二条
-        await Task.Delay(300); // 给可能的错误推送留窗口
+        await Task.Delay(300, TestContext.Current.CancellationToken); // 给可能的错误推送留窗口
         Assert.False(reader.TryRead(out _), "只有变化的设备应被推送");
     }
 }

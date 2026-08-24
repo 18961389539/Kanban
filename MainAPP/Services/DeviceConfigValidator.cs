@@ -50,8 +50,8 @@ public static class DeviceConfigValidator
                     Device = device,
                     TargetTabIndex = 0,
                     Message = string.IsNullOrEmpty(group.Key)
-                        ? $"设备「{device.Name}」Id 不能为空"
-                        : $"设备 Id「{group.Key}」重复"
+                        ? string.Format(Strings.Validator_DeviceIdRequired, device.Name)
+                        : string.Format(Strings.Validator_DeviceIdDuplicate, group.Key)
                 });
         }
 
@@ -84,14 +84,14 @@ public static class DeviceConfigValidator
                 AddAddressError(errors, device, addressCodec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
             foreach (var source in device.Sources)
             {
-                AddAddressError(errors, device, addressCodec, source.TriggerAddress, PlcAddressType.DWord, (int)DeviceManagerTab.Sources, $"采集源「{source.Name}」触发地址格式无效");
+                AddAddressError(errors, device, addressCodec, source.TriggerAddress, PlcAddressType.DWord, (int)DeviceManagerTab.Sources, string.Format(Strings.Validator_SourceTriggerAddressInvalid, source.Name));
                 if (source.Values.Count == 0)
                 {
                     errors.Add(new DeviceConfigError
                     {
                         Device = device,
                         TargetTabIndex = (int)DeviceManagerTab.Sources,
-                        Message = $"采集源「{source.Name}」至少需要配置一个值项",
+                        Message = string.Format(Strings.Validator_SourceNeedsValue, source.Name),
                     });
                     continue;
                 }
@@ -104,12 +104,12 @@ public static class DeviceConfigValidator
                         {
                             Device = device,
                             TargetTabIndex = (int)DeviceManagerTab.Sources,
-                            Message = $"采集源「{source.Name}」值项「{value.Name}」未配置采集地址",
+                            Message = string.Format(Strings.Validator_SourceValueAddressMissing, source.Name, value.Name),
                         });
                         continue;
                     }
                     var expectedValueAddressType = value.DataType == DataSourceValueType.Bool ? PlcAddressType.MBit : PlcAddressType.DWord;
-                AddAddressError(errors, device, addressCodec, value.PlcAddress, expectedValueAddressType, (int)DeviceManagerTab.Sources, $"采集源「{source.Name}」值项「{value.Name}」采集地址格式无效");
+                AddAddressError(errors, device, addressCodec, value.PlcAddress, expectedValueAddressType, (int)DeviceManagerTab.Sources, string.Format(Strings.Validator_SourceValueAddressInvalid, source.Name, value.Name));
 
                     // 阈值规则（设计稿 §6）：上下限关系、滞回/延时合法
                     if (value.HasLimits && value.Hysteresis < 0)
@@ -117,28 +117,30 @@ public static class DeviceConfigValidator
                         {
                             Device = device,
                             TargetTabIndex = (int)DeviceManagerTab.Sources,
-                            Message = $"采集源「{source.Name}」值项「{value.Name}」滞回不能为负",
+                            Message = string.Format(Strings.Validator_SourceHysteresisNegative, source.Name, value.Name),
                         });
                     if (value.HasLimits && value.ConfirmSeconds < 0)
                         errors.Add(new DeviceConfigError
                         {
                             Device = device,
                             TargetTabIndex = (int)DeviceManagerTab.Sources,
-                            Message = $"采集源「{source.Name}」值项「{value.Name}」延时确认不能为负",
+                            Message = string.Format(Strings.Validator_SourceConfirmSecondsNegative, source.Name, value.Name),
                         });
-                    if (!string.IsNullOrWhiteSpace(source.TriggerAddress)
-                        && string.Equals(source.TriggerAddress?.Trim(), value.PlcAddress?.Trim(), StringComparison.OrdinalIgnoreCase))
+                    var triggerKey = addressCodec.CanonicalKey(source.TriggerAddress);
+                    var valueKey = addressCodec.CanonicalKey(value.PlcAddress);
+                    if (!string.IsNullOrWhiteSpace(triggerKey)
+                        && string.Equals(triggerKey, valueKey, StringComparison.OrdinalIgnoreCase))
                         errors.Add(new DeviceConfigError
                         {
                             Device = device,
                             TargetTabIndex = (int)DeviceManagerTab.Sources,
-                            Message = $"采集源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同",
+                            Message = string.Format(Strings.Validator_SourceValueAddressSameAsTrigger, source.Name, value.Name),
                         });
                 }
 
                 // 同源内值项采集地址重复（修复 2026-08-17：大概率是配置错误，读同一地址的多个值项应合并）
                 var dupAddress = source.Values
-                    .Select(v => v.PlcAddress?.Trim())
+                    .Select(v => addressCodec.CanonicalKey(v.PlcAddress))
                     .Where(a => !string.IsNullOrWhiteSpace(a))
                     .GroupBy(a => a, StringComparer.OrdinalIgnoreCase)
                     .FirstOrDefault(g => g.Count() > 1);
@@ -147,7 +149,7 @@ public static class DeviceConfigValidator
                     {
                         Device = device,
                         TargetTabIndex = (int)DeviceManagerTab.Sources,
-                        Message = $"采集源「{source.Name}」有 {dupAddress.Count()} 个值项使用相同采集地址「{dupAddress.Key}」",
+                        Message = string.Format(Strings.Validator_SourceDuplicateAddress, source.Name, dupAddress.Count(), dupAddress.Key),
                     });
             }
 
@@ -253,7 +255,7 @@ public static class DeviceConfigValidator
         var deviceList = devices as IList<Device> ?? devices.ToList();
         addressCodec ??= new MitsubishiAddressCodec();
 
-        var byAddress = new Dictionary<string, (List<Device> Devices, int TabIndex)>(StringComparer.OrdinalIgnoreCase);
+        var byAddress = new Dictionary<string, (List<Device> Devices, Dictionary<string, int> TabIndices)>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in deviceList)
         {
             foreach (var (addr, tabIndex) in GetDeviceAddressesWithTabs(d))
@@ -262,17 +264,25 @@ public static class DeviceConfigValidator
                 if (string.IsNullOrWhiteSpace(normalized)) continue;
                 if (!byAddress.TryGetValue(normalized, out var entry))
                 {
-                    entry = ([], tabIndex);
+                    entry = ([], new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase));
                     byAddress[normalized] = entry;
                 }
                 if (!entry.Devices.Contains(d)) entry.Devices.Add(d);
+                entry.TabIndices.TryAdd(d.Id, tabIndex);
                 byAddress[normalized] = entry;
             }
         }
 
         var conflicts = new List<DeviceAddressConflict>();
         foreach (var kvp in byAddress.Where(k => k.Value.Devices.Count > 1))
-            conflicts.Add(new DeviceAddressConflict(kvp.Key, kvp.Value.Devices, kvp.Value.TabIndex));
+        {
+            var firstDevice = kvp.Value.Devices[0];
+            var firstTab = kvp.Value.TabIndices[firstDevice.Id];
+            conflicts.Add(new DeviceAddressConflict(kvp.Key, kvp.Value.Devices, firstTab)
+            {
+                TargetTabIndices = kvp.Value.TabIndices,
+            });
+        }
         return conflicts;
     }
 
@@ -321,7 +331,7 @@ public static class DeviceConfigValidator
         => new()
         {
             Device = conflict.Devices[1],
-            TargetTabIndex = conflict.TargetTabIndex,
+            TargetTabIndex = conflict.GetTargetTabIndex(conflict.Devices[1]),
             Message = string.Format(Strings.F080, conflict.Address, conflict.Devices.Count) +
                       string.Join("、", conflict.Devices.Select(x => x.Name)),
         };
@@ -350,29 +360,29 @@ public static class DeviceConfigValidator
 
     private static void ValidateChildConfiguration(List<DeviceConfigError> errors, Device device)
     {
-        ValidateChildSet(errors, device, device.Alarms.Select(x => (x.Id, x.DeviceId, x.Name)), 1, "报警");
-        ValidateChildSet(errors, device, device.Defects.Select(x => (x.Id, x.DeviceId, x.Name)), 2, "缺陷");
-        ValidateChildSet(errors, device, device.CounterAlarms.Select(x => (x.Id, x.DeviceId, x.Name)), 3, "计数报警");
+        ValidateChildSet(errors, device, device.Alarms.Select(x => (x.Id, x.DeviceId, x.Name)), 1, Strings.Validator_AlarmKind);
+        ValidateChildSet(errors, device, device.Defects.Select(x => (x.Id, x.DeviceId, x.Name)), 2, Strings.Validator_DefectKind);
+        ValidateChildSet(errors, device, device.CounterAlarms.Select(x => (x.Id, x.DeviceId, x.Name)), 3, Strings.Validator_CounterAlarmKind);
 
         var sourceNames = device.Sources.GroupBy(s => s.Name?.Trim() ?? "", StringComparer.OrdinalIgnoreCase);
         foreach (var group in sourceNames.Where(g => string.IsNullOrEmpty(g.Key) || g.Count() > 1))
-            errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.IsNullOrEmpty(group.Key) ? $"设备「{device.Name}」存在空名称采集源" : $"采集源名称「{group.Key}」重复" });
+            errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.IsNullOrEmpty(group.Key) ? string.Format(Strings.Validator_EmptySourceName, device.Name) : string.Format(Strings.Validator_DuplicateSourceName, group.Key) });
 
         foreach (var source in device.Sources)
         {
             if (string.IsNullOrWhiteSpace(source.Id) || !string.Equals(source.DeviceId?.Trim(), device.Id?.Trim(), StringComparison.OrdinalIgnoreCase))
-                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」Id 或 DeviceId 无效" });
+                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_SourceIdentityInvalid, source.Name) });
             var valueNames = source.Values.GroupBy(v => v.Name?.Trim() ?? "", StringComparer.OrdinalIgnoreCase);
             foreach (var group in valueNames.Where(g => string.IsNullOrEmpty(g.Key) || g.Count() > 1))
-                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.IsNullOrEmpty(group.Key) ? $"采集源「{source.Name}」存在空名称值项" : $"采集源「{source.Name}」值项名称「{group.Key}」重复" });
+                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.IsNullOrEmpty(group.Key) ? string.Format(Strings.Validator_EmptyValueName, source.Name) : string.Format(Strings.Validator_DuplicateValueName, source.Name, group.Key) });
             foreach (var value in source.Values)
             {
                 if (string.IsNullOrWhiteSpace(value.Id))
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」存在空 Id 值项" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_EmptyValueId, source.Name) });
                 if (value.DataType == DataSourceValueType.String && (value.StringLength < 1 || value.StringLength > 1024))
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」字符串长度必须在 1~1024 之间" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_StringLengthInvalid, source.Name, value.Name) });
                 if (value.DataType == DataSourceValueType.Float32 && (float.IsNaN(value.FloatLimitMin) || float.IsNaN(value.FloatLimitMax) || float.IsInfinity(value.FloatLimitMin) || float.IsInfinity(value.FloatLimitMax)))
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」浮点限值无效" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_FloatLimitsInvalid, source.Name, value.Name) });
                 var hasLimitFields = value.DataType == DataSourceValueType.Float32
                     ? value.FloatLimitMin != 0 || value.FloatLimitMax != 0
                     : value.LimitMin != 0 || value.LimitMax != 0;
@@ -380,17 +390,17 @@ public static class DeviceConfigValidator
                     ? value.FloatLimitMax <= value.FloatLimitMin
                     : value.LimitMax <= value.LimitMin;
                 if (hasLimitFields && limitInvalid)
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」上限必须大于下限" });
-                if (value.HasLimits && value.ExpectedValue.HasValue)
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」不能同时配置上下限和预期值" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_LimitOrderInvalid, source.Name, value.Name) });
+                if (value.HasLimits && value.HasExpectedValue)
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_LimitExpectedConflict, source.Name, value.Name) });
                 if (value.Hysteresis < 0 || value.ConfirmSeconds < 0)
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」告警参数不能为负" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_AlarmParametersNegative, source.Name, value.Name) });
                 var enumGroups = value.EnumValues.GroupBy(e => e.Value).Any(g => g.Count() > 1);
                 if (value.EnumValues.Any(e => string.IsNullOrWhiteSpace(e.DisplayName)) || enumGroups)
-                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」值项「{value.Name}」枚举映射无效或重复" });
+                    errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_EnumMappingInvalid, source.Name, value.Name) });
             }
             if (!string.IsNullOrWhiteSpace(source.TriggerAddress) && source.TriggerValue == source.AckValue)
-                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = $"采集源「{source.Name}」触发值不能与回执值相同" });
+                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = (int)DeviceManagerTab.Sources, Message = string.Format(Strings.Validator_TriggerAckConflict, source.Name) });
         }
     }
 
@@ -405,12 +415,12 @@ public static class DeviceConfigValidator
         foreach (var item in list)
         {
             if (string.IsNullOrWhiteSpace(item.Id) || !string.Equals(item.DeviceId?.Trim(), device.Id?.Trim(), StringComparison.OrdinalIgnoreCase))
-                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = $"设备「{device.Name}」的{kind} Id 或 DeviceId 无效" });
+                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = string.Format(Strings.Validator_ChildIdentityInvalid, device.Name, kind) });
             if (string.IsNullOrWhiteSpace(item.Name))
-                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = $"设备「{device.Name}」存在空名称{kind}" });
+                errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = string.Format(Strings.Validator_EmptyChildName, device.Name, kind) });
         }
         foreach (var group in list.GroupBy(x => x.Id?.Trim() ?? "", StringComparer.OrdinalIgnoreCase).Where(g => string.IsNullOrEmpty(g.Key) || g.Count() > 1))
-            errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = $"设备「{device.Name}」{kind} Id 重复" });
+            errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = string.Format(Strings.Validator_DuplicateChildId, device.Name, kind) });
     }
 
     private static void AddAddressError(
@@ -456,8 +466,16 @@ public static class DeviceConfigValidator
     }
 }
 
-/// <summary>结构化跨设备地址冲突：冲突地址、涉及设备与应定位的 Tab 索引。</summary>
+/// <summary>结构化跨设备地址冲突：冲突地址、涉及设备与各设备应定位的 Tab 索引。</summary>
 public sealed record DeviceAddressConflict(
     string Address,
     IReadOnlyList<Device> Devices,
-    int TargetTabIndex);
+    int TargetTabIndex)
+{
+    /// <summary>按设备 Id 保存冲突地址在该设备中的实际配置 Tab。</summary>
+    public IReadOnlyDictionary<string, int> TargetTabIndices { get; init; } =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+    public int GetTargetTabIndex(Device device)
+        => TargetTabIndices.TryGetValue(device.Id, out var tabIndex) ? tabIndex : TargetTabIndex;
+}

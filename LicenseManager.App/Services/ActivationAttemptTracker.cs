@@ -36,12 +36,7 @@ public class ActivationAttemptTracker
 
     public ActivationAttemptTracker(string? storageDir = null, Func<DateTime>? utcNowProvider = null)
     {
-        var dir = storageDir
-            ?? Environment.GetEnvironmentVariable("KANBAN_DATA_DIR")
-            ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Kanban");
-        Directory.CreateDirectory(dir);
+        var dir = LicensePaths.ResolveDataDirectory(storageDir);
         _attemptFilePath = Path.Combine(dir, "activation_attempts.dat");
         _utcNowProvider = utcNowProvider ?? (() => DateTime.UtcNow);
     }

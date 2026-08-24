@@ -1,4 +1,3 @@
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LicenseManager.Crypto;
@@ -42,7 +41,7 @@ public partial class ActivationViewModel : ObservableObject
         set
         {
             // 自动格式化：移除分隔符后重新插入，并转大写
-            var formatted = FormatProductKey(value);
+            var formatted = ProductKeyCodec.NormalizeForDisplay(value);
             if (!SetProperty(ref _productKey, formatted))
             {
                 // 字段值未变化（例如已经是 "ABCDE"，用户再次输入 "abcde" 时格式化后仍为 "ABCDE"）。
@@ -102,12 +101,6 @@ public partial class ActivationViewModel : ObservableObject
 
     private bool CanActivate() => !IsActivating && !string.IsNullOrWhiteSpace(ProductKey);
 
-    /// <summary>关闭命令（保留以兼容旧绑定，实际关闭由对话框代码后置处理）。</summary>
-    [RelayCommand]
-    private void Close()
-    {
-    }
-
     /// <summary>复制机器码到剪贴板。</summary>
     [RelayCommand]
     private void CopyMachineCode()
@@ -121,31 +114,6 @@ public partial class ActivationViewModel : ObservableObject
         {
             ErrorMessage = "复制失败，请手动记录机器码";
         }
-    }
-
-    /// <summary>格式化激活码输入：移除分隔符后重新插入，自动转大写。</summary>
-    private static string FormatProductKey(string input)
-    {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
-
-        var cleaned = new StringBuilder(input.Length);
-        foreach (var c in input)
-        {
-            if (c == '-' || c == ' ' || c == '\t') continue;
-            cleaned.Append(char.ToUpperInvariant(c));
-        }
-
-        var raw = cleaned.ToString();
-        if (raw.Length > ProductKeyCodec.SignedRawLength)
-            raw = raw[..ProductKeyCodec.SignedRawLength];
-
-        var sb = new StringBuilder(raw.Length + 4);
-        for (var i = 0; i < raw.Length; i++)
-        {
-            if (i > 0 && i % 5 == 0) sb.Append('-');
-            sb.Append(raw[i]);
-        }
-        return sb.ToString();
     }
 
     /// <summary>手动触发 ProductKey 属性变更通知（用于 SetProperty 返回 false 但仍需通知 UI 的场景）。</summary>

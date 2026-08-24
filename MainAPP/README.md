@@ -22,7 +22,7 @@ dotnet build MainAPP\MainAPP.csproj
 `KANBAN_HMAC_KEY` 只用于兼容旧版 HMAC 激活码或旧 HMAC 状态数据。若需要验证旧激活码，该值必须是 32 字节随机密钥的 Base64 形式，并且必须与旧 LicenseIssuer 使用的密钥一致：
 
 ```powershell
-.\configure-hmac-key.ps1 -HmacKey "<与 LicenseIssuer 相同的 32 字节 Base64 密钥>"
+.\ci\configure-hmac-key.ps1 -HmacKey "<与旧版签发密钥相同的 32 字节 Base64 密钥>"
 ```
 
 `configure-hmac-key.ps1` 需要管理员权限，会写入机器级环境变量且不会输出密钥。不要在客户端生成新密钥来替代旧密钥。签发私钥只能保存在签发机并使用受控方式备份，绝不能复制到 MainAPP 发布包。

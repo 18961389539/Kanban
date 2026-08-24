@@ -1,16 +1,16 @@
 # Kanban 工业看板系统 — Code Wiki
 
 > 本文件为仓库的代码维基（Code Wiki），描述项目整体架构、模块职责、关键类与函数、依赖关系及运行方式。
-> 覆盖范围：`Kanban.slnx` 全部 17 个项目（含本地 vendored 的 OxyPlot 源码 4 项）。
+> 覆盖范围：`Kanban.slnx` 全部 19 个项目（含本地 vendored 的 OxyPlot 源码 4 项）。
 > 配套文档：[架构决策记录](架构决策记录.md) · [MainAPP 易用性建议](MainAPP易用性建议.md) · [授权激活码设计方案](授权激活码设计方案.md)
 
 ---
 
 ## 1. 项目总览
 
-**定位**：面向工厂车间的**工业看板（Kanban）系统**。通过 PLC（三菱/西门子/Modbus TCP/欧姆龙/基恩士）实时采集设备产量、状态、报警与缺陷数据，展示 OEE 看板、生产复盘、工单管理、报警中心与历史查询，支持中/英/日三语。
+**定位**：面向工厂车间的**工业看板（Kanban）系统**。通过 PLC（三菱/西门子/Modbus TCP/欧姆龙/基恩士）实时采集设备产量、状态、报警与缺陷数据，展示 OEE 看板、生产复盘、工单管理、报警中心与历史查询，支持中文、英文、日文和巴西葡萄牙文。
 
-**形态**：`MainAPP`（WPF 桌面主程序，管理与本地采集）+ `Kanban.Collector`（独立采集服务进程，唯一数据写者）+ `Kanban.Web`（Blazor WASM 浏览器大屏展示）+ `PlcSimulator`（虚拟 PLC，联调/演示用）+ 授权体系（`LicenseManager.App` / `LicenseIssuer.CLI` / `LicenseIssuer.Wpf`）。
+**形态**：`MainAPP`（WPF 桌面主程序，管理与本地采集）+ `Kanban.Collector`（独立采集服务进程，唯一数据写者）+ `Kanban.Web`（Blazor WASM 浏览器大屏展示）+ `PlcSimulator`（虚拟 PLC，联调/演示用）+ 授权体系（`LicenseManager.App` / `LicenseIssuer.Wpf`）。
 
 ### 1.1 技术栈
 
@@ -40,7 +40,6 @@
 | MainAPP | `MainAPP/` | net10.0-windows | WinExe (WPF) | 桌面主程序：展示 + 管理 + 本地采集（Local 模式） |
 | Kanban.Web | `Kanban.Web/` | net10.0-browser | Blazor WASM | 浏览器大屏展示端（只读，零配置） |
 | LicenseManager.App | `LicenseManager.App/` | net10.0-windows | WPF 类库 | 授权核心：LicenseGate/试用/激活/加密（Release 混淆） |
-| LicenseIssuer.CLI | `LicenseIssuer.CLI/` | net10.0-windows | Exe | 激活码签发命令行（issue/list/revoke/verify） |
 | LicenseIssuer.Wpf | `LicenseIssuer.Wpf/` | net10.0-windows | WinExe | 激活码签发 GUI |
 | PlcSimulator | `PlcSimulator/` | net10.0-windows | Exe | 虚拟 PLC（MelsecMcServer）场景模拟器 |
 | MainAPP.Tests | `MainAPP.Tests/` | net10.0-windows | Exe 测试 | 单元 + WPF 集成测试（~130 文件） |
@@ -110,7 +109,7 @@
       │  Kanban.Web │   （引用 Core/Contracts）
       │  (WASM)     │
       └─────────────┘
-      LicenseManager.App ──┬──► LicenseIssuer.CLI / LicenseIssuer.Wpf
+      LicenseManager.App ──┬──► LicenseIssuer.Wpf
                            └──► MainAPP（授权门禁）
       MainAPP ◄── 项目引用：LicenseManager.App、Kanban.Client、Kanban.Collector.Core、OxyPlot(本地)
       MainAPP.Tests / E2E / UIAutomation / Benchmarks ──► MainAPP（及 Collector）
@@ -326,7 +325,7 @@
 App 构造：单实例 Mutex → Serilog → Host.CreateDefaultBuilder（AddMainAppCoreServices + AddMainAppPresentationServices）
 OnStartup：
   1. AppSettings.Load → Localization.Apply（先 Load 再 Apply，防语言恒为中文）
-  2. 用 WPF 三语资源 Override Core 的 ConnectionStatusMessages / ValidationMessages
+  2. 用 WPF CSV 语言资源 Override Core 的 ConnectionStatusMessages / ValidationMessages
   3. 非首实例 → 提示退出；LicenseGate.CheckStatus() 非 Active/Trial → 弹 ActivationDialog，取消即退出
   4. UserStore.Load（自动建 admin/gly、engineer/gcs、operator）→ AuditLog.Initialize
   5. 非 Viewer 模式默认 admin 自动登录（缺失回退 operator）
@@ -357,7 +356,7 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 | `DeviceConfigValidator` | 静态校验：地址完整性/名称唯一/报警缺陷阈值/跨设备地址冲突 → `List<DeviceConfigError>` |
 | `SampleDeviceBuilder` | DEBUG 构建"生成虚拟设备"：20 台样本 + 地址段分配 + `AssertNoDuplicateAddresses` |
 | `DevicePlcCommandHandler` | 设备 PLC 命令：`WriteRecipeAsync/ResetOeeAsync/ReadPlcValueAsync/ResetCounterAlarmAsync`（统一返回 `PlcOpResult`） |
-| `Localization` | 语言文化应用（zh-CN/en-US/ja-JP，`CaptureCulture` 防运行期混合） |
+| `Localization` | 语言文化应用（zh-CN/en-US/ja-JP/pt-BR，`CaptureCulture` 防运行期混合） |
 | `INavigationService` | 页面导航抽象（`Navigate(pageKey)`） |
 
 #### 3.5.4 导航与 ViewModel（`ViewModels/` + `Models/`）
@@ -393,10 +392,10 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 - **`DashboardState`**（唯一数据源，核心类）：**三连接架构**——`_client` 快照订阅 + `_metaClient` Meta 订阅 + `_invokeClient` 查询专用懒连接（ADR-1/ADR-7 落地）。`InitializeAsync` 幂等（5s 重试自愈）；`SubscribeAndRefreshAsync` 严格"先 Invoke（快照/版本/标题/语言）→ 后长驻订阅"；重渲染用 2s Timer 节流；速度点缓存（最多 120 点 ≈ 1 分钟）；tombstone（Removed）处理设备删除
 - `Pages/Home.razor`：单页看板 9 卡片（设备状态/生产状态/实时故障/OEE 四环/产量明细/当前工单/速度趋势 sparkline/班次进度/数据源），换算全委托 `SnapshotMetrics` 与 `DurationFormatter`；设备选择 localStorage 持久化
 - `Components/Ring.razor`：SVG 环形进度组件；`Components/EmptyState.razor`：统一空状态
-- `Localization.cs`：**自动生成**（文件头 WARNING），由 `ci/generate_web_loc.py` 从 WPF `Strings.resx`（zh/en/ja）生成，key → 三语三元组，`L.T(key, args)` 取文案；`Kanban.Web.csproj` BeforeBuild 自动执行
+- `Localization.cs`：**自动生成**（文件头 WARNING），由 `ci/generate_localization.py --web` 从 `MainAPP/Resources/Localization.csv` 生成，key → 动态语言数组，`L.T(key, args)` 取文案；`Kanban.Web.csproj` 在资源准备前自动执行
 - 地址解析：`wwwroot/appsettings.json` 的 `Kanban:CollectorHubUrl` 显式配置优先，留空自动派生 `http://{host}:5129/hubs/kanban`
 
-### 3.7 授权体系（`LicenseManager.App/` + `LicenseIssuer.CLI/` + `LicenseIssuer.Wpf/`）
+### 3.7 授权体系（`LicenseManager.App/` + `LicenseIssuer.Wpf/`）
 
 #### 3.7.1 授权核心（`LicenseManager.App/Services/`）
 
@@ -419,12 +418,7 @@ OnExit：停止采集（写离线状态转换防 OEE 虚高）→ 停止日报 �
 
 #### 3.7.3 签发工具
 
-- **LicenseIssuer.CLI**（System.CommandLine）：
-  - `issue --machine <8字符> [--expire YYYY-MM-DD]`：签发激活码，记录写入 `issued/yyyyMMdd_HHmmss_{machine}.json`
-  - `list [--machine]`：列出签发/撤销记录
-  - `revoke --machine [--reason]`：记录移入 `revoked/`（离线体系仅审计标记，无法主动失效已激活客户端）
-  - `verify --key [--machine]`：校验格式/校验位/签名/绑定/过期/撤销，退出码 0=可用、1=不可用、2=格式错
-- **LicenseIssuer.Wpf**：GUI 签发（机器码输入 + 永久/到期 + 生成/复制），`IssuerStore` 与 CLI **同目录同格式**（`issued/`）
+- **LicenseIssuer.Wpf**：GUI 签发（机器码输入 + 永久/到期 + 生成/复制），签发记录写入程序目录下的 `issued/`。
 
 #### 3.7.4 混淆（`LicenseManager.App/obfuscar.xml`）
 
@@ -499,7 +493,7 @@ PlcDataAcquisitionService (200ms 轮询)
 | MainAPP | LicenseManager.App、Kanban.Client、Kanban.Collector.Core、OxyPlot.Wpf、OxyPlot.SkiaSharp | HandyControl、Material.Icons.WPF、PdfSharpCore、SignalR.Client、EF Core.Sqlite、Serilog 等（CPM 统一版本）；裸引用 HslCommunication.dll |
 | Kanban.Web | Kanban.Client | Blazor WebAssembly ×2（编译前 python 生成 Localization.cs） |
 | LicenseManager.App | 无项目引用 | CommunityToolkit.Mvvm、HandyControl（Obfuscar 仅 Release） |
-| LicenseIssuer.CLI / Wpf | LicenseManager.App | System.CommandLine / HandyControl |
+| LicenseIssuer.Wpf | LicenseManager.App | HandyControl |
 | PlcSimulator | 无 | 裸引用 HslCommunication.dll、System.IO.Ports |
 | 测试/基准 | MainAPP（E2E/UIAutomation 另引 Collector、Microsoft.AspNetCore.App 等） | xunit.v3.mtp-v2、coverlet.MTP、FlaUI.UIA3、Appium、NSubstitute、BenchmarkDotNet |
 
@@ -518,7 +512,6 @@ Kanban/
 ├── MainAPP/                    WPF 主程序（Views/ViewModels/Services/...）
 ├── Kanban.Web/                 Blazor WASM 大屏
 ├── LicenseManager.App/         授权核心
-├── LicenseIssuer.CLI/         激活码签发 CLI
 ├── LicenseIssuer.Wpf/         激活码签发 GUI
 ├── PlcSimulator/               虚拟 PLC
 ├── MainAPP.Tests/              单元+集成测试（Unit/ Integration/）
@@ -603,10 +596,11 @@ dotnet run --project PlcSimulator\PlcSimulator.csproj -- --scenario stress --spe
 ### 6.7 授权签发
 
 ```powershell
-# 查看机器码（主程序激活对话框展示）→ 8 位 Base32
-dotnet run --project LicenseIssuer.CLI\LicenseIssuer.CLI.csproj -- issue --machine ABCDEFGH --expire 2027-12-31
-dotnet run --project LicenseIssuer.CLI\LicenseIssuer.CLI.csproj -- verify --key XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
+# 查看机器码（主程序激活对话框展示）→ 在 WPF 签发工具中输入 8 位 Base32 机器码
+dotnet run --project LicenseIssuer.Wpf\LicenseIssuer.Wpf.csproj
 ```
+
+WPF 签发工具支持生成永久授权或限期授权，并自动复制激活码；签发记录写入工具程序目录下的 `issued/`。
 
 新版正式激活不需要在生产目标机注入密钥。签发机必须保管 `%APPDATA%\Kanban\license-signing-key.pem`，并在签发工具所在机器以受控方式备份；发布 MainAPP 前确认 `LicenseSigningKey` 中的内置公钥与该私钥匹配。旧版 HMAC 激活码仍需通过 `configure-hmac-key.ps1` 注入原 32 字节 Base64 密钥；不要把任何私钥或 HMAC 密钥写入程序集或发布目录。
 
@@ -667,7 +661,7 @@ dotnet run --project MainAPP.Benchmarks\MainAPP.Benchmarks.csproj -c Release -- 
 2. **单源计算**（ADR-4）：OEE 用 `OeeCalculator`、快照换算用 `SnapshotMetrics`、时长用 `DurationFormatter`、Hub 路径用 `KanbanHubPaths`——禁止两端内联复制公式。
 3. **订阅纪律**（ADR-1/ADR-7）：每个连接最多一个长驻订阅；订阅发起后不得同连接再 Invoke，需要查询另开短连接。
 4. **领域逻辑放 Core**：新领域逻辑放 `Kanban.Collector.Core`（命名空间 `Kanban.Core.*`）；新跨进程契约放 `Kanban.Contracts`；UI 逻辑放 MainAPP/Web 各自侧。共享 DI 入口只有 `AddKanbanDataServices`。
-5. **多语言**：UI 文案单一源 = `MainAPP/Resources/Strings.resx`（中/英/日），`Strings.cs` 与 Web `Localization.cs` 由 `ci/` 脚本自动生成，CI 有 `--check` 守卫与中文泄漏扫描。
+5. **多语言**：UI 文案单一源 = `MainAPP/Resources/Localization.csv`（`Resource,Key,zh-CN,en-US,ja-JP,pt-BR`），构建时生成 WPF/Core RESX、`Strings.cs` 与 Web `Localization.cs`；CI 通过 `ci/generate_localization.py --check` 守卫资源漂移，并执行中文泄漏扫描。
 6. **PLC 协议扩展**：实现 `IDeviceAdapter` + `IPlcBrandDescriptor` 并注册到 DI，不要在 `PlcDataAcquisitionService` 中加协议判断分支。
 7. **枚举持久化**：`AlarmEventType/DeviceStatus/WorkOrderStatus` 数值已入库，禁止调整数值或插入中间值。
 8. **版本信息**：Collector 服务进程 `Version 1.0.0`（`GetServerVersionAsync` / `/metrics` 返回），升级发布可追溯。

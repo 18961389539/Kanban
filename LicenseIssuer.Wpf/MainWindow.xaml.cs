@@ -22,19 +22,20 @@ public partial class MainWindow : Window
 
     private void Generate_Click(object sender, RoutedEventArgs e)
     {
-        var machine = MachineCodeBox.Text.Trim();
+        var machineInput = MachineCodeBox.Text.Trim();
 
         // 1. 校验机器码格式（8 字符 Base32：A-Z 2-7）
-        if (machine.Length != 8)
+        if (machineInput.Length != 8)
         {
-            ShowStatus($"机器码必须为 8 字符，当前 {machine.Length} 位。", false);
+            ShowStatus($"机器码必须为 8 字符，当前 {machineInput.Length} 位。", false);
             return;
         }
-        if (!Base32.TryDecode(machine, out var machineHashBytes) || machineHashBytes.Length != 5)
+        if (!ProductKeyCodec.TryDecodeMachineCode(machineInput, out var machineHashBytes))
         {
             ShowStatus("机器码不是合法的 Base32 编码（仅允许 A-Z 与 2-7）。", false);
             return;
         }
+        var machine = Base32.Encode(machineHashBytes);
 
         // 2. 计算过期日期（UTC，到当天结束）
         DateTime? expireUtc = null;

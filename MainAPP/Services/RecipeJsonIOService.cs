@@ -13,11 +13,11 @@ namespace MainAPP.Services;
 /// 配方 JSON 导入/导出服务：文件格式与 recipes.json 落盘格式同构（备份文件可直接当导入文件）。
 /// 导入采用"合并 by Id"语义（Upsert）：只新增/更新文件中的配方，不删除本地任何配方；
 /// 校验未通过（数据非法/与本地同机型重名）的条目跳过并汇总计数。
-/// Remote 模式经 RecipeStore.RemotePersistenceHook 自动落盘 Collector 侧 recipes.json。
+/// Remote 模式经 IRemoteRecipeStore 自动落盘 Collector 侧 recipes.json。
 /// </summary>
 public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog, ILogger<RecipeJsonIOService> logger)
 {
-    // 文件对话框过滤器（三语资源：JSON 文件|*.json|所有文件|*.*）
+    // 文件对话框过滤器（本地化资源：JSON 文件|*.json|所有文件|*.*）
     private static string RecipeFileFilter => Strings.K695;
 
     private readonly IRecipeStore _recipeStore = recipeStore;

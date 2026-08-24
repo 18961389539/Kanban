@@ -16,6 +16,18 @@ public partial class DataSourceEnumValue : ObservableObject
 
     [ObservableProperty]
     private string _displayName = string.Empty;
+
+    /// <summary>显示名（英文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    [ObservableProperty]
+    private string? _displayNameEn;
+
+    /// <summary>显示名（日文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    [ObservableProperty]
+    private string? _displayNameJa;
+
+    /// <summary>显示名（葡萄牙文，多语言显示用；为空回退 <see cref="DisplayName"/>）。</summary>
+    [ObservableProperty]
+    private string? _displayNamePt;
 }
 
 /// <summary>
@@ -33,6 +45,18 @@ public partial class DataSourceValue : ObservableObject
     /// <summary>值项名称（如 温度 / 湿度）</summary>
     [ObservableProperty]
     private string _name = string.Empty;
+
+    /// <summary>值项名称（英文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameEn;
+
+    /// <summary>值项名称（日文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _nameJa;
+
+    /// <summary>值项名称（葡萄牙文，多语言显示用；为空回退 <see cref="Name"/>）。</summary>
+    [ObservableProperty]
+    private string? _namePt;
 
     /// <summary>采集数据类型；缺省 Int32 兼容旧配置。</summary>
     [ObservableProperty]
@@ -138,6 +162,30 @@ public partial class DataSourceValue : ObservableObject
     [property: NotMapped]
     private string _currentStringValue = string.Empty;
 
+    /// <summary>是否已有成功采样值（运行时状态，不持久化）。</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private bool _isValid;
+
+    /// <summary>是否至少尝试过一次读取（运行时状态，不持久化）。</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private bool _hasReadAttempt;
+
+    /// <summary>最后一次成功采样时间（运行时状态，不持久化）。</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private DateTime? _lastUpdatedAt;
+
+    /// <summary>最后一次读取尝试时间（运行时状态，不持久化；失败采样也会更新）。</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private DateTime? _lastReadAttemptAt;
+
     // ──────────── 派生判定属性（计算属性，不持久化） ────────────
 
     /// <summary>是否配置了数值型上下限（两者均配置且上限大于下限）。</summary>
@@ -214,8 +262,14 @@ public partial class DataSourceValue : ObservableObject
         _ => new(DataType, Int32Value: CurrentValue),
     };
 
-    public void SetRuntimeValue(DataSourceRuntimeValue value)
+    public void SetRuntimeValue(DataSourceRuntimeValue value, DateTime? updatedAt = null)
     {
+        var attemptAt = updatedAt ?? DateTime.Now;
+        HasReadAttempt = true;
+        LastReadAttemptAt = attemptAt;
+        IsValid = value.IsValid;
+        if (!value.IsValid) return;
+        LastUpdatedAt = attemptAt;
         switch (value.Type)
         {
             case DataSourceValueType.Float32: CurrentFloatValue = value.Float32Value; break;

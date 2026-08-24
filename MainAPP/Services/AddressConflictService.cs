@@ -15,6 +15,7 @@ public static class AddressConflictService
         var conflicts = DeviceConfigValidator.CollectCrossDeviceConflictsStructured(devices, addressCodec);
 
         var summaries = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var targetTabs = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var conflict in conflicts)
         {
             foreach (var device in conflict.Devices)
@@ -26,6 +27,7 @@ public static class AddressConflictService
                 }
                 if (!addresses.Contains(conflict.Address, StringComparer.OrdinalIgnoreCase))
                     addresses.Add(conflict.Address);
+                targetTabs.TryAdd(device.Id, conflict.GetTargetTabIndex(device));
             }
         }
 
@@ -34,11 +36,19 @@ public static class AddressConflictService
             summaries.ToDictionary(
                 pair => pair.Key,
                 pair => string.Join(", ", pair.Value),
-                StringComparer.OrdinalIgnoreCase));
+                StringComparer.OrdinalIgnoreCase))
+        {
+            TargetTabs = targetTabs,
+        };
     }
 }
 
 /// <summary>地址冲突报告：冲突地址总数 + 每台设备涉及的冲突地址摘要。</summary>
 public sealed record AddressConflictReport(
     int ConflictCount,
-    IReadOnlyDictionary<string, string> Summaries);
+    IReadOnlyDictionary<string, string> Summaries)
+{
+    /// <summary>设备 Id 到列表首个冲突地址所属 Tab 的映射。</summary>
+    public IReadOnlyDictionary<string, int> TargetTabs { get; init; } =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+}

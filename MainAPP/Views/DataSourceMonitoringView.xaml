@@ -1,0 +1,1049 @@
+<UserControl
+    x:Class="MainAPP.Views.DataSourceMonitoringView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:oxy="http://oxyplot.org/wpf"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:DataSourceMonitoringViewModel}"
+    d:DesignHeight="800"
+    d:DesignWidth="1400"
+    mc:Ignorable="d">
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+    <UserControl.Resources>
+        <Style x:Key="MonitorKpiButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Card" Style="{StaticResource KpiCell}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Card" Property="Background" Value="{StaticResource HoverBrush}" />
+                                <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Card" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Card" Property="Opacity" Value="0.65" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MonitorStatusText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Alarm}">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Stale}">
+                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.ReadFailed}">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.NotSampled}">
+                    <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorStatusStripe" TargetType="Border" BasedOn="{StaticResource StatusStripe}">
+            <Setter Property="Background" Value="{StaticResource SuccessBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Alarm}">
+                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Stale}">
+                    <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.ReadFailed}">
+                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.NotSampled}">
+                    <Setter Property="Background" Value="{StaticResource ThirdlyTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorStatusBadge" TargetType="Border" BasedOn="{StaticResource PillBadge}">
+            <Setter Property="Background" Value="{StaticResource StatusRunSoftBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+            <Setter Property="Padding" Value="7,2" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Alarm}">
+                    <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Stale}">
+                    <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.ReadFailed}">
+                    <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.NotSampled}">
+                    <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorStatusIcon" TargetType="materialIcons:MaterialIcon">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Check}" />
+            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Alarm}">
+                    <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.BellAlert}" />
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.Stale}">
+                    <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Stop}" />
+                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.ReadFailed}">
+                    <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Stop}" />
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:DataSourceMonitorStatus.NotSampled}">
+                    <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Stop}" />
+                    <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorRightAlignedText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
+        <Style x:Key="MonitorAddressText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style x:Key="MonitorFreshnessText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsStale}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsReadFailed}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSampled}" Value="False">
+                    <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorDetailSectionTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionTitleText}" />
+        <Style x:Key="MonitorDetailLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+            <Setter Property="Margin" Value="0,0,10,8" />
+        </Style>
+        <Style x:Key="MonitorDetailValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="MonitorHeader" TargetType="DataGridColumnHeader" BasedOn="{StaticResource KanbanDataGridColumnHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style x:Key="MonitorBooleanIcon" TargetType="materialIcons:MaterialIcon">
+            <Setter Property="Width" Value="15" />
+            <Setter Property="Height" Value="15" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Check}" />
+            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding BooleanValue}" Value="False">
+                    <Setter Property="Kind" Value="{x:Static mi:MaterialIconKind.Stop}" />
+                    <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <DataTemplate x:Key="MonitorNumericValueTemplate">
+            <TextBlock Style="{StaticResource MonitorRightAlignedText}"
+                       Foreground="{StaticResource PrimaryTextBrush}"
+                       Text="{Binding CurrentValueText}"
+                       ToolTip="{Binding ValueToolTip}" />
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorBooleanValueTemplate">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" ToolTip="{Binding ValueToolTip}">
+                <materialIcons:MaterialIcon Style="{StaticResource MonitorBooleanIcon}" />
+                <TextBlock Margin="5,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource PrimaryTextBrush}"
+                           Text="{Binding BooleanDisplayText}" />
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorStringValueTemplate">
+            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+                       Text="{Binding CurrentValueText}"
+                       TextTrimming="CharacterEllipsis"
+                       TextWrapping="NoWrap"
+                       ToolTip="{Binding ValueToolTip}" />
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorUnavailableValueTemplate">
+            <TextBlock Style="{StaticResource MonitorRightAlignedText}"
+                       Foreground="{StaticResource ThirdlyTextBrush}"
+                       Text="{Binding CurrentValueText}" />
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorTrendValueTemplate">
+            <Grid Margin="10,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" MinWidth="0">
+                    <TextBlock FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryTextBrush}"
+                               Text="{Binding ValueName}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="0,3,0,0"
+                               Foreground="{StaticResource ThirdlyTextBrush}"
+                               FontSize="11"
+                               Text="{Binding DeviceName}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="0,2,0,0"
+                               Foreground="{StaticResource ThirdlyTextBrush}"
+                               FontSize="11"
+                               Text="{Binding SourceName}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="8,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock HorizontalAlignment="Right"
+                               Foreground="{StaticResource PrimaryTextBrush}"
+                               FontWeight="SemiBold"
+                               Text="{Binding CurrentValueText}" />
+                    <TextBlock Margin="0,3,0,0"
+                               HorizontalAlignment="Right"
+                               Foreground="{StaticResource ThirdlyTextBrush}"
+                               FontSize="11"
+                               Text="{Binding Unit}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+        <Style x:Key="MonitorCardActionButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ActionBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ActionBorder" Property="Background" Value="{StaticResource HoverBrush}" />
+                                <Setter TargetName="ActionBorder" Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <DataTemplate x:Key="MonitorExceptionTemplate">
+            <Button Command="{Binding DataContext.SelectRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    Style="{StaticResource MonitorCardActionButton}"
+                    ToolTip="{Binding StatusText}">
+                <Border MinWidth="250"
+                        MaxWidth="320"
+                        Padding="10"
+                        Background="{StaticResource RegionBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="4" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource MonitorStatusStripe}" />
+                        <StackPanel Grid.Column="1" Margin="10,0,12,0" MinWidth="0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding ValueName}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="8,0,0,0"
+                                           Style="{StaticResource MonitorStatusText}"
+                                           Text="{Binding StatusText}" />
+                            </StackPanel>
+                            <TextBlock Margin="0,4,0,0"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       TextTrimming="CharacterEllipsis">
+                                <Run Text="{Binding DeviceName, Mode=OneWay}" />
+                                <Run Text=" · " />
+                                <Run Text="{Binding SourceName, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding CurrentValueText}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                            <TextBlock HorizontalAlignment="Right"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       FontSize="11"
+                                       Text="{Binding LastUpdatedText}" />
+                            <TextBlock Margin="0,3,0,0"
+                                       HorizontalAlignment="Right"
+                                       Style="{StaticResource MonitorFreshnessText}"
+                                       Text="{Binding FreshnessText}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Button>
+        </DataTemplate>
+        <Style x:Key="MonitorValueContent" TargetType="ContentControl">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+            <Setter Property="ContentTemplate" Value="{StaticResource MonitorUnavailableValueTemplate}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsNumericValueVisible}" Value="True">
+                    <Setter Property="ContentTemplate" Value="{StaticResource MonitorNumericValueTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsBooleanValueVisible}" Value="True">
+                    <Setter Property="ContentTemplate" Value="{StaticResource MonitorBooleanValueTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsStringValueVisible}" Value="True">
+                    <Setter Property="ContentTemplate" Value="{StaticResource MonitorStringValueTemplate}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="MonitorDisplayModeRadio" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="ModeBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ModeBorder" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                <Setter TargetName="ModeBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ModeBorder" Property="Background" Value="{StaticResource HoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MonitorCardList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        </Style>
+        <Style x:Key="MonitorCardListItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="9"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="MonitorCompactCardListItem" TargetType="ListBoxItem" BasedOn="{StaticResource MonitorCardListItem}">
+            <Setter Property="Width" Value="360" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+        </Style>
+        <DataTemplate x:Key="MonitorCompactCardTemplate">
+            <Button Command="{Binding DataContext.SelectRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                CommandParameter="{Binding}"
+                Style="{StaticResource MonitorCardActionButton}">
+            <Border Padding="12"
+                Background="{StaticResource RegionBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource MonitorStatusStripe}" />
+                    <StackPanel Grid.Column="1" Margin="10,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="SemiBold"
+                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding ValueName}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Margin="8,0,0,0"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{Binding DataTypeText}" />
+                        </StackPanel>
+                        <TextBlock Margin="0,4,0,0"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="{Binding DeviceName}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Margin="0,2,0,0"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   FontSize="12"
+                                   Text="{Binding SourceName}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Foreground="{StaticResource ThirdlyTextBrush}" FontSize="11" Text="{Binding PlcAddress}" />
+                            <TextBlock Margin="10,0,0,0" Foreground="{StaticResource ThirdlyTextBrush}" FontSize="11" Text="{Binding CriteriaText}" />
+                            <TextBlock Margin="10,0,0,0" Style="{StaticResource MonitorFreshnessText}" Text="{Binding FreshnessText}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" MinWidth="90" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <ContentControl Content="{Binding}" Style="{StaticResource MonitorValueContent}" />
+                        <TextBlock Margin="0,4,0,0"
+                                   HorizontalAlignment="Right"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   FontSize="11"
+                                   Text="{Binding Unit}" />
+                        <TextBlock Margin="0,4,0,0"
+                                   HorizontalAlignment="Right"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   FontSize="11"
+                                   Text="{Binding LastUpdatedText}" />
+                    </StackPanel>
+                    <Border Grid.Column="3" Margin="12,0,0,0" Style="{StaticResource MonitorStatusBadge}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Style="{StaticResource MonitorStatusIcon}" />
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource MonitorStatusText}" Text="{Binding StatusText}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                </Border>
+            </Button>
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorGroupRowTemplate">
+            <Button Command="{Binding DataContext.SelectRowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    Style="{StaticResource MonitorCardActionButton}">
+                <Grid Margin="10,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" MinWidth="0">
+                        <TextBlock FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding ValueName}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Margin="0,3,0,0" Foreground="{StaticResource ThirdlyTextBrush}" FontSize="11">
+                            <Run Text="{Binding SourceName, Mode=OneWay}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding PlcAddress, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" MinWidth="92" Margin="12,0" HorizontalAlignment="Right">
+                        <ContentControl Content="{Binding}" Style="{StaticResource MonitorValueContent}" />
+                        <TextBlock Margin="0,3,0,0" HorizontalAlignment="Right" Foreground="{StaticResource ThirdlyTextBrush}" FontSize="11" Text="{Binding Unit}" />
+                    </StackPanel>
+                    <Border Grid.Column="2" Style="{StaticResource MonitorStatusBadge}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <materialIcons:MaterialIcon Style="{StaticResource MonitorStatusIcon}" />
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource MonitorStatusText}" Text="{Binding StatusText}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Button>
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorGroupTemplate">
+            <Border Margin="0,0,0,10"
+                    Padding="10"
+                    Background="{StaticResource RegionBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="4,2,4,7">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock FontWeight="SemiBold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding DeviceName}" />
+                            <TextBlock Margin="10,0,0,0" Foreground="{StaticResource ThirdlyTextBrush}" FontSize="12" Text="{Binding ValueSummary}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <TextBlock Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" Text="{Binding AlarmCount}" />
+                            <TextBlock Margin="3,0,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Dsm_Alarm}" />
+                            <TextBlock Margin="10,0,0,0" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" Text="{Binding InvalidCount}" />
+                            <TextBlock Margin="3,0,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Dsm_Invalid}" />
+                        </StackPanel>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource MonitorGroupRowTemplate}" />
+                </DockPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="ChartTimelineVariant" />
+                <StackPanel Margin="10,0,0,0">
+                    <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.Dsm_Title}" />
+                    <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Dsm_Subtitle}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                <Border Margin="0,0,14,0"
+                        Padding="3"
+                        Background="{StaticResource RegionBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Margin="8,0,6,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeHint}"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.Dsm_DisplayMode}" />
+                        <RadioButton GroupName="DataSourceMonitorDisplayMode"
+                                     IsChecked="{Binding IsTableView}"
+                                     Style="{StaticResource MonitorDisplayModeRadio}"
+                                     Content="{x:Static resources:Strings.Dsm_TableView}" />
+                        <RadioButton GroupName="DataSourceMonitorDisplayMode"
+                                     IsChecked="{Binding IsCompactCardsView}"
+                                     Style="{StaticResource MonitorDisplayModeRadio}"
+                                     Content="{x:Static resources:Strings.Dsm_CompactCards}" />
+                        <RadioButton GroupName="DataSourceMonitorDisplayMode"
+                                     IsChecked="{Binding IsTrendView}"
+                                     Style="{StaticResource MonitorDisplayModeRadio}"
+                                     Content="{x:Static resources:Strings.Dsm_TrendView}" />
+                    </StackPanel>
+                </Border>
+                <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}">
+                    <Run Text="{x:Static resources:Strings.Dsm_LastRefresh}" />
+                    <Run Text=" "/>
+                    <Run Text="{Binding LastRefreshTime, Mode=OneWay, StringFormat={}{0:HH:mm:ss}}" />
+                </TextBlock>
+                <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.Dsm_Refresh}" ToolTip="{x:Static resources:Strings.Dsm_Refresh}" />
+            </StackPanel>
+        </DockPanel>
+
+        <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,14">
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="All" ToolTip="{x:Static resources:Strings.Dsm_AllStates}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_TotalValues}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalValues}" />
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="Alarm" ToolTip="{x:Static resources:Strings.Dsm_Alarm}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_AlarmValues}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmValues}" />
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="ReadFailed" ToolTip="{x:Static resources:Strings.Dsm_ReadFailed}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_ReadFailed}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}" Text="{Binding ReadFailedValues}" />
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="Stale" ToolTip="{x:Static resources:Strings.Dsm_Stale}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_Stale}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource WarningBrush}" Text="{Binding StaleValues}" />
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="NotSampled" ToolTip="{x:Static resources:Strings.Dsm_NotSampled}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_NotSampled}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding NotSampledValues}" />
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource MonitorKpiButton}" Command="{Binding SelectStateCommand}" CommandParameter="Normal" ToolTip="{x:Static resources:Strings.Dsm_Normal}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.Dsm_NormalValues}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource SuccessBrush}" Text="{Binding NormalValues}" />
+                </StackPanel>
+            </Button>
+        </UniformGrid>
+
+        <Border Grid.Row="2"
+                Margin="0,0,0,14"
+                Padding="14"
+                Style="{StaticResource MainCard}"
+                Visibility="{Binding HasExceptionRows, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <materialIcons:MaterialIcon Width="18"
+                                                     Height="18"
+                                                     VerticalAlignment="Center"
+                                                     Foreground="{StaticResource DangerBrush}"
+                                                     Kind="BellAlert" />
+                        <TextBlock Margin="8,0,0,0"
+                                   VerticalAlignment="Center"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{x:Static resources:Strings.Dsm_ExceptionsView}" />
+                        <TextBlock Margin="10,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   Text="{Binding ExceptionSummaryText}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <TextBlock Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeHint}"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.Dsm_ExceptionHint}" />
+                        <Button Command="{Binding ShowExceptionsCommand}"
+                                Style="{StaticResource IconButtonWarning}"
+                                Tag="{x:Static mi:MaterialIconKind.BellAlert}"
+                                Content="{x:Static resources:Strings.Dsm_Exceptions}"
+                                ToolTip="{x:Static resources:Strings.Dsm_Exceptions}" />
+                    </StackPanel>
+                </DockPanel>
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              CanContentScroll="False">
+                    <ItemsControl ItemsSource="{Binding ExceptionRows}"
+                                  ItemTemplate="{StaticResource MonitorExceptionTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="3" Margin="0,0,0,14" Padding="14" Style="{StaticResource MainCard}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Row="0" Grid.Column="0" ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name" SelectedValue="{Binding SelectedDeviceId}" SelectedValuePath="Id" Style="{StaticResource ComboBoxExtend}" ToolTip="{x:Static resources:Strings.Dsm_DeviceFilter}" />
+                <ComboBox Grid.Row="0" Grid.Column="2" ItemsSource="{Binding StateFilterItems}" DisplayMemberPath="Name" SelectedValue="{Binding SelectedStateKey}" SelectedValuePath="Key" Style="{StaticResource ComboBoxExtend}" ToolTip="{x:Static resources:Strings.Dsm_StateFilter}" />
+                <TextBox Grid.Row="0" Grid.Column="4" VerticalContentAlignment="Center" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{x:Static resources:Strings.Dsm_Search}" />
+                <Button Grid.Row="0" Grid.Column="6" Command="{Binding ShowExceptionsCommand}" Style="{StaticResource IconButtonWarning}" Tag="{x:Static mi:MaterialIconKind.BellAlert}" Content="{x:Static resources:Strings.Dsm_Exceptions}" ToolTip="{x:Static resources:Strings.Dsm_Exceptions}" />
+                <Button Grid.Row="0" Grid.Column="8" Command="{Binding ClearFiltersCommand}" Style="{StaticResource IconButtonDefault}" Tag="{x:Static mi:MaterialIconKind.DeleteSweep}" Content="{x:Static resources:Strings.Dsm_ClearFilters}" ToolTip="{x:Static resources:Strings.Dsm_ClearFilters}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="9" Margin="0,10,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding ShowingSummaryText}" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="320" MinWidth="260" MaxWidth="380" />
+            </Grid.ColumnDefinitions>
+            <DataGrid
+                x:Name="MonitorTable"
+                Grid.Column="0"
+                ItemsSource="{Binding Rows}"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                CanUserReorderColumns="False"
+                CanUserResizeRows="False"
+                CanUserSortColumns="True"
+                FrozenColumnCount="2"
+                IsReadOnly="True"
+                SelectionMode="Single"
+                SelectionUnit="FullRow"
+                SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                RowHeight="48"
+                HeadersVisibility="Column"
+                Style="{StaticResource KanbanDataGrid}"
+                CellStyle="{StaticResource KanbanDataGridCell}"
+                ColumnHeaderStyle="{StaticResource MonitorHeader}"
+                RowStyle="{StaticResource KanbanDataGridRow}"
+                Visibility="{Binding IsTableView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Device}" Binding="{Binding DeviceName, Mode=OneWay}" SortMemberPath="DeviceName" Width="150" MinWidth="110" />
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Source}" Binding="{Binding SourceName, Mode=OneWay}" SortMemberPath="SourceName" Width="180" MinWidth="130" />
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Value}" Binding="{Binding ValueName, Mode=OneWay}" SortMemberPath="ValueName" Width="140" MinWidth="100" />
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Type}" Binding="{Binding DataTypeText, Mode=OneWay}" SortMemberPath="DataTypeText" Width="95" MinWidth="80" />
+                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Dsm_CurrentValue}" SortMemberPath="CurrentValueText" Width="*" MinWidth="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding}" Style="{StaticResource MonitorValueContent}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Unit}" Binding="{Binding Unit, Mode=OneWay}" SortMemberPath="Unit" Width="80" MinWidth="55" />
+                    <DataGridTextColumn Header="{x:Static resources:Strings.Dsm_Address}" Binding="{Binding PlcAddress, Mode=OneWay}" SortMemberPath="PlcAddress" ElementStyle="{StaticResource MonitorAddressText}" Width="100" MinWidth="80" />
+                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Dsm_Status}" Width="100" MinWidth="80">
+                        <DataGridTemplateColumn.SortMemberPath>StatusSortOrder</DataGridTemplateColumn.SortMemberPath>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="4" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource MonitorStatusStripe}" />
+                                    <Border Grid.Column="1" Style="{StaticResource MonitorStatusBadge}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialIcons:MaterialIcon Style="{StaticResource MonitorStatusIcon}" />
+                                            <TextBlock Margin="5,0,0,0" Style="{StaticResource MonitorStatusText}" Text="{Binding StatusText}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static resources:Strings.Dsm_LastUpdated}" Width="110" MinWidth="90">
+                        <DataGridTemplateColumn.SortMemberPath>LastUpdatedSortValue</DataGridTemplateColumn.SortMemberPath>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding LastUpdatedText}" />
+                                    <TextBlock Style="{StaticResource MonitorFreshnessText}" Text="{Binding FreshnessText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <ListBox x:Name="MonitorCompactCards" Grid.Column="0"
+                     ItemsSource="{Binding Rows}"
+                     ItemTemplate="{StaticResource MonitorCompactCardTemplate}"
+                     ItemContainerStyle="{StaticResource MonitorCompactCardListItem}"
+                     Style="{StaticResource MonitorCardList}"
+                     ScrollViewer.CanContentScroll="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     VirtualizingPanel.ScrollUnit="Pixel"
+                     Visibility="{Binding IsCompactCardsView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingWrapPanel ItemWidth="368" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+
+            <Grid x:Name="MonitorTrend" Grid.Column="0"
+                  Visibility="{Binding IsTrendView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Grid.ColumnSpan" Value="1" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTrendView}" Value="True">
+                                <Setter Property="Grid.ColumnSpan" Value="3" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" MinWidth="210" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ListBox x:Name="MonitorTrendValues"
+                         Grid.Column="0"
+                         ItemsSource="{Binding TrendRows}"
+                         ItemTemplate="{StaticResource MonitorTrendValueTemplate}"
+                         ItemContainerStyle="{StaticResource MonitorCardListItem}"
+                         SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                         Style="{StaticResource MonitorCardList}" />
+                <Border Grid.Column="2" Padding="14" Style="{StaticResource MainCard}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                            <StackPanel DockPanel.Dock="Left">
+                                <TextBlock FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding SelectedRow.ValueName, TargetNullValue={x:Static resources:Strings.Dsm_TrendView}}" />
+                                <TextBlock Margin="0,3,0,0"
+                                           FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}">
+                                    <Run Text="{Binding SelectedRow.DeviceName, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SelectedRow.Unit, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Margin="0,3,0,0"
+                                           FontSize="{DynamicResource FontSizeCaption}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding TrendSessionHint}" />
+                                <TextBlock Margin="0,3,0,0"
+                                           FontSize="{DynamicResource FontSizeCaption}"
+                                           Foreground="{StaticResource WarningBrush}"
+                                           Text="{x:Static resources:Strings.Dsm_TrendDataGap}"
+                                           Visibility="{Binding HasTrendDataGap, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                            <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                <ContentControl HorizontalContentAlignment="Right"
+                                                Content="{Binding SelectedRow}"
+                                                Style="{StaticResource MonitorValueContent}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           HorizontalAlignment="Right"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           FontSize="{DynamicResource FontSizeHint}">
+                                    <Run Text="{Binding SelectedRow.LastUpdatedText, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SelectedRow.FreshnessText, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </DockPanel>
+                        <oxy:PlotView x:Name="MonitorTrendPlot"
+                                      Grid.Row="1"
+                                      Model="{Binding TrendChart}"
+                                      Background="Transparent"
+                                      Visibility="{Binding HasTrendChartData, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Border Grid.Row="1"
+                                Padding="20"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource HintCard}"
+                                Visibility="{Binding HasTrendChartData, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+                            <StackPanel HorizontalAlignment="Center">
+                                <materialIcons:MaterialIcon HorizontalAlignment="Center"
+                                                             Foreground="{StaticResource ThirdlyTextBrush}"
+                                                             Kind="ChartTimelineVariant"
+                                                             Width="30"
+                                                             Height="30" />
+                                <TextBlock Margin="0,8,0,0"
+                                           HorizontalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding TrendStateTitle}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{Binding TrendStateHint}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Grid.Column="0" Padding="28" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource HintCard}" Visibility="{Binding HasNoDisplayRows, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center">
+                    <materialIcons:MaterialIcon HorizontalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Kind="ChartTimelineVariant" Width="34" Height="34" />
+                    <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding EmptyStateTitle}" />
+                    <TextBlock Margin="0,5,0,0" HorizontalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding EmptyStateHint}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Padding="16">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource MainCard}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsTrendView}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <StackPanel Visibility="{Binding HasSelectedRow, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Style="{StaticResource MonitorDetailSectionTitle}" Text="{x:Static resources:Strings.Dsm_Details}" />
+                        <Grid Margin="0,5,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" MinWidth="0">
+                                <TextBlock FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                           Text="{Binding SelectedRow.ValueName}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding SelectedRow.DeviceName, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SelectedRow.SourceName, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                            <Border Grid.Column="1"
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    DataContext="{Binding SelectedRow}"
+                                    Style="{StaticResource MonitorStatusBadge}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialIcons:MaterialIcon Style="{StaticResource MonitorStatusIcon}" />
+                                    <TextBlock Margin="5,0,0,0"
+                                               Style="{StaticResource MonitorStatusText}"
+                                               Text="{Binding StatusText}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="105" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Device}" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.DeviceName}" />
+                            <TextBlock Grid.Row="1" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Source}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.SourceName}" />
+                            <TextBlock Grid.Row="2" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_CurrentValue}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.CurrentValueText}" ToolTip="{Binding SelectedRow.ValueToolTip}" />
+                            <TextBlock Grid.Row="3" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_LastValidValue}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.LastValidValueText}" />
+                            <TextBlock Grid.Row="4" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Status}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.StatusText}" />
+                            <TextBlock Grid.Row="5" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Freshness}" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.FreshnessText}" />
+                            <TextBlock Grid.Row="6" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_LastUpdated}" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.LastUpdatedText}" />
+                            <TextBlock Grid.Row="7" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Criteria}" />
+                            <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.CriteriaText}" />
+                            <TextBlock Grid.Row="8" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_Address}" />
+                            <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.PlcAddress}" />
+                            <TextBlock Grid.Row="9" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_TriggerMode}" />
+                            <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.TriggerModeText}" />
+                            <TextBlock Grid.Row="10" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_TriggerAddress}" />
+                            <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.TriggerAddressText}" />
+                            <TextBlock Grid.Row="11" Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_TriggerValue}" />
+                            <TextBlock Grid.Row="11" Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.TriggerValueText}" />
+                        </Grid>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="105" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource MonitorDetailLabel}" Text="{x:Static resources:Strings.Dsm_AckValue}" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource MonitorDetailValue}" Text="{Binding SelectedRow.AckValueText}" />
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasSelectedRow, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+                        <materialIcons:MaterialIcon HorizontalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Kind="Eye" Width="30" Height="30" />
+                        <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" TextAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" TextWrapping="Wrap" Text="{x:Static resources:Strings.Dsm_SelectRow}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

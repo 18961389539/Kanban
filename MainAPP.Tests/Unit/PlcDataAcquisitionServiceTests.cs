@@ -913,7 +913,8 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _service.Start();
         await WaitUntilAsync(
             () => _service.GetDiagnosticsSnapshot().LastCycleSucceeded,
-            TimeSpan.FromSeconds(2));
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken);
         await _service.StopAsync();
 
         var successfulSnapshot = _service.GetDiagnosticsSnapshot();
@@ -928,7 +929,8 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _service.Start();
         await WaitUntilAsync(
             () => _service.GetDiagnosticsSnapshot().ConsecutiveFailureCycles > 0,
-            TimeSpan.FromSeconds(2));
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken);
         await _service.StopAsync();
 
         var failedSnapshot = _service.GetDiagnosticsSnapshot();
@@ -947,7 +949,8 @@ public class PlcDataAcquisitionServiceTests : IDisposable
                 var snapshot = _service.GetDiagnosticsSnapshot();
                 return snapshot.LastCycleSucceeded && snapshot.ConsecutiveFailureCycles == 0;
             },
-            TimeSpan.FromSeconds(8));
+            TimeSpan.FromSeconds(8),
+            TestContext.Current.CancellationToken);
         await _service.StopAsync();
 
         var recoveredSnapshot = _service.GetDiagnosticsSnapshot();
@@ -961,14 +964,15 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         Assert.Contains(device.Id, _service.GetDiagnosticsSnapshot().LastSuccessfulDeviceIds);
     }
 
-    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    private static async Task WaitUntilAsync(
+        Func<bool> condition, TimeSpan timeout, CancellationToken cancellationToken)
     {
         var deadline = DateTime.UtcNow + timeout;
         while (!condition())
         {
             if (DateTime.UtcNow >= deadline)
                 throw new TimeoutException($"等待采集诊断条件超时：{timeout}");
-            await Task.Delay(20);
+            await Task.Delay(20, cancellationToken);
         }
     }
 
@@ -1221,7 +1225,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _service.Start();
 
         // 等几轮让外层 catch 多次触发
-        await Task.Delay(300);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // 服务应仍在运行（外层 catch 不让循环退出）
         Assert.True(_service.IsRunning);
@@ -1251,7 +1255,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _appSettings.HistoryWriteIntervalScans = 1;
         _service.Start();
 
-        await Task.Delay(300);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // 服务不退出
         Assert.True(_service.IsRunning);
@@ -1464,7 +1468,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _appSettings.HistoryWriteIntervalScans = 100; // 避免历史写入干扰
         _service.Start();
 
-        await Task.Delay(200);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // 服务不退出（TryScan 捕获异常，不让循环跳出）
         Assert.True(_service.IsRunning);

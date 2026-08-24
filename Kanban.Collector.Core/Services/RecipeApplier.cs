@@ -12,7 +12,7 @@ namespace Kanban.Collector.Core.Services;
 ///
 /// PLC 依赖（IPlcDriver/PlcConnectionManager/IDeviceAdapterResolver）**延迟到 Apply 时解析**：
 /// 避免构造期（Host 启动 MetaPublisher→ConfigSyncHandler 链）在 settings.Load() 之前触达
-/// SharedPlcDriverRouter，导致驱动按未加载的默认 PlcConfig（192.168.1.2）构造。
+/// SharedPlcDriverRouter，导致驱动按未加载的默认 PlcConfig（127.0.0.1）构造。
 /// </summary>
 public sealed class RecipeApplier(IServiceProvider services)
 {

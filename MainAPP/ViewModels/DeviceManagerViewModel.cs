@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -51,6 +52,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private readonly UserSession _userSession;
     private readonly IDeviceSetupWizardService? _deviceSetupWizard;
     private DeviceAuditSnapshot _lastSavedDeviceAuditSnapshot = new(0, []);
+    private long _configurationRevision;
 
     // 设备列表由 DeviceRepository（DI 单例）持有，ViewModel 直接引用
     public ObservableCollection<Device> Devices => _deviceRepository.Devices;
@@ -62,8 +64,15 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     public IReadOnlyDictionary<string, string> AddressConflictSummaries { get; private set; } =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>设备 Id 到列表首个冲突地址所属 Tab 的映射，供冲突点击定位。</summary>
+    public IReadOnlyDictionary<string, int> AddressConflictTabIndices { get; private set; } =
+        new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>最近一次保存校验产生的全部错误。</summary>
     public IReadOnlyList<DeviceConfigError> ValidationErrors { get; private set; } = [];
+
+    /// <summary>设备配置页统一的页面内操作反馈。</summary>
+    public OperationFeedback Feedback { get; } = new();
 
     /// <summary>当前选中设备的配置错误，显示在设备参数表单顶部。</summary>
     public IReadOnlyList<DeviceConfigError> CurrentDeviceValidationErrors =>
@@ -76,6 +85,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// <summary>当前点击的冲突地址，供设备参数表单聚焦对应输入框。</summary>
     [ObservableProperty]
     private string _focusedAddressConflict = string.Empty;
+
+    /// <summary>地址冲突聚焦请求序号；相同地址连续点击时也能触发视图重新聚焦。</summary>
+    [ObservableProperty]
+    private long _addressConflictFocusRequest;
 
     /// <summary>报警管理子 VM（报警 CRUD + CSV 导入导出）。</summary>
     public DeviceAlarmManagerViewModel AlarmManagerVm { get; }
@@ -113,7 +126,15 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [ObservableProperty]
     private bool _isDirty;
 
-    partial void OnIsDirtyChanged(bool value) => SaveCommand.NotifyCanExecuteChanged();
+    partial void OnIsDirtyChanged(bool value)
+    {
+        SaveCommand.NotifyCanExecuteChanged();
+        if (!IsLoading)
+        {
+            if (value) Feedback.Warning(Strings.Ux_StatusUnsaved);
+            else Feedback.Success(Strings.Ux_StatusSaved);
+        }
+    }
 
     /// <summary>
     /// 是否存在跨设备 PLC 地址冲突（两台及以上设备共用同一地址，会导致数据串台）。
@@ -153,6 +174,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmCsvIOService alarmCsvIO,
         DefectCsvIOService defectCsvIO,
         CounterAlarmCsvIOService counterAlarmCsvIO,
+        DataSourceCsvIOService dataSourceCsvIO,
         WorkOrderRepository workOrderRepo,
         IWorkOrderService workOrderService,
         UserSession userSession,
@@ -167,9 +189,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _configIO = configIO;
         _userSession = userSession;
         _deviceSetupWizard = deviceSetupWizard;
+        _userSession.PropertyChanged += OnUserSessionPropertyChanged;
         _connectionManager = connectionManager;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
+        _configIO.BackupAvailabilityChanged += OnBackupAvailabilityChanged;
         DeviceList = new DeviceListViewModel(deviceRepository);
 
         // 构造子 VM（报警/缺陷/计数报警管理），传入各自所需的共享依赖与父级宿主引用。
@@ -178,12 +202,17 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         AlarmManagerVm = new DeviceAlarmManagerViewModel(dialog, alarmCsvIO, dataAcquisitionService, this);
         DefectManagerVm = new DeviceDefectManagerViewModel(dialog, defectCsvIO, this);
         CounterAlarmManagerVm = new DeviceCounterAlarmManagerViewModel(dialog, plcCommands, counterAlarmCsvIO, this);
-        DataSourceManagerVm = new DeviceDataSourceManagerViewModel(dialog, this);
+        DataSourceManagerVm = new DeviceDataSourceManagerViewModel(dialog, this, dataSourceCsvIO);
         WorkOrders = new DeviceWorkOrderViewModel(dialog, this, workOrderRepo, workOrderService, deviceRepository);
         PlcCommands = new DevicePlcCommandViewModel(dialog, this, plcCommands);
 
         // 订阅设备集合与每个设备的属性/子集合变更，用于维护脏标记
-        _dirtyTracker = new DirtyTracker(() => { IsDirty = true; ScheduleAddressConflictRefresh(); });
+        _dirtyTracker = new DirtyTracker(() =>
+        {
+            Interlocked.Increment(ref _configurationRevision);
+            IsDirty = true;
+            ScheduleAddressConflictRefresh();
+        });
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
         foreach (var d in Devices) _dirtyTracker.AttachDevice(d);
 
@@ -210,7 +239,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [RelayCommand(CanExecute = nameof(CanAddDevice))]
     private void AddDevice()
     {
-        if (IsLoading) return;
+        if (!CanManageDevices || IsLoading) return;
         var newDevice = _deviceSetupWizard?.Show(Devices.ToArray(), ResolveAddressCodec());
         if (newDevice == null)
         {
@@ -233,8 +262,6 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 新增后尚未保存，下一次保存的 before 应反映「新增前」的持久化状态。
     }
 
-    private bool CanAddDevice() => !IsLoading;
-
     /// <summary>
     /// 生成不与 existing 冲突的唯一名称：若 baseName 已存在则追加 " (2)"、" (3)"...
     /// 内部可见供报警/缺陷/计数报警子 VM 复用，避免重复实现。
@@ -250,12 +277,38 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
     }
 
-    // 删除按钮的启用条件：必须选中设备且不在 PLC 写入中（避免异步回调访问已删除设备）
-    private bool CanEditSelected() => SelectedDevice != null && !IsLoading;
+    // 设备配置变更命令统一要求工程师权限，避免仅依赖页面导航权限。
+    private bool CanEditSelected() => SelectedDevice != null && !IsLoading && CanManageDevices;
 
     // 未注入连接管理器（本地/单机或测试场景）视为未连接，PLC 写命令应禁用，
     // 避免离线时误执行写配方/清零点/OEE 清零等操作（审查修复 2026-08-15）。
     public bool IsPlcConnected => _connectionManager?.IsConnected ?? false;
+
+    public bool CanManageDevices => _userSession.IsEngineerOrAbove;
+
+    public bool IsConfigurationReadOnly => !CanManageDevices;
+
+    private void OnUserSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(UserSession.IsEngineerOrAbove)) return;
+
+        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            _ = dispatcher.InvokeAsync(() => OnUserSessionPropertyChanged(sender, e));
+            return;
+        }
+
+        OnPropertyChanged(nameof(CanManageDevices));
+        OnPropertyChanged(nameof(IsConfigurationReadOnly));
+        AddDeviceCommand.NotifyCanExecuteChanged();
+        RemoveDeviceCommand.NotifyCanExecuteChanged();
+        CopyDeviceCommand.NotifyCanExecuteChanged();
+        SaveCommand.NotifyCanExecuteChanged();
+        ExportConfigCommand.NotifyCanExecuteChanged();
+        ImportConfigCommand.NotifyCanExecuteChanged();
+        RollbackToBackupCommand.NotifyCanExecuteChanged();
+        SeedSampleDevicesCommand.NotifyCanExecuteChanged();
+    }
 
     private void OnConnectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -270,12 +323,30 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(IsPlcConnected));
     }
 
-    // 只要存在未保存变更就允许保存，空列表也必须能够持久化（删除全部设备）。
-    private bool CanSave() => (IsDirty || Devices.Count > 0) && !IsLoading;
+    private void OnBackupAvailabilityChanged(object? sender, EventArgs e)
+    {
+        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            _ = dispatcher.InvokeAsync(() => OnBackupAvailabilityChanged(sender, e));
+            return;
+        }
+
+        RollbackToBackupCommand.NotifyCanExecuteChanged();
+    }
+
+    // 只有存在未保存变更时才允许保存；空列表同样可以保存，以持久化删除全部设备。
+    private bool CanSave() => IsDirty && !IsLoading && CanManageDevices;
+
+    private bool CanAddDevice() => !IsLoading && CanManageDevices;
+
+    private bool CanImportConfig() => !IsLoading && CanManageDevices;
+
+    private bool CanExportConfig() => !IsLoading && CanManageDevices;
 
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveDevice(Device? device)
     {
+        if (!CanEditSelected()) return;
         var target = device ?? SelectedDevice;
         if (target == null) return;
 
@@ -307,17 +378,68 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     }
 
     /// <summary>
-    /// 选中冲突设备并切换到设备参数 Tab，地址输入框由视图根据 FocusedAddressConflict 聚焦。
+    /// 选中冲突设备并切换到冲突地址所属 Tab，地址输入框由视图根据 FocusedAddressConflict 聚焦。
     /// </summary>
     [RelayCommand]
     private void SelectAddressConflict(Device? device)
     {
         if (device == null) return;
         SelectedDevice = device;
-        SelectedTabIndex = 0;
-        FocusedAddressConflict = AddressConflictSummaries.TryGetValue(device.Id, out var summary)
+        SelectedTabIndex = AddressConflictTabIndices.TryGetValue(device.Id, out var tabIndex)
+            ? tabIndex
+            : (int)DeviceManagerTab.Parameters;
+        var conflictAddress = AddressConflictSummaries.TryGetValue(device.Id, out var summary)
             ? summary.Split(',', StringSplitOptions.TrimEntries)[0]
             : string.Empty;
+        FocusedAddressConflict = SelectAddressConflictItem(device, SelectedTabIndex, conflictAddress)
+            ?? conflictAddress;
+        AddressConflictFocusRequest++;
+    }
+
+    private string? SelectAddressConflictItem(Device device, int tabIndex, string address)
+    {
+        var codec = ResolveAddressCodec();
+        var key = codec.CanonicalKey(address);
+        bool Matches(string? candidate) => !string.IsNullOrWhiteSpace(candidate)
+            && string.Equals(codec.CanonicalKey(candidate), key, StringComparison.OrdinalIgnoreCase);
+
+        switch ((DeviceManagerTab)tabIndex)
+        {
+            case DeviceManagerTab.Parameters:
+                foreach (var candidate in new[]
+                {
+                    device.OkCountAddress,
+                    device.NgCountAddress,
+                    device.StatusCountAddress,
+                    device.ProductionResetAddress,
+                    device.RecipeAddress,
+                })
+                {
+                    if (Matches(candidate)) return candidate;
+                }
+                return null;
+            case DeviceManagerTab.Alarms:
+                var alarm = device.Alarms.FirstOrDefault(item => Matches(item.PlcAddress));
+                AlarmManagerVm.SelectedAlarm = alarm;
+                return alarm?.PlcAddress;
+            case DeviceManagerTab.Defects:
+                var defect = device.Defects.FirstOrDefault(item => Matches(item.PlcAddress));
+                DefectManagerVm.SelectedDefect = defect;
+                return defect?.PlcAddress;
+            case DeviceManagerTab.CounterAlarms:
+                var counterAlarm = device.CounterAlarms.FirstOrDefault(item => Matches(item.PlcAddress));
+                CounterAlarmManagerVm.SelectedCounterAlarm = counterAlarm;
+                return counterAlarm?.PlcAddress;
+            case DeviceManagerTab.Sources:
+                var source = device.Sources.FirstOrDefault(item =>
+                    Matches(item.TriggerAddress) || item.Values.Any(value => Matches(value.PlcAddress)));
+                DataSourceManagerVm.SelectedSource = source;
+                var value = source?.Values.FirstOrDefault(item => Matches(item.PlcAddress));
+                DataSourceManagerVm.SelectedValue = value;
+                return value?.PlcAddress ?? source?.TriggerAddress;
+            default:
+                return null;
+        }
     }
 
     /// <summary>
@@ -328,6 +450,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void CopyDevice()
     {
+        if (!CanEditSelected()) return;
         var src = SelectedDevice;
         if (src == null) return;
 
@@ -443,7 +566,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// </summary>
     public void MoveDevice(Device dragged, Device target)
     {
-        if (dragged == null || target == null || ReferenceEquals(dragged, target)) return;
+        if (!CanManageDevices || IsLoading || dragged == null || target == null || ReferenceEquals(dragged, target)) return;
         var from = Devices.IndexOf(dragged);
         var to = Devices.IndexOf(target);
         if (from < 0 || to < 0 || from == to) return;
@@ -454,6 +577,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task Save()
     {
+        if (!CanSave()) return;
         // 聚合全部配置错误（不再逐个 return），统一列出并支持点击定位到出错设备/选项卡
         var errors = DeviceConfigValidator.CollectValidationErrors(
             Devices,
@@ -464,21 +588,40 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
         if (errors.Count > 0)
         {
+            Feedback.Error(string.Format(Strings.F067, errors.Count));
             _dialog.NotifyWarning(string.Format(Strings.F067, errors.Count));
+            if (_dialog.ShowConfigErrors(errors) is { } selectedError)
+                NavigateToError(selectedError);
             return;
         }
 
         // 防重入：保存期间置 IsLoading（禁用 PLC 写命令 + Save 自身），防止双击/并发触发两次保存
         IsLoading = true;
+        Feedback.Working(Strings.Ux_StatusSaving);
         try
         {
-            // 保存内部会回填子项 DeviceId（触发属性变更），临时抑制脏标记避免自我触发。
-            // Remote 模式下 SaveAllAsync 经 SignalR 推给 Collector 落盘（异步，不阻塞 UI 线程）
             // 前后值摘要：全设备 + 全配置字段（DeviceAuditService.CreateSnapshot）。
             var before = _lastSavedDeviceAuditSnapshot;
             var after = CreateDeviceAuditSnapshot();
+            var saveRevision = Interlocked.Read(ref _configurationRevision);
+
+            // SaveAllAsync 会在进入异步等待前创建深拷贝；仅抑制这一段的 DeviceId 回填事件，
+            // 远程持久化等待期间仍必须让用户编辑产生新的配置修订号。
+            Task persistenceTask;
             _dirtyTracker.IsSuppressed = true;
-            await _deviceRepository.SaveAllAsync();
+            try
+            {
+                persistenceTask = _deviceRepository.SaveAllAsync();
+            }
+            finally
+            {
+                _dirtyTracker.IsSuppressed = false;
+            }
+            await persistenceTask;
+
+            // Remote 保存可能刚刚生成 Collector 的 devices.json.bak，保存成功后立即刷新回滚按钮状态。
+            if (_configIO.IsRemote)
+                await _configIO.RefreshRemoteBackupAvailabilityAsync();
 
             // 保存后同步所有设备运行时的 TargetCycle
             foreach (var device in Devices)
@@ -487,10 +630,13 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             _lastSavedDeviceAuditSnapshot = after;
             // 非阻断提示：0 值阈值报警（仅记录不触发）仍可正常保存，但提醒用户其不会触发报警
             var zeroThresholdCount = Devices.Sum(d => d.CounterAlarms.Count(c => c.MaxValue <= 0));
+            Feedback.Success(zeroThresholdCount > 0
+                ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
+                : Strings.Ux_StatusSaved);
             _dialog.NotifySuccess(zeroThresholdCount > 0
                 ? string.Format(Strings.K651, after.Count, zeroThresholdCount)
                 : Strings.M009);
-            IsDirty = false;
+            IsDirty = Interlocked.Read(ref _configurationRevision) != saveRevision;
             AuditLog.Record("Device.Update", "Device", null,
                 before: before,
                 after: after,
@@ -498,6 +644,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         }
         catch (System.Exception ex)
         {
+            Feedback.Error(string.Format(Strings.F066, ex.Message));
             _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
             Log.Error(ex, "保存设备配置失败");
         }
@@ -516,9 +663,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         var codec = ResolveAddressCodec();
         var report = AddressConflictService.Compute(Devices, codec);
         AddressConflictSummaries = report.Summaries;
+        AddressConflictTabIndices = report.TargetTabs;
         AddressConflictCount = report.ConflictCount;
         HasAddressConflicts = report.ConflictCount > 0;
         OnPropertyChanged(nameof(AddressConflictSummaries));
+        OnPropertyChanged(nameof(AddressConflictTabIndices));
     }
 
     private IPlcAddressCodec ResolveAddressCodec()
@@ -551,9 +700,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 仅导出内存中的配置、不触发持久化或脏标记变化（导出是只读操作）。
     /// 用户取消保存对话框则不写文件。
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSave))]
+    [RelayCommand(CanExecute = nameof(CanExportConfig))]
     private void ExportConfig()
     {
+        if (!CanExportConfig()) return;
         _configIO.ExportConfig(Devices.Count);
     }
 
@@ -562,9 +712,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 导入前二次确认（替换会丢弃当前未保存的配置），导入后标记脏并提示用户保存以持久化。
     /// 文件解析失败或文件无设备数据时给出对应提示，不替换。
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanImportConfig))]
     private void ImportConfig()
     {
+        if (!CanImportConfig()) return;
         var imported = _configIO.ImportConfig(Devices.Count);
         if (imported == null) return;
 
@@ -577,32 +728,54 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     }
 
     /// <summary>
-    /// 恢复上一版本：复用 AppSettings.WriteFileAtomically 每次保存前留下的 devices.json.bak，
-    /// 把上一次保存前的配置加载回内存（走已验证的 ReplaceAll 路径，自动重建 Runtimes/订阅），
-    /// 标记脏并提示用户点击保存以持久化。二次确认防止误覆盖当前未保存改动。
+    /// 恢复上一版本：Local 模式读取本地备份，Remote 模式由 Collector 读取其自有备份并返回权威快照。
+    /// Remote 回滚已在 Collector 落盘，成功后保持干净；Local 回滚仍标记脏，要求用户点击保存。
+    /// 密码验证在命令体内执行，避免直接 Execute 绕过安全门禁。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanRollbackToBackup))]
-    private void RollbackToBackup()
+    private async Task RollbackToBackupAsync()
     {
-        // 权限验证：恢复上一版本会覆盖当前未保存的设备配置，需工程师或以上角色
-        if (!_userSession.IsEngineerOrAbove)
+        if (!CanRollbackToBackup()) return;
+
+        var password = _dialog.ShowPasswordInput(Strings.M119, Strings.M167);
+        if (string.IsNullOrEmpty(password))
+            return;
+        if (!_userSession.VerifyCurrentPassword(password))
         {
-            _dialog.NotifyWarning(Strings.M336);
+            _dialog.NotifyWarning(Strings.M010);
             return;
         }
 
-        var restored = _configIO.RollbackToBackup();
-        if (restored == null) return;
+        // 权限可能在密码对话框期间发生变化，命令体再次检查，避免角色降级后继续覆盖配置。
+        if (!CanRollbackToBackup()) return;
 
-        SelectedDevice = Devices.FirstOrDefault();
-        SaveCommand.NotifyCanExecuteChanged();
-        RemoveDeviceCommand.NotifyCanExecuteChanged();
-        DeviceList.RefreshDeviceList();
-        RefreshAddressConflictFlag();
-        MarkDirty();
+        var remote = _configIO.IsRemote;
+        IsLoading = true;
+        try
+        {
+            var restored = await _configIO.RollbackToBackupAsync();
+            if (restored == null) return;
+
+            SelectedDevice = Devices.FirstOrDefault();
+            DeviceList.RefreshDeviceList();
+            RefreshAddressConflictFlag();
+            if (remote)
+            {
+                SyncAuditBaseline();
+                IsDirty = false;
+            }
+            else
+            {
+                MarkDirty();
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    private bool CanRollbackToBackup() => _configIO.HasBackup;
+    private bool CanRollbackToBackup() => _configIO.HasBackup && !IsLoading && CanManageDevices;
 
     /// <summary>
     /// 是否为 DEBUG 编译版本。绑定到"生成虚拟设备"按钮的 Visibility，
@@ -616,9 +789,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 计数报警（不同单位 + 阈值）。所有 PLC 地址跨设备唯一（由 SampleDeviceBuilder 内部校验），
     /// 避免冲突告警干扰预览。若当前已有设备，提示是否替换；点击保存后才会写入磁盘。
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSeedSampleDevices))]
     private void SeedSampleDevices()
     {
+        if (!CanSeedSampleDevices()) return;
         // 权限验证：生成虚拟数据需工程师或以上角色
         if (!_userSession.IsEngineerOrAbove)
         {
@@ -645,6 +819,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _dialog.NotifySuccess(string.Format(Strings.F114, samples.Count));
     }
 
+    private bool CanSeedSampleDevices() => !IsLoading && CanManageDevices;
+
     partial void OnSelectedDeviceChanged(Device? value)
     {
         // 各子 VM（报警/缺陷/计数报警/工单/PLC）通过 DeviceChildManagerViewModel 订阅宿主 PropertyChanged 自动同步 SelectedDevice，无需在此手动赋值。
@@ -653,6 +829,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SaveCommand.NotifyCanExecuteChanged();
         AddDeviceCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
+        CopyDeviceCommand.NotifyCanExecuteChanged();
+        ImportConfigCommand.NotifyCanExecuteChanged();
+        ExportConfigCommand.NotifyCanExecuteChanged();
+        RollbackToBackupCommand.NotifyCanExecuteChanged();
+        SeedSampleDevicesCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsLoadingChanged(bool value)
@@ -661,6 +842,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         SaveCommand.NotifyCanExecuteChanged();
         AddDeviceCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
+        CopyDeviceCommand.NotifyCanExecuteChanged();
+        ImportConfigCommand.NotifyCanExecuteChanged();
+        ExportConfigCommand.NotifyCanExecuteChanged();
+        RollbackToBackupCommand.NotifyCanExecuteChanged();
+        SeedSampleDevicesCommand.NotifyCanExecuteChanged();
     }
 
     public void ReportPlcOperation(PlcOpResult result) => PlcCommands.ReportPlcOperation(result);
@@ -793,6 +979,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     public void Dispose()
     {
         _conflictDebounceTimer?.Stop();
+        _userSession.PropertyChanged -= OnUserSessionPropertyChanged;
+        _configIO.BackupAvailabilityChanged -= OnBackupAvailabilityChanged;
         if (_connectionManager != null)
             _connectionManager.PropertyChanged -= OnConnectionPropertyChanged;
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;

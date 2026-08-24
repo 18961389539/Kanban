@@ -11,6 +11,8 @@ namespace Kanban.Collector.Services;
 public sealed class CollectorHealthState
 {
     private readonly object _gate = new();
+    private readonly TaskCompletionSource<bool> _readySignal =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>初始化阶段状态。</summary>
     public enum InitState
@@ -51,6 +53,10 @@ public sealed class CollectorHealthState
         get { lock (_gate) return _lastAcquisition; }
     }
 
+    /// <summary>等待采集完成初始化；返回 false 表示初始化失败。</summary>
+    public Task<bool> WaitUntilReadyAsync(CancellationToken cancellationToken = default)
+        => _readySignal.Task.WaitAsync(cancellationToken);
+
     /// <summary>标记初始化完成（采集已启动）。</summary>
     public void MarkReady()
     {
@@ -58,6 +64,7 @@ public sealed class CollectorHealthState
         {
             _state = InitState.Ready;
             _readyAtUtc = DateTime.UtcNow;
+            _readySignal.TrySetResult(true);
         }
     }
 
@@ -69,6 +76,7 @@ public sealed class CollectorHealthState
             _state = InitState.Failed;
             _initErrorMessage = message;
             _failedAtUtc = DateTime.UtcNow;
+            _readySignal.TrySetResult(false);
         }
     }
 

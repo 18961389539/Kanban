@@ -1,3 +1,8 @@
+using System;
+using System.Linq;
+using Kanban.Collector.Core.Models;
+using MainAPP.ViewModels;
+
 namespace MainAPP.Views;
 
 /// <summary>
@@ -9,5 +14,22 @@ public partial class DeviceManagerDefectsTab
     public DeviceManagerDefectsTab()
     {
         InitializeComponent();
+    }
+
+    public void FocusAddress(string address)
+    {
+        if (DataContext is not DeviceDefectManagerViewModel vm || vm.SelectedDevice is not { } device)
+            return;
+
+        var defect = vm.SelectedDefect;
+        if (defect == null || !string.Equals(defect.PlcAddress.Trim(), address.Trim(), StringComparison.OrdinalIgnoreCase))
+            defect = device.Defects.FirstOrDefault(item =>
+                string.Equals(item.PlcAddress.Trim(), address.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (defect == null) return;
+
+        vm.SelectedDefect = defect;
+        Dispatcher.BeginInvoke(
+            new Action(() => DeviceManagerAddressFocus.FocusTextBox(this, defect!.PlcAddress)),
+            System.Windows.Threading.DispatcherPriority.Input);
     }
 }

@@ -352,13 +352,13 @@
                 <DockPanel>
                     <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                         <Border Style="{StaticResource ChartCardTitleBar}" />
-                        <TextBlock Style="{StaticResource SectionTitleText}" Text="数据采集源" />
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Dsm_DataSourceSectionTitle}" />
                         <TextBlock
                             Margin="8,0,0,0"
                             VerticalAlignment="Center"
                             FontSize="{DynamicResource FontSizeCaption}"
                             Foreground="{StaticResource ThirdlyTextBrush}"
-                            Text="温湿度 / 能耗 / 触发采集（越限走报警中心）" />
+                            Text="{x:Static resources:Strings.Dsm_DataSourceSectionHint}" />
                     </DockPanel>
                     <Grid>
                         <!-- 实时卡：每源一张卡片（名称 / 当前值+单位 / 告警态着色） -->
@@ -397,13 +397,13 @@
                                                 Margin="0,2,0,0"
                                                 FontSize="{DynamicResource FontSizeCaption}"
                                                 Foreground="{StaticResource ThirdlyTextBrush}"
-                                                Text="{Binding Value.Unit, StringFormat=单位：{0}}" />
+                                                Text="{Binding Value.Unit, Converter={StaticResource LocFormatConverter}, ConverterParameter=Dsm_UnitFormat}" />
                                             <Button
                                                 Margin="0,8,0,0"
                                                 HorizontalAlignment="Left"
                                                 Command="{Binding DataContext.ShowTrendChartCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
-                                                Content="趋势图"
+                                                Content="{x:Static resources:Strings.Dsm_TrendChart}"
                                                 Style="{StaticResource ButtonDefault}"
                                                 Padding="10,4"
                                                 FontSize="12" />
@@ -422,11 +422,11 @@
                                     DockPanel.Dock="Left"
                                     FontSize="{DynamicResource FontSizeHint}"
                                     Foreground="{StaticResource SecondaryTextBrush}"
-                                    Text="{Binding SelectedTrendSource.DisplayName, StringFormat=源：{0}}" />
+                                    Text="{Binding SelectedTrendSource.DisplayName, Converter={StaticResource LocFormatConverter}, ConverterParameter=Dsm_SourceFormat}" />
                                 <Button
                                     DockPanel.Dock="Right"
                                     Command="{Binding BackToLiveCommand}"
-                                    Content="返回实时卡"
+                                    Content="{x:Static resources:Strings.Dsm_BackToLiveCard}"
                                     Style="{StaticResource ButtonDefault}"
                                     Padding="10,4"
                                     FontSize="12" />

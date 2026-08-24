@@ -33,7 +33,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
 
     private readonly IRecipeStore _recipeStore;
     private readonly RecipeApplier _recipeApplier;
-    private readonly KanbanDataClient _client;
+    private readonly IKanbanAdminClient _client;
     private readonly IRuntimeMode _runtimeMode;
     private readonly IDeviceRepository _deviceRepository;
     private readonly IDialogService _dialog;
@@ -45,7 +45,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
     public RecipeManagerViewModel(
         IRecipeStore recipeStore,
         RecipeApplier recipeApplier,
-        KanbanDataClient client,
+        IKanbanAdminClient client,
         IRuntimeMode runtimeMode,
         IDeviceRepository deviceRepository,
         IDialogService dialog,

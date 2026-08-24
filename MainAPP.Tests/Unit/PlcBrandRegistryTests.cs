@@ -199,7 +199,7 @@ public sealed class PlcConfigNestedOptionsTests
     [Fact]
     public void CreateSnapshot_CopiesNestedOptions()
     {
-        var config = new PlcConfig { Brand = PlcBrand.Siemens };
+        var config = new PlcConfig { Brand = PlcBrand.Siemens, ProtocolKey = " Simulated " };
         config.Siemens.Model = "S400";
         config.ModbusTcp.UnitId = 5;
 
@@ -209,6 +209,19 @@ public sealed class PlcConfigNestedOptionsTests
 
         Assert.Equal("S400", snapshot.Siemens.Model);
         Assert.Equal(5, snapshot.ModbusTcp.UnitId);
+        Assert.Equal("simulated", snapshot.ProtocolKey);
+    }
+
+    [Fact]
+    public void ProtocolKey_NormalizesAndDefaults()
+    {
+        var config = new PlcConfig { ProtocolKey = "  Simulated " };
+
+        Assert.Equal("simulated", config.ProtocolKey);
+
+        config.ProtocolKey = " ";
+
+        Assert.Equal(PlcConfig.DefaultProtocolKey, config.ProtocolKey);
     }
 
     [Fact]
@@ -226,7 +239,7 @@ public sealed class PlcConfigNestedOptionsTests
     [Fact]
     public void Serialize_SettingsJson_WritesNestedOptionsWithoutFlatDuplicates()
     {
-        var config = new PlcConfig { Brand = PlcBrand.Siemens };
+        var config = new PlcConfig { Brand = PlcBrand.Siemens, ProtocolKey = "Simulated" };
         config.Siemens.Model = "S1500";
         config.ModbusTcp.UnitId = 7;
         config.Omron.ReadSplits = 200;
@@ -234,6 +247,7 @@ public sealed class PlcConfigNestedOptionsTests
         var json = JsonSerializer.Serialize(config, AppSettings.JsonOptions);
 
         Assert.Contains("\"Siemens\"", json);
+        Assert.Contains("\"ProtocolKey\": \"simulated\"", json);
         Assert.Contains("\"ModbusTcp\"", json);
         Assert.Contains("\"Omron\"", json);
         Assert.DoesNotContain("\"SiemensModel\"", json);
@@ -246,6 +260,7 @@ public sealed class PlcConfigNestedOptionsTests
     {
         var json = """
             {
+                            "ProtocolKey": "SIMULATED",
               "Brand": 2,
               "IpAddress": "10.0.0.8",
               "Port": 102,
@@ -259,6 +274,7 @@ public sealed class PlcConfigNestedOptionsTests
         var config = JsonSerializer.Deserialize<PlcConfig>(json, AppSettings.JsonOptions)!;
 
         Assert.Equal(PlcBrand.Siemens, config.Brand);
+        Assert.Equal("simulated", config.ProtocolKey);
         Assert.Equal("S1500", config.Siemens.Model);
         Assert.Equal(2, config.Siemens.Slot);
         Assert.Equal(40, config.Siemens.BatchInt32Limit);
@@ -297,6 +313,7 @@ public sealed class PlcConfigNestedOptionsTests
         var config = JsonSerializer.Deserialize<PlcConfig>(json, AppSettings.JsonOptions)!;
 
         Assert.Equal("S1200", config.Siemens.Model);
+        Assert.Equal(PlcConfig.DefaultProtocolKey, config.ProtocolKey);
         Assert.Equal(9, config.ModbusTcp.UnitId);
         Assert.Equal(4, config.ModbusTcp.RegisterFunction);
         Assert.False(config.ModbusTcp.AddressStartWithZero);

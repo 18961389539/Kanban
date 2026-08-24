@@ -19,6 +19,10 @@ public interface IKanbanMonitoringClient
     Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default);
     Task SubscribeMetaAsync(CancellationToken ct = default);
     Task<string> GetServerVersionAsync(CancellationToken ct = default);
+    Task<int> GetLanguageAsync(CancellationToken ct = default);
+    Task<string> GetLanguageCodeAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<LocalizationOverrideDto>> GetLocalizationOverridesAsync(CancellationToken ct = default);
+    void OnLocalizationChanged(Action<LocalizationChangedDto> handler);
 
     /// <summary>工单列表（只读管理页数据源）。</summary>
     Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync(CancellationToken ct = default);
@@ -28,19 +32,25 @@ public interface IKanbanMonitoringClient
 
     /// <summary>审计日志分页查询（只读审计页数据源）。</summary>
     Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>配方列表（只读数据源）。</summary>
+    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default);
 }
 
 /// <summary>
-/// 客户端管理域接口（Collector 单写者的管理写入口）：由 <see cref="KanbanDataClient"/> 实现。
+/// 客户端管理域接口（Collector 单写者的管理写入口）：由 <see cref="KanbanAdminClient"/> 实现。
 /// 与契约 <c>IKanbanAdminServer</c> 对应。
 /// </summary>
 public interface IKanbanAdminClient
 {
+    IDisposable OnRecipeApplyProgress(Action<RecipeApplyProgressDto> handler);
+    Task RecordAuditAsync(AuditLogRecordRequest request, CancellationToken ct = default);
     Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default);
+    Task<bool> HasDeviceBackupAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<DeviceConfigDto>?> RollbackDevicesAsync(CancellationToken ct = default);
     Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default);
     Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default);
     Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default);
     Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default);
-    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default);
     Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default);
 }

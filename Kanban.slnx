@@ -16,7 +16,6 @@
   <Project Path="MainAPP.Benchmarks/MainAPP.Benchmarks.csproj" />
   <Project Path="MainAPP.UIAutomation/MainAPP.UIAutomation.csproj" />
   <Project Path="LicenseManager.App/LicenseManager.App.csproj" />
-  <Project Path="LicenseIssuer.CLI/LicenseIssuer.CLI.csproj" />
   <Project Path="LicenseIssuer.Wpf/LicenseIssuer.Wpf.csproj" />
   <Project Path="PlcSimulator/PlcSimulator.csproj" />
   <Project Path="PlcSimulator.Tests/PlcSimulator.Tests.csproj" />

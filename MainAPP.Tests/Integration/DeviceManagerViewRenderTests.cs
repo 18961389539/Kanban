@@ -63,9 +63,10 @@ public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
         var alarmCsvIO = new AlarmCsvIOService(dialog);
         var defectCsvIO = new DefectCsvIOService(dialog);
         var counterAlarmCsvIO = new CounterAlarmCsvIOService(dialog);
+        var dataSourceCsvIO = new DataSourceCsvIOService(dialog);
         var workOrderRepo = new WorkOrderRepository(db, TestMapper.Instance);
         var workOrderService = new WorkOrderService(workOrderRepo, repo, dialog, history);
-        var vm = new DeviceManagerViewModel(repo, dacq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
+        var vm = new DeviceManagerViewModel(repo, dacq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, dataSourceCsvIO, workOrderRepo, workOrderService, new UserSession());
         return (repo, dacq, dialog, vm);
     }
 

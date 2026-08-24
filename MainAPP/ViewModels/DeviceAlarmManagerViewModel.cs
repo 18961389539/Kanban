@@ -1,4 +1,5 @@
 using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,6 +31,8 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
     [ObservableProperty]
     private bool _isBusyAlarmsCsv;
 
+    protected override bool IsCsvBusy => IsBusyAlarmsCsv;
+
     public DeviceAlarmManagerViewModel(
         IDialogService dialog,
         AlarmCsvIOService alarmCsvIO,
@@ -59,9 +62,26 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
         ImportAlarmsCsvCommand.NotifyCanExecuteChanged();
     }
 
+    protected override void OnHostPermissionChanged()
+    {
+        AddAlarmCommand.NotifyCanExecuteChanged();
+        RemoveAlarmCommand.NotifyCanExecuteChanged();
+        ExportAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportAlarmsCsvCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsBusyAlarmsCsvChanged(bool value)
+    {
+        AddAlarmCommand.NotifyCanExecuteChanged();
+        RemoveAlarmCommand.NotifyCanExecuteChanged();
+        ExportAlarmsCsvCommand.NotifyCanExecuteChanged();
+        ImportAlarmsCsvCommand.NotifyCanExecuteChanged();
+    }
+
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void AddAlarm()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
         // 报警名在所属设备内唯一
         var baseName = string.Format(Strings.F127, SelectedDevice.Alarms.Count + 1);
@@ -76,6 +96,7 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveAlarm(Alarm alarm)
     {
+        if (!CanEditSelected()) return;
         if (alarm == null) return;
         var confirm = _dialog.Show(
             string.Format(Strings.F501, alarm.Name),
@@ -97,13 +118,22 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ExportAlarmsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyAlarmsCsv) return;
         IsBusyAlarmsCsv = true;
         ExportAlarmsCsvCommand.NotifyCanExecuteChanged();
         try
         {
             var device = SelectedDevice;
-            await Task.Run(() => _alarmCsvIO.ExportAlarms(device)).ConfigureAwait(true);
+            var path = _alarmCsvIO.PickExportPath(device);
+            if (string.IsNullOrEmpty(path)) return;
+
+            var count = await Task.Run(() => _alarmCsvIO.ExportAlarmsToPath(device, path)).ConfigureAwait(true);
+            _dialog.NotifySuccess(string.Format(Strings.F107, count, Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
         finally
         {
@@ -121,6 +151,7 @@ public partial class DeviceAlarmManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ImportAlarmsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyAlarmsCsv) return;
         IsBusyAlarmsCsv = true;
         ExportAlarmsCsvCommand.NotifyCanExecuteChanged();

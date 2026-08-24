@@ -46,7 +46,7 @@ public class HistoryQueryHandlerTests
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev1", Page = 1, PageSize = 500 },
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev2", Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(2, response.Results.Count);
         Assert.Equal("dev1", Assert.Single(response.Results[0].ProductionLogs).DeviceId);
@@ -69,7 +69,7 @@ public class HistoryQueryHandlerTests
             [
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev1", Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         var result = Assert.Single(response.Results);
         Assert.Equal(HistoryErrorCode.None, result.ErrorCode);
@@ -96,7 +96,7 @@ public class HistoryQueryHandlerTests
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev1", Page = 1, PageSize = 500 },
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev2", Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         // 失败子查询隔离：dev1 正常，dev2 该项 ErrorCode=QueryFailed
         Assert.Equal(HistoryErrorCode.None, response.Results[0].ErrorCode);
@@ -107,7 +107,9 @@ public class HistoryQueryHandlerTests
     [Fact]
     public async Task QueryBatchAsync_EmptyRequest_ReturnsEmptyResults()
     {
-        var response = await _handler.QueryBatchAsync(new BatchHistoryQueryRequest { Queries = [] });
+        var response = await _handler.QueryBatchAsync(
+            new BatchHistoryQueryRequest { Queries = [] },
+            TestContext.Current.CancellationToken);
 
         Assert.Empty(response.Results);
     }
@@ -124,7 +126,7 @@ public class HistoryQueryHandlerTests
             [
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, WorkOrderId = 42, Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         var result = Assert.Single(response.Results);
         Assert.Equal(HistoryErrorCode.None, result.ErrorCode);
@@ -151,7 +153,9 @@ public class HistoryQueryHandlerTests
             })
             .ToList();
 
-        var response = await _handler.QueryBatchAsync(new BatchHistoryQueryRequest { Queries = queries });
+        var response = await _handler.QueryBatchAsync(
+            new BatchHistoryQueryRequest { Queries = queries },
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(32, response.Results.Count); // 截断到上限
         _executor.Received(32).QueryProductionLogsStrict(from, to, Arg.Any<string>(), null);
@@ -170,7 +174,7 @@ public class HistoryQueryHandlerTests
             [
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, DeviceId = "dev1", Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HistoryErrorCode.None, Assert.Single(response.Results).ErrorCode);
         // From ≈ now-24h（±1min 容差），To ≈ now
@@ -196,7 +200,7 @@ public class HistoryQueryHandlerTests
             [
                 new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = from, To = to, DeviceId = "dev1", Page = 1, PageSize = 500 },
             ],
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(HistoryErrorCode.None, Assert.Single(response.Results).ErrorCode);
         _executor.Received(1).QueryProductionLogsStrict(

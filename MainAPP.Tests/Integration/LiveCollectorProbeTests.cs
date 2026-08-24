@@ -44,7 +44,7 @@ public class LiveCollectorProbeTests
     {
         RequireCollector();
         var client = new KanbanDataClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         try
         {
             var from = DateTime.Now.AddDays(-1);
@@ -57,7 +57,7 @@ public class LiveCollectorProbeTests
                 Page = 1,
                 PageSize = 500,
             };
-            var response = await client.QueryHistoryAsync(request);
+            var response = await client.QueryHistoryAsync(request, TestContext.Current.CancellationToken);
             Assert.Equal(HistoryErrorCode.None, response.ErrorCode);
             Assert.True(response.ProductionLogs.Count > 0, $"单查 0 条, Total={response.Total}, Error={response.Error}");
         }
@@ -72,7 +72,7 @@ public class LiveCollectorProbeTests
     {
         RequireCollector();
         var client = new KanbanDataClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         try
         {
             var from = DateTime.Now.AddDays(-1);
@@ -86,7 +86,7 @@ public class LiveCollectorProbeTests
                     new HistoryQueryRequest { QueryType = HistoryQueryType.StatusTransition, From = from, To = to, DeviceId = "device-001", Page = 1, PageSize = 500 },
                 ],
             };
-            var response = await client.QueryHistoryBatchAsync(request);
+            var response = await client.QueryHistoryBatchAsync(request, TestContext.Current.CancellationToken);
             Assert.Equal(3, response.Results.Count);
             Assert.True(response.Results.All(r => r.ErrorCode == HistoryErrorCode.None),
                 $"批量子查询失败: {string.Join(" | ", response.Results.Select(r => r.Error))}");
@@ -103,7 +103,7 @@ public class LiveCollectorProbeTests
                     new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog, From = weekFrom, To = to, DeviceId = "device-003", Page = 1, PageSize = 500 },
                 ],
             };
-            var weekResponse = await client.QueryHistoryBatchAsync(weekRequest);
+            var weekResponse = await client.QueryHistoryBatchAsync(weekRequest, TestContext.Current.CancellationToken);
             Assert.True(weekResponse.Results.All(r => r.ErrorCode == HistoryErrorCode.None),
                 $"7 天批量失败: {string.Join(" | ", weekResponse.Results.Select(r => r.Error))}");
             Assert.True(weekResponse.Results.Sum(r => r.ProductionLogs.Count) > 1000,
@@ -121,20 +121,18 @@ public class LiveCollectorProbeTests
     {
         RequireCollector(); // Collector 不可达 → Skip（探针需真实 Collector 运行在 5129）
         var dataDir = RequireDataDir(); // 无 KANBAN_DATA_DIR → Skip（探针需明确数据目录定位审计库）
-        var client = new KanbanDataClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
-        await client.ConnectAsync();
+        var client = new KanbanAdminClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         try
         {
-            var before = await client.GetServerVersionAsync();
-            Assert.False(string.IsNullOrEmpty(before), "GetServerVersion 失败");
             await client.SaveCollectorSettingsAsync(new CollectorSettingsDto
             {
                 PollingIntervalMs = 200,
                 HistoryWriteIntervalScans = 25,
                 PlcBrand = 1, // Mitsubishi（demo 当前品牌）
-            });
+            }, TestContext.Current.CancellationToken);
             // 等待异步审计 flush 落库后直接查库验证
-            await Task.Delay(2000);
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
             var auditCount = CountAuditEntries(dataDir, "CollectorSettings.Update");
             Assert.True(auditCount > 0, $"审计表无 CollectorSettings.Update 记录（审计路由未生效）");
         }
@@ -150,8 +148,8 @@ public class LiveCollectorProbeTests
     {
         RequireCollector(); // Collector 不可达 → Skip（探针需真实 Collector 运行在 5129）
         var dataDir = RequireDataDir(); // 无 KANBAN_DATA_DIR → Skip（探针需明确数据目录定位审计库）
-        var client = new KanbanDataClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
-        await client.ConnectAsync();
+        var client = new KanbanAdminClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         try
         {
             var before = CountAuditEntries(dataDir, "CollectorSettings.Update", succeeded: false);
@@ -161,8 +159,8 @@ public class LiveCollectorProbeTests
                     PollingIntervalMs = 200,
                     HistoryWriteIntervalScans = 25,
                     PlcBrand = 0, // 非法品牌 → 服务端校验抛异常
-                }));
-            await Task.Delay(2000);
+                }, TestContext.Current.CancellationToken));
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
             var failedCount = CountAuditEntries(dataDir, "CollectorSettings.Update", succeeded: false);
             Assert.True(failedCount > before,
                 $"失败调用未落 Succeeded=0 审计（失败路径缺失）: before={before} after={failedCount}");
@@ -201,10 +199,11 @@ public class LiveCollectorProbeTests
         RequireCollector();
         // 模拟 MainAPP 场景：同一连接先订阅（长驻）再查询——若查询挂起则复现问题
         var client = new KanbanDataClient(HubUrl, NullLogger<KanbanDataClient>.Instance);
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         try
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(15));
             client.OnSnapshot(_ => { });
             var subscribeTask = Task.Run(async () =>
             {
@@ -212,7 +211,7 @@ public class LiveCollectorProbeTests
             }, cts.Token);
 
             // 等待订阅建立
-            await Task.Delay(1000);
+            await Task.Delay(1000, cts.Token);
 
             var from = DateTime.Now.AddDays(-1);
             var request = new BatchHistoryQueryRequest

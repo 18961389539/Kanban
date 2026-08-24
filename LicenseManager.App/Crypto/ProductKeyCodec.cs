@@ -26,6 +26,7 @@ namespace LicenseManager.Crypto;
 /// </remarks>
 public static class ProductKeyCodec
 {
+    private const int MachineCodeHashSize = 5;
     private const byte EcdsaVersion = 0x01;
     private const int EcdsaPayloadSize = EmbeddedKey.PayloadSize + 1;
     private const int EcdsaTotalSize = EcdsaPayloadSize + LicenseSigningKey.SignatureSize;
@@ -57,18 +58,7 @@ public static class ProductKeyCodec
     /// <returns>旧版 HMAC 格式化激活码。</returns>
     public static string Encode(byte[] machineCodeHash, DateTime? expireDate)
     {
-        if (machineCodeHash == null || machineCodeHash.Length != 5)
-            throw new ArgumentException("机器码哈希必须为 5 字节", nameof(machineCodeHash));
-
-        var payload = new byte[EmbeddedKey.PayloadSize];
-        Buffer.BlockCopy(machineCodeHash, 0, payload, 0, 5);
-
-        // 向上取整到天：确保"有效至某日当天结束"不会被截断提前失效（时区偏移导致的分数天被抹掉是旧 bug）。
-        var daysSinceEpoch = expireDate.HasValue
-            ? (ushort)Math.Clamp(Math.Ceiling((expireDate.Value.ToUniversalTime() - EpochUtc).TotalDays), 0, PermanentMarker - 1)
-            : PermanentMarker;
-        payload[5] = (byte)(daysSinceEpoch >> 8);
-        payload[6] = (byte)(daysSinceEpoch & 0xFF);
+        var payload = CreatePayload(machineCodeHash, expireDate);
 
         var tag = HmacValidator.ComputeTag(payload);
         var full = new byte[EmbeddedKey.TotalSize];
@@ -138,26 +128,7 @@ public static class ProductKeyCodec
         if (!HmacValidator.ConstantTimeEquals(tag, expectedTag))
             return null;
 
-        // 解析机器码哈希
-        var machineHashStr = Base32.Encode(payload[..5]);
-
-        // 解析过期日期
-        var daysSinceEpoch = (ushort)((payload[5] << 8) | payload[6]);
-        DateTime? expireDate = daysSinceEpoch == PermanentMarker
-            ? null
-            : EpochUtc.AddDays(daysSinceEpoch);
-
-        // 机器码绑定校验
-        if (!string.Equals(machineHashStr, currentMachineCodeHash, StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        return new LicenseInfo
-        {
-            MachineCodeHash = machineHashStr,
-            ExpireDate = expireDate,
-            ActivatedAt = DateTime.UtcNow,
-            ProductKey = Format(raw),
-        };
+        return DecodePayload(payload, raw, currentMachineCodeHash);
     }
 
     private static LicenseInfo? TryDecodeSigned(
@@ -211,15 +182,45 @@ public static class ProductKeyCodec
 
     private static byte[] CreatePayload(byte[] machineCodeHash, DateTime? expireDate)
     {
-        var payload = new byte[EmbeddedKey.PayloadSize];
-        Buffer.BlockCopy(machineCodeHash, 0, payload, 0, 5);
+        if (machineCodeHash == null || machineCodeHash.Length != MachineCodeHashSize)
+            throw new ArgumentException($"机器码哈希必须为 {MachineCodeHashSize} 字节", nameof(machineCodeHash));
 
+        var payload = new byte[EmbeddedKey.PayloadSize];
+        Buffer.BlockCopy(machineCodeHash, 0, payload, 0, MachineCodeHashSize);
+
+        // 向上取整到天，确保有效至某日当天结束不会因时区偏移提前失效。
         var daysSinceEpoch = expireDate.HasValue
             ? (ushort)Math.Clamp(Math.Ceiling((expireDate.Value.ToUniversalTime() - EpochUtc).TotalDays), 0, PermanentMarker - 1)
             : PermanentMarker;
         payload[5] = (byte)(daysSinceEpoch >> 8);
         payload[6] = (byte)(daysSinceEpoch & 0xFF);
         return payload;
+    }
+
+    /// <summary>验证并解码 8 字符机器码。</summary>
+    public static bool TryDecodeMachineCode(string input, out byte[] machineCodeHash)
+    {
+        var raw = RemoveSeparators(input);
+        if (raw.Length == 8 && Base32.TryDecode(raw, out var decoded) && decoded.Length == MachineCodeHashSize)
+        {
+            machineCodeHash = decoded;
+            return true;
+        }
+
+        machineCodeHash = Array.Empty<byte>();
+        return false;
+    }
+
+    /// <summary>规范化激活码输入，供输入框显示使用。</summary>
+    public static string NormalizeForDisplay(string? input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+
+        var raw = RemoveSeparators(input);
+        if (raw.Length > SignedRawLength)
+            raw = raw[..SignedRawLength];
+
+        return Format(raw);
     }
 
     private static string FormatWithCheckDigit(string encoded)
@@ -234,14 +235,19 @@ public static class ProductKeyCodec
         raw = string.Empty;
         if (string.IsNullOrEmpty(input)) return false;
 
+        raw = RemoveSeparators(input);
+        return raw.Length is EmbeddedKey.FormattedLength or EcdsaRawLength;
+    }
+
+    private static string RemoveSeparators(string input)
+    {
         var sb = new StringBuilder(input.Length);
         foreach (var c in input)
         {
-            if (c == '-' || c == ' ' || c == '\t' || c == '\r' || c == '\n') continue;
+            if (c is '-' or ' ' or '\t' or '\r' or '\n') continue;
             sb.Append(char.ToUpperInvariant(c));
         }
-        raw = sb.ToString();
-        return raw.Length is EmbeddedKey.FormattedLength or EcdsaRawLength;
+        return sb.ToString();
     }
 
     /// <summary>格式化为 5 字符一组（XXXXX-XXXXX-...）。</summary>

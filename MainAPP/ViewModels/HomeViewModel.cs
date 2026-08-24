@@ -39,6 +39,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly AppSettings _appSettings;
     private readonly IRuntimeMode _runtimeMode;
     private readonly IDeviceSelectionService _selection;
+    private readonly IPlcDataAcquisitionService? _plcService;
+    private readonly RemoteRuntimeSink? _remoteRuntimeSink;
     private readonly IWorkOrderRepository? _workOrderRepo;
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
@@ -62,15 +64,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>
     /// 当前工单的「工单内 OK 产量」缓存（按工单口径，非会话累计）。
-    /// 由 RefreshWorkOrderSummary 经 IWorkOrderService.GetProductionSummary 后台查询后回填。
+    /// 由 RefreshWorkOrderSummary 经可取消的工单产量查询后台回填。
     /// </summary>
     private int _currentWorkOrderOk;
 
     /// <summary>工单产量聚合查询节流：上次查询的工单 Id 与时刻（同一 Running 工单 2s 内复用）。</summary>
     private int? _lastSummaryOrderId;
     private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private int _workOrderSummaryRunning;
+    private int _workOrderSummaryRefreshRequested;
+    private readonly object _workOrderSummaryGate = new();
     private CancellationTokenSource? _workOrderSummaryCts;
+    private readonly CancellationTokenSource _disposeCts = new();
     private static readonly TimeSpan WorkOrderSummaryThrottle = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan DataFreshnessTimeout = TimeSpan.FromSeconds(5);
     /// <summary>
     /// 主页实时故障列表最大显示条数。主页为摘要视图，空间有限，故小于报警中心的上限
     /// （<see cref="AlarmCenterViewModel"/> 的 MaxActiveAlarms=200）。
@@ -141,6 +148,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string WorkOrderProgressPct => CurrentWorkOrder != null
         ? $"{WorkOrderProgressRatio * 100:F0}%"
         : "";
+
+    /// <summary>主页工单卡片显示的工单内 OK 产量，与顶部工单进度使用同一口径。</summary>
+    public string WorkOrderOkProductionDisplay => CanDisplayKpiData && CurrentWorkOrder != null
+        ? $"{_currentWorkOrderOk:N0}"
+        : "—";
 
     /// <summary>工单设置数量（计划产量）。无工单时返回 0。</summary>
     public int WorkOrderTargetQuantity => CurrentWorkOrder?.TargetQuantity ?? 0;
@@ -226,12 +238,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
     [NotifyPropertyChangedFor(nameof(NgRate))]
+    [NotifyPropertyChangedFor(nameof(NgRateDisplay))]
     [NotifyPropertyChangedFor(nameof(ShiftOutputDiff))]
     [NotifyPropertyChangedFor(nameof(ShiftOutputDiffText))]
     private int _totalOkProduction;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
     [NotifyPropertyChangedFor(nameof(NgRate))]
+    [NotifyPropertyChangedFor(nameof(NgRateDisplay))]
     [NotifyPropertyChangedFor(nameof(ShiftNgDiff))]
     [NotifyPropertyChangedFor(nameof(ShiftNgDiffText))]
     private int _totalNgProduction;
@@ -354,6 +368,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string TotalOutputDisplay => CanDisplayKpiData ? $"{TotalOutput:N0}" : "—";
     public string TotalOkProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F030, TotalOkProduction) : "—";
     public string TotalNgProductionDisplay => CanDisplayKpiData ? string.Format(Strings.F028, TotalNgProduction) : "—";
+    public string NgRateDisplay => CanDisplayKpiData ? $"{NgRate:P2}" : "—";
     public string ShiftOkProductionDisplay => CanDisplayKpiData ? $"{TotalOkProduction:N0}" : "—";
     public string ShiftNgProductionDisplay => CanDisplayKpiData ? $"{TotalNgProduction:N0}" : "—";
     public string TargetCycleDisplay => TargetCycleSec > 0 ? $"{TargetCycleSec:F2}s" : "—";
@@ -419,12 +434,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
         _appSettings = appSettings;
         _selection = selection;
+        _plcService = plcService;
+        _remoteRuntimeSink = remoteRuntimeSink;
         _workOrderRepo = workOrderRepo;
         _dialog = dialog;
         _workOrderService = workOrderService;
@@ -555,10 +572,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     partial void OnCurrentWorkOrderChanged(WorkOrder? value)
     {
-        // 工单变化：取消在途产量查询，重置节流与进度，立即查询新工单
-        _workOrderSummaryCts?.Cancel();
-        _workOrderSummaryCts?.Dispose();
-        _workOrderSummaryCts = null;
+        // 工单变化时取消旧查询，避免 Remote 模式继续占用 SignalR 请求；
+        // 旧测试替身没有异步能力时仍由单飞标志保证不会并发执行。
+        if (Volatile.Read(ref _workOrderSummaryRunning) != 0)
+            Volatile.Write(ref _workOrderSummaryRefreshRequested, 1);
+        CancelWorkOrderSummaryQuery();
         _lastSummaryOrderId = null;
         _lastSummaryQueryUtc = DateTime.MinValue;
         _currentWorkOrderOk = 0;
@@ -572,7 +590,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 查询当前 Running 工单的「工单内 OK 产量」并回填进度。
     /// 走 IWorkOrderService.GetProductionSummary（按工单时间窗口差分），而非会话累计 TotalOkProduction，
     /// 避免连续多个工单时第二个工单一开工进度即满/误弹达标。
-    /// 后台查询 + 2s 节流（Remote 模式 GetProductionSummary 是一次 SignalR 往返，不能每 tick 同步查）。
+    /// 后台查询 + 2s 节流（Remote 模式通过可取消异步接口执行 SignalR 请求）。
     /// </summary>
     private void RefreshWorkOrderSummary()
     {
@@ -590,28 +608,58 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (_lastSummaryOrderId == order.Id && DateTime.UtcNow - _lastSummaryQueryUtc < WorkOrderSummaryThrottle)
             return;
 
-        _workOrderSummaryCts?.Cancel();
-        _workOrderSummaryCts?.Dispose();
-        var cts = _workOrderSummaryCts = new CancellationTokenSource();
-        var token = cts.Token;
+        if (Interlocked.CompareExchange(ref _workOrderSummaryRunning, 1, 0) != 0)
+        {
+            // 单飞：同步/Remote 查询本身暂不支持取消，禁止同一主页并发堆积多个查询。
+            Volatile.Write(ref _workOrderSummaryRefreshRequested, 1);
+            return;
+        }
+
         _lastSummaryOrderId = order.Id;
         _lastSummaryQueryUtc = DateTime.UtcNow;
+        var queryCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
+        lock (_workOrderSummaryGate)
+            _workOrderSummaryCts = queryCts;
+        var cancellationToken = queryCts.Token;
 
-        Task.Run(() =>
+        Task.Run(async () =>
         {
-            int ok;
             try
             {
-                ok = _workOrderService.GetProductionSummary(order).OkCount;
+                var ok = _workOrderService is IAsyncWorkOrderProductionSummary asyncService
+                    ? (await asyncService.GetProductionSummaryAsync(order, cancellationToken).ConfigureAwait(false)).OkCount
+                    : _workOrderService.GetProductionSummary(order).OkCount;
+                if (!cancellationToken.IsCancellationRequested)
+                    UiDispatcher.Dispatch(() => ApplyWorkOrderSummary(order, ok));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // 工单切换或页面销毁属于正常取消，不记录为查询故障。
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
-                ok = 0; // 降级显示 0
             }
-            if (token.IsCancellationRequested) return;
-            UiDispatcher.Dispatch(() => ApplyWorkOrderSummary(order, ok));
-        }, token).Forget();
+            finally
+            {
+                lock (_workOrderSummaryGate)
+                {
+                    if (ReferenceEquals(_workOrderSummaryCts, queryCts))
+                        _workOrderSummaryCts = null;
+                    queryCts.Dispose();
+                }
+                Interlocked.Exchange(ref _workOrderSummaryRunning, 0);
+                if (Interlocked.Exchange(ref _workOrderSummaryRefreshRequested, 0) != 0
+                    && !_disposeCts.IsCancellationRequested)
+                    UiDispatcher.Dispatch(RefreshWorkOrderSummary);
+            }
+        }).Forget();
+    }
+
+    private void CancelWorkOrderSummaryQuery()
+    {
+        lock (_workOrderSummaryGate)
+            _workOrderSummaryCts?.Cancel();
     }
 
     private void ApplyWorkOrderSummary(WorkOrder order, int okCount)
@@ -622,11 +670,18 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         NotifyWorkOrderProgress();
     }
 
+    internal void ApplyWorkOrderSummaryForTest(WorkOrder order, int okCount)
+        => ApplyWorkOrderSummary(order, okCount);
+
+    internal void RefreshWorkOrderSummaryForTest()
+        => RefreshWorkOrderSummary();
+
     private void NotifyWorkOrderProgress()
     {
         OnPropertyChanged(nameof(WorkOrderProgressText));
         OnPropertyChanged(nameof(WorkOrderProgressRatio));
         OnPropertyChanged(nameof(WorkOrderProgressPct));
+        OnPropertyChanged(nameof(WorkOrderOkProductionDisplay));
     }
 
     partial void OnSelectedDeviceIdChanged(string? value)
@@ -651,22 +706,28 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void OnConnectionManagerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(PlcConnectionManager.IsConnected))
-            RefreshDataStatus();
+            UiDispatcher.Dispatch(RefreshDataStatus);
     }
 
     private void RefreshDataStatus()
     {
+        var hasFreshData = HasFreshData();
         var newKind = string.IsNullOrEmpty(SelectedDeviceId)
             ? HomeDataStatus.NoDevice
             : !_connectionManager.IsConnected
                 ? HomeDataStatus.Disconnected
-                : CurrentRuntime == null ? HomeDataStatus.NoData : HomeDataStatus.Live;
+                : CurrentRuntime == null || !hasFreshData ? HomeDataStatus.NoData : HomeDataStatus.Live;
 
         // 状态档位变化：通知档位文本 + 全部显示（CanDisplayKpiData 随档位翻转）
         if (newKind != _lastDataStatusKind)
         {
             _lastDataStatusKind = newKind;
             DataStatusKind = newKind;
+            if (newKind != HomeDataStatus.Live)
+            {
+                CurrentWorkOrder = null;
+                ClearLiveData();
+            }
             NotifyAllDisplays();
             _lastDisplaySignature = null; // 强制下次签名重算
             return;
@@ -687,10 +748,30 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         hash.Add(ShiftNgProductionDisplay);
         hash.Add(TargetCycleDisplay);
         hash.Add(ActualCycleDisplay);
+        hash.Add(WorkOrderOkProductionDisplay);
         var signature = hash.ToHashCode();
         if (signature == _lastDisplaySignature) return;
         _lastDisplaySignature = signature;
         NotifyValueDisplays();
+    }
+
+    private bool HasFreshData()
+    {
+        if (_runtimeMode.IsRemote)
+        {
+            var receivedAt = _remoteRuntimeSink?.GetLastSnapshotReceivedAt(SelectedDeviceId ?? string.Empty) ?? default;
+            return receivedAt != default && DateTime.Now - receivedAt <= DataFreshnessTimeout;
+        }
+
+        // 纯单元测试可不注入采集服务，此时用已存在的 Runtime 保持预览语义；
+        // 生产路径由采集诊断的最近成功时间判定，避免连接存活但数据已停滞时继续显示 Live。
+        if (_plcService is null) return CurrentRuntime is not null;
+        var diagnostics = _plcService.GetDiagnosticsSnapshot();
+        return diagnostics.LastSuccessfulAt is { } lastSuccessful
+            && DateTime.Now - lastSuccessful <= DataFreshnessTimeout
+            && (diagnostics.ConfiguredDevices == 0
+                || (SelectedDeviceId is { } selectedId
+                    && diagnostics.LastSuccessfulDeviceIds.Contains(selectedId)));
     }
 
     private HomeDataStatus? _lastDataStatusKind;
@@ -713,17 +794,36 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(TotalOutputDisplay));
         OnPropertyChanged(nameof(TotalOkProductionDisplay));
         OnPropertyChanged(nameof(TotalNgProductionDisplay));
+        OnPropertyChanged(nameof(NgRateDisplay));
         OnPropertyChanged(nameof(ShiftOkProductionDisplay));
         OnPropertyChanged(nameof(ShiftNgProductionDisplay));
         OnPropertyChanged(nameof(TargetCycleDisplay));
         OnPropertyChanged(nameof(ActualCycleDisplay));
+        OnPropertyChanged(nameof(WorkOrderOkProductionDisplay));
     }
 
     private void SyncRuntime()
     {
-        if (string.IsNullOrEmpty(SelectedDeviceId)) return;
+        if (string.IsNullOrEmpty(SelectedDeviceId))
+        {
+            RefreshDataStatus();
+            return;
+        }
         var deviceId = SelectedDeviceId!;
-        if (!_deviceRepository.RuntimeMap.TryGetValue(deviceId, out var rt)) return;
+        if (!_deviceRepository.RuntimeMap.TryGetValue(deviceId, out var rt))
+        {
+            CurrentRuntime = null;
+            ClearLiveData();
+            RefreshCurrentWorkOrder();
+            RefreshActiveAlarms();
+            RefreshDataStatus();
+            return;
+        }
+        if (!HasFreshData())
+        {
+            RefreshDataStatus();
+            return;
+        }
 
         // 当前速度（平均速度）= 实际总产量(OK+NG) / 运行时长（小时）
         // - 与 OEE 性能率口径一致：性能率 = 实际产量 / (目标节拍 × RunTime)
@@ -800,7 +900,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             ? runtime
             : null;
 
-        if (CurrentRuntime != null)
+        if (CurrentRuntime != null && HasFreshData())
             ApplyRuntime(CurrentRuntime, CurrentDevice);
         else
             ClearLiveData();
@@ -818,10 +918,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _lastDefectSignature = 0;
         _lastQualityInput = default;
 
-        BuildOeeRingCharts();
-        BuildStatusPieChart();
-        BuildDefectBarChart();
-        BuildQualityPieChart();
+        if (CurrentRuntime != null && HasFreshData())
+        {
+            BuildOeeRingCharts();
+            BuildStatusPieChart();
+            BuildDefectBarChart();
+            BuildQualityPieChart();
+        }
         RefreshActiveAlarms();
         RefreshDataStatus();
     }
@@ -957,12 +1060,17 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
         OeeFormulaText = ""; AvailabilityFormulaText = "";
         PerformanceFormulaText = ""; QualityFormulaText = "";
-        // 图表始终渲染：无数据时构建灰色占位图，与"始终显示图表"策略一致
+        ActiveAlarms.Clear();
+        HasHighLevelAlarm = false;
+        // 断线/无数据时不保留旧图表，交给各卡片的空状态显示，避免旧数据继续误导。
         _lastOeeInput = default; _lastStatusInput = default; _lastDefectSignature = 0; _lastQualityInput = default;
-        BuildOeeRingCharts();
-        BuildStatusPieChart();
-        BuildQualityPieChart();
-        // 缺陷图表无占位语义，仍置 null（UI 显示空状态文字）
+        OeeRingChart = null;
+        AvailabilityRingChart = null;
+        PerformanceRingChart = null;
+        QualityRingChart = null;
+        StatusPieChart = null;
+        StatusColumnChart = null;
+        QualityPieChart = null;
         DefectBarChart = null;
     }
 
@@ -1020,7 +1128,15 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// </summary>
     private void RefreshActiveAlarms()
     {
-        HasHighLevelAlarm = _alarmCollector.Refresh(ActiveAlarms, _deviceSnapshot, DateTime.Now, IsAlarmMuted, MaxHomeActiveAlarms);
+        if (string.IsNullOrEmpty(SelectedDeviceId))
+        {
+            ActiveAlarms.Clear();
+            HasHighLevelAlarm = false;
+            return;
+        }
+
+        HasHighLevelAlarm = _alarmCollector.Refresh(
+            ActiveAlarms, _deviceSnapshot, DateTime.Now, IsAlarmMuted, MaxHomeActiveAlarms, SelectedDeviceId);
     }
 
     private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -1041,6 +1157,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
                 SelectedDeviceId = _deviceRepository.Devices.Count > 0 ? _deviceRepository.Devices[0].Id : null;
             else
                 SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+            RefreshActiveAlarms();
+            RefreshDataStatus();
         });
     }
 
@@ -1068,8 +1186,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public void Dispose()
     {
         _liveTimer?.Stop();
-        _workOrderSummaryCts?.Cancel();
-        _workOrderSummaryCts?.Dispose();
+        CancelWorkOrderSummaryQuery();
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
         _lastShiftProvider.Dispose();
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _selection.PropertyChanged -= OnSelectionServiceChanged;

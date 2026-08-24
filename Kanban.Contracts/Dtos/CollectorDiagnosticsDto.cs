@@ -16,6 +16,8 @@ public sealed record CollectorDiagnosticsDto
     public long LastCycleMilliseconds { get; init; }
     public double AverageCycleMilliseconds { get; init; }
     public long MaxCycleMilliseconds { get; init; }
+    public long CycleP95Milliseconds { get; init; }
+    public long CycleP99Milliseconds { get; init; }
     public int LastSuccessfulDevices { get; init; }
     public int ConfiguredDevices { get; init; }
     public DateTime? LastSuccessfulAt { get; init; }
@@ -23,6 +25,7 @@ public sealed record CollectorDiagnosticsDto
     public int EstimatedReadOperations { get; init; }
     public int BatchPlanRebuilds { get; init; }
     public long BatchPlanBuildMilliseconds { get; init; }
+    public IReadOnlyList<CollectorReaderDiagnosticsDto> DataSourceReaderDiagnostics { get; init; } = [];
     public long DWordReadMilliseconds { get; init; }
     public long AlarmReadMilliseconds { get; init; }
     public long DefectReadMilliseconds { get; init; }
@@ -35,8 +38,27 @@ public sealed record CollectorDiagnosticsDto
     public long RecoveryFileBytes { get; init; }
     public DateTime? LastHistoryFlushAt { get; init; }
     public int HistoryFlushFailureCount { get; init; }
+    public long ProductionQueuePeakCount { get; init; }
+    public long ProductionOverflowCount { get; init; }
+    public long ProductionFlushP95Milliseconds { get; init; }
+    public long ProductionFlushP99Milliseconds { get; init; }
     public long ProductionDatabaseBytes { get; init; }
     public long ProductionWalBytes { get; init; }
+    public int PendingDataSourceCount { get; init; }
+    public long DataSourceQueuePeakCount { get; init; }
+    public long DataSourceOverflowCount { get; init; }
+    public bool DataSourceRecoveryFileExists { get; init; }
+    public long DataSourceRecoveryFileBytes { get; init; }
+    public long DataSourceRecoveryFileLines { get; init; }
+    public DateTime? LastDataSourceFlushAt { get; init; }
+    public int DataSourceFlushFailureCount { get; init; }
+    public int DataSourceTotalFlushedCount { get; init; }
+    public long DataSourceFlushP95Milliseconds { get; init; }
+    public long DataSourceFlushP99Milliseconds { get; init; }
+    public long DataSourceDatabaseBytes { get; init; }
+    public long DataSourceWalBytes { get; init; }
+    public long TotalDatabaseBytes { get; init; }
+    public long TotalWalBytes { get; init; }
 
     // ── 连接状态 ──
     public bool IsConnected { get; init; }
@@ -51,6 +73,8 @@ public sealed record CollectorDiagnosticsDto
     public int ConfiguredReadAddressCount { get; init; }
     /// <summary>设备级采集状态明细。</summary>
     public IReadOnlyList<CollectorDeviceStatusDto> DeviceStatuses { get; init; } = Array.Empty<CollectorDeviceStatusDto>();
+    /// <summary>按连接档案划分的运行状态明细（Remote 监控与 /metrics 共用同一事实源）。</summary>
+    public IReadOnlyList<CollectorProfileDiagnosticsDto> Profiles { get; init; } = Array.Empty<CollectorProfileDiagnosticsDto>();
 }
 
 /// <summary>Remote 模式下单台设备的采集状态明细。</summary>
@@ -63,4 +87,47 @@ public sealed record CollectorDeviceStatusDto
     public int NgProduction { get; init; }
     public int ConfiguredAddressCount { get; init; }
     public bool LastCycleSucceeded { get; init; }
+}
+
+/// <summary>单个 PLC 连接档案的运行诊断，不包含密码等敏感配置。</summary>
+public sealed record CollectorProfileDiagnosticsDto
+{
+    public string ProfileId { get; init; } = string.Empty;
+    public string IpAddress { get; init; } = string.Empty;
+    public int Port { get; init; }
+    public string ProtocolKey { get; init; } = string.Empty;
+    public string Brand { get; init; } = string.Empty;
+    public bool IsConnected { get; init; }
+    public string ConnectionStatus { get; init; } = string.Empty;
+    public int ConsecutiveConnectionFailures { get; init; }
+    public int TotalDisconnectCount { get; init; }
+    public DateTime? DisconnectedAt { get; init; }
+    public TimeSpan? LastDisconnectDuration { get; init; }
+    public DateTime? LastSuccessfulAcquisitionAt { get; init; }
+    public DateTime? LastAcquisitionFailureAt { get; init; }
+    public int ConsecutiveAcquisitionFailures { get; init; }
+    public int AcquisitionFailureCount { get; init; }
+    public string? LastAcquisitionFailureMessage { get; init; }
+}
+
+/// <summary>单个数据源协议 reader 的运行诊断。</summary>
+public sealed record CollectorReaderDiagnosticsDto
+{
+    public string ProtocolKey { get; init; } = string.Empty;
+    public string ReaderType { get; init; } = string.Empty;
+    public int Priority { get; init; }
+    public long ResolveCount { get; init; }
+    public long ValidationCount { get; init; }
+    public long ValidationSuccessCount { get; init; }
+    public long ValidationFailureCount { get; init; }
+    public long ReadCount { get; init; }
+    public long ReadSuccessCount { get; init; }
+    public long ReadFailureCount { get; init; }
+    public long ReadP95Milliseconds { get; init; }
+    public long ReadP99Milliseconds { get; init; }
+    public long AcknowledgementCount { get; init; }
+    public long AcknowledgementSuccessCount { get; init; }
+    public long AcknowledgementFailureCount { get; init; }
+    public long AcknowledgementP95Milliseconds { get; init; }
+    public long AcknowledgementP99Milliseconds { get; init; }
 }

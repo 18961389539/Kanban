@@ -1,5 +1,6 @@
 using AutoMapper;
 using Kanban.Collector.Core.Mapping;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests;
 
@@ -17,7 +18,9 @@ public static class TestMapper
     {
         try
         {
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
+            var config = new MapperConfiguration(
+                cfg => cfg.AddProfile<MappingProfile>(),
+                NullLoggerFactory.Instance);
             config.AssertConfigurationIsValid();
             return config.CreateMapper();
         }

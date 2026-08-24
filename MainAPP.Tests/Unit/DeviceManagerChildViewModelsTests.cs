@@ -30,6 +30,7 @@ public class DeviceManagerChildViewModelsTests
         host.SelectedDevice.Returns(selected);
         host.IsLoading.Returns(isLoading);
         host.IsPlcConnected.Returns(true);
+        host.CanManageDevices.Returns(true);
         return host;
     }
 
@@ -105,8 +106,9 @@ public class DeviceManagerChildViewModelsTests
         while (!ReferenceEquals(vm.SelectedDevice, device) && DateTime.UtcNow < deadline)
         {
             System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
-                () => { }, System.Windows.Threading.DispatcherPriority.Background);
-            await Task.Delay(10);
+                () => { }, System.Windows.Threading.DispatcherPriority.Background,
+                TestContext.Current.CancellationToken);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
         }
         Assert.Same(device, vm.SelectedDevice);
     }
@@ -223,5 +225,74 @@ public class DeviceManagerChildViewModelsTests
 
         Assert.False(vm.AddCounterAlarmCommand.CanExecute(null));
         Assert.False(vm.RemoveCounterAlarmCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task PlcCommandManager_Operator_CannotExecuteCommandsDirectly()
+    {
+        var device = new Device
+        {
+            Id = "dev-1",
+            Name = "设备1",
+            RecipeAddress = "D100",
+            RecipeValue = 42,
+            ProductionResetAddress = "D106",
+        };
+        var driver = new FakePlcDriver();
+        var handler = new DevicePlcCommandHandler(
+            driver,
+            new PlcConnectionManager(driver, new AppSettings()),
+            Substitute.For<IPlcDataAcquisitionService>(),
+            null);
+        var dialog = new FakeDialogService();
+        var host = CreateHost(device);
+        host.CanManageDevices.Returns(false);
+        var vm = new DevicePlcCommandViewModel(dialog, host, handler)
+        {
+            SelectedDevice = device,
+        };
+
+        Assert.False(vm.WriteRecipeCommand.CanExecute(null));
+        Assert.False(vm.ResetProductionCommand.CanExecute(null));
+        Assert.False(vm.ReadPlcValueCommand.CanExecute("D100"));
+
+        await vm.WriteRecipeCommand.ExecuteAsync(null);
+        await vm.ResetProductionCommand.ExecuteAsync(null);
+        await vm.ReadPlcValueCommand.ExecuteAsync("D100");
+
+        Assert.Empty(driver.WriteHistory);
+        Assert.Equal(0, driver.ReadInt32CallCount);
+        Assert.Empty(dialog.ShowCalls);
+    }
+
+    [Fact]
+    public async Task CounterAlarmManager_Operator_CannotResetCounterAlarmDirectly()
+    {
+        var device = new Device { Id = "dev-1", Name = "设备1" };
+        var alarm = new CounterAlarm { DeviceId = device.Id, Name = "计数报警", PlcAddress = "D200" };
+        device.CounterAlarms.Add(alarm);
+        var driver = new FakePlcDriver();
+        var handler = new DevicePlcCommandHandler(
+            driver,
+            new PlcConnectionManager(driver, new AppSettings()),
+            Substitute.For<IPlcDataAcquisitionService>(),
+            null);
+        var dialog = new FakeDialogService();
+        var host = CreateHost(device);
+        host.CanManageDevices.Returns(false);
+        var vm = new DeviceCounterAlarmManagerViewModel(
+            dialog,
+            handler,
+            new CounterAlarmCsvIOService(dialog),
+            host)
+        {
+            SelectedDevice = device,
+        };
+
+        Assert.False(vm.ResetCounterAlarmValueCommand.CanExecute(alarm));
+        await vm.ResetCounterAlarmValueCommand.ExecuteAsync(alarm);
+
+        Assert.Empty(driver.WriteHistory);
+        Assert.Empty(dialog.ShowCalls);
     }
 }

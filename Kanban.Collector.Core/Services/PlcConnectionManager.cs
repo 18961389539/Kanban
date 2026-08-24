@@ -52,6 +52,7 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
     private readonly IPlcDriver _driver;
     private readonly AppSettings _appSettings;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
+    private readonly string _profileId;
     private DateTime _lastConnectAttempt = DateTime.MinValue;
     private int _consecutiveFailures;
 
@@ -129,11 +130,15 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
     public PlcConnectionManager(
         IPlcDriver driver,
         AppSettings appSettings,
-        IPlcRuntimeProfileProvider? profileProvider = null)
+        IPlcRuntimeProfileProvider? profileProvider = null,
+        string? profileId = null)
     {
         _driver = driver;
         _appSettings = appSettings;
         _profileProvider = profileProvider;
+        _profileId = string.IsNullOrWhiteSpace(profileId)
+            ? ConnectionProfile.DefaultId
+            : profileId.Trim();
     }
 
     /// <summary>
@@ -246,8 +251,10 @@ public partial class PlcConnectionManager : ObservableObject, IPlcConnectionMana
             _lastConnectAttempt = DateTime.Now;
             _consecutiveFailures = Math.Max(1, _consecutiveFailures);
 
-            var ip = _appSettings.PlcConfig.IpAddress;
-            Log.Warning("PLC 断开 {Ip}（第 {N} 次，原因：{Reason}）", ip, _totalDisconnectCount, reason);
+            var config = _profileProvider?.Current.Config ?? _appSettings.PlcConfig;
+            var ip = config.IpAddress;
+            Log.Warning("PLC 连接档案 {ProfileId} 断开 {Ip}（第 {N} 次，原因：{Reason}）",
+                _profileId, ip, _totalDisconnectCount, reason);
             // 锁内仅收集事件参数，锁外触发，避免订阅者回调重入 _stateLock
             pendingEvent = new ConnectionStateChangedEventArgs
             {

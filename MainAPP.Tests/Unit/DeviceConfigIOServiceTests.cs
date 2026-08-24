@@ -22,7 +22,8 @@ namespace MainAPP.Tests.Unit;
 [Trait("Requires","None")]
 public class DeviceConfigIOServiceTests
 {
-    private static (DeviceConfigIOService service, DeviceRepository repo, FakeDialogService dialog, string tmp) NewService()
+    private static (DeviceConfigIOService service, DeviceRepository repo, FakeDialogService dialog, string tmp) NewService(
+        IRemoteDeviceConfigurationStore? remoteStore = null)
     {
         var tmp = Path.Combine(Path.GetTempPath(), "kanban_io_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tmp);
@@ -30,9 +31,9 @@ public class DeviceConfigIOServiceTests
         Environment.SetEnvironmentVariable("KANBAN_DATA_DIR", tmp);
 
         var appSettings = new AppSettings();
-        var repo = new DeviceRepository(appSettings);
+        var repo = new DeviceRepository(appSettings, remoteStore);
         var dialog = new FakeDialogService();
-        var service = new DeviceConfigIOService(repo, dialog);
+        var service = new DeviceConfigIOService(repo, dialog, remoteStore);
         return (service, repo, dialog, tmp);
     }
 
@@ -118,21 +119,19 @@ public class DeviceConfigIOServiceTests
     }
 
     [Fact]
-    public void RollbackToBackup_EmptyDeviceList_WarnsAndReturnsNull()
+    public void RollbackToBackup_EmptyDeviceList_ReplacesWithEmptyList()
     {
         var (service, repo, dialog, tmp) = NewService();
         repo.ReplaceAll(new[] { NewDevice("当前1") });
         File.WriteAllText(repo.FilePath + ".bak", "[]");
 
-        dialog.ShowResult = MessageBoxResult.Yes;
         var result = service.RollbackToBackup();
 
-        Assert.Null(result);
-        Assert.Contains(dialog.Warning, w => w.Contains("备份文件为空或无效"));
+        Assert.NotNull(result);
+        Assert.Empty(result!);
         Assert.Empty(dialog.Error);
-        Assert.Empty(dialog.Success);
-        Assert.Single(repo.Devices); // 空列表不替换
-        Assert.Equal("当前1", repo.Devices[0].Name);
+        Assert.Contains(dialog.Success, s => s.Contains("已恢复上一版本"));
+        Assert.Empty(repo.Devices);
         Directory.Delete(tmp, true);
     }
 
@@ -157,6 +156,56 @@ public class DeviceConfigIOServiceTests
         Assert.Contains(repo.Devices, d => d.Name == "备份2");
         // Runtime 同步重建
         Assert.Equal(2, repo.Runtimes.Count);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public async Task RollbackToBackupAsync_RemoteUsesCollectorHookWithoutLocalBackup()
+    {
+        var remoteStore = new FakeRemoteDeviceConfigurationStore
+        {
+            SaveHandler = _ => Task.CompletedTask,
+            RollbackHandler = () => Task.FromResult<IReadOnlyList<Device>?>(
+                new[] { NewDevice("Collector备份") }),
+            BackupHandler = () => Task.FromResult(true),
+        };
+        var (service, repo, dialog, tmp) = NewService(remoteStore);
+
+        Assert.False(service.HasBackup);
+        await service.RefreshRemoteBackupAvailabilityAsync();
+        Assert.True(service.HasBackup);
+
+        var result = await service.RollbackToBackupAsync();
+
+        Assert.NotNull(result);
+        Assert.Single(result!);
+        Assert.Equal("Collector备份", repo.Devices[0].Name);
+        Assert.True(service.IsRemote);
+        Assert.True(service.HasBackup);
+        Assert.Empty(dialog.Error);
+        Assert.Contains(dialog.Success, s => s.Contains("已恢复上一版本"));
+        Assert.False(File.Exists(repo.FilePath + ".bak"));
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public async Task HasBackup_RemoteUsesCollectorAvailabilityQuery()
+    {
+        var available = false;
+        var remoteStore = new FakeRemoteDeviceConfigurationStore
+        {
+            RollbackHandler = () => Task.FromResult<IReadOnlyList<Device>?>([]),
+            BackupHandler = () => Task.FromResult(available),
+        };
+        var (service, repo, _, tmp) = NewService(remoteStore);
+
+        Assert.False(service.HasBackup);
+        await service.RefreshRemoteBackupAvailabilityAsync();
+        Assert.False(service.HasBackup);
+
+        available = true;
+        await service.RefreshRemoteBackupAvailabilityAsync();
+        Assert.True(service.HasBackup);
         Directory.Delete(tmp, true);
     }
 
@@ -274,22 +323,23 @@ public class DeviceConfigIOServiceTests
     }
 
     [Fact]
-    public void ImportConfig_EmptyDeviceList_NotifyWarningAndReturnsNull()
+    public void ImportConfig_EmptyDeviceList_ConfirmsAndReplacesWithEmptyList()
     {
         var (service, repo, dialog, tmp) = NewService();
         repo.ReplaceAll(new[] { NewDevice("当前1") });
         var importPath = Path.Combine(tmp, "empty.json");
         File.WriteAllText(importPath, "[]");
         dialog.OpenFilePath = importPath;
+        dialog.ShowResult = MessageBoxResult.Yes;
 
         var result = service.ImportConfig(currentDeviceCount: 1);
 
-        Assert.Null(result);
-        Assert.Contains(dialog.Warning, w => w.Contains("没有设备数据"));
+        Assert.NotNull(result);
+        Assert.Empty(result!);
         Assert.Empty(dialog.Error);
-        Assert.Empty(dialog.Success);
-        Assert.Empty(dialog.ShowCalls); // 空列表不进入二次确认
-        Assert.Single(repo.Devices); // 未替换
+        Assert.Contains(dialog.Success, s => s.Contains("已导入"));
+        Assert.Contains(dialog.ShowCalls, c => c.Title == "确认导入");
+        Assert.Empty(repo.Devices);
         Directory.Delete(tmp, true);
     }
 

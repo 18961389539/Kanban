@@ -23,6 +23,7 @@ public class DatabaseProvider(AppSettings appSettings)
     private const string DefectHistoryInitialMigration = "20260816190001_InitialSchema";
     private const string AuditInitialMigration = "20260816190000_InitialSchema";
     private const string DataSourceSnapshotInitialMigration = "20260817120000_InitialSchema";
+    private const string DataSourceSnapshotLatestMigration = "20260818110000_AddValueIdentityAndTiming";
 
     private readonly AppSettings _appSettings = appSettings;
     private static readonly string[] HistoryDatabaseFiles =
@@ -88,8 +89,8 @@ public class DatabaseProvider(AppSettings appSettings)
         MigrateContext(
             CreateDataSourceSnapshotContext(),
             "DataSourceSnapshots",
-            DataSourceSnapshotInitialMigration,
-            static (_, _) => { });
+            DataSourceSnapshotLatestMigration,
+            ApplyDataSourceSnapshotLegacyPatch);
     }
 
     private void MigrateContext<TContext>(
@@ -198,6 +199,33 @@ public class DatabaseProvider(AppSettings appSettings)
         EnsureIndex(connection, transaction, "IX_AuditEntries_Operator", "AuditEntries", "Operator");
         EnsureIndex(connection, transaction, "IX_AuditEntries_Action", "AuditEntries", "Action");
         EnsureCompositeIndex(connection, transaction, "IX_AuditEntries_TargetType_TargetId", "AuditEntries", "TargetType", "TargetId");
+    }
+
+    private static void ApplyDataSourceSnapshotLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "DataType", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "FloatValue", "REAL");
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "BoolValue", "INTEGER");
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "StringValue", "TEXT");
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "ValueId", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, transaction, "DataSourceSnapshots", "PersistedAt", "TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'");
+
+        using (var update = connection.CreateCommand())
+        {
+            update.Transaction = transaction;
+            update.CommandText = "UPDATE \"DataSourceSnapshots\" SET \"PersistedAt\" = \"Timestamp\" WHERE \"PersistedAt\" = '0001-01-01 00:00:00'";
+            update.ExecuteNonQuery();
+        }
+
+        EnsureCompositeIndex(
+            connection,
+            transaction,
+            "IX_DataSourceSnapshots_DeviceId_SourceId_ValueId_Timestamp",
+            "DataSourceSnapshots",
+            "DeviceId",
+            "SourceId",
+            "ValueId",
+            "Timestamp");
     }
 
     private static bool TableExists(SqliteConnection connection, string tableName)
@@ -319,6 +347,22 @@ public class DatabaseProvider(AppSettings appSettings)
         using var index = connection.CreateCommand();
         index.Transaction = transaction;
         index.CommandText = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" (\"{column1}\", \"{column2}\")";
+        index.ExecuteNonQuery();
+    }
+
+    private static void EnsureCompositeIndex(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string indexName,
+        string tableName,
+        string column1,
+        string column2,
+        string column3,
+        string column4)
+    {
+        using var index = connection.CreateCommand();
+        index.Transaction = transaction;
+        index.CommandText = $"CREATE INDEX IF NOT EXISTS \"{indexName}\" ON \"{tableName}\" (\"{column1}\", \"{column2}\", \"{column3}\", \"{column4}\")";
         index.ExecuteNonQuery();
     }
 

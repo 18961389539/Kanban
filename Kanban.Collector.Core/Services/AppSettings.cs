@@ -33,13 +33,15 @@ public enum KanbanRunMode
 }
 
 /// <summary>
-/// 界面语言。默认中文（Zh）；切换在重启后生效（App 启动时按此值应用 CultureInfo）。
+/// 旧版界面语言枚举。新运行时使用 <see cref="AppSettings.LanguageCode"/>，
+/// 保留此枚举用于兼容旧 settings.json 和旧调用方。
 /// </summary>
 public enum AppLanguage
 {
     Zh = 0,
     En = 1,
     Ja = 2,
+    PtBr = 3,
 }
 
 /// <summary>
@@ -99,6 +101,15 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty]
     private PlcConfig _plcConfig = new();
 
+    /// <summary>命名连接档案；default 档案与 PlcConfig 保持兼容别名关系。</summary>
+    [ObservableProperty]
+    private ObservableCollection<ConnectionProfile> _connectionProfiles = new();
+
+    public AppSettings()
+    {
+        _connectionProfiles.Add(new ConnectionProfile { Config = _plcConfig });
+    }
+
     /// <summary>
     /// PLC 数据采集轮询间隔（毫秒），默认 200
     /// </summary>
@@ -146,10 +157,69 @@ public partial class AppSettings : ObservableObject
     private string _appTitle = "生产看板";
 
     /// <summary>
-    /// 界面语言（中文/英文/日文，默认中文）。App 启动时按此值应用 CultureInfo，切换后重启生效。
+    /// 旧版界面语言枚举（兼容字段）。新语言不应添加枚举值，实际语言由 LanguageCode 驱动。
     /// </summary>
     [ObservableProperty]
     private AppLanguage _language = AppLanguage.Zh;
+
+    /// <summary>
+    /// 当前界面语言文化代码，由 Localization.csv 的语言列驱动，例如 zh-CN、en-US、ja-JP、pt-BR。
+    /// 现场新增语言时只需在 CSV 增加列并重新发布，配置无需修改代码。
+    /// </summary>
+    [ObservableProperty]
+    private string _languageCode = string.Empty;
+
+    /// <summary>规范化后的有效语言代码；未知/损坏配置回退到 CSV 默认语言。</summary>
+    [JsonIgnore]
+    public string EffectiveLanguageCode
+    {
+        get
+        {
+            if (LocalizationCatalog.IsSupported(LanguageCode))
+                return LocalizationCatalog.Normalize(LanguageCode);
+            return LegacyLanguageCode(Language);
+        }
+    }
+
+    /// <summary>把旧枚举映射为兼容文化代码。</summary>
+    public static string LegacyLanguageCode(AppLanguage language) => language switch
+    {
+        AppLanguage.En => "en-US",
+        AppLanguage.Ja => "ja-JP",
+        AppLanguage.PtBr => "pt-BR",
+        _ => LocalizationCatalog.DefaultLanguage,
+    };
+
+    private static AppLanguage? TryGetLegacyLanguage(string? languageCode)
+    {
+        if (string.Equals(languageCode, "en-US", StringComparison.OrdinalIgnoreCase))
+            return AppLanguage.En;
+        if (string.Equals(languageCode, "ja-JP", StringComparison.OrdinalIgnoreCase))
+            return AppLanguage.Ja;
+        if (string.Equals(languageCode, "pt-BR", StringComparison.OrdinalIgnoreCase))
+            return AppLanguage.PtBr;
+        if (string.Equals(languageCode, LocalizationCatalog.DefaultLanguage, StringComparison.OrdinalIgnoreCase))
+            return AppLanguage.Zh;
+        return null;
+    }
+
+    /// <summary>把旧版语言代码映射为兼容枚举；新增语言无法映射时回退为中文。</summary>
+    public static AppLanguage LegacyLanguage(string? languageCode)
+        => TryGetLegacyLanguage(languageCode) ?? AppLanguage.Zh;
+
+    partial void OnLanguageChanged(AppLanguage value)
+    {
+        var legacyCode = LegacyLanguageCode(value);
+        if (!string.Equals(LanguageCode, legacyCode, StringComparison.OrdinalIgnoreCase))
+            LanguageCode = legacyCode;
+    }
+
+    partial void OnLanguageCodeChanged(string value)
+    {
+        var legacyLanguage = TryGetLegacyLanguage(value);
+        if (legacyLanguage.HasValue && Language != legacyLanguage.Value)
+            Language = legacyLanguage.Value;
+    }
 
     /// <summary>
     /// 是否启用新报警声音。默认开启；关闭后仍保留页面上的视觉提醒和报警历史。
@@ -187,6 +257,12 @@ public partial class AppSettings : ObservableObject
     /// </summary>
     [ObservableProperty]
     private KanbanRunMode _runMode = KanbanRunMode.Full;
+
+    /// <summary>
+    /// 是否已完成首次运行引导（欢迎向导）。完成后不再自动弹出，仍可通过 F1 / 帮助按钮打开手册。
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasCompletedFirstRunGuide;
 
     /// <summary>
     /// 班次配置列表（支持多班次编辑），默认白班 08:00-20:00 + 夜班 20:00-次日08:00
@@ -298,7 +374,81 @@ public partial class AppSettings : ObservableObject
     /// 采用原子写入（写临时文件 → 重命名），避免断电/强制关机时产生半截 JSON 导致配置损坏。
     /// </summary>
     public void Save()
-        => WriteSettingsFile(this);
+    {
+        SynchronizeDefaultConnectionProfile();
+        WriteSettingsFile(this);
+    }
+
+    /// <summary>按档案 ID 查找连接配置；空 ID 兼容为默认档案。</summary>
+    public ConnectionProfile? FindConnectionProfile(string? profileId)
+    {
+        EnsureConnectionProfiles();
+        var normalizedId = string.IsNullOrWhiteSpace(profileId)
+            ? ConnectionProfile.DefaultId
+            : profileId.Trim();
+        return ConnectionProfiles.FirstOrDefault(profile =>
+            string.Equals(profile.Id, normalizedId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>获取默认连接档案，确保旧配置已完成内存迁移。</summary>
+    [JsonIgnore]
+    public ConnectionProfile DefaultConnectionProfile
+        => FindConnectionProfile(ConnectionProfile.DefaultId)!;
+
+    /// <summary>
+    /// 确保连接档案集合可用并完成旧配置迁移。默认档案的 Config 绑定到兼容的 PlcConfig 实例，
+    /// 其余档案保留独立快照，供下一阶段 keyed runtime session 使用。
+    /// </summary>
+    public void EnsureConnectionProfiles()
+    {
+        ConnectionProfiles ??= new ObservableCollection<ConnectionProfile>();
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < ConnectionProfiles.Count; index++)
+        {
+            var profile = ConnectionProfiles[index]
+                ?? throw new InvalidDataException(ValidationMessages.ConnectionProfileEntryNull);
+            if (string.IsNullOrWhiteSpace(profile.Id))
+                profile.Id = index == 0 ? ConnectionProfile.DefaultId : Guid.NewGuid().ToString("N");
+            profile.Id = profile.Id.Trim();
+            if (!ids.Add(profile.Id))
+                throw new InvalidDataException(string.Format(ValidationMessages.ConnectionProfileIdDuplicate, profile.Id));
+            if (profile.Config is null)
+                profile.Config = new PlcConfig();
+            if (string.IsNullOrWhiteSpace(profile.Name)
+                && string.Equals(profile.Id, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase))
+                profile.Name = ConnectionProfile.DefaultName;
+        }
+
+        var defaultProfile = ConnectionProfiles.FirstOrDefault(profile =>
+            string.Equals(profile.Id, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase));
+        if (defaultProfile is null)
+        {
+            defaultProfile = new ConnectionProfile
+            {
+                Id = ConnectionProfile.DefaultId,
+                Name = ConnectionProfile.DefaultName,
+                Config = PlcConfig,
+            };
+            ConnectionProfiles.Insert(0, defaultProfile);
+        }
+
+        defaultProfile.Config = PlcConfig;
+    }
+
+    /// <summary>使旧 PlcConfig 别名与默认档案保持同一实例。</summary>
+    public void SynchronizeDefaultConnectionProfile()
+    {
+        EnsureConnectionProfiles();
+        DefaultConnectionProfile.Config = PlcConfig;
+    }
+
+    /// <summary>创建连接档案的独立快照，供草稿和 Remote 同步使用。</summary>
+    public ObservableCollection<ConnectionProfile> CreateConnectionProfilesSnapshot()
+    {
+        SynchronizeDefaultConnectionProfile();
+        return new ObservableCollection<ConnectionProfile>(
+            ConnectionProfiles.Select(profile => profile.CreateSnapshot()));
+    }
 
     /// <summary>
     /// 创建全字段草稿副本（采集设置同步用）：把**所有持久化字段**拷贝到新实例，
@@ -310,7 +460,7 @@ public partial class AppSettings : ObservableObject
     /// </summary>
     internal AppSettings CreateDraft()
     {
-        return new AppSettings
+        var draft = new AppSettings
         {
             SchemaVersion = SchemaVersion,
             ConfigDirectory = ConfigDirectory,
@@ -324,16 +474,20 @@ public partial class AppSettings : ObservableObject
             IsDarkTheme = IsDarkTheme,
             UiScale = UiScale,
             AppTitle = AppTitle,
-            Language = Language,
+            LanguageCode = EffectiveLanguageCode,
             EnableAlarmSound = EnableAlarmSound,
             EnableAutomaticDailyReport = EnableAutomaticDailyReport,
             AutomaticDailyReportTime = AutomaticDailyReportTime,
             DataMode = DataMode,
             CollectorHubUrl = CollectorHubUrl,
             RunMode = RunMode,
+            HasCompletedFirstRunGuide = HasCompletedFirstRunGuide,
             // 锁内快照拷贝：与原地写入方互斥（审查修复 2026-08-13）
             Shifts = LockedShiftsSnapshot(),
         };
+        draft.ConnectionProfiles = CreateConnectionProfilesSnapshot();
+        draft.EnsureConnectionProfiles();
+        return draft;
     }
 
     /// <summary>班次集合锁内快照（CreateDraft/采集读取共用；审查修复 2026-08-13）。</summary>
@@ -350,6 +504,7 @@ public partial class AppSettings : ObservableObject
     /// </summary>
     internal static void WriteSettingsFile(AppSettings candidate)
     {
+        candidate.SynchronizeDefaultConnectionProfile();
         candidate.EnsureDirectory();
         candidate.SchemaVersion = CurrentSchemaVersion;
         var json = JsonSerializer.Serialize(candidate, JsonOptions);
@@ -369,8 +524,11 @@ public partial class AppSettings : ObservableObject
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions);
             if (settings != null)
             {
+                settings.EnsureConnectionProfiles();
                 SchemaVersion = CurrentSchemaVersion;
+                ConnectionProfiles = settings.ConnectionProfiles ?? new ObservableCollection<ConnectionProfile>();
                 PlcConfig = settings.PlcConfig ?? new PlcConfig();
+                EnsureConnectionProfiles();
                 // ConfigDirectory 固定为程序运行目录下的 "Config"，不从 settings.json 读回，
                 // 避免旧配置把数据目录指向其他位置导致数据分散
                 SettingsFileName = settings.SettingsFileName;
@@ -380,7 +538,12 @@ public partial class AppSettings : ObservableObject
                 PlcBatchReadMaxGapSlots = settings.PlcBatchReadMaxGapSlots;
                 DashboardRefreshIntervalMs = settings.DashboardRefreshIntervalMs;
                 AppTitle = string.IsNullOrWhiteSpace(settings.AppTitle) ? "生产看板" : settings.AppTitle;
-                Language = Enum.IsDefined(settings.Language) ? settings.Language : AppLanguage.Zh;
+                var legacyLanguage = Enum.IsDefined(settings.Language) ? settings.Language : AppLanguage.Zh;
+                var loadedLanguageCode = LocalizationCatalog.IsSupported(settings.LanguageCode)
+                    ? LocalizationCatalog.Normalize(settings.LanguageCode)
+                    : LegacyLanguageCode(legacyLanguage);
+                Language = LegacyLanguage(loadedLanguageCode);
+                LanguageCode = loadedLanguageCode;
                 IsDarkTheme = settings.IsDarkTheme;
                 UiScale = settings.UiScale;
                 EnableAlarmSound = settings.EnableAlarmSound;
@@ -390,6 +553,7 @@ public partial class AppSettings : ObservableObject
                 if (!string.IsNullOrWhiteSpace(settings.CollectorHubUrl))
                     CollectorHubUrl = settings.CollectorHubUrl;
                 RunMode = Enum.IsDefined(settings.RunMode) ? settings.RunMode : KanbanRunMode.Full;
+                HasCompletedFirstRunGuide = settings.HasCompletedFirstRunGuide;
                 // 保证至少一个班次：若加载到空集合或 null，回退到默认两个班次
                 Shifts = (settings.Shifts is { Count: > 0 } shifts)
                     ? shifts
@@ -448,28 +612,11 @@ public partial class AppSettings : ObservableObject
     {
         List<string> errors = [];
 
-        // PLC IP 验证：System.Net.IPAddress.TryParse 接受 "1.2.3.4" 但也接受 "1"、"::1" 等，
-        // 用 AddressFamily 限定 InterNetwork（IPv4），与三菱 MC 协议一致。
-        var ip = PlcConfig.IpAddress ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(ip))
-        {
-            errors.Add(ValidationMessages.PlcIpEmpty);
-        }
-        else if (!System.Net.IPAddress.TryParse(ip, out var addr)
-                 || addr.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
-        {
-            errors.Add(string.Format(ValidationMessages.PlcIpInvalid, ip));
-        }
+        if (ConnectionProfiles is null || ConnectionProfiles.Count == 0)
+            EnsureConnectionProfiles();
 
-        // PLC 端口验证：1-65535
-        if (PlcConfig.Port < 1 || PlcConfig.Port > 65535)
-            errors.Add(string.Format(ValidationMessages.PlcPortOutOfRange, PlcConfig.Port));
-        if (!Enum.IsDefined(PlcConfig.Brand))
-            errors.Add(string.Format(ValidationMessages.PlcBrandInvalid, PlcConfig.Brand));
-        else
-            PlcBrandDescriptors.CreateDefault().Resolve(PlcConfig.Brand).Validate(PlcConfig, errors);
-        if (PlcConfig.TimeoutMs < 100 || PlcConfig.TimeoutMs > 60000)
-            errors.Add(string.Format(ValidationMessages.PlcTimeoutOutOfRange, PlcConfig.TimeoutMs));
+        ValidateConnectionProfiles(ConnectionProfiles!, errors);
+        ValidatePlcConfig(PlcConfig, errors, profileId: null);
 
         // 间隔类配置：必须为正数；同时设上限防止 Remote 设置同步传入极端值（如 1ms 轮询造成 CPU 满载）
         if (PollingIntervalMs < 10 || PollingIntervalMs > 60000)
@@ -503,6 +650,95 @@ public partial class AppSettings : ObservableObject
         }
 
         return errors;
+    }
+
+    private static void ValidateConnectionProfiles(
+        IReadOnlyList<ConnectionProfile> profiles,
+        List<string> errors)
+    {
+        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < profiles.Count; index++)
+        {
+            var profile = profiles[index];
+            if (profile is null)
+            {
+                errors.Add(string.Format(ValidationMessages.ConnectionProfileEmpty, index + 1));
+                continue;
+            }
+
+            var profileId = profile.Id?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(profileId))
+            {
+                errors.Add(string.Format(ValidationMessages.ConnectionProfileIdEmpty, index + 1));
+            }
+            else if (!ids.Add(profileId))
+            {
+                errors.Add(string.Format(ValidationMessages.ConnectionProfileIdDuplicate, profileId));
+            }
+
+            var profileLabel = string.IsNullOrWhiteSpace(profileId)
+                ? (index + 1).ToString()
+                : profileId;
+            if (string.IsNullOrWhiteSpace(profile.Name))
+                errors.Add(string.Format(ValidationMessages.ConnectionProfileNameEmpty, profileLabel));
+            if (profile.Config is null)
+            {
+                errors.Add(string.Format(ValidationMessages.ConnectionProfileConfigMissing, profileLabel));
+                continue;
+            }
+
+            if (!string.Equals(profileId, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase))
+                ValidatePlcConfig(profile.Config, errors, profileId);
+        }
+    }
+
+    private static void ValidatePlcConfig(PlcConfig config, List<string> errors, string? profileId)
+    {
+        void Add(string message)
+        {
+            errors.Add(string.IsNullOrWhiteSpace(profileId)
+                || string.Equals(profileId, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase)
+                ? message
+                : $"连接档案 '{profileId}'：{message}");
+        }
+
+        // PLC IP 验证：System.Net.IPAddress.TryParse 接受 "1.2.3.4" 但也接受 "1"、"::1" 等，
+        // 用 AddressFamily 限定 InterNetwork（IPv4），与三菱 MC 协议一致。
+        var ip = config.IpAddress ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(ip))
+        {
+            Add(ValidationMessages.PlcIpEmpty);
+        }
+        else if (!System.Net.IPAddress.TryParse(ip, out var addr)
+                 || addr.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            Add(string.Format(ValidationMessages.PlcIpInvalid, ip));
+        }
+
+        // PLC 端口验证：1-65535
+        if (config.Port < 1 || config.Port > 65535)
+            Add(string.Format(ValidationMessages.PlcPortOutOfRange, config.Port));
+        if (!Enum.IsDefined(config.Brand))
+            Add(string.Format(ValidationMessages.PlcBrandInvalid, config.Brand));
+        else
+        {
+            var brandErrors = new List<string>();
+            PlcBrandDescriptors.CreateDefault().Resolve(config.Brand).Validate(config, brandErrors);
+            foreach (var brandError in brandErrors)
+                Add(brandError);
+        }
+        if (config.TimeoutMs < 100 || config.TimeoutMs > 60000)
+            Add(string.Format(ValidationMessages.PlcTimeoutOutOfRange, config.TimeoutMs));
+    }
+
+    partial void OnPlcConfigChanged(PlcConfig value)
+    {
+        if (_connectionProfiles is null)
+            return;
+        var defaultProfile = _connectionProfiles.FirstOrDefault(profile =>
+            string.Equals(profile.Id, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase));
+        if (defaultProfile is not null && !ReferenceEquals(defaultProfile.Config, value))
+            defaultProfile.Config = value;
     }
 }
 

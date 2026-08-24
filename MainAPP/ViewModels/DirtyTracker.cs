@@ -19,6 +19,13 @@ public sealed class DirtyTracker
         nameof(CounterAlarm.CurrentValue),
         nameof(CounterAlarm.IsTriggered),
         nameof(DataSourceValue.CurrentValue),
+        nameof(DataSourceValue.CurrentFloatValue),
+        nameof(DataSourceValue.CurrentBoolValue),
+        nameof(DataSourceValue.CurrentStringValue),
+        nameof(DataSourceValue.IsValid),
+        nameof(DataSourceValue.HasReadAttempt),
+        nameof(DataSourceValue.LastUpdatedAt),
+        nameof(DataSourceValue.LastReadAttemptAt),
         nameof(DataSourceValue.IsTriggered),
         nameof(DataSourceValue.CurrentDisplayText),
     };

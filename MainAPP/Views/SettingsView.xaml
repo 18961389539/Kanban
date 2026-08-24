@@ -9,7 +9,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:models="clr-namespace:Kanban.Collector.Core.Models;assembly=Kanban.Collector.Core"
-    xmlns:core="clr-namespace:Kanban.Collector.Core.Services;assembly=Kanban.Collector.Core"
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:resources="clr-namespace:MainAPP.Resources"
     d:DesignHeight="500"
@@ -469,20 +468,17 @@
                                             Text="{Binding DraftSettings.AppTitle, UpdateSourceTrigger=PropertyChanged}"
                                             ToolTip="{x:Static resources:Strings.K525}" />
 
-                                        <!--  界面语言（中文/英文/日文，默认中文；重启后生效）。
-                                             Tag 必须是 AppLanguage 枚举值（String "0"/"1"/"2" 与 enum 不能相等比较，会导致 ComboBox 选中失败、显示空白）。
-                                             改用 x:Static 引用枚举值，避免引入 Converter。  -->
+                                        <!--  界面语言来自 Localization.csv 表头（默认中文；重启后生效）。  -->
                                         <hc:ComboBox
                                             hc:InfoElement.Title="{x:Static resources:Strings.Common_Language}"
                                             hc:InfoElement.TitlePlacement="Top"
                                             AutomationProperties.Name="{x:Static resources:Strings.K526}"
                                             Style="{StaticResource SettingsComboBox}"
-                                            SelectedValue="{Binding DraftSettings.Language}"
-                                            SelectedValuePath="Tag"
+                                            DisplayMemberPath="DisplayName"
+                                            ItemsSource="{Binding LanguageOptions}"
+                                            SelectedValue="{Binding DraftSettings.LanguageCode, UpdateSourceTrigger=PropertyChanged}"
+                                            SelectedValuePath="Code"
                                             ToolTip="{x:Static resources:Strings.Settings_LanguageHint}">
-                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_Chinese}" Tag="{x:Static core:AppLanguage.Zh}" />
-                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_English}" Tag="{x:Static core:AppLanguage.En}" />
-                                            <ComboBoxItem Content="{x:Static resources:Strings.Language_Japanese}" Tag="{x:Static core:AppLanguage.Ja}" />
                                         </hc:ComboBox>
                                         <TextBlock
                                             Margin="0,-4,0,14"

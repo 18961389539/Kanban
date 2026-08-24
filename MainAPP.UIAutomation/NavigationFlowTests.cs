@@ -7,12 +7,12 @@ namespace MainAPP.UIAutomation;
 
 /// <summary>
 /// 启动与主导航端到端测试。
-/// MainAPP 启动时自动登录内置 admin（App.xaml.cs 自动登录逻辑），侧边栏显示全部 12 项：
-/// 主页/产线总览/报警中心/设备管理/工单管理/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理。
+/// MainAPP 启动时自动登录内置 admin（App.xaml.cs 自动登录逻辑），侧边栏显示全部 13 项：
+/// 主页/产线总览/报警中心/设备管理/工单管理/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理/采集监控。
 /// 导航断言策略：UIA 树中页面内容 TextBlock 默认不暴露 Name（无 AutomationProperties.Name），
 /// 故用"主导航 ListBox 选中项 = 目标页"断言导航生效（SelectedIndex 双向绑定）；
 /// 页面 View 的真实渲染由 E2E 层视觉树断言覆盖（MainAPP.E2E.NavigationFlowTests）。
-/// 角色过滤（Operator 仅 6 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
+/// 角色过滤（Operator 仅 7 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
 /// </summary>
 [Collection("UIA")]
 public class NavigationFlowTests : IDisposable
@@ -108,7 +108,7 @@ public class NavigationFlowTests : IDisposable
     }
 
     /// <summary>
-    /// 遍历全部 12 个导航页面：断言侧边栏选中项切换成功。
+    /// 遍历全部 13 个导航页面：断言侧边栏选中项切换成功。
     /// 页面内容区 TextBlock 在 UIA 树中不暴露 Name（无 AutomationProperties.Name），
     /// 页面 View 渲染由 E2E 视觉树断言覆盖；主页为初始页，额外断言内容可见。
     /// </summary>
@@ -125,6 +125,7 @@ public class NavigationFlowTests : IDisposable
     [InlineData("用户管理")]
     [InlineData("审计日志")]
     [InlineData("配方管理")]
+    [InlineData("采集监控")]
     public void NavigateToAllPages_SelectionChanges(string navName)
     {
         var window = _fixture.MainWindow;
@@ -148,10 +149,10 @@ public class NavigationFlowTests : IDisposable
     }
 
     /// <summary>
-    /// MainAPP 启动自动登录内置 admin（App.xaml.cs），侧边栏应显示全部 12 个导航项
+    /// MainAPP 启动自动登录内置 admin（App.xaml.cs），侧边栏应显示全部 13 个导航项
     /// （含角色受限页：设备管理/配方管理=Engineer，设置/运行监控/用户管理/审计日志=Admin）。
     /// 这是"自动登录 + 角色过滤"在真实进程的回归断言——若侧边栏缺项，说明登录/过滤链路失效。
-    /// Operator 视角的过滤行为（仅 6 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
+    /// Operator 视角的过滤行为（仅 7 项）由 E2E OperatorRole_HidesGatedPages 覆盖。
     /// </summary>
     [Fact]
     public void RoleGatedPages_VisibleForAdminAutoLogin()
@@ -178,9 +179,9 @@ public class NavigationFlowTests : IDisposable
             .ToList();
         Assert.True(visibleNames.Count > 0, "侧边栏导航项为空");
 
-        // Admin 自动登录视角：12 项全部可见（含 6 个角色受限页）
+        // Admin 自动登录视角：13 项全部可见（含 6 个角色受限页）
         foreach (var expected in new[] { "主页", "产线总览", "报警中心", "设备管理", "工单管理", "历史查询",
-            "生产复盘", "设置", "运行监控", "用户管理", "审计日志", "配方管理" })
+            "生产复盘", "设置", "运行监控", "用户管理", "审计日志", "配方管理", "采集监控" })
         {
             Assert.True(visibleNames.Any(n => n.Contains(expected)),
                 $"Admin 视角下侧边栏缺少「{expected}」，实际导航项：{string.Join(" / ", visibleNames)}");

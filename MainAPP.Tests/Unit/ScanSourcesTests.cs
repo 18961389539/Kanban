@@ -20,7 +20,12 @@ public class ScanSourcesTests
     private sealed class FakeAdapter : IDeviceAdapter
     {
         public Dictionary<string, int> Registers { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, float> FloatRegisters { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, bool> BoolRegisters { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> StringRegisters { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<(string Address, int Value)> Writes { get; } = [];
+        public int ReadInt32BatchCallCount { get; private set; }
+        public string ProtocolKey { get; set; } = DataSourceProtocolKeys.Plc;
 
         public PlcBrand Brand => PlcBrand.Mitsubishi;
         public IPlcAddressCodec AddressCodec => new MitsubishiAddressCodec();
@@ -34,6 +39,7 @@ public class ScanSourcesTests
 
         public PlcOperationResult<int[]> ReadInt32Batch(string address, ushort length)
         {
+            ReadInt32BatchCallCount++;
             var values = new int[length];
             for (var i = 0; i < length; i++)
             {
@@ -50,12 +56,21 @@ public class ScanSourcesTests
             return PlcOperationResult.Success();
         }
 
-        public PlcOperationResult<bool> ReadBool(string address) => PlcOperationResult<bool>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
+        public PlcOperationResult<bool> ReadBool(string address)
+            => BoolRegisters.TryGetValue(AddressCodec.CanonicalKey(address), out var v)
+                ? PlcOperationResult<bool>.Success(v)
+                : PlcOperationResult<bool>.Fail("位不存在", PlcErrorKind.Unknown);
         public PlcOperationResult<bool[]> ReadBoolBatch(string address, ushort length) => PlcOperationResult<bool[]>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
-        public PlcOperationResult<float> ReadFloat(string address) => PlcOperationResult<float>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
+        public PlcOperationResult<float> ReadFloat(string address)
+            => FloatRegisters.TryGetValue(AddressCodec.CanonicalKey(address), out var v)
+                ? PlcOperationResult<float>.Success(v)
+                : PlcOperationResult<float>.Fail("浮点寄存器不存在", PlcErrorKind.Unknown);
         public PlcOperationResult<float[]> ReadFloatBatch(string address, ushort length) => PlcOperationResult<float[]>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
         public PlcOperationResult<ushort> ReadUInt16(string address) => PlcOperationResult<ushort>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
-        public PlcOperationResult<string> ReadString(string address, ushort length) => PlcOperationResult<string>.Fail("不支持", PlcErrorKind.UnsupportedOperation);
+        public PlcOperationResult<string> ReadString(string address, ushort length)
+            => StringRegisters.TryGetValue(AddressCodec.CanonicalKey(address), out var v)
+                ? PlcOperationResult<string>.Success(v)
+                : PlcOperationResult<string>.Fail("字符串寄存器不存在", PlcErrorKind.Unknown);
         public PlcOperationResult WriteBool(string address, bool value) => PlcOperationResult.Fail("不支持", PlcErrorKind.UnsupportedOperation);
         public PlcOperationResult WriteFloat(string address, float value) => PlcOperationResult.Fail("不支持", PlcErrorKind.UnsupportedOperation);
         public PlcOperationResult WriteUInt16(string address, ushort value) => PlcOperationResult.Fail("不支持", PlcErrorKind.UnsupportedOperation);
@@ -66,6 +81,62 @@ public class ScanSourcesTests
     {
         public IDeviceAdapter Current => adapter;
         public IDeviceAdapter Resolve(Device device) => adapter;
+    }
+
+    private sealed class SimulatedDataSourceReader : IDataSourceReader
+    {
+        private readonly Dictionary<string, int> _values = new(StringComparer.OrdinalIgnoreCase);
+
+        public DataSourceReaderDescriptor Descriptor { get; } = new("simulated", 100);
+        public int ReadValueCount { get; private set; }
+        public List<(string Address, int Value)> Acknowledgements { get; } = [];
+
+        public bool CanHandle(IDeviceAdapter adapter, DataSource source) => true;
+
+        public DataSourceReaderResult ValidateTriggerAddress(DataSourceReaderContext context, string address) =>
+            DataSourceReaderResult.Success();
+
+        public DataSourceReaderResult ValidateValueAddress(DataSourceReaderContext context, DataSourceValue value) =>
+            DataSourceReaderResult.Success();
+
+        public DataSourceReaderResult<int> ReadTrigger(DataSourceReaderContext context, string address) =>
+            ToReaderResult(ReadInt32(address));
+
+        public DataSourceReaderResult<DataSourceRuntimeValue> ReadValue(DataSourceReaderContext context, DataSourceValue value)
+        {
+            ReadValueCount++;
+            var result = ReadInt32(value.PlcAddress);
+            var runtime = new DataSourceRuntimeValue(
+                DataSourceValueType.Int32,
+                Int32Value: result.IsSuccess ? result.Content : 0,
+                IsValid: result.IsSuccess);
+            return result.IsSuccess
+                ? DataSourceReaderResult<DataSourceRuntimeValue>.Success(runtime)
+                : DataSourceReaderResult<DataSourceRuntimeValue>.Fail(
+                    runtime,
+                    result.Message,
+                    DataSourceReaderErrorKind.Unknown,
+                    result.ErrorCode);
+        }
+
+        public DataSourceReaderResult WriteAcknowledgement(DataSourceReaderContext context, string address, int value)
+        {
+            _values[address] = value;
+            Acknowledgements.Add((address, value));
+            return DataSourceReaderResult.Success();
+        }
+
+        public void SetInt32(string address, int value) => _values[address] = value;
+
+        private PlcOperationResult<int> ReadInt32(string address) =>
+            _values.TryGetValue(address, out var value)
+                ? PlcOperationResult<int>.Success(value)
+                : PlcOperationResult<int>.Fail("模拟寄存器不存在", PlcErrorKind.Unknown);
+
+        private static DataSourceReaderResult<int> ToReaderResult(PlcOperationResult<int> result) =>
+            result.IsSuccess
+                ? DataSourceReaderResult<int>.Success(result.Content)
+                : DataSourceReaderResult<int>.Fail(result.Message, DataSourceReaderErrorKind.Unknown, result.ErrorCode);
     }
 
     private sealed class RecordingAlarmHistory : IAlarmHistoryService
@@ -89,10 +160,14 @@ public class ScanSourcesTests
         public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize) => ([], 0);
     }
 
-    private static (PlcScanPipeline Pipeline, FakeAdapter Adapter, Device Device, DataSourceValue Value) BuildPipeline(DataSource source, DataSourceValue value)
+    private static (PlcScanPipeline Pipeline, FakeAdapter Adapter, Device Device, DataSourceValue Value) BuildPipeline(
+        DataSource source,
+        DataSourceValue value,
+        IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
+        string protocolKey = DataSourceProtocolKeys.Plc)
     {
         var settings = new AppSettings { ConfigDirectory = "KanbanScanSourcesTests_" + Guid.NewGuid().ToString("N") };
-        var adapter = new FakeAdapter();
+        var adapter = new FakeAdapter { ProtocolKey = protocolKey };
         var repository = new DeviceRepository(settings);
         var device = new Device { Id = "dev-001", Name = "注塑机1" };
         source.DeviceId = device.Id;
@@ -106,7 +181,8 @@ public class ScanSourcesTests
             new RecordingAlarmHistory(),
             settings,
             () => "白班",
-            NullLogger.Instance);
+            NullLogger.Instance,
+            dataSourceReaderRegistry: dataSourceReaderRegistry);
         return (pipeline, adapter, device, value);
     }
 
@@ -120,12 +196,33 @@ public class ScanSourcesTests
         var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
         adapter.Registers["D300"] = 245;
 
+        var beforeSample = DateTime.Now;
         pipeline.ScanSources();
+        var afterSample = DateTime.Now;
 
         Assert.Equal(245, valueItem.CurrentValue);
+        Assert.InRange(valueItem.LastUpdatedAt!.Value, beforeSample, afterSample);
         var cycleValues = pipeline.GetCycleSourceValues();
         Assert.True(cycleValues.ContainsKey($"dev-001:{source.Id}:{valueItem.Id}"));
         Assert.Equal(245, cycleValues[$"dev-001:{source.Id}:{valueItem.Id}"]);
+        var sample = Assert.Single(pipeline.GetCycleSourceSamples()).Value;
+        Assert.Equal(valueItem.LastUpdatedAt, sample.SampledAt);
+    }
+
+    [Fact]
+    public void Int32Source_UsesPreparedBatchValueThroughReader()
+    {
+        var value = new DataSourceValue { Name = "车间温度", PlcAddress = "D300" };
+        var source = new DataSource { Name = "温度源" };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
+        adapter.Registers["D300"] = 245;
+
+        pipeline.PrepareDWordBatchValues();
+        pipeline.ScanSources();
+
+        Assert.Equal(245, valueItem.CurrentValue);
+        Assert.Equal(1, adapter.ReadInt32BatchCallCount);
+        Assert.Empty(adapter.Writes);
     }
 
     // ──────────── 电平触发：值==触发值 → 采集 + 同址回执 ────────────
@@ -244,6 +341,98 @@ public class ScanSourcesTests
         pipeline.ScanSources();
 
         Assert.Equal(0, valueItem.CurrentValue);
+        Assert.Empty(pipeline.GetCycleSourceValues());
+    }
+
+    [Fact]
+    public void BoolFalse_ReadSuccess_PreservesFalseContent()
+    {
+        var value = new DataSourceValue { Name = "运行许可", DataType = DataSourceValueType.Bool, PlcAddress = "M10" };
+        var source = new DataSource { Name = "状态" };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
+        adapter.BoolRegisters["M10"] = false;
+
+        pipeline.ScanSources();
+
+        Assert.False(valueItem.CurrentBoolValue);
+        var runtime = Assert.Single(pipeline.GetCycleSourceRuntimeValues()).Value;
+        Assert.True(runtime.IsValid);
+        Assert.False(runtime.BoolValue);
+    }
+
+    [Fact]
+    public void Float32_ReadsTypedValue()
+    {
+        var value = new DataSourceValue { Name = "压力", DataType = DataSourceValueType.Float32, PlcAddress = "D320" };
+        var source = new DataSource { Name = "压力源" };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
+        adapter.FloatRegisters["D320"] = 12.5f;
+
+        pipeline.ScanSources();
+
+        Assert.Equal(12.5f, valueItem.CurrentFloatValue);
+    }
+
+    [Fact]
+    public void String_ReadsTypedValue()
+    {
+        var value = new DataSourceValue { Name = "状态文本", DataType = DataSourceValueType.String, PlcAddress = "D340", StringLength = 16 };
+        var source = new DataSource { Name = "状态源" };
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value);
+        adapter.StringRegisters["D340"] = "READY";
+
+        pipeline.ScanSources();
+
+        Assert.Equal("READY", valueItem.CurrentStringValue);
+    }
+
+    [Fact]
+    public void SimulatedReader_UsesSamePipelineAndProducesCycleSample()
+    {
+        var value = new DataSourceValue { Name = "模拟温度", PlcAddress = "D300" };
+        var source = new DataSource
+        {
+            Name = "模拟协议源",
+            TriggerAddress = "D510",
+            TriggerValue = 1,
+            AckValue = 2,
+        };
+        var simulatedReader = new SimulatedDataSourceReader();
+        simulatedReader.SetInt32("D300", 901);
+        simulatedReader.SetInt32("D510", 1);
+        var registry = new DataSourceReaderRegistry([simulatedReader, new PlcDataSourceReader()]);
+        var (pipeline, adapter, _, valueItem) = BuildPipeline(source, value, registry, "simulated");
+
+        pipeline.ScanSources();
+
+        Assert.Equal(901, valueItem.CurrentValue);
+        Assert.Equal(2, simulatedReader.Acknowledgements.Single().Value);
+        Assert.Empty(adapter.Writes);
+        var sample = Assert.Single(pipeline.GetCycleSourceSamples()).Value;
+        Assert.Equal(901, sample.Value.Int32Value);
+        Assert.Equal(1, simulatedReader.ReadValueCount);
+    }
+
+    [Fact]
+    public void SimulatedReader_TriggerReadFailure_DoesNotMatchZero()
+    {
+        var value = new DataSourceValue { Name = "模拟温度", PlcAddress = "D300" };
+        var source = new DataSource
+        {
+            Name = "模拟协议源",
+            TriggerAddress = "D510",
+            TriggerValue = 0,
+            AckValue = 2,
+        };
+        var simulatedReader = new SimulatedDataSourceReader();
+        simulatedReader.SetInt32("D300", 901);
+        var registry = new DataSourceReaderRegistry([simulatedReader, new PlcDataSourceReader()]);
+        var (pipeline, _, _, valueItem) = BuildPipeline(source, value, registry, "simulated");
+
+        pipeline.ScanSources();
+
+        Assert.Equal(0, valueItem.CurrentValue);
+        Assert.Empty(simulatedReader.Acknowledgements);
         Assert.Empty(pipeline.GetCycleSourceValues());
     }
 }

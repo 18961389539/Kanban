@@ -1,4 +1,3 @@
-AlarmCsvIOService.cs	报警_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv
 AlarmQueryViewModel.cs	# 触发：{AlarmTriggerCount} 次，恢复：{AlarmRecoverCount} 次，待恢复：{AlarmPendingCount} 条
 AlarmQueryViewModel.cs	PLC地址
 AlarmQueryViewModel.cs	事件时间
@@ -40,14 +39,7 @@ ProductionQueryViewModel.cs	设备名称
 RecipeManagerViewModel.cs	切换配方会放弃当前未保存的编辑，是否继续？
 RecipeManagerViewModel.cs	提示
 RuntimeMonitoringState.cs	离线/未知
-SettingsViewModel.cs	PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。
 SettingsViewModel.cs	PLC={DraftSettings.PlcConfig.IpAddress}:{DraftSettings.PlcConfig.Port} 班次={DraftSettings.Shifts.Coun
-SettingsViewModel.cs	\n是否继续保存？
-SettingsViewModel.cs	危险操作确认
-SettingsViewModel.cs	数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。
-SettingsViewModel.cs	显示
-SettingsViewModel.cs	运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。
-SettingsViewModel.cs	隐藏
 StatusQueryViewModel.cs	事件时间
 StatusQueryViewModel.cs	前一状态
 StatusQueryViewModel.cs	前一状态文本
@@ -75,15 +67,3 @@ WorkOrderSampleBuilder.cs	端子台
 WorkOrderSampleBuilder.cs	试产验证
 WorkOrderSampleBuilder.cs	返工批次
 WorkOrderSampleBuilder.cs	连接器
-DeviceDataSourceManagerViewModel.cs	状态{nextValue}
-DeviceDataSourceManagerViewModel.cs	值1
-DeviceDataSourceManagerViewModel.cs	值{next}
-DeviceConfigValidator.cs	采集源「{source.Name}」至少需要配置一个值项
-DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」采集地址格式无效
-DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」滞回不能为负
-DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」延时确认不能为负
-DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同
-DeviceConfigValidator.cs	采集源「{source.Name}」触发地址格式无效
-DeviceDetailViewModel.cs	{value.Name}（定时采集）
-DeviceConfigValidator.cs	采集源「{source.Name}」值项「{value.Name}」未配置采集地址
-DeviceConfigValidator.cs	采集源「{source.Name}」有 {dupAddress.Count()} 个值项使用相同采集地址「{dupAddress.Key}」

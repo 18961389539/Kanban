@@ -8,6 +8,8 @@ using AlarmLevel = Kanban.Collector.Core.Models.AlarmLevel;
 
 namespace Kanban.Collector.Core.Services;
 
+public readonly record struct DataSourceCycleSample(DataSourceRuntimeValue Value, DateTime SampledAt);
+
 /// <summary>
 /// PLC 扫描子系统（从 PlcDataAcquisitionService 拆出的协作组件之一）：
 /// 承担"批量读缓存 + 三组扫描"职责——
@@ -25,6 +27,7 @@ public sealed class PlcScanPipeline
     private readonly IDeviceAdapterResolver _adapterResolver;
     private readonly IDeviceRepository _deviceRepository;
     private readonly IAlarmHistoryService _alarmHistory;
+    private readonly IDataSourceReaderRegistry _dataSourceReaderRegistry;
     private readonly IAlarmNotificationChannel? _alarmNotificationChannel;
     private readonly Action<AlarmEventDto>? _onAlarmEdge;
     private readonly AppSettings _appSettings;
@@ -40,13 +43,14 @@ public sealed class PlcScanPipeline
     private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _initializedCounterAlarmIds = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}），供主服务快照落盘过滤（只写本轮成功的源）。</summary>
-    private readonly Dictionary<string, DataSourceRuntimeValue> _cycleSourceValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DataSourceCycleSample> _cycleSourceValues = new(StringComparer.OrdinalIgnoreCase);
     private readonly PlcBatchReadPlanCache _dwordPlanCache = new();
     private bool _dwordBatchPrepared;
     private int _cycleBatchReadRequests;
     private int _cycleBatchReadSuccesses;
     private int _cycleBatchReadValues;
     private int _cycleBatchReadFallbacks;
+    private readonly HashSet<string> _lastCommunicationFailureProfileIds = new(StringComparer.OrdinalIgnoreCase);
 
     public PlcScanPipeline(
         IDeviceAdapterResolver adapterResolver,
@@ -56,11 +60,13 @@ public sealed class PlcScanPipeline
         Func<string> shiftNameProvider,
         ILogger logger,
         IAlarmNotificationChannel? alarmNotificationChannel = null,
-        Action<AlarmEventDto>? onAlarmEdge = null)
+        Action<AlarmEventDto>? onAlarmEdge = null,
+        IDataSourceReaderRegistry? dataSourceReaderRegistry = null)
     {
         _adapterResolver = adapterResolver;
         _deviceRepository = deviceRepository;
         _alarmHistory = alarmHistory;
+        _dataSourceReaderRegistry = dataSourceReaderRegistry ?? new DataSourceReaderRegistry([new PlcDataSourceReader()]);
         _appSettings = appSettings;
         _shiftNameProvider = shiftNameProvider;
         _logger = logger;
@@ -76,6 +82,10 @@ public sealed class PlcScanPipeline
     public int BatchReadFallbacks => _cycleBatchReadFallbacks;
     public int BatchPlanRebuilds => _dwordPlanCache.RebuildCount;
     public long BatchPlanBuildMilliseconds => _dwordPlanCache.LastBuildMilliseconds;
+    public IReadOnlyCollection<string> LastCommunicationFailureProfileIds
+        => _lastCommunicationFailureProfileIds.ToArray();
+    public IReadOnlyList<DataSourceReaderDiagnosticsSnapshot> GetDataSourceReaderDiagnostics() =>
+        _dataSourceReaderRegistry.GetDiagnosticsSnapshot();
 
     // ──────────── 批量读缓存 ────────────
 
@@ -208,7 +218,7 @@ public sealed class PlcScanPipeline
     }
 
     private static string GetBatchCacheKey(IDeviceAdapter adapter, string address) =>
-        $"{adapter.Brand}|{adapter.AddressCodec.CanonicalKey(address)}";
+        $"{adapter.ConnectionProfileId}|{adapter.Brand}|{adapter.AddressCodec.CanonicalKey(address)}";
 
     // ──────────── 三组扫描 ────────────
 
@@ -219,15 +229,34 @@ public sealed class PlcScanPipeline
     /// </summary>
     public bool ScanAlarms()
     {
+        _lastCommunicationFailureProfileIds.Clear();
         var devices = _deviceRepository.GetDevicesSnapshot();
         if (devices.Count == 0) return true;
-        return _alarmTracker.ScanAlarms(
-            devices,
-            _adapterResolver.Resolve(devices[0]), _alarmHistory, _shiftNameProvider(), _logger,
-            _alarmNotificationChannel,
-            _appSettings.PlcBatchReadMaxLength,
-            _appSettings.PlcBatchReadMaxGapSlots,
-            _onAlarmEdge);
+        var allSuccessful = true;
+        foreach (var group in devices.GroupBy(_adapterResolver.Resolve))
+        {
+            try
+            {
+                if (!_alarmTracker.ScanAlarms(
+                        group,
+                        group.Key,
+                        _alarmHistory,
+                        _shiftNameProvider(),
+                        _logger,
+                        _alarmNotificationChannel,
+                        _appSettings.PlcBatchReadMaxLength,
+                        _appSettings.PlcBatchReadMaxGapSlots,
+                        _onAlarmEdge))
+                    allSuccessful = false;
+            }
+            catch (Exception ex) when (IsCommunicationException(ex))
+            {
+                _lastCommunicationFailureProfileIds.Add(
+                    PlcRuntimeSession.NormalizeProfileId(group.Key.ConnectionProfileId));
+                throw;
+            }
+        }
+        return allSuccessful;
     }
 
     /// <summary>
@@ -236,6 +265,7 @@ public sealed class PlcScanPipeline
     /// </summary>
     public bool ScanDefects()
     {
+        _lastCommunicationFailureProfileIds.Clear();
         var allSuccessful = true;
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         foreach (var defect in device.Defects.ToList())
@@ -243,20 +273,25 @@ public sealed class PlcScanPipeline
             var addr = defect.PlcAddress;
             if (string.IsNullOrWhiteSpace(addr)) continue;
             var adapter = _adapterResolver.Resolve(device);
-            if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
+            try
             {
-                _logger.LogWarning("缺陷 {Defect} 地址格式无效: {Address}", defect.Name, addr);
-                continue;
-            }
+                if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
+                {
+                    _logger.LogWarning("缺陷 {Defect} 地址格式无效: {Address}", defect.Name, addr);
+                    continue;
+                }
 
-            var result = ReadInt32Value(device, addr);
-            if (result.IsSuccess)
-            {
-                defect.Count = result.Content;
+                var result = ReadInt32Value(device, addr);
+                if (result.IsSuccess)
+                    defect.Count = result.Content;
+                else
+                    allSuccessful = false;
             }
-            else
+            catch (Exception ex) when (IsCommunicationException(ex))
             {
-                allSuccessful = false;
+                _lastCommunicationFailureProfileIds.Add(
+                    PlcRuntimeSession.NormalizeProfileId(adapter.ConnectionProfileId));
+                throw;
             }
         }
         return allSuccessful;
@@ -269,6 +304,7 @@ public sealed class PlcScanPipeline
     /// </summary>
     public void ScanCounterAlarms()
     {
+        _lastCommunicationFailureProfileIds.Clear();
         var configuredAlarmKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         foreach (var ca in device.CounterAlarms.ToList())
@@ -283,26 +319,35 @@ public sealed class PlcScanPipeline
             var addr = ca.PlcAddress;
             if (string.IsNullOrWhiteSpace(addr)) continue;
             var adapter = _adapterResolver.Resolve(device);
-            if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
+            try
             {
-                _logger.LogWarning("计数报警 {Alarm} 地址格式无效（需要D字地址）: {Address}", ca.Name, addr);
-                continue;
-            }
+                if (adapter.AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
+                {
+                    _logger.LogWarning("计数报警 {Alarm} 地址格式无效（需要D字地址）: {Address}", ca.Name, addr);
+                    continue;
+                }
 
-            var result = ReadInt32Value(device, addr);
-            if (result.IsSuccess)
-            {
-                var wasTriggered = ca.IsTriggered;
-                ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
-                // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
-                var isFirstObservation = _initializedCounterAlarmIds.Add(key);
-                if (!isFirstObservation && !wasTriggered && ca.IsTriggered)
-                    NotifyAlarm(device, ca.Id, ca.Name, AlarmLevel.Medium);
+                var result = ReadInt32Value(device, addr);
+                if (result.IsSuccess)
+                {
+                    var wasTriggered = ca.IsTriggered;
+                    ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
+                    // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
+                    var isFirstObservation = _initializedCounterAlarmIds.Add(key);
+                    if (!isFirstObservation && !wasTriggered && ca.IsTriggered)
+                        NotifyAlarm(device, ca.Id, ca.Name, AlarmLevel.Medium);
+                }
+                else
+                {
+                    // 持续性条件：每轮都会触发，降为 Debug 避免日志泛滥。
+                    _logger.LogDebug("计数报警 {Alarm} 读取失败: {Address}", ca.Name, addr);
+                }
             }
-            else
+            catch (Exception ex) when (IsCommunicationException(ex))
             {
-                // 持续性条件：每轮都会触发，降为 Debug 避免日志泛滥。
-                _logger.LogDebug("计数报警 {Alarm} 读取失败: {Address}", ca.Name, addr);
+                _lastCommunicationFailureProfileIds.Add(
+                    PlcRuntimeSession.NormalizeProfileId(adapter.ConnectionProfileId));
+                throw;
             }
         }
 
@@ -319,25 +364,34 @@ public sealed class PlcScanPipeline
     /// </summary>
     public void ScanSources()
     {
+        _lastCommunicationFailureProfileIds.Clear();
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         foreach (var source in device.Sources.ToList())
         {
             if (!source.Enabled) continue;
             var adapter = _adapterResolver.Resolve(device);
+            try
+            {
+                var reader = _dataSourceReaderRegistry.Resolve(adapter, source);
+                var readerContext = new DataSourceReaderContext(
+                    adapter,
+                    address => DataSourceReaderResultMapper.FromPlc(ReadInt32Value(device, address)));
 
             // 触发判定（源级一次）
-            var triggered = true;
             if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
             {
-                if (adapter.AddressCodec.Parse(source.TriggerAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
+                var triggerAddressValidation = reader.ValidateTriggerAddress(readerContext, source.TriggerAddress);
+                if (!triggerAddressValidation.IsSuccess)
                 {
-                    _logger.LogWarning("数据源 {Source} 触发地址格式无效（需要D字地址）: {Address}", source.Name, source.TriggerAddress);
+                    _logger.LogWarning("数据源 {Source} 触发地址无效: {Address}; {Message}",
+                        source.Name, source.TriggerAddress, triggerAddressValidation.Message);
                     continue;
                 }
-                var trigger = ReadInt32Value(device, source.TriggerAddress);
+                var trigger = reader.ReadTrigger(readerContext, source.TriggerAddress);
                 if (!trigger.IsSuccess)
                 {
-                    _logger.LogDebug("数据源 {Source} 触发寄存器读取失败: {Address}", source.Name, source.TriggerAddress);
+                    _logger.LogDebug("数据源 {Source} 触发寄存器读取失败: {Address}; {ErrorKind}; {Message}",
+                        source.Name, source.TriggerAddress, trigger.ErrorKind, trigger.Message);
                     continue;
                 }
                 if (trigger.Content != source.TriggerValue) continue; // 未触发（含回执态）
@@ -349,68 +403,70 @@ public sealed class PlcScanPipeline
             {
                 if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
                 if (string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
-                var expectedAddressType = value.DataType == DataSourceValueType.Bool ? PlcAddressType.MBit : PlcAddressType.DWord;
-                if (adapter.AddressCodec.Parse(value.PlcAddress) is not { IsValid: true, Type: var actualType } || actualType != expectedAddressType)
+                var valueAddressValidation = reader.ValidateValueAddress(readerContext, value);
+                if (!valueAddressValidation.IsSuccess)
                 {
-                    _logger.LogWarning("数据源 {Source} 值项 {Value} 地址类型无效（需要{Type}）: {Address}",
-                        source.Name, value.Name, expectedAddressType, value.PlcAddress);
+                    _logger.LogWarning("数据源 {Source} 值项 {Value} 地址无效: {Address}; {Message}",
+                        source.Name, value.Name, value.PlcAddress, valueAddressValidation.Message);
                     continue;
                 }
 
-                var result = ReadSourceValue(adapter, value);
-                if (!result.IsValid)
+                var result = reader.ReadValue(readerContext, value);
+                var runtimeValue = result.Content;
+                if (!result.IsSuccess || !runtimeValue.IsValid)
                 {
-                    _logger.LogDebug("数据源 {Source} 值项 {Value} 采集读取失败: {Address}",
-                        source.Name, value.Name, value.PlcAddress);
+                    // 保留最后一次成功值供诊断，但显式标记本轮无效；失败读取不进入告警状态机。
+                    if (runtimeValue.Type != value.DataType)
+                        runtimeValue = new DataSourceRuntimeValue(value.DataType, IsValid: false);
+                    value.SetRuntimeValue(runtimeValue);
+                    _logger.LogDebug("数据源 {Source} 值项 {Value} 采集读取失败: {Address}; {ErrorKind}; {Message}",
+                        source.Name, value.Name, value.PlcAddress, result.ErrorKind, result.Message);
                     continue;
                 }
 
-                value.SetRuntimeValue(result);
-                _dataSourceTracker.Observe(device, source, value, result, _shiftNameProvider());
-                _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = result;
+                var sampledAt = DateTime.Now;
+                _dataSourceTracker.Observe(device, source, value, runtimeValue, _shiftNameProvider(), sampledAt);
+                _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = new DataSourceCycleSample(runtimeValue, sampledAt);
                 anyValueRead = true;
             }
 
             // 完成后回执：向同一触发地址写回执值（下一轮读到回执值不再触发，等 PLC 再次置位）。
             // 写入失败仅记日志：下一轮会再次读到触发值重试（同命令至多每轮一次）。
             // 值项全部读取失败时不写回执（数据未捕获，PLC 端超时重发，避免假确认）。
-            if (source.HasTrigger && anyValueRead)
-            {
-                var ack = adapter.WriteInt32(source.TriggerAddress, source.AckValue);
-                if (!ack.IsSuccess)
+                if (source.HasTrigger && anyValueRead)
                 {
-                    _logger.LogWarning("数据源 {Source} 回执写入失败（触发地址 {Address}）: {Message}",
-                        source.Name, source.TriggerAddress, ack.Message);
+                    var ack = reader.WriteAcknowledgement(readerContext, source.TriggerAddress, source.AckValue);
+                    if (!ack.IsSuccess)
+                    {
+                        _logger.LogWarning("数据源 {Source} 回执写入失败（触发地址 {Address}）: {Message}",
+                            source.Name, source.TriggerAddress, ack.Message);
+                    }
                 }
+            }
+            catch (Exception ex) when (IsCommunicationException(ex))
+            {
+                _lastCommunicationFailureProfileIds.Add(
+                    PlcRuntimeSession.NormalizeProfileId(adapter.ConnectionProfileId));
+                throw;
             }
         }
     }
 
-    private static DataSourceRuntimeValue ReadSourceValue(IDeviceAdapter adapter, DataSourceValue value)
-    {
-        return value.DataType switch
-        {
-            DataSourceValueType.Float32 => ToRuntime(adapter.ReadFloat(value.PlcAddress), value.DataType),
-            DataSourceValueType.Bool => ToRuntime(adapter.ReadBool(value.PlcAddress), value.DataType),
-            DataSourceValueType.String => ToRuntime(adapter.ReadString(value.PlcAddress, (ushort)Math.Clamp(value.StringLength, 1, ushort.MaxValue)), value.DataType),
-            _ => ToRuntime(adapter.ReadInt32(value.PlcAddress), value.DataType),
-        };
-    }
-
-    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<int> result, DataSourceValueType type) =>
-        new(type, Int32Value: result.IsSuccess ? result.Content : 0, IsValid: result.IsSuccess);
-    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<float> result, DataSourceValueType type) =>
-        new(type, Float32Value: result.IsSuccess ? result.Content : 0, IsValid: result.IsSuccess && float.IsFinite(result.Content));
-    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<bool> result, DataSourceValueType type) =>
-        new(type, BoolValue: result.IsSuccess, IsValid: result.IsSuccess);
-    private static DataSourceRuntimeValue ToRuntime(PlcOperationResult<string> result, DataSourceValueType type) =>
-        new(type, StringValue: result.IsSuccess ? result.Content : string.Empty, IsValid: result.IsSuccess);
+    private static bool IsCommunicationException(Exception exception)
+        => exception is IOException
+            or System.Net.Sockets.SocketException
+            or ObjectDisposedException
+            or TimeoutException
+            or System.Net.WebException;
 
     /// <summary>本轮 ScanSources 成功采样的源值（键 = {deviceId}:{sourceId}:{valueId}）。</summary>
     public IReadOnlyDictionary<string, int> GetCycleSourceValues() =>
-        _cycleSourceValues.ToDictionary(pair => pair.Key, pair => pair.Value.Int32Value, StringComparer.OrdinalIgnoreCase);
+        _cycleSourceValues.ToDictionary(pair => pair.Key, pair => pair.Value.Value.Int32Value, StringComparer.OrdinalIgnoreCase);
 
-    public IReadOnlyDictionary<string, DataSourceRuntimeValue> GetCycleSourceRuntimeValues() => _cycleSourceValues;
+    public IReadOnlyDictionary<string, DataSourceRuntimeValue> GetCycleSourceRuntimeValues() =>
+        _cycleSourceValues.ToDictionary(pair => pair.Key, pair => pair.Value.Value, StringComparer.OrdinalIgnoreCase);
+
+    public IReadOnlyDictionary<string, DataSourceCycleSample> GetCycleSourceSamples() => _cycleSourceValues;
 
     /// <summary>
     /// 清空自上次落盘以来累积的源采样值（由主服务在快照落盘后调用）。

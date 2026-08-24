@@ -5,11 +5,24 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:models="clr-namespace:Kanban.Collector.Core.Models;assembly=Kanban.Collector.Core"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
     mc:Ignorable="d"
     d:DesignHeight="720"
     d:DesignWidth="1100">
+    <UserControl.Resources>
+        <ObjectDataProvider
+            x:Key="DataSourceValueTypeValues"
+            MethodName="GetValues"
+            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:DataSourceValueType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </UserControl.Resources>
     <!--
         设备管理 Tab：数据采集源（多值重构版，设计稿《采集模块扩展设计方案》）。
         两级表格：源表格（标识+触发配置）→ 值表格（采集地址+判定参数）→ 枚举取值表（选中值项）。
@@ -35,37 +48,54 @@
                 VerticalAlignment="Center"
                 FontSize="14"
                 FontWeight="SemiBold"
-                Text="数据源（一个触发位驱动该源全部值项）" />
+                Text="{x:Static resources:Strings.Dsm_SourceSectionTitle}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button
+                    AutomationProperties.Name="{x:Static resources:Strings.M360}"
+                    Command="{Binding DataContext.ExportDataSourcesCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Content="{x:Static resources:Strings.K653}"
+                    Style="{StaticResource IconButtonDefault}"
+                    Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
+                    ToolTip="{x:Static resources:Strings.M360}" />
+                <Button
+                    Margin="8,0,0,0"
+                    AutomationProperties.Name="{x:Static resources:Strings.M361}"
+                    Command="{Binding DataContext.ImportDataSourcesCsvCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Content="{x:Static resources:Strings.K654}"
+                    Style="{StaticResource IconButtonPrimary}"
+                    Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
+                    ToolTip="{x:Static resources:Strings.M361}" />
+                <Button
+                    Margin="8,0,0,0"
                     Command="{Binding DataContext.AddSourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="新增源"
+                    Content="{x:Static resources:Strings.Dsm_AddSource}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.Plus}" />
                 <Button
                     Margin="8,0,0,0"
                     Command="{Binding DataContext.RemoveSourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding DataContext.SelectedSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="删除源"
+                    Content="{x:Static resources:Strings.Dsm_RemoveSource}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>
         </DockPanel>
         <DataGrid
+            x:Name="SourcesGrid"
             Grid.Row="1"
             Style="{StaticResource KanbanDataGrid}"
             CellStyle="{StaticResource KanbanDataGridCell}"
             ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
             RowStyle="{StaticResource KanbanDataGridRow}"
-            IsReadOnly="False"
+            IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
             ItemsSource="{Binding Sources}"
             SelectedItem="{Binding DataContext.SelectedSource, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <DataGrid.Columns>
-                <!-- 名称列：展示含采集方式标识的 DisplayName（定时模式 = 名称 + 「定时采集」），双击/进入编辑时编辑配置名 Name -->
-                <DataGridTemplateColumn Width="*" Header="名称">
+                <!-- 名称列：展示含采集方式标识的多语言名称（定时模式 = 名称 + 「定时采集」），双击/进入编辑时编辑配置名 Name -->
+                <DataGridTemplateColumn Width="*" Header="{x:Static resources:Strings.Dsm_Name}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock VerticalAlignment="Center" Text="{Binding DisplayName}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Converter={StaticResource LocalizedNameToTextConverter}}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -76,24 +106,36 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn
                     Width="*"
+                    Binding="{Binding NameEn, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameEn}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding NameJa, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameJa}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NamePt}" />
+                <DataGridTextColumn
+                    Width="*"
                     Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged}"
-                    Header="类型" />
+                    Header="{x:Static resources:Strings.Dsm_Type}" />
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding TriggerAddress, UpdateSourceTrigger=PropertyChanged}"
-                    Header="触发地址（可选）" />
+                    Header="{x:Static resources:Strings.Dsm_TriggerAddress}" />
                 <DataGridTextColumn
                     Width="80"
                     Binding="{Binding TriggerValue, UpdateSourceTrigger=PropertyChanged}"
-                    Header="触发值" />
+                    Header="{x:Static resources:Strings.Dsm_TriggerValue}" />
                 <DataGridTextColumn
                     Width="80"
                     Binding="{Binding AckValue, UpdateSourceTrigger=PropertyChanged}"
-                    Header="回执值" />
+                    Header="{x:Static resources:Strings.Dsm_AckValue}" />
                 <DataGridCheckBoxColumn
                     Width="60"
                     Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}"
-                    Header="启用" />
+                    Header="{x:Static resources:Strings.Dsm_Enabled}" />
             </DataGrid.Columns>
         </DataGrid>
 
@@ -104,73 +146,261 @@
                 VerticalAlignment="Center"
                 FontSize="14"
                 FontWeight="SemiBold"
-                Text="值项（选中源的值：各自地址/单位/上下限/预期值）" />
+                Text="{x:Static resources:Strings.Dsm_ValueSectionTitle}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button
                     Command="{Binding DataContext.AddValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="新增值项"
+                    Content="{x:Static resources:Strings.Dsm_AddValue}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.Plus}" />
                 <Button
                     Margin="8,0,0,0"
                     Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding DataContext.SelectedValue, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="删除值项"
+                    Content="{x:Static resources:Strings.Dsm_RemoveValue}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>
         </DockPanel>
         <DataGrid
+            x:Name="ValuesGrid"
             Grid.Row="3"
             Style="{StaticResource KanbanDataGrid}"
             CellStyle="{StaticResource KanbanDataGridCell}"
             ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
             RowStyle="{StaticResource KanbanDataGridRow}"
-            IsReadOnly="False"
+            IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
             ItemsSource="{Binding DataContext.SelectedSource.Values, RelativeSource={RelativeSource AncestorType=UserControl}}"
             SelectedItem="{Binding DataContext.SelectedValue, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <DataGrid.Columns>
                 <DataGridTextColumn
-                    Width="*"
+                    Width="1.2*"
                     Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                    Header="名称" />
+                    Header="{x:Static resources:Strings.Dsm_Name}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding NameEn, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameEn}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding NameJa, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameJa}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NamePt}" />
                 <DataGridComboBoxColumn
                     Width="90"
-                    Header="类型"
+                    Header="{x:Static resources:Strings.Dsm_Type}"
                     SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                    ItemsSource="{Binding DataContext.DataSourceValueTypes, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    ItemsSource="{Binding Source={StaticResource DataSourceValueTypeValues}}" />
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"
-                    Header="采集地址" />
+                    Header="{x:Static resources:Strings.Dsm_Address}" />
                 <DataGridTextColumn
                     Width="70"
                     Binding="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
-                    Header="单位" />
-                <DataGridTextColumn
-                    Width="80"
-                    Binding="{Binding LimitMin, UpdateSourceTrigger=PropertyChanged}"
-                    Header="下限" />
-                <DataGridTextColumn
-                    Width="80"
-                    Binding="{Binding LimitMax, UpdateSourceTrigger=PropertyChanged}"
-                    Header="上限" />
+                    Header="{x:Static resources:Strings.Dsm_Unit}" />
+                <DataGridTemplateColumn Width="80" Header="{x:Static resources:Strings.Dsm_TrendLowerLimit}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="-" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                <Setter Property="Text" Value="{Binding LimitMin}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                <Setter Property="Text" Value="{Binding FloatLimitMin}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox>
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Text" Value="{Binding LimitMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Text" Value="{Binding FloatLimitMin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="80" Header="{x:Static resources:Strings.Dsm_TrendUpperLimit}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="-" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                <Setter Property="Text" Value="{Binding LimitMax}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                <Setter Property="Text" Value="{Binding FloatLimitMax}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox>
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Text" Value="{Binding LimitMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Setter Property="Text" Value="{Binding FloatLimitMax, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn
                     Width="70"
                     Binding="{Binding Hysteresis, UpdateSourceTrigger=PropertyChanged}"
-                    Header="滞回" />
+                    Header="{x:Static resources:Strings.Csv_DataSource_Hysteresis}" />
                 <DataGridTextColumn
                     Width="90"
                     Binding="{Binding ConfirmSeconds, UpdateSourceTrigger=PropertyChanged}"
-                    Header="延时确认(s)" />
-                <DataGridTextColumn
-                    Width="90"
-                    Binding="{Binding ExpectedValue, UpdateSourceTrigger=PropertyChanged}"
-                    Header="预期值" />
+                    Header="{x:Static resources:Strings.Csv_DataSource_ConfirmSeconds}" />
+                <DataGridTemplateColumn Width="90" Header="{x:Static resources:Strings.Dsm_ExpectedValue}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="-" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                <Setter Property="Text" Value="{Binding ExpectedValue}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                <Setter Property="Text" Value="{Binding FloatExpectedValue}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Bool}">
+                                                <Setter Property="Text" Value="{Binding BoolExpectedValue}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.String}">
+                                                <Setter Property="Text" Value="{Binding StringExpectedValue}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <TextBox>
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Int32}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Text" Value="{Binding ExpectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Float32}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Text" Value="{Binding FloatExpectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.String}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Setter Property="Text" Value="{Binding StringExpectedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                                <CheckBox HorizontalAlignment="Center" IsThreeState="True">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.Bool}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </CheckBox.Style>
+                                    <CheckBox.IsChecked>
+                                        <Binding Path="BoolExpectedValue" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged" />
+                                    </CheckBox.IsChecked>
+                                </CheckBox>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="80" Header="{x:Static resources:Strings.Csv_DataSource_StringLength}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="-" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.String}">
+                                                <Setter Property="Text" Value="{Binding StringLength}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding StringLength, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataType}" Value="{x:Static models:DataSourceValueType.String}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
                 <DataGridCheckBoxColumn
                     Width="60"
                     Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}"
-                    Header="启用" />
+                    Header="{x:Static resources:Strings.Dsm_Enabled}" />
             </DataGrid.Columns>
         </DataGrid>
 
@@ -181,18 +411,18 @@
                 VerticalAlignment="Center"
                 FontSize="14"
                 FontWeight="SemiBold"
-                Text="枚举取值表（选中值项：值 → 显示名，非数值型用）" />
+                Text="{x:Static resources:Strings.Dsm_EnumTableTitle}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button
                     Command="{Binding DataContext.AddEnumValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="添加行"
+                    Content="{x:Static resources:Strings.Dsm_AddEnumValue}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.Plus}" />
                 <Button
                     Margin="8,0,0,0"
                     Command="{Binding DataContext.RemoveEnumValueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding DataContext.SelectedEnumValue, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    Content="删除行"
+                    Content="{x:Static resources:Strings.Dsm_RemoveEnumValue}"
                     Style="{StaticResource IconButtonDanger}"
                     Tag="{x:Static mi:MaterialIconKind.Delete}" />
             </StackPanel>
@@ -203,18 +433,30 @@
             CellStyle="{StaticResource KanbanDataGridCell}"
             ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
             RowStyle="{StaticResource KanbanDataGridRow}"
-            IsReadOnly="False"
+            IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
             ItemsSource="{Binding DataContext.SelectedValue.EnumValues, RelativeSource={RelativeSource AncestorType=UserControl}}"
             SelectedItem="{Binding DataContext.SelectedEnumValue, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <DataGrid.Columns>
                 <DataGridTextColumn
                     Width="120"
                     Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                    Header="值" />
+                    Header="{x:Static resources:Strings.Dsm_EnumValue}" />
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                    Header="显示名" />
+                    Header="{x:Static resources:Strings.Dsm_DisplayName}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding DisplayNameEn, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameEn}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding DisplayNameJa, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NameJa}" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding DisplayNamePt, UpdateSourceTrigger=PropertyChanged}"
+                    Header="{x:Static resources:Strings.Alarm_NamePt}" />
             </DataGrid.Columns>
         </DataGrid>
 
@@ -223,7 +465,7 @@
             Grid.Row="6"
             Margin="0,10,0,0"
             Foreground="{StaticResource SecondaryTextBrush}"
-            Text="触发：未配置触发地址 = 每轮采集全部值项（定时）；配置后 = 读触发地址 == 触发值 → 采集全部值项 → 同址写回执值。判定：数值型（配置上下限）越限持续超过延时确认才报警，回落到「限值∓滞回」内恢复；非数值型（配置预期值）偏离即报警、回预期恢复。"
+            Text="{x:Static resources:Strings.Dsm_CollectionDescription}"
             TextWrapping="Wrap" />
     </Grid>
 </UserControl>

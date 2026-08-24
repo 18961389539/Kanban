@@ -70,6 +70,7 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<AlarmCsvIOService>();
         services.AddSingleton<DefectCsvIOService>();
         services.AddSingleton<CounterAlarmCsvIOService>();
+        services.AddSingleton<DataSourceCsvIOService>();
         services.AddSingleton<RecipeJsonIOService>();
 
         // ──────────── Remote 模式数据链路（展示端瘦身） ────────────
@@ -77,6 +78,18 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<KanbanDataClient>(sp => new KanbanDataClient(
             sp.GetRequiredService<AppSettings>().CollectorHubUrl,
             sp.GetRequiredService<ILogger<KanbanDataClient>>()));
+        services.AddSingleton<KanbanAdminClient>(sp => new KanbanAdminClient(
+            sp.GetRequiredService<AppSettings>().CollectorHubUrl,
+            sp.GetRequiredService<ILogger<KanbanDataClient>>()));
+        services.AddSingleton<IKanbanAdminClient>(sp => sp.GetRequiredService<KanbanAdminClient>());
+        services.AddSingleton<IRemoteDeviceConfigurationStore, RemoteDeviceConfigurationStore>();
+        services.AddSingleton<IRemoteRecipeStore, RemoteRecipeStore>();
+        services.AddSingleton<IRemoteWorkOrderStore, RemoteWorkOrderStore>();
+        services.AddSingleton<RemoteAuditService>();
+        services.AddSingleton<IAuditService>(sp =>
+            sp.GetRequiredService<IRuntimeMode>().IsRemote
+                ? sp.GetRequiredService<RemoteAuditService>()
+                : sp.GetRequiredService<AuditService>());
         services.AddSingleton<RemoteRuntimeSink>();
         // 历史查询路由代理：Local 委托 HistoryService（SQLite），Remote 走 SignalR。
         // ⚠️ 刻意行为：以下 6 个接口**无条件**重定向到 RemoteHistoryQueryService（后注册覆盖

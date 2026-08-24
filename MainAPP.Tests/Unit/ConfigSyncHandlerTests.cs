@@ -3,6 +3,7 @@ using System.Text.Json;
 using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ public class ConfigSyncHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly AppSettings _appSettings;
+    private readonly DeviceRepository _deviceRepository;
     private readonly ConfigSyncHandler _handler;
     private readonly IPlcRuntimeProfileProvider _profileProvider;
     private readonly IPlcConnectionManager _connectionManager;
@@ -37,6 +39,7 @@ public class ConfigSyncHandlerTests : IDisposable
         Directory.CreateDirectory(_tempDir);
         Environment.SetEnvironmentVariable("KANBAN_DATA_DIR", _tempDir);
         _appSettings = new AppSettings();
+        _deviceRepository = new DeviceRepository(_appSettings);
 
         var services = new ServiceCollection();
         _profileProvider = Substitute.For<IPlcRuntimeProfileProvider>();
@@ -45,7 +48,7 @@ public class ConfigSyncHandlerTests : IDisposable
         services.AddSingleton(_connectionManager);
 
         _handler = new ConfigSyncHandler(
-            new DeviceRepository(_appSettings),
+            _deviceRepository,
             null!, // WorkOrderRepository：SaveCollectorSettingsAsync 不触达，测试无需构造
             new Kanban.Collector.Services.SnapshotAggregator(),
             _appSettings,
@@ -174,6 +177,83 @@ public class ConfigSyncHandlerTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveDevices_UsesActiveKeyenceCodecForNativeAddresses()
+    {
+        var profile = new PlcRuntimeProfileProvider(
+            _appSettings,
+            new PlcAddressCodecResolver(_appSettings));
+        profile.Refresh(new PlcConfig { Brand = PlcBrand.Keyence });
+        _profileProvider.Current.Returns(profile.Current);
+
+        var dto = new DeviceConfigDto
+        {
+            Id = "dev-keyence",
+            Name = "Keyence设备",
+            OkCountAddress = "DM100",
+            NgCountAddress = "DM102",
+            StatusCountAddress = "DM104",
+            ProductionResetAddress = "DM106",
+            RecipeName = "",
+            RecipeAddress = "DM108",
+            TargetCycle = 600,
+            Alarms =
+            [
+                new AlarmConfigDto
+                {
+                    Id = "alarm-keyence",
+                    DeviceId = "dev-keyence",
+                    Name = "报警",
+                    PlcAddress = "MR100",
+                    Description = "",
+                    Level = ContractsAlarmLevel.High,
+                },
+            ],
+        };
+
+        await _handler.SaveDevicesAsync([dto]);
+
+        Assert.Equal("DM100", _deviceRepository.Devices[0].OkCountAddress);
+    }
+
+    [Fact]
+    public async Task HasDeviceBackup_ReturnsCollectorBackupState()
+    {
+        Assert.False(await _handler.HasDeviceBackupAsync());
+
+        _deviceRepository.ReplaceAll([new Device { Name = "设备", OkCountAddress = "D100" }]);
+        _deviceRepository.SaveAll();
+        _deviceRepository.Devices[0].Name = "设备-更新";
+        _deviceRepository.SaveAll();
+
+        Assert.True(await _handler.HasDeviceBackupAsync());
+    }
+
+    [Fact]
+    public async Task RollbackDevices_WithoutCollectorBackup_ReturnsNull()
+    {
+        var restored = await _handler.RollbackDevicesAsync();
+
+        Assert.Null(restored);
+    }
+
+    [Fact]
+    public async Task RollbackDevices_RestoresCollectorBackupAndReturnsAuthoritativeSnapshot()
+    {
+        _deviceRepository.ReplaceAll([new Device { Name = "备份版本" }]);
+        _deviceRepository.SaveAll();
+        _deviceRepository.Devices[0].Name = "当前版本";
+        _deviceRepository.SaveAll();
+
+        var restored = await _handler.RollbackDevicesAsync();
+
+        Assert.NotNull(restored);
+        Assert.Single(restored!);
+        Assert.Equal("备份版本", restored[0].Name);
+        Assert.Single(_deviceRepository.Devices);
+        Assert.Equal("备份版本", _deviceRepository.Devices[0].Name);
+    }
+
+    [Fact]
     public async Task SaveRecipes_InvalidRecipe_ThrowsAndDoesNotPersist()
     {
         // 需要真实 RecipeStore（校验路径读取现有配方集合）
@@ -219,6 +299,40 @@ public class ConfigSyncHandlerTests : IDisposable
 
         _appSettings.Language = AppLanguage.Ja;
         Assert.Equal(2, _handler.GetLanguage());
+    }
+
+    [Fact]
+    public void GetLanguageCode_ReturnsEffectiveDynamicLanguage()
+    {
+        _appSettings.Language = AppLanguage.En;
+        Assert.Equal("en-US", _handler.GetLanguageCode());
+
+        _appSettings.LanguageCode = "pt-BR";
+        Assert.Equal("pt-BR", _handler.GetLanguageCode());
+        Assert.Equal((int)AppLanguage.PtBr, _handler.GetLanguage());
+    }
+
+    [Fact]
+    public async Task SaveCollectorSettings_SyncsLanguageToCollector()
+    {
+        await _handler.SaveCollectorSettingsAsync(new CollectorSettingsDto
+        {
+            Language = (int)AppLanguage.PtBr,
+        });
+
+        Assert.Equal(AppLanguage.PtBr, _appSettings.Language);
+        Assert.Equal("pt-BR", _appSettings.LanguageCode);
+        Assert.Equal("pt-BR", _handler.GetLanguageCode());
+        Assert.Equal((int)AppLanguage.PtBr, _handler.GetLanguage());
+
+        var settingsPath = Path.Combine(_tempDir, "Config", "settings.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(settingsPath));
+        Assert.Equal((int)AppLanguage.PtBr, document.RootElement.GetProperty("Language").GetInt32());
+
+        // 该测试会修改进程级 Core 文案，避免影响其他测试。
+        ConnectionStatusMessages.ApplyLanguage("zh-CN");
+        ValidationMessages.ApplyLanguage("zh-CN");
+        RecipeValidationMessages.ApplyLanguage("zh-CN");
     }
 
     [Fact]
@@ -332,7 +446,7 @@ public class ConfigSyncHandlerTests : IDisposable
 
         // 运行实例保持原状（不落内存）
         Assert.Equal(200, _appSettings.PollingIntervalMs);
-        Assert.Equal("192.168.1.2", _appSettings.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", _appSettings.PlcConfig.IpAddress);
         Assert.Equal(4999, _appSettings.PlcConfig.Port);
         // PLC 驱动不热切换
         _profileProvider.DidNotReceive().Refresh(Arg.Any<PlcConfig>());

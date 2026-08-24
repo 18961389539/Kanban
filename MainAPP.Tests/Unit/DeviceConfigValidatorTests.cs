@@ -11,6 +11,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","None")]
+[Collection("LocalizationSensitive")]
 public class DeviceConfigValidatorTests
 {
     /// <summary>
@@ -40,13 +41,15 @@ public class DeviceConfigValidatorTests
     public void CollectValidationErrors_SourceValueMissingAddress_ReportsError()
     {
         var device = ValidDevice("设备1", "D100");
-        var source = new DataSource { Name = "温湿度" };
+        var source = new DataSource { DeviceId = device.Id, Name = "温湿度" };
         source.Values.Add(new DataSourceValue { Name = "温度" }); // 无采集地址
         device.Sources.Add(source);
 
         var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
 
-        Assert.Contains(errors, e => e.Message.Contains("未配置采集地址"));
+        var error = Assert.Single(errors);
+        Assert.Contains("未配置采集地址", error.Message);
+        Assert.Equal((int)DeviceManagerTab.Sources, error.TargetTabIndex);
     }
 
     [Fact]
@@ -64,16 +67,89 @@ public class DeviceConfigValidatorTests
     }
 
     [Fact]
+    public void CollectValidationErrors_SiemensSourceTriggerAndValueAlias_ReportsConflict()
+    {
+        var device = new Device
+        {
+            Name = "S7设备",
+            TargetCycle = 100,
+            OkCountAddress = "DB1.DBD100",
+            NgCountAddress = "DB1.DBD104",
+            StatusCountAddress = "MD100",
+            ProductionResetAddress = "MD104",
+        };
+        var source = new DataSource
+        {
+            DeviceId = device.Id,
+            Name = "温度源",
+            TriggerAddress = "DB1.DBD0",
+        };
+        source.Values.Add(new DataSourceValue { Name = "温度", PlcAddress = "DB1.0" });
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(
+            new[] { device }, new PlcAddressCodecResolver(new AppSettings()).Resolve(PlcBrand.Siemens));
+
+        Assert.Contains(errors, e => e.Message.Contains("不能与触发地址相同"));
+    }
+
+    [Fact]
+    public void CollectValidationErrors_SiemensSourceValueAliases_ReportsDuplicate()
+    {
+        var device = new Device
+        {
+            Name = "S7设备",
+            TargetCycle = 100,
+            OkCountAddress = "DB1.DBD100",
+            NgCountAddress = "DB1.DBD104",
+            StatusCountAddress = "MD100",
+            ProductionResetAddress = "MD104",
+        };
+        var source = new DataSource { DeviceId = device.Id, Name = "温度源" };
+        source.Values.Add(new DataSourceValue { Name = "温度", PlcAddress = "DB1.DBD0" });
+        source.Values.Add(new DataSourceValue { Name = "温度别名", PlcAddress = "DB1.0" });
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(
+            new[] { device }, new PlcAddressCodecResolver(new AppSettings()).Resolve(PlcBrand.Siemens));
+
+        Assert.Contains(errors, e => e.Message.Contains("相同采集地址"));
+    }
+
+    [Fact]
     public void CollectValidationErrors_ValidSource_NoSourceErrors()
     {
         var device = ValidDevice("设备1", "D100");
-        var source = new DataSource { Name = "温湿度", TriggerAddress = "D510" };
+        var source = new DataSource { DeviceId = device.Id, Name = "温湿度", TriggerAddress = "D510" };
         source.Values.Add(new DataSourceValue { Name = "温度", PlcAddress = "D300" });
         device.Sources.Add(source);
 
         var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
 
-        Assert.DoesNotContain(errors, e => e.TargetTabIndex == 5);
+        Assert.DoesNotContain(errors, e => e.TargetTabIndex == (int)DeviceManagerTab.Sources);
+    }
+
+    [Fact]
+    public void CollectValidationErrors_FloatExpectedValueWithLimits_ReportsConflict()
+    {
+        var device = ValidDevice("设备1", "D100");
+        var source = new DataSource { DeviceId = device.Id, Name = "温度" };
+        source.Values.Add(new DataSourceValue
+        {
+            Name = "温度值",
+            PlcAddress = "D300",
+            DataType = DataSourceValueType.Float32,
+            FloatLimitMin = 0,
+            FloatLimitMax = 100,
+            FloatExpectedValue = 50,
+        });
+        device.Sources.Add(source);
+
+        var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
+
+        var error = Assert.Single(errors);
+        Assert.Contains("不能同时配置上下限和预期值", error.Message);
+        Assert.Equal((int)DeviceManagerTab.Sources, error.TargetTabIndex);
     }
 
     [Fact]

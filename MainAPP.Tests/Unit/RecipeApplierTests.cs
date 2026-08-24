@@ -61,7 +61,7 @@ public class RecipeApplierTests
     {
         var (applier, _) = CreateApplier(connected: false);
 
-        var result = applier.Apply(TestDevice(), ValidRecipe);
+        var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("PLC 未连接", result.Message);
@@ -73,7 +73,7 @@ public class RecipeApplierTests
         var (applier, _) = CreateApplier();
         var invalid = new Recipe { Name = "" }; // 空名 + 空参数项 → 校验失败
 
-        var result = applier.Apply(TestDevice(), invalid);
+        var result = applier.Apply(TestDevice(), invalid, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("配方", result.Message);
@@ -85,7 +85,7 @@ public class RecipeApplierTests
         var (applier, adapter) = CreateApplier();
         adapter.ReadInt32(Arg.Any<string>()).Returns(PlcOperationResult<int>.Fail("读失败"));
 
-        var result = applier.Apply(TestDevice(), ValidRecipe);
+        var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("备份", result.Message);
@@ -99,7 +99,7 @@ public class RecipeApplierTests
         SetupHappyPath(adapter);
         adapter.WriteInt32("D108", 50).Returns(PlcOperationResult.Fail("写失败")); // 写失败（回滚写同值也会失败）
 
-        var result = applier.Apply(TestDevice(), ValidRecipe);
+        var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("已回滚", result.Message);
@@ -120,7 +120,7 @@ public class RecipeApplierTests
         });
         adapter.WriteInt32(Arg.Any<string>(), Arg.Any<int>()).Returns(PlcOperationResult.Success());
 
-        var result = applier.Apply(TestDevice(), ValidRecipe);
+        var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("校验不一致", result.Message);
@@ -155,7 +155,7 @@ public class RecipeApplierTests
         adapter.WriteInt32(Arg.Any<string>(), Arg.Any<int>()).Returns(PlcOperationResult.Success());
         adapter.WriteInt32("D110", 70).Returns(PlcOperationResult.Fail("写失败"));
 
-        var result = applier.Apply(TestDevice(), recipe);
+        var result = applier.Apply(TestDevice(), recipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("已回滚", result.Message);
@@ -187,7 +187,7 @@ public class RecipeApplierTests
         adapter.ReadInt32(Arg.Any<string>()).Returns(PlcOperationResult<int>.Success(50));
         adapter.WriteInt32(Arg.Any<string>(), Arg.Any<int>()).Returns(PlcOperationResult.Success());
 
-        var result = applier.Apply(TestDevice(), recipe);
+        var result = applier.Apply(TestDevice(), recipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
         Assert.Contains("校验不一致", result.Message);
@@ -202,7 +202,7 @@ public class RecipeApplierTests
         var (applier, adapter) = CreateApplier();
         SetupHappyPath(adapter);
 
-        var result = applier.Apply(TestDevice(), ValidRecipe);
+        var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         var item = Assert.Single(result.Items);
@@ -242,7 +242,7 @@ public class RecipeApplierTests
                 new RecipeItem { ParamName = "温度", PlcAddress = "D110", DataType = PlcDataType.Int32, Value = "60" },
             },
         };
-        using var cts = new CancellationTokenSource();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         // 第一项写入完成后立即取消 → 写循环第二项前抛 OCE → 回滚已写项
         adapter.WriteInt32("D108", 50).Returns(_ =>
         {

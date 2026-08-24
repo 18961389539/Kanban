@@ -19,6 +19,7 @@ using AlarmEventType = Kanban.Contracts.Enums.AlarmEventType;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
+using CoreDataSourceValueType = Kanban.Collector.Core.Models.DataSourceValueType;
 
 namespace MainAPP.Tests.Integration;
 
@@ -175,11 +176,11 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
     // ──────────── 测试设施 ────────────
 
     /// <summary>在专用 STA 线程上构造 Sink 并启动消息泵（构造绑定 CurrentDispatcher，批量闸依赖泵）。</summary>
-    private async Task StartSinkAsync()
+    private async Task StartSinkAsync(CancellationToken cancellationToken)
     {
         _client = new KanbanDataClient($"{_hubAddress}/hubs/sink",
             NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
-        await _client.ConnectAsync();
+        await _client.ConnectAsync(cancellationToken);
 
         _staThread = new Thread(() =>
         {
@@ -215,12 +216,12 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
     /// 且 HubCallerContext.Abort 是服务端主动终止（AllowReconnect=false，客户端不自动重连），
     /// 故在同一端口重建新应用——客户端 WithAutomaticReconnect（1s/5s/…）自行重连并触发重订阅。
     /// </summary>
-    private async Task RestartServerAsync()
+    private async Task RestartServerAsync(CancellationToken cancellationToken)
     {
-        await _app.StopAsync();
+        await _app.StopAsync(cancellationToken);
         await _app.DisposeAsync();
         _app = CreateApp();
-        await _app.StartAsync();
+        await _app.StartAsync(cancellationToken);
         _hubContext = _app.Services.GetRequiredService<IHubContext<SinkTestHub>>();
     }
 
@@ -292,7 +293,7 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
         SinkTestHub.InitialSnapshots = [Snapshot(totalOk: 120)];
 
-        await StartSinkAsync();
+        await StartSinkAsync(TestContext.Current.CancellationToken);
 
         WaitUntil(() => _deviceRepo.RuntimeMap.TryGetValue("dev-1", out var rt) && rt.TotalOkProduction == 120,
             "初始快照灌入 RuntimeMap");
@@ -303,46 +304,149 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Start_InitialSnapshots_AppliesDataSourceValues()
+    {
+        var device = CreateDeviceWithAlarm();
+        var source = new DataSource { Id = "src-1", Name = "环境", Type = "温湿度" };
+        source.Values.Add(new DataSourceValue
+        {
+            Id = "value-1",
+            Name = "温度",
+            DataType = CoreDataSourceValueType.Float32,
+            PlcAddress = "D300",
+            Unit = "°C",
+        });
+        device.Sources.Add(source);
+        _deviceRepo.ReplaceAll([device]);
+
+        var sampledAt = DateTime.UtcNow.AddSeconds(-2);
+        SinkTestHub.InitialSnapshots = [Snapshot(totalOk: 120) with
+        {
+            SourceValues =
+            [
+                new DataSourceValueSnapshotDto
+                {
+                    SourceId = "src-1",
+                    SourceName = "环境",
+                    SourceType = "温湿度",
+                    ValueId = "value-1",
+                    ValueName = "温度",
+                    PlcAddress = "D300",
+                    Unit = "°C",
+                    DataType = Kanban.Contracts.Enums.DataSourceValueType.Float32,
+                    Float32Value = 23.5f,
+                    DisplayText = "23.5",
+                    IsValid = true,
+                    LastUpdatedAt = sampledAt,
+                },
+            ],
+        }];
+
+        await StartSinkAsync(TestContext.Current.CancellationToken);
+
+        WaitUntil(() => _deviceRepo.GetDeviceById("dev-1")!.Sources[0].Values[0].IsValid,
+            "初始快照灌入数据源值");
+        var value = _deviceRepo.GetDeviceById("dev-1")!.Sources[0].Values[0];
+        Assert.Equal(23.5f, value.CurrentFloatValue);
+        Assert.Equal(sampledAt, value.LastUpdatedAt);
+        Assert.True(value.IsValid);
+    }
+
+    [Fact]
+    public async Task SnapshotFailure_UsesSnapshotTimeForReadAttempt_AndPreservesLastValidTime()
+    {
+        var device = CreateDeviceWithAlarm();
+        var source = new DataSource { Id = "src-1", Name = "环境", Type = "温湿度" };
+        var value = new DataSourceValue
+        {
+            Id = "value-1",
+            Name = "温度",
+            DataType = CoreDataSourceValueType.Float32,
+            PlcAddress = "D300",
+        };
+        var sampledAt = DateTime.UtcNow.AddSeconds(-2);
+        value.SetRuntimeValue(
+            new DataSourceRuntimeValue(CoreDataSourceValueType.Float32, Float32Value: 23.5f),
+            sampledAt);
+        source.Values.Add(value);
+        device.Sources.Add(source);
+        _deviceRepo.ReplaceAll([device]);
+
+        var attemptAt = sampledAt.AddSeconds(1);
+        SinkTestHub.InitialSnapshots = [Snapshot(totalOk: 120) with
+        {
+            Timestamp = attemptAt,
+            SourceValues =
+            [
+                new DataSourceValueSnapshotDto
+                {
+                    SourceId = "src-1",
+                    SourceName = "环境",
+                    SourceType = "温湿度",
+                    ValueId = "value-1",
+                    ValueName = "温度",
+                    PlcAddress = "D300",
+                    Unit = "",
+                    DataType = Kanban.Contracts.Enums.DataSourceValueType.Float32,
+                    Float32Value = 23.5f,
+                    IsValid = false,
+                    LastUpdatedAt = sampledAt,
+                },
+            ],
+        }];
+
+        await StartSinkAsync(TestContext.Current.CancellationToken);
+
+        WaitUntil(() => !_deviceRepo.GetDeviceById("dev-1")!.Sources[0].Values[0].IsValid,
+            "失败快照灌入数据源值");
+        var updatedValue = _deviceRepo.GetDeviceById("dev-1")!.Sources[0].Values[0];
+        Assert.Equal(sampledAt, updatedValue.LastUpdatedAt);
+        Assert.Equal(attemptAt, updatedValue.LastReadAttemptAt);
+    }
+
+    [Fact]
     public async Task SnapshotSubscription_AppliesUpdates_AndTombstoneRemovesRuntime()
     {
         _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
-        await StartSinkAsync();
+        await StartSinkAsync(TestContext.Current.CancellationToken);
         WaitUntil(() => SinkTestHub.SnapshotSubscribeCount >= 1, "快照订阅建立");
 
         // 订阅推送：500ms 批量闸经 Dispatcher 泵应用
-        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(totalOk: 150));
+        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(totalOk: 150), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.RuntimeMap.TryGetValue("dev-1", out var rt) && rt.TotalOkProduction == 150,
             "订阅快照灌入 RuntimeMap");
 
         // tombstone：删除广播后从本地移除
-        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(removed: true));
+        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(removed: true), TestContext.Current.CancellationToken);
         WaitUntil(() => !_deviceRepo.RuntimeMap.ContainsKey("dev-1"), "tombstone 移除设备运行时");
+        Assert.Null(_deviceRepo.GetDeviceById("dev-1"));
+        Assert.DoesNotContain(_deviceRepo.Devices, device => device.Id == "dev-1");
     }
 
     [Fact]
     public async Task AlarmStatusMetaEvents_AppliedToLocalState()
     {
         _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
-        await StartSinkAsync();
+        await StartSinkAsync(TestContext.Current.CancellationToken);
         WaitUntil(() => !SinkTestHub.AlarmSubscribeSeqs.IsEmpty && !SinkTestHub.StatusSubscribeSeqs.IsEmpty
             && SinkTestHub.MetaSubscribeCount >= 1, "事件连接三订阅建立");
 
         // 先推一帧快照建运行时（状态事件只更新已有 RuntimeMap 项）
-        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot());
+        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.RuntimeMap.ContainsKey("dev-1"), "运行时建立");
 
         // 报警触发 → StartTime 置位
         var t1 = DateTime.UtcNow.AddMinutes(-5);
-        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 1, seq: 1, AlarmEventType.Triggered, t1));
+        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 1, seq: 1, AlarmEventType.Triggered, t1), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.GetDeviceById("dev-1")!.Alarms[0].StartTime == t1, "报警触发事件应用");
 
         // 报警恢复 → EndTime 置位
         var t2 = DateTime.UtcNow;
-        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 1, seq: 2, AlarmEventType.Recovered, t2));
+        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 1, seq: 2, AlarmEventType.Recovered, t2), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.GetDeviceById("dev-1")!.Alarms[0].EndTime == t2, "报警恢复事件应用");
 
         // 状态事件 → StatusWord 更新
-        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 1, seq: 3, DeviceStatus.Alarm));
+        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 1, seq: 3, DeviceStatus.Alarm), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.RuntimeMap["dev-1"].StatusWord == (int)DeviceStatus.Alarm, "状态事件应用");
 
         // 元数据 → 工单增量插入
@@ -366,7 +470,7 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
                 },
             ],
         };
-        await _hubContext.Clients.All.SendAsync("OnMeta", meta);
+        await _hubContext.Clients.All.SendAsync("OnMeta", meta, TestContext.Current.CancellationToken);
         WaitUntil(() => _workOrderRepo.WorkOrders.Any(w => w.OrderNo == "WO-SINK"), "元数据工单插入");
         Assert.Equal("产品S", _workOrderRepo.WorkOrders.First(w => w.OrderNo == "WO-SINK").ProductName);
     }
@@ -377,22 +481,22 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         // 回归（审查修复 2026-08-13）：报警/状态流共享纪元存在"报警先到更新纪元、
         // 状态后到走同纪元分支不归零"的竞态——每流独立纪元后，状态流在自身纪元变化时必须归零游标。
         _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
-        await StartSinkAsync();
+        await StartSinkAsync(TestContext.Current.CancellationToken);
         WaitUntil(() => !SinkTestHub.AlarmSubscribeSeqs.IsEmpty && !SinkTestHub.StatusSubscribeSeqs.IsEmpty,
             "事件连接报警/状态订阅建立");
-        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot());
+        await _hubContext.Clients.All.SendAsync("OnSnapshot", Snapshot(), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.RuntimeMap.ContainsKey("dev-1"), "运行时建立");
 
         // 旧纪元：状态流消费 seq=42（游标推进）
-        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 100, seq: 42, DeviceStatus.Running));
+        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 100, seq: 42, DeviceStatus.Running), TestContext.Current.CancellationToken);
         WaitUntil(() => _deviceRepo.RuntimeMap["dev-1"].StatusWord == (int)DeviceStatus.Running, "旧纪元状态事件应用");
 
         // 报警先到（新纪元 400）→ 报警流游标归零；随后状态事件也带新纪元 → 状态流游标必须同样归零
-        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 400, seq: 3, AlarmEventType.Triggered, DateTime.UtcNow));
-        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 400, seq: 5, DeviceStatus.Alarm));
+        await _hubContext.Clients.All.SendAsync("OnAlarmEvent", AlarmEvent(epoch: 400, seq: 3, AlarmEventType.Triggered, DateTime.UtcNow), TestContext.Current.CancellationToken);
+        await _hubContext.Clients.All.SendAsync("OnStatusEvent", StatusEvent(epoch: 400, seq: 5, DeviceStatus.Alarm), TestContext.Current.CancellationToken);
 
         // 重启服务端（模拟网络断连）→ 客户端自动重连 → 重订阅：两条流的游标都应为 0（旧实现状态流会是 5）
-        await RestartServerAsync();
+        await RestartServerAsync(TestContext.Current.CancellationToken);
 
         WaitUntil(() => SinkTestHub.AlarmSubscribeSeqs.Count >= 2 && SinkTestHub.StatusSubscribeSeqs.Count >= 2,
             "事件连接重连后重订阅");
@@ -405,11 +509,11 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
     public async Task Reconnect_ResubscribesSnapshotStream()
     {
         _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
-        await StartSinkAsync();
+        await StartSinkAsync(TestContext.Current.CancellationToken);
         WaitUntil(() => SinkTestHub.SnapshotSubscribeCount >= 1, "快照订阅建立");
 
         // 重启服务端（模拟网络断连）→ 自动重连 → OnReconnectedAsync 恢复快照订阅
-        await RestartServerAsync();
+        await RestartServerAsync(TestContext.Current.CancellationToken);
 
         WaitUntil(() => SinkTestHub.SnapshotSubscribeCount >= 2, "重连后快照订阅恢复");
     }

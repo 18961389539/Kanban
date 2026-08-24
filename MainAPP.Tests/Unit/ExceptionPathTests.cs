@@ -9,6 +9,7 @@ using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -69,14 +70,18 @@ public class ExceptionPathTests : IDisposable
     public void MappingProfile_ConfigurationIsValid()
     {
         // 应用启动时应立即验证 AutoMapper 配置，避免运行时映射失败
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
+        var config = new MapperConfiguration(
+            cfg => cfg.AddProfile<MappingProfile>(),
+            NullLoggerFactory.Instance);
         config.AssertConfigurationIsValid();
     }
 
     [Fact]
     public void MappingProfile_WorkOrderToWorkOrder_PreservesFieldsExceptIdAndCreatedAt()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
+        var config = new MapperConfiguration(
+            cfg => cfg.AddProfile<MappingProfile>(),
+            NullLoggerFactory.Instance);
         var mapper = config.CreateMapper();
 
         var source = new WorkOrder

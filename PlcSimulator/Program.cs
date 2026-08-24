@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Kanban.Contracts.Dtos;
 using HslCommunication;
 using HslCommunication.Core;
 using HslCommunication.Profinet.Melsec;
@@ -264,7 +265,10 @@ internal class Program
         _simulators = _devices.Select((d, idx) => new DeviceSimulator(
             d, _scenario, _speedMultiplier,
             WriteIntCallback, WriteBoolCallback,
-            ReadInt, ReadBool, registerOffset: idx * 50)).ToList();
+            ReadInt, ReadBool,
+            writeFloat: WriteFloatCallback,
+            writeString: WriteStringCallback,
+            registerOffset: idx * 50)).ToList();
         foreach (var sim in _simulators)
             sim.Log += msg => SimLog.Info(msg);
 
@@ -554,6 +558,26 @@ internal class Program
         }
     }
 
+    private static void WriteFloatCallback(string address, float value)
+    {
+        lock (_ioLock)
+        {
+            var r = _io.Write(address, value);
+            if (!r.IsSuccess)
+                SimLog.Error($"[写入失败] {address}={value}: {r.Message}");
+        }
+    }
+
+    private static void WriteStringCallback(string address, string value)
+    {
+        lock (_ioLock)
+        {
+            var r = _io.Write(address, value);
+            if (!r.IsSuccess)
+                SimLog.Error($"[写入失败] {address}={value}: {r.Message}");
+        }
+    }
+
     /// <summary>
     /// 读取 PLC 整数。失败时抛异常（审查修复 2026-08-16，H3）：与「真实值 0」区分，
     /// 供 DeviceSimulator 的 TryReadIntNullable 与清零监听识别读取失败，避免把失败误当 0。
@@ -745,36 +769,43 @@ internal class Program
     /// </summary>
     internal static List<string> DetectAddressConflicts(List<DeviceConfig> devices)
     {
-        // address → 使用该地址的设备名列表
-        var usage = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var usage = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        var deviceIndex = 0;
         foreach (var dev in devices)
         {
-            void AddIfNotEmpty(string addr)
+            var deviceKey = $"{deviceIndex++}:{dev.Id}";
+            void AddIfNotEmpty(string addr, string owner)
             {
                 if (string.IsNullOrWhiteSpace(addr)) return;
-                if (!usage.TryGetValue(addr, out var list))
+                if (!usage.TryGetValue(addr, out var owners))
                 {
-                    list = new List<string>();
-                    usage[addr] = list;
+                    owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    usage[addr] = owners;
                 }
-                list.Add(dev.Name);
+                owners.TryAdd(deviceKey, $"{dev.Name}({owner})");
             }
 
-            AddIfNotEmpty(dev.OkCountAddress);
-            AddIfNotEmpty(dev.NgCountAddress);
-            AddIfNotEmpty(dev.StatusCountAddress);
-            AddIfNotEmpty(dev.ProductionResetAddress);
-            AddIfNotEmpty(dev.RecipeAddress);
-            foreach (var a in dev.Alarms) AddIfNotEmpty(a.PlcAddress);
-            foreach (var d in dev.Defects) AddIfNotEmpty(d.PlcAddress);
-            foreach (var c in dev.CounterAlarms) AddIfNotEmpty(c.PlcAddress);
+            AddIfNotEmpty(dev.OkCountAddress, "OK");
+            AddIfNotEmpty(dev.NgCountAddress, "NG");
+            AddIfNotEmpty(dev.StatusCountAddress, "状态");
+            AddIfNotEmpty(dev.ProductionResetAddress, "清零");
+            AddIfNotEmpty(dev.RecipeAddress, "配方");
+            foreach (var a in dev.Alarms) AddIfNotEmpty(a.PlcAddress, $"报警:{a.Name}");
+            foreach (var d in dev.Defects) AddIfNotEmpty(d.PlcAddress, $"缺陷:{d.Name}");
+            foreach (var c in dev.CounterAlarms) AddIfNotEmpty(c.PlcAddress, $"计数报警:{c.Name}");
+            foreach (var source in dev.Sources ?? [])
+            {
+                AddIfNotEmpty(source.TriggerAddress, $"数据源触发:{source.Name}");
+                foreach (var value in source.Values ?? [])
+                    AddIfNotEmpty(value.PlcAddress, $"数据源值:{source.Name}/{value.Name}");
+            }
         }
 
         var conflicts = new List<string>();
         foreach (var (addr, owners) in usage)
         {
             if (owners.Count > 1)
-                conflicts.Add($"地址 {addr} 被 {owners.Count} 台设备共用：{string.Join(", ", owners)}");
+                conflicts.Add($"地址 {addr} 被 {owners.Count} 台设备共用：{string.Join(", ", owners.Values)}");
         }
         return conflicts;
     }
@@ -845,7 +876,10 @@ internal class Program
         _simulators = _devices.Select((d, idx) => new DeviceSimulator(
             d, _scenario, _speedMultiplier,
             WriteIntCallback, WriteBoolCallback,
-            ReadInt, ReadBool, registerOffset: idx * 50)).ToList();
+            ReadInt, ReadBool,
+            writeFloat: WriteFloatCallback,
+            writeString: WriteStringCallback,
+            registerOffset: idx * 50)).ToList();
         foreach (var sim in _simulators)
         {
             sim.Log += msg => SimLog.Info(msg);
@@ -944,6 +978,34 @@ internal class Program
                 {
                     new() { Name = "连续不良计数", PlcAddress = "D114", MaxValue = 10 },
                 },
+                Sources = new()
+                {
+                    new()
+                    {
+                        Id = "src-temp-001", DeviceId = "device-001", Name = "车间温度", Type = "温湿度",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-temp-001-value", Name = "值1", PlcAddress = "D502", Unit = "℃", LimitMin = 200, LimitMax = 300 },
+                        },
+                    },
+                    new()
+                    {
+                        Id = "src-hum-001", DeviceId = "device-001", Name = "车间湿度", Type = "温湿度",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-hum-001-value", Name = "值1", PlcAddress = "D504", Unit = "%", LimitMin = 300, LimitMax = 800 },
+                        },
+                    },
+                    new()
+                    {
+                        Id = "src-trig-001", DeviceId = "device-001", Name = "温度触发采集", Type = "温湿度",
+                        TriggerAddress = "D510",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-trig-001-value", Name = "值1", PlcAddress = "D502", Unit = "℃" },
+                        },
+                    },
+                },
             },
             new()
             {
@@ -968,6 +1030,26 @@ internal class Program
                 {
                     new() { Name = "停机次数", PlcAddress = "D212", MaxValue = 5 },
                 },
+                Sources = new()
+                {
+                    new()
+                    {
+                        Id = "src-temp-002", DeviceId = "device-002", Name = "车间温度", Type = "温湿度",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-temp-002-value", Name = "值1", PlcAddress = "D552", Unit = "℃", LimitMin = 200, LimitMax = 300 },
+                        },
+                    },
+                    new()
+                    {
+                        Id = "src-trig-002", DeviceId = "device-002", Name = "温度触发采集", Type = "温湿度",
+                        TriggerAddress = "D560",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-trig-002-value", Name = "值1", PlcAddress = "D552", Unit = "℃" },
+                        },
+                    },
+                },
             },
             new()
             {
@@ -991,6 +1073,17 @@ internal class Program
                 CounterAlarms = new()
                 {
                     new() { Name = "连续NG", PlcAddress = "D314", MaxValue = 8 },
+                },
+                Sources = new()
+                {
+                    new()
+                    {
+                        Id = "src-temp-003", DeviceId = "device-003", Name = "车间温度", Type = "温湿度",
+                        Values = new List<DataSourceValueConfigDto>
+                        {
+                            new() { Id = "src-temp-003-value", Name = "值1", PlcAddress = "D602", Unit = "℃", LimitMin = 200, LimitMax = 300 },
+                        },
+                    },
                 },
             },
         };

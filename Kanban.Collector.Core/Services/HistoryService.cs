@@ -17,6 +17,25 @@ public sealed record HistoryDiagnosticsSnapshot
     public int TotalFlushedCount { get; init; }
     public long ProductionDatabaseBytes { get; init; }
     public long ProductionWalBytes { get; init; }
+    public long ProductionQueuePeakCount { get; init; }
+    public long ProductionOverflowCount { get; init; }
+    public long ProductionFlushP95Milliseconds { get; init; }
+    public long ProductionFlushP99Milliseconds { get; init; }
+    public int PendingDataSourceCount { get; init; }
+    public long DataSourceQueuePeakCount { get; init; }
+    public long DataSourceOverflowCount { get; init; }
+    public bool DataSourceRecoveryFileExists { get; init; }
+    public long DataSourceRecoveryFileBytes { get; init; }
+    public long DataSourceRecoveryFileLines { get; init; }
+    public DateTime? LastDataSourceFlushAt { get; init; }
+    public int DataSourceFlushFailureCount { get; init; }
+    public int DataSourceTotalFlushedCount { get; init; }
+    public long DataSourceFlushP95Milliseconds { get; init; }
+    public long DataSourceFlushP99Milliseconds { get; init; }
+    public long DataSourceDatabaseBytes { get; init; }
+    public long DataSourceWalBytes { get; init; }
+    public long TotalDatabaseBytes { get; init; }
+    public long TotalWalBytes { get; init; }
 }
 
 /// <summary>历史兼容门面；领域存储和生产写入管线由独立服务实现。</summary>
@@ -28,6 +47,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     private readonly StatusTransitionHistoryStore _statusStore;
     private readonly DefectHistoryStore _defectStore;
     private readonly HistoryStorageDiagnostics _storageDiagnostics;
+    private readonly DataSourceSnapshotStore? _dataSourceSnapshotStore;
     private readonly bool _ownsWriter;
     private readonly bool _ownsStorageDiagnostics;
     private readonly Timer _walCheckpointTimer;
@@ -40,7 +60,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         AlarmHistoryStore? alarmStore = null,
         StatusTransitionHistoryStore? statusStore = null,
         DefectHistoryStore? defectStore = null,
-        HistoryStorageDiagnostics? storageDiagnostics = null)
+        HistoryStorageDiagnostics? storageDiagnostics = null,
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
     {
         _db = db;
         _logger = logger;
@@ -50,6 +71,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _statusStore = statusStore ?? new StatusTransitionHistoryStore(db, NullLogger<StatusTransitionHistoryStore>.Instance);
         _defectStore = defectStore ?? new DefectHistoryStore(db, NullLogger<DefectHistoryStore>.Instance);
         _storageDiagnostics = storageDiagnostics ?? new HistoryStorageDiagnostics(settings);
+        _dataSourceSnapshotStore = dataSourceSnapshotStore;
         _ownsWriter = productionWriter is null;
         _ownsStorageDiagnostics = storageDiagnostics is null;
         _walCheckpointTimer = new Timer(_ => CheckpointWal(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
@@ -61,6 +83,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     public HistoryDiagnosticsSnapshot GetDiagnosticsSnapshot()
     {
         var writer = _productionWriter.GetDiagnosticsSnapshot();
+        var dataSourceWriter = _dataSourceSnapshotStore?.GetDiagnosticsSnapshot()
+            ?? new DataSourceSnapshotWriterDiagnosticsSnapshot();
         var storage = _storageDiagnostics.GetSnapshot();
         return new HistoryDiagnosticsSnapshot
         {
@@ -71,8 +95,27 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
             LastFlushAt = writer.LastFlushAt,
             FlushFailureCount = writer.FlushFailureCount,
             TotalFlushedCount = writer.TotalFlushedCount,
+            ProductionQueuePeakCount = writer.QueuePeakCount,
+            ProductionOverflowCount = writer.OverflowCount,
+            ProductionFlushP95Milliseconds = writer.FlushP95Milliseconds,
+            ProductionFlushP99Milliseconds = writer.FlushP99Milliseconds,
             ProductionDatabaseBytes = storage.ProductionDatabaseBytes,
             ProductionWalBytes = storage.ProductionWalBytes,
+            PendingDataSourceCount = dataSourceWriter.PendingCount,
+            DataSourceQueuePeakCount = dataSourceWriter.QueuePeakCount,
+            DataSourceOverflowCount = dataSourceWriter.OverflowCount,
+            DataSourceRecoveryFileExists = dataSourceWriter.RecoveryFileExists,
+            DataSourceRecoveryFileBytes = dataSourceWriter.RecoveryFileBytes,
+            DataSourceRecoveryFileLines = dataSourceWriter.RecoveryFileLines,
+            LastDataSourceFlushAt = dataSourceWriter.LastFlushAt,
+            DataSourceFlushFailureCount = dataSourceWriter.FlushFailureCount,
+            DataSourceTotalFlushedCount = dataSourceWriter.TotalFlushedCount,
+            DataSourceFlushP95Milliseconds = dataSourceWriter.FlushP95Milliseconds,
+            DataSourceFlushP99Milliseconds = dataSourceWriter.FlushP99Milliseconds,
+            DataSourceDatabaseBytes = storage.DataSourceDatabaseBytes,
+            DataSourceWalBytes = storage.DataSourceWalBytes,
+            TotalDatabaseBytes = storage.TotalDatabaseBytes,
+            TotalWalBytes = storage.TotalWalBytes,
         };
     }
 

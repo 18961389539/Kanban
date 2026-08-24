@@ -1,4 +1,5 @@
 using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -28,6 +29,8 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
     [ObservableProperty]
     private bool _isBusyDefectsCsv;
 
+    protected override bool IsCsvBusy => IsBusyDefectsCsv;
+
     public DeviceDefectManagerViewModel(
         IDialogService dialog,
         DefectCsvIOService defectCsvIO,
@@ -55,9 +58,26 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
         ImportDefectsCsvCommand.NotifyCanExecuteChanged();
     }
 
+    protected override void OnHostPermissionChanged()
+    {
+        AddDefectCommand.NotifyCanExecuteChanged();
+        RemoveDefectCommand.NotifyCanExecuteChanged();
+        ExportDefectsCsvCommand.NotifyCanExecuteChanged();
+        ImportDefectsCsvCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsBusyDefectsCsvChanged(bool value)
+    {
+        AddDefectCommand.NotifyCanExecuteChanged();
+        RemoveDefectCommand.NotifyCanExecuteChanged();
+        ExportDefectsCsvCommand.NotifyCanExecuteChanged();
+        ImportDefectsCsvCommand.NotifyCanExecuteChanged();
+    }
+
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void AddDefect()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null) return;
         // 缺陷名在所属设备内唯一
         var baseName = string.Format(Strings.F188, SelectedDevice.Defects.Count + 1);
@@ -70,6 +90,7 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private void RemoveDefect(Defect defect)
     {
+        if (!CanEditSelected()) return;
         if (defect == null) return;
         var confirm = _dialog.Show(
             string.Format(Strings.F502, defect.Name),
@@ -88,13 +109,22 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ExportDefectsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyDefectsCsv) return;
         IsBusyDefectsCsv = true;
         ExportDefectsCsvCommand.NotifyCanExecuteChanged();
         try
         {
             var device = SelectedDevice;
-            await Task.Run(() => _defectCsvIO.ExportDefects(device)).ConfigureAwait(true);
+            var path = _defectCsvIO.PickExportPath(device);
+            if (string.IsNullOrEmpty(path)) return;
+
+            var count = await Task.Run(() => _defectCsvIO.ExportDefectsToPath(device, path)).ConfigureAwait(true);
+            _dialog.NotifySuccess(string.Format(Strings.F293, count, Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
         finally
         {
@@ -112,6 +142,7 @@ public partial class DeviceDefectManagerViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanEditSelected))]
     private async Task ImportDefectsCsvAsync()
     {
+        if (!CanEditSelected()) return;
         if (SelectedDevice == null || IsBusyDefectsCsv) return;
         IsBusyDefectsCsv = true;
         ExportDefectsCsvCommand.NotifyCanExecuteChanged();

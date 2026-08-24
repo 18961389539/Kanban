@@ -79,6 +79,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private long _lastCycleMilliseconds;
     [ObservableProperty] private double _averageCycleMilliseconds;
     [ObservableProperty] private long _maxCycleMilliseconds;
+    [ObservableProperty] private long _cycleP95Milliseconds;
+    [ObservableProperty] private long _cycleP99Milliseconds;
     [ObservableProperty] private int _lastSuccessfulDevices;
     [ObservableProperty] private int _configuredDevices;
     [ObservableProperty] private DateTime? _lastSuccessfulAt;
@@ -102,6 +104,23 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private int _configuredReadAddressCount;
     [ObservableProperty] private long _productionDatabaseBytes;
     [ObservableProperty] private long _productionWalBytes;
+    [ObservableProperty] private int _pendingDataSourceCount;
+    [ObservableProperty] private bool _dataSourceRecoveryFileExists;
+    [ObservableProperty] private long _dataSourceRecoveryFileBytes;
+    [ObservableProperty] private DateTime? _lastDataSourceFlushAt;
+    [ObservableProperty] private int _dataSourceFlushFailureCount;
+    [ObservableProperty] private long _productionQueuePeakCount;
+    [ObservableProperty] private long _productionOverflowCount;
+    [ObservableProperty] private long _dataSourceQueuePeakCount;
+    [ObservableProperty] private long _dataSourceOverflowCount;
+    [ObservableProperty] private long _productionFlushP95Milliseconds;
+    [ObservableProperty] private long _productionFlushP99Milliseconds;
+    [ObservableProperty] private long _dataSourceFlushP95Milliseconds;
+    [ObservableProperty] private long _dataSourceFlushP99Milliseconds;
+    [ObservableProperty] private long _dataSourceDatabaseBytes;
+    [ObservableProperty] private long _dataSourceWalBytes;
+    [ObservableProperty] private long _totalDatabaseBytes;
+    [ObservableProperty] private long _totalWalBytes;
     [ObservableProperty] private int _batchPlanRebuilds;
     [ObservableProperty] private long _batchPlanBuildMilliseconds;
     [ObservableProperty] private long _dwordReadMilliseconds;
@@ -131,6 +150,23 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string ProcessUptimeText => ProcessUptime.ToString(@"d\.hh\:mm\:ss");
     public string ReadDetailText => string.Format(Strings.F024, EstimatedReadOperations, ConfiguredReadAddressCount);
     public string HistoryStorageText => string.Format(Strings.F118, FormatBytes(ProductionDatabaseBytes), FormatBytes(ProductionWalBytes));
+    public string DataSourceStorageText => string.Format(Strings.F118, FormatBytes(DataSourceDatabaseBytes), FormatBytes(DataSourceWalBytes));
+    public string TotalStorageText => string.Format(Strings.F118, FormatBytes(TotalDatabaseBytes), FormatBytes(TotalWalBytes));
+    public string DataSourceRecoveryFileText => DataSourceRecoveryFileExists ? string.Format(Strings.F088, FormatBytes(DataSourceRecoveryFileBytes)) : Strings.M052;
+    public string HistoryQueueText => string.Format(
+        Strings.Rtmon_HistoryQueueSummary,
+        ProductionQueuePeakCount,
+        ProductionOverflowCount,
+        DataSourceQueuePeakCount,
+        DataSourceOverflowCount);
+    public string HistoryFlushLatencyText => string.Format(
+        Strings.Rtmon_HistoryFlushSummary,
+        ProductionFlushP95Milliseconds,
+        ProductionFlushP99Milliseconds,
+        HistoryFlushFailureCount,
+        DataSourceFlushP95Milliseconds,
+        DataSourceFlushP99Milliseconds,
+        DataSourceFlushFailureCount);
     public string StageTimingText => string.Format(Strings.F002, DwordReadMilliseconds, AlarmReadMilliseconds, DefectReadMilliseconds, CounterAlarmReadMilliseconds, HistoryWriteMilliseconds);
     public string BatchPlanText => string.Format(Strings.F236, BatchPlanRebuilds, BatchPlanBuildMilliseconds);
     public string ProcessResourceText => string.Format(Strings.F186, ProcessThreadCount, ProcessHandleCount);
@@ -189,7 +225,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         // Remote 模式：采集/历史诊断在 Collector 进程，从 SignalR 拉取
         if (_remoteClient is not null && _runtimeMode.IsRemote)
         {
-            RefreshFromRemote();
+            RefreshFromRemoteAsync().Forget();
             return;
         }
 
@@ -217,6 +253,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         LastCycleMilliseconds = snapshot.LastCycleMilliseconds;
         AverageCycleMilliseconds = snapshot.AverageCycleMilliseconds;
         MaxCycleMilliseconds = snapshot.MaxCycleMilliseconds;
+        CycleP95Milliseconds = snapshot.CycleP95Milliseconds;
+        CycleP99Milliseconds = snapshot.CycleP99Milliseconds;
         LastSuccessfulDevices = snapshot.LastSuccessfulDevices;
         ConfiguredDevices = snapshot.ConfiguredDevices;
         LastSuccessfulAt = snapshot.LastSuccessfulAt;
@@ -237,6 +275,23 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         HistoryFlushFailureCount = historySnapshot.FlushFailureCount;
         ProductionDatabaseBytes = historySnapshot.ProductionDatabaseBytes;
         ProductionWalBytes = historySnapshot.ProductionWalBytes;
+        PendingDataSourceCount = historySnapshot.PendingDataSourceCount;
+        DataSourceRecoveryFileExists = historySnapshot.DataSourceRecoveryFileExists;
+        DataSourceRecoveryFileBytes = historySnapshot.DataSourceRecoveryFileBytes;
+        LastDataSourceFlushAt = historySnapshot.LastDataSourceFlushAt;
+        DataSourceFlushFailureCount = historySnapshot.DataSourceFlushFailureCount;
+        ProductionQueuePeakCount = historySnapshot.ProductionQueuePeakCount;
+        ProductionOverflowCount = historySnapshot.ProductionOverflowCount;
+        DataSourceQueuePeakCount = historySnapshot.DataSourceQueuePeakCount;
+        DataSourceOverflowCount = historySnapshot.DataSourceOverflowCount;
+        ProductionFlushP95Milliseconds = historySnapshot.ProductionFlushP95Milliseconds;
+        ProductionFlushP99Milliseconds = historySnapshot.ProductionFlushP99Milliseconds;
+        DataSourceFlushP95Milliseconds = historySnapshot.DataSourceFlushP95Milliseconds;
+        DataSourceFlushP99Milliseconds = historySnapshot.DataSourceFlushP99Milliseconds;
+        DataSourceDatabaseBytes = historySnapshot.DataSourceDatabaseBytes;
+        DataSourceWalBytes = historySnapshot.DataSourceWalBytes;
+        TotalDatabaseBytes = historySnapshot.TotalDatabaseBytes;
+        TotalWalBytes = historySnapshot.TotalWalBytes;
         BatchPlanRebuilds = snapshot.BatchPlanRebuilds;
         BatchPlanBuildMilliseconds = snapshot.BatchPlanBuildMilliseconds;
         DwordReadMilliseconds = snapshot.DWordReadMilliseconds;
@@ -266,6 +321,11 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         OnPropertyChanged(nameof(ProcessUptimeText));
         OnPropertyChanged(nameof(ReadDetailText));
         OnPropertyChanged(nameof(HistoryStorageText));
+        OnPropertyChanged(nameof(DataSourceStorageText));
+        OnPropertyChanged(nameof(TotalStorageText));
+        OnPropertyChanged(nameof(DataSourceRecoveryFileText));
+        OnPropertyChanged(nameof(HistoryQueueText));
+        OnPropertyChanged(nameof(HistoryFlushLatencyText));
         OnPropertyChanged(nameof(StageTimingText));
         OnPropertyChanged(nameof(BatchPlanText));
         OnPropertyChanged(nameof(ProcessResourceText));
@@ -276,7 +336,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     /// <summary>Remote 模式：从 Collector 拉取诊断快照（异步，避免阻塞 UI 刷新）。</summary>
     /// <remarks>防重入：1s 定时器触发，若上一次拉取未完成（网络慢），版本守卫丢弃过期响应，
     /// 避免旧数据覆盖新数据导致数值回跳（对齐 OverviewViewModel 的 _refreshVersion 模式）。</remarks>
-    private async void RefreshFromRemote()
+    private async Task RefreshFromRemoteAsync()
     {
         var refreshVersion = Interlocked.Increment(ref _refreshVersion);
         try
@@ -302,6 +362,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             LastCycleMilliseconds = d.LastCycleMilliseconds;
             AverageCycleMilliseconds = d.AverageCycleMilliseconds;
             MaxCycleMilliseconds = d.MaxCycleMilliseconds;
+            CycleP95Milliseconds = d.CycleP95Milliseconds;
+            CycleP99Milliseconds = d.CycleP99Milliseconds;
             LastSuccessfulDevices = d.LastSuccessfulDevices;
             ConfiguredDevices = d.ConfiguredDevices;
             LastSuccessfulAt = d.LastSuccessfulAt;
@@ -318,6 +380,23 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             HistoryFlushFailureCount = d.HistoryFlushFailureCount;
             ProductionDatabaseBytes = d.ProductionDatabaseBytes;
             ProductionWalBytes = d.ProductionWalBytes;
+            PendingDataSourceCount = d.PendingDataSourceCount;
+            DataSourceRecoveryFileExists = d.DataSourceRecoveryFileExists;
+            DataSourceRecoveryFileBytes = d.DataSourceRecoveryFileBytes;
+            LastDataSourceFlushAt = d.LastDataSourceFlushAt;
+            DataSourceFlushFailureCount = d.DataSourceFlushFailureCount;
+            ProductionQueuePeakCount = d.ProductionQueuePeakCount;
+            ProductionOverflowCount = d.ProductionOverflowCount;
+            DataSourceQueuePeakCount = d.DataSourceQueuePeakCount;
+            DataSourceOverflowCount = d.DataSourceOverflowCount;
+            ProductionFlushP95Milliseconds = d.ProductionFlushP95Milliseconds;
+            ProductionFlushP99Milliseconds = d.ProductionFlushP99Milliseconds;
+            DataSourceFlushP95Milliseconds = d.DataSourceFlushP95Milliseconds;
+            DataSourceFlushP99Milliseconds = d.DataSourceFlushP99Milliseconds;
+            DataSourceDatabaseBytes = d.DataSourceDatabaseBytes;
+            DataSourceWalBytes = d.DataSourceWalBytes;
+            TotalDatabaseBytes = d.TotalDatabaseBytes;
+            TotalWalBytes = d.TotalWalBytes;
             BatchPlanRebuilds = d.BatchPlanRebuilds;
             BatchPlanBuildMilliseconds = d.BatchPlanBuildMilliseconds;
             DwordReadMilliseconds = d.DWordReadMilliseconds;
@@ -348,6 +427,11 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             OnPropertyChanged(nameof(ProcessUptimeText));
             OnPropertyChanged(nameof(ReadDetailText));
             OnPropertyChanged(nameof(HistoryStorageText));
+            OnPropertyChanged(nameof(DataSourceStorageText));
+            OnPropertyChanged(nameof(TotalStorageText));
+            OnPropertyChanged(nameof(DataSourceRecoveryFileText));
+            OnPropertyChanged(nameof(HistoryQueueText));
+            OnPropertyChanged(nameof(HistoryFlushLatencyText));
             OnPropertyChanged(nameof(StageTimingText));
             OnPropertyChanged(nameof(BatchPlanText));
             OnPropertyChanged(nameof(ProcessResourceText));

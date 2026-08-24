@@ -126,12 +126,7 @@ public static class HardwareFingerprint
 
     private static string GetCacheFilePath()
     {
-        var dir = Environment.GetEnvironmentVariable("KANBAN_DATA_DIR")
-            ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Kanban");
-        Directory.CreateDirectory(dir);
-        return Path.Combine(dir, CacheFileName);
+        return Path.Combine(LicensePaths.ResolveDataDirectory(), CacheFileName);
     }
 
     /// <summary>从缓存文件加载哈希（DPAPI 解密）。失败返回 null。</summary>

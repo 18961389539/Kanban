@@ -5,6 +5,7 @@ using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
+using ContractDataSourceValueType = Kanban.Contracts.Enums.DataSourceValueType;
 
 namespace Kanban.Collector.Services;
 
@@ -90,6 +91,9 @@ public sealed class SnapshotPublisher
         if (a.ActiveAlarms.Count != b.ActiveAlarms.Count) return false;
         for (int i = 0; i < a.ActiveAlarms.Count; i++)
             if (a.ActiveAlarms[i] != b.ActiveAlarms[i]) return false;
+        if (a.SourceValues.Count != b.SourceValues.Count) return false;
+        for (int i = 0; i < a.SourceValues.Count; i++)
+            if (a.SourceValues[i] != b.SourceValues[i]) return false;
         return true;
     }
 
@@ -108,6 +112,31 @@ public sealed class SnapshotPublisher
                 Level = (AlarmLevel)a.Level,
                 StartTime = a.StartTime,
             })
+            .ToArray();
+
+        var sourceValues = device.Sources
+            .Where(source => source.Enabled)
+            .SelectMany(source => source.Values
+                .Where(value => value.Enabled)
+                .Select(value => new DataSourceValueSnapshotDto
+                {
+                    SourceId = source.Id,
+                    SourceName = source.Name,
+                    SourceType = source.Type,
+                    ValueId = value.Id,
+                    ValueName = value.Name,
+                    PlcAddress = value.PlcAddress,
+                    Unit = value.Unit,
+                    DataType = (ContractDataSourceValueType)value.DataType,
+                    Int32Value = value.CurrentValue,
+                    Float32Value = value.CurrentFloatValue,
+                    BoolValue = value.CurrentBoolValue,
+                    StringValue = value.CurrentStringValue,
+                    DisplayText = value.CurrentDisplayText,
+                    IsValid = value.IsValid,
+                    IsTriggered = value.IsTriggered,
+                    LastUpdatedAt = value.LastUpdatedAt,
+                }))
             .ToArray();
 
         return new DeviceSnapshotDto
@@ -131,6 +160,7 @@ public sealed class SnapshotPublisher
             RecipeName = device.RecipeName ?? "",
             RecipeValue = device.RecipeValue,
             ActiveAlarms = activeAlarms,
+            SourceValues = sourceValues,
             Timestamp = DateTime.Now,
             Seq = Interlocked.Increment(ref _seq),
         };

@@ -34,8 +34,10 @@ public class MessagePackDateTimeTests
         var options = ProductionOptions;
         var original = new DateTime(2026, 8, 14, 4, 15, 1, DateTimeKind.Local);
 
-        var packed = MessagePackSerializer.Serialize(original, options);
-        var restored = MessagePackSerializer.Deserialize<DateTime>(packed, options);
+        var packed = MessagePackSerializer.Serialize(
+            original, options, TestContext.Current.CancellationToken);
+        var restored = MessagePackSerializer.Deserialize<DateTime>(
+            packed, options, TestContext.Current.CancellationToken);
 
         // DateTime.Equals 同时比较 Ticks 与 Kind → 值与 Kind 都必须保留
         Assert.Equal(original, restored);
@@ -50,8 +52,10 @@ public class MessagePackDateTimeTests
         var options = MessagePackSerializerOptions.Standard;
         var original = new DateTime(2026, 8, 14, 4, 15, 1, DateTimeKind.Local);
 
-        var packed = MessagePackSerializer.Serialize(original, options);
-        var restored = MessagePackSerializer.Deserialize<DateTime>(packed, options);
+        var packed = MessagePackSerializer.Serialize(
+            original, options, TestContext.Current.CancellationToken);
+        var restored = MessagePackSerializer.Deserialize<DateTime>(
+            packed, options, TestContext.Current.CancellationToken);
 
         Assert.Equal(DateTimeKind.Utc, restored.Kind);
         Assert.Equal(original.ToUniversalTime().Ticks, restored.Ticks);
@@ -73,8 +77,10 @@ public class MessagePackDateTimeTests
             StartTime = new DateTime(2026, 8, 14, 4, 15, 1, DateTimeKind.Local),
         };
 
-        var packed = MessagePackSerializer.Serialize(dto, options);
-        var restored = MessagePackSerializer.Deserialize<ActiveAlarmDto>(packed, options);
+        var packed = MessagePackSerializer.Serialize(
+            dto, options, TestContext.Current.CancellationToken);
+        var restored = MessagePackSerializer.Deserialize<ActiveAlarmDto>(
+            packed, options, TestContext.Current.CancellationToken);
 
         Assert.Equal(dto.StartTime, restored.StartTime);
         Assert.Equal(DateTimeKind.Local, restored.StartTime.Kind);
@@ -108,8 +114,10 @@ public class MessagePackDateTimeTests
             ],
         };
 
-        var packed = MessagePackSerializer.Serialize(snapshot, options);
-        var restored = MessagePackSerializer.Deserialize<DeviceSnapshotDto>(packed, options);
+        var packed = MessagePackSerializer.Serialize(
+            snapshot, options, TestContext.Current.CancellationToken);
+        var restored = MessagePackSerializer.Deserialize<DeviceSnapshotDto>(
+            packed, options, TestContext.Current.CancellationToken);
 
         Assert.Equal("dev-1", restored.DeviceId);
         Assert.Single(restored.ActiveAlarms);

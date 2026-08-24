@@ -284,7 +284,7 @@
         </Style.Triggers>
     </Style>
 
-    <!--  工单状态 → 显示文本（K010-K013 三语资源；与 StatusDot 配套）  -->
+    <!--  工单状态 → 显示文本（K010-K013 本地化资源；与 StatusDot 配套）  -->
     <Style x:Key="StatusText" TargetType="TextBlock">
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />

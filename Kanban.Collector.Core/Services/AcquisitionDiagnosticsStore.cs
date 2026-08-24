@@ -7,6 +7,7 @@ internal sealed class AcquisitionDiagnosticsStore
 {
     private readonly object _sync = new();
     private readonly Stopwatch _stopwatch = new();
+    private readonly Queue<long> _cycleDurations = new();
     private long _totalCycleMs;
     private long _lastCycleMs;
     private long _maxCycleMs;
@@ -49,6 +50,8 @@ internal sealed class AcquisitionDiagnosticsStore
                 LastCycleMilliseconds = _lastCycleMs,
                 AverageCycleMilliseconds = _completedCycles == 0 ? 0 : (double)_totalCycleMs / _completedCycles,
                 MaxCycleMilliseconds = _maxCycleMs,
+                CycleP95Milliseconds = Percentile(_cycleDurations, 0.95),
+                CycleP99Milliseconds = Percentile(_cycleDurations, 0.99),
                 LastSuccessfulDevices = _lastSuccessfulDevices,
                 ConfiguredDevices = _configuredDevices,
                 LastSuccessfulAt = _lastSuccessfulAt,
@@ -174,6 +177,16 @@ internal sealed class AcquisitionDiagnosticsStore
             _lastCycleMs = cycleMilliseconds;
             _totalCycleMs += cycleMilliseconds;
             _maxCycleMs = Math.Max(_maxCycleMs, cycleMilliseconds);
+            _cycleDurations.Enqueue(cycleMilliseconds);
+            while (_cycleDurations.Count > 1024) _cycleDurations.Dequeue();
         }
+    }
+
+    private static long Percentile(IEnumerable<long> values, double percentile)
+    {
+        var ordered = values.OrderBy(value => value).ToArray();
+        if (ordered.Length == 0) return 0;
+        var index = (int)Math.Ceiling(ordered.Length * percentile) - 1;
+        return ordered[Math.Clamp(index, 0, ordered.Length - 1)];
     }
 }

@@ -89,8 +89,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
             new MetaPublisher(configSync, new ShiftProgressProvider(_settings), NullLogger<MetaPublisher>.Instance),
             _workOrderRepo,
             _settings,
-            new AuditService(_db, NullLogger<AuditService>.Instance),
-            NullLogger<KanbanHub>.Instance);
+            new AuditService(_db, NullLogger<AuditService>.Instance));
         _hub.Context = new FakeHubCallerContext(); // 读取路径依赖 Context.ConnectionAborted
     }
 
@@ -189,6 +188,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
 
         Assert.Equal("三号车间看板", await _hub.GetTitleAsync());
         Assert.Equal((int)AppLanguage.En, await _hub.GetLanguageAsync());
+        Assert.Equal("en-US", await _hub.GetLanguageCodeAsync());
         Assert.False(string.IsNullOrEmpty(await _hub.GetServerVersionAsync()));
     }
 }

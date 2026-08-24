@@ -95,12 +95,19 @@ public sealed class RuntimeMonitoringDiagnosticsTests
             Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
             File.WriteAllBytes(databasePath, new byte[11]);
             File.WriteAllBytes(databasePath + "-wal", new byte[7]);
+            var dataSourceDatabasePath = settings.GetFilePath("datasource_snapshots.db");
+            File.WriteAllBytes(dataSourceDatabasePath, new byte[13]);
+            File.WriteAllBytes(dataSourceDatabasePath + "-wal", new byte[5]);
 
             using var diagnostics = new HistoryStorageDiagnostics(settings);
             var snapshot = diagnostics.GetSnapshot();
 
             Assert.Equal(11, snapshot.ProductionDatabaseBytes);
             Assert.Equal(7, snapshot.ProductionWalBytes);
+            Assert.Equal(13, snapshot.DataSourceDatabaseBytes);
+            Assert.Equal(5, snapshot.DataSourceWalBytes);
+            Assert.Equal(24, snapshot.TotalDatabaseBytes);
+            Assert.Equal(12, snapshot.TotalWalBytes);
         }
         finally
         {

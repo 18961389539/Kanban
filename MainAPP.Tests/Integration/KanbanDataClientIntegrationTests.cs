@@ -1,4 +1,5 @@
 using Kanban.Client;
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Microsoft.AspNetCore.Builder;
@@ -32,6 +33,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         public Task<string> GetTitleAsync() => Task.FromResult("测试看板");
 
         public Task<int> GetLanguageAsync() => Task.FromResult(1); // En
+
+        public Task<string> GetLanguageCodeAsync() => Task.FromResult("en-US");
 
         /// <summary>长驻订阅（模拟真实 KanbanHub.SubscribeSnapshotsAsync：方法不返回直到连接断开）。</summary>
         public async Task SubscribeSnapshotsAsync()
@@ -69,6 +72,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
             return Task.CompletedTask;
         }
 
+        public Task<bool> HasDeviceBackupAsync() => Task.FromResult(true);
+
         public Task<ShiftProgressDto> GetShiftProgressAsync() => Task.FromResult(new ShiftProgressDto
         {
             Name = "白班",
@@ -88,7 +93,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         builder.WebHost.UseUrls("http://127.0.0.1:0"); // 随机端口
         builder.Services.AddSignalR();
         _app = builder.Build();
-        _app.MapHub<TestHub>("/hubs/test");
+        _app.MapHub<TestHub>(KanbanHubPaths.HubPath);
+        _app.MapHub<TestHub>(KanbanHubPaths.AdminHubPath);
         _app.MapGet("/healthz", () => Results.Ok());
         await _app.StartAsync();
         _hubAddress = _app.Urls.First();
@@ -101,7 +107,10 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     }
 
     private KanbanDataClient CreateClient() =>
-        new($"{_hubAddress}/hubs/test", NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
+        new($"{_hubAddress}{KanbanHubPaths.HubPath}", NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
+
+    private KanbanAdminClient CreateAdminClient() =>
+        new($"{_hubAddress}{KanbanHubPaths.HubPath}", NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
 
     // ──────────── 用例 ────────────
 
@@ -112,10 +121,10 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         var connectedTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.ConnectionStateChanged += (_, v) => connectedTcs.TrySetResult(v);
 
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         Assert.True(client.IsConnected);
-        var fired = await connectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var fired = await connectedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.True(fired, "连接成功后应触发 ConnectionStateChanged(true)");
     }
 
@@ -123,8 +132,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task Connect_Twice_Idempotent_NoDuplicateConnection()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        await client.ConnectAsync(); // 已连接应直接返回（并发保护 + double-check），不重建连接
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        await client.ConnectAsync(TestContext.Current.CancellationToken); // 已连接应直接返回（并发保护 + double-check），不重建连接
         Assert.True(client.IsConnected);
     }
 
@@ -132,8 +141,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task GetServerVersion_ReturnsServerValue()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        var version = await client.GetServerVersionAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var version = await client.GetServerVersionAsync(TestContext.Current.CancellationToken);
         Assert.Equal("test-1.0.0", version);
     }
 
@@ -141,8 +150,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task GetTitle_ReturnsServerValue()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        var title = await client.GetTitleAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var title = await client.GetTitleAsync(TestContext.Current.CancellationToken);
         Assert.Equal("测试看板", title);
     }
 
@@ -150,17 +159,26 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task GetLanguage_ReturnsServerValue()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        var lang = await client.GetLanguageAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var lang = await client.GetLanguageAsync(TestContext.Current.CancellationToken);
         Assert.Equal(1, lang); // TestHub 返回 En
+    }
+
+    [Fact]
+    public async Task GetLanguageCode_ReturnsServerValue()
+    {
+        await using var client = CreateClient();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var languageCode = await client.GetLanguageCodeAsync(TestContext.Current.CancellationToken);
+        Assert.Equal("en-US", languageCode);
     }
 
     [Fact]
     public async Task GetCurrentSnapshots_ReturnsDtoList()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        var snapshots = await client.GetCurrentSnapshotsAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var snapshots = await client.GetCurrentSnapshotsAsync(TestContext.Current.CancellationToken);
         var snap = Assert.Single(snapshots);
         Assert.Equal("dev-1", snap.DeviceId);
         Assert.Equal(120, snap.TotalOkProduction);
@@ -171,13 +189,17 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task InvokeWriteAndQueryMethods_WorkWhenConnected()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
-        var devices = await client.GetDevicesAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var devices = await client.GetDevicesAsync(TestContext.Current.CancellationToken);
         Assert.Empty(devices);
-        var shift = await client.GetShiftProgressAsync();
+        var shift = await client.GetShiftProgressAsync(TestContext.Current.CancellationToken);
         Assert.True(shift.IsInShift);
         Assert.Equal("白班", shift.Name);
         Assert.Equal("50%", shift.Pct);
+
+        await using var adminClient = CreateAdminClient();
+        await adminClient.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.True(await adminClient.HasDeviceBackupAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -192,16 +214,16 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         // Contract=SignalROrdering 标记（审查修复 2026-08-13）：显式声明本用例锁定的
         // 是库行为契约而非缺陷固化，便于 SignalR 升级时定位需重估的用例。
         await using var client = CreateClient();
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
-        var subscribeTask = client.SubscribeSnapshotsAsync(); // 长驻 Invoke（服务端方法不返回）
+        var subscribeTask = client.SubscribeSnapshotsAsync(TestContext.Current.CancellationToken); // 长驻 Invoke（服务端方法不返回）
         try
         {
-            await Task.Delay(500); // 让服务端开始处理长驻订阅
+            await Task.Delay(500, TestContext.Current.CancellationToken); // 让服务端开始处理长驻订阅
             // 同连接后续 Invoke 应挂起（3s 内不返回）而非立即完成
-            var pending = client.GetServerVersionAsync();
+            var pending = client.GetServerVersionAsync(TestContext.Current.CancellationToken);
             await Assert.ThrowsAsync<TimeoutException>(async () =>
-                await pending.WaitAsync(TimeSpan.FromSeconds(3)));
+                await pending.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -216,7 +238,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         // 审查修复 2026-08-13：回调注册按连接实例去重——部分失败重试路径对同一连接重复注册
         // On* 会导致同一消息双回调（速度趋势队列双写等）；本测试验证重复注册被忽略。
         await using var client = CreateClient();
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         var count = 0;
         void Handler(DeviceSnapshotDto _) => System.Threading.Interlocked.Increment(ref count);
@@ -224,7 +246,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         client.OnSnapshot(Handler); // 重复注册（模拟重试路径）→ 应被忽略
 
         var hub = _app.Services.GetRequiredService<Microsoft.AspNetCore.SignalR.IHubContext<TestHub>>();
-        var subscribeTask = client.SubscribeSnapshotsAsync();
+        var subscribeTask = client.SubscribeSnapshotsAsync(TestContext.Current.CancellationToken);
         try
         {
             await hub.Clients.All.SendAsync("OnSnapshot", new DeviceSnapshotDto
@@ -233,12 +255,12 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
                 DeviceName = "注塑机-1",
                 Status = DeviceStatus.Running,
                 TotalOkProduction = 1,
-            });
+            }, TestContext.Current.CancellationToken);
 
             var deadline = DateTime.UtcNow.AddSeconds(5);
             while (System.Threading.Volatile.Read(ref count) < 1 && DateTime.UtcNow < deadline)
-                await Task.Delay(50);
-            await Task.Delay(200); // 给潜在的第二次回调留出窗口
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            await Task.Delay(200, TestContext.Current.CancellationToken); // 给潜在的第二次回调留出窗口
             Assert.Equal(1, count);
         }
         finally
@@ -252,15 +274,15 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task ServerStop_RaisesConnectionStateChangedFalse()
     {
         await using var client = CreateClient();
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(client.IsConnected);
 
         var stateChangedTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         client.ConnectionStateChanged += (_, v) => stateChangedTcs.TrySetResult(v);
 
-        await _app.StopAsync(); // 停服务端 → 客户端进入 Reconnecting（1s 后触发）→ 状态通知 false
+        await _app.StopAsync(TestContext.Current.CancellationToken); // 停服务端 → 客户端进入 Reconnecting（1s 后触发）→ 状态通知 false
 
-        var fired = await stateChangedTcs.Task.WaitAsync(TimeSpan.FromSeconds(8));
+        var fired = await stateChangedTcs.Task.WaitAsync(TimeSpan.FromSeconds(8), TestContext.Current.CancellationToken);
         Assert.False(fired, "服务端停止后应触发 ConnectionStateChanged(false)（断线期间徽标不得仍显示实时）");
     }
 
@@ -268,7 +290,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     public async Task DisposeAsync_AfterConnect_NoThrow_AndIsConnectedFalse()
     {
         var client = CreateClient();
-        await client.ConnectAsync();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(client.IsConnected);
 
         await client.DisposeAsync();
@@ -284,7 +306,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         // 127.0.0.1:1 无监听 → 连接被拒，应快速抛异常（不挂起、不吞掉）；具体类型不定（可能包装为 HttpRequestException）
         await using var client = new KanbanDataClient("http://127.0.0.1:1/hubs/test",
             NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
-        await Assert.ThrowsAnyAsync<Exception>(async () => await client.ConnectAsync());
+        await Assert.ThrowsAnyAsync<Exception>(async () => await client.ConnectAsync(TestContext.Current.CancellationToken));
         Assert.False(client.IsConnected);
     }
 
@@ -307,16 +329,18 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     {
         // 覆盖未连接路径的其余 Invoke 方法族（EnsureConnected 前置校验统一抛 InvalidOperationException）
         await using var client = CreateClient();
+        await using var adminClient = CreateAdminClient();
         var calls = new Func<Task>[]
         {
-            () => client.SubscribeAlarmEventsAsync(afterSeq: 0),
-            () => client.SubscribeStatusEventsAsync(afterSeq: 0),
-            () => client.SubscribeMetaAsync(),
-            () => client.QueryHistoryAsync(new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog }),
-            () => client.GetDiagnosticsAsync(),
-            () => client.SaveDevicesAsync([]),
-            () => client.GetDevicesAsync(),
-            () => client.UpsertWorkOrderAsync(new WorkOrderDto
+            () => client.SubscribeAlarmEventsAsync(afterSeq: 0, TestContext.Current.CancellationToken),
+            () => client.SubscribeStatusEventsAsync(afterSeq: 0, TestContext.Current.CancellationToken),
+            () => client.SubscribeMetaAsync(TestContext.Current.CancellationToken),
+            () => client.QueryHistoryAsync(new HistoryQueryRequest { QueryType = HistoryQueryType.ProductionLog }, TestContext.Current.CancellationToken),
+            () => client.GetDiagnosticsAsync(TestContext.Current.CancellationToken),
+            () => adminClient.SaveDevicesAsync([], TestContext.Current.CancellationToken),
+            () => adminClient.HasDeviceBackupAsync(TestContext.Current.CancellationToken),
+            () => client.GetDevicesAsync(TestContext.Current.CancellationToken),
+            () => adminClient.UpsertWorkOrderAsync(new WorkOrderDto
             {
                 OrderNo = "WO-TEST",
                 ProductCode = "P",
@@ -324,14 +348,14 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
                 DeviceId = "dev-1",
                 DeviceName = "注塑机-1",
                 Status = WorkOrderStatus.Pending,
-            }),
-            () => client.DeleteWorkOrderAsync(1),
-            () => client.GetCurrentWorkOrderAsync("dev-1"),
-            () => client.GetShiftProgressAsync(),
-            () => client.SaveCollectorSettingsAsync(new CollectorSettingsDto()),
-            () => client.GetServerVersionAsync(),
-            () => client.GetTitleAsync(),
-            () => client.GetLanguageAsync(),
+            }, TestContext.Current.CancellationToken),
+            () => adminClient.DeleteWorkOrderAsync(1, TestContext.Current.CancellationToken),
+            () => client.GetCurrentWorkOrderAsync("dev-1", TestContext.Current.CancellationToken),
+            () => client.GetShiftProgressAsync(TestContext.Current.CancellationToken),
+            () => adminClient.SaveCollectorSettingsAsync(new CollectorSettingsDto(), TestContext.Current.CancellationToken),
+            () => client.GetServerVersionAsync(TestContext.Current.CancellationToken),
+            () => client.GetTitleAsync(TestContext.Current.CancellationToken),
+            () => client.GetLanguageAsync(TestContext.Current.CancellationToken),
         };
         foreach (var call in calls)
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await call());

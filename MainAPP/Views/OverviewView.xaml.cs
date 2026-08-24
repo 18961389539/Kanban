@@ -1,7 +1,9 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using MainAPP.ViewModels;
 using OxyPlot;
 using OxyPlot.Wpf;
@@ -14,12 +16,25 @@ namespace MainAPP.Views;
 /// </summary>
 public partial class OverviewView : UserControl
 {
+    // 图表重绘节流：高频数据更新（产线 tick 一次抛 15+ 条 PropertyChanged）若每次都
+    // InvalidatePlot 全量重绘 4 张图，是概览页最大渲染开销。改为最多 2Hz 重绘——
+    // 属性变化时只标脏，DispatcherTimer 到点合并成一次重绘。
+    private static readonly TimeSpan ChartRefreshInterval = TimeSpan.FromMilliseconds(500);
+    private readonly DispatcherTimer _chartRefreshTimer;
+    private bool _trendDirty;
+    private bool _oeeDirty;
+    private bool _heatmapDirty;
+    private bool _paretoDirty;
+
     public OverviewView()
     {
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         DataContextChanged += OnDataContextChanged;
+
+        _chartRefreshTimer = new DispatcherTimer(ChartRefreshInterval, DispatcherPriority.Background, OnChartRefreshTick, Dispatcher);
+        _chartRefreshTimer.IsEnabled = false;
     }
 
     private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
@@ -37,6 +52,8 @@ public partial class OverviewView : UserControl
     {
         if (DataContext is OverviewViewModel vm)
             vm.PropertyChanged -= OnViewModelPropertyChanged;
+        _chartRefreshTimer.Stop();
+        _trendDirty = _oeeDirty = _heatmapDirty = _paretoDirty = false;
     }
 
     private void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
@@ -60,6 +77,7 @@ public partial class OverviewView : UserControl
     /// <summary>
     /// OxyPlot 2.2.0 页面导航重载后 PlotView 渲染可能停止（Model 更新不再重绘）：
     /// 在图表属性变化时强制重设 Model + InvalidatePlot，确保瀑布图/趋势图/热力图始终渲染。
+    /// 节流版：仅标脏并启动定时器，实际重绘合并到 2Hz 的 tick，避免每次数据变化全量重绘。
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -67,18 +85,35 @@ public partial class OverviewView : UserControl
         switch (e.PropertyName)
         {
             case nameof(OverviewViewModel.TrendChart):
-                RefreshChart(TrendPlotView, vm.TrendChart);
+                _trendDirty = true;
                 break;
             case nameof(OverviewViewModel.OeeWaterfallChart):
-                RefreshChart(OeeWaterfallPlotView, vm.OeeWaterfallChart);
+                _oeeDirty = true;
                 break;
             case nameof(OverviewViewModel.ProductionHeatmapChart):
-                RefreshChart(HeatmapPlotView, vm.ProductionHeatmapChart);
+                _heatmapDirty = true;
                 break;
             case nameof(OverviewViewModel.DefectParetoChart):
-                RefreshChart(DefectParetoPlotView, vm.DefectParetoChart);
+                _paretoDirty = true;
                 break;
+            default:
+                return;
         }
+        if (!_chartRefreshTimer.IsEnabled)
+            _chartRefreshTimer.Start();
+    }
+
+    private void OnChartRefreshTick(object? sender, EventArgs e)
+    {
+        _chartRefreshTimer.Stop();
+        if (DataContext is not OverviewViewModel vm) return;
+
+        if (_trendDirty) RefreshChart(TrendPlotView, vm.TrendChart);
+        if (_oeeDirty) RefreshChart(OeeWaterfallPlotView, vm.OeeWaterfallChart);
+        if (_heatmapDirty) RefreshChart(HeatmapPlotView, vm.ProductionHeatmapChart);
+        if (_paretoDirty) RefreshChart(DefectParetoPlotView, vm.DefectParetoChart);
+
+        _trendDirty = _oeeDirty = _heatmapDirty = _paretoDirty = false;
     }
 
     private static void RefreshChart(PlotView view, PlotModel? model)

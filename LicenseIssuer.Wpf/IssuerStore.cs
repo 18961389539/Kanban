@@ -5,8 +5,7 @@ using System.Text.Json;
 namespace LicenseIssuer.Wpf;
 
 /// <summary>
-/// 签发记录持久化：与 LicenseIssuer.CLI 共用相同的 issued/ 目录与 JSON 格式，
-/// 因此本工具签发的记录可被 CLI 的 list / revoke 命令读取与管理。
+/// 签发记录持久化：使用程序目录下的 issued/ 目录与 JSON 格式。
 /// </summary>
 public static class IssuerStore
 {

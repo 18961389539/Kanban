@@ -25,12 +25,14 @@ public class DataSourceSnapshotDbContext : KanbanDbContextBase
             e.HasIndex(p => p.Timestamp);
             // 按源过滤（趋势图按单源查询）的路径
             e.HasIndex(p => new { p.SourceId, p.Timestamp });
+            e.HasIndex(p => new { p.DeviceId, p.SourceId, p.ValueId, p.Timestamp });
 
             // 字符串字段显式约束：让 EnsureCreated 生成的 schema 有 NOT NULL 约束 + 长度限制，
             // 并由 EF Core Migrations 固化为数据库约束。
             e.Property(p => p.DeviceId).IsRequired().HasMaxLength(64);
             e.Property(p => p.DeviceName).HasMaxLength(128);
             e.Property(p => p.SourceId).IsRequired().HasMaxLength(64);
+            e.Property(p => p.ValueId).IsRequired().HasMaxLength(64);
             e.Property(p => p.SourceName).HasMaxLength(128);
             e.Property(p => p.SourceType).HasMaxLength(64);
             e.Property(p => p.Unit).HasMaxLength(32);

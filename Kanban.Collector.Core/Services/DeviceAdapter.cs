@@ -1,4 +1,6 @@
-﻿using Kanban.Collector.Core.Models;
+﻿using System.Collections.Concurrent;
+using Kanban.Collector.Core.Localization;
+using Kanban.Collector.Core.Models;
 
 namespace Kanban.Collector.Core.Services;
 
@@ -16,6 +18,10 @@ public sealed record BatchReadCapabilities(
 /// </summary>
 public interface IDeviceAdapter
 {
+    /// <summary>协议实现标识，用于选择数据源 reader；未扩展的旧适配器默认为 PLC。</summary>
+    string ProtocolKey => DataSourceProtocolKeys.Plc;
+    /// <summary>绑定的连接档案；旧的非 keyed adapter 统一视为 default。</summary>
+    string ConnectionProfileId => ConnectionProfile.DefaultId;
     PlcBrand Brand { get; }
     IPlcAddressCodec AddressCodec { get; }
     BatchReadCapabilities BatchReadCapabilities { get; }
@@ -41,13 +47,20 @@ public interface IDeviceAdapterResolver
     IDeviceAdapter Resolve(Device device);
 }
 
+internal interface IProfileBoundDeviceAdapter
+{
+    bool CanBind(ConnectionProfile profile);
+    IDeviceAdapter BindToProfile(ConnectionProfile profile);
+}
+
 public sealed class DeviceAdapterResolver : IDeviceAdapterResolver
 {
     private readonly IReadOnlyList<IDeviceAdapter> _adapters;
     private readonly AppSettings? _settings;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
+    private readonly ConcurrentDictionary<string, IDeviceAdapter> _profileBindings = new(StringComparer.OrdinalIgnoreCase);
 
-    // 构造时校验：同一共享 PLC 品牌不允许注册多个适配器，避免 Resolve 时才暴露配置错误。
+    // 构造时校验：同一协议/品牌组合不允许注册多个适配器，避免 Resolve 时才暴露配置错误。
     public DeviceAdapterResolver(
         IEnumerable<IDeviceAdapter> adapters,
         AppSettings? settings = null,
@@ -56,12 +69,16 @@ public sealed class DeviceAdapterResolver : IDeviceAdapterResolver
         _adapters = adapters.ToArray();
         _settings = settings;
         _profileProvider = profileProvider;
-        var duplicates = _adapters.GroupBy(a => a.Brand).Where(g => g.Count() > 1).ToList();
+        var duplicates = _adapters
+            .GroupBy(a => (ProtocolKey: NormalizeProtocolKey(a.ProtocolKey), a.Brand))
+            .Where(g => g.Count() > 1)
+            .ToList();
         if (duplicates.Count > 0)
         {
-            var detail = string.Join("、", duplicates.Select(g => $"{g.Key}({string.Join("+", g.Select(a => a.GetType().Name))})"));
+            var detail = string.Join("、", duplicates.Select(g =>
+                $"{g.Key.ProtocolKey}/{g.Key.Brand}({string.Join("+", g.Select(a => a.GetType().Name))})"));
             throw new InvalidOperationException(
-                $"以下 PLC 品牌注册了多个适配器：{detail}。每个品牌只能注册一个适配器。");
+                $"以下协议/PLC 品牌组合注册了多个适配器：{detail}。每个组合只能注册一个适配器。");
         }
     }
 
@@ -78,40 +95,147 @@ public sealed class DeviceAdapterResolver : IDeviceAdapterResolver
         return matches[0];
     }
 
+    private IDeviceAdapter ResolveByProfile(ConnectionProfile profile)
+    {
+        var protocolKey = NormalizeProtocolKey(profile.Config.ProtocolKey);
+        var matches = _adapters.Where(adapter =>
+                adapter is IProfileBoundDeviceAdapter bindable && bindable.CanBind(profile)
+                || string.Equals(NormalizeProtocolKey(adapter.ProtocolKey), protocolKey, StringComparison.OrdinalIgnoreCase)
+                && adapter.Brand == profile.Config.Brand)
+            .ToList();
+        if (matches.Count == 1)
+        {
+            if (matches[0] is not IProfileBoundDeviceAdapter bindable)
+                return matches[0];
+            var profileId = profile.Id.Trim();
+            return _profileBindings.GetOrAdd(profileId, _ => bindable.BindToProfile(profile));
+        }
+        if (matches.Count > 1)
+        {
+            throw new InvalidOperationException(
+                string.Format(
+                    ValidationMessages.ConnectionProfileAdapterAmbiguous,
+                    profile.Id,
+                    protocolKey,
+                    profile.Config.Brand,
+                    string.Join("、", matches.Select(adapter => adapter.GetType().Name))));
+        }
+
+        throw new InvalidOperationException(
+            string.Format(
+                ValidationMessages.ConnectionProfileAdapterNotFound,
+                profile.Id,
+                protocolKey,
+                profile.Config.Brand));
+    }
+
+    private static string NormalizeProtocolKey(string? protocolKey)
+        => string.IsNullOrWhiteSpace(protocolKey)
+            ? DataSourceProtocolKeys.Plc
+            : protocolKey.Trim().ToLowerInvariant();
+
     public IDeviceAdapter Current
     {
         get
         {
-            var brand = _profileProvider?.Current.Brand ?? _settings?.PlcConfig.Brand ?? PlcBrand.Mitsubishi;
-            return ResolveByBrand(brand);
+            if (_settings is not null)
+                return ResolveByProfile(_settings.DefaultConnectionProfile);
+            if (_profileProvider is not null)
+            {
+                var current = _profileProvider.Current;
+                return ResolveByProfile(new ConnectionProfile
+                {
+                    Id = ConnectionProfile.DefaultId,
+                    Config = current.Config,
+                });
+            }
+            return ResolveByBrand(PlcBrand.Mitsubishi);
         }
     }
 
     public IDeviceAdapter Resolve(Device device)
     {
         ArgumentNullException.ThrowIfNull(device);
-        return Current;
+        if (_settings is null)
+            return Current;
+
+        var profile = _settings.FindConnectionProfile(device.ConnectionProfileId)
+            ?? throw new InvalidOperationException(
+                string.Format(
+                    ValidationMessages.DeviceConnectionProfileMissing,
+                    device.Name,
+                    device.ConnectionProfileId));
+        return ResolveByProfile(profile);
     }
 }
 
 /// <summary>默认 PLC 适配器，保持现有 IPlcDriver 行为。</summary>
-public sealed class PlcDeviceAdapter(
-    IPlcDriver driver,
-    IPlcRuntimeProfileProvider? profileProvider = null,
-    IPlcAddressCodecResolver? codecResolver = null) : IDeviceAdapter
+public sealed class PlcDeviceAdapter : IDeviceAdapter, IProfileBoundDeviceAdapter
 {
-    private readonly IPlcRuntimeProfileProvider? _profileProvider = profileProvider;
-    private readonly IPlcAddressCodecResolver? _codecResolver = codecResolver;
+    private readonly IPlcDriver _driver;
+    private readonly IPlcRuntimeProfileProvider? _profileProvider;
+    private readonly IPlcAddressCodecResolver? _codecResolver;
+    private readonly IPlcRuntimeSessionManager? _sessionManager;
+    private readonly string _profileId;
     private readonly IPlcAddressCodec _fallbackCodec = new MitsubishiAddressCodec();
-    public PlcBrand Brand => _profileProvider?.Current.Brand ?? AddressCodec.Brand;
-    public IPlcAddressCodec AddressCodec => _profileProvider?.Current.AddressCodec ?? _codecResolver?.Current ?? _fallbackCodec;
+
+    public PlcDeviceAdapter(
+        IPlcDriver driver,
+        IPlcRuntimeProfileProvider? profileProvider = null,
+        IPlcAddressCodecResolver? codecResolver = null,
+        IPlcRuntimeSessionManager? sessionManager = null,
+        string? profileId = null)
+    {
+        _driver = driver;
+        _profileProvider = profileProvider;
+        _codecResolver = codecResolver;
+        _sessionManager = sessionManager;
+        _profileId = PlcRuntimeSession.NormalizeProfileId(profileId);
+    }
+
+    private PlcRuntimeProfile? RuntimeProfile => _sessionManager?.Get(_profileId).Profile ?? _profileProvider?.Current;
+    private IPlcDriver RuntimeDriver => _sessionManager?.Get(_profileId).Driver ?? _driver;
+
+    public bool CanBind(ConnectionProfile profile)
+        => _sessionManager is not null
+           && string.Equals(
+               NormalizeProtocolKey(profile.Config.ProtocolKey),
+               DataSourceProtocolKeys.Plc,
+               StringComparison.OrdinalIgnoreCase);
+
+    public IDeviceAdapter BindToProfile(ConnectionProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        if (!CanBind(profile))
+            return this;
+        return new PlcDeviceAdapter(_driver, _profileProvider, _codecResolver, _sessionManager, profile.Id);
+    }
+
+    private static string NormalizeProtocolKey(string? protocolKey)
+        => string.IsNullOrWhiteSpace(protocolKey)
+            ? DataSourceProtocolKeys.Plc
+            : protocolKey.Trim().ToLowerInvariant();
+
+    public string ProtocolKey
+    {
+        get
+        {
+            var protocolKey = RuntimeProfile?.Config.ProtocolKey;
+            return string.IsNullOrWhiteSpace(protocolKey)
+                ? DataSourceProtocolKeys.Plc
+                : protocolKey.Trim().ToLowerInvariant();
+        }
+    }
+    public string ConnectionProfileId => _profileId;
+    public PlcBrand Brand => RuntimeProfile?.Brand ?? AddressCodec.Brand;
+    public IPlcAddressCodec AddressCodec => RuntimeProfile?.AddressCodec ?? _codecResolver?.Current ?? _fallbackCodec;
     public BatchReadCapabilities BatchReadCapabilities =>
-        _profileProvider?.Current.BatchReadCapabilities ?? PlcRuntimeProfileProvider.BatchReadCapabilitiesFor(Brand);
+        RuntimeProfile?.BatchReadCapabilities ?? PlcRuntimeProfileProvider.BatchReadCapabilitiesFor(Brand);
     public PlcOperationResult<int> ReadInt32(string address)
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadInt32(AddressCodec.ToTransportAddress(parsed.Original))
+            ? RuntimeDriver.ReadInt32(AddressCodec.ToTransportAddress(parsed.Original))
             : PlcOperationResult<int>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -119,7 +243,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadInt32Batch(AddressCodec.ToTransportAddress(parsed.Original), length)
+            ? RuntimeDriver.ReadInt32Batch(AddressCodec.ToTransportAddress(parsed.Original), length)
             : PlcOperationResult<int[]>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -127,7 +251,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.MBit } && AddressCodec.CanRead(parsed)
-            ? driver.ReadBool(AddressCodec.ToTransportAddress(parsed.Original))
+            ? RuntimeDriver.ReadBool(AddressCodec.ToTransportAddress(parsed.Original))
             : PlcOperationResult<bool>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -135,7 +259,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.MBit } && AddressCodec.CanRead(parsed)
-            ? driver.ReadBoolBatch(AddressCodec.ToTransportAddress(parsed.Original), length)
+            ? RuntimeDriver.ReadBoolBatch(AddressCodec.ToTransportAddress(parsed.Original), length)
             : PlcOperationResult<bool[]>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -143,7 +267,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadFloat(AddressCodec.ToTransportAddress(parsed.Original))
+            ? RuntimeDriver.ReadFloat(AddressCodec.ToTransportAddress(parsed.Original))
             : PlcOperationResult<float>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -151,7 +275,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadFloatBatch(AddressCodec.ToTransportAddress(parsed.Original), length)
+            ? RuntimeDriver.ReadFloatBatch(AddressCodec.ToTransportAddress(parsed.Original), length)
             : PlcOperationResult<float[]>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -159,7 +283,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadString(AddressCodec.ToTransportAddress(parsed.Original), length)
+            ? RuntimeDriver.ReadString(AddressCodec.ToTransportAddress(parsed.Original), length)
             : PlcOperationResult<string>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -167,7 +291,7 @@ public sealed class PlcDeviceAdapter(
     {
         var parsed = AddressCodec.Parse(address);
         return parsed is { IsValid: true, Type: PlcAddressType.DWord } && AddressCodec.CanRead(parsed)
-            ? driver.ReadUInt16(AddressCodec.ToTransportAddress(parsed.Original))
+            ? RuntimeDriver.ReadUInt16(AddressCodec.ToTransportAddress(parsed.Original))
             : PlcOperationResult<ushort>.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
     }
 
@@ -178,7 +302,7 @@ public sealed class PlcDeviceAdapter(
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
             return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
-        return driver.WriteInt32(AddressCodec.ToTransportAddress(parsed.Original), value);
+        return RuntimeDriver.WriteInt32(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 
     public PlcOperationResult WriteBool(string address, bool value)
@@ -188,7 +312,7 @@ public sealed class PlcDeviceAdapter(
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
             return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
-        return driver.WriteBool(AddressCodec.ToTransportAddress(parsed.Original), value);
+        return RuntimeDriver.WriteBool(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 
     public PlcOperationResult WriteFloat(string address, float value)
@@ -198,7 +322,7 @@ public sealed class PlcDeviceAdapter(
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
             return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
-        return driver.WriteFloat(AddressCodec.ToTransportAddress(parsed.Original), value);
+        return RuntimeDriver.WriteFloat(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 
     public PlcOperationResult WriteUInt16(string address, ushort value)
@@ -208,7 +332,7 @@ public sealed class PlcDeviceAdapter(
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
             return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
-        return driver.WriteUInt16(AddressCodec.ToTransportAddress(parsed.Original), value);
+        return RuntimeDriver.WriteUInt16(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 
     public PlcOperationResult WriteString(string address, string value)
@@ -218,6 +342,6 @@ public sealed class PlcDeviceAdapter(
             return PlcOperationResult.Fail(parsed.ErrorMessage, PlcErrorKind.InvalidAddress);
         if (!AddressCodec.CanWrite(parsed))
             return PlcOperationResult.Fail(string.Format(Kanban.Collector.Core.Localization.RecipeValidationMessages.RecipeAddressReadonly, parsed.Original), PlcErrorKind.UnsupportedOperation);
-        return driver.WriteString(AddressCodec.ToTransportAddress(parsed.Original), value);
+        return RuntimeDriver.WriteString(AddressCodec.ToTransportAddress(parsed.Original), value);
     }
 }

@@ -1,6 +1,7 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
+using ContractDataSourceValueType = Kanban.Contracts.Enums.DataSourceValueType;
 
 namespace Kanban.Collector.Core.Mapping;
 
@@ -19,6 +20,7 @@ public static class DeviceMapper
         Id = d.Id,
         Name = d.Name,
         MachineType = d.MachineType,
+        ConnectionProfileId = d.ConnectionProfileId,
         OkCountAddress = d.OkCountAddress,
         NgCountAddress = d.NgCountAddress,
         StatusCountAddress = d.StatusCountAddress,
@@ -56,6 +58,43 @@ public static class DeviceMapper
             Description = c.Description,
             Unit = c.Unit,
         }).ToList(),
+        Sources = d.Sources.Select(s => new DataSourceConfigDto
+        {
+            Id = s.Id,
+            DeviceId = s.DeviceId,
+            Name = s.Name,
+            Type = s.Type,
+            Enabled = s.Enabled,
+            Description = s.Description,
+            TriggerAddress = s.TriggerAddress,
+            TriggerValue = s.TriggerValue,
+            AckValue = s.AckValue,
+            Values = s.Values.Select(v => new DataSourceValueConfigDto
+            {
+                Id = v.Id,
+                Name = v.Name,
+                DataType = (ContractDataSourceValueType)v.DataType,
+                StringLength = v.StringLength,
+                FloatLimitMin = v.FloatLimitMin,
+                FloatLimitMax = v.FloatLimitMax,
+                PlcAddress = v.PlcAddress,
+                Unit = v.Unit,
+                Enabled = v.Enabled,
+                LimitMin = v.LimitMin,
+                LimitMax = v.LimitMax,
+                Hysteresis = v.Hysteresis,
+                ConfirmSeconds = v.ConfirmSeconds,
+                ExpectedValue = v.ExpectedValue,
+                FloatExpectedValue = v.FloatExpectedValue,
+                BoolExpectedValue = v.BoolExpectedValue,
+                StringExpectedValue = v.StringExpectedValue,
+                EnumValues = v.EnumValues.Select(e => new DataSourceEnumValueConfigDto
+                {
+                    Value = e.Value,
+                    DisplayName = e.DisplayName,
+                }).ToList(),
+            }).ToList(),
+        }).ToList(),
     };
 
     /// <summary>DTO 列表 → 设备实体列表（Remote 屏端零配置：从 Collector 拉取的设备配置灌回内存）。</summary>
@@ -69,6 +108,7 @@ public static class DeviceMapper
             Id = dto.Id,
             Name = dto.Name,
             MachineType = dto.MachineType,
+            ConnectionProfileId = dto.ConnectionProfileId,
             OkCountAddress = dto.OkCountAddress,
             NgCountAddress = dto.NgCountAddress,
             StatusCountAddress = dto.StatusCountAddress,
@@ -118,6 +158,52 @@ public static class DeviceMapper
                 Description = c.Description,
                 Unit = c.Unit,
             });
+        }
+        foreach (var s in dto.Sources ?? [])
+        {
+            var source = new DataSource
+            {
+                Id = s.Id,
+                DeviceId = s.DeviceId,
+                Name = s.Name,
+                Type = s.Type,
+                Enabled = s.Enabled,
+                Description = s.Description,
+                TriggerAddress = s.TriggerAddress,
+                TriggerValue = s.TriggerValue,
+                AckValue = s.AckValue,
+            };
+            foreach (var v in s.Values ?? [])
+            {
+                var value = new DataSourceValue
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    DataType = (DataSourceValueType)v.DataType,
+                    StringLength = v.StringLength,
+                    FloatLimitMin = v.FloatLimitMin,
+                    FloatLimitMax = v.FloatLimitMax,
+                    PlcAddress = v.PlcAddress,
+                    Unit = v.Unit,
+                    Enabled = v.Enabled,
+                    LimitMin = v.LimitMin,
+                    LimitMax = v.LimitMax,
+                    Hysteresis = v.Hysteresis,
+                    ConfirmSeconds = v.ConfirmSeconds,
+                    ExpectedValue = v.ExpectedValue,
+                    FloatExpectedValue = v.FloatExpectedValue,
+                    BoolExpectedValue = v.BoolExpectedValue,
+                    StringExpectedValue = v.StringExpectedValue,
+                };
+                foreach (var e in v.EnumValues ?? [])
+                    value.EnumValues.Add(new DataSourceEnumValue
+                    {
+                        Value = e.Value,
+                        DisplayName = e.DisplayName,
+                    });
+                source.Values.Add(value);
+            }
+            device.Sources.Add(source);
         }
         return device;
     }

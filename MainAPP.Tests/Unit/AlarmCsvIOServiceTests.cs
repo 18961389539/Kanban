@@ -6,6 +6,7 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Resources;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -17,6 +18,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","None")]
+[Collection("LocalizationSensitive")]
 public class AlarmCsvIOServiceTests : IDisposable
 {
     private readonly string _tempDir;
@@ -25,6 +27,7 @@ public class AlarmCsvIOServiceTests : IDisposable
 
     public AlarmCsvIOServiceTests()
     {
+        Localization.Apply(AppLanguage.Zh);
         _tempDir = Path.Combine(Path.GetTempPath(), "kanban_alarmcsv_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
         _dialog = new FakeDialogService();
@@ -33,6 +36,7 @@ public class AlarmCsvIOServiceTests : IDisposable
 
     public void Dispose()
     {
+        Localization.Apply(AppLanguage.Zh);
         try { if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true); } catch { /* best-effort */ }
     }
 
@@ -103,7 +107,7 @@ public class AlarmCsvIOServiceTests : IDisposable
         // 文件首行为表头，无数据行
         var lines = File.ReadAllLines(exportPath);
         Assert.True(lines.Length >= 1);
-        Assert.Contains("Name", lines[0]);
+        Assert.Contains(Strings.Csv_Alarm_Name, lines[0]);
         Assert.Contains(_dialog.Success, s => s.Contains("已导出 0 条报警"));
     }
 

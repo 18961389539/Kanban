@@ -22,6 +22,9 @@ public interface IKanbanHubClient
 
     /// <summary>配方下发进度推送（ApplyRecipeAsync 执行期间逐项推送，最终结果仍由 Invoke 返回值承载）</summary>
     Task OnRecipeApplyProgress(RecipeApplyProgressDto progress);
+
+    /// <summary>Collector 本地化配置变化后推送语言代码和覆盖快照。</summary>
+    Task OnLocalizationChanged(LocalizationChangedDto localization);
 }
 
 /// <summary>
@@ -77,10 +80,18 @@ public interface IKanbanHubServer
     Task<string> GetTitleAsync();
 
     /// <summary>
-    /// 界面语言（Collector settings.json 的 Language，AppLanguage 枚举值 0=中文/1=English/2=日本語）。
-    /// 屏端零配置——多语言由服务端统一控制，所有屏端跟随，避免逐屏配置。
+    /// 旧版界面语言枚举值（兼容旧版屏端）。新屏端应调用 GetLanguageCodeAsync。
     /// </summary>
     Task<int> GetLanguageAsync();
+
+    /// <summary>
+    /// 界面语言文化代码（Collector settings.json 的 LanguageCode）。
+    /// 屏端零配置——多语言由服务端统一控制，新增 CSV 语言无需修改 Hub 契约。
+    /// </summary>
+    Task<string> GetLanguageCodeAsync();
+
+    /// <summary>读取 Collector 启动时加载的本地化覆盖表（Remote 展示端只读）。</summary>
+    Task<IReadOnlyList<LocalizationOverrideDto>> GetLocalizationOverridesAsync();
 
     /// <summary>工单列表（只读；WEB 只读管理页数据源。写操作仍走 IKanbanAdminServer）。</summary>
     Task<IReadOnlyList<WorkOrderDto>> GetWorkOrdersAsync();
@@ -90,6 +101,9 @@ public interface IKanbanHubServer
 
     /// <summary>审计日志分页查询（只读；服务端 Count + Skip/Take，与历史查询同构）。</summary>
     Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request);
+
+    /// <summary>拉取全部配方（只读；管理页/看板展示数据源）。</summary>
+    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync();
 }
 
 /// <summary>
@@ -99,8 +113,20 @@ public interface IKanbanHubServer
 /// </summary>
 public interface IKanbanAdminServer
 {
+    /// <summary>写入远程审计；操作人由服务端连接上下文补充。</summary>
+    Task RecordAuditAsync(AuditLogRecordRequest request);
+
     /// <summary>同步设备配置（Remote 模式：MainAPP 设备管理页保存时推给 Collector 落盘 devices.json）</summary>
     Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices);
+
+    /// <summary>查询 Collector 是否存在可回滚的设备配置备份。</summary>
+    Task<bool> HasDeviceBackupAsync();
+
+    /// <summary>
+    /// 从 Collector 自有的 devices.json.bak 恢复设备配置并返回恢复后的权威快照。
+    /// 返回 null 表示 Collector 当前没有可用备份；空列表是合法的"删除全部设备"配置。
+    /// </summary>
+    Task<IReadOnlyList<DeviceConfigDto>?> RollbackDevicesAsync();
 
     /// <summary>新增/更新工单（Remote 模式：Collector 落库 work_orders.db，返回带 Id 的落库结果）</summary>
     Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder);
@@ -117,9 +143,6 @@ public interface IKanbanAdminServer
     /// <summary>同步全部配方（Remote 模式：MainAPP 配方管理保存时推给 Collector 落盘 recipes.json）。
     /// 参数用 List&lt;RecipeDto&gt;：MessagePack 对 IReadOnlyList&lt;T&gt; 只读包装无 formatter，SignalR 会序列化失败。</summary>
     Task SaveRecipesAsync(List<RecipeDto> recipes);
-
-    /// <summary>拉取全部配方（Remote 模式：MainAPP 启动/页面加载时从 Collector 获取配方库）。</summary>
-    Task<IReadOnlyList<RecipeDto>> GetRecipesAsync();
 
     /// <summary>
     /// 下发配方到指定设备（Remote 模式：写 PLC 由持有连接的 Collector 执行，返回逐项结果，失败已回滚）。

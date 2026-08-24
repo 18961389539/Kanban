@@ -81,6 +81,87 @@ public class DeviceWorkOrderMapperTests
         Assert.Equal("a", dtos[0].Id);
     }
 
+    [Fact]
+    public void DeviceMapper_RoundTrip_PreservesDataSources()
+    {
+        var device = new Device { Id = "dev-source", Name = "数据源测试机" };
+        var source = new DataSource
+        {
+            Id = "source-1",
+            DeviceId = device.Id,
+            Name = "环境源",
+            Type = "环境",
+            Enabled = false,
+            Description = "Remote 数据源",
+            TriggerAddress = "D510",
+            TriggerValue = 7,
+            AckValue = 8,
+        };
+        source.Values.Add(new DataSourceValue
+        {
+            Id = "value-int",
+            Name = "整数",
+            DataType = DataSourceValueType.Int32,
+            PlcAddress = "D500",
+            Enabled = true,
+            LimitMin = 1,
+            LimitMax = 9,
+            Hysteresis = 2,
+            ConfirmSeconds = 3,
+            ExpectedValue = 5,
+        });
+        source.Values.Add(new DataSourceValue
+        {
+            Id = "value-float",
+            Name = "浮点",
+            DataType = DataSourceValueType.Float32,
+            PlcAddress = "D520",
+            FloatLimitMin = 1.5f,
+            FloatLimitMax = 9.5f,
+            FloatExpectedValue = 5.5f,
+        });
+        source.Values.Add(new DataSourceValue
+        {
+            Id = "value-bool",
+            Name = "布尔",
+            DataType = DataSourceValueType.Bool,
+            PlcAddress = "M10",
+            BoolExpectedValue = true,
+        });
+        source.Values.Add(new DataSourceValue
+        {
+            Id = "value-string",
+            Name = "文本",
+            DataType = DataSourceValueType.String,
+            StringLength = 16,
+            PlcAddress = "D540",
+            StringExpectedValue = "READY",
+        });
+        source.Values[0].EnumValues.Add(new DataSourceEnumValue { Value = 5, DisplayName = "正常" });
+        device.Sources.Add(source);
+
+        var roundTripped = DeviceMapper.ToEntity(DeviceMapper.ToDto(device));
+
+        var resultSource = Assert.Single(roundTripped.Sources);
+        Assert.Equal(source.Id, resultSource.Id);
+        Assert.Equal(source.DeviceId, resultSource.DeviceId);
+        Assert.Equal(source.Name, resultSource.Name);
+        Assert.False(resultSource.Enabled);
+        Assert.Equal(source.TriggerAddress, resultSource.TriggerAddress);
+        Assert.Equal(source.TriggerValue, resultSource.TriggerValue);
+        Assert.Equal(source.AckValue, resultSource.AckValue);
+        Assert.Equal(4, resultSource.Values.Count);
+        Assert.Equal(DataSourceValueType.Int32, resultSource.Values[0].DataType);
+        Assert.Equal(5, resultSource.Values[0].ExpectedValue);
+        Assert.Equal("正常", Assert.Single(resultSource.Values[0].EnumValues).DisplayName);
+        Assert.Equal(DataSourceValueType.Float32, resultSource.Values[1].DataType);
+        Assert.Equal(5.5f, resultSource.Values[1].FloatExpectedValue);
+        Assert.Equal(DataSourceValueType.Bool, resultSource.Values[2].DataType);
+        Assert.True(resultSource.Values[2].BoolExpectedValue);
+        Assert.Equal(DataSourceValueType.String, resultSource.Values[3].DataType);
+        Assert.Equal("READY", resultSource.Values[3].StringExpectedValue);
+    }
+
     // ──────────── WorkOrderMapper ────────────
 
     [Fact]

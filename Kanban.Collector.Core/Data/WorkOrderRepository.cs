@@ -15,8 +15,6 @@ public interface IWorkOrderRepository
     ObservableCollection<WorkOrder> WorkOrders { get; }
     void LoadAll();
     List<WorkOrder> GetSnapshot();
-    Func<WorkOrder, Task<WorkOrder>>? RemoteUpsertHook { get; set; }
-    Func<int, Task<bool>>? RemoteDeleteHook { get; set; }
     Task<WorkOrder> UpsertAsync(WorkOrder workOrder);
     Task DeleteAsync(int id);
     WorkOrder Upsert(WorkOrder workOrder);
@@ -42,6 +40,7 @@ public class WorkOrderRepository : IWorkOrderRepository
 {
     private readonly DatabaseProvider _dbProvider;
     private readonly IMapper _mapper;
+    private readonly IRemoteWorkOrderStore? _remoteStore;
     private readonly object _collectionLock = new();
 
     /// <summary>集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
@@ -58,9 +57,18 @@ public class WorkOrderRepository : IWorkOrderRepository
     public long ChangeVersion => Volatile.Read(ref _changeVersionBacking);
 
     public WorkOrderRepository(DatabaseProvider dbProvider, IMapper mapper)
+        : this(dbProvider, mapper, null)
+    {
+    }
+
+    public WorkOrderRepository(
+        DatabaseProvider dbProvider,
+        IMapper mapper,
+        IRemoteWorkOrderStore? remoteStore = null)
     {
         _dbProvider = dbProvider;
         _mapper = mapper;
+        _remoteStore = remoteStore;
         // 注：WPF 绑定同步锁不在此注册（UI 进程关注点，Core 不依赖 WPF），
         // 由 MainAPP.WpfCollectionBindingRegistrar 经 SyncRoot 注册。
     }
@@ -109,23 +117,14 @@ public class WorkOrderRepository : IWorkOrderRepository
     }
 
     /// <summary>
-    /// 工单远程持久化委托（Remote 模式由 MainAPP 注入：经 SignalR 推给 Collector 落库 work_orders.db）。
-    /// Upsert 返回落库后的实体（含自增 Id）；Delete 返回是否成功。Local 模式为 null。
-    /// 异步签名避免 UI 线程阻塞等待网络。
-    /// </summary>
-    public Func<WorkOrder, Task<WorkOrder>>? RemoteUpsertHook { get; set; }
-
-    public Func<int, Task<bool>>? RemoteDeleteHook { get; set; }
-
-    /// <summary>
     /// 异步新增或更新工单。Remote 模式委托 Collector 落库；Local 模式等价于 <see cref="Upsert"/>。
     /// </summary>
     public async Task<WorkOrder> UpsertAsync(WorkOrder workOrder)
     {
         // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库，返回带 Id 的结果
-        if (RemoteUpsertHook != null)
+        if (_remoteStore?.IsEnabled == true)
         {
-            var saved = await RemoteUpsertHook(workOrder);
+            var saved = await _remoteStore.UpsertAsync(workOrder);
             SyncMemoryCollection(saved);
             return saved;
         }
@@ -139,9 +138,9 @@ public class WorkOrderRepository : IWorkOrderRepository
     public async Task DeleteAsync(int id)
     {
         // Remote 模式：Collector 是唯一写者，工单经 SignalR 落库删除
-        if (RemoteDeleteHook != null)
+        if (_remoteStore?.IsEnabled == true)
         {
-            if (await RemoteDeleteHook(id))
+            if (await _remoteStore.DeleteAsync(id))
             {
                 RemoveFromMemory(id);
             }
@@ -158,6 +157,7 @@ public class WorkOrderRepository : IWorkOrderRepository
     /// </summary>
     public WorkOrder Upsert(WorkOrder workOrder)
     {
+        EnsureLocalPersistence();
         workOrder.UpdatedAt = DateTime.Now;
         var isNew = workOrder.Id == 0;
         var oldStatus = default(WorkOrderStatus?);
@@ -247,6 +247,7 @@ public class WorkOrderRepository : IWorkOrderRepository
     /// </summary>
     public void Delete(int id)
     {
+        EnsureLocalPersistence();
         WorkOrder? removed = null;
         using var ctx = _dbProvider.CreateWorkOrderContext();
         var existing = ctx.WorkOrders.Find(id);
@@ -263,6 +264,12 @@ public class WorkOrderRepository : IWorkOrderRepository
 
         Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
             removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);
+    }
+
+    private void EnsureLocalPersistence()
+    {
+        if (_remoteStore?.IsEnabled == true)
+            throw new InvalidOperationException("Remote 模式不支持同步写入工单，请使用异步 API。");
     }
 
     /// <summary>从内存集合移除指定 Id 工单。</summary>

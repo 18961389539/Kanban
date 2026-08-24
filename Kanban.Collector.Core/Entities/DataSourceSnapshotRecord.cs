@@ -17,6 +17,9 @@ public class DataSourceSnapshotRecord
     /// <summary>数据源 Id（业务关联键）</summary>
     public string SourceId { get; set; } = string.Empty;
 
+    /// <summary>值项 Id（仅在数据源内唯一，需与 SourceId 一起定位值）。</summary>
+    public string ValueId { get; set; } = string.Empty;
+
     /// <summary>数据源名称快照（展示用）</summary>
     public string SourceName { get; set; } = string.Empty;
 
@@ -44,4 +47,24 @@ public class DataSourceSnapshotRecord
 
     /// <summary>采样时刻（本地时间，UTC 语义沿用现有历史库口径）</summary>
     public DateTime Timestamp { get; set; } = DateTime.Now;
+
+    /// <summary>写入快照数据库的时刻，与采样时刻分离。</summary>
+    public DateTime PersistedAt { get; set; } = DateTime.Now;
+
+    /// <summary>语义化的采样时刻别名；数据库仍沿用 Timestamp 列以兼容既有历史。</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime SampledAt
+    {
+        get => Timestamp;
+        set => Timestamp = value;
+    }
+
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public double? NumericValue => DataType switch
+    {
+        1 => FloatValue,
+        2 => BoolValue.HasValue ? (BoolValue.Value ? 1d : 0d) : null,
+        3 => null,
+        _ => Value,
+    };
 }

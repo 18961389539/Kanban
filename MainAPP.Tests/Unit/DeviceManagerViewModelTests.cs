@@ -38,7 +38,10 @@ public class DeviceManagerViewModelTests
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
     }
 
-    private static (DeviceManagerViewModel vm, FakeDialogService dialog, FakePlcDriver driver, string tmp) NewVm()
+    private static (DeviceManagerViewModel vm, FakeDialogService dialog, FakePlcDriver driver, string tmp) NewVm(
+        Action<DeviceRepository>? configureRepository = null,
+        UserSession? userSession = null,
+        IRemoteDeviceConfigurationStore? remoteStore = null)
     {
         var tmp = Path.Combine(Path.GetTempPath(), "kanban_dev_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tmp);
@@ -46,7 +49,7 @@ public class DeviceManagerViewModelTests
         Environment.SetEnvironmentVariable("KANBAN_DATA_DIR", tmp);
 
         var appSettings = new AppSettings();
-        var repo = new DeviceRepository(appSettings);
+        var repo = new DeviceRepository(appSettings, remoteStore);
         var driver = new FakePlcDriver();
         var conn = new PlcConnectionManager(driver, appSettings);
         conn.EnsureConnected();
@@ -56,15 +59,20 @@ public class DeviceManagerViewModelTests
             driver, conn, appSettings, history, repo, store, new TestNullLogger<PlcDataAcquisitionService>());
         var dialog = new FakeDialogService();
         // 设备管理器拆分后，构造 VM 前需先组装 IO 与 PLC 命令两个协作服务
-        var configIO = new DeviceConfigIOService(repo, dialog);
+        var configIO = new DeviceConfigIOService(repo, dialog, remoteStore);
         var plcCommands = new DevicePlcCommandHandler(driver, conn, dataAcq);
         var alarmCsvIO = new AlarmCsvIOService(dialog);
         var defectCsvIO = new DefectCsvIOService(dialog);
         var counterAlarmCsvIO = new CounterAlarmCsvIOService(dialog);
+        var dataSourceCsvIO = new DataSourceCsvIOService(dialog);
         var dbProvider = new DatabaseProvider(appSettings);
         var workOrderRepo = new WorkOrderRepository(dbProvider, TestMapper.Instance);
         var workOrderService = new WorkOrderService(workOrderRepo, repo, dialog, history);
-        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, workOrderRepo, workOrderService, new UserSession());
+        configureRepository?.Invoke(repo);
+        userSession ??= new UserSession();
+        if (userSession.CurrentUser == null)
+            userSession.Login(new User { Username = "engineer", DisplayName = "测试工程师", Role = UserRole.Engineer });
+        var vm = new DeviceManagerViewModel(repo, dataAcq, dialog, configIO, plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, dataSourceCsvIO, workOrderRepo, workOrderService, userSession, conn);
         return (vm, dialog, driver, tmp);
     }
 
@@ -83,6 +91,46 @@ public class DeviceManagerViewModelTests
     {
         var (vm, _, _, tmp) = NewVm();
         Assert.False(vm.IsDirty);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void Operator_CannotMutateDeviceConfiguration_AndRoleChangeRefreshesCommands()
+    {
+        var session = new UserSession();
+        session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
+        var (vm, _, _, tmp) = NewVm(userSession: session);
+
+        Assert.False(vm.CanManageDevices);
+        Assert.False(vm.AddDeviceCommand.CanExecute(null));
+        Assert.False(vm.ExportConfigCommand.CanExecute(null));
+        vm.AddDeviceCommand.Execute(null);
+        Assert.Empty(vm.Devices);
+
+        session.CurrentUser!.Role = UserRole.Engineer;
+
+        Assert.True(vm.CanManageDevices);
+        Assert.True(vm.AddDeviceCommand.CanExecute(null));
+        vm.AddDeviceCommand.Execute(null);
+        Assert.Single(vm.Devices);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void SaveCommand_RequiresDirtyState_WhileExportRemainsAvailableAfterSave()
+    {
+        var (vm, _, _, tmp) = NewVm();
+
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.True(vm.ExportConfigCommand.CanExecute(null));
+
+        vm.AddDeviceCommand.Execute(null);
+        ConfigureAddresses(vm.SelectedDevice!);
+        Assert.True(vm.SaveCommand.CanExecute(null));
+        vm.SaveCommand.Execute(null);
+
+        Assert.False(vm.SaveCommand.CanExecute(null));
+        Assert.True(vm.ExportConfigCommand.CanExecute(null));
         Directory.Delete(tmp, true);
     }
 
@@ -119,6 +167,44 @@ public class DeviceManagerViewModelTests
         vm.SaveCommand.Execute(null);
         Assert.False(vm.IsDirty);
         Assert.Empty(dialog.Warning);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public async Task Rollback_RequiresCurrentPassword_AndOnlySuccessfulLocalRollbackReplacesDevices()
+    {
+        var session = new UserSession();
+        session.Login(new User
+        {
+            Username = "engineer",
+            DisplayName = "测试工程师",
+            Role = UserRole.Engineer,
+            PasswordHash = PasswordHasher.Hash("correct-password"),
+        });
+        var (vm, dialog, _, tmp) = NewVm(userSession: session);
+
+        vm.AddDeviceCommand.Execute(null);
+        vm.SelectedDevice!.Name = "备份版本";
+        ConfigureAddresses(vm.SelectedDevice);
+        await vm.SaveCommand.ExecuteAsync(null);
+        vm.SelectedDevice.Name = "当前版本";
+        await vm.SaveCommand.ExecuteAsync(null);
+        vm.SelectedDevice.Name = "未保存版本";
+
+        dialog.PasswordInputResult = "wrong-password";
+        await vm.RollbackToBackupCommand.ExecuteAsync(null);
+        Assert.Equal("未保存版本", vm.SelectedDevice!.Name);
+        Assert.Contains(dialog.Warning, message => message.Contains("密码错误"));
+
+        dialog.PasswordInputResult = null;
+        await vm.RollbackToBackupCommand.ExecuteAsync(null);
+        Assert.Equal("未保存版本", vm.SelectedDevice.Name);
+
+        dialog.PasswordInputResult = "correct-password";
+        await vm.RollbackToBackupCommand.ExecuteAsync(null);
+        Assert.Equal("备份版本", vm.SelectedDevice!.Name);
+        Assert.True(vm.IsDirty);
+        Assert.Equal(3, dialog.PasswordInputCalls.Count);
         Directory.Delete(tmp, true);
     }
 
@@ -160,6 +246,46 @@ public class DeviceManagerViewModelTests
         finally
         {
             AuditLog.ResetForTest();
+            Directory.Delete(tmp, true);
+        }
+    }
+
+    [Fact]
+    public async Task Save_RemoteEditDuringPersistence_RemainsDirtyAndIsNotInSentSnapshot()
+    {
+        var snapshotStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releasePersistence = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        IReadOnlyList<Device>? sentSnapshot = null;
+        var remoteStore = new FakeRemoteDeviceConfigurationStore
+        {
+            SaveHandler = snapshot =>
+            {
+                sentSnapshot = snapshot;
+                snapshotStarted.SetResult();
+                return releasePersistence.Task;
+            }
+        };
+        var (vm, _, _, tmp) = NewVm(remoteStore: remoteStore);
+
+        try
+        {
+            vm.AddDeviceCommand.Execute(null);
+            ConfigureAddresses(vm.SelectedDevice!);
+            vm.SelectedDevice!.Name = "保存前设备";
+
+            var saveTask = vm.SaveCommand.ExecuteAsync(null);
+            await snapshotStarted.Task;
+
+            vm.SelectedDevice!.Name = "保存期间设备";
+            releasePersistence.SetResult();
+            await saveTask;
+
+            Assert.NotNull(sentSnapshot);
+            Assert.Equal("保存前设备", Assert.Single(sentSnapshot!).Name);
+            Assert.True(vm.IsDirty);
+        }
+        finally
+        {
             Directory.Delete(tmp, true);
         }
     }
@@ -438,7 +564,8 @@ public class DeviceManagerViewModelTests
         // 错误聚合到内联列表，而非逐个弹窗；错误项 = 设备名重复(1) = 1
         // （地址与 TargetCycle 均已配置且无跨设备冲突，仅剩同名冲突这一类错误）
         Assert.Single(vm.ValidationErrors);
-        Assert.Empty(dialog.ConfigErrorCalls);
+        Assert.Single(dialog.ConfigErrorCalls);
+        Assert.Same(vm.ValidationErrors, dialog.ConfigErrorCalls[0]);
         Assert.Contains(dialog.Warning, w => w.Contains("保存失败"));
         Assert.DoesNotContain(dialog.Success, s => s.Contains("保存成功")); // 未执行持久化
         Directory.Delete(tmp, true);
@@ -641,6 +768,45 @@ public class DeviceManagerViewModelTests
         Assert.Same(first, vm.SelectedDevice);
         Assert.Equal(0, vm.SelectedTabIndex);
         Assert.Equal("D100", vm.FocusedAddressConflict);
+        var firstRequest = vm.AddressConflictFocusRequest;
+
+        vm.SelectAddressConflictCommand.Execute(first);
+
+        Assert.Equal(firstRequest + 1, vm.AddressConflictFocusRequest);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void SelectAddressConflict_SelectsSourceTabForSourceAddressConflict()
+    {
+        var (vm, _, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        var first = vm.SelectedDevice!;
+        ConfigureAddresses(first);
+        vm.AddDeviceCommand.Execute(null);
+        var second = vm.SelectedDevice!;
+        second.OkCountAddress = "D200";
+        second.NgCountAddress = "D202";
+        second.StatusCountAddress = "D204";
+        second.ProductionResetAddress = "D206";
+        second.TargetCycle = 600;
+
+        var source = new DataSource
+        {
+            DeviceId = second.Id,
+            Name = "数据源",
+            TriggerAddress = "D510",
+        };
+        source.Values.Add(new DataSourceValue { Name = "值1", PlcAddress = first.OkCountAddress });
+        second.Sources.Add(source);
+
+        vm.SelectAddressConflictCommand.Execute(second);
+
+        Assert.Same(second, vm.SelectedDevice);
+        Assert.Equal((int)DeviceManagerTab.Sources, vm.SelectedTabIndex);
+        Assert.Equal(first.OkCountAddress, vm.FocusedAddressConflict);
+        Assert.Same(source, vm.DataSourceManagerVm.SelectedSource);
+        Assert.Same(source.Values[0], vm.DataSourceManagerVm.SelectedValue);
         Directory.Delete(tmp, true);
     }
 

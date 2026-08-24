@@ -49,6 +49,9 @@ public sealed record DeviceSnapshotDto
     /// <summary>当前激活的报警列表（触发中的报警）</summary>
     public IReadOnlyList<ActiveAlarmDto> ActiveAlarms { get; init; } = [];
 
+    /// <summary>当前已采样的数据源值项（只读监控展示用）。</summary>
+    public IReadOnlyList<DataSourceValueSnapshotDto> SourceValues { get; init; } = [];
+
     /// <summary>快照时间</summary>
     public DateTime Timestamp { get; init; }
 
@@ -73,4 +76,25 @@ public sealed record ActiveAlarmDto
     public required string Description { get; init; }
     public required AlarmLevel Level { get; init; }
     public DateTime StartTime { get; init; }
+}
+
+/// <summary>数据源值项的类型化实时快照。</summary>
+public sealed record DataSourceValueSnapshotDto
+{
+    public required string SourceId { get; init; }
+    public required string SourceName { get; init; }
+    public required string SourceType { get; init; }
+    public required string ValueId { get; init; }
+    public required string ValueName { get; init; }
+    public required string PlcAddress { get; init; }
+    public required string Unit { get; init; }
+    public DataSourceValueType DataType { get; init; }
+    public int Int32Value { get; init; }
+    public float Float32Value { get; init; }
+    public bool BoolValue { get; init; }
+    public string StringValue { get; init; } = string.Empty;
+    public string DisplayText { get; init; } = string.Empty;
+    public bool IsValid { get; init; }
+    public bool IsTriggered { get; init; }
+    public DateTime? LastUpdatedAt { get; init; }
 }

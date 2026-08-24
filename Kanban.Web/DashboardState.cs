@@ -85,8 +85,8 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>看板标题（Collector settings.json 的 AppTitle；拉取失败时保持默认"生产看板"）。</summary>
     public string Title { get; private set; } = "生产看板";
 
-    /// <summary>界面语言（Collector settings.json 的 Language；拉取失败时保持默认中文）。设置时同步 <see cref="L.Current"/>。</summary>
-    public WebLanguage Language { get; private set; } = WebLanguage.Zh;
+    /// <summary>界面语言文化代码（Collector settings.json 的 LanguageCode；拉取失败时保持默认中文）。</summary>
+    public string Language { get; private set; } = L.DefaultLanguage;
 
     // ──────────── 数据新鲜度（统一走 KanbanDataClient，快照回调时 MarkDataReceived） ────────────
 
@@ -301,6 +301,7 @@ public sealed class DashboardState : IAsyncDisposable
             await _client.ConnectAsync();
             // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
             _client.OnSnapshot(OnSnapshotReceived);
+            _client.OnLocalizationChanged(OnLocalizationChanged);
             await _metaClient.ConnectAsync();
             _metaClient.OnMeta(OnMetaReceived);
         }
@@ -373,6 +374,14 @@ public sealed class DashboardState : IAsyncDisposable
             // 订阅回调不得抛：异常会沿 SignalR 消息循环冒泡成未处理异常（触发 Blazor error UI）
             _logger.LogError(ex, "快照回调异常（已隔离）");
         }
+    }
+
+    private void OnLocalizationChanged(LocalizationChangedDto localization)
+    {
+        Language = L.NormalizeLanguage(localization.LanguageCode);
+        L.Current = Language;
+        L.ApplyOverrides(localization.Overrides);
+        StateChanged?.Invoke();
     }
 
     private void OnSnapshotReceivedCore(DeviceSnapshotDto snapshot)
@@ -592,16 +601,32 @@ public sealed class DashboardState : IAsyncDisposable
         // 界面语言（屏端零配置——从服务端拉取；失败保持默认中文）
         try
         {
-            var lang = await _client.GetLanguageAsync();
-            if (Enum.IsDefined(typeof(WebLanguage), lang))
-            {
-                Language = (WebLanguage)lang;
-                L.Current = Language;
-            }
+            var languageCode = await _client.GetLanguageCodeAsync();
+            Language = L.NormalizeLanguage(languageCode);
+            L.Current = Language;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "获取界面语言失败（使用默认中文）");
+            _logger.LogWarning(ex, "获取动态界面语言失败，尝试兼容旧版语言接口");
+            try
+            {
+                Language = L.FromLegacyIndex(await _client.GetLanguageAsync());
+                L.Current = Language;
+            }
+            catch (Exception legacyEx)
+            {
+                _logger.LogWarning(legacyEx, "获取兼容界面语言失败（使用默认中文）");
+            }
+        }
+        // 覆盖文件由 Collector 启动时读取；Web 端通过只读 Hub 获取，失败时继续使用内置资源。
+        try
+        {
+            var overrides = await _client.GetLocalizationOverridesAsync();
+            L.ApplyOverrides(overrides);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "获取本地化覆盖失败（使用内置资源）");
         }
 
         // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）

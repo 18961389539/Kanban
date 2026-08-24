@@ -39,7 +39,12 @@ public class CollectorReadinessTests : IDisposable
         try { Directory.Delete(_tempDir, recursive: true); } catch { }
     }
 
-    private CollectorReadinessCheck CreateCheck(IPlcDataAcquisitionService? acquisition = null, int configuredDevices = 0)
+    private CollectorReadinessCheck CreateCheck(
+        IPlcDataAcquisitionService? acquisition = null,
+        int configuredDevices = 0,
+        HistoryDiagnosticsSnapshot? history = null,
+        IPlcRuntimeSessionManager? runtimeSessions = null,
+        IReadOnlyCollection<string>? configuredProfiles = null)
     {
         if (acquisition is null)
         {
@@ -55,7 +60,10 @@ public class CollectorReadinessTests : IDisposable
         }
         return new CollectorReadinessCheck(
             _healthState, acquisition, _db, NullLogger<CollectorReadinessCheck>.Instance,
-            configuredDeviceCount: () => configuredDevices);
+            configuredDeviceCount: () => configuredDevices,
+            historyDiagnostics: () => history ?? new HistoryDiagnosticsSnapshot(),
+            runtimeSessions: runtimeSessions,
+            configuredProfileIds: () => configuredProfiles ?? Array.Empty<string>());
     }
 
     [Fact]
@@ -63,7 +71,7 @@ public class CollectorReadinessTests : IDisposable
     {
         _healthState.MarkFailed("settings.json 损坏");
         var check = CreateCheck();
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("settings.json 损坏", result.Description);
     }
@@ -72,7 +80,7 @@ public class CollectorReadinessTests : IDisposable
     public async Task InitPending_ReturnsUnhealthy()
     {
         var check = CreateCheck();
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
     }
 
@@ -81,7 +89,7 @@ public class CollectorReadinessTests : IDisposable
     {
         _healthState.MarkReady();
         var check = CreateCheck();
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Healthy, result.Status);
     }
 
@@ -92,7 +100,7 @@ public class CollectorReadinessTests : IDisposable
         var acq = Substitute.For<IPlcDataAcquisitionService>();
         acq.IsRunning.Returns(false); // 采集循环已停止（进程存活但采集挂掉）
         var check = CreateCheck(acq);
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("采集循环已停止", result.Description);
     }
@@ -111,7 +119,7 @@ public class CollectorReadinessTests : IDisposable
         });
 
         var check = CreateCheck(acq, configuredDevices: 1);
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Degraded, result.Status);
     }
 
@@ -128,7 +136,7 @@ public class CollectorReadinessTests : IDisposable
         });
 
         var check = CreateCheck(acq, configuredDevices: 1);
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("最近成功采集", result.Description);
     }
@@ -147,8 +155,96 @@ public class CollectorReadinessTests : IDisposable
         });
 
         var check = CreateCheck(acq, configuredDevices: 0);
-        var result = await check.CheckHealthAsync(new HealthCheckContext());
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Healthy, result.Status);
+    }
+
+    [Fact]
+    public async Task PartialProfileFailure_ReturnsDegradedWithProfileDetail()
+    {
+        _healthState.MarkReady();
+        var acq = Substitute.For<IPlcDataAcquisitionService>();
+        acq.IsRunning.Returns(true);
+        acq.GetDiagnosticsSnapshot().Returns(new AcquisitionDiagnosticsSnapshot
+        {
+            CompletedCycles = 30,
+            LastSuccessfulAt = DateTime.Now.AddSeconds(-20),
+        });
+        var sessions = Substitute.For<IPlcRuntimeSessionManager>();
+        sessions.GetDiagnosticsSnapshot().Returns(new[]
+        {
+            new PlcRuntimeSessionDiagnosticsSnapshot
+            {
+                ProfileId = "line-a",
+                LastSuccessfulAcquisitionAt = DateTime.Now.AddSeconds(-20),
+            },
+            new PlcRuntimeSessionDiagnosticsSnapshot
+            {
+                ProfileId = "line-b",
+                LastSuccessfulAcquisitionAt = DateTime.Now.AddMinutes(-5),
+            },
+        });
+
+        var check = CreateCheck(acq, configuredDevices: 2, runtimeSessions: sessions,
+            configuredProfiles: ["line-a", "line-b"]);
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HealthStatus.Degraded, result.Status);
+        Assert.Contains("line-b", result.Description);
+        Assert.Contains("1/2", result.Description);
+    }
+
+    [Fact]
+    public async Task AllProfileFailures_ReturnsUnhealthyWithProfileDetail()
+    {
+        _healthState.MarkReady();
+        var acq = Substitute.For<IPlcDataAcquisitionService>();
+        acq.IsRunning.Returns(true);
+        acq.GetDiagnosticsSnapshot().Returns(new AcquisitionDiagnosticsSnapshot
+        {
+            CompletedCycles = 30,
+            LastSuccessfulAt = DateTime.Now.AddSeconds(-20),
+        });
+        var sessions = Substitute.For<IPlcRuntimeSessionManager>();
+        sessions.GetDiagnosticsSnapshot().Returns(new[]
+        {
+            new PlcRuntimeSessionDiagnosticsSnapshot
+            {
+                ProfileId = "line-a",
+                ConsecutiveAcquisitionFailures = 12,
+                LastSuccessfulAcquisitionAt = DateTime.Now.AddSeconds(-20),
+            },
+            new PlcRuntimeSessionDiagnosticsSnapshot
+            {
+                ProfileId = "line-b",
+                LastSuccessfulAcquisitionAt = DateTime.Now.AddMinutes(-5),
+            },
+        });
+
+        var check = CreateCheck(acq, configuredDevices: 2, runtimeSessions: sessions,
+            configuredProfiles: ["line-a", "line-b"]);
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.Contains("所有 2 个 PLC profile 均不健康", result.Description);
+        Assert.Contains("line-a", result.Description);
+        Assert.Contains("line-b", result.Description);
+    }
+
+    [Fact]
+    public async Task DataSourceRecoveryBacklog_ReturnsDegraded()
+    {
+        _healthState.MarkReady();
+        var history = new HistoryDiagnosticsSnapshot
+        {
+            DataSourceRecoveryFileBytes = 200 * 1024 * 1024 + 1,
+        };
+
+        var check = CreateCheck(history: history);
+        var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HealthStatus.Degraded, result.Status);
+        Assert.Contains("数据源快照", result.Description);
     }
 
     [Fact]
@@ -174,7 +270,7 @@ public class CollectorReadinessTests : IDisposable
                 var probe = _db.ProbeWriteAccess();
                 Assert.NotNull(probe); // 写锁被占 → 探测失败
                 var check = CreateCheck();
-                var result = await check.CheckHealthAsync(new HealthCheckContext());
+                var result = await check.CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
                 Assert.Equal(HealthStatus.Unhealthy, result.Status);
             }
             finally

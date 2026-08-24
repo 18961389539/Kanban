@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
@@ -35,7 +36,7 @@ public class AppSettingsValidationTests : IDisposable
     public void Defaults_AreExpected()
     {
         var s = new AppSettings();
-        Assert.Equal("192.168.1.2", s.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", s.PlcConfig.IpAddress);
         Assert.Equal(4999, s.PlcConfig.Port);
         Assert.Equal(Kanban.Collector.Core.Models.PlcBrand.Mitsubishi, s.PlcConfig.Brand);
         Assert.Equal(5000, s.PlcConfig.TimeoutMs);
@@ -45,6 +46,90 @@ public class AppSettingsValidationTests : IDisposable
         Assert.False(s.IsDarkTheme);
         Assert.Null(s.LoadErrorMessage);
         Assert.Equal(2, s.Shifts.Count);
+        Assert.Same(s.PlcConfig, s.DefaultConnectionProfile.Config);
+    }
+
+    [Fact]
+    public void Load_LegacyPlcConfigCreatesDefaultConnectionProfile()
+    {
+        _settings.EnsureDirectory();
+        File.WriteAllText(_settings.SettingsFilePath,
+            "{\"SchemaVersion\":7,\"PlcConfig\":{\"ProtocolKey\":\"legacy\",\"IpAddress\":\"10.0.0.9\",\"Port\":6001}}");
+
+        var loaded = new AppSettings { ConfigDirectory = _tempDir };
+        loaded.Load();
+
+        var profile = Assert.Single(loaded.ConnectionProfiles);
+        Assert.Equal(ConnectionProfile.DefaultId, profile.Id);
+        Assert.Equal("legacy", profile.Config.ProtocolKey);
+        Assert.Equal("10.0.0.9", profile.Config.IpAddress);
+        Assert.Equal(6001, profile.Config.Port);
+        Assert.Same(loaded.PlcConfig, profile.Config);
+    }
+
+    [Fact]
+    public void SaveAndLoad_PreservesNamedConnectionProfiles()
+    {
+        _settings.ConnectionProfiles.Add(new ConnectionProfile
+        {
+            Id = "line-2",
+            Name = "Line 2",
+            Config = new PlcConfig
+            {
+                ProtocolKey = "simulated",
+                IpAddress = "10.0.0.20",
+                Port = 1502,
+            },
+        });
+
+        _settings.Save();
+
+        var loaded = new AppSettings { ConfigDirectory = _tempDir };
+        loaded.Load();
+
+        var profile = Assert.Single(loaded.ConnectionProfiles, item => item.Id == "line-2");
+        Assert.Equal("Line 2", profile.Name);
+        Assert.Equal("simulated", profile.Config.ProtocolKey);
+        Assert.Equal("10.0.0.20", profile.Config.IpAddress);
+        Assert.Equal(1502, profile.Config.Port);
+        Assert.Same(loaded.PlcConfig, loaded.DefaultConnectionProfile.Config);
+    }
+
+    [Fact]
+    public void Validate_ReportsNamedProfileConfigurationErrors()
+    {
+        _settings.ConnectionProfiles.Add(new ConnectionProfile
+        {
+            Id = "line-2",
+            Name = "",
+            Config = new PlcConfig
+            {
+                IpAddress = "not-an-ip",
+                Port = 0,
+                TimeoutMs = 99,
+                Brand = PlcBrand.ModbusTcp,
+            },
+        });
+        _settings.ConnectionProfiles[1].Config.ModbusTcp.UnitId = 0;
+
+        var errors = _settings.Validate();
+
+        Assert.Contains(errors, error => error.Contains("line-2") && error.Contains("名称"));
+        Assert.Contains(errors, error => error.Contains("line-2") && error.Contains("IP"));
+        Assert.Contains(errors, error => error.Contains("line-2") && error.Contains("端口"));
+        Assert.Contains(errors, error => error.Contains("line-2") && error.Contains("超时"));
+        Assert.Contains(errors, error => error.Contains("line-2") && error.Contains("UnitId"));
+    }
+
+    [Fact]
+    public void Validate_ReportsDuplicateConnectionProfileIds()
+    {
+        _settings.ConnectionProfiles.Add(new ConnectionProfile { Id = "line-2", Name = "Line 2" });
+        _settings.ConnectionProfiles.Add(new ConnectionProfile { Id = "LINE-2", Name = "Line 2 duplicate" });
+
+        var errors = _settings.Validate();
+
+        Assert.Contains(errors, error => error.Contains("连接档案 Id 重复") && error.Contains("LINE-2"));
     }
 
     [Fact]
@@ -145,7 +230,7 @@ public class AppSettingsValidationTests : IDisposable
         var s = new AppSettings { ConfigDirectory = _tempDir };
         s.Load();
         // 默认值保持不变
-        Assert.Equal("192.168.1.2", s.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", s.PlcConfig.IpAddress);
         Assert.Null(s.LoadErrorMessage);
     }
 
@@ -163,7 +248,7 @@ public class AppSettingsValidationTests : IDisposable
         // 损坏文件备份为 .corrupt
         Assert.True(File.Exists(_settings.SettingsFilePath + ".corrupt"));
         // 回退默认值
-        Assert.Equal("192.168.1.2", s.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", s.PlcConfig.IpAddress);
         Assert.Equal(2, s.Shifts.Count); // 默认两班次
     }
 

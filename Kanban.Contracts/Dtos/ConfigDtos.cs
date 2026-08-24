@@ -37,6 +37,51 @@ public sealed record CounterAlarmConfigDto
     public required string Unit { get; init; }
 }
 
+/// <summary>Data source value-to-display-name mapping.</summary>
+public sealed record DataSourceEnumValueConfigDto
+{
+    public int Value { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
+}
+
+/// <summary>One typed value collected by a data source.</summary>
+public sealed record DataSourceValueConfigDto
+{
+    public string Id { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public DataSourceValueType DataType { get; init; }
+    public int StringLength { get; init; } = 32;
+    public float FloatLimitMin { get; init; }
+    public float FloatLimitMax { get; init; }
+    public string PlcAddress { get; init; } = string.Empty;
+    public string Unit { get; init; } = string.Empty;
+    public bool Enabled { get; init; } = true;
+    public int LimitMin { get; init; }
+    public int LimitMax { get; init; }
+    public int Hysteresis { get; init; }
+    public int ConfirmSeconds { get; init; } = 5;
+    public int? ExpectedValue { get; init; }
+    public float? FloatExpectedValue { get; init; }
+    public bool? BoolExpectedValue { get; init; }
+    public string? StringExpectedValue { get; init; }
+    public IReadOnlyList<DataSourceEnumValueConfigDto> EnumValues { get; init; } = [];
+}
+
+/// <summary>Device-owned data source configuration.</summary>
+public sealed record DataSourceConfigDto
+{
+    public string Id { get; init; } = string.Empty;
+    public string DeviceId { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public string Type { get; init; } = string.Empty;
+    public bool Enabled { get; init; } = true;
+    public string Description { get; init; } = string.Empty;
+    public string TriggerAddress { get; init; } = string.Empty;
+    public int TriggerValue { get; init; } = 1;
+    public int AckValue { get; init; } = 2;
+    public IReadOnlyList<DataSourceValueConfigDto> Values { get; init; } = [];
+}
+
 /// <summary>
 /// 设备配置 DTO（对齐 MainAPP.Models.Device 的序列化字段，不含运行时状态）。
 /// Remote 模式下 MainAPP 设备管理页经 SignalR 同步到 Collector 落盘 devices.json。
@@ -47,6 +92,8 @@ public sealed record DeviceConfigDto
     public required string Name { get; init; }
     /// <summary>设备机型/类型（配方按机型归属的关联键）。空字符串 = 通用。</summary>
     public string MachineType { get; init; } = string.Empty;
+    /// <summary>设备使用的连接档案 ID；旧客户端缺省为 default。</summary>
+    public string ConnectionProfileId { get; init; } = "default";
     public required string OkCountAddress { get; init; }
     public required string NgCountAddress { get; init; }
     public required string StatusCountAddress { get; init; }
@@ -58,6 +105,7 @@ public sealed record DeviceConfigDto
     public IReadOnlyList<AlarmConfigDto> Alarms { get; init; } = [];
     public IReadOnlyList<DefectConfigDto> Defects { get; init; } = [];
     public IReadOnlyList<CounterAlarmConfigDto> CounterAlarms { get; init; } = [];
+    public IReadOnlyList<DataSourceConfigDto> Sources { get; init; } = [];
 }
 
 /// <summary>

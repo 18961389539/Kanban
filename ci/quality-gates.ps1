@@ -2,6 +2,8 @@
 param(
     [string]$Configuration = "Debug",
     [int]$MinimumLineCoverage = 35,
+    [double]$MaxWpfEnglishFallbackRatio = 0.94,
+    [int]$MaxWpfEnglishFallbackCount = 1959,
     [switch]$SkipVulnerabilityScan
 )
 
@@ -9,6 +11,18 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $repoRoot
 try {
+    Write-Host "==> localization source and generated artifacts"
+    & "$repoRoot\bin-shim\python.cmd" "$PSScriptRoot\generate_localization.py" --check --coverage-report --max-wpf-english-fallback-ratio $MaxWpfEnglishFallbackRatio --max-wpf-english-fallback-count $MaxWpfEnglishFallbackCount
+    if ($LASTEXITCODE -ne 0) { throw "localization generation check failed" }
+
+    Write-Host "==> architecture gates"
+    & "$PSScriptRoot\architecture-gates.ps1"
+    if ($LASTEXITCODE -ne 0) { throw "architecture gates failed" }
+
+    Write-Host "==> solution build"
+    dotnet build Kanban.slnx -c $Configuration --no-restore
+    if ($LASTEXITCODE -ne 0) { throw "solution build failed" }
+
     New-Item -ItemType Directory -Path "artifacts" -Force | Out-Null
     if (-not $SkipVulnerabilityScan) {
         Write-Host "==> dependency vulnerability scan"
@@ -18,10 +32,14 @@ try {
 
     New-Item -ItemType Directory -Path "artifacts\coverage" -Force | Out-Null
     Write-Host "==> core coverage gate"
-    dotnet test MainAPP.Tests\MainAPP.Tests.csproj -c $Configuration --collect:"XPlat Code Coverage" --results-directory artifacts\coverage --no-restore -- --no-progress
+    dotnet test --project MainAPP.Tests\MainAPP.Tests.csproj -c $Configuration --no-restore --coverlet --results-directory artifacts\coverage --no-progress
     if ($LASTEXITCODE -ne 0) { throw "tests failed" }
 
-    $reports = Get-ChildItem "artifacts\coverage" -Recurse -Filter "coverage.cobertura.xml"
+    Write-Host "==> PLC simulator tests"
+    dotnet test --project PlcSimulator.Tests\PlcSimulator.Tests.csproj -c $Configuration --no-restore -- --no-progress
+    if ($LASTEXITCODE -ne 0) { throw "PLC simulator tests failed" }
+
+    $reports = Get-ChildItem "artifacts\coverage" -Recurse -Filter "coverage.cobertura*.xml"
     if (-not $reports) { throw "coverage report was not produced" }
     $covered = 0L
     $valid = 0L

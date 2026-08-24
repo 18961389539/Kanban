@@ -20,6 +20,10 @@ public partial class Device : ObservableObject
     [ObservableProperty]
     private string _machineType = string.Empty;
 
+    /// <summary>设备使用的连接档案；缺失的旧设备迁移到默认档案。</summary>
+    [ObservableProperty]
+    private string _connectionProfileId = ConnectionProfile.DefaultId;
+
     // ──────────── PLC 地址配置 ────────────
 
     [ObservableProperty]

@@ -39,7 +39,7 @@ public class KanbanDataClientTests
     public async Task SubscribeSnapshotsAsync_BeforeConnect_FaultsWithInvalidOperation()
     {
         var client = CreateClient();
-        var task = client.SubscribeSnapshotsAsync();
+        var task = client.SubscribeSnapshotsAsync(TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await task);
     }
 
@@ -47,7 +47,7 @@ public class KanbanDataClientTests
     public async Task GetCurrentSnapshotsAsync_BeforeConnect_FaultsWithInvalidOperation()
     {
         var client = CreateClient();
-        var task = client.GetCurrentSnapshotsAsync();
+        var task = client.GetCurrentSnapshotsAsync(TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await task);
     }
 

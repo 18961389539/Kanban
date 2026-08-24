@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Kanban.Client;
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
@@ -10,6 +11,7 @@ using AlarmEventType = Kanban.Contracts.Enums.AlarmEventType;
 using MainAPP.Models;
 using Microsoft.Extensions.Logging;
 using System.Windows.Threading;
+using CoreDataSourceValueType = Kanban.Collector.Core.Models.DataSourceValueType;
 
 namespace MainAPP.Services;
 
@@ -34,6 +36,25 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private CancellationToken _cancellationToken => _shutdownCts.Token;
     private readonly List<Task> _backgroundTasks = new();
     private readonly object _taskGate = new();
+    private long _lastSnapshotReceivedTicks;
+    private readonly ConcurrentDictionary<string, long> _lastSnapshotReceivedTicksByDevice = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>最近收到 Collector 快照的时间；只由快照刷新，不能被低频 Meta/事件掩盖。</summary>
+    public DateTime LastSnapshotReceivedAt
+    {
+        get
+        {
+            var ticks = Volatile.Read(ref _lastSnapshotReceivedTicks);
+            return ticks == 0 ? default : new DateTime(ticks, DateTimeKind.Local);
+        }
+    }
+
+    public DateTime GetLastSnapshotReceivedAt(string deviceId)
+    {
+        if (!_lastSnapshotReceivedTicksByDevice.TryGetValue(deviceId, out var ticks))
+            return default;
+        return ticks == 0 ? default : new DateTime(ticks, DateTimeKind.Local);
+    }
 
     // ── Dispatcher 节流合并 ──
     // 快照 500ms/设备（30 台 ≈60 帧/秒）+ 报警/状态边沿事件若逐条 InvokeAsync，UI 线程
@@ -303,8 +324,13 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         try
         {
             var snapshots = await _client.GetCurrentSnapshotsAsync();
+            if (snapshots.Count > 0)
+                Volatile.Write(ref _lastSnapshotReceivedTicks, DateTime.Now.Ticks);
             foreach (var s in snapshots)
+            {
+                _lastSnapshotReceivedTicksByDevice[s.DeviceId] = DateTime.Now.Ticks;
                 ApplySnapshot(s);
+            }
         }
         catch (Exception ex)
         {
@@ -314,6 +340,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     private void OnSnapshotReceived(DeviceSnapshotDto snapshot)
     {
+        Volatile.Write(ref _lastSnapshotReceivedTicks, DateTime.Now.Ticks);
+        _lastSnapshotReceivedTicksByDevice[snapshot.DeviceId] = DateTime.Now.Ticks;
         // 数据新鲜度：收到实时数据即刷新时间戳（采集停滞监控依据）
         _client.MarkDataReceived();
         // 节流合并：快照是全量状态（最终一致），同设备旧帧可安全丢弃——只保留最新一帧，
@@ -326,7 +354,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // tombstone：Collector 设备配置删除广播，从本地移除该设备（Runtimes 集合 + RuntimeMap）
         if (snapshot.Removed)
         {
-            _deviceRepository.RemoveRuntime(snapshot.DeviceId);
+            _lastSnapshotReceivedTicksByDevice.TryRemove(snapshot.DeviceId, out _);
+            _deviceRepository.RemoveDevice(snapshot.DeviceId);
             return;
         }
 
@@ -359,6 +388,27 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
                 // 快照确认已恢复：补 EndTime（不重复覆盖用户已确认的结束时间）
                 alarm.EndTime = snapshot.Timestamp;
             }
+        }
+
+        foreach (var sourceSnapshot in snapshot.SourceValues)
+        {
+            var source = device.Sources.FirstOrDefault(item => item.Id == sourceSnapshot.SourceId);
+            var value = source?.Values.FirstOrDefault(item => item.Id == sourceSnapshot.ValueId);
+            if (value is null) continue;
+
+            var runtimeTimestamp = sourceSnapshot.IsValid
+                ? sourceSnapshot.LastUpdatedAt
+                : snapshot.Timestamp == default
+                    ? DateTime.Now
+                    : snapshot.Timestamp;
+            value.SetRuntimeValue(new DataSourceRuntimeValue(
+                (CoreDataSourceValueType)sourceSnapshot.DataType,
+                sourceSnapshot.Int32Value,
+                sourceSnapshot.Float32Value,
+                sourceSnapshot.BoolValue,
+                sourceSnapshot.StringValue,
+                sourceSnapshot.IsValid),
+                runtimeTimestamp);
         }
     }
 

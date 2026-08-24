@@ -1,4 +1,5 @@
 using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -28,7 +29,9 @@ public sealed class CollectorReadinessCheck : IHealthCheck
     private readonly DatabaseProvider _db;
     private readonly IAuditService? _auditService;
     private readonly Func<int> _configuredDeviceCount;
+    private readonly Func<IReadOnlyCollection<string>> _configuredProfileIds;
     private readonly Func<HistoryDiagnosticsSnapshot> _historyDiagnostics;
+    private readonly IPlcRuntimeSessionManager? _runtimeSessions;
     private readonly ILogger<CollectorReadinessCheck> _logger;
 
     public CollectorReadinessCheck(
@@ -38,7 +41,9 @@ public sealed class CollectorReadinessCheck : IHealthCheck
         ILogger<CollectorReadinessCheck> logger,
         IAuditService? auditService = null,
         Func<int>? configuredDeviceCount = null,
-        Func<HistoryDiagnosticsSnapshot>? historyDiagnostics = null)
+        Func<HistoryDiagnosticsSnapshot>? historyDiagnostics = null,
+        IPlcRuntimeSessionManager? runtimeSessions = null,
+        Func<IReadOnlyCollection<string>>? configuredProfileIds = null)
     {
         _healthState = healthState;
         _acquisition = acquisition;
@@ -46,7 +51,9 @@ public sealed class CollectorReadinessCheck : IHealthCheck
         _auditService = auditService;
         _logger = logger;
         _configuredDeviceCount = configuredDeviceCount ?? (() => 0);
+        _configuredProfileIds = configuredProfileIds ?? (() => Array.Empty<string>());
         _historyDiagnostics = historyDiagnostics ?? (() => new HistoryDiagnosticsSnapshot());
+        _runtimeSessions = runtimeSessions;
     }
 
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
@@ -74,6 +81,11 @@ public sealed class CollectorReadinessCheck : IHealthCheck
                         $"最近成功采集时间超过 {StaleAcquisitionWindow.TotalMinutes:0} 分钟（LastSuccessfulAt={diag.LastSuccessfulAt:o}）"));
                 if (!diag.LastSuccessfulAt.HasValue && diag.CompletedCycles > 0)
                     return Task.FromResult(HealthCheckResult.Unhealthy("采集从未成功（已配置设备但无成功采集记录）"));
+
+                var profileResult = CheckProfileReadiness(diag);
+                if (profileResult is { } profileHealth)
+                    return Task.FromResult(profileHealth);
+
                 if (diag.ConsecutiveFailureCycles >= 10)
                     return Task.FromResult(HealthCheckResult.Degraded(
                         $"连续 {diag.ConsecutiveFailureCycles} 轮采集失败（PLC 断线或全部设备读取失败）"));
@@ -88,9 +100,17 @@ public sealed class CollectorReadinessCheck : IHealthCheck
             try
             {
                 var hist = _historyDiagnostics();
-                if (hist.RecoveryFileBytes > MaxRecoveryFileBytes)
+                if (hist.RecoveryFileBytes > MaxRecoveryFileBytes
+                    || hist.DataSourceRecoveryFileBytes > MaxRecoveryFileBytes)
+                {
+                    var details = new List<string>();
+                    if (hist.RecoveryFileBytes > MaxRecoveryFileBytes)
+                        details.Add($"生产历史 {hist.RecoveryFileBytes / (1024 * 1024)}MB");
+                    if (hist.DataSourceRecoveryFileBytes > MaxRecoveryFileBytes)
+                        details.Add($"数据源快照 {hist.DataSourceRecoveryFileBytes / (1024 * 1024)}MB");
                     return Task.FromResult(HealthCheckResult.Degraded(
-                        $"恢复文件 {hist.RecoveryFileBytes / (1024 * 1024)}MB 超过回放上限，历史数据积压中"));
+                        $"恢复文件 {string.Join("、", details)} 超过回放上限，历史数据积压中"));
+                }
             }
             catch (Exception ex)
             {
@@ -110,5 +130,74 @@ public sealed class CollectorReadinessCheck : IHealthCheck
             _logger.LogError(ex, "readiness 探针执行异常");
             return Task.FromResult(HealthCheckResult.Unhealthy($"readiness 探针异常：{ex.Message}"));
         }
+    }
+
+    private HealthCheckResult? CheckProfileReadiness(AcquisitionDiagnosticsSnapshot diagnostics)
+    {
+        if (_runtimeSessions is null || diagnostics.CompletedCycles == 0)
+            return null;
+
+        IReadOnlyCollection<string> configuredProfiles;
+        try
+        {
+            configuredProfiles = _configuredProfileIds()
+                .Where(profileId => !string.IsNullOrWhiteSpace(profileId))
+                .Select(profileId => profileId.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "读取采集 profile 配置失败（跳过 profile readiness 检查）");
+            return null;
+        }
+
+        if (configuredProfiles.Count == 0)
+            return null;
+
+        IReadOnlyList<PlcRuntimeSessionDiagnosticsSnapshot> snapshots;
+        try
+        {
+            snapshots = _runtimeSessions.GetDiagnosticsSnapshot();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "读取 PLC profile 运行状态失败");
+            return HealthCheckResult.Unhealthy("无法读取 PLC profile 运行状态");
+        }
+
+        var byProfile = snapshots.ToDictionary(snapshot => snapshot.ProfileId, StringComparer.OrdinalIgnoreCase);
+        var unhealthy = new List<string>();
+        foreach (var profileId in configuredProfiles)
+        {
+            if (!byProfile.TryGetValue(profileId, out var snapshot))
+            {
+                unhealthy.Add($"{profileId}: 未注册");
+                continue;
+            }
+
+            if (!snapshot.LastSuccessfulAcquisitionAt.HasValue)
+            {
+                unhealthy.Add($"{profileId}: 尚无成功采集");
+                continue;
+            }
+
+            if (DateTime.Now - snapshot.LastSuccessfulAcquisitionAt.Value > StaleAcquisitionWindow)
+            {
+                unhealthy.Add($"{profileId}: 成功采集已过期");
+                continue;
+            }
+
+            if (snapshot.ConsecutiveAcquisitionFailures >= 10)
+                unhealthy.Add($"{profileId}: 连续 {snapshot.ConsecutiveAcquisitionFailures} 轮失败");
+        }
+
+        if (unhealthy.Count == 0)
+            return null;
+
+        var description = string.Join("；", unhealthy);
+        return unhealthy.Count == configuredProfiles.Count
+            ? HealthCheckResult.Unhealthy($"所有 {configuredProfiles.Count} 个 PLC profile 均不健康：{description}")
+            : HealthCheckResult.Degraded($"部分 PLC profile 不健康（{unhealthy.Count}/{configuredProfiles.Count}）：{description}");
     }
 }

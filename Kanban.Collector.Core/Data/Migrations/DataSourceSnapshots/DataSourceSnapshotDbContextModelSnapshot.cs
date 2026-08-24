@@ -72,6 +72,9 @@ namespace Kanban.Collector.Core.Data.Migrations.DataSourceSnapshots
                 b.Property<DateTime>("Timestamp")
                     .HasColumnType("TEXT");
 
+                b.Property<DateTime>("PersistedAt")
+                    .HasColumnType("TEXT");
+
                 b.Property<string>("Unit")
                     .IsRequired()
                     .HasMaxLength(32)
@@ -79,6 +82,11 @@ namespace Kanban.Collector.Core.Data.Migrations.DataSourceSnapshots
 
                 b.Property<int>("Value")
                     .HasColumnType("INTEGER");
+
+                b.Property<string>("ValueId")
+                    .IsRequired()
+                    .HasMaxLength(64)
+                    .HasColumnType("TEXT");
 
                 b.HasKey("Id");
 
@@ -89,6 +97,8 @@ namespace Kanban.Collector.Core.Data.Migrations.DataSourceSnapshots
                 b.HasIndex("SourceId", "Timestamp");
 
                 b.HasIndex("Timestamp");
+
+                b.HasIndex("DeviceId", "SourceId", "ValueId", "Timestamp");
 
                 b.ToTable("DataSourceSnapshots");
             });

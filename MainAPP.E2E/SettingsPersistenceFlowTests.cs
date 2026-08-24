@@ -62,7 +62,7 @@ public class SettingsPersistenceFlowTests
 
         Assert.NotNull(loaded.LoadErrorMessage);
         Assert.Contains("损坏", loaded.LoadErrorMessage);
-        Assert.Equal("192.168.1.2", loaded.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", loaded.PlcConfig.IpAddress);
         Assert.Equal(200, loaded.PollingIntervalMs);
         Assert.False(loaded.IsDarkTheme);
         Assert.True(System.IO.File.Exists(_host.AppSettings.SettingsFilePath + ".corrupt"));

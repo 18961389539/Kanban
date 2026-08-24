@@ -356,6 +356,30 @@ VALUES (@orderNo, @productCode, @productName, @deviceId, @deviceName, @targetQty
 [Collection("UIA")]
 public class SimulationFlowTests
 {
+    [Fact]
+    public void Simulation_HomeDeviceDetailButton_NavigatesToDeviceDetail()
+    {
+        using var ctx = new SimulationContext();
+        ctx.PrepareDevicesJson();
+        ctx.PrepareSettingsJson();
+        ctx.StartSimulator("normal", 10);
+        ctx.StartApp();
+
+        var automation = ctx.App!.Automation;
+        var window = ctx.App.MainWindow;
+        var detailButton = UiaTestHelpers.FindButton(window, automation, "查看详情");
+
+        Assert.NotNull(detailButton);
+        Assert.True(detailButton!.IsEnabled, "主页详情按钮未启用，当前设备可能未正确选中");
+
+        detailButton.SafeInvoke();
+        Thread.Sleep(1500);
+
+        Assert.True(
+            UiaTestHelpers.ContainsTextRecursive(window, "设备配置"),
+            "点击主页详情按钮后未找到设备详情页的“设备配置”区块");
+    }
+
     /// <summary>导航到指定页面（通过主导航 ListBox 按名称匹配并选中）</summary>
     private static void NavigateToPage(FlaUI.Core.AutomationElements.Window window, UIA3Automation automation, string pageName)
     {

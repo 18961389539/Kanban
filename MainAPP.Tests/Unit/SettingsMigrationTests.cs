@@ -100,6 +100,20 @@ public sealed class SettingsMigrationTests
     }
 
     [Fact]
+    public void Migrate_V7Settings_CreatesDefaultConnectionProfile()
+    {
+        var runner = new SettingsMigrationRunner();
+
+        var migrated = runner.Migrate(
+            "{\"SchemaVersion\":7,\"PlcConfig\":{\"ProtocolKey\":\"legacy\",\"IpAddress\":\"10.0.0.9\"}}");
+
+        Assert.Contains("\"ConnectionProfiles\":[", migrated);
+        Assert.Contains("\"Id\":\"default\"", migrated);
+        Assert.Contains("\"Name\":\"Default connection\"", migrated);
+        Assert.Contains("\"Config\":{\"ProtocolKey\":\"legacy\"", migrated);
+    }
+
+    [Fact]
     public void Migrate_V6MissingBrandOptions_FillsDefaults()
     {
         var runner = new SettingsMigrationRunner();

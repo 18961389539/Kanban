@@ -19,6 +19,8 @@ public sealed record AcquisitionDiagnosticsSnapshot
     public long LastCycleMilliseconds { get; init; }
     public double AverageCycleMilliseconds { get; init; }
     public long MaxCycleMilliseconds { get; init; }
+    public long CycleP95Milliseconds { get; init; }
+    public long CycleP99Milliseconds { get; init; }
     public int LastSuccessfulDevices { get; init; }
     public int ConfiguredDevices { get; init; }
     public DateTime? LastSuccessfulAt { get; init; }
@@ -30,6 +32,7 @@ public sealed record AcquisitionDiagnosticsSnapshot
     public int BatchReadFallbacks { get; init; }
     public int BatchPlanRebuilds { get; init; }
     public long BatchPlanBuildMilliseconds { get; init; }
+    public IReadOnlyList<DataSourceReaderDiagnosticsSnapshot> DataSourceReaderDiagnostics { get; init; } = [];
     public long DWordReadMilliseconds { get; init; }
     public long AlarmReadMilliseconds { get; init; }
     public long DefectReadMilliseconds { get; init; }
@@ -52,6 +55,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly IPlcDriver _plc;
     private readonly IDeviceAdapterResolver _adapterResolver;
     private readonly PlcConnectionManager _connectionManager;
+    private readonly IPlcRuntimeSessionManager? _runtimeSessions;
     private readonly AppSettings _appSettings;
     private readonly IProductionHistoryWriter _productionWriter;
     private readonly IAlarmHistoryService _alarmHistory;
@@ -66,6 +70,9 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly DefectHistoryStore? _defectHistoryStore;
     private readonly DataSourceSnapshotStore? _dataSourceSnapshotStore;
     private readonly AcquisitionDiagnosticsStore _diagnostics = new();
+    private readonly HashSet<string> _lastFailedReadProfileIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _lastSuccessfulReadProfileIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _lastCommunicationFailureProfileIds = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>缺陷快照降频：记录上次落库的（Count, ShiftName），无变化不写（键 = 设备Id|缺陷Id）。</summary>
     private readonly Dictionary<string, (int Count, string ShiftName)> _lastDefectSnapshot = new();
@@ -127,7 +134,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// </summary>
     public AcquisitionDiagnosticsSnapshot GetDiagnosticsSnapshot()
     {
-        return _diagnostics.Snapshot();
+        return _diagnostics.Snapshot() with
+        {
+            DataSourceReaderDiagnostics = _scanPipeline.GetDataSourceReaderDiagnostics(),
+        };
     }
 
     [Microsoft.Extensions.DependencyInjection.ActivatorUtilitiesConstructor]
@@ -153,10 +163,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         DefectHistoryStore? defectHistoryStore = null,
         Action<AlarmEventDto>? onAlarmEdge = null,
         Action<StatusEventDto>? onStatusEdge = null,
-        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null,
+        IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
+        IPlcRuntimeSessionManager? runtimeSessions = null)
     {
         _plc = plc;
         _connectionManager = connectionManager;
+        _runtimeSessions = runtimeSessions;
         _appSettings = appSettings;
         _productionWriter = productionWriter;
         _alarmHistory = alarmHistory;
@@ -176,7 +189,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _scanPipeline = new PlcScanPipeline(
             _adapterResolver, _deviceRepository, _alarmHistory, _appSettings,
             () => GetCurrentShiftName(), _logger, _alarmNotificationChannel,
-            dto => AlarmEdgeDetected?.Invoke(dto));
+            dto => AlarmEdgeDetected?.Invoke(dto), dataSourceReaderRegistry);
     }
 
     public PlcDataAcquisitionService(
@@ -191,10 +204,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         WorkOrderRepository? workOrderRepo = null,
         IAlarmNotificationChannel? alarmNotificationChannel = null,
         DefectHistoryStore? defectHistoryStore = null,
-        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null,
+        IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
+        IPlcRuntimeSessionManager? runtimeSessions = null)
         : this(plc, connectionManager, appSettings, historyService, historyService, historyService,
             deviceRepository, baselineStore, logger, adapterResolver, workOrderRepo, alarmNotificationChannel, defectHistoryStore,
-            onAlarmEdge: null, onStatusEdge: null, dataSourceSnapshotStore: dataSourceSnapshotStore)
+            onAlarmEdge: null, onStatusEdge: null, dataSourceSnapshotStore: dataSourceSnapshotStore,
+            dataSourceReaderRegistry: dataSourceReaderRegistry, runtimeSessions: runtimeSessions)
     {
     }
 
@@ -263,6 +279,80 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
     }
 
+    private bool IsAnySessionConnected
+        => _runtimeSessions?.IsAnyConnected ?? _connectionManager.IsConnected;
+
+    private void EnsureConnectedAll()
+    {
+        if (_runtimeSessions is null)
+            _connectionManager.EnsureConnected();
+        else
+            _runtimeSessions.EnsureConnectedAll();
+    }
+
+    private void MarkAllSessionsDisconnected(
+        DisconnectionReason reason = DisconnectionReason.ReadFailure)
+    {
+        if (_runtimeSessions is null)
+            _connectionManager.MarkDisconnected(reason);
+        else
+            _runtimeSessions.MarkAllDisconnected(reason);
+    }
+
+    private void MarkReadFailures(bool allDevicesFailed)
+    {
+        if (_runtimeSessions is null)
+        {
+            if (allDevicesFailed)
+                _connectionManager.MarkDisconnected(DisconnectionReason.ReadFailure);
+            return;
+        }
+
+        foreach (var profileId in _lastFailedReadProfileIds)
+            _runtimeSessions.MarkDisconnected(profileId, DisconnectionReason.ReadFailure);
+    }
+
+    private void RecordAcquisitionResults()
+    {
+        var activeProfileIds = GetConfiguredReadProfileIds();
+        if (activeProfileIds.Count == 0)
+            return;
+
+        var failedProfileIds = _lastFailedReadProfileIds
+            .Concat(_lastCommunicationFailureProfileIds)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var successfulProfileIds = _lastSuccessfulReadProfileIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        successfulProfileIds.UnionWith(activeProfileIds.Except(failedProfileIds));
+        _runtimeSessions?.RecordAcquisitionResults(
+            successfulProfileIds,
+            failedProfileIds,
+            noDevicesToRead: false,
+            failedProfileIds.Count == 0 ? null : "设备读取或扫描失败");
+    }
+
+    private void MarkCommunicationFailures()
+    {
+        if (_runtimeSessions is null)
+        {
+            _connectionManager.MarkDisconnected(DisconnectionReason.ScanException);
+            return;
+        }
+
+        var profileIds = _scanPipeline.LastCommunicationFailureProfileIds;
+        if (profileIds.Count == 0)
+        {
+            _logger.LogWarning(
+                "扫描发生通信异常，但未能确定连接档案；为避免误断开其他 PLC，跳过 keyed session 状态变更");
+            return;
+        }
+
+        foreach (var profileId in profileIds)
+        {
+            _lastCommunicationFailureProfileIds.Add(profileId);
+            _runtimeSessions.MarkDisconnected(profileId, DisconnectionReason.ScanException);
+        }
+    }
+
     /// <summary>
     /// 后台轮询主循环：驱动连接管理器 + 数据采集
     /// </summary>
@@ -280,19 +370,19 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 if (loopCount % 10 == 0)
                 {
                     _logger.LogDebug("采集循环 #{Loop} IsConnected={Connected} WasConnectedLastCycle={WasConnected}",
-                        loopCount, _connectionManager.IsConnected, _wasConnectedLastCycle);
+                        loopCount, IsAnySessionConnected, _wasConnectedLastCycle);
                 }
 
                 // 班次切换检测：在每轮采集前判断当前时刻所属班次，
                 // 若与上一班次不同则触发 ResetShift()，让 OEE/产量/报警时间戳按班次重新累计
                 DetectShiftChange();
 
-                _connectionManager.EnsureConnected();
+                EnsureConnectedAll();
 
                 // PLC 重连后处理推迟的产量清零（班次切换时 PLC 未连接的场景）。
                 // 仅在"上一轮未连接 + 当前已连接"的边沿触发，避免每轮反复尝试（浪费 IO）。
                 List<string>? pendingDevices = null;
-                if (_connectionManager.IsConnected && !_wasConnectedLastCycle)
+                if (IsAnySessionConnected && !_wasConnectedLastCycle)
                 {
                     pendingDevices = _baselineCoordinator.DrainPendingReconnect();
                 }
@@ -310,15 +400,16 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         }
                     }
                 }
-                _wasConnectedLastCycle = _connectionManager.IsConnected;
+                _wasConnectedLastCycle = IsAnySessionConnected;
 
                 // 延迟清空基线到期清理：PLC 清零信号发出1秒后结束窗口期。
                 // 软件基线已在 ResetShift 时经 ProductionBaselineStore.ClearAll 清空，
                 // 此处仅清理到期的设备窗口标记，使下一轮读取以当前 PLC 值重建基线。
                 _baselineCoordinator.ExpireClears(DateTime.Now, _logger);
 
-                if (_connectionManager.IsConnected)
+                if (IsAnySessionConnected)
                 {
+                    _lastCommunicationFailureProfileIds.Clear();
                     var dwordReadStopwatch = Stopwatch.StartNew();
                     var successDevices = RefreshDeviceData(out var noDevicesToRead);
                     var dwordReadMilliseconds = dwordReadStopwatch.ElapsedMilliseconds;
@@ -373,8 +464,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     }
                     else if (successDevices.Count == 0)
                     {
-                        // 所有设备读取失败：标记断开，触发重连
-                        _connectionManager.MarkDisconnected();
+                        // 所有设备读取失败：仅标记没有任何成功设备的连接档案，触发对应 profile 重连。
                     }
                     else
                     {
@@ -388,6 +478,9 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                             historyWriteMilliseconds = historyWriteStopwatch.ElapsedMilliseconds;
                         }
                     }
+
+                    MarkReadFailures(!noDevicesToRead && successDevices.Count == 0);
+                    RecordAcquisitionResults();
 
                     var configuredDevices = _deviceRepository.GetDevicesSnapshot().Count;
                     var estimatedReadOperations = CountConfiguredReadOperations();
@@ -414,6 +507,11 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     _diagnostics.RecordDisconnected(
                         _deviceRepository.GetDevicesSnapshot().Count,
                         CountConfiguredReadOperations());
+                    _runtimeSessions?.RecordAcquisitionResults(
+                        Array.Empty<string>().ToHashSet(StringComparer.OrdinalIgnoreCase),
+                        GetConfiguredReadProfileIds(),
+                        noDevicesToRead: false,
+                        failureMessage: "PLC 未连接");
                     // PLC 断线：将所有处于真实状态(1/2/3)的设备标记为离线，
                     // 使停机时段在 OEE 历史回溯中不计入任何状态（state=0 不累计）。
                     // 仅记录一次边沿（写后 prev=0），后续循环不再重复刷写。
@@ -517,7 +615,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             if (IsCommunicationException(ex))
             {
                 _logger.LogError(ex, "{ScanName} 扫描发生通信异常（触发 PLC 断连）", scanName);
-                _connectionManager.MarkDisconnected(DisconnectionReason.ScanException);
+                MarkCommunicationFailures();
             }
             else
             {
@@ -541,7 +639,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             if (IsCommunicationException(ex))
             {
                 _logger.LogError(ex, "{ScanName} 扫描发生通信异常（触发 PLC 断连）", scanName);
-                _connectionManager.MarkDisconnected(DisconnectionReason.ScanException);
+                MarkCommunicationFailures();
             }
             else
             {
@@ -571,7 +669,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// </summary>
     internal HashSet<string> RefreshDeviceData(out bool noDevicesToRead)
     {
+        _lastFailedReadProfileIds.Clear();
+        _lastSuccessfulReadProfileIds.Clear();
         HashSet<string> successDevices = [];
+        var eligibleProfileIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _scanPipeline.PrepareDWordBatchValues();
         var checkedDevices = 0;
         var notConfiguredDevices = 0;
@@ -596,20 +697,45 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 }
 
                 if (anySuccess)
+                {
                     successDevices.Add(device.Id);
+                    _lastSuccessfulReadProfileIds.Add(PlcRuntimeSession.NormalizeProfileId(device.ConnectionProfileId));
+                }
+                if (!noneConfigured)
+                    eligibleProfileIds.Add(PlcRuntimeSession.NormalizeProfileId(device.ConnectionProfileId));
             }
             catch (Exception ex)
             {
                 // 单台设备读取异常不应中断整轮采集，避免一台故障导致其他设备本轮数据丢失
                 _logger.LogError(ex, "读取设备 {DeviceId} 数据时发生异常", device.Id);
+                if (HasPotentialReadAddress(device))
+                    eligibleProfileIds.Add(PlcRuntimeSession.NormalizeProfileId(device.ConnectionProfileId));
             }
         }
         // 无可采集设备：0 台设备（checkedDevices==0）或全部设备均未配置地址 都视为"无设备可读"，
         // 不应触发 MarkDisconnected（连接本身正常），避免无设备时反复误报"PLC已断开"并空转重连。
         // 旧逻辑带 checkedDevices > 0 前置条件，会漏掉"0 台设备"场景，使其误判断开，这里改为相等比较。
         noDevicesToRead = checkedDevices == notConfiguredDevices;
+        _lastFailedReadProfileIds.UnionWith(eligibleProfileIds.Except(_lastSuccessfulReadProfileIds));
         return successDevices;
     }
+
+    private static bool HasPotentialReadAddress(Models.Device device)
+        => !string.IsNullOrWhiteSpace(device.OkCountAddress)
+           || !string.IsNullOrWhiteSpace(device.NgCountAddress)
+           || !string.IsNullOrWhiteSpace(device.StatusCountAddress)
+           || device.Alarms.Any(alarm => !string.IsNullOrWhiteSpace(alarm.PlcAddress))
+           || device.Defects.Any(defect => !string.IsNullOrWhiteSpace(defect.PlcAddress))
+           || device.CounterAlarms.Any(alarm => !string.IsNullOrWhiteSpace(alarm.PlcAddress))
+           || device.Sources.Any(source => source.Enabled
+               && (!string.IsNullOrWhiteSpace(source.TriggerAddress)
+                   || source.Values.Any(value => value.Enabled && !string.IsNullOrWhiteSpace(value.PlcAddress))));
+
+    private HashSet<string> GetConfiguredReadProfileIds()
+        => _deviceRepository.GetDevicesSnapshot()
+            .Where(HasPotentialReadAddress)
+            .Select(device => PlcRuntimeSession.NormalizeProfileId(device.ConnectionProfileId))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// PLC 读取结果三态：区分"未配置"与"读取失败"，避免未配置设备被错误累计 OEE 时间
@@ -787,10 +913,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         }
     }
 
-    /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的值项；SourceId=值项 Id，按值项聚合）。</summary>
+    /// <summary>构建本轮落盘的数据源快照集合（只包含本轮 ScanSources 成功采样的值项）。</summary>
     private List<DataSourceSnapshotRecord> BuildSourceSnapshots(string shiftName, DateTime timestamp)
     {
-        var sourceValues = _scanPipeline.GetCycleSourceRuntimeValues();
+        var sourceValues = _scanPipeline.GetCycleSourceSamples();
         var snapshots = new List<DataSourceSnapshotRecord>();
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
@@ -801,12 +927,14 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 {
                     if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
                     var key = $"{device.Id}:{source.Id}:{value.Id}";
-                    if (!sourceValues.TryGetValue(key, out var v)) continue;
+                    if (!sourceValues.TryGetValue(key, out var sample)) continue;
+                    var v = sample.Value;
                     snapshots.Add(new DataSourceSnapshotRecord
                     {
                         DeviceId = device.Id,
                         DeviceName = device.Name,
-                        SourceId = value.Id,
+                        SourceId = source.Id,
+                        ValueId = value.Id,
                         SourceName = value.Name,
                         SourceType = source.Type,
                         Unit = value.Unit,
@@ -816,7 +944,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         BoolValue = v.Type == DataSourceValueType.Bool ? v.BoolValue : null,
                         StringValue = v.Type == DataSourceValueType.String ? v.StringValue : null,
                         ShiftName = shiftName,
-                        Timestamp = timestamp,
+                        Timestamp = sample.SampledAt,
+                        PersistedAt = timestamp,
                     });
                 }
             }
@@ -997,7 +1126,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 }
 
                 // 每台设备独立触发 PLC 清零 + 延迟清空基线
-                if (_connectionManager.IsConnected)
+                if (IsAnySessionConnected)
                 {
                     TriggerPlcProductionReset(device);
                     _baselineCoordinator.ScheduleClear(device.Id);
@@ -1009,7 +1138,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 }
             }
 
-            if (!_connectionManager.IsConnected)
+            if (!IsAnySessionConnected)
             {
                 _logger.LogWarning("班次重置时 PLC 未连接，{Count} 台设备推迟清零到 PLC 重连后",
                     _baselineCoordinator.PendingReconnectCount);

@@ -203,7 +203,7 @@ public static class AlarmAnalysis
             .ToList();
     }
 
-    /// <summary>报警事件类型 → 三语文本（对齐 WPF HistoryQueryHelper.GetEventTypeText）。</summary>
+    /// <summary>报警事件类型 → 当前语言文本（对齐 WPF HistoryQueryHelper.GetEventTypeText）。</summary>
     public static string GetEventTypeText(AlarmEventType type, Func<string, object[], string> localize) => type switch
     {
         AlarmEventType.Triggered => localize("Hq_AlarmTriggered", []),

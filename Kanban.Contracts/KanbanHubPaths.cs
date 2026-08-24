@@ -7,8 +7,11 @@ namespace Kanban.Contracts;
 /// </summary>
 public static class KanbanHubPaths
 {
-    /// <summary>Collector SignalR Hub 路径（与 Kanban.Collector/Program.cs MapHub 一致）。</summary>
+    /// <summary>Collector 只读监控 Hub 路径（与 Kanban.Collector/Program.cs MapHub 一致）。</summary>
     public const string HubPath = "/hubs/kanban";
+
+    /// <summary>Collector 管理 Hub 路径，设备/工单/配方/采集设置写入仅从此入口暴露。</summary>
+    public const string AdminHubPath = "/hubs/kanban-admin";
 
     /// <summary>默认监听/访问端口（Collector 单端口部署：Hub + WASM 页面同端口）。</summary>
     public const int DefaultPort = 5129;

@@ -30,6 +30,7 @@ public static class NavigationPageCatalog
         Page("UserManager", 10, "Nav_UserManager", MaterialIconKind.AccountGroup, "Nav_UserManager", true, UserRole.Admin),
         Page("Audit", 11, "Nav_Audit", MaterialIconKind.ShieldAccount, "Nav_Audit", true, UserRole.Admin),
         Page("RecipeManager", 12, "Nav_RecipeManager", MaterialIconKind.SettingsOutline, "Nav_RecipeManager", true, UserRole.Engineer),
+        Page("DataSourceMonitoring", 13, "Nav_DataSourceMonitoring", MaterialIconKind.ChartTimelineVariant, "Nav_DataSourceMonitoring", true),
     ];
 
     public static NavigationPageDefinition Home => All[0];
@@ -45,6 +46,7 @@ public static class NavigationPageCatalog
     public static NavigationPageDefinition UserManager => All[10];
     public static NavigationPageDefinition Audit => All[11];
     public static NavigationPageDefinition RecipeManager => All[12];
+    public static NavigationPageDefinition DataSourceMonitoring => All[13];
 
     private static NavigationPageDefinition Page(
         string key, int index, string labelKey, MaterialIconKind icon, string toolTipKey, bool showInSidebar,

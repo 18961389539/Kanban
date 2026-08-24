@@ -22,14 +22,7 @@ public class LicenseStore
 
     public LicenseStore(string? storageDir = null)
     {
-        // 与 AppSettings.DataRoot 保持一致：优先读取 KANBAN_DATA_DIR 环境变量，
-        // 允许测试/沙箱环境将授权文件重定向到可写目录，避免硬编码 AppData 导致无法运行。
-        var dir = storageDir
-            ?? Environment.GetEnvironmentVariable("KANBAN_DATA_DIR")
-            ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Kanban");
-        Directory.CreateDirectory(dir);
+        var dir = LicensePaths.ResolveDataDirectory(storageDir);
         _licenseFilePath = Path.Combine(dir, LicenseFileName);
         _trialFilePath = Path.Combine(dir, TrialFileName);
     }
@@ -56,7 +49,7 @@ public class LicenseStore
         var json = JsonSerializer.Serialize(info);
         var bytes = Encoding.UTF8.GetBytes(json);
         var encrypted = ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser);
-        AtomicWriteBytes(_licenseFilePath, encrypted);
+        AtomicWrite(_licenseFilePath, encrypted);
     }
 
     public void ClearLicense()
@@ -137,18 +130,14 @@ public class LicenseStore
     /// 原子写入字节文件：先写到 .tmp 临时文件，再 File.Move 替换（原子操作）。
     /// 避免断电或异常退出时文件被截断为半写状态导致 JSON/HMAC 解析失败。
     /// </summary>
-    private static void AtomicWriteBytes(string path, byte[] bytes)
+    private static void AtomicWrite(string path, byte[] bytes)
     {
         var tmp = path + ".tmp";
         File.WriteAllBytes(tmp, bytes);
         File.Move(tmp, path, overwrite: true);
     }
 
-    /// <summary>原子写入文本文件（同 AtomicWriteBytes）。</summary>
+    /// <summary>原子写入文本文件。</summary>
     private static void AtomicWriteText(string path, string content)
-    {
-        var tmp = path + ".tmp";
-        File.WriteAllText(tmp, content);
-        File.Move(tmp, path, overwrite: true);
-    }
+        => AtomicWrite(path, Encoding.UTF8.GetBytes(content));
 }

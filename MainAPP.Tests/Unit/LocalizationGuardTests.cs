@@ -2,14 +2,15 @@ using System.Globalization;
 using System.IO;
 using System.Resources;
 using System.Text.RegularExpressions;
+using Kanban.Collector.Core.Localization;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
 /// 多语言资源一致性守卫：CI 自动阻止 key 缺失、漏翻译、重复 key 合入。
-/// 涵盖：WPF Strings.resx/en.resx/ja.resx、Strings.cs 强类型类、WEB L.cs 字典、
-/// Core ConnectionStatusMessages、以及 en/ja resx 的中文残留检测。
+/// 涵盖：WPF 配置语言 Strings.resx、Strings.cs 强类型类、WEB L.cs 字典、
+/// Core ConnectionStatusMessages、以及非中文资源的中文残留检测。
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Speed", "Fast")]
@@ -31,9 +32,31 @@ public sealed class LocalizationGuardTests
     private static string ResxPath(string fileName) =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../../MainAPP/Resources", fileName);
 
-    // ─── 测试 1：Strings.cs 所有 key 在三语 resx 中都存在 ───
+    private static IReadOnlyList<string> ConfiguredLanguages()
+    {
+        var csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+            "../../../../MainAPP/Resources/Localization.csv");
+        return File.ReadLines(csvPath)
+            .First()
+            .TrimStart('\ufeff')
+            .Split(',')
+            .Skip(2)
+            .ToArray();
+    }
+
+    private static string ResxFileName(string language)
+        => language switch
+        {
+            "zh-CN" => "Strings.resx",
+            "en-US" => "Strings.en.resx",
+            "ja-JP" => "Strings.ja.resx",
+            "pt-BR" => "Strings.pt-BR.resx",
+            _ => $"Strings.{language}.resx",
+        };
+
+    // ─── 测试 1：Strings.cs 所有 key 在配置语言 resx 中都存在 ───
     [Fact]
-    public void All_StringsCs_Keys_Exist_In_All_Three_Resx()
+    public void All_StringsCs_Keys_Exist_In_All_Configured_Resx()
     {
         var csPath = ResxPath("Strings.cs");
         var csText = File.ReadAllText(csPath);
@@ -41,22 +64,17 @@ public sealed class LocalizationGuardTests
             .Select(m => m.Groups[1].Value)
             .ToHashSet();
 
-        var zh = ParseResx(ResxPath("Strings.resx"));
-        var en = ParseResx(ResxPath("Strings.en.resx"));
-        var ja = ParseResx(ResxPath("Strings.ja.resx"));
-
-        var missingZh = csKeys.Where(k => !zh.ContainsKey(k)).ToList();
-        var missingEn = csKeys.Where(k => !en.ContainsKey(k)).ToList();
-        var missingJa = csKeys.Where(k => !ja.ContainsKey(k)).ToList();
-
-        Assert.Empty(missingZh);
-        Assert.Empty(missingEn);
-        Assert.Empty(missingJa);
+        foreach (var language in ConfiguredLanguages())
+        {
+            var resx = ParseResx(ResxPath(ResxFileName(language)));
+            var missing = csKeys.Where(key => !resx.ContainsKey(key)).ToList();
+            Assert.Empty(missing);
+        }
     }
 
-    // ─── 测试 2：三语 resx 中所有 key 都在 Strings.cs 中定义（防僵尸 key）───
+    // ─── 测试 2：配置语言 resx 中所有 key 都在 Strings.cs 中定义（防僵尸 key）───
     [Fact]
-    public void All_Resx_Keys_Defined_In_StringsCs()
+    public void All_Configured_Resx_Keys_Defined_In_StringsCs()
     {
         var csText = File.ReadAllText(ResxPath("Strings.cs"));
         var csKeys = Regex.Matches(csText, @"public static string \w+ => S\(""(\w+)""")
@@ -66,26 +84,31 @@ public sealed class LocalizationGuardTests
         // resx 系统 key (resmimetype/reader/writer/version) 是 VS 自动生成的，跳过
         var systemKeys = new HashSet<string> { "resmimetype", "reader", "writer", "version" };
 
-        foreach (var lang in new[] { ("zh", "Strings.resx"), ("en", "Strings.en.resx"), ("ja", "Strings.ja.resx") })
+        foreach (var language in ConfiguredLanguages())
         {
-            var resx = ParseResx(ResxPath(lang.Item2));
+            var resx = ParseResx(ResxPath(ResxFileName(language)));
             var extra = resx.Keys.Where(k => !csKeys.Contains(k) && !systemKeys.Contains(k)).ToList();
             Assert.True(extra.Count == 0,
-                $"{lang.Item1} resx has {extra.Count} keys NOT in Strings.cs: {string.Join(", ", extra)}");
+                $"{language} resx has {extra.Count} keys NOT in Strings.cs: {string.Join(", ", extra)}");
         }
     }
 
-    // ─── 测试 3：en resx 不含 CJK 字符（防漏翻译）。ja 使用汉字（日本語漢字）属正常，跳过。───
+    // ─── 测试 3：非中文资源不应出现中文残留（ja 的日文汉字属正常，单独跳过）。───
     [Fact]
-    public void En_Resx_Contain_No_Cjk_Characters()
+    public void NonCjk_Resx_Contain_No_Cjk_Characters()
     {
-        var resx = ParseResx(ResxPath("Strings.en.resx"));
-        var leaks = resx
-            .Where(kv => Regex.IsMatch(kv.Value, @"[\u4e00-\u9fff]"))
-            .Select(kv => $"{kv.Key}: {kv.Value[..Math.Min(40, kv.Value.Length)]}")
-            .ToList();
-        Assert.True(leaks.Count == 0,
-            $"en resx has {leaks.Count} untranslated keys: {string.Join(", ", leaks.Take(10))}");
+        foreach (var language in ConfiguredLanguages().Where(language =>
+            !language.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
+            && !language.StartsWith("ja", StringComparison.OrdinalIgnoreCase)))
+        {
+            var resx = ParseResx(ResxPath(ResxFileName(language)));
+            var leaks = resx
+                .Where(kv => Regex.IsMatch(kv.Value, @"[\u4e00-\u9fff]"))
+                .Select(kv => $"{kv.Key}: {kv.Value[..Math.Min(40, kv.Value.Length)]}")
+                .ToList();
+            Assert.True(leaks.Count == 0,
+                $"{language} resx has {leaks.Count} CJK remnants: {string.Join(", ", leaks.Take(10))}");
+        }
     }
 
     // ─── 测试 4：Strings.cs 无重复 key ───
@@ -100,32 +123,28 @@ public sealed class LocalizationGuardTests
         Assert.Empty(dups);
     }
 
-    // ─── 测试 5：全部 key 三语占位符数量一致（防 #{0} 不匹配；审查修复 2026-08-13 由 F 系列扩展到全部 key——
+    // ─── 测试 5：全部 key 在配置语言中占位符数量一致（防 #{0} 不匹配；审查修复 2026-08-13 由 F 系列扩展到全部 key——
     // 此前仅覆盖 F key，M148 en 缺失 {0} 的误译得以漏网）───
     [Fact]
     public void All_Keys_Have_Consistent_Placeholder_Count_Across_Languages()
     {
-        var zh = ParseResx(ResxPath("Strings.resx"));
-        var en = ParseResx(ResxPath("Strings.en.resx"));
-        var ja = ParseResx(ResxPath("Strings.ja.resx"));
+        var resources = ConfiguredLanguages()
+            .ToDictionary(language => language, language => ParseResx(ResxPath(ResxFileName(language))));
+        var baselineLanguage = ConfiguredLanguages().First();
+        var baseline = resources[baselineLanguage];
 
-        var fKeys = zh.Keys.Where(k => k.StartsWith("F")).ToList();
+        var fKeys = baseline.Keys.Where(k => k.StartsWith("F")).ToList();
         Assert.True(fKeys.Count >= 40, $"Expected >=40 F-keys, found {fKeys.Count}");
 
-        foreach (var key in zh.Keys)
+        foreach (var key in baseline.Keys)
         {
-            if (!en.TryGetValue(key, out var enVal) || !ja.TryGetValue(key, out var jaVal)) continue;
-
             int CountPlaceholders(string s) => Regex.Matches(s, @"\{\d+").Count;
-
-            var zhCount = CountPlaceholders(zh[key]);
-            var enCount = CountPlaceholders(enVal);
-            var jaCount = CountPlaceholders(jaVal);
-
-            Assert.True(zhCount == enCount,
-                $"Key '{key}' placeholder mismatch: zh={zhCount} en={enCount} (zh='{zh[key]}' en='{enVal}')");
-            Assert.True(zhCount == jaCount,
-                $"Key '{key}' placeholder mismatch: zh={zhCount} ja={jaCount}");
+            var baselineCount = CountPlaceholders(baseline[key]);
+            foreach (var (language, values) in resources)
+            {
+                Assert.True(values.TryGetValue(key, out var value), $"{language} is missing key '{key}'");
+                Assert.Equal(baselineCount, CountPlaceholders(value));
+            }
         }
     }
 
@@ -152,7 +171,7 @@ public sealed class LocalizationGuardTests
             .ToHashSet();
 
         // 无特殊映射：Web key 命名与 WPF resx 完全一致（Web_ 前缀 key 去前缀 或 同名共享 key）。
-        // 生成脚本 ci/generate_web_loc.py 的 SHARED_KEYS 白名单已保证一致性，此处仅防漂移。
+        // 统一生成器的 Web 共享键白名单已保证一致性，此处仅防漂移。
 
         var missing = new List<string>();
         foreach (var wk in webKeys)
@@ -169,7 +188,7 @@ public sealed class LocalizationGuardTests
             $"WEB keys with no WPF counterpart: {string.Join(", ", missing)}");
     }
 
-    // ─── 测试 10：WEB Localization.cs 不得包含模板占位符（防止 generate_web_loc.py 未运行）───
+    // ─── 测试 10：WEB Localization.cs 不得包含模板占位符（防止生成器未运行）───
     [Fact]
     public void Web_Localization_Has_No_Template_Placeholders()
     {
@@ -187,7 +206,7 @@ public sealed class LocalizationGuardTests
 
         Assert.True(placeholders.Count == 0,
             $"Kanban.Web/Localization.cs contains {placeholders.Count} template placeholders " +
-            $"(run python ci/generate_web_loc.py): {string.Join(", ", placeholders.Take(5))}");
+            $"(run python ci/generate_localization.py --web): {string.Join(", ", placeholders.Take(5))}");
     }
 
     // ─── 测试 7：Core ConnectionStatusMessages 已由 Localization.Apply 驱动，不再硬编码 ───
@@ -207,18 +226,32 @@ public sealed class LocalizationGuardTests
         Kanban.Collector.Core.Localization.ConnectionStatusMessages.Override();
     }
 
-    // ─── 测试 8：ResourceManager 能正确加载三语（卫星程序集完整）───
+    // ─── 测试 8：ResourceManager 能正确加载 CSV 中配置的语言（卫星程序集完整）───
     [Fact]
-    public void ResourceManager_Loads_All_Three_Languages()
+    public void ResourceManager_Loads_All_Configured_Languages()
     {
-        // 中文（中性资源）
-        Assert.NotNull(Res.GetString("Status_Running", CultureInfo.GetCultureInfo("zh-CN")));
+        foreach (var language in ConfiguredLanguages())
+        {
+            var value = Res.GetString("Status_Running", CultureInfo.GetCultureInfo(language));
+            Assert.False(string.IsNullOrWhiteSpace(value), $"ResourceManager 未加载语言 {language}");
+        }
+    }
 
-        // 英文
-        Assert.Equal("Running", Res.GetString("Status_Running", CultureInfo.GetCultureInfo("en-US")));
+    [Fact]
+    public void LocalizationCsv_IsTheGeneratedResourceSource()
+    {
+        var csvPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+            "../../../../MainAPP/Resources/Localization.csv");
+        Assert.True(File.Exists(csvPath), $"Localization CSV not found: {csvPath}");
 
-        // 日文
-        Assert.NotNull(Res.GetString("Status_Running", CultureInfo.GetCultureInfo("ja-JP")));
+        var lines = File.ReadAllLines(csvPath);
+        Assert.NotEmpty(lines);
+        var header = lines[0].TrimStart('\ufeff').Split(',');
+        Assert.Equal(["Resource", "Key"], header.Take(2));
+        Assert.Equal(LocalizationCatalog.LanguageCodes, header.Skip(2));
+        Assert.Contains(lines, line => line.StartsWith("Wpf,Nav_Home,"));
+        Assert.Contains(lines, line => line.StartsWith("Core,PlcIpEmpty,"));
+        Assert.Contains(lines, line => line.Contains(",Language_Portuguese,"));
     }
 
     // ─── 测试 9：目录扫描 — 不得新增硬编码中文显示字符串 ───
@@ -371,23 +404,22 @@ public sealed class LocalizationGuardTests
     // ─── 测试 12：Core 共享文案资源名与程序集约定一致（RootNamespace=Kanban.Collector.Core）───
     // 防止 RootNamespace 被改回 MainAPP 或资源被重命名时，ValidationMessages/ConnectionStatusMessages
     // 的 ResourceManager 字符串与资源名脱节——脱节时编译期零告警、运行时静默找不到资源（历史事故点）。
-    // 同时反射遍历 ValidationMessages 全部属性，断言三语 resx 均有对应 key（防新增属性漏配资源）。
+    // 同时反射遍历 ValidationMessages 全部属性，断言配置语言 resx 均有对应 key（防新增属性漏配资源）。
     [Fact]
     public void Core_Messages_ResourceName_Follows_Assembly_Convention()
     {
         var assembly = typeof(Kanban.Collector.Core.Localization.ValidationMessages).Assembly;
         var rm = new ResourceManager("Kanban.Collector.Core.Resources.Messages", assembly);
 
-        // 属性名 == resx key 名（ValidationMessages 的约定）；断言每个属性三语可解析
+        // 属性名 == resx key 名（ValidationMessages 的约定）；断言每个配置语言可解析
         var properties = typeof(Kanban.Collector.Core.Localization.ValidationMessages)
             .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         Assert.True(properties.Length >= 20, $"ValidationMessages 属性数异常: {properties.Length}");
 
         foreach (var p in properties)
         {
-            Assert.NotNull(rm.GetString(p.Name, CultureInfo.GetCultureInfo("zh-CN")));
-            Assert.NotNull(rm.GetString(p.Name, CultureInfo.GetCultureInfo("en-US")));
-            Assert.NotNull(rm.GetString(p.Name, CultureInfo.GetCultureInfo("ja-JP")));
+            foreach (var language in ConfiguredLanguages())
+                Assert.NotNull(rm.GetString(p.Name, CultureInfo.GetCultureInfo(language)));
         }
     }
 

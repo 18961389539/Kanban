@@ -12,7 +12,7 @@ namespace Kanban.Client;
 /// 不依赖任何 UI/WPF 类型：桌面端（MainAPP）以 <c>useMessagePack: true</c> 使用 MessagePack 协议，
 /// 浏览器端（Blazor WASM）以 <c>useMessagePack: false</c> 使用默认 JSON 协议（Collector 双协议并存）。
 /// </summary>
-public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient, IKanbanAdminClient
+public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
 {
     private readonly string _hubUrl;
     private readonly bool _useMessagePack;
@@ -229,11 +229,17 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             () => _connection!.On<MetaStateDto>(nameof(IKanbanHubClient.OnMeta), handler));
     }
 
+    public void OnLocalizationChanged(Action<LocalizationChangedDto> handler)
+    {
+        RegisterHandlerOnce(nameof(IKanbanHubClient.OnLocalizationChanged),
+            () => _connection!.On<LocalizationChangedDto>(nameof(IKanbanHubClient.OnLocalizationChanged), handler));
+    }
+
     /// <summary>
     /// 订阅配方下发进度推送（返回订阅句柄，Dispose 即退订——调用方必须在不再需要时释放，
     /// 否则 handler 逐次累积（进度回调重复触发 + 内存泄漏）。
     /// </summary>
-    public IDisposable OnRecipeApplyProgress(Action<RecipeApplyProgressDto> handler)
+    internal IDisposable OnRecipeApplyProgress(Action<RecipeApplyProgressDto> handler)
     {
         EnsureConnected();
         return _connection!.On<RecipeApplyProgressDto>(nameof(IKanbanHubClient.OnRecipeApplyProgress), handler);
@@ -300,14 +306,29 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     }
 
     /// <summary>同步设备配置到 Collector 落盘（Remote 模式设备管理保存）。</summary>
-    public async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
+    internal async Task SaveDevicesAsync(IReadOnlyList<DeviceConfigDto> devices, CancellationToken ct = default)
     {
         EnsureConnected();
         await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveDevicesAsync), devices, ct);
     }
 
+    /// <summary>查询 Collector 侧 devices.json.bak 是否存在（Remote 回滚按钮状态）。</summary>
+    internal async Task<bool> HasDeviceBackupAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<bool>(nameof(IKanbanAdminServer.HasDeviceBackupAsync), ct);
+    }
+
+    /// <summary>从 Collector 侧 devices.json.bak 恢复设备配置（Remote 模式）。</summary>
+    internal async Task<IReadOnlyList<DeviceConfigDto>?> RollbackDevicesAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<DeviceConfigDto>?>(
+            nameof(IKanbanAdminServer.RollbackDevicesAsync), ct);
+    }
+
     /// <summary>同步全部配方到 Collector（Remote 模式配方管理保存时落盘 recipes.json）。</summary>
-    public async Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default)
+    internal async Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default)
     {
         EnsureConnected();
         await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveRecipesAsync), recipes, ct);
@@ -317,14 +338,21 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     public async Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default)
     {
         EnsureConnected();
-        return await _connection!.InvokeAsync<IReadOnlyList<RecipeDto>>(nameof(IKanbanAdminServer.GetRecipesAsync), ct);
+        return await _connection!.InvokeAsync<IReadOnlyList<RecipeDto>>(nameof(IKanbanHubServer.GetRecipesAsync), ct);
     }
 
     /// <summary>下发配方到指定设备（Remote 模式：写 PLC 由 Collector 执行，失败已回滚）。</summary>
-    public async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default)
+    internal async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default)
     {
         EnsureConnected();
         return await _connection!.InvokeAsync<RecipeApplyResultDto>(nameof(IKanbanAdminServer.ApplyRecipeAsync), deviceId, recipeId, ct);
+    }
+
+    /// <summary>向 Collector 管理 Hub 写入一条审计记录。</summary>
+    internal async Task RecordAuditAsync(AuditLogRecordRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        await _connection!.InvokeAsync(nameof(IKanbanAdminServer.RecordAuditAsync), request, ct);
     }
 
     /// <summary>从 Collector 拉取设备配置（Remote 模式屏端零配置，不依赖本地 devices.json）。</summary>
@@ -335,14 +363,14 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     }
 
     /// <summary>新增/更新工单到 Collector 落库，返回带 Id 的结果。</summary>
-    public async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
+    internal async Task<WorkOrderDto> UpsertWorkOrderAsync(WorkOrderDto workOrder, CancellationToken ct = default)
     {
         EnsureConnected();
         return await _connection!.InvokeAsync<WorkOrderDto>(nameof(IKanbanAdminServer.UpsertWorkOrderAsync), workOrder, ct);
     }
 
     /// <summary>删除工单（Collector 落库）。</summary>
-    public async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
+    internal async Task DeleteWorkOrderAsync(int workOrderId, CancellationToken ct = default)
     {
         EnsureConnected();
         await _connection!.InvokeAsync(nameof(IKanbanAdminServer.DeleteWorkOrderAsync), workOrderId, ct);
@@ -363,7 +391,7 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     }
 
     /// <summary>同步采集设置到 Collector 落盘并热生效（Remote 模式设置页保存）。</summary>
-    public async Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default)
+    internal async Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default)
     {
         EnsureConnected();
         await _connection!.InvokeAsync(nameof(IKanbanAdminServer.SaveCollectorSettingsAsync), settings, ct);
@@ -404,11 +432,27 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetTitleAsync), ct);
     }
 
-    /// <summary>界面语言枚举值（Collector settings.json 的 Language；屏端拉取实现零配置）。</summary>
+    /// <summary>旧版界面语言枚举值（兼容旧版 Collector；新屏端使用 GetLanguageCodeAsync）。</summary>
     public async Task<int> GetLanguageAsync(CancellationToken ct = default)
     {
         EnsureConnected();
         return await _connection!.InvokeAsync<int>(nameof(IKanbanHubServer.GetLanguageAsync), ct);
+    }
+
+    /// <summary>界面语言文化代码（屏端拉取实现零配置，支持 CSV 动态语言列）。</summary>
+    public async Task<string> GetLanguageCodeAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetLanguageCodeAsync), ct);
+    }
+
+    /// <summary>从 Collector 拉取启动时加载的本地化覆盖表。</summary>
+    public async Task<IReadOnlyList<LocalizationOverrideDto>> GetLocalizationOverridesAsync(
+        CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<LocalizationOverrideDto>>(
+            nameof(IKanbanHubServer.GetLocalizationOverridesAsync), ct);
     }
 
     public async ValueTask DisposeAsync()

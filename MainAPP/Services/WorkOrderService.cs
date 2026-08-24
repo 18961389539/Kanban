@@ -114,6 +114,14 @@ public interface IWorkOrderService
     IReadOnlyDictionary<int, WorkOrderProductionSummary> GetProductionSummaries(IReadOnlyList<WorkOrder> workOrders);
 }
 
+/// <summary>工单产量聚合的可选异步能力，供 Remote 主页取消在途 SignalR 查询。</summary>
+public interface IAsyncWorkOrderProductionSummary
+{
+    Task<WorkOrderProductionSummary> GetProductionSummaryAsync(
+        WorkOrder workOrder,
+        CancellationToken cancellationToken = default);
+}
+
 /// <summary>历史服务的可选批量能力，旧测试桩未实现时由工单服务回退逐条查询。</summary>
 // 接口定义已随采集/存储核心迁移至 Kanban.Collector.Core（MainAPP.Services.IWorkOrderProductionBatchQuery），
 // 此处经项目引用可见，不再重复定义。
@@ -129,7 +137,7 @@ public class WorkOrderService(
     IDialogService dialog,
     IProductionHistoryReader historyService,
     IRuntimeMode? runtimeMode = null,
-    ILogger<WorkOrderService>? logger = null) : IWorkOrderService
+    ILogger<WorkOrderService>? logger = null) : IWorkOrderService, IAsyncWorkOrderProductionSummary
 {
     private readonly WorkOrderRepository _workOrderRepo = workOrderRepo;
     private readonly DeviceRepository _deviceRepo = deviceRepo;
@@ -139,7 +147,7 @@ public class WorkOrderService(
     private readonly ILogger<WorkOrderService> _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<WorkOrderService>.Instance;
 
     /// <summary>
-    /// Remote 模式禁用同步包装器：RemoteUpsertHook 走 SignalR 真正异步，UI 线程同步等待
+    /// Remote 模式禁用同步包装器：IRemoteWorkOrderStore 走 SignalR 真正异步，UI 线程同步等待
     /// （GetAwaiter().GetResult()）会经典死锁。生产调用方一律使用 Async 变体；
     /// 本守卫仅拦截测试/误用路径（测试不传 runtimeMode 时为 null，不拦截）。
     /// </summary>
@@ -563,6 +571,107 @@ public class WorkOrderService(
             // 查询失败（Remote 模式 SignalR 故障等）与"真无数据"区分：记录日志后返回空摘要，
             // 避免达成率 0% 无法区分故障/无数据（用户可据日志排查）
             _logger.LogWarning(ex, "工单产量聚合查询失败，返回空摘要 WorkOrder={WorkOrderId}", workOrder.Id);
+            return new WorkOrderProductionSummary();
+        }
+    }
+
+    /// <summary>异步聚合工单产量，Remote 历史请求可在工单切换或页面销毁时取消。</summary>
+    public async Task<WorkOrderProductionSummary> GetProductionSummaryAsync(
+        WorkOrder workOrder,
+        CancellationToken cancellationToken = default)
+    {
+        if (HasCompletedSnapshot(workOrder)
+            && workOrder.CompletedOkCount.HasValue
+            && workOrder.CompletedNgCount.HasValue)
+        {
+            var ok = workOrder.CompletedOkCount.Value;
+            var ng = workOrder.CompletedNgCount.Value;
+            var target = workOrder.TargetQuantity;
+            return new WorkOrderProductionSummary
+            {
+                OkCount = ok,
+                NgCount = ng,
+                AchievementRate = target > 0 ? Math.Min(1.0, (double)ok / target) : 0,
+                DefectRate = ok + ng > 0 ? (double)ng / (ok + ng) : 0,
+            };
+        }
+
+        try
+        {
+            var asyncHistory = _historyService as IAsyncProductionHistoryReader;
+            var logs = asyncHistory != null
+                ? await asyncHistory.QueryProductionLogsByWorkOrderAsync(workOrder.Id, cancellationToken).ConfigureAwait(false)
+                : await Task.Run(() => _historyService.QueryProductionLogsByWorkOrder(workOrder.Id), cancellationToken).ConfigureAwait(false);
+
+            if (logs.Count == 0)
+            {
+                logs = asyncHistory != null
+                    ? await asyncHistory.QueryProductionLogsAsync(
+                        FallbackFrom(workOrder), FallbackTo(workOrder), workOrder.DeviceId,
+                        cancellationToken: cancellationToken).ConfigureAwait(false)
+                    : await Task.Run(
+                        () => _historyService.QueryProductionLogs(
+                            FallbackFrom(workOrder), FallbackTo(workOrder), workOrder.DeviceId),
+                        cancellationToken).ConfigureAwait(false);
+            }
+
+            if (logs.Count == 0)
+                return new WorkOrderProductionSummary();
+
+            var okTotal = 0;
+            var ngTotal = 0;
+            foreach (var group in logs.GroupBy(p => p.ShiftName ?? string.Empty))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var ordered = group.OrderBy(p => p.Timestamp).ToList();
+                if (ordered.Count == 0) continue;
+                var first = ordered[0];
+                var last = ordered[^1];
+
+                if (ordered.Count == 1)
+                {
+                    var baseline = asyncHistory != null
+                        ? await asyncHistory.GetLatestProductionBeforeAsync(
+                            workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty,
+                            cancellationToken).ConfigureAwait(false)
+                        : await Task.Run(
+                            () => _historyService.GetLatestProductionBefore(
+                                workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty),
+                            cancellationToken).ConfigureAwait(false);
+                    if (baseline != null)
+                    {
+                        okTotal += Math.Max(0, last.OkProduction - baseline.OkProduction);
+                        ngTotal += Math.Max(0, last.NgProduction - baseline.NgProduction);
+                    }
+                    else
+                    {
+                        okTotal += Math.Max(0, last.OkProduction);
+                        ngTotal += Math.Max(0, last.NgProduction);
+                    }
+                }
+                else
+                {
+                    okTotal += Math.Max(0, last.OkProduction - first.OkProduction);
+                    ngTotal += Math.Max(0, last.NgProduction - first.NgProduction);
+                }
+            }
+
+            var target = workOrder.TargetQuantity;
+            return new WorkOrderProductionSummary
+            {
+                OkCount = okTotal,
+                NgCount = ngTotal,
+                AchievementRate = target > 0 ? Math.Min(1.0, (double)okTotal / target) : 0,
+                DefectRate = okTotal + ngTotal > 0 ? (double)ngTotal / (okTotal + ngTotal) : 0,
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "异步查询工单产量聚合失败，返回空摘要 WorkOrder={WorkOrderId}", workOrder.Id);
             return new WorkOrderProductionSummary();
         }
     }

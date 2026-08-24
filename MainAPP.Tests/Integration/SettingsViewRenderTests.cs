@@ -68,7 +68,7 @@ public class SettingsViewRenderTests : WpfTestHost, IDisposable
             win.Close();
         });
 
-        Assert.Equal("192.168.1.2", vm.AppSettings.PlcConfig.IpAddress);
+        Assert.Equal("127.0.0.1", vm.AppSettings.PlcConfig.IpAddress);
     }
 
     [Fact]

@@ -1,4 +1,6 @@
 using Kanban.Collector.Core.Localization;
+using Kanban.Collector.Hubs;
+using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
@@ -8,9 +10,10 @@ using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.ObjectModel;
+using Microsoft.AspNetCore.SignalR;
 using System.Reflection;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
+using ContractDataSourceValueType = Kanban.Contracts.Enums.DataSourceValueType;
 
 namespace Kanban.Collector.Services;
 
@@ -21,6 +24,7 @@ namespace Kanban.Collector.Services;
 /// </summary>
 public sealed class ConfigSyncHandler
 {
+    private readonly object _deviceConfigLock = new();
     private readonly DeviceRepository _deviceRepository;
     private readonly WorkOrderRepository _workOrderRepository;
     private readonly SnapshotAggregator _snapshotAggregator;
@@ -56,38 +60,101 @@ public sealed class ConfigSyncHandler
     {
         // 入参校验（审查修复 2026-08-13）：此前零校验——非法枚举值强转落库、null 集合 NRE 变 500。
         ArgumentNullException.ThrowIfNull(devices);
+        var deviceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var deviceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in devices)
         {
             if (d is null) throw new ArgumentException("设备列表包含 null 元素", nameof(devices));
             if (string.IsNullOrWhiteSpace(d.Id) || string.IsNullOrWhiteSpace(d.Name))
                 throw new ArgumentException($"设备 Id/Name 不能为空（Id='{d.Id}' Name='{d.Name}'）", nameof(devices));
-            foreach (var a in d.Alarms ?? []) EnsureEnumDefined(a.Level, nameof(a.Level));
+            if (!deviceIds.Add(d.Id))
+                throw new ArgumentException($"设备 Id 重复：{d.Id}", nameof(devices));
+            if (!deviceNames.Add(d.Name.Trim()))
+                throw new ArgumentException($"设备名称重复：{d.Name}", nameof(devices));
+            if (d.TargetCycle <= 0)
+                throw new ArgumentOutOfRangeException(nameof(d.TargetCycle), d.TargetCycle,
+                    $"设备「{d.Name}」目标周期必须大于 0");
+            foreach (var a in d.Alarms ?? [])
+                if (a is not null) EnsureEnumDefined(a.Level, nameof(a.Level));
             foreach (var x in d.Defects ?? [])
             {
+                if (x is null) continue;
                 EnsureEnumDefined(x.Severity, nameof(x.Severity));
                 EnsureEnumDefined(x.Category, nameof(x.Category));
             }
+            ValidateDeviceAddresses(d);
+            ValidateDataSources(d);
         }
-        try
+        ValidateSameDevicePrimaryAddresses(devices);
+        ValidateCrossDeviceAddresses(devices);
+        lock (_deviceConfigLock)
         {
-            var entities = devices.Select(DeviceMapper.ToEntity).ToList();
-            // 替换前记录旧设备 Id，替换后计算差集裁剪
-            var oldIds = _deviceRepository.GetDevicesSnapshot().Select(d => d.Id).ToHashSet();
-            _deviceRepository.ReplaceAll(entities);
-            _deviceRepository.SaveAll();
-            foreach (var removedId in oldIds.Except(entities.Select(e => e.Id)))
+            try
             {
-                _snapshotAggregator.RemoveDevice(removedId);
-                _logger.LogInformation("设备已删除并从快照流裁剪：{DeviceId}", removedId);
+                var entities = devices.Select(DeviceMapper.ToEntity).ToList();
+                // 替换前记录旧设备 Id，替换后计算差集裁剪
+                var oldIds = _deviceRepository.GetDevicesSnapshot().Select(d => d.Id).ToHashSet();
+                _deviceRepository.ReplaceAllAndSave(entities);
+                foreach (var removedId in oldIds.Except(entities.Select(e => e.Id)))
+                {
+                    _snapshotAggregator.RemoveDevice(removedId);
+                    _logger.LogInformation("设备已删除并从快照流裁剪：{DeviceId}", removedId);
+                }
+                _logger.LogInformation("Remote 设备配置同步完成：{Count} 台", entities.Count);
             }
-            _logger.LogInformation("Remote 设备配置同步完成：{Count} 台", entities.Count);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Remote 设备配置同步失败");
-            throw;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Remote 设备配置同步失败");
+                throw;
+            }
         }
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 从 Collector 自有的 devices.json.bak 恢复配置。
+    /// 返回 null 表示没有备份，空列表表示合法的空配置；恢复后立即由 Collector 落盘，
+    /// 因此 Remote 屏端不需要再次保存，也不会读取自己的本地备份。
+    /// </summary>
+    public Task<IReadOnlyList<DeviceConfigDto>?> RollbackDevicesAsync()
+    {
+        lock (_deviceConfigLock)
+        {
+            var backupPath = _deviceRepository.FilePath + ".bak";
+            if (!File.Exists(backupPath))
+                return Task.FromResult<IReadOnlyList<DeviceConfigDto>?>(null);
+
+            try
+            {
+                var json = File.ReadAllText(backupPath);
+                var restored = _deviceRepository.ImportFromJson(json)
+                    ?? throw new InvalidDataException("设备备份为空或格式无效");
+                var oldIds = _deviceRepository.GetDevicesSnapshot().Select(d => d.Id).ToHashSet();
+                _deviceRepository.ReplaceAllAndSave(restored);
+
+                foreach (var removedId in oldIds.Except(restored.Select(d => d.Id)))
+                {
+                    _snapshotAggregator.RemoveDevice(removedId);
+                    _logger.LogInformation("回滚后设备已从快照流裁剪：{DeviceId}", removedId);
+                }
+
+                var result = DeviceMapper.ToDtos(_deviceRepository.GetDevicesSnapshot()).ToList();
+                _logger.LogInformation("Remote 设备配置回滚完成：{Count} 台", result.Count);
+                return Task.FromResult<IReadOnlyList<DeviceConfigDto>?>(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Remote 设备配置回滚失败");
+                throw;
+            }
+        }
+    }
+
+    /// <summary>查询 Collector 自有的设备备份是否存在，供 Remote 回滚按钮显示真实状态。</summary>
+    public Task<bool> HasDeviceBackupAsync()
+    {
+        lock (_deviceConfigLock)
+            return Task.FromResult(File.Exists(_deviceRepository.FilePath + ".bak"));
     }
 
     /// <summary>返回当前设备配置快照（屏端 Remote 模式零配置：设备列表从此拉取，不再依赖本地 devices.json）。</summary>
@@ -230,7 +297,7 @@ public sealed class ConfigSyncHandler
     /// 校验通过后先原子落盘草稿，再把值应用到运行实例——磁盘写入失败或校验失败时
     /// 运行实例与 PLC 驱动均保持原状（不再出现"内存已变、磁盘未变"的分裂状态）。
     /// </summary>
-    public Task SaveCollectorSettingsAsync(CollectorSettingsDto dto)
+    public async Task SaveCollectorSettingsAsync(CollectorSettingsDto dto)
     {
         try
         {
@@ -240,59 +307,16 @@ public sealed class ConfigSyncHandler
             // MainAPP 语言/主题/日报配置；详见 AppSettings.CreateDraft 注释）。
             var draft = _appSettings.CreateDraft();
 
-            if (dto.PollingIntervalMs.HasValue) draft.PollingIntervalMs = dto.PollingIntervalMs.Value;
-            if (dto.HistoryWriteIntervalScans.HasValue) draft.HistoryWriteIntervalScans = dto.HistoryWriteIntervalScans.Value;
-            if (dto.PlcBatchReadMaxLength.HasValue) draft.PlcBatchReadMaxLength = dto.PlcBatchReadMaxLength.Value;
-            if (dto.PlcBatchReadMaxGapSlots.HasValue) draft.PlcBatchReadMaxGapSlots = dto.PlcBatchReadMaxGapSlots.Value;
+            CollectorSettingsMapper.ApplyPatch(dto, draft);
 
-            if (dto.PlcBrand.HasValue)
-            {
-                if (!Enum.IsDefined(typeof(PlcBrand), dto.PlcBrand.Value))
-                    throw new ArgumentOutOfRangeException(nameof(dto.PlcBrand), dto.PlcBrand.Value, "不支持的 PLC 品牌");
-                draft.PlcConfig.Brand = (PlcBrand)dto.PlcBrand.Value;
-            }
-            if (!string.IsNullOrWhiteSpace(dto.PlcIpAddress)) draft.PlcConfig.IpAddress = dto.PlcIpAddress;
-            if (dto.PlcPort.HasValue) draft.PlcConfig.Port = dto.PlcPort.Value;
-            if (dto.PlcTimeoutMs.HasValue) draft.PlcConfig.TimeoutMs = dto.PlcTimeoutMs.Value;
-            if (dto.Siemens is { } siemens)
-            {
-                if (!string.IsNullOrWhiteSpace(siemens.Model)) draft.PlcConfig.Siemens.Model = siemens.Model;
-                if (siemens.Rack.HasValue) draft.PlcConfig.Siemens.Rack = siemens.Rack.Value;
-                if (siemens.Slot.HasValue) draft.PlcConfig.Siemens.Slot = siemens.Slot.Value;
-                if (siemens.DataFormat.HasValue)
-                {
-                    if (!Enum.IsDefined(typeof(PlcDataFormat), siemens.DataFormat.Value))
-                        throw new ArgumentOutOfRangeException(nameof(dto.Siemens), siemens.DataFormat.Value, "不支持的 Siemens 数据格式");
-                    draft.PlcConfig.Siemens.DataFormat = (PlcDataFormat)siemens.DataFormat.Value;
-                }
-                if (siemens.BatchInt32Limit.HasValue) draft.PlcConfig.Siemens.BatchInt32Limit = siemens.BatchInt32Limit.Value;
-            }
-            if (dto.ModbusTcp is { } modbus)
-            {
-                if (modbus.UnitId.HasValue) draft.PlcConfig.ModbusTcp.UnitId = modbus.UnitId.Value;
-                if (modbus.AddressStartWithZero.HasValue) draft.PlcConfig.ModbusTcp.AddressStartWithZero = modbus.AddressStartWithZero.Value;
-                if (modbus.RegisterFunction.HasValue) draft.PlcConfig.ModbusTcp.RegisterFunction = modbus.RegisterFunction.Value;
-                if (modbus.BitFunction.HasValue) draft.PlcConfig.ModbusTcp.BitFunction = modbus.BitFunction.Value;
-                if (modbus.DataFormat.HasValue)
-                {
-                    if (!Enum.IsDefined(typeof(PlcDataFormat), modbus.DataFormat.Value))
-                        throw new ArgumentOutOfRangeException(nameof(dto.ModbusTcp), modbus.DataFormat.Value, "不支持的 Modbus 数据格式");
-                    draft.PlcConfig.ModbusTcp.DataFormat = (PlcDataFormat)modbus.DataFormat.Value;
-                }
-                if (modbus.BatchInt32Limit.HasValue) draft.PlcConfig.ModbusTcp.BatchInt32Limit = modbus.BatchInt32Limit.Value;
-            }
-            if (dto.Omron is { } omron && omron.ReadSplits.HasValue)
-                draft.PlcConfig.Omron.ReadSplits = omron.ReadSplits.Value;
             if (dto.Shifts is { Count: > 0 })
             {
-                var shifts = dto.Shifts.Select(s => new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime }).ToList();
                 // 复用与本地编辑一致的 1440 分钟全覆盖校验（审查修复 2026-08-15）：
                 // 此前只走 draft.Validate()（仅名称非空/起止不等），重叠或留空隙的班次可经 Remote 写入，
                 // 导致 ShiftContext.DetectChange 首个匹配命中、产量归属错乱。
-                var shiftError = ShiftValidator.Validate(shifts);
+                var shiftError = ShiftValidator.Validate(draft.Shifts);
                 if (shiftError != null)
                     throw new InvalidOperationException("班次配置校验失败：" + shiftError);
-                draft.Shifts = new ObservableCollection<ShiftConfig>(shifts);
             }
 
             // ② 完整校验：与启动期一致的口径（轮询间隔/班次/PLC 参数/批量读取上下限）
@@ -305,11 +329,16 @@ public sealed class ConfigSyncHandler
 
             // ④ 后生效：把草稿值应用到运行实例（此刻磁盘已是新值，崩溃重启也不会回退）
             var plcSignatureBefore = _appSettings.PlcConfig.GetConfigurationSignature();
+            var profileSignaturesBefore = _appSettings.CreateConnectionProfilesSnapshot()
+                .ToDictionary(profile => profile.Id, profile => profile.Config.GetConfigurationSignature(), StringComparer.OrdinalIgnoreCase);
             _appSettings.PollingIntervalMs = draft.PollingIntervalMs;
             _appSettings.HistoryWriteIntervalScans = draft.HistoryWriteIntervalScans;
             _appSettings.PlcBatchReadMaxLength = draft.PlcBatchReadMaxLength;
             _appSettings.PlcBatchReadMaxGapSlots = draft.PlcBatchReadMaxGapSlots;
+            _appSettings.LanguageCode = draft.EffectiveLanguageCode;
             _appSettings.PlcConfig = draft.PlcConfig.CreateSnapshot();
+            _appSettings.ConnectionProfiles = draft.CreateConnectionProfilesSnapshot();
+            _appSettings.EnsureConnectionProfiles();
             // 班次集合锁内原地更新：与采集轮询线程/进度查询的锁内快照读取互斥，
             // 消除 Clear+Add 中间窗口被枚举导致的 InvalidOperationException（审查修复 2026-08-13）
             lock (_appSettings.ShiftsLock)
@@ -318,16 +347,32 @@ public sealed class ConfigSyncHandler
                 foreach (var s in draft.Shifts) _appSettings.Shifts.Add(s);
             }
             var plcSignatureAfter = _appSettings.PlcConfig.GetConfigurationSignature();
+            var profileSignaturesAfter = _appSettings.CreateConnectionProfilesSnapshot()
+                .ToDictionary(profile => profile.Id, profile => profile.Config.GetConfigurationSignature(), StringComparer.OrdinalIgnoreCase);
+            var changedProfileIds = profileSignaturesBefore
+                .Where(pair => !profileSignaturesAfter.TryGetValue(pair.Key, out var signature)
+                               || !string.Equals(pair.Value, signature, StringComparison.Ordinal))
+                .Select(pair => pair.Key)
+                .Concat(profileSignaturesAfter.Keys.Except(profileSignaturesBefore.Keys, StringComparer.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            if (plcSignatureBefore != plcSignatureAfter)
+            if (changedProfileIds.Count > 0)
             {
-                // 连接参数变化：刷新运行时 Profile（驱动/编解码按新品牌重建），并断开当前连接，
-                // 下次采集循环 EnsureConnected 会用新配置重新连接（含品牌变更时 SharedPlcDriverRouter 替换驱动）。
-                // 服务延迟解析：避免在 AppSettings.Load 之前构造采集单例（见 Collector 启动顺序约束）。
+                // 连接档案变化：只刷新受影响的 keyed session；删除的档案由 manager 释放，
+                // 新增的档案只创建未连接的 session。服务延迟解析，避免在 AppSettings.Load
+                // 之前构造采集单例（见 Collector 启动顺序约束）。
                 try
                 {
-                    _services.GetService<IPlcRuntimeProfileProvider>()?.Refresh(_appSettings.PlcConfig);
-                    _services.GetService<IPlcConnectionManager>()?.Disconnect();
+                    var runtimeSessions = _services.GetService<IPlcRuntimeSessionManager>();
+                    if (runtimeSessions is not null)
+                    {
+                        runtimeSessions.RefreshFromSettings();
+                    }
+                    else if (plcSignatureBefore != plcSignatureAfter)
+                    {
+                        _services.GetService<IPlcRuntimeProfileProvider>()?.Refresh(_appSettings.PlcConfig);
+                        _services.GetService<IPlcConnectionManager>()?.Disconnect();
+                    }
                 }
                 catch (Exception ex) when (ex is not (OutOfMemoryException or AppDomainUnloadedException or ThreadAbortException))
                 {
@@ -335,15 +380,50 @@ public sealed class ConfigSyncHandler
                 }
             }
 
+            var languageCode = _appSettings.EffectiveLanguageCode;
+            ConnectionStatusMessages.ApplyLanguage(languageCode);
+            ValidationMessages.ApplyLanguage(languageCode);
+            RecipeValidationMessages.ApplyLanguage(languageCode);
+            await BroadcastLocalizationChangedAsync(languageCode);
+
             _logger.LogInformation("采集设置已从 Remote 端同步：Polling={Poll}ms Shifts={ShiftCount} Plc={Brand}/{Ip}:{Port}",
                 _appSettings.PollingIntervalMs, _appSettings.Shifts.Count,
                 _appSettings.PlcConfig.Brand, _appSettings.PlcConfig.IpAddress, _appSettings.PlcConfig.Port);
-            return Task.CompletedTask;
+            return;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "采集设置同步失败");
             throw;
+        }
+    }
+
+    private async Task BroadcastLocalizationChangedAsync(string languageCode)
+    {
+        var hubContext = _services.GetService<IHubContext<KanbanHub, IKanbanHubClient>>();
+        if (hubContext is null)
+            return;
+
+        try
+        {
+            var overrides = LocalizationOverrideStore.Snapshot()
+                .Select(entry => new LocalizationOverrideDto
+                {
+                    Resource = entry.Resource,
+                    Key = entry.Key,
+                    CultureName = entry.CultureName,
+                    Value = entry.Value,
+                })
+                .ToList();
+            await hubContext.Clients.All.OnLocalizationChanged(new LocalizationChangedDto
+            {
+                LanguageCode = languageCode,
+                Overrides = overrides,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "本地化变化广播失败，不影响设置保存");
         }
     }
 
@@ -357,8 +437,11 @@ public sealed class ConfigSyncHandler
     /// <summary>看板标题（Collector 侧 settings.json 的 AppTitle；屏端经 Hub 拉取，零配置）。</summary>
     public string GetTitle() => string.IsNullOrWhiteSpace(_appSettings.AppTitle) ? "生产看板" : _appSettings.AppTitle;
 
-    /// <summary>界面语言枚举值（Collector 侧 settings.json 的 Language；屏端经 Hub 拉取，零配置）。</summary>
-    public int GetLanguage() => (int)_appSettings.Language;
+    /// <summary>旧版界面语言枚举值；由有效文化代码映射，兼容旧版屏端。</summary>
+    public int GetLanguage() => (int)AppSettings.LegacyLanguage(_appSettings.EffectiveLanguageCode);
+
+    /// <summary>界面语言文化代码；新屏端通过此值支持 CSV 中动态增加的语言。</summary>
+    public string GetLanguageCode() => _appSettings.EffectiveLanguageCode;
 
     /// <summary>整体替换配方并落盘（对齐 RecipeStore.ReplaceAll + SaveAll 语义）。</summary>
     public Task SaveRecipesAsync(List<RecipeDto> recipes)
@@ -439,6 +522,249 @@ public sealed class ConfigSyncHandler
     }
 
     /// <summary>枚举值守卫（审查修复 2026-08-13）：拒绝未定义值，防止强转落库后下游 switch 崩溃。</summary>
+    private void ValidateDeviceAddresses(DeviceConfigDto device)
+    {
+        EnsureAddressType(device.OkCountAddress, PlcAddressType.DWord,
+            $"设备「{device.Name}」OK 计数地址", required: true);
+        EnsureAddressType(device.NgCountAddress, PlcAddressType.DWord,
+            $"设备「{device.Name}」NG 计数地址", required: true);
+        EnsureAddressType(device.StatusCountAddress, PlcAddressType.DWord,
+            $"设备「{device.Name}」状态地址", required: true);
+        EnsureAddressType(device.ProductionResetAddress, PlcAddressType.DWord,
+            $"设备「{device.Name}」产量复位地址", required: true);
+        EnsureAddressType(device.RecipeAddress, PlcAddressType.DWord,
+            $"设备「{device.Name}」配方地址");
+
+        var alarmNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var alarmIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var alarm in device.Alarms ?? [])
+        {
+            if (alarm is null) throw new ArgumentException($"设备「{device.Name}」报警列表包含 null 元素");
+            ValidateChildIdentity(device, alarm.Id, alarm.DeviceId, alarm.Name, "报警", alarmIds, alarmNames);
+            EnsureAddressType(alarm.PlcAddress, PlcAddressType.MBit,
+                $"设备「{device.Name}」报警「{alarm.Name}」地址");
+        }
+
+        var defectNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var defectIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var defect in device.Defects ?? [])
+        {
+            if (defect is null) throw new ArgumentException($"设备「{device.Name}」缺陷列表包含 null 元素");
+            ValidateChildIdentity(device, defect.Id, defect.DeviceId, defect.Name, "缺陷", defectIds, defectNames);
+            EnsureAddressType(defect.PlcAddress, PlcAddressType.DWord,
+                $"设备「{device.Name}」缺陷「{defect.Name}」地址");
+        }
+
+        var counterAlarmNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var counterAlarmIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var counterAlarm in device.CounterAlarms ?? [])
+        {
+            if (counterAlarm is null) throw new ArgumentException($"设备「{device.Name}」计数报警列表包含 null 元素");
+            ValidateChildIdentity(device, counterAlarm.Id, counterAlarm.DeviceId, counterAlarm.Name, "计数报警", counterAlarmIds, counterAlarmNames);
+            EnsureAddressType(counterAlarm.PlcAddress, PlcAddressType.DWord,
+                $"设备「{device.Name}」计数报警「{counterAlarm.Name}」地址");
+        }
+    }
+
+    private static void ValidateChildIdentity(
+        DeviceConfigDto device,
+        string id,
+        string deviceId,
+        string name,
+        string kind,
+        HashSet<string> ids,
+        HashSet<string> names)
+    {
+        if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException($"设备「{device.Name}」{kind} Id/Name 不能为空");
+        if (!string.IsNullOrWhiteSpace(deviceId)
+            && !string.Equals(deviceId, device.Id, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"设备「{device.Name}」{kind}「{name}」DeviceId 不匹配");
+        if (!ids.Add(id))
+            throw new ArgumentException($"设备「{device.Name}」{kind} Id 重复：{id}");
+        if (!names.Add(name.Trim()))
+            throw new ArgumentException($"设备「{device.Name}」{kind} 名称重复：{name}");
+    }
+
+    private void ValidateCrossDeviceAddresses(IReadOnlyList<DeviceConfigDto> devices)
+    {
+        var codec = GetAddressCodec();
+        var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var device in devices)
+        foreach (var address in EnumerateAddresses(device))
+        {
+            if (string.IsNullOrWhiteSpace(address)) continue;
+            var key = codec.CanonicalKey(address);
+            if (string.IsNullOrWhiteSpace(key)) continue;
+            if (owners.TryGetValue(key, out var owner)
+                && !string.Equals(owner, device.Id, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"设备「{device.Name}」地址「{key}」与设备 Id「{owner}」冲突");
+            owners[key] = device.Id;
+        }
+    }
+
+    private void ValidateSameDevicePrimaryAddresses(IReadOnlyList<DeviceConfigDto> devices)
+    {
+        var codec = GetAddressCodec();
+        foreach (var device in devices)
+        {
+            var addresses = new[]
+            {
+                device.OkCountAddress,
+                device.NgCountAddress,
+                device.StatusCountAddress,
+                device.ProductionResetAddress,
+                device.RecipeAddress,
+            };
+            var duplicate = addresses
+                .Where(address => !string.IsNullOrWhiteSpace(address))
+                .GroupBy(address => codec.CanonicalKey(address!), StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => !string.IsNullOrWhiteSpace(group.Key) && group.Count() > 1);
+            if (duplicate != null)
+                throw new ArgumentException($"设备「{device.Name}」主地址重复：{duplicate.Key}");
+        }
+    }
+
+    private static IEnumerable<string?> EnumerateAddresses(DeviceConfigDto device)
+    {
+        yield return device.OkCountAddress;
+        yield return device.NgCountAddress;
+        yield return device.StatusCountAddress;
+        yield return device.ProductionResetAddress;
+        yield return device.RecipeAddress;
+        foreach (var alarm in device.Alarms ?? []) yield return alarm?.PlcAddress;
+        foreach (var defect in device.Defects ?? []) yield return defect?.PlcAddress;
+        foreach (var counterAlarm in device.CounterAlarms ?? []) yield return counterAlarm?.PlcAddress;
+        foreach (var source in device.Sources ?? [])
+        {
+            if (source is null) continue;
+            yield return source.TriggerAddress;
+            foreach (var value in source.Values ?? []) yield return value?.PlcAddress;
+        }
+    }
+
+    private void ValidateDataSources(DeviceConfigDto device)
+    {
+        var codec = GetAddressCodec();
+        var sourceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var sourceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in device.Sources ?? [])
+        {
+            if (source is null)
+                throw new ArgumentException($"设备「{device.Name}」数据源列表包含 null 元素");
+            if (string.IsNullOrWhiteSpace(source.Id) || string.IsNullOrWhiteSpace(source.Name))
+                throw new ArgumentException($"设备「{device.Name}」数据源 Id/Name 不能为空");
+            if (!string.IsNullOrWhiteSpace(source.DeviceId)
+                && !string.Equals(source.DeviceId, device.Id, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"设备「{device.Name}」数据源「{source.Name}」DeviceId 不匹配");
+            if (!sourceIds.Add(source.Id))
+                throw new ArgumentException($"设备「{device.Name}」数据源 Id 重复：{source.Id}");
+            if (!sourceNames.Add(source.Name.Trim()))
+                throw new ArgumentException($"设备「{device.Name}」数据源名称重复：{source.Name}");
+            if (source.Values is null || source.Values.Count == 0)
+                throw new ArgumentException($"设备「{device.Name}」数据源「{source.Name}」至少需要一个值项");
+            if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
+            {
+                EnsureAddressType(source.TriggerAddress, PlcAddressType.DWord,
+                    $"设备「{device.Name}」数据源「{source.Name}」触发地址");
+                if (source.TriggerValue == source.AckValue)
+                    throw new ArgumentException($"设备「{device.Name}」数据源「{source.Name}」触发值与回执值不能相同");
+            }
+
+            var valueIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var valueNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var valueAddresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var value in source.Values)
+            {
+                if (value is null)
+                    throw new ArgumentException($"数据源「{source.Name}」值项列表包含 null 元素");
+                if (string.IsNullOrWhiteSpace(value.Id) || string.IsNullOrWhiteSpace(value.Name))
+                    throw new ArgumentException($"数据源「{source.Name}」值项 Id/Name 不能为空");
+                if (!valueIds.Add(value.Id))
+                    throw new ArgumentException($"数据源「{source.Name}」值项 Id 重复：{value.Id}");
+                if (!valueNames.Add(value.Name.Trim()))
+                    throw new ArgumentException($"数据源「{source.Name}」值项名称重复：{value.Name}");
+                if (!Enum.IsDefined(typeof(ContractDataSourceValueType), value.DataType))
+                    throw new ArgumentOutOfRangeException(nameof(value.DataType), value.DataType,
+                        $"数据源「{source.Name}」值项「{value.Name}」DataType 非法");
+                if (string.IsNullOrWhiteSpace(value.PlcAddress))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」未配置采集地址");
+                var expectedType = value.DataType == ContractDataSourceValueType.Bool
+                    ? PlcAddressType.MBit
+                    : PlcAddressType.DWord;
+                EnsureAddressType(value.PlcAddress, expectedType,
+                    $"数据源「{source.Name}」值项「{value.Name}」采集地址");
+                var valueAddressKey = codec.CanonicalKey(value.PlcAddress);
+                if (!valueAddresses.Add(valueAddressKey))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」采集地址重复：{valueAddressKey}");
+                if (!string.IsNullOrWhiteSpace(source.TriggerAddress)
+                    && string.Equals(codec.CanonicalKey(source.TriggerAddress), valueAddressKey, StringComparison.OrdinalIgnoreCase))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」采集地址不能与触发地址相同");
+                if (value.StringLength <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(value.StringLength), value.StringLength,
+                        $"数据源「{source.Name}」值项「{value.Name}」字符串长度必须大于 0");
+                if (value.StringLength > 1024)
+                    throw new ArgumentOutOfRangeException(nameof(value.StringLength), value.StringLength,
+                        $"数据源「{source.Name}」值项「{value.Name}」字符串长度不能超过 1024");
+                if (value.ConfirmSeconds < 0 || value.Hysteresis < 0)
+                    throw new ArgumentOutOfRangeException(nameof(value.ConfirmSeconds),
+                        $"数据源「{source.Name}」值项「{value.Name}」确认时间和滞回不能为负");
+                if (value.DataType == ContractDataSourceValueType.Float32
+                    && (float.IsNaN(value.FloatLimitMin) || float.IsNaN(value.FloatLimitMax)
+                        || float.IsInfinity(value.FloatLimitMin) || float.IsInfinity(value.FloatLimitMax)))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」浮点限值无效");
+                var hasLimits = HasConfiguredLimits(value);
+                var limitsOrdered = value.DataType == ContractDataSourceValueType.Float32
+                    ? value.FloatLimitMax > value.FloatLimitMin
+                    : value.LimitMax > value.LimitMin;
+                if (hasLimits && !limitsOrdered)
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」上限必须大于下限");
+                if (HasConfiguredLimits(value) && HasConfiguredExpectedValue(value))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」不能同时配置上下限和预期值");
+                var enumValues = value.EnumValues ?? [];
+                if (enumValues.Any(e => e is null || string.IsNullOrWhiteSpace(e.DisplayName)))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」枚举映射显示名不能为空");
+                if (enumValues.GroupBy(e => e.Value).Any(g => g.Count() > 1))
+                    throw new ArgumentException($"数据源「{source.Name}」值项「{value.Name}」枚举映射值重复");
+            }
+        }
+    }
+
+    private static bool HasConfiguredLimits(DataSourceValueConfigDto value)
+        => value.DataType == ContractDataSourceValueType.Float32
+            ? value.FloatLimitMin != 0 || value.FloatLimitMax != 0
+            : value.LimitMin != 0 || value.LimitMax != 0;
+
+    private static bool HasConfiguredExpectedValue(DataSourceValueConfigDto value)
+        => value.ExpectedValue.HasValue || value.FloatExpectedValue.HasValue
+            || value.BoolExpectedValue.HasValue || value.StringExpectedValue is not null;
+
+    private IPlcAddressCodec GetAddressCodec()
+        => _services.GetService<IPlcRuntimeProfileProvider>()?.Current?.AddressCodec
+            ?? new MitsubishiAddressCodec();
+
+    private void EnsureAddressType(string? address, PlcAddressType expectedType, string description, bool required = false)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            if (required) throw new ArgumentException($"{description}不能为空");
+            return;
+        }
+
+        var codec = GetAddressCodec();
+        PlcAddressParseResult parsed;
+        try
+        {
+            parsed = codec.Parse(address);
+        }
+        catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentException)
+        {
+            throw new ArgumentException($"{description}格式无效（需要{expectedType}）：{address}", ex);
+        }
+        if (!parsed.IsValid || parsed.Type != expectedType)
+            throw new ArgumentException($"{description}格式无效（需要{expectedType}）：{address}");
+    }
+
     private static void EnsureEnumDefined<TEnum>(TEnum value, string paramName) where TEnum : struct, Enum
     {
         if (!Enum.IsDefined(value))

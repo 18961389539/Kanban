@@ -21,12 +21,17 @@ public sealed class HistoryRetentionService : BackgroundService
 
     private readonly HistoryService _history;
     private readonly ILogger<HistoryRetentionService> _logger;
+    private readonly CollectorHealthState? _healthState;
     private readonly int _retentionDays;
 
-    public HistoryRetentionService(HistoryService history, ILogger<HistoryRetentionService> logger)
+    public HistoryRetentionService(
+        HistoryService history,
+        ILogger<HistoryRetentionService> logger,
+        CollectorHealthState? healthState = null)
     {
         _history = history;
         _logger = logger;
+        _healthState = healthState;
         _retentionDays = ResolveRetentionDays();
     }
 
@@ -45,6 +50,13 @@ public sealed class HistoryRetentionService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (_healthState is not null &&
+            !await _healthState.WaitUntilReadyAsync(stoppingToken))
+        {
+            _logger.LogWarning("Collector 初始化失败，跳过历史保留清理");
+            return;
+        }
+
         _logger.LogInformation("历史保留策略已启动：保留 {Days} 天，每 24 小时清理一次（环境变量 {Env} 可调整）",
             _retentionDays, EnvRetentionDays);
 

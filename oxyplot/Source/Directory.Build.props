@@ -16,6 +16,9 @@
     <Copyright>Copyright (c) 2014-2022 OxyPlot Contributors</Copyright>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/oxyplot/oxyplot.git</RepositoryUrl>
+    <!-- 此源码树嵌在无远程 Kanban 工作树中，避免本地构建生成空 SourceLink 映射。 -->
+    <EnableSourceLink>false</EnableSourceLink>
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 </Project>

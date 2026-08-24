@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -21,11 +22,15 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     private readonly ConfigSyncHandler _configSyncHandler;
     private readonly ShiftProgressProvider _shiftProgressProvider;
     private readonly ILogger<MetaPublisher> _logger;
-    private readonly DeviceRepository? _deviceRepository;
-    private readonly IPlcDataAcquisitionService? _plcService;
+    private readonly CollectorHealthState? _healthState;
+    private readonly IServiceProvider? _services;
+    private DeviceRepository? _deviceRepository;
+    private IPlcDataAcquisitionService? _plcService;
     private readonly object _gate = new();
     private readonly List<Channel<MetaStateDto>> _subscribers = new();
+    private readonly CancellationTokenSource _stopCts = new();
     private Timer? _timer;
+    private Task? _runTask;
     private MetaStateDto? _latest;
     // 脏标记：工单变更版本 + 上次组装的快照缓存（无变更时跳过全量拷贝/索引）
     private long _lastWorkOrderVersion = -1;
@@ -36,26 +41,63 @@ public sealed class MetaPublisher : IHostedService, IDisposable
         ShiftProgressProvider shiftProgressProvider,
         ILogger<MetaPublisher> logger,
         DeviceRepository? deviceRepository = null,
-        IPlcDataAcquisitionService? plcService = null)
+        IPlcDataAcquisitionService? plcService = null,
+        CollectorHealthState? healthState = null,
+        IServiceProvider? services = null)
     {
         _configSyncHandler = configSyncHandler;
         _shiftProgressProvider = shiftProgressProvider;
         _logger = logger;
         _deviceRepository = deviceRepository;
         _plcService = plcService;
+        _healthState = healthState;
+        _services = services;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("MetaPublisher 已启动（5s 周期）");
-        _timer = new Timer(_ => Publish(), null, TimeSpan.Zero, Interval);
+        _runTask = RunAsync(cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    private async Task RunAsync(CancellationToken startupCancellationToken)
     {
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+            startupCancellationToken,
+            _stopCts.Token);
+        try
+        {
+            if (_healthState is not null &&
+                !await _healthState.WaitUntilReadyAsync(linkedCts.Token))
+            {
+                _logger.LogWarning("Collector 初始化失败，跳过元数据发布");
+                return;
+            }
+
+            // 延迟到 CollectorWorker 完成 settings.Load 后再解析采集服务，避免默认 PLC 配置污染单例。
+            _deviceRepository ??= _services?.GetService<DeviceRepository>();
+            _plcService ??= _services?.GetService<IPlcDataAcquisitionService>();
+            _logger.LogInformation("MetaPublisher 已启动（5s 周期）");
+            _timer = new Timer(_ => Publish(), null, TimeSpan.Zero, Interval);
+            await Task.Delay(Timeout.InfiniteTimeSpan, linkedCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // 正常停止或启动取消。
+        }
+        finally
+        {
+            _timer?.Dispose();
+            _timer = null;
+        }
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _stopCts.Cancel();
         _timer?.Dispose();
-        return Task.CompletedTask;
+        if (_runTask is not null)
+            await _runTask.WaitAsync(cancellationToken);
     }
 
     /// <summary>组装并广播元数据包（Timer 回调；组装/扇出均不阻塞长于单次查询）。</summary>
@@ -176,5 +218,10 @@ public sealed class MetaPublisher : IHostedService, IDisposable
         return ValueTask.FromResult<ChannelReader<MetaStateDto>>(channel.Reader);
     }
 
-    public void Dispose() => _timer?.Dispose();
+    public void Dispose()
+    {
+        _stopCts.Cancel();
+        _timer?.Dispose();
+        _stopCts.Dispose();
+    }
 }

@@ -1,3 +1,6 @@
+using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Enums;
+
 namespace PlcSimulator;
 
 /// <summary>
@@ -46,6 +49,8 @@ public class DeviceSimulator
     // IO 回调（由 Program 提供，内部含锁和日志）
     private readonly Action<string, int> _writeInt;
     private readonly Action<string, bool> _writeBool;
+    private readonly Action<string, float> _writeFloat;
+    private readonly Action<string, string> _writeString;
     private readonly Func<string, int> _readInt;
     private readonly Func<string, bool> _readBool;
 
@@ -71,15 +76,12 @@ public class DeviceSimulator
     // 节拍漂移（累积，0 ~ CycleDriftMax）
     private double _cycleDrift;
 
-    // ── 数据源模拟（温湿度 + 触发命令字握手）──
-    /// <summary>数据源寄存器偏移（按设备索引错开共享 PLC 地址）。</summary>
+    // ── 数据源模拟 ──
     private readonly int _registerOffset;
     private int _temperature = 245;              // 温度 ×10（245 = 24.5℃）
     private bool _tempOverLimit;                 // 是否处于模拟越限窗口
     private DateTime _nextTempEventTime = DateTime.MinValue;
-    private bool _triggerAwaitingAck;            // 触发命令字置 1，等待 MainAPP 回执
-    private DateTime _triggerSetTime;
-    private DateTime _nextTriggerTime = DateTime.MinValue;
+    private readonly Dictionary<string, SourceTriggerState> _sourceTriggerStates = new(StringComparer.OrdinalIgnoreCase);
 
     // 数据源模拟地址约定（三菱 D 地址，MelsecMcServer 任意 D 字可读写）：
     // D(502+off)=温度(×10, Int32)、D(504+off)=湿度(×10, Int32)、D(510+off)=温度采集触发命令字
@@ -167,10 +169,18 @@ public class DeviceSimulator
     public double TotalRunHours => _totalRunHours;
     public bool EquipmentAgingActive => _scenario.EnableEquipmentAging && _totalRunHours >= _scenario.AgingThresholdHours;
 
+    private sealed class SourceTriggerState
+    {
+        public bool AwaitingAck { get; set; }
+        public DateTime TriggerSetTime { get; set; }
+        public DateTime NextTriggerTime { get; set; } = DateTime.MinValue;
+    }
+
     public DeviceSimulator(DeviceConfig config, ScenarioConfig scenario, double speedMultiplier,
         Action<string, int> writeInt, Action<string, bool> writeBool,
         Func<string, int> readInt, Func<string, bool> readBool, Random? rng = null,
-        int registerOffset = 0)
+        int registerOffset = 0, Action<string, float>? writeFloat = null,
+        Action<string, string>? writeString = null)
     {
         _config = config;
         _scenario = scenario;
@@ -184,6 +194,8 @@ public class DeviceSimulator
         _baseCycleSeconds = config.RecipeValue > 0 ? 3600.0 / config.RecipeValue : 60.0;
         _writeInt = writeInt;
         _writeBool = writeBool;
+        _writeFloat = writeFloat ?? NoopFloatWrite;
+        _writeString = writeString ?? NoopStringWrite;
         _readInt = readInt;
         _readBool = readBool;
     }
@@ -219,7 +231,7 @@ public class DeviceSimulator
         _shortageAlarmAddress = null;
 
         // 恢复停机次数（从首个停机类 CounterAlarm 读取，多个停机类时仅用第一个，避免互相覆盖）
-        var stopCounterAlarm = _config.CounterAlarms.FirstOrDefault(IsStopCounterAlarm);
+        var stopCounterAlarm = _config.CounterAlarms.FirstOrDefault(ca => ca.Enabled && IsStopCounterAlarm(ca));
         if (stopCounterAlarm != null)
         {
             _stopCount = TryReadInt(stopCounterAlarm.PlcAddress);
@@ -373,7 +385,8 @@ public class DeviceSimulator
         foreach (var d in _config.Defects)
             WriteIfNotEmpty(d.PlcAddress, 0);
         foreach (var ca in _config.CounterAlarms)
-            WriteIfNotEmpty(ca.PlcAddress, 0);
+            if (ca.Enabled)
+                WriteIfNotEmpty(ca.PlcAddress, 0);
 
         // 状态字最后写（与 RestoreFromPlc 一致，确保其他地址已就位后再切状态）
         WriteStatus();
@@ -429,6 +442,7 @@ public class DeviceSimulator
             // 停机次数 +1（匹配停机类计数报警，累积不清零）
             foreach (var ca in _config.CounterAlarms)
             {
+                if (!ca.Enabled) continue;
                 if (IsStopCounterAlarm(ca))
                 {
                     _stopCount++;
@@ -499,7 +513,7 @@ public class DeviceSimulator
             // 连续不良类计数清零，停机次数不清零
             foreach (var ca in _config.CounterAlarms)
             {
-                if (!IsStopCounterAlarm(ca))
+                if (ca.Enabled && !IsStopCounterAlarm(ca))
                     WriteIfNotEmpty(ca.PlcAddress, 0);
             }
             // 清零后重置阈值触发标记，允许再次触发
@@ -557,7 +571,7 @@ public class DeviceSimulator
                 }
                 else
                 {
-                    var counterAlarm = _config.CounterAlarms.FirstOrDefault(ca => ca.PlcAddress == _commJitterAddress);
+                    var counterAlarm = _config.CounterAlarms.FirstOrDefault(ca => ca.Enabled && ca.PlcAddress == _commJitterAddress);
                     if (counterAlarm != null)
                     {
                         int correct = IsStopCounterAlarm(counterAlarm) ? _stopCount : _consecutiveNg;
@@ -793,6 +807,7 @@ public class DeviceSimulator
         // 缺料属于异常停机，递增停机次数计数报警（与手动 Pause 一致）
         foreach (var ca in _config.CounterAlarms)
         {
+            if (!ca.Enabled) continue;
             if (IsStopCounterAlarm(ca))
             {
                 _stopCount++;
@@ -1068,6 +1083,7 @@ public class DeviceSimulator
     {
         foreach (var ca in _config.CounterAlarms)
         {
+            if (!ca.Enabled) continue;
             if (IsStopCounterAlarm(ca)) continue;
             if (ca.MaxValue <= 0) continue;
 
@@ -1088,6 +1104,7 @@ public class DeviceSimulator
 
         foreach (var ca in _config.CounterAlarms)
         {
+            if (!ca.Enabled) continue;
             if (!IsStopCounterAlarm(ca)) continue;
             if (ca.MaxValue <= 0) continue;
 
@@ -1351,7 +1368,7 @@ public class DeviceSimulator
             if (!string.IsNullOrEmpty(d.PlcAddress) && !criticalAddresses.Contains(d.PlcAddress))
                 candidates.Add(d.PlcAddress);
         foreach (var ca in _config.CounterAlarms)
-            if (!string.IsNullOrEmpty(ca.PlcAddress) && !criticalAddresses.Contains(ca.PlcAddress))
+            if (ca.Enabled && !string.IsNullOrEmpty(ca.PlcAddress) && !criticalAddresses.Contains(ca.PlcAddress))
                 candidates.Add(ca.PlcAddress);
         if (candidates.Count == 0) return;
 
@@ -1381,7 +1398,53 @@ public class DeviceSimulator
     /// </summary>
     private void SimulateDataSources(DateTime now)
     {
-        // 温度：常态 240~246 漂移；随机进入 6~10s 越限窗口（值 315~340，令温度越限告警可被观察）
+        if (_config.Sources is null || _config.Sources.Count == 0)
+        {
+            SimulateLegacyDataSources(now);
+            return;
+        }
+
+        UpdateTemperature(now);
+        for (var index = 0; index < _config.Sources.Count; index++)
+        {
+            var source = _config.Sources[index];
+            if (!source.Enabled) continue;
+
+            foreach (var value in source.Values ?? [])
+            {
+                if (!value.Enabled || string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
+                WriteSourceValue(source, value, now);
+            }
+
+            if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
+            {
+                var key = string.IsNullOrWhiteSpace(source.Id) ? $"index:{index}" : source.Id;
+                if (!_sourceTriggerStates.TryGetValue(key, out var state))
+                {
+                    state = new SourceTriggerState();
+                    _sourceTriggerStates[key] = state;
+                }
+                SimulateTrigger(source.Name, source.TriggerAddress, source.TriggerValue, source.AckValue, state, now);
+            }
+        }
+    }
+
+    private void SimulateLegacyDataSources(DateTime now)
+    {
+        UpdateTemperature(now);
+        WriteIfNotEmpty($"D{TemperatureAddress}", _temperature);
+        WriteIfNotEmpty($"D{HumidityAddress}", 540 + _rng.Next(-10, 11));
+
+        if (!_sourceTriggerStates.TryGetValue("legacy", out var state))
+        {
+            state = new SourceTriggerState();
+            _sourceTriggerStates["legacy"] = state;
+        }
+        SimulateTrigger(Name, $"D{TriggerAddress}", 1, TriggerAckValue, state, now);
+    }
+
+    private void UpdateTemperature(DateTime now)
+    {
         if (_tempOverLimit)
         {
             if (now >= _nextTempEventTime)
@@ -1398,28 +1461,97 @@ public class DeviceSimulator
         _temperature = _tempOverLimit
             ? _rng.Next(315, 341)
             : 240 + _rng.Next(-2, 7);
-        WriteIfNotEmpty($"D{TemperatureAddress}", _temperature);
-        WriteIfNotEmpty($"D{HumidityAddress}", 540 + _rng.Next(-10, 11));
+    }
 
-        // 触发命令字握手：每 25~45s 置 1，等 MainAPP 回执 2 后复位；15s 超时保护（MainAPP 未接采集时强制复位）
-        if (_triggerAwaitingAck)
+    private void WriteSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value, DateTime now)
+    {
+        var dataType = Enum.IsDefined(typeof(DataSourceValueType), value.DataType)
+            ? (DataSourceValueType)value.DataType
+            : DataSourceValueType.Int32;
+
+        switch (dataType)
         {
-            var current = TryReadInt($"D{TriggerAddress}");
-            if (current == TriggerAckValue || now >= _triggerSetTime.AddSeconds(15))
+            case DataSourceValueType.Float32:
+                _writeFloat(value.PlcAddress, GetFloatSourceValue(source, value));
+                break;
+            case DataSourceValueType.Bool:
+                _writeBool(value.PlcAddress, GetBoolSourceValue(value));
+                break;
+            case DataSourceValueType.String:
+                _writeString(value.PlcAddress, GetStringSourceValue(source, value));
+                break;
+            default:
+                WriteIfNotEmpty(value.PlcAddress, GetIntSourceValue(source, value, now));
+                break;
+        }
+    }
+
+    private int GetIntSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value, DateTime now)
+    {
+        if (value.ExpectedValue.HasValue) return value.ExpectedValue.Value;
+        if (IsTemperature(source, value)) return _temperature;
+        if (IsHumidity(source, value)) return 540 + _rng.Next(-10, 11);
+        if (value.LimitMax > value.LimitMin) return value.LimitMin + (value.LimitMax - value.LimitMin) / 2;
+        return 100 + (int)((now - DateTime.UnixEpoch).TotalSeconds % 20);
+    }
+
+    private float GetFloatSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value)
+    {
+        if (value.FloatExpectedValue.HasValue) return value.FloatExpectedValue.Value;
+        if (IsTemperature(source, value)) return _temperature / 10f;
+        if (IsHumidity(source, value)) return 54f;
+        if (value.FloatLimitMax > value.FloatLimitMin) return value.FloatLimitMin + (value.FloatLimitMax - value.FloatLimitMin) / 2f;
+        return 1f;
+    }
+
+    private static bool GetBoolSourceValue(DataSourceValueConfigDto value) => value.BoolExpectedValue ?? true;
+
+    private string GetStringSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value)
+    {
+        var text = value.StringExpectedValue ?? $"{source.Id}:{value.Id}";
+        var length = Math.Clamp(value.StringLength, 1, ushort.MaxValue);
+        return text.Length <= length ? text : text[..length];
+    }
+
+    private static bool IsTemperature(DataSourceConfigDto source, DataSourceValueConfigDto value) =>
+        source.Name.Contains("温度", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("温度", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("℃", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsHumidity(DataSourceConfigDto source, DataSourceValueConfigDto value) =>
+        source.Name.Contains("湿度", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("湿度", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains('%');
+
+    private void SimulateTrigger(string sourceName, string address, int triggerValue, int ackValue,
+        SourceTriggerState state, DateTime now)
+    {
+        if (state.AwaitingAck)
+        {
+            var current = TryReadInt(address);
+            if (current == ackValue || now >= state.TriggerSetTime.AddSeconds(15))
             {
-                WriteIfNotEmpty($"D{TriggerAddress}", 0);
-                _triggerAwaitingAck = false;
-                _nextTriggerTime = now.AddSeconds(_rng.Next(25, 45));
-                Log?.Invoke($"[{Name}] 触发命令字复位：D{TriggerAddress}=0（回执={current}）");
+                WriteIfNotEmpty(address, 0);
+                state.AwaitingAck = false;
+                state.NextTriggerTime = now.AddSeconds(_rng.Next(25, 45));
+                Log?.Invoke($"[{Name}] 数据源「{sourceName}」触发复位：{address}=0（回执={current}）");
             }
         }
-        else if (now >= _nextTriggerTime)
+        else if (now >= state.NextTriggerTime)
         {
-            WriteIfNotEmpty($"D{TriggerAddress}", 1);
-            _triggerAwaitingAck = true;
-            _triggerSetTime = now;
-            Log?.Invoke($"[{Name}] 触发命令字置位：D{TriggerAddress}=1，等待采集回执");
+            WriteIfNotEmpty(address, triggerValue);
+            state.AwaitingAck = true;
+            state.TriggerSetTime = now;
+            Log?.Invoke($"[{Name}] 数据源「{sourceName}」触发置位：{address}={triggerValue}，等待采集回执");
         }
+    }
+
+    private static void NoopFloatWrite(string address, float value)
+    {
+    }
+
+    private static void NoopStringWrite(string address, string value)
+    {
     }
 
     /// <summary>将连续不良值写入所有非停机类计数报警地址。</summary>
@@ -1427,7 +1559,7 @@ public class DeviceSimulator
     {
         foreach (var ca in _config.CounterAlarms)
         {
-            if (!IsStopCounterAlarm(ca))
+            if (ca.Enabled && !IsStopCounterAlarm(ca))
                 WriteIfNotEmpty(ca.PlcAddress, value);
         }
     }

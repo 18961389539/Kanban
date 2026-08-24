@@ -26,10 +26,18 @@ public sealed class PlcRuntimeProfileProvider : IPlcRuntimeProfileProvider
         AppSettings settings,
         IPlcAddressCodecResolver codecResolver,
         IPlcBrandRegistry? brandRegistry = null)
+        : this(settings.PlcConfig, codecResolver, brandRegistry)
+    {
+    }
+
+    public PlcRuntimeProfileProvider(
+        PlcConfig config,
+        IPlcAddressCodecResolver codecResolver,
+        IPlcBrandRegistry? brandRegistry = null)
     {
         _ = codecResolver;
         _brandRegistry = brandRegistry ?? PlcBrandDescriptors.CreateDefault();
-        _current = Build(settings.PlcConfig, ++_version);
+        _current = Build(config, ++_version);
     }
 
     public PlcRuntimeProfile Current

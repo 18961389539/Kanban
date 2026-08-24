@@ -25,7 +25,8 @@ public sealed class RemoteHistoryQueryService :
     IHistoryService,
     IHistoryQueryExecutor,
     IWorkOrderProductionBatchQuery,
-    IDefectHistoryReader
+    IDefectHistoryReader,
+    IAsyncProductionHistoryReader
 {
     private readonly HistoryService _local;
     private readonly DefectHistoryStore _localDefectStore;
@@ -62,15 +63,75 @@ public sealed class RemoteHistoryQueryService :
             ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, from, to, deviceId, shiftName)
             : _local.QueryProductionLogs(from, to, deviceId, shiftName);
 
+    public Task<List<ProductionLog>> QueryProductionLogsAsync(
+        DateTime from,
+        DateTime to,
+        string? deviceId = null,
+        string? shiftName = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsRemote)
+            return Task.Run(() => _local.QueryProductionLogs(from, to, deviceId, shiftName), cancellationToken);
+
+        return QueryRemoteProductionLogsAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = from == DateTime.MinValue ? null : from,
+            To = to == DateTime.MaxValue ? null : to,
+            DeviceId = deviceId,
+            ShiftName = shiftName,
+            Page = 1,
+            PageSize = HistoryQueryLimits.MaxPageSize,
+        }, cancellationToken);
+    }
+
     public List<ProductionLog> QueryProductionLogsByWorkOrder(int workOrderId)
         => IsRemote
             ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, DateTime.MinValue, DateTime.MaxValue, null, null, workOrderId: workOrderId)
             : _local.QueryProductionLogsByWorkOrder(workOrderId);
 
+    public Task<List<ProductionLog>> QueryProductionLogsByWorkOrderAsync(
+        int workOrderId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsRemote)
+            return Task.Run(() => _local.QueryProductionLogsByWorkOrder(workOrderId), cancellationToken);
+
+        return QueryRemoteProductionLogsAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            WorkOrderId = workOrderId,
+            Page = 1,
+            PageSize = HistoryQueryLimits.MaxPageSize,
+        }, cancellationToken);
+    }
+
     public ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName)
         => IsRemote
             ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, DateTime.MinValue, before, deviceId, shiftName, latestFirst: true).FirstOrDefault()
             : _local.GetLatestProductionBefore(deviceId, before, shiftName);
+
+    public async Task<ProductionLog?> GetLatestProductionBeforeAsync(
+        string deviceId,
+        DateTime before,
+        string shiftName,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsRemote)
+            return await Task.Run(() => _local.GetLatestProductionBefore(deviceId, before, shiftName), cancellationToken);
+
+        var logs = await QueryRemoteProductionLogsAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            To = before,
+            DeviceId = deviceId,
+            ShiftName = shiftName,
+            LatestFirst = true,
+            Page = 1,
+            PageSize = 1,
+        }, cancellationToken).ConfigureAwait(false);
+        return logs.FirstOrDefault();
+    }
 
     public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
         => IsRemote
@@ -410,6 +471,52 @@ public sealed class RemoteHistoryQueryService :
             PageSize = HistoryQueryLimits.MaxPageSize,
         };
         return InvokeAndMapAll<T>(request);
+    }
+
+    private async Task<List<ProductionLog>> QueryRemoteProductionLogsAsync(
+        HistoryQueryRequest firstRequest,
+        CancellationToken cancellationToken)
+    {
+        var pages = new List<HistoryQueryResponse>(8);
+        var current = firstRequest;
+        var totalReceived = 0;
+        using var overallCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        overallCts.CancelAfter(TimeSpan.FromSeconds(60));
+
+        try
+        {
+            for (var page = 1; page <= HistoryQueryLimits.MaxFetchAllPages; page++)
+            {
+                overallCts.Token.ThrowIfCancellationRequested();
+                using var pageCts = CancellationTokenSource.CreateLinkedTokenSource(overallCts.Token);
+                pageCts.CancelAfter(RemoteCallTimeout);
+                var response = await _client.QueryHistoryAsync(current, pageCts.Token).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(response.Error))
+                {
+                    _logger.LogError("Remote 异步生产历史查询失败 ErrorCode={ErrorCode} 详情={Detail}",
+                        response.ErrorCode, response.Error);
+                    throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
+                }
+
+                pages.Add(response);
+                totalReceived += response.ProductionLogs.Count;
+                if (response.Total <= totalReceived)
+                    return pages.SelectMany(MapDtos<ProductionLog>).ToList();
+
+                current = current with { Page = page + 1 };
+            }
+
+            throw new InvalidOperationException(MainAPP.Resources.Strings.F325);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Remote 异步生产历史查询超时 Device={DeviceId}", firstRequest.DeviceId);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
+        }
     }
 
     /// <summary>

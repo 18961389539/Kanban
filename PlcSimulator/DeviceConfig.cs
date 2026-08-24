@@ -1,3 +1,5 @@
+using Kanban.Contracts.Dtos;
+
 namespace PlcSimulator;
 
 /// <summary>
@@ -20,6 +22,7 @@ public class DeviceConfig
     public List<AlarmConfig> Alarms { get; set; } = new();
     public List<DefectConfig> Defects { get; set; } = new();
     public List<CounterAlarmConfig> CounterAlarms { get; set; } = new();
+    public List<DataSourceConfigDto> Sources { get; set; } = new();
 }
 
 public class AlarmConfig
@@ -40,6 +43,7 @@ public class CounterAlarmConfig
     public string Name { get; set; } = "";
     public string PlcAddress { get; set; } = "";
     public int MaxValue { get; set; }
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// 计数报警类别。未指定时按名称推断（含"停机"→Stop，否则→ConsecutiveNg），

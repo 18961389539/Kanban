@@ -61,11 +61,13 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
 
     private bool CanExecutePlcWrite() => SelectedDevice != null
         && !_host.IsLoading
-        && _host.IsPlcConnected;
+        && _host.IsPlcConnected
+        && _host.CanManageDevices;
 
     [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
     private async Task WriteRecipeAsync()
     {
+        if (!CanExecutePlcWrite()) return;
         if (SelectedDevice == null) return;
 
         _host.IsLoading = true;
@@ -105,6 +107,7 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
     private async Task ResetProductionAsync()
     {
+        if (!CanExecutePlcWrite()) return;
         if (SelectedDevice == null) return;
 
         _host.IsLoading = true;
@@ -143,6 +146,7 @@ public partial class DevicePlcCommandViewModel : DeviceChildManagerViewModel
     [RelayCommand(CanExecute = nameof(CanExecutePlcWrite))]
     private async Task ReadPlcValueAsync(string? address)
     {
+        if (!CanExecutePlcWrite()) return;
         _host.IsLoading = true;
         ReportPlcOperationStarted();
         try

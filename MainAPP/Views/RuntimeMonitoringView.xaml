@@ -212,6 +212,8 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K428}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
@@ -223,6 +225,10 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PollingIntervalMs, StringFormat={}{0} ms}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K432}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, Converter={StaticResource LocFormatConverter}, ConverterParameter=F283}" />
+                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P95Cycle}" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP95Milliseconds, StringFormat={}{0} ms}" />
+                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P99Cycle}" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP99Milliseconds, StringFormat={}{0} ms}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K433}" />
@@ -321,6 +327,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K451}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PendingHistoryCount}" />
@@ -332,6 +345,18 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushFailureCount}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K455}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryStorageText}" />
+                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_DataSourcePending}" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PendingDataSourceCount}" />
+                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_DataSourceRecovery}" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DataSourceRecoveryFileText}" />
+                        <TextBlock Grid.Row="7" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_QueuePeakOverflow}" />
+                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryQueueText}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="8" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_FlushLatency}" />
+                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushLatencyText}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_DataSourceDatabase}" />
+                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DataSourceStorageText}" />
+                        <TextBlock Grid.Row="10" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_TotalDatabase}" />
+                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalStorageText}" />
                     </Grid>
                 </StackPanel>
             </Border>

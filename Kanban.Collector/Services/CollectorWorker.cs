@@ -1,5 +1,6 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -106,19 +107,29 @@ public sealed class CollectorWorker : BackgroundService
 
         // 1.0 刷新 PLC 运行时配置档案：宿主启动时 MetaPublisher 等单例（AddHostedService/AddSingleton）
         // 可能在 settings.Load() 之前构造 PlcDataAcquisitionService→SharedPlcDriverRouter→PlcRuntimeProfileProvider，
-        // 此时 AppSettings 仍是默认值（192.168.1.2）→ 单例档案被永久污染，采集永远连不上真实 PLC。
+        // 此时 AppSettings 仍是默认值（127.0.0.1）→ 单例档案被永久污染，采集永远连不上真实 PLC。
         // Load 完成后显式刷新，保证 EnsureConnected 使用实际配置（回归自 04e8442：MetaPublisher 注入 plcService）。
-        _services.GetRequiredService<IPlcRuntimeProfileProvider>().Refresh(settings.PlcConfig);
+        var runtimeSessions = _services.GetService<IPlcRuntimeSessionManager>();
+        if (runtimeSessions is not null)
+            runtimeSessions.RefreshFromSettings();
+        else
+            _services.GetRequiredService<IPlcRuntimeProfileProvider>().Refresh(settings.PlcConfig);
 
         // 1.1 应用界面语言（Collector 进程独立应用，与 MainAPP 保持一致）
         // 读取 settings.json 的 Language 字段，覆盖 Kanban.Collector.Core 共享的连接状态文案与校验消息。
         // 确保 Collector 进程在 en/ja 模式下也使用正确语言（不依赖 MainAPP 推送）。
-        var langCode = settings.Language switch
+        var langCode = settings.EffectiveLanguageCode;
+        var localizationOverride = LocalizationOverrideLoader.Load(
+            settings.GetFilePath(LocalizationOverrideLoader.FileName));
+        if (!localizationOverride.IsValid)
         {
-            Kanban.Collector.Core.Services.AppLanguage.En => "en-US",
-            Kanban.Collector.Core.Services.AppLanguage.Ja => "ja-JP",
-            _ => "zh-CN",
-        };
+            _logger.LogWarning("本地化覆盖文件无效，已回退内置资源: {Errors}",
+                string.Join("; ", localizationOverride.Errors));
+        }
+        else if (localizationOverride.AppliedCount > 0)
+        {
+            _logger.LogInformation("已加载本地化覆盖: {Count} 项", localizationOverride.AppliedCount);
+        }
         Kanban.Collector.Core.Localization.ConnectionStatusMessages.ApplyLanguage(langCode);
         Kanban.Collector.Core.Localization.ValidationMessages.ApplyLanguage(langCode);
         Kanban.Collector.Core.Localization.RecipeValidationMessages.ApplyLanguage(langCode);

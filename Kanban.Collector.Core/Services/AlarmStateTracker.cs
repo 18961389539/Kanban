@@ -226,6 +226,28 @@ internal sealed class AlarmStateTracker
         return allSuccessful;
     }
 
+    internal bool ScanAlarms(
+        IEnumerable<Device> devices,
+        Func<Device, IDeviceAdapter> adapterResolver,
+        IAlarmHistoryService historyService,
+        string shiftName,
+        ILogger logger,
+        IAlarmNotificationChannel? notificationChannel = null,
+        int maxBatchReadLength = 64,
+        int maxGapSlots = 1,
+        Action<AlarmEventDto>? onAlarmEdge = null)
+    {
+        ArgumentNullException.ThrowIfNull(adapterResolver);
+        var allSuccessful = true;
+        foreach (var group in devices.ToList().GroupBy(adapterResolver))
+        {
+            if (!ScanAlarms(group, group.Key, historyService, shiftName, logger,
+                    notificationChannel, maxBatchReadLength, maxGapSlots, onAlarmEdge))
+                allSuccessful = false;
+        }
+        return allSuccessful;
+    }
+
     private Dictionary<string, bool> PrepareBatchValues(
         IReadOnlyList<Device> devices,
         IDeviceAdapter adapter,

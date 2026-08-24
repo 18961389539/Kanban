@@ -72,6 +72,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isLoading;
 
+    /// <summary>历史查询页统一的页面内操作反馈。</summary>
+    public OperationFeedback Feedback { get; } = new();
+
     /// <summary>
     /// 导出进行中标志：绑定到导出按钮 IsEnabled=false + 显示 LoadingCircle，避免大表导出 UI 假死与重复点击。
     /// </summary>
@@ -197,7 +200,28 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private string? _selectedAlarmName;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLastHourPreset))]
+    [NotifyPropertyChangedFor(nameof(IsLast4HoursPreset))]
+    [NotifyPropertyChangedFor(nameof(IsLast24HoursPreset))]
     private int _quickTimeIndex = -1;
+
+    public bool IsLastHourPreset
+    {
+        get => QuickTimeIndex == 9;
+        set { if (value) QuickTimeIndex = 9; }
+    }
+
+    public bool IsLast4HoursPreset
+    {
+        get => QuickTimeIndex == 10;
+        set { if (value) QuickTimeIndex = 10; }
+    }
+
+    public bool IsLast24HoursPreset
+    {
+        get => QuickTimeIndex == 11;
+        set { if (value) QuickTimeIndex = 11; }
+    }
 
     /// <summary>
     /// 标志位：防止 OnQuickTimeIndexChanged 设置 FromDate/ToDate 时反向触发
@@ -239,6 +263,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             6 => GetShiftRange(now, -1),
             7 => GetWeekRange(now),
             8 => GetMonthRange(now),
+            9 => (now.AddHours(-1), now),
+            10 => (now.AddHours(-4), now),
+            11 => (now.AddHours(-24), now),
             _ => (FromDate, ToDate)
         };
     }
@@ -606,7 +633,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         StatusQuery.Reset();
         AlarmQuery.Reset();
         OeeQuery.Reset();
+        Feedback.Success(Strings.Ux_ResetQuery);
     }
+
+    [RelayCommand]
+    private void ApplyQuickTimePreset(int index) => QuickTimeIndex = index;
 
     [RelayCommand]
     private void QueryCurrentTab()
@@ -623,6 +654,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void QueryCurrentTabSync()
     {
         QueryErrorMessage = string.Empty;
+        Feedback.Working(Strings.Ux_Querying);
         if (CurrentPage < 1) CurrentPage = 1;
         switch (SelectedTabIndex)
         {
@@ -675,6 +707,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             PageSize);
 
         IsLoading = true;
+        Feedback.Working(Strings.Ux_Querying);
         QueryErrorMessage = string.Empty;
         try
         {
@@ -686,6 +719,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         {
             if (requestVersion != _queryVersion) return;
             QueryErrorMessage = string.Format(Strings.F077, ex.Message);
+            Feedback.Error(QueryErrorMessage);
             _dialog.NotifyError(QueryErrorMessage);
         }
         finally
@@ -740,6 +774,10 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         TotalCount = result.Error == null ? result.TotalCount : 0;
         TotalPages = result.Error == null ? result.TotalPages : 0;
         QueryErrorMessage = result.Error ?? string.Empty;
+        if (result.Error == null)
+            Feedback.Success(string.Format(Strings.Ux_QueryFinished, result.TotalCount));
+        else
+            Feedback.Error(result.Error);
 
         switch (result.ViewModel)
         {
@@ -820,6 +858,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void ExecuteQuery(Action queryAction)
     {
         IsLoading = true;
+        Feedback.Working(Strings.Ux_Querying);
         QueryErrorMessage = string.Empty;
         try
         {
@@ -828,6 +867,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             QueryErrorMessage = string.Format(Strings.F077, ex.Message);
+            Feedback.Error(QueryErrorMessage);
             _dialog.NotifyError(string.Format(Strings.F154, ex.Message));
         }
         finally

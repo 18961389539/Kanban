@@ -1,3 +1,5 @@
+using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Enums;
 using Xunit;
 
 namespace PlcSimulator.Tests.Unit;
@@ -27,11 +29,17 @@ public class DeviceSimulatorTests
             RecipeValue = 50,
             Alarms = { new AlarmConfig { Id = "a1", Name = "高温报警", PlcAddress = "M100" } },
             Defects = { new DefectConfig { Name = "毛边", PlcAddress = "D110" } },
-            CounterAlarms = { new CounterAlarmConfig { Name = "停机次数", PlcAddress = "D112", MaxValue = 5, Kind = CounterAlarmKind.Stop } },
+            CounterAlarms =
+            {
+                new CounterAlarmConfig { Name = "停机次数", PlcAddress = "D112", MaxValue = 5, Kind = CounterAlarmKind.Stop },
+                new CounterAlarmConfig { Name = "禁用停机次数", PlcAddress = "D113", MaxValue = 1, Enabled = false, Kind = CounterAlarmKind.Stop },
+            },
         };
 
         public Dictionary<string, int> Ints { get; } = new(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, bool> Bools { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, float> Floats { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> Strings { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     private static DeviceSimulator Create(Harness h, ScenarioConfig? scenario = null, Random? rng = null)
@@ -43,7 +51,9 @@ public class DeviceSimulatorTests
             (a, v) => h.Bools[a] = v,
             a => h.Ints.TryGetValue(a, out var v) ? v : 0,
             a => h.Bools.TryGetValue(a, out var v) && v,
-            rng);
+            rng,
+            writeFloat: (a, v) => h.Floats[a] = v,
+            writeString: (a, v) => h.Strings[a] = v);
 
     /// <summary>关闭所有随机特性，保证状态转换测试的确定性。</summary>
     private static ScenarioConfig QuietScenario() => new()
@@ -207,5 +217,121 @@ public class DeviceSimulatorTests
         Assert.Equal(DeviceSimulator.SimStatus.Running, sim.Status);
         // 报警恢复后应清除触发的报警位
         Assert.True(!h.Bools.TryGetValue("M100", out var on) || !on);
+    }
+
+    [Fact]
+    public void ConfiguredSources_WriteTypedValuesToConfiguredAddresses()
+    {
+        var h = new Harness();
+        h.Config.Sources.Add(new DataSourceConfigDto
+        {
+            Id = "source-typed",
+            DeviceId = h.Config.Id,
+            Name = "类型源",
+            Values = new List<DataSourceValueConfigDto>
+            {
+                new() { Id = "int", Name = "整数", DataType = DataSourceValueType.Int32, PlcAddress = "D500", ExpectedValue = 7 },
+                new() { Id = "float", Name = "浮点", DataType = DataSourceValueType.Float32, PlcAddress = "D520", FloatExpectedValue = 1.25f },
+                new() { Id = "bool", Name = "布尔", DataType = DataSourceValueType.Bool, PlcAddress = "M10", BoolExpectedValue = false },
+                new() { Id = "string", Name = "文本", DataType = DataSourceValueType.String, PlcAddress = "D540", StringExpectedValue = "READY", StringLength = 16 },
+            },
+        });
+        var sim = Create(h);
+
+        sim.Tick(T0);
+
+        Assert.Equal(7, h.Ints["D500"]);
+        Assert.Equal(1.25f, h.Floats["D520"]);
+        Assert.False(h.Bools["M10"]);
+        Assert.Equal("READY", h.Strings["D540"]);
+    }
+
+    [Fact]
+    public void ConfiguredSource_TriggerHandshake_IsIndependentAndUsesConfiguredValues()
+    {
+        var h = new Harness();
+        h.Config.Sources.Add(new DataSourceConfigDto
+        {
+            Id = "source-trigger",
+            DeviceId = h.Config.Id,
+            Name = "触发源",
+            TriggerAddress = "D510",
+            TriggerValue = 3,
+            AckValue = 4,
+            Values = new List<DataSourceValueConfigDto>
+            {
+                new() { Id = "value", Name = "采样值", DataType = DataSourceValueType.Int32, PlcAddress = "D500", ExpectedValue = 7 },
+            },
+        });
+        h.Config.Sources.Add(new DataSourceConfigDto
+        {
+            Id = "source-trigger-2",
+            DeviceId = h.Config.Id,
+            Name = "第二触发源",
+            TriggerAddress = "D560",
+            TriggerValue = 5,
+            AckValue = 6,
+            Values = new List<DataSourceValueConfigDto>
+            {
+                new() { Id = "value-2", Name = "第二采样值", DataType = DataSourceValueType.Int32, PlcAddress = "D502", ExpectedValue = 9 },
+            },
+        });
+        var sim = Create(h);
+
+        sim.Tick(T0);
+        Assert.Equal(3, h.Ints["D510"]);
+        Assert.Equal(5, h.Ints["D560"]);
+
+        h.Ints["D510"] = 4;
+        h.Ints["D560"] = 6;
+        sim.Tick(T0.AddSeconds(1));
+        Assert.Equal(0, h.Ints["D510"]);
+        Assert.Equal(0, h.Ints["D560"]);
+    }
+
+    [Fact]
+    public void DisabledSourceAndValue_DoNotWritePlc()
+    {
+        var h = new Harness();
+        h.Config.Sources.Add(new DataSourceConfigDto
+        {
+            Id = "source-disabled",
+            DeviceId = h.Config.Id,
+            Name = "禁用源",
+            Enabled = false,
+            Values = new List<DataSourceValueConfigDto>
+            {
+                new() { Id = "disabled-source-value", Name = "值", PlcAddress = "D600", ExpectedValue = 1 },
+            },
+        });
+        h.Config.Sources.Add(new DataSourceConfigDto
+        {
+            Id = "source-value-disabled",
+            DeviceId = h.Config.Id,
+            Name = "部分禁用源",
+            Values = new List<DataSourceValueConfigDto>
+            {
+                new() { Id = "disabled-value", Name = "值", Enabled = false, PlcAddress = "D602", ExpectedValue = 1 },
+            },
+        });
+        var sim = Create(h);
+
+        sim.Tick(T0);
+
+        Assert.False(h.Ints.ContainsKey("D600"));
+        Assert.False(h.Ints.ContainsKey("D602"));
+    }
+
+    [Fact]
+    public void DisabledCounterAlarm_IsNotUpdatedOnPause()
+    {
+        var h = new Harness();
+        var sim = Create(h);
+
+        sim.Start(T0);
+        sim.Pause(T0);
+
+        Assert.Equal(1, h.Ints["D112"]);
+        Assert.False(h.Ints.ContainsKey("D113"));
     }
 }

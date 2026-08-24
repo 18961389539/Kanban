@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 
 namespace MainAPP.Services;
 
@@ -30,10 +31,34 @@ public partial class UserSession : ObservableObject
     /// <summary>是否管理员。</summary>
     public bool IsAdmin => CurrentRole.IsAdmin();
 
+    /// <summary>验证当前登录用户密码，不更新登录失败计数或最后登录时间。</summary>
+    public bool VerifyCurrentPassword(string password)
+    {
+        var user = CurrentUser;
+        return user != null
+            && !string.IsNullOrEmpty(user.PasswordHash)
+            && PasswordHasher.Verify(password, user.PasswordHash);
+    }
+
     /// <summary>登录：设置当前用户并刷新派生属性。</summary>
     public void Login(User user)
     {
         CurrentUser = user;
+    }
+
+    /// <summary>退出登录。</summary>
+    public void Logout()
+    {
+        CurrentUser = null;
+    }
+
+    partial void OnCurrentUserChanged(User? oldValue, User? newValue)
+    {
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnCurrentUserPropertyChanged;
+        if (newValue != null)
+            newValue.PropertyChanged += OnCurrentUserPropertyChanged;
+
         OnPropertyChanged(nameof(IsLoggedIn));
         OnPropertyChanged(nameof(CurrentRole));
         OnPropertyChanged(nameof(CurrentUserDisplay));
@@ -41,15 +66,18 @@ public partial class UserSession : ObservableObject
         OnPropertyChanged(nameof(IsAdmin));
     }
 
-    /// <summary>退出登录。</summary>
-    public void Logout()
+    private void OnCurrentUserPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        CurrentUser = null;
-        OnPropertyChanged(nameof(IsLoggedIn));
-        OnPropertyChanged(nameof(CurrentRole));
-        OnPropertyChanged(nameof(CurrentUserDisplay));
-        OnPropertyChanged(nameof(IsEngineerOrAbove));
-        OnPropertyChanged(nameof(IsAdmin));
+        if (e.PropertyName == nameof(User.Role))
+        {
+            OnPropertyChanged(nameof(CurrentRole));
+            OnPropertyChanged(nameof(IsEngineerOrAbove));
+            OnPropertyChanged(nameof(IsAdmin));
+        }
+        else if (e.PropertyName is nameof(User.Username) or nameof(User.DisplayName))
+        {
+            OnPropertyChanged(nameof(CurrentUserDisplay));
+        }
     }
 }
 

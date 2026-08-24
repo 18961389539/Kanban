@@ -61,48 +61,7 @@ public class LicenseGate
     /// </summary>
     public LicenseStatus CheckStatus()
     {
-        // 缓存机器码（首次调用时获取）
-        if (string.IsNullOrEmpty(MachineCode))
-        {
-            var hashBytes = HardwareFingerprint.GetMachineCodeHash();
-            MachineCodeHash = Base32.Encode(hashBytes);
-            MachineCode = MachineCodeHash;  // 8 字符
-        }
-
-        // 1. 优先检查已激活的授权
-        var license = _store.LoadLicense();
-        if (license != null)
-        {
-            // 重新验证激活码（防止文件被篡改或机器码变化）。
-            // 关键：使用 revalidated 而非 store 加载的 license —— ProductKey 中的字段经过签名保护，
-            // 是可信的；而 license.dat 中的 ExpireDate 等字段可被篡改（DPAPI 同用户跨机器同步时可能解密成功）。
-            // 若用 store 的 license.IsExpired 判断，攻击者可将 ExpireDate 改到未来绕过过期检查。
-            var revalidated = ProductKeyCodec.TryDecode(license.ProductKey, MachineCodeHash);
-            if (revalidated == null)
-            {
-                CurrentLicense = license;  // 保留用于诊断
-                CurrentStatus = LicenseStatus.MachineMismatch;
-                return CurrentStatus;
-            }
-
-            // 用可信的 revalidated 替换 store 加载的 license（保留 ActivatedAt 原始激活时间）
-            revalidated.ActivatedAt = license.ActivatedAt;
-            CurrentLicense = revalidated;
-
-            if (revalidated.IsExpired)
-            {
-                CurrentStatus = LicenseStatus.Expired;
-                return CurrentStatus;
-            }
-
-            CurrentStatus = LicenseStatus.Active;
-            return CurrentStatus;
-        }
-
-        // 2. 未激活 → 检查试用期
-        CurrentLicense = null;
-        CurrentStatus = _trialTracker.CheckStatus();
-        return CurrentStatus;
+        return CheckStatusCore(updateTrialState: true);
     }
 
     /// <summary>
@@ -111,31 +70,47 @@ public class LicenseGate
     /// </summary>
     public LicenseStatus RefreshStatusReadOnly()
     {
-        if (string.IsNullOrEmpty(MachineCode))
-        {
-            var hashBytes = HardwareFingerprint.GetMachineCodeHash();
-            MachineCodeHash = Base32.Encode(hashBytes);
-            MachineCode = MachineCodeHash;
-        }
+        return CheckStatusCore(updateTrialState: false);
+    }
+
+    private LicenseStatus CheckStatusCore(bool updateTrialState)
+    {
+        EnsureMachineCodeInitialized();
 
         var license = _store.LoadLicense();
         if (license != null)
+            return EvaluateStoredLicense(license);
+
+        CurrentLicense = null;
+        CurrentStatus = updateTrialState
+            ? _trialTracker.CheckStatus()
+            : _trialTracker.GetReadOnlyStatus();
+        return CurrentStatus;
+    }
+
+    private void EnsureMachineCodeInitialized()
+    {
+        if (!string.IsNullOrEmpty(MachineCode)) return;
+
+        var hashBytes = HardwareFingerprint.GetMachineCodeHash();
+        MachineCodeHash = Base32.Encode(hashBytes);
+        MachineCode = MachineCodeHash;
+    }
+
+    private LicenseStatus EvaluateStoredLicense(LicenseInfo license)
+    {
+        // ProductKey 中的授权字段经过签名保护，不能直接信任 license.dat 中的副本。
+        var revalidated = ProductKeyCodec.TryDecode(license.ProductKey, MachineCodeHash);
+        if (revalidated == null)
         {
-            var revalidated = ProductKeyCodec.TryDecode(license.ProductKey, MachineCodeHash);
-            if (revalidated == null)
-            {
-                CurrentLicense = license;
-                CurrentStatus = LicenseStatus.MachineMismatch;
-                return CurrentStatus;
-            }
-            revalidated.ActivatedAt = license.ActivatedAt;
-            CurrentLicense = revalidated;
-            CurrentStatus = revalidated.IsExpired ? LicenseStatus.Expired : LicenseStatus.Active;
+            CurrentLicense = license;
+            CurrentStatus = LicenseStatus.MachineMismatch;
             return CurrentStatus;
         }
 
-        CurrentLicense = null;
-        CurrentStatus = _trialTracker.GetReadOnlyStatus();
+        revalidated.ActivatedAt = license.ActivatedAt;
+        CurrentLicense = revalidated;
+        CurrentStatus = revalidated.IsExpired ? LicenseStatus.Expired : LicenseStatus.Active;
         return CurrentStatus;
     }
 

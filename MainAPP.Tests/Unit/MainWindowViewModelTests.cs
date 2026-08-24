@@ -103,8 +103,9 @@ public class MainWindowViewModelTests : IDisposable
         var alarmCsvIO = new AlarmCsvIOService(_dialog);
         var defectCsvIO = new DefectCsvIOService(_dialog);
         var counterAlarmCsvIO = new CounterAlarmCsvIOService(_dialog);
+        var dataSourceCsvIO = new DataSourceCsvIOService(_dialog);
         var workOrderService = new WorkOrderService(_workOrderRepo, _deviceRepo, _dialog, _historyService);
-        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, _workOrderRepo, workOrderService, userSession);
+        var deviceManagerVm = new DeviceManagerViewModel(_deviceRepo, _dataAcq, _dialog, _configIO, _plcCommands, alarmCsvIO, defectCsvIO, counterAlarmCsvIO, dataSourceCsvIO, _workOrderRepo, workOrderService, userSession);
         var historyQueryVm = new HistoryQueryViewModel(_historyService, _deviceRepo, _appSettings, _dialog);
         var homeVm = new HomeViewModel(_deviceRepo, _conn, _appSettings, null!, _selection);
         var productionLineVm = new ProductionLineViewModel(_deviceRepo, _selection, null, _appSettings);
@@ -152,12 +153,12 @@ public class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void NavItems_HasTenItems()
+    public void NavItems_HasAllSidebarItems()
     {
         var vm = NewVm();
-        // 主页/产线/报警中心/设备管理/工单/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理 共 12 项
+        // 主页/产线/报警中心/设备管理/工单/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理/采集监控 共 13 项
         // 设备详情页是上下文页面，不作为侧边栏常驻项（入口在主页"查看详情"按钮）
-        Assert.Equal(12, vm.NavItems.Count);
+        Assert.Equal(13, vm.NavItems.Count);
     }
 
     [Fact]

@@ -45,7 +45,7 @@ public class HistoryPaginationTests
         // MaxPage × MaxPageSize ≈ 10^5，远小于 int.MaxValue；直接验证不溢出、不抛异常
         var offset = HistoryPagination.Offset(int.MaxValue, int.MaxValue);
         Assert.InRange(offset, 0, int.MaxValue);
-        Assert.Equal(offset, (HistoryPagination.MaxPage - 1) * HistoryPagination.MaxPageSize);
+        Assert.Equal((HistoryPagination.MaxPage - 1) * HistoryPagination.MaxPageSize, offset);
     }
 
     [Fact]

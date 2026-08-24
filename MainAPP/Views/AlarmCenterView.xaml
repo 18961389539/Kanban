@@ -301,9 +301,9 @@
                                                             <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
                                                                        FontSize="14" FontWeight="Bold"
                                                                        Foreground="{StaticResource PrimaryTextBrush}"
-                                                                       Text="{Binding AlarmName}"
+                                                                       Text="{Binding DisplayName}"
                                                                        TextTrimming="CharacterEllipsis"
-                                                                       ToolTip="{Binding AlarmName}" />
+                                                                       ToolTip="{Binding DisplayName}" />
                                                             <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
                                                                     VerticalAlignment="Center"
                                                                     Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
@@ -436,9 +436,9 @@
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                         <TextBlock FontSize="13" FontWeight="Medium"
                                                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   Text="{Binding AlarmName}"
+                                                                   Text="{Binding DisplayName}"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   ToolTip="{Binding AlarmName}" />
+                                                                   ToolTip="{Binding DisplayName}" />
                                                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                                             <TextBlock FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding DeviceName}" />
                                                             <TextBlock Margin="8,0,0,0" Style="{StaticResource AlarmEventText}"
@@ -499,9 +499,9 @@
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
                                                     <TextBlock FontSize="13" FontWeight="Medium"
                                                                Foreground="{StaticResource PrimaryTextBrush}"
-                                                               Text="{Binding AlarmName}"
+                                                               Text="{Binding DisplayName}"
                                                                TextTrimming="CharacterEllipsis"
-                                                               ToolTip="{Binding AlarmName}" />
+                                                               ToolTip="{Binding DisplayName}" />
                                                     <TextBlock FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}"
                                                                Text="{Binding DeviceName}" />
                                                 </StackPanel>

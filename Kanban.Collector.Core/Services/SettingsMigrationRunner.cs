@@ -11,7 +11,7 @@ internal interface ISettingsMigration
 
 internal sealed class SettingsMigrationRunner
 {
-    public const int CurrentVersion = 7;
+    public const int CurrentVersion = 8;
 
     private readonly IReadOnlyList<ISettingsMigration> _migrations =
     [
@@ -22,6 +22,7 @@ internal sealed class SettingsMigrationRunner
         new Version4To5Migration(),
         new Version5To6Migration(),
         new Version6To7Migration(),
+        new Version7To8Migration(),
     ];
 
     public string Migrate(string json)
@@ -179,5 +180,28 @@ internal sealed class SettingsMigrationRunner
 
         private static JsonNode ReadOrDefault<T>(JsonObject source, string propertyName, T defaultValue) =>
             source[propertyName]?.DeepClone() ?? JsonValue.Create(defaultValue)!;
+    }
+
+    private sealed class Version7To8Migration : ISettingsMigration
+    {
+        public int FromVersion => 7;
+
+        public JsonObject Migrate(JsonObject settings)
+        {
+            if (settings["ConnectionProfiles"] is JsonArray { Count: > 0 })
+                return settings;
+
+            var plc = settings["PlcConfig"]?.DeepClone() ?? new JsonObject();
+            settings["ConnectionProfiles"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["Id"] = Kanban.Collector.Core.Models.ConnectionProfile.DefaultId,
+                    ["Name"] = Kanban.Collector.Core.Models.ConnectionProfile.DefaultName,
+                    ["Config"] = plc,
+                },
+            };
+            return settings;
+        }
     }
 }

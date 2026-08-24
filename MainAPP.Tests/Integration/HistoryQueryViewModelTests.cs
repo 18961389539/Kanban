@@ -863,11 +863,13 @@ public class HistoryQueryViewModelTests : IDisposable
     {
         var before = _vm.DeviceFilterItems.Count;
 
-        await Task.Run(() => _deviceRepo.Devices.Add(new Device { Id = "dev-bg", Name = "后台设备" }));
+        await Task.Run(
+            () => _deviceRepo.Devices.Add(new Device { Id = "dev-bg", Name = "后台设备" }),
+            TestContext.Current.CancellationToken);
 
         var deadline = DateTime.UtcNow.AddSeconds(5);
         while (_vm.DeviceFilterItems.Count <= before && DateTime.UtcNow < deadline)
-            await Task.Delay(10);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
         Assert.Contains(_vm.DeviceFilterItems, item => item.Id == "dev-bg");
     }
 

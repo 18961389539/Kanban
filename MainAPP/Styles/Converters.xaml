@@ -11,6 +11,7 @@
     <converters:StateToBrushConverter x:Key="StateToBrushConverter" />
     <converters:AlarmLevelToBrushConverter x:Key="AlarmLevelToBrushConverter" />
     <converters:AlarmLevelToTextConverter x:Key="AlarmLevelToTextConverter" />
+    <converters:LocalizedNameToTextConverter x:Key="LocalizedNameToTextConverter" />
     <converters:DefectSeverityToBrushConverter x:Key="DefectSeverityToBrushConverter" />
     <converters:DefectSeverityToTextConverter x:Key="DefectSeverityToTextConverter" />
     <converters:DefectCategoryToTextConverter x:Key="DefectCategoryToTextConverter" />

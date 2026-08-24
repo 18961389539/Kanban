@@ -169,7 +169,7 @@
                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center"
                                    FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                    Foreground="{Binding NgRate, Converter={StaticResource InverseRatioThreshold}}"
-                                   Text="{Binding NgRate, StringFormat={}{0:P2}}" />
+                                   Text="{Binding NgRateDisplay}" />
                     </DockPanel>
                 </StackPanel>
             </Grid>

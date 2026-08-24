@@ -51,6 +51,23 @@ public class ScreenshotCaptureTests : IDisposable
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowTextLength(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT { public int Left, Top, Right, Bottom; }
 
@@ -84,8 +101,37 @@ public class ScreenshotCaptureTests : IDisposable
                 // 忽略个别进程访问异常，继续找下一个
             }
         }
+
         if (proc == null || hwnd == IntPtr.Zero)
-            throw new InvalidOperationException("MainAPP 未运行或无主窗口，请先启动 MainAPP.exe");
+        {
+            foreach (var p in Process.GetProcessesByName("dotnet"))
+            {
+                try
+                {
+                    var commandLine = GetCommandLine(p.Id);
+                    if (!commandLine.Contains("MainAPP.dll", StringComparison.OrdinalIgnoreCase)
+                        && !commandLine.Contains("MainAPP.exe", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var h = p.MainWindowHandle;
+                    if (h == IntPtr.Zero)
+                        h = FindVisibleWindowForProcess(p.Id);
+
+                    if (h == IntPtr.Zero) continue;
+
+                    proc = Process.GetProcessById(p.Id);
+                    hwnd = h;
+                    break;
+                }
+                catch
+                {
+                    // 忽略个别进程访问异常，继续找下一个
+                }
+            }
+        }
+
+        if (proc == null || hwnd == IntPtr.Zero)
+            throw new InvalidOperationException("MainAPP 未运行或无主窗口，请先启动 MainAPP.exe 或 dotnet MainAPP.dll");
         _hwnd = hwnd;
 
         _app = Application.Attach(proc);
@@ -94,6 +140,20 @@ public class ScreenshotCaptureTests : IDisposable
 
         // 把窗口前置 + 还原，避免被锁屏/最小化遮挡
         EnsureForeground();
+        Thread.Sleep(800);
+
+        // 全屏模式下侧边栏默认折叠，先展开以便导航
+        ExpandSidebarIfNeeded();
+    }
+
+    private void ExpandSidebarIfNeeded()
+    {
+        var cf = _automation.ConditionFactory;
+        var navList = _mainWindow.FindFirstDescendant(cf.ByName("主导航"));
+        if (navList != null) return;
+
+        var menuButton = _mainWindow.FindFirstDescendant(cf.ByName("显示导航菜单"))?.AsButton();
+        menuButton?.SafeInvoke();
         Thread.Sleep(800);
     }
 
@@ -110,23 +170,23 @@ public class ScreenshotCaptureTests : IDisposable
             ("05_history_query", "历史查询"),
             ("06_overview", "生产复盘"),
             ("07_work_order", "工单管理"),
-            ("08_settings", "设置"),
+            ("08_settings", "系统设置"),
+            ("09_runtime_monitoring", "运行监控"),
+            ("10_data_monitoring", "数据监控"),
+            ("11_recipe_manager", "配方管理"),
+            ("12_user_manager", "用户管理"),
+            ("13_audit", "审计日志"),
         };
 
         foreach (var (fileName, navName) in pages)
         {
-            // 点击侧边栏导航项
-            var navItem = _mainWindow.FindFirstDescendant(cf => cf.ByName(navName));
-            if (navItem != null)
-            {
-                navItem.AsListBoxItem().Select();
-                Console.WriteLine($"  -> 点击导航: {navName}");
-            }
-            else
+            if (!TryNavigateToPage(navName))
             {
                 Console.WriteLine($"  [WARN] 未找到导航项: {navName}，跳过");
                 continue;
             }
+
+            Console.WriteLine($"  -> 点击导航: {navName}");
 
             // 等待页面渲染（PageTransition 0.2s + 数据绑定刷新 + 缓冲）
             Thread.Sleep(1800);
@@ -135,6 +195,19 @@ public class ScreenshotCaptureTests : IDisposable
             EnsureForeground();
             Thread.Sleep(150);
             CaptureWindow(fileName);
+        }
+    }
+
+    private bool TryNavigateToPage(string pageName)
+    {
+        try
+        {
+            UiaTestHelpers.NavigateToPage(_mainWindow, _automation, pageName);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -210,6 +283,59 @@ public class ScreenshotCaptureTests : IDisposable
             g2.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(w, h));
             bmp2.Save(path, ImageFormat.Png);
             Console.WriteLine($"  [OK] {name}.png ({w} x {h}) via CopyFromScreen (fallback)");
+        }
+    }
+
+    /// <summary>
+    /// dotnet 宿主进程的 MainWindowHandle 常为 0，需枚举可见顶层窗口。
+    /// </summary>
+    private static IntPtr FindVisibleWindowForProcess(int processId)
+    {
+        IntPtr best = IntPtr.Zero;
+        var bestArea = 0;
+
+        EnumWindows((hWnd, _) =>
+        {
+            GetWindowThreadProcessId(hWnd, out var pid);
+            if (pid != (uint)processId || !IsWindowVisible(hWnd))
+                return true;
+
+            GetWindowRect(hWnd, out var rect);
+            var w = rect.Right - rect.Left;
+            var h = rect.Bottom - rect.Top;
+            if (w < 400 || h < 300)
+                return true;
+
+            var len = GetWindowTextLength(hWnd);
+            if (len <= 0)
+                return true;
+
+            var area = w * h;
+            if (area > bestArea)
+            {
+                bestArea = area;
+                best = hWnd;
+            }
+
+            return true;
+        }, IntPtr.Zero);
+
+        return best;
+    }
+
+    private static string GetCommandLine(int processId)
+    {
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {processId}");
+        foreach (System.Management.ManagementObject obj in searcher.Get())
+            return obj["CommandLine"]?.ToString() ?? string.Empty;
+        return string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 

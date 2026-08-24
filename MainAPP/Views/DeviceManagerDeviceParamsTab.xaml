@@ -102,6 +102,7 @@
                 hc:InfoElement.TitlePlacement="Top"
                 AutomationProperties.Name="{x:Static resources:Strings.K062}"
                 Style="{StaticResource TextBoxExtend}"
+                IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
@@ -109,6 +110,7 @@
                 hc:InfoElement.TitlePlacement="Top"
                 AutomationProperties.Name="{x:Static resources:Strings.K197}"
                 Style="{StaticResource TextBoxExtend}"
+                IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding TargetCycle, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock
@@ -129,7 +131,8 @@
                     hc:InfoElement.Title="{x:Static resources:Strings.K199}"
                     hc:InfoElement.TitlePlacement="Top"
                     AutomationProperties.Name="{x:Static resources:Strings.K200}"
-                    Style="{StaticResource TextBoxExtend}">
+                    Style="{StaticResource TextBoxExtend}"
+                    IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
                         <Binding Path="OkCountAddress" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -162,7 +165,8 @@
                     hc:InfoElement.Title="{x:Static resources:Strings.K202}"
                     hc:InfoElement.TitlePlacement="Top"
                     AutomationProperties.Name="{x:Static resources:Strings.K203}"
-                    Style="{StaticResource TextBoxExtend}">
+                    Style="{StaticResource TextBoxExtend}"
+                    IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
                         <Binding Path="NgCountAddress" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -195,7 +199,8 @@
                     hc:InfoElement.Title="{x:Static resources:Strings.K205}"
                     hc:InfoElement.TitlePlacement="Top"
                     AutomationProperties.Name="{x:Static resources:Strings.K206}"
-                    Style="{StaticResource TextBoxExtend}">
+                    Style="{StaticResource TextBoxExtend}"
+                    IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}">
                     <hc:TextBox.Text>
                         <Binding Path="StatusCountAddress" UpdateSourceTrigger="PropertyChanged">
                             <Binding.ValidationRules>
@@ -229,6 +234,7 @@
                     hc:InfoElement.TitlePlacement="Top"
                     AutomationProperties.Name="{x:Static resources:Strings.K209}"
                     Style="{StaticResource TextBoxExtend}"
+                    IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     ToolTip="{x:Static resources:Strings.K210}">
                     <hc:TextBox.Text>
                         <Binding Path="ProductionResetAddress" UpdateSourceTrigger="PropertyChanged">
@@ -262,6 +268,7 @@
                 hc:InfoElement.TitlePlacement="Top"
                 AutomationProperties.Name="{x:Static resources:Strings.K063}"
                 Style="{StaticResource TextBoxExtend}"
+                IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeName, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
@@ -269,6 +276,7 @@
                 hc:InfoElement.TitlePlacement="Top"
                 AutomationProperties.Name="{x:Static resources:Strings.K216}"
                 Style="{StaticResource TextBoxExtend}"
+                IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeValue, UpdateSourceTrigger=PropertyChanged}" />
             <hc:TextBox
                 Margin="0,0,0,16"
@@ -276,6 +284,7 @@
                 hc:InfoElement.TitlePlacement="Top"
                 AutomationProperties.Name="{x:Static resources:Strings.K218}"
                 Style="{StaticResource TextBoxExtend}"
+                IsReadOnly="{Binding DataContext.IsConfigurationReadOnly, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 Text="{Binding RecipeAddress, UpdateSourceTrigger=PropertyChanged}" />
             <DockPanel Margin="0,4,0,16">
                 <TextBlock
