@@ -5,7 +5,7 @@ using MainAPP.Helpers;
 namespace MainAPP.ViewModels;
 
 /// <summary>
-/// 主页实时故障采集器：从设备快照收集所有活跃报警（PLC 边沿 + 计数阈值），
+/// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值），
 /// 处理计数报警首次触发时间缓存与 10 秒恢复去抖，并差分更新目标集合。
 /// 返回是否存在 High 级别报警（供标题徽章提示）。
 /// </summary>
@@ -21,9 +21,10 @@ public sealed class HomeAlarmCollector
         IReadOnlyList<Device> devices,
         DateTime now,
         bool isMuted,
-        int maxAlarms)
+        int maxAlarms,
+        string? selectedDeviceId = null)
     {
-        var desired = BuildDesired(devices, now);
+        var desired = BuildDesired(devices, now, selectedDeviceId);
 
         // 排序：级别降序 + 触发时间升序
         desired.Sort((a, b) =>
@@ -36,42 +37,51 @@ public sealed class HomeAlarmCollector
         if (desired.Count > maxAlarms)
             desired.RemoveRange(maxAlarms, desired.Count - maxAlarms);
 
-        // 复用已有实例：保留 IsNew 状态连续性，避免每次新建导致引用不匹配、排序失效
+        // 保留 IsNew/AddedAt 连续性，但不复用旧 ActiveAlarmInfo 实例——旧实例会快照过期的
+        // NameEn（配置热更新或首次 tick 早于 LoadAll 完成时可能为空），导致 DisplayName 永久中文。
         for (int i = 0; i < desired.Count; i++)
         {
             var existing = target.FirstOrDefault(a => a.Equals(desired[i]));
-            if (existing != null)
-                desired[i] = existing;
+            if (existing == null)
+                continue;
+            desired[i].IsNew = existing.IsNew;
+            desired[i].AddedAt = existing.AddedAt;
         }
 
         // 新加入的项标记 IsNew=true 触发闪烁并重置 AddedAt；已存在项保持原状态（静音时跳过）
         foreach (var item in desired)
         {
-            if (!target.Contains(item, ReferenceEqualityComparer.Instance))
-            {
-                item.IsNew = !isMuted;
-                item.AddedAt = now;
-                item.RefreshDuration(now);
-            }
+            if (target.Any(a => a.Equals(item)))
+                continue;
+            item.IsNew = !isMuted;
+            item.AddedAt = now;
+            item.RefreshDuration(now);
         }
 
         ObservableCollectionSyncHelper.Sync(target, desired);
         return target.Any(a => a.Level == AlarmLevel.High);
     }
 
-    private List<ActiveAlarmInfo> BuildDesired(IReadOnlyList<Device> devices, DateTime now)
+    private List<ActiveAlarmInfo> BuildDesired(
+        IReadOnlyList<Device> devices,
+        DateTime now,
+        string? selectedDeviceId)
     {
         List<ActiveAlarmInfo> desired = [];
         HashSet<string> activeKeys = [];
 
         foreach (var device in devices)
         {
+            if (selectedDeviceId != null && !string.Equals(device.Id, selectedDeviceId, StringComparison.Ordinal))
+                continue;
+
             foreach (var alarm in device.Alarms)
             {
                 if (alarm.StartTime != default && alarm.EndTime == default)
                 {
                     activeKeys.Add($"{device.Id}_{alarm.Id}");
-                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc));
+                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
+                        alarm.NameEn, alarm.NameJa, alarm.NamePt));
                 }
             }
 
@@ -86,7 +96,8 @@ public sealed class HomeAlarmCollector
                     if (!_triggerTimes.ContainsKey(key))
                         _triggerTimes[key] = now;
                     // 计数报警无级别字段，统一视为 Medium
-                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
+                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                        ca.NameEn, ca.NameJa, ca.NamePt));
                 }
                 else if (ca.Enabled && _triggerTimes.ContainsKey(key))
                 {
@@ -96,7 +107,8 @@ public sealed class HomeAlarmCollector
                     if ((now - _recoveryTimes[key]).TotalSeconds < DebounceSeconds)
                     {
                         activeKeys.Add(key);
-                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
+                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                            ca.NameEn, ca.NameJa, ca.NamePt));
                     }
                 }
             }

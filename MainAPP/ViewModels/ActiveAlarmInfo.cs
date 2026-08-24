@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Models;
+using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
 
@@ -12,8 +13,17 @@ public partial class ActiveAlarmInfo : ObservableObject
     public DateTime EventTime { get; }
     public string DeviceName { get; }
     public string AlarmName { get; }
+    public string? AlarmNameEn { get; }
+    public string? AlarmNameJa { get; }
+    public string? AlarmNamePt { get; }
     public AlarmLevel Level { get; }
     public AlarmKind Kind { get; }
+
+    /// <summary>
+    /// 按当前界面语言显示的报警名称（NameEn/Ja/Pt 缺失时回退 AlarmName）。
+    /// 快照自 Alarm 配置的多语言字段；切换语言重启后实时报警按新语言显示。
+    /// </summary>
+    public string DisplayName => AlarmNameLocalizer.Resolve(AlarmName, AlarmNameEn, AlarmNameJa, AlarmNamePt);
 
     [ObservableProperty] private string _durationText = "";
     /// <summary>
@@ -25,11 +35,22 @@ public partial class ActiveAlarmInfo : ObservableObject
     /// <summary>加入列表的时刻，用于清除 IsNew 标志。重新触发时重置。</summary>
     public DateTime AddedAt { get; set; } = DateTime.Now;
 
-    public ActiveAlarmInfo(DateTime eventTime, string deviceName, string alarmName, AlarmLevel level, AlarmKind kind)
+    public ActiveAlarmInfo(
+        DateTime eventTime,
+        string deviceName,
+        string alarmName,
+        AlarmLevel level,
+        AlarmKind kind,
+        string? alarmNameEn = null,
+        string? alarmNameJa = null,
+        string? alarmNamePt = null)
     {
         EventTime = eventTime;
         DeviceName = deviceName;
         AlarmName = alarmName;
+        AlarmNameEn = alarmNameEn;
+        AlarmNameJa = alarmNameJa;
+        AlarmNamePt = alarmNamePt;
         Level = level;
         Kind = kind;
     }

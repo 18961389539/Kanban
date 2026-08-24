@@ -34,7 +34,7 @@
     <value>生产复盘</value>
   </data>
   <data name="Nav_Settings" xml:space="preserve">
-    <value>设置</value>
+    <value>系统设置</value>
   </data>
   <data name="Nav_UserManager" xml:space="preserve">
     <value>用户管理</value>
@@ -4602,7 +4602,7 @@
     <value>配方管理</value>
   </data>
   <data name="Nav_DataSourceMonitoring" xml:space="preserve">
-    <value>数据源监控</value>
+    <value>数据监控</value>
   </data>
   <data name="Web_Nav_Dashboard" xml:space="preserve">
     <value>看板</value>
@@ -6299,6 +6299,55 @@
   </data>
   <data name="Ux_StatusUnsaved" xml:space="preserve">
     <value>有未保存的更改</value>
+  </data>
+  <data name="Ux_HelpTooltip" xml:space="preserve">
+    <value>使用手册 (F1)</value>
+  </data>
+  <data name="Ux_HelpWindowTitle" xml:space="preserve">
+    <value>使用手册</value>
+  </data>
+  <data name="Ux_HelpManualMissing" xml:space="preserve">
+    <value>未找到使用手册文件：{0}</value>
+  </data>
+  <data name="Ux_FirstRunTitle" xml:space="preserve">
+    <value>欢迎使用 Kanban</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeTitle" xml:space="preserve">
+    <value>快速了解系统</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
+    <value>MainAPP 用于集中查看产线设备状态、产量、报警与 OEE。左侧导航可切换页面；左下角圆点表示 PLC 连接状态。</value>
+  </data>
+  <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
+    <value>先确认 PLC 连接</value>
+  </data>
+  <data name="Ux_FirstRunPlcBody" xml:space="preserve">
+    <value>首次使用前请管理员确认 PLC IP、端口与网络。打开「系统设置」检查连接配置；绿色圆点表示已连接。</value>
+  </data>
+  <data name="Ux_FirstRunNavTitle" xml:space="preserve">
+    <value>常用页面</value>
+  </data>
+  <data name="Ux_FirstRunNavBody" xml:space="preserve">
+    <value>主页/产线总览：实时状态
+报警中心：处理报警
+历史查询/生产复盘：追溯与报表
+设备管理/设备详情/系统设置：需相应权限
+侧边栏顶部 ? 或按 F1：打开使用手册</value>
+  </data>
+  <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
+    <value>需要帮助时</value>
+  </data>
+  <data name="Ux_FirstRunFinishBody" xml:space="preserve">
+    <value>点击左侧导航栏最下方「使用手册 (F1)」或按 F1 打开完整使用手册（含截图）。可随时在系统设置中调整语言与字号。</value>
+  </data>
+  <data name="Ux_FirstRunOpenManual" xml:space="preserve">
+    <value>打开使用手册</value>
+  </data>
+  <data name="Ux_FirstRunGoSettings" xml:space="preserve">
+    <value>打开系统设置</value>
+  </data>
+  <data name="Ux_FirstRunSkip" xml:space="preserve">
+    <value>跳过</value>
   </data>
   <data name="Validator_AlarmKind" xml:space="preserve">
     <value>报警</value>

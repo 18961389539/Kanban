@@ -297,7 +297,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                     )
                 {
                     collected.Add(new ActiveAlarmInfo(
-                        alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc));
+                        alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
+                        alarm.NameEn, alarm.NameJa, alarm.NamePt));
                 }
             }
 
@@ -314,7 +315,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                         _counterAlarmTriggerTimes[key] = triggerTime;
                     }
                     collected.Add(new ActiveAlarmInfo(
-                        triggerTime, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count));
+                        triggerTime, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                        ca.NameEn, ca.NameJa, ca.NamePt));
                 }
             }
         }
@@ -359,7 +361,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             LongestDurationText = ts.TotalHours >= 1
                 ? $"{(int)ts.TotalHours}h {ts.Minutes}m"
                 : $"{ts.Minutes}m {ts.Seconds}s";
-            LongestAlarmText = $"{longest.DeviceName} · {longest.AlarmName}";
+            LongestAlarmText = $"{longest.DeviceName} · {longest.DisplayName}";
         }
         else
         {
@@ -369,16 +371,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 
         var visible = filtered.Take(MaxActiveAlarms).ToList();
 
-        // 复用已有实例：从 ActiveAlarms 中查找相等项（ActiveAlarmInfo.Equals 基于值），
-        // 让 ObservableCollectionSyncHelper 的引用比较能识别未变化项，保留 DurationText 连续性，避免列表闪烁
-        for (int i = 0; i < visible.Count; i++)
-        {
-            var existing = ActiveAlarms.FirstOrDefault(a => a.Equals(visible[i]));
-            if (existing != null)
-                visible[i] = existing;
-        }
-
-        // 差分更新（保留未变化项引用，避免列表闪烁）
+        // 差分更新：每 tick 用最新 NameEn 构造新实例，避免复用旧快照导致多语言名称不刷新
         ObservableCollectionSyncHelper.Sync(ActiveAlarms, visible);
 
         // 刷新持续时间文本

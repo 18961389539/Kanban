@@ -30,6 +30,7 @@
         <KeyBinding Gesture="Ctrl+7" Command="{Binding SelectPageCommand}" CommandParameter="6" />
         <KeyBinding Gesture="Ctrl+8" Command="{Binding SelectPageCommand}" CommandParameter="7" />
         <KeyBinding Gesture="Ctrl+9" Command="{Binding SelectPageCommand}" CommandParameter="8" />
+        <KeyBinding Gesture="F1" Command="{Binding OpenHelpCommand}" />
     </Window.InputBindings>
 
     <!--  大屏自适应：Viewbox 按实际窗口等比缩放 1920×1080 设计画布。
@@ -320,6 +321,62 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <!--  使用手册（F1）：沉于侧边栏底部、授权状态之上，避免与导航项重叠。  -->
+                <Button
+                    Margin="10,0,10,6"
+                    Padding="12,10"
+                    MinHeight="40"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Center"
+                    AutomationProperties.Name="{x:Static resources:Strings.Ux_HelpTooltip}"
+                    Command="{Binding OpenHelpCommand}"
+                    DockPanel.Dock="Bottom"
+                    FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                    ToolTip="{x:Static resources:Strings.Ux_HelpTooltip}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                            <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                        </Style>
+                    </Button.Style>
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <materialIcons:MaterialIcon
+                                Width="16"
+                                Height="16"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Kind="HelpCircleOutline" />
+                            <TextBlock
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Style="{StaticResource SidebarNavTextStyle}"
+                                Text="{x:Static resources:Strings.Ux_HelpTooltip}" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
 
                 <!--  导航项（ListBox + ListBoxItem 模板，替代 hc:SideMenu）。
                       原 hc:SideMenuItem 不暴露 AutomationProperties.Name 到 UIA Control 树，

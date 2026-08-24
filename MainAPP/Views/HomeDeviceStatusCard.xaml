@@ -78,55 +78,8 @@
             </DockPanel>
 
             <Grid Grid.Row="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <!-- 当前状态 -->
-                <StackPanel Grid.Row="0" Margin="0,4">
-                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K083}" />
-                    <!-- 内凹状态药丸：深色底 + 状态色边 + 状态色文字 -->
-                    <Border Margin="0,8,0,0" Padding="12,8" HorizontalAlignment="Left"
-                            CornerRadius="10"
-                            Background="{Binding RealtimeStatus, Converter={StaticResource StateSoftBrush}}"
-                            BorderBrush="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
-                            BorderThickness="1">
-                        <TextBlock FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
-                                   Foreground="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
-                                   Text="{Binding RealtimeStatus, Converter={StaticResource StateToTextConverter}}" />
-                    </Border>
-                    <!-- 配方信息：RecipeName 为空时不显示 -->
-                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecipeName}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center"
-                                                    Foreground="{StaticResource ThirdlyTextBrush}" Kind="PackageVariant" />
-                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{x:Static resources:Strings.K027}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
-                                   FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                   Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding RecipeName}" />
-                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center"
-                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{Binding RecipeValue, Converter={StaticResource LocFormatConverter}, ConverterParameter=F264}" />
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- 内凹工艺台：左环形仪表 + 右图例 -->
-                <Grid Grid.Row="1" Margin="0,14,0,0">
-                    <!-- 中空饼图：左侧环形仪表（中心显示总时长）+ 右侧三态数据 -->
-                    <Grid>
+                <!-- 内凹工艺台：左环形仪表（中心显示当前状态 + 总时长）+ 右图例 -->
+                <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -146,8 +99,21 @@
                             <oxy:PlotView Model="{Binding StatusPieChart}" Background="Transparent" />
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                         IsHitTestVisible="False">
-                                <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeKpiXs}" FontWeight="Bold"
-                                           Foreground="{StaticResource PrimaryTextBrush}"
+                                <TextBlock HorizontalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeHint}"
+                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                           Text="{x:Static resources:Strings.K083}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           HorizontalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeKpiSm}"
+                                           FontWeight="Bold"
+                                           Foreground="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
+                                           Text="{Binding RealtimeStatus, Converter={StaticResource StateToTextConverter}}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Margin="0,4,0,0"
+                                           HorizontalAlignment="Center"
+                                           FontSize="{DynamicResource FontSizeKpiXs}"
+                                           Foreground="{StaticResource SecondaryTextBrush}"
                                            Text="{Binding TotalTimeFullFormatted}" />
                             </StackPanel>
                         </Grid>
@@ -289,7 +255,6 @@
                             </Style>
                         </controls:EmptyState.Style>
                     </controls:EmptyState>
-                </Grid>
             </Grid>
         </Grid>
     </Border>

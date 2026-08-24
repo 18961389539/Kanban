@@ -174,7 +174,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         {
             var names = Device.Alarms
                 .Where(a => a.StartTime != default && a.EndTime == default)
-                .Select(a => a.Name)
+                .Select(Services.AlarmNameLocalizer.Resolve)
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToArray();
             return names.Length == 0 ? string.Empty : string.Join("、", names);

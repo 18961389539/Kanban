@@ -12,24 +12,49 @@
     <NeutralLanguage>zh-CN</NeutralLanguage>
   </PropertyGroup>
 
-  <!-- 编译前自动从 Strings.resx 重新生成 Strings.cs（多语言单一源） -->
-  <Target Name="GenerateStrings" BeforeTargets="BeforeBuild">
-    <Message Importance="high" Text="Generating Strings.cs from Strings.resx…" />
-    <Exec Command="python $(ProjectDir)..\ci\generate_wpf_strings.py"
+  <!-- 编译前从统一 Localization.csv 生成 WPF 资源和 Strings.cs。 -->
+  <Target Name="GenerateStrings" BeforeTargets="AssignCulture">
+    <Message Importance="high" Text="Generating WPF localization resources from Localization.csv…" />
+    <Exec Command="python $(ProjectDir)..\ci\generate_localization.py --wpf"
           WorkingDirectory="$(ProjectDir).."
           ContinueOnError="false" />
+    <ItemGroup>
+      <EmbeddedResource Remove="Resources\Strings*.resx" />
+      <EmbeddedResource Include="Resources\Strings.resx" />
+      <EmbeddedResource Include="Resources\Strings.*.resx">
+        <DependentUpon>Strings.resx</DependentUpon>
+      </EmbeddedResource>
+    </ItemGroup>
   </Target>
 
-  <!-- 多语言资源：Strings.resx（中文默认）+ Strings.en.resx + Strings.ja.resx；
-       强类型访问走自动生成 Resources/Strings.cs（ResourceManager 包装） -->
+  <!-- 多语言资源：Localization.csv 的全部语言列生成 Strings.*.resx，不能只枚举固定语言。 -->
   <ItemGroup>
-    <EmbeddedResource Update="Resources\Strings.resx" />
-    <EmbeddedResource Update="Resources\Strings.en.resx">
+    <EmbeddedResource Update="Resources\Strings.*.resx">
       <DependentUpon>Strings.resx</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Resources\Strings.ja.resx">
-      <DependentUpon>Strings.resx</DependentUpon>
-    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 现场翻译覆盖模板：复制到 Config/Localization.override.csv 后编辑并重启生效。 -->
+    <None Update="Resources\Localization.override.sample.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>Localization.override.sample.csv</TargetPath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内置使用手册（F1 / 帮助按钮） -->
+    <None Include="手册\**\*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>手册\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+    <None Include="..\screenshots\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <Link>screenshots\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

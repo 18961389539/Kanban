@@ -6300,6 +6300,55 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Ux_StatusUnsaved" xml:space="preserve">
     <value>未保存の変更があります</value>
   </data>
+  <data name="Ux_HelpTooltip" xml:space="preserve">
+    <value>使用手册 (F1)</value>
+  </data>
+  <data name="Ux_HelpWindowTitle" xml:space="preserve">
+    <value>使用手册</value>
+  </data>
+  <data name="Ux_HelpManualMissing" xml:space="preserve">
+    <value>使用手册ファイルが見つかりません：{0}</value>
+  </data>
+  <data name="Ux_FirstRunTitle" xml:space="preserve">
+    <value>Kanban へようこそ</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeTitle" xml:space="preserve">
+    <value>システム概要</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
+    <value> output</value>
+  </data>
+  <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
+    <value>まず PLC 接続を確認</value>
+  </data>
+  <data name="Ux_FirstRunPlcBody" xml:space="preserve">
+    <value> port</value>
+  </data>
+  <data name="Ux_FirstRunNavTitle" xml:space="preserve">
+    <value>主要ページ</value>
+  </data>
+  <data name="Ux_FirstRunNavBody" xml:space="preserve">
+    <value>ホーム/ライン：リアルタイム
+アラームセンター：対応
+履歴/レビュー：分析
+設備管理/設備詳細/設定：権限が必要
+サイドバー ? または F1：手册</value>
+  </data>
+  <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
+    <value>困ったとき</value>
+  </data>
+  <data name="Ux_FirstRunFinishBody" xml:space="preserve">
+    <value>右上の ? または F1 で手册を開けます。設定で言語と文字サイズを変更できます。</value>
+  </data>
+  <data name="Ux_FirstRunOpenManual" xml:space="preserve">
+    <value>使用手册を開く</value>
+  </data>
+  <data name="Ux_FirstRunGoSettings" xml:space="preserve">
+    <value>設定を開く</value>
+  </data>
+  <data name="Ux_FirstRunSkip" xml:space="preserve">
+    <value>スキップ</value>
+  </data>
   <data name="Validator_AlarmKind" xml:space="preserve">
     <value>アラーム</value>
   </data>

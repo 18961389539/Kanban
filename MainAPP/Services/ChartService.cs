@@ -611,7 +611,7 @@ public static class ChartService
             InsideLabelFormat = "",
             OutsideLabelFormat = "",
             StrokeThickness = 0, Stroke = _borderColor,
-            // 内凹环形仪表：让状态图呈现中空圆环，中心由 UI 叠加显示总时长
+            // 内凹环形仪表：中心由 UI 叠加显示当前状态 + 总时长（方案 B）
             InnerDiameter = 0.62,
         };
         if (total <= 0)

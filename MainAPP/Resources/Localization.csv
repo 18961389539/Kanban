@@ -6,7 +6,7 @@ Wpf,Nav_DeviceManager,设备管理,Device Manager,設備管理,Gerenciador de di
 Wpf,Nav_WorkOrder,工单管理,Work Orders,工単管理,Ordens de produção
 Wpf,Nav_HistoryQuery,历史查询,History Query,履歴照会,Consulta histórica
 Wpf,Nav_Overview,生产复盘,Review,生産レビュー,Revisão da produção
-Wpf,Nav_Settings,设置,Settings,設定,Configurações
+Wpf,Nav_Settings,系统设置,Settings,設定,Configurações
 Wpf,Nav_UserManager,用户管理,User Management,ユーザー管理,Gerenciamento de usuários
 Wpf,Nav_RuntimeMonitoring,运行监控,Runtime Monitor,稼働監視,Monitor de execução
 Wpf,Nav_DeviceDetail,设备详情,Device Detail,設備詳細,Detalhes do dispositivo
@@ -1690,7 +1690,7 @@ Wpf,K686,正在下发配方…,Applying recipe…,適用中…,Aplicando receita
 Wpf,K687,请先在左侧选择设备,Select a device first,先に設備を選択してください,Select a device first
 Wpf,K688,配方 {0} 已保存,Recipe {0} saved,レシピ {0} を保存しました,Recipe {0} saved
 Wpf,Nav_RecipeManager,配方管理,Recipes,レシピ管理,Recipes
-Wpf,Nav_DataSourceMonitoring,数据源监控,Data Source Monitor,データソース監視,Monitor de fontes de dados
+Wpf,Nav_DataSourceMonitoring,数据监控,Data Source Monitor,データソース監視,Monitor de fontes de dados
 Wpf,Web_Nav_Dashboard,看板,Dashboard,ダッシュボード,Dashboard
 Wpf,Web_Nav_History,历史查询,History Query,履歴照会,History Query
 Wpf,Web_Hq_Device,设备,Device,デバイス,Device
@@ -2342,6 +2342,37 @@ Wpf,Ux_ResetQuery,已重置查询条件,Query filters reset,検索条件をリ�
 Wpf,Ux_StatusSaved,已保存,Saved,保存済み,Salvo
 Wpf,Ux_StatusSaving,正在保存…,Saving…,保存中…,Salvando…
 Wpf,Ux_StatusUnsaved,有未保存的更改,Unsaved changes,未保存の変更があります,Alteracoes nao salvas
+Wpf,Ux_HelpTooltip,使用手册 (F1),User Manual (F1),使用手册 (F1),Manual do usuario (F1)
+Wpf,Ux_HelpWindowTitle,使用手册,User Manual,使用手册,Manual do usuario
+Wpf,Ux_HelpManualMissing,未找到使用手册文件：{0},User manual file not found: {0},使用手册ファイルが見つかりません：{0},Arquivo do manual nao encontrado: {0}
+Wpf,Ux_FirstRunTitle,欢迎使用 Kanban,Welcome to Kanban,Kanban へようこそ,Bem-vindo ao Kanban
+Wpf,Ux_FirstRunWelcomeTitle,快速了解系统,Quick Overview,システム概要,Visao geral rapida
+Wpf,Ux_FirstRunWelcomeBody,MainAPP 用于集中查看产线设备状态、产量、报警与 OEE。左侧导航可切换页面；左下角圆点表示 PLC 连接状态。,MainAPP centralizes device status, output, alarms, and OEE. Use the sidebar to switch pages; the dot at the bottom shows PLC connection status.,MainAPP は設備状態・生産数・アラーム・OEE を一覧表示します。サイドバーでページ切替、左下の点が PLC 接続状態です。,O MainAPP centraliza status, producao, alarmes e OEE. Use a barra lateral; o ponto inferior indica conexao PLC.
+Wpf,Ux_FirstRunPlcTitle,先确认 PLC 连接,Check PLC Connection First,まず PLC 接続を確認,Confirme a conexao PLC
+Wpf,Ux_FirstRunPlcBody,首次使用前请管理员确认 PLC IP、端口与网络。打开「系统设置」检查连接配置；绿色圆点表示已连接。,Ask your administrator to confirm PLC IP, port, and network. Open Settings to review connection; a green dot means connected.,初回前に PLC IP・ポート・ネットワークを確認してください。「設定」で接続を確認、緑の点は接続済み。,Confirme IP, porta e rede do PLC. Abra Configuracoes; ponto verde = conectado.
+Wpf,Ux_FirstRunNavTitle,常用页面,Key Pages,主要ページ,Paginas principais
+Wpf,Ux_FirstRunNavBody,"主页/产线总览：实时状态
+报警中心：处理报警
+历史查询/生产复盘：追溯与报表
+设备管理/设备详情/系统设置：需相应权限
+侧边栏底部「使用手册」或按 F1：打开手册","Home & Production Line: live status
+Alarm Center: handle alarms
+History & Review: traceability and reports
+Device Manager, Device Detail & Settings: role required
+Sidebar footer User Manual or F1: open manual","ホーム/ライン：リアルタイム
+アラームセンター：対応
+履歴/レビュー：分析
+設備管理/設備詳細/設定：権限が必要
+サイドバー下部「使用手册」または F1","Inicio e Linha: tempo real
+Alarmes: tratar
+Historico e Revisao: relatorios
+Dispositivos, Detalhe e Configuracoes: permissao
+Manual no rodape da barra lateral ou F1"
+Wpf,Ux_FirstRunFinishTitle,需要帮助时,When You Need Help,困ったとき,Quando precisar de ajuda
+Wpf,Ux_FirstRunFinishBody,点击左侧导航栏最下方「使用手册 (F1)」或按 F1 打开完整使用手册（含截图）。可随时在系统设置中调整语言与字号。,Click User Manual (F1) at the bottom of the sidebar or press F1 for the full illustrated manual. Change language and font size in System Settings anytime.,サイドバー下部の「使用手册 (F1)」または F1 で手册を開けます。設定で言語と文字サイズを変更できます。,Manual do usuario (F1) no rodape da barra lateral ou tecla F1 para o manual completo. Idioma e tamanho da fonte em Configuracoes.
+Wpf,Ux_FirstRunOpenManual,打开使用手册,Open User Manual,使用手册を開く,Abrir manual
+Wpf,Ux_FirstRunGoSettings,打开系统设置,Open Settings,設定を開く,Abrir configuracoes
+Wpf,Ux_FirstRunSkip,跳过,Skip,スキップ,Pular
 Wpf,Validator_AlarmKind,报警,alarm,アラーム,alarme
 Wpf,Validator_AlarmParametersNegative,数据源「{0}」值项「{1}」滞回或确认秒数不能为负数,Hysteresis or confirm seconds cannot be negative for value '{1}' in source '{0}',データソース「{0}」値項目「{1}」のヒステリシスまたは確認秒数は負にできません,Histerese ou segundos de confirmacao nao podem ser negativos para valor '{1}' na fonte '{0}'
 Wpf,Validator_ChildIdentityInvalid,设备「{0}」{1}标识无效,Invalid {1} identity for device '{0}',設備「{0}」の{1}識別子が無効です,Identidade de {1} invalida para dispositivo '{0}'

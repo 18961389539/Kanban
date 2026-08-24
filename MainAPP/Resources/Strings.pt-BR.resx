@@ -6300,6 +6300,55 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ux_StatusUnsaved" xml:space="preserve">
     <value>Alteracoes nao salvas</value>
   </data>
+  <data name="Ux_HelpTooltip" xml:space="preserve">
+    <value>Manual do usuario (F1)</value>
+  </data>
+  <data name="Ux_HelpWindowTitle" xml:space="preserve">
+    <value>Manual do usuario</value>
+  </data>
+  <data name="Ux_HelpManualMissing" xml:space="preserve">
+    <value>Arquivo do manual nao encontrado: {0}</value>
+  </data>
+  <data name="Ux_FirstRunTitle" xml:space="preserve">
+    <value>Bem-vindo ao Kanban</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeTitle" xml:space="preserve">
+    <value>Visao geral rapida</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
+    <value> alarms</value>
+  </data>
+  <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
+    <value>Confirme a conexao PLC</value>
+  </data>
+  <data name="Ux_FirstRunPlcBody" xml:space="preserve">
+    <value> and network. Open Settings to review connection; a green dot means connected.</value>
+  </data>
+  <data name="Ux_FirstRunNavTitle" xml:space="preserve">
+    <value>Paginas principais</value>
+  </data>
+  <data name="Ux_FirstRunNavBody" xml:space="preserve">
+    <value>Inicio e Linha: tempo real
+Alarmes: tratar
+Historico e Revisao: relatorios
+Dispositivos, Detalhe e Configuracoes: permissao
+? na barra lateral ou F1: manual</value>
+  </data>
+  <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
+    <value>Quando precisar de ajuda</value>
+  </data>
+  <data name="Ux_FirstRunFinishBody" xml:space="preserve">
+    <value>Clique em ? ou F1 para o manual completo. Idioma e tamanho da fonte em Configuracoes.</value>
+  </data>
+  <data name="Ux_FirstRunOpenManual" xml:space="preserve">
+    <value>Abrir manual</value>
+  </data>
+  <data name="Ux_FirstRunGoSettings" xml:space="preserve">
+    <value>Abrir configuracoes</value>
+  </data>
+  <data name="Ux_FirstRunSkip" xml:space="preserve">
+    <value>Pular</value>
+  </data>
   <data name="Validator_AlarmKind" xml:space="preserve">
     <value>alarme</value>
   </data>

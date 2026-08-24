@@ -215,9 +215,9 @@
                                                         <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
                                                                    FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
                                                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   Text="{Binding AlarmName}"
+                                                                   Text="{Binding DisplayName}"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   ToolTip="{Binding AlarmName}" />
+                                                                   ToolTip="{Binding DisplayName}" />
                                                         <!-- 级别徽章：与设备管理页一致，色条+文字双重显示，色盲友好 -->
                                                         <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
                                                                 VerticalAlignment="Center"

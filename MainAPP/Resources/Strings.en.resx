@@ -6300,6 +6300,55 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ux_StatusUnsaved" xml:space="preserve">
     <value>Unsaved changes</value>
   </data>
+  <data name="Ux_HelpTooltip" xml:space="preserve">
+    <value>User Manual (F1)</value>
+  </data>
+  <data name="Ux_HelpWindowTitle" xml:space="preserve">
+    <value>User Manual</value>
+  </data>
+  <data name="Ux_HelpManualMissing" xml:space="preserve">
+    <value>User manual file not found: {0}</value>
+  </data>
+  <data name="Ux_FirstRunTitle" xml:space="preserve">
+    <value>Welcome to Kanban</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeTitle" xml:space="preserve">
+    <value>Quick Overview</value>
+  </data>
+  <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
+    <value>MainAPP centralizes device status</value>
+  </data>
+  <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
+    <value>Check PLC Connection First</value>
+  </data>
+  <data name="Ux_FirstRunPlcBody" xml:space="preserve">
+    <value>Ask your administrator to confirm PLC IP</value>
+  </data>
+  <data name="Ux_FirstRunNavTitle" xml:space="preserve">
+    <value>Key Pages</value>
+  </data>
+  <data name="Ux_FirstRunNavBody" xml:space="preserve">
+    <value>Home &amp; Production Line: live status
+Alarm Center: handle alarms
+History &amp; Review: traceability and reports
+Device Manager, Device Detail &amp; Settings: role required
+Sidebar ? or F1: open user manual</value>
+  </data>
+  <data name="Ux_FirstRunFinishTitle" xml:space="preserve">
+    <value>When You Need Help</value>
+  </data>
+  <data name="Ux_FirstRunFinishBody" xml:space="preserve">
+    <value>Click ? (top-right) or press F1 for the full illustrated manual. Change language and font size in Settings anytime.</value>
+  </data>
+  <data name="Ux_FirstRunOpenManual" xml:space="preserve">
+    <value>Open User Manual</value>
+  </data>
+  <data name="Ux_FirstRunGoSettings" xml:space="preserve">
+    <value>Open Settings</value>
+  </data>
+  <data name="Ux_FirstRunSkip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
   <data name="Validator_AlarmKind" xml:space="preserve">
     <value>alarm</value>
   </data>

@@ -94,7 +94,11 @@ public partial class MainWindow : Window
 
     private void ActivatePage(int index)
     {
-        var next = Pages.FirstOrDefault(page => page.Definition.Index == index)?.ViewModel as INavigationPageLifecycle;
+        var pageViewModel = Pages.FirstOrDefault(page => page.Definition.Index == index)?.ViewModel;
+        if (pageViewModel != null && DataContext is MainWindowViewModel viewModel)
+            viewModel.AttachPageViewModel(pageViewModel);
+
+        var next = pageViewModel as INavigationPageLifecycle;
         if (ReferenceEquals(next, _activePageLifecycle)) return;
         _activePageLifecycle?.OnPageExit();
         _activePageLifecycle = next;

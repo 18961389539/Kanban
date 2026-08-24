@@ -27,7 +27,10 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<ApplicationRuntime>();
         services.AddSingleton<IApplicationRuntime>(sp => sp.GetRequiredService<ApplicationRuntime>());
         services.AddSingleton<ApplicationStartupCoordinator>();
+        services.AddSingleton<RemoteDataLinkBootstrapper>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IUserHelpService, UserHelpService>();
+        services.AddSingleton<IFirstRunGuideService, FirstRunGuideService>();
         services.AddSingleton<ILoginDialogService, LoginDialogService>();
         services.AddSingleton<SettingsViewModel>();
         // 登录窗口及其 ViewModel 必须每次重新创建：Window 关闭后不可再次显示，
@@ -35,6 +38,7 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddTransient<LoginViewModel>();
         services.AddTransient<LoginWindow>();
         services.AddSingleton<UserManagerViewModel>();
+        services.AddSingleton<DataSourceMonitoringViewModel>();
         services.AddSingleton<RuntimeMonitoringViewModel>(sp => new RuntimeMonitoringViewModel(
             sp.GetRequiredService<PlcConnectionManager>(),
             sp.GetRequiredService<PlcDataAcquisitionService>(),
@@ -51,6 +55,7 @@ public static class MainAppPresentationServiceCollectionExtensions
 
     private static IServiceCollection AddDevicePresentationModule(this IServiceCollection services)
     {
+        services.AddSingleton<IDeviceSetupWizardService, DeviceSetupWizardService>();
         services.AddSingleton<DeviceManagerViewModel>();
         // 配方管理页 VM（独立导航页）：构造依赖全部已注册，DI 自动解析
         services.AddSingleton<RecipeManagerViewModel>();
@@ -59,7 +64,8 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IPlcDataAcquisitionService>(),
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetRequiredService<IDialogService>(), sp.GetRequiredService<IWorkOrderService>(),
-            sp.GetRequiredService<IRuntimeMode>()));
+            sp.GetRequiredService<IRuntimeMode>(),
+            remoteRuntimeSink: sp.GetService<RemoteRuntimeSink>()));
         services.AddSingleton<ProductionLineViewModel>(sp => new ProductionLineViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>()));
@@ -117,6 +123,7 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<AuditQueryViewModel>();
         RegisterPage<AuditQueryView, AuditQueryViewModel>(services, NavigationPageCatalog.Audit);
         RegisterPage<RecipeManagerView, RecipeManagerViewModel>(services, NavigationPageCatalog.RecipeManager);
+        RegisterPage<DataSourceMonitoringView, DataSourceMonitoringViewModel>(services, NavigationPageCatalog.DataSourceMonitoring);
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

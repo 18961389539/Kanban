@@ -1,0 +1,181 @@
+<Window
+    x:Class="MainAPP.Views.FirstRunGuideWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    Title="{Binding WindowTitle}"
+    Width="680"
+    Height="580"
+    MinWidth="560"
+    MinHeight="500"
+    Background="{StaticResource BackgroundBrush}"
+    FontFamily="Microsoft YaHei"
+    FontSize="14"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style x:Key="GuideStepSegment" TargetType="Border">
+            <Setter Property="Height" Value="10" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+        </Style>
+    </Window.Resources>
+    <Border Padding="28" Background="{StaticResource BackgroundBrush}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" LastChildFill="False">
+                <TextBlock
+                    FontSize="24"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource PrimaryTextBrush}"
+                    Text="{Binding WindowTitle}" />
+                <TextBlock
+                    Margin="16,0,0,0"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Right"
+                    Foreground="{StaticResource ThirdlyTextBrush}"
+                    Text="{Binding StepProgressLabel}" />
+            </DockPanel>
+
+            <UniformGrid
+                Grid.Row="1"
+                Height="10"
+                Margin="0,18,0,0"
+                Columns="4">
+                <Border Margin="0,0,6,0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource GuideStepSegment}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="0">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="1">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="2">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="3">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <Border Margin="0,0,6,0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource GuideStepSegment}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="1">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="2">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="3">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <Border Margin="0,0,6,0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource GuideStepSegment}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="2">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="3">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <Border>
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource GuideStepSegment}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StepIndex}" Value="3">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+            </UniformGrid>
+
+            <ScrollViewer Grid.Row="2" Margin="0,24,0,0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                <TextBlock
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource PrimaryTextBrush}"
+                    Text="{Binding StepTitle}" />
+                <TextBlock
+                    Margin="0,14,0,0"
+                    Foreground="{StaticResource SecondaryTextBrush}"
+                    LineHeight="24"
+                    Text="{Binding StepBody}"
+                    TextWrapping="Wrap" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="3" Margin="0,16,0,0" Orientation="Horizontal">
+                <Button
+                    Margin="0,0,8,0"
+                    Command="{Binding OpenSettingsCommand}"
+                    Content="{x:Static resources:Strings.Ux_FirstRunGoSettings}"
+                    Style="{StaticResource ButtonDefault}"
+                    Visibility="{Binding ShowPlcActions, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <Button
+                    Command="{Binding OpenManualCommand}"
+                    Content="{x:Static resources:Strings.Ux_FirstRunOpenManual}"
+                    Style="{StaticResource ButtonDefault}"
+                    Visibility="{Binding IsLastStep, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
+
+            <DockPanel Grid.Row="4" Margin="0,24,0,0" LastChildFill="False">
+                <Button
+                    DockPanel.Dock="Left"
+                    Command="{Binding SkipCommand}"
+                    Content="{x:Static resources:Strings.Ux_FirstRunSkip}"
+                    Style="{StaticResource ButtonDefault}" />
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button
+                        Width="96"
+                        Margin="0,0,8,0"
+                        Command="{Binding BackCommand}"
+                        Content="{x:Static resources:Strings.Ux_DeviceWizardBack}"
+                        IsEnabled="{Binding IsFirstStep, Converter={StaticResource InvertedBooleanConverter}}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        Width="96"
+                        Margin="0,0,8,0"
+                        Command="{Binding NextCommand}"
+                        Content="{x:Static resources:Strings.Ux_DeviceWizardNext}"
+                        Style="{StaticResource ButtonPrimary}"
+                        Visibility="{Binding IsLastStep, Converter={StaticResource InvertedBooleanToVisibilityConverter}}" />
+                    <Button
+                        Width="120"
+                        Command="{Binding FinishCommand}"
+                        Content="{x:Static resources:Strings.Ux_DeviceWizardFinish}"
+                        Style="{StaticResource ButtonPrimary}"
+                        Visibility="{Binding IsLastStep, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>

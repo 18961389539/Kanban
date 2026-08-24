@@ -209,6 +209,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     public UserSession UserSession { get; }
 
     private readonly ILoginDialogService? _loginDialogService;
+    private readonly IUserHelpService? _userHelpService;
 
     /// <summary>当前用户显示名，供侧边栏用户卡片绑定。</summary>
     public string CurrentUserDisplay => UserSession.CurrentUserDisplay;
@@ -294,7 +295,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// 其余管理页（设备/工单/历史/复盘/设置/运行监控）在 Viewer 模式下不可达。
     /// </summary>
     private static readonly HashSet<string> ViewerAllowedPageKeys =
-        ["Home", "ProductionLine", "AlarmCenter", "DeviceDetail"];
+        ["Home", "ProductionLine", "AlarmCenter", "DeviceDetail", "DataSourceMonitoring"];
 
     /// <summary>是否 Viewer（展示）模式：侧栏只留展示页，导航受限，退出需确认。</summary>
     public bool IsViewerMode => AppSettings.RunMode == KanbanRunMode.Viewer;
@@ -392,7 +393,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         UserSession userSession,
         KanbanDataClient? dataClient = null,
         IPlcDataAcquisitionService? acquisitionService = null,
-        ILoginDialogService? loginDialogService = null)
+        ILoginDialogService? loginDialogService = null,
+        IUserHelpService? userHelpService = null)
     {
         AppSettings = appSettings;
         _serviceProvider = serviceProvider;
@@ -400,6 +402,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         LicenseGate = licenseGate;
         UserSession = userSession;
         _loginDialogService = loginDialogService;
+        _userHelpService = userHelpService;
         _dataClient = dataClient;
         _acquisitionService = acquisitionService;
 
@@ -466,18 +469,53 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     private readonly Lazy<WorkOrderManagerViewModel> _workOrderManagerLazy;
     private readonly Lazy<SettingsViewModel> _settingsLazy;
     private readonly Lazy<RuntimeMonitoringViewModel> _runtimeMonitoringLazy;
+    private readonly HashSet<object> _attachedPageViewModels = new();
+
+    /// <summary>
+    /// 页面模块直接从 DI 创建 ViewModel 时的订阅入口。
+    /// 页面模块与本 VM 共用 DI 单例，但不会经过本 VM 的 Lazy 包装，
+    /// 因此必须在页面真正激活时补挂跨页事件。
+    /// </summary>
+    internal void AttachPageViewModel(object pageViewModel)
+    {
+        switch (pageViewModel)
+        {
+            case HomeViewModel home:
+                SubscribeHome(home);
+                break;
+            case ProductionLineViewModel productionLine:
+                SubscribeProductionLine(productionLine);
+                break;
+            case OverviewViewModel overview:
+                SubscribeOverview(overview);
+                break;
+            case DeviceDetailViewModel deviceDetail:
+                SubscribeDeviceDetail(deviceDetail);
+                break;
+            case AlarmCenterViewModel alarmCenter:
+                SubscribeAlarmCenter(alarmCenter);
+                break;
+        }
+    }
 
     /// <summary>产线页"跳转主页"请求：通过名称导航到主页</summary>
     private void SubscribeProductionLine(ProductionLineViewModel vm)
-        => vm.FocusDeviceRequested += OnFocusDeviceRequested;
+    {
+        if (_attachedPageViewModels.Add(vm))
+            vm.FocusDeviceRequested += OnFocusDeviceRequested;
+    }
 
     /// <summary>概览页"跳转主页"请求：通过名称导航到主页</summary>
     private void SubscribeOverview(OverviewViewModel vm)
-        => vm.FocusDeviceRequested += OnFocusDeviceRequested;
+    {
+        if (_attachedPageViewModels.Add(vm))
+            vm.FocusDeviceRequested += OnFocusDeviceRequested;
+    }
 
     /// <summary>设备详情页"返回主页"请求：通过名称导航到主页。</summary>
     private void SubscribeDeviceDetail(DeviceDetailViewModel vm)
     {
+        if (!_attachedPageViewModels.Add(vm)) return;
         vm.GoBackRequested += OnGoBackRequested;
         vm.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
     }
@@ -488,12 +526,16 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// </summary>
     private void SubscribeHome(HomeViewModel vm)
     {
+        if (!_attachedPageViewModels.Add(vm)) return;
         vm.ViewDeviceDetailRequested += OnViewDeviceDetailRequested;
         vm.ViewWorkOrderManagerRequested += OnViewWorkOrderManagerRequested;
     }
 
     private void SubscribeAlarmCenter(AlarmCenterViewModel vm)
-        => vm.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
+    {
+        if (_attachedPageViewModels.Add(vm))
+            vm.ViewAlarmHistoryRequested += OnViewAlarmHistoryRequested;
+    }
 
     private void SubscribeDeviceManager(DeviceManagerViewModel vm) { }
 
@@ -510,23 +552,30 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         AppSettings.PropertyChanged -= OnAppSettingsPropertyChanged;
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;
-        // 页面 VM 懒加载后：只对已创建的 VM 解绑事件（IsValueCreated 判定不触发创建）
-        if (_productionLineLazy.IsValueCreated)
-            ProductionLineViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
-        if (_overviewLazy.IsValueCreated)
-            OverviewViewModel.FocusDeviceRequested -= OnFocusDeviceRequested;
-        if (_deviceDetailLazy.IsValueCreated)
+        foreach (var pageViewModel in _attachedPageViewModels)
         {
-            DeviceDetailViewModel.GoBackRequested -= OnGoBackRequested;
-            DeviceDetailViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+            switch (pageViewModel)
+            {
+                case ProductionLineViewModel productionLine:
+                    productionLine.FocusDeviceRequested -= OnFocusDeviceRequested;
+                    break;
+                case OverviewViewModel overview:
+                    overview.FocusDeviceRequested -= OnFocusDeviceRequested;
+                    break;
+                case DeviceDetailViewModel deviceDetail:
+                    deviceDetail.GoBackRequested -= OnGoBackRequested;
+                    deviceDetail.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+                    break;
+                case HomeViewModel home:
+                    home.ViewDeviceDetailRequested -= OnViewDeviceDetailRequested;
+                    home.ViewWorkOrderManagerRequested -= OnViewWorkOrderManagerRequested;
+                    break;
+                case AlarmCenterViewModel alarmCenter:
+                    alarmCenter.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+                    break;
+            }
         }
-        if (_homeLazy.IsValueCreated)
-        {
-            HomeViewModel.ViewDeviceDetailRequested -= OnViewDeviceDetailRequested;
-            HomeViewModel.ViewWorkOrderManagerRequested -= OnViewWorkOrderManagerRequested;
-        }
-        if (_alarmCenterLazy.IsValueCreated)
-            AlarmCenterViewModel.ViewAlarmHistoryRequested -= OnViewAlarmHistoryRequested;
+        _attachedPageViewModels.Clear();
     }
 
     private bool _disposed;
@@ -678,6 +727,14 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     [RelayCommand]
     private void ToggleSidebar() => IsSidebarCollapsed = !IsSidebarCollapsed;
+
+    /// <summary>打开内置使用手册（F1 / 帮助按钮）。</summary>
+    [RelayCommand]
+    private void OpenHelp()
+    {
+        var owner = Application.Current?.MainWindow;
+        _userHelpService?.OpenUserManual(owner);
+    }
 
     /// <summary>
     /// 跳转到设置页（授权状态卡片点击时调用）。

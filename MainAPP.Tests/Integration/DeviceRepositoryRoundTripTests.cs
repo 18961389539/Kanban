@@ -129,12 +129,44 @@ public class DeviceRepositoryRoundTripTests : IDisposable
     }
 
     [Fact]
+    public void SaveAll_LoadAll_RoundTrip_PreservesAlarmLocalizedNames()
+    {
+        var repo = new DeviceRepository(_appSettings);
+        var device = new Device { Name = "设备1", OkCountAddress = "D100" };
+        device.Alarms.Add(new Alarm
+        {
+            Name = "温控偏差-4",
+            NameEn = "Temperature Control Deviation-4",
+            PlcAddress = "M100",
+            Level = AlarmLevel.Medium,
+        });
+        repo.Devices.Add(device);
+        repo.SaveAll();
+
+        var repo2 = new DeviceRepository(_appSettings);
+        repo2.LoadAll();
+
+        Assert.Equal("Temperature Control Deviation-4", repo2.Devices[0].Alarms[0].NameEn);
+    }
+
+    [Fact]
     public void LoadAll_FileNotExists_LeavesEmptyCollection()
     {
         var repo = new DeviceRepository(_appSettings);
         // 文件不存在时不抛异常
         repo.LoadAll();
         Assert.Empty(repo.Devices);
+    }
+
+    [Fact]
+    public void ImportFromJson_LegacyDeviceWithoutProfileId_UsesDefaultProfile()
+    {
+        var repo = new DeviceRepository(_appSettings);
+
+        var devices = repo.ImportFromJson("[{\"Id\":\"legacy-device\",\"Name\":\"旧设备\"}]");
+
+        var device = Assert.Single(devices!);
+        Assert.Equal(ConnectionProfile.DefaultId, device.ConnectionProfileId);
     }
 
     [Fact]
@@ -161,6 +193,25 @@ public class DeviceRepositoryRoundTripTests : IDisposable
 
         Assert.True(Directory.Exists(_tempDir));
         Assert.True(File.Exists(_appSettings.GetFilePath("devices.json")));
+    }
+
+    [Fact]
+    public void ReplaceAllAndSave_WriteFailure_PreservesExistingInMemoryState()
+    {
+        var repo = new DeviceRepository(_appSettings);
+        var current = new Device { Name = "当前设备", OkCountAddress = "D100" };
+        repo.ReplaceAll([current]);
+
+        // 将目标路径变成目录，使原子替换在写盘阶段失败。
+        Directory.CreateDirectory(_appSettings.GetFilePath("devices.json"));
+        var candidate = new Device { Name = "候选设备", OkCountAddress = "D200" };
+
+        var exception = Record.Exception(() => repo.ReplaceAllAndSave([candidate]));
+        Assert.NotNull(exception);
+        Assert.True(exception is IOException or UnauthorizedAccessException);
+
+        Assert.Single(repo.Devices);
+        Assert.Equal("当前设备", repo.Devices[0].Name);
     }
 
     [Fact]

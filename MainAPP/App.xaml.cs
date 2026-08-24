@@ -9,6 +9,7 @@ using LicenseManager.ViewModels;
 using LicenseManager.Views;
 using Kanban.Client;
 using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,12 +64,20 @@ public partial class App : Application
         Log("OnStartup 开始");
 
         // 全局未捕获异常日志：WPF 运行时异常（XamlParseException 等）在启动流程之外发生时不进 OnStartup 的
-        // try/catch，此前静默崩溃无日志（如设备管理页资源缺失闪退）。此处统一记录到 Serilog 并阻止默认的
-        // 崩溃弹窗（AppDomain 级异常无法拦截进程退出，Dispatcher 级可 Handled=true 保持窗口存活）。
+        // try/catch，此前静默崩溃无日志（如设备管理页资源缺失闪退）。此处统一记录到 Serilog；
+        // 只有明确可恢复的异常才阻止 WPF 默认故障路径，未知异常不再被无条件吞掉。
         DispatcherUnhandledException += (_, args) =>
         {
-            Serilog.Log.Error(args.Exception, "UI 线程未处理异常（已记录并继续运行）");
-            args.Handled = true;
+            if (IsRecoverableDispatcherException(args.Exception))
+            {
+                Serilog.Log.Warning(args.Exception, "UI 线程可恢复异常（已记录并继续运行）");
+                args.Handled = true;
+            }
+            else
+            {
+                Serilog.Log.Error(args.Exception, "UI 线程未处理异常（交由 WPF 默认故障路径）");
+                args.Handled = false;
+            }
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
@@ -83,26 +92,32 @@ public partial class App : Application
         {
             // 界面语言应用：必须在任何 UI（含单实例提示/激活对话框）弹出之前，
             // 否则对话框按默认中文渲染。⚠ 先 Load 再 Apply：AppSettings 构造默认值是 Zh，
-            // 未 Load 时 appSettings.Language 永远为 Zh，Apply 永远应用中文。
+            // 未 Load 时 AppSettings 仍使用 CSV 默认语言，Apply 永远应用默认中文。
             var appSettings = _host.Services.GetRequiredService<AppSettings>();
             appSettings.Load();
-            Services.Localization.Apply(appSettings.Language);
-            // 同步覆盖 Kanban.Collector.Core 共享的连接状态文案（从 WPF resx 取值，三语统一源）
-            Kanban.Collector.Core.Localization.ConnectionStatusMessages.Override(
-                MainAPP.Resources.Strings.Conn_Connected,
-                MainAPP.Resources.Strings.Conn_Disconnected,
-                MainAPP.Resources.Strings.Conn_Lost,
-                MainAPP.Resources.Strings.Conn_DisconnectedRetry,
-                MainAPP.Resources.Strings.Conn_Connecting,
-                MainAPP.Resources.Strings.Conn_ConnectingSuffix,
-                MainAPP.Resources.Strings.Conn_RemoteConnecting);
-            // 同步覆盖 Kanban.Collector.Core 共享的配置校验消息（三语预设，与 Collector 进程一致）
+            Services.Localization.Apply(appSettings.EffectiveLanguageCode);
+            var localizationOverride = LocalizationOverrideLoader.Load(
+                appSettings.GetFilePath(LocalizationOverrideLoader.FileName),
+                MainAPP.Resources.Strings.IsKnownKey,
+                MainAPP.Resources.Strings.GetEmbeddedValue);
+            if (!localizationOverride.IsValid)
+            {
+                Log($"本地化覆盖文件无效，已回退内置资源：{string.Join("；", localizationOverride.Errors)}");
+            }
+            else if (localizationOverride.AppliedCount > 0)
+            {
+                Log($"已加载本地化覆盖：{localizationOverride.AppliedCount} 项");
+            }
+
+            // Core 共享提示也读取同一份启动覆盖表，保证 MainAPP 与 Collector 的错误文案一致。
+            Kanban.Collector.Core.Localization.ConnectionStatusMessages.ApplyLanguage(
+                appSettings.EffectiveLanguageCode);
             Kanban.Collector.Core.Localization.ValidationMessages.ApplyLanguage(
-                Services.Localization.GetCultureName(appSettings.Language));
+                appSettings.EffectiveLanguageCode);
             // 配方校验/下发消息（与配置校验消息同机制）
             Kanban.Collector.Core.Localization.RecipeValidationMessages.ApplyLanguage(
-                Services.Localization.GetCultureName(appSettings.Language));
-            Log($"界面语言已应用：{appSettings.Language}");
+                appSettings.EffectiveLanguageCode);
+            Log($"界面语言已应用：{appSettings.EffectiveLanguageCode}");
 
             if (_singleInstanceError is not null)
             {
@@ -264,6 +279,11 @@ public partial class App : Application
                     string.Format(Strings.F214, licenseGate.RemainingTrialDays));
             }
 
+            await Dispatcher.InvokeAsync(() =>
+            {
+                _host!.Services.GetRequiredService<IFirstRunGuideService>().TryShowAfterStartup(mainWindow);
+            }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+
             // 历史清理和采集启动放到后台，不阻塞 UI 线程。
             try
             {
@@ -298,6 +318,9 @@ public partial class App : Application
         base.OnStartup(e);
         Log("OnStartup 结束");
     }
+
+    private static bool IsRecoverableDispatcherException(Exception exception)
+        => exception is OperationCanceledException or FormatException;
 
     protected override void OnExit(ExitEventArgs e)
     {
