@@ -14,7 +14,7 @@ namespace MainAPP.Services;
 /// <summary>
 /// 计数报警 CSV 导入/导出记录（用于 CsvHelper 序列化的 DTO）。
 /// 仅包含用户可编辑的标量字段：Id/DeviceId 由导入逻辑注入，不在 CSV 中暴露。
-/// Enabled 用 True/False 文本，Excel 输入友好。
+/// Enabled 导出为当前界面语言；导入同时接受四种界面语言、True/False 和 1/0。
 /// </summary>
 public sealed class CounterAlarmCsvRecord
 {
@@ -24,6 +24,25 @@ public sealed class CounterAlarmCsvRecord
     public string Enabled { get; set; } = "True";
     public string Unit { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string? NameEn { get; set; }
+    public string? NameJa { get; set; }
+    public string? NamePt { get; set; }
+}
+
+internal sealed class CounterAlarmCsvRecordMap : ClassMap<CounterAlarmCsvRecord>
+{
+    public CounterAlarmCsvRecordMap()
+    {
+        Map(record => record.Name).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_Name", nameof(CounterAlarmCsvRecord.Name)));
+        Map(record => record.PlcAddress).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_PlcAddress", nameof(CounterAlarmCsvRecord.PlcAddress)));
+        Map(record => record.MaxValue).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_MaxValue", nameof(CounterAlarmCsvRecord.MaxValue)));
+        Map(record => record.Enabled).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_Enabled", nameof(CounterAlarmCsvRecord.Enabled)));
+        Map(record => record.Unit).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_Unit", nameof(CounterAlarmCsvRecord.Unit)));
+        Map(record => record.Description).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_Description", nameof(CounterAlarmCsvRecord.Description)));
+        Map(record => record.NameEn).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_NameEn", nameof(CounterAlarmCsvRecord.NameEn))).Optional();
+        Map(record => record.NameJa).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_NameJa", nameof(CounterAlarmCsvRecord.NameJa))).Optional();
+        Map(record => record.NamePt).Name(CsvLocalization.HeaderAliases("Csv_CounterAlarm_NamePt", nameof(CounterAlarmCsvRecord.NamePt))).Optional();
+    }
 }
 
 /// <summary>
@@ -70,29 +89,13 @@ public class CounterAlarmCsvIOService(
     /// </summary>
     public bool ExportCounterAlarms(Device device)
     {
-        var defaultFileName = $"counteralarms_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv";
-        var path = _dialog.ShowSaveFileDialog(Strings.M313, defaultFileName, Strings.M310);
+        var path = PickExportPath(device);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
         {
-            var records = device.CounterAlarms
-                .Select(c => new CounterAlarmCsvRecord
-                {
-                    Name = c.Name,
-                    PlcAddress = c.PlcAddress,
-                    MaxValue = c.MaxValue,
-                    Enabled = c.Enabled.ToString(),
-                    Unit = c.Unit,
-                    Description = c.Description,
-                })
-                .ToList();
-
-            using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
-            using var csv = new CsvWriter(writer, CsvConfig);
-            csv.WriteRecords(records);
-
-            _dialog.NotifySuccess(string.Format(Strings.F304, records.Count, Path.GetFileName(path)));
+            var count = ExportCounterAlarmsToPath(device, path);
+            _dialog.NotifySuccess(string.Format(Strings.F304, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
@@ -100,6 +103,42 @@ public class CounterAlarmCsvIOService(
             _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
+    }
+
+    /// <summary>仅在 UI 线程弹出导出文件对话框。</summary>
+    public string? PickExportPath(Device device)
+    {
+        var defaultFileName = string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Csv_CounterAlarm_FileName,
+            device.Name,
+            System.DateTime.Now);
+        return _dialog.ShowSaveFileDialog(Strings.M313, defaultFileName, Strings.M310);
+    }
+
+    /// <summary>将计数报警写入指定路径；只执行数据转换和文件 IO，可在线程池执行。</summary>
+    public int ExportCounterAlarmsToPath(Device device, string path)
+    {
+        var records = device.CounterAlarms
+            .Select(c => new CounterAlarmCsvRecord
+            {
+                Name = c.Name,
+                PlcAddress = c.PlcAddress,
+                MaxValue = c.MaxValue,
+                Enabled = CsvLocalization.BooleanText(c.Enabled),
+                Unit = c.Unit,
+                Description = c.Description,
+                NameEn = c.NameEn,
+                NameJa = c.NameJa,
+                NamePt = c.NamePt,
+            })
+            .ToList();
+
+        using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
+        using var csv = new CsvWriter(writer, CsvConfig);
+        csv.Context.RegisterClassMap<CounterAlarmCsvRecordMap>();
+        csv.WriteRecords(records);
+        return records.Count;
     }
 
     /// <summary>仅弹出文件选择对话框，返回用户选择的路径（UI 线程调用）。</summary>
@@ -117,6 +156,7 @@ public class CounterAlarmCsvIOService(
         {
             using var reader = new StreamReader(path, Encoding.UTF8);
             using var csv = new CsvReader(reader, CsvConfig);
+            csv.Context.RegisterClassMap<CounterAlarmCsvRecordMap>();
             var records = csv.GetRecords<CounterAlarmCsvRecord>().ToList();
 
             if (records.Count == 0)
@@ -154,8 +194,8 @@ public class CounterAlarmCsvIOService(
                     continue;
                 }
 
-                // Enabled 必须为布尔（容错 Excel 小写输入）
-                if (!bool.TryParse(rec.Enabled, out var enabled))
+                // 接受当前语言、其它内置语言，以及旧版 True/False 文本。
+                if (!CsvLocalization.TryParseBoolean(rec.Enabled, defaultValue: false, out var enabled))
                 {
                     result.Errors.Add(string.Format(Strings.F312, rowNum, rec.Enabled));
                     continue;
@@ -169,6 +209,9 @@ public class CounterAlarmCsvIOService(
                     Enabled = enabled,
                     Unit = rec.Unit ?? string.Empty,
                     Description = rec.Description ?? string.Empty,
+                    NameEn = string.IsNullOrWhiteSpace(rec.NameEn) ? null : rec.NameEn.Trim(),
+                    NameJa = string.IsNullOrWhiteSpace(rec.NameJa) ? null : rec.NameJa.Trim(),
+                    NamePt = string.IsNullOrWhiteSpace(rec.NamePt) ? null : rec.NamePt.Trim(),
                 });
             }
         }
@@ -213,6 +256,9 @@ public class CounterAlarmCsvIOService(
                 existing.Enabled = alarm.Enabled;
                 existing.Unit = alarm.Unit;
                 existing.Description = alarm.Description;
+                existing.NameEn = alarm.NameEn;
+                existing.NameJa = alarm.NameJa;
+                existing.NamePt = alarm.NamePt;
             }
             else
             {

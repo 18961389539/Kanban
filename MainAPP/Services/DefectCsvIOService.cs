@@ -14,8 +14,7 @@ namespace MainAPP.Services;
 /// <summary>
 /// 缺陷 CSV 导入/导出记录（用于 CsvHelper 序列化的 DTO）。
 /// 仅包含用户可编辑的标量字段：Id/DeviceId 由导入逻辑注入，不在 CSV 中暴露。
-/// Severity 用英文枚举名（Minor/Major/Critical），Excel 输入友好且无编码问题。
-/// Category 用英文枚举名（Appearance/Dimension/Function/Packaging/Other）。
+/// Severity/Category 导出为当前界面语言；导入同时接受四种界面语言和英文枚举名。
 /// </summary>
 public sealed class DefectCsvRecord
 {
@@ -23,6 +22,23 @@ public sealed class DefectCsvRecord
     public string PlcAddress { get; set; } = string.Empty;
     public string Severity { get; set; } = "Major";
     public string Category { get; set; } = "Other";
+    public string? NameEn { get; set; }
+    public string? NameJa { get; set; }
+    public string? NamePt { get; set; }
+}
+
+internal sealed class DefectCsvRecordMap : ClassMap<DefectCsvRecord>
+{
+    public DefectCsvRecordMap()
+    {
+        Map(record => record.Name).Name(CsvLocalization.HeaderAliases("Csv_Defect_Name", nameof(DefectCsvRecord.Name)));
+        Map(record => record.PlcAddress).Name(CsvLocalization.HeaderAliases("Csv_Defect_PlcAddress", nameof(DefectCsvRecord.PlcAddress)));
+        Map(record => record.Severity).Name(CsvLocalization.HeaderAliases("Csv_Defect_Severity", nameof(DefectCsvRecord.Severity)));
+        Map(record => record.Category).Name(CsvLocalization.HeaderAliases("Csv_Defect_Category", nameof(DefectCsvRecord.Category)));
+        Map(record => record.NameEn).Name(CsvLocalization.HeaderAliases("Csv_Defect_NameEn", nameof(DefectCsvRecord.NameEn))).Optional();
+        Map(record => record.NameJa).Name(CsvLocalization.HeaderAliases("Csv_Defect_NameJa", nameof(DefectCsvRecord.NameJa))).Optional();
+        Map(record => record.NamePt).Name(CsvLocalization.HeaderAliases("Csv_Defect_NamePt", nameof(DefectCsvRecord.NamePt))).Optional();
+    }
 }
 
 /// <summary>
@@ -69,27 +85,13 @@ public class DefectCsvIOService(
     /// </summary>
     public bool ExportDefects(Device device)
     {
-        var defaultFileName = $"defects_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv";
-        var path = _dialog.ShowSaveFileDialog(Strings.M311, defaultFileName, Strings.M310);
+        var path = PickExportPath(device);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
         {
-            var records = device.Defects
-                .Select(d => new DefectCsvRecord
-                {
-                    Name = d.Name,
-                    PlcAddress = d.PlcAddress,
-                    Severity = d.Severity.ToString(),
-                    Category = d.Category.ToString(),
-                })
-                .ToList();
-
-            using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
-            using var csv = new CsvWriter(writer, CsvConfig);
-            csv.WriteRecords(records);
-
-            _dialog.NotifySuccess(string.Format(Strings.F293, records.Count, Path.GetFileName(path)));
+            var count = ExportDefectsToPath(device, path);
+            _dialog.NotifySuccess(string.Format(Strings.F293, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
@@ -97,6 +99,40 @@ public class DefectCsvIOService(
             _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
+    }
+
+    /// <summary>仅在 UI 线程弹出导出文件对话框。</summary>
+    public string? PickExportPath(Device device)
+    {
+        var defaultFileName = string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Csv_Defect_FileName,
+            device.Name,
+            System.DateTime.Now);
+        return _dialog.ShowSaveFileDialog(Strings.M311, defaultFileName, Strings.M310);
+    }
+
+    /// <summary>将缺陷写入指定路径；只执行数据转换和文件 IO，可在线程池执行。</summary>
+    public int ExportDefectsToPath(Device device, string path)
+    {
+        var records = device.Defects
+            .Select(d => new DefectCsvRecord
+            {
+                Name = d.Name,
+                PlcAddress = d.PlcAddress,
+                Severity = CsvLocalization.DefectSeverityText(d.Severity),
+                Category = CsvLocalization.DefectCategoryText(d.Category),
+                NameEn = d.NameEn,
+                NameJa = d.NameJa,
+                NamePt = d.NamePt,
+            })
+            .ToList();
+
+        using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
+        using var csv = new CsvWriter(writer, CsvConfig);
+        csv.Context.RegisterClassMap<DefectCsvRecordMap>();
+        csv.WriteRecords(records);
+        return records.Count;
     }
 
     /// <summary>仅弹出文件选择对话框，返回用户选择的路径（UI 线程调用）。</summary>
@@ -114,6 +150,7 @@ public class DefectCsvIOService(
         {
             using var reader = new StreamReader(path, Encoding.UTF8);
             using var csv = new CsvReader(reader, CsvConfig);
+            csv.Context.RegisterClassMap<DefectCsvRecordMap>();
             var records = csv.GetRecords<DefectCsvRecord>().ToList();
 
             if (records.Count == 0)
@@ -151,13 +188,13 @@ public class DefectCsvIOService(
                     continue;
                 }
 
-                if (!Enum.TryParse<DefectSeverity>(rec.Severity, ignoreCase: true, out var severity))
+                if (!CsvLocalization.TryParseDefectSeverity(rec.Severity, out var severity))
                 {
                     result.Errors.Add(string.Format(Strings.F300, rowNum, rec.Severity));
                     continue;
                 }
 
-                if (!Enum.TryParse<DefectCategory>(rec.Category, ignoreCase: true, out var category))
+                if (!CsvLocalization.TryParseDefectCategory(rec.Category, out var category))
                 {
                     result.Errors.Add(string.Format(Strings.F301, rowNum, rec.Category));
                     continue;
@@ -169,6 +206,9 @@ public class DefectCsvIOService(
                     PlcAddress = rec.PlcAddress.Trim(),
                     Severity = severity,
                     Category = category,
+                    NameEn = string.IsNullOrWhiteSpace(rec.NameEn) ? null : rec.NameEn.Trim(),
+                    NameJa = string.IsNullOrWhiteSpace(rec.NameJa) ? null : rec.NameJa.Trim(),
+                    NamePt = string.IsNullOrWhiteSpace(rec.NamePt) ? null : rec.NamePt.Trim(),
                 });
             }
         }
@@ -211,6 +251,9 @@ public class DefectCsvIOService(
                 existing.Name = defect.Name;
                 existing.Severity = defect.Severity;
                 existing.Category = defect.Category;
+                existing.NameEn = defect.NameEn;
+                existing.NameJa = defect.NameJa;
+                existing.NamePt = defect.NamePt;
             }
             else
             {

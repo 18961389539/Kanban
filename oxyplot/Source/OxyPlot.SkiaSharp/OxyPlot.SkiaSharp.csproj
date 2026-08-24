@@ -10,6 +10,7 @@
     <PackageTags>plotting plot charting chart skiasharp skia pdf</PackageTags>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>OxyPlot.SkiaSharp.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>

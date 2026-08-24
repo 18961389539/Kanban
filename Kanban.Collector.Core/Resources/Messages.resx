@@ -12,7 +12,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <!-- ValidationMessages（zh-CN 默认） -->
   <data name="PlcIpEmpty" xml:space="preserve">
     <value>PLC IP 地址为空</value>
   </data>
@@ -76,7 +75,6 @@
   <data name="ShiftStartEndEqual" xml:space="preserve">
     <value>班次 '{0}' 起止时间相同（{1}）</value>
   </data>
-  <!-- ConnectionStatusMessages（zh-CN 默认） -->
   <data name="Conn_Connected" xml:space="preserve">
     <value>已连接</value>
   </data>
@@ -104,7 +102,6 @@
   <data name="PlcBatchReadMaxGapSlotsInvalid" xml:space="preserve">
     <value>PLC 批量读取空洞上限 {0} 无效，必须在 0-256 之间</value>
   </data>
-  <!-- RecipeValidationMessages（配方校验/下发，zh-CN 默认） -->
   <data name="RecipeNull" xml:space="preserve">
     <value>配方不能为空</value>
   </data>
@@ -223,11 +220,6 @@
     <value>下发已取消，已回滚</value>
   </data>
   <data name="RecipeWriteInProgress" xml:space="preserve">
-  <data name="RecipeStringNotRolledBack" xml:space="preserve">
-    <value>
-字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对
-</value>
-  </data>
     <value>参数 {0} 写入中…</value>
   </data>
 </root>

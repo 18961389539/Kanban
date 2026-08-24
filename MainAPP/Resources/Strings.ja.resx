@@ -1,110 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
-              </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -790,7 +685,7 @@
     <value>保存前に以下の設定問題が見つかりました：</value>
   </data>
   <data name="K142" xml:space="preserve">
-    <value>エラー項目をダブルクリックして対応する設備とタブに移動</value>
+    <value>エラー項目をダブルクリックして対応する設備とタブに移動。</value>
   </data>
   <data name="K143" xml:space="preserve">
     <value>閉じる</value>
@@ -994,7 +889,7 @@
     <value>OEEクリアPLCアドレス</value>
   </data>
   <data name="K210" xml:space="preserve">
-    <value>シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカカウンタをクリア</value>
+    <value>シフト切替または手動クリア時にこのアドレスへ1を書込み、PLCプログラムがOK/NGカウンタをクリアします。</value>
   </data>
   <data name="K211" xml:space="preserve">
     <value>手動OEEクリア</value>
@@ -1309,7 +1204,7 @@
     <value>シフト開始</value>
   </data>
   <data name="K315" xml:space="preserve">
-    <value>設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します</value>
+    <value>設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します。</value>
   </data>
   <data name="K316" xml:space="preserve">
     <value>OEE = 良品率 × 性能達成率 × 時間稼働率</value>
@@ -1663,7 +1558,7 @@
     <value>履歴書込み頻度</value>
   </data>
   <data name="K433" xml:space="preserve">
-    <value>実周期はPLC読取りとポーリング待ちを含みます。最大周期が設定間隔を超え続ける場合はPLC応答・ネットワーク・アドレス数を確認してください</value>
+    <value>実周期はPLC読取りとポーリング待ちを含みます。最大周期が設定間隔を超え続ける場合はPLC応答・ネットワーク・アドレス数を確認してください。</value>
   </data>
   <data name="K434" xml:space="preserve">
     <value>設備読取り</value>
@@ -1681,7 +1576,7 @@
     <value>累積失敗ポーリング</value>
   </data>
   <data name="K439" xml:space="preserve">
-    <value>直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味</value>
+    <value>直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味します。</value>
   </data>
   <data name="K440" xml:space="preserve">
     <value>PLC通信詳細</value>
@@ -1783,7 +1678,7 @@
     <value>ライセンス管理</value>
   </data>
   <data name="K473" xml:space="preserve">
-    <value>現在のライセンス状態を表示。必要に応じて再アクティベーションやバックアップ</value>
+    <value>現在のライセンス状態を表示。必要に応じて再アクティベーションやバックアップを行います。</value>
   </data>
   <data name="K474" xml:space="preserve">
     <value>マシンコード：</value>
@@ -1807,13 +1702,13 @@
     <value>データソースと実行モード</value>
   </data>
   <data name="K481" xml:space="preserve">
-    <value>データソース（ローカル収集 / リモート収集）と実行モードを選択</value>
+    <value>データソース（ローカル収集 / リモート収集）と実行モードを選択します。</value>
   </data>
   <data name="K482" xml:space="preserve">
     <value>データ収集モード</value>
   </data>
   <data name="K483" xml:space="preserve">
-    <value>リモートモードはKanban.Collectorに接続し、複数画面で同一データソースを共有</value>
+    <value>リモートモードはKanban.Collectorに接続し、複数画面で同一データソースを共有します。</value>
   </data>
   <data name="K484" xml:space="preserve">
     <value>ローカル収集（スタンドアロン）</value>
@@ -1840,7 +1735,7 @@
     <value>実行モード</value>
   </data>
   <data name="K492" xml:space="preserve">
-    <value>表示モードは大画面ページのみを残し終了を制限。工場画面向け（保存後再起動で有効）</value>
+    <value>表示モードは大画面ページのみを残し終了を制限します。工場画面向け（保存後再起動で有効）です。</value>
   </data>
   <data name="K493" xml:space="preserve">
     <value>フルモード（表示 + 管理）</value>
@@ -1858,13 +1753,13 @@
     <value>PLC接続設定</value>
   </data>
   <data name="K498" xml:space="preserve">
-    <value>通信アドレス、収集頻度、表示密度を設定</value>
+    <value>通信アドレス、収集頻度、表示密度を設定します。</value>
   </data>
   <data name="K499" xml:space="preserve">
     <value>接続とプロトコル</value>
   </data>
   <data name="K500" xml:space="preserve">
-    <value>PLCブランドを選択し通信パラメータを設定</value>
+    <value>PLCブランドを選択し通信パラメータを設定します。</value>
   </data>
   <data name="K501" xml:space="preserve">
     <value>IPアドレス</value>
@@ -1897,13 +1792,13 @@
     <value>収集戦略</value>
   </data>
   <data name="K511" xml:space="preserve">
-    <value>一括読取り、ポーリング、履歴書込みのペースを調整</value>
+    <value>一括読取り、ポーリング、履歴書込みのペースを調整します。</value>
   </data>
   <data name="K512" xml:space="preserve">
     <value>PLC一括読取り数</value>
   </data>
   <data name="K513" xml:space="preserve">
-    <value>バッチ内で許容する未設定アドレス数。0は完全連続のみ結合</value>
+    <value>バッチ内で許容する未設定アドレス数。0は完全連続のみ結合します。</value>
   </data>
   <data name="K514" xml:space="preserve">
     <value>一括読取りアドレス欠落</value>
@@ -1978,10 +1873,10 @@
     <value>シフト設定</value>
   </data>
   <data name="K540" xml:space="preserve">
-    <value>生産シフトと時間範囲を管理</value>
+    <value>生産シフトと時間範囲を管理します。</value>
   </data>
   <data name="K541" xml:space="preserve">
-    <value>シフトは即時有効になり次回ポーリングから適用。現在のシフトが再判定される可能性あり</value>
+    <value>シフトは即時有効になり次回ポーリングから適用されます。現在のシフトが再判定される可能性があります。</value>
   </data>
   <data name="K542" xml:space="preserve">
     <value>このシフトを削除</value>
@@ -2379,7 +2274,7 @@
     <value>{0} が生産数最多、合計 {1:N0} 個、良品率 {2:P1}</value>
   </data>
   <data name="F042" xml:space="preserve">
-    <value> · 有効期限 {0:yyyy-MM-dd}</value>
+    <value>· 有効期限 {0:yyyy-MM-dd}</value>
   </data>
   <data name="F043" xml:space="preserve">
     <value>↓ {0:HH:mm} に急減</value>
@@ -2870,7 +2765,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>良品率は {0:P1}、目標 {2:P0} を{1}</value>
   </data>
   <data name="F195" xml:space="preserve">
-    <value>タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80% を下回る</value>
+    <value>タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
   </data>
   <data name="F196" xml:space="preserve">
     <value>{0:HH:mm:ss} に発生 · {1}</value>
@@ -4545,7 +4440,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K654" xml:space="preserve">
     <value>インポート</value>
   </data>
-
   <data name="K655" xml:space="preserve">
     <value>累積シェア</value>
   </data>
@@ -5239,7 +5133,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>この期間には結論を生成するのに十分な生産・警報データがありません</value>
   </data>
   <data name="Web_Rv_HealthLowOutput" xml:space="preserve">
-    <value>タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の80%未満</value>
+    <value>タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
   </data>
   <data name="Web_Rv_HealthAlarmSpike" xml:space="preserve">
     <value>警報急増：今回 {0} 回、前周期 {1} 回</value>
@@ -5759,5 +5653,735 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_RecipeInfo" xml:space="preserve">
     <value>レシピ {0}：{1}</value>
+  </data>
+  <data name="Language_Portuguese" xml:space="preserve">
+    <value>ポルトガル語</value>
+  </data>
+  <data name="Alarm_LocalizedNames" xml:space="preserve">
+    <value>多言語名称</value>
+  </data>
+  <data name="Alarm_NameEn" xml:space="preserve">
+    <value>名前(EN)</value>
+  </data>
+  <data name="Alarm_NameJa" xml:space="preserve">
+    <value>名前(JA)</value>
+  </data>
+  <data name="Alarm_NamePt" xml:space="preserve">
+    <value>名前(PT)</value>
+  </data>
+  <data name="Csv_Alarm_Description" xml:space="preserve">
+    <value>説明</value>
+  </data>
+  <data name="Csv_Alarm_FileName" xml:space="preserve">
+    <value>{0}_アラーム_{1:yyyyMMdd_HHmmss}.csv</value>
+  </data>
+  <data name="Csv_Alarm_Level" xml:space="preserve">
+    <value>レベル</value>
+  </data>
+  <data name="Csv_Alarm_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Csv_Alarm_NameEn" xml:space="preserve">
+    <value>名前(EN)</value>
+  </data>
+  <data name="Csv_Alarm_NameJa" xml:space="preserve">
+    <value>名前(JA)</value>
+  </data>
+  <data name="Csv_Alarm_NamePt" xml:space="preserve">
+    <value>名前(PT)</value>
+  </data>
+  <data name="Csv_Alarm_PlcAddress" xml:space="preserve">
+    <value>PLCアドレス</value>
+  </data>
+  <data name="Csv_CounterAlarm_Description" xml:space="preserve">
+    <value>説明</value>
+  </data>
+  <data name="Csv_CounterAlarm_Enabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="Csv_CounterAlarm_FileName" xml:space="preserve">
+    <value>{0}_カウンタアラーム_{1:yyyyMMdd_HHmmss}.csv</value>
+  </data>
+  <data name="Csv_CounterAlarm_MaxValue" xml:space="preserve">
+    <value>上限値</value>
+  </data>
+  <data name="Csv_CounterAlarm_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Csv_CounterAlarm_NameEn" xml:space="preserve">
+    <value>名前(EN)</value>
+  </data>
+  <data name="Csv_CounterAlarm_NameJa" xml:space="preserve">
+    <value>名前(JA)</value>
+  </data>
+  <data name="Csv_CounterAlarm_NamePt" xml:space="preserve">
+    <value>名前(PT)</value>
+  </data>
+  <data name="Csv_CounterAlarm_PlcAddress" xml:space="preserve">
+    <value>PLCアドレス</value>
+  </data>
+  <data name="Csv_CounterAlarm_Unit" xml:space="preserve">
+    <value>単位</value>
+  </data>
+  <data name="Csv_DataSource_AckValue" xml:space="preserve">
+    <value>AckValue</value>
+  </data>
+  <data name="Csv_DataSource_BoolExpectedValue" xml:space="preserve">
+    <value>BoolExpectedValue</value>
+  </data>
+  <data name="Csv_DataSource_ConfirmSeconds" xml:space="preserve">
+    <value>ConfirmSeconds</value>
+  </data>
+  <data name="Csv_DataSource_EnumValuesJson" xml:space="preserve">
+    <value>EnumValuesJson</value>
+  </data>
+  <data name="Csv_DataSource_ExpectedValue" xml:space="preserve">
+    <value>ExpectedValue</value>
+  </data>
+  <data name="Csv_DataSource_ExpectedValueConfigured" xml:space="preserve">
+    <value>ExpectedValueConfigured</value>
+  </data>
+  <data name="Csv_DataSource_FileName" xml:space="preserve">
+    <value>{0}_データソース_{1:yyyyMMdd_HHmmss}.csv</value>
+  </data>
+  <data name="Csv_DataSource_FloatExpectedValue" xml:space="preserve">
+    <value>FloatExpectedValue</value>
+  </data>
+  <data name="Csv_DataSource_FloatLimitMax" xml:space="preserve">
+    <value>FloatLimitMax</value>
+  </data>
+  <data name="Csv_DataSource_FloatLimitMin" xml:space="preserve">
+    <value>FloatLimitMin</value>
+  </data>
+  <data name="Csv_DataSource_Hysteresis" xml:space="preserve">
+    <value>Hysteresis</value>
+  </data>
+  <data name="Csv_DataSource_LimitMax" xml:space="preserve">
+    <value>LimitMax</value>
+  </data>
+  <data name="Csv_DataSource_LimitMin" xml:space="preserve">
+    <value>LimitMin</value>
+  </data>
+  <data name="Csv_DataSource_SourceDescription" xml:space="preserve">
+    <value>SourceDescription</value>
+  </data>
+  <data name="Csv_DataSource_SourceEnabled" xml:space="preserve">
+    <value>SourceEnabled</value>
+  </data>
+  <data name="Csv_DataSource_SourceName" xml:space="preserve">
+    <value>SourceName</value>
+  </data>
+  <data name="Csv_DataSource_SourceNameEn" xml:space="preserve">
+    <value>SourceNameEn</value>
+  </data>
+  <data name="Csv_DataSource_SourceNameJa" xml:space="preserve">
+    <value>SourceNameJa</value>
+  </data>
+  <data name="Csv_DataSource_SourceNamePt" xml:space="preserve">
+    <value>SourceNamePt</value>
+  </data>
+  <data name="Csv_DataSource_SourceType" xml:space="preserve">
+    <value>SourceType</value>
+  </data>
+  <data name="Csv_DataSource_StringExpectedValue" xml:space="preserve">
+    <value>StringExpectedValue</value>
+  </data>
+  <data name="Csv_DataSource_StringLength" xml:space="preserve">
+    <value>StringLength</value>
+  </data>
+  <data name="Csv_DataSource_TriggerAddress" xml:space="preserve">
+    <value>TriggerAddress</value>
+  </data>
+  <data name="Csv_DataSource_TriggerValue" xml:space="preserve">
+    <value>TriggerValue</value>
+  </data>
+  <data name="Csv_DataSource_ValueDataType" xml:space="preserve">
+    <value>ValueDataType</value>
+  </data>
+  <data name="Csv_DataSource_ValueEnabled" xml:space="preserve">
+    <value>ValueEnabled</value>
+  </data>
+  <data name="Csv_DataSource_ValueName" xml:space="preserve">
+    <value>ValueName</value>
+  </data>
+  <data name="Csv_DataSource_ValueNameEn" xml:space="preserve">
+    <value>ValueNameEn</value>
+  </data>
+  <data name="Csv_DataSource_ValueNameJa" xml:space="preserve">
+    <value>ValueNameJa</value>
+  </data>
+  <data name="Csv_DataSource_ValueNamePt" xml:space="preserve">
+    <value>ValueNamePt</value>
+  </data>
+  <data name="Csv_DataSource_ValuePlcAddress" xml:space="preserve">
+    <value>ValuePlcAddress</value>
+  </data>
+  <data name="Csv_DataSource_ValueUnit" xml:space="preserve">
+    <value>ValueUnit</value>
+  </data>
+  <data name="Csv_Defect_Category" xml:space="preserve">
+    <value>カテゴリ</value>
+  </data>
+  <data name="Csv_Defect_FileName" xml:space="preserve">
+    <value>{0}_不良_{1:yyyyMMdd_HHmmss}.csv</value>
+  </data>
+  <data name="Csv_Defect_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Csv_Defect_NameEn" xml:space="preserve">
+    <value>名前(EN)</value>
+  </data>
+  <data name="Csv_Defect_NameJa" xml:space="preserve">
+    <value>名前(JA)</value>
+  </data>
+  <data name="Csv_Defect_NamePt" xml:space="preserve">
+    <value>名前(PT)</value>
+  </data>
+  <data name="Csv_Defect_PlcAddress" xml:space="preserve">
+    <value>PLCアドレス</value>
+  </data>
+  <data name="Csv_Defect_Severity" xml:space="preserve">
+    <value>重大度</value>
+  </data>
+  <data name="Dsm_AckValue" xml:space="preserve">
+    <value>確認値</value>
+  </data>
+  <data name="Dsm_AddEnumValue" xml:space="preserve">
+    <value>列挙追加</value>
+  </data>
+  <data name="Dsm_AddSource" xml:space="preserve">
+    <value>データソース追加</value>
+  </data>
+  <data name="Dsm_AddValue" xml:space="preserve">
+    <value>値項目追加</value>
+  </data>
+  <data name="Dsm_Address" xml:space="preserve">
+    <value>アドレス</value>
+  </data>
+  <data name="Dsm_Alarm" xml:space="preserve">
+    <value>アラーム</value>
+  </data>
+  <data name="Dsm_AlarmValues" xml:space="preserve">
+    <value>アラーム</value>
+  </data>
+  <data name="Dsm_AllDevices" xml:space="preserve">
+    <value>すべての設備</value>
+  </data>
+  <data name="Dsm_AllStates" xml:space="preserve">
+    <value>すべての状態</value>
+  </data>
+  <data name="Dsm_BackToLiveCard" xml:space="preserve">
+    <value>ライブカードに戻る</value>
+  </data>
+  <data name="Dsm_Bool" xml:space="preserve">
+    <value>ブール</value>
+  </data>
+  <data name="Dsm_BoolFalse" xml:space="preserve">
+    <value>いいえ</value>
+  </data>
+  <data name="Dsm_BoolTrue" xml:space="preserve">
+    <value>はい</value>
+  </data>
+  <data name="Dsm_ClearFilters" xml:space="preserve">
+    <value>フィルター解除</value>
+  </data>
+  <data name="Dsm_CollectionDescription" xml:space="preserve">
+    <value>トリガーアドレス未設定時は周期収集。設定時はトリガー時のみ収集。</value>
+  </data>
+  <data name="Dsm_CompactCards" xml:space="preserve">
+    <value>コンパクトカード</value>
+  </data>
+  <data name="Dsm_Criteria" xml:space="preserve">
+    <value>判定条件</value>
+  </data>
+  <data name="Dsm_CurrentValue" xml:space="preserve">
+    <value>現在値</value>
+  </data>
+  <data name="Dsm_DataSourceSectionHint" xml:space="preserve">
+    <value>設定済みデータソースの最新サンプル値</value>
+  </data>
+  <data name="Dsm_DataSourceSectionTitle" xml:space="preserve">
+    <value>データソース</value>
+  </data>
+  <data name="Dsm_DefaultEnumStateName" xml:space="preserve">
+    <value>状態{0}</value>
+  </data>
+  <data name="Dsm_DefaultValueName" xml:space="preserve">
+    <value>値項目{0}</value>
+  </data>
+  <data name="Dsm_Details" xml:space="preserve">
+    <value>詳細</value>
+  </data>
+  <data name="Dsm_Device" xml:space="preserve">
+    <value>設備</value>
+  </data>
+  <data name="Dsm_DeviceFilter" xml:space="preserve">
+    <value>設備フィルター</value>
+  </data>
+  <data name="Dsm_DisplayMode" xml:space="preserve">
+    <value>表示モード</value>
+  </data>
+  <data name="Dsm_DisplayName" xml:space="preserve">
+    <value>表示名</value>
+  </data>
+  <data name="Dsm_Empty" xml:space="preserve">
+    <value>設定済み値項目なし</value>
+  </data>
+  <data name="Dsm_EmptyHint" xml:space="preserve">
+    <value>まず設備管理でデータソースを設定してください</value>
+  </data>
+  <data name="Dsm_Enabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="Dsm_EnumTableTitle" xml:space="preserve">
+    <value>列挙マッピング</value>
+  </data>
+  <data name="Dsm_EnumValue" xml:space="preserve">
+    <value>列挙値</value>
+  </data>
+  <data name="Dsm_ExceptionHint" xml:space="preserve">
+    <value>サンプリング例外の値項目のみ表示</value>
+  </data>
+  <data name="Dsm_ExceptionSummary" xml:space="preserve">
+    <value>例外 {0}</value>
+  </data>
+  <data name="Dsm_Exceptions" xml:space="preserve">
+    <value>例外</value>
+  </data>
+  <data name="Dsm_ExceptionsView" xml:space="preserve">
+    <value>例外ビュー</value>
+  </data>
+  <data name="Dsm_ExpectedValue" xml:space="preserve">
+    <value>期待値</value>
+  </data>
+  <data name="Dsm_Float32" xml:space="preserve">
+    <value>浮動小数</value>
+  </data>
+  <data name="Dsm_Fresh" xml:space="preserve">
+    <value>最新</value>
+  </data>
+  <data name="Dsm_Freshness" xml:space="preserve">
+    <value>鮮度</value>
+  </data>
+  <data name="Dsm_Int32" xml:space="preserve">
+    <value>整数</value>
+  </data>
+  <data name="Dsm_Invalid" xml:space="preserve">
+    <value>無効</value>
+  </data>
+  <data name="Dsm_LastRefresh" xml:space="preserve">
+    <value>最終更新:</value>
+  </data>
+  <data name="Dsm_LastUpdated" xml:space="preserve">
+    <value>更新時刻</value>
+  </data>
+  <data name="Dsm_LastValidValue" xml:space="preserve">
+    <value>最終有効値</value>
+  </data>
+  <data name="Dsm_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="Dsm_NoDevicesHint" xml:space="preserve">
+    <value>まず設備を追加してください</value>
+  </data>
+  <data name="Dsm_NoMatch" xml:space="preserve">
+    <value>一致なし</value>
+  </data>
+  <data name="Dsm_NoMatchHint" xml:space="preserve">
+    <value>フィルターまたは検索条件を調整してください</value>
+  </data>
+  <data name="Dsm_Normal" xml:space="preserve">
+    <value>正常</value>
+  </data>
+  <data name="Dsm_NormalValues" xml:space="preserve">
+    <value>正常</value>
+  </data>
+  <data name="Dsm_NotSampled" xml:space="preserve">
+    <value>未サンプル</value>
+  </data>
+  <data name="Dsm_Periodic" xml:space="preserve">
+    <value>定期収集</value>
+  </data>
+  <data name="Dsm_ReadFailed" xml:space="preserve">
+    <value>読取失敗</value>
+  </data>
+  <data name="Dsm_Refresh" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="Dsm_RemoveEnumValue" xml:space="preserve">
+    <value>列挙削除</value>
+  </data>
+  <data name="Dsm_RemoveSource" xml:space="preserve">
+    <value>データソース削除</value>
+  </data>
+  <data name="Dsm_RemoveValue" xml:space="preserve">
+    <value>値項目削除</value>
+  </data>
+  <data name="Dsm_Search" xml:space="preserve">
+    <value>名称/アドレス検索</value>
+  </data>
+  <data name="Dsm_SelectRow" xml:space="preserve">
+    <value>行を選択して詳細を表示</value>
+  </data>
+  <data name="Dsm_ShowingSummary" xml:space="preserve">
+    <value>{0}/{1} を表示</value>
+  </data>
+  <data name="Dsm_Source" xml:space="preserve">
+    <value>データソース</value>
+  </data>
+  <data name="Dsm_SourceFormat" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="Dsm_SourceSectionTitle" xml:space="preserve">
+    <value>データソース一覧</value>
+  </data>
+  <data name="Dsm_Stale" xml:space="preserve">
+    <value>古い</value>
+  </data>
+  <data name="Dsm_StateFilter" xml:space="preserve">
+    <value>状態フィルター</value>
+  </data>
+  <data name="Dsm_Status" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="Dsm_String" xml:space="preserve">
+    <value>文字列</value>
+  </data>
+  <data name="Dsm_Subtitle" xml:space="preserve">
+    <value>各設備のデータソースサンプル値・状態・トレンドをリアルタイム表示</value>
+  </data>
+  <data name="Dsm_TableView" xml:space="preserve">
+    <value>テーブル</value>
+  </data>
+  <data name="Dsm_TimedSuffix" xml:space="preserve">
+    <value>（定期収集）</value>
+  </data>
+  <data name="Dsm_Title" xml:space="preserve">
+    <value>データソース監視</value>
+  </data>
+  <data name="Dsm_TotalValues" xml:space="preserve">
+    <value>値項目合計</value>
+  </data>
+  <data name="Dsm_TrendChart" xml:space="preserve">
+    <value>トレンド図</value>
+  </data>
+  <data name="Dsm_TrendDataGap" xml:space="preserve">
+    <value>トレンドに未サンプル区間があります</value>
+  </data>
+  <data name="Dsm_TrendLowerLimit" xml:space="preserve">
+    <value>下限</value>
+  </data>
+  <data name="Dsm_TrendNoData" xml:space="preserve">
+    <value>トレンドデータなし</value>
+  </data>
+  <data name="Dsm_TrendNoDataHint" xml:space="preserve">
+    <value>サンプルデータがトレンドキャッシュに入るのを待機</value>
+  </data>
+  <data name="Dsm_TrendSelectHint" xml:space="preserve">
+    <value>テーブルまたはカードで値項目を選択</value>
+  </data>
+  <data name="Dsm_TrendSelectValue" xml:space="preserve">
+    <value>値項目を選択してトレンド表示</value>
+  </data>
+  <data name="Dsm_TrendSessionHint" xml:space="preserve">
+    <value>直近 {0} 分、最大 {1} 点</value>
+  </data>
+  <data name="Dsm_TrendUnsupported" xml:space="preserve">
+    <value>このタイプはトレンド非対応</value>
+  </data>
+  <data name="Dsm_TrendUpperLimit" xml:space="preserve">
+    <value>上限</value>
+  </data>
+  <data name="Dsm_TrendView" xml:space="preserve">
+    <value>トレンド</value>
+  </data>
+  <data name="Dsm_TrendYAxis" xml:space="preserve">
+    <value>値</value>
+  </data>
+  <data name="Dsm_TriggerAddress" xml:space="preserve">
+    <value>トリガーアドレス</value>
+  </data>
+  <data name="Dsm_TriggerMode" xml:space="preserve">
+    <value>収集モード</value>
+  </data>
+  <data name="Dsm_TriggerValue" xml:space="preserve">
+    <value>トリガー値</value>
+  </data>
+  <data name="Dsm_Triggered" xml:space="preserve">
+    <value>トリガー収集</value>
+  </data>
+  <data name="Dsm_Type" xml:space="preserve">
+    <value>タイプ</value>
+  </data>
+  <data name="Dsm_Unit" xml:space="preserve">
+    <value>単位</value>
+  </data>
+  <data name="Dsm_UnitFormat" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="Dsm_Unspecified" xml:space="preserve">
+    <value>未指定</value>
+  </data>
+  <data name="Dsm_Value" xml:space="preserve">
+    <value>値項目</value>
+  </data>
+  <data name="Dsm_ValueSectionTitle" xml:space="preserve">
+    <value>値項目一覧</value>
+  </data>
+  <data name="F331" xml:space="preserve">
+    <value>{0} 件のデータソースと {1} 件の値項目を {2} にエクスポートしました</value>
+  </data>
+  <data name="F333" xml:space="preserve">
+    <value>CSV ファイルが空、またはデータ行がありません</value>
+  </data>
+  <data name="F334" xml:space="preserve">
+    <value>{0} 行目: データソース名が空です</value>
+  </data>
+  <data name="F335" xml:space="preserve">
+    <value>{0} 行目: 値項目名が空です</value>
+  </data>
+  <data name="F336" xml:space="preserve">
+    <value>{0} 行目: 値項目タイプ「{1}」が無効です</value>
+  </data>
+  <data name="F337" xml:space="preserve">
+    <value>{0} 行目: アドレス「{1}」が無効です（{2}）</value>
+  </data>
+  <data name="F338" xml:space="preserve">
+    <value>{0} 行目: アドレス「{1}」のタイプ不一致、期待 {2}、実際 {3}</value>
+  </data>
+  <data name="F339" xml:space="preserve">
+    <value>{0} 行目: フィールド「{1}」の値「{2}」が無効です</value>
+  </data>
+  <data name="F340" xml:space="preserve">
+    <value>{0} 行目: 列挙 JSON が無効です（{1}）</value>
+  </data>
+  <data name="F341" xml:space="preserve">
+    <value>{0} 行目: 列挙値が重複しています</value>
+  </data>
+  <data name="F342" xml:space="preserve">
+    <value>{0} 行目: 同一データソースの設定が一致しません</value>
+  </data>
+  <data name="F343" xml:space="preserve">
+    <value>{0} 行目: データソース「{1}」の値項目「{2}」が重複しています</value>
+  </data>
+  <data name="F344" xml:space="preserve">
+    <value>{0} 件のデータソースと {1} 件の値項目をインポートします（現在 {2} 件のデータソース）。</value>
+  </data>
+  <data name="F345" xml:space="preserve">
+    <value>{0} 件のデータソースと {1} 件の値項目をインポートしました。</value>
+  </data>
+  <data name="F346" xml:space="preserve">
+    <value>必須列がありません: {0}</value>
+  </data>
+  <data name="F347" xml:space="preserve">
+    <value>{0} 件のデータソースと {1} 件の値項目をインポートしましたが、{2} 件の検証エラーがあります:
+{3}</value>
+  </data>
+  <data name="F348" xml:space="preserve">
+    <value>インポート失敗: {0}</value>
+  </data>
+  <data name="Rtmon_DataSourceDatabase" xml:space="preserve">
+    <value>データソース DB</value>
+  </data>
+  <data name="Rtmon_DataSourcePending" xml:space="preserve">
+    <value>データソース書込待ち</value>
+  </data>
+  <data name="Rtmon_DataSourceRecovery" xml:space="preserve">
+    <value>データソース復旧ファイル</value>
+  </data>
+  <data name="Rtmon_FlushLatency" xml:space="preserve">
+    <value>フラッシュ遅延</value>
+  </data>
+  <data name="Rtmon_HistoryFlushSummary" xml:space="preserve">
+    <value>生産フラッシュ P95 {0}ms P99 {1}ms 失敗 {2}；データソース P95 {3}ms P99 {4}ms 失敗 {5}</value>
+  </data>
+  <data name="Rtmon_HistoryQueueSummary" xml:space="preserve">
+    <value>生産キュー峰值 {0}、オーバーフロー {1}；データソースキュー峰值 {2}、オーバーフロー {3}</value>
+  </data>
+  <data name="Rtmon_P95Cycle" xml:space="preserve">
+    <value>P95 サイクル</value>
+  </data>
+  <data name="Rtmon_P99Cycle" xml:space="preserve">
+    <value>P99 サイクル</value>
+  </data>
+  <data name="Rtmon_QueuePeakOverflow" xml:space="preserve">
+    <value>キュー峰值/オーバーフロー</value>
+  </data>
+  <data name="Rtmon_TotalDatabase" xml:space="preserve">
+    <value>合計 DB</value>
+  </data>
+  <data name="Settings_CollectorConfirmed" xml:space="preserve">
+    <value>Collector に同期済み</value>
+  </data>
+  <data name="Settings_CollectorLocalMode" xml:space="preserve">
+    <value>ローカルモード</value>
+  </data>
+  <data name="Settings_CollectorNotConnected" xml:space="preserve">
+    <value>Collector 未接続</value>
+  </data>
+  <data name="Settings_CollectorNotConnectedPending" xml:space="preserve">
+    <value>Collector 未接続。設定は保存済みですが未同期です</value>
+  </data>
+  <data name="Settings_CollectorPending" xml:space="preserve">
+    <value>Collector 同期待ち</value>
+  </data>
+  <data name="Ux_ConfirmPassword" xml:space="preserve">
+    <value>パスワード確認</value>
+  </data>
+  <data name="Ux_DeviceWizardAddressHint" xml:space="preserve">
+    <value>生産・状態などの PLC アドレスを設定します。後から追加も可能です。</value>
+  </data>
+  <data name="Ux_DeviceWizardAddressRequired" xml:space="preserve">
+    <value>少なくとも 1 つの PLC アドレスを設定するか、戻ってください。</value>
+  </data>
+  <data name="Ux_DeviceWizardBack" xml:space="preserve">
+    <value>戻る</value>
+  </data>
+  <data name="Ux_DeviceWizardCreated" xml:space="preserve">
+    <value>設備「{0}」を作成しました</value>
+  </data>
+  <data name="Ux_DeviceWizardFinish" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="Ux_DeviceWizardIntro" xml:space="preserve">
+    <value>設備の基本情報を入力します。次に PLC アドレスを設定できます。</value>
+  </data>
+  <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
+    <value>機種</value>
+  </data>
+  <data name="Ux_DeviceWizardNameDuplicate" xml:space="preserve">
+    <value>設備名は既に存在します</value>
+  </data>
+  <data name="Ux_DeviceWizardNameRequired" xml:space="preserve">
+    <value>設備名は必須です</value>
+  </data>
+  <data name="Ux_DeviceWizardNext" xml:space="preserve">
+    <value>次へ</value>
+  </data>
+  <data name="Ux_DeviceWizardReviewHint" xml:space="preserve">
+    <value>内容を確認し、完了をクリックして設備を作成します。</value>
+  </data>
+  <data name="Ux_DeviceWizardStepAddresses" xml:space="preserve">
+    <value>PLC アドレス</value>
+  </data>
+  <data name="Ux_DeviceWizardStepBasic" xml:space="preserve">
+    <value>基本情報</value>
+  </data>
+  <data name="Ux_DeviceWizardStepReview" xml:space="preserve">
+    <value>確認</value>
+  </data>
+  <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
+    <value>目標サイクルは OEE 性能率計算に使用します（ミリ秒）。</value>
+  </data>
+  <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
+    <value>目標サイクルは 0 より大きくする必要があります</value>
+  </data>
+  <data name="Ux_DeviceWizardTitle" xml:space="preserve">
+    <value>新規設備ウィザード</value>
+  </data>
+  <data name="Ux_QueryFinished" xml:space="preserve">
+    <value>照会完了、{0} 件</value>
+  </data>
+  <data name="Ux_Querying" xml:space="preserve">
+    <value>照会中…</value>
+  </data>
+  <data name="Ux_ResetQuery" xml:space="preserve">
+    <value>検索条件をリセットしました</value>
+  </data>
+  <data name="Ux_StatusSaved" xml:space="preserve">
+    <value>保存済み</value>
+  </data>
+  <data name="Ux_StatusSaving" xml:space="preserve">
+    <value>保存中…</value>
+  </data>
+  <data name="Ux_StatusUnsaved" xml:space="preserve">
+    <value>未保存の変更があります</value>
+  </data>
+  <data name="Validator_AlarmKind" xml:space="preserve">
+    <value>アラーム</value>
+  </data>
+  <data name="Validator_AlarmParametersNegative" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」のヒステリシスまたは確認秒数は負にできません</value>
+  </data>
+  <data name="Validator_ChildIdentityInvalid" xml:space="preserve">
+    <value>設備「{0}」の{1}識別子が無効です</value>
+  </data>
+  <data name="Validator_CounterAlarmKind" xml:space="preserve">
+    <value>カウンタアラーム</value>
+  </data>
+  <data name="Validator_DefectKind" xml:space="preserve">
+    <value>不良</value>
+  </data>
+  <data name="Validator_DeviceIdDuplicate" xml:space="preserve">
+    <value>設備 ID「{0}」が重複しています</value>
+  </data>
+  <data name="Validator_DeviceIdRequired" xml:space="preserve">
+    <value>設備「{0}」に設備 ID がありません</value>
+  </data>
+  <data name="Validator_DuplicateChildId" xml:space="preserve">
+    <value>設備「{0}」の{1} ID が重複しています</value>
+  </data>
+  <data name="Validator_DuplicateSourceName" xml:space="preserve">
+    <value>データソース名「{0}」が重複しています</value>
+  </data>
+  <data name="Validator_DuplicateValueName" xml:space="preserve">
+    <value>データソース「{0}」の値項目名「{1}」が重複しています</value>
+  </data>
+  <data name="Validator_EmptyChildName" xml:space="preserve">
+    <value>設備「{0}」の{1}名が空です</value>
+  </data>
+  <data name="Validator_EmptySourceName" xml:space="preserve">
+    <value>設備「{0}」に名前の空のデータソースがあります</value>
+  </data>
+  <data name="Validator_EmptyValueId" xml:space="preserve">
+    <value>データソース「{0}」に ID の空の値項目があります</value>
+  </data>
+  <data name="Validator_EmptyValueName" xml:space="preserve">
+    <value>データソース「{0}」に名前の空の値項目があります</value>
+  </data>
+  <data name="Validator_EnumMappingInvalid" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の列挙マッピングが無効です</value>
+  </data>
+  <data name="Validator_FloatLimitsInvalid" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の浮動小数上下限が無効です</value>
+  </data>
+  <data name="Validator_LimitExpectedConflict" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」で上下限と期待値を同時に設定できません</value>
+  </data>
+  <data name="Validator_LimitOrderInvalid" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の上限は下限より大きくする必要があります</value>
+  </data>
+  <data name="Validator_SourceConfirmSecondsNegative" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の確認秒数は負にできません</value>
+  </data>
+  <data name="Validator_SourceDuplicateAddress" xml:space="preserve">
+    <value>データソース「{0}」に同一収集アドレス「{2}」を使う値項目が {1} 件あります</value>
+  </data>
+  <data name="Validator_SourceHysteresisNegative" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」のヒステリシスは負にできません</value>
+  </data>
+  <data name="Validator_SourceIdentityInvalid" xml:space="preserve">
+    <value>データソース「{0}」の識別子が無効です</value>
+  </data>
+  <data name="Validator_SourceNeedsValue" xml:space="preserve">
+    <value>データソース「{0}」には値項目が必要です</value>
+  </data>
+  <data name="Validator_SourceTriggerAddressInvalid" xml:space="preserve">
+    <value>データソース「{0}」のトリガーアドレスが無効です</value>
+  </data>
+  <data name="Validator_SourceValueAddressInvalid" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の収集アドレスが無効です</value>
+  </data>
+  <data name="Validator_SourceValueAddressMissing" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」に収集アドレスがありません</value>
+  </data>
+  <data name="Validator_SourceValueAddressSameAsTrigger" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の収集アドレスはトリガーアドレスと同じにできません</value>
+  </data>
+  <data name="Validator_StringLengthInvalid" xml:space="preserve">
+    <value>データソース「{0}」値項目「{1}」の文字列長が無効です（1-1024）</value>
+  </data>
+  <data name="Validator_TriggerAckConflict" xml:space="preserve">
+    <value>データソース「{0}」のトリガー値と確認値は同じにできません</value>
   </data>
 </root>

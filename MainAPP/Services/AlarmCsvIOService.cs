@@ -17,7 +17,8 @@ namespace MainAPP.Services;
 /// <summary>
 /// 报警 CSV 导入/导出记录（用于 CsvHelper 序列化的 DTO）。
 /// 仅包含用户可编辑的标量字段：Id/DeviceId 由导入逻辑注入，不在 CSV 中暴露。
-/// Level 用英文枚举名（Low/Medium/High），Excel 输入友好且无编码问题。
+/// Level 导出为当前界面语言；导入同时接受四种界面语言和英文枚举名。
+/// NameEn/NameJa/NamePt 为可选多语言列，缺省（空）时界面回退显示 Name。
 /// </summary>
 public sealed class AlarmCsvRecord
 {
@@ -25,6 +26,23 @@ public sealed class AlarmCsvRecord
     public string PlcAddress { get; set; } = string.Empty;
     public string Level { get; set; } = "Medium";
     public string Description { get; set; } = string.Empty;
+    public string? NameEn { get; set; }
+    public string? NameJa { get; set; }
+    public string? NamePt { get; set; }
+}
+
+internal sealed class AlarmCsvRecordMap : ClassMap<AlarmCsvRecord>
+{
+    public AlarmCsvRecordMap()
+    {
+        Map(record => record.Name).Name(CsvLocalization.HeaderAliases("Csv_Alarm_Name", nameof(AlarmCsvRecord.Name)));
+        Map(record => record.PlcAddress).Name(CsvLocalization.HeaderAliases("Csv_Alarm_PlcAddress", nameof(AlarmCsvRecord.PlcAddress)));
+        Map(record => record.Level).Name(CsvLocalization.HeaderAliases("Csv_Alarm_Level", nameof(AlarmCsvRecord.Level)));
+        Map(record => record.Description).Name(CsvLocalization.HeaderAliases("Csv_Alarm_Description", nameof(AlarmCsvRecord.Description)));
+        Map(record => record.NameEn).Name(CsvLocalization.HeaderAliases("Csv_Alarm_NameEn", nameof(AlarmCsvRecord.NameEn))).Optional();
+        Map(record => record.NameJa).Name(CsvLocalization.HeaderAliases("Csv_Alarm_NameJa", nameof(AlarmCsvRecord.NameJa))).Optional();
+        Map(record => record.NamePt).Name(CsvLocalization.HeaderAliases("Csv_Alarm_NamePt", nameof(AlarmCsvRecord.NamePt))).Optional();
+    }
 }
 
 /// <summary>
@@ -50,7 +68,7 @@ public class AlarmCsvIOService(
     IPlcAddressCodecResolver? codecResolver = null,
     IPlcRuntimeProfileProvider? profileProvider = null)
 {
-    // 文件对话框过滤器（三语资源，与 DefectCsvIOService/CounterAlarmCsvIOService 同源 M310）
+    // 文件对话框过滤器（本地化资源，与其它 CSV 服务同源 M310）
     private static string CsvFileFilter => Strings.M310;
 
     private static readonly CsvConfiguration CsvConfig = new(CultureInfo.InvariantCulture)
@@ -81,28 +99,13 @@ public class AlarmCsvIOService(
     /// <returns>是否导出成功（用户取消或写盘失败返回 false）。</returns>
     public bool ExportAlarms(Device device)
     {
-        var defaultFileName = $"报警_{device.Name}_{System.DateTime.Now:yyyyMMddHHmm}.csv";
-        var path = _dialog.ShowSaveFileDialog(Strings.M222, defaultFileName, CsvFileFilter);
+        var path = PickExportPath(device);
         if (string.IsNullOrEmpty(path)) return false;
 
         try
         {
-            var records = device.Alarms
-                .Select(a => new AlarmCsvRecord
-                {
-                    Name = a.Name,
-                    PlcAddress = a.PlcAddress,
-                    Level = a.Level.ToString(),
-                    Description = a.Description,
-                })
-                .ToList();
-
-            // UTF-8 with BOM：Excel 打开中文不乱码（与 HistoryQuery ExportAsync 一致）
-            using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
-            using var csv = new CsvWriter(writer, CsvConfig);
-            csv.WriteRecords(records);
-
-            _dialog.NotifySuccess(string.Format(Strings.F107, records.Count, Path.GetFileName(path)));
+            var count = ExportAlarmsToPath(device, path);
+            _dialog.NotifySuccess(string.Format(Strings.F107, count, Path.GetFileName(path)));
             return true;
         }
         catch (Exception ex)
@@ -110,6 +113,43 @@ public class AlarmCsvIOService(
             _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
             return false;
         }
+    }
+
+    /// <summary>仅在 UI 线程弹出导出文件对话框。</summary>
+    public string? PickExportPath(Device device)
+    {
+        var defaultFileName = string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Csv_Alarm_FileName,
+            device.Name,
+            System.DateTime.Now);
+        return _dialog.ShowSaveFileDialog(Strings.M222, defaultFileName, CsvFileFilter);
+    }
+
+    /// <summary>
+    /// 将报警写入指定路径。只执行数据转换和文件 IO，不访问 WPF 对话框或通知，
+    /// 可在线程池执行；返回导出的记录数。
+    /// </summary>
+    public int ExportAlarmsToPath(Device device, string path)
+    {
+        var records = device.Alarms
+            .Select(a => new AlarmCsvRecord
+            {
+                Name = a.Name,
+                PlcAddress = a.PlcAddress,
+                Level = CsvLocalization.AlarmLevelText(a.Level),
+                Description = a.Description,
+                NameEn = a.NameEn,
+                NameJa = a.NameJa,
+                NamePt = a.NamePt,
+            })
+            .ToList();
+
+        using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
+        using var csv = new CsvWriter(writer, CsvConfig);
+        csv.Context.RegisterClassMap<AlarmCsvRecordMap>();
+        csv.WriteRecords(records);
+        return records.Count;
     }
 
     /// <summary>
@@ -147,6 +187,7 @@ public class AlarmCsvIOService(
         {
             using var reader = new StreamReader(path, Encoding.UTF8);
             using var csv = new CsvReader(reader, CsvConfig);
+            csv.Context.RegisterClassMap<AlarmCsvRecordMap>();
             var records = csv.GetRecords<AlarmCsvRecord>().ToList();
 
             if (records.Count == 0)
@@ -185,8 +226,8 @@ public class AlarmCsvIOService(
                     continue;
                 }
 
-                // 级别枚举解析（不区分大小写，容错 Excel 小写输入）
-                if (!Enum.TryParse<AlarmLevel>(rec.Level, ignoreCase: true, out var level))
+                // 接受当前语言、其它内置语言和旧版英文枚举名。
+                if (!CsvLocalization.TryParseAlarmLevel(rec.Level, out var level))
                 {
                     result.Errors.Add(string.Format(Strings.F185, rowNum, rec.Level));
                     continue;
@@ -198,6 +239,9 @@ public class AlarmCsvIOService(
                     PlcAddress = rec.PlcAddress.Trim(),
                     Level = level,
                     Description = rec.Description ?? string.Empty,
+                    NameEn = string.IsNullOrWhiteSpace(rec.NameEn) ? null : rec.NameEn.Trim(),
+                    NameJa = string.IsNullOrWhiteSpace(rec.NameJa) ? null : rec.NameJa.Trim(),
+                    NamePt = string.IsNullOrWhiteSpace(rec.NamePt) ? null : rec.NamePt.Trim(),
                     // DeviceId 由调用方在 ApplyImportedAlarms 中注入
                 });
             }
@@ -249,9 +293,13 @@ public class AlarmCsvIOService(
                 existing.Name = alarm.Name;
                 existing.Level = alarm.Level;
                 existing.Description = alarm.Description;
+                existing.NameEn = alarm.NameEn;
+                existing.NameJa = alarm.NameJa;
+                existing.NamePt = alarm.NamePt;
             }
             else
             {
+                alarm.Id = $"{device.Id}_{alarm.PlcAddress}";
                 device.Alarms.Add(alarm);
                 existingByCanonicalAddress[canonicalAddress] = alarm;
             }
