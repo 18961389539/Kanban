@@ -54,7 +54,7 @@
                               ItemTemplate="{StaticResource LineDeviceCardTemplate}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel ItemWidth="420" />
+                            <WrapPanel ItemWidth="460" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>

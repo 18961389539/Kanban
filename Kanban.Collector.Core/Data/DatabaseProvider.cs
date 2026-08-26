@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Serilog;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 
 namespace Kanban.Collector.Core.Data;
 
@@ -172,6 +173,38 @@ public class DatabaseProvider(AppSettings appSettings)
         destination.Open();
         source.BackupDatabase(destination);
         Log.Information("数据库迁移前备份完成 {Database} -> {Backup}", databasePath, backupPath);
+        PruneOldBackups(databasePath);
+    }
+
+    /// <summary>
+    /// 仅保留每个数据库最近 N 个迁移前备份，删除更早的 <c>*.pre-migration-*.bak</c>。
+    /// 防止启动期反复备份（如进程崩溃重启循环）导致磁盘被撑满。
+    /// 备份文件名含可字典序排序的 UTC 时间戳，按文件名降序取最新 N 个。
+    /// </summary>
+    private static void PruneOldBackups(string databasePath, int keep = 3)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(databasePath) ?? ".";
+            var prefix = Path.GetFileName(databasePath) + ".pre-migration-";
+            var staleBackups = Directory
+                .EnumerateFiles(directory, prefix + "*.bak")
+                .Select(p => Path.GetFileName(p)!)
+                .OrderByDescending(name => name)
+                .Skip(keep)
+                .Select(name => Path.Combine(directory, name))
+                .ToList();
+            foreach (var stale in staleBackups)
+            {
+                File.Delete(stale);
+                Log.Information("已清理过期迁移备份 {Backup}", stale);
+            }
+        }
+        catch (Exception ex)
+        {
+            // 清理失败不应阻断启动；仅记录警告。
+            Log.Warning(ex, "清理过期迁移备份失败（不影响启动）{Database}", databasePath);
+        }
     }
 
     private static void ApplyProductionLogLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)

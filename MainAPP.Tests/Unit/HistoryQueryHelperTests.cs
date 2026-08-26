@@ -140,6 +140,49 @@ public class HistoryQueryHelperTests
         Assert.Equal(5, ng);
     }
 
+    [Fact]
+    public void SumWindowProduction_DataGap_NotPollutedByOlderShiftInstance()
+    {
+        // 回归（2026-08-26 P1）：7 天等长窗口 + 数据缺口下，旧实现 FindBaselineBeforeWindow
+        // 会拿"更早班次实例"的累计值（171）当基线，Math.Max(0, 130-171)=0 把产量砍没。
+        // 修复后改为全量逐条差分：累计回落 171→100 即切组，窗口内实例自差 = 130-100。
+        var window = new List<ProductionLog>
+        {
+            Log("d1", "白班", 100, 0, System.DateTime.Today.AddHours(3)), // 新实例起点（较 5 天前回落 → 切组）
+            Log("d1", "白班", 130, 5, System.DateTime.Today.AddHours(4)),
+        };
+        var baseline = new List<ProductionLog>
+        {
+            Log("d1", "白班", 171, 2, System.DateTime.Today.AddDays(-5).AddHours(12)), // 更早班次实例，非同一实例
+        };
+
+        var (ok, ng) = HistoryQueryHelper.SumWindowProduction(window, baseline, System.DateTime.Today.AddHours(2));
+
+        Assert.Equal(30, ok); // 不被 171 污染
+        Assert.Equal(5, ng);
+    }
+
+    [Fact]
+    public void SumWindowProduction_CrossWindowInstance_UsesBeforePartAsBase()
+    {
+        // 窗口起点无快照（首条 > from）、实例从窗口前延续：基线 = 窗口前同实例末条（90），
+        // 窗口内产量 = 150 − 90 = 60（跨窗口边界的增量由窗口前日志承接，但不算窗口外部分）。
+        var window = new List<ProductionLog>
+        {
+            Log("d1", "白班", 120, 2, System.DateTime.Today.AddHours(10.5)),
+            Log("d1", "白班", 150, 3, System.DateTime.Today.AddHours(11)),
+        };
+        var baseline = new List<ProductionLog>
+        {
+            Log("d1", "白班", 90, 1, System.DateTime.Today.AddHours(9.5)),
+        };
+
+        var (ok, ng) = HistoryQueryHelper.SumWindowProduction(window, baseline, System.DateTime.Today.AddHours(10));
+
+        Assert.Equal(60, ok);
+        Assert.Equal(2, ng);
+    }
+
     // ──────────── FindBaselineBeforeWindow ────────────
 
     [Fact]

@@ -49,9 +49,12 @@ public static class ProductionAnalysis
 
     /// <summary>
     /// 窗口内产量（窗口差分）：Ok/NG 存的是「班次内累计值」，窗口内产量 = 窗口末条累计 − 窗口起点同班次实例的累计。
-    /// 基准候选应为窗口起点前 [windowFrom-1天, windowFrom) 全部班次快照（不按班次过滤，靠班次名变化识别同一实例）。
-    /// 性能：基准预排序一次，FindBaselineBeforeWindow 走预排序列表 O(1) 判定——大窗口下实例组可达数万个，
-    /// 若每次调用内部排序（WPF 小数据无感）会退化为数万 × O(n log n)，WASM 上分钟级卡死。
+    /// 修复 2026-08-26（与 WPF HistoryQueryHelper.SumWindowProduction 同步，P1）：统一为「实例基线差分」——
+    /// 合并窗口内 + 窗口前日志按班次实例分组（累计回落/班次切换即切组，组内窗口前日志天然属于同一实例），
+    /// 每实例基线 = 窗口起点快照 或 窗口前同实例末条 或 实例首条，产量 = 实例窗口内末条 − 基线。
+    /// 旧实现取窗口前同班次最近快照作基线（<see cref="FindBaselineBeforeWindow"/>），基线池仅覆盖
+    /// [from-1天, from)，看不到窗口内后续班次切换——长窗口/数据缺口下会把更早班次实例的累计值误作基线，
+    /// 产量被砍 0 或虚高。
     /// </summary>
     public static (int Ok, int Ng) SumWindowProduction(
         List<ProductionLogDto> logsInWindow,
@@ -59,35 +62,27 @@ public static class ProductionAnalysis
         DateTime windowFrom)
     {
         if (logsInWindow.Count == 0) return (0, 0);
-        var baselineSorted = baselineCandidates.OrderByDescending(p => p.Timestamp).ToList();
+        var all = new List<ProductionLogDto>(logsInWindow.Count + baselineCandidates.Count);
+        all.AddRange(logsInWindow);
+        all.AddRange(baselineCandidates);
         int ok = 0, ng = 0;
-        foreach (var g in SplitShiftInstances(logsInWindow))
+        foreach (var group in SplitShiftInstances(all.OrderBy(p => p.Timestamp).ToList()))
         {
-            var last = g.MaxBy(p => p.Timestamp)!;
-            int okBase, ngBase;
-            if (g.First().Timestamp <= windowFrom)
+            var winPart = group.Where(p => p.Timestamp >= windowFrom).ToList();
+            if (winPart.Count == 0) continue;
+            var last = winPart[^1];
+            ProductionLogDto baseRec;
+            if (winPart[0].Timestamp <= windowFrom)
             {
-                // 窗口起点恰有快照：直接以其累计值作基准
-                okBase = g.First().OkProduction;
-                ngBase = g.First().NgProduction;
+                baseRec = winPart[0]; // 窗口起点恰有快照 → 其累计值即基线
             }
             else
             {
-                // 窗口起点无快照：取窗口前最近且属同一班次实例的快照；缺失则回退实例首条（只统计窗口可见部分）
-                var baseRec = FindBaselineBeforeWindow(baselineSorted, g.First().ShiftName);
-                if (baseRec == null)
-                {
-                    okBase = g.First().OkProduction;
-                    ngBase = g.First().NgProduction;
-                }
-                else
-                {
-                    okBase = baseRec.OkProduction;
-                    ngBase = baseRec.NgProduction;
-                }
+                var before = group.LastOrDefault(p => p.Timestamp < windowFrom);
+                baseRec = before ?? winPart[0]; // 窗口前同实例末条；无则回退实例首条（只统计窗口可见部分）
             }
-            ok += Math.Max(0, last.OkProduction - okBase);
-            ng += Math.Max(0, last.NgProduction - ngBase);
+            ok += Math.Max(0, last.OkProduction - baseRec.OkProduction);
+            ng += Math.Max(0, last.NgProduction - baseRec.NgProduction);
         }
         return (ok, ng);
     }

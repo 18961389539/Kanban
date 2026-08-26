@@ -14,7 +14,7 @@
 | 简体中文 | [MainAPP用户使用手册.md](./MainAPP用户使用手册.md) |
 | English | [MainAPP_User_Manual_EN.md](./MainAPP_User_Manual_EN.md) |
 
-> 界面为日本語 / Português 时，F1 仍打开中文或英文手册（见手册附录 B.2）。
+> 界面语言为 English 时按 F1 打开英文手册，其他语言（含日本語 / Português）打开中文手册（见手册附录 B.2）。
 
 ## 截图列表 / Screenshots
 

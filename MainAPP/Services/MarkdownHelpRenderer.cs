@@ -30,6 +30,10 @@ internal static class MarkdownHelpRenderer
         var codeLang = string.Empty;
         var codeBuilder = new StringBuilder();
         var inList = false;
+        var inTable = false;
+        var tableHeaderPending = false;
+        var inQuote = false;
+        var quoteBuilder = new StringBuilder();
 
         void CloseList()
         {
@@ -38,9 +42,31 @@ internal static class MarkdownHelpRenderer
             inList = false;
         }
 
+        void CloseQuote()
+        {
+            if (!inQuote) return;
+            sb.Append("<blockquote>").Append(quoteBuilder).AppendLine("</blockquote>");
+            inQuote = false;
+            quoteBuilder.Clear();
+        }
+
         for (var i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
+
+            // 离开表格（遇到非表格行）时闭合 <table>，避免表格吞掉后续内容
+            if (inTable && !line.StartsWith('|'))
+            {
+                sb.AppendLine("</table>");
+                inTable = false;
+                tableHeaderPending = false;
+            }
+
+            // 离开引用块（遇到非引用行）时闭合 <blockquote>
+            if (inQuote && !line.StartsWith('>'))
+            {
+                CloseQuote();
+            }
 
             if (line.StartsWith("```", StringComparison.Ordinal))
             {
@@ -75,6 +101,7 @@ internal static class MarkdownHelpRenderer
             if (string.IsNullOrWhiteSpace(line))
             {
                 CloseList();
+                CloseQuote();
                 continue;
             }
 
@@ -83,16 +110,30 @@ internal static class MarkdownHelpRenderer
                 CloseList();
                 var level = line.TakeWhile(c => c == '#').Count();
                 level = Math.Clamp(level, 1, 4);
-                var text = InlineFormat(line[level..].Trim(), manualDir, appBaseDirectory);
-                sb.Append("<h").Append(level).Append('>').Append(text).Append("</h").Append(level).AppendLine(">");
+                var rawTitle = line[level..].Trim();
+                var text = InlineFormat(rawTitle, manualDir, appBaseDirectory);
+                var anchor = Slugify(rawTitle);
+                if (anchor.Length > 0)
+                    sb.Append("<h").Append(level).Append(" id=\"").Append(anchor).Append("\">").Append(text).Append("</h").Append(level).AppendLine(">");
+                else
+                    sb.Append("<h").Append(level).Append('>').Append(text).Append("</h").Append(level).AppendLine(">");
                 continue;
             }
 
-            if (line.StartsWith("> "))
+            if (line.StartsWith('>'))
             {
                 CloseList();
-                var text = InlineFormat(line[2..].Trim(), manualDir, appBaseDirectory);
-                sb.Append("<blockquote>").Append(text).AppendLine("</blockquote>");
+                if (!inQuote)
+                {
+                    quoteBuilder.Clear();
+                    inQuote = true;
+                }
+                else
+                {
+                    quoteBuilder.Append("<br/>");
+                }
+                var text = InlineFormat(line[1..].Trim(), manualDir, appBaseDirectory);
+                quoteBuilder.Append(text);
                 continue;
             }
 
@@ -112,12 +153,25 @@ internal static class MarkdownHelpRenderer
             if (line.StartsWith('|'))
             {
                 CloseList();
-                // 跳过 Markdown 表格分隔行
-                if (line.Contains("---")) continue;
+                if (!inTable)
+                {
+                    sb.AppendLine("<table>");
+                    inTable = true;
+                    tableHeaderPending = true;
+                }
+                // 跳过 Markdown 表格分隔行（| --- | --- |）
+                if (IsTableSeparatorRow(line))
+                {
+                    tableHeaderPending = false;
+                    continue;
+                }
                 var cells = line.Trim('|').Split('|', StringSplitOptions.TrimEntries);
-                sb.Append("<p class=\"table-row\">")
-                    .Append(string.Join(" · ", cells.Select(c => InlineFormat(c, manualDir, appBaseDirectory))))
-                    .AppendLine("</p>");
+                var tag = tableHeaderPending ? "th" : "td";
+                tableHeaderPending = false;
+                sb.Append("<tr>");
+                foreach (var cell in cells)
+                    sb.Append('<').Append(tag).Append('>').Append(InlineFormat(cell, manualDir, appBaseDirectory)).Append("</").Append(tag).Append('>');
+                sb.AppendLine("</tr>");
                 continue;
             }
 
@@ -127,6 +181,7 @@ internal static class MarkdownHelpRenderer
         }
 
         CloseList();
+        CloseQuote();
         if (inCode)
         {
             sb.Append("<pre class=\"code\">")
@@ -144,18 +199,69 @@ internal static class MarkdownHelpRenderer
         text = Regex.Replace(text, @"`([^`]+)`", "<code>$1</code>");
         text = ImageRegex.Replace(text, match =>
         {
-            var alt = WebUtility.HtmlEncode(match.Groups["alt"].Value);
+            // text 整体已 HtmlEncode，这里拿到的 alt/src 已经是编码后的值，直接复用，避免二次编码。
+            var alt = match.Groups["alt"].Value;
             var src = ResolveImageUrl(match.Groups["src"].Value, manualDir, appBaseDirectory);
             return $"<img alt=\"{alt}\" src=\"{src}\" />";
         });
         text = Regex.Replace(text, @"\[(?<label>[^\]]+)\]\((?<url>[^)]+)\)",
             m =>
             {
+                // url 同样已是编码后的值，直接复用。
                 var label = m.Groups["label"].Value;
-                var url = WebUtility.HtmlEncode(m.Groups["url"].Value);
+                var url = m.Groups["url"].Value;
                 return $"<a href=\"{url}\">{label}</a>";
             });
         return text;
+    }
+
+    /// <summary>
+    /// 判断是否为 Markdown 表格分隔行（只含 <c>|</c>、<c>-</c>、<c>:</c>、空格）。仅按整行内容判断，
+    /// 避免把含 "---" 的正常单元格内容误判为分隔行。
+    /// </summary>
+    private static bool IsTableSeparatorRow(string line)
+    {
+        var content = line.Trim('|');
+        if (content.Length == 0) return false;
+        var hasDash = false;
+        foreach (var ch in content)
+        {
+            if (ch is '-' or ':' or ' ')
+                hasDash |= ch == '-';
+            else
+                return false;
+        }
+        return hasDash;
+    }
+
+    /// <summary>
+    /// 生成标题锚点 id（供页内 <c>[文字](#anchor)</c> 链接跳转）。
+    /// 规则：字母转小写；字母/数字/汉字等字母类字符保留；空格与连字符转 <c>-</c>；其余标点（含全角括号、冒号、句点）移除。
+    /// 例如 "附录 B：工程师与管理员补充" → "附录-b工程师与管理员补充"，"12.7 运行模式（通用设置）" → "127-运行模式通用设置"。
+    /// </summary>
+    private static string Slugify(string text)
+    {
+        var sb = new StringBuilder();
+        var lastWasDash = false;
+        foreach (var ch in text)
+        {
+            var category = char.GetUnicodeCategory(ch);
+            if (char.IsLetterOrDigit(ch) || category == System.Globalization.UnicodeCategory.OtherLetter)
+            {
+                sb.Append(char.ToLowerInvariant(ch));
+                lastWasDash = false;
+            }
+            else if (char.IsWhiteSpace(ch) || ch is '-' or '_')
+            {
+                if (sb.Length > 0 && !lastWasDash)
+                {
+                    sb.Append('-');
+                    lastWasDash = true;
+                }
+            }
+            // 其余标点直接忽略
+        }
+        return sb.ToString().Trim('-');
     }
 
     private static string ResolveImageUrl(string src, string manualDir, string appBaseDirectory)
@@ -208,7 +314,9 @@ code { background: #111827; padding: 2px 6px; border-radius: 4px; }
 pre.code { background: #0F172A; padding: 12px 16px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
 pre.mermaid { background: #111827; color: #94A3B8; font-size: 13px; }
 a { color: #60A5FA; }
-.table-row { color: #CBD5E1; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+th, td { border: 1px solid #374151; padding: 6px 10px; font-size: 13px; text-align: left; vertical-align: top; }
+th { background: #111827; color: #F3F4F6; }
 strong { color: #F9FAFB; }
 </style>
 </head>

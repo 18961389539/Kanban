@@ -75,17 +75,17 @@
             <Style x:Key="MiniStatCell" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource RegionBrush}" />
                 <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="Padding" Value="2,3" />
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
             </Style>
             <Style x:Key="MiniStatLabel" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontSize" Value="12" />
                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
             <Style x:Key="MiniStatValue" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Consolas" />
-                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontSize" Value="16" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
@@ -177,33 +177,33 @@
                 <!--  Row 2：左右分栏 —— 左产量区 / 右 OEE 拆解（A×P×Q 三率）  -->
                 <Grid Grid.Row="2" Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.15*" />
+                        <ColumnDefinition Width="2*" />
                         <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
 
                     <!--  左栏：OK / NG / 总量 + 2×2 辅助指标  -->
-                    <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,6,0">
+                            <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K588}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource SuccessBrush}"
                                                Text="{Binding Runtime.TotalOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,6,0">
+                            <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K589}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource DangerBrush}"
                                                Text="{Binding Runtime.TotalNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F316}" />
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Column="2" Style="{StaticResource MiniStatCell}">
+                            <Border Grid.Column="2" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K590}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource PrimaryTextBrush}"

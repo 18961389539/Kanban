@@ -118,6 +118,14 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
         return buckets.ToArray();
     }
 
+    /// <summary>
+    /// 产量趋势分桶（与 <c>HistoryQueryHelper.SumWindowProduction</c> 同源统一，2026-08-26 P1）：
+    /// 按班次实例分组后做「实例基线差分」——实例窗口内首条增量 = 相对实例基线（窗口起点快照 /
+    /// 窗口前同实例末条 / 实例首条），后续条目相邻差分，各桶之和严格等于 SumWindowProduction 总产量。
+    /// 修复点：旧实现组内相邻差分会把「窗口起点快照相对窗口前快照」的增量（发生在窗口外）计入首桶，
+    /// 且组内单条取累计值（起点累计≠窗口产量），与总产量不一致。
+    /// 整窗口仅 1 条快照时按显示语义取累计值（与 OverviewViewModel 特判一致）。
+    /// </summary>
     public (int[] Ok, int[] Ng) BuildProductionDeltas(
         IReadOnlyList<ProductionLog> allLogs,
         DateTime from,
@@ -128,26 +136,49 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
         var ngDeltas = new int[buckets.Length];
         if (allLogs.Count == 0) return (okDeltas, ngDeltas);
 
+        // 整窗口仅 1 条快照：与 SumWindowProduction 调用方"单条快照 = 当前累计"显示语义一致
+        var winLogs = allLogs.Where(log => log.Timestamp >= from).ToList();
+        if (winLogs.Count == 1)
+        {
+            var bucket = FindBucketIndex(buckets, winLogs[0].Timestamp, bucketSize);
+            if (bucket >= 0 && bucket < buckets.Length)
+            {
+                okDeltas[bucket] = Math.Max(0, winLogs[0].OkProduction);
+                ngDeltas[bucket] = Math.Max(0, winLogs[0].NgProduction);
+            }
+            return (okDeltas, ngDeltas);
+        }
+
         var groups = HistoryQueryHelper.SplitShiftInstances(
             allLogs.OrderBy(log => log.Timestamp).ToList());
         foreach (var group in groups)
         {
+            var winPart = group.Where(log => log.Timestamp >= from).ToList();
+            if (winPart.Count == 0) continue;
+            var baseRec = HistoryQueryHelper.ResolveInstanceBase(group, winPart, from);
             for (var index = 0; index < group.Count; index++)
             {
                 var current = group[index];
                 if (current.Timestamp < from) continue;
-
-                var previous = index > 0 ? group[index - 1] : null;
-                var okDelta = previous == null
-                    ? group.Count == 1 ? current.OkProduction : 0
-                    : Math.Max(0, current.OkProduction - previous.OkProduction);
-                var ngDelta = previous == null
-                    ? group.Count == 1 ? current.NgProduction : 0
-                    : Math.Max(0, current.NgProduction - previous.NgProduction);
+                int okDelta, ngDelta;
+                if (current == winPart[0])
+                {
+                    // 实例窗口内首条：相对实例基线（跨窗口边界增量不再计入）
+                    okDelta = Math.Max(0, current.OkProduction - baseRec.OkProduction);
+                    ngDelta = Math.Max(0, current.NgProduction - baseRec.NgProduction);
+                }
+                else
+                {
+                    var previous = group[index - 1];
+                    okDelta = Math.Max(0, current.OkProduction - previous.OkProduction);
+                    ngDelta = Math.Max(0, current.NgProduction - previous.NgProduction);
+                }
                 var bucket = FindBucketIndex(buckets, current.Timestamp, bucketSize);
-                if (bucket < 0 || bucket >= buckets.Length) continue;
-                okDeltas[bucket] += Math.Max(0, okDelta);
-                ngDeltas[bucket] += Math.Max(0, ngDelta);
+                if (bucket >= 0 && bucket < buckets.Length)
+                {
+                    okDeltas[bucket] += okDelta;
+                    ngDeltas[bucket] += ngDelta;
+                }
             }
         }
         return (okDeltas, ngDeltas);

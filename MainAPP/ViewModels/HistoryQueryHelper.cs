@@ -91,8 +91,14 @@ internal static class HistoryQueryHelper
     /// 若直接取末条累计（旧实现），非整班次子集窗口下分子覆盖整个班次、分母只算窗口，性能率被高估，与主页 OEE 对不上。
     /// </para>
     /// <para>
-    /// <paramref name="baselineCandidates"/> 应为窗口起点之前（<c>[windowFrom-1天, windowFrom)</c>）按时间倒序的「全部班次」快照
-    /// （不按班次过滤，以便通过班次名变化识别「同一班次实例」，避免把前一天同名班次误当基准）。
+    /// 修复 2026-08-26（P1，与产量趋势图 BuildProductionDeltas 同源统一）：
+    /// 旧实现用 <see cref="FindBaselineBeforeWindow"/> 在 [from-1天, from) 里找「最近同班次快照」作基线，
+    /// 但看不到窗口内后续班次切换——7 天等长窗口/数据缺口下会把更早班次实例的累计值误作基线，
+    /// <c>Math.Max(0, 末条 − 基线)</c> 把产量砍成 0 或混入旧累计虚高；趋势图侧则把「窗口起点快照相对
+    /// 窗口前快照」的增量（发生在窗口外）计入首桶。两侧口径互不一致。
+    /// 现统一为「实例基线差分」：合并窗口内 + 窗口前日志按班次实例分组（累计回落/班次切换即切组，
+    /// 组内窗口前日志天然属于同一实例），每实例基线 = 窗口起点快照 或 窗口前同实例末条 或 实例首条，
+    /// 产量 = 实例窗口内末条 − 基线。总产量与趋势图各桶之和严格相等，且窗口外增量不再计入。
     /// </para>
     /// </summary>
     public static (int Ok, int Ng) SumWindowProduction(
@@ -101,40 +107,40 @@ internal static class HistoryQueryHelper
         DateTime windowFrom)
     {
         if (logsInWindow.Count == 0) return (0, 0);
-        var groups = SplitShiftInstances(logsInWindow);
+        var all = new List<ProductionLog>(logsInWindow.Count + baselineCandidates.Count);
+        all.AddRange(logsInWindow);
+        all.AddRange(baselineCandidates);
         int ok = 0, ng = 0;
-        foreach (var g in groups)
+        foreach (var group in SplitShiftInstances(all.OrderBy(log => log.Timestamp).ToList()))
         {
-            var last = g.OrderByDescending(p => p.Timestamp).First();
-            int okBase, ngBase;
-            if (g.First().Timestamp <= windowFrom)
-            {
-                // 窗口起点恰有快照：直接以该快照累计值作基准（= 累计值 @ windowFrom）
-                okBase = g.First().OkProduction;
-                ngBase = g.First().NgProduction;
-            }
-            else
-            {
-                // 窗口起点无快照：取窗口前最近、且属于同一班次实例的快照累计值
-                var baseRec = FindBaselineBeforeWindow(baselineCandidates, g.First().ShiftName);
-                if (baseRec == null)
-                {
-                    // 基准缺失：窗口前无同班次实例快照（数据缺失或查询窗口从班次中段开始且无前置历史）。
-                    // 旧实现记 0 导致整班次产量被算进窗口、性能率虚高；改为回退到班次实例内首条快照累计值，
-                    // 即只统计窗口可见部分，与窗口差分本意一致。
-                    okBase = g.First().OkProduction;
-                    ngBase = g.First().NgProduction;
-                }
-                else
-                {
-                    okBase = baseRec.OkProduction;
-                    ngBase = baseRec.NgProduction;
-                }
-            }
-            ok += Math.Max(0, last.OkProduction - okBase);
-            ng += Math.Max(0, last.NgProduction - ngBase);
+            var winPart = group.Where(log => log.Timestamp >= windowFrom).ToList();
+            if (winPart.Count == 0) continue;
+            var last = winPart[^1];
+            var baseRec = ResolveInstanceBase(group, winPart, windowFrom);
+            ok += Math.Max(0, last.OkProduction - baseRec.OkProduction);
+            ng += Math.Max(0, last.NgProduction - baseRec.NgProduction);
         }
         return (ok, ng);
+    }
+
+    /// <summary>
+    /// 解析班次实例的窗口基线（与 <c>ProductionReviewMetricsService.BuildProductionDeltas</c> 共用，保证两侧严格一致）：
+    /// <list type="bullet">
+    /// <item>窗口起点恰有快照（实例窗口内首条时间 ≤ from）→ 该快照累计值（窗口起点即累计基线）；</item>
+    /// <item>窗口起点无快照但实例从窗口前延续（组内存在 &lt; from 的同实例日志）→ 窗口前同实例末条累计值；</item>
+    /// <item>无基线（窗口前无同实例数据）→ 实例窗口内首条累计值（只统计窗口可见部分）。</item>
+    /// </list>
+    /// <paramref name="group"/> 为 <see cref="SplitShiftInstances"/> 切分后的单实例组（含窗口前日志），
+    /// <paramref name="winPart"/> 为其 Timestamp ≥ <paramref name="windowFrom"/> 的子序列（非空、升序）。
+    /// </summary>
+    internal static ProductionLog ResolveInstanceBase(
+        List<ProductionLog> group,
+        List<ProductionLog> winPart,
+        DateTime windowFrom)
+    {
+        if (winPart[0].Timestamp <= windowFrom) return winPart[0];
+        var before = group.LastOrDefault(log => log.Timestamp < windowFrom);
+        return before ?? winPart[0];
     }
 
     /// <summary>

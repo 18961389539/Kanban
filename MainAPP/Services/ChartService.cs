@@ -134,11 +134,20 @@ public static class ChartService
         model.Axes.Add(CreateLinearAxis(Strings.M190, AxisPosition.Left, "F2"));
         model.Axes.Add(CreateDateTimeAxis(Strings.K037));
 
+        // 不透明绿/红填充：堆叠面积图要求上下两块颜色清晰分开。
+        // OxyPlot AreaSeries 没有 IsStacked，且 ConstantY2 是单常量无法做"逐点 baseline"堆叠，
+        // 半透明（alpha=120）会让 NG 红与 OK 绿大面积重叠混合成棕色。
+        // 解法：两个 series 都用不透明实色，且 OK 后添加（z-order 在上）——
+        // OK 不透明绿覆盖 NG 在 0~ok 区域的红，NG 红仅在 ok~(ok+ng) 顶部可见。
+        // 视觉：绿底 + 顶部红条（图例自动按 series 顺序渲染）。
+        var okFill = OxyColor.FromRgb(0x34, 0xD3, 0x99);  // Run 绿（不透明）
+        var ngFill = OxyColor.FromRgb(0xF8, 0x71, 0x71);  // Alarm 红（不透明）
+
         var okSeries = new AreaSeries
         {
             Title = Strings.M191,
             Color = _runColor,
-            Fill = _okFill,
+            Fill = okFill,
             StrokeThickness = 1,
         };
 
@@ -146,7 +155,7 @@ public static class ChartService
         {
             Title = Strings.M192,
             Color = _alarmColor,
-            Fill = _ngFill,
+            Fill = ngFill,
             StrokeThickness = 1,
         };
 
@@ -156,22 +165,27 @@ public static class ChartService
         {
             var (time, ok, ng) = list[i];
             okSeries.Points.Add(DateTimeAxis.CreateDataPoint(time, ok));
+            // NG Y 仍手算 ok+ng 以实现视觉堆叠（顶部）；渲染层依赖 z-order 避免重叠混色。
             ngSeries.Points.Add(DateTimeAxis.CreateDataPoint(time, ok + ng));
 
             if (i % labelStep == 0)
             {
-                AddProductionLabel(model, time, ok / 2.0, ok, "OK");
-                AddProductionLabel(model, time, ok + ng / 2.0, ng, "NG");
+                // 标注颜色与柱体一致：OK 绿 / NG 红（图例、KPI 数字同源，见 ChartPalette.Run/Alarm）
+                AddProductionLabel(model, time, ok / 2.0, ok, "OK", _runColor);
+                AddProductionLabel(model, time, ok + ng / 2.0, ng, "NG", _alarmColor);
             }
         }
 
-        model.Series.Add(okSeries);
+        // z-order：NG 先添加（在下），OK 后添加（在上）——
+        // OK 不透明绿覆盖 NG 在 0~ok 区域的红，仅保留顶部 ok~(ok+ng) 红条。
+        // 图例也按此顺序渲染：NG 在前、OK 在后（图例顺序与 z-order 一致，无法分开）。
         model.Series.Add(ngSeries);
+        model.Series.Add(okSeries);
 
         return model;
     }
 
-    private static void AddProductionLabel(PlotModel model, DateTime time, double value, int amount, string prefix)
+    private static void AddProductionLabel(PlotModel model, DateTime time, double value, int amount, string prefix, OxyColor color)
     {
         if (amount <= 0) return;
 
@@ -179,7 +193,7 @@ public static class ChartService
         {
             Text = $"{prefix} {amount:N0}",
             TextPosition = DateTimeAxis.CreateDataPoint(time, value),
-            TextColor = _textColor,
+            TextColor = color,
             FontSize = 10,
             Stroke = OxyColors.Transparent,
             Background = OxyColors.Transparent,
