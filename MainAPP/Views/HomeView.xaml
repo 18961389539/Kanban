@@ -24,7 +24,7 @@
     <ScrollViewer x:Name="HomeScrollViewer"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="20"
+        <Grid Margin="16"
               MinHeight="{Binding ActualHeight, ElementName=HomeScrollViewer}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -156,7 +156,7 @@
         </Grid>
 
         <!--  ============ 第 2 行：OEE 预览 | 合格率概览 | 缺陷图表 ============  -->
-        <Grid Grid.Row="2" Margin="0,16,0,0">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />

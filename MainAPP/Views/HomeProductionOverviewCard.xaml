@@ -132,7 +132,7 @@
                         <StackPanel>
                             <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
                             <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{StaticResource PrimaryTextBrush}"
                                        Text="{Binding TargetCycleDisplay}" />
                         </StackPanel>
                     </Border>

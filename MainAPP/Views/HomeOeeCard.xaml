@@ -129,7 +129,7 @@
                                            Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
                                            FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                                           Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                                           Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
                                            Text="{Binding QualityRateDisplay}" />
                                 <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
                                            Foreground="{StaticResource ThirdlyTextBrush}"
