@@ -141,7 +141,7 @@ public class OverviewViewModelTests
         {
             DeviceId = deviceId,
             DeviceName = deviceName,
-            PreviousState = (int)DeviceStatus.Unknown,
+            PreviousState = (int)DeviceStatus.Offline,
             CurrentState = (int)DeviceStatus.Running,
             EventTime = eventTime,
         };
@@ -728,7 +728,7 @@ public class OverviewViewModelTests
             history.StatusTransitions.Add(new StatusTransitionRecord
             {
                 DeviceId = "dev-1", DeviceName = "设备1",
-                PreviousState = (int)DeviceStatus.Unknown,
+                PreviousState = (int)DeviceStatus.Offline,
                 CurrentState = (int)DeviceStatus.Running,
                 EventTime = now.AddMinutes(-90),
             });

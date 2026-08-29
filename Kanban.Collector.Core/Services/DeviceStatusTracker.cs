@@ -128,7 +128,7 @@ internal sealed class DeviceStatusTracker
         int prev;
         lock (_lock)
         {
-            shouldWrite = _prevStatusWords.TryGetValue(device.Id, out prev) && prev != (int)DeviceStatus.Unknown;
+            shouldWrite = _prevStatusWords.TryGetValue(device.Id, out prev) && prev != (int)DeviceStatus.Offline;
         }
 
         if (!shouldWrite) return;
@@ -151,7 +151,7 @@ internal sealed class DeviceStatusTracker
                     DeviceId = device.Id,
                     DeviceName = device.Name,
                     PreviousState = (Kanban.Contracts.Enums.DeviceStatus)prev,
-                    CurrentState = Kanban.Contracts.Enums.DeviceStatus.Unknown,
+                    CurrentState = Kanban.Contracts.Enums.DeviceStatus.Offline,
                     EventTime = System.DateTime.Now,
                     ShiftName = shiftName,
                 });
@@ -167,7 +167,7 @@ internal sealed class DeviceStatusTracker
         {
             // 若 UI 在锁外期间删除了该设备，跳过更新避免复活已删除的 key
             if (_prevStatusWords.ContainsKey(device.Id))
-                _prevStatusWords[device.Id] = (int)DeviceStatus.Unknown;
+                _prevStatusWords[device.Id] = (int)DeviceStatus.Offline;
         }
     }
 
@@ -187,14 +187,14 @@ internal sealed class DeviceStatusTracker
 
     /// <summary>
     /// 将状态字转换为可读文本，用于业务事件日志。
-    /// 1=运行, 2=报警, 3=待机, 0/其他=初始
+    /// 1=运行, 2=报警, 3=待机, 0/其他=离线
     /// </summary>
     private static string GetStateText(int state) => state switch
     {
         (int)DeviceStatus.Running => "运行",
         (int)DeviceStatus.Alarm => "报警",
         (int)DeviceStatus.Paused => "待机",
-        _ => "初始"
+        _ => "离线"
     };
 
     /// <summary>
@@ -206,7 +206,7 @@ internal sealed class DeviceStatusTracker
         (int)DeviceStatus.Running => status,
         (int)DeviceStatus.Alarm => status,
         (int)DeviceStatus.Paused => status,
-        _ => (int)DeviceStatus.Unknown,
+        _ => (int)DeviceStatus.Offline,
     };
 
     // ──────────── 测试访问助手 ────────────

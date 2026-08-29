@@ -187,7 +187,7 @@ public class DbContextIntegrationTests : IDisposable
             {
                 DeviceId = "dev-001",
                 DeviceName = "设备A",
-                PreviousState = (int)DeviceStatus.Unknown,
+                PreviousState = (int)DeviceStatus.Offline,
                 CurrentState = (int)DeviceStatus.Running,
                 EventTime = new DateTime(2026, 7, 26, 8, 0, 0),
                 ShiftName = "白班"
@@ -202,7 +202,7 @@ public class DbContextIntegrationTests : IDisposable
             var r = all[0];
             Assert.Equal("dev-001", r.DeviceId);
             Assert.Equal("设备A", r.DeviceName);
-            Assert.Equal((int)DeviceStatus.Unknown, r.PreviousState);
+            Assert.Equal((int)DeviceStatus.Offline, r.PreviousState);
             Assert.Equal((int)DeviceStatus.Running, r.CurrentState);
             Assert.Equal("白班", r.ShiftName);
             Assert.True(r.Id > 0);
@@ -220,7 +220,7 @@ public class DbContextIntegrationTests : IDisposable
             {
                 DeviceId = "d",
                 DeviceName = "n",
-                PreviousState = (int)DeviceStatus.Unknown,
+                PreviousState = (int)DeviceStatus.Offline,
                 CurrentState = (int)DeviceStatus.Running,
                 EventTime = DateTime.Now,
                 ShiftName = "白班"

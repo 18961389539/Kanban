@@ -87,7 +87,7 @@ public static class OeeCalculator
             case (int)DeviceStatus.Running: run += seconds; break;
             case (int)DeviceStatus.Alarm: alarm += seconds; break;
             case (int)DeviceStatus.Paused: paused += seconds; break;
-            // DeviceStatus.Unknown — 不累计任何时间
+            // DeviceStatus.Offline — 不累计任何时间
         }
     }
 }

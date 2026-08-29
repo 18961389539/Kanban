@@ -76,7 +76,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     public int RunningCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Running);
     public int AlarmCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Alarm);
     public int PausedCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Paused);
-    public int IdleCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Unknown);
+    public int IdleCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Offline);
     public int TotalOkProduction => LineDevices.Sum(d => d.Runtime.TotalOkProduction);
     public int TotalNgProduction => LineDevices.Sum(d => d.Runtime.TotalNgProduction);
     public int TotalOutput => TotalOkProduction + TotalNgProduction;

@@ -79,7 +79,7 @@ public class DeviceStatusTrackerTests
     [InlineData((int)DeviceStatus.Running, (int)DeviceStatus.Alarm)]
     [InlineData((int)DeviceStatus.Alarm, (int)DeviceStatus.Paused)]
     [InlineData((int)DeviceStatus.Paused, (int)DeviceStatus.Running)]
-    [InlineData((int)DeviceStatus.Running, (int)DeviceStatus.Unknown)]
+    [InlineData((int)DeviceStatus.Running, (int)DeviceStatus.Offline)]
     public void ReadAndUpdate_VariousTransitions_AllLogged(int from, int to)
     {
         var tracker = new DeviceStatusTracker();
@@ -155,8 +155,8 @@ public class DeviceStatusTrackerTests
 
         Assert.Equal(2, history.StatusTransitions.Count);
         Assert.Equal((int)DeviceStatus.Running, history.StatusTransitions[1].PreviousState);
-        Assert.Equal((int)DeviceStatus.Unknown, history.StatusTransitions[1].CurrentState);
-        Assert.Equal((int)DeviceStatus.Unknown, tracker.GetPrevStatusWordsSnapshot()[device.Id]);
+        Assert.Equal((int)DeviceStatus.Offline, history.StatusTransitions[1].CurrentState);
+        Assert.Equal((int)DeviceStatus.Offline, tracker.GetPrevStatusWordsSnapshot()[device.Id]);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class DeviceStatusTrackerTests
         var history = new InMemoryHistoryService();
 
         // 设备已离线（首次写入 0）
-        tracker.ReadAndUpdate(device, (int)DeviceStatus.Unknown, history, "白班", Logger);
+        tracker.ReadAndUpdate(device, (int)DeviceStatus.Offline, history, "白班", Logger);
         Assert.Single(history.StatusTransitions);
 
         tracker.LogOfflineTransition(device, history, "白班", Logger);
@@ -221,7 +221,7 @@ public class DeviceStatusTrackerTests
         tracker.ReadAndUpdate(device, (int)DeviceStatus.Running, history, "白班", Logger);
 
         Assert.Equal(3, history.StatusTransitions.Count);
-        Assert.Equal((int)DeviceStatus.Unknown, history.StatusTransitions[2].PreviousState);
+        Assert.Equal((int)DeviceStatus.Offline, history.StatusTransitions[2].PreviousState);
         Assert.Equal((int)DeviceStatus.Running, history.StatusTransitions[2].CurrentState);
     }
 

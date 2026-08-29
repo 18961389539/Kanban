@@ -39,7 +39,7 @@ public sealed class RuntimeMonitoringDiagnosticsTests
     }
 
     [Theory]
-    [InlineData(0, "离线/未知")]
+    [InlineData(0, "离线")]
     [InlineData(1, "运行")]
     [InlineData(2, "报警")]
     [InlineData(3, "待机")]
@@ -174,7 +174,7 @@ public sealed class RuntimeMonitoringDiagnosticsTests
         var desired = new List<DeviceAcquisitionStatusItem>
         {
             new() { DeviceName = "设备1", StatusText = "待机", ConfiguredAddressCount = 4, OkProduction = 9 },
-            new() { DeviceName = "设备3", StatusText = "离线/未知" },
+            new() { DeviceName = "设备3", StatusText = "离线" },
         };
 
         DeviceStatusCollectionSynchronizer.Synchronize(target, desired);

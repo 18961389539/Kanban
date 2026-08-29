@@ -427,7 +427,7 @@ public class DeviceManagerViewModelTests
         vm.DeviceRuntimeMap[alarm.Id].StatusWord = (int)DeviceStatus.Alarm;
         vm.DeviceRuntimeMap[paused.Id].StatusWord = (int)DeviceStatus.Paused;
 
-        Assert.Equal("3 台 · 运行 1 · 报警 1 · 待机 1 · 初始 0", vm.DeviceList.DeviceSummaryText);
+        Assert.Equal("3 台 · 运行 1 · 报警 1 · 待机 1 · 离线 0", vm.DeviceList.DeviceSummaryText);
         Directory.Delete(tmp, true);
     }
 

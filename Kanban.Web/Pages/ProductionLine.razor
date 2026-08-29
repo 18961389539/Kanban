@@ -165,7 +165,7 @@
                     1 => DeviceStatus.Running,
                     2 => DeviceStatus.Alarm,
                     3 => DeviceStatus.Paused,
-                    _ => DeviceStatus.Unknown,
+                    _ => DeviceStatus.Offline,
                 };
                 list = list.Where(d => d.Status == target);
             }

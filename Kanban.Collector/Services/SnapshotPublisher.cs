@@ -99,7 +99,7 @@ public sealed class SnapshotPublisher
 
     private DeviceSnapshotDto ToSnapshot(Device device, DeviceRuntime? runtime)
     {
-        var status = runtime is null ? DeviceStatus.Unknown : (DeviceStatus)runtime.StatusWord;
+        var status = runtime is null ? DeviceStatus.Offline : (DeviceStatus)runtime.StatusWord;
 
         var activeAlarms = device.Alarms
             .Where(a => a.StartTime != default && a.EndTime == default)

@@ -144,7 +144,7 @@ public sealed class ProductionDailyReportService : IDisposable
 
         var transitions = _historyService.QueryStatusTransitions(device.Id, from, to);
         var initialState = _historyService.GetLatestStatusBefore(device.Id, from)?.CurrentState
-            ?? (int)DeviceStatus.Unknown;
+            ?? (int)DeviceStatus.Offline;
         var durations = OeeCalculator.CalculateStateDurations(transitions, from, to, initialState);
         var alarms = _historyService.QueryAlarmEvents(from, to, device.Id);
         if (inWindow.Count == 0 && transitions.Count == 0 && alarms.Count == 0) return null;

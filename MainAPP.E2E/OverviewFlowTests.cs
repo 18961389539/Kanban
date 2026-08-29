@@ -116,13 +116,13 @@ public class OverviewFlowTests
                 ctx.StatusTransitions.Add(new StatusTransitionRecord
                 {
                     DeviceId = "ovr-A", DeviceName = "概览设备A",
-                    PreviousState = (int)DeviceStatus.Unknown, CurrentState = (int)DeviceStatus.Running,
+                    PreviousState = (int)DeviceStatus.Offline, CurrentState = (int)DeviceStatus.Running,
                     EventTime = now.AddHours(-3), ShiftName = "白班"
                 });
                 ctx.StatusTransitions.Add(new StatusTransitionRecord
                 {
                     DeviceId = "ovr-B", DeviceName = "概览设备B",
-                    PreviousState = (int)DeviceStatus.Unknown, CurrentState = (int)DeviceStatus.Running,
+                    PreviousState = (int)DeviceStatus.Offline, CurrentState = (int)DeviceStatus.Running,
                     EventTime = now.AddHours(-3), ShiftName = "白班"
                 });
                 ctx.SaveChanges();

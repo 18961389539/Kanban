@@ -182,7 +182,7 @@ public class QueryPageFlowTests
             ctx.StatusTransitions.Add(new StatusTransitionRecord
             {
                 DeviceId = dev, DeviceName = "查询设备",
-                PreviousState = (int)DeviceStatus.Unknown, CurrentState = (int)DeviceStatus.Running,
+                PreviousState = (int)DeviceStatus.Offline, CurrentState = (int)DeviceStatus.Running,
                 EventTime = now.AddHours(-3), ShiftName = "白班"
             });
             ctx.StatusTransitions.Add(new StatusTransitionRecord
@@ -289,7 +289,7 @@ public class QueryPageFlowTests
                 sctx.StatusTransitions.Add(new StatusTransitionRecord
                 {
                     DeviceId = dev, DeviceName = "查询设备",
-                    PreviousState = (int)DeviceStatus.Unknown, CurrentState = (int)DeviceStatus.Running,
+                    PreviousState = (int)DeviceStatus.Offline, CurrentState = (int)DeviceStatus.Running,
                     EventTime = now.AddHours(-3), ShiftName = "白班"
                 });
                 sctx.SaveChanges();

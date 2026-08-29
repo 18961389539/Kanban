@@ -1052,7 +1052,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OeeValue = 0; QualityRate = 0; PerformanceRate = 0; AvailabilityRate = 0;
         RunTime = 0; AlarmTime = 0; PausedTime = 0;
         TotalOkProduction = 0; TotalNgProduction = 0;
-        TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Unknown;
+        TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Offline;
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;
         RecipeName = ""; RecipeValue = 0;
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";

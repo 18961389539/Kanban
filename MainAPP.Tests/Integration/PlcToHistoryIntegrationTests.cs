@@ -158,7 +158,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
         // dev3：待机（状态字=0），OK=0, NG=0
         plc.SetInt32("D300", 0);
         plc.SetInt32("D301", 0);
-        plc.SetInt32("D302", (int)DeviceStatus.Unknown);
+        plc.SetInt32("D302", (int)DeviceStatus.Offline);
         plc.SetBool("M300", false);
 
         // ── 2. 第一会话：跑两轮采集（第二轮触发报警下降沿） ──
@@ -546,7 +546,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
     }
 
     // ════════════════════════════════════════════════════════════════
-    //  离线转换：PLC 断开时设备状态被标记为 Unknown(0)
+    //  离线转换：PLC 断开时设备状态被标记为 Offline(0)
     // ════════════════════════════════════════════════════════════════
 
     [Fact]
@@ -582,7 +582,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
             connMgr.Disconnect();
             Assert.False(connMgr.IsConnected);
 
-            // 第2轮：断开状态下扫描，应触发 LogOfflineTransition（Running → Unknown=0）
+            // 第2轮：断开状态下扫描，应触发 LogOfflineTransition（Running → Offline=0）
             // 注意：断开时不进入 RefreshDeviceData 分支，但 PollingLoopAsync 会调用 LogOfflineTransition
             // 这里手动调用内部方法模拟 PollingLoopAsync 的断开分支
             foreach (var d in deviceRepo.GetDevicesSnapshot())
@@ -601,7 +601,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
         var today = DateTime.Today;
         var transitions = history2.QueryStatusTransitions("dev-offline", today, today.AddDays(1).AddSeconds(-1));
 
-        // 至少 2 条：0→Running + Running→Unknown(0)
+        // 至少 2 条：0→Running + Running→Offline(0)
         Assert.True(transitions.Count >= 2);
         var offlineTransition = transitions.First(t => t.CurrentState == 0);
         Assert.Equal((int)DeviceStatus.Running, offlineTransition.PreviousState);

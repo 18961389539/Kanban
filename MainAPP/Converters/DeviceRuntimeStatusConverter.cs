@@ -21,7 +21,7 @@ public class DeviceRuntimeStatusConverter : IMultiValueConverter
         var device = values.Length > 0 ? values[0] as Device : null;
         var map = values.Length > 1 ? values[1] as IDictionary<string, DeviceRuntime> : null;
 
-        int status = (int)DeviceStatus.Unknown;
+        int status = (int)DeviceStatus.Offline;
         if (device != null && map != null && map.TryGetValue(device.Id, out var rt))
             status = rt.StatusWord;
 

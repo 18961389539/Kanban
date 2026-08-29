@@ -982,11 +982,11 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 runtime.AlarmTime += intervalSeconds;
             else if (sw == (int)DeviceStatus.Paused)
                 runtime.PausedTime += intervalSeconds;
-            else if (sw == (int)DeviceStatus.Unknown)
-                _logger.LogDebug("设备 {Device} 初始（StatusWord=0），不计入 OEE 时间", device.Name);
+            else if (sw == (int)DeviceStatus.Offline)
+                _logger.LogDebug("设备 {Device} 离线（StatusWord=0），不计入 OEE 时间", device.Name);
             else
                 // 持续性条件：每轮都会触发，降为 Debug 避免日志泛滥。首次出现时在 Debug 日志可见。
-                _logger.LogDebug("设备 {Device} 状态字非法: {StatusWord}（合法值: 0=初始, 1=运行, 2=报警, 3=待机）", device.Name, sw);
+                _logger.LogDebug("设备 {Device} 状态字非法: {StatusWord}（合法值: 0=离线, 1=运行, 2=报警, 3=待机）", device.Name, sw);
         }
     }
 

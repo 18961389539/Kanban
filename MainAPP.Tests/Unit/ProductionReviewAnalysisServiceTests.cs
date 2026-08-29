@@ -31,7 +31,7 @@ public sealed class ProductionReviewAnalysisServiceTests
         {
             DeviceId = device.Id,
             DeviceName = device.Name,
-            PreviousState = (int)DeviceStatus.Unknown,
+            PreviousState = (int)DeviceStatus.Offline,
             CurrentState = (int)DeviceStatus.Running,
             EventTime = from.AddMinutes(5),
         });

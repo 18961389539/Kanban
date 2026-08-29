@@ -740,7 +740,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             statusTransitions ??= [];
             // GetLatestStatusBefore 仍是逐设备查询（窗口前最后一条），保留不变（查询量小且难以批量化）
             var lastBefore = _reviewDataService.GetLatestStatusBefore(device.Id, from);
-            int initialState = lastBefore?.CurrentState ?? (int)DeviceStatus.Unknown;
+            int initialState = lastBefore?.CurrentState ?? (int)DeviceStatus.Offline;
             var (runSec, alarmSec, pauseSec) = OeeCalculator.CalculateStateDurations(
                 statusTransitions, from, to, initialState);
             totalRunSec += runSec;
@@ -771,7 +771,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             }
 
             // 实时状态（从 RuntimeMap）
-            int statusWord = (int)DeviceStatus.Unknown;
+            int statusWord = (int)DeviceStatus.Offline;
             if (_deviceRepository.RuntimeMap.TryGetValue(device.Id, out var rt))
                 statusWord = rt.StatusWord;
 

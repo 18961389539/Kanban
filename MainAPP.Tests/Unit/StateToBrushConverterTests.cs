@@ -33,7 +33,7 @@ public class StateToBrushConverterTests
     [InlineData((int)DeviceStatus.Running, "StatusRunBrush")]
     [InlineData((int)DeviceStatus.Alarm, "StatusAlarmBrush")]
     [InlineData((int)DeviceStatus.Paused, "StatusPauseBrush")]
-    [InlineData((int)DeviceStatus.Unknown, "SecondaryBorderBrush")]
+    [InlineData((int)DeviceStatus.Offline, "SecondaryBorderBrush")]
     public void KnownState_ReturnsExpectedBrush(int state, string expectedKey)
     {
         var brush = (Brush)_conv.Convert(state, typeof(Brush), null!, CultureInfo.InvariantCulture);

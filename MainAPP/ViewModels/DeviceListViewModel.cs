@@ -52,7 +52,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             {
                 var status = _deviceRepository.RuntimeMap.TryGetValue(device.Id, out var runtime)
                     ? runtime.StatusWord
-                    : (int)DeviceStatus.Unknown;
+                    : (int)DeviceStatus.Offline;
                 switch (status)
                 {
                     case (int)DeviceStatus.Running: running++; break;
@@ -151,7 +151,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
     private bool StatusMatches(Device d, DeviceStatusFilter filter)
     {
         if (filter == DeviceStatusFilter.All) return true;
-        int status = (int)DeviceStatus.Unknown;
+        int status = (int)DeviceStatus.Offline;
         if (_deviceRepository.RuntimeMap.TryGetValue(d.Id, out var rt))
             status = rt.StatusWord;
         return filter switch
@@ -159,7 +159,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             DeviceStatusFilter.Running => status == (int)DeviceStatus.Running,
             DeviceStatusFilter.Alarm => status == (int)DeviceStatus.Alarm,
             DeviceStatusFilter.Paused => status == (int)DeviceStatus.Paused,
-            DeviceStatusFilter.Offline => status == (int)DeviceStatus.Unknown,
+            DeviceStatusFilter.Offline => status == (int)DeviceStatus.Offline,
             _ => true,
         };
     }

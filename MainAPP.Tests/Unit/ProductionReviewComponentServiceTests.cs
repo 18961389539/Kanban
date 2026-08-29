@@ -97,7 +97,7 @@ public sealed class ProductionReviewComponentServiceTests
             new() { DeviceId = "d1", ShiftName = "白班", OkProduction = 20, Timestamp = from.AddMinutes(25) },
         };
 
-        var result = service.Build("d1", transitions, alarms, production, (int)DeviceStatus.Unknown, from, to);
+        var result = service.Build("d1", transitions, alarms, production, (int)DeviceStatus.Offline, from, to);
 
         Assert.Equal(3, result.Count);
         Assert.Contains(result, segment => segment.StatusText == "报警" && segment.AlarmCount == 1);

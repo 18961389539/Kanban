@@ -49,7 +49,7 @@
     <value>直近24時間の生産レビュー</value>
   </data>
   <data name="Status_Initial" xml:space="preserve">
-    <value>初期</value>
+    <value>オフライン</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
     <value>稼働中</value>
@@ -64,7 +64,7 @@
     <value>不明</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
-    <value>アイドル</value>
+    <value>オフライン</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
     <value>設定を保存</value>
@@ -1387,7 +1387,7 @@
     <value>設備状態タイムライン</value>
   </data>
   <data name="K376" xml:space="preserve">
-    <value>稼働・待機・アラーム・不明区間。セルをクリックして生産量とアラームを表示</value>
+    <value>稼働・待機・アラーム・オフライン区間。セルをクリックして生産量とアラームを表示</value>
   </data>
   <data name="K377" xml:space="preserve">
     <value>稼働中・生産なし</value>
@@ -2214,7 +2214,7 @@
     <value>{0} 個のアドレス</value>
   </data>
   <data name="F023" xml:space="preserve">
-    <value>{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · 初期 {4}</value>
+    <value>{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · オフライン {4}</value>
   </data>
   <data name="F024" xml:space="preserve">
     <value>{0} / {1} 個のアドレス</value>
@@ -3490,7 +3490,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>今回失敗</value>
   </data>
   <data name="M165" xml:space="preserve">
-    <value>初期/未接続</value>
+    <value>オフライン</value>
   </data>
   <data name="M166" xml:space="preserve">
     <value>アドレス競合「</value>
@@ -4764,7 +4764,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>先にデバイスを選択してください（このタブは単一デバイス照会）</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>初期</value>
+    <value>オフライン</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>稼働時間</value>
@@ -5193,7 +5193,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>状態タイムライン</value>
   </data>
   <data name="Web_Rv_TimelineHint" xml:space="preserve">
-    <value>稼働・警報・待機・不明区間。ホバーで生産と警報を確認</value>
+    <value>稼働・警報・待機・オフライン区間。ホバーで生産と警報を確認</value>
   </data>
   <data name="Web_Rv_ShiftDetails" xml:space="preserve">
     <value>シフト明細</value>

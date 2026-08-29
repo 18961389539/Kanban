@@ -107,6 +107,7 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
         }
         var statusText = state switch
         {
+            (int)DeviceStatus.Offline => Strings.Status_Initial,
             (int)DeviceStatus.Running => Strings.Status_Running,
             (int)DeviceStatus.Paused => Strings.Status_Paused,
             (int)DeviceStatus.Alarm => Strings.Status_Alarm,

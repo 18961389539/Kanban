@@ -167,7 +167,7 @@ internal static class HistoryQueryHelper
 
     /// <summary>
     /// 设备状态字 → 统一中文文本。与 <see cref="DeviceStatus"/> 常量对齐：
-    /// 0=初始, 1=运行, 2=报警, 3=待机, 其它=未知。
+    /// 0=离线, 1=运行, 2=报警, 3=待机, 其它=未知。
     /// 该映射为全应用唯一来源，<see cref="DeviceDetailViewModel.MapStatus"/> 等实时显示处复用本方法，
     /// 避免历史日志与实时状态文本分叉。文本委托多语言资源（Strings.Status_*），随 UI 语言切换。
     /// </summary>

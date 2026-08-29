@@ -27,7 +27,7 @@ public class DeviceRuntimeStatusConverterTests
     [InlineData((int)DeviceStatus.Running, "运行")]
     [InlineData((int)DeviceStatus.Alarm, "报警")]
     [InlineData((int)DeviceStatus.Paused, "待机")]
-    [InlineData((int)DeviceStatus.Unknown, "初始")]
+    [InlineData((int)DeviceStatus.Offline, "离线")]
     public void Convert_Text_ReturnsStatusLabel(int status, string expected)
     {
         var (device, map) = MakeMap(status);
@@ -43,14 +43,14 @@ public class DeviceRuntimeStatusConverterTests
         var map = new Dictionary<string, DeviceRuntime>();
         var converter = new DeviceRuntimeStatusConverter();
         var text = converter.Convert(new object[] { device, map }, null!, "Text", null!);
-        Assert.Equal("初始", text);
+        Assert.Equal("离线", text);
     }
 
     [Theory]
     [InlineData((int)DeviceStatus.Running)]
     [InlineData((int)DeviceStatus.Alarm)]
     [InlineData((int)DeviceStatus.Paused)]
-    [InlineData((int)DeviceStatus.Unknown)]
+    [InlineData((int)DeviceStatus.Offline)]
     public void Convert_Brush_ReturnsNonNullForEveryStatus(int status)
     {
         var (device, map) = MakeMap(status);
@@ -68,7 +68,7 @@ public class DeviceRuntimeStatusConverterTests
 
         var text = converter.Convert(Array.Empty<object>(), null!, "Text", null!);
 
-        Assert.Equal("初始", text);
+        Assert.Equal("离线", text);
     }
 
     [Fact]

@@ -239,7 +239,7 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         {
             DeviceId = "dev-1",
             DeviceName = "注塑机-1",
-            Status = removed ? DeviceStatus.Unknown : DeviceStatus.Running,
+            Status = removed ? DeviceStatus.Offline : DeviceStatus.Running,
             StatusWord = statusWord,
             OkProduction = totalOk,
             NgProduction = 3,

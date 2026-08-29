@@ -83,7 +83,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
             ng = Math.Max(0, logs[0].NgProduction);
         }
 
-        var initialState = rangeData.LatestStatusBefore?.CurrentState ?? (int)DeviceStatus.Unknown;
+        var initialState = rangeData.LatestStatusBefore?.CurrentState ?? (int)DeviceStatus.Offline;
         var durations = OeeCalculator.CalculateStateDurations(
             rangeData.StatusTransitions,
             from,
@@ -248,7 +248,7 @@ public sealed class ProductionReviewMetricsService : IProductionReviewMetricsSer
                     for (var i = startIdx; i < transitions.Count && transitions[i].EventTime <= rangeTo; i++)
                         rangeTransitions.Add(transitions[i]);
                     var previous = startIdx > 0 ? transitions[startIdx - 1] : null;
-                    var initialState = previous?.CurrentState ?? (int)DeviceStatus.Unknown;
+                    var initialState = previous?.CurrentState ?? (int)DeviceStatus.Offline;
                     var durations = OeeCalculator.CalculateStateDurations(
                         rangeTransitions,
                         rangeFrom,

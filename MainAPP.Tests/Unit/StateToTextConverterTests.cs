@@ -8,7 +8,7 @@ using Xunit;
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
-/// 设备状态码 → 中文文本（待机/运行/报警/暂停/未知）。
+/// 设备状态码 → 中文文本（待机/运行/报警/离线）。
 /// 转换器按 int 判断，故直接传入 DeviceStatus 常量。
 /// </summary>
 [Trait("Category","Unit")]
@@ -19,7 +19,7 @@ public class StateToTextConverterTests
     private static readonly StateToTextConverter _conv = new();
 
     [Theory]
-    [InlineData((int)DeviceStatus.Unknown, "初始")]
+    [InlineData((int)DeviceStatus.Offline, "离线")]
     [InlineData((int)DeviceStatus.Running, "运行")]
     [InlineData((int)DeviceStatus.Alarm, "报警")]
     [InlineData((int)DeviceStatus.Paused, "待机")]

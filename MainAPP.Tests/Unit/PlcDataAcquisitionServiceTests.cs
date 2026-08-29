@@ -1078,7 +1078,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
 
     /// <summary>
     /// PLC 返回状态字=0 (Unknown/待机)：
-    /// 0 是合法值（DeviceStatus.Unknown=0），写入 Runtime 但不累加 OEE 时间。
+    /// 0 是合法值（DeviceStatus.Offline=0），写入 Runtime 但不累加 OEE 时间。
     /// 首次读取会写入一条 0→0 的状态转换记录（DeviceStatusTracker 首次读取必写）。
     /// </summary>
     [Fact]

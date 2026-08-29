@@ -61,7 +61,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Status_Initial"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "初始", ["en-US"] = "Initial", ["ja-JP"] = "初期", ["pt-BR"] = "Inicial"
+            ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
         ["Wpf|Status_Running"] = new Dictionary<string, string>
         {
@@ -81,7 +81,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Status_Idle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "空闲", ["en-US"] = "Idle", ["ja-JP"] = "アイドル", ["pt-BR"] = "Ocioso"
+            ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
         ["Wpf|Common_Save"] = new Dictionary<string, string>
         {
@@ -1845,7 +1845,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K376"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "运行、暂停、报警与未知区间；点击格子查看该段产量与报警", ["en-US"] = "Running, paused, alarm and unknown intervals; click a cell to view its output and alarms", ["ja-JP"] = "稼働・待機・アラーム・不明区間。セルをクリックして生産量とアラームを表示", ["pt-BR"] = "Running, paused, alarm and unknown intervals; click a cell to view its output and alarms"
+            ["zh-CN"] = "运行、暂停、报警与离线区间；点击格子查看该段产量与报警", ["en-US"] = "Running, paused, alarm and offline intervals; click a cell to view its output and alarms", ["ja-JP"] = "稼働・待機・アラーム・オフライン区間。セルをクリックして生産量とアラームを表示", ["pt-BR"] = "Intervalos em operação, pausa, alarme e offline; clique em uma célula para ver produção e alarmes"
         },
         ["Wpf|K377"] = new Dictionary<string, string>
         {
@@ -2945,7 +2945,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F023"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 初始 {4}", ["en-US"] = "{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4}", ["ja-JP"] = "{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · 初期 {4}", ["pt-BR"] = "{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4}"
+            ["zh-CN"] = "{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 离线 {4}", ["en-US"] = "{0} units · Running {1} · Alarm {2} · Paused {3} · Offline {4}", ["ja-JP"] = "{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · オフライン {4}", ["pt-BR"] = "{0} unidades · Em operação {1} · Alarme {2} · Espera {3} · Offline {4}"
         },
         ["Wpf|F024"] = new Dictionary<string, string>
         {
@@ -4601,7 +4601,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|M165"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "初始/未连接", ["en-US"] = "Initial/Disconnected", ["ja-JP"] = "初期/未接続", ["pt-BR"] = "Initial/Disconnected"
+            ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
         ["Wpf|M166"] = new Dictionary<string, string>
         {
@@ -6289,7 +6289,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Hq_StateUnknown"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "初始", ["en-US"] = "Initial", ["ja-JP"] = "初期", ["pt-BR"] = "Initial"
+            ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
         ["Wpf|Web_Hq_StatusRun"] = new Dictionary<string, string>
         {
@@ -6861,7 +6861,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Rv_TimelineHint"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "运行、报警、待机与未知区间；悬浮查看该段产量与报警", ["en-US"] = "Run, alarm, pause and unknown segments; hover for output and alarms", ["ja-JP"] = "稼働・警報・待機・不明区間。ホバーで生産と警報を確認", ["pt-BR"] = "Run, alarm, pause and unknown segments; hover for output and alarms"
+            ["zh-CN"] = "运行、报警、待机与离线区间；悬浮查看该段产量与报警", ["en-US"] = "Run, alarm, pause and offline segments; hover for output and alarms", ["ja-JP"] = "稼働・警報・待機・オフライン区間。ホバーで生産と警報を確認", ["pt-BR"] = "Intervalos em operação, alarme, espera e offline; passe o mouse para ver produção e alarmes"
         },
         ["Wpf|Web_Rv_ShiftDetails"] = new Dictionary<string, string>
         {

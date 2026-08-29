@@ -230,7 +230,7 @@ public class HistoryQueryHelperTests
     // ──────────── 文本映射 ────────────
 
     [Theory]
-    [InlineData(0, "初始")]
+    [InlineData(0, "离线")]
     [InlineData(1, "运行")]
     [InlineData(2, "报警")]
     [InlineData(3, "待机")]

@@ -835,7 +835,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="10" Height="10" CornerRadius="2" Background="{StaticResource BorderBrush}" Opacity="0.5" VerticalAlignment="Center" />
                                 <TextBlock Margin="5,0,0,0" FontSize="12" VerticalAlignment="Center"
-                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Unknown}" />
+                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Initial}" />
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>

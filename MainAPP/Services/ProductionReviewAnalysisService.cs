@@ -118,7 +118,7 @@ public sealed class ProductionReviewAnalysisService : IProductionReviewAnalysisS
             transitions,
             alarms,
             productionLogs,
-            initialStatus?.CurrentState ?? (int)DeviceStatus.Unknown,
+            initialStatus?.CurrentState ?? (int)DeviceStatus.Offline,
             from,
             to);
         var alarmAnalysis = _alarmAnalysisService.Analyze(alarms, productionLogs, to, device.Id);

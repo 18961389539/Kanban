@@ -49,7 +49,7 @@
     <value>最近24小时生产复盘</value>
   </data>
   <data name="Status_Initial" xml:space="preserve">
-    <value>初始</value>
+    <value>离线</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
     <value>运行</value>
@@ -64,7 +64,7 @@
     <value>未知</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
-    <value>空闲</value>
+    <value>离线</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
     <value>保存设置</value>
@@ -1387,7 +1387,7 @@
     <value>设备状态时间线</value>
   </data>
   <data name="K376" xml:space="preserve">
-    <value>运行、暂停、报警与未知区间；点击格子查看该段产量与报警</value>
+    <value>运行、暂停、报警与离线区间；点击格子查看该段产量与报警</value>
   </data>
   <data name="K377" xml:space="preserve">
     <value>运行无产量</value>
@@ -2214,7 +2214,7 @@
     <value>{0} 个地址</value>
   </data>
   <data name="F023" xml:space="preserve">
-    <value>{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 初始 {4}</value>
+    <value>{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 离线 {4}</value>
   </data>
   <data name="F024" xml:space="preserve">
     <value>{0} / {1} 个地址</value>
@@ -3490,7 +3490,7 @@
     <value>本轮失败</value>
   </data>
   <data name="M165" xml:space="preserve">
-    <value>初始/未连接</value>
+    <value>离线</value>
   </data>
   <data name="M166" xml:space="preserve">
     <value>地址冲突「</value>
@@ -4764,7 +4764,7 @@
     <value>请先选择设备（该 Tab 按单设备查询）</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>初始</value>
+    <value>离线</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>运行时长</value>
@@ -5193,7 +5193,7 @@
     <value>设备状态时间线</value>
   </data>
   <data name="Web_Rv_TimelineHint" xml:space="preserve">
-    <value>运行、报警、待机与未知区间；悬浮查看该段产量与报警</value>
+    <value>运行、报警、待机与离线区间；悬浮查看该段产量与报警</value>
   </data>
   <data name="Web_Rv_ShiftDetails" xml:space="preserve">
     <value>班次明细</value>

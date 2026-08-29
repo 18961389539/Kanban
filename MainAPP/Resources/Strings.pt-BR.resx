@@ -49,7 +49,7 @@
     <value>Revisão da produção (últimas 24 h)</value>
   </data>
   <data name="Status_Initial" xml:space="preserve">
-    <value>Inicial</value>
+    <value>Offline</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
     <value>Em execução</value>
@@ -64,7 +64,7 @@
     <value>Desconhecido</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
-    <value>Ocioso</value>
+    <value>Offline</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
     <value>Salvar configurações</value>
@@ -2214,7 +2214,7 @@
     <value>{0} addresses</value>
   </data>
   <data name="F023" xml:space="preserve">
-    <value>{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4}</value>
+    <value>{0} unidades · Em operação {1} · Alarme {2} · Espera {3} · Offline {4}</value>
   </data>
   <data name="F024" xml:space="preserve">
     <value>{0} / {1} addresses</value>
@@ -3490,7 +3490,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Cycle failed</value>
   </data>
   <data name="M165" xml:space="preserve">
-    <value>Initial/Disconnected</value>
+    <value>Offline</value>
   </data>
   <data name="M166" xml:space="preserve">
     <value>Conflito de endereço「</value>
@@ -4764,7 +4764,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Select a device first (this tab queries one device)</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>Initial</value>
+    <value>Offline</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>Run Time</value>

@@ -722,10 +722,10 @@ internal class Program
         return Path.Combine(dataRoot, "Config");
     }
 
-    /// <summary>状态字显示名。与 DeviceSimulator.SimStatus 及 MainAPP DeviceStatus 对齐：3=待机（Paused），0=初始/未知。</summary>
+    /// <summary>状态字显示名。与 DeviceSimulator.SimStatus 及 MainAPP DeviceStatus 对齐：3=待机（Paused），0=离线。</summary>
     private static string StatusName(int status) => status switch
     {
-        0 => "初始/未知",
+        0 => "离线",
         1 => "运行",
         2 => "报警",
         3 => "待机",
