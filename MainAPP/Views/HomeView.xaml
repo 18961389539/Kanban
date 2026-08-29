@@ -19,7 +19,13 @@
               OkDiffBadge/NgDiffBadge 仅合格率卡片使用，已移至 HomeQualityRateCard.xaml 本地 Resources。  -->
     </UserControl.Resources>
 
-    <Grid Margin="20">
+    <!--  ScrollViewer 兜底：内容超出可视区时可纵向滚动；MinHeight 绑定视口高度，
+          使 * 行在空间充足时仍均分填满，与改前大屏布局一致。  -->
+    <ScrollViewer x:Name="HomeScrollViewer"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="20"
+              MinHeight="{Binding ActualHeight, ElementName=HomeScrollViewer}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -177,5 +183,6 @@
             <!--  列 3：设备缺陷图表  -->
             <views:HomeDefectParetoCard Grid.Column="4" />
         </Grid>
-    </Grid>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

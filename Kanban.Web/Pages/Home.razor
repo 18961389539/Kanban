@@ -82,7 +82,7 @@
                     <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@TargetCycleText</span></div>
                     <div><span class="kpi-label">@L.T("Lbl_ActualCycle")</span><span class="kpi-value">@ActualCycleText</span></div>
                     <div><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@TotalOutputText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@(NgRate > 0.05 ? "kpi-value danger" : "kpi-value")">@NgRateText</span></div>
+                    <div><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@NgRateCssClass">@NgRateText</span></div>
                 </div>
                 <div class="speed-meter">
                     <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
@@ -453,6 +453,9 @@ private void OnRenderTick()
     private double NgRate => SelectedSnapshot is null ? 0
         : SnapshotMetrics.NgRate(SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
     private string NgRateText => TotalOutput > 0 ? $"{NgRate:P1}" : "—";
+    private string NgRateCssClass => NgRate >= NgRateThresholds.Danger ? "kpi-value danger"
+        : NgRate >= NgRateThresholds.Warning ? "kpi-value paused"
+        : "kpi-value";
     private double SpeedAchievementRate => SelectedSnapshot is { TargetCycle: > 0 }
         ? SnapshotMetrics.AchievementRate(RealtimeSpeed, SelectedSnapshot.TargetCycle) : 0;
     private string SpeedAchievementRateText => $"{SpeedAchievementRate:P0}";

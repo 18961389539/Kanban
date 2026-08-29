@@ -119,14 +119,14 @@ public class ThresholdConvertersTests
     }
 
     // ═══════════════ InverseRatioThresholdConverter ═══════════════
-    // 低=好：不良率越高越红。>=0.90 → Danger, >=0.70 → Warning, else → Success
+    // 低=好：不良率越高越红。>=NgRateDanger → Danger, >=NgRateWarning → Warning, else → Success
 
     [Theory]
-    [InlineData(0.95, "Danger")]   // 高不良率 → Danger
-    [InlineData(0.90, "Danger")]   // boundary
-    [InlineData(0.80, "Warning")]  // >=0.70 → Warning
-    [InlineData(0.70, "Warning")]  // boundary
-    [InlineData(0.50, "Success")]  // 低不良率 → Success
+    [InlineData(0.06, "Danger")]   // 高不良率 → Danger
+    [InlineData(0.05, "Danger")]   // boundary
+    [InlineData(0.04, "Warning")]  // >=0.03 → Warning
+    [InlineData(0.03, "Warning")]  // boundary
+    [InlineData(0.02, "Success")]  // 低不良率 → Success
     [InlineData(0.0, "Success")]   // zero → Success
     public void InverseRatioThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {

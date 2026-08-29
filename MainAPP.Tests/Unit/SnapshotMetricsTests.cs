@@ -78,4 +78,21 @@ public class SnapshotMetricsTests
     [InlineData(0, 100, 0.0)]     // 静止 → 0
     public void AchievementRate_ClampedTo01(double actual, double target, double expected)
         => Assert.Equal(expected, SnapshotMetrics.AchievementRate(actual, target), precision: 6);
+
+    // ──────────── KpiThresholds（WPF/WASM 共用不良率着色阈值） ────────────
+
+    [Theory]
+    [InlineData(0.02, false, false)]
+    [InlineData(0.03, true, false)]
+    [InlineData(0.05, true, true)]
+    [InlineData(0.10, true, true)]
+    public void NgRateThresholds_ClassifyExpectedLevels(double ngRate, bool warning, bool danger)
+    {
+        Assert.Equal(warning, ngRate >= NgRateThresholds.Warning);
+        Assert.Equal(danger, ngRate >= NgRateThresholds.Danger);
+    }
+
+    [Fact]
+    public void NgRateThresholds_BucketAlert_IsHigherThanRealtimeDanger()
+        => Assert.True(NgRateThresholds.BucketAlert > NgRateThresholds.Danger);
 }

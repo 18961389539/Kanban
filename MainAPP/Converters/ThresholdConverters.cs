@@ -111,15 +111,15 @@ public class RatioToWidthConverter : IValueConverter
 
 /// <summary>
 /// 反向比率阈值着色：用于"低=好"的指标（不良率/不良数）。
-/// >=AchievementGood → DangerBrush（高不良率=红）, >=AchievementWarning → WarningBrush, else → SuccessBrush。
-/// 与 OeeThresholdConverter 方向相反，避免不良率高时被染绿。
+/// >=NgRateDanger → DangerBrush, >=NgRateWarning → WarningBrush, else → SuccessBrush。
+/// 阈值见 <see cref="KpiThresholds.NgRateDanger"/> / <see cref="KpiThresholds.NgRateWarning"/>（Contracts 单源）。
 /// </summary>
 public class InverseRatioThresholdConverter : ThresholdBrushCacheBase, IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is double d)
-            return d >= KpiThresholds.AchievementGood ? Red : d >= KpiThresholds.AchievementWarning ? Yellow : Green;
+            return d >= KpiThresholds.NgRateDanger ? Red : d >= KpiThresholds.NgRateWarning ? Yellow : Green;
         return Green;
     }
 

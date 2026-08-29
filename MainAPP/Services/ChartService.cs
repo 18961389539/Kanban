@@ -644,56 +644,6 @@ public static class ChartService
     }
 
     /// <summary>
-    /// 构建设备状态卡的三根独立立体柱（待机 / 运行 / 报警），使用 OxyPlot ColumnSeries。
-    /// 值为占比（0~100），三根柱分别着色，无数据时返回三根零值占位柱。
-    /// </summary>
-    public static PlotModel BuildStatusColumnChart(double runTime, double alarmTime, double pausedTime)
-    {
-        var model = CreateBaseModel();
-        model.Legends.Clear();
-
-        var total = runTime + alarmTime + pausedTime;
-        double runPct = total > 0 ? runTime / total * 100.0 : 0;
-        double alarmPct = total > 0 ? alarmTime / total * 100.0 : 0;
-        double pausePct = total > 0 ? pausedTime / total * 100.0 : 0;
-
-        var categoryAxis = new CategoryAxis
-        {
-            Position = AxisPosition.Bottom,
-            IsAxisVisible = false,
-            ItemsSource = new[] { Strings.K006, Strings.K005, Strings.K016 },
-        };
-        var valueAxis = new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            IsAxisVisible = false,
-            Minimum = 0,
-            Maximum = 100,
-            MinimumPadding = 0,
-            MaximumPadding = 0,
-        };
-        categoryAxis.Key = "category";
-        valueAxis.Key = "value";
-        model.Axes.Add(categoryAxis);
-        model.Axes.Add(valueAxis);
-
-        // OxyPlot 2.x 无 ColumnSeries；纵向柱用 BarSeries，且 YAxisKey 指向 CategoryAxis。
-        // 三根柱用 BarItem 的 Color 字段分别着色。
-        var series = new BarSeries
-        {
-            XAxisKey = "value",
-            YAxisKey = "category",
-            StrokeThickness = 1,
-        };
-        series.Items.Add(new BarItem(pausePct) { Color = _pauseColor });
-        series.Items.Add(new BarItem(runPct) { Color = _runColor });
-        series.Items.Add(new BarItem(alarmPct) { Color = _alarmColor });
-        model.Series.Add(series);
-
-        return model;
-    }
-
-    /// <summary>
     /// 构建设备明细使用的紧凑横向状态占比条，仅保留运行/报警/待机颜色，不绘制标签。
     /// </summary>
     public static PlotModel BuildStatusDistributionBarChart(double runTime, double alarmTime, double pausedTime)

@@ -2,6 +2,7 @@ using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
+using Kanban.Contracts.Metrics;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using OxyPlot;
@@ -278,8 +279,8 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
                 DateTimeAxis.ToDouble(buckets[index].AddTicks(spanTicks / 2)), // 桶中心（单位统一：ToDouble 返回天数）
                 ok + ng > 0 ? quality : double.NaN));
 
-            // P1-4 异常桶标注：NG 率超阈值时柱顶打红色 !（复盘时问题时段自动浮现）
-            if (ok + ng > 0 && ng / (double)(ok + ng) > NgRateAlertThreshold)
+            // P1-4 异常桶标注：单桶 NG 率超 NgRateThresholds.BucketAlert 时柱顶打红色 !
+            if (ok + ng > 0 && ng / (double)(ok + ng) > NgRateThresholds.BucketAlert)
             {
                 model.Annotations.Add(new PointAnnotation
                 {
@@ -324,9 +325,6 @@ public sealed class ProductionReviewChartService : IProductionReviewChartService
         }
         return model;
     }
-
-    /// <summary>NG 率超此阈值时该桶打异常标记（10% = 与良品率 90% 对应）。</summary>
-    private const double NgRateAlertThreshold = 0.10;
 
     /// <summary>右轴 Key（良品率轴，0-100%）。</summary>
     private const string QualityAxisKey = "quality";

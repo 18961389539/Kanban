@@ -297,8 +297,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _offlineTimeFullFormatted = "";
     [ObservableProperty] private string _totalTimeFullFormatted = "";
     [ObservableProperty] private PlotModel? _statusPieChart;
-    /// <summary>设备状态卡三根立体柱图（OxyPlot ColumnSeries）。</summary>
-    [ObservableProperty] private PlotModel? _statusColumnChart;
 
     // ──────────── 设备健康分 ────────────
     [ObservableProperty]
@@ -1115,17 +1113,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         PerformanceRingChart = null;
         QualityRingChart = null;
         StatusPieChart = null;
-        StatusColumnChart = null;
         QualityPieChart = null;
         DefectBarChart = null;
     }
 
 
     private void BuildStatusPieChart()
-    {
-        StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
-        StatusColumnChart = ChartService.BuildStatusColumnChart(RunTime, AlarmTime, PausedTime);
-    }
+        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
 
     private void BuildOeeRingCharts()
     {
