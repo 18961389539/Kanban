@@ -6,18 +6,22 @@
 #   3. 按顺序启动并校验 PID、端口和 Collector 业务 readiness
 #
 # 用法（在项目根目录）：
-#   .\start_env.ps1                 # 杀旧实例 + 构建 + 启动
+#   .\start_env.ps1                 # 杀旧实例 + 构建 + 启动（PlcSimulator 默认 --fresh）
 #   .\start_env.ps1 -SkipBuild      # 不构建，直接用现有产物启动（启动更快）
 #   .\start_env.ps1 -KeepServices   # 保留已安装服务；若服务在运行则拒绝启动调试实例
+#   .\start_env.ps1 -RestorePlc     # PlcSimulator 从 PLC 内存恢复（保留状态字 0 等，易卡在离线）
 #
 # 说明：
+#   - 默认对 PlcSimulator 加 --fresh：清零 PLC 并置待机(3)，避免上次断连仿真残留状态字 0 导致一直显示离线。
+#   - 需要延续上次 PLC 内存状态时用 -RestorePlc。
 #   - 数据源统一约定：不设置 KANBAN_DATA_DIR，三组件都使用默认 %APPDATA%/Kanban。
 #   - 服务化实例运行时不能与本地 Debug 实例共用 4999/5129 端口；请先停止服务，
 #     或使用 -KeepServices 仅查看服务状态而不启动本地实例。
 
 param(
     [switch]$SkipBuild,
-    [switch]$KeepServices
+    [switch]$KeepServices,
+    [switch]$RestorePlc
 )
 
 $ErrorActionPreference = "Stop"
@@ -251,9 +255,13 @@ $simProcess = $null
 $collectorProcess = $null
 $mainAppProcess = $null
 try {
-    $simProcess = Start-Process -FilePath $SimExe -WorkingDirectory (Split-Path $SimExe -Parent) -WindowStyle Minimized -PassThru -ErrorAction Stop
+    $simArgs = @()
+    if (-not $RestorePlc) { $simArgs += "--fresh" }
+    $simProcess = Start-Process -FilePath $SimExe -ArgumentList $simArgs `
+        -WorkingDirectory (Split-Path $SimExe -Parent) -WindowStyle Minimized -PassThru -ErrorAction Stop
     $startedProcesses += $simProcess
-    Write-Host "   已启动 PlcSimulator PID $($simProcess.Id)（监听 $SimPort）"
+    $simMode = if ($RestorePlc) { "恢复 PLC 状态" } else { "全新初始化(--fresh)" }
+    Write-Host "   已启动 PlcSimulator PID $($simProcess.Id)（监听 $SimPort，$simMode）"
 
     $collectorProcess = Start-Process -FilePath $dotnet -ArgumentList $CollectorDll -WorkingDirectory (Split-Path $CollectorDll -Parent) -WindowStyle Minimized -PassThru -ErrorAction Stop
     $startedProcesses += $collectorProcess

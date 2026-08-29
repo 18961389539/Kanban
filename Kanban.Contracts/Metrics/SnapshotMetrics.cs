@@ -27,11 +27,11 @@ public static class SnapshotMetrics
     }
 
     /// <summary>
-    /// 时长占比 = value / (运行+报警+暂停)；总时长为 0 返回 0。返回 0~1 比率（调用端自行乘 100 或格式化）。
+    /// 时长占比 = value / (运行+报警+暂停[+离线])；总时长为 0 返回 0。offlineTime 仅用于展示口径，不参与 OEE。
     /// </summary>
-    public static double TimeRatio(double value, double runTime, double alarmTime, double pausedTime)
+    public static double TimeRatio(double value, double runTime, double alarmTime, double pausedTime, double offlineTime = 0)
     {
-        var total = runTime + alarmTime + pausedTime;
+        var total = runTime + alarmTime + pausedTime + offlineTime;
         return total > 0 ? value / total : 0;
     }
 

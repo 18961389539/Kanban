@@ -265,22 +265,30 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
     private double _runTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
     private double _alarmTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
     [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private double _pausedTime;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
     [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private double _offlineTime;
     [ObservableProperty] private string _runTimeFormatted = "";
@@ -289,6 +297,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _runTimeFullFormatted = "";
     [ObservableProperty] private string _alarmTimeFullFormatted = "";
     [ObservableProperty] private string _pausedTimeFullFormatted = "";
+    [ObservableProperty] private string _offlineTimeFullFormatted = "";
     [ObservableProperty] private string _totalTimeFullFormatted = "";
     [ObservableProperty] private PlotModel? _statusPieChart;
     /// <summary>设备状态卡三根立体柱图（OxyPlot ColumnSeries）。</summary>
@@ -303,12 +312,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>设备健康分展示文本（0-100），无有效数据时显示 "—"。</summary>
     public string DeviceHealthScoreText => DeviceHealthScore <= 0 ? "—" : $"{DeviceHealthScore:0}";
 
-    /// <summary>运行时长占比 = RunTime / (Run+Alarm+Paused)。总时长为 0 时返回 0。口径见 SnapshotMetrics。</summary>
-    public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTime, RunTime, AlarmTime, PausedTime);
+    /// <summary>运行时长占比（图例展示，分母含离线时长）。</summary>
+    public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTime, RunTime, AlarmTime, PausedTime, OfflineTime);
     /// <summary>报警时长占比</summary>
-    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(AlarmTime, RunTime, AlarmTime, PausedTime);
+    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(AlarmTime, RunTime, AlarmTime, PausedTime, OfflineTime);
     /// <summary>待机时长占比</summary>
-    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(PausedTime, RunTime, AlarmTime, PausedTime);
+    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(PausedTime, RunTime, AlarmTime, PausedTime, OfflineTime);
+    /// <summary>离线时长占比（仅统计展示，不参与 OEE）。</summary>
+    public double OfflineTimeRatio => SnapshotMetrics.TimeRatio(OfflineTime, RunTime, AlarmTime, PausedTime, OfflineTime);
 
     /// <summary>状态总时长（运行+报警+暂停）格式化文本，用于状态饼图中心叠加显示。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
@@ -980,7 +991,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime);
         AlarmTimeFullFormatted = FormatHelper.FormatDurationFull(rt.AlarmTime);
         PausedTimeFullFormatted = FormatHelper.FormatDurationFull(rt.PausedTime);
-        TotalTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime + rt.AlarmTime + rt.PausedTime);
+        OfflineTimeFullFormatted = FormatHelper.FormatDurationFull(rt.OfflineTime);
+        TotalTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime + rt.AlarmTime + rt.PausedTime + rt.OfflineTime);
         UpdateDeviceHealth();
         UpdateOeeFormulas(rt, dev);
     }
@@ -1070,7 +1082,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;
         RecipeName = ""; RecipeValue = 0;
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";
-        RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; TotalTimeFullFormatted = "";
+        RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; OfflineTimeFullFormatted = ""; TotalTimeFullFormatted = "";
         DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
         OeeFormulaText = ""; AvailabilityFormulaText = "";
         PerformanceFormulaText = ""; QualityFormulaText = "";
