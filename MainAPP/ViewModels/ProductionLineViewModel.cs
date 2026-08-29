@@ -76,10 +76,14 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     public int RunningCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Running);
     public int AlarmCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Alarm);
     public int PausedCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Paused);
-    public int IdleCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Offline);
+    /// <summary>离线设备数（<see cref="DeviceStatus.Offline"/>）。</summary>
+    public int OfflineCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Offline);
     public int TotalOkProduction => LineDevices.Sum(d => d.Runtime.TotalOkProduction);
     public int TotalNgProduction => LineDevices.Sum(d => d.Runtime.TotalNgProduction);
     public int TotalOutput => TotalOkProduction + TotalNgProduction;
+    /// <summary>总产量卡副标题：OK / NG 分项（与 Web 产线页 kpi-row 一致）。</summary>
+    public string TotalOutputDetailText =>
+        $"{Strings.Web_Lbl_Ok} {TotalOkProduction:N0} · {Strings.Web_Lbl_Ng} {TotalNgProduction:N0}";
     /// <summary>整体合格率 = 总 OK / 总产量。</summary>
     public double OverallQualityRate => TotalOutput > 0 ? (double)TotalOkProduction / TotalOutput : 0;
     /// <summary>产线加权 OEE = 设备 OEE 按产量加权平均（避免少量产量设备拉高均值）。</summary>
@@ -168,7 +172,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
                 LineDevices.Clear();
                 RefreshSummaryKpis();
                 RefreshLastShiftComparison();
-                OnPropertyChanged(nameof(FilteredLineDevices));
+                NotifyFilteredLineDevicesChanged();
                 return;
             }
 
@@ -182,7 +186,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
 
             RefreshSummaryKpis();
             RefreshLastShiftComparison();
-            OnPropertyChanged(nameof(FilteredLineDevices));
+            NotifyFilteredLineDevicesChanged();
         }));
     }
 
@@ -262,9 +266,9 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
                 OnPropertyChanged(nameof(RunningCount));
                 OnPropertyChanged(nameof(AlarmCount));
                 OnPropertyChanged(nameof(PausedCount));
-                OnPropertyChanged(nameof(IdleCount));
+                OnPropertyChanged(nameof(OfflineCount));
                 if (_lineStatusFilter != LineStatusFilter.All)
-                    OnPropertyChanged(nameof(FilteredLineDevices));
+                    NotifyFilteredLineDevicesChanged();
                 NotifyItemTransient(sender);
                 break;
             case nameof(DeviceRuntime.TotalOkProduction):
@@ -275,7 +279,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             case nameof(DeviceRuntime.AvailabilityRate):
                 RefreshSummaryKpis();
                 if (_lineSortBy != LineSortBy.Default)
-                    OnPropertyChanged(nameof(FilteredLineDevices));
+                    NotifyFilteredLineDevicesChanged();
                 NotifyItemTransient(sender);
                 break;
         }
@@ -294,11 +298,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(RunningCount));
         OnPropertyChanged(nameof(AlarmCount));
         OnPropertyChanged(nameof(PausedCount));
-        OnPropertyChanged(nameof(IdleCount));
+        OnPropertyChanged(nameof(OfflineCount));
         OnPropertyChanged(nameof(HasNoDevices));
         OnPropertyChanged(nameof(TotalOkProduction));
         OnPropertyChanged(nameof(TotalNgProduction));
         OnPropertyChanged(nameof(TotalOutput));
+        OnPropertyChanged(nameof(TotalOutputDetailText));
         OnPropertyChanged(nameof(OverallQualityRate));
         OnPropertyChanged(nameof(WeightedOee));
         // 产量变化 → diff（current - lastShift）需重算，基线不变故不调 RefreshLastShiftComparison
@@ -327,7 +332,22 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         FocusDeviceRequested?.Invoke(deviceId);
     }
 
+    private void NotifyFilteredLineDevicesChanged()
+    {
+        OnPropertyChanged(nameof(FilteredLineDevices));
+        OnPropertyChanged(nameof(HasNoFilteredDevices));
+    }
+
     // ──────────── P0：筛选 / 排序 / 搜索 / 班次标注 ────────────
+
+    /// <summary>排序下拉选项（与 SetSortCommand / LineSortBy 同源）。</summary>
+    public IReadOnlyList<LineSortOption> LineSortOptions { get; } =
+    [
+        new() { Value = LineSortBy.Default, Label = Strings.K410 },
+        new() { Value = LineSortBy.AlarmFirst, Label = Strings.K409 },
+        new() { Value = LineSortBy.OeeDesc, Label = Strings.Web_Ln_SortOee },
+        new() { Value = LineSortBy.OutputDesc, Label = Strings.K411 },
+    ];
 
     private LineStatusFilter _lineStatusFilter = LineStatusFilter.All;
     public LineStatusFilter LineStatusFilter
@@ -337,7 +357,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         {
             if (SetProperty(ref _lineStatusFilter, value))
             {
-                OnPropertyChanged(nameof(FilteredLineDevices));
+                NotifyFilteredLineDevicesChanged();
                 OnPropertyChanged(nameof(LineStatusFilterText));
             }
         }
@@ -350,7 +370,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _lineSortBy, value))
-                OnPropertyChanged(nameof(FilteredLineDevices));
+                NotifyFilteredLineDevicesChanged();
         }
     }
 
@@ -361,7 +381,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _lineSearchKeyword, value))
-                OnPropertyChanged(nameof(FilteredLineDevices));
+                NotifyFilteredLineDevicesChanged();
         }
     }
 
@@ -371,6 +391,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         LineStatusFilter.Running => Strings.Status_Running,
         LineStatusFilter.Alarm => Strings.Status_Alarm,
         LineStatusFilter.Paused => Strings.Status_Paused,
+        LineStatusFilter.Offline => Strings.Status_Offline,
         _ => Strings.M040,
     };
 
@@ -382,9 +403,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     private void SetSort(LineSortBy? sort)
         => LineSortBy = sort ?? LineSortBy.Default;
 
+    /// <summary>筛选后无匹配设备（有设备但当前条件为空）。</summary>
+    public bool HasNoFilteredDevices => !HasNoDevices && !FilteredLineDevices.Any();
+
     /// <summary>
     /// 经筛选/排序/搜索后的设备集合（XAML ItemsControl 绑定此属性而非 LineDevices）。
-    /// 仅在筛选条件或底层集合变更时通过 OnPropertyChanged(nameof(FilteredLineDevices)) 触发重建。
+    /// 仅在筛选条件或底层集合变更时通过 <see cref="NotifyFilteredLineDevicesChanged"/> 触发重建。
     /// </summary>
     public IEnumerable<LineDeviceItem> FilteredLineDevices
     {
@@ -399,6 +423,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
                 LineStatusFilter.Running => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Running),
                 LineStatusFilter.Alarm => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Alarm),
                 LineStatusFilter.Paused => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Paused),
+                LineStatusFilter.Offline => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Offline),
                 _ => q,
             };
 
@@ -490,6 +515,8 @@ public enum LineStatusFilter
     Alarm,
     /// <summary>仅待机（StatusWord=Paused）</summary>
     Paused,
+    /// <summary>仅离线（StatusWord=Offline）</summary>
+    Offline,
 }
 
 /// <summary>产线页排序维度。</summary>
@@ -503,4 +530,11 @@ public enum LineSortBy
     OeeDesc,
     /// <summary>总产量从高到低</summary>
     OutputDesc,
+}
+
+/// <summary>产线页排序下拉项（值 + 本地化标签）。</summary>
+public class LineSortOption
+{
+    public LineSortBy Value { get; set; }
+    public string Label { get; set; } = string.Empty;
 }

@@ -51,7 +51,7 @@
                 <DataTrigger.Binding>
                     <MultiBinding Converter="{StaticResource EqualityConverter}">
                         <Binding Path="Device.Id" />
-                        <Binding Path="DataContext.SelectedDeviceId" RelativeSource="{RelativeSource AncestorType=ItemsControl}" />
+                        <Binding Path="DataContext.SelectedDeviceId" RelativeSource="{RelativeSource AncestorType=ListBox}" />
                     </MultiBinding>
                 </DataTrigger.Binding>
                 <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
@@ -350,7 +350,7 @@
                             Foreground="{StaticResource PrimaryTextBrush}"
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="0.5"
-                            Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                            Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                             CommandParameter="{Binding Device.Id}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#x2192;" FontSize="18" Margin="0,0,6,0"

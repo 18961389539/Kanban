@@ -6,7 +6,8 @@ using System.Windows.Media;
 namespace MainAPP.Views;
 
 /// <summary>
-/// 产线总览页：根据设备数量自适应切换布局（大卡片/中卡片/表格）。
+/// 产线总览页：单一详细设备卡片模板（<see cref="ViewModels.ProductionLineViewModel.IsDetailedLayout"/> 恒 true，
+/// 不按设备数切换大卡/中卡/表格）、虚拟化自适应网格、汇总 KPI 条，以及筛选 / 搜索 / 排序工具栏。
 /// </summary>
 public partial class ProductionLineView : UserControl
 {
@@ -16,14 +17,18 @@ public partial class ProductionLineView : UserControl
     }
 
     /// <summary>
-    /// Ctrl+F 焦点切到设备搜索框（hc:SearchBar 内部含 TextBox）。
+    /// Ctrl+F：焦点切到设备搜索框（hc:SearchBar 内部含 TextBox）。
     /// </summary>
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
-            // Ctrl+F（搜索框已移除，无操作）
-            e.Handled = true;
+            if (FindVisualChild<TextBox>(LineSearchBar) is { } searchBox)
+            {
+                searchBox.Focus();
+                Keyboard.Focus(searchBox);
+                e.Handled = true;
+            }
         }
     }
 
