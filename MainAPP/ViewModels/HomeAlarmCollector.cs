@@ -54,7 +54,7 @@ public sealed class HomeAlarmCollector
             desired[i].AddedAt = existing.AddedAt;
         }
 
-        // 新加入的项标记 IsNew=true 触发闪烁并重置 AddedAt；已存在项保持原状态（静音时跳过）
+        // 新加入的项标记 IsNew=true 触发闪烁并重置 AddedAt；已存在项保持原状态（静音时跳过闪烁）
         foreach (var item in desired)
         {
             if (target.Any(a => a.Equals(item)))

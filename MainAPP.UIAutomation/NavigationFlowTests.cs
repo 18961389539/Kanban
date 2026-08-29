@@ -86,7 +86,7 @@ public class NavigationFlowTests : IDisposable
         }
 
         // 静音按钮也应可定位（补全 Name 前只能靠 ToolTip 间接定位）
-        var mute = window.FindFirstDescendant(cf => cf.ByName("静音或恢复新报警闪烁"));
+        var mute = window.FindFirstDescendant(cf => cf.ByName("新报警静音"));
         Assert.NotNull(mute);
     }
 

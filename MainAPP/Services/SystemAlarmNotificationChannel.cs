@@ -14,6 +14,7 @@ namespace MainAPP.Services;
 public sealed class SystemAlarmNotificationChannel : IAlarmNotificationChannel, IDisposable
 {
     private readonly AppSettings _appSettings;
+    private readonly IAlarmSessionMute _sessionMute;
     private readonly Channel<AlarmNotification> _highPriorityQueue = Channel.CreateUnbounded<AlarmNotification>(
         new UnboundedChannelOptions
         {
@@ -34,15 +35,18 @@ public sealed class SystemAlarmNotificationChannel : IAlarmNotificationChannel, 
     /// <summary>普通等级声音因队列满被丢弃的数量，高等级报警不会走此队列。</summary>
     public long DroppedNormalNotifications => Interlocked.Read(ref _droppedNormalNotifications);
 
-    public SystemAlarmNotificationChannel(AppSettings appSettings)
+    public SystemAlarmNotificationChannel(AppSettings appSettings, IAlarmSessionMute sessionMute)
     {
         _appSettings = appSettings;
+        _sessionMute = sessionMute;
         _consumer = ConsumeAsync();
     }
 
+    private bool ShouldPlaySound => _appSettings.EnableAlarmSound && !_sessionMute.IsMuted;
+
     public void Enqueue(AlarmNotification notification)
     {
-        if (!_appSettings.EnableAlarmSound) return;
+        if (!ShouldPlaySound) return;
         if (notification.Level == AlarmLevel.High)
         {
             _highPriorityQueue.Writer.TryWrite(notification);
@@ -76,7 +80,7 @@ public sealed class SystemAlarmNotificationChannel : IAlarmNotificationChannel, 
                     continue;
                 }
 
-                if (!_appSettings.EnableAlarmSound) continue;
+                if (!ShouldPlaySound) continue;
 
                 var sound = notification.Level switch
                 {

@@ -167,7 +167,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     [ObservableProperty] private int _todayAlarmCount;
     [ObservableProperty] private int _activeAlarmCount;
     [ObservableProperty] private int _actualCycle;
-    [ObservableProperty] private string _statusText = Strings.Status_Initial;
+    [ObservableProperty] private string _statusText = Strings.Status_Offline;
     [ObservableProperty] private string _statusBrushKey = "StatusIdleBrush";
     [ObservableProperty] private string _dataScopeText = Strings.M063;
     [ObservableProperty] private string _refreshStatusText = Strings.M062;
@@ -461,7 +461,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         PausedTimeHours = 0;
         OfflineTimeHours = 0;
         ActualCycle = 0;
-        StatusText = Strings.Status_Initial;
+        StatusText = Strings.Status_Offline;
         StatusBrushKey = "StatusIdleBrush";
 
         // 设备配置

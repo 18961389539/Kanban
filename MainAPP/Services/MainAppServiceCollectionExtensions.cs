@@ -30,6 +30,7 @@ public static class MainAppServiceCollectionExtensions
 
         // ──────────── 报警声音通知（UI 进程专属，Core 去 WPF 化收口） ────────────
         // SystemSounds 位于 WPF 的 WindowsBase，实现放 MainAPP；Collector 不注册（静默）。
+        services.AddSingleton<IAlarmSessionMute, AlarmSessionMute>();
         services.AddSingleton<IAlarmNotificationChannel, SystemAlarmNotificationChannel>();
 
         // ──────────── 用户与权限（RBAC）────────────

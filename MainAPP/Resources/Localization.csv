@@ -11,7 +11,7 @@ Wpf,Nav_UserManager,用户管理,User Management,ユーザー管理,Gerenciament
 Wpf,Nav_RuntimeMonitoring,运行监控,Runtime Monitor,稼働監視,Monitor de execução
 Wpf,Nav_DeviceDetail,设备详情,Device Detail,設備詳細,Detalhes do dispositivo
 Wpf,Nav_Overview_Tip,最近24小时生产复盘,Production review (last 24h),直近24時間の生産レビュー,Revisão da produção (últimas 24 h)
-Wpf,Status_Initial,离线,Offline,オフライン,Offline
+Wpf,Status_Offline,离线,Offline,オフライン,Offline
 Wpf,Status_Running,运行,Running,稼働中,Em execução
 Wpf,Status_Alarm,报警,Alarm,アラーム,Alarme
 Wpf,Status_Paused,待机,Standby,待機,Em espera
@@ -62,6 +62,8 @@ Wpf,Wo_Device,关联设备,Device,関連設備,Device
 Wpf,Wo_CreatedAt,创建时间,Created at,作成日時,Created at
 Wpf,Wo_LastStatusChange,最近状态变更,Last status change,最終状態変更,Last status change
 Wpf,Home_DeviceHealth,设备健康,Device health,設備健全性,Device health
+Wpf,Home_DeviceHealthTooltip,"健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.","健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
+Wpf,F_DeviceHealthBreakdown,"当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
 Wpf,Home_TotalDuration,总时长,Total duration,総時間,Total duration
 Wpf,Rtmon_RetryConnect,重试连接,Retry connection,再接続,Retry connection
 Wpf,Conn_Live,实时,Live,リアルタイム,Live
@@ -411,8 +413,8 @@ Wpf,K326,工单目标,Order Target,工単目標,Order Target
 Wpf,K327,工单完成,Order Completion,工単完了,Order Completion
 Wpf,K328,C良品率概览,C: Quality Rate Overview,C:良品率概況,C: Quality Rate Overview
 Wpf,K329,实时故障,Real-time Faults,リアルタイム故障,Real-time Faults
-Wpf,K330,静音或恢复新报警闪烁,Mute or restore alarm flashing,新規アラーム点滅をミュート/復帰,Mute or restore alarm flashing
-Wpf,K331,静音/恢复新报警闪烁,Mute/Restore Alarm Flashing,アラーム点滅ミュート/復帰,Mute/Restore Alarm Flashing
+Wpf,K330,新报警静音,Mute New Alarms,新規アラームをミュート,Mute New Alarms
+Wpf,K331,切换新报警声音与闪烁；报警列表仍照常更新,Toggle sound and flashing for new alarms; the alarm list still updates,新規アラームの音と点滅を切替（一覧は更新されます）,Toggle sound and flashing for new alarms; the alarm list still updates
 Wpf,K332,级别,Level,レベル,Level
 Wpf,K333,实时故障列表,Real-time Fault List,リアルタイム故障一覧,Real-time Fault List
 Wpf,K334,暂无活跃故障,No Active Faults,アクティブな故障なし,No Active Faults

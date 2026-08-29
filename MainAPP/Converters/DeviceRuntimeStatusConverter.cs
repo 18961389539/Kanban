@@ -10,7 +10,7 @@ namespace MainAPP.Converters;
 
 /// <summary>
 /// 设备列表项状态指示：根据 Device + DeviceRuntime 映射，实时返回设备运行/报警/待机/初始状态���应的画刷或文本。
-/// 用于在设备列表中为每一项显示状态色点（运行绿 / 报警红 / 待机黄 / 初始灰），并支持 ToolTip 文本。
+/// 用于在设备列表中为每一项显示状态色点（运行绿 / 报警红 / 待机黄 / 离线灰），并支持 ToolTip 文本。
 /// MultiBinding 输入：values[0]=Device，values[1]=IDictionary&lt;string,DeviceRuntime&gt;（设备运行时映射）。
 /// parameter 传 "Text" 时返回状态文本，否则返回状态画刷。
 /// </summary>
@@ -32,7 +32,7 @@ public class DeviceRuntimeStatusConverter : IMultiValueConverter
                 (int)DeviceStatus.Running => Strings.Status_Running,
                 (int)DeviceStatus.Alarm => Strings.Status_Alarm,
                 (int)DeviceStatus.Paused => Strings.Status_Paused,
-                _ => Strings.Status_Initial,
+                _ => Strings.Status_Offline,
             };
         }
 

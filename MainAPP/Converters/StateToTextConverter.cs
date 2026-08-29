@@ -17,7 +17,7 @@ public class StateToTextConverter : IValueConverter
         {
             return state switch
             {
-                (int)DeviceStatus.Offline => Strings.Status_Initial,
+                (int)DeviceStatus.Offline => Strings.Status_Offline,
                 (int)DeviceStatus.Running => Strings.Status_Running,
                 (int)DeviceStatus.Alarm => Strings.Status_Alarm,
                 (int)DeviceStatus.Paused => Strings.Status_Paused,

@@ -56,7 +56,7 @@ internal static class HeatmapBucketBuilder
             }
             var statusText = best.StatusWord switch
             {
-                0 => Strings.Status_Initial,
+                0 => Strings.Status_Offline,
                 1 => Strings.Status_Running,
                 2 => Strings.Status_Alarm,
                 3 => Strings.Status_Paused,

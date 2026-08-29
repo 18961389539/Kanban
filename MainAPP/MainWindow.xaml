@@ -398,17 +398,31 @@
 
         <!--  ============ 内容区（PageTransition：切换时 0.2s 渐显） ============  -->
         <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <!--  Row 0：全局 PLC 断连横幅（断连时显示，所有页面可见）  -->
-                <RowDefinition Height="Auto" />
-                <!--  Row 1：页面内容  -->
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <!--  页面内容铺满；连接横幅叠在顶部（不占 Auto 行），避免显隐时下方布局跳动。  -->
+            <ItemsControl ItemsSource="{Binding Pages, ElementName=RootWindow}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <controls:NavigationPageHost
+                            Page="{Binding}"
+                            Visibility="{Binding IsCurrent, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Style="{StaticResource PageTransition}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-            <!--  全局连接状态横幅：断连红底 / 连接中黄底 / 数据停滞（采集卡死）黄底，所有页面可见  -->
+            <!--  全局连接状态横幅：断连红底 / 连接中黄底 / 数据停滞（采集卡死）黄底；叠层不占布局行。  -->
             <Border
-                Grid.Row="0"
+                x:Name="ConnectionStatusBanner"
                 Padding="16,6"
+                VerticalAlignment="Top"
+                Panel.ZIndex="850"
                 Background="{StaticResource DangerBrush}"
                 Visibility="{Binding IsConnectionBannerVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Border.Style>
@@ -440,30 +454,8 @@
                 </StackPanel>
             </Border>
 
-            <!--  内容区：host 的 Visibility 直接绑自身 DataContext 的 IsCurrent，由
-                  MainWindow.xaml.cs 监听 SelectedIndex 同步——避免任何 DataTemplate/ItemContainerStyle
-                  内部的 RelativeSource 或 ElementName，绑定源始终是元素自身。  -->
-            <ItemsControl Grid.Row="1" ItemsSource="{Binding Pages, ElementName=RootWindow}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <Grid />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:NavigationPageHost
-                            Page="{Binding}"
-                            Visibility="{Binding IsCurrent, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            HorizontalContentAlignment="Stretch"
-                            VerticalContentAlignment="Stretch"
-                            Style="{StaticResource PageTransition}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
             <Button
                 x:Name="FullscreenMenuButton"
-                Grid.Row="1"
                 Width="44"
                 Height="44"
                 Margin="16,16,0,0"
@@ -483,8 +475,7 @@
 
         <!--  全局 Growl 通知容器（右下角）。
               HandyControl 的 Growl 需要一个 Panel 容器才能在 UI 显示通知；
-              原右上角位置与 PLC 断连横幅（Row 0）冲突，断连时通知被横幅盖住。
-              移至右下角，避开顶部状态横幅，且符合车间大屏视觉动线（顶部状态/底部通知）。
+              连接横幅已改为顶部叠层，通知放右下角避开顶部状态区。
               用 StackPanel 覆盖全窗口（ColumnSpan=2），Z-order 在最上层。
               容器注册在 MainWindow 构造函数中通过 Growl.SetGrowlParent 完成。  -->
         <StackPanel x:Name="GrowlContainer"

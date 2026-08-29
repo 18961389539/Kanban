@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF">
 
     <!--  ============ 主页仪表板共享资源 ============  -->
@@ -43,6 +44,9 @@
             </DataTrigger>
             <DataTrigger Binding="{Binding DataStatusKind}" Value="NoDevice">
                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding DataStatusKind}" Value="{x:Static vm:HomeDataStatus.Live}">
+                <Setter Property="Visibility" Value="Collapsed" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

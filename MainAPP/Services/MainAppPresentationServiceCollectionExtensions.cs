@@ -65,7 +65,8 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetRequiredService<IDialogService>(), sp.GetRequiredService<IWorkOrderService>(),
             sp.GetRequiredService<IRuntimeMode>(),
-            remoteRuntimeSink: sp.GetService<RemoteRuntimeSink>()));
+            remoteRuntimeSink: sp.GetService<RemoteRuntimeSink>(),
+            alarmSessionMute: sp.GetRequiredService<IAlarmSessionMute>()));
         services.AddSingleton<ProductionLineViewModel>(sp => new ProductionLineViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>()));

@@ -48,7 +48,7 @@
   <data name="Nav_Overview_Tip" xml:space="preserve">
     <value>Revisão da produção (últimas 24 h)</value>
   </data>
-  <data name="Status_Initial" xml:space="preserve">
+  <data name="Status_Offline" xml:space="preserve">
     <value>Offline</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
@@ -200,6 +200,12 @@
   </data>
   <data name="Home_DeviceHealth" xml:space="preserve">
     <value>Device health</value>
+  </data>
+  <data name="Home_DeviceHealthTooltip" xml:space="preserve">
+    <value>Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.</value>
+  </data>
+  <data name="F_DeviceHealthBreakdown" xml:space="preserve">
+    <value>Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
   </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>Total duration</value>
@@ -1249,10 +1255,10 @@
     <value>Real-time Faults</value>
   </data>
   <data name="K330" xml:space="preserve">
-    <value>Mute or restore alarm flashing</value>
+    <value>Mute New Alarms</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>Mute/Restore Alarm Flashing</value>
+    <value>Toggle sound and flashing for new alarms; the alarm list still updates</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>Level</value>

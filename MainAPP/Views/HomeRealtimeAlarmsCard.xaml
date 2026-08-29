@@ -26,7 +26,6 @@
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="BellAlert" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K329}" />
-                    <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
                     <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="11"
                             VerticalAlignment="Center">
                         <Border.Style>
@@ -61,7 +60,7 @@
                     </TextBlock>
                 </StackPanel>
 
-                <!--  右：静音按钮（切换新报警闪烁动画）  -->
+                <!--  右：静音按钮（抑制新报警声音与闪烁）  -->
                 <Button DockPanel.Dock="Right" Width="30" Height="30" Padding="0" Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         AutomationProperties.Name="{x:Static resources:Strings.K330}"
@@ -76,7 +75,7 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsAlarmMuted}" Value="True">
                                         <Setter Property="Kind" Value="VolumeMute" />
-                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

@@ -206,7 +206,7 @@ private void OnRenderTick()
             DeviceStatus.Running => L.T("Status_Running"),
             DeviceStatus.Alarm => L.T("Status_Alarm"),
             DeviceStatus.Paused => L.T("Status_Paused"),
-            _ => L.T("Status_Idle"),
+            _ => L.T("Status_Offline"),
         };
     }
 
@@ -215,7 +215,7 @@ private void OnRenderTick()
         DeviceStatus.Running => "run",
         DeviceStatus.Alarm => "alarm",
         DeviceStatus.Paused => "paused",
-        _ => "idle",
+        _ => "offline",
     };
 
     private static string LevelText(AlarmLevel level) => level switch

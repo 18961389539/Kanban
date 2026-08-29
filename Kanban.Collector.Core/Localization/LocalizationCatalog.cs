@@ -59,7 +59,7 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "最近24小时生产复盘", ["en-US"] = "Production review (last 24h)", ["ja-JP"] = "直近24時間の生産レビュー", ["pt-BR"] = "Revisão da produção (últimas 24 h)"
         },
-        ["Wpf|Status_Initial"] = new Dictionary<string, string>
+        ["Wpf|Status_Offline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
@@ -262,6 +262,14 @@ public static class LocalizationCatalog
         ["Wpf|Home_DeviceHealth"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备健康", ["en-US"] = "Device health", ["ja-JP"] = "設備健全性", ["pt-BR"] = "Device health"
+        },
+        ["Wpf|Home_DeviceHealthTooltip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。", ["en-US"] = "Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.", ["ja-JP"] = "健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。", ["pt-BR"] = "Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
+        },
+        ["Wpf|F_DeviceHealthBreakdown"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["en-US"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["ja-JP"] = "現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["pt-BR"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
         },
         ["Wpf|Home_TotalDuration"] = new Dictionary<string, string>
         {
@@ -1661,11 +1669,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|K330"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "静音或恢复新报警闪烁", ["en-US"] = "Mute or restore alarm flashing", ["ja-JP"] = "新規アラーム点滅をミュート/復帰", ["pt-BR"] = "Mute or restore alarm flashing"
+            ["zh-CN"] = "新报警静音", ["en-US"] = "Mute New Alarms", ["ja-JP"] = "新規アラームをミュート", ["pt-BR"] = "Mute New Alarms"
         },
         ["Wpf|K331"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "静音/恢复新报警闪烁", ["en-US"] = "Mute/Restore Alarm Flashing", ["ja-JP"] = "アラーム点滅ミュート/復帰", ["pt-BR"] = "Mute/Restore Alarm Flashing"
+            ["zh-CN"] = "切换新报警声音与闪烁；报警列表仍照常更新", ["en-US"] = "Toggle sound and flashing for new alarms; the alarm list still updates", ["ja-JP"] = "新規アラームの音と点滅を切替（一覧は更新されます）", ["pt-BR"] = "Toggle sound and flashing for new alarms; the alarm list still updates"
         },
         ["Wpf|K332"] = new Dictionary<string, string>
         {

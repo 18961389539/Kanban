@@ -48,7 +48,7 @@
   <data name="Nav_Overview_Tip" xml:space="preserve">
     <value>直近24時間の生産レビュー</value>
   </data>
-  <data name="Status_Initial" xml:space="preserve">
+  <data name="Status_Offline" xml:space="preserve">
     <value>オフライン</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
@@ -200,6 +200,12 @@
   </data>
   <data name="Home_DeviceHealth" xml:space="preserve">
     <value>設備健全性</value>
+  </data>
+  <data name="Home_DeviceHealthTooltip" xml:space="preserve">
+    <value>健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。</value>
+  </data>
+  <data name="F_DeviceHealthBreakdown" xml:space="preserve">
+    <value>現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
   </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>総時間</value>
@@ -1249,10 +1255,10 @@
     <value>リアルタイム故障</value>
   </data>
   <data name="K330" xml:space="preserve">
-    <value>新規アラーム点滅をミュート/復帰</value>
+    <value>新規アラームをミュート</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>アラーム点滅ミュート/復帰</value>
+    <value>新規アラームの音と点滅を切替（一覧は更新されます）</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>レベル</value>

@@ -95,4 +95,25 @@ public class SnapshotMetricsTests
     [Fact]
     public void NgRateThresholds_BucketAlert_IsHigherThanRealtimeDanger()
         => Assert.True(NgRateThresholds.BucketAlert > NgRateThresholds.Danger);
+
+    // ──────────── OperationalStability / DeviceHealthScore ────────────
+
+    [Fact]
+    public void OperationalStability_ExcludesOfflineFromDenominator()
+    {
+        // run=50, alarm=25, paused=25 → S = 1 - 25/100 = 0.75（离线不参与分母）
+        Assert.Equal(0.75, SnapshotMetrics.OperationalStability(50, 25, 25), precision: 6);
+        // 若误用含离线的报警占比：alarm/(run+alarm+paused+offline=1000) ≈ 0.023 → S ≈ 0.977
+        var wrongStability = 1 - SnapshotMetrics.TimeRatio(25, 50, 25, 25, 900);
+        Assert.True(wrongStability > 0.9);
+        Assert.NotEqual(wrongStability, SnapshotMetrics.OperationalStability(50, 25, 25));
+    }
+
+    [Fact]
+    public void DeviceHealthScore_PerfectRates_Returns100()
+        => Assert.Equal(100, SnapshotMetrics.DeviceHealthScore(1, 1, 1, 3600, 0, 0), precision: 6);
+
+    [Fact]
+    public void DeviceHealthScore_NoActiveTime_ReturnsZero()
+        => Assert.Equal(0, SnapshotMetrics.DeviceHealthScore(1, 1, 1, 0, 0, 0));
 }

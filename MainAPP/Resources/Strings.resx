@@ -48,7 +48,7 @@
   <data name="Nav_Overview_Tip" xml:space="preserve">
     <value>最近24小时生产复盘</value>
   </data>
-  <data name="Status_Initial" xml:space="preserve">
+  <data name="Status_Offline" xml:space="preserve">
     <value>离线</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
@@ -200,6 +200,12 @@
   </data>
   <data name="Home_DeviceHealth" xml:space="preserve">
     <value>设备健康</value>
+  </data>
+  <data name="Home_DeviceHealthTooltip" xml:space="preserve">
+    <value>健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。</value>
+  </data>
+  <data name="F_DeviceHealthBreakdown" xml:space="preserve">
+    <value>当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
   </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>总时长</value>
@@ -1249,10 +1255,10 @@
     <value>实时故障</value>
   </data>
   <data name="K330" xml:space="preserve">
-    <value>静音或恢复新报警闪烁</value>
+    <value>新报警静音</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>静音/恢复新报警闪烁</value>
+    <value>切换新报警声音与闪烁；报警列表仍照常更新</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>级别</value>

@@ -243,7 +243,7 @@
                                            Text="{Binding DowntimeFormatted}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Initial}" />
+                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource StatusIdleBrush}"
                                            Text="{Binding OfflineTimeFormatted}" />

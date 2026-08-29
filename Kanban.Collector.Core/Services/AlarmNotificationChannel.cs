@@ -24,3 +24,17 @@ public interface IAlarmNotificationChannel
     /// <summary>快速入队，不得在调用线程执行网络、音频或其他阻塞 I/O。</summary>
     void Enqueue(AlarmNotification notification);
 }
+
+/// <summary>
+/// 主页「静音」会话态（不落盘）：true 时抑制新报警声音与闪烁，列表仍照常更新。
+/// </summary>
+public interface IAlarmSessionMute
+{
+    bool IsMuted { get; set; }
+}
+
+/// <inheritdoc cref="IAlarmSessionMute"/>
+public sealed class AlarmSessionMute : IAlarmSessionMute
+{
+    public bool IsMuted { get; set; }
+}

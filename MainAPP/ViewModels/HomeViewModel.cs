@@ -44,6 +44,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IWorkOrderRepository? _workOrderRepo;
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
+    private readonly IAlarmSessionMute? _alarmSessionMute;
     private readonly DispatcherTimer _liveTimer;
 
     /// <summary>
@@ -304,6 +305,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private double _deviceHealthScore;
     [ObservableProperty] private string _deviceHealthLevel = "—";
     [ObservableProperty] private Brush _deviceHealthBrush = Brushes.Gray;
+    [ObservableProperty] private string _deviceHealthScoreTooltip = "";
     /// <summary>设备健康分展示文本（0-100），无有效数据时显示 "—"。</summary>
     public string DeviceHealthScoreText => DeviceHealthScore <= 0 ? "—" : $"{DeviceHealthScore:0}";
 
@@ -319,9 +321,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>状态总时长（运行+报警+暂停）格式化文本。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
 
-    // ──────────── 第 2 行 列 3：设备缺陷图表 ────────────
+    // ──────────── 第 2 行 列 3：设备缺陷 TOP5 列表 ────────────
 
-    [ObservableProperty] private PlotModel? _defectBarChart;
+    public ObservableCollection<HomeDefectTopItem> DefectTop { get; } = [];
+
+    public bool IsDefectTopEmpty => DefectTop.Count == 0;
 
     // ──────────── 第 1 行 列 3：实时故障 ────────────
 
@@ -407,8 +411,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     // ──────────── 实时故障：静音 + 级别筛选 ────────────
 
     /// <summary>
-    /// 故障静音开关：true 时新报警不再触发闪烁高亮（仅抑制视觉动画，列表照常更新）。
-    /// 用于"已查看"场景，避免持续闪烁干扰值班人员。
+    /// 故障静音开关：true 时抑制新报警声音与闪烁高亮（列表照常更新，会话态不落盘）。
     /// </summary>
     [ObservableProperty] private bool _isAlarmMuted;
 
@@ -468,7 +471,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -479,6 +482,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _workOrderRepo = workOrderRepo;
         _dialog = dialog;
         _workOrderService = workOrderService;
+        _alarmSessionMute = alarmSessionMute;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _shiftProgress = new ShiftProgressProvider(appSettings);
         _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
@@ -530,6 +534,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     partial void OnShowHighAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
     partial void OnShowMediumAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
     partial void OnShowLowAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
+
+    partial void OnIsAlarmMutedChanged(bool value)
+    {
+        if (_alarmSessionMute != null)
+            _alarmSessionMute.IsMuted = value;
+    }
 
     private void RefreshActiveAlarmPresentation()
     {
@@ -883,7 +893,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5));
         if (statusInput != _lastStatusInput) { BuildStatusPieChart(); _lastStatusInput = statusInput; }
         var defectSig = DefectSignature(CurrentDevice);
-        if (defectSig != _lastDefectSignature) { BuildDefectBarChart(); _lastDefectSignature = defectSig; }
+        if (defectSig != _lastDefectSignature) { RefreshDefectTop(); _lastDefectSignature = defectSig; }
         var qualityInput = (TotalOkProduction, TotalNgProduction);
         if (qualityInput != _lastQualityInput) { BuildQualityPieChart(); _lastQualityInput = qualityInput; }
         RefreshActiveAlarms();
@@ -963,7 +973,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             BuildOeeRingCharts();
             BuildStatusPieChart();
-            BuildDefectBarChart();
+            RefreshDefectTop();
             BuildQualityPieChart();
         }
         RefreshActiveAlarms();
@@ -1015,7 +1025,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
-    /// 计算设备健康分：A/P/Q 三率 + 报警稳定性加权，0-100。
+    /// 计算设备健康分：A/P/Q 三率 + OEE 口径稳定性加权，0-100。
     /// 无有效运行数据时显示 "—"。
     /// </summary>
     private void UpdateDeviceHealth()
@@ -1025,15 +1035,18 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             DeviceHealthScore = 0;
             DeviceHealthLevel = "—";
             DeviceHealthBrush = Brushes.Gray;
+            DeviceHealthScoreTooltip = Strings.Home_DeviceHealthTooltip;
             return;
         }
 
-        var stability = Math.Clamp(1 - AlarmTimeRatio, 0, 1);
-        var score = 100 * (0.30 * AvailabilityRate
-                          + 0.20 * PerformanceRate
-                          + 0.25 * QualityRate
-                          + 0.25 * stability);
-        DeviceHealthScore = Math.Clamp(score, 0, 100);
+        var stability = SnapshotMetrics.OperationalStability(RunTime, AlarmTime, PausedTime);
+        DeviceHealthScore = SnapshotMetrics.DeviceHealthScore(
+            AvailabilityRate, PerformanceRate, QualityRate, RunTime, AlarmTime, PausedTime);
+        DeviceHealthScoreTooltip = string.Format(
+                Strings.F_DeviceHealthBreakdown,
+                AvailabilityRate, PerformanceRate, QualityRate, stability, DeviceHealthScore)
+            + Environment.NewLine + Environment.NewLine
+            + Strings.Home_DeviceHealthTooltip;
 
         if (DeviceHealthScore >= 85)
         {
@@ -1101,6 +1114,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";
         RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; OfflineTimeFullFormatted = ""; TotalTimeFullFormatted = "";
         DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
+        DeviceHealthScoreTooltip = Strings.Home_DeviceHealthTooltip;
         OeeFormulaText = ""; AvailabilityFormulaText = "";
         PerformanceFormulaText = ""; QualityFormulaText = "";
         ActiveAlarms.Clear();
@@ -1114,7 +1128,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         QualityRingChart = null;
         StatusPieChart = null;
         QualityPieChart = null;
-        DefectBarChart = null;
+        DefectTop.Clear();
+        OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
 
@@ -1145,17 +1160,39 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         return hash.ToHashCode();
     }
 
-    private void BuildDefectBarChart()
+    private void RefreshDefectTop()
     {
+        DefectTop.Clear();
         if (CurrentDevice == null)
         {
-            DefectBarChart = null;
+            OnPropertyChanged(nameof(IsDefectTopEmpty));
             return;
         }
-        // 快照 Defects：避免 ChartService 内部枚举时其他线程修改集合抛 InvalidOperationException
-        var defectsSnapshot = CurrentDevice.Defects.ToList();
-        DefectBarChart = ChartService.BuildDefectBarChart(
-            defectsSnapshot.Select(d => (d.Name, d.Count)));
+
+        var list = CurrentDevice.Defects
+            .Where(d => d.Count > 0)
+            .OrderByDescending(d => d.Count)
+            .Take(5)
+            .ToList();
+        if (list.Count == 0)
+        {
+            OnPropertyChanged(nameof(IsDefectTopEmpty));
+            return;
+        }
+
+        var max = list[0].Count;
+        var deviceName = CurrentDevice.Name;
+        foreach (var d in list)
+        {
+            DefectTop.Add(new HomeDefectTopItem
+            {
+                Name = d.Name,
+                DeviceName = deviceName,
+                Count = d.Count,
+                BarRatio = max > 0 ? (double)d.Count / max : 0,
+            });
+        }
+        OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
     /// <summary>

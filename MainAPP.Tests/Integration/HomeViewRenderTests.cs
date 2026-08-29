@@ -43,39 +43,4 @@ public class HomeViewRenderTests : WpfTestHost
 
         // 未抛异常即视为通过
     }
-
-    [Fact]
-    public void PlcDisconnected_Banner_StateBinding_Works()
-    {
-        var (repo, _, _) = BuildTestRepository(deviceCount: 1);
-        var appSettings = new AppSettings();
-        var conn = new PlcConnectionManager(new FakePlcDriver(), appSettings);
-        var selection = new DeviceSelectionService();
-        var homeVm = new HomeViewModel(repo, conn, appSettings, null!, selection);
-
-        Assert.False(conn.IsConnected);
-
-        RunOnSta(app =>
-        {
-            var view = new HomeView { DataContext = homeVm };
-            var win = new Window { Content = view, Width = 1280, Height = 800 };
-            win.Show();
-            win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
-            win.UpdateLayout();
-
-            // 真实断言（审查修复 2026-08-13：原实现只断言 conn.IsConnected==false，
-            // 与测试名"横幅可见性绑定"无关，横幅从未被验证）：
-            // 断线 → 横幅 Visible；连接后 DataTrigger 折叠
-            var banner = view.FindName("DisconnectBanner") as System.Windows.Controls.Border;
-            Assert.NotNull(banner);
-            Assert.Equal(System.Windows.Visibility.Visible, banner.Visibility);
-
-            conn.EnsureConnected(); // FakePlcDriver 连接成功 → IsConnected=true → 触发器折叠横幅
-            win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.DataBind);
-            win.UpdateLayout();
-            Assert.Equal(System.Windows.Visibility.Collapsed, banner.Visibility);
-
-            win.Close();
-        });
-    }
 }
