@@ -67,6 +67,7 @@
         <DataTemplate.Resources>
             <Style x:Key="RingCenterText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeKpiMd}" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
                 <Setter Property="VerticalAlignment" Value="Center" />
@@ -79,13 +80,13 @@
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
             </Style>
             <Style x:Key="MiniStatLabel" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeMicro}" />
                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
             <Style x:Key="MiniStatValue" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Consolas" />
-                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeSubtitle}" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
@@ -119,7 +120,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" HorizontalAlignment="Center" FontSize="24" FontWeight="Bold"
+                    <TextBlock Grid.Column="0" HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                Foreground="{StaticResource PrimaryTextBrush}"
                                Text="{Binding Device.Name}" TextTrimming="CharacterEllipsis" />
                     <Border Grid.Column="1" Margin="8,0,0,0" Padding="12,4" CornerRadius="999"
@@ -127,7 +128,7 @@
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" VerticalAlignment="Center"
                                      Fill="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="Bold"
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                        Foreground="{Binding Runtime.StatusWord, Converter={StaticResource StateBrush}}"
                                        Text="{Binding Runtime.StatusWord, Converter={StaticResource StateText}}" />
                         </StackPanel>
@@ -137,7 +138,7 @@
                 <!--  Row 1：配方名 + 报警横幅（全宽 Soft 底，报警时显著）  -->
                 <StackPanel Grid.Row="1">
                     <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0"
-                               FontSize="15" Foreground="{StaticResource ThirdlyTextBrush}"
+                               FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{Binding Device.RecipeName}" TextTrimming="CharacterEllipsis">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
@@ -164,10 +165,10 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <materialIcons:MaterialIcon Kind="AlertOutline" Width="15" Height="15" VerticalAlignment="Center"
                                                         Foreground="{StaticResource DangerBrush}" />
-                            <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="Bold"
+                            <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                        Foreground="{StaticResource DangerBrush}"
                                        Text="{Binding ActiveAlarmText}" TextTrimming="CharacterEllipsis" MaxWidth="180" />
-                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontFamily="Consolas"
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" FontFamily="Consolas"
                                        Foreground="{StaticResource DangerBrush}"
                                        Text="{Binding ActiveAlarmDurationText}" />
                         </StackPanel>
@@ -215,8 +216,8 @@
                         <!--  辅助指标纵向：节拍 / 运行 / 停机（合格率已上移至右栏三率条，此处删除）  -->
                         <StackPanel Margin="0,10,0,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K592}" />
-                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K592}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding CycleText}">
                                     <TextBlock.Style>
@@ -231,20 +232,20 @@
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K593}" />
-                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K593}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding RunTimeFormatted}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K659}" />
-                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K659}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding DowntimeFormatted}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock FontSize="14" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
-                                <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
+                                <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource StatusIdleBrush}"
                                            Text="{Binding OfflineTimeFormatted}" />
                             </StackPanel>
@@ -270,18 +271,17 @@
                                         <RotateTransform Angle="-90" />
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
-                                <TextBlock FontSize="24"
-                                           controls:CountUp.Value="{Binding Runtime.Oee}"
+                                <TextBlock controls:CountUp.Value="{Binding Runtime.Oee}"
                                            controls:CountUp.Format="{}{0:P0}"
                                            Style="{StaticResource RingCenterText}" />
                             </Grid>
                             <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0"
-                                       FontSize="14" Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="{x:Static resources:Strings.K587}" />
                             <StackPanel Style="{StaticResource RateBarRow}">
                                 <Grid>
-                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource StatusRunBrush}"
                                                Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
                                 </Grid>
@@ -291,8 +291,8 @@
                             </StackPanel>
                             <StackPanel Style="{StaticResource RateBarRow}">
                                 <Grid>
-                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource PrimaryBrush}"
                                                Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
                                 </Grid>
@@ -302,8 +302,8 @@
                             </StackPanel>
                             <StackPanel Style="{StaticResource RateBarRow}">
                                 <Grid>
-                                    <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
+                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource ChartOkSeriesBrush}"
                                                Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
                                 </Grid>
@@ -339,13 +339,13 @@
                                          Background="{StaticResource RegionBrush}"
                                          Value="{Binding ShiftProgressRatio, Mode=OneWay}" />
                             <TextBlock HorizontalAlignment="Right" Margin="0,0,8,0" VerticalAlignment="Center"
-                                       FontSize="13" FontWeight="SemiBold" Foreground="White"
+                                       FontSize="{DynamicResource FontSizeCaption}" FontWeight="SemiBold" Foreground="White"
                                        Text="{Binding ShiftProgressText}" />
                         </Grid>
                     </StackPanel>
 
                     <Button Grid.Column="1" Height="38" Padding="18,0" Margin="8,0,0,0"
-                            VerticalAlignment="Center" Cursor="Hand" FontSize="15"
+                            VerticalAlignment="Center" Cursor="Hand" FontSize="{DynamicResource FontSizeKpiLabel}"
                             Background="{StaticResource SecondaryRegionBrush}"
                             Foreground="{StaticResource PrimaryTextBrush}"
                             BorderBrush="{StaticResource BorderBrush}"
@@ -353,7 +353,7 @@
                             Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                             CommandParameter="{Binding Device.Id}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#x2192;" FontSize="18" Margin="0,0,6,0"
+                            <TextBlock Text="&#x2192;" FontSize="{DynamicResource FontSizeKpiXs}" Margin="0,0,6,0"
                                        Foreground="{StaticResource PrimaryBrush}" />
                             <TextBlock Text="{x:Static resources:Strings.K594}" VerticalAlignment="Center" />
                         </StackPanel>
