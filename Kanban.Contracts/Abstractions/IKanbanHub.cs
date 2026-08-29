@@ -64,6 +64,12 @@ public interface IKanbanHubServer
     /// <summary>查询设备当前工单（Running 优先，无则回退最新 Pending；无工单返回 null）。</summary>
     Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId);
 
+    /// <summary>
+    /// 查询工单产量聚合（合格/不良/达成率）。按工单时间窗口差分，与 WPF 工单进度口径一致。
+    /// 工单不存在时返回 OkCount=0 的空摘要。
+    /// </summary>
+    Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId);
+
     /// <summary>查询当前班次进度（按班次配置与当前时间计算，无班次配置时 IsInShift=false）。</summary>
     Task<ShiftProgressDto> GetShiftProgressAsync();
 

@@ -15,7 +15,7 @@
         @* 无设备数据时隐藏选择器：避免渲染一个空白下拉框与下方空状态卡片并存、让用户困惑 *@
         @if (Dashboard.Snapshots.Count > 0)
         {
-            <select class="device-select" @bind="SelectedDeviceId">
+            <select class="device-select" value="@_selectedDeviceId" @onchange="OnDeviceSelected">
                 @foreach (var dev in Dashboard.Snapshots)
                 {
                     <option value="@dev.DeviceId">@dev.DeviceName</option>
@@ -255,37 +255,51 @@
 </div>
 
 @code {
+    /// <summary>
+    /// 当前选中设备 id（只读暴露给模板）。持久化与兜底修正见 <see cref="SelectedDeviceId"/> setter 与 <see cref="EnsureSelectedDevice"/>。
+    /// </summary>
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
 
     private const string DevicePreferenceKey = "kanban.selected-device";
 
-    /// <summary>
-    /// 当前选中设备。未手动选择时默认第一台；选择持久化到 localStorage（刷新/重进保留）。
-    /// getter 兜底：存储的设备已不存在或快照未到时，自动回退第一台。
-    /// </summary>
+    /// <summary>用户切换设备或兜底回退时写入，并同步 localStorage。</summary>
     private string? SelectedDeviceId
     {
-        get
-        {
-            var snaps = Dashboard.Snapshots;
-            if (snaps.Count == 0) return null;
-            if (_selectedDeviceId is not null && snaps.Any(s => s.DeviceId == _selectedDeviceId))
-                return _selectedDeviceId;
-            // 兜底写回：直接赋值 _selectedDeviceId（不走 setter，避免触发 localStorage 写入），
-            // 让 <select> 的 DOM 高亮与逻辑选中一致
-            return _selectedDeviceId = snaps[0].DeviceId;
-        }
+        get => _selectedDeviceId;
         set
         {
-            if (_selectedDeviceId != value)
-            {
-                _selectedDeviceId = value;
-                // 持久化选中设备（fire-and-forget；localStorage 同步极快）
+            if (string.IsNullOrEmpty(value))
+                value = null;
+            if (_selectedDeviceId == value)
+                return;
+
+            _selectedDeviceId = value;
+            if (value is null)
+                _ = JS.InvokeVoidAsync("localStorage.removeItem", DevicePreferenceKey);
+            else
                 _ = JS.InvokeVoidAsync("localStorage.setItem", DevicePreferenceKey, value);
-            }
         }
+    }
+
+    private void OnDeviceSelected(ChangeEventArgs e)
+        => SelectedDeviceId = e.Value?.ToString();
+
+    /// <summary>
+    /// 快照列表变化后校正选中项：无效或空选时回退第一台，并走 setter 以同步 localStorage。
+    /// 不在 getter 内写回，避免与 @bind / localStorage 恢复打架。
+    /// </summary>
+    private void EnsureSelectedDevice()
+    {
+        var snaps = Dashboard.Snapshots;
+        if (snaps.Count == 0)
+            return;
+
+        if (_selectedDeviceId is not null && snaps.Any(s => s.DeviceId == _selectedDeviceId))
+            return;
+
+        SelectedDeviceId = snaps[0].DeviceId;
     }
 
     private DeviceSnapshotDto? SelectedSnapshot
@@ -316,6 +330,9 @@
         {
             // localStorage 不可用（隐私模式等）时静默忽略，回退默认第一台
         }
+
+        EnsureSelectedDevice();
+        Dashboard.StateChanged += OnDashboardStateChanged;
         _ = Dashboard.InitializeAsync(); // 连接 Collector（失败由定时器自动重试）
         // 渲染节流：2s 统一重渲染（推送 500ms 只更新内存，避免 render tree 高频 diff）
         _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 2000, 2000);
@@ -343,13 +360,26 @@
 
 private void OnRenderTick()
     {
-        if (_disposed) return; // Dispose 后 Timer 残留回调守卫
+        if (_disposed) return;
+        EnsureSelectedDevice();
+        Dashboard.RequestWorkOrderProductionRefresh(SelectedDeviceId);
         StateHasChanged();
+    }
+
+    private void OnDashboardStateChanged()
+    {
+        if (_disposed) return;
+        _ = InvokeAsync(() =>
+        {
+            EnsureSelectedDevice();
+            StateHasChanged();
+        });
     }
 
     public void Dispose()
     {
         _disposed = true;
+        Dashboard.StateChanged -= OnDashboardStateChanged;
         _renderTimer?.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -382,7 +412,7 @@ private void OnRenderTick()
         _ => "wo-pending",
     };
 
-    /// <summary>工单进度：Running 工单用当前 OK 产量/目标；Pending 显示 "0 / 目标"。</summary>
+    /// <summary>工单进度：Running 用工单内 OK 产量/目标（Hub 差分聚合）；Pending 显示 "-- / 目标"。</summary>
     private string WoProgressText
     {
         get
@@ -391,7 +421,7 @@ private void OnRenderTick()
             if (wo is null) return "";
             var target = wo.TargetQuantity > 0 ? wo.TargetQuantity.ToString("N0") : "--";
             return wo.Status == WorkOrderStatus.Running
-                ? L.T("Wo_Progress", (SelectedSnapshot?.TotalOkProduction ?? 0).ToString("N0"), target)
+                ? L.T("Wo_Progress", (Dashboard.GetWorkOrderOkCount(SelectedDeviceId) ?? 0).ToString("N0"), target)
                 : L.T("Wo_ProgressPending", target);
         }
     }
@@ -402,7 +432,7 @@ private void OnRenderTick()
         {
             var wo = CurrentWorkOrder;
             if (wo is null || wo.TargetQuantity <= 0) return 0;
-            var ok = SelectedSnapshot?.TotalOkProduction ?? 0;
+            var ok = Dashboard.GetWorkOrderOkCount(SelectedDeviceId) ?? 0;
             return Math.Clamp(100.0 * ok / wo.TargetQuantity, 0, 100);
         }
     }

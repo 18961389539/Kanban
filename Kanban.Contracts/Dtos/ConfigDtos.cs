@@ -130,3 +130,15 @@ public sealed record WorkOrderDto
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
+
+/// <summary>
+/// 工单产量聚合 DTO（按工单时间窗口差分；非班次会话累计 TotalOkProduction）。
+/// Running 工单由 Hub 查询生产日志计算；Completed/Aborted 优先用 CompletedOkCount 快照。
+/// </summary>
+public sealed record WorkOrderProductionSummaryDto
+{
+    public int OkCount { get; init; }
+    public int NgCount { get; init; }
+    public double AchievementRate { get; init; }
+    public double DefectRate { get; init; }
+}

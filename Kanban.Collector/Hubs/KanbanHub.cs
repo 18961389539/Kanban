@@ -25,6 +25,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly ShiftProgressProvider _shiftProgressProvider;
     private readonly MetaPublisher _metaPublisher;
     private readonly WorkOrderRepository _workOrderRepository;
+    private readonly HistoryService _historyService;
     private readonly AppSettings _appSettings;
     private readonly IAuditService _auditService;
 
@@ -37,6 +38,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         ShiftProgressProvider shiftProgressProvider,
         MetaPublisher metaPublisher,
         WorkOrderRepository workOrderRepository,
+        HistoryService historyService,
         AppSettings appSettings,
         IAuditService auditService)
     {
@@ -48,6 +50,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         _shiftProgressProvider = shiftProgressProvider;
         _metaPublisher = metaPublisher;
         _workOrderRepository = workOrderRepository;
+        _historyService = historyService;
         _appSettings = appSettings;
         _auditService = auditService;
     }
@@ -111,6 +114,25 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId)
         => _configSyncHandler.GetCurrentWorkOrderAsync(deviceId);
+
+    /// <inheritdoc />
+    public Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId)
+    {
+        var workOrder = _workOrderRepository.GetSnapshot().FirstOrDefault(w => w.Id == workOrderId);
+        if (workOrder is null)
+            return Task.FromResult(WorkOrderProductionSummaryCalculator.Empty);
+
+        try
+        {
+            return Task.FromResult(WorkOrderProductionSummaryCalculator.Calculate(workOrder, _historyService));
+        }
+        catch (Exception ex)
+        {
+            // 与 MainAPP WorkOrderService 一致：查询失败返回空摘要，由客户端按 0 展示
+            Serilog.Log.Warning(ex, "Hub 查询工单产量聚合失败 WorkOrderId={WorkOrderId}", workOrderId);
+            return Task.FromResult(WorkOrderProductionSummaryCalculator.Empty);
+        }
+    }
 
     /// <inheritdoc />
     public Task<ShiftProgressDto> GetShiftProgressAsync()

@@ -16,6 +16,7 @@ public interface IKanbanMonitoringClient
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync(CancellationToken ct = default);
     Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId, CancellationToken ct = default);
+    Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId, CancellationToken ct = default);
     Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default);
     Task SubscribeMetaAsync(CancellationToken ct = default);
     Task<string> GetServerVersionAsync(CancellationToken ct = default);

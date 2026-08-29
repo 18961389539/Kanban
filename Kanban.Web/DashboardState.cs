@@ -26,6 +26,12 @@ public sealed class DashboardState : IAsyncDisposable
     private readonly Dictionary<string, WorkOrderDto?> _workOrdersByDevice = new();
     private readonly Dictionary<string, IReadOnlyList<DeviceDefectCountDto>> _defectTopByDevice = new();
     private readonly Dictionary<string, DeviceShiftSummaryDto> _lastShiftsByDevice = new();
+    private readonly Dictionary<int, int> _workOrderOkById = new();
+    private readonly Dictionary<string, int> _trackedRunningWorkOrderIdByDevice = new();
+    private int _lastSummaryWorkOrderId = -1;
+    private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private bool _workOrderSummaryInFlight;
+    private static readonly TimeSpan WorkOrderSummaryThrottle = TimeSpan.FromSeconds(2);
     private readonly object _lock = new();
     private IReadOnlyList<DeviceSnapshotDto>? _sortedSnapshotsCache;
     private bool _sortedSnapshotsDirty = true;
@@ -139,6 +145,57 @@ public sealed class DashboardState : IAsyncDisposable
         if (string.IsNullOrEmpty(deviceId)) return null;
         lock (_lock)
             return _workOrdersByDevice.TryGetValue(deviceId, out var wo) ? wo : null;
+    }
+
+    /// <summary>Running 工单的工单内 OK 产量（Hub 差分聚合缓存）；无 Running 或尚未查询时 null。</summary>
+    public int? GetWorkOrderOkCount(string? deviceId)
+    {
+        var wo = GetWorkOrder(deviceId);
+        if (wo is null || wo.Status != WorkOrderStatus.Running) return null;
+        lock (_lock)
+            return _workOrderOkById.TryGetValue(wo.Id, out var ok) ? ok : null;
+    }
+
+    /// <summary>节流刷新 Running 工单产量（2s，对齐 WPF HomeViewModel.RefreshWorkOrderSummary）。</summary>
+    public void RequestWorkOrderProductionRefresh(string? deviceId)
+        => _ = RefreshWorkOrderProductionAsync(deviceId);
+
+    private async Task RefreshWorkOrderProductionAsync(string? deviceId)
+    {
+        var wo = GetWorkOrder(deviceId);
+        if (wo is null || wo.Status != WorkOrderStatus.Running || wo.Id <= 0)
+            return;
+
+        lock (_lock)
+        {
+            if (_workOrderSummaryInFlight) return;
+            if (_lastSummaryWorkOrderId == wo.Id
+                && DateTime.UtcNow - _lastSummaryQueryUtc < WorkOrderSummaryThrottle)
+                return;
+            _workOrderSummaryInFlight = true;
+        }
+
+        try
+        {
+            var summary = await InvokeWithGuardAsync(
+                (client, token) => client.GetWorkOrderProductionSummaryAsync(wo.Id, token),
+                CancellationToken.None);
+            lock (_lock)
+            {
+                _workOrderOkById[wo.Id] = summary.OkCount;
+                _lastSummaryWorkOrderId = wo.Id;
+                _lastSummaryQueryUtc = DateTime.UtcNow;
+            }
+            StateChanged?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "工单产量聚合查询失败 WorkOrderId={WorkOrderId}", wo.Id);
+        }
+        finally
+        {
+            lock (_lock) _workOrderSummaryInFlight = false;
+        }
     }
 
     // ──────────── 快照访问（带缓存） ────────────
@@ -481,6 +538,17 @@ public sealed class DashboardState : IAsyncDisposable
         _client.MarkDataReceived();
         lock (_lock)
         {
+            foreach (var d in meta.Devices)
+            {
+                var runningId = d.WorkOrder?.Status == WorkOrderStatus.Running ? d.WorkOrder.Id : 0;
+                if (_trackedRunningWorkOrderIdByDevice.TryGetValue(d.DeviceId, out var prevId) && prevId != runningId)
+                {
+                    _lastSummaryWorkOrderId = -1;
+                    if (prevId > 0) _workOrderOkById.Remove(prevId);
+                }
+                _trackedRunningWorkOrderIdByDevice[d.DeviceId] = runningId;
+            }
+
             if (meta.Devices.Count != _workOrdersByDevice.Count)
             {
                 // 设备集变化（增删）：全量对齐，同时清理已删除设备的残留条目

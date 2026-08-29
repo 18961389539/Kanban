@@ -71,6 +71,8 @@ public sealed class KanbanHubQueriesTests : IDisposable
         var historyService = Substitute.For<IHistoryService>();
         historyService.QueryProductionLogs(Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>())
             .Returns(new List<Kanban.Collector.Core.Entities.ProductionLog>());
+        historyService.QueryProductionLogsByWorkOrder(Arg.Any<int>())
+            .Returns(new List<Kanban.Collector.Core.Entities.ProductionLog>());
         historyService.QueryProductionLogsPaged(
                 Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns((new List<Kanban.Collector.Core.Entities.ProductionLog>(), 0));
@@ -88,6 +90,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
             new ShiftProgressProvider(_settings),
             new MetaPublisher(configSync, new ShiftProgressProvider(_settings), NullLogger<MetaPublisher>.Instance),
             _workOrderRepo,
+            new HistoryService(_db, NullLogger<HistoryService>.Instance),
             _settings,
             new AuditService(_db, NullLogger<AuditService>.Instance));
         _hub.Context = new FakeHubCallerContext(); // 读取路径依赖 Context.ConnectionAborted
@@ -170,6 +173,14 @@ public sealed class KanbanHubQueriesTests : IDisposable
         Assert.Equal("10.1.2.3", dto.PlcIpAddress);
         Assert.Equal(300, dto.PollingIntervalMs);
         Assert.NotNull(dto.Shifts);
+    }
+
+    [Fact]
+    public async Task GetWorkOrderProductionSummary_UnknownWorkOrder_ReturnsEmpty()
+    {
+        var summary = await _hub.GetWorkOrderProductionSummaryAsync(9999);
+        Assert.Equal(0, summary.OkCount);
+        Assert.Equal(0, summary.NgCount);
     }
 
     [Fact]

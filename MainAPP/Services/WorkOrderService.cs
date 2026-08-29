@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using MainAPP.Resources;
 using Kanban.Collector.Core.Services;
+using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -189,13 +190,14 @@ public class WorkOrderService(
 
             if (batch != null && batch.TryGetValue(workOrder.Id, out var logs) && logs.Count > 0)
             {
-                result[workOrder.Id] = CalculateProductionSummary(workOrder, logs);
+                result[workOrder.Id] = ToSummary(
+                    WorkOrderProductionSummaryCalculator.CalculateFromLogs(workOrder, logs, _historyService));
                 continue;
             }
             if (windowBatch != null && windowBatch.TryGetValue(workOrder.Id, out var wLogs))
             {
                 result[workOrder.Id] = wLogs.Count > 0
-                    ? CalculateProductionSummary(workOrder, wLogs)
+                    ? ToSummary(WorkOrderProductionSummaryCalculator.CalculateFromLogs(workOrder, wLogs, _historyService))
                     : new WorkOrderProductionSummary();
                 continue;
             }
@@ -480,97 +482,13 @@ public class WorkOrderService(
     /// <inheritdoc />
     public WorkOrderProductionSummary GetProductionSummary(WorkOrder workOrder)
     {
-        // 快速路径：已结束工单（Completed/Aborted）若已写入产量快照，直接返回，避免重复扫描日志。
-        // CompleteWorkOrder/AbortWorkOrder 在状态切换时已调用本方法的日志聚合分支写入快照。
-        // 老数据未回填时 CompletedOkCount 为 null，继续走日志聚合。
-        if ((workOrder.Status == WorkOrderStatus.Completed || workOrder.Status == WorkOrderStatus.Aborted)
-            && workOrder.CompletedOkCount.HasValue && workOrder.CompletedNgCount.HasValue)
-        {
-            var ok = workOrder.CompletedOkCount.Value;
-            var ng = workOrder.CompletedNgCount.Value;
-            var target = workOrder.TargetQuantity;
-            return new WorkOrderProductionSummary
-            {
-                OkCount = ok,
-                NgCount = ng,
-                AchievementRate = target > 0 ? Math.Min(1.0, (double)ok / target) : 0,
-                DefectRate = ok + ng > 0 ? (double)ng / (ok + ng) : 0,
-            };
-        }
-
-        // 查询策略：优先按 WorkOrderId 查询关联快照（新数据）；
-        // 若无关联记录（老数据或未启动采集），回退按 DeviceId + 工单时间窗口查询。
         try
         {
-            var logs = _historyService.QueryProductionLogsByWorkOrder(workOrder.Id);
-
-            // 回退：按 DeviceId + 工单时间窗口查询（容老数据无 WorkOrderId）
-            if (logs.Count == 0)
-            {
-                // 时间窗口扩展前后各 5 分钟，避免工单开始/结束边界处丢失快照
-                logs = _historyService.QueryProductionLogs(FallbackFrom(workOrder), FallbackTo(workOrder), workOrder.DeviceId);
-            }
-
-            if (logs.Count == 0)
-                return new WorkOrderProductionSummary();
-
-            // OkProduction/NgProduction 是班次内累计值（班次切换时重置基线）。
-            // 按班次分组，每班次取末条 - 首条的差值，再跨班次累加。
-            // 单条记录场景：first == last 会导致差分为 0，丢失该班次的实际产量。
-            // 此时查询该班次在工单首条快照之前的最后一条作为基线（PreBaseline），
-            // 差分 = last - PreBaseline；若无基线则视为从 0 开始累计，直接取 last 值。
-            var okTotal = 0;
-            var ngTotal = 0;
-            foreach (var group in logs.GroupBy(p => p.ShiftName ?? string.Empty))
-            {
-                var ordered = group.OrderBy(p => p.Timestamp).ToList();
-                if (ordered.Count == 0) continue;
-                var first = ordered[0];
-                var last = ordered[^1];
-
-                if (ordered.Count == 1)
-                {
-                    // 单条记录：查询同设备同班次在工单首条快照之前的最后一条作为基线
-                    var baselineTime = first.Timestamp;
-                    var baselineShift = first.ShiftName ?? string.Empty;
-                    var baseline = _historyService.GetLatestProductionBefore(
-                        workOrder.DeviceId, baselineTime, baselineShift);
-                    if (baseline != null)
-                    {
-                        okTotal += Math.Max(0, last.OkProduction - baseline.OkProduction);
-                        ngTotal += Math.Max(0, last.NgProduction - baseline.NgProduction);
-                    }
-                    else
-                    {
-                        // 无基线：PLC 累计值从 0 开始，直接取末条值
-                        okTotal += Math.Max(0, last.OkProduction);
-                        ngTotal += Math.Max(0, last.NgProduction);
-                    }
-                }
-                else
-                {
-                    okTotal += Math.Max(0, last.OkProduction - first.OkProduction);
-                    ngTotal += Math.Max(0, last.NgProduction - first.NgProduction);
-                }
-            }
-
-            var target = workOrder.TargetQuantity;
-            var achievementRate = target > 0 ? Math.Min(1.0, (double)okTotal / target) : 0;
-            var defectRate = okTotal + ngTotal > 0 ? (double)ngTotal / (okTotal + ngTotal) : 0;
-
-            return new WorkOrderProductionSummary
-            {
-                OkCount = okTotal,
-                NgCount = ngTotal,
-                AchievementRate = achievementRate,
-                DefectRate = defectRate,
-            };
+            return ToSummary(WorkOrderProductionSummaryCalculator.Calculate(workOrder, _historyService));
         }
         catch (Exception ex)
         {
-            // 查询失败（Remote 模式 SignalR 故障等）与"真无数据"区分：记录日志后返回空摘要，
-            // 避免达成率 0% 无法区分故障/无数据（用户可据日志排查）
-            _logger.LogWarning(ex, "工单产量聚合查询失败，返回空摘要 WorkOrder={WorkOrderId}", workOrder.Id);
+            _logger.LogWarning(ex, "查询工单 {OrderNo} 产量聚合失败", workOrder.OrderNo);
             return new WorkOrderProductionSummary();
         }
     }
@@ -580,21 +498,8 @@ public class WorkOrderService(
         WorkOrder workOrder,
         CancellationToken cancellationToken = default)
     {
-        if (HasCompletedSnapshot(workOrder)
-            && workOrder.CompletedOkCount.HasValue
-            && workOrder.CompletedNgCount.HasValue)
-        {
-            var ok = workOrder.CompletedOkCount.Value;
-            var ng = workOrder.CompletedNgCount.Value;
-            var target = workOrder.TargetQuantity;
-            return new WorkOrderProductionSummary
-            {
-                OkCount = ok,
-                NgCount = ng,
-                AchievementRate = target > 0 ? Math.Min(1.0, (double)ok / target) : 0,
-                DefectRate = ok + ng > 0 ? (double)ng / (ok + ng) : 0,
-            };
-        }
+        if (HasCompletedSnapshot(workOrder))
+            return ToSummary(WorkOrderProductionSummaryCalculator.Calculate(workOrder, _historyService));
 
         try
         {
@@ -615,55 +520,9 @@ public class WorkOrderService(
                         cancellationToken).ConfigureAwait(false);
             }
 
-            if (logs.Count == 0)
-                return new WorkOrderProductionSummary();
-
-            var okTotal = 0;
-            var ngTotal = 0;
-            foreach (var group in logs.GroupBy(p => p.ShiftName ?? string.Empty))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var ordered = group.OrderBy(p => p.Timestamp).ToList();
-                if (ordered.Count == 0) continue;
-                var first = ordered[0];
-                var last = ordered[^1];
-
-                if (ordered.Count == 1)
-                {
-                    var baseline = asyncHistory != null
-                        ? await asyncHistory.GetLatestProductionBeforeAsync(
-                            workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty,
-                            cancellationToken).ConfigureAwait(false)
-                        : await Task.Run(
-                            () => _historyService.GetLatestProductionBefore(
-                                workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty),
-                            cancellationToken).ConfigureAwait(false);
-                    if (baseline != null)
-                    {
-                        okTotal += Math.Max(0, last.OkProduction - baseline.OkProduction);
-                        ngTotal += Math.Max(0, last.NgProduction - baseline.NgProduction);
-                    }
-                    else
-                    {
-                        okTotal += Math.Max(0, last.OkProduction);
-                        ngTotal += Math.Max(0, last.NgProduction);
-                    }
-                }
-                else
-                {
-                    okTotal += Math.Max(0, last.OkProduction - first.OkProduction);
-                    ngTotal += Math.Max(0, last.NgProduction - first.NgProduction);
-                }
-            }
-
-            var target = workOrder.TargetQuantity;
-            return new WorkOrderProductionSummary
-            {
-                OkCount = okTotal,
-                NgCount = ngTotal,
-                AchievementRate = target > 0 ? Math.Min(1.0, (double)okTotal / target) : 0,
-                DefectRate = okTotal + ngTotal > 0 ? (double)ngTotal / (okTotal + ngTotal) : 0,
-            };
+            return logs.Count == 0
+                ? new WorkOrderProductionSummary()
+                : ToSummary(WorkOrderProductionSummaryCalculator.CalculateFromLogs(workOrder, logs, _historyService));
         }
         catch (OperationCanceledException)
         {
@@ -676,45 +535,12 @@ public class WorkOrderService(
         }
     }
 
-    private WorkOrderProductionSummary CalculateProductionSummary(WorkOrder workOrder, List<ProductionLog> logs)
-    {
-        var okTotal = 0;
-        var ngTotal = 0;
-        foreach (var group in logs.GroupBy(p => p.ShiftName ?? string.Empty))
+    private static WorkOrderProductionSummary ToSummary(WorkOrderProductionSummaryDto dto)
+        => new()
         {
-            var ordered = group.OrderBy(p => p.Timestamp).ToList();
-            if (ordered.Count == 0) continue;
-            var first = ordered[0];
-            var last = ordered[^1];
-            if (ordered.Count == 1)
-            {
-                var baseline = _historyService.GetLatestProductionBefore(
-                    workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty);
-                if (baseline != null)
-                {
-                    okTotal += Math.Max(0, last.OkProduction - baseline.OkProduction);
-                    ngTotal += Math.Max(0, last.NgProduction - baseline.NgProduction);
-                }
-                else
-                {
-                    okTotal += Math.Max(0, last.OkProduction);
-                    ngTotal += Math.Max(0, last.NgProduction);
-                }
-            }
-            else
-            {
-                okTotal += Math.Max(0, last.OkProduction - first.OkProduction);
-                ngTotal += Math.Max(0, last.NgProduction - first.NgProduction);
-            }
-        }
-
-        var target = workOrder.TargetQuantity;
-        return new WorkOrderProductionSummary
-        {
-            OkCount = okTotal,
-            NgCount = ngTotal,
-            AchievementRate = target > 0 ? Math.Min(1.0, (double)okTotal / target) : 0,
-            DefectRate = okTotal + ngTotal > 0 ? (double)ngTotal / (okTotal + ngTotal) : 0,
+            OkCount = dto.OkCount,
+            NgCount = dto.NgCount,
+            AchievementRate = dto.AchievementRate,
+            DefectRate = dto.DefectRate,
         };
-    }
 }

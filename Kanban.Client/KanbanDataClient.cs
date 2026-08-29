@@ -383,6 +383,14 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<WorkOrderDto?>(nameof(IKanbanHubServer.GetCurrentWorkOrderAsync), deviceId, ct);
     }
 
+    /// <summary>查询工单产量聚合（按工单时间窗口差分，非班次会话累计）。</summary>
+    public async Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<WorkOrderProductionSummaryDto>(
+            nameof(IKanbanHubServer.GetWorkOrderProductionSummaryAsync), workOrderId, ct);
+    }
+
     /// <summary>查询当前班次进度。</summary>
     public async Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default)
     {
