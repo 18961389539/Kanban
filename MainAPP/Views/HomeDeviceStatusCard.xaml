@@ -78,7 +78,7 @@
             </DockPanel>
 
             <Grid Grid.Row="1">
-                <!-- 内凹工艺台：左环形仪表（中心显示当前状态 + 总时长）+ 右图例 -->
+                <!-- 内凹工艺台：左环形仪表（中心显示当前状态）+ 右图例 -->
                 <Grid>
                         <Grid.Style>
                             <Style TargetType="Grid">
@@ -110,11 +110,6 @@
                                            Foreground="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
                                            Text="{Binding RealtimeStatus, Converter={StaticResource StateToTextConverter}}"
                                            TextTrimming="CharacterEllipsis" />
-                                <TextBlock Margin="0,4,0,0"
-                                           HorizontalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeKpiXs}"
-                                           Foreground="{StaticResource SecondaryTextBrush}"
-                                           Text="{Binding StatusCenterDurationFormatted}" />
                             </StackPanel>
                         </Grid>
 

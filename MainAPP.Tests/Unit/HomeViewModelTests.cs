@@ -509,4 +509,74 @@ public class HomeViewModelTests : IDisposable
     {
         Assert.Equal(expected, HomeViewModel.FormatQualityGap(qualityRate));
     }
+
+    // ═══════════════ 实时故障空状态 ═══════════════
+
+    [Fact]
+    public void ActiveAlarms_NoFaults_ShowsNoActiveFaultsEmptyState()
+    {
+        var device = CreateDevice("d1", "设备1");
+        _deviceRepository.Devices.Add(device);
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        Assert.Empty(vm.ActiveAlarms);
+        Assert.True(vm.IsActiveAlarmEmptyStateVisible);
+        Assert.Equal("暂无活跃故障", vm.ActiveEmptyStateMessage);
+    }
+
+    [Fact]
+    public void ActiveAlarms_AllLevelsFilteredOut_ShowsFilteredEmptyState()
+    {
+        var device = new Device { Id = "d1", Name = "设备1" };
+        device.Alarms.Add(new Alarm
+        {
+            Name = "高级报警",
+            Level = AlarmLevel.High,
+            PlcAddress = "M100",
+            StartTime = DateTime.Now.AddMinutes(-5),
+        });
+        _deviceRepository.Devices.Add(device);
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        vm.ShowHighAlarms = false;
+        vm.ShowMediumAlarms = false;
+        vm.ShowLowAlarms = false;
+
+        Assert.Equal(1, vm.ActiveAlarms.Count);
+        Assert.Equal(1, vm.ActiveAlarmTotalCount);
+        Assert.Empty(vm.FilteredActiveAlarms.Cast<object>());
+        Assert.True(vm.IsActiveAlarmEmptyStateVisible);
+        Assert.Equal("当前筛选无匹配报警", vm.ActiveEmptyStateMessage);
+    }
+
+    [Fact]
+    public void RefreshActiveAlarms_ShowsTruncationHintWhenExceedingHomeLimit()
+    {
+        var device = CreateDevice("d1", "设备1");
+        for (var i = 0; i < 7; i++)
+        {
+            device.Alarms.Add(new Alarm
+            {
+                Id = $"a{i}",
+                Name = $"报警{i}",
+                Level = AlarmLevel.Low,
+                PlcAddress = $"M{i}",
+                StartTime = DateTime.Now.AddMinutes(-i),
+            });
+        }
+        _deviceRepository.Devices.Add(device);
+        _connectionManager.EnsureConnected();
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        Assert.Equal(5, vm.ActiveAlarms.Count);
+        Assert.Equal(7, vm.ActiveAlarmTotalCount);
+        Assert.True(vm.HasActiveAlarmTruncation);
+        Assert.Equal("仅显示前 5 条", vm.ActiveTruncationHint);
+    }
 }

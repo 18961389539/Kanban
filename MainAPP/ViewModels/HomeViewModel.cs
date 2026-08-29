@@ -259,7 +259,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
-    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private int _realtimeStatus;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -281,7 +280,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
-    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private double _pausedTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -289,7 +287,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
-    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private double _offlineTime;
     [ObservableProperty] private string _runTimeFormatted = "";
     [ObservableProperty] private string _alarmTimeFormatted = "";
@@ -321,16 +318,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>离线时长占比（仅统计展示，不参与 OEE）。</summary>
     public double OfflineTimeRatio => SnapshotMetrics.TimeRatio(OfflineTime, RunTime, AlarmTime, PausedTime, OfflineTime);
 
-    /// <summary>状态总时长（运行+报警+暂停）格式化文本，用于状态饼图中心叠加显示。</summary>
+    /// <summary>状态总时长（运行+报警+暂停）格式化文本。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
-
-    /// <summary>
-    /// 环形图中心时长：离线时显示离线累计（仅统计）；其他状态显示 OEE 三态总时长。
-    /// </summary>
-    public string StatusCenterDurationFormatted =>
-        RealtimeStatus == (int)DeviceStatus.Offline
-            ? FormatHelper.FormatDurationFull(OfflineTime)
-            : FormatHelper.FormatDurationFull(RunTime + AlarmTime + PausedTime);
 
     // ──────────── 第 2 行 列 3：设备缺陷图表 ────────────
 
@@ -344,6 +333,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 是否存在 High 级别活跃报警（用于标题徽章红色提示）。
     /// </summary>
     [ObservableProperty] private bool _hasHighLevelAlarm;
+
+    /// <summary>当前设备截断前的活跃报警总数（供计数徽章与截断提示）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveAlarmTruncation))]
+    [NotifyPropertyChangedFor(nameof(ActiveTruncationHint))]
+    private int _activeAlarmTotalCount;
+
+    /// <summary>活跃报警是否因主页展示上限被截断。</summary>
+    public bool HasActiveAlarmTruncation => ActiveAlarmTotalCount > MaxHomeActiveAlarms;
+
+    /// <summary>截断提示文案，口径与 <see cref="AlarmCenterViewModel.ActiveTruncationHint"/> 一致。</summary>
+    public string ActiveTruncationHint => HasActiveAlarmTruncation
+        ? string.Format(Strings.K708, MaxHomeActiveAlarms)
+        : string.Empty;
 
     // ──────────── 第 2 行 列 2：合格率概览 ────────────
 
@@ -420,9 +423,18 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>
     /// 故障列表过滤视图：基于 ShowHighAlarms/ShowMediumAlarms/ShowLowAlarms 过滤 ActiveAlarms。
-    /// UI 绑定此视图而非 ActiveAlarms 本身，便于按级别筛选；计数徽章仍绑定 ActiveAlarms.Count 显示总数。
+    /// UI 绑定此视图而非 ActiveAlarms 本身，便于按级别筛选；计数徽章绑定 <see cref="ActiveAlarmTotalCount"/>。
     /// </summary>
     public ICollectionView FilteredActiveAlarms { get; }
+
+    /// <summary>活跃报警列表为空状态是否可见（基于筛选后可见条数，与列表绑定口径一致）。</summary>
+    [ObservableProperty] private bool _isActiveAlarmEmptyStateVisible = true;
+
+    /// <summary>
+    /// 活跃报警空状态文案：有报警但被筛选掉时提示调整筛选；否则提示暂无活跃故障。
+    /// 口径与 <see cref="AlarmCenterViewModel.ActiveEmptyStateMessage"/> 一致。
+    /// </summary>
+    [ObservableProperty] private string _activeEmptyStateMessage = Strings.M061;
 
     /// <summary>
     /// 总产量 = OK + NG（会话累计，用于当前生产状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
@@ -480,15 +492,15 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _selection.PropertyChanged += OnSelectionServiceChanged;
         _connectionManager.PropertyChanged += OnConnectionManagerChanged;
 
+        // 故障列表过滤视图：须在首次选中设备（会触发 RefreshActiveAlarms）之前初始化
+        FilteredActiveAlarms = CollectionViewSource.GetDefaultView(ActiveAlarms);
+        FilteredActiveAlarms.Filter = item => item is ActiveAlarmInfo a && IsLevelVisible(a.Level);
+
         if (_deviceRepository.Devices.Count > 0)
             _selection.SelectedDeviceId = _deviceRepository.Devices[0].Id;
 
         _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs) };
         _liveTimer.Tick += OnLiveTimerTick;
-
-        // 故障列表过滤视图：基于 ShowHighAlarms/Medium/Low 三态筛选
-        FilteredActiveAlarms = CollectionViewSource.GetDefaultView(ActiveAlarms);
-        FilteredActiveAlarms.Filter = item => item is ActiveAlarmInfo a && IsLevelVisible(a.Level);
     }
 
     public void OnPageEnter()
@@ -516,10 +528,17 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _ => true
     };
 
-    // 级别筛选切换时刷新过滤视图
-    partial void OnShowHighAlarmsChanged(bool value) => FilteredActiveAlarms.Refresh();
-    partial void OnShowMediumAlarmsChanged(bool value) => FilteredActiveAlarms.Refresh();
-    partial void OnShowLowAlarmsChanged(bool value) => FilteredActiveAlarms.Refresh();
+    // 级别筛选切换时刷新过滤视图与空状态
+    partial void OnShowHighAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
+    partial void OnShowMediumAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
+    partial void OnShowLowAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
+
+    private void RefreshActiveAlarmPresentation()
+    {
+        FilteredActiveAlarms.Refresh();
+        IsActiveAlarmEmptyStateVisible = !FilteredActiveAlarms.Cast<object>().Any();
+        ActiveEmptyStateMessage = ActiveAlarms.Count > 0 ? Strings.M060 : Strings.M061;
+    }
 
     /// <summary>切换故障静音开关（UI 按钮命令）。</summary>
     [RelayCommand]
@@ -1088,6 +1107,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         PerformanceFormulaText = ""; QualityFormulaText = "";
         ActiveAlarms.Clear();
         HasHighLevelAlarm = false;
+        ActiveAlarmTotalCount = 0;
         // 断线/无数据时不保留旧图表，交给各卡片的空状态显示，避免旧数据继续误导。
         _lastOeeInput = default; _lastStatusInput = default; _lastDefectSignature = 0; _lastQualityInput = default;
         OeeRingChart = null;
@@ -1158,11 +1178,16 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             ActiveAlarms.Clear();
             HasHighLevelAlarm = false;
+            ActiveAlarmTotalCount = 0;
+            RefreshActiveAlarmPresentation();
             return;
         }
 
-        HasHighLevelAlarm = _alarmCollector.Refresh(
+        var refreshResult = _alarmCollector.Refresh(
             ActiveAlarms, _deviceSnapshot, DateTime.Now, IsAlarmMuted, MaxHomeActiveAlarms, SelectedDeviceId);
+        HasHighLevelAlarm = refreshResult.HasHighLevelAlarm;
+        ActiveAlarmTotalCount = refreshResult.TotalActiveCount;
+        RefreshActiveAlarmPresentation();
     }
 
     private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

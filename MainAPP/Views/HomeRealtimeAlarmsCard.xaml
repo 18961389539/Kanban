@@ -40,8 +40,25 @@
                             </Style>
                         </Border.Style>
                         <TextBlock FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" Foreground="White"
-                                   Text="{Binding ActiveAlarms.Count, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
+                                   Text="{Binding ActiveAlarmTotalCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                     </Border>
+                    <!-- 截断提示：活跃报警超过主页展示上限时显示 -->
+                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                               FontSize="{DynamicResource FontSizeCaption}" FontWeight="Medium"
+                               Foreground="{StaticResource WarningBrush}"
+                               Text="{Binding ActiveTruncationHint}"
+                               ToolTip="{Binding ActiveTruncationHint}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasActiveAlarmTruncation}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
                 <!--  右：静音按钮（切换新报警闪烁动画）  -->
@@ -279,13 +296,13 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- 空状态 -->
-                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{x:Static resources:Strings.K334}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- 空状态：基于筛选后可见条数；文案区分「无报警」与「筛选无匹配」 -->
+                <controls:EmptyState IconKind="ShieldCheckOutline" Message="{Binding ActiveEmptyStateMessage}" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <controls:EmptyState.Style>
                         <Style TargetType="controls:EmptyState">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ActiveAlarms.Count}" Value="0">
+                                <DataTrigger Binding="{Binding IsActiveAlarmEmptyStateVisible}" Value="True">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>

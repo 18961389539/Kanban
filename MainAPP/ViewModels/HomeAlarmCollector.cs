@@ -4,10 +4,14 @@ using MainAPP.Helpers;
 
 namespace MainAPP.ViewModels;
 
+/// <summary>主页活跃报警刷新结果。</summary>
+/// <param name="HasHighLevelAlarm">是否存在 High 级别报警（供标题徽章提示）。</param>
+/// <param name="TotalActiveCount">截断前的活跃报警总数（供截断提示与计数徽章）。</param>
+public readonly record struct HomeAlarmRefreshResult(bool HasHighLevelAlarm, int TotalActiveCount);
+
 /// <summary>
 /// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值），
 /// 处理计数报警首次触发时间缓存与 10 秒恢复去抖，并差分更新目标集合。
-/// 返回是否存在 High 级别报警（供标题徽章提示）。
 /// </summary>
 public sealed class HomeAlarmCollector
 {
@@ -16,7 +20,7 @@ public sealed class HomeAlarmCollector
     private readonly Dictionary<string, DateTime> _triggerTimes = new();
     private readonly Dictionary<string, DateTime> _recoveryTimes = new();
 
-    public bool Refresh(
+    public HomeAlarmRefreshResult Refresh(
         ObservableCollection<ActiveAlarmInfo> target,
         IReadOnlyList<Device> devices,
         DateTime now,
@@ -32,6 +36,8 @@ public sealed class HomeAlarmCollector
             var levelCmp = b.Level.CompareTo(a.Level);
             return levelCmp != 0 ? levelCmp : a.EventTime.CompareTo(b.EventTime);
         });
+
+        var totalActiveCount = desired.Count;
 
         // 限制最大显示条数：截断后保留最关键/最新的报警
         if (desired.Count > maxAlarms)
@@ -59,7 +65,7 @@ public sealed class HomeAlarmCollector
         }
 
         ObservableCollectionSyncHelper.Sync(target, desired);
-        return target.Any(a => a.Level == AlarmLevel.High);
+        return new HomeAlarmRefreshResult(target.Any(a => a.Level == AlarmLevel.High), totalActiveCount);
     }
 
     private List<ActiveAlarmInfo> BuildDesired(
