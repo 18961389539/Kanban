@@ -429,7 +429,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
@@ -447,6 +447,12 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K289}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding StatusQuery.PausedTimeFormatted}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Status_Initial}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusIdleBrush}" Text="{Binding StatusQuery.OfflineTimeFormatted}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>

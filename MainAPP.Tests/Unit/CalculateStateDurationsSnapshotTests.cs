@@ -27,12 +27,13 @@ public sealed class CalculateStateDurationsSnapshotTests
             Transition(2, 1, start.AddMinutes(85)),
         };
 
-        var (run, alarm, paused) = OeeCalculator.CalculateStateDurations(
+        var (run, alarm, paused, offline) = OeeCalculator.CalculateStateDurations(
             transitions, start, start.AddMinutes(120), initialState: 1);
 
         Assert.Equal(4500, run);
         Assert.Equal(1800, alarm);
         Assert.Equal(900, paused);
+        Assert.Equal(0, offline);
     }
 
     [Fact]
@@ -47,11 +48,12 @@ public sealed class CalculateStateDurationsSnapshotTests
             Transition(1, 2, start.AddMinutes(30)),
         };
 
-        var (run, alarm, paused) = OeeCalculator.CalculateStateDurations(
+        var (run, alarm, paused, offline) = OeeCalculator.CalculateStateDurations(
             transitions, start, start.AddMinutes(40), initialState: 1);
 
         Assert.Equal(900, run);
         Assert.Equal(1500, alarm);
         Assert.Equal(0, paused);
+        Assert.Equal(0, offline);
     }
 }

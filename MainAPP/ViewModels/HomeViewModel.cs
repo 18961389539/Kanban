@@ -259,6 +259,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private int _realtimeStatus;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -277,7 +278,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
     private double _pausedTime;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StatusCenterDurationFormatted))]
+    private double _offlineTime;
     [ObservableProperty] private string _runTimeFormatted = "";
     [ObservableProperty] private string _alarmTimeFormatted = "";
     [ObservableProperty] private string _pausedTimeFormatted = "";
@@ -307,6 +312,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>状态总时长（运行+报警+暂停）格式化文本，用于状态饼图中心叠加显示。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
+
+    /// <summary>
+    /// 环形图中心时长：离线时显示离线累计（仅统计）；其他状态显示 OEE 三态总时长。
+    /// </summary>
+    public string StatusCenterDurationFormatted =>
+        RealtimeStatus == (int)DeviceStatus.Offline
+            ? FormatHelper.FormatDurationFull(OfflineTime)
+            : FormatHelper.FormatDurationFull(RunTime + AlarmTime + PausedTime);
 
     // ──────────── 第 2 行 列 3：设备缺陷图表 ────────────
 
@@ -950,6 +963,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTime = rt.RunTime;
         AlarmTime = rt.AlarmTime;
         PausedTime = rt.PausedTime;
+        OfflineTime = rt.OfflineTime;
         TotalOkProduction = rt.TotalOkProduction;
         TotalNgProduction = rt.TotalNgProduction;
         RealtimeStatus = rt.StatusWord;
@@ -1050,7 +1064,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void ClearLiveData()
     {
         OeeValue = 0; QualityRate = 0; PerformanceRate = 0; AvailabilityRate = 0;
-        RunTime = 0; AlarmTime = 0; PausedTime = 0;
+        RunTime = 0; AlarmTime = 0; PausedTime = 0; OfflineTime = 0;
         TotalOkProduction = 0; TotalNgProduction = 0;
         TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Offline;
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;

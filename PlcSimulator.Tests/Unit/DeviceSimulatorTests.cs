@@ -74,6 +74,35 @@ public class DeviceSimulatorTests
     };
 
     [Fact]
+    public void EnterSimulatedOffline_WritesZeroAndExitRestoresPreviousStatus()
+    {
+        var h = new Harness();
+        var sim = Create(h);
+        sim.Start(T0);
+        sim.EnterSimulatedOffline();
+        Assert.Equal(DeviceSimulator.SimStatus.Offline, sim.Status);
+        Assert.Equal(0, h.Ints["D104"]);
+
+        sim.ExitSimulatedOffline(T0.AddSeconds(1));
+        Assert.Equal(DeviceSimulator.SimStatus.Running, sim.Status);
+        Assert.Equal((int)DeviceSimulator.SimStatus.Running, h.Ints["D104"]);
+    }
+
+    [Fact]
+    public void Tick_WhenOffline_DoesNotAdvanceProduction()
+    {
+        var h = new Harness();
+        var sim = Create(h);
+        sim.Start(T0);
+        var okBefore = h.Ints.TryGetValue("D100", out var v) ? v : 0;
+        sim.EnterSimulatedOffline();
+        sim.Tick(T0.AddMinutes(5));
+        var okAfter = h.Ints.TryGetValue("D100", out v) ? v : 0;
+        Assert.Equal(okBefore, okAfter);
+        Assert.Equal(0, h.Ints["D104"]);
+    }
+
+    [Fact]
     public void Start_FromIdle_SetsRunning()
     {
         var sim = Create(new Harness());

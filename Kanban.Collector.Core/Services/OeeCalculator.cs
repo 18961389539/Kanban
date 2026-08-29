@@ -29,6 +29,7 @@ public static class OeeCalculator
 
     /// <summary>
     /// 从状态转换记录中计算各状态累计时长。
+    /// Run/Alarm/Paused 用于 OEE 与状态分析；Offline 仅作离线统计，不参与 OEE 四率。
     /// 遍历 [from, to] 区间内的转换事件，按当前状态累计时长直到下一事件或区间结束。
     /// 区间外（from 之前）最近一条转换的 CurrentState 作为区间起始状态。
     /// 注意：to 会被防御性截断到 DateTime.Now——实时查询时 ToDate 可能是未来时刻
@@ -39,17 +40,17 @@ public static class OeeCalculator
     /// <param name="from">查询起始时间</param>
     /// <param name="to">查询结束时间（若超过当前时刻将被截断）</param>
     /// <param name="initialState">区间外的起始状态（from 之前最近一条记录的 CurrentState）</param>
-    /// <returns>(runTime, alarmTime, pausedTime) 秒</returns>
-    public static (double RunTime, double AlarmTime, double PausedTime) CalculateStateDurations(
+    /// <returns>(runTime, alarmTime, pausedTime, offlineTime) 秒</returns>
+    public static (double RunTime, double AlarmTime, double PausedTime, double OfflineTime) CalculateStateDurations(
         IReadOnlyList<StatusTransitionRecord> transitions,
         DateTime from, DateTime to, int initialState)
     {
         // 防御性截断：未来时间不计入状态时长（实时查询 ToDate=23:59:59 场景）
         var now = DateTime.Now;
         if (to > now) to = now;
-        if (from > now) return (0, 0, 0);
+        if (from > now) return (0, 0, 0, 0);
 
-        double run = 0, alarm = 0, paused = 0;
+        double run = 0, alarm = 0, paused = 0, offline = 0;
         var currentState = initialState;
         var segmentStart = from;
 
@@ -62,7 +63,7 @@ public static class OeeCalculator
             // 若 t.EventTime == from == segmentStart，duration 为 0，不累计，但仍需更新状态
             var duration = (t.EventTime - segmentStart).TotalSeconds;
             if (duration > 0)
-                AccumulateState(ref run, ref alarm, ref paused, currentState, duration);
+                AccumulateState(ref run, ref alarm, ref paused, ref offline, currentState, duration);
 
             currentState = t.CurrentState;
             segmentStart = t.EventTime;
@@ -73,13 +74,13 @@ public static class OeeCalculator
         {
             var duration = (to - segmentStart).TotalSeconds;
             if (duration > 0)
-                AccumulateState(ref run, ref alarm, ref paused, currentState, duration);
+                AccumulateState(ref run, ref alarm, ref paused, ref offline, currentState, duration);
         }
 
-        return (run, alarm, paused);
+        return (run, alarm, paused, offline);
     }
 
-    private static void AccumulateState(ref double run, ref double alarm, ref double paused,
+    private static void AccumulateState(ref double run, ref double alarm, ref double paused, ref double offline,
         int state, double seconds)
     {
         switch (state)
@@ -87,7 +88,7 @@ public static class OeeCalculator
             case (int)DeviceStatus.Running: run += seconds; break;
             case (int)DeviceStatus.Alarm: alarm += seconds; break;
             case (int)DeviceStatus.Paused: paused += seconds; break;
-            // DeviceStatus.Offline — 不累计任何时间
+            case (int)DeviceStatus.Offline: offline += seconds; break;
         }
     }
 }

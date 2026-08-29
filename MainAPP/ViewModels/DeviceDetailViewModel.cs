@@ -161,6 +161,9 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     private double _pausedTimeHours;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeFormatted))]
+    private double _offlineTimeHours;
     [ObservableProperty] private int _todayAlarmCount;
     [ObservableProperty] private int _activeAlarmCount;
     [ObservableProperty] private int _actualCycle;
@@ -238,7 +241,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
 
     // ──────────── 状态时长比例（用于堆叠条形图） ────────────
 
-    /// <summary>总时长（运行+报警+待机），用于计算状态时长占比。无数据时为 0。</summary>
+    /// <summary>总时长（运行+报警+待机），用于 OEE 状态时长占比。不含离线。</summary>
     public double TotalDurationHours => RunTimeHours + AlarmTimeHours + PausedTimeHours;
     /// <summary>运行时长占比（0~1）。无数据时为 0。</summary>
     public double RunTimeRatio => TotalDurationHours > 0 ? RunTimeHours / TotalDurationHours : 0;
@@ -246,6 +249,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     public double AlarmTimeRatio => TotalDurationHours > 0 ? AlarmTimeHours / TotalDurationHours : 0;
     /// <summary>待机时长占比（0~1）。无数据时为 0。</summary>
     public double PausedTimeRatio => TotalDurationHours > 0 ? PausedTimeHours / TotalDurationHours : 0;
+    /// <summary>离线时长格式化（仅统计，不参与 OEE 占比图）。</summary>
+    public string OfflineTimeFormatted => FormatHelper.FormatDuration(OfflineTimeHours);
 
     // ──────────── 列表数据 ────────────
 
@@ -454,6 +459,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         RunTimeHours = 0;
         AlarmTimeHours = 0;
         PausedTimeHours = 0;
+        OfflineTimeHours = 0;
         ActualCycle = 0;
         StatusText = Strings.Status_Initial;
         StatusBrushKey = "StatusIdleBrush";
@@ -647,6 +653,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         RunTimeHours = rt.RunTime;
         AlarmTimeHours = rt.AlarmTime;
         PausedTimeHours = rt.PausedTime;
+        OfflineTimeHours = rt.OfflineTime;
 
         // PLC 原始值
         PlcOkCount = rt.OkProduction;

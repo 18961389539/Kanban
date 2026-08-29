@@ -776,6 +776,12 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         runtime.StatusWord = (int)DeviceStatus.Paused;
         _service.AccumulateOeeTime(3.0, new HashSet<string> { device.Id });
         Assert.Equal(3.0, runtime.PausedTime);
+
+        // Offline 状态累计到 OfflineTime，不计入 OEE 时间
+        runtime.StatusWord = (int)DeviceStatus.Offline;
+        _service.AccumulateOfflineTimeFromStatusWord(7.0, new HashSet<string> { device.Id });
+        Assert.Equal(7.0, runtime.OfflineTime);
+        Assert.Equal(10.0, runtime.RunTime);
     }
 
     [Fact]

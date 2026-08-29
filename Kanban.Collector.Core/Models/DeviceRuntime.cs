@@ -63,6 +63,10 @@ public partial class DeviceRuntime : ObservableObject
     [ObservableProperty]
     private double _pausedTime;
 
+    /// <summary>离线累计时长（秒）。不计入 OEE 可用率/性能率，仅作统计展示。</summary>
+    [ObservableProperty]
+    private double _offlineTime;
+
     // ──────────── OEE 计算属性 ────────────
     // 单源约定：OEE 公式只在 OeeCalculator 实现一处（含内存注释引用 memory/project_memory.md）。
     // 此处与快照发布器（SnapshotPublisher 读 runtime.Oee）、日报/复盘均委托 OeeCalculator，
@@ -102,6 +106,7 @@ public partial class DeviceRuntime : ObservableObject
         RunTime = 0;
         AlarmTime = 0;
         PausedTime = 0;
+        OfflineTime = 0;
         TotalOkProduction = 0;
         TotalNgProduction = 0;
     }
@@ -113,7 +118,7 @@ public partial class DeviceRuntime : ObservableObject
     public void UpdateFromCollector(
         int okProduction, int ngProduction, int statusWord,
         int totalOkProduction, int totalNgProduction,
-        double runTime, double alarmTime, double pausedTime)
+        double runTime, double alarmTime, double pausedTime, double offlineTime)
     {
         OkProduction = okProduction;
         NgProduction = ngProduction;
@@ -123,5 +128,6 @@ public partial class DeviceRuntime : ObservableObject
         RunTime = runTime;
         AlarmTime = alarmTime;
         PausedTime = pausedTime;
+        OfflineTime = offlineTime;
     }
 }

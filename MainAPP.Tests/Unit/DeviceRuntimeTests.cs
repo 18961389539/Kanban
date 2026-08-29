@@ -65,6 +65,7 @@ public class DeviceRuntimeTests
         rt.RunTime = 1000;
         rt.AlarmTime = 200;
         rt.PausedTime = 300;
+        rt.OfflineTime = 120;
         rt.OkProduction = 999;
         rt.NgProduction = 888;
         rt.StatusWord = 2;
@@ -76,6 +77,7 @@ public class DeviceRuntimeTests
         Assert.Equal(0, rt.RunTime);
         Assert.Equal(0, rt.AlarmTime);
         Assert.Equal(0, rt.PausedTime);
+        Assert.Equal(0, rt.OfflineTime);
         // 原始 PLC 值不在此方法清理范围（用于实时显示）
         Assert.Equal(2, rt.StatusWord);
         // OEE 应全部归零

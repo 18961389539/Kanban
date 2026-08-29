@@ -22,12 +22,13 @@ namespace PlcSimulator;
 /// </summary>
 public class DeviceSimulator
 {
-    /// <summary>模拟状态枚举，值与 PLC 状态字一致：1=运行, 2=报警, 3=待机</summary>
+    /// <summary>模拟状态枚举，值与 PLC 状态字一致：0=离线, 1=运行, 2=报警, 3=待机</summary>
     public enum SimStatus
     {
-        Idle = 3,
+        Offline = 0,
         Running = 1,
         Alarm = 2,
+        Idle = 3,
     }
 
     private readonly DeviceConfig _config;
@@ -63,6 +64,8 @@ public class DeviceSimulator
 
     // 状态
     public SimStatus Status { get; private set; } = SimStatus.Idle;
+    /// <summary>断线仿真进入离线前保存的运行态，用于恢复时写回真实状态字。</summary>
+    private SimStatus? _statusBeforeOffline;
     private DateTime _nextProduceTime;
     private DateTime? _alarmEndTime;
     private DateTime _alarmStartTime;   // 报警开始时间（用于恢复时计算实际持续时长）
@@ -253,6 +256,8 @@ public class DeviceSimulator
         {
             (int)SimStatus.Running => SimStatus.Running,
             (int)SimStatus.Alarm => SimStatus.Alarm,
+            (int)SimStatus.Offline => SimStatus.Offline,
+            (int)SimStatus.Idle => SimStatus.Idle,
             _ => SimStatus.Idle,
         };
 
@@ -392,12 +397,41 @@ public class DeviceSimulator
         WriteStatus();
     }
 
+    /// <summary>断线仿真：将状态字写为 0（离线），冻结状态机直至 <see cref="ExitSimulatedOffline"/>。</summary>
+    public void EnterSimulatedOffline()
+    {
+        lock (_stateLock)
+        {
+            if (Status == SimStatus.Offline) return;
+            _statusBeforeOffline = Status;
+            Status = SimStatus.Offline;
+            WriteStatus();
+            Log?.Invoke($"[{Name}] 断线仿真 → 状态字=0（离线）");
+        }
+    }
+
+    /// <summary>断线仿真结束：恢复断线前的状态字（1/2/3）。</summary>
+    public void ExitSimulatedOffline(DateTime now)
+    {
+        lock (_stateLock)
+        {
+            if (Status != SimStatus.Offline) return;
+            var restore = _statusBeforeOffline ?? SimStatus.Idle;
+            _statusBeforeOffline = null;
+            Status = restore;
+            WriteStatus();
+            if (restore == SimStatus.Running)
+                ScheduleNextProduce(now);
+            Log?.Invoke($"[{Name}] 断线恢复 → {StatusText(restore)}（状态字={(int)restore}）");
+        }
+    }
+
     /// <summary>启动设备：从待机进入运行，开始按节拍产出。</summary>
     public void Start(DateTime now)
     {
         lock (_stateLock)
         {
-            if (Status == SimStatus.Running) return;
+            if (Status == SimStatus.Offline || Status == SimStatus.Running) return;
             // 手动启动时清除操作员暂停/缺料停机定时器，避免状态字已改 Running
             // 但定时器仍保留导致 ProcessExpirations 误判"恢复运行"并重复写状态字
             if (_operatorPauseEndTime.HasValue || _shortageEndTime.HasValue)
@@ -531,6 +565,9 @@ public class DeviceSimulator
     {
         lock (_stateLock)
         {
+            if (Status == SimStatus.Offline)
+                return;
+
             // 阶段 1：状态过期/累积（报警恢复、突发期/缺料/操作员暂停退出、批次切换等）
             ProcessExpirations(now);
 
@@ -1602,6 +1639,7 @@ public class DeviceSimulator
 
     private static string StatusText(SimStatus s) => s switch
     {
+        SimStatus.Offline => "离线",
         SimStatus.Idle => "待机",
         SimStatus.Running => "运行",
         SimStatus.Alarm => "报警",
@@ -1651,6 +1689,7 @@ public class DeviceSimulator
                 ? " [通信抖动]" : "";
             var status = Status switch
             {
+                SimStatus.Offline => "离线",
                 SimStatus.Idle => $"待机{operatorPauseInfo}{shortageInfo}",
                 SimStatus.Running => $"运行{warmupInfo}{burstInfo}{shortageInfo}{stallInfo}{rampupInfo}{nightInfo}{pressureInfo}{agingInfo}{jitterInfo}",
                 SimStatus.Alarm => $"报警{alarmInfo}",

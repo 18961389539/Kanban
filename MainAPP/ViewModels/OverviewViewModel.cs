@@ -741,7 +741,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
             // GetLatestStatusBefore 仍是逐设备查询（窗口前最后一条），保留不变（查询量小且难以批量化）
             var lastBefore = _reviewDataService.GetLatestStatusBefore(device.Id, from);
             int initialState = lastBefore?.CurrentState ?? (int)DeviceStatus.Offline;
-            var (runSec, alarmSec, pauseSec) = OeeCalculator.CalculateStateDurations(
+            var (runSec, alarmSec, pauseSec, _) = OeeCalculator.CalculateStateDurations(
                 statusTransitions, from, to, initialState);
             totalRunSec += runSec;
             totalAlarmSec += alarmSec;

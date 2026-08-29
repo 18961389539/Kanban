@@ -11,7 +11,7 @@ Wpf,Nav_UserManager,用户管理,User Management,ユーザー管理,Gerenciament
 Wpf,Nav_RuntimeMonitoring,运行监控,Runtime Monitor,稼働監視,Monitor de execução
 Wpf,Nav_DeviceDetail,设备详情,Device Detail,設備詳細,Detalhes do dispositivo
 Wpf,Nav_Overview_Tip,最近24小时生产复盘,Production review (last 24h),直近24時間の生産レビュー,Revisão da produção (últimas 24 h)
-Wpf,Status_Initial,初始,Initial,初期,Inicial
+Wpf,Status_Initial,离线,Offline,オフライン,Offline
 Wpf,Status_Running,运行,Running,稼働中,Em execução
 Wpf,Status_Alarm,报警,Alarm,アラーム,Alarme
 Wpf,Status_Paused,待机,Standby,待機,Em espera
@@ -740,7 +740,7 @@ Wpf,F020,"
   ... ({0} in total)"
 Wpf,F021,{0}：产量 {1} 件 · 良品率 {2} · OEE {3},{0}: Output {1} pcs · Quality rate {2} · OEE {3},{0}: 生産数 {1} 個 · 良品率 {2} · OEE {3},{0}: Output {1} pcs · Quality rate {2} · OEE {3}
 Wpf,F022,{0} 个地址,{0} addresses,{0} 個のアドレス,{0} addresses
-Wpf,F023,{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 初始 {4},{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4},{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · 初期 {4},{0} units · Running {1} · Alarm {2} · Paused {3} · Initial {4}
+Wpf,F023,{0} 台 · 运行 {1} · 报警 {2} · 待机 {3} · 离线 {4},{0} units · Running {1} · Alarm {2} · Paused {3} · Offline {4},{0} 台 · 稼働 {1} · アラーム {2} · 待機 {3} · オフライン {4},{0} units · Running {1} · Alarm {2} · Paused {3} · Offline {4}
 Wpf,F024,{0} / {1} 个地址,{0} / {1} addresses,{0} / {1} 個のアドレス,{0} / {1} addresses
 Wpf,F025,{0}不能为空,{0} must not be empty,{0} は空にできません,{0} must not be empty
 Wpf,F026,{0}必须在 {1}-{2} 之间,{0} must be between {1}-{2},{0} は {1}〜{2} の範囲である必要があります,{0} must be between {1}-{2}
@@ -1290,7 +1290,7 @@ Wpf,M161,未配置地址,No address configured,アドレス未設定,No address 
 Wpf,M162,未配置,Not configured,未設定,Not configured
 Wpf,M163,本轮成功,Cycle succeeded,今回成功,Cycle succeeded
 Wpf,M164,本轮失败,Cycle failed,今回失敗,Cycle failed
-Wpf,M165,初始/未连接,Initial/Disconnected,初期/未接続,Initial/Disconnected
+Wpf,M165,离线/未连接,Offline/Disconnected,オフライン/未接続,Offline/Disconnected
 Wpf,M166,地址冲突「,Address conflict「,アドレス競合「,Conflito de endereço「
 Wpf,M167,恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：,Enter password to restore:,前バージョンを復元すると未保存の設備設定が上書きされます。パスワードを入力して続行：,Enter password to restore:
 Wpf,M168,请输入密码以生成虚拟设备：,Enter password to generate demo devices:,仮想デバイスを生成するにはパスワードを入力：,Enter password to generate demo devices:
@@ -1744,7 +1744,7 @@ Wpf,Web_Tab_Status,状态,Status,状態,Status
 Wpf,Web_Tab_Alarm,报警,Alarm,警報,Alarm
 Wpf,Web_Tab_Oee,OEE,OEE,OEE,OEE
 Wpf,Web_Hq_NeedDevice,请先选择设备（该 Tab 按单设备查询）,Select a device first (this tab queries one device),先にデバイスを選択してください（このタブは単一デバイス照会）,Select a device first (this tab queries one device)
-Wpf,Web_Hq_StateUnknown,初始,Initial,初期,Initial
+Wpf,Web_Hq_StateUnknown,离线,Offline,オフライン,Offline
 Wpf,Web_Hq_StatusRun,运行时长,Run Time,稼働時間,Run Time
 Wpf,Web_Hq_StatusAlarm,报警时长,Alarm Time,アラーム時間,Alarm Time
 Wpf,Web_Hq_StatusPause,待机时长,Paused Time,待機時間,Paused Time

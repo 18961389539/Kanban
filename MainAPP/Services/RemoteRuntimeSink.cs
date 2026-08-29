@@ -367,7 +367,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         runtime.UpdateFromCollector(
             snapshot.OkProduction, snapshot.NgProduction, snapshot.StatusWord,
             snapshot.TotalOkProduction, snapshot.TotalNgProduction,
-            snapshot.RunTime, snapshot.AlarmTime, snapshot.PausedTime);
+            snapshot.RunTime, snapshot.AlarmTime, snapshot.PausedTime, snapshot.OfflineTime);
 
         // 快照携带"当前活跃报警"（服务端权威）：以快照为准重建报警显示状态。
         // 覆盖场景：Collector 重启后事件流 Seq 归零、触发边沿不再补发，靠快照恢复仍在触发的报警；

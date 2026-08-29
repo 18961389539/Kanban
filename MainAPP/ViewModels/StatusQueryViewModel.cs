@@ -35,12 +35,18 @@ public partial class StatusQueryViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PausedTimeFormatted))]
     private double _pausedTimeSeconds;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeFormatted))]
+    private double _offlineTimeSeconds;
+
     /// <summary>运行时长格式化（Xd Yh / Xh Ym / Xm），便于人眼阅读。</summary>
     public string RunTimeFormatted => FormatDuration(RunTimeSeconds);
     /// <summary>报警时长格式化。</summary>
     public string AlarmTimeFormatted => FormatDuration(AlarmTimeSeconds);
     /// <summary>暂停时长格式化。</summary>
     public string PausedTimeFormatted => FormatDuration(PausedTimeSeconds);
+    /// <summary>离线时长格式化（仅统计，不参与 OEE）。</summary>
+    public string OfflineTimeFormatted => FormatDuration(OfflineTimeSeconds);
 
     /// <summary>秒数 → "Xd Yh" / "Xh Ym" / "Xm" 格式（与旧实现逐分支等价，委托跨进程单源，
     /// 避免与 HomeViewModel 等处的时长口径分叉）。</summary>
@@ -70,7 +76,7 @@ public partial class StatusQueryViewModel : ObservableObject
         string? deviceId, DateTime from, DateTime to, string? shiftName, int currentPage, int pageSize)
     {
         StatusTransitions.Clear();
-        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0;
+        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0; OfflineTimeSeconds = 0;
         StatusInsight = null;
         QueryError = null;
 
@@ -103,6 +109,7 @@ public partial class StatusQueryViewModel : ObservableObject
             RunTimeSeconds = durations.RunTime;
             AlarmTimeSeconds = durations.AlarmTime;
             PausedTimeSeconds = durations.PausedTime;
+            OfflineTimeSeconds = durations.OfflineTime;
 
             var dailyDurations = BuildDailyDurations(allInRange, from, effectiveTo, initialState);
             StatusChart = ChartService.BuildStatusChart(dailyDurations);
@@ -145,7 +152,7 @@ public partial class StatusQueryViewModel : ObservableObject
     {
         StatusTransitions.Clear();
         _allTransitions = [];
-        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0;
+        RunTimeSeconds = 0; AlarmTimeSeconds = 0; PausedTimeSeconds = 0; OfflineTimeSeconds = 0;
         StatusChart = null; StatusBarChart = null; StatusGanttChart = null;
         StatusInsight = null;
     }

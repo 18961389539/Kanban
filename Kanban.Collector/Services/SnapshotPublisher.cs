@@ -83,6 +83,7 @@ public sealed class SnapshotPublisher
             || a.StatusWord != b.StatusWord || a.OkProduction != b.OkProduction || a.NgProduction != b.NgProduction
             || a.TotalOkProduction != b.TotalOkProduction || a.TotalNgProduction != b.TotalNgProduction
             || a.RunTime != b.RunTime || a.AlarmTime != b.AlarmTime || a.PausedTime != b.PausedTime
+            || a.OfflineTime != b.OfflineTime
             || a.QualityRate != b.QualityRate || a.PerformanceRate != b.PerformanceRate
             || a.AvailabilityRate != b.AvailabilityRate || a.Oee != b.Oee || a.TargetCycle != b.TargetCycle
             || a.RecipeName != b.RecipeName || a.RecipeValue != b.RecipeValue
@@ -152,6 +153,7 @@ public sealed class SnapshotPublisher
             RunTime = runtime?.RunTime ?? 0,
             AlarmTime = runtime?.AlarmTime ?? 0,
             PausedTime = runtime?.PausedTime ?? 0,
+            OfflineTime = runtime?.OfflineTime ?? 0,
             QualityRate = runtime?.QualityRate ?? 0,
             PerformanceRate = runtime?.PerformanceRate ?? 0,
             AvailabilityRate = runtime?.AvailabilityRate ?? 0,

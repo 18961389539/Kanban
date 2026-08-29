@@ -69,15 +69,15 @@ public static class StatusAnalysis
         return segments;
     }
 
-    /// <summary>各状态累计时长（秒）。与 OeeCalculator.CalculateStateDurations 逐条一致。</summary>
-    public static (double RunTime, double AlarmTime, double PausedTime) CalculateStateDurations(
+    /// <summary>各状态累计时长（秒）。Run/Alarm/Paused 用于 OEE；Offline 仅统计。</summary>
+    public static (double RunTime, double AlarmTime, double PausedTime, double OfflineTime) CalculateStateDurations(
         List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState)
     {
         var now = DateTime.Now;
         if (to > now) to = now;
-        if (from > now) return (0, 0, 0);
+        if (from > now) return (0, 0, 0, 0);
 
-        double run = 0, alarm = 0, paused = 0;
+        double run = 0, alarm = 0, paused = 0, offline = 0;
         var currentState = initialState;
         var segmentStart = from;
 
@@ -86,7 +86,7 @@ public static class StatusAnalysis
             if (t.EventTime < from) continue;
             var duration = (t.EventTime - segmentStart).TotalSeconds;
             if (duration > 0)
-                AccumulateState(ref run, ref alarm, ref paused, currentState, duration);
+                AccumulateState(ref run, ref alarm, ref paused, ref offline, currentState, duration);
             currentState = (int)t.CurrentState;
             segmentStart = t.EventTime;
         }
@@ -94,18 +94,19 @@ public static class StatusAnalysis
         {
             var duration = (to - segmentStart).TotalSeconds;
             if (duration > 0)
-                AccumulateState(ref run, ref alarm, ref paused, currentState, duration);
+                AccumulateState(ref run, ref alarm, ref paused, ref offline, currentState, duration);
         }
-        return (run, alarm, paused);
+        return (run, alarm, paused, offline);
     }
 
-    private static void AccumulateState(ref double run, ref double alarm, ref double paused, int state, double seconds)
+    private static void AccumulateState(ref double run, ref double alarm, ref double paused, ref double offline, int state, double seconds)
     {
         switch (state)
         {
             case (int)Kanban.Contracts.Enums.DeviceStatus.Running: run += seconds; break;
             case (int)Kanban.Contracts.Enums.DeviceStatus.Alarm: alarm += seconds; break;
             case (int)Kanban.Contracts.Enums.DeviceStatus.Paused: paused += seconds; break;
+            case (int)Kanban.Contracts.Enums.DeviceStatus.Offline: offline += seconds; break;
         }
     }
 

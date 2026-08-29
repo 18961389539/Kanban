@@ -54,6 +54,8 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public string AlarmTimeFormatted => FormatHelper.FormatDuration(Runtime.AlarmTime);
     /// <summary>待机时长格式化。</summary>
     public string PausedTimeFormatted => FormatHelper.FormatDuration(Runtime.PausedTime);
+    /// <summary>离线时长格式化（仅统计，不参与 OEE）。</summary>
+    public string OfflineTimeFormatted => FormatHelper.FormatDuration(Runtime.OfflineTime);
 
     /// <summary>综合停机时长（报警 + 待机）格式化。</summary>
     public string DowntimeFormatted => FormatHelper.FormatDuration(Runtime.AlarmTime + Runtime.PausedTime);
@@ -146,6 +148,9 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             case nameof(DeviceRuntime.PausedTime):
                 OnPropertyChanged(nameof(PausedTimeFormatted));
                 OnPropertyChanged(nameof(DowntimeFormatted));
+                break;
+            case nameof(DeviceRuntime.OfflineTime):
+                OnPropertyChanged(nameof(OfflineTimeFormatted));
                 break;
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):

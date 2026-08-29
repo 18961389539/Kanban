@@ -427,6 +427,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     }
 
                     AccumulateOeeTime(elapsedSeconds, successDevices);
+                    AccumulateOfflineTimeFromStatusWord(elapsedSeconds, successDevices);
                     // 报警/缺陷/计数报警扫描：各自独立 try-catch，单类扫描失败不阻断其他扫描和历史快照写入。
                     // 通信异常（SocketException/ObjectDisposedException 等）经 HslPlcDriver try-catch 已转成
                     // PlcOperationResult.Fail，理论上不会逃逸到 TryScan；但为防御其他 IPlcDriver 实现，
@@ -512,18 +513,24 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                         GetConfiguredReadProfileIds(),
                         noDevicesToRead: false,
                         failureMessage: "PLC 未连接");
-                    // PLC 断线：将所有处于真实状态(1/2/3)的设备标记为离线，
-                    // 使停机时段在 OEE 历史回溯中不计入任何状态（state=0 不累计）。
-                    // 仅记录一次边沿（写后 prev=0），后续循环不再重复刷写。
+                    // PLC 断线：将所有处于真实状态(1/2/3)的设备标记为离线（state=0），
+                    // 历史回溯时计入 OfflineTime 统计，不参与 OEE 运行/报警/待机累计。
                     foreach (var device in _deviceRepository.GetDevicesSnapshot())
+                    {
                         LogOfflineTransition(device);
+                        GetRuntime(device)?.StatusWord = (int)DeviceStatus.Offline;
+                    }
 
                     // PLC 断线时清除所有设备的活跃报警，避免遗留报警状态持续显示到 UI
                     _scanPipeline.ClearAlarmsOnDisconnect();
 
                     // PLC 断线时重置 Stopwatch 计时起点，
-                    // 避免重连后第一次成功读取时 elapsed 包含整个断线期间导致 OEE 时间暴涨
+                    // 避免重连后第一次成功读取时 elapsed 包含整个断线期间导致 OEE 时间暴涨；
+                    // 断线期间计入各设备 OfflineTime（统计口径，不影响 OEE 四率）。
+                    _pollingStopwatch.Stop();
+                    var disconnectElapsedSeconds = _pollingStopwatch.Elapsed.TotalSeconds;
                     _pollingStopwatch.Restart();
+                    AccumulateOfflineTime(disconnectElapsedSeconds);
                 }
             }
             catch (OperationCanceledException)
@@ -961,9 +968,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     internal void ClearAlarmsOnDisconnect() => _scanPipeline.ClearAlarmsOnDisconnect();
 
     /// <summary>
-    /// 根据每个设备的 StatusWord 按轮询间隔累计 OEE 时间。
+    /// 根据每个设备的 StatusWord 按轮询间隔累计 OEE 时间（运行/报警/待机）。
+    /// 离线时长由 <see cref="AccumulateOfflineTimeFromStatusWord"/> 与 <see cref="AccumulateOfflineTime"/> 单独统计，不参与 OEE。
     /// 仅对本次读取成功的设备累计，单台失败不影响其他设备。
-    /// 状态字定义：1=运行, 2=报警, 3=待机，其他值为未知状态
+    /// 状态字定义：0=离线, 1=运行, 2=报警, 3=待机
     /// </summary>
     internal void AccumulateOeeTime(double intervalSeconds, HashSet<string> successDevices)
     {
@@ -982,11 +990,44 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 runtime.AlarmTime += intervalSeconds;
             else if (sw == (int)DeviceStatus.Paused)
                 runtime.PausedTime += intervalSeconds;
-            else if (sw == (int)DeviceStatus.Offline)
-                _logger.LogDebug("设备 {Device} 离线（StatusWord=0），不计入 OEE 时间", device.Name);
-            else
+            else if (sw != (int)DeviceStatus.Offline)
                 // 持续性条件：每轮都会触发，降为 Debug 避免日志泛滥。首次出现时在 Debug 日志可见。
                 _logger.LogDebug("设备 {Device} 状态字非法: {StatusWord}（合法值: 0=离线, 1=运行, 2=报警, 3=待机）", device.Name, sw);
+        }
+    }
+
+    /// <summary>
+    /// 状态字为离线(0)时累计离线时长。仅统计，不参与 OEE 四率计算。
+    /// </summary>
+    internal void AccumulateOfflineTimeFromStatusWord(double intervalSeconds, HashSet<string> successDevices)
+    {
+        if (intervalSeconds <= 0) return;
+
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            if (!successDevices.Contains(device.Id))
+                continue;
+
+            var runtime = GetRuntime(device);
+            if (runtime == null || runtime.StatusWord != (int)DeviceStatus.Offline)
+                continue;
+
+            runtime.OfflineTime += intervalSeconds;
+        }
+    }
+
+    /// <summary>
+    /// PLC 断线期间：为全部设备累计离线时长（通信不可达）。仅统计，不参与 OEE。
+    /// </summary>
+    internal void AccumulateOfflineTime(double intervalSeconds)
+    {
+        if (intervalSeconds <= 0) return;
+
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            var runtime = GetRuntime(device);
+            if (runtime == null) continue;
+            runtime.OfflineTime += intervalSeconds;
         }
     }
 
@@ -1049,13 +1090,14 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 initialState = transitions[0].CurrentState;
             }
 
-            var (run, alarm, paused) = OeeCalculator.CalculateStateDurations(transitions, from, now, initialState);
+            var (run, alarm, paused, offline) = OeeCalculator.CalculateStateDurations(transitions, from, now, initialState);
             runtime.RunTime = run;
             runtime.AlarmTime = alarm;
             runtime.PausedTime = paused;
+            runtime.OfflineTime = offline;
             _logger.LogInformation(
-                "设备 {Device} 已从历史重建 OEE 时间 Run={Run:F1}s Alarm={Alarm:F1}s Idle={Paused:F1}s（from={From:HH:mm:ss}）",
-                device.Name, run, alarm, paused, from);
+                "设备 {Device} 已从历史重建 OEE 时间 Run={Run:F1}s Alarm={Alarm:F1}s Idle={Paused:F1}s Offline={Offline:F1}s（from={From:HH:mm:ss}）",
+                device.Name, run, alarm, paused, offline, from);
         }
     }
 

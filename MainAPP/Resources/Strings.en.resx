@@ -64,7 +64,7 @@
     <value>Unknown</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
-    <value>Offline</value>
+    <value>Idle</value>
   </data>
   <data name="Common_Save" xml:space="preserve">
     <value>Save Settings</value>
@@ -1387,7 +1387,7 @@
     <value>Device Status Timeline</value>
   </data>
   <data name="K376" xml:space="preserve">
-    <value>Running, paused, alarm and offline intervals; click a cell to view its output and alarms</value>
+    <value>Running, paused, alarm and unknown intervals; click a cell to view its output and alarms</value>
   </data>
   <data name="K377" xml:space="preserve">
     <value>Running, No Output</value>
@@ -3490,7 +3490,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Cycle failed</value>
   </data>
   <data name="M165" xml:space="preserve">
-    <value>Offline</value>
+    <value>Offline/Disconnected</value>
   </data>
   <data name="M166" xml:space="preserve">
     <value>Address conflict「</value>
@@ -5193,7 +5193,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Status Timeline</value>
   </data>
   <data name="Web_Rv_TimelineHint" xml:space="preserve">
-    <value>Run, alarm, pause and offline segments; hover for output and alarms</value>
+    <value>Run, alarm, pause and unknown segments; hover for output and alarms</value>
   </data>
   <data name="Web_Rv_ShiftDetails" xml:space="preserve">
     <value>Shift Details</value>

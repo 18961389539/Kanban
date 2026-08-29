@@ -30,6 +30,7 @@ public sealed record DeviceSnapshotDto
     public double RunTime { get; init; }
     public double AlarmTime { get; init; }
     public double PausedTime { get; init; }
+    public double OfflineTime { get; init; }
 
     // ──────────── OEE（服务端已算好，客户端不重复计算） ────────────
     public double QualityRate { get; init; }

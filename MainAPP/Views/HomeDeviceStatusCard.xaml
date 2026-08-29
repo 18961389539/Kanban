@@ -114,7 +114,7 @@
                                            HorizontalAlignment="Center"
                                            FontSize="{DynamicResource FontSizeKpiXs}"
                                            Foreground="{StaticResource SecondaryTextBrush}"
-                                           Text="{Binding TotalTimeFullFormatted}" />
+                                           Text="{Binding StatusCenterDurationFormatted}" />
                             </StackPanel>
                         </Grid>
 

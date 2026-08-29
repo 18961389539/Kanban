@@ -440,10 +440,7 @@ internal class Program
 
     /// <summary>
     /// 断线仿真循环：每隔 intervalSec 秒关闭 TCP 代理，持续 durationSec 秒后恢复。
-    /// 模拟网络中断/PLC 重启场景，验证 MainAPP 的断线检测、重连冷却、DeviceStatusTracker 离线转换。
-    /// 通过关闭/重启 TcpRelay 实现，不调用 HslCommunication.ServerClose()（后者在 AsyncAcceptCallback
-    /// 中抛出未处理异常 "重新异步接受传入的连接尝试"，导致进程崩溃）。PLC 服务器始终在内部端口运行，
-    /// 仿真器状态机不受影响（模拟真实 PLC 断网后仍继续生产，只是 MainAPP 无法读取数据）。
+    /// 断线前将所有设备状态字写为 0（离线），恢复后写回断线前的 1/2/3，供 MainAPP 验证离线检测与状态追踪。
     /// </summary>
     private static async Task DisconnectSimLoopAsync(CancellationToken token, int intervalSec, int durationSec)
     {
@@ -453,16 +450,25 @@ internal class Program
 
         while (!token.IsCancellationRequested)
         {
-            SimLog.Info($"[断线仿真] 关闭 TCP 监听（持续 {durationSec}s）...");
-            // 关闭代理：断开所有 MainAPP 连接，模拟网络中断
+            SimLog.Info($"[断线仿真] 状态字→0（离线），关闭 TCP 监听（持续 {durationSec}s）...");
+            foreach (var sim in _simulators)
+            {
+                try { sim.EnterSimulatedOffline(); }
+                catch (Exception ex) { SimLog.Warning($"[{sim.Name}] 离线状态字写入失败: {ex.Message}"); }
+            }
             try { _relay?.Stop(); }
             catch (Exception ex) { SimLog.Warning($"[断线仿真] 代理关闭异常: {ex.Message}"); }
 
             try { await Task.Delay(durationSec * 1000, token).ConfigureAwait(false); }
             catch (OperationCanceledException) { break; }
 
+            var restoreAt = DateTime.UtcNow;
+            foreach (var sim in _simulators)
+            {
+                try { sim.ExitSimulatedOffline(restoreAt); }
+                catch (Exception ex) { SimLog.Warning($"[{sim.Name}] 离线恢复失败: {ex.Message}"); }
+            }
             SimLog.Info("[断线仿真] 恢复 TCP 监听");
-            // 重启代理：MainAPP 可重新连接
             try { _relay?.Start(); }
             catch (Exception ex) { SimLog.Warning($"[断线仿真] 代理启动异常: {ex.Message}"); }
 
