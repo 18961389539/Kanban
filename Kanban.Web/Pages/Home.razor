@@ -12,17 +12,27 @@
             <span class="dot"></span>
             @(Dashboard.IsConnected ? L.T("Conn_Live") : L.T("Conn_Disconnected"))
         </div>
-        <select class="device-select" @bind="SelectedDeviceId">
-            @foreach (var dev in Dashboard.Snapshots)
-            {
-                <option value="@dev.DeviceId">@dev.DeviceName</option>
-            }
-        </select>
+        @* 无设备数据时隐藏选择器：避免渲染一个空白下拉框与下方空状态卡片并存、让用户困惑 *@
+        @if (Dashboard.Snapshots.Count > 0)
+        {
+            <select class="device-select" @bind="SelectedDeviceId">
+                @foreach (var dev in Dashboard.Snapshots)
+                {
+                    <option value="@dev.DeviceId">@dev.DeviceName</option>
+                }
+            </select>
+        }
     </header>
 
+    @* 全局连接横幅：断连(红) / 数据停滞(黄，连接正常但采集链路卡死) / 正常不显示。
+       与 WPF MainWindow 横幅三态对齐（IsPlcConnecting 态 Web 端无，故只区分断连与停滞）。 *@
     @if (!Dashboard.IsConnected)
     {
         <div class="conn-banner">@L.T("ConnLost")</div>
+    }
+    else if (Dashboard.IsDataStale)
+    {
+        <div class="conn-banner warn">@L.T("ConnStale", Dashboard.DataStaleSeconds)</div>
     }
 
     @if (Dashboard.Snapshots.Count == 0)

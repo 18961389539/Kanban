@@ -100,6 +100,31 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
+    /// <summary>数据停滞阈值（秒）：超过该秒数未收到任何实时数据（快照/Meta）视为采集停滞。
+    /// 对齐 WPF MainWindowViewModel.DataStaleThresholdSeconds=10（Remote 快照 500ms 一帧，10s 无数据可断定链路卡死）。</summary>
+    public const int DataStaleThresholdSeconds = 10;
+
+    /// <summary>数据是否停滞：已连接但超过阈值未收到数据（连接正常却无新数据 = 采集/推送链路卡死）。</summary>
+    public bool IsDataStale
+    {
+        get
+        {
+            if (!IsConnected) return false;
+            var t = LastDataAt;
+            return t is { } last && (DateTime.Now - last).TotalSeconds > DataStaleThresholdSeconds;
+        }
+    }
+
+    /// <summary>数据停滞秒数（横幅文案用；未收到过数据返回 0）。</summary>
+    public int DataStaleSeconds
+    {
+        get
+        {
+            var t = LastDataAt;
+            return t is { } last ? (int)(DateTime.Now - last).TotalSeconds : 0;
+        }
+    }
+
     // ──────────── 低频元数据（Collector 5s 推送，非轮询） ────────────
 
     /// <summary>当前班次进度（Collector 推送，5s 更新一次）。</summary>
