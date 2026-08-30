@@ -14,7 +14,7 @@ public class AlarmNameLocalizationTests
     public void DisplayName_UsesNameEn_WhenCultureIsEnglish()
     {
         Localization.Apply("en-US");
-        var info = new ActiveAlarmInfo(DateTime.Now, "注塑机1", "温控偏差-4", AlarmLevel.Medium, AlarmKind.Plc,
+        var info = new ActiveAlarmInfo(DateTime.Now, "d1", "注塑机1", "温控偏差-4", AlarmLevel.Medium, AlarmKind.Plc,
             "Temperature Control Deviation-4");
         Assert.Equal("Temperature Control Deviation-4", info.DisplayName);
     }
@@ -24,7 +24,7 @@ public class AlarmNameLocalizationTests
     {
         Localization.Apply("en-US");
         CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-CN");
-        var info = new ActiveAlarmInfo(DateTime.Now, "注塑机1", "温度过高", AlarmLevel.High, AlarmKind.Plc,
+        var info = new ActiveAlarmInfo(DateTime.Now, "d1", "注塑机1", "温度过高", AlarmLevel.High, AlarmKind.Plc,
             "Over Temperature");
         Assert.Equal("Over Temperature", info.DisplayName);
     }

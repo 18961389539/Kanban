@@ -2938,6 +2938,12 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F249" xml:space="preserve">
     <value>最終更新 {0:HH:mm:ss}</value>
   </data>
+  <data name="F715" xml:space="preserve">
+    <value>統計更新 {0:HH:mm:ss}</value>
+  </data>
+  <data name="F716" xml:space="preserve">
+    <value>リアルタイム更新 {0:HH:mm:ss}</value>
+  </data>
   <data name="F250" xml:space="preserve">
     <value>更新 {0:HH:mm:ss}</value>
   </data>
@@ -5536,6 +5542,24 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="K708" xml:space="preserve">
     <value>先頭 {0} 件のみ表示</value>
+  </data>
+  <data name="K709" xml:space="preserve">
+    <value>未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり</value>
+  </data>
+  <data name="K710" xml:space="preserve">
+    <value>本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし</value>
+  </data>
+  <data name="K711" xml:space="preserve">
+    <value>本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし</value>
+  </data>
+  <data name="K712" xml:space="preserve">
+    <value>未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
+  </data>
+  <data name="K713" xml:space="preserve">
+    <value>未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
+  </data>
+  <data name="K714" xml:space="preserve">
+    <value>上部で選択した時間範囲内の発生回数第1位。約60秒更新</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？</value>

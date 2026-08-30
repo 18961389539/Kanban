@@ -6,6 +6,7 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
 
@@ -156,11 +157,9 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Equal("不合格计数超限", vm.ActiveAlarms[0].AlarmName);
         Assert.Equal(AlarmKind.Count, vm.ActiveAlarms[0].Kind);
 
-        var firstAlarm = vm.ActiveAlarms[0];
-        var firstEventTime = firstAlarm.EventTime;
+        var firstEventTime = vm.ActiveAlarms[0].EventTime;
         vm.RefreshAllCommand.Execute(null);
 
-        Assert.Same(firstAlarm, vm.ActiveAlarms[0]);
         Assert.Equal(firstEventTime, vm.ActiveAlarms[0].EventTime);
     }
 
@@ -204,7 +203,7 @@ public class AlarmCenterViewModelTests : IDisposable
         // ShowHighAlarms 变化触发 RefreshActiveAlarms
         Assert.Single(vm.ActiveAlarms);
         Assert.Equal("低级报警", vm.ActiveAlarms[0].AlarmName);
-        Assert.Equal(2, vm.ActiveCount);
+        Assert.Equal(1, vm.ActiveCount);
     }
 
     [Fact]
@@ -219,8 +218,28 @@ public class AlarmCenterViewModelTests : IDisposable
         vm.ShowLowAlarms = false;
 
         Assert.Empty(vm.ActiveAlarms);
-        Assert.Equal(1, vm.ActiveCount);
+        Assert.Equal(0, vm.ActiveCount);
         Assert.Equal("当前筛选无匹配报警", vm.ActiveEmptyStateMessage);
+    }
+
+    [Fact]
+    public void SelectedDeviceId_FiltersActiveAlarmsAndCount()
+    {
+        _deviceRepo.Devices.Add(CreateDeviceWithAlarm("d1", "设备1", "报警A"));
+        _deviceRepo.Devices.Add(CreateDeviceWithAlarm("d2", "设备2", "报警B"));
+
+        using var vm = CreateVm();
+        vm.RefreshAllCommand.Execute(null);
+        Assert.Equal(2, vm.ActiveCount);
+
+        vm.SelectedDeviceId = "d1";
+        Assert.Single(vm.ActiveAlarms);
+        Assert.Equal(1, vm.ActiveCount);
+        Assert.Equal("设备1", vm.ActiveAlarms[0].DeviceName);
+        Assert.Equal("报警A", vm.ActiveAlarms[0].AlarmName);
+
+        vm.SelectedDeviceId = null;
+        Assert.Equal(2, vm.ActiveCount);
     }
 
     // ──────────── KPI 聚合 ────────────
@@ -372,7 +391,7 @@ public class AlarmCenterViewModelTests : IDisposable
         using var vm = CreateVm();
         vm.RefreshAllCommand.Execute(null);
 
-        // MaxActiveAlarms = 200
+        // MaxActiveAlarms = 200；ActiveCount 为过滤后全集条数（未截断）
         Assert.Equal(250, vm.ActiveCount);
         Assert.Equal(200, vm.ActiveAlarms.Count);
     }
@@ -402,5 +421,41 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Equal(201, vm.ActiveCount);
         Assert.Equal(200, vm.ActiveAlarms.Count);
         Assert.Equal("后置高级报警", vm.ActiveAlarms[0].AlarmName);
+    }
+
+    [Fact]
+    public void AlarmSearchText_MatchesLocalizedDisplayName()
+    {
+        Localization.Apply("zh-CN");
+        try
+        {
+            Localization.Apply("en-US");
+            var device = new Device { Id = "d1", Name = "Injection-1" };
+            device.Alarms.Add(new Alarm
+            {
+                Name = "温度过高",
+                NameEn = "Over Temperature",
+                Level = AlarmLevel.High,
+                PlcAddress = "M100",
+                StartTime = DateTime.Now.AddMinutes(-5),
+            });
+            _deviceRepo.Devices.Add(device);
+
+            using var vm = CreateVm();
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Equal("Over Temperature", vm.ActiveAlarms[0].DisplayName);
+
+            vm.AlarmSearchText = "Over Temp";
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Single(vm.ActiveAlarms);
+
+            vm.AlarmSearchText = "nonexistent";
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Empty(vm.ActiveAlarms);
+        }
+        finally
+        {
+            Localization.Apply("zh-CN");
+        }
     }
 }

@@ -74,6 +74,14 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <!-- SQL 统计 KPI：DB 故障时数值标红并显示 — -->
+        <Style x:Key="StatsKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiCellValue}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -91,11 +99,27 @@
                     Style="{StaticResource PageTitleText}"
                     Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
                 <!-- 最后刷新时间 -->
-                <TextBlock
-                    Margin="16,0,0,0" VerticalAlignment="Center"
-                    FontSize="{DynamicResource FontSizeCaption}"
-                    Foreground="{StaticResource ThirdlyTextBrush}"
-                    Text="{Binding LastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F249}" />
+                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="{DynamicResource FontSizeCaption}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding ActiveLastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F716}" />
+                    <TextBlock
+                        FontSize="{DynamicResource FontSizeCaption}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding StatsLastUpdateTimeText}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowStatsLastUpdateTime}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
@@ -147,28 +171,28 @@
             <!--  ─── KPI 条（6 格）───  -->
             <UniformGrid Grid.Row="0" Columns="6" Margin="0,0,0,12">
                 <!-- 活跃报警数 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K709}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K125}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding ActiveCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日触发 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayTriggerKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K126}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayTriggerCount}" />
+                        <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayTriggerCountDisplay}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日恢复 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayRecoverKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K127}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayRecoverCount}" />
+                        <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayRecoverCountDisplay}" />
                     </StackPanel>
                 </Border>
                 <!-- 最长持续 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K712}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K128}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDurationText}" />
@@ -178,20 +202,31 @@
                     </StackPanel>
                 </Border>
                 <!-- 影响设备数 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K713}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K129}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 最频繁报警（标签带时间范围标注，与"今日"口径区分） -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding MostFrequentKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding MostFrequentLabel}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" FontSize="16"
-                                   Text="{Binding MostFrequentAlarm}"
-                                   TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding MostFrequentAlarm}" />
+                        <TextBlock FontSize="16" Text="{Binding MostFrequentAlarm}" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StatsKpiValue}">
+                                    <Setter Property="ToolTip" Value="{Binding MostFrequentAlarm}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding MostFrequentAlarm}" Value="—">
+                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -436,9 +471,9 @@
                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                         <TextBlock FontSize="13" FontWeight="Medium"
                                                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                                                   Text="{Binding DisplayName}"
+                                                                   Text="{Binding AlarmName}"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   ToolTip="{Binding DisplayName}" />
+                                                                   ToolTip="{Binding AlarmName}" />
                                                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                                             <TextBlock FontSize="12" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding DeviceName}" />
                                                             <TextBlock Margin="8,0,0,0" Style="{StaticResource AlarmEventText}"
@@ -499,9 +534,9 @@
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
                                                     <TextBlock FontSize="13" FontWeight="Medium"
                                                                Foreground="{StaticResource PrimaryTextBrush}"
-                                                               Text="{Binding DisplayName}"
+                                                               Text="{Binding AlarmName}"
                                                                TextTrimming="CharacterEllipsis"
-                                                               ToolTip="{Binding DisplayName}" />
+                                                               ToolTip="{Binding AlarmName}" />
                                                     <TextBlock FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}"
                                                                Text="{Binding DeviceName}" />
                                                 </StackPanel>

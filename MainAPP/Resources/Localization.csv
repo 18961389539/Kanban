@@ -1077,6 +1077,8 @@ Wpf,F246,{0} 件/h,{0} pcs/h,{0} 個/h,{0} pcs/h
 Wpf,F247,{0:N0} 次,{0:N0} times,{0:N0} 回,{0:N0} times
 Wpf,F248,共 {0} 台设备,{0} devices total,計 {0} 台,{0} devices total
 Wpf,F249,最后刷新 {0:HH:mm:ss},Last refresh {0:HH:mm:ss},最終更新 {0:HH:mm:ss},Last refresh {0:HH:mm:ss}
+Wpf,F715,统计刷新 {0:HH:mm:ss},Stats refresh {0:HH:mm:ss},統計更新 {0:HH:mm:ss},Stats refresh {0:HH:mm:ss}
+Wpf,F716,实时刷新 {0:HH:mm:ss},Live refresh {0:HH:mm:ss},リアルタイム更新 {0:HH:mm:ss},Live refresh {0:HH:mm:ss}
 Wpf,F250,更新于 {0:HH:mm:ss},Updated {0:HH:mm:ss},更新 {0:HH:mm:ss},Updated {0:HH:mm:ss}
 Wpf,F251,达成率 {0:P0},Achievement {0:P0},達成率 {0:P0},Achievement {0:P0}
 Wpf,F252,目标达成 {0:P1},Target met {0:P1},目標達成 {0:P1},Target met {0:P1}
@@ -2002,6 +2004,12 @@ Wpf,K705,调整配方列表与编辑区的宽度,Adjust the width of recipe list
 Wpf,K706,配方编辑,Recipe Editor,レシピ編集,Recipe Editor
 Wpf,K707,最频繁报警（{0}）,Most Frequent Alarm ({0}),最も頻発したアラーム（{0}）,Most Frequent Alarm ({0})
 Wpf,K708,仅显示前 {0} 条,Showing first {0} only,先頭 {0} 件のみ表示,Showing first {0} only
+Wpf,K709,当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响,Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters,未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり,Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters
+Wpf,K710,今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响,Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし,Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above
+Wpf,K711,今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响,Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし,Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above
+Wpf,K712,当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响,Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters,未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり,Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters
+Wpf,K713,当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响,Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters,未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり,Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters
+Wpf,K714,按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新,Top alarm by trigger count in the selected time range above; refreshed about every 60s,上部で選択した時間範囲内の発生回数第1位。約60秒更新,Top alarm by trigger count in the selected time range above; refreshed about every 60s
 Wpf,F317,将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？,{0} recipes will be imported ({1} will be skipped for failing validation). Continue?,レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？,{0} recipes will be imported ({1} will be skipped for failing validation). Continue?
 Wpf,F318,已导入 {0} 条配方，跳过 {1} 条,"Imported {0} recipes, skipped {1}",レシピ {0} 件をインポートし、{1} 件をスキップしました,"Imported {0} recipes, skipped {1}"
 Wpf,F319,已导出 {0} 条配方,Exported {0} recipes,レシピ {0} 件をエクスポートしました,Exported {0} recipes

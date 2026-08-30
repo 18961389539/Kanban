@@ -11,6 +11,7 @@ namespace MainAPP.ViewModels;
 public partial class ActiveAlarmInfo : ObservableObject
 {
     public DateTime EventTime { get; }
+    public string DeviceId { get; }
     public string DeviceName { get; }
     public string AlarmName { get; }
     public string? AlarmNameEn { get; }
@@ -37,6 +38,7 @@ public partial class ActiveAlarmInfo : ObservableObject
 
     public ActiveAlarmInfo(
         DateTime eventTime,
+        string deviceId,
         string deviceName,
         string alarmName,
         AlarmLevel level,
@@ -46,6 +48,7 @@ public partial class ActiveAlarmInfo : ObservableObject
         string? alarmNamePt = null)
     {
         EventTime = eventTime;
+        DeviceId = deviceId;
         DeviceName = deviceName;
         AlarmName = alarmName;
         AlarmNameEn = alarmNameEn;
@@ -71,12 +74,11 @@ public partial class ActiveAlarmInfo : ObservableObject
     /// 同值判定（不含 DurationText，用于差分更新比较）。
     /// </summary>
     public bool Equals(ActiveAlarmInfo? other) =>
-        other != null && EventTime == other.EventTime
-        && DeviceName == other.DeviceName && AlarmName == other.AlarmName
+        other != null && DeviceId == other.DeviceId && AlarmName == other.AlarmName
         && Level == other.Level && Kind == other.Kind;
 
     public override bool Equals(object? obj) => obj is ActiveAlarmInfo other && Equals(other);
-    public override int GetHashCode() => HashCode.Combine(EventTime, DeviceName, AlarmName, Level, Kind);
+    public override int GetHashCode() => HashCode.Combine(DeviceId, AlarmName, Level, Kind);
 }
 
 /// <summary>

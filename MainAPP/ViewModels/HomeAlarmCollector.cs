@@ -86,7 +86,7 @@ public sealed class HomeAlarmCollector
                 if (alarm.StartTime != default && alarm.EndTime == default)
                 {
                     activeKeys.Add($"{device.Id}_{alarm.Id}");
-                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
+                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Id, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
                         alarm.NameEn, alarm.NameJa, alarm.NamePt));
                 }
             }
@@ -102,7 +102,7 @@ public sealed class HomeAlarmCollector
                     if (!_triggerTimes.ContainsKey(key))
                         _triggerTimes[key] = now;
                     // 计数报警无级别字段，统一视为 Medium
-                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Id, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
                         ca.NameEn, ca.NameJa, ca.NamePt));
                 }
                 else if (ca.Enabled && _triggerTimes.ContainsKey(key))
@@ -113,7 +113,7 @@ public sealed class HomeAlarmCollector
                     if ((now - _recoveryTimes[key]).TotalSeconds < DebounceSeconds)
                     {
                         activeKeys.Add(key);
-                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Id, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
                             ca.NameEn, ca.NameJa, ca.NamePt));
                     }
                 }

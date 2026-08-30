@@ -2938,6 +2938,12 @@
   <data name="F249" xml:space="preserve">
     <value>最后刷新 {0:HH:mm:ss}</value>
   </data>
+  <data name="F715" xml:space="preserve">
+    <value>统计刷新 {0:HH:mm:ss}</value>
+  </data>
+  <data name="F716" xml:space="preserve">
+    <value>实时刷新 {0:HH:mm:ss}</value>
+  </data>
   <data name="F250" xml:space="preserve">
     <value>更新于 {0:HH:mm:ss}</value>
   </data>
@@ -5536,6 +5542,24 @@
   </data>
   <data name="K708" xml:space="preserve">
     <value>仅显示前 {0} 条</value>
+  </data>
+  <data name="K709" xml:space="preserve">
+    <value>当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K710" xml:space="preserve">
+    <value>今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+  </data>
+  <data name="K711" xml:space="preserve">
+    <value>今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+  </data>
+  <data name="K712" xml:space="preserve">
+    <value>当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K713" xml:space="preserve">
+    <value>当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K714" xml:space="preserve">
+    <value>按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>
