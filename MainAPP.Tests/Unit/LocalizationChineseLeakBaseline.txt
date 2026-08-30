@@ -12,10 +12,6 @@ ChartService.cs	停机时长(分钟)
 HistoryQueryViewModel.cs	\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。
 HistoryQueryViewModel.cs	已导出当前页数据 → {fullPath}
 HistoryQueryViewModel.cs	当前页导出 Tab={tabIndex} Page={CurrentPage}
-HomeViewModel.cs	健康
-HomeViewModel.cs	关注
-HomeViewModel.cs	异常
-HomeViewModel.cs	良好
 MainWindowViewModel.cs	初始
 OeeQueryViewModel.cs	值
 OeeQueryViewModel.cs	指标
@@ -48,6 +44,8 @@ StatusQueryViewModel.cs	当前状态文本
 StatusQueryViewModel.cs	设备ID
 StatusQueryViewModel.cs	设备名称
 TaskExtensions.cs	Fire-and-forget Task 发生未观察异常
+UserHelpService.cs	MainAPP用户使用手册.md
+UserHelpService.cs	手册
 UserManagerViewModel.cs	角色={role}
 UserManagerViewModel.cs	角色={user.Role}
 UserManagerViewModel.cs	，首登改密

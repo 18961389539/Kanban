@@ -612,12 +612,13 @@ public static class ChartService
     // ──────────── 从 HomeViewModel 迁入的图表（消除 ViewModel 内联图表构建） ────────────
 
     /// <summary>
-    /// 构建状态时长饼图：运行 / 报警 / 待机（迁自 HomeViewModel.BuildStatusPieChart）。
+    /// 构建设备状态时长饼图：运行 / 报警 / 待机 / 离线。
+    /// 图例含离线行、总时长含离线，饼图必须同口径计入离线扇区，否则饼图与图例占比对不上。
     /// 参数均为秒。total &lt;= 0 时返回灰色占位饼图（"初始"），保证未连接 PLC 时图表仍渲染。
     /// </summary>
-    public static PlotModel BuildStatusPieChart(double runTime, double alarmTime, double pausedTime)
+    public static PlotModel BuildStatusPieChart(double runTime, double alarmTime, double pausedTime, double offlineTime = 0)
     {
-        var total = runTime + alarmTime + pausedTime;
+        var total = runTime + alarmTime + pausedTime + offlineTime;
         var model = CreateBaseModel();
         var series = new PieSeries
         {
@@ -635,9 +636,12 @@ public static class ChartService
         }
         else
         {
+            // 扇区顺序（顺时针，顶部起始）与图例自上而下顺序一致，避免颜色对照错乱
             series.Slices.Add(new PieSlice("", runTime) { Fill = _runColor });
             series.Slices.Add(new PieSlice("", alarmTime) { Fill = _alarmColor });
             series.Slices.Add(new PieSlice("", pausedTime) { Fill = _pauseColor });
+            if (offlineTime > 0)
+                series.Slices.Add(new PieSlice("", offlineTime) { Fill = _idleColor });
         }
         model.Series.Add(series);
         return model;

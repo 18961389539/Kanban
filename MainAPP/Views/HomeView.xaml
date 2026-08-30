@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.HomeView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -80,42 +80,6 @@
                     SelectedValue="{Binding SelectedDeviceId}"
                     SelectedValuePath="Id"
                     Style="{StaticResource ComboBoxExtend}" />
-
-                <!--  班次进度：精简为名称 + 百分比，去进度条  -->
-                <Border Margin="14,0,0,0" Padding="10,4" CornerRadius="6"
-                        Background="{StaticResource SecondaryRegionBrush}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                        Visibility="{Binding IsShiftProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{Binding ShiftProgressName}" />
-                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                   Foreground="{StaticResource PrimaryTextBrush}" FontWeight="Bold"
-                                   Text="{Binding ShiftProgressPct}" />
-                    </StackPanel>
-                </Border>
-
-                <!--  当前工单条：精简为工单号 + 百分比，去产品名和进度条  -->
-                <Border Margin="14,0,0,0" Padding="10,4" CornerRadius="6"
-                        Background="{StaticResource SecondaryRegionBrush}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                        ToolTip="{x:Static resources:Strings.F326}"
-                        Visibility="{Binding HasCurrentWorkOrder, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center"
-                                                    Foreground="{StaticResource PrimaryBrush}" Kind="ClipboardTextOutline" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                   Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding CurrentWorkOrder.OrderNo}" />
-                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                   Foreground="{StaticResource ChartBaseSeriesBrush}"
-                                   Text="{Binding CurrentWorkOrder.ProductCode}" />
-                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{Binding WorkOrderProgressPct}" />
-                    </StackPanel>
-                </Border>
 
                 <!--  工单管理入口  -->
                 <Button Margin="10,0,0,0" VerticalAlignment="Center"

@@ -207,6 +207,18 @@
   <data name="F_DeviceHealthBreakdown" xml:space="preserve">
     <value>Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
   </data>
+  <data name="Home_DeviceHealth_Healthy" xml:space="preserve">
+    <value>Healthy</value>
+  </data>
+  <data name="Home_DeviceHealth_Good" xml:space="preserve">
+    <value>Good</value>
+  </data>
+  <data name="Home_DeviceHealth_Attention" xml:space="preserve">
+    <value>Attention</value>
+  </data>
+  <data name="Home_DeviceHealth_Abnormal" xml:space="preserve">
+    <value>Anormal</value>
+  </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>Total duration</value>
   </data>

@@ -64,6 +64,10 @@ Wpf,Wo_LastStatusChange,最近状态变更,Last status change,最終状態変更
 Wpf,Home_DeviceHealth,设备健康,Device health,設備健全性,Device health
 Wpf,Home_DeviceHealthTooltip,"健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.","健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
 Wpf,F_DeviceHealthBreakdown,"当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
+Wpf,Home_DeviceHealth_Healthy,健康,Healthy,健全,Healthy
+Wpf,Home_DeviceHealth_Good,良好,Good,良好,Good
+Wpf,Home_DeviceHealth_Attention,关注,Needs attention,注意,Attention
+Wpf,Home_DeviceHealth_Abnormal,异常,Abnormal,異常,Anormal
 Wpf,Home_TotalDuration,总时长,Total duration,総時間,Total duration
 Wpf,Rtmon_RetryConnect,重试连接,Retry connection,再接続,Retry connection
 Wpf,Conn_Live,实时,Live,リアルタイム,Live

@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.HomeDefectParetoCard"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -39,8 +39,8 @@
                                            FontSize="{DynamicResource FontSizeCaption}"
                                            Foreground="{StaticResource SecondaryTextBrush}"
                                            Text="{Binding Name}"
-                                           TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding DeviceName}" />
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Name}" />
                                 <Border Grid.Column="1"
                                         Height="8"
                                         Margin="8,0"

@@ -271,6 +271,22 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["en-US"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["ja-JP"] = "現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["pt-BR"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
         },
+        ["Wpf|Home_DeviceHealth_Healthy"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "健康", ["en-US"] = "Healthy", ["ja-JP"] = "健全", ["pt-BR"] = "Healthy"
+        },
+        ["Wpf|Home_DeviceHealth_Good"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "良好", ["en-US"] = "Good", ["ja-JP"] = "良好", ["pt-BR"] = "Good"
+        },
+        ["Wpf|Home_DeviceHealth_Attention"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "关注", ["en-US"] = "Needs attention", ["ja-JP"] = "注意", ["pt-BR"] = "Attention"
+        },
+        ["Wpf|Home_DeviceHealth_Abnormal"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "异常", ["en-US"] = "Abnormal", ["ja-JP"] = "異常", ["pt-BR"] = "Anormal"
+        },
         ["Wpf|Home_TotalDuration"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "总时长", ["en-US"] = "Total duration", ["ja-JP"] = "総時間", ["pt-BR"] = "Total duration"

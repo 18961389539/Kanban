@@ -89,7 +89,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     // ──────────── 图表 diff 缓存（避免每 3 秒无变化重建 PlotModel） ────────────
     private (double a, double p, double q) _lastOeeInput;
-    private (int r, int a, int p) _lastStatusInput;
+    private (int r, int a, int p, int o) _lastStatusInput;
     private int _lastDefectSignature;
     private (int ok, int ng) _lastQualityInput;
 
@@ -890,7 +890,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (oeeInput != _lastOeeInput) { BuildOeeRingCharts(); _lastOeeInput = oeeInput; }
         // 状态时长：5s 粒度桶 diff（审查修复 2026-08-13：原秒级 diff 使运行时每跨整秒重建一次饼图，
         // 即"几乎每 tick 重建"；5s 桶将重建频率降 5 倍且显示口径不变）
-        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5));
+        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5), (int)(OfflineTime / 5));
         if (statusInput != _lastStatusInput) { BuildStatusPieChart(); _lastStatusInput = statusInput; }
         var defectSig = DefectSignature(CurrentDevice);
         if (defectSig != _lastDefectSignature) { RefreshDefectTop(); _lastDefectSignature = defectSig; }
@@ -1050,22 +1050,22 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         if (DeviceHealthScore >= 85)
         {
-            DeviceHealthLevel = "健康";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Healthy;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x34, 0xD3, 0x99));
         }
         else if (DeviceHealthScore >= 70)
         {
-            DeviceHealthLevel = "良好";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Good;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x60, 0xA5, 0xFA));
         }
         else if (DeviceHealthScore >= 60)
         {
-            DeviceHealthLevel = "关注";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Attention;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24));
         }
         else
         {
-            DeviceHealthLevel = "异常";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Abnormal;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xF8, 0x71, 0x71));
         }
     }
@@ -1134,7 +1134,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
 
     private void BuildStatusPieChart()
-        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
+        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime, OfflineTime);
 
     private void BuildOeeRingCharts()
     {
@@ -1181,13 +1181,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }
 
         var max = list[0].Count;
-        var deviceName = CurrentDevice.Name;
         foreach (var d in list)
         {
             DefectTop.Add(new HomeDefectTopItem
             {
                 Name = d.Name,
-                DeviceName = deviceName,
                 Count = d.Count,
                 BarRatio = max > 0 ? (double)d.Count / max : 0,
             });
