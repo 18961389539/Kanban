@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Data;
@@ -157,11 +157,16 @@ public partial class StatusQueryViewModel : ObservableObject
         StatusInsight = null;
     }
 
-    public string? BuildCsv()
-    {
-        if (StatusTransitions.Count == 0) return null;
+    public string? BuildCsv() => BuildCsvCore(StatusTransitions);
 
-        var rows = StatusTransitions.Select(s => new StatusCsvRow
+    /// <summary>导出全部筛选结果（跨页合并，供导出范围选择"全量"时调用）。</summary>
+    public string? BuildCsvAll() => BuildCsvCore(_allTransitions);
+
+    private string? BuildCsvCore(IReadOnlyList<StatusTransitionRecord> source)
+    {
+        if (source.Count == 0) return null;
+
+        var rows = source.Select(s => new StatusCsvRow
         {
             Timestamp = s.EventTime,
             DeviceId = s.DeviceId,

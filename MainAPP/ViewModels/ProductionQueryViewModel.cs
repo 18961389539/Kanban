@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Entities;
@@ -32,6 +32,24 @@ public partial class ProductionQueryViewModel : ObservableObject
 
     [ObservableProperty]
     private double _qualityRate;
+
+    /// <summary>总产量（OK + NG），KPI 卡显示用。</summary>
+    public int TotalProduction => TotalOk + TotalNg;
+
+    /// <summary>不良率（NG / 总产量），KPI 卡显示用；无产量时为 0。</summary>
+    public double DefectRate => TotalProduction > 0 ? TotalNg / (double)TotalProduction : 0;
+
+    partial void OnTotalOkChanged(int value)
+    {
+        OnPropertyChanged(nameof(TotalProduction));
+        OnPropertyChanged(nameof(DefectRate));
+    }
+
+    partial void OnTotalNgChanged(int value)
+    {
+        OnPropertyChanged(nameof(TotalProduction));
+        OnPropertyChanged(nameof(DefectRate));
+    }
 
     [ObservableProperty]
     private PlotModel? _productionChart;
@@ -137,10 +155,17 @@ public partial class ProductionQueryViewModel : ObservableObject
     }
 
     public string? BuildCsv(DateTime fromDate, DateTime toDate)
-    {
-        if (ProductionLogs.Count == 0) return null;
+        => BuildCsvCore(fromDate, toDate, ProductionLogs);
 
-        var rows = ProductionLogs.Select(p => new ProductionCsvRow
+    /// <summary>导出全部筛选结果（跨页合并，供导出范围选择"全量"时调用）。</summary>
+    public string? BuildCsvAll(DateTime fromDate, DateTime toDate)
+        => BuildCsvCore(fromDate, toDate, _allLogs);
+
+    private string? BuildCsvCore(DateTime fromDate, DateTime toDate, IReadOnlyList<ProductionLog> source)
+    {
+        if (source.Count == 0) return null;
+
+        var rows = source.Select(p => new ProductionCsvRow
         {
             Timestamp = p.Timestamp,
             DeviceId = p.DeviceId,
@@ -153,7 +178,7 @@ public partial class ProductionQueryViewModel : ObservableObject
 
         return HistoryQueryHelper.BuildCsv(rows,
             $"# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}",
-            $"# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，C良品率：{QualityRate:P2}",
+            $"# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，良品率：{QualityRate:P2}",
             $"# {ProductionInsight ?? Strings.M176}");
     }
 

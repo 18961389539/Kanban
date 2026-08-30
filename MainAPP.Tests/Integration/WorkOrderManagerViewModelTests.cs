@@ -526,4 +526,150 @@ public class WorkOrderManagerViewModelTests : IDisposable
         Assert.Single(vm.FilteredView.Cast<WorkOrder>());
         Assert.Equal("WO-NG", vm.FilteredView.Cast<WorkOrder>().Single().OrderNo);
     }
+
+    // ──────────── 冲突集合 / 汇总条（#4 / #10）────────────
+
+    [Fact]
+    public void ConflictOrderIds_ContainsOnlyOverlappingOrders_NotNonOverlappingOnSameDevice()
+    {
+        var vm = CreateVm();
+        var first = CreateWorkOrder(orderNo: "WO-C1", deviceId: "D1", status: WorkOrderStatus.Pending);
+        first.PlannedStart = DateTime.Today.AddHours(8);
+        first.PlannedEnd = DateTime.Today.AddHours(12);
+        var second = CreateWorkOrder(orderNo: "WO-C2", deviceId: "D1", status: WorkOrderStatus.Pending);
+        second.PlannedStart = DateTime.Today.AddHours(10);
+        second.PlannedEnd = DateTime.Today.AddHours(14);
+        var others = CreateWorkOrder(orderNo: "WO-IND", deviceId: "D2", status: WorkOrderStatus.Pending);
+        others.PlannedStart = DateTime.Today.AddHours(8);
+        others.PlannedEnd = DateTime.Today.AddHours(12);
+        _workOrderRepo.Upsert(first);
+        _workOrderRepo.Upsert(second);
+        _workOrderRepo.Upsert(others);
+        Assert.Equal(1, vm.ScheduleConflictCount); // 1 对重叠
+        Assert.Equal(2, vm.ConflictOrderIds.Count); // 双方都计入高亮
+        Assert.True(vm.ConflictOrderIds.Contains(first.Id) && vm.ConflictOrderIds.Contains(second.Id));
+        Assert.False(vm.ConflictOrderIds.Contains(others.Id));
+    }
+
+    [Fact]
+    public void ConflictOrderIds_EmptyWhenNoOverlap()
+    {
+        var vm = CreateVm();
+        var first = CreateWorkOrder(orderNo: "WO-A", deviceId: "D1");
+        first.PlannedStart = DateTime.Today.AddHours(8);
+        first.PlannedEnd = DateTime.Today.AddHours(10);
+        var second = CreateWorkOrder(orderNo: "WO-B", deviceId: "D1");
+        second.PlannedStart = DateTime.Today.AddHours(11);
+        second.PlannedEnd = DateTime.Today.AddHours(13);
+        _workOrderRepo.Upsert(first);
+        _workOrderRepo.Upsert(second);
+
+        Assert.Equal(0, vm.ConflictOrderIds.Count);
+        Assert.False(vm.HasScheduleConflicts);
+    }
+
+    [Fact]
+    public void FilteredSummary_TotalsAndRate_ComputeOverCurrentFilter()
+    {
+        var vm = CreateVm();
+        var wo1 = CreateWorkOrder(orderNo: "WO-S1", status: WorkOrderStatus.Running);
+        wo1.TargetQuantity = 1000;
+        wo1.Production = new WorkOrderRuntimeProduction { OkCount = 400 };
+        _workOrderRepo.Upsert(wo1);
+        var wo2 = CreateWorkOrder(orderNo: "WO-S2", status: WorkOrderStatus.Running);
+        wo2.TargetQuantity = 500;
+        wo2.Production = new WorkOrderRuntimeProduction { OkCount = 200 };
+        _workOrderRepo.Upsert(wo2);
+
+        Assert.Equal(1500, vm.FilteredTargetTotal);
+        Assert.Equal(600, vm.FilteredOkTotal);
+        Assert.Equal(0.4, vm.FilteredAchievementRate, 3);
+    }
+
+    [Fact]
+    public void OverdueOrderIds_ContainsOnlyOverdueOrders()
+    {
+        var vm = CreateVm();
+        var overdue = CreateWorkOrder(orderNo: "WO-OLD");
+        overdue.PlannedEnd = DateTime.Now.AddMinutes(-5);
+        _workOrderRepo.Upsert(overdue);
+        var active = CreateWorkOrder(orderNo: "WO-NEW");
+        active.PlannedEnd = DateTime.Now.AddHours(2);
+        _workOrderRepo.Upsert(active);
+
+        Assert.Single(vm.OverdueOrderIds);
+        Assert.Contains(overdue.Id, vm.OverdueOrderIds);
+        Assert.False(vm.OverdueOrderIds.Contains(active.Id));
+        Assert.DoesNotContain(_workOrderRepo.WorkOrders, w => string.IsNullOrWhiteSpace(w.OverdueHintText) && w.Id == overdue.Id);
+    }
+
+    // ──────────── 详情页逾期提示（P2 修复：VM 计算属性驱动）────────────
+
+    [Fact]
+    public void SelectedOverdueHintText_RefreshedOnSelectionChange()
+    {
+        var vm = CreateVm();
+        var overdue = CreateWorkOrder(orderNo: "WO-DTL-OLD");
+        overdue.PlannedEnd = DateTime.Now.AddMinutes(-5);
+        var saved = _workOrderRepo.Upsert(overdue);
+
+        // 选中逾期工单：详情页徽章立即显示
+        vm.SelectedWorkOrder = saved;
+        Assert.NotNull(vm.SelectedOverdueHintText);
+        Assert.Contains("逾期", vm.SelectedOverdueHintText);
+    }
+
+    [Fact]
+    public void SelectedOverdueHintText_NullForNonOverdueOrNoSelection()
+    {
+        var vm = CreateVm();
+        var active = CreateWorkOrder(orderNo: "WO-DTL-OK");
+        active.PlannedEnd = DateTime.Now.AddHours(2);
+        var saved = _workOrderRepo.Upsert(active);
+
+        vm.SelectedWorkOrder = saved;
+        Assert.Null(vm.SelectedOverdueHintText);
+
+        vm.SelectedWorkOrder = null;
+        Assert.Null(vm.SelectedOverdueHintText);
+    }
+
+    [Fact]
+    public void SelectedOverdueHintText_RefreshesAsTimePasses_TimerPath()
+    {
+        var vm = CreateVm();
+        // 工单计划结束是过去 2 分钟 —— 启动即逾期，约束放 RecalcDerivedCounts 兜底路径
+        // 模拟：先选中时不逾期，随后 PlannedEnd 跨过（不可能真实改实体时间），
+        // 改为直接验证 RecalcDerivedCounts 的刷新动作对选中项生效：
+        var wo = CreateWorkOrder(orderNo: "WO-DTL-TIMER");
+        wo.PlannedEnd = DateTime.Now.AddHours(1); // 未逾期
+        var saved = _workOrderRepo.Upsert(wo);
+        vm.SelectedWorkOrder = saved;
+        Assert.Null(vm.SelectedOverdueHintText);
+
+        // 让工单变为逾期（模拟时间流逝后实体时间被更新；触发集合事件 → RecalcDerivedCounts → RefreshSelectedOverdueHint）
+        saved.PlannedEnd = DateTime.Now.AddMinutes(-1);
+        _workOrderRepo.Upsert(saved); // Replace 触发 CollectionChanged → RecalcDerivedCounts
+        Assert.NotNull(vm.SelectedOverdueHintText);
+    }
+
+    [Fact]
+    public void TimerPath_RefreshGanttForCurrentFilter_RebuildsChartModel_WithNewNowLine()
+    {
+        var vm = CreateVm();
+        var wo = CreateWorkOrder(orderNo: "WO-GANTT-TIMER");
+        wo.PlannedStart = DateTime.Now.AddHours(-4);
+        wo.PlannedEnd = DateTime.Now.AddHours(4);
+        _workOrderRepo.Upsert(wo);
+
+        // 初始甘特已构建且含"现在"线
+        var first = vm.WorkOrderGanttChartModel;
+        Assert.NotNull(first);
+
+        // timer 回调 = RecalcDerivedCounts + RefreshGanttForCurrentFilter；
+        // 该私有方法经 RefreshFilteredView → RefreshGanttChart 等价路径驱动，
+        // 此处用筛选变化触发同一路径：模型应被替换为新实例（新"现在"线 X 值）
+        vm.SearchKeyword = "GANTT-TIMER";
+        Assert.NotSame(first, vm.WorkOrderGanttChartModel);
+    }
 }

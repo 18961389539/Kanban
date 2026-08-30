@@ -70,5 +70,8 @@ revoked/
 # ── GUI 审查产物（勿入库） ──
 gui-test-screenshots/
 
+# ── Python 缓存 ──
+__pycache__/
+
 # ── 预置暂存（勿入库） ──
 .staging/

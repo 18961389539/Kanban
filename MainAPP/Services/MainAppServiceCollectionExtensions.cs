@@ -105,6 +105,9 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
         services.AddSingleton<IWorkOrderProductionBatchQuery>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
         services.AddSingleton<IDefectHistoryReader>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
+        // SN 序列号追溯：同样经 RemoteHistoryQueryService 路由（Local → 本地 SnEventStore；Remote → SignalR 查询）。
+        // Remote 模式下 ISnEventStore.Append 为忽略（采集只在 Collector 进程发生），查询走 QuerySnEventsAsync。
+        services.AddSingleton<ISnEventStore>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
 
         return services;
     }

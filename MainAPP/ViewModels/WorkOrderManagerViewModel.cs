@@ -42,6 +42,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private readonly DeviceRepository _deviceRepo;
     private readonly IDialogService _dialog;
     private readonly UserSession _userSession;
+    private readonly ISnEventStore? _snEventStore;
 
     /// <summary>工单集合（直接绑定到 Repository 的 ObservableCollection）。</summary>
     public ObservableCollection<WorkOrder> WorkOrders => _workOrderRepo.WorkOrders;
@@ -77,12 +78,119 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _onlyHasNg;
     [ObservableProperty] private WorkOrderSortMode _sortMode = WorkOrderSortMode.ScheduleStart;
 
+    /// <summary>逾期工单 Id 集合（全量，不受筛选影响）。替换时通知 UI 使列表行标签/高亮重估。</summary>
+    [ObservableProperty]
+    private ISet<int> _overdueOrderIds = new HashSet<int>();
+
+    /// <summary>计划冲突工单 Id 集合（同设备 Pending/Running 时间重叠）。替换时通知 UI 使列表行/徽章重估。</summary>
+    [ObservableProperty]
+    private ISet<int> _conflictOrderIds = new HashSet<int>();
+
+    /// <summary>工单排程甘特图模型（只读，设备×时间矩形条）。筛选/集合变化时重建。</summary>
+    public OxyPlot.PlotModel? WorkOrderGanttChartModel { get; private set; }
+
     /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
     public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
 
     /// <summary>选中工单的产量聚合（详情页绑定）。null 表示未查询/未选中。</summary>
     [ObservableProperty]
     private WorkOrderProductionSummary? _selectedProduction;
+
+    // ──────────── SN 明细（选中工单的序列号事件列表，Local 模式可用） ────────────
+
+    /// <summary>SN 明细列表（详情页绑定，按时间降序）。</summary>
+    public ObservableCollection<Kanban.Collector.Core.Entities.SnEventRecord> SnItems { get; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSnItems))]
+    private int _snTotalCount;
+
+    [ObservableProperty]
+    private int _snPage = 1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSnItems))]
+    private int _snTotalPages;
+
+    private const int SnPageSize = 20;
+
+    /// <summary>SN 追溯是否可用：注入的存储非空即可用（Local=本地库，Remote=SignalR 查询通道）。</summary>
+    public bool IsSnSupported => _snEventStore != null;
+
+    public bool HasSnItems => SnTotalCount > 0 && SnItems.Count > 0;
+
+    partial void OnSnPageChanged(int value)
+    {
+        SnPreviousPageCommand.NotifyCanExecuteChanged();
+        SnNextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSnTotalPagesChanged(int value)
+    {
+        SnPreviousPageCommand.NotifyCanExecuteChanged();
+        SnNextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSnPreviousPage))]
+    private void SnPreviousPage()
+    {
+        if (SnPage > 1)
+        {
+            SnPage--;
+            LoadSnItems();
+        }
+    }
+
+    private bool CanSnPreviousPage() => SnPage > 1;
+
+    [RelayCommand(CanExecute = nameof(CanSnNextPage))]
+    private void SnNextPage()
+    {
+        if (SnPage < SnTotalPages)
+        {
+            SnPage++;
+            LoadSnItems();
+        }
+    }
+
+    private bool CanSnNextPage() => SnPage < SnTotalPages;
+
+    /// <summary>查询选中工单的 SN 明细（后台执行 + UI 封送，选中工单变化时自动加载）。</summary>
+    private void LoadSnItems()
+    {
+        var order = SelectedWorkOrder;
+        if (order == null || order.Id <= 0 || _snEventStore == null)
+        {
+            SnItems.Clear();
+            SnTotalCount = 0;
+            SnTotalPages = 0;
+            return;
+        }
+
+        var page = SnPage;
+        var workOrderId = order.Id;
+        Task.Run(() =>
+        {
+            var (total, items) = _snEventStore.QueryByWorkOrder(workOrderId, page, SnPageSize);
+            UiDispatcher.Dispatch(() =>
+            {
+                if (SelectedWorkOrder?.Id != workOrderId) return; // 选中项已切换，丢弃过期结果
+                SnItems.Clear();
+                foreach (var record in items)
+                    SnItems.Add(record);
+                SnTotalCount = total;
+                SnTotalPages = total <= 0 ? 0 : (total + SnPageSize - 1) / SnPageSize;
+            });
+        }).Forget();
+    }
+
+    /// <summary>
+    /// 选中工单的逾期提示文本（详情页绑定，如"逾期 2h"；null 表示未逾期）。
+    /// 不能直接绑实体 <see cref="WorkOrder.OverdueHintText"/>：实体非 INotifyPropertyChanged，
+    /// 每分钟计时兜底刷新时详情页不会自动重绑；改由 VM 计算属性 + RecalcDerivedCounts 显式通知。
+    /// </summary>
+    [ObservableProperty]
+    private string? _selectedOverdueHintText;
 
     /// <summary>选中工单产量查询节流 + 取消（Remote 模式 GetProductionSummary 是 SignalR 往返，不能同步查）。</summary>
     private int? _lastProductionOrderId;
@@ -104,6 +212,14 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private int _scheduleConflictCount;
 
     public bool HasScheduleConflicts => ScheduleConflictCount > 0;
+
+    // ──────────── 筛选结果汇总（当前 FilteredView 范围内，RefreshFilteredView 时重算） ────────────
+    /// <summary>当前筛选结果的总目标产量（TargetQuantity 求和）。</summary>
+    [ObservableProperty] private long _filteredTargetTotal;
+    /// <summary>当前筛选结果的合格产量（Production.OkCount 求和；未刷新产量时为 0）。</summary>
+    [ObservableProperty] private long _filteredOkTotal;
+    /// <summary>当前筛选结果的平均达成率（TotalOk / TotalTarget，无目标时 0）。</summary>
+    [ObservableProperty] private double _filteredAchievementRate;
 
     public IReadOnlyList<WorkOrderSortOption> SortOptions { get; } =
     [
@@ -138,13 +254,15 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         IWorkOrderService workOrderService,
         DeviceRepository deviceRepo,
         IDialogService dialog,
-        UserSession userSession)
+        UserSession userSession,
+        ISnEventStore? snEventStore = null)
     {
         _workOrderRepo = workOrderRepo;
         _workOrderService = workOrderService;
         _deviceRepo = deviceRepo;
         _dialog = dialog;
         _userSession = userSession;
+        _snEventStore = snEventStore;
 
         // 创建独立的 ListCollectionView（不能用 GetDefaultView，否则与其他 ViewModel 共享同一视图导致 Filter 互相覆盖）
         FilteredView = new ListCollectionView(_workOrderRepo.WorkOrders);
@@ -155,8 +273,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         ApplySort();
         // 订阅集合变化：工单增删/状态切换后重算各状态计数（命名方法，Dispose 时解绑）
         _workOrderRepo.WorkOrders.CollectionChanged += OnWorkOrdersCollectionChanged;
-        // 每分钟兜底刷新时间相关计数（逾期判定随时间变化，无集合事件可订阅）
-        _derivedCountsTimer.Tick += (_, _) => RecalcDerivedCounts();
+        // 每分钟兜底刷新时间相关计数 + 甘特"当前时刻线"右移（两者都依赖 DateTime.Now，无集合事件可订阅）。
+        // 甘特重建仅当折叠区展开时由 PlotView 绑定更新生效（折叠时重建是廉价空操作）。
+        _derivedCountsTimer.Tick += (_, _) =>
+        {
+            RecalcDerivedCounts();
+            RefreshGanttForCurrentFilter();
+        };
         _derivedCountsTimer.Start();
     }
 
@@ -207,6 +330,38 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         AchievedCount = _workOrderRepo.WorkOrders.Count(IsAchieved);
         NgWorkOrderCount = _workOrderRepo.WorkOrders.Count(HasNgProduction);
         ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
+
+        // 逾期/冲突 Id 集合（替换引用触发 UI 通知，列表行用 CollectionContainsConverter 判定）
+        OverdueOrderIds = _workOrderRepo.WorkOrders.Where(IsOverdue).Select(w => w.Id).ToHashSet();
+        ConflictOrderIds = ComputeConflictOrderIds(_workOrderRepo.GetSnapshot());
+
+        // 回填实体运行时标记（详情页"逾期 2h"/冲突标识绑定；选中变化时重绑，无需实体自带 INPC）
+        foreach (var w in _workOrderRepo.WorkOrders)
+        {
+            w.IsOverdue = IsOverdue(w);
+            w.OverdueHintText = FormatOverdueHint(w);
+            w.IsScheduleConflict = ConflictOrderIds.Contains(w.Id);
+        }
+
+        // 详情页逾期徽章经 VM 计算属性驱动（实体无 INPC，分钟级计时刷新必须显式通知）
+        RefreshSelectedOverdueHint();
+    }
+
+    /// <summary>按当前选中工单刷新详情页逾期提示文本（选中变化与定时兜底均触发）。</summary>
+    private void RefreshSelectedOverdueHint()
+        => SelectedOverdueHintText = SelectedWorkOrder == null
+            ? null
+            : FormatOverdueHint(SelectedWorkOrder);
+
+    /// <summary>生成逾期提示文本（如"逾期 2h"）；未逾期返回 null。</summary>
+    private static string? FormatOverdueHint(WorkOrder w)
+    {
+        if (!IsOverdue(w) || w.PlannedEnd == default) return null;
+        var overdue = DateTime.Now - w.PlannedEnd;
+        var duration = overdue.TotalHours < 1
+            ? Math.Max(1, (int)overdue.TotalMinutes) + "m"
+            : (int)overdue.TotalHours + "h";
+        return string.Format(Strings.K799, duration);
     }
 
     /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。</summary>
@@ -240,7 +395,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         AchievedCount = _workOrderRepo.WorkOrders.Count(IsAchieved);
         NgWorkOrderCount = _workOrderRepo.WorkOrders.Count(HasNgProduction);
         ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
-        RefreshFilteredView();
+        RecalcDerivedCounts(); // 集合与实体运行时标记（与计数同源，避免两处口径漂移）
+        RefreshFilteredView(); // 汇总条依赖最新产量回填
     }
 
     /// <summary>从 DeviceRepository 刷新设备筛选下拉选项。</summary>
@@ -328,8 +484,51 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     private void RefreshFilteredView()
     {
         FilteredView.Refresh();
-        FilteredCount = FilteredView.Cast<WorkOrder>().Count();
+        var current = FilteredView.OfType<WorkOrder>().ToList();
+        FilteredCount = current.Count;
+
+        // 汇总条：目标总量 / 合格总量 / 平均达成率（按当前筛选结果实时重算）
+        long targetTotal = 0, okTotal = 0;
+        foreach (var w in current)
+        {
+            if (w.TargetQuantity > 0) targetTotal += w.TargetQuantity;
+            if (w.Production?.OkCount is { } ok && ok > 0) okTotal += ok;
+        }
+        FilteredTargetTotal = targetTotal;
+        FilteredOkTotal = okTotal;
+        FilteredAchievementRate = targetTotal > 0 ? (double)okTotal / targetTotal : 0;
+
+        // 排程甘特随筛选联动：仅显示当前筛选结果对应的设备与工单
+        RefreshGanttChart(current);
     }
+
+    /// <summary>重建工单排程甘特图（跟随当前筛选结果；冲突集合来自 RecalcDerivedCounts 的最新值）。</summary>
+    private void RefreshGanttChart(IReadOnlyList<WorkOrder> filtered)
+    {
+        var devices = _deviceRepo.GetDevicesSnapshot()
+            .Where(d => filtered.Any(w => w.DeviceId == d.Id))
+            .ToList();
+        // 孤立工单（设备已删）无法投影行，回退显示设备集合含其 DeviceId —— 保守取已存在设备
+        OxyPlot.PlotModel? chart = null;
+        try
+        {
+            chart = MainAPP.Services.ChartService.BuildWorkOrderGanttChart(
+                devices.Count > 0 ? devices : _deviceRepo.GetDevicesSnapshot(),
+                filtered,
+                ConflictOrderIds);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "构建工单排程甘特图失败，回退空模型");
+            chart = new OxyPlot.PlotModel();
+        }
+        WorkOrderGanttChartModel = chart;
+        OnPropertyChanged(nameof(WorkOrderGanttChartModel));
+    }
+
+    /// <summary>按当前筛选视图重建甘特图（timer 每分钟调用，驱动"当前时刻线"随时间右移）。</summary>
+    private void RefreshGanttForCurrentFilter()
+        => RefreshGanttChart(FilteredView.OfType<WorkOrder>().ToList());
 
     private static int CountScheduleConflicts(IReadOnlyList<WorkOrder> workOrders)
     {
@@ -351,6 +550,31 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         return conflicts;
     }
 
+    /// <summary>返回参与计划冲突的工单 Id 集合（与 <see cref="CountScheduleConflicts"/> 同一重叠判定）。
+    /// 仅当两台工单计划区间真正重叠时两端都计入，供列表行高亮与详情冲突标识使用。</summary>
+    private static ISet<int> ComputeConflictOrderIds(IReadOnlyList<WorkOrder> workOrders)
+    {
+        var conflictIds = new HashSet<int>();
+        foreach (var group in workOrders
+                     .Where(w => w.Status is WorkOrderStatus.Pending or WorkOrderStatus.Running
+                         && w.PlannedEnd > w.PlannedStart)
+                     .GroupBy(w => w.DeviceId))
+        {
+            var ordered = group.OrderBy(w => w.PlannedStart).ToList();
+            for (var i = 0; i < ordered.Count; i++)
+            for (var j = i + 1; j < ordered.Count; j++)
+            {
+                if (ordered[j].PlannedStart >= ordered[i].PlannedEnd) break;
+                if (ordered[i].PlannedStart < ordered[j].PlannedEnd)
+                {
+                    conflictIds.Add(ordered[i].Id);
+                    conflictIds.Add(ordered[j].Id);
+                }
+            }
+        }
+        return conflictIds;
+    }
+
     private static bool IsOverdue(WorkOrder w)
         => w.Status is WorkOrderStatus.Pending or WorkOrderStatus.Running
             && w.PlannedEnd != default
@@ -369,6 +593,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     {
         RefreshSelectedProduction();
         NotifyActionReasonsChanged();
+        // 选中变化立即刷新详情页逾期徽章（由 RecalcDerivedCounts 定时兜底，此处覆盖"切换时即最新"）
+        RefreshSelectedOverdueHint();
+        // SN 明细：重置到第 1 页并加载选中工单的序列号事件
+        SnPage = 1;
+        LoadSnItems();
     }
 
     private void NotifyActionReasonsChanged()
@@ -582,6 +811,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     /// <summary>
     /// 导出当前筛选结果到 CSV 文件。
     /// 包含工单号、产品编码、产品名称、设备名、计划产量、计划时间、状态、备注等字段。
+    /// 与 <see cref="ImportCsv"/> 互为往返（表头同源 M346）。
     /// </summary>
     [RelayCommand]
     private void ExportCsv()
@@ -636,6 +866,155 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
         }
     }
+
+    /// <summary>
+    /// 从 CSV 文件批量导入工单（模板与导出互往返，表头同源 M346）。
+    /// 逐行校验（工单号唯一、设备存在、计划时间有效），失败行跳过并提示明细；
+    /// 导入的工单一律为 Pending 状态（供排产），已结束工单请用导出归档。
+    /// </summary>
+    [RelayCommand]
+    private async Task ImportCsv()
+    {
+        var path = _dialog.ShowOpenFileDialog(Strings.K751, Strings.M310);
+        if (string.IsNullOrEmpty(path)) return;
+
+        List<WorkOrder> candidates;
+        List<string> skipErrors;
+        try
+        {
+            (candidates, skipErrors) = ReadWorkOrdersFromCsv(path);
+        }
+        catch (Exception ex)
+        {
+            _dialog.NotifyError(string.Format(Strings.K755, ex.Message));
+            return;
+        }
+
+        if (candidates.Count == 0)
+        {
+            _dialog.NotifyWarning(string.Format(Strings.K756, Path.GetFileName(path)));
+            return;
+        }
+
+        // 二次确认：避免误选文件批量写库
+        var confirm = _dialog.Show(
+            string.Format(Strings.K752, candidates.Count),
+            Strings.K750, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        var result = await _workOrderService.ImportWorkOrdersAsync(candidates);
+        // 解析阶段跳过的行与业务校验失败统一汇总提示，避免用户以为全部导入成功
+        var errors = skipErrors.Concat(result.Errors).Take(10).ToList();
+        var hiddenCount = skipErrors.Count + result.Errors.Count - errors.Count;
+        if (errors.Count > 0)
+        {
+            var detail = string.Join("\n", errors);
+            if (hiddenCount > 0)
+                detail += string.Format(Strings.M_MoreNotShown, hiddenCount);
+            _dialog.NotifyWarning(string.Format(Strings.K754, result.Imported.Count, errors.Count, detail));
+        }
+        else
+        {
+            _dialog.NotifySuccess(string.Format(Strings.K753, result.Imported.Count));
+        }
+        RefreshStatusCounts();
+    }
+
+    /// <summary>读取工单 CSV（UTF-8 兼容 BOM，表头按 M346 列名匹配；简单解析，日期格式与导出一致）。
+    /// 返回 (有效行, 解析跳过说明)。解析失败的行不静默丢弃——计入跳过列表，最终与业务校验错误一起提示。</summary>
+    private static (List<WorkOrder> Rows, List<string> SkipErrors) ReadWorkOrdersFromCsv(string path)
+    {
+        var rows = new List<WorkOrder>();
+        var skipErrors = new List<string>();
+        using var reader = new StreamReader(path, new System.Text.UTF8Encoding(true), detectEncodingFromByteOrderMarks: true);
+        var headerLine = reader.ReadLine();
+        if (string.IsNullOrWhiteSpace(headerLine)) return (rows, skipErrors);
+
+        // 表头列名可能按界面语言本地化，但列顺序固定（与 M346 一致）：
+        // 工单号,产品编码,产品名称,设备名,计划产量,计划开始,计划结束,状态,备注,创建时间,更新时间
+        // 导入仅取前 7 列 + 备注（状态/时间戳列忽略，导入统一 Pending）。
+        string? line;
+        var lineNo = 1;
+        while ((line = reader.ReadLine()) != null)
+        {
+            lineNo++;
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var fields = ParseCsvLine(line);
+            if (fields.Length < 7)
+            {
+                skipErrors.Add(string.Format(Strings.K790, lineNo, fields.Length));
+                continue;
+            }
+
+            if (!DateTime.TryParseExact(fields[5], "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var start)
+                || !DateTime.TryParseExact(fields[6], "yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var end))
+            {
+                skipErrors.Add(string.Format(Strings.K791, lineNo, fields[0]));
+                continue;
+            }
+
+            rows.Add(new WorkOrder
+            {
+                OrderNo = fields[0],
+                ProductCode = fields[1],
+                ProductName = fields[2],
+                DeviceName = fields[3],
+                TargetQuantity = int.TryParse(fields[4], out var qty) ? qty : 0,
+                PlannedStart = start,
+                PlannedEnd = end,
+                Remark = fields.Length > 8 ? fields[8] : null,
+            });
+        }
+        return (rows, skipErrors);
+    }
+
+    /// <summary>简易 CSV 行解析：支持 RFC 4180 双引号包裹（字段内逗号/引号），用于工单导入。</summary>
+    private static string[] ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var current = new System.Text.StringBuilder();
+        var inQuotes = false;
+        for (var i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"') { current.Append('"'); i++; }
+                    else inQuotes = false;
+                }
+                else current.Append(c);
+            }
+            else if (c == '"') inQuotes = true;
+            else if (c == ',') { fields.Add(current.ToString()); current.Clear(); }
+            else current.Append(c);
+        }
+        fields.Add(current.ToString());
+        return fields.ToArray();
+    }
+
+    /// <summary>复制选中工单号到剪贴板。</summary>
+    [RelayCommand(CanExecute = nameof(CanCopySelected))]
+    private void CopyOrderNo()
+    {
+        if (SelectedWorkOrder == null) return;
+        System.Windows.Clipboard.SetText(SelectedWorkOrder.OrderNo);
+        _dialog.NotifyInfo(string.Format(Strings.K757, SelectedWorkOrder.OrderNo));
+    }
+
+    /// <summary>复制选中工单产品编码到剪贴板。</summary>
+    [RelayCommand(CanExecute = nameof(CanCopySelected))]
+    private void CopyProductCode()
+    {
+        if (SelectedWorkOrder == null) return;
+        System.Windows.Clipboard.SetText(SelectedWorkOrder.ProductCode);
+        _dialog.NotifyInfo(string.Format(Strings.K757, SelectedWorkOrder.ProductCode));
+    }
+
+    private bool CanCopySelected() => SelectedWorkOrder != null;
 
     // ──────────── 样本数据生成（DEBUG） ────────────
 

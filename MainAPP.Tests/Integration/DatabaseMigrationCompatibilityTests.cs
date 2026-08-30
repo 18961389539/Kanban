@@ -1,4 +1,4 @@
-﻿using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -100,7 +100,6 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
             "production_logs.db",
             "alarm_events.db",
             "status_transitions.db",
-            "work_orders.db"
         })
         {
             var path = _settings.GetFilePath(databaseName);
@@ -111,6 +110,52 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
             query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
             Assert.Equal(1L, query.ExecuteScalar());
         }
+
+        // work_orders.db 现含两次迁移（InitialSchema + AddStatusTimestamps），新库应完整应用
+        var woPath = _settings.GetFilePath("work_orders.db");
+        Assert.True(File.Exists(woPath), "数据库文件未创建: work_orders.db");
+        using (var connection = new SqliteConnection($"Data Source={woPath}"))
+        {
+            connection.Open();
+            using var query = connection.CreateCommand();
+            query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
+            Assert.Equal(2L, query.ExecuteScalar());
+        }
+    }
+
+    /// <summary>老版 work_orders.db（只有初始列）升级后应补上状态时间戳列并保留数据（#7 时间线数据基础）。</summary>
+    [Fact]
+    public void EnsureCreatedAll_LegacyWorkOrderDatabase_AddsStatusTimestampColumns()
+    {
+        _settings.EnsureDirectory();
+        var path = _settings.GetFilePath("work_orders.db");
+        using (var connection = new SqliteConnection($"Data Source={path}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TABLE WorkOrders (Id INTEGER PRIMARY KEY AUTOINCREMENT, OrderNo TEXT NOT NULL, ProductCode TEXT NOT NULL, ProductName TEXT NOT NULL, DeviceId TEXT NOT NULL, DeviceName TEXT NOT NULL, TargetQuantity INTEGER NOT NULL, PlannedStart TEXT NOT NULL, PlannedEnd TEXT NOT NULL, Status INTEGER NOT NULL, CompletedOkCount INTEGER, CompletedNgCount INTEGER, Remark TEXT, CreatedAt TEXT NOT NULL, UpdatedAt TEXT NOT NULL); CREATE INDEX IX_WorkOrders_CreatedAt ON WorkOrders (CreatedAt); CREATE INDEX IX_WorkOrders_Status ON WorkOrders (Status); CREATE INDEX IX_WorkOrders_DeviceId_Status ON WorkOrders (DeviceId, Status); INSERT INTO WorkOrders (OrderNo, ProductCode, ProductName, DeviceId, DeviceName, TargetQuantity, PlannedStart, PlannedEnd, Status, CreatedAt, UpdatedAt) VALUES ('LEGACY-1', 'P1', '老工单', 'D1', '设备1', 100, '2026-08-01 08:00:00', '2026-08-01 18:00:00', 0, '2026-08-01 07:00:00', '2026-08-01 07:00:00');";
+            command.ExecuteNonQuery();
+        }
+
+        new DatabaseProvider(_settings).EnsureCreatedAll();
+
+        using var verify = new SqliteConnection($"Data Source={path}");
+        verify.Open();
+        using var query = verify.CreateCommand();
+        // 老数据保留
+        query.CommandText = "SELECT COUNT(*) FROM WorkOrders WHERE OrderNo = 'LEGACY-1'";
+        Assert.Equal(1L, query.ExecuteScalar());
+        // 时间戳列补齐（老数据为 null）
+        query.CommandText = "SELECT StartedAt, CompletedAt FROM WorkOrders WHERE OrderNo = 'LEGACY-1'";
+        using (var reader = query.ExecuteReader())
+        {
+            Assert.True(reader.Read());
+            Assert.True(reader.IsDBNull(0));
+            Assert.True(reader.IsDBNull(1));
+        }
+        // 迁移基线已建立（老库走 legacy patch 补列，不一定记录新迁移 ID——由 ApplyWorkOrderLegacyPatch 幂等补列）
+        query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20260731070847_InitialSchema'";
+        Assert.Equal(1L, query.ExecuteScalar());
     }
 
     [Fact]

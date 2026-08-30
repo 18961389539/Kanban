@@ -325,6 +325,16 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                     UserSession.CurrentRole, pageKey, required);
                 return;
             }
+            // 未保存离开保护（检查 2026-08-30）：离开设备管理页且存在未保存更改时需二次确认。
+            // 短路求值保证仅在当前正处于设备管理页时才触达 DeviceManagerViewModel（其必然已实例化）。
+            // 登录/权限变更触发的强制回退（RefreshNavigationForCurrentUser 直改 SelectedIndex）不经过此处，属有意豁免。
+            if (SelectedIndex == NavigationPageCatalog.DeviceManager.Index
+                && page.Index != NavigationPageCatalog.DeviceManager.Index
+                && !_deviceManagerLazy.Value.MayDiscardUnsavedAndLeave())
+            {
+                Log.Debug("离开设备管理页被未保存确认拦截");
+                return;
+            }
             SelectedIndex = page.Index;
         }
         else

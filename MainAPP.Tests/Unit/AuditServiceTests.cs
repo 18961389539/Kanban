@@ -39,13 +39,11 @@ public class AuditServiceTests : IDisposable
     private AuditService CreateSaturatedService(int queueLength)
         => new(_db, NullLogger<AuditService>.Instance, queueLength, startWorker: false);
 
-    /// <summary>轮询等待异步批量落库完成（FlushIntervalMs=2000，最多等 5 秒）。</summary>
+    /// <summary>事件驱动等待异步批量落库完成（后台 flush 每完成一批就发信号；15s 预算容忍高并发权重下的线程池调度延迟）。</summary>
     private static void WaitFlushed(AuditService service, int expectedCount)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(5);
-        while (service.FlushedCount < expectedCount && DateTime.UtcNow < deadline)
-            Thread.Sleep(50);
-        Assert.True(service.FlushedCount >= expectedCount,
+        var ok = service.WaitFlushedAsync(expectedCount, TimeSpan.FromSeconds(15)).GetAwaiter().GetResult();
+        Assert.True(ok,
             $"预期落库 {expectedCount} 条，实际 {service.FlushedCount}（丢弃 {service.DroppedCount}）");
     }
 

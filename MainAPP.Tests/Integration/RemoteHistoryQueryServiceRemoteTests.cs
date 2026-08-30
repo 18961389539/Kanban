@@ -153,7 +153,7 @@ public class RemoteHistoryQueryServiceRemoteTests : IAsyncLifetime
         await client.ConnectAsync();
         var runtime = Substitute.For<IRuntimeMode>();
         runtime.IsRemote.Returns(true);
-        return new RemoteHistoryQueryService(_local, _localDefects, client, runtime,
+        return new RemoteHistoryQueryService(_local, _localDefects, new SnEventStore(_db), client, runtime,
             NullLogger<RemoteHistoryQueryService>.Instance);
     }
 

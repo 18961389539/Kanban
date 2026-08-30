@@ -661,7 +661,7 @@
     <value>今日恢复</value>
   </data>
   <data name="K128" xml:space="preserve">
-    <value>最长持续</value>
+    <value>最早报警·已持续</value>
   </data>
   <data name="K129" xml:space="preserve">
     <value>影响设备</value>
@@ -4230,6 +4230,18 @@
   <data name="M380" xml:space="preserve">
     <value>无匹配用户</value>
   </data>
+  <data name="M381" xml:space="preserve">
+    <value>导出范围</value>
+  </data>
+  <data name="M382" xml:space="preserve">
+    <value>导出全部筛选结果？选择\"是\"导出全量，选择\"否\"仅导出当前页。</value>
+  </data>
+  <data name="M383" xml:space="preserve">
+    <value>仅当前页</value>
+  </data>
+  <data name="M384" xml:space="preserve">
+    <value>全量筛选结果（共 {0} 条）</value>
+  </data>
   <data name="M332" xml:space="preserve">
     <value>操作员</value>
   </data>
@@ -5565,7 +5577,7 @@
     <value>今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响</value>
   </data>
   <data name="K712" xml:space="preserve">
-    <value>当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响</value>
+    <value>当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响</value>
   </data>
   <data name="K713" xml:space="preserve">
     <value>当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响</value>
@@ -5575,6 +5587,57 @@
   </data>
   <data name="K717" xml:space="preserve">
     <value>事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计</value>
+  </data>
+  <data name="K718" xml:space="preserve">
+    <value>同一报警在短时间内重复触发已合并显示，共 {0} 条</value>
+  </data>
+  <data name="K719" xml:space="preserve">
+    <value>较昨日同期：昨日 {0} / 今日 {1}</value>
+  </data>
+  <data name="K720" xml:space="preserve">
+    <value>刚刚</value>
+  </data>
+  <data name="K721" xml:space="preserve">
+    <value>{0} 分钟前</value>
+  </data>
+  <data name="K722" xml:space="preserve">
+    <value>{0} 小时前</value>
+  </data>
+  <data name="K723" xml:space="preserve">
+    <value>按触发次数</value>
+  </data>
+  <data name="K724" xml:space="preserve">
+    <value>按持续时长</value>
+  </data>
+  <data name="K725" xml:space="preserve">
+    <value>设备配置校验通过（共 {0} 台）</value>
+  </data>
+  <data name="K726" xml:space="preserve">
+    <value>设备校验</value>
+  </data>
+  <data name="K727" xml:space="preserve">
+    <value>当前设备有未保存的更改，切换设备将丢失这些更改。仍要继续？</value>
+  </data>
+  <data name="K728" xml:space="preserve">
+    <value>导出所选设备</value>
+  </data>
+  <data name="K729" xml:space="preserve">
+    <value>导入设备配置</value>
+  </data>
+  <data name="K730" xml:space="preserve">
+    <value>已导出设备「{0}」</value>
+  </data>
+  <data name="K731" xml:space="preserve">
+    <value>导入失败：文件为空或解析失败。</value>
+  </data>
+  <data name="K732" xml:space="preserve">
+    <value>导入失败：设备 Id「{0}」与现有设备冲突，请修改文件中的 Id。</value>
+  </data>
+  <data name="K733" xml:space="preserve">
+    <value>已导入设备「{0}」</value>
+  </data>
+  <data name="K734" xml:space="preserve">
+    <value>离开设备管理页将丢弃未保存的配置更改，仍要继续？</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>
@@ -5772,52 +5835,52 @@
     <value>单位</value>
   </data>
   <data name="Csv_DataSource_AckValue" xml:space="preserve">
-    <value>AckValue</value>
+    <value>确认值</value>
   </data>
   <data name="Csv_DataSource_BoolExpectedValue" xml:space="preserve">
-    <value>BoolExpectedValue</value>
+    <value>布尔期望值</value>
   </data>
   <data name="Csv_DataSource_ConfirmSeconds" xml:space="preserve">
-    <value>ConfirmSeconds</value>
+    <value>确认延迟(秒)</value>
   </data>
   <data name="Csv_DataSource_EnumValuesJson" xml:space="preserve">
-    <value>EnumValuesJson</value>
+    <value>枚举映射 JSON</value>
   </data>
   <data name="Csv_DataSource_ExpectedValue" xml:space="preserve">
-    <value>ExpectedValue</value>
+    <value>期望值</value>
   </data>
   <data name="Csv_DataSource_ExpectedValueConfigured" xml:space="preserve">
-    <value>ExpectedValueConfigured</value>
+    <value>期望值已配置</value>
   </data>
   <data name="Csv_DataSource_FileName" xml:space="preserve">
     <value>{0}_数据源_{1:yyyyMMdd_HHmmss}.csv</value>
   </data>
   <data name="Csv_DataSource_FloatExpectedValue" xml:space="preserve">
-    <value>FloatExpectedValue</value>
+    <value>浮点期望值</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMax" xml:space="preserve">
-    <value>FloatLimitMax</value>
+    <value>浮点上限</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMin" xml:space="preserve">
-    <value>FloatLimitMin</value>
+    <value>浮点下限</value>
   </data>
   <data name="Csv_DataSource_Hysteresis" xml:space="preserve">
-    <value>Hysteresis</value>
+    <value>滞回</value>
   </data>
   <data name="Csv_DataSource_LimitMax" xml:space="preserve">
-    <value>LimitMax</value>
+    <value>上限</value>
   </data>
   <data name="Csv_DataSource_LimitMin" xml:space="preserve">
-    <value>LimitMin</value>
+    <value>下限</value>
   </data>
   <data name="Csv_DataSource_SourceDescription" xml:space="preserve">
-    <value>SourceDescription</value>
+    <value>数据源描述</value>
   </data>
   <data name="Csv_DataSource_SourceEnabled" xml:space="preserve">
-    <value>SourceEnabled</value>
+    <value>数据源启用</value>
   </data>
   <data name="Csv_DataSource_SourceName" xml:space="preserve">
-    <value>SourceName</value>
+    <value>数据源名称</value>
   </data>
   <data name="Csv_DataSource_SourceNameEn" xml:space="preserve">
     <value>SourceNameEn</value>
@@ -5829,28 +5892,28 @@
     <value>SourceNamePt</value>
   </data>
   <data name="Csv_DataSource_SourceType" xml:space="preserve">
-    <value>SourceType</value>
+    <value>数据源类型</value>
   </data>
   <data name="Csv_DataSource_StringExpectedValue" xml:space="preserve">
-    <value>StringExpectedValue</value>
+    <value>字符串期望值</value>
   </data>
   <data name="Csv_DataSource_StringLength" xml:space="preserve">
-    <value>StringLength</value>
+    <value>字符串长度</value>
   </data>
   <data name="Csv_DataSource_TriggerAddress" xml:space="preserve">
-    <value>TriggerAddress</value>
+    <value>触发地址</value>
   </data>
   <data name="Csv_DataSource_TriggerValue" xml:space="preserve">
-    <value>TriggerValue</value>
+    <value>触发值</value>
   </data>
   <data name="Csv_DataSource_ValueDataType" xml:space="preserve">
-    <value>ValueDataType</value>
+    <value>数据类型</value>
   </data>
   <data name="Csv_DataSource_ValueEnabled" xml:space="preserve">
-    <value>ValueEnabled</value>
+    <value>值项启用</value>
   </data>
   <data name="Csv_DataSource_ValueName" xml:space="preserve">
-    <value>ValueName</value>
+    <value>值项名称</value>
   </data>
   <data name="Csv_DataSource_ValueNameEn" xml:space="preserve">
     <value>ValueNameEn</value>
@@ -5862,10 +5925,10 @@
     <value>ValueNamePt</value>
   </data>
   <data name="Csv_DataSource_ValuePlcAddress" xml:space="preserve">
-    <value>ValuePlcAddress</value>
+    <value>值项PLC地址</value>
   </data>
   <data name="Csv_DataSource_ValueUnit" xml:space="preserve">
-    <value>ValueUnit</value>
+    <value>值项单位</value>
   </data>
   <data name="Csv_Defect_Category" xml:space="preserve">
     <value>类别</value>
@@ -6483,5 +6546,182 @@
   </data>
   <data name="Validator_TriggerAckConflict" xml:space="preserve">
     <value>数据源「{0}」触发值与确认值不能相同</value>
+  </data>
+  <data name="K750" xml:space="preserve">
+    <value>导入工单</value>
+  </data>
+  <data name="K751" xml:space="preserve">
+    <value>选择工单 CSV 文件</value>
+  </data>
+  <data name="K752" xml:space="preserve">
+    <value>即将批量导入 {0} 条工单，是否继续？</value>
+  </data>
+  <data name="K753" xml:space="preserve">
+    <value>已成功导入 {0} 条工单</value>
+  </data>
+  <data name="K754" xml:space="preserve">
+    <value>已导入 {0} 条，跳过 {1} 条：{2}</value>
+  </data>
+  <data name="K755" xml:space="preserve">
+    <value>读取工单 CSV 失败：{0}</value>
+  </data>
+  <data name="K756" xml:space="preserve">
+    <value>文件 {0} 中未找到可导入的工单</value>
+  </data>
+  <data name="K757" xml:space="preserve">
+    <value>已复制：{0}</value>
+  </data>
+  <data name="K762" xml:space="preserve">
+    <value>冲突</value>
+  </data>
+  <data name="K763" xml:space="preserve">
+    <value>逾期</value>
+  </data>
+  <data name="K764" xml:space="preserve">
+    <value>从 CSV 文件批量导入工单（列名与导出模板一致）</value>
+  </data>
+  <data name="K765" xml:space="preserve">
+    <value>目标</value>
+  </data>
+  <data name="K766" xml:space="preserve">
+    <value>合格</value>
+  </data>
+  <data name="K767" xml:space="preserve">
+    <value>达成率</value>
+  </data>
+  <data name="K768" xml:space="preserve">
+    <value>筛选结果</value>
+  </data>
+  <data name="K769" xml:space="preserve">
+    <value>复制工单号</value>
+  </data>
+  <data name="K770" xml:space="preserve">
+    <value>复制产品编码</value>
+  </data>
+  <data name="K771" xml:space="preserve">
+    <value>时间线</value>
+  </data>
+  <data name="K772" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="K773" xml:space="preserve">
+    <value>计划开始</value>
+  </data>
+  <data name="K774" xml:space="preserve">
+    <value>实际开始</value>
+  </data>
+  <data name="K775" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="K776" xml:space="preserve">
+    <value>中止</value>
+  </data>
+  <data name="K788" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="K789" xml:space="preserve">
+    <value>双击列表行可直接编辑该工单</value>
+  </data>
+  <data name="K790" xml:space="preserve">
+    <value>第 {0} 行：列数不足（{1} &lt; 7），已跳过</value>
+  </data>
+  <data name="K791" xml:space="preserve">
+    <value>第 {0} 行 [{1}]：计划时间格式应为 yyyy-MM-dd HH:mm，已跳过</value>
+  </data>
+  <data name="K794" xml:space="preserve">
+    <value>工单号已存在</value>
+  </data>
+  <data name="K795" xml:space="preserve">
+    <value>未找到设备「{0}」</value>
+  </data>
+  <data name="K799" xml:space="preserve">
+    <value>逾期 {0}</value>
+  </data>
+  <data name="K806" xml:space="preserve">
+    <value>第 {0} 行 [{1}]：{2}</value>
+  </data>
+  <data name="K901" xml:space="preserve">
+    <value>工单排程</value>
+  </data>
+  <data name="K902" xml:space="preserve">
+    <value>计划时间</value>
+  </data>
+  <data name="K903" xml:space="preserve">
+    <value>设备</value>
+  </data>
+  <data name="K904" xml:space="preserve">
+    <value>工单</value>
+  </data>
+  <data name="K905" xml:space="preserve">
+    <value>现在</value>
+  </data>
+  <data name="K906" xml:space="preserve">
+    <value>当前筛选下没有工单</value>
+  </data>
+  <data name="K907" xml:space="preserve">
+    <value>最近1小时</value>
+  </data>
+  <data name="K908" xml:space="preserve">
+    <value>最近4小时</value>
+  </data>
+  <data name="K909" xml:space="preserve">
+    <value>最近24小时</value>
+  </data>
+  <data name="K910" xml:space="preserve">
+    <value>总产量</value>
+  </data>
+  <data name="K911" xml:space="preserve">
+    <value>不良率</value>
+  </data>
+  <data name="K912" xml:space="preserve">
+    <value>平均恢复耗时</value>
+  </data>
+  <data name="K913" xml:space="preserve">
+    <value>持续时间</value>
+  </data>
+  <data name="M_MoreNotShown" xml:space="preserve">
+    <value>\n…（共 {0} 条未显示）</value>
+  </data>
+  <data name="K914" xml:space="preserve">
+    <value>SN 追溯</value>
+  </data>
+  <data name="K915" xml:space="preserve">
+    <value>输入序列号（SN）进行追溯，如 SN20260830-0001</value>
+  </data>
+  <data name="K916" xml:space="preserve">
+    <value>输入序列号查询其生产追溯记录</value>
+  </data>
+  <data name="K917" xml:space="preserve">
+    <value>将展示该件的设备、工单、班次、时间与判定结果</value>
+  </data>
+  <data name="K918" xml:space="preserve">
+    <value>SN 明细</value>
+  </data>
+  <data name="K919" xml:space="preserve">
+    <value>共 {0} 件</value>
+  </data>
+  <data name="K920" xml:space="preserve">
+    <value>该工单暂无 SN 记录</value>
+  </data>
+  <data name="K921" xml:space="preserve">
+    <value>请输入要追溯的序列号</value>
+  </data>
+  <data name="K922" xml:space="preserve">
+    <value>未找到序列号 {0} 的追溯记录</value>
+  </data>
+  <data name="K923" xml:space="preserve">
+    <value>查询失败：{0}</value>
+  </data>
+  <data name="K924" xml:space="preserve">
+    <value>结果</value>
+  </data>
+  <data name="K925" xml:space="preserve">
+    <value>上一页</value>
+  </data>
+  <data name="K926" xml:space="preserve">
+    <value>下一页</value>
+  </data>
+  <data name="K927" xml:space="preserve">
+    <value>第 {0} 页</value>
   </data>
 </root>

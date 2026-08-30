@@ -43,6 +43,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     public StatusQueryViewModel StatusQuery { get; private set; }
     public AlarmQueryViewModel AlarmQuery { get; private set; }
     public OeeQueryViewModel OeeQuery { get; private set; }
+    public SnQueryViewModel SnQuery { get; private set; }
 
     private const int PageSize = 50;
 
@@ -83,6 +84,13 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     private bool _queryPending;
     private int _queryVersion;
+
+    /// <summary>筛选条件自动查询防抖（800ms）：用户连续改动筛选时只查询最后一次，避免每次击键/翻日期都全量重查。</summary>
+    private static readonly TimeSpan AutoQueryDebounce = TimeSpan.FromMilliseconds(800);
+    private CancellationTokenSource? _autoQueryCts;
+
+    /// <summary>构造/恢复/重置期间的守卫：这些阶段的属性赋值（恢复上次条件、Reset 清零）不是用户主动改筛选，不应触发防抖自动查询。</summary>
+    private bool _suspendAutoQuery;
 
     public bool IsEmptyResult => HasQueried && TotalCount == 0 && !HasQueryError;
 
@@ -166,10 +174,16 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     partial void OnSelectedDeviceIdChanged(string? value)
     {
         OnPropertyChanged(nameof(EmptyStateCode));
+        ScheduleAutoQuery();
     }
+
+    partial void OnSelectedShiftNameChanged(string? value) => ScheduleAutoQuery();
+
+    partial void OnSelectedAlarmNameChanged(string? value) => ScheduleAutoQuery();
 
     partial void OnSelectedTabIndexChanged(int value)
     {
+        CancelAutoQuery(); // 切 Tab 不做防抖（切回自动查），避免残留的迟发查询落到错误的 Tab 上
         OnPropertyChanged(nameof(EmptyStateCode));
         // Tab 切换后页面容量可能不同（产量/状态/报警分页，OEE 不分页），
         // 不重置会导致显示"第 3 页/共 1 页"等错位，且 QueryCurrentTab 跳过 (page-1)*pageSize 行。
@@ -179,6 +193,24 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             CurrentPage = 1;
             QueryCurrentTab();
         }
+    }
+
+    /// <summary>修改日期/快捷档位时防抖自动查询。注意 _isUpdatingQuickTime 期间（QuickTimeIndex 联动设 From/To）也会调用，正好符合"选档位即查询"。</summary>
+    partial void OnFromDateChanged(DateTime value)
+    {
+        // 用户手动修改 FromDate 时，QuickTimeIndex 应回到"自定义"(0)，
+        // 避免下拉还显示"今天/昨天"造成视觉欺骗。
+        // _isUpdatingQuickTime=true 时表示是 OnQuickTimeIndexChanged 主动设的，不重置。
+        if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
+            QuickTimeIndex = 0;
+        ScheduleAutoQuery();
+    }
+
+    partial void OnToDateChanged(DateTime value)
+    {
+        if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
+            QuickTimeIndex = 0;
+        ScheduleAutoQuery();
     }
 
     [ObservableProperty]
@@ -270,21 +302,6 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         };
     }
 
-    partial void OnFromDateChanged(DateTime value)
-    {
-        // 用户手动修改 FromDate 时，QuickTimeIndex 应回到"自定义"(0)，
-        // 避免下拉还显示"今天/昨天"造成视觉欺骗。
-        // _isUpdatingQuickTime=true 时表示是 OnQuickTimeIndexChanged 主动设的，不重置。
-        if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
-            QuickTimeIndex = 0;
-    }
-
-    partial void OnToDateChanged(DateTime value)
-    {
-        if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
-            QuickTimeIndex = 0;
-    }
-
     public ObservableCollection<DeviceFilterItem> DeviceFilterItems { get; } = new();
 
     public void RefreshDeviceFilterItems()
@@ -337,7 +354,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         IHistoryService historyService,
         DeviceRepository deviceRepo,
         AppSettings appSettings,
-        IDialogService dialog)
+        IDialogService dialog,
+        ISnEventStore? snEventStore = null)
     {
         _historyService = historyService;
         _deviceRepository = deviceRepo;
@@ -348,20 +366,30 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         StatusQuery = new StatusQueryViewModel(historyService);
         AlarmQuery = new AlarmQueryViewModel(historyService);
         OeeQuery = new OeeQueryViewModel(historyService, deviceRepo, appSettings);
+        SnQuery = new SnQueryViewModel(snEventStore);
 
-        RefreshDeviceFilterItems();
-        // 班次下拉从配置初始化（所有 Tab 通用），不再依赖产量 Tab 查询结果
-        RefreshShiftFilterFromConfig();
-
-        // 跨会话恢复上次查询条件（设备 ID 校验存在性，避免引用已删除的设备）
-        RestoreLastQuery();
-        if (!string.IsNullOrEmpty(SelectedDeviceId) &&
-            !_deviceRepository.Devices.Any(d => d.Id == SelectedDeviceId))
+        // 构造期间的属性初始化/条件恢复不是用户主动改筛选，挂起防抖自动查询
+        _suspendAutoQuery = true;
+        try
         {
-            SelectedDeviceId = null;
+            RefreshDeviceFilterItems();
+            // 班次下拉从配置初始化（所有 Tab 通用），不再依赖产量 Tab 查询结果
+            RefreshShiftFilterFromConfig();
+
+            // 跨会话恢复上次查询条件（设备 ID 校验存在性，避免引用已删除的设备）
+            RestoreLastQuery();
+            if (!string.IsNullOrEmpty(SelectedDeviceId) &&
+                !_deviceRepository.Devices.Any(d => d.Id == SelectedDeviceId))
+            {
+                SelectedDeviceId = null;
+            }
+            if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
+                SelectedDeviceId = _deviceRepository.Devices[0].Id;
         }
-        if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
-            SelectedDeviceId = _deviceRepository.Devices[0].Id;
+        finally
+        {
+            _suspendAutoQuery = false;
+        }
 
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
     }
@@ -434,42 +462,61 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             if (!_hasSavedState) return;
         }
 
-        SelectedTabIndex = _savedTabIndex;
-        SelectedDeviceId = _savedDeviceId;
-        // 恢复期间禁用 QuickTimeIndex 的反向覆盖逻辑，避免 OnFromDateChanged 重置 QuickTimeIndex
-        _isUpdatingQuickTime = true;
+        // 恢复条件的属性赋值不是用户主动改筛选，挂起防抖自动查询
+        var prevSuspend = _suspendAutoQuery;
+        _suspendAutoQuery = true;
         try
         {
-            if (_savedQuickTimeIndex > 0)
+            SelectedTabIndex = _savedTabIndex;
+            SelectedDeviceId = _savedDeviceId;
+            // 恢复期间禁用 QuickTimeIndex 的反向覆盖逻辑，避免 OnFromDateChanged 重置 QuickTimeIndex
+            _isUpdatingQuickTime = true;
+            try
             {
-                // 快捷档位：按当前时间重算区间（守卫已抑制 OnQuickTimeIndexChanged 的回调），
-                // 修复恢复后"档位显示近7天、日期停留在默认值"的错位（审查修复 2026-08-13）。
-                (FromDate, ToDate) = GetQuickTimeRange(_savedQuickTimeIndex, DateTime.Now);
+                if (_savedQuickTimeIndex > 0)
+                {
+                    // 快捷档位：按当前时间重算区间（守卫已抑制 OnQuickTimeIndexChanged 的回调），
+                    // 修复恢复后"档位显示近7天、日期停留在默认值"的错位（审查修复 2026-08-13）。
+                    (FromDate, ToDate) = GetQuickTimeRange(_savedQuickTimeIndex, DateTime.Now);
+                }
+                else
+                {
+                    FromDate = _savedFromDate;
+                    ToDate = _savedToDate;
+                }
+                QuickTimeIndex = _savedQuickTimeIndex;
+                SelectedShiftName = _savedShiftName;
+                SelectedAlarmName = _savedAlarmName;
             }
-            else
+            finally
             {
-                FromDate = _savedFromDate;
-                ToDate = _savedToDate;
+                _isUpdatingQuickTime = false;
             }
-            QuickTimeIndex = _savedQuickTimeIndex;
-            SelectedShiftName = _savedShiftName;
-            SelectedAlarmName = _savedAlarmName;
         }
         finally
         {
-            _isUpdatingQuickTime = false;
+            _suspendAutoQuery = prevSuspend;
         }
     }
 
     public void PrepareAlarmHistory(string deviceId, string alarmName)
     {
-        SelectedTabIndex = 2;
-        SelectedDeviceId = deviceId;
-        SelectedAlarmName = alarmName;
-        QuickTimeIndex = 3;
-        HasQueried = true;
-        CurrentPage = 1;
-        QueryCurrentTab();
+        // 主动跳转并立即查询，属性赋值期间的防抖调度需挂起，避免双查
+        _suspendAutoQuery = true;
+        try
+        {
+            SelectedTabIndex = 2;
+            SelectedDeviceId = deviceId;
+            SelectedAlarmName = alarmName;
+            QuickTimeIndex = 3;
+            HasQueried = true;
+            CurrentPage = 1;
+            QueryCurrentTab();
+        }
+        finally
+        {
+            _suspendAutoQuery = false;
+        }
     }
 
     private string LastQueryFilePath => _appSettings.GetFilePath("last_query.json");
@@ -591,6 +638,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             case 1: StatusQuery.Page(CurrentPage, PageSize); break;
             case 2: AlarmQuery.Page(CurrentPage, PageSize); break;
             case 3: break; // OEE 单页
+            case 4: break; // SN 追溯自包含查询，不走公共分页
         }
     }
 
@@ -602,6 +650,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void Search()
     {
+        CancelAutoQuery(); // 手动查询优先：取消在途的防抖定时，避免手动+自动双查
         QueryValidationMessage = string.Empty;
         QueryErrorMessage = string.Empty;
         if (FromDate > ToDate)
@@ -616,9 +665,47 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         SaveLastQuery();
     }
 
+    /// <summary>筛选条件变化后的防抖自动查询：取消上一在途定时，800ms 内无新改动才执行一次查询。</summary>
+    private void ScheduleAutoQuery()
+    {
+        if (_suspendAutoQuery) return;
+        _autoQueryCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _autoQueryCts = cts;
+        _ = DebounceAndQueryAsync(cts);
+    }
+
+    /// <summary>取消在途的防抖自动查询（手动查询/切换 Tab/重置时调用）。</summary>
+    private void CancelAutoQuery()
+    {
+        _autoQueryCts?.Cancel();
+        _autoQueryCts = null;
+    }
+
+    private async Task DebounceAndQueryAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await Task.Delay(AutoQueryDebounce, cts.Token).ConfigureAwait(true);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+        if (cts != _autoQueryCts) return; // 已被更新的请求取代
+
+        // 与 Search 同口径：校验区间、从首页查起、持久化条件
+        if (FromDate > ToDate) return;
+        CurrentPage = 1;
+        HasQueried = true;
+        QueryCurrentTab();
+        SaveLastQuery();
+    }
+
     [RelayCommand]
     private void Reset()
     {
+        CancelAutoQuery(); // 重置期间属性归零会触发 OnXxxChanged，需先取消在途防抖，避免重置后又自动查询
         QueryValidationMessage = string.Empty;
         SelectedDeviceId = null;
         SelectedShiftName = null;
@@ -633,6 +720,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         StatusQuery.Reset();
         AlarmQuery.Reset();
         OeeQuery.Reset();
+        SnQuery.Reset();
         Feedback.Success(Strings.Ux_ResetQuery);
     }
 
@@ -662,6 +750,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             case 1: QueryStatus(); break;
             case 2: QueryAlarm(); break;
             case 3: QueryOee(); break;
+            case 4: break; // SN 追溯使用 Tab 内自包含查询按钮
         }
     }
 
@@ -737,6 +826,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             1 => CreateStatusResult(request),
             2 => CreateAlarmResult(request),
             3 => CreateOeeResult(request),
+            4 => CreateSnResult(request),
             _ => throw new InvalidOperationException(string.Format(Strings.F144, request.TabIndex)),
         };
     }
@@ -768,6 +858,10 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         var (count, pages) = vm.Query(request.DeviceId, request.From, request.To, request.ShiftName);
         return new QueryResult(count, pages, vm, vm.QueryError);
     }
+
+    /// <summary>SN 追溯 Tab：结果由 SnQueryViewModel 自包含管理，公共管线仅透传（无数据计数）。</summary>
+    private QueryResult CreateSnResult(QueryRequest request)
+        => new(0, 0, SnQuery, null);
 
     private void ApplyQueryResult(QueryResult result)
     {
@@ -889,13 +983,33 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         {
             var tabIndex = SelectedTabIndex;
             var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
-            var (fileName, csv) = await Task.Run<(string?, string?)>(() => tabIndex switch
+
+            // 导出范围二选一：Yes=全量筛选结果，No=仅当前页（取消由默认值覆盖为当前页）
+            var exportAll = _dialog.Show(
+                Strings.M382, Strings.M381, System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
+
+            var (fileName, csv) = await Task.Run<(string?, string?)>(() =>
             {
-                0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsv(from, to)),
-                1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsv()),
-                2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsv()),
-                3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
-                _ => (null, null)
+                if (exportAll)
+                {
+                    return tabIndex switch
+                    {
+                        0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsvAll(from, to)),
+                        1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsvAll()),
+                        2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsvAll()),
+                        3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
+                        _ => (null, null)
+                    };
+                }
+                return tabIndex switch
+                {
+                    0 => (string.Format(Strings.F327, from, to), ProductionQuery.BuildCsv(from, to)),
+                    1 => (string.Format(Strings.F328, from, to), StatusQuery.BuildCsv()),
+                    2 => (string.Format(Strings.F329, from, to), AlarmQuery.BuildCsv()),
+                    3 => ($"OEE_{from:yyyyMMdd}_{to:yyyyMMdd}.csv", OeeQuery.BuildCsv(deviceId)),
+                    _ => (null, null)
+                };
             }).ConfigureAwait(true);
 
             if (fileName == null || string.IsNullOrEmpty(csv))
@@ -905,9 +1019,16 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            // 明确标注当前页导出，避免大表被误解为全量导出（审查修复 2026-08-15）
-            fileName = $"{Path.GetFileNameWithoutExtension(fileName)}_page{CurrentPage}{Path.GetExtension(fileName)}";
-            csv += $"\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。";
+            if (!exportAll)
+            {
+                // 明确标注当前页导出，避免大表被误解为全量导出（审查修复 2026-08-15）
+                fileName = $"{Path.GetFileNameWithoutExtension(fileName)}_page{CurrentPage}{Path.GetExtension(fileName)}";
+                csv += $"\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。";
+            }
+            else
+            {
+                csv += "\n# " + string.Format(Strings.M384, TotalCount);
+            }
 
             // 异步执行 CSV 生成与文件写入，避免大表（10万行+）阻塞 UI 线程
             var exportDir = Path.Combine(AppSettings.DataRoot, _appSettings.ConfigDirectory, "Exports");

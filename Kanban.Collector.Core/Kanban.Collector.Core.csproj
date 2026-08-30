@@ -46,7 +46,7 @@
   <!-- 编译前从统一 Localization.csv 生成 Core 多语言 Messages 资源。 -->
   <Target Name="GenerateCoreLocalization" BeforeTargets="AssignCulture">
     <Message Importance="high" Text="Generating Core localization resources from Localization.csv…" />
-    <Exec Command="python $(ProjectDir)..\ci\generate_localization.py --core"
+    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py --core"
           WorkingDirectory="$(ProjectDir).."
           ContinueOnError="false" />
     <ItemGroup>

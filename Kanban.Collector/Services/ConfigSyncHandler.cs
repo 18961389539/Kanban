@@ -663,6 +663,12 @@ public sealed class ConfigSyncHandler
                 throw new ArgumentException($"设备「{device.Name}」数据源名称重复：{source.Name}");
             if (source.Values is null || source.Values.Count == 0)
                 throw new ArgumentException($"设备「{device.Name}」数据源「{source.Name}」至少需要一个值项");
+            // SN 类型源必须配置触发地址：SN 事件按「触发命中 → 读 SN → 写回执」采集，
+            // 无触发地址的源每轮无条件读值（数据监控可见）但不会产生追溯事件，静默失效。
+            // 与 PlcScanPipeline.ScanSources 的 source.HasTrigger 约束保持一致（审查修复 2026-08-30）。
+            if (string.Equals(source.Type, SnEventConventions.SourceType, StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(source.TriggerAddress))
+                throw new ArgumentException($"设备「{device.Name}」数据源「{source.Name}」为 SN 类型，必须配置触发地址（TriggerAddress）才能采集序列号事件");
             if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
             {
                 EnsureAddressType(source.TriggerAddress, PlcAddressType.DWord,

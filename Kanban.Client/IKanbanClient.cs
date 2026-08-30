@@ -14,6 +14,9 @@ public interface IKanbanMonitoringClient
     Task SubscribeAlarmEventsAsync(long afterSeq, CancellationToken ct = default);
     Task SubscribeStatusEventsAsync(long afterSeq, CancellationToken ct = default);
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>SN 序列号追溯查询（按 SN 精确 / 工单 / 设备+时间范围，服务端分页）。</summary>
+    Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync(CancellationToken ct = default);
     Task<WorkOrderDto?> GetCurrentWorkOrderAsync(string deviceId, CancellationToken ct = default);
     Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId, CancellationToken ct = default);

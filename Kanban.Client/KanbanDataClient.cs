@@ -285,6 +285,14 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             nameof(IKanbanHubServer.QueryHistoryAsync), request, ct);
     }
 
+    /// <summary>SN 序列号追溯查询（按 SN 精确 / 工单 / 设备+时间范围，服务端分页）。</summary>
+    public async Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<SnEventQueryResponse>(
+            nameof(IKanbanHubServer.QuerySnEventsAsync), request, ct);
+    }
+
     /// <summary>批量历史查询：多个子查询一次往返（服务端全量翻页聚合），供生产复盘页多设备批查使用。</summary>
     public async Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(
         BatchHistoryQueryRequest request, CancellationToken ct = default)

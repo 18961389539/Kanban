@@ -1,4 +1,4 @@
-﻿using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -36,6 +36,7 @@ public class DatabaseProvider(AppSettings appSettings)
         "defect_history.db",
         "audit_logs.db",
         "datasource_snapshots.db",
+        "sn_events.db",
     ];
 
     public AppSettings AppSettings => _appSettings;
@@ -47,6 +48,7 @@ public class DatabaseProvider(AppSettings appSettings)
     public DefectHistoryDbContext CreateDefectHistoryContext() => new(_appSettings);
     public AuditDbContext CreateAuditContext() => new(_appSettings);
     public DataSourceSnapshotDbContext CreateDataSourceSnapshotContext() => new(_appSettings);
+    public SnEventDbContext CreateSnEventContext() => new(_appSettings);
 
     /// <summary>
     /// 启动期数据库 schema 初始化。
@@ -92,6 +94,10 @@ public class DatabaseProvider(AppSettings appSettings)
             "DataSourceSnapshots",
             DataSourceSnapshotLatestMigration,
             ApplyDataSourceSnapshotLegacyPatch);
+        // 序列号事件库：全新数据库无历史版本，直接 EnsureCreated 建表
+        // （sn_events.db 为本次新增，不存在"旧版表升级"路径；将来加列走 legacy patch 幂等补列）。
+        using (var snContext = CreateSnEventContext())
+            snContext.Database.EnsureCreated();
     }
 
     private void MigrateContext<TContext>(
@@ -220,6 +226,10 @@ public class DatabaseProvider(AppSettings appSettings)
     {
         EnsureColumn(connection, transaction, "WorkOrders", "CompletedOkCount", "INTEGER");
         EnsureColumn(connection, transaction, "WorkOrders", "CompletedNgCount", "INTEGER");
+        // 状态时间戳（工单详情时间线）。老库（EnsureCreated / 已记录迁移的库）由 Migrate 后
+        // 的统一补丁路径幂等补齐（ApplyWorkOrderLegacyPatch 在 MigrateContext 中总会执行一次）。
+        EnsureColumn(connection, transaction, "WorkOrders", "StartedAt", "TEXT");
+        EnsureColumn(connection, transaction, "WorkOrders", "CompletedAt", "TEXT");
     }
 
     private static void ApplyAuditLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)

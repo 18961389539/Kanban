@@ -486,4 +486,57 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Equal(AlarmKind.DataSource, vm.ActiveAlarms[0].Kind);
         Assert.Equal(triggerTime, vm.ActiveAlarms[0].EventTime);
     }
+
+    // ──────────── 事件流报警风暴合并（BuildRecentStream） ────────────
+
+    [Fact]
+    public void BuildRecentStream_MergesInterleavedBursts_WithinWindow()
+    {
+        // 同一设备+同一报警在 2 分钟窗口内反复触发/恢复（中间穿插其他设备报警），
+        // 应合并为一条 "×N" 组而非逐条刷屏（多设备交错振荡是风暴的典型形态）。
+        var t0 = new DateTime(2026, 8, 30, 10, 0, 0);
+        var records = new List<AlarmEventRecord>
+        {
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Triggered, EventTime = t0.AddSeconds(30) },
+            new() { DeviceId = "d2", DeviceName = "组装机1", AlarmId = "a2", AlarmName = "缺料报警", EventType = AlarmEventType.Recovered, EventTime = t0.AddSeconds(25) },
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Triggered, EventTime = t0.AddSeconds(20) },
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Recovered, EventTime = t0.AddSeconds(10) },
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Triggered, EventTime = t0 },
+        };
+
+        var result = AlarmCenterViewModel.BuildRecentStream(records, _deviceRepo);
+
+        // 高温(×4) + 缺料(×1)
+        Assert.Equal(2, result.Count);
+        var storm = result.Single(r => r.DisplayName == "高温报警");
+        Assert.True(storm.IsStormGroup);
+        Assert.Equal(4, storm.RepeatCount);
+        Assert.Equal(3, storm.TriggerCount);
+        Assert.Equal(1, storm.RecoverCount);
+        // 主记录取组内最新事件（图标/颜色/时间戳语义）
+        Assert.Equal(AlarmEventType.Triggered, storm.EventType);
+        Assert.Equal(t0.AddSeconds(30), storm.EventTime);
+        Assert.Equal(t0, storm.FirstEventTime);
+        Assert.Equal("×4", storm.RepeatBadge);
+        // 输出按最新事件时间倒序：高温(30s) 先于缺料(25s)
+        Assert.Equal("高温报警", result[0].DisplayName);
+    }
+
+    [Fact]
+    public void BuildRecentStream_SplitsGroups_WhenGapExceedsMergeWindow()
+    {
+        // 同 key 事件间隔远超 120s 窗口 → 断档为独立两条，不合并
+        var t0 = new DateTime(2026, 8, 30, 10, 0, 0);
+        var records = new List<AlarmEventRecord>
+        {
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Triggered, EventTime = t0.AddMinutes(10) },
+            new() { DeviceId = "d1", DeviceName = "注塑机1", AlarmId = "a1", AlarmName = "高温报警", EventType = AlarmEventType.Recovered, EventTime = t0 },
+        };
+
+        var result = AlarmCenterViewModel.BuildRecentStream(records, _deviceRepo);
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, r => Assert.False(r.IsStormGroup));
+        Assert.All(result, r => Assert.Equal(1, r.RepeatCount));
+    }
 }

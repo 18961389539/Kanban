@@ -1,4 +1,4 @@
-﻿namespace Kanban.Collector.Core.Entities;
+namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
 /// 工单状态枚举。状态机：Pending → Running → Completed/Aborted。
@@ -73,6 +73,12 @@ public class WorkOrder
     /// <summary>最后更新时间。</summary>
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
+    /// <summary>实际开始时间（Start 时写入）。历史/待开始工单为 null。</summary>
+    public DateTime? StartedAt { get; set; }
+
+    /// <summary>实际结束时间（Complete/Abort 时写入）。Running/Pending 为 null。</summary>
+    public DateTime? CompletedAt { get; set; }
+
     /// <summary>
     /// 运行时产量聚合（非持久化，由 ViewModel 查询后回填用于 UI 绑定）。
     /// 使用 INotifyPropertyChanged 通知 UI 更新进度条/产量文本。
@@ -81,12 +87,25 @@ public class WorkOrder
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public WorkOrderRuntimeProduction? Production { get; set; }
 
+    /// <summary>运行时逾期标记（非持久化，由 WorkOrderManagerViewModel 周期性回填，驱动列表逾期标签/高亮）。</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public bool IsOverdue { get; set; }
+
+    /// <summary>运行时逾期提示文本（"逾期 2h"等，非持久化）。null 表示未逾期。</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? OverdueHintText { get; set; }
+
+    /// <summary>运行时计划冲突标记（同设备 Pending/Running 时间重叠，非持久化）。</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public bool IsScheduleConflict { get; set; }
+
     /// <summary>开始工单：Pending → Running。违反状态约束则抛 InvalidOperationException。</summary>
     public void Start()
     {
         if (Status != WorkOrderStatus.Pending)
             throw new InvalidOperationException($"工单 {OrderNo} 当前状态为 {Status}，无法开始（仅 Pending 可开始）");
         Status = WorkOrderStatus.Running;
+        StartedAt ??= DateTime.Now;
         UpdatedAt = DateTime.Now;
     }
 
@@ -96,6 +115,7 @@ public class WorkOrder
         if (Status != WorkOrderStatus.Running)
             throw new InvalidOperationException($"工单 {OrderNo} 当前状态为 {Status}，无法完成（仅 Running 可完成）");
         Status = WorkOrderStatus.Completed;
+        CompletedAt ??= DateTime.Now;
         UpdatedAt = DateTime.Now;
     }
 
@@ -105,6 +125,8 @@ public class WorkOrder
         if (Status != WorkOrderStatus.Running && Status != WorkOrderStatus.Pending)
             throw new InvalidOperationException($"工单 {OrderNo} 当前状态为 {Status}，无法中止（仅 Running/Pending 可中止）");
         Status = WorkOrderStatus.Aborted;
+        // Pending 直接中止时未开始过，不写 StartedAt；运行中中止保留 StartedAt。
+        CompletedAt ??= DateTime.Now;
         UpdatedAt = DateTime.Now;
     }
 }

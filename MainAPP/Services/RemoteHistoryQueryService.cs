@@ -26,10 +26,12 @@ public sealed class RemoteHistoryQueryService :
     IHistoryQueryExecutor,
     IWorkOrderProductionBatchQuery,
     IDefectHistoryReader,
-    IAsyncProductionHistoryReader
+    IAsyncProductionHistoryReader,
+    ISnEventStore
 {
     private readonly HistoryService _local;
     private readonly DefectHistoryStore _localDefectStore;
+    private readonly SnEventStore _localSnStore;
     private readonly KanbanDataClient _client;
     private readonly IRuntimeMode _runtimeMode;
     private readonly ILogger<RemoteHistoryQueryService> _logger;
@@ -43,12 +45,14 @@ public sealed class RemoteHistoryQueryService :
     public RemoteHistoryQueryService(
         HistoryService local,
         DefectHistoryStore localDefectStore,
+        SnEventStore localSnStore,
         KanbanDataClient client,
         IRuntimeMode runtimeMode,
         ILogger<RemoteHistoryQueryService> logger)
     {
         _local = local;
         _localDefectStore = localDefectStore;
+        _localSnStore = localSnStore;
         _client = client;
         _runtimeMode = runtimeMode;
         _logger = logger;
@@ -805,4 +809,93 @@ public sealed class RemoteHistoryQueryService :
 
         return [];
     }
+
+    // ──────────── ISnEventStore（SN 序列号追溯） ────────────
+
+    /// <summary>SN 采集写入：Local 委托本地 SnEventStore；Remote 模式下采集只在 Collector 发生，忽略（防误用）。</summary>
+    public void Append(SnEventRecord record)
+    {
+        if (!IsRemote)
+        {
+            _localSnStore.Append(record);
+            return;
+        }
+        _logger.LogDebug("Remote 模式下忽略 SN 采集写入（采集只在 Collector 进程发生）SN={Sn}", record.Sn);
+    }
+
+    public List<SnEventRecord> QueryBySn(string sn)
+    {
+        if (!IsRemote)
+            return _localSnStore.QueryBySn(sn);
+        var response = QueryRemoteSn(new SnEventQueryRequest { Sn = sn });
+        return response.Items.Select(ToEntity).ToList();
+    }
+
+    public (int Total, List<SnEventRecord> Items) QueryByWorkOrder(int workOrderId, int page, int pageSize)
+    {
+        if (!IsRemote)
+            return _localSnStore.QueryByWorkOrder(workOrderId, page, pageSize);
+        var response = QueryRemoteSn(new SnEventQueryRequest { WorkOrderId = workOrderId, Page = page, PageSize = pageSize });
+        return (response.Total, response.Items.Select(ToEntity).ToList());
+    }
+
+    public (int Total, List<SnEventRecord> Items) QueryByTimeRange(
+        string? deviceId, DateTime from, DateTime to, int page, int pageSize)
+    {
+        if (!IsRemote)
+            return _localSnStore.QueryByTimeRange(deviceId, from, to, page, pageSize);
+        var response = QueryRemoteSn(new SnEventQueryRequest
+        {
+            DeviceId = deviceId,
+            From = from == DateTime.MinValue ? null : from,
+            To = to == DateTime.MaxValue ? null : to,
+            Page = page,
+            PageSize = pageSize,
+        });
+        return (response.Total, response.Items.Select(ToEntity).ToList());
+    }
+
+    public SnEventStoreDiagnosticsSnapshot GetDiagnosticsSnapshot()
+        => IsRemote ? new SnEventStoreDiagnosticsSnapshot() : _localSnStore.GetDiagnosticsSnapshot();
+
+    /// <summary>
+    /// Remote SN 查询同步封装：Task.Run 转入线程池执行（SignalR InvokeAsync 在 UI 线程
+    /// 直接 GetAwaiter().GetResult() 会死锁），10s 超时统一转本地化失败文案。
+    /// </summary>
+    private SnEventQueryResponse QueryRemoteSn(SnEventQueryRequest request)
+    {
+        using var cts = new CancellationTokenSource(RemoteCallTimeout);
+        try
+        {
+            return Task.Run(
+                () => _client.QuerySnEventsAsync(request, cts.Token).GetAwaiter().GetResult(),
+                cts.Token)
+                .GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Remote SN 追溯查询超时 Sn={Sn} WorkOrderId={WorkOrderId}", request.Sn, request.WorkOrderId);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Remote SN 追溯查询失败 Sn={Sn} WorkOrderId={WorkOrderId}", request.Sn, request.WorkOrderId);
+            throw new InvalidOperationException(MainAPP.Resources.Strings.F_QueryFailed);
+        }
+    }
+
+    private static SnEventRecord ToEntity(SnEventRecordDto dto) => new()
+    {
+        Id = dto.Id,
+        Sn = dto.Sn,
+        DeviceId = dto.DeviceId,
+        DeviceName = dto.DeviceName,
+        WorkOrderId = dto.WorkOrderId,
+        ShiftName = dto.ShiftName,
+        Result = dto.Result,
+        Source = dto.Source,
+        SourceId = dto.SourceId,
+        BatchNo = dto.BatchNo,
+        Timestamp = dto.Timestamp,
+    };
 }

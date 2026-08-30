@@ -28,7 +28,7 @@ namespace MainAPP.ViewModels;
 /// 汇总全厂产量/报警，按小时聚合趋势，列出 Top 报警和设备明细（每台设备独立 OEE）。
 /// 数据来源：HistoryService（历史快照）+ DeviceRepository.Runtimes（实时状态色条）。
 /// </summary>
-public partial class OverviewViewModel : ObservableObject, IDisposable
+public partial class OverviewViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     private readonly IProductionReviewDataService _reviewDataService;
     private readonly IDeviceRepository _deviceRepository;
@@ -47,6 +47,37 @@ public partial class OverviewViewModel : ObservableObject, IDisposable
     private int _cachedChartSignature;
     private int _refreshVersion;
     private bool _refreshPending;
+
+    // ──────────── 页面生命周期（审查修复 2026-08-30：N-3 图表定时器泄漏） ────────────
+    // 概览页 2Hz 图表重绘定时器与 VM.PropertyChanged 订阅原本由 OverviewView 的 Loaded/Unloaded
+    // 管理，但 NavigationPageHost 常驻导致 Unloaded 永不触发 → 切走后定时器持续运行、逐页叠加
+    // （"页面切换越来越卡"的主因之一）。现由 MainWindow.ActivatePage 经本接口驱动，
+    // 通过 Entered/Exited 事件通知视图绑定/解绑，视图的定时器仅在页面激活期间运行。
+
+    /// <summary>页面当前是否激活（视图据此守卫图表重绘定时器）。</summary>
+    public bool IsPageActive { get; private set; }
+
+    /// <summary>页面进入（MainWindow 切换驱动后触发；视图在此启动定时器并强制刷新图表）。</summary>
+    public event EventHandler? Entered;
+
+    /// <summary>页面退出（视图在此停止定时器、清空脏标记）。</summary>
+    public event EventHandler? Exited;
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        if (IsPageActive) return;
+        IsPageActive = true;
+        Entered?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit()
+    {
+        if (!IsPageActive) return;
+        IsPageActive = false;
+        Exited?.Invoke(this, EventArgs.Empty);
+    }
 
     // ──────────── KPI 属性 ────────────
 

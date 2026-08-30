@@ -661,7 +661,7 @@
     <value>Recovered Today</value>
   </data>
   <data name="K128" xml:space="preserve">
-    <value>Longest Duration</value>
+    <value>Earliest Alarm · Ongoing</value>
   </data>
   <data name="K129" xml:space="preserve">
     <value>Affected Device</value>
@@ -4230,6 +4230,18 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M380" xml:space="preserve">
     <value>No matching users</value>
   </data>
+  <data name="M381" xml:space="preserve">
+    <value>Export Scope</value>
+  </data>
+  <data name="M382" xml:space="preserve">
+    <value>Export all filtered results? Choose Yes for full export or No for current page only.</value>
+  </data>
+  <data name="M383" xml:space="preserve">
+    <value>Current page only</value>
+  </data>
+  <data name="M384" xml:space="preserve">
+    <value>All filtered results ({0} rows)</value>
+  </data>
   <data name="M332" xml:space="preserve">
     <value>Operator</value>
   </data>
@@ -5565,7 +5577,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
   </data>
   <data name="K712" xml:space="preserve">
-    <value>Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters</value>
+    <value>Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters</value>
   </data>
   <data name="K713" xml:space="preserve">
     <value>Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters</value>
@@ -5575,6 +5587,57 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="K717" xml:space="preserve">
     <value>Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight</value>
+  </data>
+  <data name="K718" xml:space="preserve">
+    <value>Repeated triggers of the same alarm within a short window merged; {0} events total</value>
+  </data>
+  <data name="K719" xml:space="preserve">
+    <value>Versus yesterday at the same time: yesterday {0} / today {1}</value>
+  </data>
+  <data name="K720" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="K721" xml:space="preserve">
+    <value>{0} min ago</value>
+  </data>
+  <data name="K722" xml:space="preserve">
+    <value>{0} hr ago</value>
+  </data>
+  <data name="K723" xml:space="preserve">
+    <value>By Triggers</value>
+  </data>
+  <data name="K724" xml:space="preserve">
+    <value>By Duration</value>
+  </data>
+  <data name="K725" xml:space="preserve">
+    <value>Device config validated OK ({0} devices)</value>
+  </data>
+  <data name="K726" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="K727" xml:space="preserve">
+    <value>The current device has unsaved changes; switching away will lose them. Continue?</value>
+  </data>
+  <data name="K728" xml:space="preserve">
+    <value>Export Selected Device</value>
+  </data>
+  <data name="K729" xml:space="preserve">
+    <value>Import Device Config</value>
+  </data>
+  <data name="K730" xml:space="preserve">
+    <value>Exported device “{0}”</value>
+  </data>
+  <data name="K731" xml:space="preserve">
+    <value>Import failed: file is empty or could not be parsed.</value>
+  </data>
+  <data name="K732" xml:space="preserve">
+    <value>Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.</value>
+  </data>
+  <data name="K733" xml:space="preserve">
+    <value>Imported device “{0}”</value>
+  </data>
+  <data name="K734" xml:space="preserve">
+    <value>Leaving the device manager will discard unsaved configuration changes. Continue?</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>
@@ -6483,5 +6546,182 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Validator_TriggerAckConflict" xml:space="preserve">
     <value>Trigger and ack values cannot match in source '{0}'</value>
+  </data>
+  <data name="K750" xml:space="preserve">
+    <value>Import Work Orders</value>
+  </data>
+  <data name="K751" xml:space="preserve">
+    <value>Select work order CSV file</value>
+  </data>
+  <data name="K752" xml:space="preserve">
+    <value>About to import {0} work orders. Continue?</value>
+  </data>
+  <data name="K753" xml:space="preserve">
+    <value>Imported {0} work orders successfully</value>
+  </data>
+  <data name="K754" xml:space="preserve">
+    <value>Imported {0}, skipped {1}: {2}</value>
+  </data>
+  <data name="K755" xml:space="preserve">
+    <value>Failed to read work order CSV: {0}</value>
+  </data>
+  <data name="K756" xml:space="preserve">
+    <value>No importable work orders found in {0}</value>
+  </data>
+  <data name="K757" xml:space="preserve">
+    <value>Copied: {0}</value>
+  </data>
+  <data name="K762" xml:space="preserve">
+    <value>Conflict</value>
+  </data>
+  <data name="K763" xml:space="preserve">
+    <value>Overdue</value>
+  </data>
+  <data name="K764" xml:space="preserve">
+    <value>Import work orders from a CSV file (columns match the export template)</value>
+  </data>
+  <data name="K765" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="K766" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="K767" xml:space="preserve">
+    <value>Achievement</value>
+  </data>
+  <data name="K768" xml:space="preserve">
+    <value>Filtered results</value>
+  </data>
+  <data name="K769" xml:space="preserve">
+    <value>Copy order number</value>
+  </data>
+  <data name="K770" xml:space="preserve">
+    <value>Copy product code</value>
+  </data>
+  <data name="K771" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="K772" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="K773" xml:space="preserve">
+    <value>Planned start</value>
+  </data>
+  <data name="K774" xml:space="preserve">
+    <value>Actual start</value>
+  </data>
+  <data name="K775" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="K776" xml:space="preserve">
+    <value>Aborted</value>
+  </data>
+  <data name="K788" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="K789" xml:space="preserve">
+    <value>Double-click a row to edit that work order</value>
+  </data>
+  <data name="K790" xml:space="preserve">
+    <value>Row {0}: too few columns ({1} &lt; 7); skipped</value>
+  </data>
+  <data name="K791" xml:space="preserve">
+    <value>Row {0} [{1}]: planned time must be yyyy-MM-dd HH:mm; skipped</value>
+  </data>
+  <data name="K794" xml:space="preserve">
+    <value>Order number already exists</value>
+  </data>
+  <data name="K795" xml:space="preserve">
+    <value>Device "{0}" not found</value>
+  </data>
+  <data name="K799" xml:space="preserve">
+    <value>Overdue {0}</value>
+  </data>
+  <data name="K806" xml:space="preserve">
+    <value>Row {0} [{1}]: {2}</value>
+  </data>
+  <data name="K901" xml:space="preserve">
+    <value>Work Order Schedule</value>
+  </data>
+  <data name="K902" xml:space="preserve">
+    <value>Planned time</value>
+  </data>
+  <data name="K903" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="K904" xml:space="preserve">
+    <value>Work Orders</value>
+  </data>
+  <data name="K905" xml:space="preserve">
+    <value>Now</value>
+  </data>
+  <data name="K906" xml:space="preserve">
+    <value>No work orders under the current filter</value>
+  </data>
+  <data name="K907" xml:space="preserve">
+    <value>Last 1 Hour</value>
+  </data>
+  <data name="K908" xml:space="preserve">
+    <value>Last 4 Hours</value>
+  </data>
+  <data name="K909" xml:space="preserve">
+    <value>Last 24 Hours</value>
+  </data>
+  <data name="K910" xml:space="preserve">
+    <value>Total Output</value>
+  </data>
+  <data name="K911" xml:space="preserve">
+    <value>Defect Rate</value>
+  </data>
+  <data name="K912" xml:space="preserve">
+    <value>Avg Recovery Time</value>
+  </data>
+  <data name="K913" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="M_MoreNotShown" xml:space="preserve">
+    <value>\n… ({0} more not shown)</value>
+  </data>
+  <data name="K914" xml:space="preserve">
+    <value>SN Traceability</value>
+  </data>
+  <data name="K915" xml:space="preserve">
+    <value>Enter SN to trace, e.g. SN20260830-0001</value>
+  </data>
+  <data name="K916" xml:space="preserve">
+    <value>Enter an SN to look up its production trace</value>
+  </data>
+  <data name="K917" xml:space="preserve">
+    <value>Shows the device, work order, shift, time and result</value>
+  </data>
+  <data name="K918" xml:space="preserve">
+    <value>SN Details</value>
+  </data>
+  <data name="K919" xml:space="preserve">
+    <value>{0} in total</value>
+  </data>
+  <data name="K920" xml:space="preserve">
+    <value>No SN records for this work order</value>
+  </data>
+  <data name="K921" xml:space="preserve">
+    <value>Please enter an SN to trace</value>
+  </data>
+  <data name="K922" xml:space="preserve">
+    <value>No trace records found for SN {0}</value>
+  </data>
+  <data name="K923" xml:space="preserve">
+    <value>Query failed: {0}</value>
+  </data>
+  <data name="K924" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="K925" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="K926" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="K927" xml:space="preserve">
+    <value>Page {0}</value>
   </data>
 </root>

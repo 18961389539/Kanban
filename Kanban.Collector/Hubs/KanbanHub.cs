@@ -28,6 +28,11 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly HistoryService _historyService;
     private readonly AppSettings _appSettings;
     private readonly IAuditService _auditService;
+    private readonly ISnEventStore _snEventStore;
+    private readonly ILogger? _logger;
+
+    /// <summary>SN 追溯单页上限（防客户端传超大 PageSize 一次拉全表；工单明细页 20/页远低于此）。</summary>
+    private const int MaxSnPageSize = 200;
 
     public KanbanHub(
         SnapshotAggregator snapshotAggregator,
@@ -40,7 +45,9 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         WorkOrderRepository workOrderRepository,
         HistoryService historyService,
         AppSettings appSettings,
-        IAuditService auditService)
+        IAuditService auditService,
+        ISnEventStore snEventStore,
+        ILogger<KanbanHub>? logger = null)
     {
         _snapshotAggregator = snapshotAggregator;
         _eventBroadcaster = eventBroadcaster;
@@ -53,6 +60,8 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         _historyService = historyService;
         _appSettings = appSettings;
         _auditService = auditService;
+        _snEventStore = snEventStore;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -102,6 +111,81 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(BatchHistoryQueryRequest request)
         => _historyQueryHandler.QueryBatchAsync(request, Context.ConnectionAborted);
+
+    /// <inheritdoc />
+    public Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request)
+    {
+        try
+        {
+            // 归一化分页参数：负数/零 Page 与超大 PageSize 由客户端异常或恶意构造产生，
+            // Skip((page-1)*pageSize) 负偏移会抛异常、超大页会一次拉全表（审查修复 2026-08-30）。
+            var page = Math.Max(1, request.Page);
+            var pageSize = Math.Clamp(request.PageSize <= 0 ? 20 : request.PageSize, 1, MaxSnPageSize);
+
+            if (!string.IsNullOrWhiteSpace(request.Sn))
+            {
+                // SN 精确查询：一个 SN 通常一条记录，全量返回（不翻页）
+                var items = _snEventStore.QueryBySn(request.Sn.Trim())
+                    .Select(ToDto)
+                    .ToList();
+                return Task.FromResult(new SnEventQueryResponse
+                {
+                    Total = items.Count,
+                    Page = page,
+                    PageSize = pageSize,
+                    Items = items,
+                });
+            }
+
+            if (request.WorkOrderId.HasValue)
+            {
+                var (total, events) = _snEventStore.QueryByWorkOrder(
+                    request.WorkOrderId.Value, page, pageSize);
+                return Task.FromResult(new SnEventQueryResponse
+                {
+                    Total = total,
+                    Page = page,
+                    PageSize = pageSize,
+                    Items = events.Select(ToDto).ToList(),
+                });
+            }
+
+            var (rangeTotal, rangeEvents) = _snEventStore.QueryByTimeRange(
+                request.DeviceId,
+                request.From ?? DateTime.MinValue,
+                request.To ?? DateTime.MaxValue,
+                page,
+                pageSize);
+            return Task.FromResult(new SnEventQueryResponse
+            {
+                Total = rangeTotal,
+                Page = page,
+                PageSize = pageSize,
+                Items = rangeEvents.Select(ToDto).ToList(),
+            });
+        }
+        catch (Exception ex)
+        {
+            // 查询失败不中断连接：记录日志并返回空结果（客户端按空态提示，与历史查询 Error 语义一致）。
+            _logger?.LogError(ex, "SN 追溯查询失败 Sn={Sn} WorkOrderId={WorkOrderId}", request.Sn, request.WorkOrderId);
+            return Task.FromResult(new SnEventQueryResponse { Page = request.Page, PageSize = request.PageSize });
+        }
+    }
+
+    private static SnEventRecordDto ToDto(SnEventRecord record) => new()
+    {
+        Id = record.Id,
+        Sn = record.Sn,
+        DeviceId = record.DeviceId,
+        DeviceName = record.DeviceName,
+        WorkOrderId = record.WorkOrderId,
+        ShiftName = record.ShiftName,
+        Result = record.Result,
+        Source = record.Source,
+        SourceId = record.SourceId,
+        BatchNo = record.BatchNo,
+        Timestamp = record.Timestamp,
+    };
 
     /// <summary>运行监控页 Remote 模式：拉取 Collector 采集/历史/连接诊断快照。</summary>
     public Task<CollectorDiagnosticsDto> GetDiagnosticsAsync()

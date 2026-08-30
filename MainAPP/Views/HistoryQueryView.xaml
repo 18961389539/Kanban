@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.HistoryQueryView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:controls="clr-namespace:MainAPP.Controls"
@@ -113,6 +114,9 @@
                         <ComboBoxItem Content="{x:Static resources:Strings.K260}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.K261}" />
                         <ComboBoxItem Content="{x:Static resources:Strings.K262}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.K907}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.K908}" />
+                        <ComboBoxItem Content="{x:Static resources:Strings.K909}" />
                     </ComboBox>
 
                     <hc:DateTimePicker
@@ -299,8 +303,14 @@
                     </Grid.RowDefinitions>
 
                     <!-- 统计卡片 -->
-                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="5"
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K910}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding ProductionQuery.TotalProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
+                            </StackPanel>
+                        </Border>
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K281}" />
@@ -317,6 +327,12 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K911}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.DefectRate, Converter={StaticResource InverseRatioThreshold}}" Text="{Binding ProductionQuery.DefectRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -576,8 +592,8 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="3"
-                                 Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
+                         Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K299}" />
@@ -594,6 +610,13 @@
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K301}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
+                            </StackPanel>
+                        </Border>
+                        <!-- 平均恢复耗时（MTTR）：无配对样本时不显示 -->
+                        <Border Style="{StaticResource KpiCard}" Visibility="{Binding AlarmQuery.AlarmMttrText, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K912}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Text="{Binding AlarmQuery.AlarmMttrText}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -649,6 +672,7 @@
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K018}" Binding="{Binding AlarmName}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K048}" Binding="{Binding PlcAddress}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K303}" Binding="{Binding EventType, Converter={StaticResource EventTypeToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.K913}" Binding="{Binding DurationText, TargetNullValue=—}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>
@@ -860,6 +884,112 @@
                                 Message="{x:Static resources:Strings.K315}"
                                 Hint="{x:Static resources:Strings.K316}" />
                         </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!--  ============ Tab 4: SN 追溯 ============  -->
+            <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K914}">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialIcons:MaterialIcon Width="14" Height="14" VerticalAlignment="Center" Kind="QrcodeScan" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.K914}" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="1">
+                        <!-- 查询输入 + 结果区 -->
+                        <StackPanel Margin="0,0,0,12"
+                                    Visibility="{Binding SnQuery.IsSupported, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <hc:TextBox Grid.Column="0"
+                                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K915}"
+                                            FontSize="{DynamicResource FontSizeCaption}"
+                                            Style="{StaticResource TextBoxExtend}"
+                                            Text="{Binding SnQuery.SnInput, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Grid.Column="2" Command="{Binding SnQuery.SearchCommand}" Content="{x:Static resources:Strings.K269}"
+                                        Style="{StaticResource IconButtonPrimary}"
+                                        Tag="{x:Static mi:MaterialIconKind.Magnify}" />
+                            </Grid>
+
+                            <!-- 错误/提示 -->
+                            <TextBlock Margin="0,0,0,8" FontSize="{DynamicResource FontSizeHint}"
+                                       Foreground="{StaticResource DangerBrush}"
+                                       Visibility="{Binding SnQuery.QueryError, Converter={StaticResource NullToVisibilityConverter}}"
+                                       Text="{Binding SnQuery.QueryError}" />
+
+                            <!-- 结果表 -->
+                            <Grid MinHeight="240">
+                                <Border Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="8">
+                                    <DataGrid
+                                        AlternationCount="2"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        AutomationProperties.Name="{x:Static resources:Strings.K914}"
+                                        CellStyle="{StaticResource KanbanDataGridCell}"
+                                        ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                        ItemsSource="{Binding SnQuery.Results}"
+                                        Style="{StaticResource KanbanDataGrid}"
+                                        IsReadOnly="True"
+                                        VirtualizingStackPanel.IsVirtualizing="True"
+                                        VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                        VirtualizingPanel.ScrollUnit="Pixel">
+                                        <DataGrid.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                                            </ItemsPanelTemplate>
+                                        </DataGrid.ItemsPanel>
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="SN" Binding="{Binding Sn}" Width="*" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" Width="*" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.K071}" Binding="{Binding WorkOrderId}" Width="80" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.K022}" Binding="{Binding ShiftName}" Width="*" />
+                                            <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
+                                            <DataGridTemplateColumn Header="{x:Static resources:Strings.K924}" Width="70">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock>
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="OK" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Result}" Value="1">
+                                                                            <Setter Property="Text" Value="NG" />
+                                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
+                                <!-- 空态/引导 -->
+                                <Border Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="8"
+                                        Visibility="{Binding SnQuery.IsEmptyResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <controls:EmptyState
+                                        IconKind="QrcodeScan"
+                                        Message="{x:Static resources:Strings.K916}"
+                                        Hint="{x:Static resources:Strings.K917}" />
+                                </Border>
+                            </Grid>
+                        </StackPanel>
                     </Grid>
                 </Grid>
             </TabItem>

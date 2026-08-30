@@ -48,6 +48,16 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
             services.GetRequiredService<PlcConnectionManager>().SyncRemoteReconnecting(attempt);
         };
 
+        // 修复（2026-08-30，首次连接横幅状态不同步）：PrepareAsync 阶段（MainWindow.Show 之前）
+        // 的 SynchronizeRemoteLocalizationAsync 已用同一单例 KanbanDataClient 抢先建连，
+        // 首次连接成功触发的 ConnectionStateChanged(true) 早于本方法的事件订阅被丢弃；
+        // 随后下方第 66 行的 ConnectAsync 命中 KanbanDataClient 的"已连接即返回"守卫，
+        // 事件不再触发，导致 PlcConnectionManager.IsConnected 保持 false，
+        // 顶部横幅持续显示"采集服务已断开"（直到一次真实重连才恢复）。
+        // 订阅完成后立即按当前真实连接状态补齐同步（SyncRemoteConnected 幂等，重复调用无副作用）。
+        if (client.IsConnected)
+            services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.M134);
+
         var sinkStarted = false;
         void EnsureSinkStarted()
         {

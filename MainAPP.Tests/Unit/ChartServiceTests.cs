@@ -1,4 +1,6 @@
 using System.Linq;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
@@ -409,5 +411,131 @@ public class ChartServiceTests
         // 柱顶数字标签（纯数字 TextAnnotation，原 AddBarLabels 方式）已移除
         Assert.DoesNotContain(chart.Annotations, a => a is OxyPlot.Annotations.TextAnnotation ta
             && ta.Text != null && ta.Text.All(char.IsDigit));
+    }
+
+    // ═══════════════ BuildWorkOrderGanttChart（工单排程甘特）═══════════════
+
+    private static (Device D1, Device D2) SampleDevices() => (
+        new Device { Id = "dev-1", Name = "注塑机A1" },
+        new Device { Id = "dev-2", Name = "焊接机器人B2" });
+
+    private static WorkOrder SampleWorkOrder(
+        string no, string deviceId, DateTime start, DateTime end, WorkOrderStatus status)
+        => new()
+        {
+            Id = no.GetHashCode(),
+            OrderNo = no,
+            DeviceId = deviceId,
+            PlannedStart = start,
+            PlannedEnd = end,
+            Status = status,
+        };
+
+    [Fact]
+    public void BuildWorkOrderGanttChart_EmptyWorkOrders_ReturnsModelWithDeviceAxis()
+    {
+        var (d1, d2) = SampleDevices();
+        var chart = ChartService.BuildWorkOrderGanttChart([d1, d2], [], new HashSet<int>(), DateTime.Now)!;
+
+        Assert.NotNull(chart);
+        var deviceAxis = chart.Axes.OfType<CategoryAxis>().FirstOrDefault();
+        Assert.NotNull(deviceAxis);
+        Assert.Equal(["注塑机A1", "焊接机器人B2"], deviceAxis!.ItemsSource?.OfType<string>().ToList());
+        // 无工单也有"现在"参考线（时间窗口回退 ±12h），但无矩形条
+        Assert.Empty(chart.Series.OfType<RectangleBarSeries>().Single().Items);
+    }
+
+    [Fact]
+    public void BuildWorkOrderGanttChart_RendersBarPerDeviceSlot()
+    {
+        var (d1, d2) = SampleDevices();
+        var now = new DateTime(2026, 1, 1, 8, 0, 0);
+        var orders = new[]
+        {
+            SampleWorkOrder("WO-1", "dev-1", now, now.AddHours(2), WorkOrderStatus.Running),
+            SampleWorkOrder("WO-2", "dev-2", now.AddHours(1), now.AddHours(3), WorkOrderStatus.Pending),
+        };
+
+        var chart = ChartService.BuildWorkOrderGanttChart([d1, d2], orders, new HashSet<int>(), now)!;
+
+        var bar = chart.Series.OfType<RectangleBarSeries>().Single();
+        Assert.Equal(2, bar.Items.Count);
+        // 各工单落在对应设备行槽位：dev-1 → 槽 0，dev-2 → 槽 1（CategoryAxis 整数坐标，标签对齐）
+        var dev1 = bar.Items.Single(i => Math.Abs((i.Y0 + i.Y1) / 2 - 0) < 1e-9);
+        Assert.Equal(0, (dev1.Y0 + dev1.Y1) / 2, 9);
+        var dev2 = bar.Items.Single(i => Math.Abs((i.Y0 + i.Y1) / 2 - 1) < 1e-9);
+        Assert.Equal(1, (dev2.Y0 + dev2.Y1) / 2, 9);
+    }
+
+    [Fact]
+    public void BuildWorkOrderGanttChart_InvalidTimeRanges_AreSkipped()
+    {
+        var (d1, _) = SampleDevices();
+        var now = new DateTime(2026, 1, 1, 8, 0, 0);
+        var orders = new[]
+        {
+            // 合法
+            SampleWorkOrder("WO-VALID", "dev-1", now, now.AddHours(1), WorkOrderStatus.Pending),
+            // PlannedEnd <= PlannedStart → 跳过
+            SampleWorkOrder("WO-BAD", "dev-1", now, now, WorkOrderStatus.Pending),
+        };
+
+        var chart = ChartService.BuildWorkOrderGanttChart([d1], orders, new HashSet<int>(), now)!;
+
+        var bar = chart.Series.OfType<RectangleBarSeries>().Single();
+        Assert.Single(bar.Items);
+        Assert.Equal("WO-VALID", chart.Annotations.OfType<OxyPlot.Annotations.TextAnnotation>()
+            .Select(a => a.Text).SingleOrDefault()); // 状态待定不标；此处仅验证无异常
+    }
+
+    [Fact]
+    public void BuildWorkOrderGanttChart_ConflictOrdersGetWarningColor()
+    {
+        var (d1, _) = SampleDevices();
+        var now = new DateTime(2026, 1, 1, 8, 0, 0);
+        var orders = new[]
+        {
+            SampleWorkOrder("WO-A", "dev-1", now, now.AddHours(2), WorkOrderStatus.Running),
+            SampleWorkOrder("WO-B", "dev-1", now.AddHours(1), now.AddHours(3), WorkOrderStatus.Pending),
+        };
+        var conflictIds = new HashSet<int> { orders[0].Id, orders[1].Id };
+
+        var chart = ChartService.BuildWorkOrderGanttChart([d1], orders, conflictIds, now)!;
+
+        var bar = chart.Series.OfType<RectangleBarSeries>().Single();
+        Assert.Equal(2, bar.Items.Count);
+        // 冲突一律橙色调（0xFB,0xBF,0x24），覆盖 Running 的绿色
+        var warning = OxyColor.FromRgb(0xFB, 0xBF, 0x24);
+        Assert.All(bar.Items, i => Assert.Equal(warning, i.Color));
+    }
+
+    [Fact]
+    public void BuildWorkOrderGanttChart_HasNowReferenceLine()
+    {
+        var (d1, _) = SampleDevices();
+        var chart = ChartService.BuildWorkOrderGanttChart(
+            [d1], [], new HashSet<int>(), new DateTime(2026, 1, 1, 12, 0, 0))!;
+
+        var nowLine = chart.Annotations.OfType<OxyPlot.Annotations.LineAnnotation>()
+            .SingleOrDefault(a => a.Type == OxyPlot.Annotations.LineAnnotationType.Vertical);
+        Assert.NotNull(nowLine);
+        Assert.Equal(DateTimeAxis.ToDouble(new DateTime(2026, 1, 1, 12, 0, 0)), nowLine!.X);
+    }
+
+    /// <summary>孤立工单（设备已删）被安全跳过，不抛异常且不产条。</summary>
+    [Fact]
+    public void BuildWorkOrderGanttChart_OrphanWorkOrder_SkippedSilently()
+    {
+        var (d1, _) = SampleDevices();
+        var now = new DateTime(2026, 1, 1, 8, 0, 0);
+        var orders = new[]
+        {
+            SampleWorkOrder("WO-ORPHAN", "deleted-device", now, now.AddHours(1), WorkOrderStatus.Pending),
+        };
+
+        var chart = ChartService.BuildWorkOrderGanttChart([d1], orders, new HashSet<int>(), now)!;
+
+        var bar = chart.Series.OfType<RectangleBarSeries>().Single();
+        Assert.Empty(bar.Items);
     }
 }

@@ -42,10 +42,10 @@ public sealed class CsvLocalizationTests : IDisposable
     }
 
     [Theory]
-    [InlineData(AppLanguage.Zh, "名称", "高", "严重", "外观", "整数", "开启")]
-    [InlineData(AppLanguage.En, "Name", "High", "Critical", "Appearance", "Integer", "On")]
-    [InlineData(AppLanguage.Ja, "名前", "高", "重大", "外観", "整数", "オン")]
-    [InlineData(AppLanguage.PtBr, "Nome", "High", "Critical", "Appearance", "Integer", "On")]
+    [InlineData(AppLanguage.Zh, "名称", "高", "严重", "外观", "整数", "是")]
+    [InlineData(AppLanguage.En, "Name", "High", "Critical", "Appearance", "Int32", "True")]
+    [InlineData(AppLanguage.Ja, "名前", "高", "重大", "外観", "整数", "はい")]
+    [InlineData(AppLanguage.PtBr, "Nome", "High", "Critical", "Appearance", "Int32", "Verdadeiro")]
     public void Export_UsesLanguageFromSettings(
         AppLanguage language,
         string alarmNameHeader,
@@ -109,7 +109,7 @@ public sealed class CsvLocalizationTests : IDisposable
         File.WriteAllText(
             path,
             "データソース名,データソースタイプ,データソース有効,データソースの説明,トリガーアドレス,トリガー値,応答値,値項目名,データ型,値項目PLCアドレス,値項目単位,値項目有効,整数下限,整数上限,浮動小数点下限,浮動小数点上限,ヒステリシス,確認遅延(秒),期待値設定済み,整数期待値,浮動小数点期待値,ブール期待値,文字列期待値,文字列長,列挙マッピング JSON\n"
-                + string.Join(",", new[] { "源", "Type", "オン", "", "D100", "1", "2", "值", "整数", "D102", "", "オン", "", "", "", "", "", "", "オフ", "", "", "", "", "", "" }) + "\n",
+                + string.Join(",", new[] { "源", "Type", "はい", "", "D100", "1", "2", "值", "整数", "D102", "", "はい", "", "", "", "", "", "", "いいえ", "", "", "", "", "", "" }) + "\n",
             new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 
         Localization.Apply(AppLanguage.Zh);

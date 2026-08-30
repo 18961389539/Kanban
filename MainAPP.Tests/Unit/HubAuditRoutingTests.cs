@@ -50,12 +50,11 @@ public sealed class HubAuditRoutingTests : IDisposable
         try { Directory.Delete(_tempDir, recursive: true); } catch { }
     }
 
-    /// <summary>等待审计队列异步落库（AuditService 后台 flush，最多 3 秒）。</summary>
+    /// <summary>事件驱动等待审计队列异步落库（后台 flush 每完成一批就发信号；15s 预算容忍高并发调度延迟）。</summary>
     private async Task WaitFlushAsync(int expected)
     {
-        for (var i = 0; i < 30 && _audit.FlushedCount < expected; i++)
-            await Task.Delay(100);
-        Assert.True(_audit.FlushedCount >= expected, $"审计落库超时: Flushed={_audit.FlushedCount} 期望={expected}");
+        var ok = await _audit.WaitFlushedAsync(expected, TimeSpan.FromSeconds(15));
+        Assert.True(ok, $"审计落库超时: Flushed={_audit.FlushedCount} 期望={expected}");
     }
 
     private KanbanAdminHub CreateHub()

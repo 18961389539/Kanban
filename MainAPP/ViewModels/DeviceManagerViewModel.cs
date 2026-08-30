@@ -3,7 +3,9 @@ using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Windows;
 using System.Windows.Data;
@@ -110,6 +112,32 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     [ObservableProperty]
     private Device? _selectedDevice;
+
+    /// <summary>切换设备未保存确认的抑制开关：程序内主动切设备（冲突跳转/错误定位/导入恢复）时不弹确认。</summary>
+    private bool _suppressSelectionGuard;
+    /// <summary>上一次「已通过确认」的设备选择，用于未保存保护回退。</summary>
+    private Device? _selectionGuardPrevious;
+
+    /// <summary>单台设备 JSON 导出/导入的序列化选项（与 DeviceRepository 持久化口径一致）。</summary>
+    private static readonly JsonSerializerOptions DeviceJsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    /// <summary>
+    /// 离开设备管理页前调用：存在未保存更改时弹二次确认，返回 true 表示允许离开。
+    /// 供 MainWindowViewModel.Navigate 在切换离页前拦截（该入口是所有导航的统一汇合点）；
+    /// 干净状态直接放行不弹框。权限/Viewer 拒绝的导航不会到达此检查。
+    /// </summary>
+    public bool MayDiscardUnsavedAndLeave()
+    {
+        if (!IsDirty) return true;
+        var confirm = _dialog.Show(
+            Strings.K734,
+            Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        return confirm == MessageBoxResult.Yes;
+    }
 
     /// <summary>
     /// PLC 写入中标志：写入配方 / 清空计数报警当前值期间为 true，UI 显示加载覆盖层。
@@ -384,7 +412,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private void SelectAddressConflict(Device? device)
     {
         if (device == null) return;
+        _suppressSelectionGuard = true;
         SelectedDevice = device;
+        _suppressSelectionGuard = false;
         SelectedTabIndex = AddressConflictTabIndices.TryGetValue(device.Id, out var tabIndex)
             ? tabIndex
             : (int)DeviceManagerTab.Parameters;
@@ -467,7 +497,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 深拷贝设备配置（不含 Id/Name：Name 由调用方保证唯一，Id 由 Device 构造自动生成）。
     /// 子集合逐项克隆并重新挂接 DeviceId（报警的确定性 Id 由此再生），避免与原设备共享引用。
     /// </summary>
-    private static Device CloneDevice(Device src)
+    private static Device CloneDevice(Device src, string? idOverride = null)
     {
         var copy = new Device
         {
@@ -480,6 +510,10 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             RecipeAddress = src.RecipeAddress,
             TargetCycle = src.TargetCycle,
         };
+        // 副本默认使用新 Id；导入恢复时可指定保留源 Id（须在任何子配置创建前设置，
+        // 子集合的 DeviceId 与确定性 Id 生成都依赖此值）
+        if (!string.IsNullOrWhiteSpace(idOverride))
+            copy.Id = idOverride;
 
         foreach (var a in src.Alarms)
         {
@@ -689,7 +723,11 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     private void NavigateToError(DeviceConfigError err)
     {
         if (err.Device != null)
+        {
+            _suppressSelectionGuard = true;
             SelectedDevice = err.Device;
+            _suppressSelectionGuard = false;
+        }
         SelectedTabIndex = err.TargetTabIndex;
     }
 
@@ -719,12 +757,123 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         var imported = _configIO.ImportConfig(Devices.Count);
         if (imported == null) return;
 
+        _suppressSelectionGuard = true;
         SelectedDevice = Devices.FirstOrDefault();
+        _suppressSelectionGuard = false;
         SaveCommand.NotifyCanExecuteChanged();
         RemoveDeviceCommand.NotifyCanExecuteChanged();
         DeviceList.RefreshDeviceList();
         RefreshAddressConflictFlag();
         MarkDirty();
+    }
+
+    // ──────────── 全部设备校验（列表头入口，不落盘） ────────────
+
+    private bool CanValidateAll() => !IsLoading && CanManageDevices;
+
+    /// <summary>
+    /// 主动触发全量配置校验（不保存）：聚合全部设备校验错误并弹出可定位的错误清单；
+    /// 无错误时提示通过数量。与保存时的校验共用同一错误源（DeviceConfigValidator）。
+    /// 修复（2026-08-30）：此前校验只在点击保存时触发，用户无法在保存前独立确认配置健康状态。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanValidateAll))]
+    private void ValidateAllDevices()
+    {
+        if (!CanValidateAll()) return;
+        var errors = DeviceConfigValidator.CollectValidationErrors(
+            Devices,
+            _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current);
+        ValidationErrors = errors;
+        OnPropertyChanged(nameof(ValidationErrors));
+        OnPropertyChanged(nameof(CurrentDeviceValidationErrors));
+        OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
+
+        if (errors.Count == 0)
+        {
+            var msg = string.Format(Strings.K725, Devices.Count);
+            Feedback.Success(msg);
+            _dialog.NotifySuccess(msg);
+            return;
+        }
+
+        Feedback.Error(string.Format(Strings.F067, errors.Count));
+        if (_dialog.ShowConfigErrors(errors) is { } selectedError)
+            NavigateToError(selectedError);
+    }
+
+    // ──────────── 单台设备 JSON 导出 / 导入（备份与恢复单机配置） ────────────
+
+    private bool CanExportDevice() => SelectedDevice != null && !IsLoading && CanManageDevices;
+
+    private bool CanImportDevice() => !IsLoading && CanManageDevices;
+
+    /// <summary>
+    /// 导出选中设备（含全部子配置）为独立 JSON 文件，便于单机备份/迁移。
+    /// 仅序列化，不触发脏标记或持久化。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExportDevice))]
+    private void ExportDevice()
+    {
+        var src = SelectedDevice;
+        if (src == null || !CanExportDevice()) return;
+        var defaultName = (src.Name ?? "device").Trim();
+        foreach (var c in System.IO.Path.GetInvalidFileNameChars()) defaultName = defaultName.Replace(c, '_');
+        var path = _dialog.ShowSaveFileDialog(Strings.M226, $"{defaultName}.json", Strings.K695);
+        if (string.IsNullOrEmpty(path)) return;
+        try
+        {
+            System.IO.File.WriteAllText(path, JsonSerializer.Serialize(src, DeviceJsonOptions));
+            _dialog.NotifySuccess(string.Format(Strings.K730, src.Name));
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "导出单台设备配置失败");
+            _dialog.NotifyError(string.Format(Strings.F090, ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// 从 JSON 文件导入单台设备（新增保留源 Id；与现有设备 Id 冲突或解析失败时拒绝导入）。
+    /// 子配置经 CloneDevice 深拷贝并重新挂接 DeviceId，与复制设备共用同一条安全路径。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanImportDevice))]
+    private void ImportDevice()
+    {
+        if (!CanImportDevice()) return;
+        var path = _dialog.ShowOpenFileDialog(Strings.M227, Strings.K695);
+        if (string.IsNullOrEmpty(path)) return;
+
+        Device? imported;
+        try
+        {
+            imported = JsonSerializer.Deserialize<Device>(System.IO.File.ReadAllText(path), DeviceJsonOptions);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "单台设备导入文件解析失败");
+            imported = null;
+        }
+
+        if (imported == null || string.IsNullOrWhiteSpace(imported.Id))
+        {
+            _dialog.NotifyError(Strings.K731);
+            return;
+        }
+        if (Devices.Any(d => string.Equals(d.Id, imported.Id, StringComparison.OrdinalIgnoreCase)))
+        {
+            _dialog.NotifyError(string.Format(Strings.K732, imported.Id));
+            return;
+        }
+
+        // 保留文件中的源 Id（恢复语义）；重名时追加后缀避免混淆
+        var copy = CloneDevice(imported, imported.Id);
+        copy.Name = EnsureUniqueName(imported.Name, Devices.Select(d => d.Name));
+        Devices.Add(copy);
+        _deviceRepository.AddRuntime(copy);
+        SelectedDevice = copy;
+        MarkDirty();
+        RefreshAddressConflictFlag();
+        _dialog.NotifySuccess(string.Format(Strings.K733, copy.Name));
     }
 
     /// <summary>
@@ -756,7 +905,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             var restored = await _configIO.RollbackToBackupAsync();
             if (restored == null) return;
 
+            _suppressSelectionGuard = true;
             SelectedDevice = Devices.FirstOrDefault();
+            _suppressSelectionGuard = false;
             DeviceList.RefreshDeviceList();
             RefreshAddressConflictFlag();
             if (remote)
@@ -823,6 +974,29 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     partial void OnSelectedDeviceChanged(Device? value)
     {
+        // 切换设备前未保存保护：存在未保存更改时弹确认，拒绝则回退选择
+        // 修复（2026-08-30）：配置多、Tab 层级深，误切列表会静默丢弃整页编辑内容。
+        if (!_suppressSelectionGuard)
+        {
+            var previous = _selectionGuardPrevious;
+            if (value != null && !ReferenceEquals(value, previous) && IsDirty)
+            {
+                var confirm = _dialog.Show(
+                    Strings.K727,
+                    Strings.M118, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes)
+                {
+                    // 拒绝切换：回退原选择（置位抑制避免递归触发），本次不更新确认记录
+                    _suppressSelectionGuard = true;
+                    SelectedDevice = previous;
+                    _suppressSelectionGuard = false;
+                    return;
+                }
+            }
+            // 已确认或本来允许切换：推进确认记录
+            _selectionGuardPrevious = value;
+        }
+
         // 各子 VM（报警/缺陷/计数报警/工单/PLC）通过 DeviceChildManagerViewModel 订阅宿主 PropertyChanged 自动同步 SelectedDevice，无需在此手动赋值。
         OnPropertyChanged(nameof(CurrentDeviceValidationErrors));
         OnPropertyChanged(nameof(HasCurrentDeviceValidationErrors));
@@ -834,6 +1008,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         ExportConfigCommand.NotifyCanExecuteChanged();
         RollbackToBackupCommand.NotifyCanExecuteChanged();
         SeedSampleDevicesCommand.NotifyCanExecuteChanged();
+        ValidateAllDevicesCommand.NotifyCanExecuteChanged();
+        ExportDeviceCommand.NotifyCanExecuteChanged();
+        ImportDeviceCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsLoadingChanged(bool value)

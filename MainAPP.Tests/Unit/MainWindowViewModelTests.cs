@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Windows;
 using LicenseManager.Services;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
@@ -408,5 +409,70 @@ public class MainWindowViewModelTests : IDisposable
 
         Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
         vm.Dispose();
+    }
+
+    // ───────────── 未保存离开保护：跨页导航拦截（集成：真实 VM 图 + FakeDialogService） ─────────────
+
+    [Fact]
+    public void Navigate_LeavingDeviceManager_DirtyAndNo_StaysOnPage()
+    {
+        var vm = NewVm();
+        vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
+        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+
+        // 真实设备管理 VM：加设备并改名置脏
+        vm.DeviceManagerViewModel.AddDeviceCommand.Execute(null);
+        vm.DeviceManagerViewModel.SelectedDevice!.Name = "临时改名";
+        Assert.True(vm.DeviceManagerViewModel.IsDirty);
+
+        _dialog.ShowResult = MessageBoxResult.No;
+        vm.Navigate(NavigationPageCatalog.Home.Key);
+
+        // 拒绝离开：仍停留在设备管理页，且确实弹过 K734 确认
+        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+        Assert.Contains(_dialog.ShowCalls, c => c.Message.Contains("离开设备管理页", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Navigate_LeavingDeviceManager_DirtyAndYes_MovesAway()
+    {
+        var vm = NewVm();
+        vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
+        vm.DeviceManagerViewModel.AddDeviceCommand.Execute(null);
+        vm.DeviceManagerViewModel.SelectedDevice!.Name = "临时改名";
+        Assert.True(vm.DeviceManagerViewModel.IsDirty);
+
+        _dialog.ShowResult = MessageBoxResult.Yes;
+        vm.Navigate(NavigationPageCatalog.Home.Key);
+
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void Navigate_LeavingDeviceManager_Clean_MovesWithoutPrompt()
+    {
+        var vm = NewVm();
+        vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
+
+        _dialog.ShowCalls.Clear();
+        vm.Navigate(NavigationPageCatalog.Home.Key);
+
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+        Assert.DoesNotContain(_dialog.ShowCalls, c => c.Message.Contains("离开设备管理页", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Navigate_ToDeviceManager_FromDeviceManager_NoPrompt()
+    {
+        var vm = NewVm();
+        vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
+        vm.DeviceManagerViewModel.AddDeviceCommand.Execute(null);
+        vm.DeviceManagerViewModel.SelectedDevice!.Name = "临时改名";
+        Assert.True(vm.DeviceManagerViewModel.IsDirty);
+        _dialog.ShowCalls.Clear();
+
+        // 目标页即当前页（原地重进）不触发拦截，避免无意义弹窗
+        vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
+        Assert.Empty(_dialog.ShowCalls);
     }
 }

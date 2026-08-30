@@ -177,6 +177,97 @@ public class ConfigSyncHandlerTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveDevices_SnSourceWithoutTriggerAddress_Throws()
+    {
+        // SN 类型源必须配置触发地址：无触发地址的源每轮无条件读值，不会产生追溯事件（静默失效）
+        var dto = new DeviceConfigDto
+        {
+            Id = "dev-1",
+            Name = "设备",
+            TargetCycle = 600,
+            OkCountAddress = "D100",
+            NgCountAddress = "D102",
+            StatusCountAddress = "D104",
+            ProductionResetAddress = "D106",
+            RecipeName = "",
+            RecipeAddress = "",
+            Sources =
+            [
+                new DataSourceConfigDto
+                {
+                    Id = "src-sn",
+                    Name = "SN采集",
+                    DeviceId = "dev-1",
+                    Type = "SN", // SnEventConventions.SourceType；无 TriggerAddress
+                    Values =
+                    [
+                        new DataSourceValueConfigDto
+                        {
+                            Id = "val-sn",
+                            Name = "SN",
+                            DataType = Kanban.Contracts.Enums.DataSourceValueType.String,
+                            PlcAddress = "D500",
+                            StringLength = 32,
+                        },
+                    ],
+                },
+            ],
+        };
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => _handler.SaveDevicesAsync([dto]));
+        Assert.Contains("SN 类型", ex.Message);
+        Assert.Contains("触发地址", ex.Message);
+    }
+
+    [Fact]
+    public async Task SaveDevices_SnSourceWithTriggerAddress_Accepted()
+    {
+        // 对照：配置了触发地址的 SN 源应通过校验
+        var dto = new DeviceConfigDto
+        {
+            Id = "dev-1",
+            Name = "设备",
+            TargetCycle = 600,
+            OkCountAddress = "D100",
+            NgCountAddress = "D102",
+            StatusCountAddress = "D104",
+            ProductionResetAddress = "D106",
+            RecipeName = "",
+            RecipeAddress = "",
+            Sources =
+            [
+                new DataSourceConfigDto
+                {
+                    Id = "src-sn",
+                    Name = "SN采集",
+                    DeviceId = "dev-1",
+                    Type = "SN",
+                    TriggerAddress = "D600",
+                    TriggerValue = 1,
+                    AckValue = 2,
+                    Values =
+                    [
+                        new DataSourceValueConfigDto
+                        {
+                            Id = "val-sn",
+                            Name = "SN",
+                            DataType = Kanban.Contracts.Enums.DataSourceValueType.String,
+                            PlcAddress = "D500",
+                            StringLength = 32,
+                        },
+                    ],
+                },
+            ],
+        };
+
+        await _handler.SaveDevicesAsync([dto]);
+
+        var saved = _deviceRepository.Devices[0];
+        Assert.Equal("SN", saved.Sources[0].Type);
+        Assert.Equal("D600", saved.Sources[0].TriggerAddress);
+    }
+
+    [Fact]
     public async Task SaveDevices_UsesActiveKeyenceCodecForNativeAddresses()
     {
         var profile = new PlcRuntimeProfileProvider(

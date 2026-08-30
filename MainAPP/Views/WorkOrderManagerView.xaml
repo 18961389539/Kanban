@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.WorkOrderManagerView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,12 +8,31 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
+    xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
     d:DesignHeight="700"
     d:DesignWidth="1100"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  工单状态色点/文本/筛选 chip 已全局化至 Styles/Components.xaml（StatusDot/StatusText/TimePresetChip）  -->
+        <!--  列表行右键菜单：ContextMenu 附加在 ListBox 上，PlacementTarget=ListBox，
+              DataContext=WorkOrderManagerViewModel。命令无参（作用于 SelectedWorkOrder）；
+              code-behind 在 PreviewMouseRightButtonDown 先选中右键行，保证菜单操作的是该行。  -->
+        <ContextMenu x:Key="WorkOrderRowContextMenu">
+            <MenuItem Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K072}" />
+            <MenuItem Command="{Binding PlacementTarget.DataContext.StartCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K036}" />
+            <MenuItem Command="{Binding PlacementTarget.DataContext.CompleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K076}" />
+            <MenuItem Command="{Binding PlacementTarget.DataContext.AbortCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K077}" />
+            <Separator />
+            <MenuItem Command="{Binding PlacementTarget.DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K026}" />
+            <MenuItem Command="{Binding PlacementTarget.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      Header="{x:Static resources:Strings.K034}" />
+        </ContextMenu>
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -34,6 +53,8 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
@@ -47,8 +68,30 @@
                                Text="{Binding WorkOrders.Count, StringFormat={}({0})}" />
                 </DockPanel>
 
+                <!--  排程甘特区（只读，折叠）：设备×时间矩形条，随筛选联动；当前时刻红色竖线，冲突工单橙色描边  -->
+                <Expander Grid.Row="1" Margin="18,0,18,8" IsExpanded="False" Header="{x:Static resources:Strings.K901}">
+                    <Grid Height="220">
+                        <oxy:PlotView Model="{Binding WorkOrderGanttChartModel}" Background="Transparent" />
+                        <!--  空数据提示：当前筛选无工单时显示，避免空轴误导  -->
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.K906}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FilteredView.IsEmpty}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Expander>
+
                 <!--  搜索 + 设备筛选（状态筛选已由下方 chip 单选组承担，避免重复 UI）  -->
-                <Grid Grid.Row="1" Margin="18,0,18,12">
+                <Grid Grid.Row="2" Margin="18,0,18,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="8" />
@@ -70,7 +113,7 @@
                 </Grid>
 
                 <!-- 高级筛选：按计划日期和生产结果快速定位异常工单 -->
-                <WrapPanel Grid.Row="2" Margin="18,0,18,8">
+                <WrapPanel Grid.Row="3" Margin="18,0,18,8">
                     <DatePicker Width="128" Margin="0,0,6,4" SelectedDate="{Binding FilterFromDate, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.K556}" />
                     <DatePicker Width="128" Margin="0,0,12,4" SelectedDate="{Binding FilterToDate, Mode=TwoWay}" ToolTip="{x:Static resources:Strings.K557}" />
                     <ComboBox Width="150" Margin="0,0,12,4"
@@ -114,7 +157,7 @@
                 </WrapPanel>
 
                 <!--  状态分布概览：一眼看到各状态工单数量，点击切换筛选（RadioButton 单选互斥）  -->
-                <Grid Grid.Row="3" Margin="18,0,18,8">
+                <Grid Grid.Row="4" Margin="18,0,18,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -199,7 +242,7 @@
                 </Grid>
 
                 <!--  列表表头  -->
-                <Grid Grid.Row="4" Margin="18,0,18,4">
+                <Grid Grid.Row="5" Margin="18,0,18,4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="120" />
@@ -211,7 +254,7 @@
                 </Grid>
 
                 <!--  工单列表 + 空状态提示  -->
-                <Grid Grid.Row="5">
+                <Grid Grid.Row="6">
                     <ListBox
                         Margin="0,0,0,0"
                         ItemsSource="{Binding FilteredView}"
@@ -219,7 +262,10 @@
                         ItemContainerStyle="{StaticResource CardListItemStyle}"
                         VirtualizingStackPanel.IsVirtualizing="True"
                         VirtualizingStackPanel.VirtualizationMode="Recycling"
-                        VirtualizingStackPanel.ScrollUnit="Pixel">
+                        VirtualizingStackPanel.ScrollUnit="Pixel"
+                        MouseDoubleClick="OnWorkOrderListDoubleClick"
+                        PreviewMouseRightButtonDown="OnWorkOrderListPreviewMouseRightButtonDown"
+                        ContextMenu="{StaticResource WorkOrderRowContextMenu}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
@@ -229,12 +275,62 @@
                                         <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                                   Foreground="{StaticResource PrimaryTextBrush}"
-                                                   Text="{Binding OrderNo}" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding OrderNo}" TextTrimming="CharacterEllipsis" />
+                                            <!--  计划冲突标识：Id 命中 ConflictOrderIds 时显示（MultiBinding 依赖 VM 集合替换自动重估，无需实体 INPC）  -->
+                                            <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
+                                                    BorderBrush="{StaticResource WarningBrush}" BorderThickness="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True">
+                                                                <DataTrigger.Binding>
+                                                                    <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
+                                                                        <Binding Path="Id" />
+                                                                        <Binding Path="DataContext.ConflictOrderIds"
+                                                                                 RelativeSource="{RelativeSource AncestorType=ListBox}" />
+                                                                    </MultiBinding>
+                                                                </DataTrigger.Binding>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
+                                                           Foreground="{StaticResource WarningBrush}"
+                                                           Text="{x:Static resources:Strings.K762}" />
+                                            </Border>
+                                            <!--  逾期标识：Id 命中 OverdueOrderIds 时显示  -->
+                                            <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
+                                                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True">
+                                                                <DataTrigger.Binding>
+                                                                    <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
+                                                                        <Binding Path="Id" />
+                                                                        <Binding Path="DataContext.OverdueOrderIds"
+                                                                                 RelativeSource="{RelativeSource AncestorType=ListBox}" />
+                                                                    </MultiBinding>
+                                                                </DataTrigger.Binding>
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
+                                                           Foreground="{StaticResource DangerBrush}"
+                                                           Text="{x:Static resources:Strings.K763}" />
+                                            </Border>
+                                        </StackPanel>
                                         <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}"
                                                    Text="{Binding ProductName}" TextTrimming="CharacterEllipsis" />
-                                        <!--  产量进度（Production 非 null 时显示：已生产 OkCount / 计划 TargetQuantity 件）  -->
+                                        <!--  产量进度（Production 非 null 时显示：已生产 OkCount / 计划 TargetQuantity 件 + 达成率细进度条）  -->
                                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
                                                     Visibility="{Binding Production, Converter={StaticResource NullToVisibilityConverter}}">
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}"
@@ -253,10 +349,28 @@
                                                        Foreground="{StaticResource SecondaryTextBrush}"
                                                        Text="{Binding Production.ScheduleStatusText}" />
                                         </StackPanel>
+                                        <!--  达成率细进度条（达成率 0~1 → 进度 0~100%），未查询产量时不显示  -->
+                                        <ProgressBar Height="4" Maximum="1" Value="{Binding Production.AchievementRate}"
+                                                     Margin="0,3,0,0" BorderThickness="0"
+                                                     Visibility="{Binding Production, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <ProgressBar.Style>
+                                                <Style TargetType="ProgressBar">
+                                                    <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Production.AchievementRate}" Value="1">
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ProgressBar.Style>
+                                        </ProgressBar>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                               Foreground="{StaticResource SecondaryTextBrush}"
-                                               Text="{Binding DeviceName}" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding DeviceName}" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                         <Ellipse Style="{StaticResource StatusDot}" />
                                         <TextBlock Margin="6,0,0,0" Style="{StaticResource StatusText}" />
@@ -285,12 +399,12 @@
                 </Grid>
 
                 <!--  底部操作按钮  -->
-                <DockPanel Grid.Row="6" Margin="18,12,18,18" LastChildFill="False">
+                <DockPanel Grid.Row="7" Margin="18,12,18,18" LastChildFill="False">
                     <StackPanel Orientation="Horizontal">
                         <Button Command="{Binding AddCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
                                 Tag="{x:Static mi:MaterialIconKind.Plus}" />
                         <Button Margin="8,0,0,0" Command="{Binding EditCommand}" Content="{x:Static resources:Strings.K072}" Style="{StaticResource IconButtonDefault}"
-                                Tag="{x:Static mi:MaterialIconKind.PencilOutline}" />
+                                Tag="{x:Static mi:MaterialIconKind.PencilOutline}" ToolTip="{x:Static resources:Strings.K789}" />
                         <Button Margin="8,0,0,0" Command="{Binding CopyCommand}" Content="{x:Static resources:Strings.K026}" Style="{StaticResource IconButtonDefault}"
                             Tag="{x:Static mi:MaterialIconKind.ContentCopy}" ToolTip="{x:Static resources:Strings.K567}" />
                         <Button Margin="8,0,0,0" Command="{Binding DeleteCommand}" Content="{x:Static resources:Strings.K034}" Style="{StaticResource IconButtonDanger}"
@@ -299,6 +413,10 @@
                                 Style="{StaticResource IconButtonDefault}"
                                 Tag="{x:Static mi:MaterialIconKind.ChartLineVariant}"
                                 ToolTip="{x:Static resources:Strings.K569}" />
+                        <Button Margin="8,0,0,0" Command="{Binding ImportCsvCommand}" Content="{x:Static resources:Strings.K788}"
+                                Style="{StaticResource IconButtonDefault}"
+                                Tag="{x:Static mi:MaterialIconKind.FileImportOutline}"
+                                ToolTip="{x:Static resources:Strings.K764}" />
                         <Button Margin="8,0,0,0" Command="{Binding ExportCsvCommand}" Content="{x:Static resources:Strings.K079}"
                                 Style="{StaticResource IconButtonDefault}"
                                 Tag="{x:Static mi:MaterialIconKind.FileExportOutline}"
@@ -311,9 +429,40 @@
                             Style="{StaticResource IconButtonDefault}"
                             Tag="{x:Static mi:MaterialIconKind.ToyBrickPlus}"
                             ToolTip="{x:Static resources:Strings.K572}" />
-                    <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Margin="0,0,12,0"
-                               FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{Binding FilteredCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F259}" />
+                    <!--  筛选结果汇总条：单数 / 目标总量 / 合格总量 / 平均达成率  -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border Padding="6,2" CornerRadius="6" Background="{StaticResource SecondaryRegionBrush}" ToolTip="{x:Static resources:Strings.K768}">
+                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{Binding FilteredCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F259}" />
+                        </Border>
+                        <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="6" Background="{StaticResource SecondaryRegionBrush}">
+                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{x:Static resources:Strings.K765}">
+                                <TextBlock.Inlines>
+                                    <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                         Text="{Binding FilteredTargetTotal, Mode=OneWay, StringFormat={}{0:N0}}" />
+                                </TextBlock.Inlines>
+                            </TextBlock>
+                        </Border>
+                        <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="6" Background="{StaticResource SecondaryRegionBrush}">
+                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{x:Static resources:Strings.K766}">
+                                <TextBlock.Inlines>
+                                    <Run FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                                         Text="{Binding FilteredOkTotal, Mode=OneWay, StringFormat={}{0:N0}}" />
+                                </TextBlock.Inlines>
+                            </TextBlock>
+                        </Border>
+                        <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="6" Background="{StaticResource SecondaryRegionBrush}">
+                            <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{x:Static resources:Strings.K767}">
+                                <TextBlock.Inlines>
+                                    <Run FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                                         Text="{Binding FilteredAchievementRate, Mode=OneWay, StringFormat={}{0:P1}}" />
+                                </TextBlock.Inlines>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
                 </DockPanel>
             </Grid>
         </Border>
@@ -387,7 +536,7 @@
                         <!--  详情字段（仅在 SelectedWorkOrder 非 null 时显示，内容块水平居中）  -->
                         <StackPanel MaxWidth="520" HorizontalAlignment="Center"
                                     Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
-                            <!--  顶部摘要卡片：工单号 + 产品/设备 + 状态徽章  -->
+                            <!--  顶部摘要卡片：工单号 + 产品/设备 + 复制按钮 + 状态徽章  -->
                             <Border Margin="0,0,0,12" Padding="16,14" CornerRadius="12"
                                     Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                                 <Grid>
@@ -396,18 +545,40 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                                   Foreground="{StaticResource PrimaryTextBrush}"
-                                                   Text="{Binding SelectedWorkOrder.OrderNo}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeCaption}"
-                                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                                   Text="{Binding SelectedWorkOrder.ProductName}" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.OrderNo}" TextTrimming="CharacterEllipsis" />
+                                            <!--  复制工单号  -->
+                                            <Button Margin="6,0,0,0" Padding="3,0" Command="{Binding CopyOrderNoCommand}"
+                                                    Style="{StaticResource IconButtonDefault}"
+                                                    Tag="{x:Static mi:MaterialIconKind.ContentCopy}"
+                                                    ToolTip="{x:Static resources:Strings.K769}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                                            <TextBlock FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.ProductName}" TextTrimming="CharacterEllipsis" />
+                                            <!--  复制产品编码  -->
+                                            <Button Margin="6,0,0,0" Padding="3,0" Command="{Binding CopyProductCodeCommand}"
+                                                    Style="{StaticResource IconButtonDefault}"
+                                                    Tag="{x:Static mi:MaterialIconKind.ContentCopy}"
+                                                    ToolTip="{x:Static resources:Strings.K770}" />
+                                        </StackPanel>
                                         <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
                                                        Text="{Binding SelectedWorkOrder.ProductCode}" />
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text=" · " />
                                             <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
                                                        Text="{Binding SelectedWorkOrder.DeviceName}" />
+                                            <!--  详情页逾期徽章：逾期时显示"逾期 Xh"（VM 计算属性驱动，分钟级定时刷新可自动重绑）  -->
+                                            <Border Margin="8,0,0,0" Padding="5,1" CornerRadius="6"
+                                                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1"
+                                                    Visibility="{Binding SelectedOverdueHintText, Converter={StaticResource NullToVisibilityConverter}}">
+                                                <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
+                                                           Foreground="{StaticResource DangerBrush}"
+                                                           Text="{Binding SelectedOverdueHintText}" />
+                                            </Border>
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -488,6 +659,164 @@
                                                Foreground="{StaticResource PrimaryTextBrush}" TextWrapping="Wrap"
                                                Text="{Binding SelectedWorkOrder.Remark, TargetNullValue=—}" />
                                 </DockPanel>
+                            </Border>
+
+                            <!--  SN 明细卡片（序列号追溯，Local/Remote 均可用）  -->
+                            <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}"
+                                    Visibility="{Binding IsSnSupported, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K918}" />
+                                        <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{Binding SnTotalCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=K919}" />
+                                    </DockPanel>
+
+                                    <Border Margin="0,0,0,8" CornerRadius="6" Background="{StaticResource RegionBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                        <DataGrid
+                                            MaxHeight="220"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            AutomationProperties.Name="SN Items"
+                                            CellStyle="{StaticResource KanbanDataGridCell}"
+                                            ColumnHeaderStyle="{StaticResource KanbanDataGridColumnHeader}"
+                                            ItemsSource="{Binding SnItems}"
+                                            Style="{StaticResource KanbanDataGrid}"
+                                            IsReadOnly="True"
+                                            VirtualizingStackPanel.IsVirtualizing="True"
+                                            VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="SN" Binding="{Binding Sn}" Width="*" />
+                                                <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="150" />
+                                                <DataGridTemplateColumn Header="{x:Static resources:Strings.K924}" Width="60">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock>
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="OK" />
+                                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Result}" Value="1">
+                                                                                <Setter Property="Text" Value="NG" />
+                                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Border>
+
+                                    <!-- 空态 -->
+                                    <TextBlock Margin="0,0,0,8" FontSize="{DynamicResource FontSizeHint}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K920}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasSnItems}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+
+                                    <!-- 分页 -->
+                                    <DockPanel LastChildFill="False">
+                                        <Button Command="{Binding SnPreviousPageCommand}" Content="{x:Static resources:Strings.K925}"
+                                                Style="{StaticResource IconButtonDefault}" Tag="{x:Static mi:MaterialIconKind.ChevronLeft}" />
+                                        <TextBlock Margin="12,0" VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding SnPage, Converter={StaticResource LocFormatConverter}, ConverterParameter=K927}" />
+                                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
+                                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                                   Text="{Binding SnTotalPages, StringFormat={}/ {0}}" />
+                                        <Button DockPanel.Dock="Right" Command="{Binding SnNextPageCommand}" Content="{x:Static resources:Strings.K926}"
+                                                Style="{StaticResource IconButtonDefault}" Tag="{x:Static mi:MaterialIconKind.ChevronRight}" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--  时间线卡片：创建 → 计划 → 实际开始 → 实际结束（#7）  -->
+                            <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="10" Background="{StaticResource SecondaryRegionBrush}">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock DockPanel.Dock="Left" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K771}" />
+                                    </DockPanel>
+                                    <StackPanel>
+                                        <!--  创建  -->
+                                        <Grid Margin="0,2,0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="14" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,5,0,0"
+                                                     Fill="{StaticResource ThirdlyTextBrush}" />
+                                            <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K772}" />
+                                            <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                        </Grid>
+                                        <!--  计划开始  -->
+                                        <Grid Margin="0,2,0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="14" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,5,0,0"
+                                                     Fill="{StaticResource ThirdlyTextBrush}" />
+                                            <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K773}" />
+                                            <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                        </Grid>
+                                        <!--  实际开始（Running/Completed/Aborted 才有）  -->
+                                        <Grid Margin="0,2,0,2" Visibility="{Binding SelectedWorkOrder.StartedAt, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="14" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,5,0,0"
+                                                     Fill="{StaticResource PrimaryBrush}" />
+                                            <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K774}" />
+                                            <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryBrush}"
+                                                       Text="{Binding SelectedWorkOrder.StartedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                        </Grid>
+                                        <!--  实际结束（Completed/Aborted 才有）  -->
+                                        <Grid Margin="0,2,0,2" Visibility="{Binding SelectedWorkOrder.CompletedAt, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="14" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Grid.Column="0" Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,5,0,0"
+                                                     Fill="{StaticResource SuccessBrush}" />
+                                            <TextBlock Grid.Column="1" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.Status, Converter={StaticResource WorkOrderEndLabelConverter}}" />
+                                            <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeCaption}"
+                                                       Foreground="{StaticResource PrimaryTextBrush}"
+                                                       Text="{Binding SelectedWorkOrder.CompletedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>

@@ -877,7 +877,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K128"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "最长持续", ["en-US"] = "Longest Duration", ["ja-JP"] = "最長継続", ["pt-BR"] = "Longest Duration"
+            ["zh-CN"] = "最早报警·已持续", ["en-US"] = "Earliest Alarm · Ongoing", ["ja-JP"] = "最早アラーム・継続中", ["pt-BR"] = "Earliest Alarm · Ongoing"
         },
         ["Wpf|K129"] = new Dictionary<string, string>
         {
@@ -2881,7 +2881,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F001"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "CSV 共 {0} 行，{1} 行校验失败将跳过。\r\n", ["en-US"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\r\n", ["ja-JP"] = "CSV 合計 {0} 行、{1} 行が検証に失敗しスキップされます。\r\n", ["pt-BR"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\r\n"
+            ["zh-CN"] = "CSV 共 {0} 行，{1} 行校验失败将跳过。\n", ["en-US"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\n", ["ja-JP"] = "CSV 合計 {0} 行、{1} 行が検証に失敗しスキップされます。\n", ["pt-BR"] = "CSV has {0} rows in total; {1} rows failed validation and will be skipped.\n"
         },
         ["Wpf|F002"] = new Dictionary<string, string>
         {
@@ -2957,7 +2957,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F020"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "\r\n  ...（共 {0} 条）", ["en-US"] = "\r\n  ... ({0} in total)", ["ja-JP"] = "\r\n  ...（計 {0} 件）", ["pt-BR"] = "\r\n  ... ({0} in total)"
+            ["zh-CN"] = "\n  ...（共 {0} 条）", ["en-US"] = "\n  ... ({0} in total)", ["ja-JP"] = "\n  ...（計 {0} 件）", ["pt-BR"] = "\n  ... ({0} in total)"
         },
         ["Wpf|F021"] = new Dictionary<string, string>
         {
@@ -3005,7 +3005,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F032"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "{0} · {1}\r\n级别：{2}\r\n触发时间：{3:yyyy-MM-dd HH:mm:ss}\r\n持续时间：{4}", ["en-US"] = "{0} · {1}\r\nLevel: {2}\r\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\r\nDuration: {4}", ["ja-JP"] = "{0} · {1}\r\nレベル: {2}\r\n発生時刻: {3:yyyy-MM-dd HH:mm:ss}\r\n継続時間: {4}", ["pt-BR"] = "{0} · {1}\r\nLevel: {2}\r\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\r\nDuration: {4}"
+            ["zh-CN"] = "{0} · {1}\n级别：{2}\n触发时间：{3:yyyy-MM-dd HH:mm:ss}\n持续时间：{4}", ["en-US"] = "{0} · {1}\nLevel: {2}\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\nDuration: {4}", ["ja-JP"] = "{0} · {1}\nレベル: {2}\n発生時刻: {3:yyyy-MM-dd HH:mm:ss}\n継続時間: {4}", ["pt-BR"] = "{0} · {1}\nLevel: {2}\nTriggered: {3:yyyy-MM-dd HH:mm:ss}\nDuration: {4}"
         },
         ["Wpf|F033"] = new Dictionary<string, string>
         {
@@ -3221,7 +3221,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F086"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "失败明细：\r\n  · {0}", ["en-US"] = "Failed details:\r\n  · {0}", ["ja-JP"] = "失敗の詳細:\r\n  · {0}", ["pt-BR"] = "Failed details:\r\n  · {0}"
+            ["zh-CN"] = "失败明细：\n  · {0}", ["en-US"] = "Failed details:\n  · {0}", ["ja-JP"] = "失敗の詳細:\n  · {0}", ["pt-BR"] = "Failed details:\n  · {0}"
         },
         ["Wpf|F087"] = new Dictionary<string, string>
         {
@@ -3241,11 +3241,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|F091"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条报警到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarms will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "将导入 {0} 条报警到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarms will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F092"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将用 20 台虚拟设备替换当前 {0} 台设备配置，当前未保存的改动会丢失。是否继续？\r\n（替换后请点击保存以持久化）", ["en-US"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\r\n(Save after replacement to persist)", ["ja-JP"] = "20 台の仮想デバイスで現在の {0} 台の設定を置き換えます。未保存の変更は失われます。続行しますか？\r\n（置き換え後に保存してください）", ["pt-BR"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\r\n(Save after replacement to persist)"
+            ["zh-CN"] = "将用 20 台虚拟设备替换当前 {0} 台设备配置，当前未保存的改动会丢失。是否继续？\n（替换后请点击保存以持久化）", ["en-US"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\n(Save after replacement to persist)", ["ja-JP"] = "20 台の仮想デバイスで現在の {0} 台の設定を置き換えます。未保存の変更は失われます。続行しますか？\n（置き換え後に保存してください）", ["pt-BR"] = "Replace the current {0} device configs with 20 virtual devices; unsaved changes will be lost. Continue?\n(Save after replacement to persist)"
         },
         ["Wpf|F093"] = new Dictionary<string, string>
         {
@@ -3285,7 +3285,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F102"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条报警（{1} 行跳过）。\r\n", ["en-US"] = "{0} alarms imported ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件のアラームをインポートしました（{1} 行スキップ）。\r\n", ["pt-BR"] = "{0} alarms imported ({1} rows skipped).\r\n"
+            ["zh-CN"] = "已导入 {0} 条报警（{1} 行跳过）。\n", ["en-US"] = "{0} alarms imported ({1} rows skipped).\n", ["ja-JP"] = "{0} 件のアラームをインポートしました（{1} 行スキップ）。\n", ["pt-BR"] = "{0} alarms imported ({1} rows skipped).\n"
         },
         ["Wpf|F103"] = new Dictionary<string, string>
         {
@@ -3409,7 +3409,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F133"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "数据库/采集初始化失败，部分功能可能不可用：\r\n\r\n{0}", ["en-US"] = "Database/acquisition initialization failed; some features may be unavailable:\r\n\r\n{0}", ["ja-JP"] = "データベース/収集の初期化に失敗しました。一部機能が利用できない可能性があります:\r\n\r\n{0}", ["pt-BR"] = "Database/acquisition initialization failed; some features may be unavailable:\r\n\r\n{0}"
+            ["zh-CN"] = "数据库/采集初始化失败，部分功能可能不可用：\n\n{0}", ["en-US"] = "Database/acquisition initialization failed; some features may be unavailable:\n\n{0}", ["ja-JP"] = "データベース/収集の初期化に失敗しました。一部機能が利用できない可能性があります:\n\n{0}", ["pt-BR"] = "Database/acquisition initialization failed; some features may be unavailable:\n\n{0}"
         },
         ["Wpf|F134"] = new Dictionary<string, string>
         {
@@ -3441,7 +3441,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F141"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条报警将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} alarms will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "有效 {0} 条报警将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} alarms will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F142"] = new Dictionary<string, string>
         {
@@ -3449,7 +3449,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F143"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何报警：\r\n  · {0}", ["en-US"] = "No alarms imported:\r\n  · {0}", ["ja-JP"] = "アラームはインポートされませんでした:\r\n  · {0}", ["pt-BR"] = "No alarms imported:\r\n  · {0}"
+            ["zh-CN"] = "未导入任何报警：\n  · {0}", ["en-US"] = "No alarms imported:\n  · {0}", ["ja-JP"] = "アラームはインポートされませんでした:\n  · {0}", ["pt-BR"] = "No alarms imported:\n  · {0}"
         },
         ["Wpf|F144"] = new Dictionary<string, string>
         {
@@ -3461,31 +3461,31 @@ public static class LocalizationCatalog
         },
         ["Wpf|F146"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n授权与当前机器不匹配", ["en-US"] = "Machine code: {0}\r\nLicense does not match this machine", ["ja-JP"] = "マシンコード: {0}\r\nこのマシンとライセンスが一致しません", ["pt-BR"] = "Machine code: {0}\r\nLicense does not match this machine"
+            ["zh-CN"] = "机器码：{0}\n授权与当前机器不匹配", ["en-US"] = "Machine code: {0}\nLicense does not match this machine", ["ja-JP"] = "マシンコード: {0}\nこのマシンとライセンスが一致しません", ["pt-BR"] = "Machine code: {0}\nLicense does not match this machine"
         },
         ["Wpf|F147"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n授权已过期，请重新激活", ["en-US"] = "Machine code: {0}\r\nLicense expired; please activate again", ["ja-JP"] = "マシンコード: {0}\r\nライセンスの有効期限が切れています。再アクティベーションしてください", ["pt-BR"] = "Machine code: {0}\r\nLicense expired; please activate again"
+            ["zh-CN"] = "机器码：{0}\n授权已过期，请重新激活", ["en-US"] = "Machine code: {0}\nLicense expired; please activate again", ["ja-JP"] = "マシンコード: {0}\nライセンスの有効期限が切れています。再アクティベーションしてください", ["pt-BR"] = "Machine code: {0}\nLicense expired; please activate again"
         },
         ["Wpf|F148"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n检测到系统时间异常", ["en-US"] = "Machine code: {0}\r\nSystem time anomaly detected", ["ja-JP"] = "マシンコード: {0}\r\nシステム時刻の異常を検出しました", ["pt-BR"] = "Machine code: {0}\r\nSystem time anomaly detected"
+            ["zh-CN"] = "机器码：{0}\n检测到系统时间异常", ["en-US"] = "Machine code: {0}\nSystem time anomaly detected", ["ja-JP"] = "マシンコード: {0}\nシステム時刻の異常を検出しました", ["pt-BR"] = "Machine code: {0}\nSystem time anomaly detected"
         },
         ["Wpf|F149"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n永久授权", ["en-US"] = "Machine code: {0}\r\nPermanent license", ["ja-JP"] = "マシンコード: {0}\r\n永久ライセンス", ["pt-BR"] = "Machine code: {0}\r\nPermanent license"
+            ["zh-CN"] = "机器码：{0}\n永久授权", ["en-US"] = "Machine code: {0}\nPermanent license", ["ja-JP"] = "マシンコード: {0}\n永久ライセンス", ["pt-BR"] = "Machine code: {0}\nPermanent license"
         },
         ["Wpf|F150"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n激活码：{1}\r\n到期：{2:yyyy-MM-dd}", ["en-US"] = "Machine code: {0}\r\nProduct key: {1}\r\nExpires: {2:yyyy-MM-dd}", ["ja-JP"] = "マシンコード: {0}\r\nプロダクトキー: {1}\r\n有効期限: {2:yyyy-MM-dd}", ["pt-BR"] = "Machine code: {0}\r\nProduct key: {1}\r\nExpires: {2:yyyy-MM-dd}"
+            ["zh-CN"] = "机器码：{0}\n激活码：{1}\n到期：{2:yyyy-MM-dd}", ["en-US"] = "Machine code: {0}\nProduct key: {1}\nExpires: {2:yyyy-MM-dd}", ["ja-JP"] = "マシンコード: {0}\nプロダクトキー: {1}\n有効期限: {2:yyyy-MM-dd}", ["pt-BR"] = "Machine code: {0}\nProduct key: {1}\nExpires: {2:yyyy-MM-dd}"
         },
         ["Wpf|F151"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n试用期剩余 {1} 天", ["en-US"] = "Machine code: {0}\r\n{1} trial days remaining", ["ja-JP"] = "マシンコード: {0}\r\n試用残り {1} 日", ["pt-BR"] = "Machine code: {0}\r\n{1} trial days remaining"
+            ["zh-CN"] = "机器码：{0}\n试用期剩余 {1} 天", ["en-US"] = "Machine code: {0}\n{1} trial days remaining", ["ja-JP"] = "マシンコード: {0}\n試用残り {1} 日", ["pt-BR"] = "Machine code: {0}\n{1} trial days remaining"
         },
         ["Wpf|F152"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "机器码：{0}\r\n试用期已过期，请激活", ["en-US"] = "Machine code: {0}\r\nTrial expired; please activate", ["ja-JP"] = "マシンコード: {0}\r\n試用期間が終了しました。アクティベーションしてください", ["pt-BR"] = "Machine code: {0}\r\nTrial expired; please activate"
+            ["zh-CN"] = "机器码：{0}\n试用期已过期，请激活", ["en-US"] = "Machine code: {0}\nTrial expired; please activate", ["ja-JP"] = "マシンコード: {0}\n試用期間が終了しました。アクティベーションしてください", ["pt-BR"] = "Machine code: {0}\nTrial expired; please activate"
         },
         ["Wpf|F153"] = new Dictionary<string, string>
         {
@@ -3581,11 +3581,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|F176"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "确定手动清零「{0}」的 OEE 吗？\r\n将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Manually reset OEE for \"{0}\"?\r\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.", ["ja-JP"] = "「{0}」の OEE を手動リセットしますか？\r\nOK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。", ["pt-BR"] = "Manually reset OEE for \"{0}\"?\r\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone."
+            ["zh-CN"] = "确定手动清零「{0}」的 OEE 吗？\n将清零该设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Manually reset OEE for \"{0}\"?\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone.", ["ja-JP"] = "「{0}」の OEE を手動リセットしますか？\nOK/NG 生産数、稼働/アラーム/待機の累計時間、アラーム状態がクリアされます。元に戻せません。", ["pt-BR"] = "Manually reset OEE for \"{0}\"?\nOK/NG output, accumulated run/alarm/pause time and alarm status will be cleared; this cannot be undone."
         },
         ["Wpf|F177"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "确定清空计数器报警「{0}」的当前值吗？\r\n将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。", ["en-US"] = "Clear the current value of counter alarm \"{0}\"?\r\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone.", ["ja-JP"] = "カカカウンタアラーム「{0}」の現在値をクリアしますか？\r\nPLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。", ["pt-BR"] = "Clear the current value of counter alarm \"{0}\"?\r\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone."
+            ["zh-CN"] = "确定清空计数器报警「{0}」的当前值吗？\n将向 PLC 写入复位指令并清零软件侧当前值，操作不可撤销。", ["en-US"] = "Clear the current value of counter alarm \"{0}\"?\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone.", ["ja-JP"] = "カカカウンタアラーム「{0}」の現在値をクリアしますか？\nPLC にリセット指令を書き込み、ソフトウェア側の現在値をクリアします。元に戻せません。", ["pt-BR"] = "Clear the current value of counter alarm \"{0}\"?\nA reset command will be written to the PLC and the software-side value cleared; this cannot be undone."
         },
         ["Wpf|F501"] = new Dictionary<string, string>
         {
@@ -3605,7 +3605,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F178"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "程序启动失败，即将退出：\r\n\r\n{0}", ["en-US"] = "Startup failed; the app will exit:\r\n\r\n{0}", ["ja-JP"] = "起動に失敗しました。アプリを終了します:\r\n\r\n{0}", ["pt-BR"] = "Startup failed; the app will exit:\r\n\r\n{0}"
+            ["zh-CN"] = "程序启动失败，即将退出：\n\n{0}", ["en-US"] = "Startup failed; the app will exit:\n\n{0}", ["ja-JP"] = "起動に失敗しました。アプリを終了します:\n\n{0}", ["pt-BR"] = "Startup failed; the app will exit:\n\n{0}"
         },
         ["Wpf|F179"] = new Dictionary<string, string>
         {
@@ -3805,7 +3805,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F228"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "选择导入方式：\r\n  · 是 = 替换（清空现有后导入）\r\n  · 否 = 追加（保留现有，同地址覆盖）\r\n  · 取消 = 放弃导入", ["en-US"] = "Choose import mode:\r\n  · Yes = Replace (clear existing then import)\r\n  · No = Append (keep existing, overwrite same address)\r\n  · Cancel = Abort import", ["ja-JP"] = "インポート方法を選択:\r\n  · はい = 置き換え（既存をクリアしてインポート）\r\n  · いいえ = 追加（既存を保持、同一アドレスは上書き）\r\n  · キャンセル = インポート中止", ["pt-BR"] = "Choose import mode:\r\n  · Yes = Replace (clear existing then import)\r\n  · No = Append (keep existing, overwrite same address)\r\n  · Cancel = Abort import"
+            ["zh-CN"] = "选择导入方式：\n  · 是 = 替换（清空现有后导入）\n  · 否 = 追加（保留现有，同地址覆盖）\n  · 取消 = 放弃导入", ["en-US"] = "Choose import mode:\n  · Yes = Replace (clear existing then import)\n  · No = Append (keep existing, overwrite same address)\n  · Cancel = Abort import", ["ja-JP"] = "インポート方法を選択:\n  · はい = 置き換え（既存をクリアしてインポート）\n  · いいえ = 追加（既存を保持、同一アドレスは上書き）\n  · キャンセル = インポート中止", ["pt-BR"] = "Choose import mode:\n  · Yes = Replace (clear existing then import)\n  · No = Append (keep existing, overwrite same address)\n  · Cancel = Abort import"
         },
         ["Wpf|F229"] = new Dictionary<string, string>
         {
@@ -4077,19 +4077,19 @@ public static class LocalizationCatalog
         },
         ["Wpf|F294"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条缺陷到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} defects will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} defects will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "将导入 {0} 条缺陷到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} defects will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} defects will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F295"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条缺陷将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} valid defects will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "有効な {0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} valid defects will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "有效 {0} 条缺陷将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} valid defects will be imported to the current device ({1} existing).\n", ["ja-JP"] = "有効な {0} 件の欠陥を現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} valid defects will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F296"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何缺陷：\r\n  · {0}", ["en-US"] = "No defects imported:\r\n  · {0}", ["ja-JP"] = "欠陥はインポートされませんでした：\r\n  · {0}", ["pt-BR"] = "No defects imported:\r\n  · {0}"
+            ["zh-CN"] = "未导入任何缺陷：\n  · {0}", ["en-US"] = "No defects imported:\n  · {0}", ["ja-JP"] = "欠陥はインポートされませんでした：\n  · {0}", ["pt-BR"] = "No defects imported:\n  · {0}"
         },
         ["Wpf|F297"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条缺陷（{1} 行跳过）。\r\n", ["en-US"] = "Imported {0} defects ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件の欠陥をインポート（{1} 行スキップ）。\r\n", ["pt-BR"] = "Imported {0} defects ({1} rows skipped).\r\n"
+            ["zh-CN"] = "已导入 {0} 条缺陷（{1} 行跳过）。\n", ["en-US"] = "Imported {0} defects ({1} rows skipped).\n", ["ja-JP"] = "{0} 件の欠陥をインポート（{1} 行スキップ）。\n", ["pt-BR"] = "Imported {0} defects ({1} rows skipped).\n"
         },
         ["Wpf|F298"] = new Dictionary<string, string>
         {
@@ -4121,19 +4121,19 @@ public static class LocalizationCatalog
         },
         ["Wpf|F305"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将导入 {0} 条计数器报警到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} counter alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "{0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} counter alarms will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "将导入 {0} 条计数器报警到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} counter alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "{0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} counter alarms will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F306"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "有效 {0} 条计数器报警将导入到当前设备（现有 {1} 条）。\r\n", ["en-US"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\r\n", ["ja-JP"] = "有効な {0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\r\n", ["pt-BR"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\r\n"
+            ["zh-CN"] = "有效 {0} 条计数器报警将导入到当前设备（现有 {1} 条）。\n", ["en-US"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\n", ["ja-JP"] = "有効な {0} 件のカカカウンタアラームを現在のデバイスにインポートします（既存 {1} 件）。\n", ["pt-BR"] = "{0} valid counter alarms will be imported to the current device ({1} existing).\n"
         },
         ["Wpf|F307"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "未导入任何计数器报警：\r\n  · {0}", ["en-US"] = "No counter alarms imported:\r\n  · {0}", ["ja-JP"] = "カカカウンタアラームはインポートされませんでした：\r\n  · {0}", ["pt-BR"] = "No counter alarms imported:\r\n  · {0}"
+            ["zh-CN"] = "未导入任何计数器报警：\n  · {0}", ["en-US"] = "No counter alarms imported:\n  · {0}", ["ja-JP"] = "カカカウンタアラームはインポートされませんでした：\n  · {0}", ["pt-BR"] = "No counter alarms imported:\n  · {0}"
         },
         ["Wpf|F308"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 条计数器报警（{1} 行跳过）。\r\n", ["en-US"] = "Imported {0} counter alarms ({1} rows skipped).\r\n", ["ja-JP"] = "{0} 件のカカカウンタアラームをインポート（{1} 行スキップ）。\r\n", ["pt-BR"] = "Imported {0} counter alarms ({1} rows skipped).\r\n"
+            ["zh-CN"] = "已导入 {0} 条计数器报警（{1} 行跳过）。\n", ["en-US"] = "Imported {0} counter alarms ({1} rows skipped).\n", ["ja-JP"] = "{0} 件のカカカウンタアラームをインポート（{1} 行スキップ）。\n", ["pt-BR"] = "Imported {0} counter alarms ({1} rows skipped).\n"
         },
         ["Wpf|F309"] = new Dictionary<string, string>
         {
@@ -5587,6 +5587,22 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "无匹配用户", ["en-US"] = "No matching users", ["ja-JP"] = "一致するユーザーがいません", ["pt-BR"] = "No matching users"
         },
+        ["Wpf|M381"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出范围", ["en-US"] = "Export Scope", ["ja-JP"] = "エクスポート範囲", ["pt-BR"] = "Export Scope"
+        },
+        ["Wpf|M382"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出全部筛选结果？选择\\\"是\\\"导出全量，选择\\\"否\\\"仅导出当前页。", ["en-US"] = "Export all filtered results? Choose Yes for full export or No for current page only.", ["ja-JP"] = "絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。", ["pt-BR"] = "Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual."
+        },
+        ["Wpf|M383"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "仅当前页", ["en-US"] = "Current page only", ["ja-JP"] = "現在のページのみ", ["pt-BR"] = "Current page only"
+        },
+        ["Wpf|M384"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全量筛选结果（共 {0} 条）", ["en-US"] = "All filtered results ({0} rows)", ["ja-JP"] = "絞り込み結果の全件（{0} 件）", ["pt-BR"] = "Todos os resultados filtrados ({0} linhas)"
+        },
         ["Wpf|M332"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "操作员", ["en-US"] = "Operator", ["ja-JP"] = "オペレーター", ["pt-BR"] = "Operator"
@@ -5941,11 +5957,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|F_ShiftConfigChanged"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "班次配置已修改。\r\n\r\n新配置将立即生效，若当前正处于班次进行中，\r\n可能导致班次切换检测误判并清零当前累计数据。\r\n\r\n建议在班次切换时刻再修改。\r\n\r\n是否继续保存？", ["en-US"] = "Shift configuration has been modified.\r\n\r\nThe new configuration takes effect immediately. If a shift is in progress,\r\nit may cause shift-switch detection errors and reset current accumulated data.\r\n\r\nIt is recommended to modify at a shift switch.\r\n\r\nContinue saving?", ["ja-JP"] = "シフト設定が変更されました。\r\n\r\n新しい設定はすぐに有効になります。シフト進行中の場合、\r\nシフト切替の誤判定や現在の累積データのクリアが発生する可能性があります。\r\n\r\nシフト切替のタイミングでの変更を推奨します。\r\n\r\n保存を続行しますか？", ["pt-BR"] = "Shift configuration has been modified.\r\n\r\nThe new configuration takes effect immediately. If a shift is in progress,\r\nit may cause shift-switch detection errors and reset current accumulated data.\r\n\r\nIt is recommended to modify at a shift switch.\r\n\r\nContinue saving?"
+            ["zh-CN"] = "班次配置已修改。\n\n新配置将立即生效，若当前正处于班次进行中，\n可能导致班次切换检测误判并清零当前累计数据。\n\n建议在班次切换时刻再修改。\n\n是否继续保存？", ["en-US"] = "Shift configuration has been modified.\n\nThe new configuration takes effect immediately. If a shift is in progress,\nit may cause shift-switch detection errors and reset current accumulated data.\n\nIt is recommended to modify at a shift switch.\n\nContinue saving?", ["ja-JP"] = "シフト設定が変更されました。\n\n新しい設定はすぐに有効になります。シフト進行中の場合、\nシフト切替の誤判定や現在の累積データのクリアが発生する可能性があります。\n\nシフト切替のタイミングでの変更を推奨します。\n\n保存を続行しますか？", ["pt-BR"] = "Shift configuration has been modified.\n\nThe new configuration takes effect immediately. If a shift is in progress,\nit may cause shift-switch detection errors and reset current accumulated data.\n\nIt is recommended to modify at a shift switch.\n\nContinue saving?"
         },
         ["Wpf|M_UnsavedChangesLeave"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "设备配置有未保存的修改，确定离开设备管理页吗？\r\n修改会保留在当前会话中，返回设备管理页后仍可继续保存。", ["en-US"] = "There are unsaved device configuration changes. Leave the device manager?\r\nChanges are kept in the current session and can still be saved after returning.", ["ja-JP"] = "保存されていない設備構成の変更があります。設備管理ページを離れますか？\r\n変更は現在のセッションに保持され、戻った後も保存できます。", ["pt-BR"] = "There are unsaved device configuration changes. Leave the device manager?\r\nChanges are kept in the current session and can still be saved after returning."
+            ["zh-CN"] = "设备配置有未保存的修改，确定离开设备管理页吗？\n修改会保留在当前会话中，返回设备管理页后仍可继续保存。", ["en-US"] = "There are unsaved device configuration changes. Leave the device manager?\nChanges are kept in the current session and can still be saved after returning.", ["ja-JP"] = "保存されていない設備構成の変更があります。設備管理ページを離れますか？\n変更は現在のセッションに保持され、戻った後も保存できます。", ["pt-BR"] = "There are unsaved device configuration changes. Leave the device manager?\nChanges are kept in the current session and can still be saved after returning."
         },
         ["Wpf|M_NoSelfDelete"] = new Dictionary<string, string>
         {
@@ -7357,7 +7373,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K712"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters"
+            ["zh-CN"] = "当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters"
         },
         ["Wpf|K713"] = new Dictionary<string, string>
         {
@@ -7370,6 +7386,74 @@ public static class LocalizationCatalog
         ["Wpf|K717"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计", ["en-US"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight", ["ja-JP"] = "イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計", ["pt-BR"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight"
+        },
+        ["Wpf|K718"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "同一报警在短时间内重复触发已合并显示，共 {0} 条", ["en-US"] = "Repeated triggers of the same alarm within a short window merged; {0} events total", ["ja-JP"] = "同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件", ["pt-BR"] = "Repeated triggers of the same alarm within a short window merged; {0} events total"
+        },
+        ["Wpf|K719"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "较昨日同期：昨日 {0} / 今日 {1}", ["en-US"] = "Versus yesterday at the same time: yesterday {0} / today {1}", ["ja-JP"] = "昨日同期比：昨日 {0}／今日 {1}", ["pt-BR"] = "Versus yesterday at the same time: yesterday {0} / today {1}"
+        },
+        ["Wpf|K720"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "刚刚", ["en-US"] = "Just now", ["ja-JP"] = "たった今", ["pt-BR"] = "Just now"
+        },
+        ["Wpf|K721"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "{0} 分钟前", ["en-US"] = "{0} min ago", ["ja-JP"] = "{0} 分前", ["pt-BR"] = "{0} min ago"
+        },
+        ["Wpf|K722"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "{0} 小时前", ["en-US"] = "{0} hr ago", ["ja-JP"] = "{0} 時間前", ["pt-BR"] = "{0} hr ago"
+        },
+        ["Wpf|K723"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "按触发次数", ["en-US"] = "By Triggers", ["ja-JP"] = "発生回数順", ["pt-BR"] = "By Triggers"
+        },
+        ["Wpf|K724"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "按持续时长", ["en-US"] = "By Duration", ["ja-JP"] = "継続時間順", ["pt-BR"] = "By Duration"
+        },
+        ["Wpf|K725"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备配置校验通过（共 {0} 台）", ["en-US"] = "Device config validated OK ({0} devices)", ["ja-JP"] = "デバイス設定の検証OK（{0}台）", ["pt-BR"] = "Device config validated OK ({0} devices)"
+        },
+        ["Wpf|K726"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备校验", ["en-US"] = "Validate", ["ja-JP"] = "検証", ["pt-BR"] = "Validate"
+        },
+        ["Wpf|K727"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前设备有未保存的更改，切换设备将丢失这些更改。仍要继续？", ["en-US"] = "The current device has unsaved changes; switching away will lose them. Continue?", ["ja-JP"] = "現在のデバイスには未保存の変更があります。切り替えると失われます。続行しますか？", ["pt-BR"] = "The current device has unsaved changes; switching away will lose them. Continue?"
+        },
+        ["Wpf|K728"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出所选设备", ["en-US"] = "Export Selected Device", ["ja-JP"] = "選択デバイスをエクスポート", ["pt-BR"] = "Export Selected Device"
+        },
+        ["Wpf|K729"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导入设备配置", ["en-US"] = "Import Device Config", ["ja-JP"] = "デバイス設定をインポート", ["pt-BR"] = "Import Device Config"
+        },
+        ["Wpf|K730"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已导出设备「{0}」", ["en-US"] = "Exported device “{0}”", ["ja-JP"] = "デバイス「{0}」をエクスポートしました", ["pt-BR"] = "Exported device “{0}”"
+        },
+        ["Wpf|K731"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导入失败：文件为空或解析失败。", ["en-US"] = "Import failed: file is empty or could not be parsed.", ["ja-JP"] = "インポート失敗：ファイルが空か解析エラー。", ["pt-BR"] = "Import failed: file is empty or could not be parsed."
+        },
+        ["Wpf|K732"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导入失败：设备 Id「{0}」与现有设备冲突，请修改文件中的 Id。", ["en-US"] = "Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.", ["ja-JP"] = "インポート失敗：デバイスID「{0}」が既存デバイスと競合。ファイル内のIDを変更してください。", ["pt-BR"] = "Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file."
+        },
+        ["Wpf|K733"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已导入设备「{0}」", ["en-US"] = "Imported device “{0}”", ["ja-JP"] = "デバイス「{0}」をインポートしました", ["pt-BR"] = "Imported device “{0}”"
+        },
+        ["Wpf|K734"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "离开设备管理页将丢弃未保存的配置更改，仍要继续？", ["en-US"] = "Leaving the device manager will discard unsaved configuration changes. Continue?", ["ja-JP"] = "デバイス管理を離れると未保存の設定変更が失われます。続行しますか？", ["pt-BR"] = "Leaving the device manager will discard unsaved configuration changes. Continue?"
         },
         ["Wpf|F317"] = new Dictionary<string, string>
         {
@@ -7961,27 +8045,27 @@ public static class LocalizationCatalog
         },
         ["Wpf|Csv_DataSource_AckValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "AckValue", ["en-US"] = "AckValue", ["ja-JP"] = "AckValue", ["pt-BR"] = "AckValue"
+            ["zh-CN"] = "确认值", ["en-US"] = "AckValue", ["ja-JP"] = "応答値", ["pt-BR"] = "Valor de confirmacao"
         },
         ["Wpf|Csv_DataSource_BoolExpectedValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "BoolExpectedValue", ["en-US"] = "BoolExpectedValue", ["ja-JP"] = "BoolExpectedValue", ["pt-BR"] = "BoolExpectedValue"
+            ["zh-CN"] = "布尔期望值", ["en-US"] = "BoolExpectedValue", ["ja-JP"] = "ブール期待値", ["pt-BR"] = "Valor bool esperado"
         },
         ["Wpf|Csv_DataSource_ConfirmSeconds"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ConfirmSeconds", ["en-US"] = "ConfirmSeconds", ["ja-JP"] = "ConfirmSeconds", ["pt-BR"] = "ConfirmSeconds"
+            ["zh-CN"] = "确认延迟(秒)", ["en-US"] = "ConfirmSeconds", ["ja-JP"] = "確認遅延(秒)", ["pt-BR"] = "Segundo(s) de confirmacao"
         },
         ["Wpf|Csv_DataSource_EnumValuesJson"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "EnumValuesJson", ["en-US"] = "EnumValuesJson", ["ja-JP"] = "EnumValuesJson", ["pt-BR"] = "EnumValuesJson"
+            ["zh-CN"] = "枚举映射 JSON", ["en-US"] = "EnumValuesJson", ["ja-JP"] = "列挙マッピング JSON", ["pt-BR"] = "JSON de mapeamento de enum"
         },
         ["Wpf|Csv_DataSource_ExpectedValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ExpectedValue", ["en-US"] = "ExpectedValue", ["ja-JP"] = "ExpectedValue", ["pt-BR"] = "ExpectedValue"
+            ["zh-CN"] = "期望值", ["en-US"] = "ExpectedValue", ["ja-JP"] = "整数期待値", ["pt-BR"] = "Valor esperado"
         },
         ["Wpf|Csv_DataSource_ExpectedValueConfigured"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ExpectedValueConfigured", ["en-US"] = "ExpectedValueConfigured", ["ja-JP"] = "ExpectedValueConfigured", ["pt-BR"] = "ExpectedValueConfigured"
+            ["zh-CN"] = "期望值已配置", ["en-US"] = "ExpectedValueConfigured", ["ja-JP"] = "期待値設定済み", ["pt-BR"] = "Valor esperado configurado"
         },
         ["Wpf|Csv_DataSource_FileName"] = new Dictionary<string, string>
         {
@@ -7989,39 +8073,39 @@ public static class LocalizationCatalog
         },
         ["Wpf|Csv_DataSource_FloatExpectedValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "FloatExpectedValue", ["en-US"] = "FloatExpectedValue", ["ja-JP"] = "FloatExpectedValue", ["pt-BR"] = "FloatExpectedValue"
+            ["zh-CN"] = "浮点期望值", ["en-US"] = "FloatExpectedValue", ["ja-JP"] = "浮動小数点期待値", ["pt-BR"] = "Valor esperado float"
         },
         ["Wpf|Csv_DataSource_FloatLimitMax"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "FloatLimitMax", ["en-US"] = "FloatLimitMax", ["ja-JP"] = "FloatLimitMax", ["pt-BR"] = "FloatLimitMax"
+            ["zh-CN"] = "浮点上限", ["en-US"] = "FloatLimitMax", ["ja-JP"] = "浮動小数点上限", ["pt-BR"] = "Limite maximo float"
         },
         ["Wpf|Csv_DataSource_FloatLimitMin"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "FloatLimitMin", ["en-US"] = "FloatLimitMin", ["ja-JP"] = "FloatLimitMin", ["pt-BR"] = "FloatLimitMin"
+            ["zh-CN"] = "浮点下限", ["en-US"] = "FloatLimitMin", ["ja-JP"] = "浮動小数点下限", ["pt-BR"] = "Limite minimo float"
         },
         ["Wpf|Csv_DataSource_Hysteresis"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "Hysteresis", ["en-US"] = "Hysteresis", ["ja-JP"] = "Hysteresis", ["pt-BR"] = "Hysteresis"
+            ["zh-CN"] = "滞回", ["en-US"] = "Hysteresis", ["ja-JP"] = "ヒステリシス", ["pt-BR"] = "Histerese"
         },
         ["Wpf|Csv_DataSource_LimitMax"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "LimitMax", ["en-US"] = "LimitMax", ["ja-JP"] = "LimitMax", ["pt-BR"] = "LimitMax"
+            ["zh-CN"] = "上限", ["en-US"] = "LimitMax", ["ja-JP"] = "整数上限", ["pt-BR"] = "Limite maximo"
         },
         ["Wpf|Csv_DataSource_LimitMin"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "LimitMin", ["en-US"] = "LimitMin", ["ja-JP"] = "LimitMin", ["pt-BR"] = "LimitMin"
+            ["zh-CN"] = "下限", ["en-US"] = "LimitMin", ["ja-JP"] = "整数下限", ["pt-BR"] = "Limite minimo"
         },
         ["Wpf|Csv_DataSource_SourceDescription"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "SourceDescription", ["en-US"] = "SourceDescription", ["ja-JP"] = "SourceDescription", ["pt-BR"] = "SourceDescription"
+            ["zh-CN"] = "数据源描述", ["en-US"] = "SourceDescription", ["ja-JP"] = "データソースの説明", ["pt-BR"] = "Descricao da fonte"
         },
         ["Wpf|Csv_DataSource_SourceEnabled"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "SourceEnabled", ["en-US"] = "SourceEnabled", ["ja-JP"] = "SourceEnabled", ["pt-BR"] = "SourceEnabled"
+            ["zh-CN"] = "数据源启用", ["en-US"] = "SourceEnabled", ["ja-JP"] = "データソース有効", ["pt-BR"] = "Fonte ativada"
         },
         ["Wpf|Csv_DataSource_SourceName"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "SourceName", ["en-US"] = "SourceName", ["ja-JP"] = "SourceName", ["pt-BR"] = "SourceName"
+            ["zh-CN"] = "数据源名称", ["en-US"] = "SourceName", ["ja-JP"] = "データソース名", ["pt-BR"] = "Nome da fonte"
         },
         ["Wpf|Csv_DataSource_SourceNameEn"] = new Dictionary<string, string>
         {
@@ -8037,35 +8121,35 @@ public static class LocalizationCatalog
         },
         ["Wpf|Csv_DataSource_SourceType"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "SourceType", ["en-US"] = "SourceType", ["ja-JP"] = "SourceType", ["pt-BR"] = "SourceType"
+            ["zh-CN"] = "数据源类型", ["en-US"] = "SourceType", ["ja-JP"] = "データソースタイプ", ["pt-BR"] = "Tipo da fonte"
         },
         ["Wpf|Csv_DataSource_StringExpectedValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "StringExpectedValue", ["en-US"] = "StringExpectedValue", ["ja-JP"] = "StringExpectedValue", ["pt-BR"] = "StringExpectedValue"
+            ["zh-CN"] = "字符串期望值", ["en-US"] = "StringExpectedValue", ["ja-JP"] = "文字列期待値", ["pt-BR"] = "Valor esperado string"
         },
         ["Wpf|Csv_DataSource_StringLength"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "StringLength", ["en-US"] = "StringLength", ["ja-JP"] = "StringLength", ["pt-BR"] = "StringLength"
+            ["zh-CN"] = "字符串长度", ["en-US"] = "StringLength", ["ja-JP"] = "文字列長", ["pt-BR"] = "Comprimento da string"
         },
         ["Wpf|Csv_DataSource_TriggerAddress"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "TriggerAddress", ["en-US"] = "TriggerAddress", ["ja-JP"] = "TriggerAddress", ["pt-BR"] = "TriggerAddress"
+            ["zh-CN"] = "触发地址", ["en-US"] = "TriggerAddress", ["ja-JP"] = "トリガーアドレス", ["pt-BR"] = "Endereco de gatilho"
         },
         ["Wpf|Csv_DataSource_TriggerValue"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "TriggerValue", ["en-US"] = "TriggerValue", ["ja-JP"] = "TriggerValue", ["pt-BR"] = "TriggerValue"
+            ["zh-CN"] = "触发值", ["en-US"] = "TriggerValue", ["ja-JP"] = "トリガー値", ["pt-BR"] = "Valor de gatilho"
         },
         ["Wpf|Csv_DataSource_ValueDataType"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ValueDataType", ["en-US"] = "ValueDataType", ["ja-JP"] = "ValueDataType", ["pt-BR"] = "ValueDataType"
+            ["zh-CN"] = "数据类型", ["en-US"] = "ValueDataType", ["ja-JP"] = "データ型", ["pt-BR"] = "Tipo de valor"
         },
         ["Wpf|Csv_DataSource_ValueEnabled"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ValueEnabled", ["en-US"] = "ValueEnabled", ["ja-JP"] = "ValueEnabled", ["pt-BR"] = "ValueEnabled"
+            ["zh-CN"] = "值项启用", ["en-US"] = "ValueEnabled", ["ja-JP"] = "値項目有効", ["pt-BR"] = "Valor ativado"
         },
         ["Wpf|Csv_DataSource_ValueName"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ValueName", ["en-US"] = "ValueName", ["ja-JP"] = "ValueName", ["pt-BR"] = "ValueName"
+            ["zh-CN"] = "值项名称", ["en-US"] = "ValueName", ["ja-JP"] = "値項目名", ["pt-BR"] = "Nome do valor"
         },
         ["Wpf|Csv_DataSource_ValueNameEn"] = new Dictionary<string, string>
         {
@@ -8081,11 +8165,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Csv_DataSource_ValuePlcAddress"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ValuePlcAddress", ["en-US"] = "ValuePlcAddress", ["ja-JP"] = "ValuePlcAddress", ["pt-BR"] = "ValuePlcAddress"
+            ["zh-CN"] = "值项PLC地址", ["en-US"] = "ValuePlcAddress", ["ja-JP"] = "値項目PLCアドレス", ["pt-BR"] = "Endereco PLC do valor"
         },
         ["Wpf|Csv_DataSource_ValueUnit"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "ValueUnit", ["en-US"] = "ValueUnit", ["ja-JP"] = "ValueUnit", ["pt-BR"] = "ValueUnit"
+            ["zh-CN"] = "值项单位", ["en-US"] = "ValueUnit", ["ja-JP"] = "値項目単位", ["pt-BR"] = "Unidade do valor"
         },
         ["Wpf|Csv_Defect_Category"] = new Dictionary<string, string>
         {
@@ -8561,7 +8645,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F347"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "已导入 {0} 个数据源、{1} 个值项，但有 {2} 个校验错误：\r\n{3}", ["en-US"] = "Imported {0} sources and {1} values with {2} validation errors:\r\n{3}", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートしましたが、{2} 件の検証エラーがあります:\r\n{3}", ["pt-BR"] = "Importadas {0} fontes e {1} valores com {2} erros de validacao:\r\n{3}"
+            ["zh-CN"] = "已导入 {0} 个数据源、{1} 个值项，但有 {2} 个校验错误：\n{3}", ["en-US"] = "Imported {0} sources and {1} values with {2} validation errors:\n{3}", ["ja-JP"] = "{0} 件のデータソースと {1} 件の値項目をインポートしましたが、{2} 件の検証エラーがあります:\n{3}", ["pt-BR"] = "Importadas {0} fontes e {1} valores com {2} erros de validacao:\n{3}"
         },
         ["Wpf|F348"] = new Dictionary<string, string>
         {
@@ -8765,7 +8849,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_FirstRunNavBody"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "主页/产线总览：实时状态\r\n报警中心：处理报警\r\n历史查询/生产复盘：追溯与报表\r\n设备管理/设备详情/系统设置：需相应权限\r\n侧边栏底部「使用手册」或按 F1：打开手册", ["en-US"] = "Home & Production Line: live status\r\nAlarm Center: handle alarms\r\nHistory & Review: traceability and reports\r\nDevice Manager, Device Detail & Settings: role required\r\nSidebar footer User Manual or F1: open manual", ["ja-JP"] = "ホーム/ライン：リアルタイム\r\nアラームセンター：対応\r\n履歴/レビュー：分析\r\n設備管理/設備詳細/設定：権限が必要\r\nサイドバー下部「使用手册」または F1", ["pt-BR"] = "Inicio e Linha: tempo real\r\nAlarmes: tratar\r\nHistorico e Revisao: relatorios\r\nDispositivos, Detalhe e Configuracoes: permissao\r\nManual no rodape da barra lateral ou F1"
+            ["zh-CN"] = "主页/产线总览：实时状态\n报警中心：处理报警\n历史查询/生产复盘：追溯与报表\n设备管理/设备详情/系统设置：需相应权限\n侧边栏底部「使用手册」或按 F1：打开手册", ["en-US"] = "Home & Production Line: live status\nAlarm Center: handle alarms\nHistory & Review: traceability and reports\nDevice Manager, Device Detail & Settings: role required\nSidebar footer User Manual or F1: open manual", ["ja-JP"] = "ホーム/ライン：リアルタイム\nアラームセンター：対応\n履歴/レビュー：分析\n設備管理/設備詳細/設定：権限が必要\nサイドバー下部「使用手册」または F1", ["pt-BR"] = "Inicio e Linha: tempo real\nAlarmes: tratar\nHistorico e Revisao: relatorios\nDispositivos, Detalhe e Configuracoes: permissao\nManual no rodape da barra lateral ou F1"
         },
         ["Wpf|Ux_FirstRunFinishTitle"] = new Dictionary<string, string>
         {
@@ -8902,6 +8986,242 @@ public static class LocalizationCatalog
         ["Wpf|Validator_TriggerAckConflict"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "数据源「{0}」触发值与确认值不能相同", ["en-US"] = "Trigger and ack values cannot match in source '{0}'", ["ja-JP"] = "データソース「{0}」のトリガー値と確認値は同じにできません", ["pt-BR"] = "Valores de gatilho e confirmacao nao podem ser iguais na fonte '{0}'"
+        },
+        ["Wpf|K750"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导入工单", ["en-US"] = "Import Work Orders", ["ja-JP"] = "工単インポート", ["pt-BR"] = "Importar ordens de produção"
+        },
+        ["Wpf|K751"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "选择工单 CSV 文件", ["en-US"] = "Select work order CSV file", ["ja-JP"] = "工単 CSV ファイルを選択", ["pt-BR"] = "Selecione o arquivo CSV de ordens de produção"
+        },
+        ["Wpf|K752"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "即将批量导入 {0} 条工单，是否继续？", ["en-US"] = "About to import {0} work orders. Continue?", ["ja-JP"] = "{0} 件の工単を一括インポートします。続行しますか？", ["pt-BR"] = "Os {0} ordens de produção serão importadas. Continuar?"
+        },
+        ["Wpf|K753"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已成功导入 {0} 条工单", ["en-US"] = "Imported {0} work orders successfully", ["ja-JP"] = "{0} 件の工単をインポートしました", ["pt-BR"] = "{0} ordens de produção importadas com sucesso"
+        },
+        ["Wpf|K754"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已导入 {0} 条，跳过 {1} 条：{2}", ["en-US"] = "Imported {0}, skipped {1}: {2}", ["ja-JP"] = "{0} 件インポート、{1} 件スキップ：{2}", ["pt-BR"] = "Importadas {0}, ignoradas {1}: {2}"
+        },
+        ["Wpf|K755"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "读取工单 CSV 失败：{0}", ["en-US"] = "Failed to read work order CSV: {0}", ["ja-JP"] = "工単 CSV の読み取りに失敗：{0}", ["pt-BR"] = "Falha ao ler o CSV de ordens de produção: {0}"
+        },
+        ["Wpf|K756"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "文件 {0} 中未找到可导入的工单", ["en-US"] = "No importable work orders found in {0}", ["ja-JP"] = "{0} にインポート可能な工単がありません", ["pt-BR"] = "Nenhuma ordem de produção importável encontrada em {0}"
+        },
+        ["Wpf|K757"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已复制：{0}", ["en-US"] = "Copied: {0}", ["ja-JP"] = "コピーしました：{0}", ["pt-BR"] = "Copiado: {0}"
+        },
+        ["Wpf|K762"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "冲突", ["en-US"] = "Conflict", ["ja-JP"] = "競合", ["pt-BR"] = "Conflito"
+        },
+        ["Wpf|K763"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "逾期", ["en-US"] = "Overdue", ["ja-JP"] = "期限超過", ["pt-BR"] = "Atrasado"
+        },
+        ["Wpf|K764"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "从 CSV 文件批量导入工单（列名与导出模板一致）", ["en-US"] = "Import work orders from a CSV file (columns match the export template)", ["ja-JP"] = "CSV から工単を一括インポート（列名はエクスポートテンプレートと同一）", ["pt-BR"] = "Importar ordens de produção de um arquivo CSV (as colunas correspondem ao modelo de exportação)"
+        },
+        ["Wpf|K765"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "目标", ["en-US"] = "Target", ["ja-JP"] = "目標", ["pt-BR"] = "Alvo"
+        },
+        ["Wpf|K766"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "合格", ["en-US"] = "OK", ["ja-JP"] = "良品", ["pt-BR"] = "OK"
+        },
+        ["Wpf|K767"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "达成率", ["en-US"] = "Achievement", ["ja-JP"] = "達成率", ["pt-BR"] = "Taxa de realização"
+        },
+        ["Wpf|K768"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "筛选结果", ["en-US"] = "Filtered results", ["ja-JP"] = "絞り込み結果", ["pt-BR"] = "Resultados filtrados"
+        },
+        ["Wpf|K769"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "复制工单号", ["en-US"] = "Copy order number", ["ja-JP"] = "工単番号をコピー", ["pt-BR"] = "Copiar número da ordem"
+        },
+        ["Wpf|K770"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "复制产品编码", ["en-US"] = "Copy product code", ["ja-JP"] = "製品コードをコピー", ["pt-BR"] = "Copiar código do produto"
+        },
+        ["Wpf|K771"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "时间线", ["en-US"] = "Timeline", ["ja-JP"] = "タイムライン", ["pt-BR"] = "Linha do tempo"
+        },
+        ["Wpf|K772"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "创建", ["en-US"] = "Created", ["ja-JP"] = "作成", ["pt-BR"] = "Criada"
+        },
+        ["Wpf|K773"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "计划开始", ["en-US"] = "Planned start", ["ja-JP"] = "予定開始", ["pt-BR"] = "Início planejado"
+        },
+        ["Wpf|K774"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "实际开始", ["en-US"] = "Actual start", ["ja-JP"] = "実開始", ["pt-BR"] = "Início real"
+        },
+        ["Wpf|K775"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "完成", ["en-US"] = "Completed", ["ja-JP"] = "完了", ["pt-BR"] = "Concluída"
+        },
+        ["Wpf|K776"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "中止", ["en-US"] = "Aborted", ["ja-JP"] = "中止", ["pt-BR"] = "Abortada"
+        },
+        ["Wpf|K788"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导入", ["en-US"] = "Import", ["ja-JP"] = "インポート", ["pt-BR"] = "Importar"
+        },
+        ["Wpf|K789"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "双击列表行可直接编辑该工单", ["en-US"] = "Double-click a row to edit that work order", ["ja-JP"] = "行をダブルクリックで編集", ["pt-BR"] = "Clique duas vezes em uma linha para editar essa ordem"
+        },
+        ["Wpf|K790"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "第 {0} 行：列数不足（{1} < 7），已跳过", ["en-US"] = "Row {0}: too few columns ({1} < 7); skipped", ["ja-JP"] = "{0} 行目：列数不足（{1} < 7）、スキップ", ["pt-BR"] = "Linha {0}: colunas insuficientes ({1} < 7); ignorada"
+        },
+        ["Wpf|K791"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "第 {0} 行 [{1}]：计划时间格式应为 yyyy-MM-dd HH:mm，已跳过", ["en-US"] = "Row {0} [{1}]: planned time must be yyyy-MM-dd HH:mm; skipped", ["ja-JP"] = "{0} 行目 [{1}]：予定時刻は yyyy-MM-dd HH:mm 形式にしてください（スキップ）", ["pt-BR"] = "Linha {0} [{1}]: horário planejado deve ser yyyy-MM-dd HH:mm; ignorada"
+        },
+        ["Wpf|K794"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单号已存在", ["en-US"] = "Order number already exists", ["ja-JP"] = "工単番号は既に存在します", ["pt-BR"] = "O número da ordem já existe"
+        },
+        ["Wpf|K795"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "未找到设备「{0}」", ["en-US"] = "Device \"{0}\" not found", ["ja-JP"] = "デバイス「{0}」が見つかりません", ["pt-BR"] = "Dispositivo \"{0}\" não encontrado"
+        },
+        ["Wpf|K799"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "逾期 {0}", ["en-US"] = "Overdue {0}", ["ja-JP"] = "期限超過 {0}", ["pt-BR"] = "Atrasado {0}"
+        },
+        ["Wpf|K806"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "第 {0} 行 [{1}]：{2}", ["en-US"] = "Row {0} [{1}]: {2}", ["ja-JP"] = "{0} 行目 [{1}]：{2}", ["pt-BR"] = "Linha {0} [{1}]: {2}"
+        },
+        ["Wpf|K901"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单排程", ["en-US"] = "Work Order Schedule", ["ja-JP"] = "工単スケジュール", ["pt-BR"] = "Agendamento de ordens de produção"
+        },
+        ["Wpf|K902"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "计划时间", ["en-US"] = "Planned time", ["ja-JP"] = "予定時刻", ["pt-BR"] = "Horário planejado"
+        },
+        ["Wpf|K903"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备", ["en-US"] = "Device", ["ja-JP"] = "設備", ["pt-BR"] = "Dispositivo"
+        },
+        ["Wpf|K904"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单", ["en-US"] = "Work Orders", ["ja-JP"] = "工単", ["pt-BR"] = "Ordens de produção"
+        },
+        ["Wpf|K905"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "现在", ["en-US"] = "Now", ["ja-JP"] = "現在", ["pt-BR"] = "Agora"
+        },
+        ["Wpf|K906"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前筛选下没有工单", ["en-US"] = "No work orders under the current filter", ["ja-JP"] = "現在の絞り込みに一致する工単なし", ["pt-BR"] = "Nenhuma ordem sob o filtro atual"
+        },
+        ["Wpf|K907"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "最近1小时", ["en-US"] = "Last 1 Hour", ["ja-JP"] = "直近1時間", ["pt-BR"] = "Última 1 hora"
+        },
+        ["Wpf|K908"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "最近4小时", ["en-US"] = "Last 4 Hours", ["ja-JP"] = "直近4時間", ["pt-BR"] = "Últimas 4 horas"
+        },
+        ["Wpf|K909"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "最近24小时", ["en-US"] = "Last 24 Hours", ["ja-JP"] = "直近24時間", ["pt-BR"] = "Últimas 24 horas"
+        },
+        ["Wpf|K910"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "总产量", ["en-US"] = "Total Output", ["ja-JP"] = "総生産数", ["pt-BR"] = "Produção total"
+        },
+        ["Wpf|K911"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "不良率", ["en-US"] = "Defect Rate", ["ja-JP"] = "不良率", ["pt-BR"] = "Taxa de defeitos"
+        },
+        ["Wpf|K912"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "平均恢复耗时", ["en-US"] = "Avg Recovery Time", ["ja-JP"] = "平均復旧時間", ["pt-BR"] = "Tempo médio de recuperação"
+        },
+        ["Wpf|K913"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "持续时间", ["en-US"] = "Duration", ["ja-JP"] = "継続時間", ["pt-BR"] = "Duração"
+        },
+        ["Wpf|M_MoreNotShown"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "\\n…（共 {0} 条未显示）", ["en-US"] = "\\n… ({0} more not shown)", ["ja-JP"] = "\\n…（他 {0} 件省略）", ["pt-BR"] = "\\n… ({0} itens não exibidos)"
+        },
+        ["Wpf|K914"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "SN 追溯", ["en-US"] = "SN Traceability", ["ja-JP"] = "SNトレーサビリティ", ["pt-BR"] = "Rastreabilidade SN"
+        },
+        ["Wpf|K915"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "输入序列号（SN）进行追溯，如 SN20260830-0001", ["en-US"] = "Enter SN to trace, e.g. SN20260830-0001", ["ja-JP"] = "トレースするシリアル番号を入力（例：SN20260830-0001）", ["pt-BR"] = "Digite o SN para rastrear"
+        },
+        ["Wpf|K916"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "输入序列号查询其生产追溯记录", ["en-US"] = "Enter an SN to look up its production trace", ["ja-JP"] = "シリアル番号を入力して生産トレースを照会", ["pt-BR"] = "Insira um SN para consultar seu rastreio de produção"
+        },
+        ["Wpf|K917"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "将展示该件的设备、工单、班次、时间与判定结果", ["en-US"] = "Shows the device, work order, shift, time and result", ["ja-JP"] = "設備・工単・シフト・時間・判定結果を表示します", ["pt-BR"] = "Mostra dispositivo"
+        },
+        ["Wpf|K918"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "SN 明细", ["en-US"] = "SN Details", ["ja-JP"] = "SN明細", ["pt-BR"] = "Detalhes do SN"
+        },
+        ["Wpf|K919"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "共 {0} 件", ["en-US"] = "{0} in total", ["ja-JP"] = "合計 {0} 件", ["pt-BR"] = "{0} no total"
+        },
+        ["Wpf|K920"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "该工单暂无 SN 记录", ["en-US"] = "No SN records for this work order", ["ja-JP"] = "この工単にSN記録はありません", ["pt-BR"] = "Nenhum registro de SN para esta ordem"
+        },
+        ["Wpf|K921"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请输入要追溯的序列号", ["en-US"] = "Please enter an SN to trace", ["ja-JP"] = "トレースするシリアル番号を入力してください", ["pt-BR"] = "Insira um SN para rastrear"
+        },
+        ["Wpf|K922"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "未找到序列号 {0} 的追溯记录", ["en-US"] = "No trace records found for SN {0}", ["ja-JP"] = "SN {0} のトレース記録が見つかりません", ["pt-BR"] = "Nenhum registro de rastreio encontrado para o SN {0}"
+        },
+        ["Wpf|K923"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "查询失败：{0}", ["en-US"] = "Query failed: {0}", ["ja-JP"] = "照会失敗：{0}", ["pt-BR"] = "Falha na consulta: {0}"
+        },
+        ["Wpf|K924"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "结果", ["en-US"] = "Result", ["ja-JP"] = "結果", ["pt-BR"] = "Resultado"
+        },
+        ["Wpf|K925"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "上一页", ["en-US"] = "Previous", ["ja-JP"] = "前へ", ["pt-BR"] = "Anterior"
+        },
+        ["Wpf|K926"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "下一页", ["en-US"] = "Next", ["ja-JP"] = "次へ", ["pt-BR"] = "Próxima"
+        },
+        ["Wpf|K927"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "第 {0} 页", ["en-US"] = "Page {0}", ["ja-JP"] = "{0} ページ目", ["pt-BR"] = "Página {0}"
         },
         };
 

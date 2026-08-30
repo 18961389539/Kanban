@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -13,6 +12,10 @@ namespace MainAPP.Views;
 /// <summary>
 /// OverviewView.xaml 的交互逻辑。
 /// 概览页：最近 N 小时生产汇总（KPI + 趋势图 + Top 报警 + 设备明细表格）。
+/// 生命周期（审查修复 2026-08-30）：图表定时器与订阅改由 ViewModel 的
+/// INavigationPageLifecycle 驱动（Entered/Exited 事件）。此前依赖 Loaded/Unloaded，
+/// 但 NavigationPageHost 常驻导致 Unloaded 永不触发 → 定时器切走后持续运行、逐页叠加，
+/// 是页面切换越来越卡的主因之一。
 /// </summary>
 public partial class OverviewView : UserControl
 {
@@ -29,8 +32,6 @@ public partial class OverviewView : UserControl
     public OverviewView()
     {
         InitializeComponent();
-        Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
         DataContextChanged += OnDataContextChanged;
 
         _chartRefreshTimer = new DispatcherTimer(ChartRefreshInterval, DispatcherPriority.Background, OnChartRefreshTick, Dispatcher);
@@ -40,29 +41,34 @@ public partial class OverviewView : UserControl
     private void OnDataContextChanged(object sender, System.Windows.DependencyPropertyChangedEventArgs e)
     {
         if (e.OldValue is OverviewViewModel oldVm)
+        {
             oldVm.PropertyChanged -= OnViewModelPropertyChanged;
+            oldVm.Entered -= OnVmEntered;
+            oldVm.Exited -= OnVmExited;
+        }
         if (DataContext is OverviewViewModel vm)
         {
             vm.PropertyChanged += OnViewModelPropertyChanged;
-            ForceChartsRefresh(vm);
+            vm.Entered += OnVmEntered;
+            vm.Exited += OnVmExited;
+            // 视图创建可能晚于 VM 首次 OnPageEnter（懒加载）：若 VM 已激活则补一次进入逻辑
+            if (vm.IsPageActive)
+                OnVmEntered(vm, EventArgs.Empty);
         }
     }
 
-    private void OnUnloaded(object sender, System.Windows.RoutedEventArgs e)
+    private void OnVmEntered(object? sender, EventArgs e)
     {
-        if (DataContext is OverviewViewModel vm)
-            vm.PropertyChanged -= OnViewModelPropertyChanged;
+        if (DataContext is not OverviewViewModel vm) return;
+        vm.RefreshCommand.Execute(null);
+        ForceChartsRefresh(vm);
+        // 激活期间允许属性变化触发重绘（定时器由脏标记启动，见 OnViewModelPropertyChanged）
+    }
+
+    private void OnVmExited(object? sender, EventArgs e)
+    {
         _chartRefreshTimer.Stop();
         _trendDirty = _oeeDirty = _heatmapDirty = _paretoDirty = false;
-    }
-
-    private void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
-    {
-        if (DataContext is OverviewViewModel vm)
-        {
-            vm.RefreshCommand.Execute(null);
-            ForceChartsRefresh(vm);
-        }
     }
 
     /// <summary>无条件强制重绘四个图表（页面重载后 OxyPlot 渲染可能停止，即使 Model 未变）。</summary>
@@ -78,10 +84,11 @@ public partial class OverviewView : UserControl
     /// OxyPlot 2.2.0 页面导航重载后 PlotView 渲染可能停止（Model 更新不再重绘）：
     /// 在图表属性变化时强制重设 Model + InvalidatePlot，确保瀑布图/趋势图/热力图始终渲染。
     /// 节流版：仅标脏并启动定时器，实际重绘合并到 2Hz 的 tick，避免每次数据变化全量重绘。
+    /// 仅页面激活期间生效（IsPageActive 守卫）：切走后属性变化不启动定时器，避免泄漏。
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (DataContext is not OverviewViewModel vm) return;
+        if (DataContext is not OverviewViewModel vm || !vm.IsPageActive) return;
         switch (e.PropertyName)
         {
             case nameof(OverviewViewModel.TrendChart):

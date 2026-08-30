@@ -58,6 +58,12 @@ public interface IKanbanHubServer
     /// </summary>
     Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(BatchHistoryQueryRequest request);
 
+    /// <summary>
+    /// SN 序列号追溯查询（Unary）：按 SN 精确 / 工单明细 / 设备+时间范围 反查逐件事件。
+    /// 服务端 Count + Skip/Take 分页；与采集侧共用同一存储（sn_events.db）。
+    /// </summary>
+    Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request);
+
     /// <summary>拉取设备配置（Remote 模式屏端零配置：设备列表从此获取，不依赖本地 devices.json）</summary>
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync();
 

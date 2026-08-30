@@ -165,7 +165,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         Action<StatusEventDto>? onStatusEdge = null,
         DataSourceSnapshotStore? dataSourceSnapshotStore = null,
         IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
-        IPlcRuntimeSessionManager? runtimeSessions = null)
+        IPlcRuntimeSessionManager? runtimeSessions = null,
+        ISnEventStore? snEventStore = null)
     {
         _plc = plc;
         _connectionManager = connectionManager;
@@ -189,7 +190,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _scanPipeline = new PlcScanPipeline(
             _adapterResolver, _deviceRepository, _alarmHistory, _appSettings,
             () => GetCurrentShiftName(), _logger, _alarmNotificationChannel,
-            dto => AlarmEdgeDetected?.Invoke(dto), dataSourceReaderRegistry);
+            dto => AlarmEdgeDetected?.Invoke(dto), dataSourceReaderRegistry,
+            snEventStore, d => _workOrderRepo?.GetRunningByDevice(d)?.Id);
     }
 
     public PlcDataAcquisitionService(
@@ -206,11 +208,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         DefectHistoryStore? defectHistoryStore = null,
         DataSourceSnapshotStore? dataSourceSnapshotStore = null,
         IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
-        IPlcRuntimeSessionManager? runtimeSessions = null)
+        IPlcRuntimeSessionManager? runtimeSessions = null,
+        ISnEventStore? snEventStore = null)
         : this(plc, connectionManager, appSettings, historyService, historyService, historyService,
             deviceRepository, baselineStore, logger, adapterResolver, workOrderRepo, alarmNotificationChannel, defectHistoryStore,
             onAlarmEdge: null, onStatusEdge: null, dataSourceSnapshotStore: dataSourceSnapshotStore,
-            dataSourceReaderRegistry: dataSourceReaderRegistry, runtimeSessions: runtimeSessions)
+            dataSourceReaderRegistry: dataSourceReaderRegistry, runtimeSessions: runtimeSessions,
+            snEventStore: snEventStore)
     {
     }
 

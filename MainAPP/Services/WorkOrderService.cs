@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using MainAPP.Resources;
 using Kanban.Collector.Core.Services;
 using Kanban.Contracts.Dtos;
@@ -113,6 +113,15 @@ public interface IWorkOrderService
 
     /// <summary>批量查询工单产量，生产环境按一次工单 Id 查询减少数据库往返。</summary>
     IReadOnlyDictionary<int, WorkOrderProductionSummary> GetProductionSummaries(IReadOnlyList<WorkOrder> workOrders);
+
+    /// <summary>
+    /// 批量导入工单（CSV 解析后的候选列表）。逐条执行与单条新增一致的业务校验
+    /// （OrderNo 唯一、设备存在、计划时间有效、同设备时间不冲突），校验失败的行跳过并记录错误，
+    /// 不弹对话框（批量场景不适合逐个打断）。返回成功/失败汇总。
+    /// </summary>
+    /// <param name="candidates">候选工单（Id 应为 0，导入一律作为新工单；状态忽略统一为 Pending）。</param>
+    /// <returns>导入结果：Imported 已落库清单、Errors 每行失败原因。</returns>
+    Task<WorkOrderImportResult> ImportWorkOrdersAsync(IReadOnlyList<WorkOrder> candidates);
 }
 
 /// <summary>工单产量聚合的可选异步能力，供 Remote 主页取消在途 SignalR 查询。</summary>
@@ -121,6 +130,19 @@ public interface IAsyncWorkOrderProductionSummary
     Task<WorkOrderProductionSummary> GetProductionSummaryAsync(
         WorkOrder workOrder,
         CancellationToken cancellationToken = default);
+}
+
+/// <summary>批量导入工单结果：Imported 为已落库清单，Errors 为逐行失败原因（含行号/工单号便于定位）。</summary>
+public sealed class WorkOrderImportResult
+{
+    /// <summary>已成功导入的工单（按输入顺序，仅校验通过部分）。</summary>
+    public List<WorkOrder> Imported { get; } = [];
+
+    /// <summary>失败原因列表（"第 N 行 [工单号]：原因"）。</summary>
+    public List<string> Errors { get; } = [];
+
+    public int FailedCount => Errors.Count;
+    public bool HasErrors => Errors.Count > 0;
 }
 
 /// <summary>历史服务的可选批量能力，旧测试桩未实现时由工单服务回退逐条查询。</summary>
@@ -240,6 +262,8 @@ public class WorkOrderService(
         Status = w.Status,
         CompletedOkCount = w.CompletedOkCount,
         CompletedNgCount = w.CompletedNgCount,
+        StartedAt = w.StartedAt,
+        CompletedAt = w.CompletedAt,
         Remark = w.Remark,
         CreatedAt = w.CreatedAt,
         UpdatedAt = w.UpdatedAt,
@@ -286,6 +310,8 @@ public class WorkOrderService(
         template.CompletedOkCount = null;
         template.CompletedNgCount = null;
         template.Production = null;
+        template.StartedAt = null;
+        template.CompletedAt = null;
         template.CreatedAt = DateTime.Now;
         template.UpdatedAt = template.CreatedAt;
 
@@ -543,4 +569,100 @@ public class WorkOrderService(
             AchievementRate = dto.AchievementRate,
             DefectRate = dto.DefectRate,
         };
+
+    /// <inheritdoc />
+    public async Task<WorkOrderImportResult> ImportWorkOrdersAsync(IReadOnlyList<WorkOrder> candidates)
+    {
+        var result = new WorkOrderImportResult();
+        if (candidates == null || candidates.Count == 0)
+            return result;
+
+        // 设备名 → DeviceId 映射（导入 CSV 用设备名标识设备，与导出对齐）
+        var devices = _deviceRepo.GetDevicesSnapshot();
+        var deviceByName = devices
+            .GroupBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // 现有工单 OrderNo 集合（批量导入需跨候选查重）
+        var existingOrderNos = new HashSet<string>(
+            _workOrderRepo.GetSnapshot().Select(w => w.OrderNo.Trim()),
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < candidates.Count; i++)
+        {
+            var candidate = candidates[i];
+            var lineNo = i + 2; // 表头占第 1 行
+            try
+            {
+                var failure = ValidateImportCandidate(candidate, deviceByName, existingOrderNos);
+                if (failure != null)
+                {
+                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, failure));
+                    continue;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "导入工单第 {Line} 行校验异常 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
+                result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+                continue;
+            }
+
+            try
+            {
+                var saved = await _workOrderRepo.UpsertAsync(candidate);
+                existingOrderNos.Add(saved.OrderNo.Trim());
+                result.Imported.Add(saved);
+                _logger.LogInformation("工单导入 Id={Id} OrderNo={OrderNo} Device={Device}", saved.Id, saved.OrderNo, saved.DeviceName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "导入工单第 {Line} 行落库失败 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
+                result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+            }
+        }
+        return result;
+    }
+
+    /// <summary>单条导入候选校验：返回失败原因字符串，null 表示通过。批量场景不弹对话框。</summary>
+    private static string? ValidateImportCandidate(
+        WorkOrder candidate,
+        IReadOnlyDictionary<string, Device> deviceByName,
+        ISet<string> existingOrderNos)
+    {
+        if (string.IsNullOrWhiteSpace(candidate.OrderNo))
+            return Strings.K599;
+        if (string.IsNullOrWhiteSpace(candidate.ProductCode))
+            return Strings.K600;
+        if (string.IsNullOrWhiteSpace(candidate.ProductName))
+            return Strings.K601;
+        if (candidate.TargetQuantity <= 0)
+            return Strings.K603;
+
+        var orderNoKey = candidate.OrderNo.Trim();
+        if (existingOrderNos.Contains(orderNoKey))
+            return Strings.K794;
+
+        // 设备名匹配（CSV 仅设备名；找不到或重名都拒绝，避免落库悬空 DeviceId）
+        if (!deviceByName.TryGetValue(candidate.DeviceName ?? string.Empty, out var device))
+            return string.Format(Strings.K795, candidate.DeviceName);
+        candidate.DeviceId = device.Id;
+        candidate.DeviceName = device.Name;
+
+        if (candidate.PlannedStart == default || candidate.PlannedEnd == default
+            || candidate.PlannedEnd <= candidate.PlannedStart)
+            return Strings.K604;
+
+        // 状态统一为 Pending（导入即待排产）；清空运行时产量与旧快照
+        candidate.Status = WorkOrderStatus.Pending;
+        candidate.Id = 0;
+        candidate.CompletedOkCount = null;
+        candidate.CompletedNgCount = null;
+        candidate.StartedAt = null;
+        candidate.CompletedAt = null;
+        candidate.Production = null;
+        candidate.CreatedAt = DateTime.Now;
+        candidate.UpdatedAt = candidate.CreatedAt;
+        return null;
+    }
 }

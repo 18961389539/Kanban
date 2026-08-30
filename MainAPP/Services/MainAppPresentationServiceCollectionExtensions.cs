@@ -73,7 +73,9 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>()));
         services.AddSingleton<AlarmCenterViewModel>(sp => new AlarmCenterViewModel(
             sp.GetRequiredService<IHistoryService>(), sp.GetRequiredService<DeviceRepository>(),
-            sp.GetRequiredService<IDialogService>()));
+            sp.GetRequiredService<IDialogService>(),
+            appSettings: sp.GetRequiredService<AppSettings>(),
+            alarmSessionMute: sp.GetRequiredService<IAlarmSessionMute>()));
         services.AddSingleton<OverviewViewModel>(sp => new OverviewViewModel(
             sp.GetRequiredService<DeviceRepository>(),
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IDialogService>(),
@@ -106,7 +108,8 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<WorkOrderManagerViewModel>(sp => new WorkOrderManagerViewModel(
             sp.GetRequiredService<WorkOrderRepository>(), sp.GetRequiredService<IWorkOrderService>(),
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDialogService>(),
-            sp.GetRequiredService<UserSession>()));
+            sp.GetRequiredService<UserSession>(),
+            sp.GetService<ISnEventStore>()));
     }
 
     private static IServiceCollection AddNavigationPresentationModule(this IServiceCollection services)

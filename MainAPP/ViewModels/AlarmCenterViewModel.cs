@@ -24,6 +24,15 @@ public enum AlarmCenterTimeRange
     Hour1,
     Hours4,
     Hours24,
+    /// <summary>本班次：按班次配置解析当前班次起止（无有效班次时回退今日 0:00 起）。</summary>
+    CurrentShift,
+}
+
+/// <summary>Top 排行排序维度：按触发次数 或 按报警持续总时长。</summary>
+public enum AlarmTopSortMode
+{
+    ByTriggerCount,
+    ByTotalDuration,
 }
 
 /// <summary>
@@ -35,12 +44,17 @@ public class AlarmTopItem
     public string DisplayName { get; set; } = string.Empty;
     public string DeviceName { get; set; } = string.Empty;
     public int TriggerCount { get; set; }
+    /// <summary>窗口内报警总时长（由触发/恢复事件对推算；未恢复的按至 now 计）。</summary>
+    public TimeSpan TotalDuration { get; set; }
+    /// <summary>排行右侧数值文案：按触发次数时为触发数，按持续时长时为格式化时长（由 VM 按当前维度填充）。</summary>
+    public string RankValueText { get; set; } = string.Empty;
     public AlarmLevel Level { get; set; }
     /// <summary>排名序号（1-based，由 ViewModel 填充）</summary>
     public int Rank { get; set; }
 }
 
-/// <summary>事件流列表项：附带从设备配置解析的多语言显示名。</summary>
+/// <summary>事件流列表项：附带从设备配置解析的多语言显示名。
+/// 报警风暴合并组（RepeatCount &gt; 1）以组内最新事件为主记录，其余次数由附加字段承载。</summary>
 public sealed class AlarmCenterEventItem
 {
     public AlarmEventRecord Record { get; }
@@ -48,11 +62,56 @@ public sealed class AlarmCenterEventItem
     public AlarmEventType EventType => Record.EventType;
     public string DeviceName => Record.DeviceName;
     public DateTime EventTime => Record.EventTime;
+    /// <summary>组内最早事件时间（单条事件时与 EventTime 相同）。</summary>
+    public DateTime FirstEventTime { get; }
+    /// <summary>组内事件总数（风暴合并后 &gt;1，单条事件为 1）。</summary>
+    public int RepeatCount { get; }
+    /// <summary>组内触发次数（仅风暴合并组填写，单条事件为 0）。</summary>
+    public int TriggerCount { get; }
+    /// <summary>组内恢复次数（仅风暴合并组填写，单条事件为 0）。</summary>
+    public int RecoverCount { get; }
+    /// <summary>是否风暴合并组，UI 据此显示 "×N" 角标。</summary>
+    public bool IsStormGroup => RepeatCount > 1;
+    /// <summary>"×N" 角标文本（语言无关数字符号，规避 XAML StringFormat 转义）。</summary>
+    public string RepeatBadge => IsStormGroup ? $"×{RepeatCount}" : string.Empty;
+    /// <summary>风暴合并说明悬浮文案。</summary>
+    public string RepeatTooltip => IsStormGroup
+        ? string.Format(MainAPP.Resources.Strings.K718, RepeatCount)
+        : string.Empty;
+    /// <summary>相对时间文案（刚刚/N 分钟前/N 小时前/MM-dd HH:mm），随 60s 统计刷新滚动更新。</summary>
+    public string EventRelativeText
+    {
+        get
+        {
+            var elapsed = DateTime.Now - EventTime;
+            if (elapsed.TotalSeconds < 60) return MainAPP.Resources.Strings.K720;
+            if (elapsed.TotalMinutes < 60) return string.Format(MainAPP.Resources.Strings.K721, (int)elapsed.TotalMinutes);
+            if (elapsed.TotalHours < 24) return string.Format(MainAPP.Resources.Strings.K722, (int)elapsed.TotalHours);
+            return EventTime.ToString("MM-dd HH:mm");
+        }
+    }
+    /// <summary>相对时间悬浮提示：完整绝对时间。</summary>
+    public string EventRelativeTooltip => EventTime.ToString("MM-dd HH:mm:ss");
 
     public AlarmCenterEventItem(AlarmEventRecord record, string displayName)
+        : this(record, displayName, repeatCount: 1, triggerCount: 0, recoverCount: 0)
+    {
+    }
+
+    public AlarmCenterEventItem(
+        AlarmEventRecord record,
+        string displayName,
+        int repeatCount,
+        int triggerCount,
+        int recoverCount,
+        DateTime firstEventTime = default)
     {
         Record = record;
         DisplayName = displayName;
+        RepeatCount = repeatCount;
+        TriggerCount = triggerCount;
+        RecoverCount = recoverCount;
+        FirstEventTime = firstEventTime == default ? record.EventTime : firstEventTime;
     }
 }
 
@@ -61,7 +120,7 @@ public sealed class AlarmCenterEventItem
 /// 数据来源：DeviceRepository.Runtimes（实时活跃报警）+ HistoryService.QueryAlarmEvents（事件流与统计）。
 /// 不修改数据库 schema，纯只读监控视图。
 /// </summary>
-public partial class AlarmCenterViewModel : ObservableObject, IDisposable
+public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     private readonly IAlarmHistoryService _historyService;
     private readonly IDeviceRepository _deviceRepository;
@@ -75,10 +134,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     private bool _disposed;
     private int _unfilteredActiveCount;
     private List<AlarmEventRecord> _pendingDataSourceEvents = new();
+    private readonly AppSettings? _appSettings;
+    private readonly IAlarmSessionMute? _alarmSessionMute;
 
     private const int MaxActiveAlarms = 200;       // 活跃报警列表上限（避免极端情况内存膨胀）
     private const int MaxRecentEvents = 500;       // 事件流展示上限
     private const int TopAlarmsCount = 10;         // Top N 报警
+    /// <summary>
+    /// 报警风暴合并窗口（秒）：同一设备+同一报警的相邻事件时间间隔不超过该窗口并入同一组，
+    /// 避免"触发→恢复→触发"高频循环在事件流刷屏（现场突发/报警振荡场景常见）。
+    /// </summary>
+    private const int StormMergeWindowSeconds = 120;
 
     // ──────────── 时间范围 ────────────
 
@@ -86,6 +152,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(IsHour1))]
     [NotifyPropertyChangedFor(nameof(IsHours4))]
     [NotifyPropertyChangedFor(nameof(IsHours24))]
+    [NotifyPropertyChangedFor(nameof(IsCurrentShift))]
     [NotifyPropertyChangedFor(nameof(MostFrequentLabel))]
     private AlarmCenterTimeRange _selectedTimeRange = AlarmCenterTimeRange.Hours4;
 
@@ -105,6 +172,11 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     {
         get => SelectedTimeRange == AlarmCenterTimeRange.Hours24;
         set { if (value) SelectedTimeRange = AlarmCenterTimeRange.Hours24; }
+    }
+    public bool IsCurrentShift
+    {
+        get => SelectedTimeRange == AlarmCenterTimeRange.CurrentShift;
+        set { if (value) SelectedTimeRange = AlarmCenterTimeRange.CurrentShift; }
     }
 
     // ──────────── KPI 属性 ────────────
@@ -170,11 +242,50 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         ? string.Format(Strings.F715, StatsLastUpdateTime.Value)
         : string.Empty;
 
+    // ──────────── 今日 KPI 较昨日同期对比（昨日 0 点 至"今日已过时长"同窗口径） ────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerCompareText))]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerCompareTooltip))]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerCompareBetter))]
+    private int _yesterdayTriggerCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverCompareText))]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverCompareTooltip))]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverCompareBetter))]
+    private int _yesterdayRecoverCount;
+
+    /// <summary>今日触发较昨日同期变化文案（▲/▼ + 百分比；不可比时 —）。</summary>
+    public string TodayTriggerCompareText => FormatCompareText(TodayTriggerCount, YesterdayTriggerCount);
+    /// <summary>今日触发较昨日同期是否"更好"（触发减少为好）。</summary>
+    public bool TodayTriggerCompareBetter => !HasStatsError && TodayTriggerCount <= YesterdayTriggerCount;
+    public string TodayTriggerCompareTooltip => HasStatsError
+        ? StatsErrorText!
+        : string.Format(Strings.K719, YesterdayTriggerCount, TodayTriggerCount);
+
+    /// <summary>今日恢复较昨日同期变化文案（▲/▼ + 百分比；不可比时 —）。</summary>
+    public string TodayRecoverCompareText => FormatCompareText(TodayRecoverCount, YesterdayRecoverCount);
+    /// <summary>今日恢复较昨日同期是否"更好"（恢复增加为好）。</summary>
+    public bool TodayRecoverCompareBetter => !HasStatsError && TodayRecoverCount >= YesterdayRecoverCount;
+    public string TodayRecoverCompareTooltip => HasStatsError
+        ? StatsErrorText!
+        : string.Format(Strings.K719, YesterdayRecoverCount, TodayRecoverCount);
+
+    private string FormatCompareText(int today, int yesterday)
+    {
+        if (HasStatsError || yesterday <= 0) return "—";
+        var delta = today - yesterday;
+        if (delta == 0) return "±0%";
+        var pct = (int)Math.Round(Math.Abs(delta) * 100.0 / yesterday);
+        return delta > 0 ? $"▲ {pct}%" : $"▼ {pct}%";
+    }
+
     /// <summary>最频繁报警 KPI 标签：带时间范围标注，避免与"今日"口径混淆。</summary>
     public string MostFrequentLabel => string.Format(Strings.K707, SelectedTimeRange switch
     {
         AlarmCenterTimeRange.Hour1 => Strings.K042,
         AlarmCenterTimeRange.Hours4 => Strings.K043,
+        AlarmCenterTimeRange.CurrentShift => Strings.K078,
         _ => Strings.K025,
     });
 
@@ -202,6 +313,40 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _alarmSearchText = string.Empty;
     [ObservableProperty] private string? _selectedDeviceId;
 
+    // ──────────── 页面级静音（与会话级 IAlarmSessionMute 同步，主页静音按钮同源） ────────────
+
+    [ObservableProperty] private bool _isAlarmMuted;
+
+    partial void OnIsAlarmMutedChanged(bool value)
+    {
+        if (_alarmSessionMute != null)
+            _alarmSessionMute.IsMuted = value;
+    }
+
+    /// <summary>切换页面级报警静音。</summary>
+    [RelayCommand]
+    private void ToggleAlarmMute() => IsAlarmMuted = !IsAlarmMuted;
+
+    // ──────────── Top 排行维度（按触发次数 / 按持续时长） ────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTopSortByCount))]
+    [NotifyPropertyChangedFor(nameof(IsTopSortByDuration))]
+    private AlarmTopSortMode _topSortMode = AlarmTopSortMode.ByTriggerCount;
+
+    public bool IsTopSortByCount
+    {
+        get => TopSortMode == AlarmTopSortMode.ByTriggerCount;
+        set { if (value) TopSortMode = AlarmTopSortMode.ByTriggerCount; }
+    }
+    public bool IsTopSortByDuration
+    {
+        get => TopSortMode == AlarmTopSortMode.ByTotalDuration;
+        set { if (value) TopSortMode = AlarmTopSortMode.ByTotalDuration; }
+    }
+
+    partial void OnTopSortModeChanged(AlarmTopSortMode value) => RefreshStats();
+
     public ObservableCollection<Device> DeviceFilterItems { get; } = new();
 
     public event Action<string, string>? ViewAlarmHistoryRequested;
@@ -209,11 +354,16 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     public AlarmCenterViewModel(
         IAlarmHistoryService historyService,
         IDeviceRepository deviceRepository,
-        IDialogService dialog)
+        IDialogService dialog,
+        AppSettings? appSettings = null,
+        IAlarmSessionMute? alarmSessionMute = null)
     {
         _historyService = historyService;
         _deviceRepository = deviceRepository;
         _dialog = dialog;
+        _appSettings = appSettings;
+        _alarmSessionMute = alarmSessionMute;
+        _isAlarmMuted = _alarmSessionMute?.IsMuted ?? false;
 
         foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
             DeviceFilterItems.Add(device);
@@ -263,6 +413,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         _activeTimer.Stop();
         _statsTimer.Stop();
     }
+
+    // ──────────── 页面生命周期（审查修复 2026-08-30：N-3/P2-7 定时器泄漏） ────────────
+    // 此前由 AlarmCenterView 的 Loaded/Unloaded 驱动 Start/Stop，但 NavigationPageHost 常驻
+    // （视图加载后永不卸载，Unloaded 永不触发），定时器在切走后持续运行、逐页叠加。
+    // 改由 MainWindow.ActivatePage 经 INavigationPageLifecycle 驱动，页面切走立即停止。
+
+    /// <inheritdoc />
+    public void OnPageEnter() => Start();
+
+    /// <inheritdoc />
+    public void OnPageExit() => Stop();
 
     private void OnActiveTimerTick(object? sender, EventArgs e) => RefreshActiveAlarms();
 
@@ -515,36 +676,81 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 刷新事件流与统计：单次查询 [min(窗口起点, 今日0点, 30天前), now]，内存切分窗口事件与今日事件，
-    /// 计算今日触发/恢复数、Top N 报警（按触发次数降序）、最频繁报警名。
+    /// 解析查询窗口起点：按所选时间范围；"本班次"通过班次配置解析当前班次起点
+    /// （跨午夜班次由 ShiftConfigResolver.ResolveRange 处理），无班次配置或不在班次时段时回退今日 0:00。
+    /// </summary>
+    private DateTime ResolveWindowStart(DateTime now, DateTime todayStart)
+    {
+        if (SelectedTimeRange == AlarmCenterTimeRange.Hour1) return now.AddHours(-1);
+        if (SelectedTimeRange == AlarmCenterTimeRange.Hours24) return now.AddHours(-24);
+        if (SelectedTimeRange == AlarmCenterTimeRange.CurrentShift)
+        {
+            if (_appSettings != null)
+            {
+                var snap = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now);
+                if (snap.Shift != null) return snap.Start;
+            }
+            return todayStart;
+        }
+        return now.AddHours(-4);
+    }
+
+    /// <summary>
+    /// 推算同一（设备+报警）事件组的总持续时间：按时间升序将 触发→恢复 配对累加，
+    /// 未闭合的触发按至 now 计（报警仍持续中）。供 Top 排行"按持续时长"维度排序。
+    /// </summary>
+    private static TimeSpan ComputeAlarmTotalDuration(
+        IEnumerable<AlarmEventRecord> events,
+        DateTime now)
+    {
+        var sorted = events.OrderBy(e => e.EventTime).ToList();
+        double totalSeconds = 0;
+        DateTime? openStart = null;
+        foreach (var e in sorted)
+        {
+            if (e.EventType == AlarmEventType.Triggered)
+            {
+                if (openStart == null) openStart = e.EventTime;
+            }
+            else if (e.EventType == AlarmEventType.Recovered && openStart.HasValue)
+            {
+                totalSeconds += (e.EventTime - openStart.Value).TotalSeconds;
+                openStart = null;
+            }
+        }
+        if (openStart.HasValue)
+            totalSeconds += (now - openStart.Value).TotalSeconds;
+        return TimeSpan.FromSeconds(Math.Max(0, totalSeconds));
+    }
+
+    /// <summary>
+    /// 刷新事件流与统计：单次查询 [窗口起点 ∪ 今日0点, now]，内存切分窗口事件与今日事件，
+    /// 计算今日触发/恢复数（含较昨日同期对比）、Top N 报警（按触发次数/持续时长维度）、最频繁报警名。
     /// 级别/搜索筛选与左栏活跃列表口径一致。
+    /// 修复（2026-08-30）：原实现恒按"今日0点与30天前取更早"回退 30 天全量拉取再内存过滤，
+    /// 每次 60s 刷新都全表扫 30 天；现只查询所需窗口（≤24h，默认 4h）。
     /// </summary>
     private void RefreshStats()
     {
         var requestVersion = ++_statsRefreshVersion;
         var now = DateTime.Now;
-        var from = SelectedTimeRange switch
-        {
-            AlarmCenterTimeRange.Hour1 => now.AddHours(-1),
-            AlarmCenterTimeRange.Hours4 => now.AddHours(-4),
-            AlarmCenterTimeRange.Hours24 => now.AddHours(-24),
-            _ => now.AddHours(-4),
-        };
         var todayStart = now.Date;
-        var queryFrom = from < todayStart ? from : todayStart;
-        var extendedFrom = queryFrom < now.AddDays(-30) ? queryFrom : now.AddDays(-30);
+        var from = ResolveWindowStart(now, todayStart);
+        var queryFrom = from < todayStart ? from : todayStart;   // 覆盖窗口与今日 KPI 两个口径的最小并集
         var deviceId = SelectedDeviceId;
         var search = AlarmSearchText;
         var showHigh = ShowHighAlarms;
         var showMedium = ShowMediumAlarms;
         var showLow = ShowLowAlarms;
         var deviceRepository = _deviceRepository;
+        var sortMode = TopSortMode;
 
         void RefreshStatsCore()
         {
             try
             {
-                var allEvents = _historyService.QueryAlarmEventsStrict(extendedFrom, now, deviceId);
+                // 修复（2026-08-30）：只拉 [queryFrom, now]，不再回退 30 天全量
+                var allEvents = _historyService.QueryAlarmEventsStrict(queryFrom, now, deviceId);
                 var windowEvents = allEvents.Where(e => e.EventTime >= from).ToList();
                 var todayEvents = allEvents.Where(e => e.EventTime >= todayStart).ToList();
 
@@ -558,8 +764,27 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                 var triggerCount = filteredToday.Count(e => e.EventType == AlarmEventType.Triggered);
                 var recoverCount = filteredToday.Count(e => e.EventType == AlarmEventType.Recovered);
 
-                var topItems = filteredWindow
-                    .Where(e => e.EventType == AlarmEventType.Triggered)
+                // 较昨日同期：昨日 [0 点, 0 点 + 今日已过时长] 同窗口径
+                var yesterdayTrigger = 0;
+                var yesterdayRecover = 0;
+                try
+                {
+                    var elapsedToday = now - todayStart;
+                    var yesterdayStart = todayStart.AddDays(-1);
+                    var yesterdayEnd = yesterdayStart + elapsedToday;
+                    var yesterdayEvents = _historyService.QueryAlarmEventsStrict(yesterdayStart, yesterdayEnd, deviceId)
+                        .Where(MatchesFilters)
+                        .ToList();
+                    yesterdayTrigger = yesterdayEvents.Count(e => e.EventType == AlarmEventType.Triggered);
+                    yesterdayRecover = yesterdayEvents.Count(e => e.EventType == AlarmEventType.Recovered);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "报警中心昨日同期对比查询失败，仅展示今日数值");
+                }
+
+                // Top 排行：按（设备+报警）聚类，同时统计触发次数与总时长，再按当前维度排序
+                var keyGroups = filteredWindow
                     .GroupBy(e => new { e.AlarmName, e.DeviceName, e.DeviceId, e.AlarmId })
                     .Select(g =>
                     {
@@ -569,25 +794,33 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                             AlarmName = g.Key.AlarmName,
                             DisplayName = AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, sample),
                             DeviceName = g.Key.DeviceName,
-                            TriggerCount = g.Count(),
+                            TriggerCount = g.Count(e => e.EventType == AlarmEventType.Triggered),
+                            TotalDuration = ComputeAlarmTotalDuration(g, now),
                             Level = LookupAlarmLevel(deviceRepository, g.Key.AlarmName, g.Key.DeviceId, g.Key.AlarmId),
                         };
                     })
-                    .OrderByDescending(x => x.TriggerCount)
+                    .ToList();
+
+                var topItems = (sortMode == AlarmTopSortMode.ByTotalDuration
+                        ? keyGroups.OrderByDescending(x => x.TotalDuration.TotalSeconds)
+                        : keyGroups.OrderByDescending(x => x.TriggerCount))
                     .Take(TopAlarmsCount)
                     .ToList();
 
                 for (int i = 0; i < topItems.Count; i++)
+                {
                     topItems[i].Rank = i + 1;
+                    topItems[i].RankValueText = sortMode == AlarmTopSortMode.ByTotalDuration
+                        ? Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(topItems[i].TotalDuration.TotalSeconds)
+                        : topItems[i].TriggerCount.ToString();
+                }
 
-                var recent = filteredWindow
-                    .OrderByDescending(e => e.EventTime)
+                var recent = BuildRecentStream(filteredWindow, deviceRepository)
                     .Take(MaxRecentEvents)
-                    .Select(e => new AlarmCenterEventItem(
-                        e, AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, e)))
                     .ToList();
 
-                var mostFrequent = topItems.FirstOrDefault();
+                // 最频繁报警保持"触发次数最多"口径（与 Top 显示维度解耦）
+                var mostFrequent = keyGroups.OrderByDescending(x => x.TriggerCount).FirstOrDefault();
 
                 var pendingSource = PendingDataSourceAlarmQuery.ExtractPending(allEvents);
 
@@ -602,6 +835,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
 
                     TodayTriggerCount = triggerCount;
                     TodayRecoverCount = recoverCount;
+                    YesterdayTriggerCount = yesterdayTrigger;
+                    YesterdayRecoverCount = yesterdayRecover;
                     MostFrequentAlarm = mostFrequent != null
                         ? string.Format(Strings.F033, mostFrequent.DisplayName, mostFrequent.TriggerCount)
                         : "—";
@@ -642,6 +877,66 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             Task.Run(RefreshStatsCore).Forget();
         else
             RefreshStatsCore();
+    }
+
+    /// <summary>
+    /// 构建最近事件流（含报警风暴抑制）。
+    /// 按事件时间倒序遍历，以【设备+报警】为 key 做窗口聚类：同一 key 的事件只要与该 key
+    /// 最近一条事件的间隔 ≤ StormMergeWindowSeconds 即并入同组——即使中间穿插了其他设备的
+    /// 报警也不断组（多设备交错振荡是报警风暴的典型形态，相邻合并将完全失效）。
+    /// 每个 key 可因时间断档形成多组；整组合并为一条展示项，主记录取组内最新事件
+    /// （图标/颜色/时间戳语义不变），剩余次数与触发/恢复计数放在附加字段，UI 显示 "×N" 角标。
+    /// 完成后按各组最新事件时间倒序返回。
+    /// internal：供 MainAPP.Tests 单元测试直接验证合并语义。
+    /// </summary>
+    internal static List<AlarmCenterEventItem> BuildRecentStream(
+        IReadOnlyList<AlarmEventRecord> filteredWindow,
+        IDeviceRepository deviceRepository)
+    {
+        var windowTs = TimeSpan.FromSeconds(StormMergeWindowSeconds);
+        // key → 该 key 当前打开的组：Items（倒序累积，[0]=组内最新，[^1]=组内最旧）、
+        // Newest=组内最新事件时间（恒定）、LastAdded=最近并入事件时间（断档判断用）
+        var groupsByKey = new Dictionary<string, (List<AlarmEventRecord> Items, DateTime Newest, DateTime LastAdded)>();
+        var allGroups = new List<(List<AlarmEventRecord> Items, DateTime Newest, DateTime LastAdded)>();
+
+        foreach (var e in filteredWindow.OrderByDescending(x => x.EventTime))
+        {
+            var key = $"{e.DeviceId}|{e.AlarmName}";
+            if (groupsByKey.TryGetValue(key, out var g) && (g.LastAdded - e.EventTime) <= windowTs)
+            {
+                g.Items.Add(e);
+                g.LastAdded = e.EventTime;          // 倒序迭代：相邻并入，间隙用上次并入时间判断
+                groupsByKey[key] = g;
+            }
+            else
+            {
+                // 该 key 无打开组或已断档：先归档旧组，再开新组
+                if (g.Items is not null)
+                    allGroups.Add(g);
+                groupsByKey[key] = (new List<AlarmEventRecord> { e }, e.EventTime, e.EventTime);
+            }
+        }
+
+        foreach (var kvp in groupsByKey)
+            allGroups.Add(kvp.Value);
+
+        // 每组以组内最新事件时间为准，倒序输出
+        var result = new List<AlarmCenterEventItem>();
+        foreach (var g in allGroups.OrderByDescending(x => x.Newest))
+        {
+            var latest = g.Items[0];
+            var triggerCount = g.Items.Count(r => r.EventType == AlarmEventType.Triggered);
+            var recoverCount = g.Items.Count(r => r.EventType == AlarmEventType.Recovered);
+            result.Add(new AlarmCenterEventItem(
+                latest,
+                AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, latest),
+                repeatCount: g.Items.Count,
+                triggerCount: triggerCount,
+                recoverCount: recoverCount,
+                firstEventTime: g.Items[^1].EventTime));
+        }
+
+        return result;
     }
 
     /// <summary>

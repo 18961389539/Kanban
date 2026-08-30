@@ -117,6 +117,10 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
 
     private static bool DeviceMatchesKeyword(Device d, string keyword)
     {
+        // Id 是随机 GUID，不能用子串匹配（字母数字噪声太大）；支持等值或 ≥8 位前缀定位
+        var id = d.Id ?? string.Empty;
+        if (string.Equals(id, keyword, System.StringComparison.OrdinalIgnoreCase)
+            || (keyword.Length >= 8 && id.StartsWith(keyword, System.StringComparison.OrdinalIgnoreCase))) return true;
         if ((d.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
         if ((d.OkCountAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
         if ((d.NgCountAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
@@ -129,7 +133,10 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             if ((a.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
         }
         foreach (var def in d.Defects)
+        {
             if ((def.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+            if ((def.PlcAddress ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;
+        }
         foreach (var c in d.CounterAlarms)
         {
             if ((c.Name ?? string.Empty).Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) return true;

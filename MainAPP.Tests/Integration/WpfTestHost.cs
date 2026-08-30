@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
@@ -46,6 +47,24 @@ public abstract class WpfTestHost
         {
             if (listener != null)
                 PresentationTraceSources.DataBindingSource.Listeners.Remove(listener);
+            // 冲刷共享 STA Dispatcher：把本测试期间遗留的排队操作（DispatcherTimer 回调、
+            // async 封送、Growl 等）在当前测试返回前执行完。这些操作可能访问 DI 的
+            // IServiceProvider；若拖到下一个测试的 Invoke 里执行（此时容器已释放）会抛
+            // ObjectDisposedException('IServiceProvider')，表现为间歇性的“下一测试失败”。
+            DrainDispatcher();
+        }
+    }
+
+    /// <summary>执行所有优先级不低于 ContextIdle 的排队 Dispatcher 操作，消除跨测试的遗留状态。</summary>
+    protected void DrainDispatcher()
+    {
+        try
+        {
+            Fixture.Dispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+        }
+        catch
+        {
+            // 冲刷失败（如个别遗留操作自身抛异常）不阻塞当前测试结果判定
         }
     }
 

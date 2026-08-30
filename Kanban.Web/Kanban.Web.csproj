@@ -12,7 +12,7 @@
   <!-- 编译前从统一 Localization.csv 重新生成 Localization.cs。 -->
   <Target Name="GenerateLocalization" BeforeTargets="BeforeBuild">
     <Message Importance="high" Text="Generating Localization.cs from WPF Strings.resx…" />
-    <Exec Command="python $(ProjectDir)..\ci\generate_localization.py --web"
+    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py --web"
           WorkingDirectory="$(ProjectDir).."
           ContinueOnError="false" />
   </Target>

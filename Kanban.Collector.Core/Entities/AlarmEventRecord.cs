@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Kanban.Collector.Core.Entities;
 
 /// <summary>
@@ -47,4 +49,12 @@ public class AlarmEventRecord
     /// 班次配置修改后不影响历史记录，仅作用于后续写入）。
     /// </summary>
     public string ShiftName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 显示用：本次触发持续时长文本（如 "12min" / "1.5h"）。
+    /// 由查询层在贪心配对后回填，[NotMapped] 不落库。
+    /// Recovered 事件为 null（表格显示 "—"）；未配对 Triggered 为 null（显示"待恢复"，语义见 AlarmInsight）。
+    /// </summary>
+    [NotMapped]
+    public string? DurationText { get; set; }
 }

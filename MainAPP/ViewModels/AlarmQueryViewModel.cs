@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
@@ -33,6 +33,10 @@ public partial class AlarmQueryViewModel : ObservableObject
     [ObservableProperty]
     private int _alarmPendingCount;
 
+    /// <summary>平均恢复耗时（MTTR）文本，如 "12min" / "1.5h"；无配对样本时为 null（不显示）。</summary>
+    [ObservableProperty]
+    private string? _alarmMttrText;
+
     [ObservableProperty]
     private PlotModel? _alarmChart;
 
@@ -53,6 +57,7 @@ public partial class AlarmQueryViewModel : ObservableObject
     {
         AlarmEvents.Clear();
         AlarmTriggerCount = 0; AlarmRecoverCount = 0; AlarmPendingCount = 0;
+        AlarmMttrText = null;
         AlarmInsight = null;
         AlarmChart = null;
         LastQueryAlarmNames.Clear();
@@ -98,6 +103,9 @@ public partial class AlarmQueryViewModel : ObservableObject
             // 贪心配对（审查修复 2026-08-13）：每条 Recovered 与其前最近一条**未配对** Triggered 配对。
             // 原实现每个 Triggered 找其后第一条 Recovered——T1→T2→R 序列中 T1/T2 共用同一条 R，
             // T2（实际尚待恢复）被误算为已恢复，平均时长系统性偏低。
+            // 本次配对同时回填表格每行的 DurationText（trigger → 时长），并累计 allDurations 供 MTTR。
+            var durationByTrigger = new Dictionary<AlarmEventRecord, double>();
+            List<double> allDurations = [];
             var alarmStats = list
                 .Where(e => e.EventType == AlarmEventType.Triggered)
                 .GroupBy(e => e.AlarmName)
@@ -117,7 +125,10 @@ public partial class AlarmQueryViewModel : ObservableObject
                             .FirstOrDefault();
                         if (prev == null) continue;
                         paired.Add(prev);
-                        durations.Add((rec.EventTime - prev.EventTime).TotalMinutes);
+                        var minutes = (rec.EventTime - prev.EventTime).TotalMinutes;
+                        durations.Add(minutes);
+                        allDurations.Add(minutes);
+                        durationByTrigger[prev] = minutes;
                     }
                     return (
                         AlarmName: g.Key,
@@ -127,6 +138,19 @@ public partial class AlarmQueryViewModel : ObservableObject
                 })
                 .OrderByDescending(x => x.TriggerCount);
             AlarmChart = ChartService.BuildAlarmChart(alarmStats);
+
+            // 回填表格行级持续时长（仅 Triggered；Recovered/未配对 Triggered 保持 null → 表格 "—"）
+            foreach (var e in list)
+            {
+                if (e.EventType == AlarmEventType.Triggered
+                    && durationByTrigger.TryGetValue(e, out var minutes))
+                {
+                    e.DurationText = FormatDurationText(minutes);
+                }
+            }
+            AlarmMttrText = allDurations.Count > 0
+                ? FormatDurationText(allDurations.Average())
+                : null;
 
             // 待恢复持续时长排行的基准时间：查询区间终点，若终点在未来则截到当前时刻。
             // 历史"待恢复"概念应基于查询窗口的视角，而非物理当下。
@@ -142,6 +166,12 @@ public partial class AlarmQueryViewModel : ObservableObject
             return (0, 0);
         }
     }
+
+    /// <summary>持续时长显示文本：≥1 小时用 "x.xh"，否则用整分钟。与洞察文案口径一致。</summary>
+    internal static string FormatDurationText(double minutes)
+        => minutes >= 60
+            ? $"{minutes / 60.0:F1}h"
+            : $"{minutes:F0}min";
 
     /// <summary>翻页：从缓存全量结果内存分页，不重新查询（KPI/图表不变）。</summary>
     public void Page(int currentPage, int pageSize)
@@ -162,16 +192,22 @@ public partial class AlarmQueryViewModel : ObservableObject
         AlarmEvents.Clear();
         _allEvents = [];
         AlarmTriggerCount = 0; AlarmRecoverCount = 0; AlarmPendingCount = 0;
+        AlarmMttrText = null;
         AlarmChart = null;
         AlarmInsight = null;
         LastQueryAlarmNames.Clear();
     }
 
-    public string? BuildCsv()
-    {
-        if (AlarmEvents.Count == 0) return null;
+    public string? BuildCsv() => BuildCsvCore(AlarmEvents);
 
-        var rows = AlarmEvents.Select(e => new AlarmCsvRow
+    /// <summary>导出全部筛选结果（跨页合并，供导出范围选择"全量"时调用）。</summary>
+    public string? BuildCsvAll() => BuildCsvCore(_allEvents);
+
+    private string? BuildCsvCore(IReadOnlyList<AlarmEventRecord> source)
+    {
+        if (source.Count == 0) return null;
+
+        var rows = source.Select(e => new AlarmCsvRow
         {
             Timestamp = e.EventTime,
             DeviceId = e.DeviceId,
@@ -180,7 +216,8 @@ public partial class AlarmQueryViewModel : ObservableObject
             AlarmName = e.AlarmName,
             PlcAddress = e.PlcAddress,
             EventType = e.EventType,
-            EventTypeText = HistoryQueryHelper.GetEventTypeText(e.EventType)
+            EventTypeText = HistoryQueryHelper.GetEventTypeText(e.EventType),
+            DurationText = e.EventType == AlarmEventType.Triggered ? e.DurationText : string.Empty
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,
@@ -312,5 +349,6 @@ public partial class AlarmQueryViewModel : ObservableObject
         [Name("PLC地址")] public string? PlcAddress { get; set; }
         [Name("事件类型")] public AlarmEventType EventType { get; set; }
         [Name("事件类型文本")] public string? EventTypeText { get; set; }
+        [Name("持续时间")] public string? DurationText { get; set; }
     }
 }

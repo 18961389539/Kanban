@@ -215,7 +215,7 @@ Wpf,K124,搜索设备或报警名称,Search device or alarm name,設備または
 Wpf,K125,活跃报警,Active Alarms,アクティブアラーム,Active Alarms
 Wpf,K126,今日触发,Triggered Today,本日発生,Triggered Today
 Wpf,K127,今日恢复,Recovered Today,本日復帰,Recovered Today
-Wpf,K128,最长持续,Longest Duration,最長継続,Longest Duration
+Wpf,K128,最早报警·已持续,Earliest Alarm · Ongoing,最早アラーム・継続中,Earliest Alarm · Ongoing
 Wpf,K129,影响设备,Affected Device,影響設備,Affected Device
 Wpf,K130,最频繁报警,Most Frequent Alarms,頻発アラーム,Most Frequent Alarms
 Wpf,K131,高级,High,高,High
@@ -1537,6 +1537,10 @@ Wpf,M377,修改密码,Change Password,パスワード変更,Change Password
 Wpf,M378,禁用,Disabled,無効,Disabled
 Wpf,M379,搜索用户名 / 显示名,Search username / display name,ユーザー名 / 表示名を検索,Search username / display name
 Wpf,M380,无匹配用户,No matching users,一致するユーザーがいません,No matching users
+Wpf,M381,导出范围,Export Scope,エクスポート範囲,Export Scope
+Wpf,M382,导出全部筛选结果？选择\"是\"导出全量，选择\"否\"仅导出当前页。,Export all filtered results? Choose Yes for full export or No for current page only.,絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。,Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.
+Wpf,M383,仅当前页,Current page only,現在のページのみ,Current page only
+Wpf,M384,全量筛选结果（共 {0} 条）,All filtered results ({0} rows),絞り込み結果の全件（{0} 件）,Todos os resultados filtrados ({0} linhas)
 Wpf,M332,操作员,Operator,オペレーター,Operator
 Wpf,M333,工程师,Engineer,エンジニア,Engineer
 Wpf,M334,管理员,Administrator,管理者,Administrator
@@ -2011,10 +2015,27 @@ Wpf,K708,仅显示前 {0} 条,Showing first {0} only,先頭 {0} 件のみ表示,
 Wpf,K709,当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响,Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters,未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり,Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters
 Wpf,K710,今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响,Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし,Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above
 Wpf,K711,今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响,Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし,Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above
-Wpf,K712,当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响,Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters,未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり,Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters
+Wpf,K712,当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响,Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters,未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり,Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters
 Wpf,K713,当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响,Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters,未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり,Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters
 Wpf,K714,按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新,Top alarm by trigger count in the selected time range above; refreshed about every 60s,上部で選択した時間範囲内の発生回数第1位。約60秒更新,Top alarm by trigger count in the selected time range above; refreshed about every 60s
 Wpf,K717,事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计,Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight,イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計,Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight
+Wpf,K718,同一报警在短时间内重复触发已合并显示，共 {0} 条,Repeated triggers of the same alarm within a short window merged; {0} events total,同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件,Repeated triggers of the same alarm within a short window merged; {0} events total
+Wpf,K719,较昨日同期：昨日 {0} / 今日 {1},Versus yesterday at the same time: yesterday {0} / today {1},昨日同期比：昨日 {0}／今日 {1},Versus yesterday at the same time: yesterday {0} / today {1}
+Wpf,K720,刚刚,Just now,たった今,Just now
+Wpf,K721,{0} 分钟前,{0} min ago,{0} 分前,{0} min ago
+Wpf,K722,{0} 小时前,{0} hr ago,{0} 時間前,{0} hr ago
+Wpf,K723,按触发次数,By Triggers,発生回数順,By Triggers
+Wpf,K724,按持续时长,By Duration,継続時間順,By Duration
+Wpf,K725,设备配置校验通过（共 {0} 台）,Device config validated OK ({0} devices),デバイス設定の検証OK（{0}台）,Device config validated OK ({0} devices)
+Wpf,K726,设备校验,Validate,検証,Validate
+Wpf,K727,当前设备有未保存的更改，切换设备将丢失这些更改。仍要继续？,The current device has unsaved changes; switching away will lose them. Continue?,現在のデバイスには未保存の変更があります。切り替えると失われます。続行しますか？,The current device has unsaved changes; switching away will lose them. Continue?
+Wpf,K728,导出所选设备,Export Selected Device,選択デバイスをエクスポート,Export Selected Device
+Wpf,K729,导入设备配置,Import Device Config,デバイス設定をインポート,Import Device Config
+Wpf,K730,已导出设备「{0}」,Exported device “{0}”,デバイス「{0}」をエクスポートしました,Exported device “{0}”
+Wpf,K731,导入失败：文件为空或解析失败。,Import failed: file is empty or could not be parsed.,インポート失敗：ファイルが空か解析エラー。,Import failed: file is empty or could not be parsed.
+Wpf,K732,导入失败：设备 Id「{0}」与现有设备冲突，请修改文件中的 Id。,Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.,インポート失敗：デバイスID「{0}」が既存デバイスと競合。ファイル内のIDを変更してください。,Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.
+Wpf,K733,已导入设备「{0}」,Imported device “{0}”,デバイス「{0}」をインポートしました,Imported device “{0}”
+Wpf,K734,离开设备管理页将丢弃未保存的配置更改，仍要继续？,Leaving the device manager will discard unsaved configuration changes. Continue?,デバイス管理を離れると未保存の設定変更が失われます。続行しますか？,Leaving the device manager will discard unsaved configuration changes. Continue?
 Wpf,F317,将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？,{0} recipes will be imported ({1} will be skipped for failing validation). Continue?,レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？,{0} recipes will be imported ({1} will be skipped for failing validation). Continue?
 Wpf,F318,已导入 {0} 条配方，跳过 {1} 条,"Imported {0} recipes, skipped {1}",レシピ {0} 件をインポートし、{1} 件をスキップしました,"Imported {0} recipes, skipped {1}"
 Wpf,F319,已导出 {0} 条配方,Exported {0} recipes,レシピ {0} 件をエクスポートしました,Exported {0} recipes
@@ -2162,38 +2183,38 @@ Wpf,Csv_CounterAlarm_NameJa,名称(JA),Name (JA),名前(JA),Nome (JA)
 Wpf,Csv_CounterAlarm_NamePt,名称(PT),Name (PT),名前(PT),Nome (PT)
 Wpf,Csv_CounterAlarm_PlcAddress,PLC地址,PlcAddress,PLCアドレス,Endereco PLC
 Wpf,Csv_CounterAlarm_Unit,单位,Unit,単位,Unidade
-Wpf,Csv_DataSource_AckValue,AckValue,AckValue,AckValue,AckValue
-Wpf,Csv_DataSource_BoolExpectedValue,BoolExpectedValue,BoolExpectedValue,BoolExpectedValue,BoolExpectedValue
-Wpf,Csv_DataSource_ConfirmSeconds,ConfirmSeconds,ConfirmSeconds,ConfirmSeconds,ConfirmSeconds
-Wpf,Csv_DataSource_EnumValuesJson,EnumValuesJson,EnumValuesJson,EnumValuesJson,EnumValuesJson
-Wpf,Csv_DataSource_ExpectedValue,ExpectedValue,ExpectedValue,ExpectedValue,ExpectedValue
-Wpf,Csv_DataSource_ExpectedValueConfigured,ExpectedValueConfigured,ExpectedValueConfigured,ExpectedValueConfigured,ExpectedValueConfigured
+Wpf,Csv_DataSource_AckValue,确认值,AckValue,応答値,Valor de confirmacao
+Wpf,Csv_DataSource_BoolExpectedValue,布尔期望值,BoolExpectedValue,ブール期待値,Valor bool esperado
+Wpf,Csv_DataSource_ConfirmSeconds,确认延迟(秒),ConfirmSeconds,確認遅延(秒),Segundo(s) de confirmacao
+Wpf,Csv_DataSource_EnumValuesJson,枚举映射 JSON,EnumValuesJson,列挙マッピング JSON,JSON de mapeamento de enum
+Wpf,Csv_DataSource_ExpectedValue,期望值,ExpectedValue,整数期待値,Valor esperado
+Wpf,Csv_DataSource_ExpectedValueConfigured,期望值已配置,ExpectedValueConfigured,期待値設定済み,Valor esperado configurado
 Wpf,Csv_DataSource_FileName,{0}_数据源_{1:yyyyMMdd_HHmmss}.csv,{0}_datasources_{1:yyyyMMdd_HHmmss}.csv,{0}_データソース_{1:yyyyMMdd_HHmmss}.csv,{0}_fontes_dados_{1:yyyyMMdd_HHmmss}.csv
-Wpf,Csv_DataSource_FloatExpectedValue,FloatExpectedValue,FloatExpectedValue,FloatExpectedValue,FloatExpectedValue
-Wpf,Csv_DataSource_FloatLimitMax,FloatLimitMax,FloatLimitMax,FloatLimitMax,FloatLimitMax
-Wpf,Csv_DataSource_FloatLimitMin,FloatLimitMin,FloatLimitMin,FloatLimitMin,FloatLimitMin
-Wpf,Csv_DataSource_Hysteresis,Hysteresis,Hysteresis,Hysteresis,Hysteresis
-Wpf,Csv_DataSource_LimitMax,LimitMax,LimitMax,LimitMax,LimitMax
-Wpf,Csv_DataSource_LimitMin,LimitMin,LimitMin,LimitMin,LimitMin
-Wpf,Csv_DataSource_SourceDescription,SourceDescription,SourceDescription,SourceDescription,SourceDescription
-Wpf,Csv_DataSource_SourceEnabled,SourceEnabled,SourceEnabled,SourceEnabled,SourceEnabled
-Wpf,Csv_DataSource_SourceName,SourceName,SourceName,SourceName,SourceName
+Wpf,Csv_DataSource_FloatExpectedValue,浮点期望值,FloatExpectedValue,浮動小数点期待値,Valor esperado float
+Wpf,Csv_DataSource_FloatLimitMax,浮点上限,FloatLimitMax,浮動小数点上限,Limite maximo float
+Wpf,Csv_DataSource_FloatLimitMin,浮点下限,FloatLimitMin,浮動小数点下限,Limite minimo float
+Wpf,Csv_DataSource_Hysteresis,滞回,Hysteresis,ヒステリシス,Histerese
+Wpf,Csv_DataSource_LimitMax,上限,LimitMax,整数上限,Limite maximo
+Wpf,Csv_DataSource_LimitMin,下限,LimitMin,整数下限,Limite minimo
+Wpf,Csv_DataSource_SourceDescription,数据源描述,SourceDescription,データソースの説明,Descricao da fonte
+Wpf,Csv_DataSource_SourceEnabled,数据源启用,SourceEnabled,データソース有効,Fonte ativada
+Wpf,Csv_DataSource_SourceName,数据源名称,SourceName,データソース名,Nome da fonte
 Wpf,Csv_DataSource_SourceNameEn,SourceNameEn,SourceNameEn,SourceNameEn,SourceNameEn
 Wpf,Csv_DataSource_SourceNameJa,SourceNameJa,SourceNameJa,SourceNameJa,SourceNameJa
 Wpf,Csv_DataSource_SourceNamePt,SourceNamePt,SourceNamePt,SourceNamePt,SourceNamePt
-Wpf,Csv_DataSource_SourceType,SourceType,SourceType,SourceType,SourceType
-Wpf,Csv_DataSource_StringExpectedValue,StringExpectedValue,StringExpectedValue,StringExpectedValue,StringExpectedValue
-Wpf,Csv_DataSource_StringLength,StringLength,StringLength,StringLength,StringLength
-Wpf,Csv_DataSource_TriggerAddress,TriggerAddress,TriggerAddress,TriggerAddress,TriggerAddress
-Wpf,Csv_DataSource_TriggerValue,TriggerValue,TriggerValue,TriggerValue,TriggerValue
-Wpf,Csv_DataSource_ValueDataType,ValueDataType,ValueDataType,ValueDataType,ValueDataType
-Wpf,Csv_DataSource_ValueEnabled,ValueEnabled,ValueEnabled,ValueEnabled,ValueEnabled
-Wpf,Csv_DataSource_ValueName,ValueName,ValueName,ValueName,ValueName
+Wpf,Csv_DataSource_SourceType,数据源类型,SourceType,データソースタイプ,Tipo da fonte
+Wpf,Csv_DataSource_StringExpectedValue,字符串期望值,StringExpectedValue,文字列期待値,Valor esperado string
+Wpf,Csv_DataSource_StringLength,字符串长度,StringLength,文字列長,Comprimento da string
+Wpf,Csv_DataSource_TriggerAddress,触发地址,TriggerAddress,トリガーアドレス,Endereco de gatilho
+Wpf,Csv_DataSource_TriggerValue,触发值,TriggerValue,トリガー値,Valor de gatilho
+Wpf,Csv_DataSource_ValueDataType,数据类型,ValueDataType,データ型,Tipo de valor
+Wpf,Csv_DataSource_ValueEnabled,值项启用,ValueEnabled,値項目有効,Valor ativado
+Wpf,Csv_DataSource_ValueName,值项名称,ValueName,値項目名,Nome do valor
 Wpf,Csv_DataSource_ValueNameEn,ValueNameEn,ValueNameEn,ValueNameEn,ValueNameEn
 Wpf,Csv_DataSource_ValueNameJa,ValueNameJa,ValueNameJa,ValueNameJa,ValueNameJa
 Wpf,Csv_DataSource_ValueNamePt,ValueNamePt,ValueNamePt,ValueNamePt,ValueNamePt
-Wpf,Csv_DataSource_ValuePlcAddress,ValuePlcAddress,ValuePlcAddress,ValuePlcAddress,ValuePlcAddress
-Wpf,Csv_DataSource_ValueUnit,ValueUnit,ValueUnit,ValueUnit,ValueUnit
+Wpf,Csv_DataSource_ValuePlcAddress,值项PLC地址,ValuePlcAddress,値項目PLCアドレス,Endereco PLC do valor
+Wpf,Csv_DataSource_ValueUnit,值项单位,ValueUnit,値項目単位,Unidade do valor
 Wpf,Csv_Defect_Category,类别,Category,カテゴリ,Categoria
 Wpf,Csv_Defect_FileName,{0}_缺陷_{1:yyyyMMdd_HHmmss}.csv,{0}_defects_{1:yyyyMMdd_HHmmss}.csv,{0}_不良_{1:yyyyMMdd_HHmmss}.csv,{0}_defeitos_{1:yyyyMMdd_HHmmss}.csv
 Wpf,Csv_Defect_Name,名称,Name,名前,Nome
@@ -2418,3 +2439,62 @@ Wpf,Validator_SourceValueAddressMissing,数据源「{0}」值项「{1}」未配�
 Wpf,Validator_SourceValueAddressSameAsTrigger,数据源「{0}」值项「{1}」采集地址不能与触发地址相同,Value '{1}' PLC address cannot match trigger address in source '{0}',データソース「{0}」値項目「{1}」の収集アドレスはトリガーアドレスと同じにできません,Endereco PLC do valor '{1}' nao pode ser igual ao gatilho na fonte '{0}'
 Wpf,Validator_StringLengthInvalid,数据源「{0}」值项「{1}」字符串长度无效（1-1024）,Invalid string length (1-1024) for value '{1}' in source '{0}',データソース「{0}」値項目「{1}」の文字列長が無効です（1-1024）,Comprimento de string invalido (1-1024) para valor '{1}' na fonte '{0}'
 Wpf,Validator_TriggerAckConflict,数据源「{0}」触发值与确认值不能相同,Trigger and ack values cannot match in source '{0}',データソース「{0}」のトリガー値と確認値は同じにできません,Valores de gatilho e confirmacao nao podem ser iguais na fonte '{0}'
+Wpf,K750,导入工单,Import Work Orders,工単インポート,Importar ordens de produção
+Wpf,K751,选择工单 CSV 文件,Select work order CSV file,工単 CSV ファイルを選択,Selecione o arquivo CSV de ordens de produção
+Wpf,K752,即将批量导入 {0} 条工单，是否继续？,About to import {0} work orders. Continue?,{0} 件の工単を一括インポートします。続行しますか？,Os {0} ordens de produção serão importadas. Continuar?
+Wpf,K753,已成功导入 {0} 条工单,Imported {0} work orders successfully,{0} 件の工単をインポートしました,{0} ordens de produção importadas com sucesso
+Wpf,K754,已导入 {0} 条，跳过 {1} 条：{2},"Imported {0}, skipped {1}: {2}",{0} 件インポート、{1} 件スキップ：{2},"Importadas {0}, ignoradas {1}: {2}"
+Wpf,K755,读取工单 CSV 失败：{0},Failed to read work order CSV: {0},工単 CSV の読み取りに失敗：{0},Falha ao ler o CSV de ordens de produção: {0}
+Wpf,K756,文件 {0} 中未找到可导入的工单,No importable work orders found in {0},{0} にインポート可能な工単がありません,Nenhuma ordem de produção importável encontrada em {0}
+Wpf,K757,已复制：{0},Copied: {0},コピーしました：{0},Copiado: {0}
+Wpf,K762,冲突,Conflict,競合,Conflito
+Wpf,K763,逾期,Overdue,期限超過,Atrasado
+Wpf,K764,从 CSV 文件批量导入工单（列名与导出模板一致）,Import work orders from a CSV file (columns match the export template),CSV から工単を一括インポート（列名はエクスポートテンプレートと同一）,Importar ordens de produção de um arquivo CSV (as colunas correspondem ao modelo de exportação)
+Wpf,K765,目标,Target,目標,Alvo
+Wpf,K766,合格,OK,良品,OK
+Wpf,K767,达成率,Achievement,達成率,Taxa de realização
+Wpf,K768,筛选结果,Filtered results,絞り込み結果,Resultados filtrados
+Wpf,K769,复制工单号,Copy order number,工単番号をコピー,Copiar número da ordem
+Wpf,K770,复制产品编码,Copy product code,製品コードをコピー,Copiar código do produto
+Wpf,K771,时间线,Timeline,タイムライン,Linha do tempo
+Wpf,K772,创建,Created,作成,Criada
+Wpf,K773,计划开始,Planned start,予定開始,Início planejado
+Wpf,K774,实际开始,Actual start,実開始,Início real
+Wpf,K775,完成,Completed,完了,Concluída
+Wpf,K776,中止,Aborted,中止,Abortada
+Wpf,K788,导入,Import,インポート,Importar
+Wpf,K789,双击列表行可直接编辑该工单,Double-click a row to edit that work order,行をダブルクリックで編集,Clique duas vezes em uma linha para editar essa ordem
+Wpf,K790,第 {0} 行：列数不足（{1} < 7），已跳过,Row {0}: too few columns ({1} < 7); skipped,{0} 行目：列数不足（{1} < 7）、スキップ,Linha {0}: colunas insuficientes ({1} < 7); ignorada
+Wpf,K791,第 {0} 行 [{1}]：计划时间格式应为 yyyy-MM-dd HH:mm，已跳过,Row {0} [{1}]: planned time must be yyyy-MM-dd HH:mm; skipped,{0} 行目 [{1}]：予定時刻は yyyy-MM-dd HH:mm 形式にしてください（スキップ）,Linha {0} [{1}]: horário planejado deve ser yyyy-MM-dd HH:mm; ignorada
+Wpf,K794,工单号已存在,Order number already exists,工単番号は既に存在します,O número da ordem já existe
+Wpf,K795,未找到设备「{0}」,Device "{0}" not found,デバイス「{0}」が見つかりません,Dispositivo "{0}" não encontrado
+Wpf,K799,逾期 {0},Overdue {0},期限超過 {0},Atrasado {0}
+Wpf,K806,第 {0} 行 [{1}]：{2},Row {0} [{1}]: {2},{0} 行目 [{1}]：{2},Linha {0} [{1}]: {2}
+Wpf,K901,工单排程,Work Order Schedule,工単スケジュール,Agendamento de ordens de produção
+Wpf,K902,计划时间,Planned time,予定時刻,Horário planejado
+Wpf,K903,设备,Device,設備,Dispositivo
+Wpf,K904,工单,Work Orders,工単,Ordens de produção
+Wpf,K905,现在,Now,現在,Agora
+Wpf,K906,当前筛选下没有工单,No work orders under the current filter,現在の絞り込みに一致する工単なし,Nenhuma ordem sob o filtro atual
+Wpf,K907,最近1小时,Last 1 Hour,直近1時間,Última 1 hora
+Wpf,K908,最近4小时,Last 4 Hours,直近4時間,Últimas 4 horas
+Wpf,K909,最近24小时,Last 24 Hours,直近24時間,Últimas 24 horas
+Wpf,K910,总产量,Total Output,総生産数,Produção total
+Wpf,K911,不良率,Defect Rate,不良率,Taxa de defeitos
+Wpf,K912,平均恢复耗时,Avg Recovery Time,平均復旧時間,Tempo médio de recuperação
+Wpf,K913,持续时间,Duration,継続時間,Duração
+Wpf,M_MoreNotShown,\n…（共 {0} 条未显示）,"\n… ({0} more not shown)",\n…（他 {0} 件省略）,"\n… ({0} itens não exibidos)"
+Wpf,K914,SN 追溯,SN Traceability,SNトレーサビリティ,Rastreabilidade SN
+Wpf,K915,输入序列号（SN）进行追溯，如 SN20260830-0001,"Enter SN to trace, e.g. SN20260830-0001",トレースするシリアル番号を入力（例：SN20260830-0001）,Digite o SN para rastrear, ex.: SN20260830-0001
+Wpf,K916,输入序列号查询其生产追溯记录,Enter an SN to look up its production trace,シリアル番号を入力して生産トレースを照会,Insira um SN para consultar seu rastreio de produção
+Wpf,K917,将展示该件的设备、工单、班次、时间与判定结果,"Shows the device, work order, shift, time and result",設備・工単・シフト・時間・判定結果を表示します,Mostra dispositivo, ordem, turno, horário e resultado
+Wpf,K918,SN 明细,SN Details,SN明細,Detalhes do SN
+Wpf,K919,共 {0} 件,{0} in total,合計 {0} 件,{0} no total
+Wpf,K920,该工单暂无 SN 记录,No SN records for this work order,この工単にSN記録はありません,Nenhum registro de SN para esta ordem
+Wpf,K921,请输入要追溯的序列号,Please enter an SN to trace,トレースするシリアル番号を入力してください,Insira um SN para rastrear
+Wpf,K922,未找到序列号 {0} 的追溯记录,No trace records found for SN {0},SN {0} のトレース記録が見つかりません,Nenhum registro de rastreio encontrado para o SN {0}
+Wpf,K923,查询失败：{0},Query failed: {0},照会失敗：{0},Falha na consulta: {0}
+Wpf,K924,结果,Result,結果,Resultado
+Wpf,K925,上一页,Previous,前へ,Anterior
+Wpf,K926,下一页,Next,次へ,Próxima
+Wpf,K927,第 {0} 页,Page {0},{0} ページ目,Página {0}

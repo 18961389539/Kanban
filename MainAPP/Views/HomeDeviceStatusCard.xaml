@@ -36,7 +36,8 @@
         共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
     -->
     <Border Style="{StaticResource DashboardCard}">
-        <Grid Margin="20">
+        <!--  内边距 20→16：紧凑化以容纳 2×3 看板在 1080 设计高度内的完整展示（修复 2026-08-30，见 HomeView.xaml 说明）  -->
+        <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />

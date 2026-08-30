@@ -1,13 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -1186,11 +1189,297 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Equal(0, _vm.ProductionQuery.TotalNg);
     }
 
+    // ════════════════════ 筛选防抖自动查询（合理化建议 6）════════════════════
+
+    [Fact]
+    public void FilterChange_AfterDebounce_AutoQueries()
+    {
+        // 构造完成后未查询：HasQueried=false
+        Assert.False(_vm.HasQueried);
+
+        // 插入产量数据后修改筛选日期 → 触发 800ms 防抖自动查询
+        var from = DateTime.Now.AddMinutes(-30).AddSeconds(-DateTime.Now.Second);
+        InsertProductionLog("dev-001", "设备A", "白班", 0, 0, 1, from);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 0, 1, from.AddMinutes(5));
+
+        _vm.FromDate = from;
+        _vm.ToDate = DateTime.Now.AddMinutes(10);
+
+        // 防抖 800ms + 后台查询执行耗时，轮询等待至多 15s。
+        // 预算放宽（与 AuditService 等待先例一致）：全量并行/CI 高负载下调度可能显著延迟，
+        // 过短的固定预算会把"环境慢"误判为"防抖未触发"造成偶发假失败。
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline && !_vm.HasQueried)
+            Thread.Sleep(100);
+
+        Assert.True(_vm.HasQueried, "筛选变化后 800ms 防抖应自动查询");
+        Assert.Equal(2, _vm.TotalCount);
+    }
+
+    // ════════════════════ 快速时间档位补全（合理化建议 11）════════════════════
+
+    [Fact]
+    public void QuickTimeIndex_Last1Hour_SetsRelativeRange()
+    {
+        var before = DateTime.Now;
+        _vm.QuickTimeIndex = 9; // 最近1小时
+        var after = DateTime.Now;
+
+        Assert.InRange(_vm.FromDate, before.AddHours(-1).AddSeconds(-2), after.AddHours(-1).AddSeconds(2));
+        Assert.InRange(_vm.ToDate, before.AddSeconds(-2), after.AddSeconds(2));
+        Assert.True(_vm.IsLastHourPreset);
+    }
+
+    [Fact]
+    public void QuickTimeIndex_Last4Hours_SetsRelativeRange()
+    {
+        var before = DateTime.Now;
+        _vm.QuickTimeIndex = 10; // 最近4小时
+        var after = DateTime.Now;
+
+        Assert.InRange(_vm.FromDate, before.AddHours(-4).AddSeconds(-2), after.AddHours(-4).AddSeconds(2));
+        Assert.InRange(_vm.ToDate, before.AddSeconds(-2), after.AddSeconds(2));
+        Assert.True(_vm.IsLast4HoursPreset);
+    }
+
+    [Fact]
+    public void QuickTimeIndex_Last24Hours_SetsRelativeRange()
+    {
+        var before = DateTime.Now;
+        _vm.QuickTimeIndex = 11; // 最近24小时
+        var after = DateTime.Now;
+
+        Assert.InRange(_vm.FromDate, before.AddHours(-24).AddSeconds(-2), after.AddHours(-24).AddSeconds(2));
+        Assert.InRange(_vm.ToDate, before.AddSeconds(-2), after.AddSeconds(2));
+        Assert.True(_vm.IsLast24HoursPreset);
+    }
+
+    // ════════════════════ 导出范围二选一（合理化建议 4）════════════════════
+
+    [Fact]
+    public void ExportCommand_YesDialog_SavesAllFilteredRows()
+    {
+        // 55 条报警 → 分两页（PageSize=50），选择"是"应导出全量 55 条
+        for (int i = 0; i < 55; i++)
+        {
+            InsertAlarmEvent("dev-001", "设备A", "a" + (i % 2), "报警" + (i % 2), "D" + (i % 2),
+                i % 2 == 0 ? AlarmEventType.Triggered : AlarmEventType.Recovered,
+                new DateTime(2026, 1, 1, 9, 0, 0).AddMinutes(i));
+        }
+
+        var vm = new HistoryQueryViewModel(_historyService, _deviceRepo, _appSettings, new YesDialogService());
+        vm.SelectedTabIndex = 2; // 报警 Tab
+        vm.FromDate = new DateTime(2026, 1, 1, 8, 0, 0);
+        vm.ToDate = new DateTime(2026, 1, 1, 23, 0, 0);
+        vm.SearchCommand.Execute(null);
+
+        Assert.Equal(55, vm.TotalCount);
+        Assert.True(vm.TotalPages > 1, "55 条按每页 50 条应分两页");
+
+        var cmd = vm.ExportCommand;
+        cmd.Execute(null);
+        Assert.NotNull(cmd.ExecutionTask);
+        Assert.True(cmd.ExecutionTask!.Wait(TimeSpan.FromSeconds(10)), "导出应在 10s 内完成");
+
+        var exportDir = Path.Combine(_tempDir, "Exports");
+        var files = Directory.GetFiles(exportDir, "报警_*.csv");
+        var csv = File.ReadAllText(files.Single());
+        Assert.Equal(55, CountCsvLines(csv)); // 全量 55 条数据行
+    }
+
+    /// <summary>统计 CSV 中数据行数：数据行首列为时间戳（以数字开头），注释行以 # 或中文片段开头不计入。</summary>
+    private static int CountCsvLines(string? csv)
+    {
+        if (string.IsNullOrEmpty(csv)) return 0;
+        return csv.Split('\n')
+            .Select(l => l.TrimStart())
+            .Count(l => l.Length > 0 && char.IsDigit(l[0]));
+    }
+
+    // ════════════════════ 时间区间校验（补测 A1）════════════════════
+
+    [Fact]
+    public void Search_FromAfterTo_SetsValidationMessageAndReturnsEarly()
+    {
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = new DateTime(2026, 1, 2, 0, 0, 0);
+        _vm.ToDate = new DateTime(2026, 1, 1, 0, 0, 0); // From > To
+
+        _vm.SearchCommand.Execute(null);
+
+        Assert.Equal(Strings.M101, _vm.QueryValidationMessage);
+        Assert.True(_vm.HasQueryValidationError);
+        Assert.False(_vm.HasQueried, "区间非法时应提前返回，不标记已查询");
+        Assert.Equal(0, _vm.TotalCount);
+    }
+
+    [Fact]
+    public void Search_ValidRange_ClearsPreviousValidationMessage()
+    {
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = new DateTime(2020, 1, 1);
+        _vm.ToDate = new DateTime(2020, 1, 2); // 合法区间（空数据）
+
+        _vm.SearchCommand.Execute(null);
+
+        Assert.Equal(string.Empty, _vm.QueryValidationMessage);
+        Assert.False(_vm.HasQueryValidationError);
+        Assert.True(_vm.HasQueried);
+    }
+
+    // ════════════════════ 查询摘要 / KPI 可见性（补测 A2）════════════════════
+
+    [Fact]
+    public void QuerySummaryText_NotQueried_ShowsIdleText()
+    {
+        Assert.False(_vm.HasQueried);
+        Assert.Equal(Strings.M096, _vm.QuerySummaryText);
+    }
+
+    [Fact]
+    public void QuerySummaryText_EmptyResult_ShowsNoDataText()
+    {
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = new DateTime(2020, 1, 1);
+        _vm.ToDate = new DateTime(2020, 1, 2);
+
+        _vm.SearchCommand.Execute(null);
+
+        Assert.True(_vm.IsEmptyResult);
+        Assert.Equal(Strings.M098, _vm.QuerySummaryText);
+    }
+
+    [Fact]
+    public void QuerySummaryText_WithData_UsesPaginationFormat()
+    {
+        var t = new DateTime(2026, 7, 23, 10, 0, 0);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 5, 1, t);
+
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = t.AddMinutes(-1);
+        _vm.ToDate = t.AddMinutes(1);
+
+        _vm.SearchCommand.Execute(null);
+
+        Assert.Equal(string.Format(Strings.F069, 1, 1, 1), _vm.QuerySummaryText);
+    }
+
+    [Fact]
+    public void IsKpiVisible_OnlyWhenQueriedWithData()
+    {
+        Assert.False(_vm.IsKpiVisible); // 未查询
+
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = new DateTime(2020, 1, 1);
+        _vm.ToDate = new DateTime(2020, 1, 2);
+        _vm.SearchCommand.Execute(null);
+        Assert.False(_vm.IsKpiVisible); // 空结果
+
+        var t = new DateTime(2026, 7, 23, 10, 0, 0);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 5, 1, t);
+        _vm.FromDate = t.AddMinutes(-1);
+        _vm.ToDate = t.AddMinutes(1);
+        _vm.SearchCommand.Execute(null);
+        Assert.True(_vm.IsKpiVisible); // 有数据
+    }
+
+    // ════════════════════ 快捷预设命令 / 档位 setter（补测 A3）════════════════════
+
+    [Fact]
+    public void ApplyQuickTimePreset_SetsQuickTimeIndex()
+    {
+        _vm.ApplyQuickTimePresetCommand.Execute(9); // 最近1小时
+        Assert.Equal(9, _vm.QuickTimeIndex);
+        Assert.True(_vm.IsLastHourPreset);
+
+        _vm.ApplyQuickTimePresetCommand.Execute(3); // 近7天
+        Assert.Equal(3, _vm.QuickTimeIndex);
+        Assert.False(_vm.IsLastHourPreset);
+        Assert.False(_vm.IsLast24HoursPreset);
+    }
+
+    [Fact]
+    public void LastHourPreset_Setter_SetsQuickTimeIndex()
+    {
+        _vm.IsLastHourPreset = true;
+        Assert.Equal(9, _vm.QuickTimeIndex);
+
+        _vm.IsLast24HoursPreset = true;
+        Assert.Equal(11, _vm.QuickTimeIndex);
+
+        _vm.IsLast4HoursPreset = true;
+        Assert.Equal(10, _vm.QuickTimeIndex);
+    }
+
+    // ════════════════════ 报警中心跳转（补测 A4）════════════════════
+
+    [Fact]
+    public void PrepareAlarmHistory_SwitchesToAlarmTabAndQueries()
+    {
+        var t = DateTime.Now.AddDays(-1); // 落在近7天窗口内
+        InsertAlarmEvent("dev-001", "设备A", "alm-001", "高温", "M100", AlarmEventType.Triggered, t);
+
+        _vm.PrepareAlarmHistory("dev-001", "高温");
+
+        Assert.Equal(2, _vm.SelectedTabIndex);
+        Assert.Equal("dev-001", _vm.SelectedDeviceId);
+        Assert.Equal("高温", _vm.SelectedAlarmName);
+        Assert.Equal(3, _vm.QuickTimeIndex); // 近7天
+        Assert.True(_vm.HasQueried);
+        Assert.Equal(1, _vm.TotalCount);
+        Assert.Single(_vm.AlarmQuery.AlarmEvents);
+    }
+
+    // ════════════════════ 导出可用性（补测 A5）════════════════════
+
+    [Fact]
+    public void ExportCommand_CanExecute_TracksQueryAndDataState()
+    {
+        Assert.False(_vm.ExportCommand.CanExecute(null)); // 未查询不可导出
+
+        // 空结果仍不可导出
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = new DateTime(2020, 1, 1);
+        _vm.ToDate = new DateTime(2020, 1, 2);
+        _vm.SearchCommand.Execute(null);
+        Assert.False(_vm.ExportCommand.CanExecute(null));
+
+        // 有数据后可导出
+        var t = new DateTime(2026, 7, 23, 10, 0, 0);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 5, 1, t);
+        _vm.FromDate = t.AddMinutes(-1);
+        _vm.ToDate = t.AddMinutes(1);
+        _vm.SearchCommand.Execute(null);
+        Assert.True(_vm.ExportCommand.CanExecute(null));
+    }
+
     /// <summary>不弹窗的 IDialogService 桩，避免测试中 MessageBox/Growl 阻塞。</summary>
     private sealed class StubDialogService : IDialogService
     {
         public MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
             => MessageBoxResult.OK;
+        public void NotifySuccess(string message) { }
+        public void NotifyWarning(string message) { }
+        public void NotifyError(string message) { }
+        public void NotifyInfo(string message) { }
+        public string? ShowSaveFileDialog(string title, string defaultFileName, string filter) => null;
+        public string? ShowOpenFileDialog(string title, string filter) => null;
+        public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
+        public string? ShowPasswordInput(string title, string message) => null;
+        public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+    }
+
+    /// <summary>导出范围对话框返回"是"（全量导出）的桩，验证全量导出的对话框分支。</summary>
+    private sealed class YesDialogService : IDialogService
+    {
+        public MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
+            => MessageBoxResult.Yes;
         public void NotifySuccess(string message) { }
         public void NotifyWarning(string message) { }
         public void NotifyError(string message) { }

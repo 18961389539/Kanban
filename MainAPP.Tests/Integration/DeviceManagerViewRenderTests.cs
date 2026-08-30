@@ -148,11 +148,71 @@ public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
         Assert.Single(vm.DeviceList.FilteredDevices);
     }
 
-    /// <summary>不弹窗的 IDialogService 桩，避免测试中 MessageBox/Growl 阻塞。</summary>
+    [Fact]
+    public void MayDiscardUnsavedAndLeave_OnRenderedView_DirtyRejected_StaysAndPrompts()
+    {
+        bool accepted = true;
+        RunOnSta(app =>
+        {
+            var (repo, _, dialog, created) = BuildViewModel(deviceCount: 1);
+            var vm = created;
+            var view = new DeviceManagerView { DataContext = vm };
+            var win = new Window { Content = view, Width = 1280, Height = 800 };
+            win.Show();
+            win.UpdateLayout();
+
+            // 真实 VM 图置脏：选中既有设备并改名（DirtyTracker 已挂接设备属性变更）
+            vm.SelectedDevice = repo.Devices[0];
+            repo.Devices[0].Name = "渲染环境改名";
+            Assert.True(vm.IsDirty);
+
+            var stub = (StubDialogService)dialog;
+            stub.Result = MessageBoxResult.No;
+            accepted = vm.MayDiscardUnsavedAndLeave();   // Navigate 守卫在离页前调用同一方法
+
+            win.Close();
+        });
+
+        Assert.False(accepted);
+    }
+
+    [Fact]
+    public void MayDiscardUnsavedAndLeave_OnRenderedView_DirtyConfirmed_Allows()
+    {
+        bool accepted = false;
+        RunOnSta(app =>
+        {
+            var (repo, _, dialog, created) = BuildViewModel(deviceCount: 1);
+            var vm = created;
+            var view = new DeviceManagerView { DataContext = vm };
+            var win = new Window { Content = view, Width = 1280, Height = 800 };
+            win.Show();
+            win.UpdateLayout();
+
+            vm.SelectedDevice = repo.Devices[0];
+            repo.Devices[0].Name = "渲染环境改名";
+            Assert.True(vm.IsDirty);
+
+            var stub = (StubDialogService)dialog;
+            stub.Result = MessageBoxResult.Yes;
+            accepted = vm.MayDiscardUnsavedAndLeave();
+
+            win.Close();
+        });
+
+        Assert.True(accepted);
+    }
+
+    /// <summary>不弹窗的 IDialogService 桩：可配置 Show 返回结果并记录调用，供未保存保护渲染级用例使用。</summary>
     private sealed class StubDialogService : IDialogService
     {
+        public MessageBoxResult Result { get; set; } = MessageBoxResult.OK;
+        public List<(string Message, string Title, MessageBoxButton Buttons)> ShowCalls { get; } = new();
         public MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
-            => MessageBoxResult.OK;
+        {
+            ShowCalls.Add((message, title, buttons));
+            return Result;
+        }
         public void NotifySuccess(string message) { }
         public void NotifyWarning(string message) { }
         public void NotifyError(string message) { }

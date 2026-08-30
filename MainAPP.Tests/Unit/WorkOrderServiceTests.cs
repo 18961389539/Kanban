@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -387,5 +387,174 @@ public class WorkOrderServiceTests : IDisposable
         // 老数据工单：班次 B 差分 40（Ok）/2（Ng）——经窗口批量命中而非逐条回退
         Assert.Equal(40, results[legacy.Id].OkCount);
         Assert.Equal(2, results[legacy.Id].NgCount);
+    }
+
+    // ───────────── 批量导入（#9）─────────────
+
+    [Fact]
+    public async Task ImportWorkOrders_ValidRows_ImportedAsPending()
+    {
+        var svc = CreateService();
+        _deviceRepo.Devices.Add(new Device { Name = "注塑机A1" });
+
+        var result = await svc.ImportWorkOrdersAsync([
+            new WorkOrder
+            {
+                OrderNo = "IMP-1",
+                ProductCode = "P1",
+                ProductName = "产品甲",
+                DeviceName = "注塑机A1",
+                TargetQuantity = 500,
+                PlannedStart = DateTime.Now.AddHours(1),
+                PlannedEnd = DateTime.Now.AddHours(5),
+            },
+        ]);
+
+        Assert.Empty(result.Errors);
+        var wo = Assert.Single(result.Imported);
+        Assert.Equal(WorkOrderStatus.Pending, wo.Status);
+        Assert.Equal("注塑机A1", wo.DeviceName);
+        Assert.False(string.IsNullOrEmpty(wo.DeviceId));
+        // 导出模板对齐：实体快照条目已可从仓储读到
+        Assert.Contains(_workOrderRepo.WorkOrders, w => w.OrderNo == "IMP-1");
+    }
+
+    [Fact]
+    public async Task ImportWorkOrders_DuplicateOrderNo_ReportedAsError()
+    {
+        var svc = CreateService();
+        _deviceRepo.Devices.Add(new Device { Name = "注塑机A1" });
+        _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "EXIST",
+            ProductCode = "P1",
+            ProductName = "已有",
+            DeviceId = "d1",
+            PlannedStart = DateTime.Now.AddHours(-2),
+            PlannedEnd = DateTime.Now.AddHours(2),
+        });
+
+        var result = await svc.ImportWorkOrdersAsync([
+            new WorkOrder
+            {
+                OrderNo = "EXIST",
+                ProductCode = "P2",
+                ProductName = "重复",
+                DeviceName = "注塑机A1",
+                TargetQuantity = 100,
+                PlannedStart = DateTime.Now.AddHours(1),
+                PlannedEnd = DateTime.Now.AddHours(2),
+            },
+        ]);
+
+        Assert.Single(result.Errors);
+        Assert.Empty(result.Imported);
+    }
+
+    [Fact]
+    public async Task ImportWorkOrders_UnknownDevice_ReportedAsError()
+    {
+        var svc = CreateService();
+
+        var result = await svc.ImportWorkOrdersAsync([
+            new WorkOrder
+            {
+                OrderNo = "IMP-UNK",
+                ProductCode = "P1",
+                ProductName = "产品",
+                DeviceName = "不存在的设备",
+                TargetQuantity = 100,
+                PlannedStart = DateTime.Now.AddHours(1),
+                PlannedEnd = DateTime.Now.AddHours(2),
+            },
+        ]);
+
+        Assert.Single(result.Errors);
+        Assert.Empty(result.Imported);
+    }
+
+    // ───────────── 状态时间戳（#7 时间线数据）─────────────
+
+    [Fact]
+    public void StartWorkOrder_WritesStartedAt_OnlyOnce()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "TS-1",
+            Status = WorkOrderStatus.Pending,
+            DeviceId = "d1",
+            PlannedStart = DateTime.Now.AddHours(-1),
+            PlannedEnd = DateTime.Now.AddHours(1),
+        });
+
+        var before = DateTime.Now.AddSeconds(-1);
+        var started = svc.StartWorkOrder(wo);
+        Assert.NotNull(started);
+        Assert.NotNull(started.StartedAt);
+        Assert.InRange(started.StartedAt!.Value, before, DateTime.Now.AddSeconds(1));
+        Assert.Null(started.CompletedAt);
+
+        // 已 Running 的工单不能再次 Start（校验拦截返回 null），StartedAt 不被覆盖
+        var again = svc.StartWorkOrder(started);
+        Assert.Null(again);
+        Assert.NotNull(started.StartedAt);
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_WritesCompletedAt()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "TS-2",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "d1",
+            StartedAt = DateTime.Now.AddHours(-2),
+            PlannedStart = DateTime.Now.AddHours(-2),
+            PlannedEnd = DateTime.Now.AddHours(2),
+        });
+
+        var completed = svc.CompleteWorkOrder(wo);
+        Assert.NotNull(completed);
+        Assert.NotNull(completed.CompletedAt);
+        Assert.NotNull(completed.StartedAt);
+    }
+
+    [Fact]
+    public void AbortPendingWorkOrder_WritesCompletedAt_KeepsStartedAtNull()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "TS-3",
+            Status = WorkOrderStatus.Pending,
+            DeviceId = "d1",
+            PlannedStart = DateTime.Now.AddHours(1),
+            PlannedEnd = DateTime.Now.AddHours(2),
+        });
+
+        var aborted = svc.AbortWorkOrder(wo);
+        Assert.NotNull(aborted);
+        Assert.Null(aborted.StartedAt);
+        Assert.NotNull(aborted.CompletedAt);
+    }
+
+    [Fact]
+    public void Clone_PreservesStatusTimestamps()
+    {
+        var svc = CreateService();
+        var source = new WorkOrder
+        {
+            Id = 7,
+            OrderNo = "WO-CLONE",
+            Status = WorkOrderStatus.Completed,
+            StartedAt = DateTime.Now.AddHours(-3),
+            CompletedAt = DateTime.Now.AddHours(-1),
+        };
+
+        var clone = svc.Clone(source);
+        Assert.Equal(source.StartedAt, clone.StartedAt);
+        Assert.Equal(source.CompletedAt, clone.CompletedAt);
     }
 }

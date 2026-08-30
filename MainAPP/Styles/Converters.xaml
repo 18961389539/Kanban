@@ -34,6 +34,8 @@
     <converters:InverseRatioThresholdConverter x:Key="InverseRatioThreshold" />
     <converters:RatioToWidthConverter x:Key="RatioToWidthConverter" />
     <converters:EqualityConverter x:Key="EqualityConverter" />
+    <converters:CollectionContainsConverter x:Key="CollectionContainsConverter" />
+    <converters:WorkOrderEndLabelConverter x:Key="WorkOrderEndLabelConverter" />
     <converters:JsonPrettyPrintConverter x:Key="JsonPrettyPrintConverter" />
     <converters:TimeSpanToTimeStringConverter x:Key="TimeSpanConverter" />
     <converters:TimeSpanToDateTimeConverter x:Key="TimeSpanToDateTimeConverter" />

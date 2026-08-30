@@ -413,6 +413,115 @@ public class DeviceManagerViewModelTests
     }
 
     [Fact]
+    public void SearchKeyword_MatchingRandomGuidId_IsNotNoisy()
+    {
+        // 修复（2026-08-30）：设备 Id 为随机 GUID，若用子串匹配则单个字母必然命中多台设备；
+        // Id 仅支持等值或 ≥8 位前缀定位，短关键字仍以名称/地址匹配为主。
+        var (vm, _, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        var dev1 = vm.SelectedDevice!;
+        dev1.Name = "A机";
+        vm.AddDeviceCommand.Execute(null);
+        var dev2 = vm.SelectedDevice!;
+        dev2.Name = "B机";
+
+        // 短关键词不因 Id 噪声命中
+        vm.DeviceList.SearchKeyword = "b";
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+
+        // Id 完全匹配可精确定位
+        vm.DeviceList.SearchKeyword = dev2.Id;
+        var match = Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal(dev2.Id, match.Id);
+
+        // Id 前缀（≥8 位）可定位
+        vm.DeviceList.SearchKeyword = dev2.Id[..8];
+        var matchPrefix = Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+        Assert.Equal(dev2.Id, matchPrefix.Id);
+
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void SwitchingDevice_WithUnsavedChanges_Rejected_KeepsSelection()
+    {
+        // 修复（2026-08-30）：切换设备丢失未保存编辑需二次确认；拒绝则回退原选择。
+        var (vm, dialog, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        var dev1 = vm.SelectedDevice!;
+        vm.AddDeviceCommand.Execute(null);
+        var dev2 = vm.SelectedDevice!;
+        dev1.Name = "改名一号";   // 触发脏标记
+        Assert.True(vm.IsDirty);
+
+        dialog.ShowResult = System.Windows.MessageBoxResult.No;
+        vm.SelectedDevice = dev1;   // 尝试切回 dev1
+
+        // 拒绝后仍停留在 dev2，且确实弹过未保存确认
+        Assert.Equal(dev2.Id, vm.SelectedDevice!.Id);
+        Assert.Contains(dialog.ShowCalls, c => c.Message.Contains("未保存", StringComparison.Ordinal));
+
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void SwitchingDevice_WithUnsavedChanges_Confirmed_Moves()
+    {
+        var (vm, dialog, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        var dev1 = vm.SelectedDevice!;
+        vm.AddDeviceCommand.Execute(null);
+        var dev2 = vm.SelectedDevice!;
+        dev1.Name = "改名一号";
+        Assert.True(vm.IsDirty);
+
+        dialog.ShowResult = System.Windows.MessageBoxResult.Yes;
+        vm.SelectedDevice = dev1;
+
+        Assert.Equal(dev1.Id, vm.SelectedDevice!.Id);
+
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void MayDiscardUnsavedAndLeave_Clean_ReturnsTrue_NoDialog()
+    {
+        var (vm, dialog, _, tmp) = NewVm();
+        Assert.False(vm.IsDirty);
+
+        Assert.True(vm.MayDiscardUnsavedAndLeave());
+        Assert.Empty(dialog.ShowCalls);   // 干净状态不弹框
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void MayDiscardUnsavedAndLeave_DirtyRejected_ReturnsFalse()
+    {
+        var (vm, dialog, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        vm.SelectedDevice!.Name = "改名一号";
+        Assert.True(vm.IsDirty);
+
+        dialog.ShowResult = System.Windows.MessageBoxResult.No;
+        Assert.False(vm.MayDiscardUnsavedAndLeave());
+        Assert.Contains(dialog.ShowCalls, c => c.Message.Contains("离开设备管理页", StringComparison.Ordinal));
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void MayDiscardUnsavedAndLeave_DirtyConfirmed_ReturnsTrue()
+    {
+        var (vm, dialog, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        vm.SelectedDevice!.Name = "改名一号";
+        Assert.True(vm.IsDirty);
+
+        dialog.ShowResult = System.Windows.MessageBoxResult.Yes;
+        Assert.True(vm.MayDiscardUnsavedAndLeave());
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
     public void DeviceSummaryText_ReflectsRuntimeStatusCounts()
     {
         var (vm, _, _, tmp) = NewVm();

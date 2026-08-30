@@ -13,8 +13,9 @@
         主页仪表板卡片 6：缺陷 TOP5 列表（与 WASM Home 缺陷卡对齐：名称 ToolTip=设备名 + 横向柱 + 计数）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
     -->
-    <Border Style="{StaticResource DashboardCard}">
-        <Grid Margin="20">
+    <Border Style="{StaticResource DashboardCard}">
+        <!--  内边距 20→16：紧凑化以容纳 2×3 看板在 1080 设计高度内的完整展示（修复 2026-08-30，见 HomeView.xaml 说明）  -->
+        <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 using AlarmEventType = Kanban.Collector.Core.Entities.AlarmEventType;
@@ -39,6 +40,15 @@ public sealed class PlcScanPipeline
     /// <summary>数据源采集源告警状态机（数值越限/预期偏离 判定，随 ScanSources 驱动）。</summary>
     private readonly DataSourceAlarmTracker _dataSourceTracker;
 
+    /// <summary>序列号事件存储（可空：未注入时 SN 采集仅读值不落库，不影响主链路）。</summary>
+    private readonly ISnEventStore? _snEventStore;
+
+    /// <summary>设备当前 Running 工单 Id 解析（可空：测试场景/未注入时不关联工单）。</summary>
+    private readonly Func<string, int?>? _runningWorkOrderIdProvider;
+
+    /// <summary>SN 去重键 → 最近一次已记录的 SN（防无触发源/PLC 未清缓冲导致重复记录）。</summary>
+    private readonly Dictionary<string, string> _lastRecordedSnBySource = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly Dictionary<string, int> _cycleInt32Values = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _cycleBatchAddresses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _initializedCounterAlarmIds = new(StringComparer.OrdinalIgnoreCase);
@@ -61,7 +71,9 @@ public sealed class PlcScanPipeline
         ILogger logger,
         IAlarmNotificationChannel? alarmNotificationChannel = null,
         Action<AlarmEventDto>? onAlarmEdge = null,
-        IDataSourceReaderRegistry? dataSourceReaderRegistry = null)
+        IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
+        ISnEventStore? snEventStore = null,
+        Func<string, int?>? runningWorkOrderIdProvider = null)
     {
         _adapterResolver = adapterResolver;
         _deviceRepository = deviceRepository;
@@ -72,6 +84,8 @@ public sealed class PlcScanPipeline
         _logger = logger;
         _alarmNotificationChannel = alarmNotificationChannel;
         _onAlarmEdge = onAlarmEdge;
+        _snEventStore = snEventStore;
+        _runningWorkOrderIdProvider = runningWorkOrderIdProvider;
         _dataSourceTracker = new DataSourceAlarmTracker(_alarmHistory, _alarmNotificationChannel, _onAlarmEdge, _logger);
     }
 
@@ -407,6 +421,10 @@ public sealed class PlcScanPipeline
 
             // 采集全部值项（各自独立读取，失败不影响其它值项）
             var anyValueRead = false;
+            // SN 事件采集：Type=SN 的源在触发采集后记录序列号事件（值项约定见 SnEventConventions）
+            var isSnSource = string.Equals(source.Type, SnEventConventions.SourceType, StringComparison.OrdinalIgnoreCase);
+            string? snValue = null;
+            int? snResult = null;
             foreach (var value in source.Values.ToList())
             {
                 if (!value.Enabled) continue; // 值项独立启用开关（修复 2026-08-17）
@@ -435,7 +453,38 @@ public sealed class PlcScanPipeline
                 var sampledAt = DateTime.Now;
                 _dataSourceTracker.Observe(device, source, value, runtimeValue, _shiftNameProvider(), sampledAt);
                 _cycleSourceValues[$"{device.Id}:{source.Id}:{value.Id}"] = new DataSourceCycleSample(runtimeValue, sampledAt);
+                if (isSnSource)
+                {
+                    if (string.IsNullOrWhiteSpace(snValue) && value.DataType == DataSourceValueType.String)
+                        snValue = runtimeValue.StringValue;
+                    else if (!snResult.HasValue && value.DataType == DataSourceValueType.Int32 && IsSnResultValueItem(value))
+                        snResult = runtimeValue.Int32Value;
+                }
                 anyValueRead = true;
+            }
+
+            // SN 事件落库：触发采集命中且读到 SN 时记录；同源同 SN 去重防重复（PLC 未清缓冲兜底）。
+            if (isSnSource && _snEventStore != null && source.HasTrigger && !string.IsNullOrWhiteSpace(snValue))
+            {
+                var snDedupeKey = $"{device.Id}:{source.Id}";
+                var sn = snValue.Trim();
+                if (!_lastRecordedSnBySource.TryGetValue(snDedupeKey, out var lastRecorded)
+                    || !string.Equals(lastRecorded, sn, StringComparison.Ordinal))
+                {
+                    _lastRecordedSnBySource[snDedupeKey] = sn;
+                    _snEventStore.Append(new SnEventRecord
+                    {
+                        Sn = sn,
+                        DeviceId = device.Id,
+                        DeviceName = device.Name,
+                        WorkOrderId = _runningWorkOrderIdProvider?.Invoke(device.Id),
+                        ShiftName = _shiftNameProvider(),
+                        Result = snResult.HasValue && snResult.Value != 0 ? 1 : 0,
+                        Source = SnEventConventions.SourceName,
+                        SourceId = source.Id,
+                        Timestamp = DateTime.Now,
+                    });
+                }
             }
 
             // 完成后回执：向同一触发地址写回执值（下一轮读到回执值不再触发，等 PLC 再次置位）。
@@ -459,6 +508,11 @@ public sealed class PlcScanPipeline
             }
         }
     }
+
+    /// <summary>SN 结果值项识别：名称含 "Result"（或中文"结果"）的 Int32 值项 = 判定结果（0=OK，非 0=NG）。</summary>
+    private static bool IsSnResultValueItem(DataSourceValue value)
+        => value.Name.Contains("result", StringComparison.OrdinalIgnoreCase)
+            || value.Name.Contains("结果", StringComparison.Ordinal);
 
     private static bool IsCommunicationException(Exception exception)
         => exception is IOException
@@ -553,7 +607,10 @@ public sealed class PlcScanPipeline
 
     /// <summary>移除单个数据源的告警状态（设备管理删除数据源后调用，防内存泄漏）。</summary>
     public void RemoveDataSourceState(string deviceId, string sourceId)
-        => _dataSourceTracker.RemoveSource(deviceId, sourceId);
+    {
+        _dataSourceTracker.RemoveSource(deviceId, sourceId);
+        _lastRecordedSnBySource.Remove($"{deviceId}:{sourceId}");
+    }
 
     /// <summary>班次切换前为活跃报警写入 EventType=3 事件（须在 ResetAll 清空 _prevAlarmStates 之前调用）。</summary>
     public void LogShiftChangeForActiveAlarms(IReadOnlyList<Device> devices)

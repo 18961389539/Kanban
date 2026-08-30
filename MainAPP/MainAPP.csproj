@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -15,7 +15,7 @@
   <!-- 编译前从统一 Localization.csv 生成 WPF 资源和 Strings.cs。 -->
   <Target Name="GenerateStrings" BeforeTargets="AssignCulture">
     <Message Importance="high" Text="Generating WPF localization resources from Localization.csv…" />
-    <Exec Command="python $(ProjectDir)..\ci\generate_localization.py --wpf"
+    <Exec Command="py $(ProjectDir)..\ci\generate_localization.py --wpf"
           WorkingDirectory="$(ProjectDir).."
           ContinueOnError="false" />
     <ItemGroup>

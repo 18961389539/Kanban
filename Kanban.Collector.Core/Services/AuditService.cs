@@ -24,6 +24,8 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     private readonly Channel<AuditEntry> _channel;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _flushTask;
+    /// <summary>每次批量落库成功释放一个令牌，供测试确定性等待（事件驱动，避免固定预算轮询在高并发下偶发超时）。</summary>
+    private readonly SemaphoreSlim _flushSignal = new(0);
     private DateTime _lastCleanupUtc = DateTime.UtcNow;
     private int _queueDroppedCount;
     private int _persistenceFailedCount;
@@ -62,6 +64,23 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
 
     /// <summary>已落库条数。</summary>
     public int FlushedCount => Volatile.Read(ref _flushedCount);
+
+    /// <summary>
+    /// 测试辅助：等待已落库条数达到 <paramref name="minCount"/>（内部以刷盘完成信号驱动，非固定预算轮询）。
+    /// 返回 true=达到；false=超时（FlushedCount/DroppedCount 提供诊断信息）。internal：仅供测试程序集经 InternalsVisibleTo 使用。
+    /// </summary>
+    internal async Task<bool> WaitFlushedAsync(int minCount, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (FlushedCount < minCount)
+        {
+            var remaining = deadline - DateTime.UtcNow;
+            if (remaining <= TimeSpan.Zero) return false;
+            // 令牌可能在“计数检查与等待之间”已被释放并排队，WaitAsync 立即返回后循环重查即可
+            await _flushSignal.WaitAsync(remaining);
+        }
+        return true;
+    }
 
     public void Record(string action, string? targetType = null, string? targetId = null,
         bool succeeded = true, string? detail = null, string? operatorName = null,
@@ -223,6 +242,7 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
                 context.AuditEntries.AddRange(batch);
                 await context.SaveChangesAsync(CancellationToken.None);
                 Interlocked.Add(ref _flushedCount, batch.Count);
+                _flushSignal.Release(); // 唤醒可能的 WaitFlushedAsync 等待者
                 return;
             }
             catch (Exception ex) when (attempt < PersistenceRetryCount)
@@ -266,6 +286,7 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
         finally
         {
             _cts.Dispose();
+            _flushSignal.Dispose();
             GC.SuppressFinalize(this);
         }
     }

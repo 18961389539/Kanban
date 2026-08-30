@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -94,6 +94,33 @@ public sealed class WpfStaFixture : IDisposable
     private static void InjectResources(Application app)
     {
         var rd = app.Resources;
+        // 与 App.xaml 顶层资源保持一致：MainWindow.xaml 依赖 AppIcon 作为窗口图标，
+        // 测试宿主没有走真实 App 启动，必须同等注入，否则 XAML 解析期抛资源缺失异常。
+        // 注意：此 DrawingImage 与 App.xaml 为同源复制，若生产改动图标需同步。
+        rd["AppIcon"] = new System.Windows.Media.DrawingImage
+        {
+            Drawing = new System.Windows.Media.DrawingGroup
+            {
+                Children = new System.Windows.Media.DrawingCollection
+                {
+                    new System.Windows.Media.GeometryDrawing(new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x18, 0x22, 0x2F)),
+                        null, new System.Windows.Media.RectangleGeometry(new System.Windows.Rect(0, 0, 64, 64))),
+                    new System.Windows.Media.GeometryDrawing(new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x38, 0xBD, 0xF8)),
+                        null, new System.Windows.Media.RectangleGeometry(new System.Windows.Rect(10, 11, 44, 42))),
+                    new System.Windows.Media.GeometryDrawing(new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x18, 0x22, 0x2F)),
+                        null, new System.Windows.Media.RectangleGeometry(new System.Windows.Rect(16, 17, 32, 30))),
+                    new System.Windows.Media.GeometryDrawing(new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0x34, 0xD3, 0x99)),
+                        null, GeometryParser("M20,39 L20,31 L26,31 L26,39 Z M29,39 L29,25 L35,25 L35,39 Z M38,39 L38,20 L44,20 L44,39 Z")),
+                    new System.Windows.Media.GeometryDrawing(new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0xFB, 0xBF, 0x24)),
+                        null, GeometryParser("M20,43 L44,43 L44,46 L20,46 Z"))
+                }
+            }
+        };
         // HC 主题（提供 DarkPrimaryBrush 等 HC 内置资源，含 DarkSuccess/Warning/Danger 变体）
         rd.MergedDictionaries.Add(new ResourceDictionary
         {
@@ -105,7 +132,7 @@ public sealed class WpfStaFixture : IDisposable
         });
 
         // ── 加载生产资源字典（Brushes/Effects 与 App.xaml 同源，保证测试与生产同一套资源） ──
-        string[] dictionaries = { "Brushes", "Effects", "Converters", "TrackerControl", "Texts", "Cards", "Components", "ProductionLineResources", "HomeResources" };
+        string[] dictionaries = { "Brushes", "Effects", "Converters", "TrackerControl", "FontSizes", "Texts", "Cards", "Components", "ScrollBar", "ProductionLineResources", "HomeResources" };
         foreach (var name in dictionaries)
         {
             rd.MergedDictionaries.Add(new ResourceDictionary
@@ -119,4 +146,8 @@ public sealed class WpfStaFixture : IDisposable
         HandyControl.Controls.Growl.SetGrowlParent(growlContainer, true);
         rd["GrowlContainer"] = growlContainer;
     }
+
+    /// <summary>把 Mini-Language 路径字符串解析为 Geometry（AppIcon 图标的柱状条形状）。</summary>
+    private static System.Windows.Media.Geometry GeometryParser(string path) =>
+        System.Windows.Media.Geometry.Parse(path);
 }

@@ -63,6 +63,42 @@
                         FontSize="{DynamicResource FontSizeHint}"
                         Foreground="{StaticResource ThirdlyTextBrush}"
                         Text="{Binding DeviceList.DeviceSummaryText}" />
+                    <!--  全部设备校验（不落盘，弹出可定位的错误清单）  -->
+                    <Button
+                        DockPanel.Dock="Right"
+                        Margin="8,0,0,0"
+                        Padding="10,5"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static resources:Strings.K726}"
+                        Command="{Binding ValidateAllDevicesCommand}"
+                        Content="{x:Static resources:Strings.K726}"
+                        Style="{StaticResource ButtonDefault}"
+                        ToolTip="{x:Static resources:Strings.K726}"
+                        ToolTipService.ShowOnDisabled="True" />
+                    <!--  导出所选设备 JSON（单机备份）  -->
+                    <Button
+                        DockPanel.Dock="Right"
+                        Margin="8,0,0,0"
+                        Padding="6"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static resources:Strings.K728}"
+                        Command="{Binding ExportDeviceCommand}"
+                        Style="{StaticResource ButtonDefault}"
+                        Tag="{x:Static mi:MaterialIconKind.ExportVariant}"
+                        ToolTip="{x:Static resources:Strings.K728}"
+                        ToolTipService.ShowOnDisabled="True" />
+                    <!--  导入设备配置 JSON  -->
+                    <Button
+                        DockPanel.Dock="Right"
+                        Margin="8,0,0,0"
+                        Padding="6"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static resources:Strings.K729}"
+                        Command="{Binding ImportDeviceCommand}"
+                        Style="{StaticResource ButtonDefault}"
+                        Tag="{x:Static mi:MaterialIconKind.Import}"
+                        ToolTip="{x:Static resources:Strings.K729}"
+                        ToolTipService.ShowOnDisabled="True" />
                     <TextBlock
                         DockPanel.Dock="Right"
                         Margin="8,0,0,0"

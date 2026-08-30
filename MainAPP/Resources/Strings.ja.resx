@@ -661,7 +661,7 @@
     <value>本日復帰</value>
   </data>
   <data name="K128" xml:space="preserve">
-    <value>最長継続</value>
+    <value>最早アラーム・継続中</value>
   </data>
   <data name="K129" xml:space="preserve">
     <value>影響設備</value>
@@ -4230,6 +4230,18 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M380" xml:space="preserve">
     <value>一致するユーザーがいません</value>
   </data>
+  <data name="M381" xml:space="preserve">
+    <value>エクスポート範囲</value>
+  </data>
+  <data name="M382" xml:space="preserve">
+    <value>絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。</value>
+  </data>
+  <data name="M383" xml:space="preserve">
+    <value>現在のページのみ</value>
+  </data>
+  <data name="M384" xml:space="preserve">
+    <value>絞り込み結果の全件（{0} 件）</value>
+  </data>
   <data name="M332" xml:space="preserve">
     <value>オペレーター</value>
   </data>
@@ -5565,7 +5577,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし</value>
   </data>
   <data name="K712" xml:space="preserve">
-    <value>未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
+    <value>未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
   </data>
   <data name="K713" xml:space="preserve">
     <value>未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
@@ -5575,6 +5587,57 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="K717" xml:space="preserve">
     <value>イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計</value>
+  </data>
+  <data name="K718" xml:space="preserve">
+    <value>同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件</value>
+  </data>
+  <data name="K719" xml:space="preserve">
+    <value>昨日同期比：昨日 {0}／今日 {1}</value>
+  </data>
+  <data name="K720" xml:space="preserve">
+    <value>たった今</value>
+  </data>
+  <data name="K721" xml:space="preserve">
+    <value>{0} 分前</value>
+  </data>
+  <data name="K722" xml:space="preserve">
+    <value>{0} 時間前</value>
+  </data>
+  <data name="K723" xml:space="preserve">
+    <value>発生回数順</value>
+  </data>
+  <data name="K724" xml:space="preserve">
+    <value>継続時間順</value>
+  </data>
+  <data name="K725" xml:space="preserve">
+    <value>デバイス設定の検証OK（{0}台）</value>
+  </data>
+  <data name="K726" xml:space="preserve">
+    <value>検証</value>
+  </data>
+  <data name="K727" xml:space="preserve">
+    <value>現在のデバイスには未保存の変更があります。切り替えると失われます。続行しますか？</value>
+  </data>
+  <data name="K728" xml:space="preserve">
+    <value>選択デバイスをエクスポート</value>
+  </data>
+  <data name="K729" xml:space="preserve">
+    <value>デバイス設定をインポート</value>
+  </data>
+  <data name="K730" xml:space="preserve">
+    <value>デバイス「{0}」をエクスポートしました</value>
+  </data>
+  <data name="K731" xml:space="preserve">
+    <value>インポート失敗：ファイルが空か解析エラー。</value>
+  </data>
+  <data name="K732" xml:space="preserve">
+    <value>インポート失敗：デバイスID「{0}」が既存デバイスと競合。ファイル内のIDを変更してください。</value>
+  </data>
+  <data name="K733" xml:space="preserve">
+    <value>デバイス「{0}」をインポートしました</value>
+  </data>
+  <data name="K734" xml:space="preserve">
+    <value>デバイス管理を離れると未保存の設定変更が失われます。続行しますか？</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？</value>
@@ -5772,52 +5835,52 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>単位</value>
   </data>
   <data name="Csv_DataSource_AckValue" xml:space="preserve">
-    <value>AckValue</value>
+    <value>応答値</value>
   </data>
   <data name="Csv_DataSource_BoolExpectedValue" xml:space="preserve">
-    <value>BoolExpectedValue</value>
+    <value>ブール期待値</value>
   </data>
   <data name="Csv_DataSource_ConfirmSeconds" xml:space="preserve">
-    <value>ConfirmSeconds</value>
+    <value>確認遅延(秒)</value>
   </data>
   <data name="Csv_DataSource_EnumValuesJson" xml:space="preserve">
-    <value>EnumValuesJson</value>
+    <value>列挙マッピング JSON</value>
   </data>
   <data name="Csv_DataSource_ExpectedValue" xml:space="preserve">
-    <value>ExpectedValue</value>
+    <value>整数期待値</value>
   </data>
   <data name="Csv_DataSource_ExpectedValueConfigured" xml:space="preserve">
-    <value>ExpectedValueConfigured</value>
+    <value>期待値設定済み</value>
   </data>
   <data name="Csv_DataSource_FileName" xml:space="preserve">
     <value>{0}_データソース_{1:yyyyMMdd_HHmmss}.csv</value>
   </data>
   <data name="Csv_DataSource_FloatExpectedValue" xml:space="preserve">
-    <value>FloatExpectedValue</value>
+    <value>浮動小数点期待値</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMax" xml:space="preserve">
-    <value>FloatLimitMax</value>
+    <value>浮動小数点上限</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMin" xml:space="preserve">
-    <value>FloatLimitMin</value>
+    <value>浮動小数点下限</value>
   </data>
   <data name="Csv_DataSource_Hysteresis" xml:space="preserve">
-    <value>Hysteresis</value>
+    <value>ヒステリシス</value>
   </data>
   <data name="Csv_DataSource_LimitMax" xml:space="preserve">
-    <value>LimitMax</value>
+    <value>整数上限</value>
   </data>
   <data name="Csv_DataSource_LimitMin" xml:space="preserve">
-    <value>LimitMin</value>
+    <value>整数下限</value>
   </data>
   <data name="Csv_DataSource_SourceDescription" xml:space="preserve">
-    <value>SourceDescription</value>
+    <value>データソースの説明</value>
   </data>
   <data name="Csv_DataSource_SourceEnabled" xml:space="preserve">
-    <value>SourceEnabled</value>
+    <value>データソース有効</value>
   </data>
   <data name="Csv_DataSource_SourceName" xml:space="preserve">
-    <value>SourceName</value>
+    <value>データソース名</value>
   </data>
   <data name="Csv_DataSource_SourceNameEn" xml:space="preserve">
     <value>SourceNameEn</value>
@@ -5829,28 +5892,28 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>SourceNamePt</value>
   </data>
   <data name="Csv_DataSource_SourceType" xml:space="preserve">
-    <value>SourceType</value>
+    <value>データソースタイプ</value>
   </data>
   <data name="Csv_DataSource_StringExpectedValue" xml:space="preserve">
-    <value>StringExpectedValue</value>
+    <value>文字列期待値</value>
   </data>
   <data name="Csv_DataSource_StringLength" xml:space="preserve">
-    <value>StringLength</value>
+    <value>文字列長</value>
   </data>
   <data name="Csv_DataSource_TriggerAddress" xml:space="preserve">
-    <value>TriggerAddress</value>
+    <value>トリガーアドレス</value>
   </data>
   <data name="Csv_DataSource_TriggerValue" xml:space="preserve">
-    <value>TriggerValue</value>
+    <value>トリガー値</value>
   </data>
   <data name="Csv_DataSource_ValueDataType" xml:space="preserve">
-    <value>ValueDataType</value>
+    <value>データ型</value>
   </data>
   <data name="Csv_DataSource_ValueEnabled" xml:space="preserve">
-    <value>ValueEnabled</value>
+    <value>値項目有効</value>
   </data>
   <data name="Csv_DataSource_ValueName" xml:space="preserve">
-    <value>ValueName</value>
+    <value>値項目名</value>
   </data>
   <data name="Csv_DataSource_ValueNameEn" xml:space="preserve">
     <value>ValueNameEn</value>
@@ -5862,10 +5925,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>ValueNamePt</value>
   </data>
   <data name="Csv_DataSource_ValuePlcAddress" xml:space="preserve">
-    <value>ValuePlcAddress</value>
+    <value>値項目PLCアドレス</value>
   </data>
   <data name="Csv_DataSource_ValueUnit" xml:space="preserve">
-    <value>ValueUnit</value>
+    <value>値項目単位</value>
   </data>
   <data name="Csv_Defect_Category" xml:space="preserve">
     <value>カテゴリ</value>
@@ -6483,5 +6546,182 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Validator_TriggerAckConflict" xml:space="preserve">
     <value>データソース「{0}」のトリガー値と確認値は同じにできません</value>
+  </data>
+  <data name="K750" xml:space="preserve">
+    <value>工単インポート</value>
+  </data>
+  <data name="K751" xml:space="preserve">
+    <value>工単 CSV ファイルを選択</value>
+  </data>
+  <data name="K752" xml:space="preserve">
+    <value>{0} 件の工単を一括インポートします。続行しますか？</value>
+  </data>
+  <data name="K753" xml:space="preserve">
+    <value>{0} 件の工単をインポートしました</value>
+  </data>
+  <data name="K754" xml:space="preserve">
+    <value>{0} 件インポート、{1} 件スキップ：{2}</value>
+  </data>
+  <data name="K755" xml:space="preserve">
+    <value>工単 CSV の読み取りに失敗：{0}</value>
+  </data>
+  <data name="K756" xml:space="preserve">
+    <value>{0} にインポート可能な工単がありません</value>
+  </data>
+  <data name="K757" xml:space="preserve">
+    <value>コピーしました：{0}</value>
+  </data>
+  <data name="K762" xml:space="preserve">
+    <value>競合</value>
+  </data>
+  <data name="K763" xml:space="preserve">
+    <value>期限超過</value>
+  </data>
+  <data name="K764" xml:space="preserve">
+    <value>CSV から工単を一括インポート（列名はエクスポートテンプレートと同一）</value>
+  </data>
+  <data name="K765" xml:space="preserve">
+    <value>目標</value>
+  </data>
+  <data name="K766" xml:space="preserve">
+    <value>良品</value>
+  </data>
+  <data name="K767" xml:space="preserve">
+    <value>達成率</value>
+  </data>
+  <data name="K768" xml:space="preserve">
+    <value>絞り込み結果</value>
+  </data>
+  <data name="K769" xml:space="preserve">
+    <value>工単番号をコピー</value>
+  </data>
+  <data name="K770" xml:space="preserve">
+    <value>製品コードをコピー</value>
+  </data>
+  <data name="K771" xml:space="preserve">
+    <value>タイムライン</value>
+  </data>
+  <data name="K772" xml:space="preserve">
+    <value>作成</value>
+  </data>
+  <data name="K773" xml:space="preserve">
+    <value>予定開始</value>
+  </data>
+  <data name="K774" xml:space="preserve">
+    <value>実開始</value>
+  </data>
+  <data name="K775" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="K776" xml:space="preserve">
+    <value>中止</value>
+  </data>
+  <data name="K788" xml:space="preserve">
+    <value>インポート</value>
+  </data>
+  <data name="K789" xml:space="preserve">
+    <value>行をダブルクリックで編集</value>
+  </data>
+  <data name="K790" xml:space="preserve">
+    <value>{0} 行目：列数不足（{1} &lt; 7）、スキップ</value>
+  </data>
+  <data name="K791" xml:space="preserve">
+    <value>{0} 行目 [{1}]：予定時刻は yyyy-MM-dd HH:mm 形式にしてください（スキップ）</value>
+  </data>
+  <data name="K794" xml:space="preserve">
+    <value>工単番号は既に存在します</value>
+  </data>
+  <data name="K795" xml:space="preserve">
+    <value>デバイス「{0}」が見つかりません</value>
+  </data>
+  <data name="K799" xml:space="preserve">
+    <value>期限超過 {0}</value>
+  </data>
+  <data name="K806" xml:space="preserve">
+    <value>{0} 行目 [{1}]：{2}</value>
+  </data>
+  <data name="K901" xml:space="preserve">
+    <value>工単スケジュール</value>
+  </data>
+  <data name="K902" xml:space="preserve">
+    <value>予定時刻</value>
+  </data>
+  <data name="K903" xml:space="preserve">
+    <value>設備</value>
+  </data>
+  <data name="K904" xml:space="preserve">
+    <value>工単</value>
+  </data>
+  <data name="K905" xml:space="preserve">
+    <value>現在</value>
+  </data>
+  <data name="K906" xml:space="preserve">
+    <value>現在の絞り込みに一致する工単なし</value>
+  </data>
+  <data name="K907" xml:space="preserve">
+    <value>直近1時間</value>
+  </data>
+  <data name="K908" xml:space="preserve">
+    <value>直近4時間</value>
+  </data>
+  <data name="K909" xml:space="preserve">
+    <value>直近24時間</value>
+  </data>
+  <data name="K910" xml:space="preserve">
+    <value>総生産数</value>
+  </data>
+  <data name="K911" xml:space="preserve">
+    <value>不良率</value>
+  </data>
+  <data name="K912" xml:space="preserve">
+    <value>平均復旧時間</value>
+  </data>
+  <data name="K913" xml:space="preserve">
+    <value>継続時間</value>
+  </data>
+  <data name="M_MoreNotShown" xml:space="preserve">
+    <value>\n…（他 {0} 件省略）</value>
+  </data>
+  <data name="K914" xml:space="preserve">
+    <value>SNトレーサビリティ</value>
+  </data>
+  <data name="K915" xml:space="preserve">
+    <value>トレースするシリアル番号を入力（例：SN20260830-0001）</value>
+  </data>
+  <data name="K916" xml:space="preserve">
+    <value>シリアル番号を入力して生産トレースを照会</value>
+  </data>
+  <data name="K917" xml:space="preserve">
+    <value>設備・工単・シフト・時間・判定結果を表示します</value>
+  </data>
+  <data name="K918" xml:space="preserve">
+    <value>SN明細</value>
+  </data>
+  <data name="K919" xml:space="preserve">
+    <value>合計 {0} 件</value>
+  </data>
+  <data name="K920" xml:space="preserve">
+    <value>この工単にSN記録はありません</value>
+  </data>
+  <data name="K921" xml:space="preserve">
+    <value>トレースするシリアル番号を入力してください</value>
+  </data>
+  <data name="K922" xml:space="preserve">
+    <value>SN {0} のトレース記録が見つかりません</value>
+  </data>
+  <data name="K923" xml:space="preserve">
+    <value>照会失敗：{0}</value>
+  </data>
+  <data name="K924" xml:space="preserve">
+    <value>結果</value>
+  </data>
+  <data name="K925" xml:space="preserve">
+    <value>前へ</value>
+  </data>
+  <data name="K926" xml:space="preserve">
+    <value>次へ</value>
+  </data>
+  <data name="K927" xml:space="preserve">
+    <value>{0} ページ目</value>
   </data>
 </root>

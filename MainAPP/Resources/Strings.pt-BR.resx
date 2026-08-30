@@ -661,7 +661,7 @@
     <value>Recovered Today</value>
   </data>
   <data name="K128" xml:space="preserve">
-    <value>Longest Duration</value>
+    <value>Earliest Alarm · Ongoing</value>
   </data>
   <data name="K129" xml:space="preserve">
     <value>Affected Device</value>
@@ -4230,6 +4230,18 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M380" xml:space="preserve">
     <value>No matching users</value>
   </data>
+  <data name="M381" xml:space="preserve">
+    <value>Export Scope</value>
+  </data>
+  <data name="M382" xml:space="preserve">
+    <value>Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.</value>
+  </data>
+  <data name="M383" xml:space="preserve">
+    <value>Current page only</value>
+  </data>
+  <data name="M384" xml:space="preserve">
+    <value>Todos os resultados filtrados ({0} linhas)</value>
+  </data>
   <data name="M332" xml:space="preserve">
     <value>Operator</value>
   </data>
@@ -5565,7 +5577,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
   </data>
   <data name="K712" xml:space="preserve">
-    <value>Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters</value>
+    <value>Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters</value>
   </data>
   <data name="K713" xml:space="preserve">
     <value>Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters</value>
@@ -5575,6 +5587,57 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="K717" xml:space="preserve">
     <value>Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight</value>
+  </data>
+  <data name="K718" xml:space="preserve">
+    <value>Repeated triggers of the same alarm within a short window merged; {0} events total</value>
+  </data>
+  <data name="K719" xml:space="preserve">
+    <value>Versus yesterday at the same time: yesterday {0} / today {1}</value>
+  </data>
+  <data name="K720" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="K721" xml:space="preserve">
+    <value>{0} min ago</value>
+  </data>
+  <data name="K722" xml:space="preserve">
+    <value>{0} hr ago</value>
+  </data>
+  <data name="K723" xml:space="preserve">
+    <value>By Triggers</value>
+  </data>
+  <data name="K724" xml:space="preserve">
+    <value>By Duration</value>
+  </data>
+  <data name="K725" xml:space="preserve">
+    <value>Device config validated OK ({0} devices)</value>
+  </data>
+  <data name="K726" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="K727" xml:space="preserve">
+    <value>The current device has unsaved changes; switching away will lose them. Continue?</value>
+  </data>
+  <data name="K728" xml:space="preserve">
+    <value>Export Selected Device</value>
+  </data>
+  <data name="K729" xml:space="preserve">
+    <value>Import Device Config</value>
+  </data>
+  <data name="K730" xml:space="preserve">
+    <value>Exported device “{0}”</value>
+  </data>
+  <data name="K731" xml:space="preserve">
+    <value>Import failed: file is empty or could not be parsed.</value>
+  </data>
+  <data name="K732" xml:space="preserve">
+    <value>Import failed: device Id “{0}” conflicts with an existing device. Edit the Id in the file.</value>
+  </data>
+  <data name="K733" xml:space="preserve">
+    <value>Imported device “{0}”</value>
+  </data>
+  <data name="K734" xml:space="preserve">
+    <value>Leaving the device manager will discard unsaved configuration changes. Continue?</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>
@@ -5772,52 +5835,52 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Unidade</value>
   </data>
   <data name="Csv_DataSource_AckValue" xml:space="preserve">
-    <value>AckValue</value>
+    <value>Valor de confirmacao</value>
   </data>
   <data name="Csv_DataSource_BoolExpectedValue" xml:space="preserve">
-    <value>BoolExpectedValue</value>
+    <value>Valor bool esperado</value>
   </data>
   <data name="Csv_DataSource_ConfirmSeconds" xml:space="preserve">
-    <value>ConfirmSeconds</value>
+    <value>Segundo(s) de confirmacao</value>
   </data>
   <data name="Csv_DataSource_EnumValuesJson" xml:space="preserve">
-    <value>EnumValuesJson</value>
+    <value>JSON de mapeamento de enum</value>
   </data>
   <data name="Csv_DataSource_ExpectedValue" xml:space="preserve">
-    <value>ExpectedValue</value>
+    <value>Valor esperado</value>
   </data>
   <data name="Csv_DataSource_ExpectedValueConfigured" xml:space="preserve">
-    <value>ExpectedValueConfigured</value>
+    <value>Valor esperado configurado</value>
   </data>
   <data name="Csv_DataSource_FileName" xml:space="preserve">
     <value>{0}_fontes_dados_{1:yyyyMMdd_HHmmss}.csv</value>
   </data>
   <data name="Csv_DataSource_FloatExpectedValue" xml:space="preserve">
-    <value>FloatExpectedValue</value>
+    <value>Valor esperado float</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMax" xml:space="preserve">
-    <value>FloatLimitMax</value>
+    <value>Limite maximo float</value>
   </data>
   <data name="Csv_DataSource_FloatLimitMin" xml:space="preserve">
-    <value>FloatLimitMin</value>
+    <value>Limite minimo float</value>
   </data>
   <data name="Csv_DataSource_Hysteresis" xml:space="preserve">
-    <value>Hysteresis</value>
+    <value>Histerese</value>
   </data>
   <data name="Csv_DataSource_LimitMax" xml:space="preserve">
-    <value>LimitMax</value>
+    <value>Limite maximo</value>
   </data>
   <data name="Csv_DataSource_LimitMin" xml:space="preserve">
-    <value>LimitMin</value>
+    <value>Limite minimo</value>
   </data>
   <data name="Csv_DataSource_SourceDescription" xml:space="preserve">
-    <value>SourceDescription</value>
+    <value>Descricao da fonte</value>
   </data>
   <data name="Csv_DataSource_SourceEnabled" xml:space="preserve">
-    <value>SourceEnabled</value>
+    <value>Fonte ativada</value>
   </data>
   <data name="Csv_DataSource_SourceName" xml:space="preserve">
-    <value>SourceName</value>
+    <value>Nome da fonte</value>
   </data>
   <data name="Csv_DataSource_SourceNameEn" xml:space="preserve">
     <value>SourceNameEn</value>
@@ -5829,28 +5892,28 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>SourceNamePt</value>
   </data>
   <data name="Csv_DataSource_SourceType" xml:space="preserve">
-    <value>SourceType</value>
+    <value>Tipo da fonte</value>
   </data>
   <data name="Csv_DataSource_StringExpectedValue" xml:space="preserve">
-    <value>StringExpectedValue</value>
+    <value>Valor esperado string</value>
   </data>
   <data name="Csv_DataSource_StringLength" xml:space="preserve">
-    <value>StringLength</value>
+    <value>Comprimento da string</value>
   </data>
   <data name="Csv_DataSource_TriggerAddress" xml:space="preserve">
-    <value>TriggerAddress</value>
+    <value>Endereco de gatilho</value>
   </data>
   <data name="Csv_DataSource_TriggerValue" xml:space="preserve">
-    <value>TriggerValue</value>
+    <value>Valor de gatilho</value>
   </data>
   <data name="Csv_DataSource_ValueDataType" xml:space="preserve">
-    <value>ValueDataType</value>
+    <value>Tipo de valor</value>
   </data>
   <data name="Csv_DataSource_ValueEnabled" xml:space="preserve">
-    <value>ValueEnabled</value>
+    <value>Valor ativado</value>
   </data>
   <data name="Csv_DataSource_ValueName" xml:space="preserve">
-    <value>ValueName</value>
+    <value>Nome do valor</value>
   </data>
   <data name="Csv_DataSource_ValueNameEn" xml:space="preserve">
     <value>ValueNameEn</value>
@@ -5862,10 +5925,10 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>ValueNamePt</value>
   </data>
   <data name="Csv_DataSource_ValuePlcAddress" xml:space="preserve">
-    <value>ValuePlcAddress</value>
+    <value>Endereco PLC do valor</value>
   </data>
   <data name="Csv_DataSource_ValueUnit" xml:space="preserve">
-    <value>ValueUnit</value>
+    <value>Unidade do valor</value>
   </data>
   <data name="Csv_Defect_Category" xml:space="preserve">
     <value>Categoria</value>
@@ -6483,5 +6546,182 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Validator_TriggerAckConflict" xml:space="preserve">
     <value>Valores de gatilho e confirmacao nao podem ser iguais na fonte '{0}'</value>
+  </data>
+  <data name="K750" xml:space="preserve">
+    <value>Importar ordens de produção</value>
+  </data>
+  <data name="K751" xml:space="preserve">
+    <value>Selecione o arquivo CSV de ordens de produção</value>
+  </data>
+  <data name="K752" xml:space="preserve">
+    <value>Os {0} ordens de produção serão importadas. Continuar?</value>
+  </data>
+  <data name="K753" xml:space="preserve">
+    <value>{0} ordens de produção importadas com sucesso</value>
+  </data>
+  <data name="K754" xml:space="preserve">
+    <value>Importadas {0}, ignoradas {1}: {2}</value>
+  </data>
+  <data name="K755" xml:space="preserve">
+    <value>Falha ao ler o CSV de ordens de produção: {0}</value>
+  </data>
+  <data name="K756" xml:space="preserve">
+    <value>Nenhuma ordem de produção importável encontrada em {0}</value>
+  </data>
+  <data name="K757" xml:space="preserve">
+    <value>Copiado: {0}</value>
+  </data>
+  <data name="K762" xml:space="preserve">
+    <value>Conflito</value>
+  </data>
+  <data name="K763" xml:space="preserve">
+    <value>Atrasado</value>
+  </data>
+  <data name="K764" xml:space="preserve">
+    <value>Importar ordens de produção de um arquivo CSV (as colunas correspondem ao modelo de exportação)</value>
+  </data>
+  <data name="K765" xml:space="preserve">
+    <value>Alvo</value>
+  </data>
+  <data name="K766" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="K767" xml:space="preserve">
+    <value>Taxa de realização</value>
+  </data>
+  <data name="K768" xml:space="preserve">
+    <value>Resultados filtrados</value>
+  </data>
+  <data name="K769" xml:space="preserve">
+    <value>Copiar número da ordem</value>
+  </data>
+  <data name="K770" xml:space="preserve">
+    <value>Copiar código do produto</value>
+  </data>
+  <data name="K771" xml:space="preserve">
+    <value>Linha do tempo</value>
+  </data>
+  <data name="K772" xml:space="preserve">
+    <value>Criada</value>
+  </data>
+  <data name="K773" xml:space="preserve">
+    <value>Início planejado</value>
+  </data>
+  <data name="K774" xml:space="preserve">
+    <value>Início real</value>
+  </data>
+  <data name="K775" xml:space="preserve">
+    <value>Concluída</value>
+  </data>
+  <data name="K776" xml:space="preserve">
+    <value>Abortada</value>
+  </data>
+  <data name="K788" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="K789" xml:space="preserve">
+    <value>Clique duas vezes em uma linha para editar essa ordem</value>
+  </data>
+  <data name="K790" xml:space="preserve">
+    <value>Linha {0}: colunas insuficientes ({1} &lt; 7); ignorada</value>
+  </data>
+  <data name="K791" xml:space="preserve">
+    <value>Linha {0} [{1}]: horário planejado deve ser yyyy-MM-dd HH:mm; ignorada</value>
+  </data>
+  <data name="K794" xml:space="preserve">
+    <value>O número da ordem já existe</value>
+  </data>
+  <data name="K795" xml:space="preserve">
+    <value>Dispositivo "{0}" não encontrado</value>
+  </data>
+  <data name="K799" xml:space="preserve">
+    <value>Atrasado {0}</value>
+  </data>
+  <data name="K806" xml:space="preserve">
+    <value>Linha {0} [{1}]: {2}</value>
+  </data>
+  <data name="K901" xml:space="preserve">
+    <value>Agendamento de ordens de produção</value>
+  </data>
+  <data name="K902" xml:space="preserve">
+    <value>Horário planejado</value>
+  </data>
+  <data name="K903" xml:space="preserve">
+    <value>Dispositivo</value>
+  </data>
+  <data name="K904" xml:space="preserve">
+    <value>Ordens de produção</value>
+  </data>
+  <data name="K905" xml:space="preserve">
+    <value>Agora</value>
+  </data>
+  <data name="K906" xml:space="preserve">
+    <value>Nenhuma ordem sob o filtro atual</value>
+  </data>
+  <data name="K907" xml:space="preserve">
+    <value>Última 1 hora</value>
+  </data>
+  <data name="K908" xml:space="preserve">
+    <value>Últimas 4 horas</value>
+  </data>
+  <data name="K909" xml:space="preserve">
+    <value>Últimas 24 horas</value>
+  </data>
+  <data name="K910" xml:space="preserve">
+    <value>Produção total</value>
+  </data>
+  <data name="K911" xml:space="preserve">
+    <value>Taxa de defeitos</value>
+  </data>
+  <data name="K912" xml:space="preserve">
+    <value>Tempo médio de recuperação</value>
+  </data>
+  <data name="K913" xml:space="preserve">
+    <value>Duração</value>
+  </data>
+  <data name="M_MoreNotShown" xml:space="preserve">
+    <value>\n… ({0} itens não exibidos)</value>
+  </data>
+  <data name="K914" xml:space="preserve">
+    <value>Rastreabilidade SN</value>
+  </data>
+  <data name="K915" xml:space="preserve">
+    <value>Digite o SN para rastrear</value>
+  </data>
+  <data name="K916" xml:space="preserve">
+    <value>Insira um SN para consultar seu rastreio de produção</value>
+  </data>
+  <data name="K917" xml:space="preserve">
+    <value>Mostra dispositivo</value>
+  </data>
+  <data name="K918" xml:space="preserve">
+    <value>Detalhes do SN</value>
+  </data>
+  <data name="K919" xml:space="preserve">
+    <value>{0} no total</value>
+  </data>
+  <data name="K920" xml:space="preserve">
+    <value>Nenhum registro de SN para esta ordem</value>
+  </data>
+  <data name="K921" xml:space="preserve">
+    <value>Insira um SN para rastrear</value>
+  </data>
+  <data name="K922" xml:space="preserve">
+    <value>Nenhum registro de rastreio encontrado para o SN {0}</value>
+  </data>
+  <data name="K923" xml:space="preserve">
+    <value>Falha na consulta: {0}</value>
+  </data>
+  <data name="K924" xml:space="preserve">
+    <value>Resultado</value>
+  </data>
+  <data name="K925" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="K926" xml:space="preserve">
+    <value>Próxima</value>
+  </data>
+  <data name="K927" xml:space="preserve">
+    <value>Página {0}</value>
   </data>
 </root>

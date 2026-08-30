@@ -55,7 +55,7 @@ public class RemoteHistoryQueryServiceTests : IDisposable
         var client = new KanbanDataClient("http://127.0.0.1:5129/hubs/kanban",
             NullLogger<KanbanDataClient>.Instance, useMessagePack: false);
         return new RemoteHistoryQueryService(
-            history, new DefectHistoryStore(_db), client, mode,
+            history, new DefectHistoryStore(_db), new SnEventStore(_db), client, mode,
             NullLogger<RemoteHistoryQueryService>.Instance);
     }
 

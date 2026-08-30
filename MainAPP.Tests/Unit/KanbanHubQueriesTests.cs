@@ -32,6 +32,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
     private readonly DeviceRepository _deviceRepo;
     private readonly WorkOrderRepository _workOrderRepo;
     private readonly SnapshotAggregator _aggregator;
+    private readonly SnEventStore _snStore;
     private readonly KanbanHub _hub;
 
     /// <summary>最小 HubCallerContext：读取路径（快照/查询）依赖 Context.ConnectionAborted，脱离真实连接单测时注入。</summary>
@@ -58,6 +59,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
         _deviceRepo = new DeviceRepository(_settings);
         _workOrderRepo = new WorkOrderRepository(_db, Substitute.For<AutoMapper.IMapper>());
         _aggregator = new SnapshotAggregator();
+        _snStore = new SnEventStore(_db, NullLogger<SnEventStore>.Instance);
 
         var services = new ServiceCollection();
         services.AddSingleton(_settings);
@@ -92,12 +94,14 @@ public sealed class KanbanHubQueriesTests : IDisposable
             _workOrderRepo,
             new HistoryService(_db, NullLogger<HistoryService>.Instance),
             _settings,
-            new AuditService(_db, NullLogger<AuditService>.Instance));
+            new AuditService(_db, NullLogger<AuditService>.Instance),
+            _snStore);
         _hub.Context = new FakeHubCallerContext(); // 读取路径依赖 Context.ConnectionAborted
     }
 
     public void Dispose()
     {
+        _snStore.Dispose(); // 停后台落库任务，防测试进程残留
         try { Directory.Delete(_tempDir, true); } catch { }
     }
 
@@ -137,6 +141,75 @@ public sealed class KanbanHubQueriesTests : IDisposable
 
         Assert.True(string.IsNullOrEmpty(response.Error));
         Assert.Empty(response.ProductionLogs);
+    }
+
+    [Fact]
+    public async Task QuerySnEvents_BySn_ReturnsMappedEvents()
+    {
+        // 写入两条 SN 事件（Append 入队，查询时同步排空落库）
+        _snStore.Append(new Kanban.Collector.Core.Entities.SnEventRecord
+        {
+            Sn = "SN-UNIT-001",
+            DeviceId = "dev-1",
+            DeviceName = "注塑机1",
+            WorkOrderId = 7,
+            ShiftName = "白班",
+            Result = 0,
+            Timestamp = DateTime.Now,
+        });
+        _snStore.Append(new Kanban.Collector.Core.Entities.SnEventRecord
+        {
+            Sn = "SN-UNIT-002",
+            DeviceId = "dev-1",
+            DeviceName = "注塑机1",
+            WorkOrderId = 7,
+            ShiftName = "白班",
+            Result = 1,
+            Timestamp = DateTime.Now.AddMinutes(1),
+        });
+
+        var response = await _hub.QuerySnEventsAsync(new SnEventQueryRequest { Sn = "SN-UNIT-001" });
+
+        var record = Assert.Single(response.Items);
+        Assert.Equal("SN-UNIT-001", record.Sn);
+        Assert.Equal(7, record.WorkOrderId);
+        Assert.Equal("白班", record.ShiftName);
+        Assert.Equal(0, record.Result);
+        Assert.Equal(1, response.Total);
+    }
+
+    [Fact]
+    public async Task QuerySnEvents_ByWorkOrder_Paginates()
+    {
+        for (var i = 0; i < 5; i++)
+        {
+            _snStore.Append(new Kanban.Collector.Core.Entities.SnEventRecord
+            {
+                Sn = $"SN-WO-{i:D3}",
+                DeviceId = "dev-2",
+                DeviceName = "注塑机2",
+                WorkOrderId = 42,
+                ShiftName = "夜班",
+                Result = 0,
+                Timestamp = DateTime.Now.AddMinutes(i),
+            });
+        }
+
+        var page1 = await _hub.QuerySnEventsAsync(new SnEventQueryRequest { WorkOrderId = 42, Page = 1, PageSize = 3 });
+        Assert.Equal(5, page1.Total);
+        Assert.Equal(3, page1.Items.Count);
+
+        var page2 = await _hub.QuerySnEventsAsync(new SnEventQueryRequest { WorkOrderId = 42, Page = 2, PageSize = 3 });
+        Assert.Equal(5, page2.Total);
+        Assert.Equal(2, page2.Items.Count);
+    }
+
+    [Fact]
+    public async Task QuerySnEvents_UnknownSn_ReturnsEmpty()
+    {
+        var response = await _hub.QuerySnEventsAsync(new SnEventQueryRequest { Sn = "SN-DOES-NOT-EXIST" });
+        Assert.Equal(0, response.Total);
+        Assert.Empty(response.Items);
     }
 
     [Fact]

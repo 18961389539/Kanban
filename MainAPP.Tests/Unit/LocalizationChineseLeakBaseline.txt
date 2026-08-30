@@ -5,6 +5,7 @@ AlarmQueryViewModel.cs	事件类型
 AlarmQueryViewModel.cs	事件类型文本
 AlarmQueryViewModel.cs	报警ID
 AlarmQueryViewModel.cs	报警名称
+AlarmQueryViewModel.cs	持续时间
 AlarmQueryViewModel.cs	设备ID
 AlarmQueryViewModel.cs	设备名称
 AuditQueryViewModel.cs	审计归档 {items.Count} 条
@@ -23,6 +24,7 @@ ProductionLineViewModel.cs	ProductionLineViewModel 构造完成：LineDevices.Co
 ProductionLineViewModel.cs	ProductionLineViewModel 构造：Devices.Count={DeviceCount}, Runtimes.Count={RuntimeCount}
 ProductionLineViewModel.cs	TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}
 ProductionLineViewModel.cs	TryAddLineDevice 跳过：设备 {Name}({Id}) 未找到对应 Runtime
+ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，良品率：{QualityRate:P2}
 ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，C良品率：{QualityRate:P2}
 ProductionQueryViewModel.cs	# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}
 ProductionQueryViewModel.cs	NG产量

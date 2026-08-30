@@ -454,6 +454,149 @@ public static class ChartService
         return model;
     }
 
+    // ════════════════════ 工单排程甘特图（只读，设备×时间矩形条） ════════════════════
+
+    /// <summary>
+    /// 构建工单排程甘特图：Y 轴为设备（每台一行），X 轴为时间，
+    /// 每个工单按 PlannedStart~PlannedEnd 画一条矩形色条；状态着色、
+    /// 冲突工单描边高亮（warning 色），并叠加一条竖直"当前时刻"线。
+    /// 期望输入：设备快照（确定行顺序）、工单列表、冲突工单 Id 集合。
+    /// 结果供工单管理页只读排程视图使用；选中联动由 ViewModel 负责（点击事件不在 PlotModel 内）。
+    /// </summary>
+    public static PlotModel BuildWorkOrderGanttChart(
+        IReadOnlyList<Device> devices,
+        IReadOnlyList<WorkOrder> workOrders,
+        ISet<int> conflictOrderIds,
+        DateTime? now = null)
+    {
+        var model = CreateBaseModel(Strings.K901);
+        var current = now ?? DateTime.Now;
+        var list = workOrders
+            .Where(w => w.PlannedEnd > w.PlannedStart)
+            .OrderBy(w => w.PlannedStart)
+            .ToList();
+        var deviceList = devices.ToList();
+
+        // 时间轴范围：全量工单计划区间 ∩ 含当前时刻；无工单时回退今天 ±12h 空窗
+        DateTime min;
+        DateTime max;
+        if (list.Count > 0)
+        {
+            min = list.Min(w => w.PlannedStart);
+            max = list.Max(w => w.PlannedEnd);
+        }
+        else
+        {
+            min = current.AddHours(-12);
+            max = current.AddHours(12);
+        }
+        min = Min(min, current);
+        max = Max(max, current);
+        // 最小可视跨度 1 小时，避免单点工单把时间轴压成一条线
+        if ((max - min).TotalHours < 1)
+            max = min.AddHours(1);
+
+        var dateAxis = CreateDateTimeAxis(Strings.K902);
+        dateAxis.Minimum = DateTimeAxis.ToDouble(min);
+        dateAxis.Maximum = DateTimeAxis.ToDouble(max);
+        model.Axes.Add(dateAxis);
+
+        var deviceAxis = new CategoryAxis
+        {
+            Title = Strings.K903,
+            Position = AxisPosition.Left,
+            TicklineColor = _gridColor,
+            MajorGridlineStyle = LineStyle.None,
+            MinorGridlineStyle = LineStyle.None,
+            AxislineColor = _gridColor,
+            TitleColor = _textColor,
+            TextColor = _textColor,
+            IsPanEnabled = false,
+            IsZoomEnabled = false,
+            ItemsSource = deviceList.Select(d => d.Name).ToList(),
+        };
+        deviceAxis.Key = "woDevice";
+        model.Axes.Add(deviceAxis);
+
+        // 每台设备一行：槽位 = CategoryAxis 整数坐标（标签画在值 i 处），
+        // 条形中心落在 i，与设备名标签严格对齐（不能用 i+0.5，否则每行标签错位半格骑在行边界上）。
+        // 条高 ±0.25（高 0.5），行间自动留 0.5 空隙。
+        const double slotHeight = 0.5;
+        var rowByDevice = deviceList.Select((d, i) => (d.Id, Slot: (double)i)).ToDictionary(x => x.Id, x => x.Slot);
+
+        var series = new RectangleBarSeries
+        {
+            Title = Strings.K904,
+            // 默认轴映射：第 0 个 X 轴 = 时间（Bottom），第 0 个 Y 轴 = 设备序号（Left）
+            // RectangleBarItem(x0, y0, x1, y1)：x 走时间轴、y 走设备轴。
+        };
+        foreach (var w in list)
+        {
+            if (!rowByDevice.TryGetValue(w.DeviceId, out var slot)) continue; // 设备已删除等孤立工单
+            var conflict = conflictOrderIds.Contains(w.Id);
+            var baseColor = w.Status switch
+            {
+                WorkOrderStatus.Running => _runColor,
+                WorkOrderStatus.Completed => _primaryColor,
+                WorkOrderStatus.Aborted => _idleColor,
+                _ => _secondaryColor, // Pending
+            };
+            // 冲突工单用醒目的橙色调替代（RectangleBarItem 无描边 API）：
+            // 列表/详情已用橙色系标冲突，甘特保持同语义，避免与"进行中"的绿色混淆。
+            var color = conflict ? OxyColor.FromRgb(0xFB, 0xBF, 0x24) : baseColor;
+            var item = new RectangleBarItem(
+                DateTimeAxis.ToDouble(w.PlannedStart),
+                slot - slotHeight / 2,
+                DateTimeAxis.ToDouble(w.PlannedEnd),
+                slot + slotHeight / 2)
+            { Color = color };
+            series.Items.Add(item);
+
+            // 长条标注工单号（≥1h 或 ≥24px 可读空间），避免挤压
+            var duration = w.PlannedEnd - w.PlannedStart;
+            if (duration.TotalMinutes >= 60)
+            {
+                model.Annotations.Add(new TextAnnotation
+                {
+                    Text = w.OrderNo,
+                    TextPosition = new DataPoint(
+                        DateTimeAxis.ToDouble(w.PlannedStart.Add(duration / 2)),
+                        slot),
+                    TextColor = OxyColors.White,
+                    FontSize = 10,
+                    Stroke = OxyColors.Transparent,
+                    Background = OxyColors.Transparent,
+                    Padding = new OxyThickness(2),
+                    TextVerticalAlignment = VerticalAlignment.Middle,
+                    TextHorizontalAlignment = HorizontalAlignment.Center,
+                });
+            }
+        }
+        model.Series.Add(series);
+
+        // 当前时刻竖直参考线（Pending/Running 排程视图的核心锚点）
+        // 文本放在首行上方的空隙（y = -0.5 槽位），避免与任一条形重叠
+        model.Annotations.Add(new LineAnnotation
+        {
+            Type = LineAnnotationType.Vertical,
+            X = DateTimeAxis.ToDouble(current),
+            Color = OxyColor.FromRgb(0xF8, 0x71, 0x71),
+            LineStyle = LineStyle.Dash,
+            StrokeThickness = 1,
+            Text = Strings.K905,
+            TextPosition = new DataPoint(DateTimeAxis.ToDouble(current), -0.5),
+            TextVerticalAlignment = OxyPlot.VerticalAlignment.Top,
+            TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Center,
+            TextOrientation = AnnotationTextOrientation.Horizontal,
+            TextColor = _textColor,
+        });
+
+        return model;
+    }
+
+    private static DateTime Min(DateTime a, DateTime b) => a <= b ? a : b;
+    private static DateTime Max(DateTime a, DateTime b) => a >= b ? a : b;
+
     // ════════════════════ Tab 3: OEE 指标柱状图 + 目标线 ════════════════════
 
     /// <summary>

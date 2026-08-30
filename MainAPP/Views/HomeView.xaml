@@ -20,11 +20,14 @@
     </UserControl.Resources>
 
     <!--  ScrollViewer 兜底：内容超出可视区时可纵向滚动；MinHeight 绑定视口高度，
-          使 * 行在空间充足时仍均分填满，与改前大屏布局一致。  -->
+          使 * 行在空间充足时仍均分填满，与改前大屏布局一致。
+          修复（2026-08-30）：原间距下 2×3 卡片总高超出 1080 设计画布约 3%，
+          底部 OEE/合格率/缺陷 三卡在常规 1080p 窗口被压到折叠线以下。
+          收紧外层/行间距使整页落在设计高度内，滚动仅作兜底不再被触发。  -->
     <ScrollViewer x:Name="HomeScrollViewer"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="16"
+        <Grid Margin="8"
               MinHeight="{Binding ActualHeight, ElementName=HomeScrollViewer}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -33,7 +36,7 @@
         </Grid.RowDefinitions>
 
         <!--  ============ 顶部栏：标题 + 数据状态 + PLC连接 + 设备切换器 + 班次进度 ============  -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <!-- MinWidth=0 允许 * 列在窄窗下收缩，WrapPanel 在列内换行而非与标题叠层 -->
@@ -102,7 +105,7 @@
         </Grid>
 
         <!--  ============ 第 1 行：设备状态 | 当前生产状态 | 实时故障 ============  -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
+        <Grid Grid.Row="1" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />

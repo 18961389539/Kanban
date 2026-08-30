@@ -214,7 +214,7 @@
 | `PlcDataAcquisitionService` | 采集总调度（facade）：`PollingLoopAsync` 轮询（约 200ms）驱动班次检测/重连/产量读取/OEE 累计/历史快照写入；`Start/StopAsync/ResetShift/GetDiagnosticsSnapshot`；内部装配 `PlcScanPipeline/DeviceStatusTracker/BaselineResetCoordinator/ShiftContext` |
 | `PlcScanPipeline` | 扫描子系统：`PrepareDWordBatchValues`（批量读+轮内缓存）、`ScanAlarms/ScanDefects/ScanCounterAlarms`、`ClearAlarmsOnDisconnect` |
 | `PlcBatchReadPlanner` | 静态批量读规划：离散 DWord 地址聚合成连续读块（空洞合并 `maxGapSlots`、长度上限），配套 `PlcBatchReadPlanCache` |
-| `SharedPlcDriverRouter` | 共享驱动路由器：全局唯一活动 PLC 连接，品牌变更时经 `ISharedPlcDriverFactory` 替换驱动；实现 `IPlcDriver` 委托转发 |
+| `SharedPlcDriverRouter` | 共享驱动路由器：全局唯一活动 PLC 连接，品牌变更时经 `ISharedPlcDriverFactory` 替换驱动；实现 `IPlcDriver` 委托转发。**并发设计（锁外 IO + 引用安全）**：`_sync` 只保护驱动引用交换与引用计数，阻塞式 IO 在锁外执行（IO 串行化由底层驱动实例锁保证）；品牌切换时旧驱动标记退役，若仍有在途 IO 则等引用归零后延迟 Dispose，避免「在途 IO 期间释放驱动」的竞态。锁持有时间与 IO 阻塞时长解耦 |
 | `DeviceAdapter` / `PlcDeviceAdapter` / `DeviceAdapterResolver` | 协议适配层：先经 Codec 解析校验地址类型/读写权限，再转传输地址调 `IPlcDriver`；`Resolve(device)` 按运行时品牌解析 |
 | `PlcAddressParser` | 静态地址解析：支持 D/M（三菱）、Siemens DB 多写法、Modbus（HR/IR/C/DI）；`Parse→PlcAddressParseResult(Type/Offset/Stride/Group)` |
 | `PlcAddressCodecs` | 品牌地址编解码：`MitsubishiAddressCodec/SiemensAddressCodec/ModbusTcpAddressCodec` + `PlcAddressCodecResolver`；`KeyenceAddressCodec`、`OmronAddressCodec` 独立文件 |
