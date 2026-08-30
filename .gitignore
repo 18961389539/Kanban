@@ -6,6 +6,7 @@ obj/
 *.cache
 *.pdb
 *.dll
+!lib/HslCommunication/HslCommunication.dll
 *.exe
 *.deps.json
 *.runtimeconfig.json
