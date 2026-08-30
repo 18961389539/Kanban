@@ -7367,6 +7367,10 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新", ["en-US"] = "Top alarm by trigger count in the selected time range above; refreshed about every 60s", ["ja-JP"] = "上部で選択した時間範囲内の発生回数第1位。約60秒更新", ["pt-BR"] = "Top alarm by trigger count in the selected time range above; refreshed about every 60s"
         },
+        ["Wpf|K717"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计", ["en-US"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight", ["ja-JP"] = "イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計", ["pt-BR"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight"
+        },
         ["Wpf|F317"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？", ["en-US"] = "{0} recipes will be imported ({1} will be skipped for failing validation). Continue?", ["ja-JP"] = "レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？", ["pt-BR"] = "{0} recipes will be imported ({1} will be skipped for failing validation). Continue?"

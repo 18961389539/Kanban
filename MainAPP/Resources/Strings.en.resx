@@ -5573,6 +5573,9 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="K714" xml:space="preserve">
     <value>Top alarm by trigger count in the selected time range above; refreshed about every 60s</value>
   </data>
+  <data name="K717" xml:space="preserve">
+    <value>Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>
   </data>

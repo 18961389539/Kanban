@@ -215,14 +215,14 @@
                                                                 <Style TargetType="materialIcons:MaterialIcon">
                                                                     <Setter Property="Kind" Value="AlertCircleOutline" />
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding Kind}" Value="Count">
-                                                                            <Setter Property="Kind" Value="Counter" />
-                                                                        </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Level}" Value="High">
                                                                             <Setter Property="Kind" Value="AlertOctagon" />
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding Level}" Value="Medium">
                                                                             <Setter Property="Kind" Value="Alert" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Kind}" Value="Count">
+                                                                            <Setter Property="Kind" Value="Counter" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>

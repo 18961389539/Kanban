@@ -90,5 +90,8 @@ public enum AlarmKind
     Plc,
 
     /// <summary>数值累计超阈值报警</summary>
-    Count
+    Count,
+
+    /// <summary>数据采集源值项越限/偏离报警（历史 AlarmId 以 src: 前缀）</summary>
+    DataSource
 }

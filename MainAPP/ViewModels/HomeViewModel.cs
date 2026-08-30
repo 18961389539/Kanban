@@ -30,7 +30,7 @@ public enum HomeDataStatus
 /// <summary>
 /// 主页仪表板 ViewModel：2 行 3 列共 6 张卡片。
 /// 全部数据来自设备内存 Runtime，零数据库读取。
-/// 每 3 秒从 DeviceRuntime 同步一次本地属性。
+/// 每 3 秒从 DeviceRuntime 同步一次本地属性；活跃故障列表另含轻量历史查询（未恢复数据源）。
 /// </summary>
 public partial class HomeViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
@@ -45,6 +45,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
     private readonly IAlarmSessionMute? _alarmSessionMute;
+    private readonly IAlarmHistoryService? _alarmHistoryService;
     private readonly DispatcherTimer _liveTimer;
 
     /// <summary>
@@ -54,6 +55,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private List<Device> _deviceSnapshot = [];
 
     private readonly HomeAlarmCollector _alarmCollector = new();
+    private readonly object _pendingDataSourceLock = new();
+    private List<AlarmEventRecord> _pendingDataSourceEvents = [];
+    private int _pendingDataSourceQueryVersion;
     private readonly ShiftProgressProvider _shiftProgress;
     private readonly LastShiftComparisonProvider _lastShiftProvider;
 
@@ -471,7 +475,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -483,6 +487,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _dialog = dialog;
         _workOrderService = workOrderService;
         _alarmSessionMute = alarmSessionMute;
+        _alarmHistoryService = alarmHistoryService;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _shiftProgress = new ShiftProgressProvider(appSettings);
         _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
@@ -737,6 +742,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     partial void OnSelectedDeviceIdChanged(string? value)
     {
+        _pendingDataSourceQueryVersion++;
+        lock (_pendingDataSourceLock)
+            _pendingDataSourceEvents = [];
         // 切换设备：取消在途上班次回填查询，RefreshSelected 会重设速度与各项数据
         _lastShiftProvider.Cancel();
         RefreshSelected();
@@ -1194,12 +1202,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
-    /// 刷新实时故障列表：收集所有设备的活跃报警。
-    /// 使用差分更新避免全量 Clear+Add 导致列表闪烁。
-    /// 计数报警无触发/恢复时间戳，用首次发现触发时刻作为 EventTime（缓存避免每 3 秒跳动）。
-    /// 排序：级别降序（High→Medium→Low）+ 触发时间升序（近的在前）。
-    /// 关键：复用 ActiveAlarms 中已有的实例（基于 Equals 匹配），避免每次 new 新实例
-    ///       导致 ReferenceEquals 永远 false、排序 Move 失效、IsNew 标志错乱。
+    /// 刷新实时故障列表：收集当前设备的活跃报警（含历史未恢复数据源）。
+    /// 数据源 pending 在后台轻量查询（7 天窗口），失败时回退上一轮缓存。
     /// </summary>
     private void RefreshActiveAlarms()
     {
@@ -1212,8 +1216,50 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             return;
         }
 
+        KickPendingDataSourceQuery();
+        ApplyActiveAlarmsFromSnapshot(SnapshotPendingDataSourceEvents());
+    }
+
+    private void KickPendingDataSourceQuery()
+    {
+        if (_alarmHistoryService == null) return;
+
+        var deviceId = SelectedDeviceId;
+        var queryVersion = ++_pendingDataSourceQueryVersion;
+        Task.Run(() =>
+        {
+            var pending = PendingDataSourceAlarmQuery.TryQueryPending(
+                _alarmHistoryService, DateTime.Now, deviceId, PendingDataSourceAlarmQuery.ActiveLookback);
+            if (pending == null) return;
+
+            UiDispatcher.Dispatch(() =>
+            {
+                if (queryVersion != _pendingDataSourceQueryVersion) return;
+                lock (_pendingDataSourceLock)
+                    _pendingDataSourceEvents = pending;
+                if (string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal))
+                    ApplyActiveAlarmsFromSnapshot(pending);
+            });
+        }).Forget();
+    }
+
+    private IReadOnlyList<AlarmEventRecord> SnapshotPendingDataSourceEvents()
+    {
+        lock (_pendingDataSourceLock)
+            return _pendingDataSourceEvents.ToList();
+    }
+
+    private void ApplyActiveAlarmsFromSnapshot(IReadOnlyList<AlarmEventRecord> pendingDataSourceEvents)
+    {
         var refreshResult = _alarmCollector.Refresh(
-            ActiveAlarms, _deviceSnapshot, DateTime.Now, IsAlarmMuted, MaxHomeActiveAlarms, SelectedDeviceId);
+            ActiveAlarms,
+            _deviceSnapshot,
+            DateTime.Now,
+            IsAlarmMuted,
+            MaxHomeActiveAlarms,
+            SelectedDeviceId,
+            pendingDataSourceEvents,
+            _deviceRepository);
         HasHighLevelAlarm = refreshResult.HasHighLevelAlarm;
         ActiveAlarmTotalCount = refreshResult.TotalActiveCount;
         RefreshActiveAlarmPresentation();

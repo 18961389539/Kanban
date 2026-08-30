@@ -77,7 +77,11 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
 
         if (itemCount == 0)
         {
-            RemoveAllChildren();
+            // ItemsHost 与 ItemContainerGenerator 的挂接时机取决于 ScrollViewer 配置
+            // （CanContentScroll + ScrollUnit.Pixel 时首帧 Measure 可能尚未挂接），
+            // 此时 generator 为 null，跳过容器清理即可（无子元素，无残留可清）。
+            if (ItemContainerGenerator != null)
+                RemoveAllChildren();
             UpdateScrollInfo(new Size(panelWidth, 0), new Size(panelWidth, Math.Max(0, availableSize.Height)));
             return availableSize;
         }
@@ -154,6 +158,9 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         if (firstIndex > lastIndex) return;
 
         var generator = ItemContainerGenerator;
+        // 首帧 ScrollUnit=Pixel 时序下 ItemsHost 可能尚未挂接，此时无容器可生成，
+        // 等下次 Measure 挂接后再生成（见 MeasureOverride 空分支同款注释）。
+        if (generator == null) return;
         var childIndex = 0;
         using (generator.StartAt(generator.GeneratorPositionFromIndex(firstIndex), GeneratorDirection.Forward, true))
         {

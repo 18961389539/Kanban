@@ -5573,6 +5573,9 @@
   <data name="K714" xml:space="preserve">
     <value>按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新</value>
   </data>
+  <data name="K717" xml:space="preserve">
+    <value>事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>
   </data>

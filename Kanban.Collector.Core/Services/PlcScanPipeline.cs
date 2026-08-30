@@ -314,6 +314,7 @@ public sealed class PlcScanPipeline
             if (!ca.Enabled)
             {
                 _initializedCounterAlarmIds.Remove(key);
+                ca.StartTime = default;
                 continue;
             }
             var addr = ca.PlcAddress;
@@ -335,7 +336,14 @@ public sealed class PlcScanPipeline
                     // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
                     var isFirstObservation = _initializedCounterAlarmIds.Add(key);
                     if (!isFirstObservation && !wasTriggered && ca.IsTriggered)
+                    {
+                        ca.StartTime = DateTime.Now;
                         NotifyAlarm(device, ca.Id, ca.Name, AlarmLevel.Medium);
+                    }
+                    else if (wasTriggered && !ca.IsTriggered)
+                    {
+                        ca.StartTime = default;
+                    }
                 }
                 else
                 {

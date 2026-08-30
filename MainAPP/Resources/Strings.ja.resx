@@ -5573,6 +5573,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K714" xml:space="preserve">
     <value>上部で選択した時間範囲内の発生回数第1位。約60秒更新</value>
   </data>
+  <data name="K717" xml:space="preserve">
+    <value>イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計</value>
+  </data>
   <data name="F317" xml:space="preserve">
     <value>レシピ {0} 件をインポートします（検証に失敗した {1} 件はスキップされます）。続行しますか？</value>
   </data>
