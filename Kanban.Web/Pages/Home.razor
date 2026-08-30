@@ -47,7 +47,7 @@
             <span class="sum-item run"><span class="dot"></span>@L.T("Status_Running") <b>@Dashboard.StatusSummary.Running</b></span>
             <span class="sum-item alarm"><span class="dot"></span>@L.T("Status_Alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
             <span class="sum-item paused"><span class="dot"></span>@L.T("Status_Paused") <b>@Dashboard.StatusSummary.Paused</b></span>
-            <span class="sum-item idle"><span class="dot"></span>@L.T("Status_Idle") <b>@Dashboard.StatusSummary.Idle</b></span>
+            <span class="sum-item offline"><span class="dot"></span>@L.T("Status_Offline") <b>@Dashboard.StatusSummary.Idle</b></span>
             <span class="sum-item">@L.T("Card_DevCount") <b>@Dashboard.DeviceCount</b></span>
         </div>
     }
@@ -68,14 +68,16 @@
                     <span class="status-badge @Status.Class">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span></div>
-                    <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span></div>
-                    <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span><span class="ratio-hint">@PctRatio(RunRatio)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span><span class="ratio-hint">@PctRatio(AlarmRatio)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span><span class="ratio-hint">@PctRatio(PauseRatio)</span></div>
+                    <div><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value idle">@FmtDuration(SelectedSnapshot.OfflineTime)</span><span class="ratio-hint">@PctRatio(OfflineRatio)</span></div>
                 </div>
                 <div class="time-bar">
                     <div class="seg run" style="width:@RunRatio%"></div>
                     <div class="seg alarm" style="width:@AlarmRatio%"></div>
                     <div class="seg paused" style="width:@PauseRatio%"></div>
+                    <div class="seg offline" style="width:@OfflineRatio%"></div>
                 </div>
                 <div class="meta-line">@L.T("Meta_StatusWord", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
                 @if (!string.IsNullOrEmpty(SelectedSnapshot.RecipeName))
@@ -316,8 +318,13 @@
     private DeviceShiftSummaryDto? LastShift
         => SelectedDeviceId is null ? null : Dashboard.GetLastShift(SelectedDeviceId);
 
-    /// <summary>产量差文本（对齐 WPF FormatHelper.FormatDiff：+N / -N / 0）。</summary>
-    private static string FmtDiff(int diff) => diff > 0 ? $"+{diff:N0}" : diff.ToString("N0");
+    /// <summary>产量差文本（对齐 WPF FormatHelper.FormatDiff 零值语义：+N / -N / 0→空）。</summary>
+    private static string FmtDiff(int diff) => diff switch
+    {
+        > 0 => $"+{diff:N0}",
+        < 0 => diff.ToString("N0"),
+        _ => ""
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -393,7 +400,7 @@ private void OnRenderTick()
             DeviceStatus.Running => (L.T("Status_Running"), "run"),
             DeviceStatus.Alarm => (L.T("Status_Alarm"), "alarm"),
             DeviceStatus.Paused => (L.T("Status_Paused"), "paused"),
-            _ => (L.T("Status_Idle"), "idle"),
+            _ => (L.T("Status_Offline"), "offline"),
         };
 
     private string WoStatusText => CurrentWorkOrder?.Status switch
@@ -503,12 +510,16 @@ private void OnRenderTick()
     private double RunRatio => RatioPercentOf(SelectedSnapshot?.RunTime ?? 0, SelectedSnapshot);
     private double AlarmRatio => RatioPercentOf(SelectedSnapshot?.AlarmTime ?? 0, SelectedSnapshot);
     private double PauseRatio => RatioPercentOf(SelectedSnapshot?.PausedTime ?? 0, SelectedSnapshot);
+    private double OfflineRatio => RatioPercentOf(SelectedSnapshot?.OfflineTime ?? 0, SelectedSnapshot);
     private double OkRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalOkProduction / TotalOutput : 0;
     private double NgRatio => TotalOutput > 0 ? 100.0 * SelectedSnapshot!.TotalNgProduction / TotalOutput : 0;
 
-    /// <summary>时长占比（百分比，0~100）；口径见 SnapshotMetrics.TimeRatio。</summary>
+    /// <summary>时长占比（百分比，0~100）；分母含离线，与 WPF HomeViewModel *TimeRatio 一致。</summary>
     private static double RatioPercentOf(double value, DeviceSnapshotDto? s)
-        => 100.0 * SnapshotMetrics.TimeRatio(value, s?.RunTime ?? 0, s?.AlarmTime ?? 0, s?.PausedTime ?? 0);
+        => 100.0 * SnapshotMetrics.TimeRatio(
+            value, s?.RunTime ?? 0, s?.AlarmTime ?? 0, s?.PausedTime ?? 0, s?.OfflineTime ?? 0);
+
+    private static string PctRatio(double ratio) => $"{ratio:F0}%";
 
     private static string LevelClass(AlarmLevel level) => level switch
     {

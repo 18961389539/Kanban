@@ -567,7 +567,7 @@
                                 </UniformGrid>
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                     <Rectangle Width="10" Height="10" Fill="{StaticResource StatusIdleBrush}" />
-                                    <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Initial}" />
+                                    <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
                                     <TextBlock Margin="8,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource StatusIdleBrush}" Text="{Binding OfflineTimeFormatted}" />
                                 </StackPanel>

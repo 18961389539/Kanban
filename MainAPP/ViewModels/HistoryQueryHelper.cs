@@ -173,7 +173,7 @@ internal static class HistoryQueryHelper
     /// </summary>
     public static string GetStateText(int state) => state switch
     {
-        0 => Strings.Status_Initial, 1 => Strings.Status_Running, 2 => Strings.Status_Alarm, 3 => Strings.Status_Paused, _ => Strings.Status_Unknown
+        0 => Strings.Status_Offline, 1 => Strings.Status_Running, 2 => Strings.Status_Alarm, 3 => Strings.Status_Paused, _ => Strings.Status_Unknown
     };
 
     public static string GetEventTypeText(AlarmEventType type) => type switch

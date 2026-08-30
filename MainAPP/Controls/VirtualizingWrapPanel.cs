@@ -16,6 +16,7 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         typeof(VirtualizingWrapPanel),
         new FrameworkPropertyMetadata(-1));
     private double _itemHeight = InitialItemHeight;
+    private double _itemSlotWidth = 1;
     private int _itemsPerRow = 1;
     private Size _extent;
     private Size _viewport;
@@ -34,18 +35,53 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         set => SetValue(ItemWidthProperty, value);
     }
 
+    /// <summary>
+    /// 自适应列宽下限（&gt;0 时启用）。列数 = floor(面板宽 / MinItemWidth)，每列均分剩余宽度（等同 CSS minmax + 1fr）。
+    /// 为 0 时沿用固定 <see cref="ItemWidth"/> 槽位。
+    /// </summary>
+    public static readonly DependencyProperty MinItemWidthProperty = DependencyProperty.Register(
+        nameof(MinItemWidth),
+        typeof(double),
+        typeof(VirtualizingWrapPanel),
+        new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    public double MinItemWidth
+    {
+        get => (double)GetValue(MinItemWidthProperty);
+        set => SetValue(MinItemWidthProperty, value);
+    }
+
+    private void UpdateColumnLayout(double panelWidth)
+    {
+        if (MinItemWidth > 0)
+        {
+            var width = panelWidth > 0 ? panelWidth : MinItemWidth;
+            _itemsPerRow = Math.Max(1, (int)Math.Floor(width / MinItemWidth));
+            _itemSlotWidth = width / _itemsPerRow;
+            return;
+        }
+
+        _itemSlotWidth = Math.Max(1, ItemWidth);
+        var basis = panelWidth > 0 ? panelWidth : _itemSlotWidth;
+        _itemsPerRow = Math.Max(1, (int)Math.Floor(basis / _itemSlotWidth));
+    }
+
     protected override Size MeasureOverride(Size availableSize)
     {
         var itemCount = ItemsControl.GetItemsOwner(this)?.Items.Count ?? 0;
         var panelWidth = double.IsInfinity(availableSize.Width) || availableSize.Width <= 0
-            ? ItemWidth
+            ? (MinItemWidth > 0 ? MinItemWidth : ItemWidth)
             : availableSize.Width;
-        var itemWidth = Math.Max(1, ItemWidth);
-        _itemsPerRow = Math.Max(1, (int)Math.Floor(panelWidth / itemWidth));
+        UpdateColumnLayout(panelWidth);
+        var itemWidth = _itemSlotWidth;
 
         if (itemCount == 0)
         {
-            RemoveAllChildren();
+            // ItemsHost 与 ItemContainerGenerator 的挂接时机取决于 ScrollViewer 配置
+            // （CanContentScroll + ScrollUnit.Pixel 时首帧 Measure 可能尚未挂接），
+            // 此时 generator 为 null，跳过容器清理即可（无子元素，无残留可清）。
+            if (ItemContainerGenerator != null)
+                RemoveAllChildren();
             UpdateScrollInfo(new Size(panelWidth, 0), new Size(panelWidth, Math.Max(0, availableSize.Height)));
             return availableSize;
         }
@@ -96,9 +132,9 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
             var row = index / _itemsPerRow;
             var column = index % _itemsPerRow;
             child.Arrange(new Rect(
-                column * ItemWidth,
+                column * _itemSlotWidth,
                 row * _itemHeight - _offset.Y,
-                ItemWidth,
+                _itemSlotWidth,
                 _itemHeight));
         }
 
@@ -122,6 +158,9 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         if (firstIndex > lastIndex) return;
 
         var generator = ItemContainerGenerator;
+        // 首帧 ScrollUnit=Pixel 时序下 ItemsHost 可能尚未挂接，此时无容器可生成，
+        // 等下次 Measure 挂接后再生成（见 MeasureOverride 空分支同款注释）。
+        if (generator == null) return;
         var childIndex = 0;
         using (generator.StartAt(generator.GeneratorPositionFromIndex(firstIndex), GeneratorDirection.Forward, true))
         {
@@ -185,12 +224,12 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
     }
 
     public void LineDown() => SetVerticalOffset(_offset.Y + _itemHeight);
-    public void LineLeft() => SetHorizontalOffset(_offset.X - ItemWidth);
-    public void LineRight() => SetHorizontalOffset(_offset.X + ItemWidth);
+    public void LineLeft() => SetHorizontalOffset(_offset.X - _itemSlotWidth);
+    public void LineRight() => SetHorizontalOffset(_offset.X + _itemSlotWidth);
     public void LineUp() => SetVerticalOffset(_offset.Y - _itemHeight);
     public void MouseWheelDown() => SetVerticalOffset(_offset.Y + (3 * _itemHeight));
-    public void MouseWheelLeft() => SetHorizontalOffset(_offset.X - (3 * ItemWidth));
-    public void MouseWheelRight() => SetHorizontalOffset(_offset.X + (3 * ItemWidth));
+    public void MouseWheelLeft() => SetHorizontalOffset(_offset.X - (3 * _itemSlotWidth));
+    public void MouseWheelRight() => SetHorizontalOffset(_offset.X + (3 * _itemSlotWidth));
     public void MouseWheelUp() => SetVerticalOffset(_offset.Y - (3 * _itemHeight));
     public void PageDown() => SetVerticalOffset(_offset.Y + _viewport.Height);
     public void PageLeft() => SetHorizontalOffset(_offset.X - _viewport.Width);

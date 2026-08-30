@@ -34,7 +34,7 @@
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value kpi-ok">@Summary.Running</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@Summary.Alarm</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@Summary.Paused</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Idle")</span><span class="kpi-value">@Summary.Idle</span></div>
+            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@Summary.Idle</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@Summary.TotalOutput.ToString("N0")</span><span class="kpi-sub">@L.T("Lbl_Ok") @Summary.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Summary.TotalNg.ToString("N0")</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Ln_WeightedOee")</span><span class="kpi-value">@Pct(Summary.WeightedOee)</span></div>
         </section>
@@ -45,7 +45,7 @@
             <button class="chip-btn @(StatusFilter == 1 ? "active" : "")" @onclick="() => StatusFilter = 1">@L.T("Status_Running")</button>
             <button class="chip-btn @(StatusFilter == 2 ? "active" : "")" @onclick="() => StatusFilter = 2">@L.T("Status_Alarm")</button>
             <button class="chip-btn @(StatusFilter == 3 ? "active" : "")" @onclick="() => StatusFilter = 3">@L.T("Status_Paused")</button>
-            <button class="chip-btn @(StatusFilter == 4 ? "active" : "")" @onclick="() => StatusFilter = 4">@L.T("Status_Idle")</button>
+            <button class="chip-btn @(StatusFilter == 4 ? "active" : "")" @onclick="() => StatusFilter = 4">@L.T("Status_Offline")</button>
             <input class="filter-input line-search" type="search" value="@SearchText" @oninput="OnSearchInput" placeholder="@L.T("Ln_Search")" />
             <select class="filter-input line-sort" @bind="SortBy">
                 <option value="name">@L.T("Ln_SortName")</option>
@@ -207,7 +207,7 @@
         DeviceStatus.Running => L.T("Status_Running"),
         DeviceStatus.Alarm => L.T("Status_Alarm"),
         DeviceStatus.Paused => L.T("Status_Paused"),
-        _ => L.T("Status_Idle"),
+        _ => L.T("Status_Offline"),
     };
 
     private static string StateClass(DeviceStatus status) => status switch
@@ -215,7 +215,7 @@
         DeviceStatus.Running => "run",
         DeviceStatus.Alarm => "alarm",
         DeviceStatus.Paused => "paused",
-        _ => "idle",
+        _ => "offline",
     };
 
     private static string LevelClass(AlarmLevel level) => level switch

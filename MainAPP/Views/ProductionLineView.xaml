@@ -7,15 +7,57 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:controls="clr-namespace:MainAPP.Controls"
-    xmlns:views="clr-namespace:MainAPP.Views"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
     d:DataContext="{d:DesignInstance Type=vm:ProductionLineViewModel}"
     d:DesignHeight="1080"
     d:DesignWidth="1920"
     PreviewKeyDown="OnPreviewKeyDown"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
 
+    <UserControl.Resources>
+        <Style x:Key="LineFilterChip" TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style x:Key="LineDeviceCardList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+            <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        </Style>
+        <Style x:Key="LineDeviceCardListItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -40,8 +82,164 @@
             </StackPanel>
         </DockPanel>
 
-        <!--  主体：纯设备卡片网格  -->
-        <Grid Grid.Row="1">
+        <!--  汇总 KPI 条（与 Web ProductionLine kpi-row 对齐）  -->
+        <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,16"
+                     Visibility="{Binding HasNoDevices, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Running}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource SuccessBrush}"
+                               Text="{Binding RunningCount, StringFormat={}{0:N0}}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Alarm}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}"
+                               Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Paused}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource WarningBrush}"
+                               Text="{Binding PausedCount, StringFormat={}{0:N0}}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Offline}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource ThirdlyTextBrush}"
+                               Text="{Binding OfflineCount, StringFormat={}{0:N0}}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Web_Lbl_TotalOutput}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource PrimaryTextBrush}"
+                               Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
+                    <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               Text="{Binding TotalOutputDetailText}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource KpiCard}" Padding="10,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K414}" />
+                    <TextBlock Style="{StaticResource KpiCellValue}"
+                               Foreground="{Binding WeightedOee, Converter={StaticResource OeeThreshold}}"
+                               Text="{Binding WeightedOee, StringFormat={}{0:P0}}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!--  筛选 / 搜索 / 排序  -->
+        <Grid Grid.Row="2" Margin="0,0,0,16"
+              Visibility="{Binding HasNoDevices, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="0" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                <Button Content="{x:Static resources:Strings.Web_Ln_FilterAll}"
+                        Command="{Binding SetStatusFilterCommand}"
+                        CommandParameter="{x:Static vm:LineStatusFilter.All}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource LineFilterChip}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LineStatusFilter}" Value="{x:Static vm:LineStatusFilter.All}">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{x:Static resources:Strings.Status_Running}"
+                        Command="{Binding SetStatusFilterCommand}"
+                        CommandParameter="{x:Static vm:LineStatusFilter.Running}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource LineFilterChip}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LineStatusFilter}" Value="{x:Static vm:LineStatusFilter.Running}">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{x:Static resources:Strings.Status_Alarm}"
+                        Command="{Binding SetStatusFilterCommand}"
+                        CommandParameter="{x:Static vm:LineStatusFilter.Alarm}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource LineFilterChip}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LineStatusFilter}" Value="{x:Static vm:LineStatusFilter.Alarm}">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{x:Static resources:Strings.Status_Paused}"
+                        Command="{Binding SetStatusFilterCommand}"
+                        CommandParameter="{x:Static vm:LineStatusFilter.Paused}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource LineFilterChip}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LineStatusFilter}" Value="{x:Static vm:LineStatusFilter.Paused}">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Content="{x:Static resources:Strings.Status_Offline}"
+                        Command="{Binding SetStatusFilterCommand}"
+                        CommandParameter="{x:Static vm:LineStatusFilter.Offline}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource LineFilterChip}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding LineStatusFilter}" Value="{x:Static vm:LineStatusFilter.Offline}">
+                                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </WrapPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                <hc:SearchBar
+                    x:Name="LineSearchBar"
+                    Width="260"
+                    Margin="0,0,10,0"
+                    AutomationProperties.Name="{x:Static resources:Strings.K406}"
+                    Style="{StaticResource SearchBarExtend}"
+                    Text="{Binding LineSearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:ComboBox
+                    Width="150"
+                    AutomationProperties.Name="{x:Static resources:Strings.K408}"
+                    DisplayMemberPath="Label"
+                    ItemsSource="{Binding LineSortOptions}"
+                    SelectedValue="{Binding LineSortBy}"
+                    SelectedValuePath="Value"
+                    Style="{StaticResource ComboBoxExtend}" />
+            </StackPanel>
+        </Grid>
+
+        <!--  主体：设备卡片网格  -->
+        <Grid Grid.Row="3">
             <Border Background="{StaticResource RegionBrush}" CornerRadius="8"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     Visibility="{Binding HasNoDevices, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -49,16 +247,35 @@
                                      Hint="{x:Static resources:Strings.K417}" />
             </Border>
 
-            <ScrollViewer VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding FilteredLineDevices}"
-                              ItemTemplate="{StaticResource LineDeviceCardTemplate}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel ItemWidth="460" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-            </ScrollViewer>
+            <Border Background="{StaticResource RegionBrush}" CornerRadius="8"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                    Visibility="{Binding HasNoFilteredDevices, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.Web_Ln_EmptyFilter}" />
+            </Border>
+
+            <ListBox x:Name="LineDeviceCards"
+                     ItemTemplate="{StaticResource LineDeviceCardTemplate}"
+                     ItemContainerStyle="{StaticResource LineDeviceCardListItem}"
+                     ItemsSource="{Binding FilteredLineDevices}">
+                <ListBox.Style>
+                    <Style TargetType="ListBox" BasedOn="{StaticResource LineDeviceCardList}">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasNoDevices}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HasNoFilteredDevices}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.Style>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingWrapPanel MinItemWidth="380" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
         </Grid>
     </Grid>
 </UserControl>

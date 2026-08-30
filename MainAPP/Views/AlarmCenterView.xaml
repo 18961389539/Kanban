@@ -74,6 +74,45 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <!-- SQL 统计 KPI：DB 故障时数值标红并显示 — -->
+        <Style x:Key="StatsKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiCellValue}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AlarmVirtualList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+            <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        </Style>
+        <Style x:Key="AlarmVirtualListItem" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -91,11 +130,27 @@
                     Style="{StaticResource PageTitleText}"
                     Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
                 <!-- 最后刷新时间 -->
-                <TextBlock
-                    Margin="16,0,0,0" VerticalAlignment="Center"
-                    FontSize="{DynamicResource FontSizeCaption}"
-                    Foreground="{StaticResource ThirdlyTextBrush}"
-                    Text="{Binding LastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F249}" />
+                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="{DynamicResource FontSizeCaption}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding ActiveLastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F716}" />
+                    <TextBlock
+                        FontSize="{DynamicResource FontSizeCaption}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding StatsLastUpdateTimeText}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowStatsLastUpdateTime}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
@@ -123,8 +178,13 @@
                     AutomationProperties.Name="{x:Static resources:Strings.K025}"
                     IsChecked="{Binding IsHours24}"
                     Style="{StaticResource TimeRangeTab}"
-                    Margin="0,0,12,0"
                     Content="{x:Static resources:Strings.K025}" />
+                <TextBlock Margin="12,0,12,0" MaxWidth="220" VerticalAlignment="Center"
+                           FontSize="{DynamicResource FontSizeCaption}"
+                           Foreground="{StaticResource ThirdlyTextBrush}"
+                           Text="{x:Static resources:Strings.K717}"
+                           TextWrapping="Wrap"
+                           ToolTip="{x:Static resources:Strings.K717}" />
                 <!-- 刷新按钮 -->
                 <Button
                     Command="{Binding RefreshAllCommand}"
@@ -140,6 +200,8 @@
             <Grid.RowDefinitions>
                 <!-- KPI 条 -->
                 <RowDefinition Height="Auto" />
+                <!-- 统计错误横幅（全宽） -->
+                <RowDefinition Height="Auto" />
                 <!-- 双栏列表 -->
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
@@ -147,28 +209,28 @@
             <!--  ─── KPI 条（6 格）───  -->
             <UniformGrid Grid.Row="0" Columns="6" Margin="0,0,0,12">
                 <!-- 活跃报警数 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K709}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K125}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding ActiveCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日触发 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayTriggerKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K126}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayTriggerCount}" />
+                        <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayTriggerCountDisplay}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日恢复 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayRecoverKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K127}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayRecoverCount}" />
+                        <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayRecoverCountDisplay}" />
                     </StackPanel>
                 </Border>
                 <!-- 最长持续 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K712}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K128}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDurationText}" />
@@ -178,26 +240,58 @@
                     </StackPanel>
                 </Border>
                 <!-- 影响设备数 -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K713}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K129}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 最频繁报警（标签带时间范围标注，与"今日"口径区分） -->
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding MostFrequentKpiToolTip}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding MostFrequentLabel}" />
-                        <TextBlock Style="{StaticResource KpiCellValue}" FontSize="16"
-                                   Text="{Binding MostFrequentAlarm}"
-                                   TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding MostFrequentAlarm}" />
+                        <TextBlock FontSize="16" Text="{Binding MostFrequentAlarm}" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource StatsKpiValue}">
+                                    <Setter Property="ToolTip" Value="{Binding MostFrequentAlarm}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding MostFrequentAlarm}" Value="—">
+                                            <Setter Property="ToolTip" Value="{x:Null}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
+            <!-- DB 故障横幅：事件流/Top/今日 KPI 数据源失败时全宽提示 -->
+            <Border Grid.Row="1" Margin="0,0,0,12" Padding="12,8" CornerRadius="6"
+                    Background="{StaticResource StatusAlarmSoftBrush}"
+                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasStatsError}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock FontSize="12" FontWeight="Bold"
+                           Foreground="{StaticResource DangerBrush}"
+                           Text="{Binding StatsErrorText}"
+                           TextWrapping="Wrap"
+                           ToolTip="{Binding StatsErrorText}" />
+            </Border>
+
             <!--  ─── 双栏：左活跃报警 + 右事件流/Top ───  -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10" />
@@ -250,19 +344,12 @@
 
                         <!-- 活跃报警列表 -->
                         <Grid>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
-                                <ItemsControl ItemsSource="{Binding ActiveAlarms}"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="{x:Static resources:Strings.K134}">
-                                    <!-- 显式设置 ItemsPanel 为 VirtualizingStackPanel，否则默认 StackPanel 不虚拟化 -->
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                            <ListBox ItemsSource="{Binding ActiveAlarms}"
+                                     ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
+                                     Style="{StaticResource AlarmVirtualList}"
+                                     AutomationProperties.Name="{x:Static resources:Strings.K134}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
                                                     <Border Margin="16,0,16,8" Padding="12,10" CornerRadius="6"
                                                         Style="{StaticResource ActiveAlarmCard}">
                                                 <Grid>
@@ -285,14 +372,17 @@
                                                                     <Style TargetType="materialIcons:MaterialIcon">
                                                                         <Setter Property="Kind" Value="AlertCircleOutline" />
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding Kind}" Value="Count">
-                                                                                <Setter Property="Kind" Value="Counter" />
-                                                                            </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Level}" Value="High">
                                                                                 <Setter Property="Kind" Value="AlertOctagon" />
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Level}" Value="Medium">
                                                                                 <Setter Property="Kind" Value="Alert" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Kind}" Value="Count">
+                                                                                <Setter Property="Kind" Value="Counter" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Kind}" Value="DataSource">
+                                                                                <Setter Property="Kind" Value="DatabaseSearchOutline" />
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
@@ -336,9 +426,8 @@
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                             <!-- 空状态 -->
                             <controls:EmptyState
                                 HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -373,37 +462,13 @@
                         <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
-                                <!-- DB 故障横幅：事件流/Top/今日 KPI 数据源失败时显示，避免静默显示为"无报警" -->
-                                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center"
-                                           FontSize="12" FontWeight="Bold"
-                                           Foreground="{StaticResource DangerBrush}"
-                                           Text="{Binding StatsErrorText}"
-                                           TextTrimming="CharacterEllipsis"
-                                           ToolTip="{Binding StatsErrorText}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasStatsError}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
                             </DockPanel>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
-                                <ItemsControl ItemsSource="{Binding RecentEvents}"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="{x:Static resources:Strings.K046}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                            <ListBox ItemsSource="{Binding RecentEvents}"
+                                     ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
+                                     Style="{StaticResource AlarmVirtualList}"
+                                     AutomationProperties.Name="{x:Static resources:Strings.K046}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
                                             <Border Margin="16,0,16,6" Padding="10,8" CornerRadius="4"
                                                     Background="{StaticResource SecondaryRegionBrush}">
                                                 <Grid>
@@ -454,9 +519,8 @@
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </DockPanel>
                     </Border>
 
@@ -467,18 +531,12 @@
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K138}" />
                             </DockPanel>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True">
-                                <ItemsControl ItemsSource="{Binding TopAlarms}"
-                                              VirtualizingStackPanel.IsVirtualizing="True"
-                                              VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                              AutomationProperties.Name="{x:Static resources:Strings.K139}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                            <ListBox ItemsSource="{Binding TopAlarms}"
+                                     ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
+                                     Style="{StaticResource AlarmVirtualList}"
+                                     AutomationProperties.Name="{x:Static resources:Strings.K139}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
                                             <Grid Margin="16,0,16,4" VerticalAlignment="Center">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -513,9 +571,8 @@
                                                 </Border>
                                             </Grid>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </DockPanel>
                     </Border>
                 </Grid>

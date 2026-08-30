@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Helpers;
+using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
 
@@ -10,13 +13,14 @@ namespace MainAPP.ViewModels;
 public readonly record struct HomeAlarmRefreshResult(bool HasHighLevelAlarm, int TotalActiveCount);
 
 /// <summary>
-/// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值），
-/// 处理计数报警首次触发时间缓存与 10 秒恢复去抖，并差分更新目标集合。
+/// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值 + 历史未恢复数据源），
+/// 计数报警优先使用 <see cref="CounterAlarm.StartTime"/>，恢复侧保留 10 秒去抖，并差分更新目标集合。
 /// </summary>
 public sealed class HomeAlarmCollector
 {
     private const double DebounceSeconds = 10;
 
+    /// <summary>计数报警触发时刻缓存：恢复去抖期间 StartTime 已清零，仍用此值展示持续时间。</summary>
     private readonly Dictionary<string, DateTime> _triggerTimes = new();
     private readonly Dictionary<string, DateTime> _recoveryTimes = new();
 
@@ -26,11 +30,12 @@ public sealed class HomeAlarmCollector
         DateTime now,
         bool isMuted,
         int maxAlarms,
-        string? selectedDeviceId = null)
+        string? selectedDeviceId = null,
+        IReadOnlyList<AlarmEventRecord>? pendingDataSourceEvents = null,
+        IDeviceRepository? deviceRepository = null)
     {
-        var desired = BuildDesired(devices, now, selectedDeviceId);
+        var desired = BuildDesired(devices, now, selectedDeviceId, pendingDataSourceEvents, deviceRepository);
 
-        // 排序：级别降序 + 触发时间升序
         desired.Sort((a, b) =>
         {
             var levelCmp = b.Level.CompareTo(a.Level);
@@ -39,12 +44,9 @@ public sealed class HomeAlarmCollector
 
         var totalActiveCount = desired.Count;
 
-        // 限制最大显示条数：截断后保留最关键/最新的报警
         if (desired.Count > maxAlarms)
             desired.RemoveRange(maxAlarms, desired.Count - maxAlarms);
 
-        // 保留 IsNew/AddedAt 连续性，但不复用旧 ActiveAlarmInfo 实例——旧实例会快照过期的
-        // NameEn（配置热更新或首次 tick 早于 LoadAll 完成时可能为空），导致 DisplayName 永久中文。
         for (int i = 0; i < desired.Count; i++)
         {
             var existing = target.FirstOrDefault(a => a.Equals(desired[i]));
@@ -54,7 +56,6 @@ public sealed class HomeAlarmCollector
             desired[i].AddedAt = existing.AddedAt;
         }
 
-        // 新加入的项标记 IsNew=true 触发闪烁并重置 AddedAt；已存在项保持原状态（静音时跳过）
         foreach (var item in desired)
         {
             if (target.Any(a => a.Equals(item)))
@@ -71,7 +72,9 @@ public sealed class HomeAlarmCollector
     private List<ActiveAlarmInfo> BuildDesired(
         IReadOnlyList<Device> devices,
         DateTime now,
-        string? selectedDeviceId)
+        string? selectedDeviceId,
+        IReadOnlyList<AlarmEventRecord>? pendingDataSourceEvents,
+        IDeviceRepository? deviceRepository)
     {
         List<ActiveAlarmInfo> desired = [];
         HashSet<string> activeKeys = [];
@@ -86,7 +89,7 @@ public sealed class HomeAlarmCollector
                 if (alarm.StartTime != default && alarm.EndTime == default)
                 {
                     activeKeys.Add($"{device.Id}_{alarm.Id}");
-                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
+                    desired.Add(new ActiveAlarmInfo(alarm.StartTime, device.Id, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
                         alarm.NameEn, alarm.NameJa, alarm.NamePt));
                 }
             }
@@ -97,42 +100,55 @@ public sealed class HomeAlarmCollector
                 if (ca.Enabled && ca.IsTriggered)
                 {
                     activeKeys.Add(key);
-                    // 触发中：清除恢复缓存，首次发现触发时记录时刻
                     _recoveryTimes.Remove(key);
-                    if (!_triggerTimes.ContainsKey(key))
+                    if (ca.StartTime != default)
+                        _triggerTimes[key] = ca.StartTime;
+                    else if (!_triggerTimes.ContainsKey(key))
                         _triggerTimes[key] = now;
-                    // 计数报警无级别字段，统一视为 Medium
-                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+
+                    desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Id, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
                         ca.NameEn, ca.NameJa, ca.NamePt));
                 }
                 else if (ca.Enabled && _triggerTimes.ContainsKey(key))
                 {
-                    // 去抖：刚恢复（IsTriggered=false）但仍在去抖窗口内，继续显示
                     if (!_recoveryTimes.ContainsKey(key))
                         _recoveryTimes[key] = now;
                     if ((now - _recoveryTimes[key]).TotalSeconds < DebounceSeconds)
                     {
                         activeKeys.Add(key);
-                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                        desired.Add(new ActiveAlarmInfo(_triggerTimes[key], device.Id, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
                             ca.NameEn, ca.NameJa, ca.NamePt));
                     }
                 }
             }
         }
 
-        // 清除已恢复的计数报警时间记录
-        var staleKeys = _triggerTimes.Keys.Where(k => !activeKeys.Contains(k)).ToList();
-        foreach (var k in staleKeys)
+        if (pendingDataSourceEvents != null && deviceRepository != null)
         {
-            _triggerTimes.Remove(k);
-            _recoveryTimes.Remove(k);
+            foreach (var record in pendingDataSourceEvents)
+            {
+                if (selectedDeviceId != null
+                    && !string.Equals(record.DeviceId, selectedDeviceId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var (nameEn, nameJa, namePt) = AlarmCenterDisplayHelper.ResolveEventLocalizedFields(
+                    deviceRepository, record.DeviceId, record.AlarmId);
+                desired.Add(new ActiveAlarmInfo(
+                    record.EventTime, record.DeviceId, record.DeviceName, record.AlarmName,
+                    AlarmLevel.Medium, AlarmKind.DataSource, nameEn, nameJa, namePt));
+            }
         }
-        // 清除去抖窗口已过期的恢复记录
-        var expiredRecovery = _recoveryTimes
-            .Where(kv => (now - kv.Value).TotalSeconds >= DebounceSeconds)
-            .Select(kv => kv.Key).ToList();
-        foreach (var k in expiredRecovery)
-            _recoveryTimes.Remove(k);
+
+        foreach (var key in _triggerTimes.Keys.Where(k => !activeKeys.Contains(k)).ToList())
+        {
+            _triggerTimes.Remove(key);
+            _recoveryTimes.Remove(key);
+        }
+
+        foreach (var key in _recoveryTimes
+                     .Where(kv => (now - kv.Value).TotalSeconds >= DebounceSeconds)
+                     .Select(kv => kv.Key).ToList())
+            _recoveryTimes.Remove(key);
 
         return desired;
     }

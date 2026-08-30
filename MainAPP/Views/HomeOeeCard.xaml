@@ -26,7 +26,6 @@
             <StackPanel Grid.Row="0" Margin="0,0,0,14" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
                 <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
-                <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
             <!--  左右布局：OEE 主环居左，A/P/Q 三环指标居右，避免上下堆叠导致底部文字被压缩/重叠  -->
@@ -130,7 +129,7 @@
                                            Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
                                            FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
-                                           Foreground="{Binding QualityRate, Converter={StaticResource OeeThreshold}}"
+                                           Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
                                            Text="{Binding QualityRateDisplay}" />
                                 <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
                                            Foreground="{StaticResource ThirdlyTextBrush}"

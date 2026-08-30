@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -22,6 +22,17 @@ namespace MainAPP.Tests.Unit;
 [Trait("Requires","None")]
 public class ThresholdConvertersTests
 {
+    private readonly WpfStaFixture _fixture;
+
+    public ThresholdConvertersTests(WpfStaFixture fixture) => _fixture = fixture;
+
+    /// <summary>
+    /// 在共享 STA 线程上执行测试体：在线程池线程触碰共享 Freezable（如 Application 资源画刷）
+    /// 会把其注册为"另一线程拥有"，导致随后 HomeView 等在 STA 上应用同一资源 Style 时的
+    /// Seal 校验抛 XamlParseException（"另一个线程拥有此对象"）。2026-08-30 测试抖动修复。
+    /// </summary>
+    private void RunOnSta(Action body) => _fixture.Invoke(_ => body());
+
     /// <summary>解析生产资源字典中的语义画刷（Success/Warning/Danger）；缺失即失败。</summary>
     private static Brush ResolveBrush(string bucket)
     {
@@ -42,17 +53,23 @@ public class ThresholdConvertersTests
     [InlineData(-0.1, "Danger")]   // negative → Danger
     public void OeeThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {
-        var cvt = new OeeThresholdConverter();
-        var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
-        Assert.Same(ResolveBrush(expectedBucket), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new OeeThresholdConverter();
+            var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
+            Assert.Same(ResolveBrush(expectedBucket), brush);
+        });
     }
 
     [Fact]
     public void OeeThreshold_NonDouble_ReturnsBrush()
     {
-        var cvt = new OeeThresholdConverter();
-        var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
-        Assert.NotNull(brush);
+        RunOnSta(() =>
+        {
+            var cvt = new OeeThresholdConverter();
+            var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
+            Assert.NotNull(brush);
+        });
     }
 
     [Fact]
@@ -74,9 +91,12 @@ public class ThresholdConvertersTests
     [InlineData(0.0, "Danger")]    // zero → Danger
     public void RatioThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {
-        var cvt = new RatioThresholdConverter();
-        var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
-        Assert.Same(ResolveBrush(expectedBucket), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new RatioThresholdConverter();
+            var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
+            Assert.Same(ResolveBrush(expectedBucket), brush);
+        });
     }
 
     [Fact]
@@ -130,18 +150,24 @@ public class ThresholdConvertersTests
     [InlineData(0.0, "Success")]   // zero → Success
     public void InverseRatioThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {
-        var cvt = new InverseRatioThresholdConverter();
-        var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
-        Assert.Same(ResolveBrush(expectedBucket), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new InverseRatioThresholdConverter();
+            var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
+            Assert.Same(ResolveBrush(expectedBucket), brush);
+        });
     }
 
     [Fact]
     public void InverseRatioThreshold_NonDouble_ReturnsGreen()
     {
-        var cvt = new InverseRatioThresholdConverter();
-        var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
-        Assert.NotNull(brush);
-        Assert.Same(ResolveBrush("Success"), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new InverseRatioThresholdConverter();
+            var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
+            Assert.NotNull(brush);
+            Assert.Same(ResolveBrush("Success"), brush);
+        });
     }
 
     [Fact]
@@ -161,6 +187,13 @@ public class ThresholdConvertersTests
 [Trait("Requires","None")]
 public class QualityThresholdConverterTests
 {
+    private readonly WpfStaFixture _fixture;
+
+    public QualityThresholdConverterTests(WpfStaFixture fixture) => _fixture = fixture;
+
+    /// <summary>在共享 STA 线程上执行测试体，避免把共享资源画刷注册为"另一线程拥有"（见 ThresholdConvertersTests.RunOnSta）。</summary>
+    private void RunOnSta(Action body) => _fixture.Invoke(_ => body());
+
     private static Brush ResolveBrush(string bucket)
     {
         var brush = Application.Current.TryFindResource(bucket + "Brush") as Brush;
@@ -175,18 +208,24 @@ public class QualityThresholdConverterTests
     [InlineData(0.0, "Danger")]
     public void QualityThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {
-        var cvt = new QualityThresholdConverter();
-        var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
-        Assert.Same(ResolveBrush(expectedBucket), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new QualityThresholdConverter();
+            var brush = (Brush)cvt.Convert(input, typeof(Brush), null, CultureInfo.InvariantCulture);
+            Assert.Same(ResolveBrush(expectedBucket), brush);
+        });
     }
 
     [Fact]
     public void QualityThreshold_NonDouble_ReturnsGreen()
     {
-        var cvt = new QualityThresholdConverter();
-        var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
-        Assert.NotNull(brush);
-        Assert.Same(ResolveBrush("Success"), brush);
+        RunOnSta(() =>
+        {
+            var cvt = new QualityThresholdConverter();
+            var brush = cvt.Convert("invalid", typeof(Brush), null, CultureInfo.InvariantCulture) as Brush;
+            Assert.NotNull(brush);
+            Assert.Same(ResolveBrush("Success"), brush);
+        });
     }
 
     [Fact]

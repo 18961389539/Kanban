@@ -48,7 +48,7 @@
   <data name="Nav_Overview_Tip" xml:space="preserve">
     <value>最近24小时生产复盘</value>
   </data>
-  <data name="Status_Initial" xml:space="preserve">
+  <data name="Status_Offline" xml:space="preserve">
     <value>离线</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
@@ -200,6 +200,24 @@
   </data>
   <data name="Home_DeviceHealth" xml:space="preserve">
     <value>设备健康</value>
+  </data>
+  <data name="Home_DeviceHealthTooltip" xml:space="preserve">
+    <value>健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。</value>
+  </data>
+  <data name="F_DeviceHealthBreakdown" xml:space="preserve">
+    <value>当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
+  </data>
+  <data name="Home_DeviceHealth_Healthy" xml:space="preserve">
+    <value>健康</value>
+  </data>
+  <data name="Home_DeviceHealth_Good" xml:space="preserve">
+    <value>良好</value>
+  </data>
+  <data name="Home_DeviceHealth_Attention" xml:space="preserve">
+    <value>关注</value>
+  </data>
+  <data name="Home_DeviceHealth_Abnormal" xml:space="preserve">
+    <value>异常</value>
   </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>总时长</value>
@@ -1249,10 +1267,10 @@
     <value>实时故障</value>
   </data>
   <data name="K330" xml:space="preserve">
-    <value>静音或恢复新报警闪烁</value>
+    <value>新报警静音</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>静音/恢复新报警闪烁</value>
+    <value>切换新报警声音与闪烁；报警列表仍照常更新</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>级别</value>
@@ -2931,6 +2949,12 @@
   </data>
   <data name="F249" xml:space="preserve">
     <value>最后刷新 {0:HH:mm:ss}</value>
+  </data>
+  <data name="F715" xml:space="preserve">
+    <value>统计刷新 {0:HH:mm:ss}</value>
+  </data>
+  <data name="F716" xml:space="preserve">
+    <value>实时刷新 {0:HH:mm:ss}</value>
   </data>
   <data name="F250" xml:space="preserve">
     <value>更新于 {0:HH:mm:ss}</value>
@@ -5530,6 +5554,27 @@
   </data>
   <data name="K708" xml:space="preserve">
     <value>仅显示前 {0} 条</value>
+  </data>
+  <data name="K709" xml:space="preserve">
+    <value>当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K710" xml:space="preserve">
+    <value>今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+  </data>
+  <data name="K711" xml:space="preserve">
+    <value>今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+  </data>
+  <data name="K712" xml:space="preserve">
+    <value>当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K713" xml:space="preserve">
+    <value>当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响</value>
+  </data>
+  <data name="K714" xml:space="preserve">
+    <value>按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新</value>
+  </data>
+  <data name="K717" xml:space="preserve">
+    <value>事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>将导入 {0} 条配方（{1} 条校验未通过将被跳过）。继续？</value>

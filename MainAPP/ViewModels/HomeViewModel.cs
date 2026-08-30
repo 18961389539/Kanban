@@ -30,7 +30,7 @@ public enum HomeDataStatus
 /// <summary>
 /// 主页仪表板 ViewModel：2 行 3 列共 6 张卡片。
 /// 全部数据来自设备内存 Runtime，零数据库读取。
-/// 每 3 秒从 DeviceRuntime 同步一次本地属性。
+/// 每 3 秒从 DeviceRuntime 同步一次本地属性；活跃故障列表另含轻量历史查询（未恢复数据源）。
 /// </summary>
 public partial class HomeViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
@@ -44,6 +44,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IWorkOrderRepository? _workOrderRepo;
     private readonly IDialogService? _dialog;
     private readonly IWorkOrderService? _workOrderService;
+    private readonly IAlarmSessionMute? _alarmSessionMute;
+    private readonly IAlarmHistoryService? _alarmHistoryService;
     private readonly DispatcherTimer _liveTimer;
 
     /// <summary>
@@ -53,6 +55,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private List<Device> _deviceSnapshot = [];
 
     private readonly HomeAlarmCollector _alarmCollector = new();
+    private readonly object _pendingDataSourceLock = new();
+    private List<AlarmEventRecord> _pendingDataSourceEvents = [];
+    private int _pendingDataSourceQueryVersion;
     private readonly ShiftProgressProvider _shiftProgress;
     private readonly LastShiftComparisonProvider _lastShiftProvider;
 
@@ -88,7 +93,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     // ──────────── 图表 diff 缓存（避免每 3 秒无变化重建 PlotModel） ────────────
     private (double a, double p, double q) _lastOeeInput;
-    private (int r, int a, int p) _lastStatusInput;
+    private (int r, int a, int p, int o) _lastStatusInput;
     private int _lastDefectSignature;
     private (int ok, int ng) _lastQualityInput;
 
@@ -304,6 +309,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private double _deviceHealthScore;
     [ObservableProperty] private string _deviceHealthLevel = "—";
     [ObservableProperty] private Brush _deviceHealthBrush = Brushes.Gray;
+    [ObservableProperty] private string _deviceHealthScoreTooltip = "";
     /// <summary>设备健康分展示文本（0-100），无有效数据时显示 "—"。</summary>
     public string DeviceHealthScoreText => DeviceHealthScore <= 0 ? "—" : $"{DeviceHealthScore:0}";
 
@@ -319,9 +325,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>状态总时长（运行+报警+暂停）格式化文本。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
 
-    // ──────────── 第 2 行 列 3：设备缺陷图表 ────────────
+    // ──────────── 第 2 行 列 3：设备缺陷 TOP5 列表 ────────────
 
-    [ObservableProperty] private PlotModel? _defectBarChart;
+    public ObservableCollection<HomeDefectTopItem> DefectTop { get; } = [];
+
+    public bool IsDefectTopEmpty => DefectTop.Count == 0;
 
     // ──────────── 第 1 行 列 3：实时故障 ────────────
 
@@ -407,8 +415,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     // ──────────── 实时故障：静音 + 级别筛选 ────────────
 
     /// <summary>
-    /// 故障静音开关：true 时新报警不再触发闪烁高亮（仅抑制视觉动画，列表照常更新）。
-    /// 用于"已查看"场景，避免持续闪烁干扰值班人员。
+    /// 故障静音开关：true 时抑制新报警声音与闪烁高亮（列表照常更新，会话态不落盘）。
     /// </summary>
     [ObservableProperty] private bool _isAlarmMuted;
 
@@ -468,7 +475,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -479,6 +486,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _workOrderRepo = workOrderRepo;
         _dialog = dialog;
         _workOrderService = workOrderService;
+        _alarmSessionMute = alarmSessionMute;
+        _alarmHistoryService = alarmHistoryService;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _shiftProgress = new ShiftProgressProvider(appSettings);
         _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
@@ -530,6 +539,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     partial void OnShowHighAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
     partial void OnShowMediumAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
     partial void OnShowLowAlarmsChanged(bool value) => RefreshActiveAlarmPresentation();
+
+    partial void OnIsAlarmMutedChanged(bool value)
+    {
+        if (_alarmSessionMute != null)
+            _alarmSessionMute.IsMuted = value;
+    }
 
     private void RefreshActiveAlarmPresentation()
     {
@@ -727,6 +742,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     partial void OnSelectedDeviceIdChanged(string? value)
     {
+        _pendingDataSourceQueryVersion++;
+        lock (_pendingDataSourceLock)
+            _pendingDataSourceEvents = [];
         // 切换设备：取消在途上班次回填查询，RefreshSelected 会重设速度与各项数据
         _lastShiftProvider.Cancel();
         RefreshSelected();
@@ -880,10 +898,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (oeeInput != _lastOeeInput) { BuildOeeRingCharts(); _lastOeeInput = oeeInput; }
         // 状态时长：5s 粒度桶 diff（审查修复 2026-08-13：原秒级 diff 使运行时每跨整秒重建一次饼图，
         // 即"几乎每 tick 重建"；5s 桶将重建频率降 5 倍且显示口径不变）
-        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5));
+        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5), (int)(OfflineTime / 5));
         if (statusInput != _lastStatusInput) { BuildStatusPieChart(); _lastStatusInput = statusInput; }
         var defectSig = DefectSignature(CurrentDevice);
-        if (defectSig != _lastDefectSignature) { BuildDefectBarChart(); _lastDefectSignature = defectSig; }
+        if (defectSig != _lastDefectSignature) { RefreshDefectTop(); _lastDefectSignature = defectSig; }
         var qualityInput = (TotalOkProduction, TotalNgProduction);
         if (qualityInput != _lastQualityInput) { BuildQualityPieChart(); _lastQualityInput = qualityInput; }
         RefreshActiveAlarms();
@@ -963,7 +981,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             BuildOeeRingCharts();
             BuildStatusPieChart();
-            BuildDefectBarChart();
+            RefreshDefectTop();
             BuildQualityPieChart();
         }
         RefreshActiveAlarms();
@@ -1015,7 +1033,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
-    /// 计算设备健康分：A/P/Q 三率 + 报警稳定性加权，0-100。
+    /// 计算设备健康分：A/P/Q 三率 + OEE 口径稳定性加权，0-100。
     /// 无有效运行数据时显示 "—"。
     /// </summary>
     private void UpdateDeviceHealth()
@@ -1025,34 +1043,37 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             DeviceHealthScore = 0;
             DeviceHealthLevel = "—";
             DeviceHealthBrush = Brushes.Gray;
+            DeviceHealthScoreTooltip = Strings.Home_DeviceHealthTooltip;
             return;
         }
 
-        var stability = Math.Clamp(1 - AlarmTimeRatio, 0, 1);
-        var score = 100 * (0.30 * AvailabilityRate
-                          + 0.20 * PerformanceRate
-                          + 0.25 * QualityRate
-                          + 0.25 * stability);
-        DeviceHealthScore = Math.Clamp(score, 0, 100);
+        var stability = SnapshotMetrics.OperationalStability(RunTime, AlarmTime, PausedTime);
+        DeviceHealthScore = SnapshotMetrics.DeviceHealthScore(
+            AvailabilityRate, PerformanceRate, QualityRate, RunTime, AlarmTime, PausedTime);
+        DeviceHealthScoreTooltip = string.Format(
+                Strings.F_DeviceHealthBreakdown,
+                AvailabilityRate, PerformanceRate, QualityRate, stability, DeviceHealthScore)
+            + Environment.NewLine + Environment.NewLine
+            + Strings.Home_DeviceHealthTooltip;
 
         if (DeviceHealthScore >= 85)
         {
-            DeviceHealthLevel = "健康";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Healthy;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x34, 0xD3, 0x99));
         }
         else if (DeviceHealthScore >= 70)
         {
-            DeviceHealthLevel = "良好";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Good;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0x60, 0xA5, 0xFA));
         }
         else if (DeviceHealthScore >= 60)
         {
-            DeviceHealthLevel = "关注";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Attention;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24));
         }
         else
         {
-            DeviceHealthLevel = "异常";
+            DeviceHealthLevel = Strings.Home_DeviceHealth_Abnormal;
             DeviceHealthBrush = new SolidColorBrush(Color.FromRgb(0xF8, 0x71, 0x71));
         }
     }
@@ -1101,6 +1122,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";
         RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; OfflineTimeFullFormatted = ""; TotalTimeFullFormatted = "";
         DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
+        DeviceHealthScoreTooltip = Strings.Home_DeviceHealthTooltip;
         OeeFormulaText = ""; AvailabilityFormulaText = "";
         PerformanceFormulaText = ""; QualityFormulaText = "";
         ActiveAlarms.Clear();
@@ -1114,12 +1136,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         QualityRingChart = null;
         StatusPieChart = null;
         QualityPieChart = null;
-        DefectBarChart = null;
+        DefectTop.Clear();
+        OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
 
     private void BuildStatusPieChart()
-        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime);
+        => StatusPieChart = ChartService.BuildStatusPieChart(RunTime, AlarmTime, PausedTime, OfflineTime);
 
     private void BuildOeeRingCharts()
     {
@@ -1145,26 +1168,42 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         return hash.ToHashCode();
     }
 
-    private void BuildDefectBarChart()
+    private void RefreshDefectTop()
     {
+        DefectTop.Clear();
         if (CurrentDevice == null)
         {
-            DefectBarChart = null;
+            OnPropertyChanged(nameof(IsDefectTopEmpty));
             return;
         }
-        // 快照 Defects：避免 ChartService 内部枚举时其他线程修改集合抛 InvalidOperationException
-        var defectsSnapshot = CurrentDevice.Defects.ToList();
-        DefectBarChart = ChartService.BuildDefectBarChart(
-            defectsSnapshot.Select(d => (d.Name, d.Count)));
+
+        var list = CurrentDevice.Defects
+            .Where(d => d.Count > 0)
+            .OrderByDescending(d => d.Count)
+            .Take(5)
+            .ToList();
+        if (list.Count == 0)
+        {
+            OnPropertyChanged(nameof(IsDefectTopEmpty));
+            return;
+        }
+
+        var max = list[0].Count;
+        foreach (var d in list)
+        {
+            DefectTop.Add(new HomeDefectTopItem
+            {
+                Name = d.Name,
+                Count = d.Count,
+                BarRatio = max > 0 ? (double)d.Count / max : 0,
+            });
+        }
+        OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
     /// <summary>
-    /// 刷新实时故障列表：收集所有设备的活跃报警。
-    /// 使用差分更新避免全量 Clear+Add 导致列表闪烁。
-    /// 计数报警无触发/恢复时间戳，用首次发现触发时刻作为 EventTime（缓存避免每 3 秒跳动）。
-    /// 排序：级别降序（High→Medium→Low）+ 触发时间升序（近的在前）。
-    /// 关键：复用 ActiveAlarms 中已有的实例（基于 Equals 匹配），避免每次 new 新实例
-    ///       导致 ReferenceEquals 永远 false、排序 Move 失效、IsNew 标志错乱。
+    /// 刷新实时故障列表：收集当前设备的活跃报警（含历史未恢复数据源）。
+    /// 数据源 pending 在后台轻量查询（7 天窗口），失败时回退上一轮缓存。
     /// </summary>
     private void RefreshActiveAlarms()
     {
@@ -1177,8 +1216,50 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             return;
         }
 
+        KickPendingDataSourceQuery();
+        ApplyActiveAlarmsFromSnapshot(SnapshotPendingDataSourceEvents());
+    }
+
+    private void KickPendingDataSourceQuery()
+    {
+        if (_alarmHistoryService == null) return;
+
+        var deviceId = SelectedDeviceId;
+        var queryVersion = ++_pendingDataSourceQueryVersion;
+        Task.Run(() =>
+        {
+            var pending = PendingDataSourceAlarmQuery.TryQueryPending(
+                _alarmHistoryService, DateTime.Now, deviceId, PendingDataSourceAlarmQuery.ActiveLookback);
+            if (pending == null) return;
+
+            UiDispatcher.Dispatch(() =>
+            {
+                if (queryVersion != _pendingDataSourceQueryVersion) return;
+                lock (_pendingDataSourceLock)
+                    _pendingDataSourceEvents = pending;
+                if (string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal))
+                    ApplyActiveAlarmsFromSnapshot(pending);
+            });
+        }).Forget();
+    }
+
+    private IReadOnlyList<AlarmEventRecord> SnapshotPendingDataSourceEvents()
+    {
+        lock (_pendingDataSourceLock)
+            return _pendingDataSourceEvents.ToList();
+    }
+
+    private void ApplyActiveAlarmsFromSnapshot(IReadOnlyList<AlarmEventRecord> pendingDataSourceEvents)
+    {
         var refreshResult = _alarmCollector.Refresh(
-            ActiveAlarms, _deviceSnapshot, DateTime.Now, IsAlarmMuted, MaxHomeActiveAlarms, SelectedDeviceId);
+            ActiveAlarms,
+            _deviceSnapshot,
+            DateTime.Now,
+            IsAlarmMuted,
+            MaxHomeActiveAlarms,
+            SelectedDeviceId,
+            pendingDataSourceEvents,
+            _deviceRepository);
         HasHighLevelAlarm = refreshResult.HasHighLevelAlarm;
         ActiveAlarmTotalCount = refreshResult.TotalActiveCount;
         RefreshActiveAlarmPresentation();

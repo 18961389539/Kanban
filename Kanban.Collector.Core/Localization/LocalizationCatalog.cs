@@ -59,7 +59,7 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "最近24小时生产复盘", ["en-US"] = "Production review (last 24h)", ["ja-JP"] = "直近24時間の生産レビュー", ["pt-BR"] = "Revisão da produção (últimas 24 h)"
         },
-        ["Wpf|Status_Initial"] = new Dictionary<string, string>
+        ["Wpf|Status_Offline"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
@@ -262,6 +262,30 @@ public static class LocalizationCatalog
         ["Wpf|Home_DeviceHealth"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "设备健康", ["en-US"] = "Device health", ["ja-JP"] = "設備健全性", ["pt-BR"] = "Device health"
+        },
+        ["Wpf|Home_DeviceHealthTooltip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。", ["en-US"] = "Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.", ["ja-JP"] = "健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。", ["pt-BR"] = "Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
+        },
+        ["Wpf|F_DeviceHealthBreakdown"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["en-US"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["ja-JP"] = "現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}", ["pt-BR"] = "Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
+        },
+        ["Wpf|Home_DeviceHealth_Healthy"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "健康", ["en-US"] = "Healthy", ["ja-JP"] = "健全", ["pt-BR"] = "Healthy"
+        },
+        ["Wpf|Home_DeviceHealth_Good"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "良好", ["en-US"] = "Good", ["ja-JP"] = "良好", ["pt-BR"] = "Good"
+        },
+        ["Wpf|Home_DeviceHealth_Attention"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "关注", ["en-US"] = "Needs attention", ["ja-JP"] = "注意", ["pt-BR"] = "Attention"
+        },
+        ["Wpf|Home_DeviceHealth_Abnormal"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "异常", ["en-US"] = "Abnormal", ["ja-JP"] = "異常", ["pt-BR"] = "Anormal"
         },
         ["Wpf|Home_TotalDuration"] = new Dictionary<string, string>
         {
@@ -1661,11 +1685,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|K330"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "静音或恢复新报警闪烁", ["en-US"] = "Mute or restore alarm flashing", ["ja-JP"] = "新規アラーム点滅をミュート/復帰", ["pt-BR"] = "Mute or restore alarm flashing"
+            ["zh-CN"] = "新报警静音", ["en-US"] = "Mute New Alarms", ["ja-JP"] = "新規アラームをミュート", ["pt-BR"] = "Mute New Alarms"
         },
         ["Wpf|K331"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "静音/恢复新报警闪烁", ["en-US"] = "Mute/Restore Alarm Flashing", ["ja-JP"] = "アラーム点滅ミュート/復帰", ["pt-BR"] = "Mute/Restore Alarm Flashing"
+            ["zh-CN"] = "切换新报警声音与闪烁；报警列表仍照常更新", ["en-US"] = "Toggle sound and flashing for new alarms; the alarm list still updates", ["ja-JP"] = "新規アラームの音と点滅を切替（一覧は更新されます）", ["pt-BR"] = "Toggle sound and flashing for new alarms; the alarm list still updates"
         },
         ["Wpf|K332"] = new Dictionary<string, string>
         {
@@ -3866,6 +3890,14 @@ public static class LocalizationCatalog
         ["Wpf|F249"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "最后刷新 {0:HH:mm:ss}", ["en-US"] = "Last refresh {0:HH:mm:ss}", ["ja-JP"] = "最終更新 {0:HH:mm:ss}", ["pt-BR"] = "Last refresh {0:HH:mm:ss}"
+        },
+        ["Wpf|F715"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "统计刷新 {0:HH:mm:ss}", ["en-US"] = "Stats refresh {0:HH:mm:ss}", ["ja-JP"] = "統計更新 {0:HH:mm:ss}", ["pt-BR"] = "Stats refresh {0:HH:mm:ss}"
+        },
+        ["Wpf|F716"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "实时刷新 {0:HH:mm:ss}", ["en-US"] = "Live refresh {0:HH:mm:ss}", ["ja-JP"] = "リアルタイム更新 {0:HH:mm:ss}", ["pt-BR"] = "Live refresh {0:HH:mm:ss}"
         },
         ["Wpf|F250"] = new Dictionary<string, string>
         {
@@ -7310,6 +7342,34 @@ public static class LocalizationCatalog
         ["Wpf|K708"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "仅显示前 {0} 条", ["en-US"] = "Showing first {0} only", ["ja-JP"] = "先頭 {0} 件のみ表示", ["pt-BR"] = "Showing first {0} only"
+        },
+        ["Wpf|K709"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响", ["en-US"] = "Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters", ["ja-JP"] = "未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters"
+        },
+        ["Wpf|K710"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响", ["en-US"] = "Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above", ["ja-JP"] = "本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし", ["pt-BR"] = "Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above"
+        },
+        ["Wpf|K711"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响", ["en-US"] = "Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above", ["ja-JP"] = "本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし", ["pt-BR"] = "Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above"
+        },
+        ["Wpf|K712"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前未恢复报警中持续时间最长的一条；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームのうち継続時間が最長のもの。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters"
+        },
+        ["Wpf|K713"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响", ["en-US"] = "Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters", ["ja-JP"] = "未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり", ["pt-BR"] = "Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters"
+        },
+        ["Wpf|K714"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新", ["en-US"] = "Top alarm by trigger count in the selected time range above; refreshed about every 60s", ["ja-JP"] = "上部で選択した時間範囲内の発生回数第1位。約60秒更新", ["pt-BR"] = "Top alarm by trigger count in the selected time range above; refreshed about every 60s"
+        },
+        ["Wpf|K717"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计", ["en-US"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight", ["ja-JP"] = "イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計", ["pt-BR"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight"
         },
         ["Wpf|F317"] = new Dictionary<string, string>
         {

@@ -62,6 +62,15 @@ public partial class CounterAlarm : ObservableObject
     [NotMapped]
     public bool IsTriggered => MaxValue > 0 && CurrentValue > MaxValue;
 
+    /// <summary>
+    /// 本次触发开始时刻（运行时状态，不持久化）。
+    /// 边沿进入触发时写入；恢复或停用后清零。
+    /// </summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    [property: NotMapped]
+    private DateTime _startTime;
+
     // ──────────── 可选辅助属性 ────────────
 
     /// <summary>是否启用（停用后采集循环跳过此报警）</summary>

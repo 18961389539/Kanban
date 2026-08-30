@@ -14,7 +14,7 @@ internal static class RuntimeDeviceStatusText
         DeviceStatusWord.Running => Strings.Status_Running,
         DeviceStatusWord.Alarm => Strings.Status_Alarm,
         DeviceStatusWord.Standby => Strings.Status_Paused,
-        DeviceStatusWord.Offline => Strings.Status_Initial,
+        DeviceStatusWord.Offline => Strings.Status_Offline,
         _ => string.Format(Strings.F164, statusWord),
     };
 }

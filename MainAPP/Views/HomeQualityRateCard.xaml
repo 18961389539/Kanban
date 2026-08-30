@@ -68,7 +68,6 @@
                 <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K328}" />
                 <!-- 良品率状态 chip 已移除（2026-08-11 用户要求）：达标状态由大数字与
                      距目标差距行的 QualityThreshold 着色表达（≥95% 绿 / 未达红） -->
-                <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
             </StackPanel>
 
             <!-- 主体：左侧小环图 + 右侧详细指标。

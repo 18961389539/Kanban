@@ -451,7 +451,7 @@
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Status_Initial}" />
+                                <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Status_Offline}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusIdleBrush}" Text="{Binding StatusQuery.OfflineTimeFormatted}" />
                             </StackPanel>
                         </Border>

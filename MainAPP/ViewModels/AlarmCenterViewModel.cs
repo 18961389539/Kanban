@@ -32,11 +32,28 @@ public enum AlarmCenterTimeRange
 public class AlarmTopItem
 {
     public string AlarmName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
     public string DeviceName { get; set; } = string.Empty;
     public int TriggerCount { get; set; }
     public AlarmLevel Level { get; set; }
     /// <summary>排名序号（1-based，由 ViewModel 填充）</summary>
     public int Rank { get; set; }
+}
+
+/// <summary>事件流列表项：附带从设备配置解析的多语言显示名。</summary>
+public sealed class AlarmCenterEventItem
+{
+    public AlarmEventRecord Record { get; }
+    public string DisplayName { get; }
+    public AlarmEventType EventType => Record.EventType;
+    public string DeviceName => Record.DeviceName;
+    public DateTime EventTime => Record.EventTime;
+
+    public AlarmCenterEventItem(AlarmEventRecord record, string displayName)
+    {
+        Record = record;
+        DisplayName = displayName;
+    }
 }
 
 /// <summary>
@@ -53,9 +70,11 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     private readonly DispatcherTimer _statsTimer;   // 60s 刷新事件流与统计
     private readonly DispatcherTimer _searchDebounceTimer;  // 搜索输入防抖（350ms）
     private readonly Dispatcher _uiDispatcher = Dispatcher.CurrentDispatcher;
-    private readonly Dictionary<string, DateTime> _counterAlarmTriggerTimes = new();
     private int _statsRefreshVersion;
+    private int _activeRefreshVersion;
     private bool _disposed;
+    private int _unfilteredActiveCount;
+    private List<AlarmEventRecord> _pendingDataSourceEvents = new();
 
     private const int MaxActiveAlarms = 200;       // 活跃报警列表上限（避免极端情况内存膨胀）
     private const int MaxRecentEvents = 500;       // 事件流展示上限
@@ -93,31 +112,62 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActiveEmptyStateMessage))]
     private int _activeCount;
-    [ObservableProperty] private int _todayTriggerCount;
-    [ObservableProperty] private int _todayRecoverCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerCountDisplay))]
+    private int _todayTriggerCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverCountDisplay))]
+    private int _todayRecoverCount;
     [ObservableProperty] private string _longestDurationText = "—";
     [ObservableProperty] private string _longestAlarmText = "—";
     [ObservableProperty] private string _mostFrequentAlarm = "—";
     [ObservableProperty] private int _affectedDeviceCount;
-    [ObservableProperty] private DateTime _lastUpdateTime;
+    [ObservableProperty] private DateTime _activeLastUpdateTime;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowStatsLastUpdateTime))]
+    [NotifyPropertyChangedFor(nameof(StatsLastUpdateTimeText))]
+    private DateTime? _statsLastUpdateTime;
 
-    /// <summary>过滤后活跃报警条数（截断提示判断依据）。</summary>
+    /// <summary>过滤后活跃报警条数（截断前全集，非列表可见条数）。</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTruncation))]
     [NotifyPropertyChangedFor(nameof(ActiveTruncationHint))]
-    private int _visibleAlarmCount;
+    private int _filteredAlarmCount;
 
     /// <summary>事件流/统计加载失败提示（null=正常；非 null 显示红色横幅，DB 故障不再静默）。</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasStatsError))]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerCountDisplay))]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverCountDisplay))]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerKpiToolTip))]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverKpiToolTip))]
+    [NotifyPropertyChangedFor(nameof(MostFrequentKpiToolTip))]
     private string? _statsErrorText;
 
     public bool HasStatsError => !string.IsNullOrWhiteSpace(StatsErrorText);
 
-    public bool HasTruncation => VisibleAlarmCount > MaxActiveAlarms;
+    /// <summary>今日触发 KPI 展示值（统计失败时显示 —，避免与真实 0 混淆）。</summary>
+    public string TodayTriggerCountDisplay => HasStatsError ? "—" : TodayTriggerCount.ToString();
+
+    /// <summary>今日恢复 KPI 展示值（统计失败时显示 —）。</summary>
+    public string TodayRecoverCountDisplay => HasStatsError ? "—" : TodayRecoverCount.ToString();
+
+    public string TodayTriggerKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K710;
+
+    public string TodayRecoverKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K711;
+
+    public string MostFrequentKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K714;
+
+    public bool HasTruncation => FilteredAlarmCount > MaxActiveAlarms;
 
     public string ActiveTruncationHint => HasTruncation
         ? string.Format(Strings.K708, MaxActiveAlarms)
+        : string.Empty;
+
+    public bool ShowStatsLastUpdateTime => StatsLastUpdateTime.HasValue;
+
+    public string StatsLastUpdateTimeText => StatsLastUpdateTime.HasValue
+        ? string.Format(Strings.F715, StatsLastUpdateTime.Value)
         : string.Empty;
 
     /// <summary>最频繁报警 KPI 标签：带时间范围标注，避免与"今日"口径混淆。</summary>
@@ -128,8 +178,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         _ => Strings.K025,
     });
 
-    public string ActiveEmptyStateMessage => ActiveCount > 0
-        ? Strings.M060
+    public string ActiveEmptyStateMessage => ActiveAlarms.Count == 0
+        ? (_unfilteredActiveCount > 0 ? Strings.M060 : Strings.M061)
         : Strings.M061;
 
     // ──────────── 列表数据 ────────────
@@ -138,7 +188,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     public ObservableCollection<ActiveAlarmInfo> ActiveAlarms { get; } = new();
 
     /// <summary>最近事件流（按时间倒序，最新在最前）。</summary>
-    public ObservableCollection<AlarmEventRecord> RecentEvents { get; } = new();
+    public ObservableCollection<AlarmCenterEventItem> RecentEvents { get; } = new();
 
     /// <summary>Top N 报警排行（按触发次数降序）。</summary>
     public ObservableCollection<AlarmTopItem> TopAlarms { get; } = new();
@@ -189,7 +239,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         _searchDebounceTimer.Tick += OnSearchDebounceTick;
 
         // 首次立即刷新一次，确保页面打开即有数据
-        RefreshActiveAlarms();
+        RefreshActiveAlarms(blockUntilApplied: true);
         RefreshStats();
     }
 
@@ -201,7 +251,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         if (!_activeTimer.IsEnabled) _activeTimer.Start();
         if (!_statsTimer.IsEnabled) _statsTimer.Start();
         // 切回页面时立即刷新一次，避免显示过期数据
-        RefreshActiveAlarms();
+        RefreshActiveAlarms(blockUntilApplied: true);
         RefreshStats();
     }
 
@@ -225,6 +275,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     {
         _disposed = true;
         _statsRefreshVersion++;
+        _activeRefreshVersion++;
         _activeTimer.Stop();
         _statsTimer.Stop();
         _searchDebounceTimer.Stop();
@@ -232,26 +283,44 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         _statsTimer.Tick -= OnStatsTimerTick;
         _searchDebounceTimer.Tick -= OnSearchDebounceTick;
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
-        _counterAlarmTriggerTimes.Clear();
     }
 
     partial void OnSelectedTimeRangeChanged(AlarmCenterTimeRange value) => RefreshStats();
 
-    partial void OnShowHighAlarmsChanged(bool value) => RefreshActiveAlarms();
-    partial void OnShowMediumAlarmsChanged(bool value) => RefreshActiveAlarms();
-    partial void OnShowLowAlarmsChanged(bool value) => RefreshActiveAlarms();
+    partial void OnShowHighAlarmsChanged(bool value)
+    {
+        RefreshActiveAlarms(blockUntilApplied: true);
+        RefreshStats();
+    }
+
+    partial void OnShowMediumAlarmsChanged(bool value)
+    {
+        RefreshActiveAlarms(blockUntilApplied: true);
+        RefreshStats();
+    }
+
+    partial void OnShowLowAlarmsChanged(bool value)
+    {
+        RefreshActiveAlarms(blockUntilApplied: true);
+        RefreshStats();
+    }
     partial void OnAlarmSearchTextChanged(string value)
     {
         // 防抖：停止已有计时，输入停顿 350ms 后才重扫，避免 IME 每个按键触发完整遍历
         _searchDebounceTimer.Stop();
         _searchDebounceTimer.Start();
     }
-    partial void OnSelectedDeviceIdChanged(string? value) => RefreshActiveAlarms();
+    partial void OnSelectedDeviceIdChanged(string? value)
+    {
+        RefreshActiveAlarms(blockUntilApplied: true);
+        RefreshStats();
+    }
 
     private void OnSearchDebounceTick(object? sender, EventArgs e)
     {
         _searchDebounceTimer.Stop();
         RefreshActiveAlarms();
+        RefreshStats();
     }
 
     private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -266,93 +335,140 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
                 DeviceFilterItems.Add(device);
             if (SelectedDeviceId != null && !DeviceFilterItems.Any(d => d.Id == SelectedDeviceId))
                 SelectedDeviceId = null;
-            RefreshActiveAlarms();
+            RefreshActiveAlarms(blockUntilApplied: true);
         }));
     }
 
     [RelayCommand]
     private void RefreshAll()
     {
-        RefreshActiveAlarms();
+        RefreshActiveAlarms(blockUntilApplied: true);
         RefreshStats();
     }
 
     /// <summary>
-    /// 刷新实时活跃报警列表：遍历所有设备的 Alarms 与 CounterAlarms，
-    /// 收集 StartTime!=default &amp;&amp; EndTime==default 的 PLC 报警 + IsTriggered 的计数报警。
-    /// 与 HomeViewModel.RefreshActiveAlarms 逻辑一致但简化（无 CounterAlarm 去抖）。
+    /// 刷新实时活跃报警列表：后台遍历设备快照 + 缓存的数据源未恢复报警，
+    /// 收集 PLC 边沿报警、计数报警与历史未恢复的数据源报警。
     /// </summary>
-    private void RefreshActiveAlarms()
+    private void RefreshActiveAlarms(bool blockUntilApplied = false)
     {
-        var now = DateTime.Now;
-        var collected = new List<ActiveAlarmInfo>();
-        var activeCounterAlarmKeys = new HashSet<string>();
+        var requestVersion = ++_activeRefreshVersion;
+        var context = CaptureActiveRefreshContext();
 
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        if (blockUntilApplied)
         {
-            // PLC 边沿报警：StartTime 已设置且未恢复
+            var pending = ResolvePendingDataSourceForActive(context);
+            var collected = BuildActiveAlarmList(context, pending);
+            ApplyActiveAlarms(context.Now, collected, context);
+            return;
+        }
+
+        Task.Run(() =>
+        {
+            var pending = ResolvePendingDataSourceForActive(context);
+            var collected = BuildActiveAlarmList(context, pending);
+            _uiDispatcher.BeginInvoke(() =>
+            {
+                if (_disposed || requestVersion != _activeRefreshVersion) return;
+                ApplyActiveAlarms(context.Now, collected, context);
+            }, DispatcherPriority.Background);
+        }).Forget();
+    }
+
+    private ActiveRefreshContext CaptureActiveRefreshContext()
+    {
+        return new ActiveRefreshContext
+        {
+            Now = DateTime.Now,
+            SelectedDeviceId = SelectedDeviceId,
+            SearchText = AlarmSearchText,
+            ShowHigh = ShowHighAlarms,
+            ShowMedium = ShowMediumAlarms,
+            ShowLow = ShowLowAlarms,
+            Devices = _deviceRepository.GetDevicesSnapshot(),
+            DeviceRepository = _deviceRepository,
+        };
+    }
+
+    private List<AlarmEventRecord> ResolvePendingDataSourceForActive(ActiveRefreshContext context)
+    {
+        var pending = PendingDataSourceAlarmQuery.TryQueryPending(
+            _historyService, context.Now, context.SelectedDeviceId, PendingDataSourceAlarmQuery.ActiveLookback);
+        if (pending != null)
+        {
+            lock (_pendingDataSourceEvents)
+                _pendingDataSourceEvents = pending;
+            return pending;
+        }
+
+        lock (_pendingDataSourceEvents)
+            return _pendingDataSourceEvents.ToList();
+    }
+
+    private List<ActiveAlarmInfo> BuildActiveAlarmList(
+        ActiveRefreshContext context,
+        IReadOnlyList<AlarmEventRecord> pendingDataSourceEvents)
+    {
+        var collected = new List<ActiveAlarmInfo>();
+
+        foreach (var device in context.Devices)
+        {
             foreach (var alarm in device.Alarms)
             {
-                if (alarm.StartTime != default && alarm.EndTime == default
-                    )
+                if (alarm.StartTime != default && alarm.EndTime == default)
                 {
                     collected.Add(new ActiveAlarmInfo(
-                        alarm.StartTime, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
+                        alarm.StartTime, device.Id, device.Name, alarm.Name, alarm.Level, AlarmKind.Plc,
                         alarm.NameEn, alarm.NameJa, alarm.NamePt));
                 }
             }
 
-            // 计数报警：已触发且启用
             foreach (var ca in device.CounterAlarms)
             {
-                if (ca.Enabled && ca.IsTriggered)
-                {
-                    var key = $"{device.Id}_{ca.Id}";
-                    activeCounterAlarmKeys.Add(key);
-                    if (!_counterAlarmTriggerTimes.TryGetValue(key, out var triggerTime))
-                    {
-                        triggerTime = now;
-                        _counterAlarmTriggerTimes[key] = triggerTime;
-                    }
-                    collected.Add(new ActiveAlarmInfo(
-                        triggerTime, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
-                        ca.NameEn, ca.NameJa, ca.NamePt));
-                }
+                if (!ca.Enabled || !ca.IsTriggered) continue;
+                var triggerTime = ca.StartTime != default ? ca.StartTime : context.Now;
+                collected.Add(new ActiveAlarmInfo(
+                    triggerTime, device.Id, device.Name, ca.Name, AlarmLevel.Medium, AlarmKind.Count,
+                    ca.NameEn, ca.NameJa, ca.NamePt));
             }
         }
 
-        foreach (var key in _counterAlarmTriggerTimes.Keys
-                     .Where(key => !activeCounterAlarmKeys.Contains(key))
-                     .ToList())
-            _counterAlarmTriggerTimes.Remove(key);
+        foreach (var record in pendingDataSourceEvents)
+        {
+            if (context.SelectedDeviceId != null
+                && !string.Equals(record.DeviceId, context.SelectedDeviceId, StringComparison.OrdinalIgnoreCase))
+                continue;
 
-        // 排序：级别降序 + 触发时间升序
+            var (nameEn, nameJa, namePt) = AlarmCenterDisplayHelper.ResolveEventLocalizedFields(
+                context.DeviceRepository, record.DeviceId, record.AlarmId);
+            collected.Add(new ActiveAlarmInfo(
+                record.EventTime, record.DeviceId, record.DeviceName, record.AlarmName,
+                AlarmLevel.Medium, AlarmKind.DataSource, nameEn, nameJa, namePt));
+        }
+
         collected.Sort((a, b) =>
         {
             int c = b.Level.CompareTo(a.Level);
             return c != 0 ? c : a.EventTime.CompareTo(b.EventTime);
         });
 
-        ActiveCount = collected.Count;
+        return collected;
+    }
 
-        // 级别/设备/搜索过滤后的集合（KPI 与列表共用同一口径；审查修复 2026-08-13：
-        // 原 KPI 基于过滤前全集——用户按级别筛选时，KPI 卡显示的最长报警可能不在下方列表中）
-        var selectedDeviceName = SelectedDeviceId is null
-            ? null
-            : _deviceRepository.Devices.FirstOrDefault(d => d.Id == SelectedDeviceId)?.Name;
+    private void ApplyActiveAlarms(DateTime now, List<ActiveAlarmInfo> collected, ActiveRefreshContext context)
+    {
+        _unfilteredActiveCount = collected.Count;
+
         var filtered = collected
-            .Where(a => IsLevelVisible(a.Level)
-                        && (selectedDeviceName is null || a.DeviceName == selectedDeviceName)
-                        && (string.IsNullOrWhiteSpace(AlarmSearchText)
-                            || a.DeviceName.Contains(AlarmSearchText, StringComparison.OrdinalIgnoreCase)
-                            || a.AlarmName.Contains(AlarmSearchText, StringComparison.OrdinalIgnoreCase)))
+            .Where(a => IsLevelVisible(a.Level, context.ShowHigh, context.ShowMedium, context.ShowLow)
+                        && (context.SelectedDeviceId is null || a.DeviceId == context.SelectedDeviceId)
+                        && MatchesActiveSearch(a, context.SearchText))
             .ToList();
 
-        // 影响设备数：与列表共用同一过滤口径（审查修复 2026-08-14）
-        AffectedDeviceCount = filtered.Select(a => a.DeviceName).Distinct().Count();
-
-        // 截断提示依据：过滤后条数超过展示上限时提示"仅显示前 N 条"
-        VisibleAlarmCount = filtered.Count;
+        ActiveCount = filtered.Count;
+        OnPropertyChanged(nameof(ActiveEmptyStateMessage));
+        AffectedDeviceCount = filtered.Select(a => a.DeviceId).Distinct().Count();
+        FilteredAlarmCount = filtered.Count;
 
         if (filtered.Count > 0)
         {
@@ -370,21 +486,38 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         }
 
         var visible = filtered.Take(MaxActiveAlarms).ToList();
-
-        // 差分更新：每 tick 用最新 NameEn 构造新实例，避免复用旧快照导致多语言名称不刷新
         ObservableCollectionSyncHelper.Sync(ActiveAlarms, visible);
 
-        // 刷新持续时间文本
         foreach (var item in ActiveAlarms)
             item.RefreshDuration(now);
 
-        LastUpdateTime = now;
+        ActiveLastUpdateTime = now;
+    }
+
+    private static bool MatchesActiveSearch(ActiveAlarmInfo alarm, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return true;
+        return alarm.DeviceName.Contains(search, StringComparison.OrdinalIgnoreCase)
+               || alarm.AlarmName.Contains(search, StringComparison.OrdinalIgnoreCase)
+               || alarm.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool MatchesEventSearch(
+        IDeviceRepository deviceRepository,
+        AlarmEventRecord record,
+        string search)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return true;
+        var display = AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, record);
+        return record.DeviceName.Contains(search, StringComparison.OrdinalIgnoreCase)
+               || record.AlarmName.Contains(search, StringComparison.OrdinalIgnoreCase)
+               || display.Contains(search, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// 刷新事件流与统计：单次查询 [min(窗口起点, 今日0点), now]，内存切分窗口事件与今日事件，
+    /// 刷新事件流与统计：单次查询 [min(窗口起点, 今日0点, 30天前), now]，内存切分窗口事件与今日事件，
     /// 计算今日触发/恢复数、Top N 报警（按触发次数降序）、最频繁报警名。
-    /// 使用严格查询：DB 故障时抛出并展示内联错误横幅，不再静默显示为"无报警"。
+    /// 级别/搜索筛选与左栏活跃列表口径一致。
     /// </summary>
     private void RefreshStats()
     {
@@ -398,108 +531,150 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
             _ => now.AddHours(-4),
         };
         var todayStart = now.Date;
-        // 单次查询覆盖两个窗口的并集，避免每轮刷新两次全量扫描（审查修复 2026-08-14）
         var queryFrom = from < todayStart ? from : todayStart;
+        var extendedFrom = queryFrom < now.AddDays(-30) ? queryFrom : now.AddDays(-30);
+        var deviceId = SelectedDeviceId;
+        var search = AlarmSearchText;
+        var showHigh = ShowHighAlarms;
+        var showMedium = ShowMediumAlarms;
+        var showLow = ShowLowAlarms;
+        var deviceRepository = _deviceRepository;
 
-        // 后台线程查询避免阻塞 UI（HistoryService 查询是同步 EF 调用）
-        Task.Run(() =>
+        void RefreshStatsCore()
         {
             try
             {
-                var allEvents = _historyService.QueryAlarmEventsStrict(queryFrom, now);
+                var allEvents = _historyService.QueryAlarmEventsStrict(extendedFrom, now, deviceId);
                 var windowEvents = allEvents.Where(e => e.EventTime >= from).ToList();
                 var todayEvents = allEvents.Where(e => e.EventTime >= todayStart).ToList();
 
-                // 今日 KPI（按日期过滤，不受时间范围影响）
-                var triggerCount = todayEvents.Count(e => e.EventType == AlarmEventType.Triggered);
-                var recoverCount = todayEvents.Count(e => e.EventType == AlarmEventType.Recovered);
+                bool MatchesFilters(AlarmEventRecord e) =>
+                    IsLevelVisible(LookupAlarmLevel(deviceRepository, e.AlarmName, e.DeviceId, e.AlarmId), showHigh, showMedium, showLow)
+                    && MatchesEventSearch(deviceRepository, e, search);
 
-                // Top N 报警（按触发次数降序；审查修复 2026-08-13：原按 TotalDurationMinutes 排序，
-                // 却以"最频繁报警"标签+次数文案展示——时长最长与触发最频繁口径混淆，工业看板会误报根因）
-                var topItems = windowEvents
+                var filteredWindow = windowEvents.Where(MatchesFilters).ToList();
+                var filteredToday = todayEvents.Where(MatchesFilters).ToList();
+
+                var triggerCount = filteredToday.Count(e => e.EventType == AlarmEventType.Triggered);
+                var recoverCount = filteredToday.Count(e => e.EventType == AlarmEventType.Recovered);
+
+                var topItems = filteredWindow
                     .Where(e => e.EventType == AlarmEventType.Triggered)
-                    .GroupBy(e => new { e.AlarmName, e.DeviceName })
-                    .Select(g => new AlarmTopItem
+                    .GroupBy(e => new { e.AlarmName, e.DeviceName, e.DeviceId, e.AlarmId })
+                    .Select(g =>
                     {
-                        AlarmName = g.Key.AlarmName,
-                        DeviceName = g.Key.DeviceName,
-                        TriggerCount = g.Count(),
-                        Level = LookupAlarmLevel(g.Key.AlarmName, g.Key.DeviceName),
+                        var sample = g.First();
+                        return new AlarmTopItem
+                        {
+                            AlarmName = g.Key.AlarmName,
+                            DisplayName = AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, sample),
+                            DeviceName = g.Key.DeviceName,
+                            TriggerCount = g.Count(),
+                            Level = LookupAlarmLevel(deviceRepository, g.Key.AlarmName, g.Key.DeviceId, g.Key.AlarmId),
+                        };
                     })
                     .OrderByDescending(x => x.TriggerCount)
                     .Take(TopAlarmsCount)
                     .ToList();
 
-                // 填充排名序号（1-based）
                 for (int i = 0; i < topItems.Count; i++)
                     topItems[i].Rank = i + 1;
 
-                // 最近事件流（时间倒序，截断上限）
-                var recent = windowEvents
+                var recent = filteredWindow
                     .OrderByDescending(e => e.EventTime)
                     .Take(MaxRecentEvents)
+                    .Select(e => new AlarmCenterEventItem(
+                        e, AlarmCenterDisplayHelper.ResolveEventDisplayName(deviceRepository, e)))
                     .ToList();
 
-                // 最频繁报警
                 var mostFrequent = topItems.FirstOrDefault();
 
-                // 封送回 UI 线程更新集合
-                _uiDispatcher.BeginInvoke(new Action(() =>
+                var pendingSource = PendingDataSourceAlarmQuery.ExtractPending(allEvents);
+
+                void ApplyStats()
                 {
                     if (_disposed || requestVersion != _statsRefreshVersion) return;
                     StatsErrorText = null;
+                    lock (_pendingDataSourceEvents)
+                        _pendingDataSourceEvents = pendingSource;
                     ObservableCollectionSyncHelper.Sync(RecentEvents, recent);
                     ObservableCollectionSyncHelper.Sync(TopAlarms, topItems);
 
                     TodayTriggerCount = triggerCount;
                     TodayRecoverCount = recoverCount;
                     MostFrequentAlarm = mostFrequent != null
-                        ? string.Format(Strings.F033, mostFrequent.AlarmName, mostFrequent.TriggerCount)
+                        ? string.Format(Strings.F033, mostFrequent.DisplayName, mostFrequent.TriggerCount)
                         : "—";
-                    LastUpdateTime = now;
-                }));
+                    StatsLastUpdateTime = now;
+                    RefreshActiveAlarms(blockUntilApplied: Application.Current != null);
+                }
+
+                if (Application.Current != null)
+                    _uiDispatcher.Invoke(ApplyStats);
+                else
+                    ApplyStats();
             }
             catch (Exception ex)
             {
                 Log.Error(ex, "报警中心刷新统计失败");
-                _uiDispatcher.BeginInvoke(new Action(() =>
+                void ApplyError()
                 {
                     if (_disposed || requestVersion != _statsRefreshVersion) return;
-                    // 内联横幅提示故障，并清空上一轮残留数据——避免"看起来正常但数据是旧的"
                     StatsErrorText = string.Format(Strings.F073, ex.Message);
+                    lock (_pendingDataSourceEvents)
+                        _pendingDataSourceEvents = new List<AlarmEventRecord>();
                     RecentEvents.Clear();
                     TopAlarms.Clear();
                     TodayTriggerCount = 0;
                     TodayRecoverCount = 0;
                     MostFrequentAlarm = "—";
-                    LastUpdateTime = now;
-                }));
+                    StatsLastUpdateTime = now;
+                }
+
+                if (Application.Current != null)
+                    _uiDispatcher.Invoke(ApplyError);
+                else
+                    ApplyError();
             }
-        }).Forget();
+        }
+
+        if (Application.Current != null)
+            Task.Run(RefreshStatsCore).Forget();
+        else
+            RefreshStatsCore();
     }
 
     /// <summary>
-    /// 根据报警名与设备名查找配置中的报警级别（Top 排行展示用）。
-    /// 未找到返回 Low（保守显示）。
+    /// 根据报警名与设备 Id 查找配置中的报警级别（Top 排行展示用）。
+    /// 数据源报警固定为 Medium；未找到返回 Low（保守显示）。
     /// </summary>
-    private AlarmLevel LookupAlarmLevel(string alarmName, string deviceName)
+    private static AlarmLevel LookupAlarmLevel(
+        IDeviceRepository deviceRepository,
+        string alarmName,
+        string deviceId,
+        string? alarmId = null)
     {
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
-        {
-            if (device.Name != deviceName) continue;
-            var alarm = device.Alarms.FirstOrDefault(a => a.Name == alarmName);
-            if (alarm != null) return alarm.Level;
-        }
-        return AlarmLevel.Low;
+        if (alarmId != null && alarmId.StartsWith("src:", StringComparison.OrdinalIgnoreCase))
+            return AlarmLevel.Medium;
+
+        var device = deviceRepository.GetDeviceById(deviceId);
+        if (device == null) return AlarmLevel.Low;
+        var alarm = device.Alarms.FirstOrDefault(a => a.Name == alarmName);
+        if (alarm != null) return alarm.Level;
+        var counter = device.CounterAlarms.FirstOrDefault(a => a.Name == alarmName);
+        return counter != null ? AlarmLevel.Medium : AlarmLevel.Low;
     }
 
-    private bool IsLevelVisible(AlarmLevel level) => level switch
+    private static bool IsLevelVisible(AlarmLevel level, bool showHigh, bool showMedium, bool showLow) => level switch
     {
-        AlarmLevel.High => ShowHighAlarms,
-        AlarmLevel.Medium => ShowMediumAlarms,
-        AlarmLevel.Low => ShowLowAlarms,
+        AlarmLevel.High => showHigh,
+        AlarmLevel.Medium => showMedium,
+        AlarmLevel.Low => showLow,
         _ => true,
     };
+
+    private bool IsLevelVisible(AlarmLevel level) =>
+        IsLevelVisible(level, ShowHighAlarms, ShowMediumAlarms, ShowLowAlarms);
 
     [RelayCommand]
     private void CopyAlarm(ActiveAlarmInfo? alarm)
@@ -516,9 +691,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
     private void ViewAlarmHistory(ActiveAlarmInfo? alarm)
     {
         if (alarm == null) return;
-        var device = _deviceRepository.Devices.FirstOrDefault(d => d.Name == alarm.DeviceName);
-        if (device == null) return;
-        ViewAlarmHistoryRequested?.Invoke(device.Id, alarm.AlarmName);
+        ViewAlarmHistoryRequested?.Invoke(alarm.DeviceId, alarm.AlarmName);
     }
 
     public static string EventTypeText(AlarmEventType eventType) => eventType switch
@@ -528,4 +701,16 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable
         AlarmEventType.ShiftChange => Strings.EventType_ShiftChange,
         _ => eventType.ToString(),
     };
+
+    private sealed class ActiveRefreshContext
+    {
+        public DateTime Now { get; init; }
+        public string? SelectedDeviceId { get; init; }
+        public string SearchText { get; init; } = string.Empty;
+        public bool ShowHigh { get; init; }
+        public bool ShowMedium { get; init; }
+        public bool ShowLow { get; init; }
+        public IReadOnlyList<Device> Devices { get; init; } = Array.Empty<Device>();
+        public IDeviceRepository DeviceRepository { get; init; } = null!;
+    }
 }

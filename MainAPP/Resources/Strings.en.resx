@@ -48,7 +48,7 @@
   <data name="Nav_Overview_Tip" xml:space="preserve">
     <value>Production review (last 24h)</value>
   </data>
-  <data name="Status_Initial" xml:space="preserve">
+  <data name="Status_Offline" xml:space="preserve">
     <value>Offline</value>
   </data>
   <data name="Status_Running" xml:space="preserve">
@@ -200,6 +200,24 @@
   </data>
   <data name="Home_DeviceHealth" xml:space="preserve">
     <value>Device health</value>
+  </data>
+  <data name="Home_DeviceHealthTooltip" xml:space="preserve">
+    <value>Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.</value>
+  </data>
+  <data name="F_DeviceHealthBreakdown" xml:space="preserve">
+    <value>Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}</value>
+  </data>
+  <data name="Home_DeviceHealth_Healthy" xml:space="preserve">
+    <value>Healthy</value>
+  </data>
+  <data name="Home_DeviceHealth_Good" xml:space="preserve">
+    <value>Good</value>
+  </data>
+  <data name="Home_DeviceHealth_Attention" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="Home_DeviceHealth_Abnormal" xml:space="preserve">
+    <value>Abnormal</value>
   </data>
   <data name="Home_TotalDuration" xml:space="preserve">
     <value>Total duration</value>
@@ -1249,10 +1267,10 @@
     <value>Real-time Faults</value>
   </data>
   <data name="K330" xml:space="preserve">
-    <value>Mute or restore alarm flashing</value>
+    <value>Mute New Alarms</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>Mute/Restore Alarm Flashing</value>
+    <value>Toggle sound and flashing for new alarms; the alarm list still updates</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>Level</value>
@@ -2931,6 +2949,12 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="F249" xml:space="preserve">
     <value>Last refresh {0:HH:mm:ss}</value>
+  </data>
+  <data name="F715" xml:space="preserve">
+    <value>Stats refresh {0:HH:mm:ss}</value>
+  </data>
+  <data name="F716" xml:space="preserve">
+    <value>Live refresh {0:HH:mm:ss}</value>
   </data>
   <data name="F250" xml:space="preserve">
     <value>Updated {0:HH:mm:ss}</value>
@@ -5530,6 +5554,27 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="K708" xml:space="preserve">
     <value>Showing first {0} only</value>
+  </data>
+  <data name="K709" xml:space="preserve">
+    <value>Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters</value>
+  </data>
+  <data name="K710" xml:space="preserve">
+    <value>Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
+  </data>
+  <data name="K711" xml:space="preserve">
+    <value>Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
+  </data>
+  <data name="K712" xml:space="preserve">
+    <value>Longest-running alarm among those not yet recovered; live snapshot; affected by level/device/search filters</value>
+  </data>
+  <data name="K713" xml:space="preserve">
+    <value>Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters</value>
+  </data>
+  <data name="K714" xml:space="preserve">
+    <value>Top alarm by trigger count in the selected time range above; refreshed about every 60s</value>
+  </data>
+  <data name="K717" xml:space="preserve">
+    <value>Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight</value>
   </data>
   <data name="F317" xml:space="preserve">
     <value>{0} recipes will be imported ({1} will be skipped for failing validation). Continue?</value>

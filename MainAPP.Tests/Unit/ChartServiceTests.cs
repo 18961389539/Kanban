@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
@@ -308,6 +308,18 @@ public class ChartServiceTests
         var pie = chart!.Series.OfType<PieSeries>().FirstOrDefault();
         Assert.NotNull(pie);
         Assert.Equal(3, pie!.Slices.Count); // 运行/报警/暂停
+    }
+
+    [Fact]
+    public void BuildStatusPieChart_WithOffline_ReturnsFourSlices()
+    {
+        // 图例含离线行且总时长含离线，饼图必须同口径计入离线扇区（2026-08-30 口径修复）
+        var chart = ChartService.BuildStatusPieChart(3600, 120, 600, 900);
+
+        Assert.NotNull(chart);
+        var pie = chart!.Series.OfType<PieSeries>().FirstOrDefault();
+        Assert.NotNull(pie);
+        Assert.Equal(4, pie!.Slices.Count); // 运行/报警/暂停/离线
     }
 
     // ═══════════════ BuildDefectBarChart ═══════════════

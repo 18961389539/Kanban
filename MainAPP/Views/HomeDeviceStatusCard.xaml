@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.HomeDeviceStatusCard"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -46,7 +46,6 @@
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Harddisk" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K028}" />
-                    <TextBlock Style="{StaticResource HomeDataStatusBadge}" Text="{Binding DataStatusText}" ToolTip="{Binding DataStatusTooltip}" />
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <!-- 当前班次 -->
@@ -62,9 +61,16 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{Binding DeviceStatusShiftTag}" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       Text="{Binding DeviceStatusShiftTag}" />
+                            <!--  班次进度百分比（方案 B 由顶栏迁入，ToolTip=已用/剩余时间）  -->
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                                       Foreground="{StaticResource PrimaryTextBrush}" FontWeight="Bold"
+                                       Text="{Binding ShiftProgressPct}"
+                                       ToolTip="{Binding ShiftProgressText}" />
+                        </StackPanel>
                     </Border>
                     <!-- 日期 + 时钟 -->
                     <Border Padding="6,4" CornerRadius="8"
@@ -124,31 +130,6 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" Orientation="Horizontal">
                                                 <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
-                                                         Fill="{StaticResource StatusPauseBrush}" />
-                                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K006}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
-                                                           Foreground="{StaticResource StatusPauseBrush}"
-                                                           Text="{Binding PausedTimeFullFormatted}" />
-                                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
-                                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                                           Text="{Binding PausedTimeRatio, StringFormat={}{0:P0}}" />
-                                            </StackPanel>
-                                        </Grid>
-                                        <ProgressBar Style="{StaticResource RecessedProgressBar}"
-                                                     Foreground="{StaticResource StatusPauseBrush}"
-                                                     Value="{Binding PausedTimeRatio, Mode=OneWay}" />
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,0,12">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                                <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                                                          Fill="{StaticResource SuccessBrush}" />
                                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                            Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K005}" />
@@ -166,7 +147,7 @@
                                                      Foreground="{StaticResource SuccessBrush}"
                                                      Value="{Binding RunTimeRatio, Mode=OneWay}" />
                                     </StackPanel>
-                                    <StackPanel>
+                                    <StackPanel Margin="0,0,0,12">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -199,9 +180,34 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" Orientation="Horizontal">
                                                 <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                         Fill="{StaticResource StatusPauseBrush}" />
+                                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K006}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                                           Foreground="{StaticResource StatusPauseBrush}"
+                                                           Text="{Binding PausedTimeFullFormatted}" />
+                                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
+                                                           Foreground="{StaticResource ThirdlyTextBrush}"
+                                                           Text="{Binding PausedTimeRatio, StringFormat={}{0:P0}}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <ProgressBar Style="{StaticResource RecessedProgressBar}"
+                                                     Foreground="{StaticResource StatusPauseBrush}"
+                                                     Value="{Binding PausedTimeRatio, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                <Ellipse Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center"
                                                          Fill="{StaticResource StatusIdleBrush}" />
                                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.Status_Initial}" />
+                                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
@@ -218,7 +224,8 @@
                                     </StackPanel>
                                     <!-- 设备健康 -->
                                     <Border Margin="0,10,0,0" Padding="0,10,0,0"
-                                            BorderBrush="#2D3548" BorderThickness="0,1,0,0">
+                                            BorderBrush="#2D3548" BorderThickness="0,1,0,0"
+                                            ToolTip="{Binding DeviceHealthScoreTooltip}">
                                         <StackPanel>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>

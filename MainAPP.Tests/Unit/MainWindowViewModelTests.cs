@@ -382,7 +382,7 @@ public class MainWindowViewModelTests : IDisposable
         var device = new Device { Id = "device-1", Name = "设备一" };
         _deviceRepo.Devices.Add(device);
         var vm = NewVm();
-        var alarm = new ActiveAlarmInfo(DateTime.Now, device.Name, "高温报警", AlarmLevel.High, AlarmKind.Plc);
+        var alarm = new ActiveAlarmInfo(DateTime.Now, device.Id, device.Name, "高温报警", AlarmLevel.High, AlarmKind.Plc);
 
         vm.AlarmCenterViewModel.ViewAlarmHistoryCommand.Execute(alarm);
 

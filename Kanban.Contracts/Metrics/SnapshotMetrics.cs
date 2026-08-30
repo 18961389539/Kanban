@@ -42,4 +42,33 @@ public static class SnapshotMetrics
     /// <summary>速度达成率 = 实际速度 / 目标节拍，Clamp[0,1]；目标≤0 返回 0。</summary>
     public static double AchievementRate(double actualPerHour, double targetPerHour)
         => targetPerHour > 0 ? Math.Clamp(actualPerHour / targetPerHour, 0, 1) : 0;
+
+    /// <summary>OEE 活动窗口时长（运行+报警+暂停，不含离线）。</summary>
+    public static double OeeActiveTimeSeconds(double runTime, double alarmTime, double pausedTime)
+        => runTime + alarmTime + pausedTime;
+
+    /// <summary>
+    /// 运行稳定性（OEE 口径）= 1 − 报警/(运行+报警+暂停)。
+    /// 与 A/P/Q 同窗口；展示用 <see cref="TimeRatio"/> 含离线时分母不同。
+    /// </summary>
+    public static double OperationalStability(double runTime, double alarmTime, double pausedTime)
+    {
+        var active = OeeActiveTimeSeconds(runTime, alarmTime, pausedTime);
+        return active > 0 ? Math.Clamp(1.0 - alarmTime / active, 0, 1) : 0;
+    }
+
+    /// <summary>
+    /// 设备健康分（0–100）= 100×(0.30×A + 0.20×P + 0.25×Q + 0.25×稳定性)。
+    /// A/P/Q 为 OEE 三率；稳定性分母与 OEE 窗口一致（不含离线）。无活动时长返回 0。
+    /// </summary>
+    public static double DeviceHealthScore(
+        double availabilityRate, double performanceRate, double qualityRate,
+        double runTime, double alarmTime, double pausedTime)
+    {
+        if (OeeActiveTimeSeconds(runTime, alarmTime, pausedTime) <= 0) return 0;
+        var stability = OperationalStability(runTime, alarmTime, pausedTime);
+        var score = 100.0 * (0.30 * availabilityRate + 0.20 * performanceRate
+            + 0.25 * qualityRate + 0.25 * stability);
+        return Math.Clamp(score, 0, 100);
+    }
 }

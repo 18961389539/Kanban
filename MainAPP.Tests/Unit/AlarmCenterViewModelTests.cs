@@ -1,10 +1,10 @@
-using System;
+using System.Threading;
 using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
@@ -30,6 +30,7 @@ namespace MainAPP.Tests.Unit;
 [Trait("Category","Unit")]
 [Trait("Speed","Fast")]
 [Trait("Requires","None")]
+[Collection("LocalizationSensitive")]
 public class AlarmCenterViewModelTests : IDisposable
 {
     private readonly AppSettings _appSettings;
@@ -47,11 +48,16 @@ public class AlarmCenterViewModelTests : IDisposable
 
     public void Dispose()
     {
-        // AlarmCenterViewModel.Dispose 停止定时器；VM 在每个测试中 using 释放
+        Localization.Apply("zh-CN");
     }
 
     private AlarmCenterViewModel CreateVm()
         => new(_historyService, _deviceRepo, _dialog);
+
+    private static void WaitForBackgroundStats()
+    {
+        Thread.Sleep(1000);
+    }
 
     private static Device CreateDeviceWithAlarm(
         string id = "d1",
@@ -142,10 +148,12 @@ public class AlarmCenterViewModelTests : IDisposable
     [Fact]
     public void RefreshAll_CollectsTriggeredCounterAlarms()
     {
+        var triggerTime = DateTime.Now.AddMinutes(-12);
         var device = new Device { Id = "d1", Name = "设备1" };
         device.CounterAlarms.Add(new CounterAlarm
         {
             Name = "不合格计数超限", Enabled = true, MaxValue = 50, CurrentValue = 100,
+            StartTime = triggerTime,
         });
         _deviceRepo.Devices.Add(device);
 
@@ -155,13 +163,7 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Single(vm.ActiveAlarms);
         Assert.Equal("不合格计数超限", vm.ActiveAlarms[0].AlarmName);
         Assert.Equal(AlarmKind.Count, vm.ActiveAlarms[0].Kind);
-
-        var firstAlarm = vm.ActiveAlarms[0];
-        var firstEventTime = firstAlarm.EventTime;
-        vm.RefreshAllCommand.Execute(null);
-
-        Assert.Same(firstAlarm, vm.ActiveAlarms[0]);
-        Assert.Equal(firstEventTime, vm.ActiveAlarms[0].EventTime);
+        Assert.Equal(triggerTime, vm.ActiveAlarms[0].EventTime);
     }
 
     [Fact]
@@ -204,12 +206,13 @@ public class AlarmCenterViewModelTests : IDisposable
         // ShowHighAlarms 变化触发 RefreshActiveAlarms
         Assert.Single(vm.ActiveAlarms);
         Assert.Equal("低级报警", vm.ActiveAlarms[0].AlarmName);
-        Assert.Equal(2, vm.ActiveCount);
+        Assert.Equal(1, vm.ActiveCount);
     }
 
     [Fact]
     public void ShowAllLevelsFalse_EmptyActiveAlarms()
     {
+        Localization.Apply("zh-CN");
         var device = CreateDeviceWithAlarm("d1", "设备1", active: true);
         _deviceRepo.Devices.Add(device);
 
@@ -219,8 +222,28 @@ public class AlarmCenterViewModelTests : IDisposable
         vm.ShowLowAlarms = false;
 
         Assert.Empty(vm.ActiveAlarms);
-        Assert.Equal(1, vm.ActiveCount);
+        Assert.Equal(0, vm.ActiveCount);
         Assert.Equal("当前筛选无匹配报警", vm.ActiveEmptyStateMessage);
+    }
+
+    [Fact]
+    public void SelectedDeviceId_FiltersActiveAlarmsAndCount()
+    {
+        _deviceRepo.Devices.Add(CreateDeviceWithAlarm("d1", "设备1", "报警A"));
+        _deviceRepo.Devices.Add(CreateDeviceWithAlarm("d2", "设备2", "报警B"));
+
+        using var vm = CreateVm();
+        vm.RefreshAllCommand.Execute(null);
+        Assert.Equal(2, vm.ActiveCount);
+
+        vm.SelectedDeviceId = "d1";
+        Assert.Single(vm.ActiveAlarms);
+        Assert.Equal(1, vm.ActiveCount);
+        Assert.Equal("设备1", vm.ActiveAlarms[0].DeviceName);
+        Assert.Equal("报警A", vm.ActiveAlarms[0].AlarmName);
+
+        vm.SelectedDeviceId = null;
+        Assert.Equal(2, vm.ActiveCount);
     }
 
     // ──────────── KPI 聚合 ────────────
@@ -372,7 +395,7 @@ public class AlarmCenterViewModelTests : IDisposable
         using var vm = CreateVm();
         vm.RefreshAllCommand.Execute(null);
 
-        // MaxActiveAlarms = 200
+        // MaxActiveAlarms = 200；ActiveCount 为过滤后全集条数（未截断）
         Assert.Equal(250, vm.ActiveCount);
         Assert.Equal(200, vm.ActiveAlarms.Count);
     }
@@ -402,5 +425,65 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Equal(201, vm.ActiveCount);
         Assert.Equal(200, vm.ActiveAlarms.Count);
         Assert.Equal("后置高级报警", vm.ActiveAlarms[0].AlarmName);
+    }
+
+    [Fact]
+    public void AlarmSearchText_MatchesLocalizedDisplayName()
+    {
+        Localization.Apply("zh-CN");
+        try
+        {
+            Localization.Apply("en-US");
+            var device = new Device { Id = "d1", Name = "Injection-1" };
+            device.Alarms.Add(new Alarm
+            {
+                Name = "温度过高",
+                NameEn = "Over Temperature",
+                Level = AlarmLevel.High,
+                PlcAddress = "M100",
+                StartTime = DateTime.Now.AddMinutes(-5),
+            });
+            _deviceRepo.Devices.Add(device);
+
+            using var vm = CreateVm();
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Equal("Over Temperature", vm.ActiveAlarms[0].DisplayName);
+
+            vm.AlarmSearchText = "Over Temp";
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Single(vm.ActiveAlarms);
+
+            vm.AlarmSearchText = "nonexistent";
+            vm.RefreshAllCommand.Execute(null);
+            Assert.Empty(vm.ActiveAlarms);
+        }
+        finally
+        {
+            Localization.Apply("zh-CN");
+        }
+    }
+
+    [Fact]
+    public void RefreshStats_IncludesPendingDataSourceAlarmInActiveList()
+    {
+        var device = new Device { Id = "d1", Name = "设备1" };
+        var source = new DataSource { Name = "温湿度" };
+        var value = new DataSourceValue { Name = "温度" };
+        source.Values.Add(value);
+        device.Sources.Add(source);
+        _deviceRepo.Devices.Add(device);
+
+        var triggerTime = DateTime.Now.AddMinutes(-8);
+        _historyService.LogAlarmEvent(
+            "d1", "设备1", $"src:{value.Id}", "温湿度-温度", "D100",
+            AlarmEventType.Triggered, triggerTime);
+
+        using var vm = CreateVm();
+        WaitForBackgroundStats();
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.Single(vm.ActiveAlarms);
+        Assert.Equal(AlarmKind.DataSource, vm.ActiveAlarms[0].Kind);
+        Assert.Equal(triggerTime, vm.ActiveAlarms[0].EventTime);
     }
 }
