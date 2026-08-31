@@ -63,14 +63,8 @@
   <data name="Status_Unknown" xml:space="preserve">
     <value>不明</value>
   </data>
-  <data name="Status_Idle" xml:space="preserve">
-    <value>アイドル</value>
-  </data>
   <data name="Common_Save" xml:space="preserve">
     <value>設定を保存</value>
-  </data>
-  <data name="Common_Cancel" xml:space="preserve">
-    <value>キャンセル</value>
   </data>
   <data name="Common_Language" xml:space="preserve">
     <value>言語</value>
@@ -125,15 +119,6 @@
   </data>
   <data name="Settings_ConfirmSave" xml:space="preserve">
     <value>保存を続行しますか？</value>
-  </data>
-  <data name="Language_Chinese" xml:space="preserve">
-    <value>中国語</value>
-  </data>
-  <data name="Language_English" xml:space="preserve">
-    <value>英語</value>
-  </data>
-  <data name="Language_Japanese" xml:space="preserve">
-    <value>日本語</value>
   </data>
   <data name="Settings_DailyReportMaster" xml:space="preserve">
     <value>日報マスターノード</value>
@@ -278,12 +263,6 @@
   </data>
   <data name="Conn_Disconnected" xml:space="preserve">
     <value>未接続</value>
-  </data>
-  <data name="Conn_Reconnecting" xml:space="preserve">
-    <value>再接続中</value>
-  </data>
-  <data name="Conn_Stale" xml:space="preserve">
-    <value>データ停滞</value>
   </data>
   <data name="EventType_Triggered" xml:space="preserve">
     <value>発生</value>
@@ -606,21 +585,6 @@
   <data name="K093" xml:space="preserve">
     <value>OK</value>
   </data>
-  <data name="K094" xml:space="preserve">
-    <value>生産量 / 不良</value>
-  </data>
-  <data name="K095" xml:space="preserve">
-    <value>稼働 / アラーム</value>
-  </data>
-  <data name="K096" xml:space="preserve">
-    <value>性能効率</value>
-  </data>
-  <data name="K097" xml:space="preserve">
-    <value>目標 / 実績</value>
-  </data>
-  <data name="K098" xml:space="preserve">
-    <value>総停止</value>
-  </data>
   <data name="K099" xml:space="preserve">
     <value>PLC接続</value>
   </data>
@@ -713,9 +677,6 @@
   </data>
   <data name="K129" xml:space="preserve">
     <value>影響設備</value>
-  </data>
-  <data name="K130" xml:space="preserve">
-    <value>頻発アラーム</value>
   </data>
   <data name="K131" xml:space="preserve">
     <value>高</value>
@@ -868,7 +829,7 @@
     <value>単位</value>
   </data>
   <data name="K181" xml:space="preserve">
-    <value>カカカウント単位</value>
+    <value>カウント単位</value>
   </data>
   <data name="K182" xml:space="preserve">
     <value>カカカウンタアラーム説明</value>
@@ -1326,9 +1287,6 @@
   <data name="K333" xml:space="preserve">
     <value>リアルタイム故障一覧</value>
   </data>
-  <data name="K334" xml:space="preserve">
-    <value>アクティブな故障なし</value>
-  </data>
   <data name="K335" xml:space="preserve">
     <value>生産ダッシュボード</value>
   </data>
@@ -1398,9 +1356,6 @@
   <data name="K357" xml:space="preserve">
     <value>レシピ値は現在の設備設定に基づく</value>
   </data>
-  <data name="K358" xml:space="preserve">
-    <value>タイムライン選択</value>
-  </data>
   <data name="K359" xml:space="preserve">
     <value>レビュー結論</value>
   </data>
@@ -1443,9 +1398,6 @@
   <data name="K372" xml:space="preserve">
     <value>現在の時間範囲の主要アラーム</value>
   </data>
-  <data name="K373" xml:space="preserve">
-    <value>頻発繰り返し</value>
-  </data>
   <data name="K374" xml:space="preserve">
     <value>アラーム記録なし</value>
   </data>
@@ -1454,9 +1406,6 @@
   </data>
   <data name="K376" xml:space="preserve">
     <value>稼働・待機・アラーム・不明区間。セルをクリックして生産量とアラームを表示</value>
-  </data>
-  <data name="K377" xml:space="preserve">
-    <value>稼働中・生産なし</value>
   </data>
   <data name="K378" xml:space="preserve">
     <value>現在の設備明細</value>
@@ -1506,9 +1455,6 @@
   <data name="K393" xml:space="preserve">
     <value>不良数は設備の累積スナップショットに基づき、選択範囲を表しません</value>
   </data>
-  <data name="K394" xml:space="preserve">
-    <value>不良集中シフト/時間帯</value>
-  </data>
   <data name="K395" xml:space="preserve">
     <value>停止分析</value>
   </data>
@@ -1536,17 +1482,11 @@
   <data name="K403" xml:space="preserve">
     <value>設備名</value>
   </data>
-  <data name="K404" xml:space="preserve">
-    <value>不良（個）</value>
-  </data>
   <data name="K405" xml:space="preserve">
     <value>生産ライン</value>
   </data>
   <data name="K406" xml:space="preserve">
     <value>設備名で検索</value>
-  </data>
-  <data name="K407" xml:space="preserve">
-    <value>設備名で検索（Ctrl+F）</value>
   </data>
   <data name="K408" xml:space="preserve">
     <value>並替</value>
@@ -1559,12 +1499,6 @@
   </data>
   <data name="K411" xml:space="preserve">
     <value>生産量↓</value>
-  </data>
-  <data name="K412" xml:space="preserve">
-    <value>アラーム中</value>
-  </data>
-  <data name="K413" xml:space="preserve">
-    <value>全体良品率</value>
   </data>
   <data name="K414" xml:space="preserve">
     <value>加重OEE</value>
@@ -1638,9 +1572,6 @@
   <data name="K437" xml:space="preserve">
     <value>直近成功時刻</value>
   </data>
-  <data name="K438" xml:space="preserve">
-    <value>累積失敗ポーリング</value>
-  </data>
   <data name="K439" xml:space="preserve">
     <value>直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味します。</value>
   </data>
@@ -1667,9 +1598,6 @@
   </data>
   <data name="K447" xml:space="preserve">
     <value>直近成功設備</value>
-  </data>
-  <data name="K448" xml:space="preserve">
-    <value>最大収集周期</value>
   </data>
   <data name="K449" xml:space="preserve">
     <value>収集成功率</value>
@@ -1764,12 +1692,6 @@
   <data name="K479" xml:space="preserve">
     <value>アクティベーションコードをコピー</value>
   </data>
-  <data name="K480" xml:space="preserve">
-    <value>データソースと実行モード</value>
-  </data>
-  <data name="K481" xml:space="preserve">
-    <value>データソース（ローカル収集 / リモート収集）と実行モードを選択します。</value>
-  </data>
   <data name="K482" xml:space="preserve">
     <value>データ収集モード</value>
   </data>
@@ -1820,12 +1742,6 @@
   </data>
   <data name="K498" xml:space="preserve">
     <value>通信アドレス、収集頻度、表示密度を設定します。</value>
-  </data>
-  <data name="K499" xml:space="preserve">
-    <value>接続とプロトコル</value>
-  </data>
-  <data name="K500" xml:space="preserve">
-    <value>PLCブランドを選択し通信パラメータを設定します。</value>
   </data>
   <data name="K501" xml:space="preserve">
     <value>IPアドレス</value>
@@ -1986,17 +1902,8 @@
   <data name="K555" xml:space="preserve">
     <value>工単番号/製品/設備を検索</value>
   </data>
-  <data name="K556" xml:space="preserve">
-    <value>計画開始</value>
-  </data>
-  <data name="K557" xml:space="preserve">
-    <value>計画終了</value>
-  </data>
   <data name="K558" xml:space="preserve">
     <value>工単スケジュール並替</value>
-  </data>
-  <data name="K559" xml:space="preserve">
-    <value>計画時間または状態で並替</value>
   </data>
   <data name="K560" xml:space="preserve">
     <value>期限超過のみ</value>
@@ -2006,12 +1913,6 @@
   </data>
   <data name="K562" xml:space="preserve">
     <value>NGあり</value>
-  </data>
-  <data name="K563" xml:space="preserve">
-    <value>工単番号 / 製品</value>
-  </data>
-  <data name="K564" xml:space="preserve">
-    <value>生産済</value>
   </data>
   <data name="K565" xml:space="preserve">
     <value>下の「追加」をクリックするかフィルターを調整</value>
@@ -2028,9 +1929,6 @@
   <data name="K569" xml:space="preserve">
     <value>全工単の生産量を照会し進捗を更新</value>
   </data>
-  <data name="K570" xml:space="preserve">
-    <value>現在の絞り込み結果をCSVにエクスポート</value>
-  </data>
   <data name="K571" xml:space="preserve">
     <value>サンプル生成</value>
   </data>
@@ -2042,9 +1940,6 @@
   </data>
   <data name="K574" xml:space="preserve">
     <value>工単番号、製品名、設備名で検索可能</value>
-  </data>
-  <data name="K575" xml:space="preserve">
-    <value>不良生産量</value>
   </data>
   <data name="K576" xml:space="preserve">
     <value>達成率</value>
@@ -2058,17 +1953,11 @@
   <data name="K579" xml:space="preserve">
     <value>看板システム</value>
   </data>
-  <data name="K580" xml:space="preserve">
-    <value>累積切断回数</value>
-  </data>
   <data name="K581" xml:space="preserve">
     <value>ライセンス状態</value>
   </data>
   <data name="K582" xml:space="preserve">
     <value>メインナビゲーション</value>
-  </data>
-  <data name="M001" xml:space="preserve">
-    <value>セキュリティ検証</value>
   </data>
   <data name="M002" xml:space="preserve">
     <value>Microsoft YaHeiフォントが見つからず、PDFを生成できません</value>
@@ -2102,9 +1991,6 @@
   </data>
   <data name="M012" xml:space="preserve">
     <value>● 達成</value>
-  </data>
-  <data name="M013" xml:space="preserve">
-    <value>通信断</value>
   </data>
   <data name="M014" xml:space="preserve">
     <value>収集停止</value>
@@ -2174,15 +2060,6 @@
   </data>
   <data name="M036" xml:space="preserve">
     <value>ヒント</value>
-  </data>
-  <data name="M037" xml:space="preserve">
-    <value>エラー</value>
-  </data>
-  <data name="M038" xml:space="preserve">
-    <value>確認</value>
-  </data>
-  <data name="M039" xml:space="preserve">
-    <value>警告</value>
   </data>
   <data name="M040" xml:space="preserve">
     <value>すべて</value>
@@ -2441,9 +2318,6 @@
   <data name="F075" xml:space="preserve">
     <value>履歴書き込み間隔は 1 以上である必要があります。現在値: {0}</value>
   </data>
-  <data name="F076" xml:space="preserve">
-    <value>履歴データの書き込みに失敗しました: {0}</value>
-  </data>
   <data name="F077" xml:space="preserve">
     <value>履歴クエリに失敗しました: {0}</value>
   </data>
@@ -2528,9 +2402,6 @@
   </data>
   <data name="F103" xml:space="preserve">
     <value>{0} 件のアラームをインポートしました。保存して永続化してください</value>
-  </data>
-  <data name="F104" xml:space="preserve">
-    <value>{0} 件をエクスポートしました → {1}</value>
   </data>
   <data name="F105" xml:space="preserve">
     <value>{0} 台のデバイスを {1} にエクスポートしました</value>
@@ -2736,9 +2607,6 @@
   <data name="F168" xml:space="preserve">
     <value>レビューレポートをエクスポートしました: {0}</value>
   </data>
-  <data name="F169" xml:space="preserve">
-    <value>目標 {0:F0} 個/バケット</value>
-  </data>
   <data name="F170" xml:space="preserve">
     <value>目標 {0:P0}</value>
   </data>
@@ -2863,9 +2731,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F205" xml:space="preserve">
     <value>デバイス「{0}」: 不良名「{1}」が重複しています</value>
   </data>
-  <data name="F206" xml:space="preserve">
-    <value>デバイス「{0}」のカカカウンタアラーム「{1}」上限は 0 より大きい必要があります（現在 {2}）</value>
-  </data>
   <data name="F207" xml:space="preserve">
     <value>デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります</value>
   </data>
@@ -2953,9 +2818,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F234" xml:space="preserve">
     <value>収集サービス再接続、切断時間 {0}</value>
   </data>
-  <data name="F235" xml:space="preserve">
-    <value>Collector 接続の解放に失敗しました: {0}</value>
-  </data>
   <data name="F236" xml:space="preserve">
     <value>再構築 {0} 回 · 直近 {1} ms</value>
   </data>
@@ -3034,20 +2896,8 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F259" xml:space="preserve">
     <value>{0} 件を表示</value>
   </data>
-  <data name="F260" xml:space="preserve">
-    <value>期限超過 {0}</value>
-  </data>
-  <data name="F261" xml:space="preserve">
-    <value>達成 {0}</value>
-  </data>
-  <data name="F262" xml:space="preserve">
-    <value>NGあり {0}</value>
-  </data>
   <data name="F263" xml:space="preserve">
     <value>計画競合 {0}</value>
-  </data>
-  <data name="F264" xml:space="preserve">
-    <value>レシピ値 {0}</value>
   </data>
   <data name="F265" xml:space="preserve">
     <value>前シフト·{0}</value>
@@ -3066,24 +2916,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="F270" xml:space="preserve">
     <value>主要 {0}</value>
-  </data>
-  <data name="F271" xml:space="preserve">
-    <value>前シフト比 {0} 個</value>
-  </data>
-  <data name="F272" xml:space="preserve">
-    <value>不良 {0:N0} 個</value>
-  </data>
-  <data name="F273" xml:space="preserve">
-    <value>合計（{0} 台）</value>
-  </data>
-  <data name="F274" xml:space="preserve">
-    <value>繰り返し {0} 回</value>
-  </data>
-  <data name="F275" xml:space="preserve">
-    <value>間隔 {0:F0} 分</value>
-  </data>
-  <data name="F276" xml:space="preserve">
-    <value>生産量差 {0:N0}</value>
   </data>
   <data name="F277" xml:space="preserve">
     <value>復旧 {0}</value>
@@ -3114,9 +2946,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="F286" xml:space="preserve">
     <value>上限 {0}</value>
-  </data>
-  <data name="F287" xml:space="preserve">
-    <value>{0} 詳細</value>
   </data>
   <data name="F288" xml:space="preserve">
     <value>シフト {0} 削除</value>
@@ -3195,9 +3024,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F310" xml:space="preserve">
     <value>行 {0}：カカカウンタアラーム名が空です</value>
   </data>
-  <data name="F311" xml:space="preserve">
-    <value>行 {0}：閾値上限 '{1}' は有効な整数ではありません</value>
-  </data>
   <data name="F312" xml:space="preserve">
     <value>行 {0}：有効状態 '{1}' が無効です（True/False のいずれか）</value>
   </data>
@@ -3222,9 +3048,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M050" xml:space="preserve">
     <value>Collector未接続</value>
   </data>
-  <data name="M051" xml:space="preserve">
-    <value>リモートモードに切替</value>
-  </data>
   <data name="M052" xml:space="preserve">
     <value>バックログなし</value>
   </data>
@@ -3245,9 +3068,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M058" xml:space="preserve">
     <value>前期間</value>
-  </data>
-  <data name="M059" xml:space="preserve">
-    <value>ステータス期間をクリックして警報と生産量を表示</value>
   </data>
   <data name="M060" xml:space="preserve">
     <value>現在のフィルタに一致する警報なし</value>
@@ -3273,9 +3093,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M067" xml:space="preserve">
     <value>時間別生産量</value>
   </data>
-  <data name="M069" xml:space="preserve">
-    <value>収集設定を同期済み</value>
-  </data>
   <data name="M070" xml:space="preserve">
     <value>サービス切断</value>
   </data>
@@ -3284,9 +3101,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M072" xml:space="preserve">
     <value>データなし</value>
-  </data>
-  <data name="M073" xml:space="preserve">
-    <value>設備名</value>
   </data>
   <data name="M074" xml:space="preserve">
     <value>未保存の変更あり</value>
@@ -3507,14 +3321,8 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M146" xml:space="preserve">
     <value>シフト設定変更のお知らせ</value>
   </data>
-  <data name="M147" xml:space="preserve">
-    <value>シフト名は必須です</value>
-  </data>
   <data name="M148" xml:space="preserve">
     <value>最大 {0} シフト</value>
-  </data>
-  <data name="M149" xml:space="preserve">
-    <value>デフォルト設定に戻す</value>
   </data>
   <data name="M150" xml:space="preserve">
     <value>時間稼働率 = 実稼働時間 / 計画稼働時間</value>
@@ -3570,9 +3378,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M167" xml:space="preserve">
     <value>前バージョンを復元すると未保存の設備設定が上書きされます。パスワードを入力して続行：</value>
   </data>
-  <data name="M168" xml:space="preserve">
-    <value>仮想デバイスを生成するにはパスワードを入力：</value>
-  </data>
   <data name="M169" xml:space="preserve">
     <value>仮想設備を生成</value>
   </data>
@@ -3592,7 +3397,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>未保存の変更</value>
   </data>
   <data name="M175" xml:space="preserve">
-    <value>カカカウント警報クリア確認</value>
+    <value>カウント警報クリア確認</value>
   </data>
   <data name="M176" xml:space="preserve">
     <value>洞察なし</value>
@@ -3626,9 +3431,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M186" xml:space="preserve">
     <value>PLC未接続のため、読み取れません</value>
-  </data>
-  <data name="M187" xml:space="preserve">
-    <value>操作タイムアウト</value>
   </data>
   <data name="M188" xml:space="preserve">
     <value>PLC未接続のため、クリアできません</value>
@@ -3690,9 +3492,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M207" xml:space="preserve">
     <value>警報</value>
   </data>
-  <data name="M208" xml:space="preserve">
-    <value>待機</value>
-  </data>
   <data name="M209" xml:space="preserve">
     <value>アラーム回数</value>
   </data>
@@ -3716,15 +3515,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M216" xml:space="preserve">
     <value>数量</value>
-  </data>
-  <data name="M217" xml:space="preserve">
-    <value>パーセント(%)</value>
-  </data>
-  <data name="M218" xml:space="preserve">
-    <value>良品</value>
-  </data>
-  <data name="M219" xml:space="preserve">
-    <value>不良</value>
   </data>
   <data name="M220" xml:space="preserve">
     <value>時間</value>
@@ -3769,9 +3559,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>NG数量アドレス</value>
   </data>
   <data name="M234" xml:space="preserve">
-    <value>OEEクリアアドレス</value>
-  </data>
-  <data name="M276" xml:space="preserve">
     <value>OEEクリアアドレス</value>
   </data>
   <data name="M275" xml:space="preserve">
@@ -3933,15 +3720,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Conn_Connected" xml:space="preserve">
     <value>接続済み</value>
   </data>
-  <data name="Conn_Lost" xml:space="preserve">
-    <value>接続切断</value>
-  </data>
-  <data name="Conn_DisconnectedRetry" xml:space="preserve">
-    <value>未接続 (再試行間隔{0:F0}秒)</value>
-  </data>
-  <data name="Conn_Connecting" xml:space="preserve">
-    <value>接続中</value>
-  </data>
   <data name="Conn_ConnectingSuffix" xml:space="preserve">
     <value>... ({0}回目)</value>
   </data>
@@ -4025,9 +3803,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Lbl_Ng" xml:space="preserve">
     <value>NG 不良</value>
-  </data>
-  <data name="Web_Lbl_Planned" xml:space="preserve">
-    <value>計画</value>
   </data>
   <data name="Web_Lbl_Elapsed" xml:space="preserve">
     <value>稼働時間</value>
@@ -4194,20 +3969,11 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M324" xml:space="preserve">
     <value>パスワードリセット</value>
   </data>
-  <data name="M325" xml:space="preserve">
-    <value>アカカウントが無効です</value>
-  </data>
   <data name="M326" xml:space="preserve">
     <value>ユーザー名は既に存在します</value>
   </data>
   <data name="M327" xml:space="preserve">
     <value>最後の管理者アカカウントは削除できません</value>
-  </data>
-  <data name="M328" xml:space="preserve">
-    <value>現在のユーザー</value>
-  </data>
-  <data name="M329" xml:space="preserve">
-    <value>ログアウト</value>
   </data>
   <data name="M330" xml:space="preserve">
     <value>表示名</value>
@@ -4223,9 +3989,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M362" xml:space="preserve">
     <value>未保存の変更があります</value>
-  </data>
-  <data name="M363" xml:space="preserve">
-    <value>最終ログイン</value>
   </data>
   <data name="M364" xml:space="preserve">
     <value>パスワードは 8 文字以上必要です</value>
@@ -4284,9 +4047,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M382" xml:space="preserve">
     <value>絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。</value>
   </data>
-  <data name="M383" xml:space="preserve">
-    <value>現在のページのみ</value>
-  </data>
   <data name="M384" xml:space="preserve">
     <value>絞り込み結果の全件（{0} 件）</value>
   </data>
@@ -4299,9 +4059,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="M334" xml:space="preserve">
     <value>管理者</value>
   </data>
-  <data name="M335" xml:space="preserve">
-    <value>新しいパスワードを入力</value>
-  </data>
   <data name="M336" xml:space="preserve">
     <value>権限不足、エンジニア以上のロールが必要です</value>
   </data>
@@ -4310,12 +4067,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="M338" xml:space="preserve">
     <value>ユーザー切り替え</value>
-  </data>
-  <data name="K584" xml:space="preserve">
-    <value>テーブル表示</value>
-  </data>
-  <data name="K585" xml:space="preserve">
-    <value>コード表示</value>
   </data>
   <data name="K587" xml:space="preserve">
     <value>OEE</value>
@@ -4328,9 +4079,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="K590" xml:space="preserve">
     <value>合計</value>
-  </data>
-  <data name="K591" xml:space="preserve">
-    <value>良品率</value>
   </data>
   <data name="K592" xml:space="preserve">
     <value>サイクル</value>
@@ -4634,12 +4382,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K672" xml:space="preserve">
     <value>パラメータを追加</value>
   </data>
-  <data name="K673" xml:space="preserve">
-    <value>パラメータを削除</value>
-  </data>
-  <data name="K674" xml:space="preserve">
-    <value>利用可能なレシピはありません</value>
-  </data>
   <data name="K675" xml:space="preserve">
     <value>レシピ適用成功</value>
   </data>
@@ -4666,9 +4408,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="K683" xml:space="preserve">
     <value>対象設備</value>
-  </data>
-  <data name="K684" xml:space="preserve">
-    <value>設備機種</value>
   </data>
   <data name="K685" xml:space="preserve">
     <value>レシピ {0} を設備 {1} に適用しますか？</value>
@@ -5151,7 +4890,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥</value>
   </data>
   <data name="Web_Mo_TmCountAlarm" xml:space="preserve">
-    <value>カカカウント警報</value>
+    <value>カウント警報</value>
   </data>
   <data name="Web_Mo_TmHistory" xml:space="preserve">
     <value>履歴書込</value>
@@ -5370,7 +5109,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥 {0} 件</value>
   </data>
   <data name="Web_Dv_CountAlarmCount" xml:space="preserve">
-    <value>カカカウント警報 {0} 件</value>
+    <value>カウント警報 {0} 件</value>
   </data>
   <data name="Web_Dv_Detail" xml:space="preserve">
     <value>{0} 設定詳細</value>
@@ -5379,10 +5118,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>アドレス設定</value>
   </data>
   <data name="Web_Dv_OkCountAddr" xml:space="preserve">
-    <value>OK カカカウントアドレス</value>
+    <value>OK カウントアドレス</value>
   </data>
   <data name="Web_Dv_NgCountAddr" xml:space="preserve">
-    <value>NG カカカウントアドレス</value>
+    <value>NG カウントアドレス</value>
   </data>
   <data name="Web_Dv_StatusAddr" xml:space="preserve">
     <value>状態語アドレス</value>
@@ -5400,7 +5139,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>欠陥設定</value>
   </data>
   <data name="Web_Dv_CountAlarmConfig" xml:space="preserve">
-    <value>カカカウント警報設定</value>
+    <value>カウント警報設定</value>
   </data>
   <data name="Web_Dv_None" xml:space="preserve">
     <value>設定なし</value>
@@ -5410,6 +5149,18 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Dv_PlcAddr" xml:space="preserve">
     <value>PLC アドレス</value>
+  </data>
+  <data name="Web_Dv_Loading" xml:space="preserve">
+    <value>デバイス設定を読み込み中</value>
+  </data>
+  <data name="Web_Dv_LoadFailed" xml:space="preserve">
+    <value>デバイス設定の読み込みに失敗</value>
+  </data>
+  <data name="Web_Dv_LoadFailedHint" xml:space="preserve">
+    <value>収集サービスの稼働を確認して再試行してください</value>
+  </data>
+  <data name="Web_Dv_Retry" xml:space="preserve">
+    <value>再試行</value>
   </data>
   <data name="Web_Dv_Description" xml:space="preserve">
     <value>説明</value>
@@ -5461,12 +5212,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Rc_None" xml:space="preserve">
     <value>レシピなし</value>
-  </data>
-  <data name="Web_Rc_RecipeValue" xml:space="preserve">
-    <value>レシピ値</value>
-  </data>
-  <data name="Web_Rc_RecipeId" xml:space="preserve">
-    <value>レシピ ID</value>
   </data>
   <data name="Web_St_Title" xml:space="preserve">
     <value>収集設定（読み取り専用）</value>
@@ -5789,9 +5534,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="F329" xml:space="preserve">
     <value>警報_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
   </data>
-  <data name="F330" xml:space="preserve">
-    <value>{0} 件、Tab={1}</value>
-  </data>
   <data name="Web_Recipe" xml:space="preserve">
     <value>レシピ</value>
   </data>
@@ -5809,6 +5551,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_ConnLost" xml:space="preserve">
     <value>接続が切れました。再接続中…</value>
+  </data>
+  <data name="Web_ConnStale" xml:space="preserve">
+    <value>データが {0}s 停滞しています。収集サービスが停止している可能性があります</value>
   </data>
   <data name="Web_RecipeInfo" xml:space="preserve">
     <value>レシピ {0}：{1}</value>
@@ -6408,9 +6153,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。</value>
   </data>
-  <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
-    <value>機種</value>
-  </data>
   <data name="Ux_DeviceWizardNameDuplicate" xml:space="preserve">
     <value>設備名は既に存在します</value>
   </data>
@@ -6420,17 +6162,11 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Ux_DeviceWizardNext" xml:space="preserve">
     <value>次へ</value>
   </data>
-  <data name="Ux_DeviceWizardReviewHint" xml:space="preserve">
-    <value>内容を確認し、完了をクリックして設備を作成します。</value>
-  </data>
   <data name="Ux_DeviceWizardStepAddresses" xml:space="preserve">
     <value>PLC アドレス</value>
   </data>
   <data name="Ux_DeviceWizardStepBasic" xml:space="preserve">
     <value>基本情報</value>
-  </data>
-  <data name="Ux_DeviceWizardStepReview" xml:space="preserve">
-    <value>確認</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
     <value>OEE 性能率と速度比較に使用します（単位：個/時間）。</value>
@@ -6475,13 +6211,13 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>システム概要</value>
   </data>
   <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
-    <value> output</value>
+    <value>MainAPP は設備状態・生産数・アラーム・OEE を一覧表示します。サイドバーでページ切替、左下の点が PLC 接続状態です。</value>
   </data>
   <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
     <value>まず PLC 接続を確認</value>
   </data>
   <data name="Ux_FirstRunPlcBody" xml:space="preserve">
-    <value> port</value>
+    <value>初回前に PLC IP・ポート・ネットワークを確認してください。「設定」で接続を確認、緑の点は接続済み。</value>
   </data>
   <data name="Ux_FirstRunNavTitle" xml:space="preserve">
     <value>主要ページ</value>
@@ -6625,9 +6361,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K763" xml:space="preserve">
     <value>期限超過</value>
   </data>
-  <data name="K764" xml:space="preserve">
-    <value>CSV から工単を一括インポート（列名はエクスポートテンプレートと同一）</value>
-  </data>
   <data name="K765" xml:space="preserve">
     <value>目標</value>
   </data>
@@ -6637,23 +6370,11 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K767" xml:space="preserve">
     <value>達成率</value>
   </data>
-  <data name="K768" xml:space="preserve">
-    <value>絞り込み結果</value>
-  </data>
-  <data name="K769" xml:space="preserve">
-    <value>工単番号をコピー</value>
-  </data>
-  <data name="K770" xml:space="preserve">
-    <value>製品コードをコピー</value>
-  </data>
   <data name="K771" xml:space="preserve">
     <value>タイムライン</value>
   </data>
   <data name="K772" xml:space="preserve">
     <value>作成</value>
-  </data>
-  <data name="K773" xml:space="preserve">
-    <value>予定開始</value>
   </data>
   <data name="K774" xml:space="preserve">
     <value>実開始</value>
@@ -6742,9 +6463,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K917" xml:space="preserve">
     <value>設備・工単・シフト・時間・判定結果を表示します</value>
   </data>
-  <data name="K918" xml:space="preserve">
-    <value>SN明細</value>
-  </data>
   <data name="K919" xml:space="preserve">
     <value>合計 {0} 件</value>
   </data>
@@ -6772,7 +6490,97 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="K927" xml:space="preserve">
     <value>{0} ページ目</value>
   </data>
-  <data name="K928" xml:space="preserve">
-    <value>概要</value>
+  <data name="Web_Csv_EventTime" xml:space="preserve">
+    <value>イベント時刻</value>
+  </data>
+  <data name="Web_Csv_Time" xml:space="preserve">
+    <value>時刻</value>
+  </data>
+  <data name="Web_Csv_DeviceId" xml:space="preserve">
+    <value>設備ID</value>
+  </data>
+  <data name="Web_Csv_DeviceName" xml:space="preserve">
+    <value>設備名</value>
+  </data>
+  <data name="Web_Csv_AlarmId" xml:space="preserve">
+    <value>アラームID</value>
+  </data>
+  <data name="Web_Csv_AlarmName" xml:space="preserve">
+    <value>アラーム名</value>
+  </data>
+  <data name="Web_Csv_PlcAddress" xml:space="preserve">
+    <value>PLCアドレス</value>
+  </data>
+  <data name="Web_Csv_EventType" xml:space="preserve">
+    <value>イベント種別</value>
+  </data>
+  <data name="Web_Csv_EventTypeText" xml:space="preserve">
+    <value>イベント種別テキスト</value>
+  </data>
+  <data name="Web_Csv_Shift" xml:space="preserve">
+    <value>シフト</value>
+  </data>
+  <data name="Web_Csv_OkCount" xml:space="preserve">
+    <value>OK生産数</value>
+  </data>
+  <data name="Web_Csv_NgCount" xml:space="preserve">
+    <value>NG生産数</value>
+  </data>
+  <data name="Web_Csv_StatusWord" xml:space="preserve">
+    <value>ステータスワード</value>
+  </data>
+  <data name="Web_Csv_PrevState" xml:space="preserve">
+    <value>前回状態</value>
+  </data>
+  <data name="Web_Csv_CurrState" xml:space="preserve">
+    <value>現在状態</value>
+  </data>
+  <data name="Web_Csv_PrevStateText" xml:space="preserve">
+    <value>前回状態テキスト</value>
+  </data>
+  <data name="Web_Csv_CurrStateText" xml:space="preserve">
+    <value>現在状態テキスト</value>
+  </data>
+  <data name="Web_Csv_Metric" xml:space="preserve">
+    <value>指標</value>
+  </data>
+  <data name="Web_Csv_Value" xml:space="preserve">
+    <value>値</value>
+  </data>
+  <data name="Web_Csv_RunSeconds" xml:space="preserve">
+    <value>稼働時間(s)</value>
+  </data>
+  <data name="Web_Csv_AlarmSeconds" xml:space="preserve">
+    <value>アラーム時間(s)</value>
+  </data>
+  <data name="Web_Csv_TargetCycle" xml:space="preserve">
+    <value>目標タクト(個/時)</value>
+  </data>
+  <data name="Web_Csv_SumAlarm" xml:space="preserve">
+    <value># 発報：{0} 回、復旧：{1} 回、未復旧：{2} 件</value>
+  </data>
+  <data name="Web_Csv_SumRange" xml:space="preserve">
+    <value># 照会範囲：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}</value>
+  </data>
+  <data name="Web_Csv_SumProd" xml:space="preserve">
+    <value># OK合計：{0} 個、NG合計：{1} 個、良品率：{2}</value>
+  </data>
+  <data name="Web_Csv_SumStatus" xml:space="preserve">
+    <value># 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h</value>
+  </data>
+  <data name="Web_Csv_SumDevice" xml:space="preserve">
+    <value># 設備：{0}</value>
+  </data>
+  <data name="Web_Csv_FileAlarm" xml:space="preserve">
+    <value>alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Csv_FileProd" xml:space="preserve">
+    <value>production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Csv_FileStatus" xml:space="preserve">
+    <value>status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Unit_PerHour" xml:space="preserve">
+    <value>個/h</value>
   </data>
 </root>

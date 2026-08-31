@@ -1,4 +1,4 @@
-Resource,Key,zh-CN,en-US,ja-JP,pt-BR
+﻿Resource,Key,zh-CN,en-US,ja-JP,pt-BR
 Wpf,Nav_Home,主页,Home,ホーム,Início
 Wpf,Nav_ProductionLine,产线总览,Production Line,生産ライン,Visão geral da linha
 Wpf,Nav_AlarmCenter,报警中心,Alarm Center,アラームセンター,Central de alarmes
@@ -16,9 +16,7 @@ Wpf,Status_Running,运行,Running,稼働中,Em execução
 Wpf,Status_Alarm,报警,Alarm,アラーム,Alarme
 Wpf,Status_Paused,待机,Standby,待機,Em espera
 Wpf,Status_Unknown,未知,Unknown,不明,Desconhecido
-Wpf,Status_Idle,空闲,Idle,アイドル,Ocioso
 Wpf,Common_Save,保存设置,Save Settings,設定を保存,Salvar configurações
-Wpf,Common_Cancel,取消,Cancel,キャンセル,Cancelar
 Wpf,Common_Language,语言,Language,言語,Idioma
 Wpf,Common_RestartRequired,语言切换将在重启后生效。,Language change takes effect after restart.,言語の切り替えは再起動後に有効になります。,A alteração do idioma terá efeito após reiniciar.
 Wpf,Settings_DisplaySettings,显示设置,Display Settings,表示設定,Configurações de exibição
@@ -37,9 +35,6 @@ Wpf,Settings_Warn_PlcChanged,PLC 连接参数已变更，保存后将断开当�
 Wpf,Settings_Warn_DataModeChanged,数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。,Data acquisition mode changed. Saving will switch the data source (local / remote collector service).,データ収集モードが変更されました。保存するとデータソース（ローカル / リモート収集サービス）が切り替わります。,"O modo de aquisição de dados foi alterado. Ao salvar, a fonte de dados será alternada (serviço local/remoto de coleta)."
 Wpf,Settings_Warn_RunModeChanged,运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。,Run mode changed. Saving will change the run mode (full / viewer only).,実行モードが変更されました。保存すると実行モード（フル / 表示のみ）が変更されます。,"O modo de execução foi alterado. Ao salvar, o modo será alterado (completo/somente visualização)."
 Wpf,Settings_ConfirmSave,是否继续保存？,Continue saving?,保存を続行しますか？,Continue saving?
-Wpf,Language_Chinese,中文,Chinese,中国語,Chinese
-Wpf,Language_English,英文,English,英語,English
-Wpf,Language_Japanese,日文,Japanese,日本語,Japanese
 Wpf,Settings_DailyReportMaster,日报主节点,Daily report master node,日報マスターノード,Daily report master node
 Wpf,Settings_DailyReportMasterHint,多屏部署时，只在一台「主节点」上开启此开关生成日报；其他屏端保持关闭，避免重复生成 PDF。,"In multi-screen deployments, enable this only on the single master node that should generate daily reports; keep it off on other screens to avoid duplicate PDFs.",複数画面構成では、日報を生成する「マスターノード」1台のみでこれを有効にし、他の画面ではオフにして重複PDFを防ぎます。,"Em implantações com várias telas, habilite esta opção somente no nó mestre que deve gerar os relatórios diários; mantenha-a desativada nas outras telas para evitar PDFs duplicados."
 Wpf,Csv_LabelRange,统计范围,Range,集計範囲,Range
@@ -62,8 +57,8 @@ Wpf,Wo_Device,关联设备,Device,関連設備,Device
 Wpf,Wo_CreatedAt,创建时间,Created at,作成日時,Created at
 Wpf,Wo_LastStatusChange,最近状态变更,Last status change,最終状態変更,Last status change
 Wpf,Home_DeviceHealth,设备健康,Device health,設備健全性,Device health
-Wpf,Home_DeviceHealthTooltip,"健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.","健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。","Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
-Wpf,F_DeviceHealthBreakdown,"当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}","Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}"
+Wpf,Home_DeviceHealthTooltip,健康分 = 30%×可用率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×稳定性(S)。A/P/Q 为 OEE 口径；S = 1 − 报警/(运行+报警+暂停)，不含离线。,"Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline.",健康スコア = 30%×可動率(A) + 20%×性能率(P) + 25%×良品率(Q) + 25%×安定性(S)。A/P/Q は OEE 口径。S = 1 − アラーム/(運転+アラーム+一時停止)、オフライン除外。,"Health = 30%×Availability + 20%×Performance + 25%×Quality + 25%×Stability. A/P/Q use OEE window; S = 1 − alarm/(run+alarm+pause), excludes offline."
+Wpf,F_DeviceHealthBreakdown,当前：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0},Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0},現在：30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0},Current: 30%×{0:P0} + 20%×{1:P0} + 25%×{2:P0} + 25%×{3:P0} = {4:0}
 Wpf,Home_DeviceHealth_Healthy,健康,Healthy,健全,Healthy
 Wpf,Home_DeviceHealth_Good,良好,Good,良好,Good
 Wpf,Home_DeviceHealth_Attention,关注,Needs attention,注意,Attention
@@ -88,8 +83,6 @@ Wpf,Rtmon_DiagOverview,总体状态,Overview,全体状態,Visão geral
 Wpf,Rtmon_TxtFilter,文本文件|*.txt|所有文件|*.*,Text files|*.txt|All files|*.*,テキストファイル|*.txt|すべてのファイル|*.*,Arquivos de texto|*.txt|Todos os arquivos|*.*
 Wpf,Conn_Live,实时,Live,リアルタイム,Live
 Wpf,Conn_Disconnected,未连接,Disconnected,未接続,Disconnected
-Wpf,Conn_Reconnecting,重连中,Reconnecting,再接続中,Reconnecting
-Wpf,Conn_Stale,数据停滞,Data Stalled,データ停滞,Data Stalled
 Wpf,EventType_Triggered,触发,Triggered,発生,Triggered
 Wpf,EventType_Recovered,恢复,Recovered,復帰,Recovered
 Wpf,EventType_ShiftChange,班次切换,Shift Change,シフト切替,Shift Change
@@ -197,11 +190,6 @@ Wpf,K090,报警次数,Alarm Count,アラーム回数,Alarm Count
 Wpf,K091,最长停机,Longest Downtime,最長停止,Longest Downtime
 Wpf,K092,取消,Cancel,キャンセル,Cancel
 Wpf,K093,确定,OK,OK,OK
-Wpf,K094,产量 / 不良,Output / Defects,生産量 / 不良,Output / Defects
-Wpf,K095,运行 / 报警,Running / Alarm,稼働 / アラーム,Running / Alarm
-Wpf,K096,性能效率,Performance Efficiency,性能効率,Performance Efficiency
-Wpf,K097,目标 / 实际,Target / Actual,目標 / 実績,Target / Actual
-Wpf,K098,综合停机,Total Downtime,総停止,Total Downtime
 Wpf,K099,PLC 连接,PLC Connection,PLC接続,PLC Connection
 Wpf,K100,累计断线,Cumulative Disconnects,累積切断,Cumulative Disconnects
 Wpf,K101,复制机器码,Copy Machine Code,マシンコードをコピー,Copy Machine Code
@@ -233,7 +221,6 @@ Wpf,K126,今日触发,Triggered Today,本日発生,Triggered Today
 Wpf,K127,今日恢复,Recovered Today,本日復帰,Recovered Today
 Wpf,K128,最早报警·已持续,Earliest Alarm · Ongoing,最早アラーム・継続中,Earliest Alarm · Ongoing
 Wpf,K129,影响设备,Affected Device,影響設備,Affected Device
-Wpf,K130,最频繁报警,Most Frequent Alarms,頻発アラーム,Most Frequent Alarms
 Wpf,K131,高级,High,高,High
 Wpf,K132,中级,Medium,中,Medium
 Wpf,K133,低级,Low,低,Low
@@ -284,7 +271,7 @@ Wpf,K177,计数器报警 PLC 地址,Counter Alarm PLC Address,カカカウンタ
 Wpf,K178,阈值上限,Upper Threshold,閾値上限,Upper Threshold
 Wpf,K179,计数器报警阈值上限,Counter Alarm Upper Threshold,カカカウンタアラーム閾値上限,Counter Alarm Upper Threshold
 Wpf,K180,单位,Unit,単位,Unit
-Wpf,K181,计数单位,Count Unit,カカカウント単位,Count Unit
+Wpf,K181,计数单位,Count Unit,カウント単位,Count Unit
 Wpf,K182,计数器报警描述,Counter Alarm Description,カカカウンタアラーム説明,Counter Alarm Description
 Wpf,K183,当前值：,Current value:,現在値：,Valor atual:
 Wpf,K184,已超限,Exceeded,上限超過,Exceeded
@@ -437,7 +424,6 @@ Wpf,K330,新报警静音,Mute New Alarms,新規アラームをミュート,Mute 
 Wpf,K331,切换新报警声音与闪烁；报警列表仍照常更新,Toggle sound and flashing for new alarms; the alarm list still updates,新規アラームの音と点滅を切替（一覧は更新されます）,Toggle sound and flashing for new alarms; the alarm list still updates
 Wpf,K332,级别,Level,レベル,Level
 Wpf,K333,实时故障列表,Real-time Fault List,リアルタイム故障一覧,Real-time Fault List
-Wpf,K334,暂无活跃故障,No Active Faults,アクティブな故障なし,No Active Faults
 Wpf,K335,生产仪表板,Production Dashboard,生産ダッシュボード,Production Dashboard
 Wpf,K336,PLC 未连接,PLC Disconnected,PLC未接続,PLC Disconnected
 Wpf,K337,PLC 已连接,PLC Connected,PLC接続済み,PLC Connected
@@ -461,7 +447,6 @@ Wpf,K354,设备健康评分,Device Health Score,設備健全度スコア,Device 
 Wpf,K355,产品 / 批次,Product / Batch,製品 / ロット,Product / Batch
 Wpf,K356,当前配方,Current Recipe,現在のレシピ,Current Recipe
 Wpf,K357,配方值来自当前设备配置,Recipe value from current device config,レシピ値は現在の設備設定に基づく,Recipe value from current device config
-Wpf,K358,时间线选择,Timeline Selection,タイムライン選択,Timeline Selection
 Wpf,K359,复盘结论,Review Conclusion,レビュー結論,Review Conclusion
 Wpf,K360,根据当前生产、设备与质量数据生成分析结论,"Conclusion generated from production, device and quality data",生産・設備・品質データから分析結論を生成,"Conclusion generated from production, device and quality data"
 Wpf,K361,次,times,回,times
@@ -476,11 +461,9 @@ Wpf,K369,产量趋势,Output Trend,生産量トレンド,Output Trend
 Wpf,K370,按时间范围查看产量变化,View output changes over the time range,時間範囲の生産量変化を表示,View output changes over the time range
 Wpf,K371,Top 5 报警,Top 5 Alarms,トップ5アラーム,Top 5 Alarms
 Wpf,K372,当前时间范围内的主要报警,Main alarms in the current time range,現在の時間範囲の主要アラーム,Main alarms in the current time range
-Wpf,K373,高频重复,Frequent Repeats,頻発繰り返し,Frequent Repeats
 Wpf,K374,暂无报警记录,No alarm records,アラーム記録なし,No alarm records
 Wpf,K375,设备状态时间线,Device Status Timeline,設備状態タイムライン,Device Status Timeline
 Wpf,K376,运行、暂停、报警与未知区间；点击格子查看该段产量与报警,"Running, paused, alarm and unknown intervals; click a cell to view its output and alarms",稼働・待機・アラーム・不明区間。セルをクリックして生産量とアラームを表示,"Running, paused, alarm and unknown intervals; click a cell to view its output and alarms"
-Wpf,K377,运行无产量,"Running, No Output",稼働中・生産なし,"Running, No Output"
 Wpf,K378,当前设备明细,Current Device Details,現在の設備明細,Current Device Details
 Wpf,K379,所选设备的产量、运行时长与 OEE,"Output, run time and OEE of the selected device",選択設備の生産量、稼働時間、OEE,"Output, run time and OEE of the selected device"
 Wpf,K380,产量,Output,生産量,Output
@@ -497,7 +480,6 @@ Wpf,K390,当前设备缺陷帕累托,Current Device Defect Pareto,現在の設�
 Wpf,K391,按所选时间范围内新增缺陷数量排序,Ranked by defects added in the selected time range,選択した時間範囲で追加された欠陥数で並べ替え,Ranked by defects added in the selected time range
 Wpf,K392,暂无当前累计缺陷,No cumulative defects,累積不良なし,No cumulative defects
 Wpf,K393,缺陷计数来自设备当前累计快照，不代表所选时间范围,"Defect counts come from the device cumulative snapshot, not the selected range",不良数は設備の累積スナップショットに基づき、選択範囲を表しません,"Defect counts come from the device cumulative snapshot, not the selected range"
-Wpf,K394,缺陷集中班次 / 时段,Defect Concentration Shift/Period,不良集中シフト/時間帯,Defect Concentration Shift/Period
 Wpf,K395,停机分析,Downtime Analysis,停止分析,Downtime Analysis
 Wpf,K396,基于当前设备状态和报警历史计算,Computed from current device status and alarm history,現在の設備状態とアラーム履歴に基づき計算,Computed from current device status and alarm history
 Wpf,K397,总停机时长,Total Downtime,総停止時間,Total Downtime
@@ -507,16 +489,12 @@ Wpf,K400,查看不同设备在各时段的产量分布,View output distribution 
 Wpf,K401,暂无热力图数据,No heatmap data,ヒートマップデータなし,No heatmap data
 Wpf,K402,设备未运行或未采集到产量,Device not running or no output acquired,設備が未稼働か生産量が未収集,Device not running or no output acquired
 Wpf,K403,设备名,Device Name,設備名,Device Name
-Wpf,K404,不良(件),Defects (pcs),不良（個）,Defects (pcs)
 Wpf,K405,产线总览,Production Line,生産ライン,Production Line
 Wpf,K406,按设备名搜索,Search by device name,設備名で検索,Search by device name
-Wpf,K407,按设备名搜索 (Ctrl+F),Search by device name (Ctrl+F),設備名で検索（Ctrl+F）,Search by device name (Ctrl+F)
 Wpf,K408,排序,Sort,並替,Sort
 Wpf,K409,报警优先,Alarm First,アラーム優先,Alarm First
 Wpf,K410,默认,Default,既定,Default
 Wpf,K411,产量↓,Output ↓,生産量↓,Output ↓
-Wpf,K412,报警中,Alarming,アラーム中,Alarming
-Wpf,K413,整体良品率,Overall Quality Rate,全体良品率,Overall Quality Rate
 Wpf,K414,加权 OEE,Weighted OEE,加重OEE,Weighted OEE
 Wpf,K415,当前班次：,Current Shift:,現在のシフト：,Turno atual:
 Wpf,K416,暂无设备,No Devices,設備なし,No Devices
@@ -541,7 +519,6 @@ Wpf,K434,设备读取,Device Reads,設備読取り,Device Reads
 Wpf,K435,配置设备数,Configured Devices,設定設備数,Configured Devices
 Wpf,K436,最近成功读取,Recent Successful Reads,直近成功読取り,Recent Successful Reads
 Wpf,K437,最近成功时间,Last Success Time,直近成功時刻,Last Success Time
-Wpf,K438,累计失败轮询,Cumulative Failed Polls,累積失敗ポーリング,Cumulative Failed Polls
 Wpf,K439,最近成功读取表示上一轮至少成功读取到的设备数量；0 台时会触发断线判定或表示当前没有可读地址。,Successful reads in the last round; 0 triggers disconnect or means no readable addresses.,直近成功読取りは前ラウンドで少なくとも1台成功した設備数。0台は切断判定または読取り可能アドレスなしを意味します。,Successful reads in the last round; 0 triggers disconnect or means no readable addresses.
 Wpf,K440,PLC 通信详情,PLC Communication Details,PLC通信詳細,PLC Communication Details
 Wpf,K441,连接端点,Connection Endpoint,接続エンドポイント,Connection Endpoint
@@ -551,7 +528,6 @@ Wpf,K444,采集质量与读取性能,Acquisition Quality & Read Performance,収�
 Wpf,K445,轮询成功率,Poll Success Rate,ポーリング成功率,Poll Success Rate
 Wpf,K446,读取点数 / 配置,Read Points / Configured,読取り点数 / 設定,Read Points / Configured
 Wpf,K447,最近成功设备,Recent Successful Devices,直近成功設備,Recent Successful Devices
-Wpf,K448,最大采集周期,Max Acquisition Cycle,最大収集周期,Max Acquisition Cycle
 Wpf,K449,采集成功率,Acquisition Success Rate,収集成功率,Acquisition Success Rate
 Wpf,K450,历史写入健康度,History Write Health,履歴書込み健全度,History Write Health
 Wpf,K451,待写入快照,Pending Snapshots,書込み待ちスナップショット,Pending Snapshots
@@ -583,8 +559,6 @@ Wpf,K476,激活时间：,Activation Time:,アクティベーション時刻：,H
 Wpf,K477,到期时间：,Expiry Time:,有効期限：,Hora de expiração:
 Wpf,K478,激活码：,License Key:,アクティベーションコード：,Chave de licença:
 Wpf,K479,复制激活码,Copy License Key,アクティベーションコードをコピー,Copy License Key
-Wpf,K480,数据源与运行模式,Data Source & Run Mode,データソースと実行モード,Data Source & Run Mode
-Wpf,K481,选择数据来源（本地采集 / 远程采集服务）与程序运行模式。,Choose data source (local / remote collector) and run mode.,データソース（ローカル収集 / リモート収集）と実行モードを選択します。,Choose data source (local / remote collector) and run mode.
 Wpf,K482,数据采集模式,Data Acquisition Mode,データ収集モード,Data Acquisition Mode
 Wpf,K483,远程模式连接 Kanban.Collector 采集服务，支持多屏共享同一数据源。,Remote mode connects to the Kanban.Collector service; multiple screens share one data source.,リモートモードはKanban.Collectorに接続し、複数画面で同一データソースを共有します。,Remote mode connects to the Kanban.Collector service; multiple screens share one data source.
 Wpf,K484,本地采集（单机模式）,Local Acquisition (standalone),ローカル収集（スタンドアロン）,Local Acquisition (standalone)
@@ -602,8 +576,6 @@ Wpf,K495,展示模式（仅大屏页面）,Viewer Mode (Dashboard Only),表示�
 Wpf,K496,展示模式,Viewer Mode,表示モード,Viewer Mode
 Wpf,K497,PLC 连接配置,PLC Connection Config,PLC接続設定,PLC Connection Config
 Wpf,K498,配置通信地址、采集频率和显示密度。,"Configure communication address, acquisition rate and display density.",通信アドレス、収集頻度、表示密度を設定します。,"Configure communication address, acquisition rate and display density."
-Wpf,K499,连接与协议,Connection & Protocol,接続とプロトコル,Connection & Protocol
-Wpf,K500,选择 PLC 品牌并配置通信参数。,Select PLC brand and configure communication parameters.,PLCブランドを選択し通信パラメータを設定します。,Select PLC brand and configure communication parameters.
 Wpf,K501,IP 地址,IP Address,IPアドレス,IP Address
 Wpf,K502,PLC IP 地址,PLC IP Address,PLC IPアドレス,PLC IP Address
 Wpf,K503,PLC 端口,PLC Port,PLCポート,PLC Port
@@ -657,34 +629,25 @@ Wpf,K552,工单编辑,Edit Work Order,工単編集,Edit Work Order
 Wpf,K553,计划产量（件）,Planned Output (pcs),計画生産量（個）,Planned Output (pcs)
 Wpf,K554,工单列表,Work Order List,工単一覧,Work Order List
 Wpf,K555,搜索工单号/产品/设备,Search order/product/device,工単番号/製品/設備を検索,Search order/product/device
-Wpf,K556,计划时间从,Planned From,計画開始,Planned From
-Wpf,K557,计划时间至,Planned To,計画終了,Planned To
 Wpf,K558,工单排程排序,Order Schedule Sort,工単スケジュール並替,Order Schedule Sort
-Wpf,K559,按计划时间或状态排序,Sort by planned time or status,計画時間または状態で並替,Sort by planned time or status
 Wpf,K560,仅超期,Overdue Only,期限超過のみ,Overdue Only
 Wpf,K561,仅达标,Met Only,達成のみ,Met Only
 Wpf,K562,有 NG,Has NG,NGあり,Has NG
-Wpf,K563,工单号 / 产品,Order No. / Product,工単番号 / 製品,Order No. / Product
-Wpf,K564,已生产,Produced,生産済,Produced
 Wpf,K565,点击下方「新增」或调整筛选条件,"Click ""Add"" below or adjust filters",下の「追加」をクリックするかフィルターを調整,"Click ""Add"" below or adjust filters"
 Wpf,K566,未找到匹配的工单,No matching work order,一致する工単なし,No matching work order
 Wpf,K567,复制当前工单并创建新的待开始工单,Copy the current order as a new pending order,現在の工単をコピーして新規未開始工単を作成,Copy the current order as a new pending order
 Wpf,K568,刷新产量,Refresh Output,生産量を更新,Refresh Output
 Wpf,K569,查询所有工单的产量数据并更新列表进度,Query output of all orders and update progress,全工単の生産量を照会し進捗を更新,Query output of all orders and update progress
-Wpf,K570,导出当前筛选结果到 CSV 文件,Export current filtered results to CSV,現在の絞り込み結果をCSVにエクスポート,Export current filtered results to CSV
 Wpf,K571,生成样本,Generate Samples,サンプル生成,Generate Samples
 Wpf,K572,生成样本工单用于预览（需密码确认）,Generate sample orders for preview (password required),プレビュー用のサンプル工単を生成（パスワード確認あり）,Generate sample orders for preview (password required)
 Wpf,K573,调整工单列表与工单详情的宽度,Adjust width of order list and detail,工単一覧と詳細の幅を調整,Adjust width of order list and detail
 Wpf,K574,支持搜索工单号、产品名称或设备名快速定位,"Search by order no., product name or device name",工単番号、製品名、設備名で検索可能,"Search by order no., product name or device name"
-Wpf,K575,不良产量,Defective Output,不良生産量,Defective Output
 Wpf,K576,达成率,Achievement Rate,達成率,Achievement Rate
 Wpf,K577,折叠展开侧边栏,Collapse/Expand Sidebar,サイドバーを折畳/展開,Collapse/Expand Sidebar
 Wpf,K578,折叠/展开侧边栏,Collapse/Expand Sidebar,サイドバー折畳/展開,Collapse/Expand Sidebar
 Wpf,K579,看板系统,Kanban System,看板システム,Kanban System
-Wpf,K580,累计断线次数,Cumulative Disconnects,累積切断回数,Cumulative Disconnects
 Wpf,K581,授权状态,License Status,ライセンス状態,License Status
 Wpf,K582,主导航,Main Navigation,メインナビゲーション,Main Navigation
-Wpf,M001,安全验证,Security Verification,セキュリティ検証,Security Verification
 Wpf,M002,未找到 Microsoft YaHei 中文字体，无法生成 PDF,Microsoft YaHei font not found; cannot generate PDF,Microsoft YaHeiフォントが見つからず、PDFを生成できません,Microsoft YaHei font not found; cannot generate PDF
 Wpf,M003,所选文件中没有设备数据,No device data in the selected file,選択ファイルに設備データがありません,No device data in the selected file
 Wpf,M004,未找到上一版本备份文件,Previous version backup not found,前回バージョンのバックアップが見つかりません,Previous version backup not found
@@ -696,7 +659,6 @@ Wpf,M009,保存成功,Saved successfully,保存しました,Saved successfully
 Wpf,M010,密码错误，已取消恢复操作,Wrong password; restore cancelled,パスワードが違います。復元をキャンセルしました,Wrong password; restore cancelled
 Wpf,M011,当前 Tab 无数据可导出,No data in the current tab to export,現在のタブにエクスポートできるデータがありません,No data in the current tab to export
 Wpf,M012,● 达标,● Met,● 達成,● Met
-Wpf,M013,通信中断,Communication Lost,通信断,Communication Lost
 Wpf,M014,采集已停止,Acquisition Stopped,収集停止,Acquisition Stopped
 Wpf,M015,试用授权,Trial License,試用ライセンス,Trial License
 Wpf,M016,激活成功,Activation Successful,アクティベーション成功,Activation Successful
@@ -720,9 +682,6 @@ Wpf,M033,已超期未完成,"Overdue, Incomplete",期限超過・未完了,"Over
 Wpf,M034,当前筛选结果为空，无可导出的工单,No work orders match the current filter,現在の絞り込みに一致する工単がありません,No work orders match the current filter
 Wpf,M035,请先在设备管理页添加设备,Add devices in Device Management first,先に設備管理ページで設備を追加してください,Add devices in Device Management first
 Wpf,M036,提示,Tip,ヒント,Tip
-Wpf,M037,错误,Error,エラー,Error
-Wpf,M038,确认,Confirm,確認,Confirm
-Wpf,M039,警告,Warning,警告,Warning
 Wpf,M040,全部,All,すべて,All
 Wpf,M041,待开始,Pending,未開始,Pending
 Wpf,M042,进行中,In Progress,進行中,In Progress
@@ -827,7 +786,6 @@ Wpf,F072,写入成功 ({0:HH:mm:ss}),Write OK ({0:HH:mm:ss}),書き込み成功�
 Wpf,F073,刷新报警统计失败: {0},Failed to refresh alarm statistics: {0},アラーム統計の更新に失敗しました: {0},Failed to refresh alarm statistics: {0}
 Wpf,F074,剩余 {0:F1} GB,{0:F1} GB free,空き {0:F1} GB,{0:F1} GB free
 Wpf,F075,历史写入间隔不能小于 1，当前值: {0},"History write interval must not be less than 1, current: {0}",履歴書き込み間隔は 1 以上である必要があります。現在値: {0},"History write interval must not be less than 1, current: {0}"
-Wpf,F076,历史数据写入失败：{0},Failed to write history data: {0},履歴データの書き込みに失敗しました: {0},Failed to write history data: {0}
 Wpf,F077,历史查询失败：{0},History query failed: {0},履歴クエリに失敗しました: {0},History query failed: {0}
 Wpf,F078,发现 {0} 项问题,{0} issues found,{0} 件の問題を検出,{0} issues found
 Wpf,F079,可用率 {0:P1}，损失 {1:P1},"Availability {0:P1}, loss {1:P1}",稼働率 {0:P1}、損失 {1:P1},"Availability {0:P1}, loss {1:P1}"
@@ -871,7 +829,6 @@ Wpf,F102,"已导入 {0} 条报警（{1} 行跳过）。
 ","{0} alarms imported ({1} rows skipped).
 "
 Wpf,F103,已导入 {0} 条报警，请点击保存以持久化,{0} alarms imported; click Save to persist,{0} 件のアラームをインポートしました。保存して永続化してください,{0} alarms imported; click Save to persist
-Wpf,F104,已导出 {0} 条 → {1},Exported {0} rows → {1},{0} 件をエクスポートしました → {1},Exported {0} rows → {1}
 Wpf,F105,已导出 {0} 台设备到 {1},Exported {0} devices to {1},{0} 台のデバイスを {1} にエクスポートしました,Exported {0} devices to {1}
 Wpf,F106,已导出 {0} 条工单 → {1},Exported {0} work orders → {1},{0} 件の工単をエクスポートしました → {1},Exported {0} work orders → {1}
 Wpf,F107,已导出 {0} 条报警 → {1},Exported {0} alarms → {1},{0} 件のアラームをエクスポートしました → {1},Exported {0} alarms → {1}
@@ -984,7 +941,6 @@ Wpf,F165,状态历史查询失败：{0},Failed to query status history: {0},状�
 Wpf,F166,班次{0},Shift {0},班 {0},Shift {0}
 Wpf,F167,生产复盘 PDF 已导出：{0},Review PDF exported: {0},レビュー PDF をエクスポートしました: {0},Review PDF exported: {0}
 Wpf,F168,生产复盘报表已导出：{0},Review report exported: {0},レビューレポートをエクスポートしました: {0},Review report exported: {0}
-Wpf,F169,目标 {0:F0} 件/桶,Target {0:F0} pcs/bucket,目標 {0:F0} 個/バケット,Target {0:F0} pcs/bucket
 Wpf,F170,目标 {0:P0},Target {0:P0},目標 {0:P0},Target {0:P0}
 Wpf,F171,目标 {0:P2},Target {0:P2},目標 {0:P2},Target {0:P2}
 Wpf,F172,目标 {0} 件/h,Target {0} pcs/h,目標 {0} 個/h,Target {0} pcs/h
@@ -1041,7 +997,6 @@ Wpf,F202,设备「{0}」报警名重复：「{1}」,"Device ""{0}"": duplicate a
 Wpf,F203,设备「{0}」未配置：{1},"Device ""{0}"" not configured: {1}",デバイス「{0}」が未設定です: {1},"Device ""{0}"" not configured: {1}"
 Wpf,F204,设备「{0}」目标周期必须 > 0（当前 {1}）,"Device ""{0}"" target cycle must be > 0 (current {1})",デバイス「{0}」の目標サイクルは 0 より大きい必要があります（現在 {1}）,"Device ""{0}"" target cycle must be > 0 (current {1})"
 Wpf,F205,设备「{0}」缺陷名重复：「{1}」,"Device ""{0}"": duplicate defect name ""{1}""",デバイス「{0}」: 不良名「{1}」が重複しています,"Device ""{0}"": duplicate defect name ""{1}"""
-Wpf,F206,设备「{0}」计数器报警「{1}」阈值上限必须 > 0（当前 {2}）,"Device ""{0}"" counter alarm ""{1}"" upper limit must be > 0 (current {2})",デバイス「{0}」のカカカウンタアラーム「{1}」上限は 0 より大きい必要があります（現在 {2}）,"Device ""{0}"" counter alarm ""{1}"" upper limit must be > 0 (current {2})"
 Wpf,F207,设备「{0}」重复报警 PLC 地址：「{1}」，同一设备内报警地址必须唯一,"Device ""{0}"": duplicate alarm PLC address ""{1}""; alarm addresses must be unique within a device",デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります,"Device ""{0}"": duplicate alarm PLC address ""{1}""; alarm addresses must be unique within a device"
 Wpf,F208,设备「{0}」已有进行中工单 {1}，请先完成或中止,"Device ""{0}"" already has an in-progress work order {1}; finish or abort it first",デバイス「{0}」には進行中の工単 {1} があります。先に完了または中止してください,"Device ""{0}"" already has an in-progress work order {1}; finish or abort it first"
 Wpf,F209,设备名重复：「{0}」（{1} 台），设备名必须唯一,"Duplicate device name ""{0}"" ({1} units); device names must be unique",デバイス名「{0}」が重複しています（{1} 台）。デバイス名は一意である必要があります,"Duplicate device name ""{0}"" ({1} units); device names must be unique"
@@ -1082,7 +1037,6 @@ Wpf,F231,采集服务参数同步失败（本地已保存）：{0},Collection se
 Wpf,F232,采集服务已断开 · {0},Collection service disconnected · {0},収集サービス切断 · {0},Collection service disconnected · {0}
 Wpf,F233,采集服务已断开（{0}）· 第 {1} 次重试,Collection service disconnected ({0}) · retry {1},収集サービス切断（{0}）· {1} 回目の再試行,Collection service disconnected ({0}) · retry {1}
 Wpf,F234,采集服务已重连，断线时长 {0},"Collection service reconnected, downtime {0}",収集サービス再接続、切断時間 {0},"Collection service reconnected, downtime {0}"
-Wpf,F235,释放 Collector 连接失败：{0},Failed to release the Collector connection: {0},Collector 接続の解放に失敗しました: {0},Failed to release the Collector connection: {0}
 Wpf,F236,重建 {0} 次 · 最近 {1} ms,Rebuilds {0} · Last {1} ms,再構築 {0} 回 · 直近 {1} ms,Rebuilds {0} · Last {1} ms
 Wpf,F237,错误：{0},Error: {0},エラー: {0},Error: {0}
 Wpf,F238,，{0} 是主要拖累项（{1:P0} vs {2:P0}）,", {0} is the main drag ({1:P0} vs {2:P0})",、{0} が主な足枷（{1:P0} vs {2:P0}）,", {0} is the main drag ({1:P0} vs {2:P0})"
@@ -1109,23 +1063,13 @@ Wpf,F256,报警 {0:F1}h,Alarm {0:F1}h,警報 {0:F1}時間,Alarm {0:F1}h
 Wpf,F257,合格 {0:N0},OK {0:N0},良品 {0:N0},OK {0:N0}
 Wpf,F258,不合格 {0:N0},NG {0:N0},不良 {0:N0},NG {0:N0}
 Wpf,F259,显示 {0} 条,Showing {0} items,{0} 件を表示,Showing {0} items
-Wpf,F260,超期 {0},Overdue {0},期限超過 {0},Overdue {0}
-Wpf,F261,达标 {0},Met {0},達成 {0},Met {0}
-Wpf,F262,有NG {0},NG {0},NGあり {0},NG {0}
 Wpf,F263,计划冲突 {0},Conflict {0},計画競合 {0},Conflict {0}
-Wpf,F264,配方值 {0},Recipe {0},レシピ値 {0},Recipe {0}
 Wpf,F265,上班次·{0},Last shift {0},前シフト·{0},Last shift {0}
 Wpf,F266,总数 {0},Total {0},合計 {0},Total {0}
 Wpf,F267,{0:F1} 件/h,{0:F1} pcs/h,{0:F1} 個/h,{0:F1} pcs/h
 Wpf,F268,按小时产量（{0}）,Hourly Output ({0}),時間別生産量（{0}）,Hourly Output ({0})
 Wpf,F269,类型 {0},Type {0},タイプ {0},Type {0}
 Wpf,F270,主要 {0},Main {0},主要 {0},Main {0}
-Wpf,F271,较上班次 {0} 件,vs last shift {0} pcs,前シフト比 {0} 個,vs last shift {0} pcs
-Wpf,F272,不良 {0:N0} 件,NG {0:N0} pcs,不良 {0:N0} 個,NG {0:N0} pcs
-Wpf,F273,合计（{0} 台）,Total ({0} units),合計（{0} 台）,Total ({0} units)
-Wpf,F274,重复 {0} 次,Repeated {0}x,繰り返し {0} 回,Repeated {0}x
-Wpf,F275,间隔 {0:F0} min,Interval {0:F0}min,間隔 {0:F0} 分,Interval {0:F0}min
-Wpf,F276,前后产量差 {0:N0},Output diff {0:N0},生産量差 {0:N0},Output diff {0:N0}
 Wpf,F277,已恢复 {0},Recovered {0},復旧 {0},Recovered {0}
 Wpf,F278,/ 待处理 {0},/ Pending {0},/ 処理待ち {0},/ Pending {0}
 Wpf,F279,最近发生：{0:HH:mm:ss},Last occurred: {0:HH:mm:ss},最終発生：{0:HH:mm:ss},Last occurred: {0:HH:mm:ss}
@@ -1136,7 +1080,6 @@ Wpf,F283,每 {0} 次轮询,Every {0} polls,{0} 回ごとポーリング,Every {0
 Wpf,F284,刷新于 {0:HH:mm:ss},Refreshed {0:HH:mm:ss},更新 {0:HH:mm:ss},Refreshed {0:HH:mm:ss}
 Wpf,F285,当前 {0},Current {0},現在 {0},Current {0}
 Wpf,F286,上限 {0},Limit {0},上限 {0},Limit {0}
-Wpf,F287,查看 {0} 详情,View {0} details,{0} 詳細,View {0} details
 Wpf,F288,删除班次 {0},Delete shift {0},シフト {0} 削除,Delete shift {0}
 Wpf,F289,状态字: {0},Status word: {0},状態語: {0},Status word: {0}
 Wpf,F290,检测到 {0} 处跨设备地址冲突，保存时将提示定位,{0} address conflicts detected,{0} 件のクロスデバイスアドレス競合を検出,{0} address conflicts detected
@@ -1192,7 +1135,6 @@ Wpf,F308,"已导入 {0} 条计数器报警（{1} 行跳过）。
 "
 Wpf,F309,已导入 {0} 条计数器报警，请点击保存以持久化,"Imported {0} counter alarms, click Save to persist",{0} 件のカカカウンタアラームをインポートしました。保存をクリックして永続化してください,"Imported {0} counter alarms, click Save to persist"
 Wpf,F310,第 {0} 行：计数器报警名称为空,Row {0}: counter alarm name is empty,行 {0}：カカカウンタアラーム名が空です,Row {0}: counter alarm name is empty
-Wpf,F311,第 {0} 行：阈值上限 '{1}' 不是有效整数,Row {0}: max value '{1}' is not a valid integer,行 {0}：閾値上限 '{1}' は有効な整数ではありません,Row {0}: max value '{1}' is not a valid integer
 Wpf,F312,第 {0} 行：启用状态 '{1}' 无效（应为 True/False）,Row {0}: enabled '{1}' is invalid (expected True/False),行 {0}：有効状態 '{1}' が無効です（True/False のいずれか）,Row {0}: enabled '{1}' is invalid (expected True/False)
 Wpf,F313,第 {0} 行：PLC 地址 '{1}' 应为 DWord 类型，当前为 {2},"Row {0}: PLC address '{1}' should be DWord type, got {2}",行 {0}：PLC アドレス '{1}' は DWord 型である必要があります（現在 {2}）,"Row {0}: PLC address '{1}' should be DWord type, got {2}"
 Wpf,F314,CSV 文件中没有计数器报警数据,No counter alarm data in CSV file,CSV ファイルにカカカウンタアラームデータがありません,No counter alarm data in CSV file
@@ -1201,7 +1143,6 @@ Wpf,F316,{0},{0},{0},{0}
 Wpf,K583,暂无数据,No data,データなし,No data
 Wpf,M049,未断线,Not Disconnected,断線なし,Not Disconnected
 Wpf,M050,Collector 未连接,Collector Not Connected,Collector未接続,Collector Not Connected
-Wpf,M051,进入远程采集模式,Entered Remote Mode,リモートモードに切替,Entered Remote Mode
 Wpf,M052,无积压,No Backlog,バックログなし,No Backlog
 Wpf,M053,配置正常,Configuration OK,設定正常,Configuration OK
 Wpf,M054,不可用,Unavailable,利用不可,Unavailable
@@ -1209,7 +1150,6 @@ Wpf,M055,暂无运行工单,No Active Work Order,稼働中の作業指示なし,
 Wpf,M056,暂无产品信息,No Product Info,製品情報なし,No Product Info
 Wpf,M057,暂无配方信息,No Recipe Info,レシピ情報なし,No Recipe Info
 Wpf,M058,上一周期,Previous Period,前期間,Previous Period
-Wpf,M059,点击任一状态时段查看对应报警与产量,Click a status period to view alarms,ステータス期間をクリックして警報と生産量を表示,Click a status period to view alarms
 Wpf,M060,当前筛选无匹配报警,No matching alarms,現在のフィルタに一致する警報なし,No matching alarms
 Wpf,M061,暂无活跃故障,No active faults,アクティブな故障なし,No active faults
 Wpf,M062,就绪,Ready,準備完了,Ready
@@ -1218,11 +1158,9 @@ Wpf,M064,请输入采集服务地址,Please enter collector address,収集サー
 Wpf,M065,连接成功（采集服务可达）,Connection successful,接続成功（収集サービス到達可能）,Connection successful
 Wpf,M066,小时,Hours,時間,Hours
 Wpf,M067,按小时产量,Hourly Output,時間別生産量,Hourly Output
-Wpf,M069,采集设置已同步,Collection settings synced,収集設定を同期済み,Collection settings synced
 Wpf,M070,服务断开,Service Disconnected,サービス切断,Service Disconnected
 Wpf,M071,PLC断开,PLC Disconnected,PLC切断,PLC Disconnected
 Wpf,M072,无数据,No Data,データなし,No Data
-Wpf,M073,设备名,Device Name,設備名,Device Name
 Wpf,M074,有未保存修改,Unsaved Changes,未保存の変更あり,Unsaved Changes
 Wpf,M075,已保存,Saved,保存済み,Saved
 Wpf,M076,测试中...,Testing...,テスト中...,Testing...
@@ -1296,9 +1234,7 @@ Wpf,M143,授权已过期，请输入新的激活码。,License expired; enter a 
 Wpf,M144,授权与当前机器不匹配，请重新激活。,License does not match this machine; please reactivate.,ライセンスがマシンと一致しないため再アクティブ化してください。,License does not match this machine; please reactivate.
 Wpf,M145,请输入激活码以继续使用。,Enter an activation code to continue.,アクティベーションコードを入力してください。,Enter an activation code to continue.
 Wpf,M146,班次配置变更提示,Shift Configuration Changed,シフト設定変更のお知らせ,Shift Configuration Changed
-Wpf,M147,班次名称不能为空,Shift name cannot be empty,シフト名は必須です,Shift name cannot be empty
 Wpf,M148,最多 {0} 个班次,Up to {0} shifts,最大 {0} シフト,Up to {0} shifts
-Wpf,M149,恢复默认设置,Restore Default Settings,デフォルト設定に戻す,Restore Default Settings
 Wpf,M150,时间稼动率 = 实际运行时间 / 计划运行时间,Availability Rate = Run Time / Planned Time,時間稼働率 = 実稼働時間 / 計画稼働時間,Availability Rate = Run Time / Planned Time
 Wpf,M151,性能达标率 = 实际产量 / 理论产量,Performance Rate = Actual Output / Theoretical Output,性能達成率 = 実生産量 / 理論生産量,Performance Rate = Actual Output / Theoretical Output
 Wpf,M152,良品率 = 合格品 / 总产量,Quality Rate = OK / (OK + NG),良品率 = 良品 / 総生産量,Quality Rate = OK / (OK + NG)
@@ -1317,14 +1253,13 @@ Wpf,M164,本轮失败,Cycle failed,今回失敗,Cycle failed
 Wpf,M165,离线/未连接,Offline/Disconnected,オフライン/未接続,Offline/Disconnected
 Wpf,M166,地址冲突「,Address conflict「,アドレス競合「,Conflito de endereço「
 Wpf,M167,恢复上一版本将覆盖当前未保存的设备配置，请输入密码以继续：,Enter password to restore:,前バージョンを復元すると未保存の設備設定が上書きされます。パスワードを入力して続行：,Enter password to restore:
-Wpf,M168,请输入密码以生成虚拟设备：,Enter password to generate demo devices:,仮想デバイスを生成するにはパスワードを入力：,Enter password to generate demo devices:
 Wpf,M169,生成虚拟设备,Generate Demo Devices,仮想設備を生成,Generate Demo Devices
 Wpf,M170,正在执行 PLC 操作...,Executing PLC operation...,PLC操作を実行中...,Executing PLC operation...
 Wpf,M171,确认 OEE 清零,Confirm OEE Reset,OEE クリア確認,Confirm OEE Reset
 Wpf,M172,已取消,Cancelled,キャンセル済み,Cancelled
 Wpf,M173,设备配置有未保存的修改，确定退出吗？\n未保存的修改将在退出后丢失。,Unsaved changes exist. Exit anyway?,未保存の変更があります。終了しますか？\n未保存の変更は失われます。,Unsaved changes exist. Exit anyway?
 Wpf,M174,未保存的修改,Unsaved Changes,未保存の変更,Unsaved Changes
-Wpf,M175,确认清空计数器报警,Confirm Clear Counter Alarm,カカカウント警報クリア確認,Confirm Clear Counter Alarm
+Wpf,M175,确认清空计数器报警,Confirm Clear Counter Alarm,カウント警報クリア確認,Confirm Clear Counter Alarm
 Wpf,M176,无洞察,No Insights,洞察なし,No Insights
 Wpf,M177,🔴 长报警,Long Alarm,🔴 長時間警報,Long Alarm
 Wpf,M178,最长报警,Longest Alarm,最長警報,Longest Alarm
@@ -1336,7 +1271,6 @@ Wpf,M183,用户取消,User cancelled,ユーザーがキャンセル,User cancell
 Wpf,M184,清零失败,Reset failed,クリア失敗,Reset failed
 Wpf,M185,地址为空,Address is empty,アドレスが空です,Address is empty
 Wpf,M186,PLC 未连接，无法读取,"PLC not connected, cannot read",PLC未接続のため、読み取れません,"PLC not connected, cannot read"
-Wpf,M187,操作超时,Operation Timeout,操作タイムアウト,Operation Timeout
 Wpf,M188,PLC 未连接，无法清空,"PLC not connected, cannot clear",PLC未接続のため、クリアできません,"PLC not connected, cannot clear"
 Wpf,M189,产量趋势图,Output Trend,生産量トレンド図,Output Trend
 Wpf,M190,产量(件),Output(pcs),生産量(個),Output(pcs)
@@ -1357,7 +1291,6 @@ Wpf,M204,持续时间(分钟),Duration (min),継続時間(分),Duration (min)
 Wpf,M205,设备,Device,設備,Device
 Wpf,M206,产量,Output,生産量,Output
 Wpf,M207,报警,Alarm,警報,Alarm
-Wpf,M208,待机,Idle,待機,Idle
 Wpf,M209,报警次数,Alarm Count,アラーム回数,Alarm Count
 Wpf,M210,报警时长(分钟),Alarm Duration (min),警報時間(分),Alarm Duration (min)
 Wpf,M211,停机时长(分钟),Downtime (min),停止時間(分),Downtime (min)
@@ -1366,9 +1299,6 @@ Wpf,M213,目标,Target,目標,Target
 Wpf,M214,实际,Actual,実績,Actual
 Wpf,M215,差距,Gap,差,Gap
 Wpf,M216,数量,Count,数量,Count
-Wpf,M217,百分比(%),Percentage(%),パーセント(%),Percentage(%)
-Wpf,M218,合格,OK,良品,OK
-Wpf,M219,不合格,NG,不良,NG
 Wpf,M220,小时,Hours,時間,Hours
 Wpf,M221,CSV 文件 (*.csv)|*.csv|所有文件 (*.*)|*.*,CSV files (*.csv)|*.csv|All files (*.*)|*.*,CSV ファイル (*.csv)|*.csv|すべてのファイル (*.*)|*.*,CSV files (*.csv)|*.csv|All files (*.*)|*.*
 Wpf,M222,导出报警配置,Export Alarm Config,警報設定をエクスポート,Export Alarm Config
@@ -1384,7 +1314,6 @@ Wpf,M231,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset A
 Wpf,M232,OK 数量地址,OK Count Address,OK数量アドレス,OK Count Address
 Wpf,M233,NG 数量地址,NG Count Address,NG数量アドレス,NG Count Address
 Wpf,M234,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset Address
-Wpf,M276,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset Address
 Wpf,M275,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset Address
 Wpf,M274,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset Address
 Wpf,M273,OEE 清零地址,OEE Reset Address,OEEクリアアドレス,OEE Reset Address
@@ -1438,9 +1367,6 @@ Wpf,M302,前 8 小时,Previous 8 Hours,過去8時間,Previous 8 Hours
 Wpf,M303,前 7 天,Previous 7 Days,過去7日間,Previous 7 Days
 Wpf,M300,前 24 小时,Previous 24 Hours,過去24時間,Previous 24 Hours
 Wpf,Conn_Connected,已连接,Connected,接続済み,Connected
-Wpf,Conn_Lost,连接断开,Connection Lost,接続切断,Connection Lost
-Wpf,Conn_DisconnectedRetry,未连接 (重试间隔{0:F0}s),Disconnected (retry in {0:F0}s),未接続 (再試行間隔{0:F0}秒),Disconnected (retry in {0:F0}s)
-Wpf,Conn_Connecting,正在连接,Connecting,接続中,Connecting
 Wpf,Conn_ConnectingSuffix,... (第{0}次),... (attempt #{0}),... ({0}回目),... (attempt #{0})
 Wpf,Conn_RemoteConnecting,采集服务 (第{0}次),Collector (attempt #{0}),収集サービス ({0}回目),Collector (attempt #{0})
 Wpf,Web_Msg_NoDeviceData,暂无设备数据,No device data,デバイスデータなし,No device data
@@ -1469,7 +1395,6 @@ Wpf,Web_Lbl_Performance,性能率,Performance,性能率,Performance
 Wpf,Web_Lbl_Quality,合格率,Quality,良品率,Quality
 Wpf,Web_Lbl_Ok,OK 良品,OK Good,OK 良品,OK Good
 Wpf,Web_Lbl_Ng,NG 不良,NG Defect,NG 不良,NG Defect
-Wpf,Web_Lbl_Planned,计划,Planned,計画,Planned
 Wpf,Web_Lbl_Elapsed,已运行,Elapsed,稼働時間,Elapsed
 Wpf,Web_Lbl_Remaining,剩余,Remaining,残り,Remaining
 Wpf,Web_Lbl_ConnStatus,连接状态,Connection,接続状態,Connection
@@ -1525,17 +1450,13 @@ Wpf,M321,角色,Role,ロール,Role
 Wpf,M322,添加用户,Add User,ユーザー追加,Add User
 Wpf,M323,删除用户,Delete User,ユーザー削除,Delete User
 Wpf,M324,重置密码,Reset Password,パスワードリセット,Reset Password
-Wpf,M325,账号未启用,Account is disabled,アカカウントが無効です,Account is disabled
 Wpf,M326,用户名已存在,Username already exists,ユーザー名は既に存在します,Username already exists
 Wpf,M327,不能删除最后一个管理员账号,Cannot delete the last admin account,最後の管理者アカカウントは削除できません,Cannot delete the last admin account
-Wpf,M328,当前用户,Current User,現在のユーザー,Current User
-Wpf,M329,退出登录,Log Out,ログアウト,Log Out
 Wpf,M330,显示名,Display Name,表示名,Display Name
 Wpf,M331,启用,Active,有効,Active
 Wpf,M360,不能禁用或降级最后一个管理员账号,Cannot disable or demote the last administrator account,最後の管理者を無効化または降格できません,Cannot disable or demote the last administrator account
 Wpf,M361,不能修改自己的角色或禁用自己,Cannot change your own role or disable yourself,自分のロールを変更したり自分自身を無効化したりできません,Cannot change your own role or disable yourself
 Wpf,M362,有未保存的修改,Unsaved changes,未保存の変更があります,Unsaved changes
-Wpf,M363,最后登录,Last Login,最終ログイン,Last Login
 Wpf,M364,密码至少 8 位,Password must be at least 8 characters,パスワードは 8 文字以上必要です,Password must be at least 8 characters
 Wpf,M365,两次输入的密码不一致,The two passwords do not match,入力したパスワードが一致しません,The two passwords do not match
 Wpf,M366,账号已锁定，剩余 {0} 分钟,"Account locked, {0} minutes remaining",アカカウントがロックされています。残り {0} 分,"Account locked, {0} minutes remaining"
@@ -1554,23 +1475,18 @@ Wpf,M378,禁用,Disabled,無効,Disabled
 Wpf,M379,搜索用户名 / 显示名,Search username / display name,ユーザー名 / 表示名を検索,Search username / display name
 Wpf,M380,无匹配用户,No matching users,一致するユーザーがいません,No matching users
 Wpf,M381,导出范围,Export Scope,エクスポート範囲,Export Scope
-Wpf,M382,导出全部筛选结果？选择\"是\"导出全量，选择\"否\"仅导出当前页。,Export all filtered results? Choose Yes for full export or No for current page only.,絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。,Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.
-Wpf,M383,仅当前页,Current page only,現在のページのみ,Current page only
+Wpf,M382,"导出全部筛选结果？选择\""是\""导出全量，选择\""否\""仅导出当前页。",Export all filtered results? Choose Yes for full export or No for current page only.,絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。,Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.
 Wpf,M384,全量筛选结果（共 {0} 条）,All filtered results ({0} rows),絞り込み結果の全件（{0} 件）,Todos os resultados filtrados ({0} linhas)
 Wpf,M332,操作员,Operator,オペレーター,Operator
 Wpf,M333,工程师,Engineer,エンジニア,Engineer
 Wpf,M334,管理员,Administrator,管理者,Administrator
-Wpf,M335,请输入新密码,Enter new password,新しいパスワードを入力,Enter new password
 Wpf,M336,权限不足，需要工程师或以上角色,"Insufficient permission, engineer or above required",権限不足、エンジニア以上のロールが必要です,"Insufficient permission, engineer or above required"
 Wpf,M337,权限不足，需要管理员角色,"Insufficient permission, administrator required",権限不足、管理者ロールが必要です,"Insufficient permission, administrator required"
 Wpf,M338,切换用户,Switch User,ユーザー切り替え,Switch User
-Wpf,K584,表格视图,Table View,テーブル表示,Table View
-Wpf,K585,卡片视图,Card View,コード表示,Card View
 Wpf,K587,OEE,OEE,OEE,OEE
 Wpf,K588,OK,OK,OK,OK
 Wpf,K589,NG,NG,NG,NG
 Wpf,K590,总产量,Total,合計,Total
-Wpf,K591,合格率,Quality,良品率,Quality
 Wpf,K592,节拍,Cycle,サイクル,Cycle
 Wpf,K593,运行,Run,実行,Run
 Wpf,K594,详情,Details,詳細,Details
@@ -1701,8 +1617,6 @@ Wpf,K669,下限,Min,下限,Min
 Wpf,K670,上限,Max,上限,Max
 Wpf,K671,单位,Unit,単位,Unit
 Wpf,K672,添加参数项,Add Parameter,パラメータを追加,Add Parameter
-Wpf,K673,移除参数项,Remove Parameter,パラメータを削除,Remove Parameter
-Wpf,K674,暂无可用配方,No recipes available,利用可能なレシピはありません,No recipes available
 Wpf,K675,配方下发成功,Recipe applied successfully,レシピ適用成功,Recipe applied successfully
 Wpf,K676,配方下发失败：{0},Apply failed: {0},適用失敗：{0},Apply failed: {0}
 Wpf,K677,确认删除配方 {0}？,Delete recipe {0}?,レシピ {0} を削除しますか？,Delete recipe {0}?
@@ -1712,7 +1626,6 @@ Wpf,K680,备注,Remark,備考,Remark
 Wpf,K681,参数项为空，无法保存配方,Cannot save: recipe has no parameters,パラメータがありません。保存できません,Cannot save: recipe has no parameters
 Wpf,K682,配方校验失败：{0},Recipe validation failed: {0},検証失敗：{0},Recipe validation failed: {0}
 Wpf,K683,目标设备,Target Device,対象設備,Target Device
-Wpf,K684,设备机型,Device Machine Type,設備機種,Device Machine Type
 Wpf,K685,确认将配方 {0} 下发到 {1}？,Apply recipe {0} to device {1}?,レシピ {0} を設備 {1} に適用しますか？,Apply recipe {0} to device {1}?
 Wpf,K686,正在下发配方…,Applying recipe…,適用中…,Aplicando receita…
 Wpf,K687,请先在左侧选择设备,Select a device first,先に設備を選択してください,Select a device first
@@ -1873,7 +1786,7 @@ Wpf,Web_Mo_TmBatchPlan,批计划,Batch Plan,バッチ計画,Batch Plan
 Wpf,Web_Mo_TmDword,字读取,DWord Read,ワード読取,DWord Read
 Wpf,Web_Mo_TmAlarm,报警,Alarm,警報,Alarm
 Wpf,Web_Mo_TmDefect,缺陷,Defect,欠陥,Defect
-Wpf,Web_Mo_TmCountAlarm,计数器报警,Counter Alarm,カカカウント警報,Counter Alarm
+Wpf,Web_Mo_TmCountAlarm,计数器报警,Counter Alarm,カウント警報,Counter Alarm
 Wpf,Web_Mo_TmHistory,历史写入,History Write,履歴書込,History Write
 Wpf,Web_Nav_Review,生产复盘,Production Review,生産レビュー,Production Review
 Wpf,Web_Rv_HintTitle,生产复盘分析,Production Review,生産レビュー分析,Production Review
@@ -1946,20 +1859,24 @@ Wpf,Web_Dv_DeviceId,设备 ID,Device ID,デバイス ID,Device ID
 Wpf,Web_Dv_MachineType,机型,Machine Type,機種,Machine Type
 Wpf,Web_Dv_AlarmCount,报警 {0} 条,{0} alarms,警報 {0} 件,{0} alarms
 Wpf,Web_Dv_DefectCount,缺陷 {0} 条,{0} defects,欠陥 {0} 件,{0} defects
-Wpf,Web_Dv_CountAlarmCount,计数器报警 {0} 条,{0} counter alarms,カカカウント警報 {0} 件,{0} counter alarms
+Wpf,Web_Dv_CountAlarmCount,计数器报警 {0} 条,{0} counter alarms,カウント警報 {0} 件,{0} counter alarms
 Wpf,Web_Dv_Detail,{0} 配置详情,{0} Config Details,{0} 設定詳細,{0} Config Details
 Wpf,Web_Dv_AddressConfig,地址配置,Address Config,アドレス設定,Address Config
-Wpf,Web_Dv_OkCountAddr,OK 计数地址,OK Count Address,OK カカカウントアドレス,OK Count Address
-Wpf,Web_Dv_NgCountAddr,NG 计数地址,NG Count Address,NG カカカウントアドレス,NG Count Address
+Wpf,Web_Dv_OkCountAddr,OK 计数地址,OK Count Address,OK カウントアドレス,OK Count Address
+Wpf,Web_Dv_NgCountAddr,NG 计数地址,NG Count Address,NG カウントアドレス,NG Count Address
 Wpf,Web_Dv_StatusAddr,状态字地址,Status Word Address,状態語アドレス,Status Word Address
 Wpf,Web_Dv_ResetAddr,产量复位地址,Reset Address,リセットアドレス,Reset Address
 Wpf,Web_Dv_RecipeAddr,配方地址,Recipe Address,レシピアドレス,Recipe Address
 Wpf,Web_Dv_AlarmConfig,报警配置,Alarm Config,警報設定,Alarm Config
 Wpf,Web_Dv_DefectConfig,缺陷配置,Defect Config,欠陥設定,Defect Config
-Wpf,Web_Dv_CountAlarmConfig,计数器报警配置,Counter Alarm Config,カカカウント警報設定,Counter Alarm Config
+Wpf,Web_Dv_CountAlarmConfig,计数器报警配置,Counter Alarm Config,カウント警報設定,Counter Alarm Config
 Wpf,Web_Dv_None,无配置,None,設定なし,None
 Wpf,Web_Dv_Name,名称,Name,名称,Name
 Wpf,Web_Dv_PlcAddr,PLC 地址,PLC Address,PLC アドレス,PLC Address
+Wpf,Web_Dv_Loading,正在加载设备配置,Loading device configs,デバイス設定を読み込み中,Loading device configs
+Wpf,Web_Dv_LoadFailed,设备配置加载失败,Failed to load device configs,デバイス設定の読み込みに失敗,Failed to load device configs
+Wpf,Web_Dv_LoadFailedHint,请确认采集服务正常后重试,Ensure the collection service is running and retry,収集サービスの稼働を確認して再試行してください,Ensure the collection service is running and retry
+Wpf,Web_Dv_Retry,重试,Retry,再試行,Retry
 Wpf,Web_Dv_Description,描述,Description,説明,Description
 Wpf,Web_Dv_Severity,严重度,Severity,重大度,Severity
 Wpf,Web_Dv_Category,类别,Category,カテゴリ,Category
@@ -1977,8 +1894,6 @@ Wpf,Web_Wo_PlanEnd,计划结束,Planned End,計画終了,Planned End
 Wpf,Web_Wo_Status,状态,Status,状態,Status
 Wpf,Web_Rc_Title,配方管理（只读）,Recipes (Read-only),レシピ管理（読み取り専用）,Recipes (Read-only)
 Wpf,Web_Rc_None,暂无配方,No recipes,レシピなし,No recipes
-Wpf,Web_Rc_RecipeValue,配方值,Recipe Value,レシピ値,Recipe Value
-Wpf,Web_Rc_RecipeId,配方 ID,Recipe ID,レシピ ID,Recipe ID
 Wpf,Web_St_Title,采集设置（只读）,Settings (Read-only),収集設定（読み取り専用）,Settings (Read-only)
 Wpf,Web_St_Acquisition,采集参数,Acquisition,収集パラメータ,Acquisition
 Wpf,Web_St_PollingMs,轮询间隔,Polling Interval,ポーリング間隔,Polling Interval
@@ -2086,13 +2001,13 @@ Wpf,F326,进度口径：设备本班次累计产量（与工单管理页按工�
 Wpf,F327,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Output_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,生産量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Output_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,F328,状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,StateDuration_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,状態時間_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,StateDuration_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,F329,报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,警報_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
-Wpf,F330,{0} 条，Tab={1},"{0} rows, Tab={1}",{0} 件、Tab={1},"{0} rows, Tab={1}"
 Wpf,Web_Recipe,配方,Recipe,レシピ,Recipe
 Wpf,Web_DefectTop,缺陷分布 TOP5,Defect Top 5,欠陥トップ5,Defect Top 5
 Wpf,Web_NoDefectData,暂无缺陷数据,No defect data,欠陥データなし,No defect data
 Wpf,Web_LastShift,上一班次,Last Shift,前シフト,Last Shift
 Wpf,Web_LastShiftLine,{0}：OK {1}（{2}）· NG {3}（{4}）,{0}: OK {1} ({2}) · NG {3} ({4}),{0}：OK {1}（{2}）· NG {3}（{4}）,{0}: OK {1} ({2}) · NG {3} ({4})
 Wpf,Web_ConnLost,连接中断，正在重连…,"Connection lost, reconnecting…",接続が切れました。再接続中…,"Connection lost, reconnecting…"
+Wpf,Web_ConnStale,数据停滞 {0}s，采集服务可能卡死,Data stalled for {0}s; the collection service may be stuck,データが {0}s 停滞しています。収集サービスが停止している可能性があります,Data stalled for {0}s; the collection service may be stuck
 Wpf,Web_RecipeInfo,配方 {0}：{1},Recipe {0}: {1},レシピ {0}：{1},Recipe {0}: {1}
 Core,PlcIpEmpty,PLC IP 地址为空,PLC IP address is empty,PLC IP アドレスが空です,PLC IP address is empty
 Core,PlcIpInvalid,PLC IP 地址 '{0}' 不是合法的 IPv4 地址,PLC IP address '{0}' is not a valid IPv4 address,PLC IP アドレス '{0}' は有効な IPv4 アドレスではありません,PLC IP address '{0}' is not a valid IPv4 address
@@ -2107,7 +2022,7 @@ Core,ConnectionProfileConfigMissing,连接档案 {0} 配置不能为空,Connecti
 Core,ConnectionProfileIdRequired,连接档案 Id 不能为空,Connection profile Id cannot be empty,接続プロファイル Id を入力してください,O Id do perfil de conexão não pode estar vazio
 Core,ConnectionProfileEntryNull,连接档案不能为空。,Connection profile cannot be empty.,接続プロファイルを空にすることはできません。,O perfil de conexão não pode estar vazio.
 Core,DeviceConnectionProfileMissing,设备 {0} 引用了不存在的连接档案 {1}。,Device {0} references a missing connection profile {1}.,設備 {0} が存在しない接続プロファイル {1} を参照しています。,O dispositivo {0} referencia um perfil de conexão inexistente {1}.
-Core,ConnectionProfileAdapterAmbiguous,连接档案 {0} 的协议 {1} 与品牌 {2} 注册了多个适配器：{3},"Connection profile {0} has multiple adapters registered for protocol {1} and brand {2}: {3}",接続プロファイル {0} のプロトコル {1} とブランド {2} に複数のアダプターが登録されています: {3},"O perfil de conexão {0} tem vários adaptadores registrados para o protocolo {1} e a marca {2}: {3}"
+Core,ConnectionProfileAdapterAmbiguous,连接档案 {0} 的协议 {1} 与品牌 {2} 注册了多个适配器：{3},Connection profile {0} has multiple adapters registered for protocol {1} and brand {2}: {3},接続プロファイル {0} のプロトコル {1} とブランド {2} に複数のアダプターが登録されています: {3},O perfil de conexão {0} tem vários adaptadores registrados para o protocolo {1} e a marca {2}: {3}
 Core,ConnectionProfileAdapterNotFound,连接档案 {0} 未找到协议 {1} / 品牌 {2} 的适配器。,"No adapter found for connection profile {0}, protocol {1}, brand {2}.",接続プロファイル {0} にプロトコル {1} / ブランド {2} のアダプターが見つかりません。,"Nenhum adaptador encontrado para o perfil de conexão {0}, protocolo {1}, marca {2}."
 Core,DataSourceProtocolKeyEmpty,协议键不能为空。,Protocol key cannot be empty.,プロトコルキーを入力してください。,A chave de protocolo não pode estar vazia.
 Core,ModbusUnitIdOutOfRange,Modbus UnitId {0} 不在合法范围 (1-247),Modbus UnitId {0} is out of range (1-247),Modbus UnitId {0} が範囲外です (1-247),Modbus UnitId {0} is out of range (1-247)
@@ -2175,7 +2090,7 @@ Core,RecipeDeviceNotFound,设备不存在：{0},Device not found: {0},設備が�
 Core,RecipeNotFound,配方不存在：{0},Recipe not found: {0},レシピが見つかりません：{0},Recipe not found: {0}
 Core,RecipeApplyCancelled,下发已取消，已回滚,"Apply cancelled, rolled back",適用をキャンセルし、ロールバックしました,"Apply cancelled, rolled back"
 Core,RecipeWriteInProgress,参数 {0} 写入中…,Writing parameter {0}…,パラメータ {0} を書き込み中…,Writing parameter {0}…
-Core,RecipeStringNotRolledBack,字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对,"String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually",文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください,"Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente"
+Core,RecipeStringNotRolledBack,字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对,String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually,文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください,Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente
 Wpf,Language_Portuguese,葡萄牙语,Portuguese,ポルトガル語,Português
 Wpf,Alarm_LocalizedNames,多语言名称,Localized names,多言語名称,Nomes localizados
 Wpf,Alarm_NameEn,名称(EN),Name (EN),名前(EN),Nome (EN)
@@ -2374,18 +2289,15 @@ Wpf,Ux_ConfirmPassword,确认密码,Confirm password,パスワード確認,Confi
 Wpf,Ux_DeviceWizardAddressHint,请填写全部四个 PLC 地址（均为必填）。,Fill in all four PLC addresses (all required).,4 つの PLC アドレスをすべて入力してください（すべて必須）。,Preencha os quatro enderecos PLC (todos obrigatorios).
 Wpf,Ux_DeviceWizardAddressRequired,请填写全部四个 PLC 地址。,Fill in all four PLC addresses.,4 つの PLC アドレスをすべて入力してください。,Preencha os quatro enderecos PLC.
 Wpf,Ux_DeviceWizardBack,上一步,Back,戻る,Voltar
-Wpf,Ux_DeviceWizardCreated,已创建设备「{0}」，请点击保存写入配置。,"Created device '{0}'. Click Save to persist the configuration.",設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。,"Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao."
+Wpf,Ux_DeviceWizardCreated,已创建设备「{0}」，请点击保存写入配置。,Created device '{0}'. Click Save to persist the configuration.,設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。,Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao.
 Wpf,Ux_DeviceWizardFinish,完成,Finish,完了,Concluir
 Wpf,Ux_DeviceWizardIntro,填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。,Enter the device name and target cycle (both required). PLC addresses are configured on the next step.,設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。,Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.
-Wpf,Ux_DeviceWizardSaveReminder,完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。,"The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.",完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。,"O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar."
-Wpf,Ux_DeviceWizardMachineType,机型,Machine type,機種,Tipo de maquina
+Wpf,Ux_DeviceWizardSaveReminder,完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。,The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.,完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。,O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar.
 Wpf,Ux_DeviceWizardNameDuplicate,设备名称已存在,Device name already exists,設備名は既に存在します,Nome do dispositivo ja existe
 Wpf,Ux_DeviceWizardNameRequired,设备名称不能为空,Device name is required,設備名は必須です,Nome do dispositivo obrigatorio
 Wpf,Ux_DeviceWizardNext,下一步,Next,次へ,Avancar
-Wpf,Ux_DeviceWizardReviewHint,确认信息无误后点击完成创建设备。,"Review the information, then click Finish to create the device.",内容を確認し、完了をクリックして設備を作成します。,Revise as informacoes e clique em Concluir para criar o dispositivo.
 Wpf,Ux_DeviceWizardStepAddresses,PLC 地址,PLC addresses,PLC アドレス,Enderecos PLC
 Wpf,Ux_DeviceWizardStepBasic,基本信息,Basic info,基本情報,Informacoes basicas
-Wpf,Ux_DeviceWizardStepReview,确认,Review,確認,Revisao
 Wpf,Ux_DeviceWizardTargetCycleHint,用于 OEE 性能率与速度对比，单位：个/小时。,Used for OEE performance rate and speed comparison (pieces per hour).,OEE 性能率と速度比較に使用します（単位：個/時間）。,Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).
 Wpf,Ux_DeviceWizardTargetCycleInvalid,目标周期必须大于 0,Target cycle must be greater than 0,目標サイクルは 0 より大きくする必要があります,Ciclo alvo deve ser maior que 0
 Wpf,Ux_DeviceWizardTitle,新建设备向导,New Device Wizard,新規設備ウィザード,Assistente de novo dispositivo
@@ -2400,9 +2312,9 @@ Wpf,Ux_HelpWindowTitle,使用手册,User Manual,使用手册,Manual do usuario
 Wpf,Ux_HelpManualMissing,未找到使用手册文件：{0},User manual file not found: {0},使用手册ファイルが見つかりません：{0},Arquivo do manual nao encontrado: {0}
 Wpf,Ux_FirstRunTitle,欢迎使用 Kanban,Welcome to Kanban,Kanban へようこそ,Bem-vindo ao Kanban
 Wpf,Ux_FirstRunWelcomeTitle,快速了解系统,Quick Overview,システム概要,Visao geral rapida
-Wpf,Ux_FirstRunWelcomeBody,MainAPP 用于集中查看产线设备状态、产量、报警与 OEE。左侧导航可切换页面；左下角圆点表示 PLC 连接状态。,MainAPP centralizes device status, output, alarms, and OEE. Use the sidebar to switch pages; the dot at the bottom shows PLC connection status.,MainAPP は設備状態・生産数・アラーム・OEE を一覧表示します。サイドバーでページ切替、左下の点が PLC 接続状態です。,O MainAPP centraliza status, producao, alarmes e OEE. Use a barra lateral; o ponto inferior indica conexao PLC.
+Wpf,Ux_FirstRunWelcomeBody,MainAPP 用于集中查看产线设备状态、产量、报警与 OEE。左侧导航可切换页面；左下角圆点表示 PLC 连接状态。,"MainAPP centralizes device status, output, alarms, and OEE. Use the sidebar to switch pages; the dot at the bottom shows PLC connection status.",MainAPP は設備状態・生産数・アラーム・OEE を一覧表示します。サイドバーでページ切替、左下の点が PLC 接続状態です。,"O MainAPP centraliza status, producao, alarmes e OEE. Use a barra lateral; o ponto inferior indica conexao PLC."
 Wpf,Ux_FirstRunPlcTitle,先确认 PLC 连接,Check PLC Connection First,まず PLC 接続を確認,Confirme a conexao PLC
-Wpf,Ux_FirstRunPlcBody,首次使用前请管理员确认 PLC IP、端口与网络。打开「系统设置」检查连接配置；绿色圆点表示已连接。,Ask your administrator to confirm PLC IP, port, and network. Open Settings to review connection; a green dot means connected.,初回前に PLC IP・ポート・ネットワークを確認してください。「設定」で接続を確認、緑の点は接続済み。,Confirme IP, porta e rede do PLC. Abra Configuracoes; ponto verde = conectado.
+Wpf,Ux_FirstRunPlcBody,首次使用前请管理员确认 PLC IP、端口与网络。打开「系统设置」检查连接配置；绿色圆点表示已连接。,"Ask your administrator to confirm PLC IP, port, and network. Open Settings to review connection; a green dot means connected.",初回前に PLC IP・ポート・ネットワークを確認してください。「設定」で接続を確認、緑の点は接続済み。,"Confirme IP, porta e rede do PLC. Abra Configuracoes; ponto verde = conectado."
 Wpf,Ux_FirstRunNavTitle,常用页面,Key Pages,主要ページ,Paginas principais
 Wpf,Ux_FirstRunNavBody,"主页/产线总览：实时状态
 报警中心：处理报警
@@ -2465,16 +2377,11 @@ Wpf,K756,文件 {0} 中未找到可导入的工单,No importable work orders fou
 Wpf,K757,已复制：{0},Copied: {0},コピーしました：{0},Copiado: {0}
 Wpf,K762,冲突,Conflict,競合,Conflito
 Wpf,K763,逾期,Overdue,期限超過,Atrasado
-Wpf,K764,从 CSV 文件批量导入工单（列名与导出模板一致）,Import work orders from a CSV file (columns match the export template),CSV から工単を一括インポート（列名はエクスポートテンプレートと同一）,Importar ordens de produção de um arquivo CSV (as colunas correspondem ao modelo de exportação)
 Wpf,K765,目标,Target,目標,Alvo
 Wpf,K766,合格,OK,良品,OK
 Wpf,K767,达成率,Achievement,達成率,Taxa de realização
-Wpf,K768,筛选结果,Filtered results,絞り込み結果,Resultados filtrados
-Wpf,K769,复制工单号,Copy order number,工単番号をコピー,Copiar número da ordem
-Wpf,K770,复制产品编码,Copy product code,製品コードをコピー,Copiar código do produto
 Wpf,K771,时间线,Timeline,タイムライン,Linha do tempo
 Wpf,K772,创建,Created,作成,Criada
-Wpf,K773,计划开始,Planned start,予定開始,Início planejado
 Wpf,K774,实际开始,Actual start,実開始,Início real
 Wpf,K775,完成,Completed,完了,Concluída
 Wpf,K776,中止,Aborted,中止,Abortada
@@ -2483,7 +2390,7 @@ Wpf,K789,双击列表行可直接编辑该工单,Double-click a row to edit that
 Wpf,K790,第 {0} 行：列数不足（{1} < 7），已跳过,Row {0}: too few columns ({1} < 7); skipped,{0} 行目：列数不足（{1} < 7）、スキップ,Linha {0}: colunas insuficientes ({1} < 7); ignorada
 Wpf,K791,第 {0} 行 [{1}]：计划时间格式应为 yyyy-MM-dd HH:mm，已跳过,Row {0} [{1}]: planned time must be yyyy-MM-dd HH:mm; skipped,{0} 行目 [{1}]：予定時刻は yyyy-MM-dd HH:mm 形式にしてください（スキップ）,Linha {0} [{1}]: horário planejado deve ser yyyy-MM-dd HH:mm; ignorada
 Wpf,K794,工单号已存在,Order number already exists,工単番号は既に存在します,O número da ordem já existe
-Wpf,K795,未找到设备「{0}」,Device "{0}" not found,デバイス「{0}」が見つかりません,Dispositivo "{0}" não encontrado
+Wpf,K795,未找到设备「{0}」,"Device ""{0}"" not found",デバイス「{0}」が見つかりません,"Dispositivo ""{0}"" não encontrado"
 Wpf,K799,逾期 {0},Overdue {0},期限超過 {0},Atrasado {0}
 Wpf,K806,第 {0} 行 [{1}]：{2},Row {0} [{1}]: {2},{0} 行目 [{1}]：{2},Linha {0} [{1}]: {2}
 Wpf,K901,工单排程,Work Order Schedule,工単スケジュール,Agendamento de ordens de produção
@@ -2499,12 +2406,11 @@ Wpf,K910,总产量,Total Output,総生産数,Produção total
 Wpf,K911,不良率,Defect Rate,不良率,Taxa de defeitos
 Wpf,K912,平均恢复耗时,Avg Recovery Time,平均復旧時間,Tempo médio de recuperação
 Wpf,K913,持续时间,Duration,継続時間,Duração
-Wpf,M_MoreNotShown,\n…（共 {0} 条未显示）,"\n… ({0} more not shown)",\n…（他 {0} 件省略）,"\n… ({0} itens não exibidos)"
+Wpf,M_MoreNotShown,\n…（共 {0} 条未显示）,\n… ({0} more not shown),\n…（他 {0} 件省略）,\n… ({0} itens não exibidos)
 Wpf,K914,SN 追溯,SN Traceability,SNトレーサビリティ,Rastreabilidade SN
-Wpf,K915,输入序列号（SN）进行追溯，如 SN20260830-0001,"Enter SN to trace, e.g. SN20260830-0001",トレースするシリアル番号を入力（例：SN20260830-0001）,Digite o SN para rastrear, ex.: SN20260830-0001
+Wpf,K915,输入序列号（SN）进行追溯，如 SN20260830-0001,"Enter SN to trace, e.g. SN20260830-0001",トレースするシリアル番号を入力（例：SN20260830-0001）,"Digite o SN para rastrear, ex.: SN20260830-0001"
 Wpf,K916,输入序列号查询其生产追溯记录,Enter an SN to look up its production trace,シリアル番号を入力して生産トレースを照会,Insira um SN para consultar seu rastreio de produção
-Wpf,K917,将展示该件的设备、工单、班次、时间与判定结果,"Shows the device, work order, shift, time and result",設備・工単・シフト・時間・判定結果を表示します,Mostra dispositivo, ordem, turno, horário e resultado
-Wpf,K918,SN 明细,SN Details,SN明細,Detalhes do SN
+Wpf,K917,将展示该件的设备、工单、班次、时间与判定结果,"Shows the device, work order, shift, time and result",設備・工単・シフト・時間・判定結果を表示します,"Mostra dispositivo, ordem, turno, horário e resultado"
 Wpf,K919,共 {0} 件,{0} in total,合計 {0} 件,{0} no total
 Wpf,K920,该工单暂无 SN 记录,No SN records for this work order,この工単にSN記録はありません,Nenhum registro de SN para esta ordem
 Wpf,K921,请输入要追溯的序列号,Please enter an SN to trace,トレースするシリアル番号を入力してください,Insira um SN para rastrear
@@ -2514,3 +2420,34 @@ Wpf,K924,结果,Result,結果,Resultado
 Wpf,K925,上一页,Previous,前へ,Anterior
 Wpf,K926,下一页,Next,次へ,Próxima
 Wpf,K927,第 {0} 页,Page {0},{0} ページ目,Página {0}
+Wpf,Web_Csv_EventTime,事件时间,Event Time,イベント時刻,Hora do evento
+Wpf,Web_Csv_Time,时间,Time,時刻,Hora
+Wpf,Web_Csv_DeviceId,设备ID,Device ID,設備ID,ID do dispositivo
+Wpf,Web_Csv_DeviceName,设备名称,Device Name,設備名,Nome do dispositivo
+Wpf,Web_Csv_AlarmId,报警ID,Alarm ID,アラームID,ID do alarme
+Wpf,Web_Csv_AlarmName,报警名称,Alarm Name,アラーム名,Nome do alarme
+Wpf,Web_Csv_PlcAddress,PLC地址,PLC Address,PLCアドレス,Endereço PLC
+Wpf,Web_Csv_EventType,事件类型,Event Type,イベント種別,Tipo de evento
+Wpf,Web_Csv_EventTypeText,事件类型文本,Event Type Text,イベント種別テキスト,Texto do tipo de evento
+Wpf,Web_Csv_Shift,班次,Shift,シフト,Turno
+Wpf,Web_Csv_OkCount,OK产量,OK Output,OK生産数,Produção OK
+Wpf,Web_Csv_NgCount,NG产量,NG Output,NG生産数,Produção NG
+Wpf,Web_Csv_StatusWord,状态字,Status Word,ステータスワード,Palavra de status
+Wpf,Web_Csv_PrevState,前一状态,Previous State,前回状態,Estado anterior
+Wpf,Web_Csv_CurrState,当前状态,Current State,現在状態,Estado atual
+Wpf,Web_Csv_PrevStateText,前一状态文本,Previous State Text,前回状態テキスト,Texto do estado anterior
+Wpf,Web_Csv_CurrStateText,当前状态文本,Current State Text,現在状態テキスト,Texto do estado atual
+Wpf,Web_Csv_Metric,指标,Metric,指標,Métrica
+Wpf,Web_Csv_Value,值,Value,値,Valor
+Wpf,Web_Csv_RunSeconds,运行时长(s),Run Time (s),稼働時間(s),Tempo de execução (s)
+Wpf,Web_Csv_AlarmSeconds,报警时长(s),Alarm Time (s),アラーム時間(s),Tempo de alarme (s)
+Wpf,Web_Csv_TargetCycle,目标节拍(件/小时),Target Cycle (pcs/h),目標タクト(個/時),Ciclo alvo (peças/h)
+Wpf,Web_Csv_SumAlarm,# 触发：{0} 次，恢复：{1} 次，待恢复：{2} 条,"# Triggered: {0}, Recovered: {1}, Pending: {2}",# 発報：{0} 回、復旧：{1} 回、未復旧：{2} 件,"# Disparados: {0}, Recuperados: {1}, Pendentes: {2}"
+Wpf,Web_Csv_SumRange,# 查询区间：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Range: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# 照会範囲：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Intervalo: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}
+Wpf,Web_Csv_SumProd,# 总 OK：{0} 件，总 NG：{1} 件，良品率：{2},"# Total OK: {0}, Total NG: {1}, Yield: {2}",# OK合計：{0} 個、NG合計：{1} 個、良品率：{2},"# Total OK: {0}, Total NG: {1}, Rendimento: {2}"
+Wpf,Web_Csv_SumStatus,# 运行时长：{0}h，报警时长：{1}h，待机时长：{2}h,"# Run: {0}h, Alarm: {1}h, Idle: {2}h",# 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h,"# Execução: {0}h, Alarme: {1}h, Ocioso: {2}h"
+Wpf,Web_Csv_SumDevice,# 设备：{0},# Device: {0},# 設備：{0},# Dispositivo: {0}
+Wpf,Web_Csv_FileAlarm,报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
+Wpf,Web_Csv_FileProd,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
+Wpf,Web_Csv_FileStatus,状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
+Wpf,Web_Unit_PerHour,件/h,pcs/h,個/h,peças/h

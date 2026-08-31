@@ -728,6 +728,9 @@ body {
 
 td.dim { color: var(--text-3); }
 
+/* 设备管理页：配置刷新失败提示（旧数据保留展示时显示在标题行右侧） */
+.dv-refresh-failed { color: var(--red); border-color: var(--red); }
+
 /* ──────────── Blazor 全局错误横幅 ────────────
    默认隐藏（标准模板依赖此规则；缺失时 div 恒可见导致误报横幅）。
    仅 Blazor 运行时检测到未处理异常时才会显示（运行时设内联 display）。 */

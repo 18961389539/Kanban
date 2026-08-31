@@ -2,8 +2,12 @@
 param(
     [string]$Configuration = "Debug",
     [int]$MinimumLineCoverage = 35,
-    [double]$MaxWpfEnglishFallbackRatio = 0.94,
-    [int]$MaxWpfEnglishFallbackCount = 1959,
+    # 单向阈值：只允许调低，不允许调高。
+    # 上升意味着"为了让门变绿而放宽标准"，会让译文覆盖率持续劣化且无人察觉。
+    # 基线（2026-08-31）：pt-BR ratio=83.18% / count=1865，此处仅留极小缓冲。
+    # 补译 pt-BR 后应同步下调这两个值。
+    [double]$MaxWpfEnglishFallbackRatio = 0.84,
+    [int]$MaxWpfEnglishFallbackCount = 1875,
     [switch]$SkipVulnerabilityScan
 )
 
@@ -14,6 +18,14 @@ try {
     Write-Host "==> localization source and generated artifacts"
     & "$repoRoot\bin-shim\python.cmd" "$PSScriptRoot\generate_localization.py" --check --coverage-report --max-wpf-english-fallback-ratio $MaxWpfEnglishFallbackRatio --max-wpf-english-fallback-count $MaxWpfEnglishFallbackCount
     if ($LASTEXITCODE -ne 0) { throw "localization generation check failed" }
+
+    Write-Host "==> hardcoded Chinese display strings (baseline guard)"
+    & "$repoRoot\bin-shim\python.cmd" "$PSScriptRoot\scan_chinese_leaks.py" --check
+    if ($LASTEXITCODE -ne 0) { throw "new hardcoded Chinese display strings detected" }
+
+    Write-Host "==> bare StringFormat in XAML"
+    & "$repoRoot\bin-shim\python.cmd" "$PSScriptRoot\scan_bare_stringformat.py"
+    if ($LASTEXITCODE -ne 0) { throw "bare StringFormat detected" }
 
     Write-Host "==> architecture gates"
     & "$PSScriptRoot\architecture-gates.ps1"

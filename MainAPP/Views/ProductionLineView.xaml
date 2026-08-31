@@ -272,7 +272,7 @@
                 </ListBox.Style>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <controls:VirtualizingWrapPanel MinItemWidth="380" />
+                        <controls:VirtualizingWrapPanel ItemsPerRow="4" />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>

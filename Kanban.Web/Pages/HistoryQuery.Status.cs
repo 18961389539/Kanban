@@ -260,10 +260,13 @@ public partial class HistoryQuery
         }
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# 运行时长：{StRunSeconds / 3600.0:F2}h，报警时长：{StAlarmSeconds / 3600.0:F2}h，待机时长：{StPauseSeconds / 3600.0:F2}h");
+        sb.AppendLine(L.T("Csv_SumStatus",
+            (StRunSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            (StAlarmSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            (StPauseSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine($"# {StInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
-            C("事件时间"), C("设备ID"), C("设备名称"), C("前一状态"), C("当前状态"), C("前一状态文本"), C("当前状态文本"), C("班次")));
+            C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_PrevState")), C(L.T("Csv_CurrState")), C(L.T("Csv_PrevStateText")), C(L.T("Csv_CurrStateText")), C(L.T("Csv_Shift"))));
         foreach (var r in StRows)
         {
             sb.AppendLine(string.Join(',',
@@ -272,7 +275,7 @@ public partial class HistoryQuery
                 C(StateText((int)r.PreviousState)), C(StateText((int)r.CurrentState)), C(r.ShiftName)));
         }
 
-        var fileName = $"状态时长_{_stFrom:yyyyMMdd}_{_stTo:yyyyMMdd}.csv";
+        var fileName = L.T("Csv_FileStatus", _stFrom, _stTo);
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
     }
 

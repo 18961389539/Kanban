@@ -233,13 +233,25 @@ def load_csv() -> list[dict[str, str]]:
         LANGUAGES = languages
 
         rows: list[dict[str, str]] = []
+        malformed: list[str] = []
         for line_number, raw in enumerate(reader, start=2):
             if not any((value or "").strip() for value in raw.values()):
                 continue
+            rest = raw.get(None)  # DictReader 把超出表头的列塞进 None 键——值含未转义半角逗号时会触发
+            if rest:
+                malformed.append(
+                    f"row {line_number}: {len(rest)} extra column(s) — value likely contains an unquoted comma; key={raw.get('Key', '?')!r}"
+                )
             row = {column: (raw.get(column) or "") for column in [*CSV_PREFIX, *LANGUAGES]}
             row["Resource"] = row["Resource"].strip()
             row["Key"] = row["Key"].strip()
             rows.append(row)
+
+    if malformed:
+        raise ValueError(
+            "Localization.csv has rows with extra columns (quote values containing commas):\n"
+            + "\n".join(malformed[:50])
+        )
 
     validate_rows(rows)
     return rows
@@ -317,9 +329,14 @@ def print_coverage(rows: list[dict[str, str]]) -> None:
         )
 
 
-def validate_fallback_ratio(rows: list[dict[str, str]], maximum: float) -> None:
+def validate_fallback_ratio(rows: list[dict[str, str]], maximum: float) -> list[str]:
+    """返回违规描述列表，空列表表示通过。
+
+    不要 raise：main() 需要在翻译率超标时继续跑生成物一致性（drift）检查，
+    提前抛出会静默掩盖 drift——那通常是比翻译率更严重的问题。
+    """
     if not 0 <= maximum <= 1:
-        raise ValueError("--max-wpf-english-fallback-ratio must be between 0 and 1")
+        return [f"--max-wpf-english-fallback-ratio must be between 0 and 1 (got {maximum})"]
 
     violations = [
         item for item in coverage_rows(rows)
@@ -327,20 +344,19 @@ def validate_fallback_ratio(rows: list[dict[str, str]], maximum: float) -> None:
         and item["language"] not in {"zh-CN", "en-US"}
         and item["fallback_ratio"] > maximum
     ]
-    if violations:
-        details = "; ".join(
-            f"{item['language']}={item['fallback_ratio']:.2%}"
-            for item in violations
-        )
-        raise ValueError(
-            "WPF English fallback ratio exceeds the configured limit "
-            f"({maximum:.2%}): {details}"
-        )
+    if not violations:
+        return []
+    details = "; ".join(
+        f"{item['language']}={item['fallback_ratio']:.2%}"
+        for item in violations
+    )
+    return [f"WPF English fallback ratio exceeds the configured limit ({maximum:.2%}): {details}"]
 
 
-def validate_fallback_count(rows: list[dict[str, str]], maximum: int) -> None:
+def validate_fallback_count(rows: list[dict[str, str]], maximum: int) -> list[str]:
+    """返回违规描述列表，空列表表示通过（理由同 validate_fallback_ratio）。"""
     if maximum < 0:
-        raise ValueError("--max-wpf-english-fallback-count must be non-negative")
+        return ["--max-wpf-english-fallback-count must be non-negative"]
 
     violations = [
         item for item in coverage_rows(rows)
@@ -348,15 +364,13 @@ def validate_fallback_count(rows: list[dict[str, str]], maximum: int) -> None:
         and item["language"] not in {"zh-CN", "en-US"}
         and item["same_as_english"] > maximum
     ]
-    if violations:
-        details = "; ".join(
-            f"{item['language']}={item['same_as_english']}"
-            for item in violations
-        )
-        raise ValueError(
-            "WPF English fallback count exceeds the configured limit "
-            f"({maximum}): {details}"
-        )
+    if not violations:
+        return []
+    details = "; ".join(
+        f"{item['language']}={item['same_as_english']}"
+        for item in violations
+    )
+    return [f"WPF English fallback count exceeds the configured limit ({maximum}): {details}"]
 
 
 def write_csv(rows: list[dict[str, str]]) -> None:
@@ -835,14 +849,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.bootstrap:
             bootstrap_csv()
         rows = load_csv()
-        if args.coverage_report or args.max_wpf_english_fallback_ratio is not None:
+        problems: list[str] = []
+        if args.coverage_report or args.max_wpf_english_fallback_ratio is not None \
+                or args.max_wpf_english_fallback_count is not None:
             print_coverage(rows)
         if args.max_wpf_english_fallback_ratio is not None:
-            validate_fallback_ratio(rows, args.max_wpf_english_fallback_ratio)
+            problems += validate_fallback_ratio(rows, args.max_wpf_english_fallback_ratio)
         if args.max_wpf_english_fallback_count is not None:
-            validate_fallback_count(rows, args.max_wpf_english_fallback_count)
-        if args.max_wpf_english_fallback_count is not None:
-            validate_fallback_count(rows, args.max_wpf_english_fallback_count)
+            problems += validate_fallback_count(rows, args.max_wpf_english_fallback_count)
         scope = "all"
         if args.wpf:
             scope = "wpf"
@@ -874,9 +888,11 @@ def main(argv: list[str] | None = None) -> int:
                 path.unlink()
 
         if mismatches:
-            print("Generated localization files are out of date:", file=sys.stderr)
-            for path in mismatches:
-                print(f"  {path}", file=sys.stderr)
+            problems.append("Generated localization files are out of date:")
+            problems += [f"  {path}" for path in mismatches]
+
+        if problems:
+            print("\n".join(problems), file=sys.stderr)
             return 1
         if not args.check:
             print(f"Generated localization scope={scope} from {len(rows)} CSV rows")

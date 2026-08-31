@@ -31,7 +31,7 @@ public partial class HistoryQuery
     private string OeNgText => OeNg.ToString("N0");
     private string OeRunText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(OeRunSeconds);
     private string OeAlarmText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(OeAlarmSeconds);
-    private string OeTargetText => OeTargetCycle > 0 ? $"{OeTargetCycle} 件/h" : "—";
+    private string OeTargetText => OeTargetCycle > 0 ? $"{OeTargetCycle} {L.T("Unit_PerHour")}" : "—";
     private string OeDeviceNameText => OeDeviceName ?? "—";
 
     private async Task OeSearchAsync(DateTime from, DateTime to)
@@ -173,18 +173,18 @@ public partial class HistoryQuery
         }
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# 设备：{OeDeviceName ?? DeviceId}");
+        sb.AppendLine(L.T("Csv_SumDevice", OeDeviceName ?? DeviceId));
         sb.AppendLine($"# {OeInsight ?? "—"}");
-        sb.AppendLine(string.Join(',', C("指标"), C("值")));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_Metric")), C(L.T("Csv_Value"))));
         sb.AppendLine(string.Join(',', C(L.T("Lbl_Quality")), OeQ.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine(string.Join(',', C(L.T("Lbl_Performance")), OeP.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine(string.Join(',', C(L.T("Lbl_Availability")), OeA.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine(string.Join(',', C("OEE"), OeValue.ToString("F4", System.Globalization.CultureInfo.InvariantCulture)));
-        sb.AppendLine(string.Join(',', C("OK产量"), OeOk.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        sb.AppendLine(string.Join(',', C("NG产量"), OeNg.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        sb.AppendLine(string.Join(',', C("运行时长(s)"), OeRunSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)));
-        sb.AppendLine(string.Join(',', C("报警时长(s)"), OeAlarmSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)));
-        sb.AppendLine(string.Join(',', C("目标节拍(件/小时)"), OeTargetCycle.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_OkCount")), OeOk.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_NgCount")), OeNg.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_RunSeconds")), OeRunSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_AlarmSeconds")), OeAlarmSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)));
+        sb.AppendLine(string.Join(',', C(L.T("Csv_TargetCycle")), OeTargetCycle.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
         var fileName = $"OEE_{(OeRunSeconds > 0 ? DateTime.Now.ToString("yyyyMMdd") : "query")}.csv";
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");

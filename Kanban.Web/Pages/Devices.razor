@@ -1,9 +1,10 @@
 @page "/devices"
 @implements IDisposable
 @inject DashboardState Dashboard
-@inject IJSRuntime JS
+@inject ILogger<Devices> Logger
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
+@using Microsoft.Extensions.Logging
 
 <div class="query-page">
     <div class="line-header">
@@ -11,11 +12,34 @@
             <span class="brand-title">@L.T("Dv_Title")</span>
             <span class="brand-sub">@L.T("Dv_ReadOnly")</span>
         </div>
+        @* 刷新失败但已有旧数据：保留展示，标题行提示 + 手动重试（30s 后也会自动重拉） *@
+        @if (_firstLoadDone && _loadFailed)
+        {
+            <div class="line-shift dv-refresh-failed">
+                <span>@L.T("Dv_LoadFailed")</span>
+                <button class="chip-btn" @onclick="RetryAsync">@L.T("Dv_Retry")</button>
+            </div>
+        }
     </div>
 
-    @if (DeviceList.Count == 0)
+    @if (!_firstLoadDone)
     {
-        <EmptyState Title="@L.T("Dv_NoDevices")" Hint="" Icon="🖥️" />
+        <EmptyState Title="@L.T("Dv_Loading")" Hint="" Icon="⏳" />
+    }
+    else if (DeviceList.Count == 0)
+    {
+        @if (_loadFailed)
+        {
+            @* 拉取失败且无数据：区别于"真的没有设备"，给出原因提示与重试入口 *@
+            <EmptyState Title="@L.T("Dv_LoadFailed")" Hint="@L.T("Dv_LoadFailedHint")" Icon="⚠️" />
+            <div class="filter-bar compact">
+                <button class="chip-btn" @onclick="RetryAsync">@L.T("Dv_Retry")</button>
+            </div>
+        }
+        else
+        {
+            <EmptyState Title="@L.T("Dv_NoDevices")" Hint="" Icon="🖥️" />
+        }
     }
     else
     {
@@ -31,9 +55,9 @@
                         <div><span class="kpi-label">@L.T("Dv_DeviceId")</span><span class="kpi-value mono">@d.Id</span></div>
                         <div><span class="kpi-label">@L.T("Dv_MachineType")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.MachineType) ? "—" : d.MachineType)</span></div>
                         <div><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
-                        <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@d.TargetCycle 件/h</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
                     </div>
-                    <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CounterAlarmCount", d.CounterAlarms.Count)</div>
+                    <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CounterAlarms.Count)</div>
                 </div>
             }
         </div>
@@ -114,7 +138,7 @@
                     </table>
                 }
 
-                <div class="card-title sub">@L.T("Dv_CounterAlarmConfig")</div>
+                <div class="card-title sub">@L.T("Dv_CountAlarmConfig")</div>
                 @if (sel.CounterAlarms.Count == 0)
                 {
                     <div class="no-data">@L.T("Dv_None")</div>
@@ -153,31 +177,50 @@
     private string? SelectedDeviceId { get; set; }
     private DeviceConfigDto? Selected => DeviceList.FirstOrDefault(d => d.Id == SelectedDeviceId);
 
+    // ──── 加载状态：首次加载中 / 失败 / 真空态三分支，避免拉取失败伪装成"暂无设备" ────
+    private bool _firstLoadDone;
+    private bool _loadFailed;
+    private DateTime _lastLoadAttemptUtc = DateTime.MinValue;
+
+    /// <summary>设备配置重拉节流：与 DashboardState 查询连接失败后的 30s 冷却守卫对齐。</summary>
+    private static readonly TimeSpan ReloadInterval = TimeSpan.FromSeconds(30);
+
     protected override async Task OnInitializedAsync()
     {
         await Dashboard.InitializeAsync();
         await LoadDevicesAsync();
         _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
-        await Task.CompletedTask;
     }
 
     private async Task LoadDevicesAsync()
     {
+        _lastLoadAttemptUtc = DateTime.UtcNow;
         try
         {
             DeviceList = [.. await Dashboard.QueryDevicesAsync()];
+            _loadFailed = false;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            // 失败时保留现有列表（若有）继续展示，仅置失败标记；30s 后 tick 自动重拉
+            _loadFailed = true;
+            Logger.LogDebug(ex, "拉取设备配置失败（30s 后自动重试，或点击重试按钮）");
+        }
+        finally
+        {
+            _firstLoadDone = true;
+            if (!_disposed) StateHasChanged(); // fire-and-forget 重拉完成后立即反映结果（dispose 竞态防护：避免渲染队列异常触发全局错误横幅）
         }
     }
 
+    private async Task RetryAsync() => await LoadDevicesAsync();
+
     private void SelectDevice(string id) => SelectedDeviceId = SelectedDeviceId == id ? null : id;
 
-        /// <summary>
+    /// <summary>
     /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
     /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
-    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// 仅吞掉释放竞态（ObjectDisposedException），其余异常记日志——避免真实渲染缺陷被静默吞掉导致页面停更无迹可查。
     /// </summary>
     private async Task SafeTickAsync()
     {
@@ -186,16 +229,25 @@
         {
             await InvokeAsync(OnRenderTick);
         }
-        catch (Exception)
+        catch (ObjectDisposedException)
         {
             // 组件已释放的竞态：忽略（页面生命周期正常结束）
         }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "设备管理页渲染 tick 异常");
+        }
     }
 
-private void OnRenderTick()
+    private void OnRenderTick()
     {
         if (_disposed) return;
-        StateHasChanged(); // 状态徽标 3s 刷新（快照联动）
+        // 设备配置无推送通道：低频重拉（30s 节流）兜底 Collector 侧配置变更；状态徽标仍按 3s 快照刷新
+        if (DateTime.UtcNow - _lastLoadAttemptUtc >= ReloadInterval)
+        {
+            _ = LoadDevicesAsync(); // 内部全捕获，不会 fault
+        }
+        StateHasChanged();
     }
 
     private string StateText(string deviceId)

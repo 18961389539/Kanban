@@ -25,7 +25,6 @@ ProductionLineViewModel.cs	ProductionLineViewModel 构造：Devices.Count={Devic
 ProductionLineViewModel.cs	TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}
 ProductionLineViewModel.cs	TryAddLineDevice 跳过：设备 {Name}({Id}) 未找到对应 Runtime
 ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，良品率：{QualityRate:P2}
-ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，C良品率：{QualityRate:P2}
 ProductionQueryViewModel.cs	# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}
 ProductionQueryViewModel.cs	NG产量
 ProductionQueryViewModel.cs	OK产量
@@ -36,7 +35,6 @@ ProductionQueryViewModel.cs	设备ID
 ProductionQueryViewModel.cs	设备名称
 RecipeManagerViewModel.cs	切换配方会放弃当前未保存的编辑，是否继续？
 RecipeManagerViewModel.cs	提示
-RuntimeMonitoringState.cs	离线/未知
 SettingsViewModel.cs	PLC={DraftSettings.PlcConfig.IpAddress}:{DraftSettings.PlcConfig.Port} 班次={DraftSettings.Shifts.Coun
 StatusQueryViewModel.cs	事件时间
 StatusQueryViewModel.cs	前一状态

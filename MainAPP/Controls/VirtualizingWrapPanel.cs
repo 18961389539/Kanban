@@ -51,11 +51,38 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         set => SetValue(MinItemWidthProperty, value);
     }
 
+    /// <summary>固定每行列数（&gt;0 时启用，优先于 <see cref="MinItemWidth"/>）。为 0 时按 MinItemWidth / ItemWidth 自适应。</summary>
+    public static readonly DependencyProperty ItemsPerRowProperty = DependencyProperty.Register(
+        nameof(ItemsPerRow),
+        typeof(int),
+        typeof(VirtualizingWrapPanel),
+        new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    public int ItemsPerRow
+    {
+        get => (int)GetValue(ItemsPerRowProperty);
+        set => SetValue(ItemsPerRowProperty, value);
+    }
+
     private void UpdateColumnLayout(double panelWidth)
     {
+        var width = panelWidth > 0
+            ? panelWidth
+            : ItemsPerRow > 0
+                ? Math.Max(1, ItemsPerRow)
+                : MinItemWidth > 0
+                    ? MinItemWidth
+                    : ItemWidth;
+
+        if (ItemsPerRow > 0)
+        {
+            _itemsPerRow = ItemsPerRow;
+            _itemSlotWidth = width / _itemsPerRow;
+            return;
+        }
+
         if (MinItemWidth > 0)
         {
-            var width = panelWidth > 0 ? panelWidth : MinItemWidth;
             _itemsPerRow = Math.Max(1, (int)Math.Floor(width / MinItemWidth));
             _itemSlotWidth = width / _itemsPerRow;
             return;
@@ -70,7 +97,9 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
     {
         var itemCount = ItemsControl.GetItemsOwner(this)?.Items.Count ?? 0;
         var panelWidth = double.IsInfinity(availableSize.Width) || availableSize.Width <= 0
-            ? (MinItemWidth > 0 ? MinItemWidth : ItemWidth)
+            ? (ItemsPerRow > 0
+                ? Math.Max(1, ItemsPerRow)
+                : MinItemWidth > 0 ? MinItemWidth : ItemWidth)
             : availableSize.Width;
         UpdateColumnLayout(panelWidth);
         var itemWidth = _itemSlotWidth;

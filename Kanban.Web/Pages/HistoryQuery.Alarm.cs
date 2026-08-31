@@ -174,10 +174,10 @@ public partial class HistoryQuery
         }
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# 触发：{AlTriggered} 次，恢复：{AlRecovered} 次，待恢复：{AlPending} 条");
+        sb.AppendLine(L.T("Csv_SumAlarm", AlTriggered, AlRecovered, AlPending));
         sb.AppendLine($"# {AlInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
-            C("事件时间"), C("设备ID"), C("设备名称"), C("报警ID"), C("报警名称"), C("PLC地址"), C("事件类型"), C("事件类型文本"), C("班次")));
+            C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_AlarmId")), C(L.T("Csv_AlarmName")), C(L.T("Csv_PlcAddress")), C(L.T("Csv_EventType")), C(L.T("Csv_EventTypeText")), C(L.T("Csv_Shift"))));
         foreach (var r in AlRows)
         {
             sb.AppendLine(string.Join(',',
@@ -186,7 +186,7 @@ public partial class HistoryQuery
                 ((int)r.EventType).ToString(), C(AlarmTypeText(r.EventType)), C(r.ShiftName)));
         }
 
-        var fileName = $"报警_{_alFrom:yyyyMMdd}_{_alTo:yyyyMMdd}.csv";
+        var fileName = L.T("Csv_FileAlarm", _alFrom, _alTo);
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
     }
 

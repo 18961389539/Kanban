@@ -229,11 +229,11 @@ public partial class HistoryQuery
         }
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# 查询区间：{_prodFrom:yyyy-MM-dd HH:mm:ss} ~ {_prodTo:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"# 总 OK：{ProdTotalOk} 件，总 NG：{ProdTotalNg} 件，良品率：{ProdQualityRate:P2}");
+        sb.AppendLine(L.T("Csv_SumRange", _prodFrom, _prodTo));
+        sb.AppendLine(L.T("Csv_SumProd", ProdTotalOk, ProdTotalNg, ProdQualityRate.ToString("P2", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine($"# {ProdInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
-            C("时间"), C("设备ID"), C("设备名称"), C("班次"), C("OK产量"), C("NG产量"), C("状态字")));
+            C(L.T("Csv_Time")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_Shift")), C(L.T("Csv_OkCount")), C(L.T("Csv_NgCount")), C(L.T("Csv_StatusWord"))));
         foreach (var r in ProdRows)
         {
             sb.AppendLine(string.Join(',',
@@ -241,7 +241,7 @@ public partial class HistoryQuery
                 r.OkProduction.ToString(), r.NgProduction.ToString(), r.StatusWord.ToString()));
         }
 
-        var fileName = $"产量_{_prodFrom:yyyyMMdd}_{_prodTo:yyyyMMdd}.csv";
+        var fileName = L.T("Csv_FileProd", _prodFrom, _prodTo);
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
     }
 

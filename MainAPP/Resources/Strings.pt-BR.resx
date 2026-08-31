@@ -63,14 +63,8 @@
   <data name="Status_Unknown" xml:space="preserve">
     <value>Desconhecido</value>
   </data>
-  <data name="Status_Idle" xml:space="preserve">
-    <value>Ocioso</value>
-  </data>
   <data name="Common_Save" xml:space="preserve">
     <value>Salvar configurações</value>
-  </data>
-  <data name="Common_Cancel" xml:space="preserve">
-    <value>Cancelar</value>
   </data>
   <data name="Common_Language" xml:space="preserve">
     <value>Idioma</value>
@@ -125,15 +119,6 @@
   </data>
   <data name="Settings_ConfirmSave" xml:space="preserve">
     <value>Continue saving?</value>
-  </data>
-  <data name="Language_Chinese" xml:space="preserve">
-    <value>Chinese</value>
-  </data>
-  <data name="Language_English" xml:space="preserve">
-    <value>English</value>
-  </data>
-  <data name="Language_Japanese" xml:space="preserve">
-    <value>Japanese</value>
   </data>
   <data name="Settings_DailyReportMaster" xml:space="preserve">
     <value>Daily report master node</value>
@@ -278,12 +263,6 @@
   </data>
   <data name="Conn_Disconnected" xml:space="preserve">
     <value>Disconnected</value>
-  </data>
-  <data name="Conn_Reconnecting" xml:space="preserve">
-    <value>Reconnecting</value>
-  </data>
-  <data name="Conn_Stale" xml:space="preserve">
-    <value>Data Stalled</value>
   </data>
   <data name="EventType_Triggered" xml:space="preserve">
     <value>Triggered</value>
@@ -606,21 +585,6 @@
   <data name="K093" xml:space="preserve">
     <value>OK</value>
   </data>
-  <data name="K094" xml:space="preserve">
-    <value>Output / Defects</value>
-  </data>
-  <data name="K095" xml:space="preserve">
-    <value>Running / Alarm</value>
-  </data>
-  <data name="K096" xml:space="preserve">
-    <value>Performance Efficiency</value>
-  </data>
-  <data name="K097" xml:space="preserve">
-    <value>Target / Actual</value>
-  </data>
-  <data name="K098" xml:space="preserve">
-    <value>Total Downtime</value>
-  </data>
   <data name="K099" xml:space="preserve">
     <value>PLC Connection</value>
   </data>
@@ -713,9 +677,6 @@
   </data>
   <data name="K129" xml:space="preserve">
     <value>Affected Device</value>
-  </data>
-  <data name="K130" xml:space="preserve">
-    <value>Most Frequent Alarms</value>
   </data>
   <data name="K131" xml:space="preserve">
     <value>High</value>
@@ -1326,9 +1287,6 @@
   <data name="K333" xml:space="preserve">
     <value>Real-time Fault List</value>
   </data>
-  <data name="K334" xml:space="preserve">
-    <value>No Active Faults</value>
-  </data>
   <data name="K335" xml:space="preserve">
     <value>Production Dashboard</value>
   </data>
@@ -1398,9 +1356,6 @@
   <data name="K357" xml:space="preserve">
     <value>Recipe value from current device config</value>
   </data>
-  <data name="K358" xml:space="preserve">
-    <value>Timeline Selection</value>
-  </data>
   <data name="K359" xml:space="preserve">
     <value>Review Conclusion</value>
   </data>
@@ -1443,9 +1398,6 @@
   <data name="K372" xml:space="preserve">
     <value>Main alarms in the current time range</value>
   </data>
-  <data name="K373" xml:space="preserve">
-    <value>Frequent Repeats</value>
-  </data>
   <data name="K374" xml:space="preserve">
     <value>No alarm records</value>
   </data>
@@ -1454,9 +1406,6 @@
   </data>
   <data name="K376" xml:space="preserve">
     <value>Running, paused, alarm and unknown intervals; click a cell to view its output and alarms</value>
-  </data>
-  <data name="K377" xml:space="preserve">
-    <value>Running, No Output</value>
   </data>
   <data name="K378" xml:space="preserve">
     <value>Current Device Details</value>
@@ -1506,9 +1455,6 @@
   <data name="K393" xml:space="preserve">
     <value>Defect counts come from the device cumulative snapshot, not the selected range</value>
   </data>
-  <data name="K394" xml:space="preserve">
-    <value>Defect Concentration Shift/Period</value>
-  </data>
   <data name="K395" xml:space="preserve">
     <value>Downtime Analysis</value>
   </data>
@@ -1536,17 +1482,11 @@
   <data name="K403" xml:space="preserve">
     <value>Device Name</value>
   </data>
-  <data name="K404" xml:space="preserve">
-    <value>Defects (pcs)</value>
-  </data>
   <data name="K405" xml:space="preserve">
     <value>Production Line</value>
   </data>
   <data name="K406" xml:space="preserve">
     <value>Search by device name</value>
-  </data>
-  <data name="K407" xml:space="preserve">
-    <value>Search by device name (Ctrl+F)</value>
   </data>
   <data name="K408" xml:space="preserve">
     <value>Sort</value>
@@ -1559,12 +1499,6 @@
   </data>
   <data name="K411" xml:space="preserve">
     <value>Output ↓</value>
-  </data>
-  <data name="K412" xml:space="preserve">
-    <value>Alarming</value>
-  </data>
-  <data name="K413" xml:space="preserve">
-    <value>Overall Quality Rate</value>
   </data>
   <data name="K414" xml:space="preserve">
     <value>Weighted OEE</value>
@@ -1638,9 +1572,6 @@
   <data name="K437" xml:space="preserve">
     <value>Last Success Time</value>
   </data>
-  <data name="K438" xml:space="preserve">
-    <value>Cumulative Failed Polls</value>
-  </data>
   <data name="K439" xml:space="preserve">
     <value>Successful reads in the last round; 0 triggers disconnect or means no readable addresses.</value>
   </data>
@@ -1667,9 +1598,6 @@
   </data>
   <data name="K447" xml:space="preserve">
     <value>Recent Successful Devices</value>
-  </data>
-  <data name="K448" xml:space="preserve">
-    <value>Max Acquisition Cycle</value>
   </data>
   <data name="K449" xml:space="preserve">
     <value>Acquisition Success Rate</value>
@@ -1764,12 +1692,6 @@
   <data name="K479" xml:space="preserve">
     <value>Copy License Key</value>
   </data>
-  <data name="K480" xml:space="preserve">
-    <value>Data Source &amp; Run Mode</value>
-  </data>
-  <data name="K481" xml:space="preserve">
-    <value>Choose data source (local / remote collector) and run mode.</value>
-  </data>
   <data name="K482" xml:space="preserve">
     <value>Data Acquisition Mode</value>
   </data>
@@ -1820,12 +1742,6 @@
   </data>
   <data name="K498" xml:space="preserve">
     <value>Configure communication address, acquisition rate and display density.</value>
-  </data>
-  <data name="K499" xml:space="preserve">
-    <value>Connection &amp; Protocol</value>
-  </data>
-  <data name="K500" xml:space="preserve">
-    <value>Select PLC brand and configure communication parameters.</value>
   </data>
   <data name="K501" xml:space="preserve">
     <value>IP Address</value>
@@ -1986,17 +1902,8 @@
   <data name="K555" xml:space="preserve">
     <value>Search order/product/device</value>
   </data>
-  <data name="K556" xml:space="preserve">
-    <value>Planned From</value>
-  </data>
-  <data name="K557" xml:space="preserve">
-    <value>Planned To</value>
-  </data>
   <data name="K558" xml:space="preserve">
     <value>Order Schedule Sort</value>
-  </data>
-  <data name="K559" xml:space="preserve">
-    <value>Sort by planned time or status</value>
   </data>
   <data name="K560" xml:space="preserve">
     <value>Overdue Only</value>
@@ -2006,12 +1913,6 @@
   </data>
   <data name="K562" xml:space="preserve">
     <value>Has NG</value>
-  </data>
-  <data name="K563" xml:space="preserve">
-    <value>Order No. / Product</value>
-  </data>
-  <data name="K564" xml:space="preserve">
-    <value>Produced</value>
   </data>
   <data name="K565" xml:space="preserve">
     <value>Click "Add" below or adjust filters</value>
@@ -2028,9 +1929,6 @@
   <data name="K569" xml:space="preserve">
     <value>Query output of all orders and update progress</value>
   </data>
-  <data name="K570" xml:space="preserve">
-    <value>Export current filtered results to CSV</value>
-  </data>
   <data name="K571" xml:space="preserve">
     <value>Generate Samples</value>
   </data>
@@ -2042,9 +1940,6 @@
   </data>
   <data name="K574" xml:space="preserve">
     <value>Search by order no., product name or device name</value>
-  </data>
-  <data name="K575" xml:space="preserve">
-    <value>Defective Output</value>
   </data>
   <data name="K576" xml:space="preserve">
     <value>Achievement Rate</value>
@@ -2058,17 +1953,11 @@
   <data name="K579" xml:space="preserve">
     <value>Kanban System</value>
   </data>
-  <data name="K580" xml:space="preserve">
-    <value>Cumulative Disconnects</value>
-  </data>
   <data name="K581" xml:space="preserve">
     <value>License Status</value>
   </data>
   <data name="K582" xml:space="preserve">
     <value>Main Navigation</value>
-  </data>
-  <data name="M001" xml:space="preserve">
-    <value>Security Verification</value>
   </data>
   <data name="M002" xml:space="preserve">
     <value>Microsoft YaHei font not found; cannot generate PDF</value>
@@ -2102,9 +1991,6 @@
   </data>
   <data name="M012" xml:space="preserve">
     <value>● Met</value>
-  </data>
-  <data name="M013" xml:space="preserve">
-    <value>Communication Lost</value>
   </data>
   <data name="M014" xml:space="preserve">
     <value>Acquisition Stopped</value>
@@ -2174,15 +2060,6 @@
   </data>
   <data name="M036" xml:space="preserve">
     <value>Tip</value>
-  </data>
-  <data name="M037" xml:space="preserve">
-    <value>Error</value>
-  </data>
-  <data name="M038" xml:space="preserve">
-    <value>Confirm</value>
-  </data>
-  <data name="M039" xml:space="preserve">
-    <value>Warning</value>
   </data>
   <data name="M040" xml:space="preserve">
     <value>All</value>
@@ -2441,9 +2318,6 @@ Duration: {4}</value>
   <data name="F075" xml:space="preserve">
     <value>History write interval must not be less than 1, current: {0}</value>
   </data>
-  <data name="F076" xml:space="preserve">
-    <value>Failed to write history data: {0}</value>
-  </data>
   <data name="F077" xml:space="preserve">
     <value>History query failed: {0}</value>
   </data>
@@ -2528,9 +2402,6 @@ Duration: {4}</value>
   </data>
   <data name="F103" xml:space="preserve">
     <value>{0} alarms imported; click Save to persist</value>
-  </data>
-  <data name="F104" xml:space="preserve">
-    <value>Exported {0} rows → {1}</value>
   </data>
   <data name="F105" xml:space="preserve">
     <value>Exported {0} devices to {1}</value>
@@ -2736,9 +2607,6 @@ Trial expired; please activate</value>
   <data name="F168" xml:space="preserve">
     <value>Review report exported: {0}</value>
   </data>
-  <data name="F169" xml:space="preserve">
-    <value>Target {0:F0} pcs/bucket</value>
-  </data>
   <data name="F170" xml:space="preserve">
     <value>Target {0:P0}</value>
   </data>
@@ -2863,9 +2731,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="F205" xml:space="preserve">
     <value>Device "{0}": duplicate defect name "{1}"</value>
   </data>
-  <data name="F206" xml:space="preserve">
-    <value>Device "{0}" counter alarm "{1}" upper limit must be &gt; 0 (current {2})</value>
-  </data>
   <data name="F207" xml:space="preserve">
     <value>Device "{0}": duplicate alarm PLC address "{1}"; alarm addresses must be unique within a device</value>
   </data>
@@ -2953,9 +2818,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="F234" xml:space="preserve">
     <value>Collection service reconnected, downtime {0}</value>
   </data>
-  <data name="F235" xml:space="preserve">
-    <value>Failed to release the Collector connection: {0}</value>
-  </data>
   <data name="F236" xml:space="preserve">
     <value>Rebuilds {0} · Last {1} ms</value>
   </data>
@@ -3034,20 +2896,8 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="F259" xml:space="preserve">
     <value>Showing {0} items</value>
   </data>
-  <data name="F260" xml:space="preserve">
-    <value>Overdue {0}</value>
-  </data>
-  <data name="F261" xml:space="preserve">
-    <value>Met {0}</value>
-  </data>
-  <data name="F262" xml:space="preserve">
-    <value>NG {0}</value>
-  </data>
   <data name="F263" xml:space="preserve">
     <value>Conflict {0}</value>
-  </data>
-  <data name="F264" xml:space="preserve">
-    <value>Recipe {0}</value>
   </data>
   <data name="F265" xml:space="preserve">
     <value>Last shift {0}</value>
@@ -3066,24 +2916,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="F270" xml:space="preserve">
     <value>Main {0}</value>
-  </data>
-  <data name="F271" xml:space="preserve">
-    <value>vs last shift {0} pcs</value>
-  </data>
-  <data name="F272" xml:space="preserve">
-    <value>NG {0:N0} pcs</value>
-  </data>
-  <data name="F273" xml:space="preserve">
-    <value>Total ({0} units)</value>
-  </data>
-  <data name="F274" xml:space="preserve">
-    <value>Repeated {0}x</value>
-  </data>
-  <data name="F275" xml:space="preserve">
-    <value>Interval {0:F0}min</value>
-  </data>
-  <data name="F276" xml:space="preserve">
-    <value>Output diff {0:N0}</value>
   </data>
   <data name="F277" xml:space="preserve">
     <value>Recovered {0}</value>
@@ -3114,9 +2946,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="F286" xml:space="preserve">
     <value>Limit {0}</value>
-  </data>
-  <data name="F287" xml:space="preserve">
-    <value>View {0} details</value>
   </data>
   <data name="F288" xml:space="preserve">
     <value>Delete shift {0}</value>
@@ -3195,9 +3024,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="F310" xml:space="preserve">
     <value>Row {0}: counter alarm name is empty</value>
   </data>
-  <data name="F311" xml:space="preserve">
-    <value>Row {0}: max value '{1}' is not a valid integer</value>
-  </data>
   <data name="F312" xml:space="preserve">
     <value>Row {0}: enabled '{1}' is invalid (expected True/False)</value>
   </data>
@@ -3222,9 +3048,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M050" xml:space="preserve">
     <value>Collector Not Connected</value>
   </data>
-  <data name="M051" xml:space="preserve">
-    <value>Entered Remote Mode</value>
-  </data>
   <data name="M052" xml:space="preserve">
     <value>No Backlog</value>
   </data>
@@ -3245,9 +3068,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M058" xml:space="preserve">
     <value>Previous Period</value>
-  </data>
-  <data name="M059" xml:space="preserve">
-    <value>Click a status period to view alarms</value>
   </data>
   <data name="M060" xml:space="preserve">
     <value>No matching alarms</value>
@@ -3273,9 +3093,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M067" xml:space="preserve">
     <value>Hourly Output</value>
   </data>
-  <data name="M069" xml:space="preserve">
-    <value>Collection settings synced</value>
-  </data>
   <data name="M070" xml:space="preserve">
     <value>Service Disconnected</value>
   </data>
@@ -3284,9 +3101,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M072" xml:space="preserve">
     <value>No Data</value>
-  </data>
-  <data name="M073" xml:space="preserve">
-    <value>Device Name</value>
   </data>
   <data name="M074" xml:space="preserve">
     <value>Unsaved Changes</value>
@@ -3507,14 +3321,8 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M146" xml:space="preserve">
     <value>Shift Configuration Changed</value>
   </data>
-  <data name="M147" xml:space="preserve">
-    <value>Shift name cannot be empty</value>
-  </data>
   <data name="M148" xml:space="preserve">
     <value>Up to {0} shifts</value>
-  </data>
-  <data name="M149" xml:space="preserve">
-    <value>Restore Default Settings</value>
   </data>
   <data name="M150" xml:space="preserve">
     <value>Availability Rate = Run Time / Planned Time</value>
@@ -3570,9 +3378,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M167" xml:space="preserve">
     <value>Enter password to restore:</value>
   </data>
-  <data name="M168" xml:space="preserve">
-    <value>Enter password to generate demo devices:</value>
-  </data>
   <data name="M169" xml:space="preserve">
     <value>Generate Demo Devices</value>
   </data>
@@ -3626,9 +3431,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M186" xml:space="preserve">
     <value>PLC not connected, cannot read</value>
-  </data>
-  <data name="M187" xml:space="preserve">
-    <value>Operation Timeout</value>
   </data>
   <data name="M188" xml:space="preserve">
     <value>PLC not connected, cannot clear</value>
@@ -3690,9 +3492,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M207" xml:space="preserve">
     <value>Alarm</value>
   </data>
-  <data name="M208" xml:space="preserve">
-    <value>Idle</value>
-  </data>
   <data name="M209" xml:space="preserve">
     <value>Alarm Count</value>
   </data>
@@ -3716,15 +3515,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M216" xml:space="preserve">
     <value>Count</value>
-  </data>
-  <data name="M217" xml:space="preserve">
-    <value>Percentage(%)</value>
-  </data>
-  <data name="M218" xml:space="preserve">
-    <value>OK</value>
-  </data>
-  <data name="M219" xml:space="preserve">
-    <value>NG</value>
   </data>
   <data name="M220" xml:space="preserve">
     <value>Hours</value>
@@ -3769,9 +3559,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>NG Count Address</value>
   </data>
   <data name="M234" xml:space="preserve">
-    <value>OEE Reset Address</value>
-  </data>
-  <data name="M276" xml:space="preserve">
     <value>OEE Reset Address</value>
   </data>
   <data name="M275" xml:space="preserve">
@@ -3933,15 +3720,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="Conn_Connected" xml:space="preserve">
     <value>Connected</value>
   </data>
-  <data name="Conn_Lost" xml:space="preserve">
-    <value>Connection Lost</value>
-  </data>
-  <data name="Conn_DisconnectedRetry" xml:space="preserve">
-    <value>Disconnected (retry in {0:F0}s)</value>
-  </data>
-  <data name="Conn_Connecting" xml:space="preserve">
-    <value>Connecting</value>
-  </data>
   <data name="Conn_ConnectingSuffix" xml:space="preserve">
     <value>... (attempt #{0})</value>
   </data>
@@ -4025,9 +3803,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="Web_Lbl_Ng" xml:space="preserve">
     <value>NG Defect</value>
-  </data>
-  <data name="Web_Lbl_Planned" xml:space="preserve">
-    <value>Planned</value>
   </data>
   <data name="Web_Lbl_Elapsed" xml:space="preserve">
     <value>Elapsed</value>
@@ -4194,20 +3969,11 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M324" xml:space="preserve">
     <value>Reset Password</value>
   </data>
-  <data name="M325" xml:space="preserve">
-    <value>Account is disabled</value>
-  </data>
   <data name="M326" xml:space="preserve">
     <value>Username already exists</value>
   </data>
   <data name="M327" xml:space="preserve">
     <value>Cannot delete the last admin account</value>
-  </data>
-  <data name="M328" xml:space="preserve">
-    <value>Current User</value>
-  </data>
-  <data name="M329" xml:space="preserve">
-    <value>Log Out</value>
   </data>
   <data name="M330" xml:space="preserve">
     <value>Display Name</value>
@@ -4223,9 +3989,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M362" xml:space="preserve">
     <value>Unsaved changes</value>
-  </data>
-  <data name="M363" xml:space="preserve">
-    <value>Last Login</value>
   </data>
   <data name="M364" xml:space="preserve">
     <value>Password must be at least 8 characters</value>
@@ -4284,9 +4047,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M382" xml:space="preserve">
     <value>Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.</value>
   </data>
-  <data name="M383" xml:space="preserve">
-    <value>Current page only</value>
-  </data>
   <data name="M384" xml:space="preserve">
     <value>Todos os resultados filtrados ({0} linhas)</value>
   </data>
@@ -4299,9 +4059,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   <data name="M334" xml:space="preserve">
     <value>Administrator</value>
   </data>
-  <data name="M335" xml:space="preserve">
-    <value>Enter new password</value>
-  </data>
   <data name="M336" xml:space="preserve">
     <value>Insufficient permission, engineer or above required</value>
   </data>
@@ -4310,12 +4067,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="M338" xml:space="preserve">
     <value>Switch User</value>
-  </data>
-  <data name="K584" xml:space="preserve">
-    <value>Table View</value>
-  </data>
-  <data name="K585" xml:space="preserve">
-    <value>Card View</value>
   </data>
   <data name="K587" xml:space="preserve">
     <value>OEE</value>
@@ -4328,9 +4079,6 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="K590" xml:space="preserve">
     <value>Total</value>
-  </data>
-  <data name="K591" xml:space="preserve">
-    <value>Quality</value>
   </data>
   <data name="K592" xml:space="preserve">
     <value>Cycle</value>
@@ -4634,12 +4382,6 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="K672" xml:space="preserve">
     <value>Add Parameter</value>
   </data>
-  <data name="K673" xml:space="preserve">
-    <value>Remove Parameter</value>
-  </data>
-  <data name="K674" xml:space="preserve">
-    <value>No recipes available</value>
-  </data>
   <data name="K675" xml:space="preserve">
     <value>Recipe applied successfully</value>
   </data>
@@ -4666,9 +4408,6 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="K683" xml:space="preserve">
     <value>Target Device</value>
-  </data>
-  <data name="K684" xml:space="preserve">
-    <value>Device Machine Type</value>
   </data>
   <data name="K685" xml:space="preserve">
     <value>Apply recipe {0} to device {1}?</value>
@@ -5411,6 +5150,18 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Web_Dv_PlcAddr" xml:space="preserve">
     <value>PLC Address</value>
   </data>
+  <data name="Web_Dv_Loading" xml:space="preserve">
+    <value>Loading device configs</value>
+  </data>
+  <data name="Web_Dv_LoadFailed" xml:space="preserve">
+    <value>Failed to load device configs</value>
+  </data>
+  <data name="Web_Dv_LoadFailedHint" xml:space="preserve">
+    <value>Ensure the collection service is running and retry</value>
+  </data>
+  <data name="Web_Dv_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
   <data name="Web_Dv_Description" xml:space="preserve">
     <value>Description</value>
   </data>
@@ -5461,12 +5212,6 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="Web_Rc_None" xml:space="preserve">
     <value>No recipes</value>
-  </data>
-  <data name="Web_Rc_RecipeValue" xml:space="preserve">
-    <value>Recipe Value</value>
-  </data>
-  <data name="Web_Rc_RecipeId" xml:space="preserve">
-    <value>Recipe ID</value>
   </data>
   <data name="Web_St_Title" xml:space="preserve">
     <value>Settings (Read-only)</value>
@@ -5789,9 +5534,6 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="F329" xml:space="preserve">
     <value>Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
   </data>
-  <data name="F330" xml:space="preserve">
-    <value>{0} rows, Tab={1}</value>
-  </data>
   <data name="Web_Recipe" xml:space="preserve">
     <value>Recipe</value>
   </data>
@@ -5809,6 +5551,9 @@ Changes are kept in the current session and can still be saved after returning.<
   </data>
   <data name="Web_ConnLost" xml:space="preserve">
     <value>Connection lost, reconnecting…</value>
+  </data>
+  <data name="Web_ConnStale" xml:space="preserve">
+    <value>Data stalled for {0}s; the collection service may be stuck</value>
   </data>
   <data name="Web_RecipeInfo" xml:space="preserve">
     <value>Recipe {0}: {1}</value>
@@ -6408,9 +6153,6 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar.</value>
   </data>
-  <data name="Ux_DeviceWizardMachineType" xml:space="preserve">
-    <value>Tipo de maquina</value>
-  </data>
   <data name="Ux_DeviceWizardNameDuplicate" xml:space="preserve">
     <value>Nome do dispositivo ja existe</value>
   </data>
@@ -6420,17 +6162,11 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ux_DeviceWizardNext" xml:space="preserve">
     <value>Avancar</value>
   </data>
-  <data name="Ux_DeviceWizardReviewHint" xml:space="preserve">
-    <value>Revise as informacoes e clique em Concluir para criar o dispositivo.</value>
-  </data>
   <data name="Ux_DeviceWizardStepAddresses" xml:space="preserve">
     <value>Enderecos PLC</value>
   </data>
   <data name="Ux_DeviceWizardStepBasic" xml:space="preserve">
     <value>Informacoes basicas</value>
-  </data>
-  <data name="Ux_DeviceWizardStepReview" xml:space="preserve">
-    <value>Revisao</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
     <value>Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).</value>
@@ -6475,13 +6211,13 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Visao geral rapida</value>
   </data>
   <data name="Ux_FirstRunWelcomeBody" xml:space="preserve">
-    <value> alarms</value>
+    <value>O MainAPP centraliza status, producao, alarmes e OEE. Use a barra lateral; o ponto inferior indica conexao PLC.</value>
   </data>
   <data name="Ux_FirstRunPlcTitle" xml:space="preserve">
     <value>Confirme a conexao PLC</value>
   </data>
   <data name="Ux_FirstRunPlcBody" xml:space="preserve">
-    <value> and network. Open Settings to review connection; a green dot means connected.</value>
+    <value>Confirme IP, porta e rede do PLC. Abra Configuracoes; ponto verde = conectado.</value>
   </data>
   <data name="Ux_FirstRunNavTitle" xml:space="preserve">
     <value>Paginas principais</value>
@@ -6625,9 +6361,6 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="K763" xml:space="preserve">
     <value>Atrasado</value>
   </data>
-  <data name="K764" xml:space="preserve">
-    <value>Importar ordens de produção de um arquivo CSV (as colunas correspondem ao modelo de exportação)</value>
-  </data>
   <data name="K765" xml:space="preserve">
     <value>Alvo</value>
   </data>
@@ -6637,23 +6370,11 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="K767" xml:space="preserve">
     <value>Taxa de realização</value>
   </data>
-  <data name="K768" xml:space="preserve">
-    <value>Resultados filtrados</value>
-  </data>
-  <data name="K769" xml:space="preserve">
-    <value>Copiar número da ordem</value>
-  </data>
-  <data name="K770" xml:space="preserve">
-    <value>Copiar código do produto</value>
-  </data>
   <data name="K771" xml:space="preserve">
     <value>Linha do tempo</value>
   </data>
   <data name="K772" xml:space="preserve">
     <value>Criada</value>
-  </data>
-  <data name="K773" xml:space="preserve">
-    <value>Início planejado</value>
   </data>
   <data name="K774" xml:space="preserve">
     <value>Início real</value>
@@ -6734,16 +6455,13 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Rastreabilidade SN</value>
   </data>
   <data name="K915" xml:space="preserve">
-    <value>Digite o SN para rastrear</value>
+    <value>Digite o SN para rastrear, ex.: SN20260830-0001</value>
   </data>
   <data name="K916" xml:space="preserve">
     <value>Insira um SN para consultar seu rastreio de produção</value>
   </data>
   <data name="K917" xml:space="preserve">
-    <value>Mostra dispositivo</value>
-  </data>
-  <data name="K918" xml:space="preserve">
-    <value>Detalhes do SN</value>
+    <value>Mostra dispositivo, ordem, turno, horário e resultado</value>
   </data>
   <data name="K919" xml:space="preserve">
     <value>{0} no total</value>
@@ -6772,7 +6490,97 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="K927" xml:space="preserve">
     <value>Página {0}</value>
   </data>
-  <data name="K928" xml:space="preserve">
-    <value>Visão geral</value>
+  <data name="Web_Csv_EventTime" xml:space="preserve">
+    <value>Hora do evento</value>
+  </data>
+  <data name="Web_Csv_Time" xml:space="preserve">
+    <value>Hora</value>
+  </data>
+  <data name="Web_Csv_DeviceId" xml:space="preserve">
+    <value>ID do dispositivo</value>
+  </data>
+  <data name="Web_Csv_DeviceName" xml:space="preserve">
+    <value>Nome do dispositivo</value>
+  </data>
+  <data name="Web_Csv_AlarmId" xml:space="preserve">
+    <value>ID do alarme</value>
+  </data>
+  <data name="Web_Csv_AlarmName" xml:space="preserve">
+    <value>Nome do alarme</value>
+  </data>
+  <data name="Web_Csv_PlcAddress" xml:space="preserve">
+    <value>Endereço PLC</value>
+  </data>
+  <data name="Web_Csv_EventType" xml:space="preserve">
+    <value>Tipo de evento</value>
+  </data>
+  <data name="Web_Csv_EventTypeText" xml:space="preserve">
+    <value>Texto do tipo de evento</value>
+  </data>
+  <data name="Web_Csv_Shift" xml:space="preserve">
+    <value>Turno</value>
+  </data>
+  <data name="Web_Csv_OkCount" xml:space="preserve">
+    <value>Produção OK</value>
+  </data>
+  <data name="Web_Csv_NgCount" xml:space="preserve">
+    <value>Produção NG</value>
+  </data>
+  <data name="Web_Csv_StatusWord" xml:space="preserve">
+    <value>Palavra de status</value>
+  </data>
+  <data name="Web_Csv_PrevState" xml:space="preserve">
+    <value>Estado anterior</value>
+  </data>
+  <data name="Web_Csv_CurrState" xml:space="preserve">
+    <value>Estado atual</value>
+  </data>
+  <data name="Web_Csv_PrevStateText" xml:space="preserve">
+    <value>Texto do estado anterior</value>
+  </data>
+  <data name="Web_Csv_CurrStateText" xml:space="preserve">
+    <value>Texto do estado atual</value>
+  </data>
+  <data name="Web_Csv_Metric" xml:space="preserve">
+    <value>Métrica</value>
+  </data>
+  <data name="Web_Csv_Value" xml:space="preserve">
+    <value>Valor</value>
+  </data>
+  <data name="Web_Csv_RunSeconds" xml:space="preserve">
+    <value>Tempo de execução (s)</value>
+  </data>
+  <data name="Web_Csv_AlarmSeconds" xml:space="preserve">
+    <value>Tempo de alarme (s)</value>
+  </data>
+  <data name="Web_Csv_TargetCycle" xml:space="preserve">
+    <value>Ciclo alvo (peças/h)</value>
+  </data>
+  <data name="Web_Csv_SumAlarm" xml:space="preserve">
+    <value># Disparados: {0}, Recuperados: {1}, Pendentes: {2}</value>
+  </data>
+  <data name="Web_Csv_SumRange" xml:space="preserve">
+    <value># Intervalo: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}</value>
+  </data>
+  <data name="Web_Csv_SumProd" xml:space="preserve">
+    <value># Total OK: {0}, Total NG: {1}, Rendimento: {2}</value>
+  </data>
+  <data name="Web_Csv_SumStatus" xml:space="preserve">
+    <value># Execução: {0}h, Alarme: {1}h, Ocioso: {2}h</value>
+  </data>
+  <data name="Web_Csv_SumDevice" xml:space="preserve">
+    <value># Dispositivo: {0}</value>
+  </data>
+  <data name="Web_Csv_FileAlarm" xml:space="preserve">
+    <value>alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Csv_FileProd" xml:space="preserve">
+    <value>production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Csv_FileStatus" xml:space="preserve">
+    <value>status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Unit_PerHour" xml:space="preserve">
+    <value>peças/h</value>
   </data>
 </root>
