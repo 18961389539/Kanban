@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using MainAPP.Resources;
 using Kanban.Analysis;
 using System.ComponentModel;
@@ -37,7 +38,7 @@ public sealed record DeviceFilterOption(string Id, string Name);
 /// 工单业务逻辑（弹窗、状态机校验、二次确认、落库）已抽取到 <see cref="IWorkOrderService"/>，
 /// 本 ViewModel 仅负责列表展示、筛选与命令转发，避免与 <see cref="DeviceManagerViewModel"/> 重复。
 /// </summary>
-public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
+public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     private readonly WorkOrderRepository _workOrderRepo;
     private readonly IWorkOrderService _workOrderService;
@@ -90,6 +91,9 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
 
     /// <summary>工单排程甘特图模型（只读，设备×时间矩形条）。筛选/集合变化时重建。</summary>
     public OxyPlot.PlotModel? WorkOrderGanttChartModel { get; private set; }
+
+    private int _ganttBuildVersion;
+    private bool _pageActive;
 
     /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
     public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
@@ -360,20 +364,51 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         // 创建独立的 ListCollectionView（不能用 GetDefaultView，否则与其他 ViewModel 共享同一视图导致 Filter 互相覆盖）
         FilteredView = new ListCollectionView(_workOrderRepo.WorkOrders);
         FilteredView.Filter = FilterWorkOrder;
-
-        RefreshDeviceOptions();
-        RefreshStatusCounts();
         ApplySort();
         // 订阅集合变化：工单增删/状态切换后重算各状态计数（命名方法，Dispose 时解绑）
         _workOrderRepo.WorkOrders.CollectionChanged += OnWorkOrdersCollectionChanged;
         // 每分钟兜底刷新时间相关计数 + 甘特"当前时刻线"右移（两者都依赖 DateTime.Now，无集合事件可订阅）。
-        // 甘特重建仅当折叠区展开时由 PlotView 绑定更新生效（折叠时重建是廉价空操作）。
         _derivedCountsTimer.Tick += (_, _) =>
         {
+            if (!_pageActive) return;
             RecalcDerivedCounts();
             RefreshGanttForCurrentFilter();
         };
-        _derivedCountsTimer.Start();
+    }
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        _pageActive = true;
+        RefreshDeviceOptions();
+        if (!_derivedCountsTimer.IsEnabled)
+            _derivedCountsTimer.Start();
+
+        // 让导航切换先完成绘制，再在后台优先级重算计数/触发甘特图异步构建。
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted)
+        {
+            RecalcDerivedCounts();
+            RefreshFilteredView();
+            return;
+        }
+
+        dispatcher.BeginInvoke(() =>
+        {
+            if (!_pageActive) return;
+            RecalcDerivedCounts();
+            RefreshFilteredView();
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit()
+    {
+        _pageActive = false;
+        _derivedCountsTimer.Stop();
+        _productionCts?.Cancel();
+        _snCts?.Cancel();
+        Interlocked.Increment(ref _ganttBuildVersion);
     }
 
     /// <summary>工单集合变更 → 增量维护状态计数 + 全量重算时间/产量相关计数。
@@ -601,26 +636,44 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     /// <summary>重建工单排程甘特图（跟随当前筛选结果；冲突集合来自 RecalcDerivedCounts 的最新值）。</summary>
     private void RefreshGanttChart(IReadOnlyList<WorkOrder> filtered)
     {
-        var devices = _deviceRepo.GetDevicesSnapshot()
+        if (!_pageActive)
+            return;
+
+        var version = Interlocked.Increment(ref _ganttBuildVersion);
+        var deviceSnapshot = _deviceRepo.GetDevicesSnapshot();
+        var devices = deviceSnapshot
             .Where(d => filtered.Any(w => w.DeviceId == d.Id))
             .ToList();
-        // 孤立工单（设备已删）无法投影行，回退显示设备集合含其 DeviceId —— 保守取已存在设备
-        OxyPlot.PlotModel? chart = null;
-        try
+        var chartDevices = devices.Count > 0 ? devices : deviceSnapshot;
+        var conflictIds = ConflictOrderIds;
+        var highlightedId = SelectedWorkOrder?.Id;
+        var workOrders = filtered.ToList();
+
+        Task.Run(() =>
         {
-            chart = MainAPP.Services.ChartService.BuildWorkOrderGanttChart(
-                devices.Count > 0 ? devices : _deviceRepo.GetDevicesSnapshot(),
-                filtered,
-                ConflictOrderIds,
-                highlightedWorkOrderId: SelectedWorkOrder?.Id);
-        }
-        catch (Exception ex)
-        {
-            Serilog.Log.Warning(ex, "构建工单排程甘特图失败，回退空模型");
-            chart = new OxyPlot.PlotModel();
-        }
-        WorkOrderGanttChartModel = chart;
-        OnPropertyChanged(nameof(WorkOrderGanttChartModel));
+            OxyPlot.PlotModel chart;
+            try
+            {
+                chart = ChartService.BuildWorkOrderGanttChart(
+                    chartDevices,
+                    workOrders,
+                    conflictIds,
+                    highlightedWorkOrderId: highlightedId);
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "构建工单排程甘特图失败，回退空模型");
+                chart = new OxyPlot.PlotModel();
+            }
+
+            UiDispatcher.Dispatch(() =>
+            {
+                if (!_pageActive || version != _ganttBuildVersion)
+                    return;
+                WorkOrderGanttChartModel = chart;
+                OnPropertyChanged(nameof(WorkOrderGanttChartModel));
+            });
+        }).Forget();
     }
 
     /// <summary>按当前筛选视图重建甘特图（timer 每分钟调用，驱动"当前时刻线"随时间右移）。</summary>

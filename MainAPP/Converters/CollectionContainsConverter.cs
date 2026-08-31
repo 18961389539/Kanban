@@ -18,10 +18,11 @@ public sealed class CollectionContainsConverter : IMultiValueConverter
     {
         if (values == null || values.Length < 2 || values[0] == null || values[1] == null)
             return false;
+        // 工单列表行绑定的是 int Id + HashSet<int>；走 O(1) Contains，避免 Cast<object>().Contains 线性扫描。
+        if (values[0] is int id && values[1] is IReadOnlySet<int> intSet)
+            return intSet.Contains(id);
         var item = values[0];
-        // 兼容 ICollection<T>、IEnumerable<T> 等常见集合形态；values[1] 为 VM 的集合属性引用。
-        var collection = values[1] as System.Collections.IEnumerable;
-        if (collection == null)
+        if (values[1] is not System.Collections.IEnumerable collection)
             return false;
         return collection.Cast<object>().Contains(item);
     }
