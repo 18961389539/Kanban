@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
 using MainAPP.Resources;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,6 +31,10 @@ internal static class RuntimeHealthText
 
 public sealed partial class DeviceAcquisitionStatusItem : ObservableObject
 {
+    /// <summary>设备唯一标识，用作设备状态集合的增量同步键。
+    /// 不得改用 DeviceName：设备重名会让同步字典抛 ArgumentException，
+    /// 而同步发生在 1s 刷新定时器回调内，异常直通 Dispatcher 会终止进程。</summary>
+    [ObservableProperty] private string _deviceId = string.Empty;
     [ObservableProperty] private string _deviceName = string.Empty;
     [ObservableProperty] private string _statusText = Strings.Status_Unknown;
     [ObservableProperty] private string _acquisitionText = Strings.K402;
@@ -57,17 +63,30 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
     private readonly SystemResourceMonitor _systemResourceMonitor;
+    private readonly IDialogService _dialogService;
     private readonly KanbanDataClient? _remoteClient;
     private readonly DispatcherTimer _refreshTimer;
 
     /// <summary>远程刷新版本守卫（RefreshFromRemote 防重入：过期响应丢弃）。</summary>
     private int _refreshVersion;
 
-    [ObservableProperty] private bool _isConnected;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ReconnectCommand))]
+    private bool _isConnected;
     [ObservableProperty] private bool _isAcquisitionRunning;
     [ObservableProperty] private string _connectionStatus = Strings.Conn_Disconnected;
     [ObservableProperty] private DateTime? _disconnectedAt;
     [ObservableProperty] private bool _isCollectorUnreachable;
+    /// <summary>正在发起重连（用于禁用"重试连接"按钮，避免连点把 PLC 驱动建链请求打爆）。</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ReconnectCommand))]
+    private bool _isReconnecting;
+    /// <summary>自动刷新已暂停。1Hz 刷新会让 P99 延迟、队列峰值、磁盘剩余这类准静态指标一直跳动，
+    /// 用户既看不清数值也复制不下来；排查故障时"先暂停再读数"是刚性需求。</summary>
+    [ObservableProperty] private bool _isAutoRefreshPaused;
+    /// <summary>最近一次刷新本身的异常（区别于采集循环的 LastFailureMessage）。
+    /// 刷新失败时数据停止更新，必须让用户看到，否则页面看上去"正常但不动"。</summary>
+    [ObservableProperty] private string? _refreshErrorMessage;
     [ObservableProperty] private int _consecutiveFailures;
     [ObservableProperty] private int _totalDisconnectCount;
     [ObservableProperty] private int _completedCycles;
@@ -176,9 +195,25 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
     public int TotalDeviceCount => _deviceRepository.GetDevicesSnapshot().Count;
     public string HealthText => RuntimeHealthText.Format(IsConnected, IsAcquisitionRunning, LastCycleSucceeded, ConsecutiveFailureCycles);
-    public bool HasActiveFailure => !IsConnected || (!LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage));
+    public bool HasRefreshError => !string.IsNullOrWhiteSpace(RefreshErrorMessage);
+    public bool HasActiveFailure => !IsConnected
+        || HasRefreshError
+        || (!LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage));
     /// <summary>是否已有轮询趋势数据（用于空状态提示）。</summary>
     public bool HasPollingTrendData => _pollingTrendPoints.Count > 0;
+    /// <summary>本地采集模式。只有本地模式才由本页直接发起 PLC 重连；
+    /// Remote 模式的 SignalR 连接归上层 Coordinator 统一重连（含回调重新注册），
+    /// 本页越权 ConnectAsync 会建出一条无回调注册的连接，页面永远收不到数据。</summary>
+    public bool IsLocalMode => !_runtimeMode.IsRemote;
+    /// <summary>"重试连接"可执行条件：连接归本进程管理、当前已断线、且未在重连中。</summary>
+    public bool CanReconnectNow => IsLocalMode && !IsReconnecting && !IsConnected;
+    /// <summary>暂停/继续按钮文案。</summary>
+    public string AutoRefreshToggleText => IsAutoRefreshPaused
+        ? Strings.Rtmon_ResumeAutoRefresh
+        : Strings.Rtmon_PauseAutoRefresh;
+    /// <summary>成功率显示值：尚无采集周期时返回 null（UI 显示"暂无"）。
+    /// 直接给 0 会让刚启动时显示"0.0%"+空进度条，视觉含义等同"全部失败"，与"还没数据"是两回事。</summary>
+    public double? SuccessRateDisplay => CompletedCycles == 0 ? null : SuccessRatePercent;
 
     public RuntimeMonitoringViewModel(
         IPlcConnectionManager connectionManager,
@@ -187,6 +222,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         IDeviceRepository deviceRepository,
         HistoryService historyService,
         SystemResourceMonitor systemResourceMonitor,
+        IDialogService dialogService,
         IPlcAddressCodecResolver? addressCodecResolver = null,
         IPlcRuntimeProfileProvider? profileProvider = null,
         KanbanDataClient? remoteClient = null,
@@ -198,6 +234,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         _deviceRepository = deviceRepository;
         _historyService = historyService;
         _systemResourceMonitor = systemResourceMonitor;
+        _dialogService = dialogService;
         _addressCodecResolver = addressCodecResolver;
         _profileProvider = profileProvider;
         _remoteClient = remoteClient;
@@ -213,11 +250,35 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public void OnPageEnter()
     {
         if (_refreshTimer.IsEnabled) return;
+        RaiseConfigMetricsChanged();
         Refresh();
         _refreshTimer.Start();
     }
 
     public void OnPageExit() => _refreshTimer.Stop();
+
+    /// <summary>
+    /// 配置类指标（PLC 地址 / 轮询间隔 / 历史写入间隔）只在进入页面时通知一次。
+    /// 它们取自 AppSettings，运行期间不变；原先每秒 OnPropertyChanged 只是制造无效绑定重算，
+    /// 还容易让人误以为这些配置是"实时采集到的运行状态"。
+    /// </summary>
+    private void RaiseConfigMetricsChanged()
+    {
+        OnPropertyChanged(nameof(PlcEndpoint));
+        OnPropertyChanged(nameof(PollingIntervalMs));
+        OnPropertyChanged(nameof(HistoryWriteIntervalScans));
+    }
+
+    /// <summary>暂停/继续自动刷新。恢复时立刻补一帧，不用干等下一个 tick。</summary>
+    [RelayCommand]
+    private void ToggleAutoRefresh()
+    {
+        IsAutoRefreshPaused = !IsAutoRefreshPaused;
+        if (!IsAutoRefreshPaused) Refresh();
+    }
+
+    partial void OnIsAutoRefreshPausedChanged(bool value)
+        => OnPropertyChanged(nameof(AutoRefreshToggleText));
 
     [RelayCommand]
     private void Refresh()
@@ -232,9 +293,193 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         RefreshFromLocal();
     }
 
+    /// <summary>
+    /// 真正发起一次 PLC 重连（对应标题栏"重试连接"按钮）。
+    /// 原实现把该按钮绑到 RefreshCommand——点了只是刷新显示，不会重连，属误导性按钮。
+    /// EnsureConnected 内部会执行驱动建链（最长一个连接超时），必须在后台线程跑，
+    /// 直接在 UI 线程调用会把整个界面卡在建链上。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanReconnectNow))]
+    private async Task ReconnectAsync()
+    {
+        IsReconnecting = true;
+        try
+        {
+            await Task.Run(() => _connectionManager.EnsureConnected());
+        }
+        catch (Exception ex)
+        {
+            // EnsureConnected 内部已吞掉常规异常，这里兜住不可恢复异常（OOM 等）后如实呈现
+            LastFailureMessage = ex.Message;
+            LastFailureAt = DateTime.Now;
+        }
+        finally
+        {
+            IsReconnecting = false;
+            Refresh(); // 立即把新的连接状态刷到界面，最多等 1s 定时器太慢
+        }
+    }
+
+    /// <summary>
+    /// 导出当前诊断快照到 .txt（UTF-8 带 BOM，记事本/工单系统直接可读）。
+    /// 排查故障时只靠截图会丢失数值精度、也无法检索，落盘一份结构化文本是刚性需求。
+    /// </summary>
+    [RelayCommand]
+    private void ExportDiagnostics()
+    {
+        var path = _dialogService.ShowSaveFileDialog(
+            Strings.Rtmon_ExportDiagnostics,
+            // 文件名保持 ASCII：诊断快照常要贴到工单/邮件里外发，中文名在跨系统流转时易被改写。
+            $"runtime_diagnostics_{DateTime.Now:yyyyMMddHHmm}.txt",
+            Strings.Rtmon_TxtFilter);
+        if (string.IsNullOrEmpty(path)) return;
+
+        try
+        {
+            var report = BuildDiagnosticsReport();
+            File.WriteAllText(path, report, new UTF8Encoding(true));
+            _dialogService.NotifySuccess(string.Format(Strings.Rtmon_DiagnosticsExported, Path.GetFileName(path)));
+        }
+        catch (Exception ex)
+        {
+            _dialogService.NotifyError(string.Format(Strings.F090, ex.Message));
+        }
+    }
+
+    /// <summary>把同一份诊断快照复制到剪贴板，便于直接粘到工单/群聊里。</summary>
+    [RelayCommand]
+    private void CopyDiagnostics()
+    {
+        try
+        {
+            // 剪贴板被其他进程独占时 SetText 会抛 ExternalException；
+            // 失败时引导用户改用"导出"落盘，而不是静默吞掉让用户以为复制成功了。
+            System.Windows.Clipboard.SetText(BuildDiagnosticsReport());
+            _dialogService.NotifySuccess(Strings.Rtmon_DiagnosticsCopied);
+        }
+        catch (Exception ex)
+        {
+            _dialogService.NotifyError(string.Format(Strings.Rtmon_CopyFailed, ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// 生成诊断快照文本：导出文件与复制剪贴板共用同一份内容，避免两处格式漂移。
+    /// 指标标签直接复用界面上的本地化键，导出结果与用户看到的界面对得上号。
+    /// 读取的是当前内存快照，不触发重新采集——导出的就是用户此刻看到的那一帧。
+    /// </summary>
+    public string BuildDiagnosticsReport()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(Strings.Rtmon_DiagnosticsTitle);
+        sb.AppendLine($"{Strings.Rtmon_DiagnosticsGeneratedAt}: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"{Strings.Rtmon_RuntimeMode}: {(IsLocalMode ? Strings.Settings_CollectorLocalMode : Strings.K487)}");
+        sb.AppendLine(string.Format(Strings.F284, LastRefreshTime));
+
+        AppendSection(sb, Strings.Rtmon_DiagOverview);
+        sb.AppendLine($"  {Strings.K425}: {HealthText}");
+        sb.AppendLine($"  {Strings.K099}: {ConnectionStatus}");
+        sb.AppendLine($"  {Strings.K100}: {TotalDisconnectCount}");
+        sb.AppendLine($"  {Strings.K442}: {DisconnectDurationText}");
+        sb.AppendLine($"  {Strings.K424}: {ConsecutiveFailureCycles}");
+        sb.AppendLine($"  {Strings.K423}: {(string.IsNullOrWhiteSpace(LastFailureMessage) ? Strings.K583 : LastFailureMessage)}");
+        if (LastFailureAt is { } failedAt)
+            sb.AppendLine($"    {string.Format(Strings.F279, failedAt)}");
+        if (HasRefreshError)
+            sb.AppendLine($"  {Strings.Rtmon_RefreshFailed}: {RefreshErrorMessage}");
+        if (IsCollectorUnreachable)
+            sb.AppendLine($"  {Strings.Rtmon_CollectorUnreachable}");
+
+        AppendSection(sb, Strings.K427);
+        sb.AppendLine($"  {Strings.K428}: {string.Format(Strings.F247, CompletedCycles)}");
+        sb.AppendLine($"  {Strings.K429}: {AverageCycleMilliseconds:F1} ms");
+        sb.AppendLine($"  {Strings.K430}: {MaxCycleMilliseconds} ms");
+        sb.AppendLine($"  {Strings.K431}: {PollingIntervalMs} ms");
+        sb.AppendLine($"  {Strings.K432}: {string.Format(Strings.F283, HistoryWriteIntervalScans)}");
+
+        AppendSection(sb, Strings.K434);
+        sb.AppendLine($"  {Strings.K435}: {TotalDeviceCount}");
+        sb.AppendLine($"  {Strings.K436}: {LastSuccessfulDevices}");
+        sb.AppendLine($"  {Strings.K437}: {LastSuccessfulAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.K595}");
+        sb.AppendLine($"  {Strings.K446}: {ReadDetailText}");
+        sb.AppendLine($"  {Strings.K447}: {DeviceReadSummary}");
+
+        AppendSection(sb, Strings.K440);
+        sb.AppendLine($"  {Strings.K441}: {PlcEndpoint}");
+        sb.AppendLine($"  {Strings.K442}: {DisconnectDurationText}");
+        sb.AppendLine($"  {Strings.K443}: {string.Format(Strings.F291, ConsecutiveFailures)}");
+
+        AppendSection(sb, Strings.K444);
+        sb.AppendLine($"  {Strings.K445}: {(SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.K595)}");
+        sb.AppendLine($"  {Strings.Rtmon_P95Cycle}: {CycleP95Milliseconds} ms");
+        sb.AppendLine($"  {Strings.Rtmon_P99Cycle}: {CycleP99Milliseconds} ms");
+
+        AppendSection(sb, Strings.K450);
+        sb.AppendLine($"  {Strings.K451}: {PendingHistoryCount}");
+        sb.AppendLine($"  {Strings.K452}: {RecoveryFileText}");
+        sb.AppendLine($"  {Strings.K453}: {LastHistoryFlushAt?.ToString("HH:mm:ss") ?? Strings.K595}");
+        sb.AppendLine($"  {Strings.K454}: {HistoryFlushFailureCount}");
+        sb.AppendLine($"  {Strings.K455}: {HistoryStorageText}");
+        sb.AppendLine($"  {Strings.Rtmon_DataSourcePending}: {PendingDataSourceCount}");
+        sb.AppendLine($"  {Strings.Rtmon_DataSourceRecovery}: {DataSourceRecoveryFileText}");
+        sb.AppendLine($"  {Strings.Rtmon_QueuePeakOverflow}: {HistoryQueueText}");
+        sb.AppendLine($"  {Strings.Rtmon_FlushLatency}: {HistoryFlushLatencyText}");
+        sb.AppendLine($"  {Strings.Rtmon_DataSourceDatabase}: {DataSourceStorageText}");
+        sb.AppendLine($"  {Strings.Rtmon_TotalDatabase}: {TotalStorageText}");
+
+        AppendSection(sb, Strings.K456);
+        sb.AppendLine($"  {Strings.K457}: {CpuMemoryText}");
+        sb.AppendLine($"  {Strings.K458}: {ProcessUptimeText}");
+        sb.AppendLine($"  {Strings.K459}: {GpuUsageText}");
+        sb.AppendLine($"  {Strings.K460}: {DataConsistencyText}");
+        sb.AppendLine($"  {Strings.K461}: {ProcessResourceText}");
+        sb.AppendLine($"  {Strings.K462}: {SystemMemoryText}");
+        sb.AppendLine($"  {Strings.K463}: {DiskFreeText}");
+        sb.AppendLine($"  {Strings.Rtmon_AddressConflict}: {AddressConflictCount}");
+        sb.AppendLine($"  {Strings.Rtmon_InvalidAddress}: {InvalidAddressCount}");
+        sb.AppendLine($"  {Strings.K465}: {StageTimingText}");
+        sb.AppendLine($"  {Strings.K466}: {BatchPlanText}");
+
+        AppendSection(sb, Strings.K467);
+        if (DeviceStatuses.Count == 0)
+        {
+            sb.AppendLine($"  {Strings.K583}");
+        }
+        else
+        {
+            // 制表符分隔：直接粘进 Excel / 工单表格能自动分列
+            sb.AppendLine($"  {Strings.K002}\t{Strings.K083}\t{Strings.K468}\t{Strings.K469}\t{Strings.Wo_OkNg}");
+            foreach (var d in DeviceStatuses)
+                sb.AppendLine($"  {d.DeviceName}\t{d.StatusText}\t{d.AcquisitionText}\t{d.ReadSummary}\t{d.ProductionSummary}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static void AppendSection(StringBuilder sb, string title)
+    {
+        sb.AppendLine();
+        sb.AppendLine($"[{title}]");
+    }
+
     /// <summary>本地采集模式：直接读本进程采集/历史诊断（原行为不变）。</summary>
     private void RefreshFromLocal()
     {
+        try
+        {
+            RefreshFromLocalCore();
+        }
+        catch (Exception ex)
+        {
+            // 1s 定时器回调里未捕获的异常会直通 Dispatcher 终止进程：
+            // 设备快照/配置校验/资源采样任一环节抛异常都不该让监控页把整个应用带崩。
+            HandleRefreshException(ex);
+        }
+    }
+
+    private void RefreshFromLocalCore()
+    {
+        RefreshErrorMessage = null; // 本次刷新成功跑完即清除上一次的刷新异常
         var snapshot = _acquisitionService.GetDiagnosticsSnapshot();
         IsConnected = _connectionManager.IsConnected;
         IsCollectorUnreachable = false;
@@ -308,10 +553,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         LastRefreshTime = DateTime.Now;
         OnPropertyChanged(nameof(HealthText));
         OnPropertyChanged(nameof(HasActiveFailure));
-        OnPropertyChanged(nameof(PlcEndpoint));
-        OnPropertyChanged(nameof(PollingIntervalMs));
-        OnPropertyChanged(nameof(HistoryWriteIntervalScans));
         OnPropertyChanged(nameof(TotalDeviceCount));
+        OnPropertyChanged(nameof(SuccessRateDisplay));
         OnPropertyChanged(nameof(RecoveryFileText));
         OnPropertyChanged(nameof(DataConsistencyText));
         OnPropertyChanged(nameof(DeviceReadSummary));
@@ -343,6 +586,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         {
             var d = await _remoteClient!.GetDiagnosticsAsync();
             if (refreshVersion != Volatile.Read(ref _refreshVersion)) return; // 已有更新的刷新，丢弃过期响应
+            RefreshErrorMessage = null; // 拉取成功且响应未过期才清除上一次的刷新异常
             IsConnected = d.IsConnected;
             IsCollectorUnreachable = false;
             // 采集状态用真值（CollectorDiagnosticsDto.IsRunning）：连接正常 ≠ 采集运行中，
@@ -414,10 +658,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             LastRefreshTime = DateTime.Now;
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(HasActiveFailure));
-            OnPropertyChanged(nameof(PlcEndpoint));
-            OnPropertyChanged(nameof(PollingIntervalMs));
-            OnPropertyChanged(nameof(HistoryWriteIntervalScans));
             OnPropertyChanged(nameof(TotalDeviceCount));
+            OnPropertyChanged(nameof(SuccessRateDisplay));
             OnPropertyChanged(nameof(RecoveryFileText));
             OnPropertyChanged(nameof(DataConsistencyText));
             OnPropertyChanged(nameof(DeviceReadSummary));
@@ -452,11 +694,41 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             OnPropertyChanged(nameof(DisconnectDurationText));
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(HasActiveFailure));
-            OnPropertyChanged(nameof(PlcEndpoint));
+            OnPropertyChanged(nameof(SuccessRateDisplay));
         }
     }
 
-    private void OnRefreshTimerTick(object? sender, EventArgs e) => Refresh();
+    private void OnRefreshTimerTick(object? sender, EventArgs e)
+    {
+        if (IsAutoRefreshPaused) return; // 暂停读数：定时器继续跑但不出帧，恢复时无需重建
+
+        // 最后一道兜底：Refresh 内部已各自保护，这里防止任何遗漏的异常冒泡到 Dispatcher
+        // 变成未处理异常终止进程（1s 一次，异常不处理就是每秒一次崩溃）。
+        try
+        {
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            HandleRefreshException(ex);
+        }
+    }
+
+    /// <summary>
+    /// 刷新异常统一处理：呈现到告警条而不是冒泡终止进程。
+    /// 注意不更新 LastRefreshTime——刷新失败时时间戳停在旧值，用户能看出数据已停滞。
+    /// Remote 分支的失败不进这里：那走 IsCollectorUnreachable 单独呈现（采集服务不可达 ≠ 刷新异常）。
+    /// </summary>
+    private void HandleRefreshException(Exception ex)
+    {
+        RefreshErrorMessage = ex.Message; // HasRefreshError / HasActiveFailure 由 OnRefreshErrorMessageChanged 联动通知
+    }
+
+    partial void OnRefreshErrorMessageChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasRefreshError));
+        OnPropertyChanged(nameof(HasActiveFailure));
+    }
 
     private void UpdateResourceMetrics()
     {
@@ -489,6 +761,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         {
             desired.Add(new DeviceAcquisitionStatusItem
             {
+                DeviceId = d.DeviceId,
                 DeviceName = d.DeviceName,
                 StatusText = RuntimeDeviceStatusText.Format(d.StatusWord),
                 AcquisitionText = d.ConfiguredAddressCount == 0
@@ -513,6 +786,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
                 .Count(address => !string.IsNullOrWhiteSpace(address));
             desired.Add(new DeviceAcquisitionStatusItem
             {
+                DeviceId = device.Id,
                 DeviceName = device.Name,
                 StatusText = GetStatusText(runtime?.StatusWord ?? 0),
                 AcquisitionText = addresses == 0 ? Strings.M162 : lastSuccessfulDeviceIds.Contains(device.Id) ? Strings.M163 : Strings.M164,

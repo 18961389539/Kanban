@@ -46,6 +46,7 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<DeviceRepository>(),
             sp.GetRequiredService<HistoryService>(),
             sp.GetRequiredService<SystemResourceMonitor>(),
+            sp.GetRequiredService<IDialogService>(),
             sp.GetService<IPlcAddressCodecResolver>(),
             sp.GetService<IPlcRuntimeProfileProvider>(),
             sp.GetService<KanbanDataClient>(),

@@ -4,6 +4,8 @@ using Kanban.Analysis;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using GridLength = System.Windows.GridLength;
+using GridUnitType = System.Windows.GridUnitType;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -92,9 +94,76 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
     public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
 
-    /// <summary>选中工单的产量聚合（详情页绑定）。null 表示未查询/未选中。</summary>
+    /// <summary>选中工单的产量聚合（详情页绑定）。null 表示尚未加载完成。</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedOkCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementText))]
+    [NotifyPropertyChangedFor(nameof(SelectedDefectRateText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementRateValue))]
+    [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
     private WorkOrderProductionSummary? _selectedProduction;
+
+    /// <summary>选中工单产量查询中（详情卡片显示加载态）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedOkCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementText))]
+    [NotifyPropertyChangedFor(nameof(SelectedDefectRateText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementRateValue))]
+    [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
+    private bool _isProductionLoading;
+
+    /// <summary>选中工单产量查询失败（详情卡片显示错误提示，可点「刷新产量」重试）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedOkCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgCountText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementText))]
+    [NotifyPropertyChangedFor(nameof(SelectedDefectRateText))]
+    [NotifyPropertyChangedFor(nameof(SelectedAchievementRateValue))]
+    [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
+    [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
+    private bool _isProductionLoadFailed;
+
+    public string SelectedOkCountText => FormatProductionCount(SelectedProduction?.OkCount);
+    public string SelectedNgCountText => FormatProductionCount(SelectedProduction?.NgCount);
+    public string SelectedAchievementText => FormatProductionRate(SelectedProduction?.AchievementRate);
+    public string SelectedDefectRateText => FormatProductionRate(SelectedProduction?.DefectRate);
+
+    /// <summary>达成率进度条绑定值（0~1）。</summary>
+    public double SelectedAchievementRateValue => SelectedProduction?.AchievementRate ?? 0;
+
+    /// <summary>合格/不良堆叠条是否有实际产量。</summary>
+    public bool HasSelectedProductionBar => SelectedProduction is { TotalCount: > 0 };
+
+    /// <summary>合格占比（Grid 列宽，Star）。</summary>
+    public GridLength SelectedOkBarGridLength => ToOkNgGridLength(ok: true);
+
+    /// <summary>不良占比（Grid 列宽，Star）。</summary>
+    public GridLength SelectedNgBarGridLength => ToOkNgGridLength(ok: false);
+
+    private GridLength ToOkNgGridLength(bool ok)
+    {
+        if (SelectedProduction is not { TotalCount: > 0 } summary)
+            return ok ? new GridLength(1, GridUnitType.Star) : new GridLength(0, GridUnitType.Star);
+        var weight = ok ? summary.OkCount : summary.NgCount;
+        return new GridLength(Math.Max(weight, 0.001), GridUnitType.Star);
+    }
+
+    private string FormatProductionCount(int? count)
+        => IsProductionLoadFailed || (IsProductionLoading && SelectedProduction == null) || count == null
+            ? "—"
+            : string.Format(Strings.F244, count.Value);
+
+    private string FormatProductionRate(double? rate)
+        => IsProductionLoadFailed || (IsProductionLoading && SelectedProduction == null) || rate == null
+            ? "—"
+            : rate.Value.ToString("P1");
 
     // ──────────── SN 明细（选中工单的序列号事件列表，Local 模式可用） ────────────
 
@@ -110,8 +179,18 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSnItems))]
+    [NotifyPropertyChangedFor(nameof(ShowSnEmptyState))]
     private int _snTotalPages;
 
+    /// <summary>SN 明细查询中（避免切换工单时短暂显示「暂无数据」）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSnEmptyState))]
+    private bool _isSnLoading;
+
+    /// <summary>SN 区块空态：非加载中且无记录时显示。</summary>
+    public bool ShowSnEmptyState => !IsSnLoading && !HasSnItems;
+
+    private CancellationTokenSource? _snCts;
     private const int SnPageSize = 20;
 
     /// <summary>SN 追溯是否可用：注入的存储非空即可用（Local=本地库，Remote=SignalR 查询通道）。</summary>
@@ -158,30 +237,44 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
     /// <summary>查询选中工单的 SN 明细（后台执行 + UI 封送，选中工单变化时自动加载）。</summary>
     private void LoadSnItems()
     {
+        _snCts?.Cancel();
+        _snCts?.Dispose();
+        _snCts = null;
+
         var order = SelectedWorkOrder;
         if (order == null || order.Id <= 0 || _snEventStore == null)
         {
             SnItems.Clear();
             SnTotalCount = 0;
             SnTotalPages = 0;
+            IsSnLoading = false;
             return;
         }
 
         var page = SnPage;
         var workOrderId = order.Id;
+        SnItems.Clear();
+        SnTotalCount = 0;
+        SnTotalPages = 0;
+        IsSnLoading = true;
+
+        var cts = _snCts = new CancellationTokenSource();
+        var token = cts.Token;
         Task.Run(() =>
         {
             var (total, items) = _snEventStore.QueryByWorkOrder(workOrderId, page, SnPageSize);
+            if (token.IsCancellationRequested) return;
             UiDispatcher.Dispatch(() =>
             {
-                if (SelectedWorkOrder?.Id != workOrderId) return; // 选中项已切换，丢弃过期结果
+                if (token.IsCancellationRequested || SelectedWorkOrder?.Id != workOrderId) return;
+                IsSnLoading = false;
                 SnItems.Clear();
                 foreach (var record in items)
                     SnItems.Add(record);
                 SnTotalCount = total;
                 SnTotalPages = total <= 0 ? 0 : (total + SnPageSize - 1) / SnPageSize;
             });
-        }).Forget();
+        }, token).Forget();
     }
 
     /// <summary>
@@ -308,6 +401,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         // 时间/产量相关计数全量重算（见方法头注释）；冲突计数同样依赖全局关系，全量。
         RecalcDerivedCounts();
         RefreshFilteredView();
+        StartCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>按状态增量调整四个状态计数（仅 Status——其余计数见 RecalcDerivedCounts）。</summary>
@@ -380,6 +474,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         _derivedCountsTimer.Stop();
         _productionCts?.Cancel();
         _productionCts?.Dispose();
+        _snCts?.Cancel();
+        _snCts?.Dispose();
         _workOrderRepo.WorkOrders.CollectionChanged -= OnWorkOrdersCollectionChanged;
         GC.SuppressFinalize(this);
     }
@@ -515,7 +611,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             chart = MainAPP.Services.ChartService.BuildWorkOrderGanttChart(
                 devices.Count > 0 ? devices : _deviceRepo.GetDevicesSnapshot(),
                 filtered,
-                ConflictOrderIds);
+                ConflictOrderIds,
+                highlightedWorkOrderId: SelectedWorkOrder?.Id);
         }
         catch (Exception ex)
         {
@@ -598,6 +695,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         // SN 明细：重置到第 1 页并加载选中工单的序列号事件
         SnPage = 1;
         LoadSnItems();
+        RefreshGanttForCurrentFilter();
     }
 
     private void NotifyActionReasonsChanged()
@@ -622,12 +720,25 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             _productionCts = null;
             _lastProductionOrderId = null;
             SelectedProduction = null;
+            IsProductionLoading = false;
+            IsProductionLoadFailed = false;
             return;
         }
 
-        // 节流：同一工单 2s 内复用上次结果（Remote 模式为 SignalR 往返）
-        if (_lastProductionOrderId == order.Id && DateTime.UtcNow - _lastProductionQueryUtc < ProductionThrottle)
+        // 切换工单时丢弃上一工单的产量，避免短暂显示错误数据
+        if (_lastProductionOrderId != order.Id)
+            SelectedProduction = null;
+
+        // 节流：同一工单 2s 内复用上次结果；无缓存或上次失败时仍重试
+        if (_lastProductionOrderId == order.Id
+            && DateTime.UtcNow - _lastProductionQueryUtc < ProductionThrottle
+            && SelectedProduction != null
+            && !IsProductionLoadFailed)
+        {
+            ApplyProductionSummary(order, SelectedProduction);
+            RefreshFilteredView();
             return;
+        }
 
         _productionCts?.Cancel();
         _productionCts?.Dispose();
@@ -635,10 +746,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         var token = cts.Token;
         _lastProductionOrderId = order.Id;
         _lastProductionQueryUtc = DateTime.UtcNow;
+        IsProductionLoading = true;
+        IsProductionLoadFailed = false;
 
         Task.Run(() =>
         {
             WorkOrderProductionSummary? summary;
+            var failed = false;
             try
             {
                 summary = _workOrderService.GetProductionSummary(order);
@@ -646,15 +760,67 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
             catch (Exception ex)
             {
                 Serilog.Log.Error(ex, "查询工单 {OrderNo} 产量聚合失败", order.OrderNo);
-                return;
+                summary = null;
+                failed = true;
             }
             if (token.IsCancellationRequested) return;
             UiDispatcher.Dispatch(() =>
             {
                 if (token.IsCancellationRequested || SelectedWorkOrder?.Id != order.Id) return;
+                IsProductionLoading = false;
+                if (failed)
+                {
+                    IsProductionLoadFailed = true;
+                    return;
+                }
                 SelectedProduction = summary;
+                IsProductionLoadFailed = false;
+                ApplyProductionSummary(order, summary);
+                RefreshFilteredView();
             });
         }, token).Forget();
+    }
+
+    /// <summary>将产量聚合回填到工单实体；可选刷新列表行绑定（WorkOrder 无 INPC）。</summary>
+    private void ApplyProductionSummary(WorkOrder workOrder, WorkOrderProductionSummary summary, bool refreshListRow = true)
+    {
+        workOrder.Production = new WorkOrderRuntimeProduction
+        {
+            OkCount = summary.OkCount,
+            NgCount = summary.NgCount,
+            AchievementRate = summary.AchievementRate,
+            ScheduleStatusText = GetScheduleStatusText(workOrder, summary.AchievementRate),
+            ProgressDeviation = GetProgressDeviation(workOrder, summary.AchievementRate),
+        };
+        if (refreshListRow)
+            NotifyWorkOrderProductionChanged(workOrder);
+    }
+
+    /// <summary>触发 ListBox 行内产量绑定刷新（与 WorkOrderRepository.SyncMemoryCollection 同策略）。</summary>
+    private void NotifyWorkOrderProductionChanged(WorkOrder workOrder)
+    {
+        var list = _workOrderRepo.WorkOrders;
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (list[i].Id != workOrder.Id) continue;
+            list[i] = workOrder;
+            return;
+        }
+    }
+
+    /// <summary>批量回填后统一刷新列表项绑定。</summary>
+    private void RefreshWorkOrderListItemBindings(IReadOnlyList<WorkOrder> workOrders)
+    {
+        var list = _workOrderRepo.WorkOrders;
+        foreach (var workOrder in workOrders)
+        {
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (list[i].Id != workOrder.Id) continue;
+                list[i] = workOrder;
+                break;
+            }
+        }
     }
 
     /// <summary>
@@ -669,20 +835,20 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         foreach (var w in snapshot)
         {
             if (!summaries.TryGetValue(w.Id, out var summary)) continue;
-            w.Production = new WorkOrderRuntimeProduction
-            {
-                OkCount = summary.OkCount,
-                NgCount = summary.NgCount,
-                AchievementRate = summary.AchievementRate,
-                ScheduleStatusText = GetScheduleStatusText(w, summary.AchievementRate),
-                ProgressDeviation = GetProgressDeviation(w, summary.AchievementRate),
-            };
+            ApplyProductionSummary(w, summary, refreshListRow: false);
         }
+        RefreshWorkOrderListItemBindings(snapshot);
         // 触发列表刷新让绑定更新
         RefreshStatusCounts();
         // 同步更新详情页选中工单的产量（直接取批量结果，避免再发一次单工单查询）
         if (SelectedWorkOrder != null && summaries.TryGetValue(SelectedWorkOrder.Id, out var selSummary))
+        {
             SelectedProduction = selSummary;
+            IsProductionLoading = false;
+            IsProductionLoadFailed = false;
+            _lastProductionOrderId = SelectedWorkOrder.Id;
+            _lastProductionQueryUtc = DateTime.UtcNow;
+        }
         _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
     }
 
@@ -771,7 +937,9 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable
         }
     }
 
-    private bool CanStart() => SelectedWorkOrder != null && SelectedWorkOrder.Status == WorkOrderStatus.Pending;
+    private bool CanStart() => SelectedWorkOrder != null
+        && SelectedWorkOrder.Status == WorkOrderStatus.Pending
+        && !HasRunningWorkOrderOnDevice(SelectedWorkOrder);
 
     [RelayCommand(CanExecute = nameof(CanComplete))]
     private async Task Complete()

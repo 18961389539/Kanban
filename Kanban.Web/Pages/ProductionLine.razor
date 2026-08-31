@@ -1,10 +1,11 @@
 @page "/line"
 @implements IDisposable
 @inject DashboardState Dashboard
-@inject IJSRuntime JS
+@inject ILogger<ProductionLine> Logger
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
 @using Kanban.Contracts.Metrics
+@using Microsoft.Extensions.Logging
 
 <div class="query-page">
     @* ──── 标题行：产线总览 + 设备数 + 当前班次 ──── *@
@@ -41,13 +42,13 @@
 
         @* ──── 筛选：状态 / 搜索 / 排序 ──── *@
         <div class="filter-bar compact">
-            <button class="chip-btn @(StatusFilter == 0 ? "active" : "")" @onclick="() => StatusFilter = 0">@L.T("Ln_FilterAll")</button>
-            <button class="chip-btn @(StatusFilter == 1 ? "active" : "")" @onclick="() => StatusFilter = 1">@L.T("Status_Running")</button>
-            <button class="chip-btn @(StatusFilter == 2 ? "active" : "")" @onclick="() => StatusFilter = 2">@L.T("Status_Alarm")</button>
-            <button class="chip-btn @(StatusFilter == 3 ? "active" : "")" @onclick="() => StatusFilter = 3">@L.T("Status_Paused")</button>
-            <button class="chip-btn @(StatusFilter == 4 ? "active" : "")" @onclick="() => StatusFilter = 4">@L.T("Status_Offline")</button>
+            <button class="chip-btn @(StatusFilter == 0 ? "active" : "")" @onclick="() => SetFilter(0)">@L.T("Ln_FilterAll")</button>
+            <button class="chip-btn @(StatusFilter == 1 ? "active" : "")" @onclick="() => SetFilter(1)">@L.T("Status_Running")</button>
+            <button class="chip-btn @(StatusFilter == 2 ? "active" : "")" @onclick="() => SetFilter(2)">@L.T("Status_Alarm")</button>
+            <button class="chip-btn @(StatusFilter == 3 ? "active" : "")" @onclick="() => SetFilter(3)">@L.T("Status_Paused")</button>
+            <button class="chip-btn @(StatusFilter == 4 ? "active" : "")" @onclick="() => SetFilter(4)">@L.T("Status_Offline")</button>
             <input class="filter-input line-search" type="search" value="@SearchText" @oninput="OnSearchInput" placeholder="@L.T("Ln_Search")" />
-            <select class="filter-input line-sort" @bind="SortBy">
+            <select class="filter-input line-sort" value="@SortBy" @onchange="OnSortChange">
                 <option value="name">@L.T("Ln_SortName")</option>
                 <option value="output">@L.T("Ln_SortOutput")</option>
                 <option value="oee">@L.T("Ln_SortOee")</option>
@@ -112,14 +113,19 @@
 @code {
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
-    private List<DeviceConfigDto> _deviceConfigs = [];
 
     // ──── 筛选状态 ────
     private int StatusFilter { get; set; } // 0=全部 1=运行 2=报警 3=待机 4=空闲
     private string SearchText { get; set; } = "";
     private string SortBy { get; set; } = "name";
 
-    private void OnSearchInput(ChangeEventArgs e) => SearchText = e.Value?.ToString() ?? "";
+    // ──── 渲染缓存：快照每帧变化、筛选条件交互变化时置脏，避免单次渲染内重复全量计算 ────
+    private LineSummary? _summaryCache;
+    private List<DeviceSnapshotDto>? _filteredCache;
+    private Dictionary<string, DeviceConfigDto> _deviceConfigsById = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>节拍"偏慢"阈值：实际节拍 = 目标/性能率，性能率 < 0.9 即实际比目标慢 10% 以上。</summary>
+    private const double CycleSlowThreshold = 0.9;
 
     private sealed class LineSummary
     {
@@ -128,67 +134,81 @@
         public double WeightedOee;
     }
 
-    private LineSummary Summary
+    private LineSummary Summary => _summaryCache ??= ComputeSummary();
+
+    private LineSummary ComputeSummary()
     {
-        get
+        var s = new LineSummary();
+        foreach (var d in Dashboard.Snapshots)
         {
-            var s = new LineSummary();
-            foreach (var d in Dashboard.Snapshots)
+            switch (d.Status)
             {
-                switch (d.Status)
-                {
-                    case DeviceStatus.Running: s.Running++; break;
-                    case DeviceStatus.Alarm: s.Alarm++; break;
-                    case DeviceStatus.Paused: s.Paused++; break;
-                    default: s.Idle++; break;
-                }
-                s.TotalOk += d.TotalOkProduction;
-                s.TotalNg += d.TotalNgProduction;
-                s.WeightedOee += d.Oee * (d.TotalOkProduction + d.TotalNgProduction);
+                case DeviceStatus.Running: s.Running++; break;
+                case DeviceStatus.Alarm: s.Alarm++; break;
+                case DeviceStatus.Paused: s.Paused++; break;
+                default: s.Idle++; break;
             }
-            var totalWeight = s.TotalOutput;
-            s.WeightedOee = totalWeight > 0 ? s.WeightedOee / totalWeight : 0; // 加权 OEE（WPF 同口径）
-            return s;
+            s.TotalOk += d.TotalOkProduction;
+            s.TotalNg += d.TotalNgProduction;
+            s.WeightedOee += d.Oee * (d.TotalOkProduction + d.TotalNgProduction);
         }
+        var totalWeight = s.TotalOutput;
+        s.WeightedOee = totalWeight > 0 ? s.WeightedOee / totalWeight : 0; // 加权 OEE（WPF 同口径）
+        return s;
     }
 
-    /// <summary>筛选 + 搜索 + 排序后的设备列表。</summary>
-    private List<DeviceSnapshotDto> FilteredDevices
+    /// <summary>筛选 + 搜索 + 排序后的设备列表（缓存：条件变化或快照刷新时置脏）。</summary>
+    private List<DeviceSnapshotDto> FilteredDevices => _filteredCache ??= ComputeFilteredDevices();
+
+    private List<DeviceSnapshotDto> ComputeFilteredDevices()
     {
-        get
+        IEnumerable<DeviceSnapshotDto> list = Dashboard.Snapshots;
+        if (StatusFilter > 0)
         {
-            IEnumerable<DeviceSnapshotDto> list = Dashboard.Snapshots;
-            if (StatusFilter > 0)
+            var target = StatusFilter switch
             {
-                var target = StatusFilter switch
-                {
-                    1 => DeviceStatus.Running,
-                    2 => DeviceStatus.Alarm,
-                    3 => DeviceStatus.Paused,
-                    _ => DeviceStatus.Offline,
-                };
-                list = list.Where(d => d.Status == target);
-            }
-            if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                var kw = SearchText.Trim();
-                list = list.Where(d => d.DeviceName.Contains(kw, StringComparison.OrdinalIgnoreCase)
-                    || d.DeviceId.Contains(kw, StringComparison.OrdinalIgnoreCase));
-            }
-            return SortBy switch
-            {
-                "output" => list.OrderByDescending(d => d.TotalOkProduction + d.TotalNgProduction).ToList(),
-                "oee" => list.OrderByDescending(d => d.Oee).ToList(),
-                _ => list.OrderBy(d => d.DeviceName, StringComparer.OrdinalIgnoreCase).ToList(),
+                1 => DeviceStatus.Running,
+                2 => DeviceStatus.Alarm,
+                3 => DeviceStatus.Paused,
+                _ => DeviceStatus.Offline,
             };
+            list = list.Where(d => d.Status == target);
         }
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var kw = SearchText.Trim();
+            list = list.Where(d => d.DeviceName.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                || d.DeviceId.Contains(kw, StringComparison.OrdinalIgnoreCase));
+        }
+        return SortBy switch
+        {
+            "output" => list.OrderByDescending(d => d.TotalOkProduction + d.TotalNgProduction).ToList(),
+            "oee" => list.OrderByDescending(d => d.Oee).ToList(),
+            _ => list.OrderBy(d => d.DeviceName, StringComparer.OrdinalIgnoreCase).ToList(),
+        };
+    }
+
+    private void SetFilter(int status)
+    {
+        StatusFilter = status;
+        _filteredCache = null;
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        SearchText = e.Value?.ToString() ?? "";
+        _filteredCache = null;
+    }
+
+    private void OnSortChange(ChangeEventArgs e)
+    {
+        SortBy = e.Value?.ToString() ?? "name";
+        _filteredCache = null;
     }
 
     private string RecipeOf(string deviceId)
-    {
-        var config = _deviceConfigs.FirstOrDefault(c => c.Id == deviceId);
-        return string.IsNullOrWhiteSpace(config?.RecipeName) ? "" : config.RecipeName;
-    }
+        => _deviceConfigsById.TryGetValue(deviceId, out var config) && !string.IsNullOrWhiteSpace(config.RecipeName)
+            ? config.RecipeName : "";
 
     /// <summary>节拍对比 "实际/目标s"：实际 = 3600/(目标产能×性能率)（WPF LineDeviceItem 同口径）。</summary>
     private static string CycleText(DeviceSnapshotDto d)
@@ -200,7 +220,7 @@
     }
 
     private static bool IsCycleSlow(DeviceSnapshotDto d)
-        => d.TargetCycle > 0 && d.PerformanceRate > 0 && 3600.0 / (d.TargetCycle * d.PerformanceRate) > 3600.0 / d.TargetCycle;
+        => d.TargetCycle > 0 && d.PerformanceRate > 0 && d.PerformanceRate < CycleSlowThreshold;
 
     private static string StateText(DeviceStatus status) => status switch
     {
@@ -234,19 +254,22 @@
         await Dashboard.InitializeAsync();
         try
         {
-            _deviceConfigs = [.. await Dashboard.QueryDevicesAsync()];
+            _deviceConfigsById = (await Dashboard.QueryDevicesAsync())
+                .Where(c => !string.IsNullOrEmpty(c.Id))
+                .GroupBy(c => c.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogDebug(ex, "拉取设备配置失败（配方标签暂不可用，重进页面后重试）");
         }
         _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
-        await Task.CompletedTask;
     }
 
-        /// <summary>
+    /// <summary>
     /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；
     /// 该 Task 若未观察会成为 unhandledrejection → Blazor 显示全局 error UI（页面功能不受影响但横幅误报）。
-    /// 统一吞掉释放竞态异常，保证任何时序下不产生未观察异常。
+    /// 仅吞掉释放竞态（ObjectDisposedException），其余异常记日志——避免真实渲染缺陷被静默吞掉导致页面停更无迹可查。
     /// </summary>
     private async Task SafeTickAsync()
     {
@@ -255,15 +278,21 @@
         {
             await InvokeAsync(OnRenderTick);
         }
-        catch (Exception)
+        catch (ObjectDisposedException)
         {
             // 组件已释放的竞态：忽略（页面生命周期正常结束）
         }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "产线概览渲染 tick 异常");
+        }
     }
 
-private void OnRenderTick()
+    private void OnRenderTick()
     {
         if (_disposed) return;
+        _summaryCache = null;    // 快照每帧变化：置脏，渲染时各重算一次
+        _filteredCache = null;
         StateHasChanged();
     }
 

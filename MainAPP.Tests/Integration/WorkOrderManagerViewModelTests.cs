@@ -302,16 +302,15 @@ public class WorkOrderManagerViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Start_DeviceAlreadyHasRunning_ShowsWarning()
+    public void Start_DeviceAlreadyHasRunning_CommandCannotExecute()
     {
         var vm = CreateVm();
         _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-001", deviceId: "D1", status: WorkOrderStatus.Running));
         var pending = _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-002", deviceId: "D1", status: WorkOrderStatus.Pending));
         vm.SelectedWorkOrder = pending;
 
-        vm.StartCommand.Execute(null);
-
-        Assert.Contains(_dialog.Warning, w => w.Contains("进行中工单"));
+        Assert.False(vm.StartCommand.CanExecute(null));
+        Assert.Equal(WorkOrderStatus.Pending, _workOrderRepo.WorkOrders.Single(w => w.OrderNo == "WO-002").Status);
     }
 
     [Fact]

@@ -467,7 +467,8 @@ public static class ChartService
         IReadOnlyList<Device> devices,
         IReadOnlyList<WorkOrder> workOrders,
         ISet<int> conflictOrderIds,
-        DateTime? now = null)
+        DateTime? now = null,
+        int? highlightedWorkOrderId = null)
     {
         var model = CreateBaseModel(Strings.K901);
         var current = now ?? DateTime.Now;
@@ -523,6 +524,8 @@ public static class ChartService
         // 条高 ±0.25（高 0.5），行间自动留 0.5 空隙。
         const double slotHeight = 0.5;
         var rowByDevice = deviceList.Select((d, i) => (d.Id, Slot: (double)i)).ToDictionary(x => x.Id, x => x.Slot);
+        var hasSelection = highlightedWorkOrderId.HasValue;
+        var highlightColor = OxyColor.FromRgb(0x38, 0xBD, 0xF8);
 
         var series = new RectangleBarSeries
         {
@@ -533,6 +536,7 @@ public static class ChartService
         foreach (var w in list)
         {
             if (!rowByDevice.TryGetValue(w.DeviceId, out var slot)) continue; // 设备已删除等孤立工单
+            var isSelected = hasSelection && w.Id == highlightedWorkOrderId!.Value;
             var conflict = conflictOrderIds.Contains(w.Id);
             var baseColor = w.Status switch
             {
@@ -541,14 +545,21 @@ public static class ChartService
                 WorkOrderStatus.Aborted => _idleColor,
                 _ => _secondaryColor, // Pending
             };
-            // 冲突工单用醒目的橙色调替代（RectangleBarItem 无描边 API）：
-            // 列表/详情已用橙色系标冲突，甘特保持同语义，避免与"进行中"的绿色混淆。
-            var color = conflict ? OxyColor.FromRgb(0xFB, 0xBF, 0x24) : baseColor;
+            // 冲突工单用醒目的橙色调；选中工单用高亮色覆盖，其余条在存在选中项时降透明度。
+            var color = isSelected
+                ? highlightColor
+                : conflict
+                    ? OxyColor.FromRgb(0xFB, 0xBF, 0x24)
+                    : baseColor;
+            if (hasSelection && !isSelected)
+                color = OxyColor.FromAColor(96, color);
+
+            var barHeight = isSelected ? slotHeight * 1.15 : slotHeight;
             var item = new RectangleBarItem(
                 DateTimeAxis.ToDouble(w.PlannedStart),
-                slot - slotHeight / 2,
+                slot - barHeight / 2,
                 DateTimeAxis.ToDouble(w.PlannedEnd),
-                slot + slotHeight / 2)
+                slot + barHeight / 2)
             { Color = color };
             series.Items.Add(item);
 

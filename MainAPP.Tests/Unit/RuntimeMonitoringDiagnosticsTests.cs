@@ -186,4 +186,67 @@ public sealed class RuntimeMonitoringDiagnosticsTests
         Assert.DoesNotContain(target, item => item.DeviceName == "设备2");
         Assert.Contains(target, item => item.DeviceName == "设备3");
     }
+
+    [Fact]
+    public void DeviceStatusCollectionSynchronizer_DuplicateDeviceNames_DoesNotThrow()
+    {
+        // P0 回归：原实现 target.ToDictionary(item => item.DeviceName)，设备重名时抛
+        // ArgumentException；同步发生在 1s 刷新定时器回调内，异常直通 Dispatcher 会终止进程。
+        var target = new ObservableCollection<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceId = "d1", DeviceName = "重名设备" },
+            new() { DeviceId = "d2", DeviceName = "重名设备" },
+        };
+        var desired = new List<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceId = "d1", DeviceName = "重名设备", StatusText = "运行" },
+            new() { DeviceId = "d2", DeviceName = "重名设备", StatusText = "报警" },
+        };
+
+        DeviceStatusCollectionSynchronizer.Synchronize(target, desired);
+
+        Assert.Equal(2, target.Count);
+        Assert.Contains(target, item => item.DeviceId == "d1" && item.StatusText == "运行");
+        Assert.Contains(target, item => item.DeviceId == "d2" && item.StatusText == "报警");
+    }
+
+    [Fact]
+    public void DeviceStatusCollectionSynchronizer_MissingDeviceId_FallsBackToNameAndDeduplicates()
+    {
+        // 旧版 Collector 未下发 DeviceId 时回退到设备名做键：重名必须去重而不是抛异常/留重复行。
+        var target = new ObservableCollection<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceName = "重名设备" },
+            new() { DeviceName = "重名设备" },
+        };
+        var desired = new List<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceName = "重名设备", StatusText = "运行" },
+        };
+
+        DeviceStatusCollectionSynchronizer.Synchronize(target, desired);
+
+        var only = Assert.Single(target);
+        Assert.Equal("运行", only.StatusText);
+    }
+
+    [Fact]
+    public void DeviceStatusCollectionSynchronizer_SyncsRenamedDevice()
+    {
+        // 设备改名后按 Id 命中旧行并更新名称，而不是新增一行、留下同 Id 的两条记录。
+        var target = new ObservableCollection<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceId = "d1", DeviceName = "旧名称" },
+        };
+        var desired = new List<DeviceAcquisitionStatusItem>
+        {
+            new() { DeviceId = "d1", DeviceName = "新名称", StatusText = "运行" },
+        };
+
+        DeviceStatusCollectionSynchronizer.Synchronize(target, desired);
+
+        var only = Assert.Single(target);
+        Assert.Equal("新名称", only.DeviceName);
+        Assert.Equal("运行", only.StatusText);
+    }
 }

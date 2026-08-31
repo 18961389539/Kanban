@@ -510,6 +510,29 @@ public class ChartServiceTests
     }
 
     [Fact]
+    public void BuildWorkOrderGanttChart_HighlightedWorkOrderUsesBrightColorAndDimsOthers()
+    {
+        var (d1, _) = SampleDevices();
+        var now = new DateTime(2026, 1, 1, 8, 0, 0);
+        var orders = new[]
+        {
+            SampleWorkOrder("WO-A", "dev-1", now, now.AddHours(2), WorkOrderStatus.Running),
+            SampleWorkOrder("WO-B", "dev-1", now.AddHours(1), now.AddHours(3), WorkOrderStatus.Pending),
+        };
+        var highlight = OxyColor.FromRgb(0x38, 0xBD, 0xF8);
+
+        var chart = ChartService.BuildWorkOrderGanttChart(
+            [d1], orders, new HashSet<int>(), now, highlightedWorkOrderId: orders[1].Id)!;
+
+        var bar = chart.Series.OfType<RectangleBarSeries>().Single();
+        Assert.Equal(2, bar.Items.Count);
+        var selected = bar.Items.Single(i => i.Color == highlight);
+        var other = bar.Items.Single(i => i.Color != highlight);
+        Assert.Equal(highlight, selected.Color);
+        Assert.Equal(96, other.Color.A);
+    }
+
+    [Fact]
     public void BuildWorkOrderGanttChart_HasNowReferenceLine()
     {
         var (d1, _) = SampleDevices();

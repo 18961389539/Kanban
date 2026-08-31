@@ -225,6 +225,54 @@
   <data name="Rtmon_RetryConnect" xml:space="preserve">
     <value>重试连接</value>
   </data>
+  <data name="Rtmon_AddressConflict" xml:space="preserve">
+    <value>地址冲突</value>
+  </data>
+  <data name="Rtmon_InvalidAddress" xml:space="preserve">
+    <value>无效地址</value>
+  </data>
+  <data name="Rtmon_CollectorUnreachable" xml:space="preserve">
+    <value>采集服务不可达</value>
+  </data>
+  <data name="Rtmon_RefreshFailed" xml:space="preserve">
+    <value>刷新失败</value>
+  </data>
+  <data name="Rtmon_PauseAutoRefresh" xml:space="preserve">
+    <value>暂停刷新</value>
+  </data>
+  <data name="Rtmon_ResumeAutoRefresh" xml:space="preserve">
+    <value>继续刷新</value>
+  </data>
+  <data name="Rtmon_ExportDiagnostics" xml:space="preserve">
+    <value>导出诊断</value>
+  </data>
+  <data name="Rtmon_CopyDiagnostics" xml:space="preserve">
+    <value>复制诊断</value>
+  </data>
+  <data name="Rtmon_DiagnosticsCopied" xml:space="preserve">
+    <value>诊断信息已复制到剪贴板</value>
+  </data>
+  <data name="Rtmon_CopyFailed" xml:space="preserve">
+    <value>复制失败: {0}</value>
+  </data>
+  <data name="Rtmon_DiagnosticsExported" xml:space="preserve">
+    <value>诊断信息已导出 → {0}</value>
+  </data>
+  <data name="Rtmon_DiagnosticsTitle" xml:space="preserve">
+    <value>运行监控诊断快照</value>
+  </data>
+  <data name="Rtmon_DiagnosticsGeneratedAt" xml:space="preserve">
+    <value>生成时间</value>
+  </data>
+  <data name="Rtmon_RuntimeMode" xml:space="preserve">
+    <value>运行模式</value>
+  </data>
+  <data name="Rtmon_DiagOverview" xml:space="preserve">
+    <value>总体状态</value>
+  </data>
+  <data name="Rtmon_TxtFilter" xml:space="preserve">
+    <value>文本文件|*.txt|所有文件|*.*</value>
+  </data>
   <data name="Conn_Live" xml:space="preserve">
     <value>实时</value>
   </data>
@@ -6723,5 +6771,8 @@
   </data>
   <data name="K927" xml:space="preserve">
     <value>第 {0} 页</value>
+  </data>
+  <data name="K928" xml:space="preserve">
+    <value>概览</value>
   </data>
 </root>

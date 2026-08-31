@@ -225,6 +225,54 @@
   <data name="Rtmon_RetryConnect" xml:space="preserve">
     <value>Retry connection</value>
   </data>
+  <data name="Rtmon_AddressConflict" xml:space="preserve">
+    <value>Address conflicts</value>
+  </data>
+  <data name="Rtmon_InvalidAddress" xml:space="preserve">
+    <value>Invalid addresses</value>
+  </data>
+  <data name="Rtmon_CollectorUnreachable" xml:space="preserve">
+    <value>Collector unreachable</value>
+  </data>
+  <data name="Rtmon_RefreshFailed" xml:space="preserve">
+    <value>Refresh failed</value>
+  </data>
+  <data name="Rtmon_PauseAutoRefresh" xml:space="preserve">
+    <value>Pause refresh</value>
+  </data>
+  <data name="Rtmon_ResumeAutoRefresh" xml:space="preserve">
+    <value>Resume refresh</value>
+  </data>
+  <data name="Rtmon_ExportDiagnostics" xml:space="preserve">
+    <value>Export diagnostics</value>
+  </data>
+  <data name="Rtmon_CopyDiagnostics" xml:space="preserve">
+    <value>Copy diagnostics</value>
+  </data>
+  <data name="Rtmon_DiagnosticsCopied" xml:space="preserve">
+    <value>Diagnostics copied to clipboard</value>
+  </data>
+  <data name="Rtmon_CopyFailed" xml:space="preserve">
+    <value>Copy failed: {0}</value>
+  </data>
+  <data name="Rtmon_DiagnosticsExported" xml:space="preserve">
+    <value>Diagnostics exported → {0}</value>
+  </data>
+  <data name="Rtmon_DiagnosticsTitle" xml:space="preserve">
+    <value>Runtime Monitoring Diagnostics Snapshot</value>
+  </data>
+  <data name="Rtmon_DiagnosticsGeneratedAt" xml:space="preserve">
+    <value>Generated at</value>
+  </data>
+  <data name="Rtmon_RuntimeMode" xml:space="preserve">
+    <value>Runtime mode</value>
+  </data>
+  <data name="Rtmon_DiagOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Rtmon_TxtFilter" xml:space="preserve">
+    <value>Text files|*.txt|All files|*.*</value>
+  </data>
   <data name="Conn_Live" xml:space="preserve">
     <value>Live</value>
   </data>
@@ -6723,5 +6771,8 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="K927" xml:space="preserve">
     <value>Page {0}</value>
+  </data>
+  <data name="K928" xml:space="preserve">
+    <value>Overview</value>
   </data>
 </root>

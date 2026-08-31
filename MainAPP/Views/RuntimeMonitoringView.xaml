@@ -30,6 +30,15 @@
             <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
+        <!-- 问题计数：非 0 时高亮，0 时与常规字段一致（静默）。 -->
+        <Style x:Key="IssueCountValue" TargetType="TextBlock" BasedOn="{StaticResource FieldValue}">
+            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text}" Value="0">
+                    <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="ConnectionKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiValueMd}">
             <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
             <Style.Triggers>
@@ -101,18 +110,49 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                 <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F284}" />
-                <Button Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="{x:Static resources:Strings.Rtmon_RetryConnect}" Tag="{x:Static mi:MaterialIconKind.Refresh}">
+                <!-- 真·重连：绑定 ReconnectCommand（后台线程调 IPlcConnectionManager.EnsureConnected）。
+                     原实现绑的是 RefreshCommand，点了只刷新显示、不重连，属误导性按钮。
+                     Remote 模式下 SignalR 连接归上层 Coordinator 统一重连，本页不越权建链，故隐藏。 -->
+                <Button Margin="0,0,8,0" Command="{Binding ReconnectCommand}" Content="{x:Static resources:Strings.Rtmon_RetryConnect}" Tag="{x:Static mi:MaterialIconKind.LanConnect}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource IconButtonWarning}">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsLocalMode}" Value="True" />
+                                        <Condition Binding="{Binding IsConnected}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
                                     <Setter Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <!-- 1Hz 刷新会让 P99/队列峰值/磁盘剩余这类准静态指标一直跳，排查时先暂停再读数 -->
+                <Button Margin="0,0,8,0" Command="{Binding ToggleAutoRefreshCommand}" Content="{Binding AutoRefreshToggleText}" Tag="{x:Static mi:MaterialIconKind.Pause}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource IconButtonDefault}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAutoRefreshPaused}" Value="True">
+                                    <Setter Property="Tag" Value="{x:Static mi:MaterialIconKind.Play}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
                 </Button>
+                <!-- 诊断快照导出/复制：排查故障时只靠截图会丢数值精度也无法检索，
+                     这里给出结构化文本出口（工单页有导出 CSV，本页对齐该能力）。 -->
+                <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
+                        Command="{Binding CopyDiagnosticsCommand}"
+                        Content="{x:Static resources:Strings.Rtmon_CopyDiagnostics}"
+                        Tag="{x:Static mi:MaterialIconKind.ContentCopy}"
+                        ToolTip="{x:Static resources:Strings.Rtmon_CopyDiagnostics}" />
+                <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
+                        Command="{Binding ExportDiagnosticsCommand}"
+                        Content="{x:Static resources:Strings.Rtmon_ExportDiagnostics}"
+                        Tag="{x:Static mi:MaterialIconKind.FileExport}"
+                        ToolTip="{x:Static resources:Strings.Rtmon_ExportDiagnostics}" />
                 <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}" ToolTip="{x:Static resources:Strings.K422}" />
             </StackPanel>
         </DockPanel>
@@ -141,40 +181,124 @@
                     <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource StatusAlarmBrush}" Text="{x:Static resources:Strings.K423}" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding LastFailureMessage}" TextWrapping="Wrap" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding LastFailureAt, Converter={StaticResource LocFormatConverter}, ConverterParameter=F279}" />
+                    <!-- 刷新本身抛异常（配置校验/设备快照/资源采样）：数据已停止更新，必须显式告知，
+                         否则页面看上去"正常但不动"。 -->
+                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource StatusAlarmBrush}" TextWrapping="Wrap">
+                        <Run Text="{x:Static resources:Strings.Rtmon_RefreshFailed}" />
+                        <Run Text="：" />
+                        <Run Text="{Binding RefreshErrorMessage, Mode=OneWay}" />
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasRefreshError}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
+                <!-- 断连时展示"连续失败 N 次"会自相矛盾（刚断连时 N 还是 0，看着像"没失败却报警"）。
+                     断连状态下改展示断线持续时长——此时用户真正想知道的是"断了多久"。 -->
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K424}" />
                     <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding ConsecutiveFailureCycles}" />
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K442}" />
+                    <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding DisconnectDurationText}" />
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <UniformGrid Grid.Row="2" Columns="4" Margin="0,0,0,14">
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
+        <!-- KPI 行按可用宽度自适应列数：写死 Columns=4 时窄窗口会把 4 张卡挤成细条
+             （连接状态卡的 "192.168.x.x:502" 会被截断）。≥1000 才排 4 列，630~1000 排 2 列，再窄单列。
+             触发器按声明顺序生效，后命中的覆盖先命中的，故阈值从低到高排列。 -->
+        <UniformGrid x:Name="KpiRow" Grid.Row="2" Margin="0,0,0,6">
+            <UniformGrid.Style>
+                <Style TargetType="UniformGrid">
+                    <Setter Property="Columns" Value="1" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource ComparisonConverter}, ConverterParameter='&gt;=630'}" Value="True">
+                            <Setter Property="Columns" Value="2" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource Self}, Converter={StaticResource ComparisonConverter}, ConverterParameter='&gt;=1000'}" Value="True">
+                            <Setter Property="Columns" Value="4" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </UniformGrid.Style>
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K099}" />
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center" Style="{StaticResource ConnectionIndicator}" />
                         <TextBlock Style="{StaticResource ConnectionKpiValue}" Text="{Binding ConnectionStatus}" />
                     </StackPanel>
-                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding PlcEndpoint}" />
+                    <!-- 采集服务不可达时 PLC 地址无意义（本进程根本拿不到 PLC 状态），换成明确的故障定位信息，
+                         避免"PLC 连接：未连接"让人误以为是 PLC 侧掉线而去查网线。 -->
+                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding PlcEndpoint}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCollectorUnreachable}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.Rtmon_CollectorUnreachable}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCollectorUnreachable}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K425}" />
                     <TextBlock Style="{StaticResource HealthKpiValue}" Text="{Binding HealthText}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding IsAcquisitionRunning, Converter={StaticResource LocFormatConverter}, ConverterParameter=F280}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,0">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K426}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding LastCycleMilliseconds, StringFormat={}{0} ms}" />
                     <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding AverageCycleMilliseconds, Converter={StaticResource LocFormatConverter}, ConverterParameter=F281}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource KpiCard}">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K100}" />
                     <TextBlock Style="{StaticResource KpiValueMd}" Text="{Binding TotalDisconnectCount}" />
@@ -183,8 +307,11 @@
             </Border>
         </UniformGrid>
 
+        <!-- 设备状态表与趋势图独占整行（跨 2 列）：这两块内容天然需要宽度，
+             挤在半栏里表格要横向滚动、趋势图也看不出变化。 -->
         <Grid Grid.Row="3">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -210,10 +337,6 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K428}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CompletedCycles, Converter={StaticResource LocFormatConverter}, ConverterParameter=F247}" />
@@ -225,10 +348,6 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PollingIntervalMs, StringFormat={}{0} ms}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K432}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryWriteIntervalScans, Converter={StaticResource LocFormatConverter}, ConverterParameter=F283}" />
-                        <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P95Cycle}" />
-                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP95Milliseconds, StringFormat={}{0} ms}" />
-                        <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P99Cycle}" />
-                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP99Milliseconds, StringFormat={}{0} ms}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K433}" />
@@ -249,6 +368,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K435}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding TotalDeviceCount}" />
@@ -256,6 +376,10 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulDevices}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K437}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastSuccessfulAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K446}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ReadDetailText}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K447}" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DeviceReadSummary}" />
                     </Grid>
                     <Border Style="{StaticResource HintCard}" Margin="0,22,0,0">
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K439}" />
@@ -272,7 +396,6 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -299,16 +422,26 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K445}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SuccessRatePercent, StringFormat={}{0:F1}%}" />
-                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K446}" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ReadDetailText}" />
-                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K447}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DeviceReadSummary}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SuccessRateDisplay, StringFormat={}{0:F1}%, TargetNullValue={x:Static resources:Strings.K595}}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P95Cycle}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP95Milliseconds, StringFormat={}{0} ms}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P99Cycle}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP99Milliseconds, StringFormat={}{0} ms}" />
                     </Grid>
-                    <ProgressBar Style="{StaticResource MetricProgressBar}" Value="{Binding SuccessRatePercent}" Maximum="100" />
+                    <!-- 无采集周期时隐藏进度条：空条 + "0.0%" 会被读成"全部失败"，实际只是还没数据 -->
+                    <ProgressBar Value="{Binding SuccessRatePercent}" Maximum="100">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar" BasedOn="{StaticResource MetricProgressBar}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SuccessRateDisplay}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
                     <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K449}" />
                 </StackPanel>
             </Border>
@@ -377,6 +510,10 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K457}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CpuMemoryText}" />
@@ -392,34 +529,62 @@
                         <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SystemMemoryText}" />
                         <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K463}" />
                         <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding DiskFreeText}" />
+                        <!-- 配置校验算了三个指标，原来只露出"配置检查"一项汇总：
+                             用户看到"发现 3 项问题"却定位不到是地址冲突还是非法地址。 -->
+                        <TextBlock Grid.Row="7" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_AddressConflict}" />
+                        <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource IssueCountValue}" Text="{Binding AddressConflictCount}" />
+                        <TextBlock Grid.Row="8" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_InvalidAddress}" />
+                        <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource IssueCountValue}" Text="{Binding InvalidAddressCount}" />
+                        <!-- 阶段耗时/批次计划原本是卡片底部两对"孤立小标题 + 长文本"，
+                             把卡片撑得比数据区还长；收进表体后与其他指标对齐，也便于扫读。 -->
+                        <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K465}" />
+                        <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding StageTimingText}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="10" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K466}" />
+                        <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding BatchPlanText}" TextWrapping="Wrap" />
                     </Grid>
-                    <ProgressBar Style="{StaticResource MetricProgressBar}" Value="{Binding GpuUsagePercent}" Maximum="100" />
-                    <TextBlock Margin="0,6,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K464}" />
-                    <TextBlock Margin="0,10,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K465}" />
-                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding StageTimingText}" TextWrapping="Wrap" />
-                    <TextBlock Margin="0,8,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K466}" />
-                    <TextBlock Margin="0,2,0,0" Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding BatchPlanText}" />
+                    <!-- GPU 不可用时整块隐藏：原来只留一条空进度条 + 孤立标题 -->
+                    <TextBlock Margin="0,6,0,0" Text="{x:Static resources:Strings.K464}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource HintText}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GpuAvailable}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Value="{Binding GpuUsagePercent}" Maximum="100">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar" BasedOn="{StaticResource MetricProgressBar}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GpuAvailable}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
+            <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K467}" />
                     <Grid>
-                        <ListView Margin="0,12,0,0" Height="220" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
-                        <ListView.View>
-                            <GridView ColumnHeaderContainerStyle="{StaticResource MetricColumnHeader}">
-                                <GridViewColumn Header="{x:Static resources:Strings.K002}" Width="150" DisplayMemberBinding="{Binding DeviceName}" />
-                                <GridViewColumn Header="{x:Static resources:Strings.K083}" Width="92" DisplayMemberBinding="{Binding StatusText}" />
-                                <GridViewColumn Header="{x:Static resources:Strings.K468}" Width="92" DisplayMemberBinding="{Binding AcquisitionText}" />
-                                <GridViewColumn Header="{x:Static resources:Strings.K469}" Width="110" DisplayMemberBinding="{Binding ReadSummary}" />
-                                <GridViewColumn Header="OK / NG" Width="100">
-                                    <GridViewColumn.DisplayMemberBinding>
-                                        <Binding Path="ProductionSummary" />
-                                    </GridViewColumn.DisplayMemberBinding>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
+                        <!-- 不再写死 Height=220：本页外层已有 ScrollViewer，固定高度会让列表内部再长出一条
+                             独立滚动条（外层滚 + 内层滚 = 双层滚动，滚到底就得先"穿过"内层）。
+                             改为按内容自适应，MaxHeight 只作为设备极多时的兜底（同时保住虚拟化）。 -->
+                        <ListView x:Name="DeviceStatusList" Margin="0,12,0,0" MaxHeight="480" Style="{StaticResource MetricListView}" ItemsSource="{Binding DeviceStatuses}">
+                            <ListView.View>
+                                <GridView ColumnHeaderContainerStyle="{StaticResource MetricColumnHeader}">
+                                    <GridViewColumn Header="{x:Static resources:Strings.K002}" Width="220" DisplayMemberBinding="{Binding DeviceName}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.K083}" Width="140" DisplayMemberBinding="{Binding StatusText}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.K468}" Width="140" DisplayMemberBinding="{Binding AcquisitionText}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.K469}" Width="160" DisplayMemberBinding="{Binding ReadSummary}" />
+                                    <GridViewColumn Header="{x:Static resources:Strings.Wo_OkNg}" Width="140" DisplayMemberBinding="{Binding ProductionSummary}" />
+                                </GridView>
+                            </ListView.View>
                         </ListView>
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="0,12,0,0"
@@ -440,12 +605,13 @@
                 </StackPanel>
             </Border>
 
-            <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
+            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource MainCard}" Padding="16" Margin="0,8,0,0">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{x:Static resources:Strings.K470}" />
                     <TextBlock Margin="0,2,0,0" Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K471}" />
                     <Grid>
-                        <oxy:PlotView Height="220" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
+                        <!-- PlotView 自身没有滚动条，但整行宽度下 220 太扁，趋势起伏看不出来；加高到 280。 -->
+                        <oxy:PlotView x:Name="PollingTrendChart" Height="280" Margin="0,10,0,0" Model="{Binding PollingTrend}" Background="Transparent" />
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
                                    Text="{x:Static resources:Strings.K583}">

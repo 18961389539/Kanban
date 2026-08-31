@@ -70,6 +70,22 @@ Wpf,Home_DeviceHealth_Attention,关注,Needs attention,注意,Attention
 Wpf,Home_DeviceHealth_Abnormal,异常,Abnormal,異常,Anormal
 Wpf,Home_TotalDuration,总时长,Total duration,総時間,Total duration
 Wpf,Rtmon_RetryConnect,重试连接,Retry connection,再接続,Retry connection
+Wpf,Rtmon_AddressConflict,地址冲突,Address conflicts,アドレス競合,Conflitos de endereco
+Wpf,Rtmon_InvalidAddress,无效地址,Invalid addresses,無効アドレス,Enderecos invalidos
+Wpf,Rtmon_CollectorUnreachable,采集服务不可达,Collector unreachable,収集サービス到達不能,Collector inaccessivel
+Wpf,Rtmon_RefreshFailed,刷新失败,Refresh failed,更新失敗,Falha ao atualizar
+Wpf,Rtmon_PauseAutoRefresh,暂停刷新,Pause refresh,更新を一時停止,Pausar atualizacao
+Wpf,Rtmon_ResumeAutoRefresh,继续刷新,Resume refresh,更新を再開,Retomar atualizacao
+Wpf,Rtmon_ExportDiagnostics,导出诊断,Export diagnostics,診断をエクスポート,Exportar diagnóstico
+Wpf,Rtmon_CopyDiagnostics,复制诊断,Copy diagnostics,診断をコピー,Copiar diagnóstico
+Wpf,Rtmon_DiagnosticsCopied,诊断信息已复制到剪贴板,Diagnostics copied to clipboard,診断情報をクリップボードにコピーしました,Diagnósticos copiados para a área de transferência
+Wpf,Rtmon_CopyFailed,复制失败: {0},Copy failed: {0},コピーに失敗しました: {0},Falha ao copiar: {0}
+Wpf,Rtmon_DiagnosticsExported,诊断信息已导出 → {0},Diagnostics exported → {0},診断情報をエクスポートしました → {0},Diagnósticos exportados → {0}
+Wpf,Rtmon_DiagnosticsTitle,运行监控诊断快照,Runtime Monitoring Diagnostics Snapshot,稼働状態監視の診断スナップショット,Instantâneo de diagnóstico do monitoramento
+Wpf,Rtmon_DiagnosticsGeneratedAt,生成时间,Generated at,生成日時,Gerado em
+Wpf,Rtmon_RuntimeMode,运行模式,Runtime mode,実行モード,Modo de execução
+Wpf,Rtmon_DiagOverview,总体状态,Overview,全体状態,Visão geral
+Wpf,Rtmon_TxtFilter,文本文件|*.txt|所有文件|*.*,Text files|*.txt|All files|*.*,テキストファイル|*.txt|すべてのファイル|*.*,Arquivos de texto|*.txt|Todos os arquivos|*.*
 Wpf,Conn_Live,实时,Live,リアルタイム,Live
 Wpf,Conn_Disconnected,未连接,Disconnected,未接続,Disconnected
 Wpf,Conn_Reconnecting,重连中,Reconnecting,再接続中,Reconnecting

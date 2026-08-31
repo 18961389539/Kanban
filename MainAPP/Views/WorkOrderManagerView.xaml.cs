@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using Kanban.Collector.Core.Entities;
 using MainAPP.ViewModels;
@@ -61,6 +62,22 @@ public partial class WorkOrderManagerView : UserControl
             {
                 item.IsSelected = true;
             }
+        }
+    }
+
+    /// <summary>
+    /// 更多下拉：复制 / 生成样本（低频操作收进 ContextMenu，与设备管理页同交互）。
+    /// </summary>
+    private void OnMoreActionsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = btn;
+            menu.Placement = PlacementMode.Bottom;
+            menu.HorizontalOffset = 0;
+            menu.VerticalOffset = 4;
+            menu.DataContext = btn.DataContext;
+            menu.IsOpen = true;
         }
     }
 }

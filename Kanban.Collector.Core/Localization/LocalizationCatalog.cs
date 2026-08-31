@@ -295,6 +295,70 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "重试连接", ["en-US"] = "Retry connection", ["ja-JP"] = "再接続", ["pt-BR"] = "Retry connection"
         },
+        ["Wpf|Rtmon_AddressConflict"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "地址冲突", ["en-US"] = "Address conflicts", ["ja-JP"] = "アドレス競合", ["pt-BR"] = "Conflitos de endereco"
+        },
+        ["Wpf|Rtmon_InvalidAddress"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "无效地址", ["en-US"] = "Invalid addresses", ["ja-JP"] = "無効アドレス", ["pt-BR"] = "Enderecos invalidos"
+        },
+        ["Wpf|Rtmon_CollectorUnreachable"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "采集服务不可达", ["en-US"] = "Collector unreachable", ["ja-JP"] = "収集サービス到達不能", ["pt-BR"] = "Collector inaccessivel"
+        },
+        ["Wpf|Rtmon_RefreshFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "刷新失败", ["en-US"] = "Refresh failed", ["ja-JP"] = "更新失敗", ["pt-BR"] = "Falha ao atualizar"
+        },
+        ["Wpf|Rtmon_PauseAutoRefresh"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "暂停刷新", ["en-US"] = "Pause refresh", ["ja-JP"] = "更新を一時停止", ["pt-BR"] = "Pausar atualizacao"
+        },
+        ["Wpf|Rtmon_ResumeAutoRefresh"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "继续刷新", ["en-US"] = "Resume refresh", ["ja-JP"] = "更新を再開", ["pt-BR"] = "Retomar atualizacao"
+        },
+        ["Wpf|Rtmon_ExportDiagnostics"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出诊断", ["en-US"] = "Export diagnostics", ["ja-JP"] = "診断をエクスポート", ["pt-BR"] = "Exportar diagnóstico"
+        },
+        ["Wpf|Rtmon_CopyDiagnostics"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "复制诊断", ["en-US"] = "Copy diagnostics", ["ja-JP"] = "診断をコピー", ["pt-BR"] = "Copiar diagnóstico"
+        },
+        ["Wpf|Rtmon_DiagnosticsCopied"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "诊断信息已复制到剪贴板", ["en-US"] = "Diagnostics copied to clipboard", ["ja-JP"] = "診断情報をクリップボードにコピーしました", ["pt-BR"] = "Diagnósticos copiados para a área de transferência"
+        },
+        ["Wpf|Rtmon_CopyFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "复制失败: {0}", ["en-US"] = "Copy failed: {0}", ["ja-JP"] = "コピーに失敗しました: {0}", ["pt-BR"] = "Falha ao copiar: {0}"
+        },
+        ["Wpf|Rtmon_DiagnosticsExported"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "诊断信息已导出 → {0}", ["en-US"] = "Diagnostics exported → {0}", ["ja-JP"] = "診断情報をエクスポートしました → {0}", ["pt-BR"] = "Diagnósticos exportados → {0}"
+        },
+        ["Wpf|Rtmon_DiagnosticsTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "运行监控诊断快照", ["en-US"] = "Runtime Monitoring Diagnostics Snapshot", ["ja-JP"] = "稼働状態監視の診断スナップショット", ["pt-BR"] = "Instantâneo de diagnóstico do monitoramento"
+        },
+        ["Wpf|Rtmon_DiagnosticsGeneratedAt"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "生成时间", ["en-US"] = "Generated at", ["ja-JP"] = "生成日時", ["pt-BR"] = "Gerado em"
+        },
+        ["Wpf|Rtmon_RuntimeMode"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "运行模式", ["en-US"] = "Runtime mode", ["ja-JP"] = "実行モード", ["pt-BR"] = "Modo de execução"
+        },
+        ["Wpf|Rtmon_DiagOverview"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "总体状态", ["en-US"] = "Overview", ["ja-JP"] = "全体状態", ["pt-BR"] = "Visão geral"
+        },
+        ["Wpf|Rtmon_TxtFilter"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "文本文件|*.txt|所有文件|*.*", ["en-US"] = "Text files|*.txt|All files|*.*", ["ja-JP"] = "テキストファイル|*.txt|すべてのファイル|*.*", ["pt-BR"] = "Arquivos de texto|*.txt|Todos os arquivos|*.*"
+        },
         ["Wpf|Conn_Live"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "实时", ["en-US"] = "Live", ["ja-JP"] = "リアルタイム", ["pt-BR"] = "Live"
