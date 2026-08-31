@@ -6583,4 +6583,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Web_Unit_PerHour" xml:space="preserve">
     <value>個/h</value>
   </data>
+  <data name="Status_Idle" xml:space="preserve">
+    <value>アイドル</value>
+  </data>
 </root>

@@ -9035,6 +9035,10 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "件/h", ["en-US"] = "pcs/h", ["ja-JP"] = "個/h", ["pt-BR"] = "peças/h"
         },
+        ["Wpf|Status_Idle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "空闲", ["en-US"] = "Idle", ["ja-JP"] = "アイドル", ["pt-BR"] = "Ocioso"
+        },
         };
 
     private static readonly Dictionary<string, Dictionary<string, string>> LanguageNames =

@@ -6583,4 +6583,7 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Web_Unit_PerHour" xml:space="preserve">
     <value>pcs/h</value>
   </data>
+  <data name="Status_Idle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
 </root>

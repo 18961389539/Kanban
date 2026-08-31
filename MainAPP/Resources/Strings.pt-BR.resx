@@ -6583,4 +6583,7 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Web_Unit_PerHour" xml:space="preserve">
     <value>peças/h</value>
   </data>
+  <data name="Status_Idle" xml:space="preserve">
+    <value>Ocioso</value>
+  </data>
 </root>

@@ -65,7 +65,9 @@ SHARED_WEB_KEYS = {
     "Card_WorkOrder", "Conn_Connected", "Conn_Disconnected", "Conn_Live", "Fresh_Live", "Fresh_Mins",
     "Fresh_None", "Fresh_Secs", "Lbl_Achievement", "Lbl_ActualCycle", "Lbl_Availability",
     "Lbl_ConnStatus", "Lbl_DataFresh", "Lbl_DevTotal", "Lbl_Elapsed", "Lbl_Ng",
-    "Lbl_NgRate", "Lbl_Ok", "Lbl_Performance", "Lbl_Planned", "Lbl_Quality",
+    # Lbl_Planned 已移除：CSV 中不存在该键且 Web 端零引用，留在此处会让 Web 字典
+    # 回退成键名字面量，并触发 LocalizationGuardTests.Web_LKeys_Have_Corresponding_Wpf_Keys。
+    "Lbl_NgRate", "Lbl_Ok", "Lbl_Performance", "Lbl_Quality",
     "Lbl_RealTimeSpeed", "Lbl_Remaining", "Lbl_SnapSeq", "Lbl_SvcAddr", "Lbl_SvcVersion",
     "Lbl_TargetCycle", "Lbl_TotalOutput", "Meta_PlanWo", "Meta_QualityRate", "Meta_ShiftAuto",
     "Meta_StatusWord", "Meta_TrendCurrent", "Msg_EmptyHint", "Msg_NoDevSelected",

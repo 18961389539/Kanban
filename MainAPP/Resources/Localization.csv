@@ -2451,3 +2451,4 @@ Wpf,Web_Csv_FileAlarm,报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{
 Wpf,Web_Csv_FileProd,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,Web_Csv_FileStatus,状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,Web_Unit_PerHour,件/h,pcs/h,個/h,peças/h
+Wpf,Status_Idle,空闲,Idle,アイドル,Ocioso
