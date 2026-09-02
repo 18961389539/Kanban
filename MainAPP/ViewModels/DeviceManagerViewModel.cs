@@ -830,7 +830,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 仅序列化，不触发脏标记或持久化。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanExportDevice))]
-    private void ExportDevice()
+    private async Task ExportDevice()
     {
         var src = SelectedDevice;
         if (src == null || !CanExportDevice()) return;
@@ -840,7 +840,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         if (string.IsNullOrEmpty(path)) return;
         try
         {
-            System.IO.File.WriteAllText(path, JsonSerializer.Serialize(src, DeviceJsonOptions));
+            var json = JsonSerializer.Serialize(src, DeviceJsonOptions);
+            // P1-8 修复 2026-09-02：写盘移出 UI 线程
+            await Task.Run(() => System.IO.File.WriteAllText(path, json));
             _dialog.NotifySuccess(string.Format(Strings.K730, src.Name));
         }
         catch (Exception ex)
@@ -855,7 +857,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     /// 子配置经 CloneDevice 深拷贝并重新挂接 DeviceId，与复制设备共用同一条安全路径。
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanImportDevice))]
-    private void ImportDevice()
+    private async Task ImportDevice()
     {
         if (!CanImportDevice()) return;
         var path = _dialog.ShowOpenFileDialog(Strings.M227, Strings.K695);
@@ -864,7 +866,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         Device? imported;
         try
         {
-            imported = JsonSerializer.Deserialize<Device>(System.IO.File.ReadAllText(path), DeviceJsonOptions);
+            // P1-8 修复 2026-09-02：读盘移出 UI 线程
+            var json = await Task.Run(() => System.IO.File.ReadAllText(path));
+            imported = JsonSerializer.Deserialize<Device>(json, DeviceJsonOptions);
         }
         catch (Exception ex)
         {

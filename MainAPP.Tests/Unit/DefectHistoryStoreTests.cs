@@ -21,10 +21,12 @@ public sealed class DefectHistoryStoreTests
         var databaseProvider = new DatabaseProvider(settings);
         try
         {
-            using (var context = databaseProvider.CreateDefectHistoryContext())
-                context.Database.EnsureCreated();
+            using var context = databaseProvider.CreateDefectHistoryContext();
+            context.Database.EnsureCreated();
 
-            var store = new DefectHistoryStore(databaseProvider);
+            // P1-3 修复 2026-09-02：Dispose 后台 flush 循环，避免 finally 删除目录时
+            // 后台线程仍可能 new DbContext 造成竞态（IOException 被吞 → 测试假通过）。
+            using var store = new DefectHistoryStore(databaseProvider);
             store.Append(
             [
                 CreateSnapshot(DateTime.Now.AddDays(-366), 10),
@@ -62,10 +64,11 @@ public sealed class DefectHistoryStoreTests
         var databaseProvider = new DatabaseProvider(settings);
         try
         {
-            using (var context = databaseProvider.CreateDefectHistoryContext())
-                context.Database.EnsureCreated();
+            using var context = databaseProvider.CreateDefectHistoryContext();
+            context.Database.EnsureCreated();
 
-            var store = new DefectHistoryStore(databaseProvider);
+            // P1-3 修复 2026-09-02：见上方注释（Dispose 后台 flush 循环）
+            using var store = new DefectHistoryStore(databaseProvider);
             var from = new DateTime(2026, 8, 8, 8, 0, 0);
             var to = from.AddHours(4);
             // defect-1（day 班次）：基线 10 → 窗口内 15 → 18（增量 8）

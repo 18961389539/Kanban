@@ -329,7 +329,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     /// 排查故障时只靠截图会丢失数值精度、也无法检索，落盘一份结构化文本是刚性需求。
     /// </summary>
     [RelayCommand]
-    private void ExportDiagnostics()
+    private async Task ExportDiagnostics()
     {
         var path = _dialogService.ShowSaveFileDialog(
             Strings.Rtmon_ExportDiagnostics,
@@ -341,7 +341,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         try
         {
             var report = BuildDiagnosticsReport();
-            File.WriteAllText(path, report, new UTF8Encoding(true));
+            // P1-8 修复 2026-09-02：报告可能很大，写盘移出 UI 线程（对齐 OverviewViewModel:315 范式）
+            await Task.Run(() => File.WriteAllText(path, report, new UTF8Encoding(true)));
             _dialogService.NotifySuccess(string.Format(Strings.Rtmon_DiagnosticsExported, Path.GetFileName(path)));
         }
         catch (Exception ex)

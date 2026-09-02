@@ -811,7 +811,7 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.ToDate = new DateTime(2026, 1, 16, 18, 0, 0);
         _vm.SelectedShiftName = "白班";
 
-        _vm.SaveLastQuery();
+        _vm.SaveLastQueryAsync().GetAwaiter().GetResult(); // P1-8: 方法已异步化，测试内同步等待
 
         // 改变条件
         _vm.SelectedTabIndex = 0;
@@ -838,7 +838,7 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.SelectedTabIndex = 0;
         _vm.SelectedDeviceId = "dev-001";
         _vm.QuickTimeIndex = 3; // 近 7 天
-        _vm.SaveLastQuery();
+        _vm.SaveLastQueryAsync().GetAwaiter().GetResult(); // P1-8: 方法已异步化，测试内同步等待
 
         // 改乱：回到自定义并设置无关日期
         _vm.QuickTimeIndex = 0;

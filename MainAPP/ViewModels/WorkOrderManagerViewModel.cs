@@ -1063,7 +1063,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     /// 与 <see cref="ImportCsv"/> 互为往返（表头同源 M346）。
     /// </summary>
     [RelayCommand]
-    private void ExportCsv()
+    private async Task ExportCsv()
     {
         var filtered = FilteredView.OfType<WorkOrder>().ToList();
         if (filtered.Count == 0)
@@ -1078,35 +1078,40 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
 
         try
         {
-            // UTF-8 with BOM：Excel 打开中文不乱码
-            using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
-            // 表头（多语言资源；文件名模板有意保留中文，跨语言归档稳定）
-            writer.WriteLine(Strings.M346);
-            foreach (var w in filtered)
+            // P1-8 修复 2026-09-02：写盘移出 UI 线程（数百行 CSV 同步写会卡 UI）。
+            // Strings/CsvUtil 均为只读静态资源，线程池线程访问安全。
+            await Task.Run(() =>
             {
-                var statusText = w.Status switch
+                // UTF-8 with BOM：Excel 打开中文不乱码
+                using var writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(true));
+                // 表头（多语言资源；文件名模板有意保留中文，跨语言归档稳定）
+                writer.WriteLine(Strings.M346);
+                foreach (var w in filtered)
                 {
-                    WorkOrderStatus.Pending => Strings.M041,
-                    WorkOrderStatus.Running => Strings.M042,
-                    WorkOrderStatus.Completed => Strings.M043,
-                    WorkOrderStatus.Aborted => Strings.M031,
-                    _ => w.Status.ToString(),
-                };
-                // CSV 字段含逗号需双引号包裹
-                var remark = w.Remark ?? "";
-                writer.WriteLine(string.Join(",",
-                    CsvUtil.Escape(w.OrderNo),
-                    CsvUtil.Escape(w.ProductCode),
-                    CsvUtil.Escape(w.ProductName),
-                    CsvUtil.Escape(w.DeviceName),
-                    w.TargetQuantity,
-                    w.PlannedStart.ToString("yyyy-MM-dd HH:mm"),
-                    w.PlannedEnd.ToString("yyyy-MM-dd HH:mm"),
-                    statusText,
-                    CsvUtil.Escape(remark),
-                    w.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
-                    w.UpdatedAt.ToString("yyyy-MM-dd HH:mm")));
-            }
+                    var statusText = w.Status switch
+                    {
+                        WorkOrderStatus.Pending => Strings.M041,
+                        WorkOrderStatus.Running => Strings.M042,
+                        WorkOrderStatus.Completed => Strings.M043,
+                        WorkOrderStatus.Aborted => Strings.M031,
+                        _ => w.Status.ToString(),
+                    };
+                    // CSV 字段含逗号需双引号包裹
+                    var remark = w.Remark ?? "";
+                    writer.WriteLine(string.Join(",",
+                        CsvUtil.Escape(w.OrderNo),
+                        CsvUtil.Escape(w.ProductCode),
+                        CsvUtil.Escape(w.ProductName),
+                        CsvUtil.Escape(w.DeviceName),
+                        w.TargetQuantity,
+                        w.PlannedStart.ToString("yyyy-MM-dd HH:mm"),
+                        w.PlannedEnd.ToString("yyyy-MM-dd HH:mm"),
+                        statusText,
+                        CsvUtil.Escape(remark),
+                        w.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                        w.UpdatedAt.ToString("yyyy-MM-dd HH:mm")));
+                }
+            });
 
             _dialog.NotifySuccess(string.Format(Strings.F106, filtered.Count, Path.GetFileName(path)));
         }

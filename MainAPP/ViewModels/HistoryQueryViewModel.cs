@@ -441,7 +441,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private string? _savedAlarmName;
     private bool _hasSavedState;
 
-    public void SaveLastQuery()
+    public async Task SaveLastQueryAsync()
     {
         _savedTabIndex = SelectedTabIndex;
         _savedDeviceId = SelectedDeviceId;
@@ -451,7 +451,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         _savedShiftName = SelectedShiftName;
         _savedAlarmName = SelectedAlarmName;
         _hasSavedState = true;
-        PersistLastQuerySnapshot();
+        await PersistLastQuerySnapshotAsync();
     }
 
     public void RestoreLastQuery()
@@ -522,7 +522,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     private string LastQueryFilePath => _appSettings.GetFilePath("last_query.json");
 
-    private void PersistLastQuerySnapshot()
+    /// <summary>
+    /// 持久化上次查询条件。审查修复 2026-09-02（P1-8）：文件 IO 移出 UI 线程
+    /// （查询成功后每次都会触发，高频路径不得同步写盘）。
+    /// </summary>
+    private async Task PersistLastQuerySnapshotAsync()
     {
         try
         {
@@ -539,9 +543,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             };
             var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
             // 原子写入：先写临时文件再重命名，避免断电产生半截 JSON
-            var tempPath = LastQueryFilePath + ".tmp";
-            File.WriteAllText(tempPath, json);
-            File.Move(tempPath, LastQueryFilePath, overwrite: true);
+            await Task.Run(() =>
+            {
+                var tempPath = LastQueryFilePath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, LastQueryFilePath, overwrite: true);
+            });
         }
         catch (Exception ex)
         {
@@ -555,7 +562,10 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         try
         {
             if (!File.Exists(LastQueryFilePath)) return;
-            var json = File.ReadAllText(LastQueryFilePath);
+            // P1-8 修复 2026-09-02：构造函数一次性调用、不能 await，用同步等待线程池读盘
+            //（IO 在池线程执行，UI 线程仅等待小文件读取完成，不参与磁盘操作）。
+            var json = Task.Run(() => File.ReadAllText(LastQueryFilePath))
+                .ConfigureAwait(false).GetAwaiter().GetResult();
             var snapshot = JsonSerializer.Deserialize<LastQuerySnapshot>(json);
             if (snapshot == null) return;
 
@@ -649,7 +659,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private bool CanExport() => HasQueried && TotalCount > 0 && !IsExporting;
 
     [RelayCommand]
-    private void Search()
+    private async Task Search()
     {
         CancelAutoQuery(); // 手动查询优先：取消在途的防抖定时，避免手动+自动双查
         QueryValidationMessage = string.Empty;
@@ -663,7 +673,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         HasQueried = true;
         QueryCurrentTab();
         // 查询成功后持久化当前条件，便于下次进入页面或重启应用时恢复
-        SaveLastQuery();
+        await SaveLastQueryAsync(); // P1-8 修复 2026-09-02：IO 移出 UI 线程
     }
 
     /// <summary>筛选条件变化后的防抖自动查询：取消上一在途定时，800ms 内无新改动才执行一次查询。</summary>
@@ -700,7 +710,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         CurrentPage = 1;
         HasQueried = true;
         QueryCurrentTab();
-        SaveLastQuery();
+        await SaveLastQueryAsync(); // P1-8 修复 2026-09-02：IO 移出 UI 线程
     }
 
     [RelayCommand]
