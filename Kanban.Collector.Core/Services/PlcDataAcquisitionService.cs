@@ -74,6 +74,64 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly HashSet<string> _lastSuccessfulReadProfileIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _lastCommunicationFailureProfileIds = new(StringComparer.OrdinalIgnoreCase);
 
+    // ──────────── 故障档案冷却（P0-5） ────────────
+    // 某档案连续失败达到阈值后进入冷却：本轮跳过其块读与设备刷新（不再每轮为故障 PLC
+    // 付一次完整超时拖垮整轮），冷却 N 轮后自动重试。冷却期间不标记离线、不触发断线重连，
+    // 设备保持上一轮状态，避免诊断面板误报"离线"。
+    private const int ProfileFailureCooldownThreshold = 3; // 连续失败 3 轮进入冷却
+    private const int ProfileCooldownRounds = 3;           // 冷却 3 轮后自动重试一次
+    /// <summary>档案 → 连续失败轮数（成功即清零）。</summary>
+    private readonly Dictionary<string, int> _profileFailureRounds = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>档案 → 剩余冷却轮数（每轮递减，归零自动重试）。</summary>
+    private readonly Dictionary<string, int> _profileCooldownRounds = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>本轮处于冷却中的档案集合（由 UpdateProfileCooldowns 重建，供块读/设备刷新跳过）。</summary>
+    private readonly HashSet<string> _cooldownProfileIds = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 依据本轮成功/失败档案更新冷却状态：成功清零计数并解除冷却；连续失败达阈值进入冷却；
+    /// 冷却轮数每轮递减，归零后自动移除（下一轮重试）。
+    /// </summary>
+    private void UpdateProfileCooldowns()
+    {
+        foreach (var profileId in _lastSuccessfulReadProfileIds)
+        {
+            _profileFailureRounds[profileId] = 0;
+            _profileCooldownRounds.Remove(profileId);
+        }
+        foreach (var profileId in _lastFailedReadProfileIds)
+        {
+            _profileFailureRounds.TryGetValue(profileId, out var fails);
+            fails++;
+            if (fails >= ProfileFailureCooldownThreshold)
+            {
+                _logger.LogWarning("连接档案 {ProfileId} 连续 {Count} 轮读取失败，进入冷却（{Rounds} 轮后自动重试）",
+                    profileId, fails, ProfileCooldownRounds);
+                _profileCooldownRounds[profileId] = ProfileCooldownRounds;
+                _profileFailureRounds[profileId] = 0;
+            }
+            else
+            {
+                _profileFailureRounds[profileId] = fails;
+            }
+        }
+        foreach (var profileId in _profileCooldownRounds.Keys.ToArray())
+        {
+            var remaining = _profileCooldownRounds[profileId] - 1;
+            if (remaining <= 0)
+            {
+                _profileCooldownRounds.Remove(profileId);
+                _logger.LogInformation("连接档案 {ProfileId} 冷却结束，本轮恢复读取", profileId);
+            }
+            else
+            {
+                _profileCooldownRounds[profileId] = remaining;
+            }
+        }
+        _cooldownProfileIds.Clear();
+        foreach (var profileId in _profileCooldownRounds.Keys)
+            _cooldownProfileIds.Add(profileId);
+    }
+
     /// <summary>缺陷快照降频：记录上次落库的（Count, ShiftName），无变化不写（键 = 设备Id|缺陷Id）。</summary>
     private readonly Dictionary<string, (int Count, string ShiftName)> _lastDefectSnapshot = new();
     private CancellationTokenSource? _cts;
@@ -486,6 +544,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
 
                     MarkReadFailures(!noDevicesToRead && successDevices.Count == 0);
                     RecordAcquisitionResults();
+                    UpdateProfileCooldowns();
 
                     var configuredDevices = _deviceRepository.GetDevicesSnapshot().Count;
                     var estimatedReadOperations = CountConfiguredReadOperations();
@@ -684,12 +743,16 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _lastSuccessfulReadProfileIds.Clear();
         HashSet<string> successDevices = [];
         var eligibleProfileIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        _scanPipeline.PrepareDWordBatchValues();
+        _scanPipeline.PrepareDWordBatchValues(_cooldownProfileIds);
         var checkedDevices = 0;
         var notConfiguredDevices = 0;
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
             checkedDevices++;
+            // 故障冷却中的档案：跳过该档案全部设备读取，保留上一轮状态。
+            // 不标记离线、不触发断线重连（避免诊断面板把"冷却跳过"误报成"离线"）。
+            if (_cooldownProfileIds.Contains(PlcRuntimeSession.NormalizeProfileId(device.ConnectionProfileId)))
+                continue;
             try
             {
                 var ok = TryReadOkCount(device);

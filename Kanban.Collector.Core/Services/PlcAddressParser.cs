@@ -71,6 +71,14 @@ public readonly struct PlcAddressParseResult
 /// </summary>
 public static class PlcAddressParser
 {
+    /// <summary>
+    /// 解析结果记忆化缓存：地址集有限（设备/报警/缺陷配置固定），Ordinal 键按原始字符串命中，
+    /// 避免热路径（5Hz × 每设备每地址）每次做 Trim/ToUpper 分配 + 最多 10 次正则匹配。
+    /// 配置变更时由 <see cref="ClearCache"/> 整体失效。
+    /// </summary>
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, PlcAddressParseResult> Cache =
+        new(System.StringComparer.Ordinal);
+
     private static readonly Regex DPattern = new(@"^D\d+$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex MPattern = new(@"^M\d+$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex SiemensDWordPattern = new(@"^DB(?<db>\d+)\.DBD(?<offset>\d+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -95,6 +103,11 @@ public static class PlcAddressParser
             return PlcAddressParseResult.Invalid(address ?? string.Empty, "地址不能为空");
         }
 
+        return Cache.GetOrAdd(address, static raw => ParseCore(raw));
+    }
+
+    private static PlcAddressParseResult ParseCore(string address)
+    {
         var trimmed = address.Trim().ToUpperInvariant();
 
         var siemensAreaDWord = SiemensAreaDWordPattern.Match(trimmed);
@@ -203,5 +216,18 @@ public static class PlcAddressParser
     {
         var result = Parse(address);
         return result.IsValid ? result.Original : string.Empty;
+    }
+
+    /// <summary>
+    /// 清空全部品牌地址解析缓存（含各品牌 codec 内部缓存）。
+    /// 设备/报警/缺陷地址或连接档案配置变更后必须调用，否则旧地址结果会被沿用。
+    /// </summary>
+    public static void ClearCache()
+    {
+        Cache.Clear();
+        SiemensAddressCodec.ClearParseCache();
+        ModbusTcpAddressCodec.ClearParseCache();
+        OmronAddressCodec.ClearParseCache();
+        KeyenceAddressCodec.ClearParseCache();
     }
 }

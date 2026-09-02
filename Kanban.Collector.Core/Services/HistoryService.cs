@@ -49,6 +49,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     private readonly HistoryStorageDiagnostics _storageDiagnostics;
     private readonly DataSourceSnapshotStore? _dataSourceSnapshotStore;
     private readonly bool _ownsWriter;
+    private readonly bool _ownsDefectStore;
     private readonly bool _ownsStorageDiagnostics;
     private readonly Timer _walCheckpointTimer;
     private readonly ILogger<HistoryService> _logger;
@@ -73,6 +74,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _storageDiagnostics = storageDiagnostics ?? new HistoryStorageDiagnostics(settings);
         _dataSourceSnapshotStore = dataSourceSnapshotStore;
         _ownsWriter = productionWriter is null;
+        _ownsDefectStore = defectStore is null; // 自建缺陷存储须本类负责释放（后台 flush 任务）
         _ownsStorageDiagnostics = storageDiagnostics is null;
         _walCheckpointTimer = new Timer(_ => CheckpointWal(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
@@ -214,6 +216,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     {
         _walCheckpointTimer.Dispose();
         if (_ownsWriter) _productionWriter.Dispose();
+        if (_ownsDefectStore) _defectStore.Dispose();
         if (_ownsStorageDiagnostics) _storageDiagnostics.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -222,6 +225,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     {
         _walCheckpointTimer.Dispose();
         if (_ownsWriter) await _productionWriter.DisposeAsync();
+        if (_ownsDefectStore) _defectStore.Dispose();
         if (_ownsStorageDiagnostics) _storageDiagnostics.Dispose();
         GC.SuppressFinalize(this);
     }

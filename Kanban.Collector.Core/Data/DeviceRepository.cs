@@ -120,6 +120,8 @@ public class DeviceRepository : IDeviceRepository
         {
             var remoteSnapshot = CreateDeepSnapshot();
             await _remoteStore.SaveDevicesAsync(remoteSnapshot);
+            // Remote 保存即地址可能变更：失效 PLC 地址解析缓存
+            PlcAddressParser.ClearCache();
             return;
         }
 
@@ -192,7 +194,7 @@ public class DeviceRepository : IDeviceRepository
 
         _appSettings.EnsureDirectory();
 
-        List<Device> snapshot;
+        string json;
         lock (_collectionLock)
         {
             // 回填 DeviceId 到子集合（确保 JSON 中数据完整）
@@ -203,13 +205,16 @@ public class DeviceRepository : IDeviceRepository
                 foreach (var c in device.CounterAlarms) c.DeviceId = device.Id;
                 foreach (var s in device.Sources) s.DeviceId = device.Id;
             }
-            snapshot = Devices.ToList();
+            // 审查修复 2026-09-02（P0-3）：序列化必须在锁内——原"锁内浅拷 + 锁外序列化"
+            // 遍历的仍是采集线程正在写的同一批 Device 对象，快照不原子（与 CreateDeepSnapshot 同构）。
+            json = JsonSerializer.Serialize(Devices, JsonOptions);
         }
-
-        var json = JsonSerializer.Serialize(snapshot, JsonOptions);
 
         // 原子写入：复用 AppSettings 的实现，避免写入中途崩溃产生截断的 JSON 文件
         Services.AppSettings.WriteFileAtomically(FilePath, json);
+
+        // 保存即地址可能变更：失效 PLC 地址解析缓存
+        PlcAddressParser.ClearCache();
     }
 
     /// <summary>
@@ -464,6 +469,8 @@ public class DeviceRepository : IDeviceRepository
         DeviceMap.Clear();
         Runtimes.Clear();
         RuntimeMap.Clear();
+        // 设备/报警/缺陷地址整体变更：失效 PLC 地址解析缓存，避免旧地址结果被热路径沿用
+        PlcAddressParser.ClearCache();
         foreach (var device in devices)
         {
             Devices.Add(device);
@@ -480,16 +487,25 @@ public class DeviceRepository : IDeviceRepository
         return runtime;
     }
 
+    /// <summary>
+    /// 深拷贝全部设备：序列化在 <see cref="_collectionLock"/> 内执行（对 Devices 对象图的原子快照），
+    /// 反序列化是纯 CPU 且不触碰 Devices，留在锁外执行。
+    /// 审查修复 2026-09-02（P0-3）：原实现锁内仅 ToList() 浅拷引用、锁外序列化——采集线程 /
+    /// RemoteRuntimeSink 正在写的 Device 子集合（Alarms/Defects/Sources）会被并发遍历，
+    /// 轻则抛 "Collection was modified"，重则产出半新半旧的 JSON 经 SaveAllAsync 写成 Collector
+    /// 权威配置。保存是低频操作，锁内一次序列化（数十 ms）完全可接受，正确性优先。
+    /// </summary>
     private List<Device> CreateDeepSnapshot()
     {
+        string json;
         lock (_collectionLock)
         {
             foreach (var device in Devices)
                 NormalizeChildIds(device);
-            var json = JsonSerializer.Serialize(Devices.ToList(), JsonOptions);
-            return JsonSerializer.Deserialize<List<Device>>(json, JsonOptions)
-                   ?? new List<Device>();
+            json = JsonSerializer.Serialize(Devices, JsonOptions);
         }
+        return JsonSerializer.Deserialize<List<Device>>(json, JsonOptions)
+               ?? new List<Device>();
     }
 
     private void HandleCorruptFile(Exception ex)

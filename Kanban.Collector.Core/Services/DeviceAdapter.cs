@@ -179,6 +179,14 @@ public sealed class PlcDeviceAdapter : IDeviceAdapter, IProfileBoundDeviceAdapte
     private readonly string _profileId;
     private readonly IPlcAddressCodec _fallbackCodec = new MitsubishiAddressCodec();
 
+    // 运行时 session/profile/driver 字段级缓存：adapter 经 DeviceAdapterResolver._profileBindings
+    // 按档案缓存（长生命周期），避免每次读写都调 sessionManager.Get()（全局锁 + 配置查找）。
+    // profile 按 Version 失效（Provider.Refresh 时递增），driver/session 引用在 session 生命周期内稳定。
+    private PlcRuntimeSession? _cachedSession;
+    private IPlcDriver? _cachedDriver;
+    private PlcRuntimeProfile? _cachedProfile;
+    private long _cachedProfileVersion = -1;
+
     public PlcDeviceAdapter(
         IPlcDriver driver,
         IPlcRuntimeProfileProvider? profileProvider = null,
@@ -193,8 +201,25 @@ public sealed class PlcDeviceAdapter : IDeviceAdapter, IProfileBoundDeviceAdapte
         _profileId = PlcRuntimeSession.NormalizeProfileId(profileId);
     }
 
-    private PlcRuntimeProfile? RuntimeProfile => _sessionManager?.Get(_profileId).Profile ?? _profileProvider?.Current;
-    private IPlcDriver RuntimeDriver => _sessionManager?.Get(_profileId).Driver ?? _driver;
+    private PlcRuntimeSession? RuntimeSession => _cachedSession ??= _sessionManager?.Get(_profileId);
+
+    private PlcRuntimeProfile? RuntimeProfile
+    {
+        get
+        {
+            var session = RuntimeSession;
+            if (session == null) return _profileProvider?.Current;
+            var profile = session.Profile;
+            if (profile.Version != _cachedProfileVersion)
+            {
+                _cachedProfile = profile;
+                _cachedProfileVersion = profile.Version;
+            }
+            return _cachedProfile;
+        }
+    }
+
+    private IPlcDriver RuntimeDriver => _cachedDriver ??= RuntimeSession?.Driver ?? _driver;
 
     public bool CanBind(ConnectionProfile profile)
         => _sessionManager is not null

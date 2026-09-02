@@ -26,7 +26,25 @@ public sealed class PlcRuntimeSession : IDisposable
     public IPlcRuntimeProfileProvider ProfileProvider { get; }
     public PlcConnectionManager ConnectionManager { get; }
     public PlcRuntimeProfile Profile => ProfileProvider.Current;
-    public string ConfigurationSignature => Profile.Config.GetConfigurationSignature();
+
+    // 签名按 Profile.Version 缓存：Version 仅 Refresh 时递增，避免每次访问都做全对象 JSON 序列化。
+    // Profile.Config 是不可变快照，Version 不变即签名不变，缓存安全。
+    private string _signature = string.Empty;
+    private long _signatureVersion = -1;
+
+    public string ConfigurationSignature
+    {
+        get
+        {
+            var profile = Profile;
+            if (profile.Version != _signatureVersion)
+            {
+                _signature = profile.Config.GetConfigurationSignature();
+                _signatureVersion = profile.Version;
+            }
+            return _signature;
+        }
+    }
 
     internal void Configure(PlcConfig config)
     {
@@ -276,21 +294,35 @@ public sealed class PlcRuntimeSessionManager : IPlcRuntimeSessionManager
     public void RefreshFromSettings()
     {
         List<PlcRuntimeSession> removed;
+
+        // 审查修复 2026-09-02（P0-2）：先经 UpdateLock 取设置快照（含 Ensure 迁移），再进 _sync。
+        // _sync 与写侧（SettingsViewModel.CopySettings / ConfigSyncHandler 的 UpdateLock）不是同一把锁，
+        // 原先在 _sync 内枚举 ConnectionProfiles 且调用 EnsureConnectionProfiles（其 Insert(0,…) 分支
+        // 会修改集合结构、原地改写 profile 属性），与写侧并发会抛 "Collection was modified" 或漏配档案。
+        // 锁顺序固定：UpdateLock（外）→ _sync（内）；持 _sync 期间绝不获取 UpdateLock（防 A-B-BA 死锁）。
+        List<ConnectionProfile> profilesSnapshot;
+        ConnectionProfile defaultProfileSnapshot;
+        lock (_settings.UpdateLock)
+        {
+            _settings.EnsureConnectionProfiles();
+            defaultProfileSnapshot = _settings.DefaultConnectionProfile;
+            profilesSnapshot = _settings.ConnectionProfiles.ToList();
+        }
+
         lock (_sync)
         {
             ThrowIfDisposed();
-            _settings.EnsureConnectionProfiles();
             var activeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 ConnectionProfile.DefaultId,
             };
 
-            var defaultConfig = _settings.DefaultConnectionProfile.Config;
+            var defaultConfig = defaultProfileSnapshot.Config;
             if (!string.Equals(_defaultSession.ConfigurationSignature,
                     defaultConfig.GetConfigurationSignature(), StringComparison.Ordinal))
                 _defaultSession.Configure(defaultConfig);
 
-            foreach (var profile in _settings.ConnectionProfiles)
+            foreach (var profile in profilesSnapshot)
             {
                 var profileId = PlcRuntimeSession.NormalizeProfileId(profile.Id);
                 if (string.Equals(profileId, ConnectionProfile.DefaultId, StringComparison.OrdinalIgnoreCase))

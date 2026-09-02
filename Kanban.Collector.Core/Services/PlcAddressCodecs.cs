@@ -74,9 +74,20 @@ internal sealed class SiemensAddressCodec : IPlcAddressCodec
     private static readonly Regex AreaDWordPattern = new(@"^(?<area>[MIQ])D(?<offset>\d+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex AreaBitPattern = new(@"^(?<area>[MIQ])(?<byte>\d+)\.(?<bit>[0-7])$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // 解析是纯函数且不依赖实例状态（Pattern 全静态），静态缓存避免热路径重复正则。
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, PlcAddressParseResult> ParseCache =
+        new(System.StringComparer.Ordinal);
+
     public PlcBrand Brand => PlcBrand.Siemens;
     public PlcAddressParseResult Parse(string? address)
-        => ParseInternal(address);
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return PlcAddressParseResult.Invalid(address ?? string.Empty, "地址不能为空");
+        return ParseCache.GetOrAdd(address, static raw => ParseCore(raw));
+    }
+
+    /// <summary>清空解析缓存（配置变更时由 <see cref="PlcAddressParser.ClearCache"/> 聚合调用）。</summary>
+    internal static void ClearParseCache() => ParseCache.Clear();
 
     public string Normalize(string? address) => Parse(address).Original ?? string.Empty;
     public bool CanRead(PlcAddressParseResult address) => address.IsValid;
@@ -138,9 +149,9 @@ internal sealed class SiemensAddressCodec : IPlcAddressCodec
         throw new FormatException($"不支持的 Siemens 地址: {address}");
     }
 
-    private static PlcAddressParseResult ParseInternal(string? address)
+    private static PlcAddressParseResult ParseCore(string address)
     {
-        var original = address?.Trim().ToUpperInvariant() ?? string.Empty;
+        var original = address.Trim().ToUpperInvariant();
         if (!DWordPattern.IsMatch(original) && !BitPattern.IsMatch(original)
             && !NativeDWordPattern.IsMatch(original) && !NativeBitPattern.IsMatch(original)
             && !AreaDWordPattern.IsMatch(original) && !AreaBitPattern.IsMatch(original))
@@ -197,6 +208,10 @@ internal sealed class ModbusTcpAddressCodec : IPlcAddressCodec
     private readonly int _registerFunction;
     private readonly int _bitFunction;
 
+    // 解析是纯函数（不依赖 _registerFunction/_bitFunction），静态缓存避免热路径重复正则。
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, PlcAddressParseResult> ParseCache =
+        new(System.StringComparer.Ordinal);
+
     public ModbusTcpAddressCodec(PlcConfig config)
     {
         _registerFunction = config.ModbusTcp.RegisterFunction;
@@ -206,7 +221,17 @@ internal sealed class ModbusTcpAddressCodec : IPlcAddressCodec
 
     public PlcAddressParseResult Parse(string? address)
     {
-        var original = address?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(address))
+            return PlcAddressParseResult.Invalid(address ?? string.Empty, "地址不能为空");
+        return ParseCache.GetOrAdd(address, static raw => ParseCore(raw));
+    }
+
+    /// <summary>清空解析缓存（配置变更时由 <see cref="PlcAddressParser.ClearCache"/> 聚合调用）。</summary>
+    internal static void ClearParseCache() => ParseCache.Clear();
+
+    private static PlcAddressParseResult ParseCore(string address)
+    {
+        var original = address.Trim().ToUpperInvariant();
         var match = RegisterPattern.Match(original);
         if (match.Success)
             return PlcAddressParseResult.Valid(original, PlcAddressType.DWord,
@@ -226,9 +251,6 @@ internal sealed class ModbusTcpAddressCodec : IPlcAddressCodec
         if (match.Success)
             return PlcAddressParseResult.Valid(original, PlcAddressType.MBit,
                 int.Parse(match.Groups["offset"].Value), 1, "DI");
-
-        if (string.IsNullOrWhiteSpace(original))
-            return PlcAddressParseResult.Invalid(original, "地址不能为空");
 
         return PlcAddressParseResult.Invalid(original, $"不是有效的 Modbus 地址（HR/IR/C/DI）: {address}");
     }

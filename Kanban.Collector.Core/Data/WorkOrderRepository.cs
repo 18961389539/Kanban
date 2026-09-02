@@ -12,7 +12,13 @@ namespace Kanban.Collector.Core.Data;
 /// </summary>
 public interface IWorkOrderRepository
 {
-    ObservableCollection<WorkOrder> WorkOrders { get; }
+    BulkObservableCollection<WorkOrder> WorkOrders { get; }
+
+    /// <summary>开启批量更新作用域：作用域内的集合修改不逐条抛事件，最外层退出时统一抛一次 Reset。
+    /// 供 LoadAll / 批量导入 / 远程全量同步等「连续 N 次变更」场景使用，避免订阅方退化成 O(N²) 重算。
+    /// 调用方须自行持有 SyncRoot 锁（与逐条修改的锁约定一致）。</summary>
+    IDisposable BeginBulkUpdate();
+
     void LoadAll();
     List<WorkOrder> GetSnapshot();
     Task<WorkOrder> UpsertAsync(WorkOrder workOrder);
@@ -48,7 +54,10 @@ public class WorkOrderRepository : IWorkOrderRepository
     public object SyncRoot => _collectionLock;
 
     /// <summary>工单内存集合（绑定到 UI）。所有读写经 _collectionLock 串行化。</summary>
-    public ObservableCollection<WorkOrder> WorkOrders { get; } = new();
+    public BulkObservableCollection<WorkOrder> WorkOrders { get; } = new();
+
+    /// <inheritdoc />
+    public IDisposable BeginBulkUpdate() => WorkOrders.BeginBulkUpdate();
 
     /// <summary>工单变更版本号（LoadAll/Upsert/Delete 成功后递增）。供 MetaPublisher 脏标记判断
     /// 是否重组装快照——无变更时跳过全量拷贝，消除每 5s 的无谓分配与锁争用。</summary>
@@ -96,10 +105,15 @@ public class WorkOrderRepository : IWorkOrderRepository
 
         lock (_collectionLock)
         {
-            WorkOrders.Clear();
-            foreach (var w in snapshot)
+            // 批量作用域：W 条工单只抛 1 次 Reset，而不是 W 次 Add + 1 次 Clear。
+            // 否则每个订阅者（CollectionView 重建 + ViewModel 派生计数重算）都要跑 O(W) 一次，整体 O(W²)。
+            using (WorkOrders.BeginBulkUpdate())
             {
-                WorkOrders.Add(w);
+                WorkOrders.Clear();
+                foreach (var w in snapshot)
+                {
+                    WorkOrders.Add(w);
+                }
             }
         }
 
@@ -315,14 +329,17 @@ public class WorkOrderRepository : IWorkOrderRepository
             ctx.WorkOrders.RemoveRange(old);
             ctx.SaveChanges();
 
-            // 同步内存集合
+            // 同步内存集合（批量作用域：N 次 RemoveAt 只抛 1 次 Reset）
             lock (_collectionLock)
             {
-                for (var i = WorkOrders.Count - 1; i >= 0; i--)
+                using (WorkOrders.BeginBulkUpdate())
                 {
-                    if (removedIds.Contains(WorkOrders[i].Id))
+                    for (var i = WorkOrders.Count - 1; i >= 0; i--)
                     {
-                        WorkOrders.RemoveAt(i);
+                        if (removedIds.Contains(WorkOrders[i].Id))
+                        {
+                            WorkOrders.RemoveAt(i);
+                        }
                     }
                 }
             }

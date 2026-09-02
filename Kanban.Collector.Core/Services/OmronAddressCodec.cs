@@ -17,14 +17,25 @@ internal sealed class OmronAddressCodec : IPlcAddressCodec
         "^(?<area>D|DM|C|CIO|W|WR|H|HR|A|AR|E|EM|TIM|CNT|CF)(?<word>\\d+)\\.(?<bit>[0-9]|1[0-5])$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // 解析是纯函数且不依赖实例状态，静态缓存避免热路径重复正则。
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, PlcAddressParseResult> ParseCache =
+        new(System.StringComparer.Ordinal);
+
     public PlcBrand Brand => PlcBrand.Omron;
 
     public PlcAddressParseResult Parse(string? address)
     {
-        var original = address?.Trim().ToUpperInvariant() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(original))
-            return PlcAddressParseResult.Invalid(original, "地址不能为空");
+        if (string.IsNullOrWhiteSpace(address))
+            return PlcAddressParseResult.Invalid(address ?? string.Empty, "地址不能为空");
+        return ParseCache.GetOrAdd(address, static raw => ParseCore(raw));
+    }
 
+    /// <summary>清空解析缓存（配置变更时由 <see cref="PlcAddressParser.ClearCache"/> 聚合调用）。</summary>
+    internal static void ClearParseCache() => ParseCache.Clear();
+
+    private static PlcAddressParseResult ParseCore(string address)
+    {
+        var original = address.Trim().ToUpperInvariant();
         var bit = BitPattern.Match(original);
         if (bit.Success)
         {

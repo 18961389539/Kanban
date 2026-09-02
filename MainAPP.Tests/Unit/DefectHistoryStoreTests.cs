@@ -30,6 +30,7 @@ public sealed class DefectHistoryStoreTests
                 CreateSnapshot(DateTime.Now.AddDays(-366), 10),
                 CreateSnapshot(DateTime.Now.AddDays(-1), 20),
             ]);
+            store.Flush(); // Append 为异步入队（P1-9 性能修复），断言前同步排空
 
             var removed = store.CleanupOldSnapshots(365);
             var remaining = store.Query(DateTime.Now.AddDays(-400), DateTime.Now, "device-1");
@@ -79,6 +80,7 @@ public sealed class DefectHistoryStoreTests
                 CreateSnapshot(from.AddHours(-1), 1, "defect-2", "day"),
                 CreateSnapshot(from.AddHours(2), 5, "defect-2", "day"),
             ]);
+            store.Flush(); // Append 为异步入队（P1-9 性能修复），断言前同步排空
 
             var bounds = store.QueryWindowBounds(from, to, "device-1");
 

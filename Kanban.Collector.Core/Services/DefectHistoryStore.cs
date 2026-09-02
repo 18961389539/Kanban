@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -7,30 +8,151 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Kanban.Collector.Core.Services;
 
 /// <summary>
-/// 缺陷历史快照存储。采集线程写入短事务，复盘页按时间范围读取。
+/// 缺陷历史快照存储。写入走 Channel + 后台批量落库（采集线程零阻塞，P1-9 性能修复 2026-09-01），
+/// 复盘页按时间范围读取。
 /// </summary>
-public sealed class DefectHistoryStore(
-    DatabaseProvider databaseProvider,
-    ILogger<DefectHistoryStore>? logger = null) : IDefectHistoryReader
+public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
 {
-    private readonly DatabaseProvider _databaseProvider = databaseProvider;
-    private readonly Microsoft.Extensions.Logging.ILogger _logger =
-        logger ?? NullLogger<DefectHistoryStore>.Instance;
+    /// <summary>通道容量：正常速率（每 ~5s 一批、每批数十行）远不会触顶；极端溢出丢最旧保最新（快照型数据）。</summary>
+    private const int ChannelCapacity = 8192;
+    /// <summary>单批最大落库条数。</summary>
+    private const int MaxBatchSize = 512;
+    private readonly DatabaseProvider _databaseProvider;
+    private readonly Microsoft.Extensions.Logging.ILogger _logger;
+    private readonly Channel<DefectSnapshotRecord> _channel = Channel.CreateBounded<DefectSnapshotRecord>(
+        new BoundedChannelOptions(ChannelCapacity)
+        {
+            // DropOldest：采集线程永不因通道满而阻塞；溢出丢弃最旧快照（最新快照代表当前状态）
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+        });
+    private readonly CancellationTokenSource _cts = new();
+    private readonly Task _flushTask;
+    /// <summary>
+    /// 排空互斥闸门：所有 <see cref="FlushPendingAsync"/> 调用（后台循环 / <see cref="Flush"/> /
+    /// 停机排空）必须经此串行。审查修复 2026-09-02（P0-4）：通道声明 SingleReader=true 走无锁
+    /// 快路径，原实现 Flush() 由任意调用线程与后台循环并发 TryRead，会静默丢项/损坏内部索引。
+    /// </summary>
+    private readonly SemaphoreSlim _flushGate = new(1, 1);
+    private long _overflowCount;
+    private bool _disposed;
 
+    public DefectHistoryStore(
+        DatabaseProvider databaseProvider,
+        ILogger<DefectHistoryStore>? logger = null)
+    {
+        _databaseProvider = databaseProvider;
+        _logger = logger ?? NullLogger<DefectHistoryStore>.Instance;
+        _flushTask = Task.Run(() => FlushLoopAsync(_cts.Token));
+    }
+
+    /// <summary>
+    /// 缺陷快照入队（非阻塞）。由后台 flush 循环批量落库；通道溢出（极端场景）丢弃最旧记录并告警。
+    /// 原实现在此同步 new DbContext + SaveChanges，与后台 flush 抢 SQLite 写锁，且随 defect_history.db
+    /// 膨胀（650MB/309 万行）把采集线程拖得越来越慢。
+    /// </summary>
     public void Append(IEnumerable<DefectSnapshotRecord> snapshots)
     {
-        var records = snapshots.ToList();
-        if (records.Count == 0) return;
+        foreach (var snapshot in snapshots)
+        {
+            if (!_channel.Writer.TryWrite(snapshot))
+            {
+                Interlocked.Increment(ref _overflowCount);
+                _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", Volatile.Read(ref _overflowCount));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 同步排空通道并落库（供测试断言与停机路径使用；生产热路径不调用）。
+    /// 与后台循环经 <see cref="_flushGate"/> 互斥：返回时保证"已 TryRead 的数据均已 SaveChanges 落库"，
+    /// 而不仅是"通道已空"——修复测试断言早于后台批次落库的间歇性失败（P0-4）。
+    /// </summary>
+    public void Flush()
+    {
+        _flushGate.Wait();
+        try
+        {
+            while (_channel.Reader.Count > 0)
+                FlushPendingAsync(CancellationToken.None).GetAwaiter().GetResult();
+        }
+        finally { _flushGate.Release(); }
+    }
+
+    private async Task FlushLoopAsync(CancellationToken ct)
+    {
+        var reader = _channel.Reader;
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                var hasData = await reader.WaitToReadAsync(ct).AsTask()
+                    .WaitAsync(TimeSpan.FromSeconds(1), ct);
+                if (!hasData) break;
+                await FlushBatchAsync(ct);
+            }
+            catch (TimeoutException)
+            {
+                if (reader.Count > 0) await FlushBatchAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "缺陷历史后台写入异常");
+                try { await Task.Delay(TimeSpan.FromSeconds(1), ct); }
+                catch (OperationCanceledException) { break; }
+            }
+        }
+
+        // 停机排空：通道剩余全部落库（与原有"调用方退出前数据不丢"语义一致）。
+        // 此刻后台读者已退出，但仍可能与外部 Flush() 并发，故同样经闸门互斥。
+        while (reader.Count > 0)
+        {
+            var before = reader.Count;
+            await FlushBatchAsync(CancellationToken.None);
+            if (reader.Count >= before) break;
+        }
+    }
+
+    /// <summary>经 <see cref="_flushGate"/> 互斥地执行一次批量落库（P0-4：串行化所有读者）。</summary>
+    private async Task FlushBatchAsync(CancellationToken ct)
+    {
+        await _flushGate.WaitAsync(ct);
+        try { await FlushPendingAsync(ct); }
+        finally { _flushGate.Release(); }
+    }
+
+    private async Task FlushPendingAsync(CancellationToken ct)
+    {
+        var batch = new List<DefectSnapshotRecord>(MaxBatchSize);
+        if (!_channel.Reader.TryRead(out var first)) return;
+        batch.Add(first);
+        while (batch.Count < MaxBatchSize && _channel.Reader.TryRead(out var next))
+            batch.Add(next);
         try
         {
             using var context = _databaseProvider.CreateDefectHistoryContext();
-            context.DefectSnapshots.AddRange(records);
-            context.SaveChanges();
+            context.DefectSnapshots.AddRange(batch);
+            await context.SaveChangesAsync(ct);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "写入缺陷历史快照失败，数量={Count}", records.Count);
+            // 与原有语义一致：失败丢弃本批并记日志（快照型数据可容忍，不做回放避免拖累后台线程）
+            _logger.LogWarning(ex, "写入缺陷历史快照失败，数量={Count}", batch.Count);
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _cts.Cancel();
+        try { _flushTask.Wait(TimeSpan.FromSeconds(5)); }
+        catch (Exception ex) { _logger.LogWarning(ex, "等待缺陷历史后台写入停止超时或失败"); }
+        _cts.Dispose();
     }
 
     public List<DefectSnapshotRecord> Query(DateTime from, DateTime to, string deviceId)

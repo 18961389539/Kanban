@@ -120,8 +120,14 @@ public sealed class PlcScanPipeline
         return adapter.ReadInt32(address);
     }
 
-    /// <summary>构建本轮 DWord 批量读计划并执行，填充轮内缓存（同地址一轮只读一次）。</summary>
-    public void PrepareDWordBatchValues()
+    /// <summary>
+    /// 构建本轮 DWord 批量读计划并执行，填充轮内缓存（同地址一轮只读一次）。
+    /// </summary>
+    /// <param name="cooledDownProfileIds">
+    /// 故障冷却中的连接档案：跳过其块读（避免每轮为故障 PLC 付一次完整超时），
+    /// 冷却结束后该档案自然重试。null/空集合 = 无跳过。
+    /// </param>
+    public void PrepareDWordBatchValues(IReadOnlySet<string>? cooledDownProfileIds = null)
     {
         _cycleInt32Values.Clear();
         _cycleBatchAddresses.Clear();
@@ -142,6 +148,8 @@ public sealed class PlcScanPipeline
 
         foreach (var planGroup in plan)
         {
+            if (cooledDownProfileIds != null && cooledDownProfileIds.Contains(planGroup.Adapter.ConnectionProfileId))
+                continue; // 故障冷却中：本轮跳过块读，冷却结束后自动重试
             foreach (var block in planGroup.Blocks)
             {
                 _cycleBatchReadRequests++;
