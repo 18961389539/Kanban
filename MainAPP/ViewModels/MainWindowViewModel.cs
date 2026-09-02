@@ -719,7 +719,11 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         }
 
         if (value == NavigationPageCatalog.DeviceDetail.Index)
-            DeviceDetailViewModel.RefreshOnEnter();
+        {
+            _dispatcher.BeginInvoke(
+                () => DeviceDetailViewModel.RefreshOnEnter(),
+                DispatcherPriority.Background);
+        }
 
         // Background 优先级在 Render（渲染）之后执行，近似"用户可见切换完成"时刻
         _dispatcher.BeginInvoke(new Action(() =>

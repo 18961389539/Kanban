@@ -3,6 +3,7 @@ using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
@@ -19,7 +20,7 @@ namespace MainAPP.ViewModels;
 /// 产线页 ViewModel：所有设备俯瞰视图。
 /// 数据来自 DeviceRepository（DI 单例，与主页共享），无需独立定时器。
 /// </summary>
-public partial class ProductionLineViewModel : ObservableObject, IDisposable
+public partial class ProductionLineViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     private static readonly ILogger _log = Log.ForContext<ProductionLineViewModel>();
     private readonly DeviceRepository _deviceRepository;
@@ -63,38 +64,147 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         _deviceRepository.Runtimes.CollectionChanged += OnRuntimesCollectionChanged;
         _selection.PropertyChanged += OnSelectionChanged;
         SelectedDeviceId = _selection.SelectedDeviceId;
-        RefreshLastShiftComparison();
-        UpdateCurrentShift();
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged += OnShiftsChanged;
+        _kpiTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _kpiTimer.Tick += OnKpiTimerTick;
+        // 筛选/排序视图：ListCollectionView（源 = LineDevices）+ Filter + CustomSort。
+        // 原实现 getter 每次 ToList() 返回新 List 实例 → ItemsSource 收到新引用 → Reset →
+        // VirtualizingWrapPanel 全量重建容器、虚拟化失效（排序/筛选态下每台设备每次属性变化都触发）。
+        FilteredLineDevices = new ListCollectionView(LineDevices);
+        FilteredLineDevices.Filter = FilterDevice;
+        ApplySort();
         _log.Information("ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}", LineDevices.Count);
+    }
+
+    private bool _pageActive;
+
+    // ── KPI 合批刷新状态：Runtime 属性变化只置脏标记，由 Background 定时器合并后一次刷新，
+    //    避免 6N 次/帧的 O(N²) 重算（N 台设备 × 每台 6 个属性 × 17 个 O(N) KPI getter）。──
+
+    private readonly System.Windows.Threading.DispatcherTimer _kpiTimer;
+    private bool _kpisDirty;
+    private bool _filterDirty;
+    /// <summary>Runtime 反查 LineDeviceItem（O(1)，替代原 FirstOrDefault O(N) 线性查找）。</summary>
+    private readonly Dictionary<DeviceRuntime, LineDeviceItem> _runtimeToItem = new();
+    /// <summary>合批期间被标记为"派生文本需刷新"的设备项。</summary>
+    private readonly HashSet<LineDeviceItem> _dirtyTransientItems = new();
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        _pageActive = true;
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            if (!_pageActive) return;
+            FlushPendingRefresh();
+            UpdateCurrentShift();
+            RefreshLastShiftComparison();
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit()
+    {
+        _pageActive = false;
+        _kpiTimer.Stop(); // 页面不可见时无 KPI 消费者，停止定时器；脏标记保留，进入页面时统一刷新
+    }
+
+    /// <summary>应用积压的 KPI / 筛选 / 瞬态文本刷新（一次重算，批量通知）。</summary>
+    private void FlushPendingRefresh()
+    {
+        var notifyKpis = _kpisDirty;
+        var notifyFilter = _filterDirty;
+        LineDeviceItem[] transientItems = [.. _dirtyTransientItems];
+        _kpisDirty = false;
+        _filterDirty = false;
+        _dirtyTransientItems.Clear();
+
+        if (notifyKpis)
+        {
+            RecalculateKpis();
+            NotifyAllKpis();
+        }
+        if (notifyFilter)
+            NotifyFilteredLineDevicesChanged();
+        foreach (var item in transientItems)
+            item.RefreshTransientTexts();
+    }
+
+    private void OnKpiTimerTick(object? sender, EventArgs e)
+    {
+        _kpiTimer.Stop();
+        if (!_pageActive) return;
+        FlushPendingRefresh();
     }
 
     // ──────────── 汇总 KPI（顶部条） ────────────
 
+    // KPI 聚合缓存：由 RecalculateKpis 单次 O(N) 遍历填充，getter 零分配零 LINQ。
+    // 避免原实现每次通知都触发 17 个 O(N) LINQ getter 的 O(N²) 放大。
+    private int _runningCount;
+    private int _alarmCount;
+    private int _pausedCount;
+    private int _offlineCount;
+    private int _totalOkProduction;
+    private int _totalNgProduction;
+    private double _overallQualityRate;
+    private double _weightedOee;
+    private string _totalOutputDetailText = string.Empty;
+
     public int DeviceCount => LineDevices.Count;
-    public int RunningCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Running);
-    public int AlarmCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Alarm);
-    public int PausedCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Paused);
+    public int RunningCount => _runningCount;
+    public int AlarmCount => _alarmCount;
+    public int PausedCount => _pausedCount;
     /// <summary>离线设备数（<see cref="DeviceStatus.Offline"/>）。</summary>
-    public int OfflineCount => LineDevices.Count(d => d.Runtime.StatusWord == (int)DeviceStatus.Offline);
-    public int TotalOkProduction => LineDevices.Sum(d => d.Runtime.TotalOkProduction);
-    public int TotalNgProduction => LineDevices.Sum(d => d.Runtime.TotalNgProduction);
-    public int TotalOutput => TotalOkProduction + TotalNgProduction;
+    public int OfflineCount => _offlineCount;
+    public int TotalOkProduction => _totalOkProduction;
+    public int TotalNgProduction => _totalNgProduction;
+    public int TotalOutput => _totalOkProduction + _totalNgProduction;
     /// <summary>总产量卡副标题：OK / NG 分项（与 Web 产线页 kpi-row 一致）。</summary>
-    public string TotalOutputDetailText =>
-        $"{Strings.Web_Lbl_Ok} {TotalOkProduction:N0} · {Strings.Web_Lbl_Ng} {TotalNgProduction:N0}";
+    public string TotalOutputDetailText => _totalOutputDetailText;
     /// <summary>整体合格率 = 总 OK / 总产量。</summary>
-    public double OverallQualityRate => TotalOutput > 0 ? (double)TotalOkProduction / TotalOutput : 0;
+    public double OverallQualityRate => _overallQualityRate;
     /// <summary>产线加权 OEE = 设备 OEE 按产量加权平均（避免少量产量设备拉高均值）。</summary>
-    public double WeightedOee
+    public double WeightedOee => _weightedOee;
+
+    /// <summary>
+    /// 单次 O(N) 遍历累加所有汇总 KPI（状态计数 + 产量 + 加权 OEE + 合格率），缓存到字段。
+    /// 语义与原 17 个独立 LINQ getter 完全一致：四个状态精确等值匹配，其它状态值不计入任何计数。
+    /// </summary>
+    private void RecalculateKpis()
     {
-        get
+        int running = 0, alarm = 0, paused = 0, offline = 0, ok = 0, ng = 0;
+        double oeeWeighted = 0;
+        foreach (var item in LineDevices)
         {
-            var totalWeight = LineDevices.Sum(d => d.Runtime.TotalOkProduction + d.Runtime.TotalNgProduction);
-            if (totalWeight == 0) return 0;
-            return LineDevices.Sum(d => d.Runtime.Oee * (d.Runtime.TotalOkProduction + d.Runtime.TotalNgProduction)) / totalWeight;
+            var runtime = item.Runtime;
+            switch (runtime.StatusWord)
+            {
+                case (int)DeviceStatus.Running: running++; break;
+                case (int)DeviceStatus.Alarm: alarm++; break;
+                case (int)DeviceStatus.Paused: paused++; break;
+                case (int)DeviceStatus.Offline: offline++; break;
+            }
+            var itemOk = runtime.TotalOkProduction;
+            var itemNg = runtime.TotalNgProduction;
+            ok += itemOk;
+            ng += itemNg;
+            oeeWeighted += runtime.Oee * (itemOk + itemNg);
         }
+        _runningCount = running;
+        _alarmCount = alarm;
+        _pausedCount = paused;
+        _offlineCount = offline;
+        _totalOkProduction = ok;
+        _totalNgProduction = ng;
+        _totalOutputDetailText = $"{Strings.Web_Lbl_Ok} {ok:N0} · {Strings.Web_Lbl_Ng} {ng:N0}";
+        var total = ok + ng;
+        _overallQualityRate = total > 0 ? (double)ok / total : 0;
+        _weightedOee = total > 0 ? oeeWeighted / total : 0;
     }
 
     // ──────────── 趋势对比（vs 上一班次，复用 PlcDataAcquisitionService 内存缓存） ────────────
@@ -169,6 +279,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             {
                 foreach (var item in LineDevices)
                     item.Runtime.PropertyChanged -= OnRuntimePropertyChanged;
+                _runtimeToItem.Clear();
+                _dirtyTransientItems.Clear();
                 LineDevices.Clear();
                 RefreshSummaryKpis();
                 RefreshLastShiftComparison();
@@ -227,6 +339,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
 
         var item = new LineDeviceItem(dev, runtime, _appSettings);
         item.Runtime.PropertyChanged += OnRuntimePropertyChanged;
+        _runtimeToItem[runtime] = item;
         LineDevices.Add(item);
         _log.Information("TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}", dev.Name, dev.Id, LineDevices.Count);
     }
@@ -237,6 +350,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         var item = LineDevices.FirstOrDefault(x => x.Device.Id == deviceId);
         if (item == null) return;
         item.Runtime.PropertyChanged -= OnRuntimePropertyChanged;
+        _runtimeToItem.Remove(item.Runtime);
+        _dirtyTransientItems.Remove(item);
         item.Dispose();
         LineDevices.Remove(item);
     }
@@ -249,6 +364,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             item.Runtime.PropertyChanged -= OnRuntimePropertyChanged;
             item.Dispose();
         }
+        _runtimeToItem.Clear();
+        _dirtyTransientItems.Clear();
         LineDevices.Clear();
 
         foreach (var dev in _deviceRepository.Devices)
@@ -257,19 +374,18 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         RefreshSummaryKpis();
     }
 
-    /// <summary>Runtime 属性变化：刷新汇总 KPI（任一设备 OEE/产量变化都会影响整体）。</summary>
+    /// <summary>
+    /// Runtime 属性变化：仅置脏标记，由 Background 定时器合批后一次刷新（500ms 合并窗口）。
+    /// 原实现每台设备每次属性变化即全量重算 17 个 O(N) KPI getter，O(N²) 级放大。
+    /// </summary>
     private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
             case nameof(DeviceRuntime.StatusWord):
-                OnPropertyChanged(nameof(RunningCount));
-                OnPropertyChanged(nameof(AlarmCount));
-                OnPropertyChanged(nameof(PausedCount));
-                OnPropertyChanged(nameof(OfflineCount));
+                _kpisDirty = true;
                 if (_lineStatusFilter != LineStatusFilter.All)
-                    NotifyFilteredLineDevicesChanged();
-                NotifyItemTransient(sender);
+                    _filterDirty = true;
                 break;
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):
@@ -277,22 +393,29 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             case nameof(DeviceRuntime.QualityRate):
             case nameof(DeviceRuntime.PerformanceRate):
             case nameof(DeviceRuntime.AvailabilityRate):
-                RefreshSummaryKpis();
+                _kpisDirty = true;
                 if (_lineSortBy != LineSortBy.Default)
-                    NotifyFilteredLineDevicesChanged();
-                NotifyItemTransient(sender);
+                    _filterDirty = true;
                 break;
+            default:
+                return;
         }
+
+        if (sender is DeviceRuntime runtime && _runtimeToItem.TryGetValue(runtime, out var item))
+            _dirtyTransientItems.Add(item);
+
+        if (!_pageActive) return; // 页面不可见时不启动定时器，进入页面时 FlushPendingRefresh 统一应用
+        if (!_kpiTimer.IsEnabled) _kpiTimer.Start();
     }
 
-    /// <summary>运行时状态/缺陷集合变化后，刷新对应卡片的报警/缺陷派生文本。</summary>
-    private void NotifyItemTransient(object? sender)
-    {
-        var item = LineDevices.FirstOrDefault(x => ReferenceEquals(x.Runtime, sender));
-        item?.RefreshTransientTexts();
-    }
-
+    /// <summary>重算 KPI 并批量通知所有 KPI 属性（设备增删等低频路径同步调用）。</summary>
     private void RefreshSummaryKpis()
+    {
+        RecalculateKpis();
+        NotifyAllKpis();
+    }
+
+    private void NotifyAllKpis()
     {
         OnPropertyChanged(nameof(DeviceCount));
         OnPropertyChanged(nameof(RunningCount));
@@ -332,9 +455,14 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         FocusDeviceRequested?.Invoke(deviceId);
     }
 
+    /// <summary>
+    /// 筛选/排序变化后刷新视图：Filter 委托读取字段最新状态，Refresh 重跑过滤 + CustomSort。
+    /// 与结构变化（设备增删）不同——结构变化由 ListCollectionView 自动感知源集合 CollectionChanged，
+    /// 无需此处刷新。
+    /// </summary>
     private void NotifyFilteredLineDevicesChanged()
     {
-        OnPropertyChanged(nameof(FilteredLineDevices));
+        FilteredLineDevices.Refresh();
         OnPropertyChanged(nameof(HasNoFilteredDevices));
     }
 
@@ -370,7 +498,10 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         set
         {
             if (SetProperty(ref _lineSortBy, value))
-                NotifyFilteredLineDevicesChanged();
+            {
+                ApplySort();
+                OnPropertyChanged(nameof(HasNoFilteredDevices));
+            }
         }
     }
 
@@ -404,40 +535,78 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
         => LineSortBy = sort ?? LineSortBy.Default;
 
     /// <summary>筛选后无匹配设备（有设备但当前条件为空）。</summary>
-    public bool HasNoFilteredDevices => !HasNoDevices && !FilteredLineDevices.Any();
+    public bool HasNoFilteredDevices => !HasNoDevices && FilteredLineDevices.IsEmpty;
 
     /// <summary>
-    /// 经筛选/排序/搜索后的设备集合（XAML ItemsControl 绑定此属性而非 LineDevices）。
-    /// 仅在筛选条件或底层集合变更时通过 <see cref="NotifyFilteredLineDevicesChanged"/> 触发重建。
+    /// 经筛选/排序/搜索后的设备集合视图（XAML ItemsControl 绑定此属性而非 LineDevices）。
+    /// ListCollectionView：单一视图实例 + Filter 谓词 + CustomSort 比较器，筛选/排序条件变化
+    /// 时仅 Refresh 内部重排，ItemsSource 引用恒定 → VirtualizingWrapPanel 不重建容器，虚拟化始终生效。
+    /// 原实现 getter 每次返回新 List 实例，触发 ItemsSource Reset 导致整表容器重建（O(N²)）。
     /// </summary>
-    public IEnumerable<LineDeviceItem> FilteredLineDevices
+    public ListCollectionView FilteredLineDevices { get; private set; } = null!;
+
+    /// <summary>过滤谓词：合并关键词搜索（忽略大小写）+ 状态筛选。读字段最新状态，Refresh 时重跑。</summary>
+    private bool FilterDevice(object item)
     {
-        get
+        if (item is not LineDeviceItem x) return false;
+        if (!string.IsNullOrWhiteSpace(_lineSearchKeyword)
+            && !(x.Device.Name ?? string.Empty).Contains(_lineSearchKeyword, StringComparison.OrdinalIgnoreCase))
+            return false;
+        return _lineStatusFilter switch
         {
-            IEnumerable<LineDeviceItem> q = LineDevices;
-            if (!string.IsNullOrWhiteSpace(_lineSearchKeyword))
-                q = q.Where(x => (x.Device.Name ?? string.Empty).Contains(_lineSearchKeyword, StringComparison.OrdinalIgnoreCase));
+            LineStatusFilter.Running => x.Runtime.StatusWord == (int)DeviceStatus.Running,
+            LineStatusFilter.Alarm => x.Runtime.StatusWord == (int)DeviceStatus.Alarm,
+            LineStatusFilter.Paused => x.Runtime.StatusWord == (int)DeviceStatus.Paused,
+            LineStatusFilter.Offline => x.Runtime.StatusWord == (int)DeviceStatus.Offline,
+            _ => true,
+        };
+    }
 
-            q = _lineStatusFilter switch
-            {
-                LineStatusFilter.Running => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Running),
-                LineStatusFilter.Alarm => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Alarm),
-                LineStatusFilter.Paused => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Paused),
-                LineStatusFilter.Offline => q.Where(x => x.Runtime.StatusWord == (int)DeviceStatus.Offline),
-                _ => q,
-            };
+    /// <summary>应用排序比较器（DeferRefresh 内整体重排，避免多次中间刷新）。</summary>
+    private void ApplySort()
+    {
+        using var defer = FilteredLineDevices.DeferRefresh();
+        FilteredLineDevices.CustomSort = _lineSortBy switch
+        {
+            LineSortBy.AlarmFirst => new AlarmFirstComparer(),
+            LineSortBy.OeeDesc => new OeeDescComparer(),
+            LineSortBy.OutputDesc => new OutputDescComparer(),
+            _ => null,
+        };
+    }
 
-            q = _lineSortBy switch
-            {
-                LineSortBy.AlarmFirst => q.OrderByDescending(x => x.Runtime.StatusWord == (int)DeviceStatus.Alarm)
-                    .ThenByDescending(x => x.Runtime.StatusWord == (int)DeviceStatus.Paused)
-                    .ThenByDescending(x => x.Runtime.AlarmTime),
-                LineSortBy.OeeDesc => q.OrderByDescending(x => x.Runtime.Oee),
-                LineSortBy.OutputDesc => q.OrderByDescending(x => x.TotalOutput),
-                _ => q,
-            };
+    /// <summary>报警优先，其次待机，再按报警时长降序（与原 OrderByDescending 链等价，键值降序比较）。</summary>
+    private sealed class AlarmFirstComparer : System.Collections.IComparer
+    {
+        public int Compare(object? x, object? y)
+        {
+            if (x is not LineDeviceItem a || y is not LineDeviceItem b) return 0;
+            var aKey = a.Runtime.StatusWord == (int)DeviceStatus.Alarm ? 2
+                     : a.Runtime.StatusWord == (int)DeviceStatus.Paused ? 1 : 0;
+            var bKey = b.Runtime.StatusWord == (int)DeviceStatus.Alarm ? 2
+                     : b.Runtime.StatusWord == (int)DeviceStatus.Paused ? 1 : 0;
+            var c = bKey.CompareTo(aKey);
+            return c != 0 ? c : b.Runtime.AlarmTime.CompareTo(a.Runtime.AlarmTime);
+        }
+    }
 
-            return q.ToList();
+    /// <summary>OEE 从高到低。</summary>
+    private sealed class OeeDescComparer : System.Collections.IComparer
+    {
+        public int Compare(object? x, object? y)
+        {
+            if (x is not LineDeviceItem a || y is not LineDeviceItem b) return 0;
+            return b.Runtime.Oee.CompareTo(a.Runtime.Oee);
+        }
+    }
+
+    /// <summary>总产量从高到低。</summary>
+    private sealed class OutputDescComparer : System.Collections.IComparer
+    {
+        public int Compare(object? x, object? y)
+        {
+            if (x is not LineDeviceItem a || y is not LineDeviceItem b) return 0;
+            return b.TotalOutput.CompareTo(a.TotalOutput);
         }
     }
 
@@ -464,7 +633,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     private void UpdateCurrentShift()
     {
         var now = DateTime.Now;
-        var shifts = _appSettings?.Shifts;
+        var shifts = _appSettings?.GetShiftsSnapshot(); // P0-1 修复 2026-09-02：锁内快照，禁止直接枚举
         var (shift, _) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
         if (shift == null)
         {
@@ -488,6 +657,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
     /// </remarks>
     public void Dispose()
     {
+        _kpiTimer.Stop();
+        _kpiTimer.Tick -= OnKpiTimerTick;
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged -= OnRuntimesCollectionChanged;
         _selection.PropertyChanged -= OnSelectionChanged;
@@ -500,6 +671,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable
             item.Runtime.PropertyChanged -= OnRuntimePropertyChanged;
             item.Dispose();
         }
+        _runtimeToItem.Clear();
+        _dirtyTransientItems.Clear();
         LineDevices.Clear();
     }
 }

@@ -155,6 +155,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     private readonly LineSeries _trendUpperLimitSeries;
     private bool _isRefreshing;
     private bool _disposed;
+    private bool _pageActive;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
@@ -309,14 +310,20 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     public void OnPageEnter()
     {
         if (_refreshTimer.IsEnabled) return;
+        _pageActive = true;
         ResetTrendSession();
         UpdateTrendChart();
-        Refresh();
         _refreshTimer.Start();
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            if (!_pageActive) return;
+            Refresh();
+        }, DispatcherPriority.Background);
     }
 
     public void OnPageExit()
     {
+        _pageActive = false;
         _refreshTimer.Stop();
         ResetTrendSession();
         UpdateTrendChart();

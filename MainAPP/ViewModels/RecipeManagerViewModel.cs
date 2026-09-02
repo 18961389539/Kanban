@@ -6,6 +6,7 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Localization;
+using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace MainAPP.ViewModels;
 /// 配方按机型归属（空机型=通用）；下发目标通过页面内设备下拉选择任意设备。
 /// 下发执行：Local 模式用 RecipeApplier 直接写 PLC（写后读回校验+失败回滚）；Remote 模式经 SignalR 由 Collector 执行。
 /// </summary>
-public partial class RecipeManagerViewModel : ObservableObject, IDisposable
+public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     /// <summary>"全部"筛选胶囊的哨兵值（与"通用"机型的空字符串区分）。</summary>
     public const string AllMachineTypesFilter = "__ALL__";
@@ -65,11 +66,26 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable
         // 不再维护第二份手工同步的拷贝集合（消除索引漂移风险）。
         _filteredView = new ListCollectionView(AvailableRecipes) { Filter = FilterPredicate };
 
-        RefreshRecipes();
-        RefreshDevices();
         // 配方库集合变更（Remote 同步/其他端写入）→ 刷新列表；保存中的内部刷新由 _isSaving 屏蔽
         _recipeStore.Recipes.CollectionChanged += OnStoreRecipesChanged;
     }
+
+    private bool _pageActive;
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        _pageActive = true;
+        _uiDispatcher.BeginInvoke(() =>
+        {
+            if (!_pageActive) return;
+            RefreshRecipes();
+            RefreshDevices();
+        }, DispatcherPriority.Background);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit() => _pageActive = false;
 
     /// <summary>正在保存（SaveRecipeAsync 内部会 Upsert 触发 CollectionChanged，需屏蔽其导致的中间态刷新）。</summary>
     private bool _isSaving;

@@ -656,12 +656,16 @@ public class WorkOrderManagerViewModelTests : IDisposable
     public void TimerPath_RefreshGanttForCurrentFilter_RebuildsChartModel_WithNewNowLine()
     {
         var vm = CreateVm();
+        // 甘特图构建有 _pageActive 守卫（导航生命周期延迟重活），必须先进入页面才会构建
+        vm.OnPageEnter();
         var wo = CreateWorkOrder(orderNo: "WO-GANTT-TIMER");
         wo.PlannedStart = DateTime.Now.AddHours(-4);
         wo.PlannedEnd = DateTime.Now.AddHours(4);
         _workOrderRepo.Upsert(wo);
 
-        // 初始甘特已构建且含"现在"线
+        // 初始甘特已构建且含"现在"线。构建在 Task.Run 后台完成后经 UiDispatcher 回填
+        //（无 Application 时同步执行），自旋等待就绪，避免与后台构建竞态
+        SpinUntil(() => vm.WorkOrderGanttChartModel != null);
         var first = vm.WorkOrderGanttChartModel;
         Assert.NotNull(first);
 
@@ -669,6 +673,14 @@ public class WorkOrderManagerViewModelTests : IDisposable
         // 该私有方法经 RefreshFilteredView → RefreshGanttChart 等价路径驱动，
         // 此处用筛选变化触发同一路径：模型应被替换为新实例（新"现在"线 X 值）
         vm.SearchKeyword = "GANTT-TIMER";
+        SpinUntil(() => !ReferenceEquals(vm.WorkOrderGanttChartModel, first));
         Assert.NotSame(first, vm.WorkOrderGanttChartModel);
+    }
+
+    /// <summary>轮询等待条件满足（最多 5s）。甘特图由 Task.Run 后台构建后异步回填，断言前须等待。</summary>
+    private static void SpinUntil(Func<bool> condition)
+    {
+        for (var i = 0; i < 500 && !condition(); i++)
+            System.Threading.Thread.Sleep(10);
     }
 }

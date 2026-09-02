@@ -452,24 +452,49 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     }
 
     /// <summary>全量重算逾期/达标/NG/冲突计数：这些判定随时间流逝（IsOverdue 用 DateTime.Now）
-    /// 与产量回填（Production 属性）变化，集合事件无法覆盖，必须周期性/事件后全量。</summary>
-    private void RecalcDerivedCounts()
+    /// 与产量回填（Production 属性）变化，集合事件无法覆盖，必须周期性/事件后全量。
+    /// 注意：全部基于 <b>同一份快照</b> 单次遍历完成，调用方已有快照时请传 <paramref name="snapshot"/>
+    /// 避免重复加锁拷贝。</summary>
+    private void RecalcDerivedCounts() => RecalcDerivedCounts(_workOrderRepo.GetSnapshot());
+
+    private void RecalcDerivedCounts(List<WorkOrder> snapshot)
     {
-        OverdueCount = _workOrderRepo.WorkOrders.Count(IsOverdue);
-        AchievedCount = _workOrderRepo.WorkOrders.Count(IsAchieved);
-        NgWorkOrderCount = _workOrderRepo.WorkOrders.Count(HasNgProduction);
-        ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
+        // 单次遍历同时累加三项目级计数并收集逾期 Id 集合
+        //（原先是 3 次 Count(闭包) 全表扫描 + 1 次 Where/Select/ToHashSet，共 4 趟）
+        var overdueIds = new HashSet<int>();
+        var overdue = 0;
+        var achieved = 0;
+        var ng = 0;
+        foreach (var w in snapshot)
+        {
+            if (IsOverdue(w))
+            {
+                overdue++;
+                overdueIds.Add(w.Id);
+            }
+            if (IsAchieved(w)) achieved++;
+            if (HasNgProduction(w)) ng++;
+        }
+
+        // 冲突扫描一次同时产出「重叠对数」与「参与冲突的工单 Id 集合」
+        var (conflictCount, conflictIds) = ComputeScheduleConflicts(snapshot);
+
+        OverdueCount = overdue;
+        AchievedCount = achieved;
+        NgWorkOrderCount = ng;
+        ScheduleConflictCount = conflictCount;
 
         // 逾期/冲突 Id 集合（替换引用触发 UI 通知，列表行用 CollectionContainsConverter 判定）
-        OverdueOrderIds = _workOrderRepo.WorkOrders.Where(IsOverdue).Select(w => w.Id).ToHashSet();
-        ConflictOrderIds = ComputeConflictOrderIds(_workOrderRepo.GetSnapshot());
+        OverdueOrderIds = overdueIds;
+        ConflictOrderIds = conflictIds;
 
         // 回填实体运行时标记（详情页"逾期 2h"/冲突标识绑定；选中变化时重绑，无需实体自带 INPC）
-        foreach (var w in _workOrderRepo.WorkOrders)
+        // 用已算好的 Id 集合反查，避免对每条工单重复求值 IsOverdue（其内含 DateTime.Now）
+        foreach (var w in snapshot)
         {
-            w.IsOverdue = IsOverdue(w);
-            w.OverdueHintText = FormatOverdueHint(w);
-            w.IsScheduleConflict = ConflictOrderIds.Contains(w.Id);
+            w.IsOverdue = overdueIds.Contains(w.Id);
+            w.OverdueHintText = w.IsOverdue ? FormatOverdueHint(w) : null;
+            w.IsScheduleConflict = conflictIds.Contains(w.Id);
         }
 
         // 详情页逾期徽章经 VM 计算属性驱动（实体无 INPC，分钟级计时刷新必须显式通知）
@@ -493,11 +518,14 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         return string.Format(Strings.K799, duration);
     }
 
-    /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。</summary>
-    private readonly System.Windows.Threading.DispatcherTimer _derivedCountsTimer = new()
-    {
-        Interval = TimeSpan.FromMinutes(1),
-    };
+    /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。
+    /// 显式 Background 优先级：Tick 内为 O(W·K) 同步重算，默认的 Normal(9) 高于 Render(7) 会抢渲染。
+    /// （与 MainWindowViewModel / ProductionLineViewModel / RuntimeMonitoringViewModel 等处约定一致）</summary>
+    private readonly System.Windows.Threading.DispatcherTimer _derivedCountsTimer =
+        new(System.Windows.Threading.DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMinutes(1),
+        };
 
     private bool _disposed;
 
@@ -518,15 +546,28 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     /// <summary>按状态统计全量工单数量，更新各计数属性（供下拉显示"进行中(2)"）。</summary>
     private void RefreshStatusCounts()
     {
-        PendingCount = _workOrderRepo.WorkOrders.Count(w => w.Status == WorkOrderStatus.Pending);
-        RunningCount = _workOrderRepo.WorkOrders.Count(w => w.Status == WorkOrderStatus.Running);
-        CompletedCount = _workOrderRepo.WorkOrders.Count(w => w.Status == WorkOrderStatus.Completed);
-        AbortedCount = _workOrderRepo.WorkOrders.Count(w => w.Status == WorkOrderStatus.Aborted);
-        OverdueCount = _workOrderRepo.WorkOrders.Count(IsOverdue);
-        AchievedCount = _workOrderRepo.WorkOrders.Count(IsAchieved);
-        NgWorkOrderCount = _workOrderRepo.WorkOrders.Count(HasNgProduction);
-        ScheduleConflictCount = CountScheduleConflicts(_workOrderRepo.GetSnapshot());
-        RecalcDerivedCounts(); // 集合与实体运行时标记（与计数同源，避免两处口径漂移）
+        // 单次遍历累加四状态计数（原先是 4 次 Count(闭包) 全表扫描）
+        var snapshot = _workOrderRepo.GetSnapshot();
+        var pending = 0;
+        var running = 0;
+        var completed = 0;
+        var aborted = 0;
+        foreach (var w in snapshot)
+        {
+            switch (w.Status)
+            {
+                case WorkOrderStatus.Pending: pending++; break;
+                case WorkOrderStatus.Running: running++; break;
+                case WorkOrderStatus.Completed: completed++; break;
+                case WorkOrderStatus.Aborted: aborted++; break;
+            }
+        }
+        PendingCount = pending;
+        RunningCount = running;
+        CompletedCount = completed;
+        AbortedCount = aborted;
+        // 复用同一份快照：避免再取一次锁拷贝，也避免冲突扫描被算两遍
+        RecalcDerivedCounts(snapshot); // 集合与实体运行时标记（与计数同源，避免两处口径漂移）
         RefreshFilteredView(); // 汇总条依赖最新产量回填
     }
 
@@ -641,9 +682,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
 
         var version = Interlocked.Increment(ref _ganttBuildVersion);
         var deviceSnapshot = _deviceRepo.GetDevicesSnapshot();
-        var devices = deviceSnapshot
-            .Where(d => filtered.Any(w => w.DeviceId == d.Id))
-            .ToList();
+        // 先建设备 Id 集合再 O(1) 反查：原先是 Where(d => filtered.Any(...))，每次刷新 O(设备数 × 工单数)
+        var filteredDeviceIds = filtered.Select(w => w.DeviceId).ToHashSet(StringComparer.Ordinal);
+        var devices = filteredDeviceIds.Count == 0
+            ? new List<Device>()
+            : deviceSnapshot.Where(d => filteredDeviceIds.Contains(d.Id)).ToList();
         var chartDevices = devices.Count > 0 ? devices : deviceSnapshot;
         var conflictIds = ConflictOrderIds;
         var highlightedId = SelectedWorkOrder?.Id;
@@ -680,8 +723,14 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     private void RefreshGanttForCurrentFilter()
         => RefreshGanttChart(FilteredView.OfType<WorkOrder>().ToList());
 
-    private static int CountScheduleConflicts(IReadOnlyList<WorkOrder> workOrders)
+    /// <summary>一次扫描同时产出「计划重叠对数」与「参与冲突的工单 Id 集合」。
+    /// 替代原先 CountScheduleConflicts / ComputeConflictOrderIds 两遍近乎相同的双重循环
+    /// （同一份数据跑两遍 O(W·K)，且两处判定必须手工保持同步）。
+    /// 判定语义不变：仅 Pending/Running 且 PlannedEnd &gt; PlannedStart 的工单参与，
+    /// 按设备分组后按 PlannedStart 排序，窗口内真正重叠时两端都计入。</summary>
+    private static (int Count, ISet<int> Ids) ComputeScheduleConflicts(IReadOnlyList<WorkOrder> workOrders)
     {
+        var conflictIds = new HashSet<int>();
         var conflicts = 0;
         foreach (var group in workOrders
                      .Where(w => w.Status is WorkOrderStatus.Pending or WorkOrderStatus.Running
@@ -694,35 +743,14 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             {
                 if (ordered[j].PlannedStart >= ordered[i].PlannedEnd) break;
                 if (ordered[i].PlannedStart < ordered[j].PlannedEnd)
-                    conflicts++;
-            }
-        }
-        return conflicts;
-    }
-
-    /// <summary>返回参与计划冲突的工单 Id 集合（与 <see cref="CountScheduleConflicts"/> 同一重叠判定）。
-    /// 仅当两台工单计划区间真正重叠时两端都计入，供列表行高亮与详情冲突标识使用。</summary>
-    private static ISet<int> ComputeConflictOrderIds(IReadOnlyList<WorkOrder> workOrders)
-    {
-        var conflictIds = new HashSet<int>();
-        foreach (var group in workOrders
-                     .Where(w => w.Status is WorkOrderStatus.Pending or WorkOrderStatus.Running
-                         && w.PlannedEnd > w.PlannedStart)
-                     .GroupBy(w => w.DeviceId))
-        {
-            var ordered = group.OrderBy(w => w.PlannedStart).ToList();
-            for (var i = 0; i < ordered.Count; i++)
-            for (var j = i + 1; j < ordered.Count; j++)
-            {
-                if (ordered[j].PlannedStart >= ordered[i].PlannedEnd) break;
-                if (ordered[i].PlannedStart < ordered[j].PlannedEnd)
                 {
+                    conflicts++;
                     conflictIds.Add(ordered[i].Id);
                     conflictIds.Add(ordered[j].Id);
                 }
             }
         }
-        return conflictIds;
+        return (conflicts, conflictIds);
     }
 
     private static bool IsOverdue(WorkOrder w)

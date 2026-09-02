@@ -588,37 +588,43 @@ public class WorkOrderService(
             _workOrderRepo.GetSnapshot().Select(w => w.OrderNo.Trim()),
             StringComparer.OrdinalIgnoreCase);
 
-        for (var i = 0; i < candidates.Count; i++)
+        // 批量作用域：N 行导入只抛 1 次 Reset，而不是 N 次集合事件。
+        // 原先每行 Upsert 都会触发一次 CollectionChanged → ViewModel 全量重算派生计数（O(W·K)）
+        // + 重建甘特图，整体退化成 O(W²·K)，数百行导入会卡死 UI 数十秒。
+        using (_workOrderRepo.BeginBulkUpdate())
         {
-            var candidate = candidates[i];
-            var lineNo = i + 2; // 表头占第 1 行
-            try
+            for (var i = 0; i < candidates.Count; i++)
             {
-                var failure = ValidateImportCandidate(candidate, deviceByName, existingOrderNos);
-                if (failure != null)
+                var candidate = candidates[i];
+                var lineNo = i + 2; // 表头占第 1 行
+                try
                 {
-                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, failure));
+                    var failure = ValidateImportCandidate(candidate, deviceByName, existingOrderNos);
+                    if (failure != null)
+                    {
+                        result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, failure));
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "导入工单第 {Line} 行校验异常 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
+                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
                     continue;
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "导入工单第 {Line} 行校验异常 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
-                result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
-                continue;
-            }
 
-            try
-            {
-                var saved = await _workOrderRepo.UpsertAsync(candidate);
-                existingOrderNos.Add(saved.OrderNo.Trim());
-                result.Imported.Add(saved);
-                _logger.LogInformation("工单导入 Id={Id} OrderNo={OrderNo} Device={Device}", saved.Id, saved.OrderNo, saved.DeviceName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "导入工单第 {Line} 行落库失败 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
-                result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+                try
+                {
+                    var saved = await _workOrderRepo.UpsertAsync(candidate);
+                    existingOrderNos.Add(saved.OrderNo.Trim());
+                    result.Imported.Add(saved);
+                    _logger.LogInformation("工单导入 Id={Id} OrderNo={OrderNo} Device={Device}", saved.Id, saved.OrderNo, saved.DeviceName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "导入工单第 {Line} 行落库失败 OrderNo={OrderNo}", lineNo, candidate.OrderNo);
+                    result.Errors.Add(string.Format(Strings.K806, lineNo, candidate.OrderNo, ex.Message));
+                }
             }
         }
         return result;

@@ -60,9 +60,13 @@ public partial class OverviewView : UserControl
     private void OnVmEntered(object? sender, EventArgs e)
     {
         if (DataContext is not OverviewViewModel vm) return;
-        vm.RefreshCommand.Execute(null);
-        ForceChartsRefresh(vm);
-        // 激活期间允许属性变化触发重绘（定时器由脏标记启动，见 OnViewModelPropertyChanged）
+        // 复盘页进入时先完成导航绘制，再在后台优先级触发历史查询与图表重绘。
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!vm.IsPageActive) return;
+            vm.RefreshCommand.Execute(null);
+            ForceChartsRefresh(vm);
+        }, DispatcherPriority.Background);
     }
 
     private void OnVmExited(object? sender, EventArgs e)

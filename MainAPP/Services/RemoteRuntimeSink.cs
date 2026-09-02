@@ -566,22 +566,37 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         {
             try
             {
-                foreach (var d in meta.Devices)
+                var workOrders = _workOrderRepository.WorkOrders;
+                // 批量作用域：N 台设备只抛 1 次 Reset，而不是每设备一次集合事件
+                // （否则 ViewModel 要为每个设备全量重算一次派生计数，随设备数平方级恶化）
+                using (_workOrderRepository.BeginBulkUpdate())
                 {
-                    if (d.WorkOrder is null) continue;
-                    var entity = WorkOrderMapper.ToEntity(d.WorkOrder);
-                    var existing = _workOrderRepository.WorkOrders.FirstOrDefault(w => w.Id == entity.Id);
-                    if (existing is not null)
+                    foreach (var d in meta.Devices)
                     {
-                        // 服务器权威：整项替换（与 SyncMemoryCollection 一致，触发 UI 重新读取）
-                        var idx = _workOrderRepository.WorkOrders.IndexOf(existing);
+                        if (d.WorkOrder is null) continue;
+                        var entity = WorkOrderMapper.ToEntity(d.WorkOrder);
+
+                        // 一次线性扫描同时完成「查找 + 定位索引」，替代原先 FirstOrDefault + IndexOf 两趟
+                        var idx = -1;
+                        for (var i = 0; i < workOrders.Count; i++)
+                        {
+                            if (workOrders[i].Id == entity.Id)
+                            {
+                                idx = i;
+                                break;
+                            }
+                        }
+
                         if (idx >= 0)
-                            _workOrderRepository.WorkOrders[idx] = entity;
-                    }
-                    else
-                    {
-                        // 跨端新增（另一台 WPF/浏览器创建的工单）：按 CreatedAt 倒序约定插到首位
-                        _workOrderRepository.WorkOrders.Insert(0, entity);
+                        {
+                            // 服务器权威：整项替换（与 SyncMemoryCollection 一致，触发 UI 重新读取）
+                            workOrders[idx] = entity;
+                        }
+                        else
+                        {
+                            // 跨端新增（另一台 WPF/浏览器创建的工单）：按 CreatedAt 倒序约定插到首位
+                            workOrders.Insert(0, entity);
+                        }
                     }
                 }
             }

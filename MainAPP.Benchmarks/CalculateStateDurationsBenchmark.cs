@@ -47,6 +47,6 @@ public class CalculateStateDurationsBenchmark
     }
 
     [Benchmark]
-    public (double Run, double Alarm, double Paused) Calculate() =>
+    public (double RunTime, double AlarmTime, double PausedTime, double OfflineTime) Calculate() =>
         OeeCalculator.CalculateStateDurations(_transitions, _from, _to, initialState: 1);
 }

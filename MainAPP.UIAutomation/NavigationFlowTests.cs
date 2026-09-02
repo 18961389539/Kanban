@@ -33,9 +33,13 @@ public class NavigationFlowTests : IDisposable
         var title = window.FindFirstDescendant(cf => cf.ByName("生产仪表板"));
         Assert.NotNull(title);
 
-        // PLC 断线横幅可见（无 PLC 连接时应显示）
-        var banner = window.FindFirstDescendant(cf => cf.ByName("PLC 未连接，实时数据可能已过期"));
-        Assert.NotNull(banner);
+        // PLC 横幅：隔离环境可能已连上本机 Simulator（横幅 Collapsed），或未连接（显示断连提示）
+        var disconnectedBanner = window.FindFirstDescendant(cf => cf.ByName("PLC 未连接，实时数据可能已过期"));
+        if (disconnectedBanner == null)
+        {
+            var homeKpi = window.FindFirstDescendant(cf => cf.ByName("设备状态"));
+            Assert.NotNull(homeKpi);
+        }
     }
 
     [Fact]
@@ -120,12 +124,12 @@ public class NavigationFlowTests : IDisposable
     [InlineData("工单管理")]
     [InlineData("历史查询")]
     [InlineData("生产复盘")]
-    [InlineData("设置")]
+    [InlineData("系统设置")]
     [InlineData("运行监控")]
     [InlineData("用户管理")]
     [InlineData("审计日志")]
     [InlineData("配方管理")]
-    [InlineData("采集监控")]
+    [InlineData("数据监控")]
     public void NavigateToAllPages_SelectionChanges(string navName)
     {
         var window = _fixture.MainWindow;
@@ -181,7 +185,7 @@ public class NavigationFlowTests : IDisposable
 
         // Admin 自动登录视角：13 项全部可见（含 6 个角色受限页）
         foreach (var expected in new[] { "主页", "产线总览", "报警中心", "设备管理", "工单管理", "历史查询",
-            "生产复盘", "设置", "运行监控", "用户管理", "审计日志", "配方管理", "采集监控" })
+            "生产复盘", "系统设置", "运行监控", "用户管理", "审计日志", "配方管理", "数据监控" })
         {
             Assert.True(visibleNames.Any(n => n.Contains(expected)),
                 $"Admin 视角下侧边栏缺少「{expected}」，实际导航项：{string.Join(" / ", visibleNames)}");

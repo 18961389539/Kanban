@@ -1,6 +1,7 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
@@ -32,7 +33,7 @@ public class ProductionLineViewModelTests
 
         Assert.False(vm.HasNoDevices);
         Assert.False(vm.HasNoFilteredDevices);
-        Assert.Equal(2, vm.FilteredLineDevices.Count());
+        Assert.Equal(2, vm.FilteredLineDevices.Cast<LineDeviceItem>().Count());
     }
 
     [Fact]
@@ -94,7 +95,7 @@ public class ProductionLineViewModelTests
         vm.SetStatusFilterCommand.Execute(LineStatusFilter.Offline);
 
         Assert.False(vm.HasNoFilteredDevices);
-        var item = Assert.Single(vm.FilteredLineDevices);
+        var item = Assert.Single(vm.FilteredLineDevices.Cast<LineDeviceItem>());
         Assert.Equal("离线机", item.Device.Name);
     }
 

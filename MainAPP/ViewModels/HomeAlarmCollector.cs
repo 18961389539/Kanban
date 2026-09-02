@@ -47,22 +47,34 @@ public sealed class HomeAlarmCollector
         if (desired.Count > maxAlarms)
             desired.RemoveRange(maxAlarms, desired.Count - maxAlarms);
 
-        for (int i = 0; i < desired.Count; i++)
+        // 既有项按身份键建索引（一次 O(N)），替代原先 FirstOrDefault / Any 两个 O(N²) 循环。
+        // 键含 EventTime：静止报警直接复用既有实例 → Sync 引用差分零集合事件，
+        // 虚拟化容器不重建、滚动位置保留（原先是把 IsNew/AddedAt 拷贝到新对象再全量替换，
+        // 引用必然失配，差分从未生效，每次刷新等于 Clear+AddRange）。
+        // IsNew/AddedAt 状态天然随实例保留，DurationText 由 HomeViewModel.SyncRuntime
+        // 每 tick 对全集合 RefreshDuration 原地刷新（INPC 驱动 UI）。
+        var existingByKey = new Dictionary<(string, string, AlarmLevel, AlarmKind, DateTime), ActiveAlarmInfo>(target.Count);
+        foreach (var item in target)
         {
-            var existing = target.FirstOrDefault(a => a.Equals(desired[i]));
-            if (existing == null)
-                continue;
-            desired[i].IsNew = existing.IsNew;
-            desired[i].AddedAt = existing.AddedAt;
+            var key = (item.DeviceId, item.AlarmName, item.Level, item.Kind, item.EventTime);
+            if (!existingByKey.ContainsKey(key))
+                existingByKey[key] = item;
         }
 
-        foreach (var item in desired)
+        for (var i = 0; i < desired.Count; i++)
         {
-            if (target.Any(a => a.Equals(item)))
-                continue;
-            item.IsNew = !isMuted;
-            item.AddedAt = now;
-            item.RefreshDuration(now);
+            var key = (desired[i].DeviceId, desired[i].AlarmName, desired[i].Level, desired[i].Kind, desired[i].EventTime);
+            if (existingByKey.TryGetValue(key, out var existing))
+            {
+                desired[i] = existing;
+            }
+            else
+            {
+                // 新报警（或重新触发导致 EventTime 变化）：重新进入 IsNew 高亮（30s 后由 SyncRuntime 清除）
+                desired[i].IsNew = !isMuted;
+                desired[i].AddedAt = now;
+                desired[i].RefreshDuration(now);
+            }
         }
 
         ObservableCollectionSyncHelper.Sync(target, desired);

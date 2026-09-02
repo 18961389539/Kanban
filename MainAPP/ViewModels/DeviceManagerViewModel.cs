@@ -42,7 +42,7 @@ public class StatusFilterOption
     public string Label { get; set; } = string.Empty;
 }
 
-public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHost, IDisposable
+public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHost, IDisposable, INavigationPageLifecycle
 {
     private readonly IPlcDataAcquisitionService _dataAcquisitionService;
     private readonly DeviceRepository _deviceRepository;
@@ -248,11 +248,29 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         _deviceRepository.Runtimes.CollectionChanged += OnRuntimesCollectionChanged;
         foreach (var rt in _deviceRepository.Runtimes) AttachRuntime(rt);
 
-        // 初始计算跨设备地址冲突标记（LoadAll 已在 ViewModel 构造前完成）
         _lastSavedDeviceAuditSnapshot = CreateDeviceAuditSnapshot();
-        RefreshAddressConflictFlag();
         if (_connectionManager != null)
             _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
+    }
+
+    private bool _pageActive;
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        _pageActive = true;
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            if (!_pageActive) return;
+            RefreshAddressConflictFlag();
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit()
+    {
+        _pageActive = false;
+        _conflictDebounceTimer?.Stop();
     }
 
     /// <summary>设备全量配置审计快照（全字段、全设备），委托 <see cref="DeviceAuditService"/> 生成。</summary>

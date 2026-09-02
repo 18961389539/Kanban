@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
+using MainAPP.Models;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
@@ -19,7 +20,7 @@ namespace MainAPP.ViewModels;
 /// - 安全体检横幅：默认口令 / 免密账号 / 从未登录
 /// - 密码策略：最小 8 位 + 确认输入 + 强度条（PasswordPolicy 统一）
 /// </summary>
-public partial class UserManagerViewModel : ObservableObject, IDisposable
+public partial class UserManagerViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     /// <summary>"全部"角色筛选哨兵（null = 全部）。</summary>
     public static readonly UserRole? AllRolesFilter = null;
@@ -126,8 +127,18 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable
         _session = session;
         _filteredView = new ListCollectionView(Users) { Filter = FilterPredicate };
         _userStore.UsersChanged += OnUsersChanged;
-        RefreshUsers();
     }
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+            RefreshUsers,
+            System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <inheritdoc />
+    public void OnPageExit() { }
 
     private void OnUsersChanged()
     {
