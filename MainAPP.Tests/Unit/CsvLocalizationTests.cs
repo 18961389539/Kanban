@@ -45,7 +45,7 @@ public sealed class CsvLocalizationTests : IDisposable
     [InlineData(AppLanguage.Zh, "名称", "高", "严重", "外观", "整数", "是")]
     [InlineData(AppLanguage.En, "Name", "High", "Critical", "Appearance", "Int32", "True")]
     [InlineData(AppLanguage.Ja, "名前", "高", "重大", "外観", "整数", "はい")]
-    [InlineData(AppLanguage.PtBr, "Nome", "High", "Critical", "Appearance", "Int32", "Verdadeiro")]
+    [InlineData(AppLanguage.PtBr, "Nome", "Alto", "Crítico", "Aparência", "Int32", "Verdadeiro")]
     public void Export_UsesLanguageFromSettings(
         AppLanguage language,
         string alarmNameHeader,
