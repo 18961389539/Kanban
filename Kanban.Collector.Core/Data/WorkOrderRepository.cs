@@ -16,7 +16,12 @@ public interface IWorkOrderRepository
 
     /// <summary>开启批量更新作用域：作用域内的集合修改不逐条抛事件，最外层退出时统一抛一次 Reset。
     /// 供 LoadAll / 批量导入 / 远程全量同步等「连续 N 次变更」场景使用，避免订阅方退化成 O(N²) 重算。
-    /// 调用方须自行持有 SyncRoot 锁（与逐条修改的锁约定一致）。</summary>
+    /// 审查修复 2026-09-02（P1-4）：本包装自动持有 <see cref="SyncRoot"/> 锁，调用方无需手动加锁——
+    /// 原实现仅转发给集合，而 WorkOrderService.ImportWorkOrders / RemoteRuntimeSink 批量应用
+    /// 未持锁，批量期间的逐条修改与 WPF 绑定引擎（EnableCollectionSynchronization 持同一把锁读）
+    /// 失去互斥。仓储内部路径（LoadAll/ApplySnapshot 已持 _collectionLock）走集合直调，Monitor 重入无影响。
+    /// 注：作用域内若有 await（如 ImportWorkOrders 的 UpsertAsync），Monitor 锁会跨 await 持有，
+    /// 这是批量导入的既有语义（导入期间其余读者短暂等待），不构成死锁（被等待的线程池任务不取该锁）。</summary>
     IDisposable BeginBulkUpdate();
 
     void LoadAll();
@@ -57,7 +62,34 @@ public class WorkOrderRepository : IWorkOrderRepository
     public BulkObservableCollection<WorkOrder> WorkOrders { get; } = new();
 
     /// <inheritdoc />
-    public IDisposable BeginBulkUpdate() => WorkOrders.BeginBulkUpdate();
+    public IDisposable BeginBulkUpdate()
+    {
+        // P1-4 修复 2026-09-02：把"调用方须持锁"的文档约定固化为代码保证。
+        // Monitor 锁覆盖整个批量窗口（含 ExitBulk 的 Reset 通知），与绑定引擎同锁互斥。
+        Monitor.Enter(_collectionLock);
+        var scope = WorkOrders.BeginBulkUpdate();
+        return new LockedBulkScope(_collectionLock, scope);
+    }
+
+    /// <summary>持锁的批量作用域：Dispose 时先退出集合批量（抛 Reset），再释放集合锁。</summary>
+    private sealed class LockedBulkScope : IDisposable
+    {
+        private readonly object _syncRoot;
+        private IDisposable? _inner;
+
+        public LockedBulkScope(object syncRoot, IDisposable inner)
+        {
+            _syncRoot = syncRoot;
+            _inner = inner;
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _inner, null) is not { } scope) return;
+            try { scope.Dispose(); }
+            finally { Monitor.Exit(_syncRoot); }
+        }
+    }
 
     /// <summary>工单变更版本号（LoadAll/Upsert/Delete 成功后递增）。供 MetaPublisher 脏标记判断
     /// 是否重组装快照——无变更时跳过全量拷贝，消除每 5s 的无谓分配与锁争用。</summary>

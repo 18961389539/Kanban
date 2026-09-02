@@ -90,6 +90,10 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// <summary>
     /// 依据本轮成功/失败档案更新冷却状态：成功清零计数并解除冷却；连续失败达阈值进入冷却；
     /// 冷却轮数每轮递减，归零后自动移除（下一轮重试）。
+    /// 审查修复 2026-09-02（P1-5）：
+    /// ① 进冷却时**保留**失败计数（不清零）——冷却结束重试若再失败，fails 从高水位继续递增，
+    ///    立即重新进冷却，避免"3 失败 + 3 冷却 + 再 3 失败"循环里故障 PLC 一半时间每轮付完整超时；
+    /// ② 每轮按当前配置档案差集清理两字典，删除/改名档案的残留条目不再永久驻留。
     /// </summary>
     private void UpdateProfileCooldowns()
     {
@@ -107,7 +111,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                 _logger.LogWarning("连接档案 {ProfileId} 连续 {Count} 轮读取失败，进入冷却（{Rounds} 轮后自动重试）",
                     profileId, fails, ProfileCooldownRounds);
                 _profileCooldownRounds[profileId] = ProfileCooldownRounds;
-                _profileFailureRounds[profileId] = 0;
+                // 不清零 _profileFailureRounds：冷却结束后的首次重试失败即重新冷却（P1-5）
             }
             else
             {
@@ -126,6 +130,18 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             {
                 _profileCooldownRounds[profileId] = remaining;
             }
+        }
+        // P1-5：差集清理——配置中已不存在的档案，其失败/冷却计数不再保留
+        var active = GetConfiguredReadProfileIds();
+        if (_profileFailureRounds.Keys.Any(id => !active.Contains(id)))
+        {
+            foreach (var stale in _profileFailureRounds.Keys.Where(id => !active.Contains(id)).ToArray())
+                _profileFailureRounds.Remove(stale);
+        }
+        if (_profileCooldownRounds.Keys.Any(id => !active.Contains(id)))
+        {
+            foreach (var stale in _profileCooldownRounds.Keys.Where(id => !active.Contains(id)).ToArray())
+                _profileCooldownRounds.Remove(stale);
         }
         _cooldownProfileIds.Clear();
         foreach (var profileId in _profileCooldownRounds.Keys)

@@ -18,14 +18,23 @@ namespace Kanban.Collector.Core.Data;
 ///
 /// <para>锁约定：本类不自行加锁。调用方须与逐条修改保持一致，在持有集合同步锁
 /// （SyncRoot / _collectionLock）的前提下使用，否则 WPF 绑定引擎（已通过
-/// EnableCollectionSynchronization 注册同步）与后台线程之间仍会竞争。</para>
+/// EnableCollectionSynchronization 注册同步）与后台线程之间仍会竞争。
+/// 审查修复 2026-09-02（P1-4）：<see cref="WorkOrderRepository.BeginBulkUpdate"/> 的
+/// 包装层会自动持有 SyncRoot，调用方（WorkOrderService.ImportWorkOrders、
+/// RemoteRuntimeSink 批量应用）不再需要手动加锁；仓储内部路径（LoadAll/ApplySnapshot）
+/// 外层已持锁，经 Monitor 重入不受影响。</para>
 ///
 /// <para>嵌套安全：支持嵌套作用域，仅最外层退出时抛 Reset；作用域内若无任何实际变更则不抛 Reset。</para>
 /// </remarks>
 public class BulkObservableCollection<T> : ObservableCollection<T>
 {
     private int _bulkDepth;
-    private bool _mutated;
+    /// <summary>
+    /// 批量作用域内是否发生过修改。必须 volatile：InsertItem 等写侧可能在后台线程执行，
+    /// ExitBulk 在作用域退出线程读取——普通字段无内存屏障，JIT/CPU 可重排导致漏抛 Reset
+    /// （UI 静默不刷新，审查修复 2026-09-02 P1-4）。
+    /// </summary>
+    private volatile bool _mutated;
 
     /// <summary>进入批量更新作用域。建议配合 <c>using</c> 使用：最外层退出时统一抛一次 Reset。</summary>
     public IDisposable BeginBulkUpdate()

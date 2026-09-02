@@ -29,20 +29,25 @@ public sealed class PlcRuntimeSession : IDisposable
 
     // 签名按 Profile.Version 缓存：Version 仅 Refresh 时递增，避免每次访问都做全对象 JSON 序列化。
     // Profile.Config 是不可变快照，Version 不变即签名不变，缓存安全。
-    private string _signature = string.Empty;
-    private long _signatureVersion = -1;
+    // 审查修复 2026-09-02（P1-6）：合成不可变引用类型单引用原子发布——原双字段
+    // （_signature + _signatureVersion）是两次独立写，并发读者可能读到"新 Version + 旧 Signature"
+    // 而误判配置未变、跳过 Configure。当前三处访问点虽在 lock(_sync) 内，但这是隐性契约；
+    // volatile 引用使锁外读取也安全（volatile 不允许 ValueTuple，故用 record）。
+    private volatile SignatureCache? _signatureCache;
+
+    private sealed record SignatureCache(long Version, string Signature);
 
     public string ConfigurationSignature
     {
         get
         {
             var profile = Profile;
-            if (profile.Version != _signatureVersion)
-            {
-                _signature = profile.Config.GetConfigurationSignature();
-                _signatureVersion = profile.Version;
-            }
-            return _signature;
+            var cached = _signatureCache;
+            if (cached is { } c && c.Version == profile.Version)
+                return c.Signature;
+            var signature = profile.Config.GetConfigurationSignature();
+            _signatureCache = new SignatureCache(profile.Version, signature);
+            return signature;
         }
     }
 

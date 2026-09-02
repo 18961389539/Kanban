@@ -50,15 +50,27 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
     /// 缺陷快照入队（非阻塞）。由后台 flush 循环批量落库；通道溢出（极端场景）丢弃最旧记录并告警。
     /// 原实现在此同步 new DbContext + SaveChanges，与后台 flush 抢 SQLite 写锁，且随 defect_history.db
     /// 膨胀（650MB/309 万行）把采集线程拖得越来越慢。
+    /// 审查修复 2026-09-02（P1-1）：Dispose 后拒绝入队并告警——原实现 Dispose 只 Cancel 后台循环，
+    /// TryWrite 仍返回 true，数据进通道无人消费、静默丢失且调用方无感知。
     /// </summary>
     public void Append(IEnumerable<DefectSnapshotRecord> snapshots)
     {
+        if (Volatile.Read(ref _disposed))
+        {
+            var count = snapshots.TryGetNonEnumeratedCount(out var known) ? known : snapshots.Count();
+            _logger.LogWarning("缺陷快照存储已释放，丢弃 {Count} 条快照", count);
+            return;
+        }
+
         foreach (var snapshot in snapshots)
         {
             if (!_channel.Writer.TryWrite(snapshot))
             {
-                Interlocked.Increment(ref _overflowCount);
-                _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", Volatile.Read(ref _overflowCount));
+                var n = Interlocked.Increment(ref _overflowCount);
+                // P1-2 修复 2026-09-02：溢出时逐条打日志会形成日志风暴（磁盘满/DB 锁死时每秒数百条，
+                // 反而拖垮磁盘与 I/O）。采样：仅记录首次与每 1000 条的累计水位。
+                if (n == 1 || n % 1000 == 0)
+                    _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", n);
             }
         }
     }
@@ -150,6 +162,9 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
         if (_disposed) return;
         _disposed = true;
         _cts.Cancel();
+        // P1-1 修复 2026-09-02：显式完成通道，让 WaitToReadAsync 在 Cancel 之外也能自然结束
+        // （返回 false → 退出主循环 → 停机排空剩余批次），避免后台任务续延链滞留。
+        _channel.Writer.TryComplete();
         try { _flushTask.Wait(TimeSpan.FromSeconds(5)); }
         catch (Exception ex) { _logger.LogWarning(ex, "等待缺陷历史后台写入停止超时或失败"); }
         _cts.Dispose();
