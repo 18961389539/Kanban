@@ -1,0 +1,36 @@
+/* Shared tokens for work-order preview HTMLs */
+:root {
+  --bg: #0f1419;
+  --card: #1a2332;
+  --card2: #151d29;
+  --region: #121a26;
+  --border: #2a3544;
+  --text: #e8edf4;
+  --text2: #9aa8b8;
+  --text3: #6b7a8c;
+  --primary: #3b82f6;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --r: 10px;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); min-height: 100vh; }
+.badge { display: inline-block; padding: 2px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; border: 1px solid; margin-left: 6px; }
+.badge.od { color: var(--danger); border-color: var(--danger); }
+.badge.cf { color: var(--warning); border-color: var(--warning); }
+.btn { border: 1px solid var(--border); background: var(--region); color: var(--text); padding: 7px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.ok { background: #16a34a; border-color: #16a34a; color: #fff; }
+.btn.warn { border-color: var(--warning); color: var(--warning); }
+.btn.sm { padding: 5px 10px; font-size: 11px; }
+.chip { padding: 4px 9px; border-radius: 7px; background: var(--region); color: var(--text2); font-size: 11px; }
+.chip b { color: var(--text); margin-left: 3px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); display: inline-block; }
+.bar { height: 5px; background: var(--region); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--primary); }
+.banner { padding: 8px 16px; background: rgba(59,130,246,.08); border-bottom: 1px dashed var(--border); color: var(--text2); font-size: 12px; }
+.banner a { color: var(--primary); }
+.banner b { color: var(--primary); }

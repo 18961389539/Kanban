@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>V2 · 执行看板版</title>
+<style>
+:root{--bg:#0f1419;--card:#1a2332;--region:#121a26;--border:#2a3544;--text:#e8edf4;--t2:#9aa8b8;--t3:#6b7a8c;--p:#3b82f6;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;font-family:"Segoe UI","PingFang SC",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-size:13px}
+.banner{padding:8px 16px;background:rgba(59,130,246,.08);border-bottom:1px dashed var(--border);color:var(--t2);font-size:12px}.banner a{color:var(--p)}
+.wrap{max-width:1400px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;height:100vh}
+.hdr{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hdr h1{font-size:17px}.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:4px 9px;border-radius:6px;background:var(--region);color:var(--t2);font-size:11px}.chip b{color:var(--text)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:var(--region);color:var(--text);padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer}
+.btn.p{background:var(--p);border-color:var(--p);color:#fff}
+.filters{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inp{flex:1;min-width:180px;background:var(--region);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text)}
+.sel{background:var(--region);border:1px solid var(--border);border-radius:7px;padding:7px;color:var(--text)}
+.tab{padding:5px 11px;border-radius:16px;background:var(--region);border:1px solid var(--border);font-size:11px;color:var(--t2);cursor:pointer}
+.tab.on{background:rgba(59,130,246,.15);border-color:var(--p);color:var(--p)}
+.body{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;flex:1;min-height:0}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;min-height:0}
+table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--t3);font-weight:500;padding:8px 10px;font-size:11px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr{cursor:pointer}tr:hover td{background:rgba(255,255,255,.02)}tr.on td{background:rgba(59,130,246,.1)}
+.wo{font-weight:700}.sub{color:var(--t2);font-size:11px;margin-top:2px}
+.b{display:inline-block;padding:1px 5px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid;margin-left:4px}
+.b.od{color:var(--err);border-color:var(--err)}.b.cf{color:var(--warn);border-color:var(--warn)}
+.bar{height:4px;background:var(--region);border-radius:3px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--p)}
+.pct{font-size:11px;color:var(--t3)}
+.detail{padding:16px;overflow:auto}
+.dh{margin-bottom:14px}.dh h2{font-size:20px}.dh .m{color:var(--t2);margin-top:4px;font-size:12px}
+.actions{display:flex;gap:8px;margin-bottom:16px}
+.actions .btn.ok{background:#16a34a;border-color:#16a34a;color:#fff}
+.actions .btn.warn{border-color:var(--warn);color:var(--warn)}
+.kpi2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.tile{background:var(--region);border-radius:9px;padding:12px}.tile label{font-size:11px;color:var(--t2)}.tile .v{font-size:26px;font-weight:700;margin-top:4px}
+.tile .v.p{color:var(--p)}
+.yield{background:var(--region);border-radius:9px;padding:12px;margin-bottom:12px}
+.yr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px}
+.yr .ok{color:var(--ok);font-weight:700}.yr .ng{color:var(--err);font-weight:700}.yr .r{color:var(--warn);font-weight:700}
+.sbar{height:7px;display:flex;border-radius:4px;overflow:hidden}.sbar .ok{background:var(--ok);flex:95}.sbar .ng{background:var(--err);flex:5}
+.note{font-size:11px;color:var(--t3);margin-top:8px}
+.sec{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;font-size:12px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="banner"><b>V2 执行看板版</b> — <a href="index.html">← 返回目录</a> · 全宽表格 + 右侧紧凑 KPI，操作紧贴工单头，信息密度最高。</div>
+<div class="wrap">
+  <header class="hdr">
+    <h1>工单管理</h1>
+    <div class="chips">
+      <span class="chip">共 <b>24</b></span><span class="chip">逾期 <b style="color:var(--err)">5</b></span>
+      <span class="chip">冲突 <b style="color:var(--warn)">2</b></span>
+    </div>
+    <div class="toolbar">
+      <button class="btn p">＋ 新建</button><button class="btn">刷新产量</button>
+      <button class="btn">导入</button><button class="btn">导出</button>
+    </div>
+  </header>
+  <div class="filters">
+    <input class="inp" placeholder="搜索工单号 / 产品 / 设备"/>
+    <select class="sel"><option>全部设备</option></select>
+    <span class="tab on">全部 24</span><span class="tab">进行中 3</span><span class="tab">待开始 8</span>
+    <span class="tab">已完成 11</span><span style="margin-left:auto;color:var(--t3);font-size:11px">排序：计划开始 ↑</span>
+  </div>
+  <div class="body">
+    <div class="panel" style="overflow:auto">
+      <table>
+        <thead><tr><th>工单号 / 产品</th><th>计划时间</th><th>设备</th><th>进度</th><th>状态</th><th>提醒</th></tr></thead>
+        <tbody>
+          <tr class="on"><td><div class="wo">WO-003-R</div><div class="sub">电路板模组</div></td>
+            <td><div>07-31 21:19</div><div class="sub">08-01 05:19</div></td><td>组装机1</td>
+            <td><div class="pct">17% · 208/1200</div><div class="bar"><i style="width:17%"></i></div></td>
+            <td>● 进行中</td><td><span class="b od">逾期712h</span></td></tr>
+          <tr><td><div class="wo">WO-002-R</div><div class="sub">外壳组件</div></td>
+            <td>07-31 18:00</td><td>测试台1</td>
+            <td><div class="pct">64%</div><div class="bar"><i style="width:64%"></i></div></td>
+            <td>● 进行中</td><td><span class="b od">逾期</span></td></tr>
+          <tr><td><div class="wo">WO-001</div><div class="sub">连接器</div></td>
+            <td>08-02 08:00</td><td>组装机1</td>
+            <td><div class="pct">—</div><div class="bar"><i style="width:0"></i></div></td>
+            <td>○ 待开始</td><td><span class="b cf">冲突</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel detail">
+      <div class="dh"><h2>WO-20260801-003-R <span class="b od">逾期712h</span></h2>
+        <div class="m">电路板模组 · P-2001 · 组装机1 · ● 进行中</div></div>
+      <div class="actions">
+        <button class="btn" disabled style="opacity:.4">▶ 开始</button>
+        <button class="btn ok">✓ 完成</button><button class="btn warn">■ 中止</button>
+      </div>
+      <div class="kpi2">
+        <div class="tile"><label>计划产量</label><div class="v">1,200</div></div>
+        <div class="tile"><label>达成率</label><div class="v p">17.3%</div></div>
+      </div>
+      <div class="yield">
+        <div class="yr"><span class="ok">合格 208</span><span class="ng">不良 11</span><span class="r">不良率 5.0%</span></div>
+        <div class="sbar"><div class="ok"></div><div class="ng"></div></div>
+        <div class="note">计划 07-31 21:19 ~ 08-01 05:19</div>
+      </div>
+      <div class="sec"><b>备注</b> 试产验证</div>
+      <div class="sec"><b>SN 明细</b> 共 0 件 — 暂无记录</div>
+    </div>
+  </div>
+</div>
+<script>document.querySelectorAll('tbody tr').forEach(r=>r.onclick=()=>{document.querySelectorAll('tbody tr').forEach(x=>x.classList.remove('on'));r.classList.add('on')})</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>V4 · 紧凑卡片版</title>
+<style>
+:root{--bg:#0f1419;--card:#1a2332;--region:#121a26;--border:#2a3544;--text:#e8edf4;--t2:#9aa8b8;--t3:#6b7a8c;--p:#3b82f6;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;font-family:"Segoe UI","PingFang SC",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-size:12px;height:100vh;display:flex;flex-direction:column}
+.banner{padding:8px 16px;background:rgba(59,130,246,.08);border-bottom:1px dashed var(--border);color:var(--t2);font-size:12px}.banner a{color:var(--p)}
+.app{flex:1;display:grid;grid-template-columns:300px 1fr;min-height:0}
+.left{border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--card)}
+.lh{padding:14px;border-bottom:1px solid var(--border)}.lh h2{font-size:14px;margin-bottom:8px}
+.one-line{display:flex;gap:6px}.one-line input{flex:1;background:var(--region);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px}
+.one-line select{width:90px;background:var(--region);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px}
+.pills{display:flex;gap:4px;margin-top:8px;overflow-x:auto}.pill{padding:4px 8px;border-radius:12px;background:var(--region);font-size:10px;color:var(--t2);white-space:nowrap;cursor:pointer}
+.pill.on{background:rgba(59,130,246,.15);color:var(--p)}
+.list{flex:1;overflow:auto;padding:8px}
+.card{background:var(--region);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer}
+.card.on{border-color:var(--p);background:rgba(59,130,246,.08)}
+.card .id{font-weight:700;font-size:12px}.card .meta{color:var(--t2);margin-top:3px;font-size:10px}
+.card .foot{display:flex;justify-content:space-between;margin-top:6px;align-items:center}
+.bar{height:3px;background:#0f1419;border-radius:2px;flex:1;margin:0 8px}.bar i{display:block;height:100%;background:var(--p)}
+.lf{padding:10px;border-top:1px solid var(--border);display:flex;gap:6px}
+.lf button{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--region);color:var(--text);font-size:11px;cursor:pointer}
+.lf .p{background:var(--p);border-color:var(--p);color:#fff}
+.right{display:flex;flex-direction:column;min-height:0}
+.rh{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.rh h2{font-size:14px}.sync{font-size:10px;color:var(--ok)}
+.scroll{flex:1;overflow:auto;padding:14px 16px 70px}
+.block{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:10px}
+.block h3{font-size:15px}.block .sub{color:var(--t2);margin-top:3px;font-size:11px}
+.kpi2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.k{background:var(--region);border-radius:7px;padding:10px;text-align:center}.k .l{color:var(--t2);font-size:10px}.k .v{font-size:20px;font-weight:700;margin-top:2px}
+.sticky{position:sticky;bottom:0;padding:10px 16px;background:linear-gradient(transparent,var(--bg) 30%);border-top:1px solid var(--border);display:flex;gap:8px}
+.sticky button{flex:1;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+.sticky .ok{background:#16a34a;border-color:#16a34a;color:#fff}
+.tag{font-size:9px;padding:1px 4px;border:1px solid var(--err);color:var(--err);border-radius:3px;margin-left:4px}
+</style>
+</head>
+<body>
+<div class="banner"><b>V4 紧凑卡片版</b> — <a href="index.html">← 返回目录</a> · 左窄卡片列表 + 右流式详情，筛选单行折叠，适合小屏。</div>
+<div class="app">
+  <aside class="left">
+    <div class="lh">
+      <h2>工单列表 <span style="color:var(--t3);font-weight:400">(3)</span></h2>
+      <div class="one-line">
+        <input placeholder="搜索…"/><select><option>设备</option></select>
+      </div>
+      <div class="pills">
+        <span class="pill on">全部</span><span class="pill">进行中 3</span><span class="pill">待开始</span><span class="pill">已完成</span>
+      </div>
+    </div>
+    <div class="list">
+      <div class="card on">
+        <div class="id">WO-003-R <span class="tag">逾期</span></div>
+        <div class="meta">电路板模组 · 组装机1</div>
+        <div class="foot"><span style="color:var(--p)">17%</span><div class="bar"><i style="width:17%"></i></div><span style="font-size:10px;color:var(--t2)">进行中</span></div>
+      </div>
+      <div class="card">
+        <div class="id">WO-002-R <span class="tag">逾期</span></div>
+        <div class="meta">外壳组件 · 测试台1</div>
+        <div class="foot"><span>64%</span><div class="bar"><i style="width:64%"></i></div><span style="font-size:10px;color:var(--t2)">进行中</span></div>
+      </div>
+      <div class="card">
+        <div class="id">WO-001 <span class="tag" style="border-color:var(--warn);color:var(--warn)">冲突</span></div>
+        <div class="meta">连接器 · 组装机1</div>
+        <div class="foot"><span>—</span><div class="bar"><i style="width:0"></i></div><span style="font-size:10px;color:var(--t2)">待开始</span></div>
+      </div>
+    </div>
+    <div class="lf"><button class="p">＋ 新增</button><button>编辑</button><button style="color:var(--err)">删除</button></div>
+  </aside>
+  <main class="right">
+    <div class="rh"><h2>工单详情</h2><span class="sync">✓ 产量已同步</span></div>
+    <div class="scroll">
+      <div class="block">
+        <h3>WO-20260801-003-R</h3>
+        <div class="sub">电路板模组 · P-2001 · 组装机1 · 逾期 712h · 进行中</div>
+        <div style="margin-top:8px;font-size:11px;color:var(--t2)"><b style="color:var(--t3)">备注</b> 试产验证</div>
+      </div>
+      <div class="block kpi2">
+        <div class="k"><div class="l">计划产量</div><div class="v">1,200</div></div>
+        <div class="k"><div class="l">达成率</div><div class="v" style="color:var(--p)">17.3%</div></div>
+      </div>
+      <div class="block">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span>合格 <b style="color:var(--ok)">208</b></span>
+          <span>不良 <b style="color:var(--err)">11</b></span>
+          <span>不良率 <b style="color:var(--warn)">5.0%</b></span>
+        </div>
+        <div style="height:6px;display:flex;border-radius:3px;overflow:hidden"><div style="flex:95;background:var(--ok)"></div><div style="flex:5;background:var(--err)"></div></div>
+        <div style="margin-top:8px;font-size:10px;color:var(--t3)">07-31 21:19 ~ 08-01 05:19</div>
+      </div>
+      <div class="block"><b>SN 明细</b> <span style="color:var(--t3)">共 0 件</span><div style="text-align:center;padding:16px;color:var(--t3)">暂无 SN 记录</div></div>
+      <div class="block"><b>时间线</b><div style="margin-top:6px;color:var(--t2)">创建 07-31 19:19 · 实际开始 07-31 21:22</div></div>
+    </div>
+    <div class="sticky">
+      <button disabled style="opacity:.4">▶ 开始</button>
+      <button class="ok">✓ 完成</button>
+      <button style="border-color:var(--warn);color:var(--warn)">■ 中止</button>
+    </div>
+  </main>
+</div>
+<script>document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('on'));c.classList.add('on')})</script>
+</body>
+</html>

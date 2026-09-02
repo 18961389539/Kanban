@@ -4,10 +4,10 @@ param(
     [int]$MinimumLineCoverage = 35,
     # 单向阈值：只允许调低，不允许调高。
     # 上升意味着"为了让门变绿而放宽标准"，会让译文覆盖率持续劣化且无人察觉。
-    # 基线（2026-08-31）：pt-BR ratio=83.18% / count=1865，此处仅留极小缓冲。
-    # 补译 pt-BR 后应同步下调这两个值。
-    [double]$MaxWpfEnglishFallbackRatio = 0.84,
-    [int]$MaxWpfEnglishFallbackCount = 1875,
+    # 基线（2026-08-31 pt-BR 全量翻译后）：ratio≈2.4% / count=52，剩余为合理回落
+    # （专有名词 OK/NG/OEE、数据类型名、ASCII 文件名、纯占位符）。
+    [double]$MaxWpfEnglishFallbackRatio = 0.05,
+    [int]$MaxWpfEnglishFallbackCount = 60,
     [switch]$SkipVulnerabilityScan
 )
 
