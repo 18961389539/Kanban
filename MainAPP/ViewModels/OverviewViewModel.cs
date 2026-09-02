@@ -553,10 +553,12 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     private void UpdateCurrentShiftName()
     {
         var now = DateTime.Now;
-        var (shift, _) = HistoryQueryHelper.FindCurrentShift(_appSettings.Shifts, now.TimeOfDay);
+        // P0-1 修复 2026-09-02：经锁内快照读取班次，禁止直接枚举可变集合
+        var shiftsSnapshot = _appSettings.GetShiftsSnapshot();
+        var (shift, _) = HistoryQueryHelper.FindCurrentShift(shiftsSnapshot, now.TimeOfDay);
         if (shift == null)
         {
-            CurrentShiftName = (_appSettings.Shifts == null || _appSettings.Shifts.Count == 0)
+            CurrentShiftName = shiftsSnapshot.Count == 0
                 ? Strings.M110
                 : Strings.M111;
             CurrentShiftDateRange = string.Empty;
@@ -964,7 +966,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                 statusByDevice,
                 alarmByDevice,
                 devices,
-                _appSettings.Shifts,
+                _appSettings.GetShiftsSnapshot(), // P0-1 修复 2026-09-02：Task.Run 后台线程必须用锁内快照
                 from,
                 to)
             .Select(item => new ShiftComparisonSummary
@@ -1030,7 +1032,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                         (ProductionReviewBucketSize)bucketSize,
                         avgTargetCycle,
                         devices.Count,
-                        _appSettings.Shifts,
+                        _appSettings.GetShiftsSnapshot(), // P0-1 修复 2026-09-02：统一快照读取
                         CreateChartPalette());
                     OnPropertyChanged(nameof(TrendChart));
                     HasTrendData = bucketOk.Any(v => v > 0) || bucketNg.Any(v => v > 0);
@@ -1207,9 +1209,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     private (DateTime From, DateTime To, string Label) GetPreviousShiftComparison(DateTime now)
     {
-        var shifts = _appSettings.Shifts;
+        var shifts = _appSettings.GetShiftsSnapshot(); // P0-1 修复 2026-09-02
         var (current, currentIndex) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
-        if (current == null || shifts == null || shifts.Count == 0)
+        if (current == null || shifts.Count == 0)
             return (now.AddHours(-24), now, Strings.M300);
         var currentRange = current.ResolveRange(now);
         var previousIndex = (currentIndex - 1 + shifts.Count) % shifts.Count;
@@ -1220,7 +1222,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     private (DateTime From, DateTime To) ResolveCurrentShiftRange(DateTime now)
     {
-        var (shift, _) = HistoryQueryHelper.FindCurrentShift(_appSettings.Shifts, now.TimeOfDay);
+        var (shift, _) = HistoryQueryHelper.FindCurrentShift(_appSettings.GetShiftsSnapshot(), now.TimeOfDay); // P0-1 修复 2026-09-02
         if (shift == null) return (now.AddHours(-24), now);
         var range = shift.ResolveRange(now);
         return (range.Start, now);
@@ -1228,9 +1230,9 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     private (DateTime From, DateTime To) ResolvePreviousShiftRange(DateTime now)
     {
-        var shifts = _appSettings.Shifts;
+        var shifts = _appSettings.GetShiftsSnapshot(); // P0-1 修复 2026-09-02
         var (current, currentIndex) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
-        if (current == null || shifts == null || shifts.Count == 0)
+        if (current == null || shifts.Count == 0)
             return (now.AddHours(-24), now);
 
         var currentRange = current.ResolveRange(now);

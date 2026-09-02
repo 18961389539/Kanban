@@ -16,7 +16,9 @@ public sealed class ShiftProgressProvider
 
     public ShiftProgressSnapshot Compute(DateTime now)
     {
-        var (shift, start, end) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now);
+        // P0-1 修复 2026-09-02：写侧有两个线程（UI 的 CopySettings + Hub 的 ConfigSyncHandler），
+        // 即使本方法在 UI 线程调用，也必须经锁内快照读取。
+        var (shift, start, end) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
         if (shift == null)
             return new ShiftProgressSnapshot(false, Strings.M115, "", 0, "");
 

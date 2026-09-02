@@ -327,34 +327,51 @@ public sealed class ConfigSyncHandler
             // ③ 先落盘（草稿全量序列化；失败则运行实例保持原状）
             AppSettings.WriteSettingsFile(draft);
 
-            // ④ 后生效：把草稿值应用到运行实例（此刻磁盘已是新值，崩溃重启也不会回退）
+            // ④ 后生效：把草稿值应用到运行实例（此刻磁盘已是新值，崩溃重启也不会回退）。
+            // 审查修复 2026-09-02（P0-2）：写入与签名比对包进 UpdateLock——Hub 线程在此换
+            // ConnectionProfiles 引用 / 原地改 PlcConfig，与采集线程（PlcRuntimeSession.RefreshFromSettings
+            // 枚举档案、PlcScanPipeline 读 Batch 参数）并发时原先无互斥。锁顺序与
+            // SettingsViewModel.CopySettings 一致：UpdateLock（外）→ ShiftsLock（内）。
+            // RefreshFromSettings 在锁外调用（其内部自行取锁），锁内无 IO，持有时间毫秒级。
             var plcSignatureBefore = _appSettings.PlcConfig.GetConfigurationSignature();
-            var profileSignaturesBefore = _appSettings.CreateConnectionProfilesSnapshot()
-                .ToDictionary(profile => profile.Id, profile => profile.Config.GetConfigurationSignature(), StringComparer.OrdinalIgnoreCase);
-            _appSettings.PollingIntervalMs = draft.PollingIntervalMs;
-            _appSettings.HistoryWriteIntervalScans = draft.HistoryWriteIntervalScans;
-            _appSettings.PlcBatchReadMaxLength = draft.PlcBatchReadMaxLength;
-            _appSettings.PlcBatchReadMaxGapSlots = draft.PlcBatchReadMaxGapSlots;
-            _appSettings.LanguageCode = draft.EffectiveLanguageCode;
-            _appSettings.PlcConfig = draft.PlcConfig.CreateSnapshot();
-            _appSettings.ConnectionProfiles = draft.CreateConnectionProfilesSnapshot();
-            _appSettings.EnsureConnectionProfiles();
-            // 班次集合锁内原地更新：与采集轮询线程/进度查询的锁内快照读取互斥，
-            // 消除 Clear+Add 中间窗口被枚举导致的 InvalidOperationException（审查修复 2026-08-13）
-            lock (_appSettings.ShiftsLock)
+            List<ConnectionProfile> profilesBeforeSnapshot;
+            lock (_appSettings.UpdateLock)
             {
-                _appSettings.Shifts.Clear();
-                foreach (var s in draft.Shifts) _appSettings.Shifts.Add(s);
+                profilesBeforeSnapshot = _appSettings.ConnectionProfiles.ToList();
             }
-            var plcSignatureAfter = _appSettings.PlcConfig.GetConfigurationSignature();
-            var profileSignaturesAfter = _appSettings.CreateConnectionProfilesSnapshot()
+            var profileSignaturesBefore = profilesBeforeSnapshot
                 .ToDictionary(profile => profile.Id, profile => profile.Config.GetConfigurationSignature(), StringComparer.OrdinalIgnoreCase);
-            var changedProfileIds = profileSignaturesBefore
-                .Where(pair => !profileSignaturesAfter.TryGetValue(pair.Key, out var signature)
-                               || !string.Equals(pair.Value, signature, StringComparison.Ordinal))
-                .Select(pair => pair.Key)
-                .Concat(profileSignaturesAfter.Keys.Except(profileSignaturesBefore.Keys, StringComparer.OrdinalIgnoreCase))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> changedProfileIds;
+            bool defaultConfigChanged;
+            lock (_appSettings.UpdateLock)
+            {
+                _appSettings.PollingIntervalMs = draft.PollingIntervalMs;
+                _appSettings.HistoryWriteIntervalScans = draft.HistoryWriteIntervalScans;
+                _appSettings.PlcBatchReadMaxLength = draft.PlcBatchReadMaxLength;
+                _appSettings.PlcBatchReadMaxGapSlots = draft.PlcBatchReadMaxGapSlots;
+                _appSettings.LanguageCode = draft.EffectiveLanguageCode;
+                _appSettings.PlcConfig = draft.PlcConfig.CreateSnapshot();
+                _appSettings.ConnectionProfiles = draft.CreateConnectionProfilesSnapshot();
+                _appSettings.EnsureConnectionProfiles();
+                // 班次集合锁内原地更新：与采集轮询线程/进度查询的锁内快照读取互斥，
+                // 消除 Clear+Add 中间窗口被枚举导致的 InvalidOperationException（审查修复 2026-08-13）
+                lock (_appSettings.ShiftsLock)
+                {
+                    _appSettings.Shifts.Clear();
+                    foreach (var s in draft.Shifts) _appSettings.Shifts.Add(s);
+                }
+
+                var plcSignatureAfter = _appSettings.PlcConfig.GetConfigurationSignature();
+                defaultConfigChanged = !string.Equals(plcSignatureBefore, plcSignatureAfter, StringComparison.Ordinal);
+                var profileSignaturesAfter = _appSettings.ConnectionProfiles
+                    .ToDictionary(profile => profile.Id, profile => profile.Config.GetConfigurationSignature(), StringComparer.OrdinalIgnoreCase);
+                changedProfileIds = profileSignaturesBefore
+                    .Where(pair => !profileSignaturesAfter.TryGetValue(pair.Key, out var signature)
+                                   || !string.Equals(pair.Value, signature, StringComparison.Ordinal))
+                    .Select(pair => pair.Key)
+                    .Concat(profileSignaturesAfter.Keys.Except(profileSignaturesBefore.Keys, StringComparer.OrdinalIgnoreCase))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
 
             if (changedProfileIds.Count > 0)
             {
@@ -368,7 +385,7 @@ public sealed class ConfigSyncHandler
                     {
                         runtimeSessions.RefreshFromSettings();
                     }
-                    else if (plcSignatureBefore != plcSignatureAfter)
+                    else if (defaultConfigChanged)
                     {
                         _services.GetService<IPlcRuntimeProfileProvider>()?.Refresh(_appSettings.PlcConfig);
                         _services.GetService<IPlcConnectionManager>()?.Disconnect();

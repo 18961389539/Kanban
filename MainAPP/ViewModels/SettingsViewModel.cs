@@ -27,7 +27,7 @@ namespace MainAPP.ViewModels;
 /// <summary>
 /// 设置视图模型
 /// </summary>
-public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.ObservableObject, IDisposable
+public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.ObservableObject, IDisposable, INavigationPageLifecycle
 {
     /// <summary>
     /// 应用全局设置
@@ -397,8 +397,17 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         _lastSavedRunMode = DraftSettings.RunMode;
         WireDraftEvents();
         _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
+    }
+
+    /// <inheritdoc />
+    public void OnPageEnter()
+    {
+        RefreshLicenseStatus(recheck: false);
         StartLicenseStatusTimer();
     }
+
+    /// <inheritdoc />
+    public void OnPageExit() => StopLicenseStatusTimer();
 
     private sealed record SettingsAuditSnapshot(string PlcIp, int PlcPort, int ShiftCount);
 
@@ -970,36 +979,46 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
     private static void CopySettings(AppSettings source, AppSettings target)
     {
-        // 数据源/运行模式/采集服务地址是可编辑设置（SelectedDataMode/SelectedRunMode/TestCollectorConnectionAsync
-        // 均读写草稿），漏拷会导致保存后改动被静默丢弃（审查修复 2026-08-13）。
-        target.DataMode = source.DataMode;
-        target.RunMode = source.RunMode;
-        target.CollectorHubUrl = source.CollectorHubUrl;
-        // 用快照整体复制，避免逐字段漏拷（如 ModbusTcp.BatchInt32Limit）；快照含全部嵌套 Options。
-        target.PlcConfig = source.PlcConfig.CreateSnapshot();
-        target.ConnectionProfiles = source.CreateConnectionProfilesSnapshot();
-        target.EnsureConnectionProfiles();
-        target.PollingIntervalMs = source.PollingIntervalMs;
-        target.HistoryWriteIntervalScans = source.HistoryWriteIntervalScans;
-        target.PlcBatchReadMaxLength = source.PlcBatchReadMaxLength;
-        target.PlcBatchReadMaxGapSlots = source.PlcBatchReadMaxGapSlots;
-        target.DashboardRefreshIntervalMs = source.DashboardRefreshIntervalMs;
-        target.AppTitle = source.AppTitle;
-        target.LanguageCode = source.EffectiveLanguageCode;
-        target.IsDarkTheme = source.IsDarkTheme;
-        target.UiScale = source.UiScale;
-        target.EnableAlarmSound = source.EnableAlarmSound;
-        target.EnableAutomaticDailyReport = source.EnableAutomaticDailyReport;
-        target.AutomaticDailyReportTime = source.AutomaticDailyReportTime;
-        target.AutomaticDailyReportIsMaster = source.AutomaticDailyReportIsMaster;
-        // 审查修复 2026-08-13：改为锁内原地更新而非替换集合实例——
-        // ①ProductionLineViewModel 等订阅方挂在旧实例上，替换会使其订阅永久失效（僵尸引用）；
-        // ②本地模式下采集轮询线程也会枚举 Shifts，与 UI 线程原地写入用同一把锁互斥。
-        lock (target.ShiftsLock)
+        // 审查修复 2026-09-02（P0-2）：整体写入包进 target.UpdateLock——本地模式下采集线程
+        // （PlcDataAcquisitionService / PlcScanPipeline / PlcRuntimeSession.RefreshFromSettings）
+        // 每轮都读 PollingIntervalMs / HistoryWriteIntervalScans / Batch 参数 / ConnectionProfiles，
+        // 原先除 Shifts 外全部裸写：换引用 + 逐字段赋值与采集读取并发，可读到半更新状态，
+        // 且 ConnectionProfiles 的"整体换引用"与 PlcRuntimeSession 内部 _sync 锁不互斥（两把锁）。
+        // 读侧统一经 Get*Snapshot() 取快照（先 UpdateLock 后各自的内部锁，锁顺序不可反转）。
+        lock (target.UpdateLock)
         {
-            target.Shifts.Clear();
-            foreach (var s in source.Shifts)
-                target.Shifts.Add(new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime });
+            // 数据源/运行模式/采集服务地址是可编辑设置（SelectedDataMode/SelectedRunMode/TestCollectorConnectionAsync
+            // 均读写草稿），漏拷会导致保存后改动被静默丢弃（审查修复 2026-08-13）。
+            target.DataMode = source.DataMode;
+            target.RunMode = source.RunMode;
+            target.CollectorHubUrl = source.CollectorHubUrl;
+            // 用快照整体复制，避免逐字段漏拷（如 ModbusTcp.BatchInt32Limit）；快照含全部嵌套 Options。
+            target.PlcConfig = source.PlcConfig.CreateSnapshot();
+            target.ConnectionProfiles = source.CreateConnectionProfilesSnapshot();
+            target.EnsureConnectionProfiles();
+            target.PollingIntervalMs = source.PollingIntervalMs;
+            target.HistoryWriteIntervalScans = source.HistoryWriteIntervalScans;
+            target.PlcBatchReadMaxLength = source.PlcBatchReadMaxLength;
+            target.PlcBatchReadMaxGapSlots = source.PlcBatchReadMaxGapSlots;
+            target.DashboardRefreshIntervalMs = source.DashboardRefreshIntervalMs;
+            target.AppTitle = source.AppTitle;
+            target.LanguageCode = source.EffectiveLanguageCode;
+            target.IsDarkTheme = source.IsDarkTheme;
+            target.UiScale = source.UiScale;
+            target.EnableAlarmSound = source.EnableAlarmSound;
+            target.EnableAutomaticDailyReport = source.EnableAutomaticDailyReport;
+            target.AutomaticDailyReportTime = source.AutomaticDailyReportTime;
+            target.AutomaticDailyReportIsMaster = source.AutomaticDailyReportIsMaster;
+            // 审查修复 2026-08-13：改为锁内原地更新而非替换集合实例——
+            // ①ProductionLineViewModel 等订阅方挂在旧实例上，替换会使其订阅永久失效（僵尸引用）；
+            // ②本地模式下采集轮询线程也会枚举 Shifts，与写入方原地更新用同一把锁互斥。
+            // 锁顺序：UpdateLock（外）→ ShiftsLock（内），所有写侧保持一致避免死锁。
+            lock (target.ShiftsLock)
+            {
+                target.Shifts.Clear();
+                foreach (var s in source.Shifts)
+                    target.Shifts.Add(new ShiftConfig { Name = s.Name, StartTime = s.StartTime, EndTime = s.EndTime });
+            }
         }
     }
 

@@ -506,7 +506,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (_deviceRepository.Devices.Count > 0)
             _selection.SelectedDeviceId = _deviceRepository.Devices[0].Id;
 
-        _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs) };
+        // 显式 Background 优先级：图表重算/列表刷新不应抢占渲染(7)/输入(5)之前的调度槽。
+        // 全项目 11 个 DispatcherTimer 中此前唯一漏配优先级的实例（2026-09-01 性能审查 P1-13）。
+        _liveTimer = new DispatcherTimer(System.Windows.Threading.DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs)
+        };
         _liveTimer.Tick += OnLiveTimerTick;
     }
 
@@ -518,8 +523,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         // 设备未加载（Remote 拉取尚未完成）时不动作——由 OnDevicesCollectionChanged 在拉取完成后回退。
         if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
             SelectedDeviceId = _deviceRepository.Devices[0].Id;
-        SyncRuntime();
         _liveTimer.Start();
+        // 让导航切换先完成绘制再重算；无 Dispatcher（单元测试/设计期）时同步执行，
+        // 保持 OnPageEnter 的「进入即完成一次同步」语义（与 WorkOrderManagerViewModel.OnPageEnter 同模式）。
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher == null || dispatcher.HasShutdownStarted)
+        {
+            SyncRuntime();
+            return;
+        }
+        dispatcher.BeginInvoke(() =>
+        {
+            if (!_liveTimer.IsEnabled) return;
+            SyncRuntime();
+        }, DispatcherPriority.Background);
     }
 
     public void OnPageExit() => _liveTimer.Stop();
@@ -1302,7 +1319,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         ShiftProgressPct = snap.Pct;
 
         // 设备状态卡右上角：当前班次 + 日期时钟
-        var shift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now);
+        var shift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now); // P0-1 修复 2026-09-02
         DeviceStatusShiftTag = shift.Shift == null
             ? string.Empty
             : $"{shift.Shift.Name} {shift.Start:hh\\:mm}-{shift.End:hh\\:mm}";

@@ -167,7 +167,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     /// 委托 HistoryQueryHelper 单源实现（Contains 语义一致）。</summary>
     private ShiftConfig? FindCurrentShift()
     {
-        var shifts = _appSettings?.Shifts;
+        var shifts = _appSettings?.GetShiftsSnapshot(); // P0-1 修复 2026-09-02：锁内快照，禁止直接枚举
         if (shifts == null || shifts.Count == 0) return null;
         return ViewModels.HistoryQueryHelper.FindCurrentShift(shifts, DateTime.Now.TimeOfDay).Shift;
     }

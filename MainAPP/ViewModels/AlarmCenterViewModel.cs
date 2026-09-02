@@ -387,10 +387,6 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
             Interval = TimeSpan.FromMilliseconds(350),
         };
         _searchDebounceTimer.Tick += OnSearchDebounceTick;
-
-        // 首次立即刷新一次，确保页面打开即有数据
-        RefreshActiveAlarms(blockUntilApplied: true);
-        RefreshStats();
     }
 
     /// <summary>
@@ -400,8 +396,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     {
         if (!_activeTimer.IsEnabled) _activeTimer.Start();
         if (!_statsTimer.IsEnabled) _statsTimer.Start();
-        // 切回页面时立即刷新一次，避免显示过期数据
-        RefreshActiveAlarms(blockUntilApplied: true);
+        // 切回页面时立即刷新一次，避免显示过期数据（异步应用，避免 blockUntilApplied 在 UI 线程同步扫设备+历史库）
+        RefreshActiveAlarms(blockUntilApplied: false);
         RefreshStats();
     }
 
@@ -647,6 +643,13 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         }
 
         var visible = filtered.Take(MaxActiveAlarms).ToList();
+        // 值差分预处理（身份键含 EventTime）：静止报警复用既有实例 → Sync 引用差分零集合事件，
+        // 虚拟化容器不重建、滚动位置保留。原先每次 new 全部对象，引用比较必然全部失配，
+        // 等价于 Clear+AddRange：每 3s 约 400 次集合通知 + 200 个 DataTemplate 重建。
+        // 重新触发的报警 EventTime 变化 → 键不同 → 走 Replace，UI 取到新触发时刻。
+        // DurationText 是 [ObservableProperty]，复用实例后靠下方 RefreshDuration 原地刷新驱动 UI。
+        ObservableCollectionSyncHelper.ReuseExisting(ActiveAlarms, visible,
+            a => (a.DeviceId, a.AlarmName, a.Level, a.Kind, a.EventTime));
         ObservableCollectionSyncHelper.Sync(ActiveAlarms, visible);
 
         foreach (var item in ActiveAlarms)
@@ -687,7 +690,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         {
             if (_appSettings != null)
             {
-                var snap = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now);
+                var snap = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now); // P0-1 修复 2026-09-02
                 if (snap.Shift != null) return snap.Start;
             }
             return todayStart;

@@ -20,7 +20,7 @@ internal static class HistoryQueryHelper
     /// shifts 为 null/空时返回 (null, -1)，由调用方决定回退策略。
     /// </summary>
     internal static (ShiftConfig? Shift, int Index) FindCurrentShift(
-        System.Collections.Generic.IList<ShiftConfig>? shifts, TimeSpan timeOfDay)
+        System.Collections.Generic.IReadOnlyList<ShiftConfig>? shifts, TimeSpan timeOfDay)
     {
         if (shifts == null || shifts.Count == 0)
             return (null, -1);

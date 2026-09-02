@@ -281,6 +281,30 @@ public partial class AppSettings : ObservableObject
     public object ShiftsLock { get; } = new();
 
     /// <summary>
+    /// 设置整体更新锁（审查修复 2026-09-02，P0-2）：覆盖 <see cref="Shifts"/> 以外的全部设置字段
+    /// （轮询参数、批量读上限、PlcConfig、ConnectionProfiles 换引用等）。
+    /// 写侧（SettingsViewModel.CopySettings / ConfigSyncHandler）写入时持有；
+    /// 采集线程（PlcDataAcquisitionService / PlcScanPipeline / PlcRuntimeSession）跨线程读取时经
+    /// 各自的 Get*Snapshot() 取快照后再使用，禁止在锁外直接枚举可变集合。
+    /// [JsonIgnore]：同 ShiftsLock，避免锁对象被序列化进 settings.json。
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public object UpdateLock { get; } = new();
+
+    /// <summary>
+    /// 班次配置的锁内只读快照（审查修复 2026-09-02，P0-1）。
+    /// 跨线程读取点（ViewModel 的 Task.Run 后台查询、LastShiftComparisonProvider 等）必须经本方法
+    /// 取快照，禁止在锁外直接枚举 <see cref="Shifts"/>——UI 线程 CopySettings 的 Clear+Add 会与
+    /// 后台枚举并发，触发 "Collection was modified" 或读到半集合窗口。
+    /// UI 线程上的纯展示读取（同一 Dispatcher）可保留直读。
+    /// </summary>
+    public IReadOnlyList<ShiftConfig> GetShiftsSnapshot()
+    {
+        lock (ShiftsLock)
+            return Shifts.ToList();
+    }
+
+    /// <summary>
     /// 每路径互斥锁：保证同一文件路径的并发写串行化，避免临时文件名冲突与丢失更新。
     /// 多设备基线同时持久化时（班次切换瞬间），不同 path 各自一把锁互不阻塞，同 path 串行。
     /// </summary>
@@ -377,6 +401,8 @@ public partial class AppSettings : ObservableObject
     {
         SynchronizeDefaultConnectionProfile();
         WriteSettingsFile(this);
+        // 连接档案/PLC 品牌等配置变更可能改变地址解析规则（codec），失效解析缓存
+        PlcAddressParser.ClearCache();
     }
 
     /// <summary>按档案 ID 查找连接配置；空 ID 兼容为默认档案。</summary>

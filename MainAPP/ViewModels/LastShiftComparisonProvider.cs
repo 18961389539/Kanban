@@ -56,7 +56,7 @@ public sealed class LastShiftComparisonProvider : IDisposable
 
         // 兜底查询在后台线程执行（本地模式 SQLite 24 小时历史查询，不能在 UI 线程同步跑）。
         var now = DateTime.Now;
-        var currentShift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.Shifts, now).Shift;
+        var currentShift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now).Shift; // P0-1 修复 2026-09-02：后台线程禁止直接枚举 Shifts
         var fallbackKey = BuildFallbackKey(deviceId, currentShift?.Name);
         if (_fallbackAttemptAtByKey.TryGetValue(fallbackKey, out var lastAttempt)
             && now - lastAttempt < FallbackRetryInterval)

@@ -235,7 +235,7 @@ public partial class OeeQueryViewModel : ObservableObject
             var lastLog = group.Last();
             var shiftName = firstLog.ShiftName;
 
-            var shiftConfig = _appSettings.Shifts?.FirstOrDefault(s => s.Name == shiftName);
+            var shiftConfig = _appSettings.GetShiftsSnapshot().FirstOrDefault(s => s.Name == shiftName); // P0-1 修复 2026-09-02
             DateTime shiftFrom, shiftTo;
             if (shiftConfig != null)
             {

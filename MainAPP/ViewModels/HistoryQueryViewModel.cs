@@ -315,7 +315,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     /// </summary>
     private void RefreshShiftFilterFromConfig()
     {
-        var names = (_appSettings.Shifts ?? Enumerable.Empty<ShiftConfig>())
+        // P0-1 修复 2026-09-02：经锁内快照读取班次，禁止直接枚举可变集合
+        var names = _appSettings.GetShiftsSnapshot()
             .Select(s => s.Name)
             .Where(n => !string.IsNullOrEmpty(n))
             .Distinct()
@@ -577,9 +578,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     private (DateTime From, DateTime To) GetShiftRange(DateTime now, int shiftOffset)
     {
-        var shifts = _appSettings.Shifts;
+        var shifts = _appSettings.GetShiftsSnapshot(); // P0-1 修复 2026-09-02
         var (currentShift, currentIdx) = HistoryQueryHelper.FindCurrentShift(shifts, now.TimeOfDay);
-        if (currentShift == null || shifts == null)
+        if (currentShift == null)
             return (FromDate, ToDate);
 
         int n = shifts.Count;
