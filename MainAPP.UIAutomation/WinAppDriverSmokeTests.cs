@@ -33,7 +33,9 @@ public class WinAppDriverSmokeTests : IDisposable
     [Fact]
     public void WinAppDriver_AppLaunches_MainWindowVisible()
     {
-        if (!IsWinAppDriverEnabled()) return; // 不满足前置条件则静默跳过，避免本地无 WAD 变红
+        // 未声明启用 → 显式 Skip（计入 Skipped，杜绝"零断言静默绿"；审查修复 2026-09-03）
+        if (!IsWinAppDriverEnabled())
+            Assert.Skip("KANBAN_RUN_WAD_TESTS!=1：未启用 WinAppDriver 冒烟测试");
 
         var options = new AppiumOptions();
         options.App = KanbanAppFixture.LocateExeForPublicUse();
@@ -52,14 +54,13 @@ public class WinAppDriverSmokeTests : IDisposable
     /// 前置条件：
     ///   - 环境变量 KANBAN_RUN_WAD_TESTS=1（CI 脚本设置；本地默认不设）
     ///   - WinAppDriver 服务监听 127.0.0.1:4723
-    /// 不满足时测试直接 return，不计为失败也不计为通过。
+    /// 不满足时测试 Assert.Skip（计入 Skipped）；已声明启用但服务未运行则显式失败。
     /// </summary>
     private static bool IsWinAppDriverEnabled()
     {
         var flag = Environment.GetEnvironmentVariable("KANBAN_RUN_WAD_TESTS");
         if (!string.Equals(flag, "1", StringComparison.Ordinal))
         {
-            // 未声明启用 → 静默跳过（不调用 Assert.Skip 以兼容旧 xUnit）
             return false;
         }
         if (!IsWinAppDriverRunning())

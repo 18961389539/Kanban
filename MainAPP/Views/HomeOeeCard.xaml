@@ -38,12 +38,12 @@
 
                 <!--  左：OEE 主环 + 中心百分比  -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Grid Width="195" Height="195" HorizontalAlignment="Center">
-                        <oxy:PlotView Model="{Binding OeeRingChart}" Width="195" Height="195"
+                    <Grid Width="235" Height="235" HorizontalAlignment="Center">
+                        <oxy:PlotView Model="{Binding OeeRingChart}" Width="235" Height="235"
                                       Background="Transparent" />
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                     ToolTip="{Binding OeeFormulaText, StringFormat='OEE = {0}'}">
-                            <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeHero}" FontWeight="Bold"
+                            <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                        Foreground="{Binding OeeValue, Converter={StaticResource OeeThreshold}}"
                                        Text="{Binding OeeDisplay}" />
                             <TextBlock HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="{DynamicResource FontSizeCaption}"

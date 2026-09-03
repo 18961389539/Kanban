@@ -29,6 +29,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     private readonly AppSettings _appSettings;
     private readonly IAuditService _auditService;
     private readonly ISnEventStore _snEventStore;
+    private readonly IActiveAlarmStateService _activeAlarmStateService;
     private readonly ILogger? _logger;
 
     /// <summary>SN 追溯单页上限（防客户端传超大 PageSize 一次拉全表；工单明细页 20/页远低于此）。</summary>
@@ -47,6 +48,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         AppSettings appSettings,
         IAuditService auditService,
         ISnEventStore snEventStore,
+        IActiveAlarmStateService activeAlarmStateService,
         ILogger<KanbanHub>? logger = null)
     {
         _snapshotAggregator = snapshotAggregator;
@@ -61,6 +63,7 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         _appSettings = appSettings;
         _auditService = auditService;
         _snEventStore = snEventStore;
+        _activeAlarmStateService = activeAlarmStateService;
         _logger = logger;
     }
 
@@ -314,4 +317,23 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     /// <inheritdoc />
     public Task<IReadOnlyList<RecipeDto>> GetRecipesAsync()
         => _configSyncHandler.GetRecipesAsync();
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ActiveAlarmStateDto>> QueryActiveAlarmStatesAsync(string? deviceId = null)
+    {
+        var rows = _activeAlarmStateService.QueryActive(deviceId);
+        var dtos = rows.Select(r => new ActiveAlarmStateDto
+        {
+            DeviceId = r.DeviceId,
+            DeviceName = r.DeviceName,
+            AlarmId = r.AlarmId,
+            AlarmName = r.AlarmName,
+            PlcAddress = r.PlcAddress,
+            IsActive = r.IsActive,
+            TriggeredAt = r.TriggeredAt,
+            ShiftName = r.ShiftName,
+            UpdatedAt = r.UpdatedAt,
+        }).ToList();
+        return Task.FromResult<IReadOnlyList<ActiveAlarmStateDto>>(dtos);
+    }
 }

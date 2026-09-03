@@ -51,6 +51,12 @@ try {
     dotnet test --project PlcSimulator.Tests\PlcSimulator.Tests.csproj -c $Configuration --no-restore -- --no-progress
     if ($LASTEXITCODE -ne 0) { throw "PLC simulator tests failed" }
 
+    # E2E 流程测试此前从未被任何脚本执行（盲区，审查修复 2026-09-03）。
+    # 用例自带 TestHost 与临时目录，无外部依赖，可直接进入常规门禁。
+    Write-Host "==> end-to-end flow tests"
+    dotnet test --project MainAPP.E2E\MainAPP.E2E.csproj -c $Configuration --no-restore -- --no-progress
+    if ($LASTEXITCODE -ne 0) { throw "E2E flow tests failed" }
+
     $reports = Get-ChildItem "artifacts\coverage" -Recurse -Filter "coverage.cobertura*.xml"
     if (-not $reports) { throw "coverage report was not produced" }
     $covered = 0L

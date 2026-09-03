@@ -13,6 +13,7 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Helpers;
 using Material.Icons;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -262,9 +263,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     // 数据新鲜度监控：Remote 取 KanbanDataClient 最后收数时间，Local 取采集服务最后成功轮询
     private readonly KanbanDataClient? _dataClient;
     private readonly IPlcDataAcquisitionService? _acquisitionService;
-    private readonly DispatcherTimer _staleCheckTimer;
+    private readonly PageRefreshTimer _staleCheckTimer;
 
-    private void OnStaleCheckTick(object? sender, EventArgs e)
+    private void OnStaleCheckTick()
     {
         OnPropertyChanged(nameof(IsDataStale));
         OnPropertyChanged(nameof(DataStaleSeconds));
@@ -435,11 +436,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         _runtimeMonitoringLazy = CreateLazy(GetService<RuntimeMonitoringViewModel>);
 
         // 数据新鲜度检查：2s 轮询刷新"数据停滞"横幅（连接正常但采集卡死时提示）
-        _staleCheckTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(2),
-        };
-        _staleCheckTimer.Tick += OnStaleCheckTick;
+        _staleCheckTimer = new PageRefreshTimer(TimeSpan.FromSeconds(2), OnStaleCheckTick);
         _staleCheckTimer.Start();
         // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）。
         // 命名方法订阅（遵守本文件"事件全部用命名方法"约定），Dispose 精确解绑。
@@ -558,7 +555,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         if (_disposed) return;
         _disposed = true;
 
-        _staleCheckTimer.Stop();
+        _staleCheckTimer.Dispose();
         AppSettings.PropertyChanged -= OnAppSettingsPropertyChanged;
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;

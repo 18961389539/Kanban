@@ -464,19 +464,22 @@ public class AlarmCenterViewModelTests : IDisposable
     }
 
     [Fact]
-    public void RefreshStats_IncludesPendingDataSourceAlarmInActiveList()
+    public void RefreshStats_IncludesActiveSourceStateInActiveList()
     {
         var device = new Device { Id = "d1", Name = "设备1" };
         var source = new DataSource { Name = "温湿度" };
-        var value = new DataSourceValue { Name = "温度" };
+        var value = new DataSourceValue { Id = "temp", Name = "温度" };
         source.Values.Add(value);
         device.Sources.Add(source);
         _deviceRepo.Devices.Add(device);
 
         var triggerTime = DateTime.Now.AddMinutes(-8);
-        _historyService.LogAlarmEvent(
+        // 直查状态表：活跃的数据源报警行由采集端 Upsert 维护，前端不再回溯事件流推断
+        var states = new InMemoryActiveAlarmStateService();
+        states.UpsertActive(
             "d1", "设备1", $"src:{value.Id}", "温湿度-温度", "D100",
-            AlarmEventType.Triggered, triggerTime);
+            isActive: true, triggeredAt: triggerTime);
+        _historyService.ActiveStates = states;
 
         using var vm = CreateVm();
         WaitForBackgroundStats();

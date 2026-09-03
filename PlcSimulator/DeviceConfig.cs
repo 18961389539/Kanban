@@ -17,6 +17,8 @@ public class DeviceConfig
     public string ProductionResetAddress { get; set; } = "";
     public string RecipeAddress { get; set; } = "";
     public int RecipeValue { get; set; }
+    /// <summary>目标节拍（秒/件）：>0 时作为节拍基准（devices.json 的真实目标周期），优先于 RecipeValue 公式。</summary>
+    public int TargetCycle { get; set; }
 
     // ── 子项 ──
     public List<AlarmConfig> Alarms { get; set; } = new();

@@ -36,6 +36,7 @@ public class DataSourceAlarmTrackerTests
         public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null) => [];
         public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds) => [];
         public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize) => ([], 0);
+        public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null) => [];
     }
 
     private static (Device device, DataSource source, DataSourceValue value) BuildDeviceWithSource(

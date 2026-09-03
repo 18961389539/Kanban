@@ -14,6 +14,12 @@ public interface IHistoryService :
     /// <summary>分页查询缺陷快照（SQL 层 Count + Skip/Take；异常向调用方抛出）。</summary>
     (List<Entities.DefectSnapshotRecord> Items, int Total) QueryDefectSnapshotsPaged(
         DateTime from, DateTime to, string deviceId, int page, int pageSize);
+
+    /// <summary>
+    /// 历史写入诊断快照（运行监控页展示：待写队列/恢复文件/库大小等）。
+    /// Remote 实现返回空快照（写入发生在 Collector 侧，本地无写入队列）。
+    /// </summary>
+    HistoryDiagnosticsSnapshot GetDiagnosticsSnapshot();
 }
 
 /// <summary>

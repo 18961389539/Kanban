@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
@@ -350,111 +350,47 @@ public class AlarmStateTrackerTests
     // ──────────── ScanAlarms：状态重建 ────────────
 
     [Fact]
-    public void ScanAlarms_StateMissingAndLastEventTriggered_RebuildsAsActive()
+    public void ScanAlarms_StateMissingAndActiveStateRow_RebuildsAsActive()
     {
-        var tracker = new AlarmStateTracker();
+        var activeStates = new InMemoryActiveAlarmStateService();
+        var tracker = new AlarmStateTracker(activeStates);
         var (device, alarm) = BuildDeviceWithAlarm();
         var plc = new FakePlcDriver();
         plc.SetBool(alarm.PlcAddress, true);
         var history = new InMemoryHistoryService();
         var devices = new ObservableCollection<Device> { device };
 
-        // 预置历史：最近事件是 Triggered（无对应 Recovered），表示报警当前仍触发中
-        history.AlarmEvents.Add(new AlarmEventRecord
-        {
-            AlarmId = alarm.Id,
-            EventType = AlarmEventType.Triggered,
-            EventTime = DateTime.Now.AddMinutes(-5)
-        });
+        // 预置状态表：活跃行（触发时间 2 分钟前，模拟跨重启仍触发）
+        var triggeredAt = DateTime.Now.AddMinutes(-2);
+        activeStates.UpsertActive(device.Id, device.Name, alarm.Id, alarm.Name, alarm.PlcAddress, true, triggeredAt);
 
-        // 首次扫描：从历史重建状态，应回填 StartTime 但不重复写入 Triggered
+        // 首次扫描：从状态表重建为触发态，回填 StartTime，且不重复写入 Triggered 事件
         tracker.ScanAlarms(devices, plc, history, "白班", Logger);
 
         Assert.True(tracker.GetPrevAlarmStatesSnapshot()[alarm.Id]);
-        // 重建时不应产生新事件
+        Assert.Empty(history.AlarmEvents);
+        Assert.Equal(triggeredAt, device.Alarms[0].StartTime);
+    }
+
+    [Fact]
+    public void ScanAlarms_StateMissingAndNoActiveStateRow_RebuildsAsInactive()
+    {
+        // 状态表无行（等价旧模型"无历史/陈旧 Triggered"）→ 重建未触发；
+        // PLC 为 ON 走正常触发沿（StartTime = now），并同步落状态表活跃行。
+        var activeStates = new InMemoryActiveAlarmStateService();
+        var tracker = new AlarmStateTracker(activeStates);
+        var (device, alarm) = BuildDeviceWithAlarm();
+        var plc = new FakePlcDriver();
+        plc.SetBool(alarm.PlcAddress, true);
+        var history = new InMemoryHistoryService();
+        var devices = new ObservableCollection<Device> { device };
+
+        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
+
         Assert.Single(history.AlarmEvents);
-        // 回填窗口内：StartTime 应保持历史触发时间（与历史记录一致）
-        Assert.Equal(history.AlarmEvents[0].EventTime, device.Alarms[0].StartTime);
-    }
-
-    [Fact]
-    public void ScanAlarms_StateMissingAndLastEventTriggeredStale_RebuildsAsInactive()
-    {
-        // 回归（审查修复）：历史 Triggered 超过回填窗口（如 8 小时前、上次运行遗留）时不得回填 StartTime，
-        // 否则实时故障卡持续时长虚高（如显示 8h）。陈旧 Triggered 按未触发处理，PLC ON 走正常触发沿。
-        var tracker = new AlarmStateTracker();
-        var (device, alarm) = BuildDeviceWithAlarm();
-        var plc = new FakePlcDriver();
-        plc.SetBool(alarm.PlcAddress, true);
-        var history = new InMemoryHistoryService();
-        var devices = new ObservableCollection<Device> { device };
-
-        // 预置历史：8 小时前的 Triggered（上次运行遗留，早于回填窗口）
-        history.AlarmEvents.Add(new AlarmEventRecord
-        {
-            AlarmId = alarm.Id,
-            EventType = AlarmEventType.Triggered,
-            EventTime = DateTime.Now.AddHours(-8)
-        });
-
-        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
-
-        // 陈旧 Triggered 不回填 → PLC ON 触发新的上升沿（StartTime = now）
-        Assert.Equal(2, history.AlarmEvents.Count);
-        Assert.Equal(AlarmEventType.Triggered, history.AlarmEvents[1].EventType);
+        Assert.Equal(AlarmEventType.Triggered, history.AlarmEvents[0].EventType);
         Assert.True(tracker.GetPrevAlarmStatesSnapshot()[alarm.Id]);
-        Assert.True(DateTime.Now - device.Alarms[0].StartTime < TimeSpan.FromMinutes(1));
-    }
-
-    [Fact]
-    public void ScanAlarms_StateMissingAndLastEventRecovered_RebuildsAsInactive()
-    {
-        var tracker = new AlarmStateTracker();
-        var (device, alarm) = BuildDeviceWithAlarm();
-        var plc = new FakePlcDriver();
-        plc.SetBool(alarm.PlcAddress, true);
-        var history = new InMemoryHistoryService();
-        var devices = new ObservableCollection<Device> { device };
-
-        // 预置历史：最近事件是 Recovered，表示报警已恢复
-        history.AlarmEvents.Add(new AlarmEventRecord
-        {
-            AlarmId = alarm.Id,
-            EventType = AlarmEventType.Recovered,
-            EventTime = DateTime.Now.AddMinutes(-5)
-        });
-
-        // 首次扫描：从历史重建为 false，但 PLC 当前为 true → 触发新的上升沿
-        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
-
-        Assert.Equal(2, history.AlarmEvents.Count);
-        Assert.Equal(AlarmEventType.Triggered, history.AlarmEvents[1].EventType);
-        Assert.True(tracker.GetPrevAlarmStatesSnapshot()[alarm.Id]);
-    }
-
-    [Fact]
-    public void ScanAlarms_StateMissingAndLastEventShiftChange_RebuildsAsInactive()
-    {
-        var tracker = new AlarmStateTracker();
-        var (device, alarm) = BuildDeviceWithAlarm();
-        var plc = new FakePlcDriver();
-        plc.SetBool(alarm.PlcAddress, true);
-        var history = new InMemoryHistoryService();
-        var devices = new ObservableCollection<Device> { device };
-
-        // 预置历史：最近事件是 ShiftChange（班次切换），新班次按未触发处理
-        history.AlarmEvents.Add(new AlarmEventRecord
-        {
-            AlarmId = alarm.Id,
-            EventType = AlarmEventType.ShiftChange,
-            EventTime = DateTime.Now.AddMinutes(-5)
-        });
-
-        tracker.ScanAlarms(devices, plc, history, "白班", Logger);
-
-        // 重建为 false + PLC 当前 true → 触发新的上升沿
-        Assert.Equal(2, history.AlarmEvents.Count);
-        Assert.Equal(AlarmEventType.Triggered, history.AlarmEvents[1].EventType);
+        Assert.True(activeStates.GetRow(device.Id, alarm.Id)?.IsActive);
     }
 
     // ──────────── LogShiftChangeForActiveAlarms ────────────
@@ -498,7 +434,7 @@ public class AlarmStateTrackerTests
     }
 
     [Fact]
-    public void LogShiftChangeForActiveAlarms_WriteFails_AddsToFailedSet()
+    public void LogShiftChangeForActiveAlarms_WriteFails_DoesNotThrowAndEventNotPersisted()
     {
         var tracker = new AlarmStateTracker();
         var (device, alarm) = BuildDeviceWithAlarm();
@@ -510,12 +446,12 @@ public class AlarmStateTrackerTests
         plc.SetBool(alarm.PlcAddress, true);
         tracker.ScanAlarms(devices, plc, history, "白班", Logger);
 
-        // 配置写入失败
+        // 配置写入失败：写失败不抛异常、不落库（旧"失败补偿集合"机制已移除，
+        // 状态表 Upsert 幂等，新班次若仍触发会重新落表）
         history.ShouldFailAlarmEventWrite = true;
         tracker.LogShiftChangeForActiveAlarms(devices, history, "白班", Logger);
 
-        // 应记入 _shiftChangeFailedAlarms
-        Assert.Contains(alarm.Id, tracker.GetShiftChangeFailedAlarmsSnapshot());
+        Assert.Single(history.AlarmEvents); // 仅保留原 Triggered
     }
 
     [Fact]
@@ -534,27 +470,24 @@ public class AlarmStateTrackerTests
         // 班次切换写入失败
         history.ShouldFailAlarmEventWrite = true;
         tracker.LogShiftChangeForActiveAlarms(devices, history, "白班", Logger);
-        Assert.Contains(alarm.Id, tracker.GetShiftChangeFailedAlarmsSnapshot());
 
-        // ResetShift 清空 _prevAlarmStates（生产中由 PlcDataAcquisitionService.ResetShift 调用）
+        // ResetShift 清空 _prevAlarmStates（生产中由 PlcDataAcquisitionService.ResetShift 调用；
+        // 状态表行由 PlcScanPipeline.ResetAll 按设备清除）
         tracker.ResetAll();
 
-        // 下一轮扫描：_shiftChangeFailedAlarms 应被消费并跳过历史查询，直接当作未触发
-        // PLC 仍为 true → 触发新的上升沿
+        // 下一轮扫描：无状态表注入时重建走"未触发"，PLC 仍为 true → 触发新的上升沿
         history.ShouldFailAlarmEventWrite = false;
         tracker.ScanAlarms(devices, plc, history, "白班", Logger);
 
         // 新写入一条 Triggered 事件
         var triggered = history.AlarmEvents.Count(e => e.EventType == AlarmEventType.Triggered);
         Assert.Equal(2, triggered);
-        // _shiftChangeFailedAlarms 应已被消费移除
-        Assert.DoesNotContain(alarm.Id, tracker.GetShiftChangeFailedAlarmsSnapshot());
     }
 
     // ──────────── RemoveAlarmState / RemoveDeviceAlarms ────────────
 
     [Fact]
-    public void RemoveAlarmState_ClearsBothDictionaries()
+    public void RemoveAlarmState_ClearsPrevState()
     {
         var tracker = new AlarmStateTracker();
         var (device, alarm) = BuildDeviceWithAlarm();
@@ -562,17 +495,14 @@ public class AlarmStateTrackerTests
         var history = new InMemoryHistoryService();
         var devices = new ObservableCollection<Device> { device };
 
-        // 触发报警 + 模拟班次切换失败
+        // 触发报警
         plc.SetBool(alarm.PlcAddress, true);
         tracker.ScanAlarms(devices, plc, history, "白班", Logger);
-        history.ShouldFailAlarmEventWrite = true;
-        tracker.LogShiftChangeForActiveAlarms(devices, history, "白班", Logger);
 
         // 删除报警状态
         tracker.RemoveAlarmState(alarm.Id);
 
         Assert.False(tracker.GetPrevAlarmStatesSnapshot().ContainsKey(alarm.Id));
-        Assert.DoesNotContain(alarm.Id, tracker.GetShiftChangeFailedAlarmsSnapshot());
     }
 
     [Fact]
@@ -604,7 +534,7 @@ public class AlarmStateTrackerTests
     // ──────────── ResetAll ────────────
 
     [Fact]
-    public void ResetAll_ClearsPrevAlarmStatesButKeepsShiftChangeFailedSet()
+    public void ResetAll_ClearsPrevAlarmStates()
     {
         var tracker = new AlarmStateTracker();
         var (device, alarm) = BuildDeviceWithAlarm();
@@ -612,18 +542,14 @@ public class AlarmStateTrackerTests
         var history = new InMemoryHistoryService();
         var devices = new ObservableCollection<Device> { device };
 
-        // 触发报警 + 班次切换写入失败
+        // 触发报警
         plc.SetBool(alarm.PlcAddress, true);
         tracker.ScanAlarms(devices, plc, history, "白班", Logger);
-        history.ShouldFailAlarmEventWrite = true;
-        tracker.LogShiftChangeForActiveAlarms(devices, history, "白班", Logger);
 
         tracker.ResetAll();
 
-        // _prevAlarmStates 应清空
+        // _prevAlarmStates 应清空（新班次后由状态表重建）
         Assert.Empty(tracker.GetPrevAlarmStatesSnapshot());
-        // _shiftChangeFailedAlarms 应保留（按设计，由 ScanAlarms 消费一次后自动移除）
-        Assert.Contains(alarm.Id, tracker.GetShiftChangeFailedAlarmsSnapshot());
     }
 
     // ──────────── 无效地址 ────────────

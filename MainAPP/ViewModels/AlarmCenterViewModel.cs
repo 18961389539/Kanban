@@ -125,15 +125,15 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     private readonly IAlarmHistoryService _historyService;
     private readonly IDeviceRepository _deviceRepository;
     private readonly IDialogService _dialog;
-    private readonly DispatcherTimer _activeTimer;  // 3s 刷新活跃报警
-    private readonly DispatcherTimer _statsTimer;   // 60s 刷新事件流与统计
-    private readonly DispatcherTimer _searchDebounceTimer;  // 搜索输入防抖（350ms）
+    private readonly PageRefreshTimer _activeTimer;  // 3s 刷新活跃报警
+    private readonly PageRefreshTimer _statsTimer;   // 60s 刷新事件流与统计
+    private readonly PageRefreshTimer _searchDebounceTimer;  // 搜索输入防抖（350ms）
     private readonly Dispatcher _uiDispatcher = Dispatcher.CurrentDispatcher;
     private int _statsRefreshVersion;
     private int _activeRefreshVersion;
     private bool _disposed;
     private int _unfilteredActiveCount;
-    private List<AlarmEventRecord> _pendingDataSourceEvents = new();
+    private List<ActiveAlarmStateRecord> _pendingDataSourceEvents = new();
     private readonly AppSettings? _appSettings;
     private readonly IAlarmSessionMute? _alarmSessionMute;
 
@@ -234,6 +234,34 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
 
     public string ActiveTruncationHint => HasTruncation
         ? string.Format(Strings.K708, MaxActiveAlarms)
+        : string.Empty;
+
+    /// <summary>窗口内事件流合并后的总条数（截断前，已按级别/设备/搜索筛选）。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRecentEventTruncation))]
+    [NotifyPropertyChangedFor(nameof(RecentEventTruncationHint))]
+    private int _recentEventTotalCount;
+
+    /// <summary>Top 聚类组总数（截断前），仅用于判断是否超过展示上限。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTopAlarmTruncation))]
+    [NotifyPropertyChangedFor(nameof(TopAlarmTruncationHint))]
+    private int _topAlarmGroupCount;
+
+    // ──────────── P0-3 修复 2026-09-02：事件流 / Top 排行的截断提示 ────────────
+    // 左栏活跃报警已有"仅显示前 200 条"提示，但右栏事件流（500 条合并项上限）与
+    // Top 排行（10 条上限）此前无任何提示，数据超限时用户无从得知列表被截断，
+    // 容易误读为"总共就这么多"。故补齐同级提示，与 ActiveTruncationHint 口径一致。
+    public bool HasRecentEventTruncation => RecentEventTotalCount > MaxRecentEvents;
+
+    public string RecentEventTruncationHint => HasRecentEventTruncation
+        ? string.Format(Strings.K708, MaxRecentEvents)
+        : string.Empty;
+
+    public bool HasTopAlarmTruncation => TopAlarmGroupCount > TopAlarmsCount;
+
+    public string TopAlarmTruncationHint => HasTopAlarmTruncation
+        ? string.Format(Strings.K708, TopAlarmsCount)
         : string.Empty;
 
     public bool ShowStatsLastUpdateTime => StatsLastUpdateTime.HasValue;
@@ -369,24 +397,12 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
             DeviceFilterItems.Add(device);
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
 
-        _activeTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(3),
-        };
-        _activeTimer.Tick += OnActiveTimerTick;
+        _activeTimer = new PageRefreshTimer(TimeSpan.FromSeconds(3), OnActiveTimerTick);
 
-        _statsTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(60),
-        };
-        _statsTimer.Tick += OnStatsTimerTick;
+        _statsTimer = new PageRefreshTimer(TimeSpan.FromSeconds(60), OnStatsTimerTick);
 
         // 搜索防抖：输入停止 350ms 后才重扫活跃列表，避免每个按键触发完整设备遍历
-        _searchDebounceTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMilliseconds(350),
-        };
-        _searchDebounceTimer.Tick += OnSearchDebounceTick;
+        _searchDebounceTimer = new PageRefreshTimer(TimeSpan.FromMilliseconds(350), OnSearchDebounceTick);
     }
 
     /// <summary>
@@ -421,24 +437,21 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     /// <inheritdoc />
     public void OnPageExit() => Stop();
 
-    private void OnActiveTimerTick(object? sender, EventArgs e) => RefreshActiveAlarms();
+    private void OnActiveTimerTick() => RefreshActiveAlarms();
 
-    private void OnStatsTimerTick(object? sender, EventArgs e) => RefreshStats();
+    private void OnStatsTimerTick() => RefreshStats();
 
     /// <summary>
-    /// 释放定时器资源：停止定时器并取消 Tick 事件订阅，避免 ViewModel 释放后仍被定时器回调持有。
+    /// 释放定时器资源：停止并解绑定时器（PageRefreshTimer 内部解绑 Tick），避免 ViewModel 释放后仍被回调持有。
     /// </summary>
     public void Dispose()
     {
         _disposed = true;
         _statsRefreshVersion++;
         _activeRefreshVersion++;
-        _activeTimer.Stop();
-        _statsTimer.Stop();
-        _searchDebounceTimer.Stop();
-        _activeTimer.Tick -= OnActiveTimerTick;
-        _statsTimer.Tick -= OnStatsTimerTick;
-        _searchDebounceTimer.Tick -= OnSearchDebounceTick;
+        _activeTimer.Dispose();
+        _statsTimer.Dispose();
+        _searchDebounceTimer.Dispose();
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
     }
 
@@ -473,8 +486,9 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         RefreshStats();
     }
 
-    private void OnSearchDebounceTick(object? sender, EventArgs e)
+    private void OnSearchDebounceTick()
     {
+        // 单次语义：防抖到期执行一次即停，下次输入变化时由 OnAlarmSearchTextChanged 重新 Start
         _searchDebounceTimer.Stop();
         RefreshActiveAlarms();
         RefreshStats();
@@ -514,7 +528,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
 
         if (blockUntilApplied)
         {
-            var pending = ResolvePendingDataSourceForActive(context);
+            var pending = ResolveActiveSourceStates(context);
             var collected = BuildActiveAlarmList(context, pending);
             ApplyActiveAlarms(context.Now, collected, context);
             return;
@@ -522,7 +536,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
 
         Task.Run(() =>
         {
-            var pending = ResolvePendingDataSourceForActive(context);
+            var pending = ResolveActiveSourceStates(context);
             var collected = BuildActiveAlarmList(context, pending);
             _uiDispatcher.BeginInvoke(() =>
             {
@@ -547,12 +561,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         };
     }
 
-    private List<AlarmEventRecord> ResolvePendingDataSourceForActive(ActiveRefreshContext context)
+    /// <summary>
+    /// 解析当前活跃的数据源报警：直查报警活跃状态表（失败回退上一轮缓存）。
+    /// 状态行由采集端边沿 Upsert 维护，IsActive 即当前事实，不再回溯历史事件推断。
+    /// </summary>
+    private List<ActiveAlarmStateRecord> ResolveActiveSourceStates(ActiveRefreshContext context)
     {
-        var pending = PendingDataSourceAlarmQuery.TryQueryPending(
-            _historyService, context.Now, context.SelectedDeviceId, PendingDataSourceAlarmQuery.ActiveLookback);
+        var pending = PendingDataSourceAlarmQuery.TryQueryActiveSourceStates(_historyService, context.SelectedDeviceId);
         if (pending != null)
         {
+            // 存在性校验：仅保留当前 PLC 配置中仍存在的值项行，残留孤儿行不再进活跃墙
+            pending = PendingDataSourceAlarmQuery.FilterByCurrentState(pending, context.Devices);
             lock (_pendingDataSourceEvents)
                 _pendingDataSourceEvents = pending;
             return pending;
@@ -562,9 +581,15 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
             return _pendingDataSourceEvents.ToList();
     }
 
+    private List<ActiveAlarmStateRecord> SnapshotPendingDataSourceEvents()
+    {
+        lock (_pendingDataSourceEvents)
+            return _pendingDataSourceEvents.ToList();
+    }
+
     private List<ActiveAlarmInfo> BuildActiveAlarmList(
         ActiveRefreshContext context,
-        IReadOnlyList<AlarmEventRecord> pendingDataSourceEvents)
+        IReadOnlyList<ActiveAlarmStateRecord> pendingDataSourceEvents)
     {
         var collected = new List<ActiveAlarmInfo>();
 
@@ -599,7 +624,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
             var (nameEn, nameJa, namePt) = AlarmCenterDisplayHelper.ResolveEventLocalizedFields(
                 context.DeviceRepository, record.DeviceId, record.AlarmId);
             collected.Add(new ActiveAlarmInfo(
-                record.EventTime, record.DeviceId, record.DeviceName, record.AlarmName,
+                record.TriggeredAt, record.DeviceId, record.DeviceName, record.AlarmName,
                 AlarmLevel.Medium, AlarmKind.DataSource, nameEn, nameJa, namePt));
         }
 
@@ -649,7 +674,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         // 重新触发的报警 EventTime 变化 → 键不同 → 走 Replace，UI 取到新触发时刻。
         // DurationText 是 [ObservableProperty]，复用实例后靠下方 RefreshDuration 原地刷新驱动 UI。
         ObservableCollectionSyncHelper.ReuseExisting(ActiveAlarms, visible,
-            a => (a.DeviceId, a.AlarmName, a.Level, a.Kind, a.EventTime));
+            a => (a.DeviceId, a.AlarmName, a.Level, a.Kind, a.EventTime, a.AlarmNameEn, a.AlarmNameJa, a.AlarmNamePt));
         ObservableCollectionSyncHelper.Sync(ActiveAlarms, visible);
 
         foreach (var item in ActiveAlarms)
@@ -804,6 +829,11 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                     })
                     .ToList();
 
+                // P0-3：先统计截断前总数（Top 聚类组数 / 事件流合并条数），供截断提示展示
+                var topGroupCount = keyGroups.Count;
+                var recentAll = BuildRecentStream(filteredWindow, deviceRepository);
+                var recentTotal = recentAll.Count;
+
                 var topItems = (sortMode == AlarmTopSortMode.ByTotalDuration
                         ? keyGroups.OrderByDescending(x => x.TotalDuration.TotalSeconds)
                         : keyGroups.OrderByDescending(x => x.TriggerCount))
@@ -818,14 +848,18 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                         : topItems[i].TriggerCount.ToString();
                 }
 
-                var recent = BuildRecentStream(filteredWindow, deviceRepository)
+                var recent = recentAll
                     .Take(MaxRecentEvents)
                     .ToList();
 
                 // 最频繁报警保持"触发次数最多"口径（与 Top 显示维度解耦）
                 var mostFrequent = keyGroups.OrderByDescending(x => x.TriggerCount).FirstOrDefault();
 
-                var pendingSource = PendingDataSourceAlarmQuery.ExtractPending(allEvents);
+                // 活跃报警数据源：直查状态表（不再从窗口事件流回溯 7/30 天推断），失败时回退上一轮缓存
+                var activeStates = PendingDataSourceAlarmQuery.TryQueryActiveSourceStates(_historyService, deviceId);
+                var pendingSource = activeStates != null
+                    ? PendingDataSourceAlarmQuery.FilterByCurrentState(activeStates, deviceRepository.GetDevicesSnapshot())
+                    : SnapshotPendingDataSourceEvents();
 
                 void ApplyStats()
                 {
@@ -835,6 +869,8 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                         _pendingDataSourceEvents = pendingSource;
                     ObservableCollectionSyncHelper.Sync(RecentEvents, recent);
                     ObservableCollectionSyncHelper.Sync(TopAlarms, topItems);
+                    RecentEventTotalCount = recentTotal;
+                    TopAlarmGroupCount = topGroupCount;
 
                     TodayTriggerCount = triggerCount;
                     TodayRecoverCount = recoverCount;
@@ -860,9 +896,11 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                     if (_disposed || requestVersion != _statsRefreshVersion) return;
                     StatsErrorText = string.Format(Strings.F073, ex.Message);
                     lock (_pendingDataSourceEvents)
-                        _pendingDataSourceEvents = new List<AlarmEventRecord>();
+                        _pendingDataSourceEvents = new List<ActiveAlarmStateRecord>();
                     RecentEvents.Clear();
                     TopAlarms.Clear();
+                    RecentEventTotalCount = 0;
+                    TopAlarmGroupCount = 0;
                     TodayTriggerCount = 0;
                     TodayRecoverCount = 0;
                     MostFrequentAlarm = "—";

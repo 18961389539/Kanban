@@ -349,6 +349,14 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<IReadOnlyList<RecipeDto>>(nameof(IKanbanHubServer.GetRecipesAsync), ct);
     }
 
+    /// <summary>查询当前活跃报警状态快照（Remote 模式；活跃报警墙直查采集端真源）。</summary>
+    public async Task<IReadOnlyList<ActiveAlarmStateDto>> QueryActiveAlarmStatesAsync(string? deviceId = null, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<IReadOnlyList<ActiveAlarmStateDto>>(
+            nameof(IKanbanHubServer.QueryActiveAlarmStatesAsync), deviceId, ct);
+    }
+
     /// <summary>下发配方到指定设备（Remote 模式：写 PLC 由 Collector 执行，失败已回滚）。</summary>
     internal async Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default)
     {

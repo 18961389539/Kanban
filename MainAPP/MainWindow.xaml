@@ -456,19 +456,29 @@
 
             <Button
                 x:Name="FullscreenMenuButton"
-                Width="44"
-                Height="44"
-                Margin="16,16,0,0"
+                Width="40"
+                Height="40"
                 Padding="0"
+                Margin="16,16,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Panel.ZIndex="900"
+                AutomationProperties.AutomationId="FullscreenMenuButton"
                 AutomationProperties.Name="{x:Static resources:Strings.K121}"
                 Click="OnFullscreenMenuClick"
                 FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                Style="{StaticResource ButtonDefault}"
-                Visibility="Visible"
                 ToolTip="{x:Static resources:Strings.K121}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                        <!--  半透明常驻：全屏时停靠左侧中部，低调不喧宾夺主，悬停时加深便于点击  -->
+                        <Setter Property="Opacity" Value="0.35" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="1" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
                 <materialIcons:MaterialIcon Width="20" Height="20" Kind="Menu" />
             </Button>
         </Grid>

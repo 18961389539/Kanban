@@ -62,6 +62,12 @@ public static class MainAppServiceCollectionExtensions
         services.AddSingleton<IProductionReviewCsvExportService, ProductionReviewCsvExportService>();
         services.AddSingleton<IProductionReviewChartService, ProductionReviewChartService>();
         services.AddSingleton<IProductionReviewPdfService, ProductionReviewPdfService>();
+        // 2026-09-02 拆分（P1-9）：概览页数据聚合服务（从 OverviewViewModel.QueryData 抽出）
+        services.AddSingleton<IOverviewDashboardService>(sp => new OverviewDashboardService(
+            sp.GetRequiredService<IProductionReviewDataService>(),
+            sp.GetRequiredService<IProductionReviewMetricsService>(),
+            sp.GetRequiredService<IProductionReviewAnalysisService>(),
+            sp.GetRequiredService<DefectHistoryStore>()));
         services.AddSingleton<ProductionDailyReportService>();
         services.AddSingleton<GpuUsageMonitor>();
         services.AddSingleton<SystemResourceMonitor>();

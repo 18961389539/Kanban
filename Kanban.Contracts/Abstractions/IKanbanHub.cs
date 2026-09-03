@@ -116,6 +116,12 @@ public interface IKanbanHubServer
 
     /// <summary>拉取全部配方（只读；管理页/看板展示数据源）。</summary>
     Task<IReadOnlyList<RecipeDto>> GetRecipesAsync();
+
+    /// <summary>
+    /// 查询当前活跃报警状态快照（Unary）：采集端 ActiveAlarmStates 表的 IsActive=true 行。
+    /// 前端活跃报警墙直查真源，取代"回溯历史事件推断活跃状态"的旧逻辑。
+    /// </summary>
+    Task<IReadOnlyList<ActiveAlarmStateDto>> QueryActiveAlarmStatesAsync(string? deviceId = null);
 }
 
 /// <summary>

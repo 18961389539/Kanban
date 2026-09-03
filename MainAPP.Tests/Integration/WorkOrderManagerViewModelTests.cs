@@ -85,7 +85,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AddCommand.Execute(null);
 
-        Assert.Single(_workOrderRepo.WorkOrders);
+        Assert.Single(_workOrderRepo.GetSnapshot());
         Assert.Contains(_dialog.Success, s => s.Contains("已新增"));
         Assert.Equal(wo, vm.SelectedWorkOrder);
     }
@@ -98,7 +98,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AddCommand.Execute(null);
 
-        Assert.Empty(_workOrderRepo.WorkOrders);
+        Assert.Empty(_workOrderRepo.GetSnapshot());
         Assert.Empty(_dialog.Success);
     }
 
@@ -126,7 +126,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         vm.EditCommand.Execute(null);
 
         Assert.Contains(_dialog.Success, s => s.Contains("已更新"));
-        Assert.Equal("更新后产品", _workOrderRepo.WorkOrders[0].ProductName);
+        Assert.Equal("更新后产品", _workOrderRepo.GetSnapshot()[0].ProductName);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         vm.EditCommand.Execute(null);
 
         Assert.Empty(_dialog.Success);
-        Assert.Equal("测试产品", _workOrderRepo.WorkOrders[0].ProductName);
+        Assert.Equal("测试产品", _workOrderRepo.GetSnapshot()[0].ProductName);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.CopyCommand.Execute(null);
 
-        var copy = Assert.Single(_workOrderRepo.WorkOrders, w => w.OrderNo == "WO-DONE-COPY");
+        var copy = Assert.Single(_workOrderRepo.GetSnapshot(), w => w.OrderNo == "WO-DONE-COPY");
         Assert.NotEqual(saved.Id, copy.Id);
         Assert.Equal(WorkOrderStatus.Pending, copy.Status);
         Assert.Null(copy.CompletedOkCount);
@@ -198,8 +198,8 @@ public class WorkOrderManagerViewModelTests : IDisposable
         Assert.Equal(WorkOrderStatus.Pending, template.Status);
         Assert.Null(template.CompletedOkCount);
         Assert.Null(template.CompletedNgCount);
-        Assert.Single(_workOrderRepo.WorkOrders);
-        Assert.Same(saved, _workOrderRepo.WorkOrders[0]);
+        Assert.Single(_workOrderRepo.GetSnapshot());
+        Assert.Same(saved, _workOrderRepo.GetSnapshot()[0]);
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AddCommand.Execute(null);
 
-        Assert.Single(_workOrderRepo.WorkOrders);
+        Assert.Single(_workOrderRepo.GetSnapshot());
         Assert.Contains(_dialog.Warning, message => message.Contains("已存在"));
     }
 
@@ -231,7 +231,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AddCommand.Execute(null);
 
-        Assert.Single(_workOrderRepo.WorkOrders);
+        Assert.Single(_workOrderRepo.GetSnapshot());
         Assert.Contains(_dialog.Warning, message => message.Contains("重叠"));
     }
 
@@ -247,7 +247,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.DeleteCommand.Execute(null);
 
-        Assert.Empty(_workOrderRepo.WorkOrders);
+        Assert.Empty(_workOrderRepo.GetSnapshot());
         Assert.Contains(_dialog.Success, s => s.Contains("已删除"));
         Assert.Null(vm.SelectedWorkOrder);
     }
@@ -262,7 +262,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.DeleteCommand.Execute(null);
 
-        Assert.Single(_workOrderRepo.WorkOrders);
+        Assert.Single(_workOrderRepo.GetSnapshot());
         Assert.Empty(_dialog.Success);
     }
 
@@ -284,7 +284,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.StartCommand.Execute(null);
 
-        Assert.Equal(WorkOrderStatus.Running, _workOrderRepo.WorkOrders[0].Status);
+        Assert.Equal(WorkOrderStatus.Running, _workOrderRepo.GetSnapshot()[0].Status);
         Assert.Contains(_dialog.Success, s => s.Contains("已开始"));
     }
 
@@ -310,7 +310,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         vm.SelectedWorkOrder = pending;
 
         Assert.False(vm.StartCommand.CanExecute(null));
-        Assert.Equal(WorkOrderStatus.Pending, _workOrderRepo.WorkOrders.Single(w => w.OrderNo == "WO-002").Status);
+        Assert.Equal(WorkOrderStatus.Pending, _workOrderRepo.GetSnapshot().Single(w => w.OrderNo == "WO-002").Status);
     }
 
     [Fact]
@@ -331,7 +331,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.CompleteCommand.Execute(null);
 
-        Assert.Equal(WorkOrderStatus.Completed, _workOrderRepo.WorkOrders[0].Status);
+        Assert.Equal(WorkOrderStatus.Completed, _workOrderRepo.GetSnapshot()[0].Status);
         Assert.Contains(_dialog.Success, s => s.Contains("已完成"));
     }
 
@@ -367,7 +367,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AbortCommand.Execute(null);
 
-        Assert.Equal(WorkOrderStatus.Aborted, _workOrderRepo.WorkOrders[0].Status);
+        Assert.Equal(WorkOrderStatus.Aborted, _workOrderRepo.GetSnapshot()[0].Status);
         Assert.Contains(_dialog.Success, s => s.Contains("已中止"));
     }
 
@@ -381,7 +381,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AbortCommand.Execute(null);
 
-        Assert.Equal(WorkOrderStatus.Running, _workOrderRepo.WorkOrders[0].Status);
+        Assert.Equal(WorkOrderStatus.Running, _workOrderRepo.GetSnapshot()[0].Status);
         Assert.Empty(_dialog.Success);
     }
 
@@ -395,7 +395,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
 
         vm.AbortCommand.Execute(null);
 
-        Assert.Equal(WorkOrderStatus.Aborted, _workOrderRepo.WorkOrders[0].Status);
+        Assert.Equal(WorkOrderStatus.Aborted, _workOrderRepo.GetSnapshot()[0].Status);
     }
 
     [Fact]
@@ -599,7 +599,7 @@ public class WorkOrderManagerViewModelTests : IDisposable
         Assert.Single(vm.OverdueOrderIds);
         Assert.Contains(overdue.Id, vm.OverdueOrderIds);
         Assert.False(vm.OverdueOrderIds.Contains(active.Id));
-        Assert.DoesNotContain(_workOrderRepo.WorkOrders, w => string.IsNullOrWhiteSpace(w.OverdueHintText) && w.Id == overdue.Id);
+        Assert.DoesNotContain(_workOrderRepo.GetSnapshot(), w => string.IsNullOrWhiteSpace(w.OverdueHintText) && w.Id == overdue.Id);
     }
 
     // ──────────── 详情页逾期提示（P2 修复：VM 计算属性驱动）────────────
@@ -677,10 +677,27 @@ public class WorkOrderManagerViewModelTests : IDisposable
         Assert.NotSame(first, vm.WorkOrderGanttChartModel);
     }
 
-    /// <summary>轮询等待条件满足（最多 5s）。甘特图由 Task.Run 后台构建后异步回填，断言前须等待。</summary>
+    /// <summary>轮询等待条件满足（最多 5s）。甘特图由 Task.Run 后台构建后异步回填，断言前须等待。
+    /// 甘特重建入口经 ChartDiffGate 的 DispatcherTimer 防抖（Background 优先级），测试线程没有
+    /// 运行中的 Dispatcher 时 Tick 永不触发——每轮泵一次 Dispatcher 帧驱动防抖到期（审查修复 2026-09-03）。</summary>
     private static void SpinUntil(Func<bool> condition)
     {
         for (var i = 0; i < 500 && !condition(); i++)
+        {
             System.Threading.Thread.Sleep(10);
+            PumpCurrentDispatcher();
+        }
+    }
+
+    /// <summary>在当前线程的 Dispatcher 上泵一帧：处理所有已排队的操作（含 Background 优先级的防抖 Tick）后返回。
+    /// Continue=false 必须用低于 Background 的优先级：同优先级 FIFO 会先执行退出指令，
+    /// Dispatcher 每帧只处理这一个操作，防抖 Tick 永远排不上队。</summary>
+    private static void PumpCurrentDispatcher()
+    {
+        var frame = new System.Windows.Threading.DispatcherFrame();
+        _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+            new Action(() => frame.Continue = false),
+            System.Windows.Threading.DispatcherPriority.SystemIdle);
+        System.Windows.Threading.Dispatcher.PushFrame(frame);
     }
 }

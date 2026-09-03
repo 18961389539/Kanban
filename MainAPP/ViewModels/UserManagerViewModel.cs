@@ -73,8 +73,12 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
     /// <summary>新用户确认密码（code-behind 同步；与 NewPassword 一致性校验）。</summary>
     public string NewPasswordConfirm { get; set; } = string.Empty;
 
-    /// <summary>新用户是否"首次登录必须改密"。</summary>
-    [ObservableProperty] private bool _newMustChangePassword;
+    /// <summary>
+    /// 新用户是否"首次登录必须改密"。
+    /// P0-6 修复 2026-09-02：默认改为 true（勾选）。管理员创建的用户凭临时密码
+    /// 首次登录必须强制改密是安全基线，默认勾选避免管理员疏漏留下长期默认口令风险。
+    /// </summary>
+    [ObservableProperty] private bool _newMustChangePassword = true;
 
     /// <summary>新密码强度等级（0=弱 1=中 2=强，code-behind 实时更新）。</summary>
     [ObservableProperty]
@@ -127,6 +131,11 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         _session = session;
         _filteredView = new ListCollectionView(Users) { Filter = FilterPredicate };
         _userStore.UsersChanged += OnUsersChanged;
+
+        // 构造时同步填充一次，保证"构造即可用"契约（单测直接断言 FilteredUsers/RoleFilters/SecurityRisks，
+        // 且测试宿主无 Application.Current，OnPageEnter 的 BeginInvoke 不会发生——审查修复 2026-09-03）；
+        // OnPageEnter 仍会再刷一次拉取最新数据。
+        RefreshUsers();
     }
 
     /// <inheritdoc />

@@ -329,6 +329,8 @@ public class WorkOrderServiceTests : IDisposable
         public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
             DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
             => throw new InvalidOperationException("测试异常");
+        public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
+            => throw new InvalidOperationException("测试异常");
         public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
             string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)
             => throw new InvalidOperationException("测试异常");
@@ -339,6 +341,8 @@ public class WorkOrderServiceTests : IDisposable
         public bool LogAlarmEvent(string deviceId, string deviceName, string alarmId, string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime, string? shiftName = null)
             => throw new InvalidOperationException("测试异常");
         public bool LogStatusTransition(string deviceId, string deviceName, int previousState, int currentState, DateTime eventTime, string? shiftName = null)
+            => throw new InvalidOperationException("测试异常");
+        public HistoryDiagnosticsSnapshot GetDiagnosticsSnapshot()
             => throw new InvalidOperationException("测试异常");
     }
 

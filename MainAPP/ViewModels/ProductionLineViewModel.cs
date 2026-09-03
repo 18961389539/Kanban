@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -66,11 +66,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         SelectedDeviceId = _selection.SelectedDeviceId;
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged += OnShiftsChanged;
-        _kpiTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        _kpiTimer.Tick += OnKpiTimerTick;
+        _kpiTimer = new PageRefreshTimer(TimeSpan.FromMilliseconds(500), OnKpiTimerTick);
         // 筛选/排序视图：ListCollectionView（源 = LineDevices）+ Filter + CustomSort。
         // 原实现 getter 每次 ToList() 返回新 List 实例 → ItemsSource 收到新引用 → Reset →
         // VirtualizingWrapPanel 全量重建容器、虚拟化失效（排序/筛选态下每台设备每次属性变化都触发）。
@@ -85,7 +81,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     // ── KPI 合批刷新状态：Runtime 属性变化只置脏标记，由 Background 定时器合并后一次刷新，
     //    避免 6N 次/帧的 O(N²) 重算（N 台设备 × 每台 6 个属性 × 17 个 O(N) KPI getter）。──
 
-    private readonly System.Windows.Threading.DispatcherTimer _kpiTimer;
+    private readonly PageRefreshTimer _kpiTimer;
     private bool _kpisDirty;
     private bool _filterDirty;
     /// <summary>Runtime 反查 LineDeviceItem（O(1)，替代原 FirstOrDefault O(N) 线性查找）。</summary>
@@ -134,9 +130,9 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
             item.RefreshTransientTexts();
     }
 
-    private void OnKpiTimerTick(object? sender, EventArgs e)
+    private void OnKpiTimerTick()
     {
-        _kpiTimer.Stop();
+        _kpiTimer.Stop(); // 单次语义：积压刷新合并为一次即停，dirty 后再由属性变化触发 Start
         if (!_pageActive) return;
         FlushPendingRefresh();
     }
@@ -657,8 +653,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     /// </remarks>
     public void Dispose()
     {
-        _kpiTimer.Stop();
-        _kpiTimer.Tick -= OnKpiTimerTick;
+        _kpiTimer.Dispose();
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged -= OnRuntimesCollectionChanged;
         _selection.PropertyChanged -= OnSelectionChanged;

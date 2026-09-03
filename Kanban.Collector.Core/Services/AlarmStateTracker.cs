@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
@@ -21,29 +21,23 @@ internal sealed class AlarmStateTracker
     private readonly Dictionary<string, bool> _prevAlarmStates = new();
 
     /// <summary>
-    /// 班次切换事件（EventType=3）写入失败的报警 Id 集合。
-    /// ScanAlarms 重建内存状态时跳过这些报警的历史查询，直接当作未触发处理，
-    /// 避免 GetLatestAlarmEvent 查到旧 EventType=1 导致 StartTime 回填为上个班次时刻。
-    /// 每个报警 Id 在被消费一次后自动从集合移除。
+    /// 活跃状态快照服务（ActiveAlarmStates 表）：触发边沿 Upsert、恢复边沿删除、
+    /// 重启/重连状态重建（取代旧的"从历史事件推断 + 重建窗口"补丁）。
     /// </summary>
-    private readonly HashSet<string> _shiftChangeFailedAlarms = new();
+    private readonly IActiveAlarmStateService? _activeState;
     private readonly PlcBatchReadPlanCache _batchPlanCache = new();
 
     /// <summary>
-    /// 保护 _prevAlarmStates / _shiftChangeFailedAlarms 并发访问的锁对象。
+    /// 保护 _prevAlarmStates 并发访问的锁对象。
     /// 轮询线程读写，UI 线程（RemoveDeviceState/RemoveAlarmState）也会读写，
     /// 必须加锁避免 Dictionary/HashSet 并发访问导致 InvalidOperationException 或数据错乱。
     /// </summary>
     private readonly object _lock = new();
 
-    /// <summary>
-    /// 状态重建回填窗口：进程重启/PLC 重连后，仅当历史库中该报警最后一次事件是
-    /// 最近 <see cref="RebuildBackfillWindow"/> 内的 Triggered 时才回填 StartTime（延续持续时长）。
-    /// 更早的 Triggered 视为陈旧残留（跨运行时段/跨班次遗留），按"重新触发"处理——
-    /// 避免 StartTime 回填到几小时甚至几天前，导致实时故障卡持续时长虚高（如 8h）。
-    /// 窗口覆盖采集重连退避（最长 30s）+ 进程重启恢复余量。
-    /// </summary>
-    private static readonly TimeSpan RebuildBackfillWindow = TimeSpan.FromMinutes(10);
+    public AlarmStateTracker(IActiveAlarmStateService? activeState = null)
+    {
+        _activeState = activeState;
+    }
 
     /// <summary>
     /// 遍历所有报警，读取 PLC 位状态并检测边沿（用 Alarm.Id 作为状态字典 key）。
@@ -64,6 +58,9 @@ internal sealed class AlarmStateTracker
         var deviceList = devices.ToList();
         var batchValues = PrepareBatchValues(deviceList, adapter, logger, maxBatchReadLength, maxGapSlots);
         var allSuccessful = true;
+        // 设备级活跃状态缓存：本进程首轮扫描（重启/重连后 _prevAlarmStates 为空）需要重建 prevState，
+        // 每设备只查一次状态表，避免逐条 AlarmId 查询。
+        var activeStateCache = LoadActiveStateCache(deviceList);
         foreach (var device in deviceList)
         foreach (var alarm in device.Alarms.ToList())
         {
@@ -93,47 +90,25 @@ internal sealed class AlarmStateTracker
             // RemoveAlarmState 的后续逻辑安全处理（key 已删除则无需更新）。
             bool prevState;
             bool needRebuild;
-            bool skipHistoryRebuild;
 
             lock (_lock)
             {
-                if (!_prevAlarmStates.TryGetValue(alarm.Id, out prevState))
-                {
-                    needRebuild = true;
-                    // 班次切换事件写入失败的报警：跳过历史查询，直接当作未触发处理
-                    skipHistoryRebuild = _shiftChangeFailedAlarms.Remove(alarm.Id);
-                }
-                else
-                {
-                    needRebuild = false;
-                    skipHistoryRebuild = false;
-                }
+                needRebuild = !_prevAlarmStates.TryGetValue(alarm.Id, out prevState);
             }
 
-            // ── 锁外：状态重建（DB 查询） ──
+            // ── 锁外：状态重建（ActiveAlarmStates 快照表） ──
             if (needRebuild)
             {
-                if (skipHistoryRebuild)
+                // 从状态快照表恢复：行存在且 IsActive → 仍触发并延续 TriggeredAt（持续时长不虚高）；
+                // 无行/已恢复 → 未触发（当前 ON 走正常触发沿）。取代旧的"历史事件推断 + 重建窗口"补丁。
+                prevState = false;
+                if (activeStateCache != null
+                    && activeStateCache.TryGetValue(device.Id, out var rows)
+                    && rows.TryGetValue(alarm.Id, out var row) && row.IsActive)
                 {
-                    prevState = false;
-                }
-                else
-                {
-                    // 从 AlarmEvents 历史表重建状态，避免断线期间边沿事件丢失导致 Duration 计算虚高。
-                    // 仅回填最近窗口内的 Triggered：陈旧 Triggered（上次运行遗留）按未触发处理，
-                    // 当前 ON 会走正常触发沿（StartTime=now 并写新事件），防止时长虚高（如 8h）。
-                    var latest = historyService.GetLatestAlarmEvent(alarm.Id);
-                    if (latest != null && latest.EventType == AlarmEventType.Triggered
-                        && DateTime.Now - latest.EventTime <= RebuildBackfillWindow)
-                    {
-                        prevState = true;
-                        alarm.StartTime = latest.EventTime;
-                        alarm.EndTime = default;
-                    }
-                    else
-                    {
-                        prevState = false;
-                    }
+                    prevState = true;
+                    alarm.StartTime = row.TriggeredAt;
+                    alarm.EndTime = default;
                 }
             }
 
@@ -171,6 +146,18 @@ internal sealed class AlarmStateTracker
 
                 logger.LogInformation("报警 {Alarm} {Edge}（设备={Device}）",
                     alarm.Name, edgeType == AlarmEventType.Triggered ? "触发" : "恢复", device.Name);
+
+                // 同步维护活跃状态快照表：触发 Upsert（IsActive=true）、恢复删除行。
+                // 写失败无碍：Upsert/删除均幂等，下轮边沿或重建自动覆盖。
+                if (edgeType == AlarmEventType.Triggered)
+                {
+                    _activeState?.UpsertActive(device.Id, device.Name, alarm.Id, alarm.Name,
+                        addr, isActive: true, triggeredAt: eventTime, shiftName);
+                }
+                else
+                {
+                    _activeState?.RemoveByAlarm(device.Id, alarm.Id);
+                }
 
                 // 边沿事件广播：成功落库后向 EventBroadcaster 推送（修复 Remote 事件流缺口——
                 // 此前 AlarmStateTracker 仅写 DB + 报警铃，从未喂 EventBroadcaster）。
@@ -340,10 +327,8 @@ internal sealed class AlarmStateTracker
     /// <summary>
     /// 同步遍历当前仍触发中的报警（_prevAlarmStates 值为 true），
     /// 记录 EventType=3"班次切换"事件到 AlarmEvents 表。
-    /// 这些报警在新班次中会被当作"未触发"处理，下次 PLC 读取到 ON 时重新触发上升沿。
-    /// 单次尝试不重试（避免 Thread.Sleep 阻塞采集线程；DB 异常时立即重试通常也失败），
-    /// 写入失败时记入 _shiftChangeFailedAlarms 集合，ScanAlarms 重建时跳过历史查询直接当作未触发，
-    /// 避免 StartTime 回填为上个班次时刻。
+    /// 这些报警在新班次中会被当作"未触发"处理，下次 PLC 读取到 ON 时重新触发上升沿
+    /// （状态表行由 PlcScanPipeline.ResetAll 按设备清除，新班次重新落表）。
     /// 必须在 ResetAll 清空 _prevAlarmStates 之前调用。
     /// </summary>
     internal void LogShiftChangeForActiveAlarms(
@@ -364,33 +349,42 @@ internal sealed class AlarmStateTracker
 
             try
             {
-                var success = historyService.LogAlarmEvent(
+                historyService.LogAlarmEvent(
                     device.Id, device.Name, alarm.Id, alarm.Name,
                     alarm.PlcAddress, AlarmEventType.ShiftChange, System.DateTime.Now, shiftName);
-
-                if (!success)
-                {
-                    lock (_lock)
-                        _shiftChangeFailedAlarms.Add(alarm.Id);
-                    logger.LogError("报警 {Alarm} 班次切换事件写入失败，已标记跳过历史重建", alarm.Name);
-                }
             }
             catch (System.Exception ex)
             {
-                lock (_lock)
-                    _shiftChangeFailedAlarms.Add(alarm.Id);
-                logger.LogError(ex, "报警 {Alarm} 班次切换事件写入异常，已标记跳过历史重建", alarm.Name);
+                // 事件写入失败不阻断班次切换：状态表由调用方在 ResetAll 后按需清除，
+                // 无需失败补偿集合（Upsert 幂等，新班次若仍触发会重新落表）。
+                logger.LogError(ex, "报警 {Alarm} 班次切换事件写入异常", alarm.Name);
             }
         }
     }
 
-    /// <summary>清理已删除报警的残留内存状态（_prevAlarmStates + _shiftChangeFailedAlarms）。</summary>
+    /// <summary>
+    /// 为状态重建预取各设备的活跃报警状态（本进程首轮扫描使用）。
+    /// 返回 null 表示未注入状态服务（跳过重建，prevState 一律 false，行为与旧"无历史"一致）。
+    /// </summary>
+    private Dictionary<string, Dictionary<string, ActiveAlarmStateRecord>>? LoadActiveStateCache(IReadOnlyList<Device> devices)
+    {
+        if (_activeState == null) return null;
+        var cache = new Dictionary<string, Dictionary<string, ActiveAlarmStateRecord>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var device in devices)
+        {
+            var rows = _activeState.QueryActive(device.Id);
+            if (rows.Count == 0) continue;
+            cache[device.Id] = rows.ToDictionary(r => r.AlarmId, StringComparer.OrdinalIgnoreCase);
+        }
+        return cache;
+    }
+
+    /// <summary>清理已删除报警的残留内存状态（key 为 Alarm.Id）。</summary>
     internal void RemoveAlarmState(string alarmId)
     {
         lock (_lock)
         {
             _prevAlarmStates.Remove(alarmId);
-            _shiftChangeFailedAlarms.Remove(alarmId);
         }
     }
 
@@ -404,16 +398,11 @@ internal sealed class AlarmStateTracker
             foreach (var alarmId in alarmIds)
             {
                 _prevAlarmStates.Remove(alarmId);
-                _shiftChangeFailedAlarms.Remove(alarmId);
             }
         }
     }
 
-    /// <summary>班次切换时清空全部报警状态字典（_prevAlarmStates 保留，_shiftChangeFailedAlarms 保留）。</summary>
-    /// <remarks>
-    /// 注意：原实现仅清空 _prevAlarmStates，不清空 _shiftChangeFailedAlarms
-    /// （后者在 ScanAlarms 中被消费一次后自动移除）。保持原语义。
-    /// </remarks>
+    /// <summary>班次切换时清空全部报警边沿状态字典（状态表行由 PlcScanPipeline.ResetAll 按设备清除）。</summary>
     internal void ResetAll()
     {
         lock (_lock)
@@ -430,12 +419,6 @@ internal sealed class AlarmStateTracker
             return _prevAlarmStates.ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
-    internal System.Collections.Generic.IReadOnlyCollection<string> GetShiftChangeFailedAlarmsSnapshot()
-    {
-        lock (_lock)
-            return _shiftChangeFailedAlarms.ToList();
-    }
-
     internal void SetPrevAlarmStateForTest(string alarmId, bool state)
     {
         lock (_lock)
@@ -443,9 +426,8 @@ internal sealed class AlarmStateTracker
     }
 
     /// <summary>
-    /// 仅从 _prevAlarmStates 移除指定报警（不清 _shiftChangeFailedAlarms），
-    /// 精确模拟 ResetShift 对单条报警状态的影响（ResetShift 内 _prevAlarmStates.Clear()
-    /// 不会清空 _shiftChangeFailedAlarms），便于班次切换失败恢复场景的单测。
+    /// 仅从 _prevAlarmStates 移除指定报警，精确模拟 ResetShift 对单条报警状态的影响
+    /// （ResetShift 内 _prevAlarmStates.Clear()），便于班次切换场景的单测。
     /// </summary>
     internal void ClearPrevAlarmStateForTest(string alarmId)
     {

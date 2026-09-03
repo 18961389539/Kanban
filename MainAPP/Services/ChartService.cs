@@ -871,7 +871,9 @@ public static class ChartService
             OutsideLabelFormat = "",
             StrokeThickness = 1,
             Stroke = _borderColor,
-            InnerDiameter = 0.62,
+            // P0 修复 2026-09-02：内径 0.62→0.75，中心留白从 38% 扩到 25%，
+            // 消除 OEE=100%（满环无深灰缺口）时中心 48px 百分比文字与环弧线重叠。
+            InnerDiameter = 0.75,
         };
         if (v <= 0)
         {

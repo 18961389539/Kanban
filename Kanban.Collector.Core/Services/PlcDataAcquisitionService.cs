@@ -240,7 +240,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         DataSourceSnapshotStore? dataSourceSnapshotStore = null,
         IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
         IPlcRuntimeSessionManager? runtimeSessions = null,
-        ISnEventStore? snEventStore = null)
+        ISnEventStore? snEventStore = null,
+        IActiveAlarmStateService? activeAlarmState = null)
     {
         _plc = plc;
         _connectionManager = connectionManager;
@@ -265,7 +266,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             _adapterResolver, _deviceRepository, _alarmHistory, _appSettings,
             () => GetCurrentShiftName(), _logger, _alarmNotificationChannel,
             dto => AlarmEdgeDetected?.Invoke(dto), dataSourceReaderRegistry,
-            snEventStore, d => _workOrderRepo?.GetRunningByDevice(d)?.Id);
+            snEventStore, d => _workOrderRepo?.GetRunningByDevice(d)?.Id, activeAlarmState);
     }
 
     public PlcDataAcquisitionService(
@@ -283,12 +284,13 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         DataSourceSnapshotStore? dataSourceSnapshotStore = null,
         IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
         IPlcRuntimeSessionManager? runtimeSessions = null,
-        ISnEventStore? snEventStore = null)
+        ISnEventStore? snEventStore = null,
+        IActiveAlarmStateService? activeAlarmState = null)
         : this(plc, connectionManager, appSettings, historyService, historyService, historyService,
             deviceRepository, baselineStore, logger, adapterResolver, workOrderRepo, alarmNotificationChannel, defectHistoryStore,
             onAlarmEdge: null, onStatusEdge: null, dataSourceSnapshotStore: dataSourceSnapshotStore,
             dataSourceReaderRegistry: dataSourceReaderRegistry, runtimeSessions: runtimeSessions,
-            snEventStore: snEventStore)
+            snEventStore: snEventStore, activeAlarmState: activeAlarmState)
     {
     }
 

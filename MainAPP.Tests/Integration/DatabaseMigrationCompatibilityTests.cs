@@ -108,7 +108,9 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
             connection.Open();
             using var query = connection.CreateCommand();
             query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
-            Assert.Equal(1L, query.ExecuteScalar());
+            // alarm_events.db 现含两次迁移（InitialSchema + AddActiveAlarmStates）
+            var expectedHistoryCount = databaseName == "alarm_events.db" ? 2L : 1L;
+            Assert.Equal(expectedHistoryCount, query.ExecuteScalar());
         }
 
         // work_orders.db 现含两次迁移（InitialSchema + AddStatusTimestamps），新库应完整应用

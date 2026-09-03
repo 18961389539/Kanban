@@ -95,6 +95,16 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     private int _ganttBuildVersion;
     private bool _pageActive;
 
+    // ──────────── 甘特图重建防抖（P0-7 修复 2026-09-02：切换工单 UI 卡死） ────────────
+    // 原实现：每次选中工单变化（RefreshGanttForCurrentFilter）与每次产量回填
+    // （RefreshFilteredView → RefreshGanttChart）都会全量重建甘特图并在 UI 线程整图渲染。
+    // 工单/设备数量增大后，一次切换触发 2 次全量 build+apply，连续切换更会叠加，
+    // OxyPlot 整图渲染占满 UI 线程 → 表现为"切换工单 UI 卡死"。
+    // 修复：切换热路径只把重建请求排入 250ms 防抖窗口（ChartDiffGate），窗口内的多次请求合并为一次；
+    // 且 apply（替换 PlotModel，触发整图渲染）降到 Background 优先级，不再抢占输入。
+    private readonly Helpers.ChartDiffGate _ganttRebuildGate;
+    private IReadOnlyList<WorkOrder>? _pendingGanttInput;
+
     /// <summary>可选设备筛选项（"全部设备" + 各设备，按 DeviceId 匹配）。</summary>
     public ObservableCollection<DeviceFilterOption> DeviceOptions { get; } = [new("", Strings.M044)];
 
@@ -367,13 +377,16 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         ApplySort();
         // 订阅集合变化：工单增删/状态切换后重算各状态计数（命名方法，Dispose 时解绑）
         _workOrderRepo.WorkOrders.CollectionChanged += OnWorkOrdersCollectionChanged;
-        // 每分钟兜底刷新时间相关计数 + 甘特"当前时刻线"右移（两者都依赖 DateTime.Now，无集合事件可订阅）。
-        _derivedCountsTimer.Tick += (_, _) =>
+        // 甘特重建防抖：多次重建请求在窗口内合并为一次（见字段注释，ChartDiffGate 内部防抖）
+        _ganttRebuildGate = new Helpers.ChartDiffGate(OnGanttDebounceTick, debounce: TimeSpan.FromMilliseconds(250));
+        // 每分钟兜底刷新时间相关计数 + 甘特"当前时刻线"右移（两者都依赖 DateTime.Now，无集合事件可订阅）
+        _derivedCountsTimer = new Helpers.PageRefreshTimer(
+        TimeSpan.FromMinutes(1), () =>
         {
             if (!_pageActive) return;
             RecalcDerivedCounts();
             RefreshGanttForCurrentFilter();
-        };
+        });
     }
 
     /// <inheritdoc />
@@ -384,20 +397,23 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         if (!_derivedCountsTimer.IsEnabled)
             _derivedCountsTimer.Start();
 
+        // P0-2 修复 2026-09-02：进入页面必须全量重算状态计数——
+        // ViewModel 是懒加载（首次导航到本页才创建），而仓库 LoadAll 在启动期已完成，
+        // 创建时订阅后不会再收到集合 Reset 事件，若仅 RecalcDerivedCounts（不含四状态计数），
+        // 状态筛选 chip 的 Pending/Running/Completed/Aborted 计数会长期停留在 0。
+        // RefreshStatusCounts 内部以同一快照完成状态计数 + 派生计数，并刷新筛选视图。
         // 让导航切换先完成绘制，再在后台优先级重算计数/触发甘特图异步构建。
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher == null || dispatcher.HasShutdownStarted)
         {
-            RecalcDerivedCounts();
-            RefreshFilteredView();
+            RefreshStatusCounts();
             return;
         }
 
         dispatcher.BeginInvoke(() =>
         {
             if (!_pageActive) return;
-            RecalcDerivedCounts();
-            RefreshFilteredView();
+            RefreshStatusCounts();
         }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
@@ -406,6 +422,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         _pageActive = false;
         _derivedCountsTimer.Stop();
+        _ganttRebuildGate.Reset();
         _productionCts?.Cancel();
         _snCts?.Cancel();
         Interlocked.Increment(ref _ganttBuildVersion);
@@ -519,13 +536,9 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     }
 
     /// <summary>低频定时器：每分钟全量重算时间相关计数，覆盖"工单跨过 PlannedEnd 变逾期"的无事件转变。
-    /// 显式 Background 优先级：Tick 内为 O(W·K) 同步重算，默认的 Normal(9) 高于 Render(7) 会抢渲染。
+    /// PageRefreshTimer 统一 Background 优先级：Tick 内为 O(W·K) 同步重算，不抢渲染。
     /// （与 MainWindowViewModel / ProductionLineViewModel / RuntimeMonitoringViewModel 等处约定一致）</summary>
-    private readonly System.Windows.Threading.DispatcherTimer _derivedCountsTimer =
-        new(System.Windows.Threading.DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMinutes(1),
-        };
+    private readonly Helpers.PageRefreshTimer _derivedCountsTimer;
 
     private bool _disposed;
 
@@ -534,7 +547,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         if (_disposed) return;
         _disposed = true;
-        _derivedCountsTimer.Stop();
+        _derivedCountsTimer.Dispose();
+        _ganttRebuildGate.Dispose();
         _productionCts?.Cancel();
         _productionCts?.Dispose();
         _snCts?.Cancel();
@@ -656,6 +670,17 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     private void RefreshFilteredView()
     {
         FilteredView.Refresh();
+        RefreshSummaryTotals();
+    }
+
+    /// <summary>仅重算筛选汇总（目标/合格/达成率）并联动甘特，<b>不</b> Refresh 过滤视图。
+    /// P0-7 修复 2026-09-02（切换工单 UI 卡死·自激振荡）：产量回填完成后若走
+    /// FilteredView.Refresh()，ListBox 选中会瞬间丢失（TwoWay 推 null）又被 WPF 恢复（推回原工单），
+    /// 该抖动再次触发 OnSelectedWorkOrderChanged → 产量回填 → Refresh → 抖动 …
+    /// 在 UI 线程形成 ~200Hz 的 null↔id 振荡死循环，UI 100% 占用，表现为
+    /// "数据仍在更新但无法再切换工单"。产量回填只改数值不改集合成员资格，无需 Refresh。</summary>
+    private void RefreshSummaryTotals()
+    {
         var current = FilteredView.OfType<WorkOrder>().ToList();
         FilteredCount = current.Count;
 
@@ -671,7 +696,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         FilteredAchievementRate = targetTotal > 0 ? (double)okTotal / targetTotal : 0;
 
         // 排程甘特随筛选联动：仅显示当前筛选结果对应的设备与工单
-        RefreshGanttChart(current);
+        //（走防抖队列：产量回填等高频路径不会各自触发全量重建，见 _ganttDebounceTimer 注释）
+        ScheduleGanttRebuild(current);
     }
 
     /// <summary>重建工单排程甘特图（跟随当前筛选结果；冲突集合来自 RecalcDerivedCounts 的最新值）。</summary>
@@ -709,19 +735,44 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 chart = new OxyPlot.PlotModel();
             }
 
-            UiDispatcher.Dispatch(() =>
+            // P0-7：apply 降到 Background 优先级执行（替换 PlotModel 触发整图渲染，
+            // Normal 优先级会抢占输入/滚动响应；Background 让渲染排到空闲时）。
+            void ApplyGanttModel()
             {
                 if (!_pageActive || version != _ganttBuildVersion)
                     return;
                 WorkOrderGanttChartModel = chart;
                 OnPropertyChanged(nameof(WorkOrderGanttChartModel));
-            });
+            }
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
+                ApplyGanttModel();
+            else
+                dispatcher.BeginInvoke(new Action(ApplyGanttModel), System.Windows.Threading.DispatcherPriority.Background);
         }).Forget();
     }
 
-    /// <summary>按当前筛选视图重建甘特图（timer 每分钟调用，驱动"当前时刻线"随时间右移）。</summary>
+    /// <summary>按当前筛选视图重建甘特图（timer 每分钟调用，驱动"当前时刻线"随时间右移）。
+    /// 走防抖队列（250ms 窗口合并），切换工单/产量回填等热路径不会各自触发一次全量重建。</summary>
     private void RefreshGanttForCurrentFilter()
-        => RefreshGanttChart(FilteredView.OfType<WorkOrder>().ToList());
+        => ScheduleGanttRebuild();
+
+    /// <summary>将甘特重建请求排入防抖窗口：仅保留最新输入，窗口内多次请求合并为一次构建。
+    /// ChartDiffGate.Force 恒调度（甘特"当前时刻线"每分钟右移，即使输入相同也要重建）。</summary>
+    private void ScheduleGanttRebuild(IReadOnlyList<WorkOrder>? filtered = null)
+    {
+        _pendingGanttInput = filtered;
+        if (_pageActive) _ganttRebuildGate.Force();
+    }
+
+    /// <summary>防抖到期：基于最新输入执行一次甘特图重建。</summary>
+    private void OnGanttDebounceTick()
+    {
+        if (!_pageActive) return;
+        var input = _pendingGanttInput ?? FilteredView.OfType<WorkOrder>().ToList();
+        _pendingGanttInput = null;
+        RefreshGanttChart(input);
+    }
 
     /// <summary>一次扫描同时产出「计划重叠对数」与「参与冲突的工单 Id 集合」。
     /// 替代原先 CountScheduleConflicts / ComputeConflictOrderIds 两遍近乎相同的双重循环
@@ -769,14 +820,23 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     /// <summary>选中工单变化时查询产量聚合。</summary>
     partial void OnSelectedWorkOrderChanged(WorkOrder? value)
     {
-        RefreshSelectedProduction();
-        NotifyActionReasonsChanged();
-        // 选中变化立即刷新详情页逾期徽章（由 RecalcDerivedCounts 定时兜底，此处覆盖"切换时即最新"）
-        RefreshSelectedOverdueHint();
-        // SN 明细：重置到第 1 页并加载选中工单的序列号事件
-        SnPage = 1;
-        LoadSnItems();
-        RefreshGanttForCurrentFilter();
+        try
+        {
+            RefreshSelectedProduction();
+            NotifyActionReasonsChanged();
+            // 选中变化立即刷新详情页逾期徽章（由 RecalcDerivedCounts 定时兜底，此处覆盖"切换时即最新"）
+            RefreshSelectedOverdueHint();
+            // SN 明细：重置到第 1 页并加载选中工单的序列号事件
+            SnPage = 1;
+            LoadSnItems();
+            RefreshGanttForCurrentFilter();
+        }
+        catch (Exception ex)
+        {
+            // 防御（P0-7）：任何内部异常不得中断 SelectedWorkOrder 双向绑定——
+            // 绑定链一旦因异常断裂，列表点击将永久失效，症状即"无法切换工单"。
+            Serilog.Log.Error(ex, "切换工单处理失败 id={Id}", value?.Id);
+        }
     }
 
     private void NotifyActionReasonsChanged()
@@ -799,8 +859,10 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             _productionCts?.Cancel();
             _productionCts?.Dispose();
             _productionCts = null;
-            _lastProductionOrderId = null;
-            SelectedProduction = null;
+            // P0-7：瞬态 null（视图 Refresh 引发的选中抖动，随后 WPF 会恢复选中）不清空产量缓存——
+            // 否则 2s 节流失效，恢复选中后立即全量重查 → 回填 → Refresh → 抖动 自激死循环。
+            // 真正切换工单走下方 _lastProductionOrderId != order.Id 分支丢弃旧缓存；详情区在
+            // SelectedWorkOrder=null 时整体隐藏，保留缓存不产生错误显示。
             IsProductionLoading = false;
             IsProductionLoadFailed = false;
             return;
@@ -816,8 +878,13 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             && SelectedProduction != null
             && !IsProductionLoadFailed)
         {
-            ApplyProductionSummary(order, SelectedProduction);
-            RefreshFilteredView();
+            // refreshListRow:false——本分支多为选中抖动（null→同工单 恢复）在集合
+            // CollectionChanged 事件窗口内的重入，此时再 SetItem 会触发
+            // ObservableCollection.CheckReentrancy 异常（曾打断 TwoWay 绑定链，
+            // 症状即"无法再切换工单"）。且数据未变化，无需刷新列表行。
+            ApplyProductionSummary(order, SelectedProduction, refreshListRow: false);
+            // 只重算汇总，不 Refresh 视图（防选中抖动自激循环，见 RefreshSummaryTotals 注释）
+            RefreshSummaryTotals();
             return;
         }
 
@@ -857,7 +924,8 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 SelectedProduction = summary;
                 IsProductionLoadFailed = false;
                 ApplyProductionSummary(order, summary);
-                RefreshFilteredView();
+                // 只重算汇总，不 Refresh 视图（防选中抖动自激循环，见 RefreshSummaryTotals 注释）
+                RefreshSummaryTotals();
             });
         }, token).Forget();
     }
@@ -877,31 +945,17 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             NotifyWorkOrderProductionChanged(workOrder);
     }
 
-    /// <summary>触发 ListBox 行内产量绑定刷新（与 WorkOrderRepository.SyncMemoryCollection 同策略）。</summary>
+    /// <summary>触发 ListBox 行内产量绑定刷新（与 WorkOrderRepository.SyncMemoryCollection 同策略）。
+    /// 必须经 TryReplaceInMemory 持锁替换：本方法可能在后台回填线程执行，直接 SetItem
+    /// 与绑定引擎/Upsert 路径无互斥（审查修复 2026-09-03）。</summary>
     private void NotifyWorkOrderProductionChanged(WorkOrder workOrder)
-    {
-        var list = _workOrderRepo.WorkOrders;
-        for (var i = 0; i < list.Count; i++)
-        {
-            if (list[i].Id != workOrder.Id) continue;
-            list[i] = workOrder;
-            return;
-        }
-    }
+        => _workOrderRepo.TryReplaceInMemory(workOrder);
 
     /// <summary>批量回填后统一刷新列表项绑定。</summary>
     private void RefreshWorkOrderListItemBindings(IReadOnlyList<WorkOrder> workOrders)
     {
-        var list = _workOrderRepo.WorkOrders;
         foreach (var workOrder in workOrders)
-        {
-            for (var i = 0; i < list.Count; i++)
-            {
-                if (list[i].Id != workOrder.Id) continue;
-                list[i] = workOrder;
-                break;
-            }
-        }
+            _workOrderRepo.TryReplaceInMemory(workOrder);
     }
 
     /// <summary>

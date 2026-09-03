@@ -14,6 +14,7 @@ using LicenseManager.Views;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Helpers;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Mapping;
 using MainAPP.Services;
@@ -76,7 +77,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private KanbanRunMode _lastSavedRunMode;
 
     /// <summary>授权状态定时刷新器（UI 线程 DispatcherTimer，每 60 秒）。</summary>
-    private DispatcherTimer? _licenseRefreshTimer;
+    private PageRefreshTimer? _licenseRefreshTimer;
 
     /// <summary>当前用户会话（用于权限门禁）；测试宿主未注册时为 null。</summary>
     private readonly UserSession? _userSession;
@@ -494,8 +495,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private void StartLicenseStatusTimer()
     {
         if (Application.Current is null) return;
-        _licenseRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
-        _licenseRefreshTimer.Tick += (_, _) => RefreshLicenseStatus(recheck: false);
+        _licenseRefreshTimer = new PageRefreshTimer(TimeSpan.FromSeconds(60), () => RefreshLicenseStatus(recheck: false));
         _licenseRefreshTimer.Start();
     }
 
@@ -503,7 +503,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     private void StopLicenseStatusTimer()
     {
         if (_licenseRefreshTimer is null) return;
-        _licenseRefreshTimer.Stop();
+        _licenseRefreshTimer.Dispose();
         _licenseRefreshTimer = null;
     }
 

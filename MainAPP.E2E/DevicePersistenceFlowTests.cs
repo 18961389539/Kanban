@@ -77,7 +77,8 @@ public class DevicePersistenceFlowTests
 
         var repo = _host.Resolve<DeviceRepository>();
         Assert.NotNull(repo.LoadErrorMessage);
-        Assert.Contains("损坏", repo.LoadErrorMessage);
+        // 文案口径（2026-09 起）："设备配置文件 devices.json 无效（<异常详情>）"，不再用"损坏"字样
+        Assert.Contains("无效", repo.LoadErrorMessage);
         Assert.True(System.IO.File.Exists(repo.FilePath + ".corrupt"));
         Assert.Empty(repo.Devices);
     }

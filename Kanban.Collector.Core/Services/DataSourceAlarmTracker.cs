@@ -25,6 +25,7 @@ namespace Kanban.Collector.Core.Services;
 public sealed class DataSourceAlarmTracker
 {
     private readonly IAlarmHistoryService _alarmHistory;
+    private readonly IActiveAlarmStateService? _activeState;
     private readonly ILogger _logger;
     private readonly IAlarmNotificationChannel? _notificationChannel;
     private readonly Func<DateTime> _nowProvider;
@@ -62,13 +63,15 @@ public sealed class DataSourceAlarmTracker
         IAlarmNotificationChannel? notificationChannel = null,
         Action<AlarmEventDto>? onAlarmEdge = null,
         ILogger? logger = null,
-        Func<DateTime>? nowProvider = null)
+        Func<DateTime>? nowProvider = null,
+        IActiveAlarmStateService? activeState = null)
     {
         _alarmHistory = alarmHistory;
         _notificationChannel = notificationChannel;
         _onAlarmEdge = onAlarmEdge;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
         _nowProvider = nowProvider ?? (() => DateTime.Now);
+        _activeState = activeState;
     }
 
     private readonly Action<AlarmEventDto>? _onAlarmEdge;
@@ -200,6 +203,8 @@ public sealed class DataSourceAlarmTracker
         _alarmHistory.LogAlarmEvent(
             device.Id, device.Name, state.AlarmId, state.AlarmName, state.PlcAddress,
             AlarmEventType.Triggered, now, shiftName);
+        _activeState?.UpsertActive(state.DeviceId, state.DeviceName, state.AlarmId, state.AlarmName,
+            state.PlcAddress, isActive: true, triggeredAt: now, shiftName);
         TryNotify(device, source, valueItem, now);
         TryPublishEdge(device, source, valueItem, state.PlcAddress, AlarmEventType.Triggered, AlarmLevel.Medium, now, shiftName);
         _logger.LogInformation("数据源 {Source} 值项 {Value}（设备 {Device}）触发告警：当前值 {Current}{Unit}",
@@ -211,6 +216,7 @@ public sealed class DataSourceAlarmTracker
         _alarmHistory.LogAlarmEvent(
             device.Id, device.Name, state.AlarmId, state.AlarmName, state.PlcAddress,
             AlarmEventType.Recovered, now, shiftName);
+        _activeState?.RemoveByAlarm(state.DeviceId, state.AlarmId);
         TryPublishEdge(device, source, valueItem, state.PlcAddress, AlarmEventType.Recovered, AlarmLevel.Medium, now, shiftName);
         _logger.LogInformation("数据源 {Source} 值项 {Value}（设备 {Device}）告警恢复：当前值 {Current}{Unit}",
             source.Name, valueItem.Name, device.Name, valueItem.CurrentValue, valueItem.Unit);
@@ -269,6 +275,7 @@ public sealed class DataSourceAlarmTracker
             _alarmHistory.LogAlarmEvent(
                 state.DeviceId, state.DeviceName, state.AlarmId, state.AlarmName, state.PlcAddress,
                 AlarmEventType.Recovered, now, shiftName);
+            _activeState?.RemoveByAlarm(state.DeviceId, state.AlarmId);
             _logger.LogInformation("数据源告警 {Alarm}（设备 {Device}）断线恢复", state.AlarmName, state.DeviceName);
         }
         _states.Clear();
@@ -287,6 +294,8 @@ public sealed class DataSourceAlarmTracker
             _alarmHistory.LogAlarmEvent(
                 state.DeviceId, state.DeviceName, state.AlarmId, state.AlarmName, state.PlcAddress,
                 AlarmEventType.Recovered, now, string.Empty);
+            // 状态表同步删除：新班次值仍越限时由重新触发边沿再次写入（TriggeredAt=新班次时刻）
+            _activeState?.RemoveByAlarm(state.DeviceId, state.AlarmId);
             _logger.LogInformation("数据源告警 {Alarm}（设备 {Device}）班次切换恢复", state.AlarmName, state.DeviceName);
         }
         _states.Clear();
@@ -298,6 +307,7 @@ public sealed class DataSourceAlarmTracker
         var prefix = deviceId + ":";
         foreach (var key in _states.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
             _states.Remove(key);
+        _activeState?.RemoveByDeviceId(deviceId);
     }
 
     /// <summary>删除单个数据源的全部值项状态（设备管理删除数据源后调用，防内存泄漏）。</summary>
@@ -305,7 +315,11 @@ public sealed class DataSourceAlarmTracker
     {
         var prefix = $"{deviceId}:{sourceId}:";
         foreach (var key in _states.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            var valueId = key.Substring(key.LastIndexOf(':') + 1);
             _states.Remove(key);
+            _activeState?.RemoveByAlarm(deviceId, SourceAlarmId(valueId));
+        }
     }
 
     private static string GetKey(string deviceId, string sourceId, string valueId) => $"{deviceId}:{sourceId}:{valueId}";

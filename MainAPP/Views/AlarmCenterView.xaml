@@ -515,9 +515,28 @@
                     <Border Grid.Row="0" Style="{StaticResource MainCard}" Padding="0">
                         <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
-                                <Border Style="{StaticResource ChartCardTitleBar}" />
-                                <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
-                            </DockPanel>
+                            <Border Style="{StaticResource ChartCardTitleBar}" />
+                            <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K046}" />
+                            <!-- P0-3 修复：事件流总数 + 截断提示（超 500 条合并项时告知还有更多） -->
+                            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{Binding RecentEventTotalCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=K919}" />
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource WarningBrush}"
+                                       Text="{Binding RecentEventTruncationHint}"
+                                       ToolTip="{Binding RecentEventTruncationHint}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasRecentEventTruncation}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DockPanel>
                             <ListBox ItemsSource="{Binding RecentEvents}"
                                      ItemContainerStyle="{StaticResource AlarmVirtualListItem}"
                                      Style="{StaticResource AlarmVirtualList}"
@@ -606,6 +625,22 @@
                                 </StackPanel>
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K138}" />
+                                <!-- P0-3 修复：Top 排行截断提示（超 10 个聚类组时告知还有更多） -->
+                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="Medium"
+                                           Foreground="{StaticResource WarningBrush}"
+                                           Text="{Binding TopAlarmTruncationHint}"
+                                           ToolTip="{Binding TopAlarmTruncationHint}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasTopAlarmTruncation}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </DockPanel>
                             <ListBox ItemsSource="{Binding TopAlarms}"
                                      ItemContainerStyle="{StaticResource AlarmVirtualListItem}"

@@ -5,6 +5,7 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using MainAPP.Resources;
+using MainAPP.Helpers;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Legends;
@@ -146,7 +147,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     private const int MaxTrendPoints = 600;
     private static readonly TimeSpan MaxTrendAge = TimeSpan.FromMinutes(10);
     private readonly IDeviceRepository _deviceRepository;
-    private readonly DispatcherTimer _refreshTimer;
+    private readonly PageRefreshTimer _refreshTimer;
     private readonly Dictionary<string, Queue<DataSourceMonitorTrendPoint>> _trendPoints = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DataSourceMonitorRow> _rowCache = new(StringComparer.Ordinal);
     private readonly LineSeries _trendLineSeries;
@@ -300,11 +301,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
         StateFilterItems.Add(new("NotSampled", Strings.Dsm_NotSampled));
         StateFilterItems.Add(new("Exceptions", Strings.Dsm_Exceptions));
 
-        _refreshTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(1),
-        };
-        _refreshTimer.Tick += OnRefreshTimerTick;
+        _refreshTimer = new PageRefreshTimer(TimeSpan.FromSeconds(1), OnRefreshTimerTick);
     }
 
     public void OnPageEnter()
@@ -390,7 +387,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
             SelectedRow = row;
     }
 
-    private void OnRefreshTimerTick(object? sender, EventArgs e) => Refresh();
+    private void OnRefreshTimerTick() => Refresh();
 
     private void RefreshDeviceFilterItems(IReadOnlyList<Device> devices)
     {
@@ -895,8 +892,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     {
         if (_disposed) return;
         _disposed = true;
-        _refreshTimer.Stop();
-        _refreshTimer.Tick -= OnRefreshTimerTick;
+        _refreshTimer.Dispose();
         _rowCache.Clear();
         _trendPoints.Clear();
         _trendLineSeries.Points.Clear();

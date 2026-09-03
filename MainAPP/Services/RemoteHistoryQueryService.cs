@@ -164,6 +164,32 @@ public sealed class RemoteHistoryQueryService :
             ? QueryRemoteAlarmByAlarmId(alarmId)
             : _local.GetLatestAlarmEventStrict(alarmId);
 
+    /// <summary>查询当前活跃报警状态快照：Local 委托本地存储；Remote 走 SignalR 直查采集端 ActiveAlarmStates 表。</summary>
+    public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
+    {
+        if (!IsRemote)
+            return _local.QueryActiveAlarmStates(deviceId);
+
+        using var timeoutCts = new CancellationTokenSource(RemoteCallTimeout);
+        var dtos = Task.Run(
+            () => _client.QueryActiveAlarmStatesAsync(deviceId, timeoutCts.Token).GetAwaiter().GetResult())
+            .GetAwaiter().GetResult();
+        return dtos.Select(ToActiveStateEntity).ToList();
+    }
+
+    private static ActiveAlarmStateRecord ToActiveStateEntity(ActiveAlarmStateDto dto) => new()
+    {
+        DeviceId = dto.DeviceId,
+        DeviceName = dto.DeviceName,
+        AlarmId = dto.AlarmId,
+        AlarmName = dto.AlarmName,
+        PlcAddress = dto.PlcAddress,
+        IsActive = dto.IsActive,
+        TriggeredAt = dto.TriggeredAt,
+        ShiftName = dto.ShiftName,
+        UpdatedAt = dto.UpdatedAt,
+    };
+
     // ──────────── IStatusTransitionHistoryService ────────────
 
     public List<StatusTransitionRecord> QueryStatusTransitions(string deviceId, DateTime from, DateTime to, string? shiftName = null)
@@ -857,6 +883,14 @@ public sealed class RemoteHistoryQueryService :
 
     public SnEventStoreDiagnosticsSnapshot GetDiagnosticsSnapshot()
         => IsRemote ? new SnEventStoreDiagnosticsSnapshot() : _localSnStore.GetDiagnosticsSnapshot();
+
+    /// <summary>
+    /// 历史写入诊断：Remote 模式写入发生在 Collector 侧，本地无写入队列，返回空快照；
+    /// Local 模式直接透传本地 HistoryService。与 SnEventStore 诊断的 IsRemote 分支同模式。
+    /// 显式接口实现：与下方 SnEventStore 同名无参方法仅返回类型不同，无法隐式共存。
+    /// </summary>
+    HistoryDiagnosticsSnapshot IHistoryService.GetDiagnosticsSnapshot()
+        => IsRemote ? new HistoryDiagnosticsSnapshot() : _local.GetDiagnosticsSnapshot();
 
     /// <summary>
     /// Remote SN 查询同步封装：Task.Run 转入线程池执行（SignalR InvokeAsync 在 UI 线程

@@ -44,6 +44,7 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     private readonly ProductionHistoryStore _productionStore;
     private readonly ProductionHistoryWriter _productionWriter;
     private readonly AlarmHistoryStore _alarmStore;
+    private readonly ActiveAlarmStateStore _activeStateStore;
     private readonly StatusTransitionHistoryStore _statusStore;
     private readonly DefectHistoryStore _defectStore;
     private readonly HistoryStorageDiagnostics _storageDiagnostics;
@@ -62,13 +63,15 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         StatusTransitionHistoryStore? statusStore = null,
         DefectHistoryStore? defectStore = null,
         HistoryStorageDiagnostics? storageDiagnostics = null,
-        DataSourceSnapshotStore? dataSourceSnapshotStore = null)
+        DataSourceSnapshotStore? dataSourceSnapshotStore = null,
+        ActiveAlarmStateStore? activeStateStore = null)
     {
         _db = db;
         _logger = logger;
         _productionStore = productionStore ?? new ProductionHistoryStore(db, NullLogger<ProductionHistoryStore>.Instance);
         _productionWriter = productionWriter ?? new ProductionHistoryWriter(db, settings, NullLogger<ProductionHistoryWriter>.Instance);
         _alarmStore = alarmStore ?? new AlarmHistoryStore(db, NullLogger<AlarmHistoryStore>.Instance);
+        _activeStateStore = activeStateStore ?? new ActiveAlarmStateStore(db, NullLogger<ActiveAlarmStateStore>.Instance);
         _statusStore = statusStore ?? new StatusTransitionHistoryStore(db, NullLogger<StatusTransitionHistoryStore>.Instance);
         _defectStore = defectStore ?? new DefectHistoryStore(db, NullLogger<DefectHistoryStore>.Instance);
         _storageDiagnostics = storageDiagnostics ?? new HistoryStorageDiagnostics(settings);
@@ -166,6 +169,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId) => _alarmStore.GetLatestAlarmEvent(alarmId);
     public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId) => _alarmStore.GetLatestAlarmEventStrict(alarmId);
     public int CleanupOldAlarmEvents(int retentionDays = 365) => _alarmStore.CleanupOldAlarmEvents(retentionDays);
+    public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
+        => _activeStateStore.QueryActive(deviceId);
 
     public bool LogStatusTransition(string deviceId, string deviceName, int previousState, int currentState,
         DateTime eventTime, string? shiftName = null)

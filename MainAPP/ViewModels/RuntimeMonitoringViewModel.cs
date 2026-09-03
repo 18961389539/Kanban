@@ -12,6 +12,7 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Helpers;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -59,13 +60,13 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private readonly AppSettings _appSettings;
     private readonly IRuntimeMode _runtimeMode;
     private readonly IDeviceRepository _deviceRepository;
-    private readonly HistoryService _historyService;
+    private readonly IHistoryService _historyService;
     private readonly IPlcAddressCodecResolver? _addressCodecResolver;
     private readonly IPlcRuntimeProfileProvider? _profileProvider;
     private readonly SystemResourceMonitor _systemResourceMonitor;
     private readonly IDialogService _dialogService;
     private readonly KanbanDataClient? _remoteClient;
-    private readonly DispatcherTimer _refreshTimer;
+    private readonly PageRefreshTimer _refreshTimer;
 
     /// <summary>远程刷新版本守卫（RefreshFromRemote 防重入：过期响应丢弃）。</summary>
     private int _refreshVersion;
@@ -220,7 +221,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         IPlcDataAcquisitionService acquisitionService,
         AppSettings appSettings,
         IDeviceRepository deviceRepository,
-        HistoryService historyService,
+        IHistoryService historyService,
         SystemResourceMonitor systemResourceMonitor,
         IDialogService dialogService,
         IPlcAddressCodecResolver? addressCodecResolver = null,
@@ -240,11 +241,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         _remoteClient = remoteClient;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _pollingTrendSeries = (LineSeries)_pollingTrend.Series[0];
-        _refreshTimer = new DispatcherTimer(DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromSeconds(1),
-        };
-        _refreshTimer.Tick += OnRefreshTimerTick;
+        _refreshTimer = new PageRefreshTimer(TimeSpan.FromSeconds(1), OnRefreshTimerTick);
     }
 
     public void OnPageEnter()
@@ -703,7 +700,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         }
     }
 
-    private void OnRefreshTimerTick(object? sender, EventArgs e)
+    private void OnRefreshTimerTick()
     {
         if (IsAutoRefreshPaused) return; // 暂停读数：定时器继续跑但不出帧，恢复时无需重建
 
@@ -869,7 +866,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public void Dispose()
     {
         OnPageExit();
-        _refreshTimer.Tick -= OnRefreshTimerTick;
+        _refreshTimer.Dispose();
         _pollingTrendPoints.Clear();
         // 注意：不释放 _systemResourceMonitor——它是 DI 容器持有的单例（级联单例 GpuUsageMonitor），
         // 生命周期归容器管，由页面 VM 释放属所有权违规（host.Dispose 统一释放）。

@@ -79,20 +79,28 @@ public class DeviceSimulator
     // 节拍漂移（累积，0 ~ CycleDriftMax）
     private double _cycleDrift;
 
-    // ── 数据源模拟 ──
+    // ── 数据源模拟（工艺参数平滑演进 + 越限联动报警 + 共享环境传导）──
     private readonly int _registerOffset;
-    private int _temperature = 245;              // 温度 ×10（245 = 24.5℃）
-    private bool _tempOverLimit;                 // 是否处于模拟越限窗口
-    private DateTime _nextTempEventTime = DateTime.MinValue;
+    private bool _paramsInitialized;
+    /// <summary>工艺参数集合（温度/湿度/压力/电流，按设备工艺类型初始化基线与越限阈值）。</summary>
+    private readonly List<SimulatedAnalogParam> _analogParams = new();
+    /// <summary>当前由参数越限触发的报警关联参数 Key（报警恢复时驱动参数回落，形成因果闭环）。</summary>
+    private string? _overlimitLinkedKey;
+    /// <summary>共享环境触发去重：低压气源 / 供电波动事件期间各只触发一次，事件结束后复位。</summary>
+    private bool _airLowAlarmTriggered;
+    private bool _powerDipAlarmTriggered;
     private readonly Dictionary<string, SourceTriggerState> _sourceTriggerStates = new(StringComparer.OrdinalIgnoreCase);
 
     // 数据源模拟地址约定（三菱 D 地址，MelsecMcServer 任意 D 字可读写）：
-    // D(502+off)=温度(×10, Int32)、D(504+off)=湿度(×10, Int32)、D(510+off)=温度采集触发命令字
-    // 注意：各值寄存器间隔 2 字——Int32 读会拼接相邻字（低地址=低 16 位），相邻字留空避免值污染。
-    private int TemperatureAddress => 502 + _registerOffset;
-    private int HumidityAddress => 504 + _registerOffset;
-    private int TriggerAddress => 510 + _registerOffset;
-    private const int TriggerAckValue = 2;
+    // D(600+off)=温度(°C, Float32)、D(602+off)=湿度(%, Float32)、D(604+off)=工艺压力(bar/MPa, Float32)、
+    // D(606+off)=工艺电流/转速(A, Float32)、D(608+off)=数据源采集触发命令字（Int32 握手）。
+    // 地址区取 D6xx（与 OK/NG 计数 D1xx、缺陷 D2xx、配方 D5xx 错开，避免冲突）。
+    // 注意：相邻 Float32 各占 2 字，地址间隔留 2 字避免值污染。
+    private int TemperatureAddress => 600 + _registerOffset;
+    private int HumidityAddress => 602 + _registerOffset;
+    private int PressureAddress => 604 + _registerOffset;
+    private int CurrentAddress => 606 + _registerOffset;
+    private int TriggerAddress => 608 + _registerOffset;
 
     // 开机预热：启动后前 WarmupPieces 件使用高 NG 率 + 慢节拍
     private int _warmupProduced;
@@ -179,6 +187,50 @@ public class DeviceSimulator
         public DateTime NextTriggerTime { get; set; } = DateTime.MinValue;
     }
 
+    /// <summary>
+    /// 工艺参数模拟状态：正常时段按随机游走 + 向基线回归演进（真实传感器曲线），
+    /// 偶发进入越限期（缓慢爬升并保持），越限期间联动触发名称匹配的报警位。
+    /// </summary>
+    private sealed class SimulatedAnalogParam
+    {
+        /// <summary>参数标识（temperature/humidity/pressure/current）。</summary>
+        public required string Key { get; init; }
+        /// <summary>日志显示名。</summary>
+        public required string DisplayName { get; init; }
+        /// <summary>参数基线值（Float32 工程单位：°C / % / bar / MPa / A）。</summary>
+        public required float Base { get; init; }
+        /// <summary>正常波动半幅（工程单位）。</summary>
+        public required float Noise { get; init; }
+        /// <summary>越限触发阈值（超过即进入越限期）。</summary>
+        public required float OverLimitAt { get; init; }
+        /// <summary>关联报警关键字列表（名称任含其一即联动该报警位）。空列表 = 不联动报警。</summary>
+        public required string[] AlarmKeywords { get; init; }
+        /// <summary>当前值。</summary>
+        public float Current { get; set; }
+        public bool OverLimit { get; set; }
+        /// <summary>下一次允许进入越限事件的时刻。</summary>
+        public DateTime NextOverEvent { get; set; } = DateTime.MinValue;
+        /// <summary>自行恢复时刻（无联动报警或联动失败时用；联动报警恢复由 ProcessExpirations 驱动）。</summary>
+        public DateTime? NextDownEvent { get; set; }
+    }
+
+    /// <summary>共享环境快照（由 Program 每 EnvironmentTickMs 刷新一次，传给各设备）。</summary>
+    public readonly struct EnvironmentSnapshot
+    {
+        public static readonly EnvironmentSnapshot None = new(false, false);
+
+        public EnvironmentSnapshot(bool airPressureLow, bool powerDip)
+        {
+            AirPressureLow = airPressureLow;
+            PowerDip = powerDip;
+        }
+
+        /// <summary>气源压力低（影响气动类设备）。</summary>
+        public bool AirPressureLow { get; }
+        /// <summary>供电波动（影响电流/电压敏感设备）。</summary>
+        public bool PowerDip { get; }
+    }
+
     public DeviceSimulator(DeviceConfig config, ScenarioConfig scenario, double speedMultiplier,
         Action<string, int> writeInt, Action<string, bool> writeBool,
         Func<string, int> readInt, Func<string, bool> readBool, Random? rng = null,
@@ -191,10 +243,16 @@ public class DeviceSimulator
         // 随机源可注入种子（审查修复 2026-08-16，配合单测确定性驱动），默认 Random.Shared
         _rng = rng ?? Random.Shared;
         // 数据源模拟寄存器偏移：多台设备共享同一 PLC 时按设备索引错开地址，避免触发握手互相打架。
-        // 约定（三菱 D 地址）：D(502+off)=温度(×10) D(503+off)=湿度(×10) D(510+off)=温度采集触发命令字
+        // 统一数值约定（三菱 D 地址）：数据源值一律是工程单位、不做任何缩放（×10 约定已废弃）。
+        // 实际写入地址由 devices.json 的 Sources.Values.PlcAddress 决定，按 DataType 写 Float32 工程值（D 连续双字）
+        // 或 Int32 工程整数；未配置 Sources 时回退 SimulateLegacyDataSources 的 D(600+off) 区间
+        // （温度 D600 / 湿度 D602 / 压力 D604 / 电流 D606 / 触发命令字 D608，Float32 工程单位）。
         _registerOffset = registerOffset;
-        // RecipeValue=50 表示 50件/h，节拍 = 3600/50 = 72秒/件
-        _baseCycleSeconds = config.RecipeValue > 0 ? 3600.0 / config.RecipeValue : 60.0;
+        // 节拍优先锚定 TargetCycle（devices.json 中的真实目标节拍秒数）；未配置时回退配方频率
+        // （RecipeValue=50 表示 50件/h，节拍 = 3600/50 = 72秒/件）
+        _baseCycleSeconds = config.TargetCycle > 0
+            ? config.TargetCycle
+            : config.RecipeValue > 0 ? 3600.0 / config.RecipeValue : 60.0;
         _writeInt = writeInt;
         _writeBool = writeBool;
         _writeFloat = writeFloat ?? NoopFloatWrite;
@@ -431,7 +489,9 @@ public class DeviceSimulator
     {
         lock (_stateLock)
         {
-            if (Status == SimStatus.Offline || Status == SimStatus.Running) return;
+            // 修复（2026-09-02）：Offline 态允许启动（重启空内存 RestoreFromPlc 把状态字 0 映射为
+            // Offline，仅拒绝 Running；否则离线设备永远无法恢复运行，产量长期为 0）。
+            if (Status == SimStatus.Running) return;
             // 手动启动时清除操作员暂停/缺料停机定时器，避免状态字已改 Running
             // 但定时器仍保留导致 ProcessExpirations 误判"恢复运行"并重复写状态字
             if (_operatorPauseEndTime.HasValue || _shortageEndTime.HasValue)
@@ -442,7 +502,8 @@ public class DeviceSimulator
                 _shortageAlarmName = null;
                 _shortageAlarmAddress = null;
             }
-            var wasIdle = Status == SimStatus.Idle;
+            // Idle / Offline 均视为冷启动（Offline 同样需要首件检验等冷启动流程）
+            var coldStart = Status == SimStatus.Idle || Status == SimStatus.Offline;
             Status = SimStatus.Running;
             WriteStatus();
             _runSessionStartTime = now;
@@ -452,7 +513,7 @@ public class DeviceSimulator
                 _warmupProduced = 0;
             }
             // 冷启动（待机→运行）触发首件检验标记，Tick 中检测到标记后触发强制待机
-            if (wasIdle && _scenario.EnableFirstArticleInspection)
+            if (coldStart && _scenario.EnableFirstArticleInspection)
             {
                 _pendingFirstArticleInspection = true;
             }
@@ -559,9 +620,14 @@ public class DeviceSimulator
     /// <summary>
     /// 主循环 Tick：由 Program 每 100ms 调用一次。
     /// 处理：报警恢复、突发不良期检查/退出、缺料停机进入/退出、随机报警触发、节拍到期产出、阈值检查。
-    /// 新特性：物料批次切换、设备老化累积、PLC 通信抖动、首件检验触发、报警恢复爬坡递减。
+    /// 新特性：物料批次切换、设备老化累积、PLC 通信抖动、首件检验触发、报警恢复爬坡递减、
+    ///         工艺参数平滑联动（温度/湿度/压力/电流 + 越限报警）、共享环境传导（气源/供电）。
+    /// 重载 <see cref="Tick(DateTime)"/> 兼容旧调用（无共享环境）。
     /// </summary>
-    public void Tick(DateTime now)
+    public void Tick(DateTime now) => Tick(now, EnvironmentSnapshot.None);
+
+    /// <summary>带共享环境快照的 Tick（Program 每 100ms 调用，环境状态按 EnvironmentTickMs 刷新）。</summary>
+    public void Tick(DateTime now, EnvironmentSnapshot env)
     {
         lock (_stateLock)
         {
@@ -579,7 +645,7 @@ public class DeviceSimulator
                 return;
 
             // 阶段 3：随机事件触发（仅运行态）+ 节拍产出 + 配方同步
-            ProcessRunningStateEvents(now);
+            ProcessRunningStateEvents(now, env);
         }
     }
 
@@ -653,6 +719,23 @@ public class DeviceSimulator
             WriteStatus();
             ScheduleNextProduce(now);
             var duration = (now - _alarmStartTime).TotalSeconds;
+
+            // 参数越限联动（2026-09-02）：报警恢复驱动工艺参数回落，结束越限期并重排下次越限事件
+            if (_overlimitLinkedKey != null)
+            {
+                var linked = _analogParams.FirstOrDefault(p => p.Key == _overlimitLinkedKey);
+                if (linked != null)
+                {
+                    linked.OverLimit = false;
+                    linked.NextDownEvent = null;
+                    linked.NextOverEvent = now.AddSeconds(
+                        _rng.Next(_scenario.ParamOverIntervalMinSec, _scenario.ParamOverIntervalMaxSec + 1));
+                    linked.Current += (linked.Base - linked.Current) * 0.6f;
+                    Log?.Invoke($"[{Name}] 报警恢复 → 工艺参数「{linked.DisplayName}」回落至 {linked.Current:F1}");
+                }
+                _overlimitLinkedKey = null;
+            }
+
             // 报警恢复爬坡：前 N 件节拍慢、NG 率略高（设备未稳定）
             if (_scenario.EnablePostAlarmRampup)
             {
@@ -718,10 +801,44 @@ public class DeviceSimulator
 
     /// <summary>
     /// 阶段 3：仅运行态执行。处理随机事件触发（通信抖动/报警/突发期/缺料/操作员行为）、节拍产出、配方同步。
+    /// <paramref name="env"/> 为共享环境快照（低压气源/供电波动传导跨设备异常）。
     /// </summary>
-    private void ProcessRunningStateEvents(DateTime now)
+    private void ProcessRunningStateEvents(DateTime now, EnvironmentSnapshot env)
     {
         if (Status != SimStatus.Running) return;
+
+        // 4. 共享环境引发的异常（低压气源 / 供电波动，一次事件期间仅触发一次，避免刷屏）
+        if (_scenario.EnableSharedEnvironment && env is { AirPressureLow: true } or { PowerDip: true })
+        {
+            if (env.AirPressureLow)
+            {
+                if (!_airLowAlarmTriggered)
+                    _airLowAlarmTriggered = TryTriggerLinkedAlarm(
+                        new[] { "气压低", "气压不足", "压力低", "气动阀", "气缸卡阻" }, now, "共享气源压力低");
+                if (_airLowAlarmTriggered) return;
+            }
+            else
+            {
+                _airLowAlarmTriggered = false;
+            }
+
+            if (env.PowerDip)
+            {
+                if (!_powerDipAlarmTriggered)
+                    _powerDipAlarmTriggered = TryTriggerLinkedAlarm(
+                        new[] { "电压波动", "电流异常", "伺服报警", "电机过载", "漏电", "供电" }, now, "供电波动");
+                if (_powerDipAlarmTriggered) return;
+            }
+            else
+            {
+                _powerDipAlarmTriggered = false;
+            }
+        }
+        else
+        {
+            _airLowAlarmTriggered = false;
+            _powerDipAlarmTriggered = false;
+        }
 
         // 4.5 PLC 通信抖动触发检查（偶发篡改 PLC 内存值模拟电磁干扰）
         if (_scenario.EnableCommJitter && !_commJitterEndTime.HasValue
@@ -797,6 +914,11 @@ public class DeviceSimulator
         var recipeInPlc = TryReadInt(_config.RecipeAddress);
         if (recipeInPlc > 0)
         {
+            // TargetCycle 锚定模式：节拍以 devices.json 的目标节拍为基准，配方值仅作为 RecipeValue 存根。
+            // 不随配方编号重算节拍，避免 3600/RecipeValue 与真实目标节拍不一致导致产量失真。
+            if (_config.TargetCycle > 0)
+                return;
+
             var newCycle = 3600.0 / recipeInPlc;
             if (Math.Abs(newCycle - _baseCycleSeconds) > 0.01)
             {
@@ -1019,12 +1141,15 @@ public class DeviceSimulator
                 WriteIfNotEmpty(_config.NgCountAddress, _plcNgCount);
             }
 
-            // 缺陷 +1（随机选一个缺陷类型）
+            // 缺陷 +1（按工艺加权选择，见 PickDefect）
             if (_config.Defects.Count > 0)
             {
-                var defect = _config.Defects[_rng.Next(_config.Defects.Count)];
-                _defectCounts[defect.PlcAddress] = _defectCounts.GetValueOrDefault(defect.PlcAddress) + 1;
-                WriteIfNotEmpty(defect.PlcAddress, _defectCounts[defect.PlcAddress]);
+                var defect = PickDefect();
+                if (defect != null)
+                {
+                    _defectCounts[defect.PlcAddress] = _defectCounts.GetValueOrDefault(defect.PlcAddress) + 1;
+                    WriteIfNotEmpty(defect.PlcAddress, _defectCounts[defect.PlcAddress]);
+                }
             }
 
             // 连续不良/NG 计数 +1（非停机类）— 批量更新，避免每件 NG 写 100 个计数报警地址
@@ -1198,6 +1323,36 @@ public class DeviceSimulator
         _alarmEndTime = now.AddSeconds(durationSec);
 
         Log?.Invoke($"[{Name}] 运行 → 报警[{_activeAlarmName}]（{(manual ? "手动" : "随机")}触发，预计 {durationSec:F0}s 后恢复）");
+    }
+
+    /// <summary>
+    /// 联动报警触发：工艺参数越限 / 共享环境事件共用入口。
+    /// 在设备 Alarms 中按关键字匹配报警位（如"温度过高"、"气压低"），已在报警态不重复触发。
+    /// <paramref name="linkedParamKey"/> 非空时，报警恢复（ProcessExpirations）会驱动该参数回落。
+    /// </summary>
+    private bool TryTriggerLinkedAlarm(string[] keywords, DateTime now, string reason, string? linkedParamKey = null)
+    {
+        if (Status == SimStatus.Alarm) return false;
+
+        var alarm = _config.Alarms.FirstOrDefault(a =>
+            keywords.Any(k => a.Name.Contains(k, StringComparison.OrdinalIgnoreCase)));
+        if (alarm == null) return false;
+
+        FlushPendingBatch();
+        Status = SimStatus.Alarm;
+        WriteStatus();
+        _alarmStartTime = now;
+        _activeAlarmName = alarm.Name;
+        _activeAlarmAddress = alarm.PlcAddress;
+        WriteBoolIfNotEmpty(alarm.PlcAddress, true);
+
+        var durationSec = _scenario.AlarmMinSec
+            + _rng.NextDouble() * (_scenario.AlarmMaxSec - _scenario.AlarmMinSec);
+        _alarmEndTime = now.AddSeconds(durationSec);
+        _overlimitLinkedKey = linkedParamKey;
+
+        Log?.Invoke($"[{Name}] 运行 → 报警[{alarm.Name}]（{reason}，预计 {durationSec:F0}s 后恢复）");
+        return true;
     }
 
     /// <summary>
@@ -1430,18 +1585,25 @@ public class DeviceSimulator
     private void WriteStatus() => WriteIfNotEmpty(_config.StatusCountAddress, (int)Status);
 
     /// <summary>
-    /// 数据源模拟：写入温度/湿度寄存器 + 维护「触发命令字置 1 → 等 MainAPP 回执 2 → 复位」握手。
+    /// 数据源模拟：先推进工艺参数曲线（温度/湿度/压力/电流平滑演进 + 越限联动报警），
+    /// 再按配置 Sources 写寄存器或回退内建 legacy 寄存器；同时维护「触发命令字置 1 → 等采集回执 → 复位」握手。
     /// 受 <see cref="SimulateDataSources"/> 节拍驱动，与设备状态机解耦。
     /// </summary>
     private void SimulateDataSources(DateTime now)
     {
+        if (!_paramsInitialized)
+        {
+            InitAnalogParams();
+            _paramsInitialized = true;
+        }
+        UpdateAnalogParams(now);
+
         if (_config.Sources is null || _config.Sources.Count == 0)
         {
             SimulateLegacyDataSources(now);
             return;
         }
 
-        UpdateTemperature(now);
         for (var index = 0; index < _config.Sources.Count; index++)
         {
             var source = _config.Sources[index];
@@ -1466,39 +1628,228 @@ public class DeviceSimulator
         }
     }
 
+    /// <summary>内建数据源：直接写约定寄存器的平滑工艺参数（Float32，供未配置 Sources 的旧设备使用）。</summary>
     private void SimulateLegacyDataSources(DateTime now)
     {
-        UpdateTemperature(now);
-        WriteIfNotEmpty($"D{TemperatureAddress}", _temperature);
-        WriteIfNotEmpty($"D{HumidityAddress}", 540 + _rng.Next(-10, 11));
+        _writeFloat($"D{TemperatureAddress}", GetParamValue("temperature", 24.5f));
+        _writeFloat($"D{HumidityAddress}", GetParamValue("humidity", 54f));
+        _writeFloat($"D{PressureAddress}", GetParamValue("pressure", 0.5f));
+        _writeFloat($"D{CurrentAddress}", GetParamValue("current", 5f));
 
         if (!_sourceTriggerStates.TryGetValue("legacy", out var state))
         {
             state = new SourceTriggerState();
             _sourceTriggerStates["legacy"] = state;
         }
-        SimulateTrigger(Name, $"D{TriggerAddress}", 1, TriggerAckValue, state, now);
+        SimulateTrigger(Name, $"D{TriggerAddress}", 1, 2, state, now);
     }
 
-    private void UpdateTemperature(DateTime now)
+    /// <summary>
+    /// 按设备工艺类型初始化参数模型（基线 / 噪声 / 越限阈值 / 联动报警关键字）。
+    /// 设备名不匹配任何工艺类型时使用通用参数。
+    /// </summary>
+    private void InitAnalogParams()
     {
-        if (_tempOverLimit)
+        _analogParams.Clear();
+        var name = _config.Name;
+        var isZhuru = name.Contains("注塑", StringComparison.Ordinal);
+        var isHanjie = name.Contains("焊接", StringComparison.Ordinal);
+        var isZhuangpei = name.Contains("装配", StringComparison.Ordinal);
+        var isJiance = name.Contains("检测", StringComparison.Ordinal);
+
+        // 温度：所有工艺类型都有稳定温控需求
+        _analogParams.Add(new SimulatedAnalogParam
         {
-            if (now >= _nextTempEventTime)
+            Key = "temperature",
+            DisplayName = "温度",
+            Base = isHanjie ? 220f : 24.5f,      // 焊接机焊头温度（℃），其余为环境/料温
+            Noise = isHanjie ? 6f : 0.4f,
+            OverLimitAt = isHanjie ? 245f : 32f,
+            AlarmKeywords = new[] { "温度过高", "焊头过热", "过热", "加热圈断路" },
+        });
+
+        // 湿度：环境型参数，越限不联动设备报警（由数据源越限告警显示）
+        _analogParams.Add(new SimulatedAnalogParam
+        {
+            Key = "humidity",
+            DisplayName = "湿度",
+            Base = 54f,
+            Noise = 1.2f,
+            OverLimitAt = 68f,
+            AlarmKeywords = Array.Empty<string>(),
+        });
+
+        // 压力：注塑机为注塑压力（bar），其余为气源/工艺气压（MPa）
+        _analogParams.Add(new SimulatedAnalogParam
+        {
+            Key = "pressure",
+            DisplayName = isZhuru ? "注塑压力" : "工艺气压",
+            Base = isZhuru ? 150f : 0.5f,
+            Noise = isZhuru ? 3f : 0.015f,
+            OverLimitAt = isZhuru ? 178f : 0.62f,
+            AlarmKeywords = new[] { "压力低", "气压不足", "气压低", "锁模力不足", "气动阀卡死" },
+        });
+
+        // 电流/转速：焊接机为焊接电流（A），注塑机为料筒电流（A），装配/检测为电机/机构电流（A）
+        float currentBase, currentNoise, currentOver;
+        if (isHanjie) { currentBase = 200f; currentNoise = 10f; currentOver = 265f; }
+        else if (isZhuru) { currentBase = 42f; currentNoise = 2.5f; currentOver = 58f; }
+        else if (isZhuangpei) { currentBase = 12f; currentNoise = 0.8f; currentOver = 18f; }
+        else { currentBase = 8f; currentNoise = 0.5f; currentOver = 12f; }
+        _analogParams.Add(new SimulatedAnalogParam
+        {
+            Key = "current",
+            DisplayName = "工艺电流",
+            Base = currentBase,
+            Noise = currentNoise,
+            OverLimitAt = currentOver,
+            AlarmKeywords = new[] { "电流异常", "电压波动", "电机过载", "伺服报警", "传感器故障" },
+        });
+
+        // 各参数首次越限时间随机化（启动后 20~90s），避免开机即触发报警
+        foreach (var p in _analogParams)
+        {
+            p.Current = p.Base;
+            p.NextOverEvent = DateTime.UtcNow.AddSeconds(
+                _rng.Next(_scenario.ParamOverIntervalMinSec, _scenario.ParamOverIntervalMaxSec + 1));
+        }
+    }
+
+    /// <summary>取参数当前值（未初始化或未找到时返回 fallback）。</summary>
+    private float GetParamValue(string key, float fallback = 0f)
+    {
+        foreach (var p in _analogParams)
+        {
+            if (p.Key == key) return p.Current;
+        }
+        return fallback;
+    }
+
+    /// <summary>
+    /// 工艺参数演进：正常时段随机游走 + 向基线回归（真实传感器曲线）；
+    /// 越限事件进入时缓慢爬升并联动触发匹配报警，报警恢复（ProcessExpirations）后参数回落。
+    /// </summary>
+    private void UpdateAnalogParams(DateTime now)
+    {
+        if (!_scenario.EnableParameterSimulation) return;
+
+        foreach (var p in _analogParams)
+        {
+            if (p.OverLimit)
             {
-                _tempOverLimit = false;
-                _nextTempEventTime = now.AddSeconds(_rng.Next(45, 90));
+                // 越限保持：高位轻微抖动（模拟真实过程的持续劣化）
+                p.Current = p.Current * 0.96f + p.OverLimitAt * 0.04f
+                    + (float)(_rng.NextDouble() * p.Noise * 0.2 - p.Noise * 0.1);
+
+                // 无联动报警（或联动失败）时自行恢复
+                if (p.NextDownEvent is { } down && now >= down)
+                {
+                    p.OverLimit = false;
+                    p.NextDownEvent = null;
+                    p.NextOverEvent = now.AddSeconds(
+                        _rng.Next(_scenario.ParamOverIntervalMinSec, _scenario.ParamOverIntervalMaxSec + 1));
+                    Log?.Invoke($"[{Name}] 工艺参数「{p.DisplayName}」越限结束 → 回落");
+
+                    // 越限期间值在高位，恢复时回弹到基线附近
+                    p.Current += (p.Base - p.Current) * 0.55f;
+                }
+                continue;
+            }
+
+            // 正常演进：随机游走 + 松弛回归基线
+            p.Current += (float)(_rng.NextDouble() * 2 - 1) * p.Noise + (p.Base - p.Current) * 0.04f;
+            if (p.Current < 0) p.Current = 0;
+
+            // 越限事件进入（首次随机时间到达）
+            if (now < p.NextOverEvent) continue;
+
+            p.OverLimit = true;
+            // 故障发生瞬间参数已越过阈值（真实过程：劣化累积到某一点突发越限）
+            p.Current = p.OverLimitAt + (float)(_rng.NextDouble() * p.Noise * 0.5);
+            Log?.Invoke($"[{Name}] 工艺参数「{p.DisplayName}」越限：{p.Current:F1}（阈值 {p.OverLimitAt:F1}）→ 触发联动报警");
+
+            if (p.AlarmKeywords.Length == 0
+                || !TryTriggerLinkedAlarm(p.AlarmKeywords, now, $"参数{p.DisplayName}越限", p.Key))
+            {
+                // 无联动报警位或触发失败 → 自行恢复
+                p.NextDownEvent = now.AddSeconds(
+                    _rng.Next(_scenario.ParamOverMinSec, _scenario.ParamOverMaxSec + 1));
             }
         }
-        else if (now >= _nextTempEventTime)
-        {
-            _tempOverLimit = true;
-            _nextTempEventTime = now.AddSeconds(_rng.Next(6, 10));
-        }
-        _temperature = _tempOverLimit
-            ? _rng.Next(315, 341)
-            : 240 + _rng.Next(-2, 7);
     }
+
+    /// <summary>
+    /// 工艺加权缺陷选择：不同工艺类型的设备有各自的典型不良分布
+    /// （注塑机偏向缩水/飞边，焊接机偏向虚焊/焊穿，装配机偏向漏装/错件，检测机偏向脏污/尺寸）。
+    /// 预热期 / 报警恢复爬坡期工艺主缺陷占比更高（模拟工艺不稳定阶段）。
+    /// </summary>
+    private DefectConfig? PickDefect()
+    {
+        if (_config.Defects.Count == 0) return null;
+        if (!_scenario.EnableDefectProcessWeight)
+            return _config.Defects[_rng.Next(_config.Defects.Count)];
+
+        var weights = ComputeDefectWeights();
+        var total = weights.Sum(x => x.Weight);
+        var roll = _rng.NextDouble() * total;
+        foreach (var (defect, weight) in weights)
+        {
+            roll -= weight;
+            if (roll <= 0) return defect;
+        }
+        return weights[^1].Defect;
+    }
+
+    private List<(DefectConfig Defect, double Weight)> ComputeDefectWeights()
+    {
+        var deviceName = _config.Name;
+        // 工艺不稳定阶段（开机预热 / 报警恢复爬坡）：主缺陷占比放大
+        var instability = WarmupActive || PostAlarmRampupActive ? 1.45 : 1.0;
+        var result = new List<(DefectConfig, double)>();
+        foreach (var defect in _config.Defects)
+        {
+            var baseWeight = ProcessDefectWeight(deviceName, defect.Name);
+            var weight = instability > 1.0 && baseWeight > 1.0 ? baseWeight * instability : baseWeight;
+            result.Add((defect, weight));
+        }
+        return result;
+    }
+
+    private static double ProcessDefectWeight(string deviceName, string defectName)
+    {
+        if (deviceName.Contains("注塑", StringComparison.Ordinal))
+        {
+            if (ContainsAny(defectName, "缩水", "飞边")) return 2.2;
+            if (ContainsAny(defectName, "气泡", "黑点")) return 1.6;
+            if (ContainsAny(defectName, "色差", "尺寸")) return 1.2;
+            return 1.0;
+        }
+        if (deviceName.Contains("焊接", StringComparison.Ordinal))
+        {
+            if (ContainsAny(defectName, "虚焊")) return 2.2;
+            if (ContainsAny(defectName, "焊穿", "气孔")) return 1.8;
+            if (ContainsAny(defectName, "裂纹", "焊偏", "焊疤")) return 1.4;
+            return 1.0;
+        }
+        if (deviceName.Contains("装配", StringComparison.Ordinal))
+        {
+            if (ContainsAny(defectName, "漏装")) return 2.2;
+            if (ContainsAny(defectName, "错件", "浮高", "滑丝")) return 1.6;
+            if (ContainsAny(defectName, "错位", "损伤")) return 1.3;
+            return 1.0;
+        }
+        if (deviceName.Contains("检测", StringComparison.Ordinal))
+        {
+            if (ContainsAny(defectName, "脏污", "缺件")) return 1.7;
+            if (ContainsAny(defectName, "划痕", "尺寸")) return 1.5;
+            if (ContainsAny(defectName, "变形", "错件")) return 1.3;
+            return 1.0;
+        }
+        return 1.0;
+    }
+
+    private static bool ContainsAny(string text, params string[] needles)
+        => needles.Any(n => text.Contains(n, StringComparison.Ordinal));
 
     private void WriteSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value, DateTime now)
     {
@@ -1525,9 +1876,9 @@ public class DeviceSimulator
 
     private int GetIntSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value, DateTime now)
     {
+        // Int32 一律写工程整数，不做 ×10 缩放（×10 约定已废弃，曾导致 MainAPP 限值判断失配、报警挂 56h）。
+        // 温度/湿度/压力/电流等存在小数域的参数请使用 Float32 数据源（见 GetFloatSourceValue）。
         if (value.ExpectedValue.HasValue) return value.ExpectedValue.Value;
-        if (IsTemperature(source, value)) return _temperature;
-        if (IsHumidity(source, value)) return 540 + _rng.Next(-10, 11);
         if (value.LimitMax > value.LimitMin) return value.LimitMin + (value.LimitMax - value.LimitMin) / 2;
         return 100 + (int)((now - DateTime.UnixEpoch).TotalSeconds % 20);
     }
@@ -1535,8 +1886,10 @@ public class DeviceSimulator
     private float GetFloatSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value)
     {
         if (value.FloatExpectedValue.HasValue) return value.FloatExpectedValue.Value;
-        if (IsTemperature(source, value)) return _temperature / 10f;
-        if (IsHumidity(source, value)) return 54f;
+        if (IsTemperature(source, value)) return GetParamValue("temperature", 24.5f);
+        if (IsHumidity(source, value)) return GetParamValue("humidity", 54f);
+        if (IsPressure(source, value)) return GetParamValue("pressure", 0.5f);
+        if (IsCurrent(source, value)) return GetParamValue("current", 5f);
         if (value.FloatLimitMax > value.FloatLimitMin) return value.FloatLimitMin + (value.FloatLimitMax - value.FloatLimitMin) / 2f;
         return 1f;
     }
@@ -1559,6 +1912,23 @@ public class DeviceSimulator
         source.Name.Contains("湿度", StringComparison.OrdinalIgnoreCase)
         || value.Name.Contains("湿度", StringComparison.OrdinalIgnoreCase)
         || value.Unit.Contains('%');
+
+    private static bool IsPressure(DataSourceConfigDto source, DataSourceValueConfigDto value) =>
+        source.Name.Contains("压力", StringComparison.OrdinalIgnoreCase)
+        || source.Name.Contains("气压", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("压力", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("气压", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("MPa", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("bar", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("kpa", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsCurrent(DataSourceConfigDto source, DataSourceValueConfigDto value) =>
+        source.Name.Contains("电流", StringComparison.OrdinalIgnoreCase)
+        || source.Name.Contains("转速", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("电流", StringComparison.OrdinalIgnoreCase)
+        || value.Name.Contains("转速", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("A", StringComparison.OrdinalIgnoreCase)
+        || value.Unit.Contains("rpm", StringComparison.OrdinalIgnoreCase);
 
     private void SimulateTrigger(string sourceName, string address, int triggerValue, int ackValue,
         SourceTriggerState state, DateTime now)

@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
+using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
 using Serilog;
@@ -18,7 +19,7 @@ namespace MainAPP.ViewModels;
 /// 支持将当前过滤结果导出 CSV（可读）/JSON（完整归档，含前后值）到本地文件。
 /// 仅 Admin 可访问（NavigationPageCatalog 的 RequiredRole 控制）。
 /// </summary>
-public partial class AuditQueryViewModel : ObservableObject
+public partial class AuditQueryViewModel : ObservableObject, INavigationPageLifecycle
 {
     private readonly IAuditService _auditService;
     private readonly IDialogService _dialog;
@@ -51,8 +52,12 @@ public partial class AuditQueryViewModel : ObservableObject
     [ObservableProperty]
     private int _total;
 
+    /// <summary>
+    /// 总页数。P0-4 修复 2026-09-02：初始值改为 1（原默认 0），避免首次进入页面、
+    /// 尚未点击查询时底部分页栏显示"第 1/0 页 · 共 0 条"的空态错误。
+    /// </summary>
     [ObservableProperty]
-    private int _totalPages;
+    private int _totalPages = 1;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -78,10 +83,25 @@ public partial class AuditQueryViewModel : ObservableObject
 
     public double PageSuccessRate => Entries.Count == 0 ? 0 : PageSucceeded * 100d / Entries.Count;
 
+    /// <summary>
+    /// 本页成功率展示文案（P0-4 修复 2026-09-02）：无记录时显示 "—"，
+    /// 避免空态下显示 "0.0%" 误导用户以为成功率真的为零（无数据 ≠ 成功率 0）。
+    /// </summary>
+    [ObservableProperty]
+    private string _pageSuccessRateDisplay = "—";
+
     public AuditQueryViewModel(IAuditService auditService, IDialogService dialog)
     {
         _auditService = auditService;
         _dialog = dialog;
+    }
+
+    /// <summary>页面进入时自动执行一次查询，避免首次进入显示未初始化分页/空态（P0-4）。</summary>
+    public void OnPageEnter() => QueryCommand.Execute(null);
+
+    /// <summary>页面切走时无需清理（查询为一次性后台任务，无定时器）。</summary>
+    public void OnPageExit()
+    {
     }
 
     public bool HasPreviousPage => Page > 1;
@@ -340,6 +360,7 @@ public partial class AuditQueryViewModel : ObservableObject
 
                     PageSucceeded = items.Count(item => item.Succeeded);
                     PageFailed = items.Count - PageSucceeded;
+                    PageSuccessRateDisplay = items.Count == 0 ? "—" : PageSuccessRate.ToString("F1") + "%";
                     OnPropertyChanged(nameof(PageSuccessRate));
 
                     Total = total;
@@ -361,6 +382,7 @@ public partial class AuditQueryViewModel : ObservableObject
                     QueryError = ex.Message;
                     Total = 0;
                     TotalPages = 1;
+                    PageSuccessRateDisplay = "—";
                     OnPropertyChanged(nameof(HasPreviousPage));
                     OnPropertyChanged(nameof(HasNextPage));
                     OnPropertyChanged(nameof(PageSummary));

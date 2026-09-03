@@ -46,6 +46,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     private readonly PlcConnectionManager _connectionManager;
     private readonly InMemoryHistoryService _history;
     private readonly ProductionBaselineStore _baselineStore;
+    private readonly InMemoryActiveAlarmStateService _activeState;
     private readonly PlcDataAcquisitionService _service;
 
     public PlcDataAcquisitionServiceTests(ITestOutputHelper output)
@@ -68,6 +69,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _connectionManager = new PlcConnectionManager(_plc, _appSettings);
         _history = new InMemoryHistoryService();
         _baselineStore = new ProductionBaselineStore(_appSettings);
+        _activeState = new InMemoryActiveAlarmStateService();
 
         _service = new PlcDataAcquisitionService(
             _plc,
@@ -76,7 +78,8 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             _history,
             _deviceRepository,
             _baselineStore,
-            NullLogger<PlcDataAcquisitionService>.Instance);
+            NullLogger<PlcDataAcquisitionService>.Instance,
+            activeAlarmState: _activeState);
     }
 
     public void Dispose()
@@ -252,23 +255,22 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     [Fact]
-    public void ScanAlarms_RebuildFromHistory_AfterStateCleared()
+    public void ScanAlarms_RebuildFromStateTable_AfterStateCleared()
     {
         var device = AddDevice();
         var alarm = device.Alarms.First();
 
-        // 触发报警并落库
+        // 触发报警并落库（触发边沿同步写入状态表）
         _plc.SetBool(alarm.PlcAddress, true);
         _service.ScanAlarms();
         Assert.Single(_history.AlarmEvents);
+        Assert.True(_activeState.GetRow(device.Id, alarm.Id)?.IsActive);
 
-        // 模拟 PLC 重连后状态字典被清空（实际由 ResetShift 触发）：
-        // 不再调用 _service.SetPrevAlarmStateForTest，直接 ScanAlarms 应从历史重建
-        // 注意：调用前需手动清除内存状态以模拟重连
-        _service.RemoveAlarmState(alarm.Id);
+        // 模拟 PLC 重连后内存状态字典被清空（实际由 ResetShift 触发；ActiveAlarmStates 表行保留）
+        _service.ClearPrevAlarmStateForTest(alarm.Id);
         Assert.False(_service.PrevAlarmStatesForTest.ContainsKey(alarm.Id));
 
-        // PLC 仍为 true，重建后状态应为 true，StartTime 回填为最近 Triggered 事件时间
+        // PLC 仍为 true：重建应从状态表恢复（IsActive=true），prevState = true，不产生新事件
         _service.ScanAlarms();
         Assert.True(_service.PrevAlarmStatesForTest[alarm.Id]);
         Assert.True(alarm.StartTime > DateTime.MinValue);
@@ -313,7 +315,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     [Fact]
-    public void LogShiftChangeForActiveAlarms_WriteFails_AddsToFailedSet()
+    public void LogShiftChangeForActiveAlarms_WriteFails_DoesNotThrowAndEventNotPersisted()
     {
         var device = AddDevice();
         var alarm = device.Alarms.First();
@@ -322,14 +324,12 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _service.SetPrevAlarmStateForTest(alarm.Id, true);
         _service.CurrentShiftIdForTest = new ShiftIdentifier("白班", new(0, 0, 0), new(12, 0, 0));
 
-        // 模拟 DB 写入失败：LogShiftChangeForActiveAlarms 应将报警 Id 加入 _shiftChangeFailedAlarms
+        // 模拟 DB 写入失败：不抛异常、事件不落库（旧"失败补偿集合"机制已移除）
         _history.ShouldFailAlarmEventWrite = true;
         _service.LogShiftChangeForActiveAlarms();
 
         // 关键断言：班次切换事件未落库
         Assert.Empty(_history.AlarmEvents);
-        // 报警 Id 已被加入失败集合，等待 ScanAlarms 重建时跳过历史查询
-        Assert.Contains(alarm.Id, _service.ShiftChangeFailedAlarmsForTest);
     }
 
     [Fact]
@@ -344,16 +344,14 @@ public class PlcDataAcquisitionServiceTests : IDisposable
             alarm.PlcAddress, AlarmEventType.Triggered, oldShiftTime, "白班");
         Assert.Single(_history.AlarmEvents);
 
-        // 步骤2：班次切换事件写入失败，报警 Id 已加入 _shiftChangeFailedAlarms
+        // 步骤2：班次切换事件写入失败（无副作用；状态表行由 ResetShift 后按设备清除）
         _service.SetPrevAlarmStateForTest(alarm.Id, true);
         _service.CurrentShiftIdForTest = new ShiftIdentifier("白班", new(0, 0, 0), new(12, 0, 0));
         _history.ShouldFailAlarmEventWrite = true;
         _service.LogShiftChangeForActiveAlarms();
-        Assert.Contains(alarm.Id, _service.ShiftChangeFailedAlarmsForTest);
+        Assert.Single(_history.AlarmEvents); // 班次事件未落库（历史保留步骤1的 Triggered；旧失败集合机制已移除）
 
-        // 步骤3：模拟 ResetShift 清空 _prevAlarmStates（生产代码中由 ResetShift 触发）。
-        // 注意：必须使用 ClearPrevAlarmStateForTest 而非 RemoveAlarmState——后者会同时清空
-        // _shiftChangeFailedAlarms，导致 ScanAlarms 走历史重建分支而非"跳过历史"分支。
+        // 步骤3：模拟 ResetShift 清空 _prevAlarmStates（生产代码中由 ResetShift 触发）
         _service.ClearPrevAlarmStateForTest(alarm.Id);
         Assert.False(_service.PrevAlarmStatesForTest.ContainsKey(alarm.Id));
 
@@ -361,15 +359,14 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         _history.ShouldFailAlarmEventWrite = false;
         _plc.SetBool(alarm.PlcAddress, true);
 
-        // 步骤5：ScanAlarms 重建状态
+        // 步骤5：ScanAlarms 重建状态（无状态表注入 → 重建走"未触发"）
         _service.ScanAlarms();
 
-        // 关键断言1：因 _shiftChangeFailedAlarms 跳过历史查询，报警被当作"未触发"，
-        // PLC 当前为 true → 触发新的上升沿事件（而非沿用上班次的 Triggered 不写新事件）
+        // 关键断言1：重建"未触发"，PLC 当前为 true → 触发新的上升沿事件
         Assert.Equal(2, _history.AlarmEvents.Count);
         Assert.Equal(AlarmEventType.Triggered, _history.AlarmEvents[1].EventType);
 
-        // 关键断言2：StartTime 是新班次内的时间（不是历史回填的上班次 oldShiftTime）
+        // 关键断言2：StartTime 是新班次内的时间（不沿用上班次历史回填）
         Assert.True(alarm.StartTime > oldShiftTime);
     }
 

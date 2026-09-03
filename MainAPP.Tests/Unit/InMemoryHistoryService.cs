@@ -24,6 +24,12 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
     public List<AlarmEventRecord> AlarmEvents { get; } = new();
     public List<DefectSnapshotRecord> DefectSnapshots { get; } = new();
 
+    /// <summary>可选报警活跃状态表桩：测试注入后 QueryActiveAlarmStates 委派给它；未注入时返回空（模拟无状态行）。</summary>
+    public IActiveAlarmStateService? ActiveStates { get; set; }
+
+    /// <summary>内存桩无写入队列，返回空诊断快照（对齐 RemoteHistoryQueryService 的空快照语义）。</summary>
+    public HistoryDiagnosticsSnapshot GetDiagnosticsSnapshot() => new();
+
     public List<ProductionLog> QueryProductionLogs(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
     {
         List<ProductionLog> snapshot;
@@ -139,6 +145,9 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
         var (p, s) = HistoryPagination.Normalize(page, pageSize);
         return (filtered.Skip((p - 1) * s).Take(s).ToList(), filtered.Count);
     }
+
+    public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
+        => ActiveStates?.QueryActive(deviceId) ?? [];
 
     public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
         string deviceId, DateTime from, DateTime to, string? shiftName, int page, int pageSize)

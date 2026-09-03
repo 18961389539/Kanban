@@ -13,7 +13,7 @@ namespace MainAPP.ViewModels;
 public readonly record struct HomeAlarmRefreshResult(bool HasHighLevelAlarm, int TotalActiveCount);
 
 /// <summary>
-/// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值 + 历史未恢复数据源），
+/// 主页实时故障采集器：从指定设备快照收集活跃报警（PLC 边沿 + 计数阈值 + 活跃状态表数据源报警），
 /// 计数报警优先使用 <see cref="CounterAlarm.StartTime"/>，恢复侧保留 10 秒去抖，并差分更新目标集合。
 /// </summary>
 public sealed class HomeAlarmCollector
@@ -31,10 +31,10 @@ public sealed class HomeAlarmCollector
         bool isMuted,
         int maxAlarms,
         string? selectedDeviceId = null,
-        IReadOnlyList<AlarmEventRecord>? pendingDataSourceEvents = null,
+        IReadOnlyList<ActiveAlarmStateRecord>? activeSourceStates = null,
         IDeviceRepository? deviceRepository = null)
     {
-        var desired = BuildDesired(devices, now, selectedDeviceId, pendingDataSourceEvents, deviceRepository);
+        var desired = BuildDesired(devices, now, selectedDeviceId, activeSourceStates, deviceRepository);
 
         desired.Sort((a, b) =>
         {
@@ -53,17 +53,19 @@ public sealed class HomeAlarmCollector
         // 引用必然失配，差分从未生效，每次刷新等于 Clear+AddRange）。
         // IsNew/AddedAt 状态天然随实例保留，DurationText 由 HomeViewModel.SyncRuntime
         // 每 tick 对全集合 RefreshDuration 原地刷新（INPC 驱动 UI）。
-        var existingByKey = new Dictionary<(string, string, AlarmLevel, AlarmKind, DateTime), ActiveAlarmInfo>(target.Count);
+        var existingByKey = new Dictionary<(string, string, AlarmLevel, AlarmKind, DateTime, string?, string?, string?), ActiveAlarmInfo>(target.Count);
         foreach (var item in target)
         {
-            var key = (item.DeviceId, item.AlarmName, item.Level, item.Kind, item.EventTime);
+            var key = (item.DeviceId, item.AlarmName, item.Level, item.Kind, item.EventTime,
+                item.AlarmNameEn, item.AlarmNameJa, item.AlarmNamePt);
             if (!existingByKey.ContainsKey(key))
                 existingByKey[key] = item;
         }
 
         for (var i = 0; i < desired.Count; i++)
         {
-            var key = (desired[i].DeviceId, desired[i].AlarmName, desired[i].Level, desired[i].Kind, desired[i].EventTime);
+            var key = (desired[i].DeviceId, desired[i].AlarmName, desired[i].Level, desired[i].Kind, desired[i].EventTime,
+                desired[i].AlarmNameEn, desired[i].AlarmNameJa, desired[i].AlarmNamePt);
             if (existingByKey.TryGetValue(key, out var existing))
             {
                 desired[i] = existing;
@@ -85,7 +87,7 @@ public sealed class HomeAlarmCollector
         IReadOnlyList<Device> devices,
         DateTime now,
         string? selectedDeviceId,
-        IReadOnlyList<AlarmEventRecord>? pendingDataSourceEvents,
+        IReadOnlyList<ActiveAlarmStateRecord>? activeSourceStates,
         IDeviceRepository? deviceRepository)
     {
         List<ActiveAlarmInfo> desired = [];
@@ -135,9 +137,9 @@ public sealed class HomeAlarmCollector
             }
         }
 
-        if (pendingDataSourceEvents != null && deviceRepository != null)
+        if (activeSourceStates != null && deviceRepository != null)
         {
-            foreach (var record in pendingDataSourceEvents)
+            foreach (var record in activeSourceStates)
             {
                 if (selectedDeviceId != null
                     && !string.Equals(record.DeviceId, selectedDeviceId, StringComparison.OrdinalIgnoreCase))
@@ -146,7 +148,7 @@ public sealed class HomeAlarmCollector
                 var (nameEn, nameJa, namePt) = AlarmCenterDisplayHelper.ResolveEventLocalizedFields(
                     deviceRepository, record.DeviceId, record.AlarmId);
                 desired.Add(new ActiveAlarmInfo(
-                    record.EventTime, record.DeviceId, record.DeviceName, record.AlarmName,
+                    record.TriggeredAt, record.DeviceId, record.DeviceName, record.AlarmName,
                     AlarmLevel.Medium, AlarmKind.DataSource, nameEn, nameJa, namePt));
             }
         }

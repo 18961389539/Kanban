@@ -35,7 +35,10 @@ public sealed class PlcScanPipeline
     private readonly ILogger _logger;
     private readonly Func<string> _shiftNameProvider;
 
-    private readonly AlarmStateTracker _alarmTracker = new();
+    private readonly AlarmStateTracker _alarmTracker;
+
+    /// <summary>活跃报警状态快照表服务（PLC/数据源两类报警的边沿维护与级联清理）。</summary>
+    private readonly IActiveAlarmStateService? _activeAlarmState;
 
     /// <summary>数据源采集源告警状态机（数值越限/预期偏离 判定，随 ScanSources 驱动）。</summary>
     private readonly DataSourceAlarmTracker _dataSourceTracker;
@@ -73,7 +76,8 @@ public sealed class PlcScanPipeline
         Action<AlarmEventDto>? onAlarmEdge = null,
         IDataSourceReaderRegistry? dataSourceReaderRegistry = null,
         ISnEventStore? snEventStore = null,
-        Func<string, int?>? runningWorkOrderIdProvider = null)
+        Func<string, int?>? runningWorkOrderIdProvider = null,
+        IActiveAlarmStateService? activeAlarmState = null)
     {
         _adapterResolver = adapterResolver;
         _deviceRepository = deviceRepository;
@@ -86,7 +90,10 @@ public sealed class PlcScanPipeline
         _onAlarmEdge = onAlarmEdge;
         _snEventStore = snEventStore;
         _runningWorkOrderIdProvider = runningWorkOrderIdProvider;
-        _dataSourceTracker = new DataSourceAlarmTracker(_alarmHistory, _alarmNotificationChannel, _onAlarmEdge, _logger);
+        _activeAlarmState = activeAlarmState;
+        _alarmTracker = new AlarmStateTracker(activeAlarmState);
+        _dataSourceTracker = new DataSourceAlarmTracker(_alarmHistory, _alarmNotificationChannel, _onAlarmEdge, _logger,
+            activeState: activeAlarmState);
     }
 
     // ──────────── 诊断指标（只读，供主类 GetDiagnosticsSnapshot 聚合） ────────────
@@ -577,6 +584,8 @@ public sealed class PlcScanPipeline
                     value.CurrentValue = 0;
             }
             _dataSourceTracker.RecoverAllOnDisconnect(shiftName);
+            // 状态表同步清除该设备全部活跃行（PLC + 数据源），避免断线后孤儿行残留
+            _activeAlarmState?.RemoveByDeviceId(device.Id);
         }
         _alarmTracker.ResetAll();
     }
@@ -601,6 +610,9 @@ public sealed class PlcScanPipeline
     {
         _alarmTracker.ResetAll();
         _dataSourceTracker.ResetAll();
+        // 状态表同步清除：新班次若报警仍触发，由下一轮扫描重新落表（TriggeredAt=新班次时刻）
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+            _activeAlarmState?.RemoveByDeviceId(device.Id);
     }
 
     /// <summary>清理指定设备的报警边沿状态与报警时间戳（设备删除/单设备清零）。</summary>
@@ -608,10 +620,19 @@ public sealed class PlcScanPipeline
     {
         _alarmTracker.RemoveDeviceAlarms(device);
         _dataSourceTracker.RemoveDevice(device.Id);
+        _activeAlarmState?.RemoveByDeviceId(device.Id);
     }
 
     /// <summary>移除单个报警的边沿状态（设备管理删除报警后调用，防内存泄漏）。</summary>
-    public void RemoveAlarmState(string alarmId) => _alarmTracker.RemoveAlarmState(alarmId);
+    public void RemoveAlarmState(string alarmId)
+    {
+        _alarmTracker.RemoveAlarmState(alarmId);
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            if (device.Alarms.Any(a => a.Id == alarmId))
+                _activeAlarmState?.RemoveByAlarm(device.Id, alarmId);
+        }
+    }
 
     /// <summary>移除单个数据源的告警状态（设备管理删除数据源后调用，防内存泄漏）。</summary>
     public void RemoveDataSourceState(string deviceId, string sourceId)
@@ -628,9 +649,6 @@ public sealed class PlcScanPipeline
 
     internal IReadOnlyDictionary<string, bool> GetPrevAlarmStatesForTest()
         => _alarmTracker.GetPrevAlarmStatesSnapshot();
-
-    internal IReadOnlyCollection<string> GetShiftChangeFailedAlarmsForTest()
-        => _alarmTracker.GetShiftChangeFailedAlarmsSnapshot();
 
     internal void SetPrevAlarmStateForTest(string alarmId, bool state)
         => _alarmTracker.SetPrevAlarmStateForTest(alarmId, state);

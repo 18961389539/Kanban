@@ -1,4 +1,4 @@
-﻿using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Entities;
 
 namespace Kanban.Collector.Core.Services;
 
@@ -34,22 +34,14 @@ public partial class PlcDataAcquisitionService
         => _statusTracker.GetPrevStatusWordsSnapshot();
 
     /// <summary>
-    /// 测试用：读取 _shiftChangeFailedAlarms 的快照副本，便于断言班次切换失败集合状态。
-    /// 用于验证 LogShiftChangeForActiveAlarms 在写入失败后是否正确标记报警。
-    /// </summary>
-    internal System.Collections.Generic.IReadOnlyCollection<string> ShiftChangeFailedAlarmsForTest
-        => _scanPipeline.GetShiftChangeFailedAlarmsForTest();
-
-    /// <summary>
     /// 测试用：直接设置 _prevAlarmStates 中的某项，便于构造报警已触发等初始场景。
     /// </summary>
     internal void SetPrevAlarmStateForTest(string alarmId, bool state)
         => _scanPipeline.SetPrevAlarmStateForTest(alarmId, state);
 
     /// <summary>
-    /// 测试用：仅从 _prevAlarmStates 移除指定报警（不清 _shiftChangeFailedAlarms），
-    /// 精确模拟 ResetShift 对单条报警状态的影响（ResetShift 内 _prevAlarmStates.Clear()
-    /// 不会清空 _shiftChangeFailedAlarms），便于班次切换失败恢复场景的单测。
+    /// 测试用：仅从 _prevAlarmStates 移除指定报警，
+    /// 精确模拟 ResetShift 对单条报警状态的影响（ResetShift 内 _prevAlarmStates.Clear()）。
     /// </summary>
     internal void ClearPrevAlarmStateForTest(string alarmId)
         => _scanPipeline.ClearPrevAlarmStateForTest(alarmId);

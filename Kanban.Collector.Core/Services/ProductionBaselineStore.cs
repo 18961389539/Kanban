@@ -41,6 +41,13 @@ public class ProductionBaselineStore(AppSettings appSettings)
     /// <summary>磁盘快照，仅用于首次读取的恢复判定；ClearAll/ClearDevice 时同步清空。</summary>
     private Dictionary<string, int> _loadedBaselines = new();
 
+    /// <summary>
+    /// 回退日志限流：key → 上次记录时刻（Environment.TickCount64 毫秒，锁内访问）。
+    /// 同一 key 限流窗口内只记一次，防止传感器故障导致每轮回退时日志风暴（审查修复 2026-09-03）。
+    /// </summary>
+    private readonly Dictionary<string, long> _lastFallbackLogAtMs = new();
+    private const long FallbackLogIntervalMs = 60_000;
+
     /// <summary>当前持久化基线所属班次标识（"Name|StartTime|EndTime"）。用于跨班次防串账。</summary>
     public string? BaselineShiftId { get; private set; }
 
@@ -118,7 +125,11 @@ public class ProductionBaselineStore(AppSettings appSettings)
                 // 恢复时同样检查 raw < saved：PLC 计数器已被外部清零（raw < 磁盘基线）时
                 // 若沿用 saved，当轮 raw - baseline 会算出负产量（审查修复 2026-08-15）。
                 if (BaselineShiftId == currentShiftId && _loadedBaselines.TryGetValue(key, out var saved))
+                {
+                    if (raw < saved)
+                        LogFallback(key, saved, raw);
                     baseline = raw < saved ? raw : saved;
+                }
                 else
                     baseline = raw;
                 _baselines[key] = baseline;
@@ -126,7 +137,10 @@ public class ProductionBaselineStore(AppSettings appSettings)
             }
             else if (raw < baseline)
             {
-                // PLC 计数器回退（外部手动清零或班次切换后 PLC 程序清零）
+                // PLC 计数器回退（外部手动清零或班次切换后 PLC 程序清零）：
+                // 保留"以 raw 为新基线"的回退保护语义（防负产量），但必须留痕——
+                // 回绕/清零会让当班差分归零重计，没有日志时现场产量对不上账无从排查（审查修复 2026-09-03）。
+                LogFallback(key, baseline, raw);
                 baseline = raw;
                 _baselines[key] = baseline;
                 changed = true;
@@ -167,6 +181,7 @@ public class ProductionBaselineStore(AppSettings appSettings)
         {
             RemovePrefixed(_baselines, prefix);
             RemovePrefixed(_loadedBaselines, prefix);
+            RemovePrefixedMs(_lastFallbackLogAtMs, prefix);
             shiftIdToSave = BaselineShiftId;
             snapshotToSave = new Dictionary<string, int>(_baselines);
             versionToSave = ++_saveVersion;
@@ -186,11 +201,29 @@ public class ProductionBaselineStore(AppSettings appSettings)
         {
             _baselines.Clear();
             _loadedBaselines.Clear();
+            _lastFallbackLogAtMs.Clear();
             BaselineShiftId = shiftId;
             emptySnapshot = new Dictionary<string, int>(_baselines);
             versionToSave = ++_saveVersion;
         }
         SaveWithRecheck(emptySnapshot, shiftId, versionToSave);
+    }
+
+    /// <summary>
+    /// 回退留痕日志（必须在 <see cref="_lock"/> 内调用）。限流：同一 key 窗口内只记一次。
+    /// lost = 旧基线 - 新值，即本次回退"作废"的累计量；若为非班次清零场景，
+    /// 通常意味着 PLC 计数器位宽回绕（16 位约 11 小时@1Hz、约 1 小时@16Hz）或上位机清零。
+    /// </summary>
+    private void LogFallback(string key, int baseline, int raw)
+    {
+        var nowMs = Environment.TickCount64;
+        if (_lastFallbackLogAtMs.TryGetValue(key, out var lastMs) && nowMs - lastMs < FallbackLogIntervalMs)
+            return;
+        _lastFallbackLogAtMs[key] = nowMs;
+        Log.Warning(
+            "产量计数器回退/清零：key={Key} 旧基线={Baseline} 新值={Raw} 作废累计={Lost}，当班差分将归零重计。" +
+            "若非班次切换清零，请检查 PLC 计数器位宽（回绕）或是否有外部清零写入",
+            key, baseline, raw, (long)baseline - raw);
     }
 
     /// <summary>
@@ -230,6 +263,14 @@ public class ProductionBaselineStore(AppSettings appSettings)
     }
 
     private static void RemovePrefixed(Dictionary<string, int> dict, string prefix)
+    {
+        List<string> toRemove = [];
+        foreach (var key in dict.Keys)
+            if (key.StartsWith(prefix, StringComparison.Ordinal)) toRemove.Add(key);
+        foreach (var key in toRemove) dict.Remove(key);
+    }
+
+    private static void RemovePrefixedMs(Dictionary<string, long> dict, string prefix)
     {
         List<string> toRemove = [];
         foreach (var key in dict.Keys)

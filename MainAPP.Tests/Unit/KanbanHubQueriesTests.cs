@@ -95,7 +95,8 @@ public sealed class KanbanHubQueriesTests : IDisposable
             new HistoryService(_db, NullLogger<HistoryService>.Instance),
             _settings,
             new AuditService(_db, NullLogger<AuditService>.Instance),
-            _snStore);
+            _snStore,
+            Substitute.For<IActiveAlarmStateService>());
         _hub.Context = new FakeHubCallerContext(); // 读取路径依赖 Context.ConnectionAborted
     }
 

@@ -66,7 +66,7 @@ public class DatabaseProvider(AppSettings appSettings)
             CreateAlarmEventContext(),
             "AlarmEvents",
             AlarmEventInitialMigration,
-            static (_, _) => { });
+            ApplyAlarmEventsLegacyPatch);
         MigrateContext(
             CreateStatusTransitionContext(),
             "StatusTransitions",
@@ -244,6 +244,32 @@ public class DatabaseProvider(AppSettings appSettings)
         EnsureCompositeIndex(connection, transaction, "IX_AuditEntries_TargetType_TargetId", "AuditEntries", "TargetType", "TargetId");
     }
 
+    /// <summary>
+    /// 报警库幂等补丁：确保 ActiveAlarmStates 快照表存在。
+    /// 已迁移库由 EF 迁移 AddActiveAlarmStates 建表；此处兜底极旧/手工库（CREATE IF NOT EXISTS 幂等，空操作无害）。
+    /// </summary>
+    private static void ApplyAlarmEventsLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        using (var create = connection.CreateCommand())
+        {
+            create.Transaction = transaction;
+            create.CommandText =
+                "CREATE TABLE IF NOT EXISTS \"ActiveAlarmStates\"" +
+                " (\"Id\" INTEGER NOT NULL CONSTRAINT \"PK_ActiveAlarmStates\" PRIMARY KEY AUTOINCREMENT," +
+                " \"DeviceId\" TEXT NOT NULL, \"DeviceName\" TEXT NOT NULL, \"AlarmId\" TEXT NOT NULL," +
+                " \"AlarmName\" TEXT NOT NULL, \"PlcAddress\" TEXT NOT NULL, \"IsActive\" INTEGER NOT NULL," +
+                " \"TriggeredAt\" TEXT NOT NULL, \"ShiftName\" TEXT NOT NULL, \"UpdatedAt\" TEXT NOT NULL)";
+            create.ExecuteNonQuery();
+        }
+        using (var index = connection.CreateCommand())
+        {
+            index.Transaction = transaction;
+            index.CommandText = "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_ActiveAlarmStates_DeviceId_AlarmId\" ON \"ActiveAlarmStates\" (\"DeviceId\", \"AlarmId\")";
+            index.ExecuteNonQuery();
+        }
+        EnsureIndex(connection, transaction, "IX_ActiveAlarmStates_IsActive", "ActiveAlarmStates", "IsActive");
+    }
+
     private static void ApplyDataSourceSnapshotLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
     {
         EnsureColumn(connection, transaction, "DataSourceSnapshots", "DataType", "INTEGER NOT NULL DEFAULT 0");
@@ -303,7 +329,7 @@ public class DatabaseProvider(AppSettings appSettings)
         SqliteTransaction transaction,
         string tableName)
     {
-        var entityType = context.Model.GetEntityTypes().Single();
+        var entityType = context.Model.GetEntityTypes().Single(e => e.GetTableName() == tableName);
         var storeObject = StoreObjectIdentifier.Table(tableName, schema: null);
         var expectedColumns = entityType.GetProperties()
             .Select(property => property.GetColumnName(storeObject))

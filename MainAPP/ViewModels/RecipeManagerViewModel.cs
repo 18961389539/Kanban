@@ -68,6 +68,12 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
 
         // 配方库集合变更（Remote 同步/其他端写入）→ 刷新列表；保存中的内部刷新由 _isSaving 屏蔽
         _recipeStore.Recipes.CollectionChanged += OnStoreRecipesChanged;
+
+        // 构造时同步填充一次，保证"构造即可用"契约（单测直接断言 AvailableRecipes/TargetDevices、
+        // 以及任何依赖 VM 创建后立即可展示首屏的场景）；OnPageEnter 仍会再刷一次拉取最新数据
+        // （此前填充只在 OnPageEnter 的 BeginInvoke 里做，构造后列表恒为空——审查修复 2026-09-03）。
+        RefreshRecipes();
+        RefreshDevices();
     }
 
     private bool _pageActive;

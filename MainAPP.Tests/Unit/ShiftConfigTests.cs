@@ -118,6 +118,54 @@ public class ShiftConfigTests
         Assert.Equal(At(8, 0), end);
     }
 
+    // ──────────── EndTime = 24:00（审查修复 2026-09-03） ────────────
+
+    [Fact]
+    public void ResolveRange_EndTime24_EveningSegment_ReturnsNextMidnight()
+    {
+        // 工厂常规配置"晚班 16:00-24:00"：23:00 → 今日 16:00 至 次日 00:00。
+        // 修复前 LocalTime.FromTicksSinceMidnight(24h.Ticks) 越界抛 ArgumentOutOfRangeException。
+        var s = new ShiftConfig { Name = "晚班", StartTime = new(16, 0, 0), EndTime = TimeSpan.FromHours(24) };
+        var (start, end) = s.ResolveRange(At(23, 0));
+        Assert.Equal(At(16, 0), start);
+        Assert.Equal(Day.AddDays(1), end);
+    }
+
+    [Theory]
+    [InlineData(2, 0)]   // 凌晨段：昨日 16:00 → 今日 00:00
+    [InlineData(12, 0)]  // 间隙段：最晚 start ≤ reference（昨日 16:00）
+    public void ResolveRange_EndTime24_EarlyMorningOrGap_ReturnsPreviousInstance(int h, int m)
+    {
+        var s = new ShiftConfig { Name = "晚班", StartTime = new(16, 0, 0), EndTime = TimeSpan.FromHours(24) };
+        var (start, end) = s.ResolveRange(At(h, m));
+        Assert.Equal(Day.AddDays(-1).AddHours(16), start);
+        Assert.Equal(Day, end);
+    }
+
+    [Fact]
+    public void Contains_EndTime24_CoversUntilMidnight()
+    {
+        // TimeSpan 比较：24:00 与一天内时刻天然可比，23:59 包含、00:00（跨天边界含义已变）不包含
+        var s = new ShiftConfig { Name = "晚班", StartTime = new(16, 0, 0), EndTime = TimeSpan.FromHours(24) };
+        Assert.True(s.Contains(new TimeSpan(16, 0, 0)));
+        Assert.True(s.Contains(new TimeSpan(23, 59, 59)));
+        Assert.False(s.Contains(new TimeSpan(0, 0, 0)));
+    }
+
+    [Fact]
+    public void DurationHours_EndTime24_EqualSpan()
+    {
+        var s = new ShiftConfig { Name = "晚班", StartTime = new(16, 0, 0), EndTime = TimeSpan.FromHours(24) };
+        Assert.Equal(8, s.DurationHours, precision: 6);
+    }
+
+    [Fact]
+    public void GetCurrentStart_EndTime24_ReturnsTodayStart()
+    {
+        var s = new ShiftConfig { Name = "晚班", StartTime = new(16, 0, 0), EndTime = TimeSpan.FromHours(24) };
+        Assert.Equal(At(16, 0), s.GetCurrentStart(At(23, 0)));
+    }
+
     // ──────────── GetCurrentStart ────────────
 
     [Fact]

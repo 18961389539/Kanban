@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json;
 using Kanban.Collector.Core.Data;
@@ -111,7 +111,7 @@ public class AlarmNameLocalizationTests
         var deviceRepo = new DeviceRepository(new AppSettings());
         deviceRepo.Devices.Add(device);
 
-        var pending = new List<AlarmEventRecord>
+        var pending = new List<ActiveAlarmStateRecord>
         {
             new()
             {
@@ -119,15 +119,15 @@ public class AlarmNameLocalizationTests
                 DeviceName = "设备1",
                 AlarmId = $"src:{value.Id}",
                 AlarmName = "温湿度-温度",
-                EventType = AlarmEventType.Triggered,
-                EventTime = DateTime.Now.AddMinutes(-4),
+                IsActive = true,
+                TriggeredAt = DateTime.Now.AddMinutes(-4),
             },
         };
 
         var target = new ObservableCollection<ActiveAlarmInfo>();
         var collector = new HomeAlarmCollector();
         collector.Refresh(target, [device], DateTime.Now, isMuted: true, maxAlarms: 5,
-            selectedDeviceId: "d1", pendingDataSourceEvents: pending, deviceRepository: deviceRepo);
+            selectedDeviceId: "d1", activeSourceStates: pending, deviceRepository: deviceRepo);
 
         Assert.Equal(AlarmKind.DataSource, Assert.Single(target).Kind);
     }

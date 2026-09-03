@@ -46,7 +46,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IWorkOrderService? _workOrderService;
     private readonly IAlarmSessionMute? _alarmSessionMute;
     private readonly IAlarmHistoryService? _alarmHistoryService;
-    private readonly DispatcherTimer _liveTimer;
+    private readonly PageRefreshTimer _liveTimer;
 
     /// <summary>
     /// 设备快照缓存：仅在 Devices.CollectionChanged 时重建，RefreshActiveAlarms 每 tick 直接遍历，
@@ -56,7 +56,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     private readonly HomeAlarmCollector _alarmCollector = new();
     private readonly object _pendingDataSourceLock = new();
-    private List<AlarmEventRecord> _pendingDataSourceEvents = [];
+    private List<ActiveAlarmStateRecord> _pendingDataSourceEvents = [];
     private int _pendingDataSourceQueryVersion;
     private readonly ShiftProgressProvider _shiftProgress;
     private readonly LastShiftComparisonProvider _lastShiftProvider;
@@ -91,11 +91,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// </summary>
     private const int MaxHomeActiveAlarms = 5;
 
-    // ──────────── 图表 diff 缓存（避免每 3 秒无变化重建 PlotModel） ────────────
-    private (double a, double p, double q) _lastOeeInput;
-    private (int r, int a, int p, int o) _lastStatusInput;
-    private int _lastDefectSignature;
-    private (int ok, int ng) _lastQualityInput;
+    // ──────────── 图表 diff 缓存（避免每 3 秒无变化重建 PlotModel，ChartDiffGate 公共实现） ────────────
+    private readonly ChartDiffGate _oeeRingGate;
+    private readonly ChartDiffGate _statusPieGate;
+    private readonly ChartDiffGate _defectTopGate;
+    private readonly ChartDiffGate _qualityPieGate;
 
     // ──────────── 设备选择 ────────────
 
@@ -492,6 +492,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _shiftProgress = new ShiftProgressProvider(appSettings);
         _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
 
+        // 图表差分门必须在首次选中设备（会触发 RefreshSelected → ClearLiveData 的 Reset）之前就绪
+        _oeeRingGate = new ChartDiffGate(BuildOeeRingCharts);
+        _statusPieGate = new ChartDiffGate(BuildStatusPieChart);
+        _defectTopGate = new ChartDiffGate(RefreshDefectTop);
+        _qualityPieGate = new ChartDiffGate(BuildQualityPieChart);
+
         RefreshDeviceFilterItems();
         // 使用命名方法而非 lambda，确保 Dispose 时能正确取消订阅（lambda 每次创建新委托实例，-= 不生效）
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
@@ -506,13 +512,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (_deviceRepository.Devices.Count > 0)
             _selection.SelectedDeviceId = _deviceRepository.Devices[0].Id;
 
-        // 显式 Background 优先级：图表重算/列表刷新不应抢占渲染(7)/输入(5)之前的调度槽。
-        // 全项目 11 个 DispatcherTimer 中此前唯一漏配优先级的实例（2026-09-01 性能审查 P1-13）。
-        _liveTimer = new DispatcherTimer(System.Windows.Threading.DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs)
-        };
-        _liveTimer.Tick += OnLiveTimerTick;
+        // 统一刷新管道：PageRefreshTimer 固定 DispatcherPriority.Background（历史性能审查 P1-13 补丁）。
+        _liveTimer = new PageRefreshTimer(
+            TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs), OnLiveTimerTick);
     }
 
     public void OnPageEnter()
@@ -910,17 +912,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         var now = DateTime.Now;
         ApplyRuntime(rt, CurrentDevice);
-        // 仅数据变化时重建 OxyPlot（避免每 3 秒无意义 new PlotModel）
-        var oeeInput = (Math.Round(AvailabilityRate, 3), Math.Round(PerformanceRate, 3), Math.Round(QualityRate, 3));
-        if (oeeInput != _lastOeeInput) { BuildOeeRingCharts(); _lastOeeInput = oeeInput; }
+        // 仅数据变化时重建图表（无变化不 rebuild PlotModel；签名比对由 ChartDiffGate 公共实现）
+        _oeeRingGate.Evaluate((Math.Round(AvailabilityRate, 3), Math.Round(PerformanceRate, 3), Math.Round(QualityRate, 3)));
         // 状态时长：5s 粒度桶 diff（审查修复 2026-08-13：原秒级 diff 使运行时每跨整秒重建一次饼图，
         // 即"几乎每 tick 重建"；5s 桶将重建频率降 5 倍且显示口径不变）
-        var statusInput = ((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5), (int)(OfflineTime / 5));
-        if (statusInput != _lastStatusInput) { BuildStatusPieChart(); _lastStatusInput = statusInput; }
-        var defectSig = DefectSignature(CurrentDevice);
-        if (defectSig != _lastDefectSignature) { RefreshDefectTop(); _lastDefectSignature = defectSig; }
-        var qualityInput = (TotalOkProduction, TotalNgProduction);
-        if (qualityInput != _lastQualityInput) { BuildQualityPieChart(); _lastQualityInput = qualityInput; }
+        _statusPieGate.Evaluate(((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5), (int)(OfflineTime / 5)));
+        _defectTopGate.Evaluate(DefectSignature(CurrentDevice));
+        _qualityPieGate.Evaluate((TotalOkProduction, TotalNgProduction));
         RefreshActiveAlarms();
         // 刷新所有活跃报警的持续时间文本（基于当前时间）
         foreach (var a in ActiveAlarms)
@@ -989,10 +987,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         // 重置 diff 缓存，强制下次 SyncRuntime 重建图表。
         // 不重置会导致新设备数据恰好等于旧设备缓存值时跳过重建，显示陈旧图表。
-        _lastOeeInput = default;
-        _lastStatusInput = default;
-        _lastDefectSignature = 0;
-        _lastQualityInput = default;
+        _oeeRingGate.Reset();
+        _statusPieGate.Reset();
+        _defectTopGate.Reset();
+        _qualityPieGate.Reset();
 
         if (CurrentRuntime != null && HasFreshData())
         {
@@ -1146,7 +1144,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         HasHighLevelAlarm = false;
         ActiveAlarmTotalCount = 0;
         // 断线/无数据时不保留旧图表，交给各卡片的空状态显示，避免旧数据继续误导。
-        _lastOeeInput = default; _lastStatusInput = default; _lastDefectSignature = 0; _lastQualityInput = default;
+        _oeeRingGate.Reset(); _statusPieGate.Reset(); _defectTopGate.Reset(); _qualityPieGate.Reset();
         OeeRingChart = null;
         AvailabilityRingChart = null;
         PerformanceRingChart = null;
@@ -1219,8 +1217,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
-    /// 刷新实时故障列表：收集当前设备的活跃报警（含历史未恢复数据源）。
-    /// 数据源 pending 在后台轻量查询（7 天窗口），失败时回退上一轮缓存。
+    /// 刷新实时故障列表：收集当前设备的活跃报警（PLC 边沿 + 计数阈值 + 活跃状态表数据源报警）。
+    /// 数据源状态表查询在后台轻量执行（直查 IsActive 行），失败时回退上一轮缓存。
     /// </summary>
     private void RefreshActiveAlarms()
     {
@@ -1233,11 +1231,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             return;
         }
 
-        KickPendingDataSourceQuery();
-        ApplyActiveAlarmsFromSnapshot(SnapshotPendingDataSourceEvents());
+        KickActiveStateQuery();
+        ApplyActiveAlarmsFromSnapshot(SnapshotActiveStates());
     }
 
-    private void KickPendingDataSourceQuery()
+    private void KickActiveStateQuery()
     {
         if (_alarmHistoryService == null) return;
 
@@ -1245,28 +1243,29 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         var queryVersion = ++_pendingDataSourceQueryVersion;
         Task.Run(() =>
         {
-            var pending = PendingDataSourceAlarmQuery.TryQueryPending(
-                _alarmHistoryService, DateTime.Now, deviceId, PendingDataSourceAlarmQuery.ActiveLookback);
-            if (pending == null) return;
+            var states = PendingDataSourceAlarmQuery.TryQueryActiveSourceStates(_alarmHistoryService, deviceId);
+            if (states == null) return;
+            // 存在性校验：仅保留当前 PLC 配置中仍存在的值项行，孤儿行不进主页故障卡
+            states = PendingDataSourceAlarmQuery.FilterByCurrentState(states, _deviceRepository.GetDevicesSnapshot());
 
             UiDispatcher.Dispatch(() =>
             {
                 if (queryVersion != _pendingDataSourceQueryVersion) return;
                 lock (_pendingDataSourceLock)
-                    _pendingDataSourceEvents = pending;
+                    _pendingDataSourceEvents = states;
                 if (string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal))
-                    ApplyActiveAlarmsFromSnapshot(pending);
+                    ApplyActiveAlarmsFromSnapshot(states);
             });
         }).Forget();
     }
 
-    private IReadOnlyList<AlarmEventRecord> SnapshotPendingDataSourceEvents()
+    private IReadOnlyList<ActiveAlarmStateRecord> SnapshotActiveStates()
     {
         lock (_pendingDataSourceLock)
             return _pendingDataSourceEvents.ToList();
     }
 
-    private void ApplyActiveAlarmsFromSnapshot(IReadOnlyList<AlarmEventRecord> pendingDataSourceEvents)
+    private void ApplyActiveAlarmsFromSnapshot(IReadOnlyList<ActiveAlarmStateRecord> pendingDataSourceEvents)
     {
         var refreshResult = _alarmCollector.Refresh(
             ActiveAlarms,
@@ -1305,7 +1304,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         });
     }
 
-    private void OnLiveTimerTick(object? sender, EventArgs e)
+    private void OnLiveTimerTick()
         => SyncRuntime();
 
     private void UpdateShiftProgress()
@@ -1328,7 +1327,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public void Dispose()
     {
-        _liveTimer?.Stop();
+        _liveTimer?.Dispose();
         CancelWorkOrderSummaryQuery();
         _disposeCts.Cancel();
         _disposeCts.Dispose();

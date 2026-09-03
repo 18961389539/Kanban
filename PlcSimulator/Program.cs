@@ -58,6 +58,14 @@ internal class Program
     private static ScenarioConfig _scenario = new();
     private static bool _freshInit = false;
 
+    // ── 共享环境状态（低压气源 / 供电波动，跨设备传导；由 UpdateEnvironment 按 EnvironmentTickMs 刷新）──
+    private static bool _airPressureLow;
+    private static DateTime _airLowEndUtc;
+    private static DateTime _nextAirLowUtc = DateTime.UtcNow.AddSeconds(40);
+    private static bool _powerDip;
+    private static DateTime _powerDipEndUtc;
+    private static DateTime _nextPowerDipUtc = DateTime.UtcNow.AddSeconds(60);
+
     static async Task Main(string[] args)
     {
         // 单实例保护：防误启双 Simulator 抢占同一端口（残留实例与真实例双监听 4999/5000 时，
@@ -288,8 +296,13 @@ internal class Program
             var startedCount = 0;
             foreach (var sim in _simulators)
             {
-                // 仅待机态才自动启动；运行态（恢复）保持原状
-                if (sim.Status == DeviceSimulator.SimStatus.Idle)
+                // 仅待机态才自动启动；运行态（恢复）保持原状。
+                // 修复（2026-09-02）：Offline 态也一并启动——重启时 PLC 内存为空，
+                // RestoreFromPlc 把状态字 0 映射为 Offline（SimStatus.Offline=0），
+                // 若仅 Idle 启动，离线设备将永远卡在 Offline（Start 内部拒绝 Offline），
+                // 表现为"重启后产量长期为 0"。Offline 设备启动后进入 Running 正常产出。
+                if (sim.Status == DeviceSimulator.SimStatus.Idle
+                    || sim.Status == DeviceSimulator.SimStatus.Offline)
                 {
                     sim.Start(now);
                     startedCount++;
@@ -479,17 +492,30 @@ internal class Program
 
     /// <summary>
     /// 主 Tick 循环：每 100ms 调用所有设备的 Tick，驱动节拍产出、报警恢复、突发不良期、阈值检查。
+    /// 每 EnvironmentTickMs 刷新一次共享环境快照（低压气源 / 供电波动），传给各设备实现跨设备传导。
     /// </summary>
     private static async Task TickLoopAsync(CancellationToken token)
     {
+        var envTickMs = Math.Max(500, _scenario.EnvironmentTickMs);
+        var envAccumMs = 0;
+        var env = new DeviceSimulator.EnvironmentSnapshot(false, false);
+
         while (!token.IsCancellationRequested)
         {
             var now = DateTime.UtcNow;
+            envAccumMs += 100;
+            if (envAccumMs >= envTickMs)
+            {
+                envAccumMs = 0;
+                UpdateEnvironment(now);
+            }
+            env = new DeviceSimulator.EnvironmentSnapshot(_airPressureLow, _powerDip);
+
             // 修复（2026-08-16，审查 R2）：per-device 隔离。原 foreach 无 try/catch，
             // 任一设备抛异常会静默终止整个 tick 循环，所有设备同时"冻产"且无告警。
             foreach (var sim in _simulators)
             {
-                try { sim.Tick(now); }
+                try { sim.Tick(now, env); }
                 catch (Exception ex)
                 {
                     SimLog.Error($"[{sim.Name}] Tick 异常：{ex.Message}（该设备本轮跳过，其余设备继续）");
@@ -498,6 +524,67 @@ internal class Program
 
             try { await Task.Delay(100, token).ConfigureAwait(false); }
             catch (OperationCanceledException) { break; }
+        }
+    }
+
+    /// <summary>
+    /// 共享环境状态演进：低压气源 / 供电波动事件的进入与退出。
+    /// 事件期间所有设备经 <see cref="DeviceSimulator.EnvironmentSnapshot"/> 感知，
+    /// 各自按自身报警位匹配触发异常（模拟公用工程故障跨设备传导）。
+    /// </summary>
+    private static void UpdateEnvironment(DateTime nowUtc)
+    {
+        if (!_scenario.EnableSharedEnvironment) return;
+        var rng = Random.Shared;
+
+        // 低压气源：事件中 → 到期恢复；空闲中 → 到点投骰子尝试进入
+        if (_airPressureLow)
+        {
+            if (nowUtc >= _airLowEndUtc)
+            {
+                _airPressureLow = false;
+                _nextAirLowUtc = nowUtc.AddSeconds(rng.Next(30, _scenario.AirLowCooldownMaxSec + 1));
+                SimLog.Info("[共享环境] 气源压力恢复正常");
+            }
+        }
+        else if (nowUtc >= _nextAirLowUtc)
+        {
+            if (rng.NextDouble() < _scenario.AirLowChancePerCheck)
+            {
+                _airPressureLow = true;
+                var sec = rng.Next(_scenario.AirLowMinSec, _scenario.AirLowMaxSec + 1);
+                _airLowEndUtc = nowUtc.AddSeconds(sec);
+                SimLog.Warning($"[共享环境] 气源压力低（持续 {sec}s，影响气动类设备）");
+            }
+            else
+            {
+                _nextAirLowUtc = nowUtc.AddSeconds(rng.Next(20, _scenario.AirLowCooldownMaxSec + 1));
+            }
+        }
+
+        // 供电波动：事件中 → 到期恢复；空闲中 → 到点投骰子尝试进入
+        if (_powerDip)
+        {
+            if (nowUtc >= _powerDipEndUtc)
+            {
+                _powerDip = false;
+                _nextPowerDipUtc = nowUtc.AddSeconds(rng.Next(20, _scenario.PowerDipCooldownMaxSec + 1));
+                SimLog.Info("[共享环境] 供电恢复正常");
+            }
+        }
+        else if (nowUtc >= _nextPowerDipUtc)
+        {
+            if (rng.NextDouble() < _scenario.PowerDipChancePerCheck)
+            {
+                _powerDip = true;
+                var sec = rng.Next(_scenario.PowerDipMinSec, _scenario.PowerDipMaxSec + 1);
+                _powerDipEndUtc = nowUtc.AddSeconds(sec);
+                SimLog.Warning($"[共享环境] 供电波动（持续 {sec}s，影响电流/电压敏感设备）");
+            }
+            else
+            {
+                _nextPowerDipUtc = nowUtc.AddSeconds(rng.Next(15, _scenario.PowerDipCooldownMaxSec + 1));
+            }
         }
     }
 
@@ -744,7 +831,9 @@ internal class Program
         Console.WriteLine("─── 设备配置 ───");
         foreach (var dev in _devices)
         {
-            var cycleSec = dev.RecipeValue > 0 ? 3600.0 / dev.RecipeValue : 60.0;
+            var cycleSec = dev.TargetCycle > 0
+                ? dev.TargetCycle
+                : dev.RecipeValue > 0 ? 3600.0 / dev.RecipeValue : 60.0;
             var simCycleSec = cycleSec / _speedMultiplier;
             Console.WriteLine($"[{dev.Name}] (Id: {dev.Id}, 节拍 {cycleSec:F1}s/件 → 仿真 {simCycleSec:F1}s/件 @x{_speedMultiplier:F1})");
             Console.WriteLine($"  OK: {dev.OkCountAddress}, NG: {dev.NgCountAddress}, 状态: {dev.StatusCountAddress}");

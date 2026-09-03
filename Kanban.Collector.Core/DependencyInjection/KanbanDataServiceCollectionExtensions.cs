@@ -93,7 +93,8 @@ public static class KanbanDataServiceCollectionExtensions
             sp.GetRequiredService<DataSourceSnapshotStore>(),
             sp.GetRequiredService<IDataSourceReaderRegistry>(),
             sp.GetRequiredService<IPlcRuntimeSessionManager>(),
-            sp.GetRequiredService<ISnEventStore>()));
+            sp.GetRequiredService<ISnEventStore>(),
+            sp.GetRequiredService<IActiveAlarmStateService>()));
         services.AddSingleton<IPlcDataAcquisitionService>(sp => sp.GetRequiredService<PlcDataAcquisitionService>());
 
         // ──────────── 历史存储（默认实现；MainAPP Remote 模式可整体重定向到远程代理） ────────────
@@ -106,6 +107,8 @@ public static class KanbanDataServiceCollectionExtensions
         services.AddSingleton<IProductionHistoryReader>(sp => sp.GetRequiredService<ProductionHistoryStore>());
         services.AddSingleton<AlarmHistoryStore>();
         services.AddSingleton<IAlarmHistoryService>(sp => sp.GetRequiredService<AlarmHistoryStore>());
+        services.AddSingleton<ActiveAlarmStateStore>();
+        services.AddSingleton<IActiveAlarmStateService>(sp => sp.GetRequiredService<ActiveAlarmStateStore>());
         services.AddSingleton<StatusTransitionHistoryStore>();
         services.AddSingleton<IStatusTransitionHistoryService>(sp => sp.GetRequiredService<StatusTransitionHistoryStore>());
         services.AddSingleton<HistoryStorageDiagnostics>();

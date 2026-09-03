@@ -33,6 +33,10 @@ public interface IWorkOrderRepository
     int CleanupOldWorkOrders(int retentionDays = 365);
     WorkOrder? GetRunningByDevice(string deviceId);
     WorkOrder? GetLatestPendingByDevice(string deviceId);
+
+    /// <summary>持锁替换内存集合中指定 Id 的工单项（整项替换触发 UI Replace 通知）。
+    /// 找不到对应项（已被删除）时返回 false，不做插入。产量回填等后台线程写回必须经本方法。</summary>
+    bool TryReplaceInMemory(WorkOrder workOrder);
 }
 
 /// <summary>
@@ -285,6 +289,25 @@ public class WorkOrderRepository : IWorkOrderRepository
                 WorkOrders.Insert(0, workOrder);
             }
         }
+    }
+
+    /// <inheritdoc />
+    public bool TryReplaceInMemory(WorkOrder workOrder)
+    {
+        // 产量回填等后台线程写回的唯一合法入口：绕过 _collectionLock 的直接 SetItem
+        // 与 WPF 绑定引擎（EnableCollectionSynchronization 同锁读）及 Upsert 路径失去互斥，
+        // 曾引发 ObservableCollection.CheckReentrancy / "Collection was modified"
+        // 枚举异常（审查修复 2026-09-03）。找不到对应项（已被删除）时静默放弃，不插入。
+        lock (_collectionLock)
+        {
+            for (var i = 0; i < WorkOrders.Count; i++)
+            {
+                if (WorkOrders[i].Id != workOrder.Id) continue;
+                WorkOrders[i] = workOrder;
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>

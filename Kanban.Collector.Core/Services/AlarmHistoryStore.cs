@@ -5,8 +5,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Core.Services;
 
-public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryStore> logger) : IAlarmHistoryService
+public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryStore> logger, ActiveAlarmStateStore? activeStateStore = null) : IAlarmHistoryService
 {
+    private readonly ActiveAlarmStateStore _activeStateStore
+        = activeStateStore ?? new ActiveAlarmStateStore(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<ActiveAlarmStateStore>.Instance);
+
+    public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
+        => _activeStateStore.QueryActive(deviceId);
     public bool LogAlarmEvent(string deviceId, string deviceName, string alarmId,
         string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime,
         string? shiftName = null)

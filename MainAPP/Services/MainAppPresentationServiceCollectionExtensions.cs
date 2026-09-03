@@ -44,7 +44,9 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<PlcDataAcquisitionService>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<DeviceRepository>(),
-            sp.GetRequiredService<HistoryService>(),
+            // 走 IHistoryService（Remote 模式重定向到 RemoteHistoryQueryService）；
+            // 之前注入具体类 HistoryService，Remote 模式下本页会静默读取本地空库（审查修复 2026-09-03）。
+            sp.GetRequiredService<IHistoryService>(),
             sp.GetRequiredService<SystemResourceMonitor>(),
             sp.GetRequiredService<IDialogService>(),
             sp.GetService<IPlcAddressCodecResolver>(),
@@ -82,13 +84,10 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IProductionReviewPdfService>(),
-            sp.GetRequiredService<IDefectHistoryReader>(),
             sp.GetRequiredService<WorkOrderRepository>(),
-            sp.GetRequiredService<IProductionReviewAnalysisService>(),
-            sp.GetRequiredService<IProductionReviewDataService>(),
             sp.GetRequiredService<IProductionReviewCsvExportService>(),
             sp.GetRequiredService<IProductionReviewChartService>(),
-            sp.GetRequiredService<IProductionReviewMetricsService>()));
+            sp.GetRequiredService<IOverviewDashboardService>()));
         services.AddSingleton<DeviceDetailViewModel>(sp => new DeviceDetailViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IHistoryService>(),
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<IDialogService>(),

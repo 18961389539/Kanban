@@ -22,7 +22,9 @@ public partial class ShiftConfig : ObservableObject
     private TimeSpan _startTime = new(8, 0, 0);
 
     /// <summary>
-    /// 班次结束时间（仅时分秒部分有效；若小于 StartTime 表示跨天）
+    /// 班次结束时间（仅时分秒部分有效；若小于 StartTime 表示跨天）。
+    /// 允许 24:00（TimeSpan.FromHours(24)）表示当天结束；
+    /// Contains/DurationHours/GetCurrentStart 对该值语义正确，ResolveRange 内部已做归一化。
     /// </summary>
     [ObservableProperty]
     private TimeSpan _endTime = new(20, 0, 0);
@@ -57,11 +59,14 @@ public partial class ShiftConfig : ObservableObject
     /// 跨天（EndTime ≤ StartTime）由 NodaTime 的日期运算保证正确，无需手动 AddDays(-1) 判断。
     /// 约定：返回包含 reference 的班次实例；若 reference 落在班次间隙（相邻班次未铺满 24h），
     /// 则取最晚开始 ≤ reference 的那次实例。与历史 GetShiftAbsoluteRange 行为一致。
+    /// EndTime 允许 24:00（TimeSpan 1.00:00:00，工厂“晚班 16:00-24:00”常规配置）：
+    /// NodaTime LocalTime 合法上界为当天最后一 tick，这里对 24:00 归一化为 00:00，
+    /// startT &gt; endT 必然进入跨天分支，得到 [start, 次日 00:00) 的正确区间（审查修复 2026-09-03）。
     /// </summary>
     public (DateTime Start, DateTime End) ResolveRange(DateTime reference)
     {
-        var startT = LocalTime.FromTicksSinceMidnight(StartTime.Ticks);
-        var endT   = LocalTime.FromTicksSinceMidnight(EndTime.Ticks);
+        var startT = LocalTime.FromTicksSinceMidnight(StartTime.Ticks % NodaConstants.TicksPerDay);
+        var endT   = LocalTime.FromTicksSinceMidnight(EndTime.Ticks % NodaConstants.TicksPerDay);
         var refLocal = LocalDateTime.FromDateTime(reference); // 以本地墙钟解释，不带时区
 
         if (startT <= endT)
@@ -95,7 +100,8 @@ public partial class ShiftConfig : ObservableObject
     /// </summary>
     public DateTime GetCurrentStart(DateTime now)
     {
-        var startT = LocalTime.FromTicksSinceMidnight(StartTime.Ticks);
+        // StartTime 同样做 24:00 归一化（配置异常时防 NodaTime 越界，与 ResolveRange 同口径）
+        var startT = LocalTime.FromTicksSinceMidnight(StartTime.Ticks % NodaConstants.TicksPerDay);
         var refLocal = LocalDateTime.FromDateTime(now);
 
         if (EndTime <= StartTime) // 跨天

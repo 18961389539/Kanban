@@ -133,6 +133,9 @@ public class NavigationFlowTests
             var vm = _host.GetMainWindowViewModel();
             vm.SelectedIndex = NavigationPageCatalog.DataSourceMonitoring.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            // OnPageEnter 经 BeginInvoke(Background) 排队 Refresh（行构建），必须泵到 Background
+            // 才会执行；只泵 Loaded/Render 时 Rows 恒为空（审查修复 2026-09-03）。
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
             window.UpdateLayout();
 
@@ -195,6 +198,8 @@ public class NavigationFlowTests
             var vm = _host.GetMainWindowViewModel();
             vm.SelectedIndex = NavigationPageCatalog.DataSourceMonitoring.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
+            // 泵到 Background：驱动 OnPageEnter 排队的 Refresh（Rows/TrendRows 构建），见上
+            window.Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
             window.UpdateLayout();
 

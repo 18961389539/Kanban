@@ -202,7 +202,8 @@
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="MonitorStringValueTemplate">
-            <TextBlock Foreground="{StaticResource PrimaryTextBrush}"
+            <TextBlock Style="{StaticResource MonitorRightAlignedText}"
+                       Foreground="{StaticResource PrimaryTextBrush}"
                        Text="{Binding CurrentValueText}"
                        TextTrimming="CharacterEllipsis"
                        TextWrapping="NoWrap"

@@ -1205,15 +1205,31 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.FromDate = from;
         _vm.ToDate = DateTime.Now.AddMinutes(10);
 
-        // 防抖 800ms + 后台查询执行耗时，轮询等待至多 15s。
+        // 防抖 800ms + 后台查询执行耗时，轮询等待至多 30s。
         // 预算放宽（与 AuditService 等待先例一致）：全量并行/CI 高负载下调度可能显著延迟，
         // 过短的固定预算会把"环境慢"误判为"防抖未触发"造成偶发假失败。
-        var deadline = DateTime.UtcNow.AddSeconds(15);
+        // 每轮泵一次 Dispatcher：防抖延续若被 Post 回 Dispatcher 队列（STA fixture 场景），
+        // 无泵时永不执行（审查修复 2026-09-03）。
+        var deadline = DateTime.UtcNow.AddSeconds(30);
         while (DateTime.UtcNow < deadline && !_vm.HasQueried)
+        {
             Thread.Sleep(100);
+            PumpCurrentDispatcher();
+        }
 
         Assert.True(_vm.HasQueried, "筛选变化后 800ms 防抖应自动查询");
         Assert.Equal(2, _vm.TotalCount);
+    }
+
+    /// <summary>在当前线程的 Dispatcher 上泵一帧（处理所有已排队操作后返回）。
+    /// Continue=false 用低于 Background 的优先级，保证防抖/回填等 Background 操作先被处理。</summary>
+    private static void PumpCurrentDispatcher()
+    {
+        var frame = new System.Windows.Threading.DispatcherFrame();
+        _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+            new Action(() => frame.Continue = false),
+            System.Windows.Threading.DispatcherPriority.SystemIdle);
+        System.Windows.Threading.Dispatcher.PushFrame(frame);
     }
 
     // ════════════════════ 快速时间档位补全（合理化建议 11）════════════════════

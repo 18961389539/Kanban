@@ -273,6 +273,54 @@ public class ScenarioConfig
     /// 设为 3 秒确保覆盖 MainAPP 至少 1 个采集周期（采集间隔约 1-2 秒）。</summary>
     public int CommJitterDurationSec { get; init; } = 3;
 
+    // ── 工艺参数联动（数据源平滑模拟 + 越限触发真实报警）──
+    /// <summary>启用工艺参数平滑模拟：温度/湿度/压力/电流按随机游走+回归基线演进，
+    /// 参数越限时自动触发名称匹配的真实报警位（如温度过高/气压低），报警恢复后参数回落。</summary>
+    public bool EnableParameterSimulation { get; init; } = true;
+
+    /// <summary>参数正常波动半幅（相对基线的小数比例，0.02 = 基准值 ±2%）。</summary>
+    public double ParamNoiseSpan { get; init; } = 0.02;
+
+    /// <summary>参数每次越限事件之间的正常间隔随机上下限（秒）。</summary>
+    public int ParamOverIntervalMinSec { get; init; } = 40;
+    public int ParamOverIntervalMaxSec { get; init; } = 90;
+
+    /// <summary>参数越限持续随机上下限（秒，报警持续时长与其一致）。</summary>
+    public int ParamOverMinSec { get; init; } = 6;
+    public int ParamOverMaxSec { get; init; } = 15;
+
+    // ── 共享环境（气源/供电异常跨设备传导）──
+    /// <summary>启用共享环境模拟：气源压力低 / 供电波动事件会同时影响多台设备（触发气压类/电流电压类报警）。</summary>
+    public bool EnableSharedEnvironment { get; init; } = true;
+
+    /// <summary>环境状态刷新间隔（毫秒，默认 2.5s 检查一次事件）。</summary>
+    public int EnvironmentTickMs { get; init; } = 2500;
+
+    /// <summary>每次环境刷新进入低压气源事件的概率（0.004 ≈ 每 10 分钟一次）。</summary>
+    public double AirLowChancePerCheck { get; init; } = 0.004;
+
+    /// <summary>低压气源持续随机上下限（秒）。</summary>
+    public int AirLowMinSec { get; init; } = 10;
+    public int AirLowMaxSec { get; init; } = 25;
+
+    /// <summary>低压气源事件之间的随机间隔上限（秒）。</summary>
+    public int AirLowCooldownMaxSec { get; init; } = 150;
+
+    /// <summary>每次环境刷新进入供电波动事件的概率。</summary>
+    public double PowerDipChancePerCheck { get; init; } = 0.003;
+
+    /// <summary>供电波动持续随机上下限（秒）。</summary>
+    public int PowerDipMinSec { get; init; } = 3;
+    public int PowerDipMaxSec { get; init; } = 8;
+
+    /// <summary>供电波动事件之间的随机间隔上限（秒）。</summary>
+    public int PowerDipCooldownMaxSec { get; init; } = 120;
+
+    // ── 缺陷工艺加权（缺陷分布贴合设备工艺特性）──
+    /// <summary>启用工艺加权缺陷选择：注塑机偏向缩水/飞边，焊接机偏向虚焊/焊穿等。
+    /// 预热期/报警恢复爬坡期工艺主缺陷占比更高（模拟工艺不稳定阶段）。</summary>
+    public bool EnableDefectProcessWeight { get; init; } = true;
+
     // ── 预设场景 ──
 
     public static readonly Dictionary<string, ScenarioConfig> Presets = new(StringComparer.OrdinalIgnoreCase)

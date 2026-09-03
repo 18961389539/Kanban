@@ -39,6 +39,9 @@ public interface IKanbanMonitoringClient
 
     /// <summary>配方列表（只读数据源）。</summary>
     Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default);
+
+    /// <summary>查询当前活跃报警状态快照（活跃报警墙直查真源）。</summary>
+    Task<IReadOnlyList<ActiveAlarmStateDto>> QueryActiveAlarmStatesAsync(string? deviceId = null, CancellationToken ct = default);
 }
 
 /// <summary>
