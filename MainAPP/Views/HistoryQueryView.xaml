@@ -819,7 +819,7 @@
                         </Border>
                         <Border Style="{StaticResource KpiCardSecondary}">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K017}" />
+                                <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.M352}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             </StackPanel>
                         </Border>

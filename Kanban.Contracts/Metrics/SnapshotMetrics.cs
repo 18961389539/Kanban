@@ -39,6 +39,19 @@ public static class SnapshotMetrics
     public static double CycleSeconds(double perHour)
         => perHour > 0 ? 3600.0 / perHour : 0;
 
+    /// <summary>
+    /// 运行期间平均节拍（秒/件）。与 <see cref="RealtimeSpeed"/> 同源，运行不足
+    /// <see cref="MinRunTimeSecForSpeed"/> 秒时返回 0。不经性能率 Clamp，超产时快于目标。
+    /// </summary>
+    public static double AverageCycleSeconds(double runTimeSeconds, int ok, int ng)
+        => CycleSeconds(RealtimeSpeed(runTimeSeconds, ok, ng));
+
+    /// <summary>应产件数 = 目标产能（件/小时）× 已过小时；产能或时长无效时返回 0。</summary>
+    public static int ExpectedOutput(int targetPcsPerHour, double elapsedHours)
+        => targetPcsPerHour > 0 && elapsedHours > 0
+            ? (int)Math.Round(targetPcsPerHour * elapsedHours)
+            : 0;
+
     /// <summary>速度达成率 = 实际速度 / 目标节拍，Clamp[0,1]；目标≤0 返回 0。</summary>
     public static double AchievementRate(double actualPerHour, double targetPerHour)
         => targetPerHour > 0 ? Math.Clamp(actualPerHour / targetPerHour, 0, 1) : 0;

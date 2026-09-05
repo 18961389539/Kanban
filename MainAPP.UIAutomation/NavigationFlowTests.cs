@@ -102,7 +102,7 @@ public class NavigationFlowTests : IDisposable
         string[] expectedTexts =
         {
             "生产仪表板", "设备状态", "当前生产状态", "实时故障",
-            "OEE 综合效率", "缺陷帕累托（TOP5）"
+            "OEE 综合效率", "缺陷帕累托（TOP8）"
         };
         foreach (var text in expectedTexts)
         {

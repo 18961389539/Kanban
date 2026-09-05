@@ -874,10 +874,10 @@
     <value>基本パラメータ</value>
   </data>
   <data name="K196" xml:space="preserve">
-    <value>目標タクト（個/時間）</value>
+    <value>目標能力（個/時間）</value>
   </data>
   <data name="K197" xml:space="preserve">
-    <value>目標タクト</value>
+    <value>目標能力</value>
   </data>
   <data name="K198" xml:space="preserve">
     <value>PLCアドレス設定</value>
@@ -1237,7 +1237,7 @@
     <value>OEE = 良品率 × 性能達成率 × 時間稼働率</value>
   </data>
   <data name="K317" xml:space="preserve">
-    <value>不良パレート（TOP5）</value>
+    <value>不良パレート（TOP8）</value>
   </data>
   <data name="K318" xml:space="preserve">
     <value>状態データがありません</value>
@@ -2726,7 +2726,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>デバイス「{0}」が未設定です: {1}</value>
   </data>
   <data name="F204" xml:space="preserve">
-    <value>デバイス「{0}」の目標サイクルは 0 より大きい必要があります（現在 {1}）</value>
+    <value>デバイス「{0}」の目標能力は 0 より大きい必要があります（現在 {1}）</value>
   </data>
   <data name="F205" xml:space="preserve">
     <value>デバイス「{0}」: 不良名「{1}」が重複しています</value>
@@ -3776,6 +3776,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
     <value>目標タクト</value>
+  </data>
+  <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
+    <value>目標能力</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
     <value>実タクト</value>
@@ -5058,10 +5061,70 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>OEE 順</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>タクト（実績/目標）</value>
+    <value>平均タクト（実績/目標）</value>
+  </data>
+  <data name="Ln_ShiftPace" xml:space="preserve">
+    <value>良品達成（OK/予定）</value>
+  </data>
+  <data name="Ln_AvailabilityHint" xml:space="preserve">
+    <value>アラーム時間のみ控除（待機・オフライン含まず）</value>
+  </data>
+  <data name="Ln_ActualCapacity" xml:space="preserve">
+    <value>実績能力</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleAll" xml:space="preserve">
+    <value>全デバイスに適用</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
+    <value>全デバイスに適用</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
+    <value>{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
+    <value>{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleFailed" xml:space="preserve">
+    <value>目標能力の保存に失敗しました：{0}</value>
+  </data>
+  <data name="Hp_DefectSubtitle" xml:space="preserve">
+    <value>現在の設備 · 当シフト増分</value>
+  </data>
+  <data name="Hp_DefectSummary" xml:space="preserve">
+    <value>不良合計 {0:N0}</value>
+  </data>
+  <data name="Hp_DefectShareNg" xml:space="preserve">
+    <value>NG比 {0:P0}</value>
+  </data>
+  <data name="Hp_DefectCumulative" xml:space="preserve">
+    <value>累積 {0:P0}</value>
+  </data>
+  <data name="Hp_DefectOthers" xml:space="preserve">
+    <value>その他（{0} 件）</value>
+  </data>
+  <data name="Hp_DefectEmptyZero" xml:space="preserve">
+    <value>現在の不良カウントなし</value>
+  </data>
+  <data name="Hp_DefectEmptyZeroHint" xml:space="preserve">
+    <value>設定済み不良アドレスはすべて 0</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfigured" xml:space="preserve">
+    <value>不良項目未設定</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfiguredHint" xml:space="preserve">
+    <value>設備管理で不良名と PLC アドレスを設定してください</value>
+  </data>
+  <data name="Hp_DefectTooltip" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="Hp_DefectTooltipNoAddr" xml:space="preserve">
+    <value>{0} · {1}</value>
   </data>
   <data name="Web_Ln_Downtime" xml:space="preserve">
     <value>停止</value>
+  </data>
+  <data name="Web_Ln_AvailabilityHint" xml:space="preserve">
+    <value>アラーム時間のみ控除（待機・オフライン含まず）</value>
   </data>
   <data name="Web_Ln_NoDevices" xml:space="preserve">
     <value>デバイスなし</value>
@@ -5490,7 +5553,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>故障時間(s)</value>
   </data>
   <data name="M352" xml:space="preserve">
-    <value>目標サイクル(個/時)</value>
+    <value>目標能力(個/時)</value>
   </data>
   <data name="M353" xml:space="preserve">
     <value># 設備：{0}</value>
@@ -5538,7 +5601,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>レシピ</value>
   </data>
   <data name="Web_DefectTop" xml:space="preserve">
-    <value>欠陥トップ5</value>
+    <value>不良パレート（TOP8）</value>
   </data>
   <data name="Web_NoDefectData" xml:space="preserve">
     <value>欠陥データなし</value>
@@ -6148,7 +6211,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>完了</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。</value>
+    <value>設備名と目標能力を入力します（いずれも必須）。次のステップで PLC アドレスを設定します。</value>
   </data>
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。</value>
@@ -6172,7 +6235,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>OEE 性能率と速度比較に使用します（単位：個/時間）。</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
-    <value>目標サイクルは 0 より大きくする必要があります</value>
+    <value>目標能力は 0 より大きくする必要があります</value>
   </data>
   <data name="Ux_DeviceWizardTitle" xml:space="preserve">
     <value>新規設備ウィザード</value>
@@ -6554,7 +6617,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>アラーム時間(s)</value>
   </data>
   <data name="Web_Csv_TargetCycle" xml:space="preserve">
-    <value>目標タクト(個/時)</value>
+    <value>目標能力(個/時)</value>
   </data>
   <data name="Web_Csv_SumAlarm" xml:space="preserve">
     <value># 発報：{0} 回、復旧：{1} 回、未復旧：{2} 件</value>

@@ -20,7 +20,6 @@ public class LineDeviceItemTests
         runtime.PausedTime = 720;  // 12m
         var item = new LineDeviceItem(device, runtime);
 
-        // 1020s -> "17m 0s"
         Assert.Equal("17m 0s", item.DowntimeFormatted);
     }
 
@@ -48,66 +47,96 @@ public class LineDeviceItemTests
         Assert.Equal(0, item.ActualCycleSec);
     }
 
-    // ═══════════════ 节拍对比 / 班次进度（2026-08-11 三项增强） ═══════════════
-
-private static AppSettings ShiftsAppSettings()
-{
-    var appSettings = new AppSettings();
-    appSettings.Shifts.Add(new ShiftConfig
+    private static AppSettings ShiftsAppSettings()
     {
-        Name = "白班",
-        StartTime = new TimeSpan(8, 0, 0),
-        EndTime = new TimeSpan(20, 0, 0),
-    });
-    // 夜班跨天（20:00-08:00）：保证任意时刻都有当前班次，测试不依赖运行时间
-    appSettings.Shifts.Add(new ShiftConfig
+        var appSettings = new AppSettings();
+        appSettings.Shifts.Add(new ShiftConfig
+        {
+            Name = "白班",
+            StartTime = new TimeSpan(8, 0, 0),
+            EndTime = new TimeSpan(20, 0, 0),
+        });
+        appSettings.Shifts.Add(new ShiftConfig
+        {
+            Name = "夜班",
+            StartTime = new TimeSpan(20, 0, 0),
+            EndTime = new TimeSpan(8, 0, 0),
+        });
+        return appSettings;
+    }
+
+    [Fact]
+    public void CycleText_ShowsAverageOverTarget_AndSlowFlag()
     {
-        Name = "夜班",
-        StartTime = new TimeSpan(20, 0, 0),
-        EndTime = new TimeSpan(8, 0, 0),
-    });
-    return appSettings;
-}
+        var device = new Device { TargetCycle = 400 }; // 400 件/小时 → 目标 9.0s
+        var runtime = new DeviceRuntime(device);
+        runtime.RunTime = 3600;
+        runtime.TotalOkProduction = 200;
+        runtime.TotalNgProduction = 0;
+        var item = new LineDeviceItem(device, runtime);
 
-[Fact]
-public void CycleText_ShowsRealOverTarget_AndSlowFlag()
-{
-    var device = new Device { TargetCycle = 400 }; // 400 件/小时 → 理论节拍 9.0s
-    var runtime = new DeviceRuntime(device);
-    runtime.RunTime = 3600;          // 1 小时
-    runtime.TotalOkProduction = 200; // 产量 200 → 性能率 200/(400×1)=0.5 → 真实节拍 18.0s
-    runtime.TotalNgProduction = 0;
-    var item = new LineDeviceItem(device, runtime);
+        Assert.Equal(9.0, item.TargetCycleSec, 3);
+        Assert.Equal(18.0, item.RealCycleSec, 3);
+        Assert.Equal(18.0, item.ActualCycleSec, 3);
+        Assert.Equal("18.0/9.0s", item.CycleText);
+        Assert.True(item.IsCycleSlow);
+    }
 
-    Assert.Equal(9.0, item.TargetCycleSec, 3);
-    Assert.Equal(18.0, item.RealCycleSec, 3);
-    Assert.Equal("18.0/9.0s", item.CycleText);
-    Assert.True(item.IsCycleSlow);
-}
+    [Fact]
+    public void CycleText_Overspeed_FasterThanTarget_NotClamped()
+    {
+        var device = new Device { TargetCycle = 400 };
+        var runtime = new DeviceRuntime(device);
+        runtime.RunTime = 3600;
+        runtime.TotalOkProduction = 800;
+        runtime.TotalNgProduction = 0;
+        var item = new LineDeviceItem(device, runtime);
 
-[Fact]
-public void ShiftProgress_ComputesAgainstShiftCapacity()
-{
-    var device = new Device { TargetCycle = 400 }; // 件/小时
-    var runtime = new DeviceRuntime(device);
-    runtime.TotalOkProduction = 2400;
-    var item = new LineDeviceItem(device, runtime, ShiftsAppSettings());
+        Assert.Equal(4.5, item.RealCycleSec, 3);
+        Assert.Equal("4.5/9.0s", item.CycleText);
+        Assert.False(item.IsCycleSlow);
+    }
 
-    Assert.Equal(4800, item.ShiftTargetQuantity); // 400 × 12h
-    Assert.True(item.HasShiftTarget);
-    Assert.Equal(0.5, item.ShiftProgressRatio, 3);
-    // ShiftProgressText 不含单位（单一“件”单位由 ShiftProgressFullText 拼接），对齐当前实现
-    Assert.Equal("2,400 / 4,800", item.ShiftProgressText);
-}
+    [Fact]
+    public void ShiftProgress_UsesElapsedExpectedNotFullShift()
+    {
+        var device = new Device { TargetCycle = 400 };
+        var runtime = new DeviceRuntime(device);
+        runtime.TotalOkProduction = 2400;
+        var noon = new DateTime(2026, 9, 3, 14, 0, 0); // 白班已过 6h → 应产 2400
+        var item = new LineDeviceItem(device, runtime, ShiftsAppSettings(), () => noon);
 
-[Fact]
-public void ShiftProgress_NoShiftConfig_Hidden()
-{
-    var device = new Device { TargetCycle = 400 };
-    var runtime = new DeviceRuntime(device);
-    var item = new LineDeviceItem(device, runtime); // appSettings = null
+        Assert.Equal(4800, item.ShiftTargetQuantity);
+        Assert.Equal(2400, item.ShiftExpectedQuantity);
+        Assert.True(item.HasShiftTarget);
+        Assert.Equal(1.0, item.ShiftProgressRatio, 3);
+        Assert.Equal(1.0, item.ShiftProgressBarValue, 3);
+        Assert.StartsWith("2,400 / 2,400", item.ShiftProgressText);
+    }
 
-    Assert.False(item.HasShiftTarget);
-    Assert.Equal(string.Empty, item.ShiftProgressText);
-}
+    [Fact]
+    public void ShiftProgress_Overachievement_BarCaps_TextShowsOver100()
+    {
+        var device = new Device { TargetCycle = 400 };
+        var runtime = new DeviceRuntime(device);
+        runtime.TotalOkProduction = 3600;
+        var noon = new DateTime(2026, 9, 3, 14, 0, 0); // 应产 2400，实际 3600 → 150%
+        var item = new LineDeviceItem(device, runtime, ShiftsAppSettings(), () => noon);
+
+        Assert.Equal(1.5, item.ShiftProgressRatio, 3);
+        Assert.Equal(1.0, item.ShiftProgressBarValue, 3);
+        Assert.StartsWith("3,600 / 2,400", item.ShiftProgressText);
+        Assert.Contains("150", item.ShiftProgressText);
+    }
+
+    [Fact]
+    public void ShiftProgress_NoShiftConfig_Hidden()
+    {
+        var device = new Device { TargetCycle = 400 };
+        var runtime = new DeviceRuntime(device);
+        var item = new LineDeviceItem(device, runtime);
+
+        Assert.False(item.HasShiftTarget);
+        Assert.Equal(string.Empty, item.ShiftProgressText);
+    }
 }

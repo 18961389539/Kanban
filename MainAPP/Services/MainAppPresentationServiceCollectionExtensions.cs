@@ -70,10 +70,12 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<IRuntimeMode>(),
             remoteRuntimeSink: sp.GetService<RemoteRuntimeSink>(),
             alarmSessionMute: sp.GetRequiredService<IAlarmSessionMute>(),
-            alarmHistoryService: sp.GetRequiredService<IHistoryService>()));
+            alarmHistoryService: sp.GetRequiredService<IHistoryService>(),
+            defectHistoryReader: sp.GetService<IDefectHistoryReader>()));
         services.AddSingleton<ProductionLineViewModel>(sp => new ProductionLineViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDeviceSelectionService>(),
-            sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>()));
+            sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<IDialogService>()));
         services.AddSingleton<AlarmCenterViewModel>(sp => new AlarmCenterViewModel(
             sp.GetRequiredService<IHistoryService>(), sp.GetRequiredService<DeviceRepository>(),
             sp.GetRequiredService<IDialogService>(),

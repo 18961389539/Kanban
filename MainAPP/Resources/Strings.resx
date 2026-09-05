@@ -874,10 +874,10 @@
     <value>基本参数</value>
   </data>
   <data name="K196" xml:space="preserve">
-    <value>目标周期（个 / 小时）</value>
+    <value>目标产能（件/小时）</value>
   </data>
   <data name="K197" xml:space="preserve">
-    <value>目标周期</value>
+    <value>目标产能</value>
   </data>
   <data name="K198" xml:space="preserve">
     <value>PLC 地址配置</value>
@@ -1237,7 +1237,7 @@
     <value>OEE = 良品率 × 性能达标率 × 时间稼动率</value>
   </data>
   <data name="K317" xml:space="preserve">
-    <value>缺陷帕累托（TOP5）</value>
+    <value>缺陷帕累托（TOP8）</value>
   </data>
   <data name="K318" xml:space="preserve">
     <value>暂无状态数据</value>
@@ -2726,7 +2726,7 @@
     <value>设备「{0}」未配置：{1}</value>
   </data>
   <data name="F204" xml:space="preserve">
-    <value>设备「{0}」目标周期必须 &gt; 0（当前 {1}）</value>
+    <value>设备「{0}」目标产能必须 &gt; 0（当前 {1}）</value>
   </data>
   <data name="F205" xml:space="preserve">
     <value>设备「{0}」缺陷名重复：「{1}」</value>
@@ -3776,6 +3776,9 @@
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
     <value>目标节拍</value>
+  </data>
+  <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
+    <value>目标产能</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
     <value>实际节拍</value>
@@ -5058,10 +5061,70 @@
     <value>按 OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>节拍（实际/目标）</value>
+    <value>平均节拍（实际/目标）</value>
+  </data>
+  <data name="Ln_ShiftPace" xml:space="preserve">
+    <value>良品达成（OK/应产）</value>
+  </data>
+  <data name="Ln_AvailabilityHint" xml:space="preserve">
+    <value>只扣报警时间，不含待机和离线</value>
+  </data>
+  <data name="Ln_ActualCapacity" xml:space="preserve">
+    <value>实际产能</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleAll" xml:space="preserve">
+    <value>应用到全部设备</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
+    <value>应用到全部设备</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
+    <value>将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
+    <value>已将 {0} 台设备的目标产能设为 {1:N0} 件/小时</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleFailed" xml:space="preserve">
+    <value>保存目标产能失败：{0}</value>
+  </data>
+  <data name="Hp_DefectSubtitle" xml:space="preserve">
+    <value>当前设备 · 本班次新增</value>
+  </data>
+  <data name="Hp_DefectSummary" xml:space="preserve">
+    <value>缺陷合计 {0:N0}</value>
+  </data>
+  <data name="Hp_DefectShareNg" xml:space="preserve">
+    <value>占 NG {0:P0}</value>
+  </data>
+  <data name="Hp_DefectCumulative" xml:space="preserve">
+    <value>累计 {0:P0}</value>
+  </data>
+  <data name="Hp_DefectOthers" xml:space="preserve">
+    <value>其他（{0} 项）</value>
+  </data>
+  <data name="Hp_DefectEmptyZero" xml:space="preserve">
+    <value>当前无不良计数</value>
+  </data>
+  <data name="Hp_DefectEmptyZeroHint" xml:space="preserve">
+    <value>已配置的缺陷地址当前均为 0</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfigured" xml:space="preserve">
+    <value>未配置缺陷项</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfiguredHint" xml:space="preserve">
+    <value>请在设备管理中配置缺陷名称和 PLC 地址</value>
+  </data>
+  <data name="Hp_DefectTooltip" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="Hp_DefectTooltipNoAddr" xml:space="preserve">
+    <value>{0} · {1}</value>
   </data>
   <data name="Web_Ln_Downtime" xml:space="preserve">
     <value>停机</value>
+  </data>
+  <data name="Web_Ln_AvailabilityHint" xml:space="preserve">
+    <value>只扣报警时间，不含待机和离线</value>
   </data>
   <data name="Web_Ln_NoDevices" xml:space="preserve">
     <value>暂无设备</value>
@@ -5490,7 +5553,7 @@
     <value>报警时长(s)</value>
   </data>
   <data name="M352" xml:space="preserve">
-    <value>目标节拍(件/小时)</value>
+    <value>目标产能(件/小时)</value>
   </data>
   <data name="M353" xml:space="preserve">
     <value># 设备：{0}</value>
@@ -5538,7 +5601,7 @@
     <value>配方</value>
   </data>
   <data name="Web_DefectTop" xml:space="preserve">
-    <value>缺陷分布 TOP5</value>
+    <value>缺陷帕累托（TOP8）</value>
   </data>
   <data name="Web_NoDefectData" xml:space="preserve">
     <value>暂无缺陷数据</value>
@@ -6148,7 +6211,7 @@
     <value>完成</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。</value>
+    <value>填写设备名称与目标产能（均为必填），下一步配置 PLC 地址。</value>
   </data>
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。</value>
@@ -6169,10 +6232,10 @@
     <value>基本信息</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleHint" xml:space="preserve">
-    <value>用于 OEE 性能率与速度对比，单位：个/小时。</value>
+    <value>用于 OEE 性能率与速度对比，单位：件/小时。</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
-    <value>目标周期必须大于 0</value>
+    <value>目标产能必须大于 0</value>
   </data>
   <data name="Ux_DeviceWizardTitle" xml:space="preserve">
     <value>新建设备向导</value>
@@ -6554,7 +6617,7 @@
     <value>报警时长(s)</value>
   </data>
   <data name="Web_Csv_TargetCycle" xml:space="preserve">
-    <value>目标节拍(件/小时)</value>
+    <value>目标产能(件/小时)</value>
   </data>
   <data name="Web_Csv_SumAlarm" xml:space="preserve">
     <value># 触发：{0} 次，恢复：{1} 次，待恢复：{2} 条</value>

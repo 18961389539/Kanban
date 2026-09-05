@@ -46,6 +46,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IWorkOrderService? _workOrderService;
     private readonly IAlarmSessionMute? _alarmSessionMute;
     private readonly IAlarmHistoryService? _alarmHistoryService;
+    private readonly IDefectHistoryReader? _defectHistoryReader;
     private readonly PageRefreshTimer _liveTimer;
 
     /// <summary>
@@ -331,6 +332,15 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public bool IsDefectTopEmpty => DefectTop.Count == 0;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDefectParetoData))]
+    private DefectParetoEmptyKind _defectParetoEmptyKind = DefectParetoEmptyKind.NoDevice;
+
+    public bool HasDefectParetoData => DefectParetoEmptyKind == DefectParetoEmptyKind.HasData;
+
+    [ObservableProperty] private string _defectParetoSummaryText = "";
+    [ObservableProperty] private string _defectNgShareText = "";
+
     // ──────────── 第 1 行 列 3：实时故障 ────────────
 
     public ObservableCollection<ActiveAlarmInfo> ActiveAlarms { get; } = new();
@@ -475,7 +485,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null, IDefectHistoryReader? defectHistoryReader = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -488,6 +498,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _workOrderService = workOrderService;
         _alarmSessionMute = alarmSessionMute;
         _alarmHistoryService = alarmHistoryService;
+        _defectHistoryReader = defectHistoryReader;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _shiftProgress = new ShiftProgressProvider(appSettings);
         _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
@@ -1152,7 +1163,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         StatusPieChart = null;
         QualityPieChart = null;
         DefectTop.Clear();
-        OnPropertyChanged(nameof(IsDefectTopEmpty));
+        ResetDefectParetoPresentation(DefectParetoEmptyKind.NoDevice);
     }
 
 
@@ -1170,15 +1181,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void BuildQualityPieChart()
         => QualityPieChart = ChartService.BuildQualityPieChart(TotalOkProduction, TotalNgProduction);
 
-    /// <summary>计算设备缺陷签名的哈希（仅名称 + 计数），避免每 tick 拼字符串。</summary>
-    private static int DefectSignature(Device? device)
+    /// <summary>缺陷签名：名称/计数/严重度/类别/地址 + NG（占 NG 文案依赖产量）。</summary>
+    private int DefectSignature(Device? device)
     {
         if (device == null) return 0;
         var hash = new HashCode();
+        hash.Add(TotalNgProduction);
+        hash.Add(device.Defects.Count);
         foreach (var d in device.Defects)
         {
             hash.Add(d.Name);
             hash.Add(d.Count);
+            hash.Add(d.Severity);
+            hash.Add(d.Category);
+            hash.Add(d.PlcAddress);
         }
         return hash.ToHashCode();
     }
@@ -1186,34 +1202,79 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private void RefreshDefectTop()
     {
         DefectTop.Clear();
-        if (CurrentDevice == null)
-        {
-            OnPropertyChanged(nameof(IsDefectTopEmpty));
-            return;
-        }
+        var device = CurrentDevice;
+        var inputs = device == null
+            ? []
+            : DefectParetoInputBuilder.BuildHomeInputs(
+                device, _defectHistoryReader, _appSettings.GetShiftsSnapshot(), DateTime.Now);
+        var result = DefectParetoMetrics.Build(inputs, TotalNgProduction, device != null);
 
-        var list = CurrentDevice.Defects
-            .Where(d => d.Count > 0)
-            .OrderByDescending(d => d.Count)
-            .Take(5)
-            .ToList();
-        if (list.Count == 0)
-        {
-            OnPropertyChanged(nameof(IsDefectTopEmpty));
-            return;
-        }
+        DefectParetoEmptyKind = result.EmptyKind;
+        DefectParetoSummaryText = result.EmptyKind == DefectParetoEmptyKind.HasData
+            ? string.Format(Strings.Hp_DefectSummary, result.TotalCount)
+            : "";
+        DefectNgShareText = result.ShareOfNg is { } share
+            ? string.Format(Strings.Hp_DefectShareNg, share)
+            : "";
 
-        var max = list[0].Count;
-        foreach (var d in list)
-        {
-            DefectTop.Add(new HomeDefectTopItem
-            {
-                Name = d.Name,
-                Count = d.Count,
-                BarRatio = max > 0 ? (double)d.Count / max : 0,
-            });
-        }
+        foreach (var row in result.Rows)
+            DefectTop.Add(ToHomeDefectRow(row));
+
         OnPropertyChanged(nameof(IsDefectTopEmpty));
+    }
+
+    private void ResetDefectParetoPresentation(DefectParetoEmptyKind kind)
+    {
+        DefectParetoEmptyKind = kind;
+        DefectParetoSummaryText = "";
+        DefectNgShareText = "";
+        OnPropertyChanged(nameof(IsDefectTopEmpty));
+    }
+
+    private static HomeDefectTopItem ToHomeDefectRow(DefectParetoRow row)
+    {
+        var name = row.IsOthers
+            ? string.Format(Strings.Hp_DefectOthers, row.OtherKindCount)
+            : row.Name;
+        var tooltip = row.IsOthers
+            ? name
+            : $"{name}{Environment.NewLine}{FormatDefectTooltip(row)}";
+        return new HomeDefectTopItem
+        {
+            Rank = row.Rank,
+            RankText = row.Rank > 0 ? row.Rank.ToString() : "",
+            Name = name,
+            Count = row.Count,
+            BarRatio = row.ShareOfTotal,
+            ShareText = row.ShareOfTotal.ToString("P0"),
+            CumulativeText = string.Format(Strings.Hp_DefectCumulative, row.CumulativeShare),
+            IsVitalFew = row.IsVitalFew,
+            IsOthers = row.IsOthers,
+            Severity = (DefectSeverity)(int)row.Severity,
+            Category = (DefectCategory)(int)row.Category,
+            Tooltip = tooltip,
+        };
+    }
+
+    private static string FormatDefectTooltip(DefectParetoRow row)
+    {
+        var severity = row.Severity switch
+        {
+            Kanban.Contracts.Enums.DefectSeverity.Critical => Strings.Severity_Critical,
+            Kanban.Contracts.Enums.DefectSeverity.Major => Strings.Severity_Major,
+            _ => Strings.Severity_Minor,
+        };
+        var category = row.Category switch
+        {
+            Kanban.Contracts.Enums.DefectCategory.Appearance => Strings.Defect_Appearance,
+            Kanban.Contracts.Enums.DefectCategory.Dimension => Strings.Defect_Dimension,
+            Kanban.Contracts.Enums.DefectCategory.Function => Strings.Defect_Function,
+            Kanban.Contracts.Enums.DefectCategory.Packaging => Strings.Defect_Packaging,
+            _ => Strings.Defect_Other,
+        };
+        return string.IsNullOrWhiteSpace(row.PlcAddress)
+            ? string.Format(Strings.Hp_DefectTooltipNoAddr, severity, category)
+            : string.Format(Strings.Hp_DefectTooltip, severity, category, row.PlcAddress);
     }
 
     /// <summary>

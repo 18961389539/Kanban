@@ -1,5 +1,7 @@
 using System.Threading.Channels;
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Enums;
+using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,8 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     private readonly IServiceProvider? _services;
     private DeviceRepository? _deviceRepository;
     private IPlcDataAcquisitionService? _plcService;
+    private IDefectHistoryReader? _defectHistoryReader;
+    private AppSettings? _appSettings;
     private readonly object _gate = new();
     private readonly List<Channel<MetaStateDto>> _subscribers = new();
     private readonly CancellationTokenSource _stopCts = new();
@@ -77,6 +81,8 @@ public sealed class MetaPublisher : IHostedService, IDisposable
             // 延迟到 CollectorWorker 完成 settings.Load 后再解析采集服务，避免默认 PLC 配置污染单例。
             _deviceRepository ??= _services?.GetService<DeviceRepository>();
             _plcService ??= _services?.GetService<IPlcDataAcquisitionService>();
+            _defectHistoryReader ??= _services?.GetService<IDefectHistoryReader>();
+            _appSettings ??= _services?.GetService<AppSettings>();
             _logger.LogInformation("MetaPublisher 已启动（5s 周期）");
             _timer = new Timer(_ => Publish(), null, TimeSpan.Zero, Interval);
             await Task.Delay(Timeout.InfiniteTimeSpan, linkedCts.Token);
@@ -116,11 +122,13 @@ public sealed class MetaPublisher : IHostedService, IDisposable
                 _cachedWorkOrders = workOrders;
                 _lastWorkOrderVersion = version;
             }
+            var (defectTop, defectSummaries) = BuildDefectPareto();
             var meta = new MetaStateDto
             {
                 Devices = _cachedWorkOrders!,
                 Shift = _shiftProgressProvider.GetProgress(),
-                DefectTop = BuildDefectTop(),
+                DefectTop = defectTop,
+                DefectSummaries = defectSummaries,
                 LastShifts = BuildLastShifts(),
             };
             lock (_gate)
@@ -140,31 +148,61 @@ public sealed class MetaPublisher : IHostedService, IDisposable
     }
 
     /// <summary>
-    /// 各设备缺陷计数 TOP5（Count&gt;0 才推送）。与 WPF 首页 DefectBarChart 同源：
-    /// 采集循环写入的设备实体缺陷计数（PlcScanPipeline），服务端排序取前 5。
-    /// 5s 低频 + 最多 5 条/设备，推送体积可忽略。
+    /// 各设备缺陷帕累托（与 WPF 首页同源）：本班次窗口内新增件数（历史快照差分）。
+    /// 行 = 正计数 TOP5 + 可选「其他」；摘要按设备下发。
     /// </summary>
-    private List<DeviceDefectCountDto> BuildDefectTop()
+    private (List<DeviceDefectCountDto> Top, List<DeviceDefectSummaryDto> Summaries) BuildDefectPareto()
     {
-        if (_deviceRepository is null) return [];
+        if (_deviceRepository is null) return ([], []);
+
+        List<Core.Models.ShiftConfig> shifts;
+        if (_appSettings != null)
+        {
+            lock (_appSettings.ShiftsLock)
+                shifts = _appSettings.Shifts.ToList();
+        }
+        else
+            shifts = [];
+
+        var now = DateTime.Now;
         var top = new List<DeviceDefectCountDto>();
+        var summaries = new List<DeviceDefectSummaryDto>();
         foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
-            foreach (var d in device.Defects
-                         .Where(x => x.Count > 0)
-                         .OrderByDescending(x => x.Count)
-                         .Take(5))
+            var ng = 0;
+            if (_deviceRepository.RuntimeMap.TryGetValue(device.Id, out var runtime))
+                ng = runtime.TotalNgProduction;
+
+            var inputs = DefectParetoInputBuilder.BuildHomeInputs(device, _defectHistoryReader, shifts, now);
+            var result = DefectParetoMetrics.Build(inputs, ng);
+            summaries.Add(new DeviceDefectSummaryDto
+            {
+                DeviceId = device.Id,
+                ConfiguredCount = result.ConfiguredCount,
+                TotalCount = result.TotalCount,
+                EmptyKind = result.EmptyKind,
+            });
+            foreach (var row in result.Rows)
             {
                 top.Add(new DeviceDefectCountDto
                 {
                     DeviceId = device.Id,
                     DeviceName = device.Name,
-                    Name = d.Name,
-                    Count = d.Count,
+                    Name = row.Name,
+                    Count = row.Count,
+                    Rank = row.Rank,
+                    ShareOfTotal = row.ShareOfTotal,
+                    CumulativeShare = row.CumulativeShare,
+                    IsVitalFew = row.IsVitalFew,
+                    IsOthers = row.IsOthers,
+                    OtherKindCount = row.OtherKindCount,
+                    Severity = row.Severity,
+                    Category = row.Category,
+                    PlcAddress = row.PlcAddress,
                 });
             }
         }
-        return top;
+        return (top, summaries);
     }
 
     /// <summary>

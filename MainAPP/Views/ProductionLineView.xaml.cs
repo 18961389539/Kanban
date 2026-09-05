@@ -7,7 +7,7 @@ namespace MainAPP.Views;
 
 /// <summary>
 /// 产线总览页：单一详细设备卡片模板（<see cref="ViewModels.ProductionLineViewModel.IsDetailedLayout"/> 恒 true，
-/// 不按设备数切换大卡/中卡/表格）、虚拟化自适应网格、汇总 KPI 条，以及筛选 / 搜索 / 排序工具栏。
+/// 不按设备数切换大卡/中卡/表格）、顶部目标产能批量设置、虚拟化自适应网格、汇总 KPI 条，以及筛选 / 搜索 / 排序工具栏。
 /// </summary>
 public partial class ProductionLineView : UserControl
 {

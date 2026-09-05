@@ -52,7 +52,8 @@ public partial class Device : ObservableObject
     // ──────────── 生产节拍 ────────────
 
     /// <summary>
-    /// 目标周期（单位：个/每小时）
+    /// 目标产能（件/小时）。属性名 <c>TargetCycle</c> 为历史兼容，不是秒/件。
+    /// 秒/件展示用 <c>3600 / TargetCycle</c>。
     /// </summary>
     [ObservableProperty]
     private int _targetCycle;

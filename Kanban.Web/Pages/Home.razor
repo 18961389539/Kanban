@@ -136,23 +136,52 @@
 
             <section class="card">
                 <div class="card-title">@L.T("DefectTop")</div>
-                @if (DefectTop.Count == 0)
+                <div class="defect-sub">@L.T("Hp_DefectSubtitle")</div>
+                @if (DefectEmptyKind == DefectParetoEmptyKind.HasData)
                 {
-                    <div class="no-data">@L.T("NoDefectData")</div>
-                }
-                else
-                {
-                    var defectMax = DefectTop.Max(x => x.Count);
+                    <div class="defect-summary">
+                        <span>@L.T("Hp_DefectSummary", DefectTotalCount)</span>
+                        @if (DefectNgShare is { } ngShare)
+                        {
+                            <span>@L.T("Hp_DefectShareNg", ngShare)</span>
+                        }
+                    </div>
                     <div class="defect-list">
                         @foreach (var d in DefectTop)
                         {
-                            <div class="defect-row">
-                                <span class="defect-name" title="@d.DeviceName">@d.Name</span>
-                                <div class="defect-track"><div class="defect-fill" style="width:@(100.0 * d.Count / defectMax)%"></div></div>
-                                <span class="defect-count">@d.Count.ToString("N0")</span>
+                            var barPct = DefectBarPercent(d);
+                            var fillClass = d.IsOthers ? "other" : DefectFillClass(d.Severity);
+                            var displayName = d.IsOthers ? L.T("Hp_DefectOthers", d.OtherKindCount) : d.Name;
+                            <div class="defect-row @(d.IsVitalFew ? "vital" : "")" title="@DefectTooltip(d, displayName)">
+                                <span class="defect-rank">@(d.Rank > 0 ? d.Rank.ToString() : "")</span>
+                                <div class="defect-main">
+                                    <div class="defect-head">
+                                        <span class="defect-name">@displayName</span>
+                                        <span class="defect-count">@d.Count.ToString("N0")</span>
+                                    </div>
+                                    <div class="defect-barline">
+                                        <div class="defect-track"><div class="defect-fill @fillClass" style="width:@barPct.ToString("F1")%"></div></div>
+                                        <span class="defect-share">@Pct(DefectItemShare(d))</span>
+                                        <span class="defect-cumul @(d.IsVitalFew ? "vital" : "")">@L.T("Hp_DefectCumulative", d.CumulativeShare > 0 ? d.CumulativeShare : DefectItemShare(d))</span>
+                                    </div>
+                                </div>
                             </div>
                         }
                     </div>
+                }
+                else if (DefectEmptyKind == DefectParetoEmptyKind.NotConfigured)
+                {
+                    <div class="no-data">@L.T("Hp_DefectEmptyUnconfigured")</div>
+                    <div class="no-data-hint">@L.T("Hp_DefectEmptyUnconfiguredHint")</div>
+                }
+                else if (DefectEmptyKind == DefectParetoEmptyKind.AllZero)
+                {
+                    <div class="no-data">@L.T("Hp_DefectEmptyZero")</div>
+                    <div class="no-data-hint">@L.T("Hp_DefectEmptyZeroHint")</div>
+                }
+                else
+                {
+                    <div class="no-data">@L.T("NoDefectData")</div>
                 }
             </section>
 
@@ -310,9 +339,30 @@
     /// <summary>当前选中设备的工单（Collector 5s 推送缓存，切换设备即时取用）。</summary>
     private WorkOrderDto? CurrentWorkOrder => Dashboard.GetWorkOrder(SelectedDeviceId);
 
-    /// <summary>当前选中设备的缺陷计数 TOP5（Meta 5s 推送；无数据返回空列表）。</summary>
+    /// <summary>当前选中设备的缺陷帕累托行（Meta 5s 推送；无数据返回空列表）。</summary>
     private IReadOnlyList<DeviceDefectCountDto> DefectTop
         => SelectedDeviceId is null ? [] : Dashboard.GetDefectTop(SelectedDeviceId);
+
+    private DeviceDefectSummaryDto? DefectSummary
+        => SelectedDeviceId is null ? null : Dashboard.GetDefectSummary(SelectedDeviceId);
+
+    private DefectParetoEmptyKind DefectEmptyKind
+        => DefectSummary?.EmptyKind
+           ?? (DefectTop.Count > 0 ? DefectParetoEmptyKind.HasData : DefectParetoEmptyKind.NoDevice);
+
+    private int DefectTotalCount
+        => DefectSummary?.TotalCount ?? DefectTop.Sum(x => x.Count);
+
+    private double? DefectNgShare
+    {
+        get
+        {
+            var ng = SelectedSnapshot?.TotalNgProduction ?? 0;
+            var total = DefectTotalCount;
+            if (ng <= 0 || total <= 0) return null;
+            return (double)total / ng;
+        }
+    }
 
     /// <summary>当前选中设备的上一班次汇总（Meta 5s 推送；无缓存返回 null）。</summary>
     private DeviceShiftSummaryDto? LastShift
@@ -527,4 +577,44 @@ private void OnRenderTick()
         AlarmLevel.Medium => "lvl-medium",
         _ => "lvl-low",
     };
+
+    private double DefectBarPercent(DeviceDefectCountDto d)
+    {
+        var share = DefectItemShare(d);
+        if (share > 0) return 100.0 * share;
+        var max = DefectTop.Count == 0 ? 0 : DefectTop.Max(x => x.Count);
+        return max > 0 ? 100.0 * d.Count / max : 0;
+    }
+
+    private static double DefectItemShare(DeviceDefectCountDto d) => d.ShareOfTotal;
+
+    private static string DefectFillClass(DefectSeverity severity) => severity switch
+    {
+        DefectSeverity.Critical => "critical",
+        DefectSeverity.Major => "major",
+        _ => "minor",
+    };
+
+    private static string DefectTooltip(DeviceDefectCountDto d, string displayName)
+    {
+        if (d.IsOthers) return displayName;
+        var sev = d.Severity switch
+        {
+            DefectSeverity.Critical => L.T("Severity_Critical"),
+            DefectSeverity.Major => L.T("Severity_Major"),
+            _ => L.T("Severity_Minor"),
+        };
+        var cat = d.Category switch
+        {
+            DefectCategory.Appearance => L.T("Defect_Appearance"),
+            DefectCategory.Dimension => L.T("Defect_Dimension"),
+            DefectCategory.Function => L.T("Defect_Function"),
+            DefectCategory.Packaging => L.T("Defect_Packaging"),
+            _ => L.T("Defect_Other"),
+        };
+        var detail = string.IsNullOrWhiteSpace(d.PlcAddress)
+            ? L.T("Hp_DefectTooltipNoAddr", sev, cat)
+            : L.T("Hp_DefectTooltip", sev, cat, d.PlcAddress);
+        return $"{displayName}\n{detail}";
+    }
 }

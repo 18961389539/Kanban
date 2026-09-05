@@ -2,12 +2,14 @@
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
+using Kanban.Contracts.Metrics;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MainAPP.Helpers;
 using MainAPP.Resources;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Models;
 
@@ -21,28 +23,30 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
 {
     private bool _disposed;
     private readonly AppSettings? _appSettings;
+    private readonly Func<DateTime> _clock;
 
     public Device Device { get; }
     public DeviceRuntime Runtime { get; }
 
-    /// <summary>实际节拍（秒/件）= 3600 / 目标节拍。目标为 0 时返回 0。</summary>
-    public double ActualCycleSec => Runtime.TargetCycle > 0 ? 3600.0 / Runtime.TargetCycle : 0;
+    /// <summary>运行期间平均节拍（秒/件），与主页实际节拍同源；数据不足时为 0。</summary>
+    public double ActualCycleSec => RealCycleSec;
 
-    /// <summary>目标节拍（秒/件）= 3600 / 目标产能（件/小时）。目标为 0 时返回 0。</summary>
-    public double TargetCycleSec => Runtime.TargetCycle > 0 ? 3600.0 / Runtime.TargetCycle : 0;
+    /// <summary>目标节拍（秒/件）= 3600 / 目标产能（件/小时）。</summary>
+    public double TargetCycleSec => SnapshotMetrics.CycleSeconds(Runtime.TargetCycle);
 
     /// <summary>
-    /// 真实节拍（秒/件）= 3600 / (目标产能 × 性能率)——性能率折损后的实际节拍。
-    /// 2026-08-11 新增：卡片节拍显示"实际/目标"对比（原 ActualCycleSec 实为理论值）。
+    /// 运行期间平均节拍（秒/件）。用产量/运行时长换算，不经性能率 100% 封顶，
+    /// 超产时可以快于目标。
     /// </summary>
-    public double RealCycleSec => Runtime.TargetCycle > 0 && Runtime.PerformanceRate > 0
-        ? 3600.0 / (Runtime.TargetCycle * Runtime.PerformanceRate)
-        : 0;
+    public double RealCycleSec => SnapshotMetrics.AverageCycleSeconds(
+        Runtime.RunTime, Runtime.TotalOkProduction, Runtime.TotalNgProduction);
 
-    /// <summary>节拍对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
-    public string CycleText => RealCycleSec > 0 ? $"{RealCycleSec:0.0}/{TargetCycleSec:0.0}s" : "—";
+    /// <summary>平均节拍对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
+    public string CycleText => RealCycleSec > 0 && TargetCycleSec > 0
+        ? $"{RealCycleSec:0.0}/{TargetCycleSec:0.0}s"
+        : "—";
 
-    /// <summary>实际节拍是否慢于目标（用于节拍对比红色警示）。</summary>
+    /// <summary>平均节拍是否慢于目标（用于节拍对比红色警示）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && RealCycleSec > TargetCycleSec;
 
     /// <summary>总产量 = OK + NG。</summary>
@@ -61,44 +65,89 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public string DowntimeFormatted => FormatHelper.FormatDuration(Runtime.AlarmTime + Runtime.PausedTime);
 
     /// <summary>
-    /// 当前班次理论产能（件）= 目标产能（件/小时）× 当前班次小时数。
-    /// 无班次配置/未配置 AppSettings 时返回 0（进度条隐藏）。
+    /// 当前班次整班理论产能（件）= 目标产能 × 班次总时长。进度条分母用
+    /// <see cref="ShiftExpectedQuantity"/>。
     /// </summary>
     public int ShiftTargetQuantity
     {
         get
         {
-            var shift = FindCurrentShift();
+            var (shift, start, end) = ResolveCurrentShift();
             if (shift == null || Runtime.TargetCycle <= 0) return 0;
-            var hours = (shift.EndTime - shift.StartTime).TotalHours;
-            if (hours <= 0) hours += 24; // 跨天班次（如 20:00-08:00）
-            return (int)Math.Round(Runtime.TargetCycle * hours);
+            return SnapshotMetrics.ExpectedOutput(Runtime.TargetCycle, (end - start).TotalHours);
         }
     }
 
-    /// <summary>班次进度 0-1（本班次 OK / 班次理论产能，Clamp）。</summary>
-    public double ShiftProgressRatio => ShiftTargetQuantity > 0
-        ? Math.Clamp((double)Runtime.TotalOkProduction / ShiftTargetQuantity, 0, 1)
-        : 0;
+    /// <summary>到此刻应产件数 = 目标产能 × 班次已过小时；班次刚开始时为 0。</summary>
+    public int ShiftExpectedQuantity
+    {
+        get
+        {
+            var (shift, start, _) = ResolveCurrentShift();
+            if (shift == null || Runtime.TargetCycle <= 0) return 0;
+            return SnapshotMetrics.ExpectedOutput(Runtime.TargetCycle, (_clock() - start).TotalHours);
+        }
+    }
 
-    /// <summary>班次进度文本："1,284 / 1,600"（不含单位）；无目标时为空。</summary>
-    public string ShiftProgressText => ShiftTargetQuantity > 0
-        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0}"
-        : string.Empty;
+    /// <summary>班次良品达成比 = 本班次 OK / 到此刻应产；应产为 0 时返回 0。可大于 1（超额）。</summary>
+    public double ShiftProgressRatio
+    {
+        get
+        {
+            var expected = ShiftExpectedQuantity;
+            return expected > 0 ? (double)Runtime.TotalOkProduction / expected : 0;
+        }
+    }
 
-    /// <summary>班次进度完整文本："1,284 / 1,600 件 · 80.3%"；无目标时为空。</summary>
-    public string ShiftProgressFullText => ShiftTargetQuantity > 0
-        ? $"{Runtime.TotalOkProduction:N0} / {ShiftTargetQuantity:N0} 件 · {ShiftProgressRatio:P1}"
-        : string.Empty;
+    /// <summary>进度条填充 0–1（超额时停在满格，百分比仍显示真实达成）。</summary>
+    public double ShiftProgressBarValue => Math.Clamp(ShiftProgressRatio, 0, 1);
 
-    /// <summary>是否有班次目标（进度条可见性）。</summary>
-    public bool HasShiftTarget => ShiftTargetQuantity > 0;
+    /// <summary>良品达成文本："1,284 / 1,600 · 80.3%"；应产尚未形成时分母为 "—"。</summary>
+    public string ShiftProgressText
+    {
+        get
+        {
+            if (!HasShiftTarget) return string.Empty;
+            var expected = ShiftExpectedQuantity;
+            var ok = $"{Runtime.TotalOkProduction:N0}";
+            if (expected <= 0) return $"{ok} / —";
+            return $"{ok} / {expected:N0} · {ShiftProgressRatio:P1}";
+        }
+    }
 
-    public LineDeviceItem(Device device, DeviceRuntime runtime, AppSettings? appSettings = null)
+    /// <summary>班次达成完整文本（含单位）。</summary>
+    public string ShiftProgressFullText
+    {
+        get
+        {
+            if (!HasShiftTarget) return string.Empty;
+            var expected = ShiftExpectedQuantity;
+            var ok = $"{Runtime.TotalOkProduction:N0}";
+            if (expected <= 0) return $"{ok} / —";
+            return $"{ok} / {expected:N0} 件 · {ShiftProgressRatio:P1}";
+        }
+    }
+
+    /// <summary>是否有班次与目标产能（进度条可见性，不要求已过时间）。</summary>
+    public bool HasShiftTarget
+    {
+        get
+        {
+            var (shift, _, _) = ResolveCurrentShift();
+            return shift != null && Runtime.TargetCycle > 0;
+        }
+    }
+
+    public LineDeviceItem(
+        Device device,
+        DeviceRuntime runtime,
+        AppSettings? appSettings = null,
+        Func<DateTime>? clock = null)
     {
         Device = device;
         Runtime = runtime;
         _appSettings = appSettings;
+        _clock = clock ?? (() => DateTime.Now);
         Runtime.PropertyChanged += OnRuntimePropertyChanged;
     }
 
@@ -118,28 +167,20 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     /// <summary>
     /// 转发 Runtime 属性变更，触发 LineDeviceItem 派生属性的 PropertyChanged。
     /// 仅转发影响派生属性的源属性，避免无谓通知。
-    /// 注意：DeviceRuntime.SyncTargetCycle 不 raise TargetCycle，改 raise PerformanceRate/OEE，
-    /// 故监听 PerformanceRate 以同步 ActualCycleSec。
+    /// 注意：DeviceRuntime.SyncTargetCycle 不 raise TargetCycle，改 raise PerformanceRate/OEE。
     /// </summary>
     private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
             case nameof(DeviceRuntime.TargetCycle):
-            case nameof(DeviceRuntime.PerformanceRate): // SyncTargetCycle 触发
-                OnPropertyChanged(nameof(ActualCycleSec));
-                OnPropertyChanged(nameof(TargetCycleSec));
-                OnPropertyChanged(nameof(RealCycleSec));
-                OnPropertyChanged(nameof(CycleText));
-                OnPropertyChanged(nameof(IsCycleSlow));
-                OnPropertyChanged(nameof(ShiftTargetQuantity)); // 目标产能变化影响班次目标
-                OnPropertyChanged(nameof(ShiftProgressRatio));
-                OnPropertyChanged(nameof(ShiftProgressText));
-                OnPropertyChanged(nameof(ShiftProgressFullText));
-                OnPropertyChanged(nameof(HasShiftTarget));
+            case nameof(DeviceRuntime.PerformanceRate):
+                NotifyCycleChanged();
+                RefreshShiftProgress();
                 break;
             case nameof(DeviceRuntime.RunTime):
                 OnPropertyChanged(nameof(RunTimeFormatted));
+                NotifyCycleChanged();
                 break;
             case nameof(DeviceRuntime.AlarmTime):
                 OnPropertyChanged(nameof(AlarmTimeFormatted));
@@ -155,21 +196,34 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):
                 OnPropertyChanged(nameof(TotalOutput));
-                // 班次进度（本班次 OK 变化；班次切换瞬间产量清零也经此路径刷新目标）
-                OnPropertyChanged(nameof(ShiftProgressRatio));
-                OnPropertyChanged(nameof(ShiftProgressText));
-                OnPropertyChanged(nameof(ShiftProgressFullText));
+                NotifyCycleChanged();
+                RefreshShiftProgress();
                 break;
         }
     }
 
-    /// <summary>当前时刻所属班次（无配置/不属于任何班次时返回 null）。
-    /// 委托 HistoryQueryHelper 单源实现（Contains 语义一致）。</summary>
-    private ShiftConfig? FindCurrentShift()
+    private void NotifyCycleChanged()
     {
-        var shifts = _appSettings?.GetShiftsSnapshot(); // P0-1 修复 2026-09-02：锁内快照，禁止直接枚举
-        if (shifts == null || shifts.Count == 0) return null;
-        return ViewModels.HistoryQueryHelper.FindCurrentShift(shifts, DateTime.Now.TimeOfDay).Shift;
+        OnPropertyChanged(nameof(ActualCycleSec));
+        OnPropertyChanged(nameof(TargetCycleSec));
+        OnPropertyChanged(nameof(RealCycleSec));
+        OnPropertyChanged(nameof(CycleText));
+        OnPropertyChanged(nameof(IsCycleSlow));
+    }
+
+    private (ShiftConfig? Shift, DateTime Start, DateTime End) ResolveCurrentShift()
+        => ShiftConfigResolver.ResolveCurrentShift(_appSettings?.GetShiftsSnapshot(), _clock());
+
+    /// <summary>班次已过时间变化后刷新达成进度（由产线页 1s 定时器调用）。</summary>
+    public void RefreshShiftProgress()
+    {
+        OnPropertyChanged(nameof(ShiftTargetQuantity));
+        OnPropertyChanged(nameof(ShiftExpectedQuantity));
+        OnPropertyChanged(nameof(ShiftProgressRatio));
+        OnPropertyChanged(nameof(ShiftProgressBarValue));
+        OnPropertyChanged(nameof(ShiftProgressText));
+        OnPropertyChanged(nameof(ShiftProgressFullText));
+        OnPropertyChanged(nameof(HasShiftTarget));
     }
 
     /// <summary>当前触发的报警名称（StartTime 已置、EndTime 为空），顿号拼接；无则空字符串。</summary>
@@ -235,6 +289,4 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         OnPropertyChanged(nameof(ActiveAlarmDurationText));
         OnPropertyChanged(nameof(DefectSummaryText));
     }
-
-
 }

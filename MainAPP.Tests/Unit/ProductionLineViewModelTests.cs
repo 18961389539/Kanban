@@ -1,7 +1,10 @@
+using System.IO;
+using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Models;
+using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
@@ -22,6 +25,7 @@ public class ProductionLineViewModelTests
         Assert.True(vm.HasNoDevices);
         Assert.False(vm.HasNoFilteredDevices);
         Assert.Empty(vm.FilteredLineDevices);
+        Assert.False(vm.ApplyBatchTargetCycleCommand.CanExecute(null));
     }
 
     [Fact]
@@ -121,10 +125,96 @@ public class ProductionLineViewModelTests
         Assert.Equal(110, vm.TotalOkProduction);
         Assert.Equal(30, vm.TotalNgProduction);
         Assert.Equal(140, vm.TotalOutput);
-        Assert.Contains("110", vm.TotalOutputDetailText);
-        Assert.Contains("30", vm.TotalOutputDetailText);
-        var expectedWeightedOee = (runningRt.Oee * 100 + alarmRt.Oee * 100) / 140;
-        Assert.Equal(expectedWeightedOee, vm.WeightedOee, 6);
+    }
+
+    [Fact]
+    public void BatchTargetPcsPerHour_WhenAllDevicesShareCycle_SeedsThatValue()
+    {
+        using var vm = CreateViewModelWithTargetCycles(40, 40);
+
+        Assert.Equal(40, vm.BatchTargetPcsPerHour);
+        Assert.True(vm.ApplyBatchTargetCycleCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void BatchTargetPcsPerHour_WhenDevicesDiffer_StaysZeroAndCannotApply()
+    {
+        using var vm = CreateViewModelWithTargetCycles(100, 200);
+
+        Assert.Equal(0, vm.BatchTargetPcsPerHour);
+        Assert.False(vm.ApplyBatchTargetCycleCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task ApplyBatchTargetCycle_WritesAllDevicesRuntimesAndPersists()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            var a = new Device { Id = "a", Name = "A", TargetCycle = 100 };
+            var b = new Device { Id = "b", Name = "B", TargetCycle = 200 };
+            repo.Devices.Add(a);
+            repo.Devices.Add(b);
+            repo.AddRuntime(a);
+            repo.AddRuntime(b);
+
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.Yes };
+            using var vm = new ProductionLineViewModel(repo, new DeviceSelectionService(), appSettings: settings, dialog: dialog);
+            vm.BatchTargetPcsPerHour = 40;
+
+            await vm.ApplyBatchTargetCycleCommand.ExecuteAsync(null);
+
+            Assert.Equal(40, a.TargetCycle);
+            Assert.Equal(40, b.TargetCycle);
+            Assert.Equal(40, repo.RuntimeMap["a"].TargetCycle);
+            Assert.Equal(40, repo.RuntimeMap["b"].TargetCycle);
+            Assert.Equal(40, vm.LineDevices[0].Runtime.TargetCycle);
+            Assert.Equal(40, vm.LineDevices[1].Runtime.TargetCycle);
+            Assert.Single(dialog.ShowCalls);
+            Assert.Equal(string.Format(Strings.Ln_ApplyTargetCycleDone, 2, 40), Assert.Single(dialog.Success));
+
+            var verify = new DeviceRepository(settings);
+            verify.LoadAll();
+            Assert.Equal(2, verify.Devices.Count);
+            Assert.All(verify.Devices, device => Assert.Equal(40, device.TargetCycle));
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ApplyBatchTargetCycle_WhenConfirmCancelled_LeavesValuesUnchanged()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            var a = new Device { Id = "a", Name = "A", TargetCycle = 100 };
+            var b = new Device { Id = "b", Name = "B", TargetCycle = 200 };
+            repo.Devices.Add(a);
+            repo.Devices.Add(b);
+            repo.AddRuntime(a);
+            repo.AddRuntime(b);
+
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.No };
+            using var vm = new ProductionLineViewModel(repo, new DeviceSelectionService(), appSettings: settings, dialog: dialog);
+            vm.BatchTargetPcsPerHour = 40;
+
+            await vm.ApplyBatchTargetCycleCommand.ExecuteAsync(null);
+
+            Assert.Equal(100, a.TargetCycle);
+            Assert.Equal(200, b.TargetCycle);
+            Assert.Equal(100, repo.RuntimeMap["a"].TargetCycle);
+            Assert.Equal(200, repo.RuntimeMap["b"].TargetCycle);
+            Assert.Single(dialog.ShowCalls);
+            Assert.Empty(dialog.Success);
+            Assert.False(File.Exists(repo.FilePath));
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
     }
 
     private static ProductionLineViewModel CreateViewModelWithDevices(
@@ -140,5 +230,38 @@ public class ProductionLineViewModelTests
         }
 
         return new ProductionLineViewModel(repo, new DeviceSelectionService());
+    }
+
+    private static ProductionLineViewModel CreateViewModelWithTargetCycles(params int[] cycles)
+    {
+        var repo = new DeviceRepository(new AppSettings());
+        for (var i = 0; i < cycles.Length; i++)
+        {
+            var device = new Device { Id = Guid.NewGuid().ToString("N"), Name = $"D{i}", TargetCycle = cycles[i] };
+            repo.Devices.Add(device);
+            repo.AddRuntime(device);
+        }
+
+        return new ProductionLineViewModel(repo, new DeviceSelectionService());
+    }
+
+    private static (string Dir, AppSettings Settings, DeviceRepository Repo) CreateIsolatedRepo()
+    {
+        var name = "pl-batch-" + Guid.NewGuid().ToString("N");
+        var settings = new AppSettings { ConfigDirectory = name };
+        return (Path.Combine(AppSettings.DataRoot, name), settings, new DeviceRepository(settings));
+    }
+
+    private static void CleanupIsolated(string dir)
+    {
+        try
+        {
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, recursive: true);
+        }
+        catch
+        {
+            // 测试临时目录清理失败不影响断言
+        }
     }
 }

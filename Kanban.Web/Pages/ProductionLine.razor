@@ -36,8 +36,6 @@
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@Summary.Alarm</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@Summary.Paused</span></div>
             <div class="kpi-card"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@Summary.Idle</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@Summary.TotalOutput.ToString("N0")</span><span class="kpi-sub">@L.T("Lbl_Ok") @Summary.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Summary.TotalNg.ToString("N0")</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Ln_WeightedOee")</span><span class="kpi-value">@Pct(Summary.WeightedOee)</span></div>
         </section>
 
         @* ──── 筛选：状态 / 搜索 / 排序 ──── *@
@@ -93,12 +91,15 @@
                             <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span></div>
                             <div><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span></div>
                             <div><span class="kpi-label">@L.T("Ln_Cycle")</span><span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span></div>
-                            <div><span class="kpi-label">@L.T("Ln_Downtime")</span><span class="kpi-value">@FmtDuration(d.AlarmTime + d.PausedTime)</span></div>
+                            <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@FmtDuration(d.AlarmTime)</span></div>
+                            <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@FmtDuration(d.PausedTime)</span></div>
+                            <div><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@FmtDuration(d.OfflineTime)</span></div>
                         </div>
 
                         <div class="ring-row">
                             <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="#34D399" />
-                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD"
+                                  Title="@L.T("Ln_AvailabilityHint")" />
                             <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
                             <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
                         </div>
@@ -124,14 +125,9 @@
     private List<DeviceSnapshotDto>? _filteredCache;
     private Dictionary<string, DeviceConfigDto> _deviceConfigsById = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>节拍"偏慢"阈值：实际节拍 = 目标/性能率，性能率 < 0.9 即实际比目标慢 10% 以上。</summary>
-    private const double CycleSlowThreshold = 0.9;
-
     private sealed class LineSummary
     {
-        public int Running, Alarm, Paused, Idle, TotalOk, TotalNg;
-        public int TotalOutput => TotalOk + TotalNg;
-        public double WeightedOee;
+        public int Running, Alarm, Paused, Idle;
     }
 
     private LineSummary Summary => _summaryCache ??= ComputeSummary();
@@ -148,12 +144,7 @@
                 case DeviceStatus.Paused: s.Paused++; break;
                 default: s.Idle++; break;
             }
-            s.TotalOk += d.TotalOkProduction;
-            s.TotalNg += d.TotalNgProduction;
-            s.WeightedOee += d.Oee * (d.TotalOkProduction + d.TotalNgProduction);
         }
-        var totalWeight = s.TotalOutput;
-        s.WeightedOee = totalWeight > 0 ? s.WeightedOee / totalWeight : 0; // 加权 OEE（WPF 同口径）
         return s;
     }
 
@@ -210,17 +201,20 @@
         => _deviceConfigsById.TryGetValue(deviceId, out var config) && !string.IsNullOrWhiteSpace(config.RecipeName)
             ? config.RecipeName : "";
 
-    /// <summary>节拍对比 "实际/目标s"：实际 = 3600/(目标产能×性能率)（WPF LineDeviceItem 同口径）。</summary>
+    /// <summary>平均节拍对比 "实际/目标s"：与 WPF LineDeviceItem / SnapshotMetrics 同口径。</summary>
     private static string CycleText(DeviceSnapshotDto d)
     {
-        if (d.TargetCycle <= 0) return "—";
-        var target = 3600.0 / d.TargetCycle;
-        var real = d.PerformanceRate > 0 ? 3600.0 / (d.TargetCycle * d.PerformanceRate) : 0;
-        return real > 0 ? $"{real:0.0}/{target:0.0}s" : "—";
+        var target = SnapshotMetrics.CycleSeconds(d.TargetCycle);
+        var real = SnapshotMetrics.AverageCycleSeconds(d.RunTime, d.TotalOkProduction, d.TotalNgProduction);
+        return real > 0 && target > 0 ? $"{real:0.0}/{target:0.0}s" : "—";
     }
 
     private static bool IsCycleSlow(DeviceSnapshotDto d)
-        => d.TargetCycle > 0 && d.PerformanceRate > 0 && d.PerformanceRate < CycleSlowThreshold;
+    {
+        var target = SnapshotMetrics.CycleSeconds(d.TargetCycle);
+        var real = SnapshotMetrics.AverageCycleSeconds(d.RunTime, d.TotalOkProduction, d.TotalNgProduction);
+        return target > 0 && real > target;
+    }
 
     private static string StateText(DeviceStatus status) => status switch
     {
@@ -245,7 +239,7 @@
         _ => "lvl-low",
     };
 
-    private static string Pct(double v) => $"{v:P0}";
+    private static string Pct(double v) => $"{v:P1}";
 
     private static string FmtDuration(double seconds) => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
 

@@ -3,6 +3,7 @@ using System.Threading.Channels;
 using AutoMapper;
 using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
@@ -176,7 +177,7 @@ public class MetaPublisherTests : IDisposable
     }
 
     [Fact]
-    public void Publish_DefectTop_OnlyPositiveCounts_SortedDesc_Take5()
+    public void Publish_DefectTop_OnlyPositiveCounts_SortedDesc_Take8()
     {
         var publisher = CreatePublisherWithData(repo =>
         {
@@ -186,7 +187,7 @@ public class MetaPublisherTests : IDisposable
             d.Defects.Add(new Defect { Name = "色差", Count = 0 });   // 0 值过滤
             d.Defects.Add(new Defect { Name = "缩水", Count = 5 });
             d.Defects.Add(new Defect { Name = "飞边", Count = 8 });
-            d.Defects.Add(new Defect { Name = "暗纹", Count = 1 });   // 第 6 个（Take5 截断）
+            d.Defects.Add(new Defect { Name = "暗纹", Count = 1 });
             repo.ReplaceAll([d]);
         });
 
@@ -198,8 +199,44 @@ public class MetaPublisherTests : IDisposable
         Assert.Equal(5, top.Count);
         Assert.Equal(["缺料", "飞边", "缩水", "毛边", "暗纹"], top.Select(x => x.Name));
         Assert.All(top, x => Assert.True(x.Count > 0));
+        Assert.All(top, x => Assert.False(x.IsOthers));
         Assert.Equal("d1", top[0].DeviceId);
         Assert.Equal(12, top[0].Count);
+        Assert.Equal(12 / 29.0, top[0].ShareOfTotal, precision: 6);
+        Assert.True(top[0].IsVitalFew);
+        var summary = Assert.Single(meta.DefectSummaries);
+        Assert.Equal("d1", summary.DeviceId);
+        Assert.Equal(6, summary.ConfiguredCount);
+        Assert.Equal(29, summary.TotalCount);
+        Assert.Equal(DefectParetoEmptyKind.HasData, summary.EmptyKind);
+    }
+
+    [Fact]
+    public void Publish_DefectTop_NinthPositive_BecomesOthersRow()
+    {
+        var publisher = CreatePublisherWithData(repo =>
+        {
+            var d = new Device { Id = "d1", Name = "机1" };
+            d.Defects.Add(new Defect { Name = "缺料", Count = 12 });
+            d.Defects.Add(new Defect { Name = "飞边", Count = 8 });
+            d.Defects.Add(new Defect { Name = "缩水", Count = 5 });
+            d.Defects.Add(new Defect { Name = "毛边", Count = 3 });
+            d.Defects.Add(new Defect { Name = "暗纹", Count = 2 });
+            d.Defects.Add(new Defect { Name = "裂纹", Count = 2 });
+            d.Defects.Add(new Defect { Name = "划痕", Count = 2 });
+            d.Defects.Add(new Defect { Name = "气泡", Count = 2 });
+            d.Defects.Add(new Defect { Name = "油污", Count = 1 });
+            repo.ReplaceAll([d]);
+        });
+
+        publisher.Publish();
+        var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
+        Assert.True(reader.TryRead(out var meta));
+        Assert.Equal(9, meta.DefectTop.Count);
+        Assert.True(meta.DefectTop[^1].IsOthers);
+        Assert.Equal(1, meta.DefectTop[^1].OtherKindCount);
+        Assert.Equal(1, meta.DefectTop[^1].Count);
+        Assert.Equal("", meta.DefectTop[^1].Name);
     }
 
     [Fact]
@@ -216,6 +253,10 @@ public class MetaPublisherTests : IDisposable
         var reader = SubscribeAsync(publisher).GetAwaiter().GetResult();
         Assert.True(reader.TryRead(out var meta));
         Assert.Empty(meta.DefectTop);
+        var summary = Assert.Single(meta.DefectSummaries);
+        Assert.Equal(DefectParetoEmptyKind.AllZero, summary.EmptyKind);
+        Assert.Equal(1, summary.ConfiguredCount);
+        Assert.Equal(0, summary.TotalCount);
     }
 
     [Fact]

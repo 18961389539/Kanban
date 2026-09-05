@@ -1161,11 +1161,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|K196"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标周期（个 / 小时）", ["en-US"] = "Target Cycle (pcs/hour)", ["ja-JP"] = "目標タクト（個/時間）", ["pt-BR"] = "Ciclo alvo (pçs/hora)"
+            ["zh-CN"] = "目标产能（件/小时）", ["en-US"] = "Target output (pcs/hour)", ["ja-JP"] = "目標能力（個/時間）", ["pt-BR"] = "Capacidade alvo (pçs/hora)"
         },
         ["Wpf|K197"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标周期", ["en-US"] = "Target Cycle", ["ja-JP"] = "目標タクト", ["pt-BR"] = "Ciclo alvo"
+            ["zh-CN"] = "目标产能", ["en-US"] = "Target output", ["ja-JP"] = "目標能力", ["pt-BR"] = "Capacidade alvo"
         },
         ["Wpf|K198"] = new Dictionary<string, string>
         {
@@ -1645,7 +1645,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K317"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "缺陷帕累托（TOP5）", ["en-US"] = "Defect Pareto (Top 5)", ["ja-JP"] = "不良パレート（TOP5）", ["pt-BR"] = "Pareto de defeitos (Top 5)"
+            ["zh-CN"] = "缺陷帕累托（TOP8）", ["en-US"] = "Defect Pareto (Top 8)", ["ja-JP"] = "不良パレート（TOP8）", ["pt-BR"] = "Pareto de defeitos (Top 8)"
         },
         ["Wpf|K318"] = new Dictionary<string, string>
         {
@@ -3597,7 +3597,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F204"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "设备「{0}」目标周期必须 > 0（当前 {1}）", ["en-US"] = "Device \"{0}\" target cycle must be > 0 (current {1})", ["ja-JP"] = "デバイス「{0}」の目標サイクルは 0 より大きい必要があります（現在 {1}）", ["pt-BR"] = "O ciclo alvo do dispositivo \"{0}\" deve ser > 0 (atual {1})"
+            ["zh-CN"] = "设备「{0}」目标产能必须 > 0（当前 {1}）", ["en-US"] = "Device \"{0}\" target output must be > 0 (current {1})", ["ja-JP"] = "デバイス「{0}」の目標能力は 0 より大きい必要があります（現在 {1}）", ["pt-BR"] = "A capacidade alvo do dispositivo \"{0}\" deve ser > 0 (atual {1})"
         },
         ["Wpf|F205"] = new Dictionary<string, string>
         {
@@ -4982,6 +4982,10 @@ public static class LocalizationCatalog
         ["Wpf|Web_Lbl_TargetCycle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "目标节拍", ["en-US"] = "Target Cycle", ["ja-JP"] = "目標タクト", ["pt-BR"] = "Ciclo alvo"
+        },
+        ["Wpf|Web_Lbl_TargetCapacity"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "目标产能", ["en-US"] = "Target Output", ["ja-JP"] = "目標能力", ["pt-BR"] = "Capacidade alvo"
         },
         ["Wpf|Web_Lbl_ActualCycle"] = new Dictionary<string, string>
         {
@@ -6681,11 +6685,91 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Ln_Cycle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍（实际/目标）", ["en-US"] = "Cycle (Actual/Target)", ["ja-JP"] = "タクト（実績/目標）", ["pt-BR"] = "Ciclo (real/alvo)"
+            ["zh-CN"] = "平均节拍（实际/目标）", ["en-US"] = "Avg cycle (actual/target)", ["ja-JP"] = "平均タクト（実績/目標）", ["pt-BR"] = "Ciclo médio (real/alvo)"
+        },
+        ["Wpf|Ln_ShiftPace"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "良品达成（OK/应产）", ["en-US"] = "Good-count pace (OK/due)", ["ja-JP"] = "良品達成（OK/予定）", ["pt-BR"] = "Ritmo de OK (OK/previsto)"
+        },
+        ["Wpf|Ln_AvailabilityHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "只扣报警时间，不含待机和离线", ["en-US"] = "Counts alarm time only; excludes standby and offline", ["ja-JP"] = "アラーム時間のみ控除（待機・オフライン含まず）", ["pt-BR"] = "Desconta apenas alarme; exclui espera e offline"
+        },
+        ["Wpf|Ln_ActualCapacity"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "实际产能", ["en-US"] = "Actual output", ["ja-JP"] = "実績能力", ["pt-BR"] = "Produção real"
+        },
+        ["Wpf|Ln_ApplyTargetCycleAll"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "应用到全部设备", ["en-US"] = "Apply to all devices", ["ja-JP"] = "全デバイスに適用", ["pt-BR"] = "Aplicar a todos os dispositivos"
+        },
+        ["Wpf|Ln_ApplyTargetCycleTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "应用到全部设备", ["en-US"] = "Apply to all devices", ["ja-JP"] = "全デバイスに適用", ["pt-BR"] = "Aplicar a todos os dispositivos"
+        },
+        ["Wpf|Ln_ApplyTargetCycleConfirm"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。", ["en-US"] = "Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.", ["ja-JP"] = "{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。", ["pt-BR"] = "Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina."
+        },
+        ["Wpf|Ln_ApplyTargetCycleDone"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已将 {0} 台设备的目标产能设为 {1:N0} 件/小时", ["en-US"] = "Target output for {0} devices is now {1:N0} pcs/hour", ["ja-JP"] = "{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました", ["pt-BR"] = "A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora"
+        },
+        ["Wpf|Ln_ApplyTargetCycleFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "保存目标产能失败：{0}", ["en-US"] = "Failed to save target output: {0}", ["ja-JP"] = "目標能力の保存に失敗しました：{0}", ["pt-BR"] = "Falha ao salvar a capacidade alvo: {0}"
+        },
+        ["Wpf|Hp_DefectSubtitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前设备 · 本班次新增", ["en-US"] = "Current device · shift increment", ["ja-JP"] = "現在の設備 · 当シフト増分", ["pt-BR"] = "Dispositivo atual · incremento do turno"
+        },
+        ["Wpf|Hp_DefectSummary"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "缺陷合计 {0:N0}", ["en-US"] = "Defect total {0:N0}", ["ja-JP"] = "不良合計 {0:N0}", ["pt-BR"] = "Total de defeitos {0:N0}"
+        },
+        ["Wpf|Hp_DefectShareNg"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "占 NG {0:P0}", ["en-US"] = "{0:P0} of NG", ["ja-JP"] = "NG比 {0:P0}", ["pt-BR"] = "{0:P0} do NG"
+        },
+        ["Wpf|Hp_DefectCumulative"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "累计 {0:P0}", ["en-US"] = "Cumul. {0:P0}", ["ja-JP"] = "累積 {0:P0}", ["pt-BR"] = "Acum. {0:P0}"
+        },
+        ["Wpf|Hp_DefectOthers"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "其他（{0} 项）", ["en-US"] = "Others ({0})", ["ja-JP"] = "その他（{0} 件）", ["pt-BR"] = "Outros ({0})"
+        },
+        ["Wpf|Hp_DefectEmptyZero"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前无不良计数", ["en-US"] = "No defect counts right now", ["ja-JP"] = "現在の不良カウントなし", ["pt-BR"] = "Sem contagem de defeitos agora"
+        },
+        ["Wpf|Hp_DefectEmptyZeroHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已配置的缺陷地址当前均为 0", ["en-US"] = "Configured defect registers are all 0", ["ja-JP"] = "設定済み不良アドレスはすべて 0", ["pt-BR"] = "Os endereços de defeito configurados estão em 0"
+        },
+        ["Wpf|Hp_DefectEmptyUnconfigured"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "未配置缺陷项", ["en-US"] = "No defect items configured", ["ja-JP"] = "不良項目未設定", ["pt-BR"] = "Nenhum item de defeito configurado"
+        },
+        ["Wpf|Hp_DefectEmptyUnconfiguredHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请在设备管理中配置缺陷名称和 PLC 地址", ["en-US"] = "Configure defect names and PLC addresses in Device Manager", ["ja-JP"] = "設備管理で不良名と PLC アドレスを設定してください", ["pt-BR"] = "Configure nomes e endereços PLC em Gerenciador de dispositivos"
+        },
+        ["Wpf|Hp_DefectTooltip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "{0} · {1} · {2}", ["en-US"] = "{0} · {1} · {2}", ["ja-JP"] = "{0} · {1} · {2}", ["pt-BR"] = "{0} · {1} · {2}"
+        },
+        ["Wpf|Hp_DefectTooltipNoAddr"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "{0} · {1}", ["en-US"] = "{0} · {1}", ["ja-JP"] = "{0} · {1}", ["pt-BR"] = "{0} · {1}"
         },
         ["Wpf|Web_Ln_Downtime"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "停机", ["en-US"] = "Downtime", ["ja-JP"] = "停止", ["pt-BR"] = "Parada"
+        },
+        ["Wpf|Web_Ln_AvailabilityHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "只扣报警时间，不含待机和离线", ["en-US"] = "Counts alarm time only; excludes standby and offline", ["ja-JP"] = "アラーム時間のみ控除（待機・オフライン含まず）", ["pt-BR"] = "Desconta apenas alarme; exclui espera e offline"
         },
         ["Wpf|Web_Ln_NoDevices"] = new Dictionary<string, string>
         {
@@ -7257,7 +7341,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|M352"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标节拍(件/小时)", ["en-US"] = "Target cycle (pcs/h)", ["ja-JP"] = "目標サイクル(個/時)", ["pt-BR"] = "Ciclo alvo (pçs/h)"
+            ["zh-CN"] = "目标产能(件/小时)", ["en-US"] = "Target output (pcs/h)", ["ja-JP"] = "目標能力(個/時)", ["pt-BR"] = "Capacidade alvo (pçs/h)"
         },
         ["Wpf|M353"] = new Dictionary<string, string>
         {
@@ -7321,7 +7405,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_DefectTop"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "缺陷分布 TOP5", ["en-US"] = "Defect Top 5", ["ja-JP"] = "欠陥トップ5", ["pt-BR"] = "Top 5 de defeitos"
+            ["zh-CN"] = "缺陷帕累托（TOP8）", ["en-US"] = "Defect Pareto (Top 8)", ["ja-JP"] = "不良パレート（TOP8）", ["pt-BR"] = "Pareto de defeitos (Top 8)"
         },
         ["Wpf|Web_NoDefectData"] = new Dictionary<string, string>
         {
@@ -8461,7 +8545,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardIntro"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。", ["en-US"] = "Enter the device name and target cycle (both required). PLC addresses are configured on the next step.", ["ja-JP"] = "設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。", ["pt-BR"] = "Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa."
+            ["zh-CN"] = "填写设备名称与目标产能（均为必填），下一步配置 PLC 地址。", ["en-US"] = "Enter the device name and target output rate (both required). PLC addresses are configured on the next step.", ["ja-JP"] = "設備名と目標能力を入力します（いずれも必須）。次のステップで PLC アドレスを設定します。", ["pt-BR"] = "Informe o nome e a capacidade alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa."
         },
         ["Wpf|Ux_DeviceWizardSaveReminder"] = new Dictionary<string, string>
         {
@@ -8489,11 +8573,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_DeviceWizardTargetCycleHint"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "用于 OEE 性能率与速度对比，单位：个/小时。", ["en-US"] = "Used for OEE performance rate and speed comparison (pieces per hour).", ["ja-JP"] = "OEE 性能率と速度比較に使用します（単位：個/時間）。", ["pt-BR"] = "Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora)."
+            ["zh-CN"] = "用于 OEE 性能率与速度对比，单位：件/小时。", ["en-US"] = "Used for OEE performance rate and speed comparison (pieces per hour).", ["ja-JP"] = "OEE 性能率と速度比較に使用します（単位：個/時間）。", ["pt-BR"] = "Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora)."
         },
         ["Wpf|Ux_DeviceWizardTargetCycleInvalid"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标周期必须大于 0", ["en-US"] = "Target cycle must be greater than 0", ["ja-JP"] = "目標サイクルは 0 より大きくする必要があります", ["pt-BR"] = "Ciclo alvo deve ser maior que 0"
+            ["zh-CN"] = "目标产能必须大于 0", ["en-US"] = "Target output must be greater than 0", ["ja-JP"] = "目標能力は 0 より大きくする必要があります", ["pt-BR"] = "Capacidade alvo deve ser maior que 0"
         },
         ["Wpf|Ux_DeviceWizardTitle"] = new Dictionary<string, string>
         {
@@ -8997,7 +9081,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Csv_TargetCycle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标节拍(件/小时)", ["en-US"] = "Target Cycle (pcs/h)", ["ja-JP"] = "目標タクト(個/時)", ["pt-BR"] = "Ciclo alvo (peças/h)"
+            ["zh-CN"] = "目标产能(件/小时)", ["en-US"] = "Target Output (pcs/h)", ["ja-JP"] = "目標能力(個/時)", ["pt-BR"] = "Capacidade alvo (peças/h)"
         },
         ["Wpf|Web_Csv_SumAlarm"] = new Dictionary<string, string>
         {

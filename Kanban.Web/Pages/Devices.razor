@@ -55,7 +55,7 @@
                         <div><span class="kpi-label">@L.T("Dv_DeviceId")</span><span class="kpi-value mono">@d.Id</span></div>
                         <div><span class="kpi-label">@L.T("Dv_MachineType")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.MachineType) ? "—" : d.MachineType)</span></div>
                         <div><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
-                        <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
+                        <div><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
                     </div>
                     <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CounterAlarms.Count)</div>
                 </div>

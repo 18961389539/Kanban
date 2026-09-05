@@ -52,6 +52,7 @@ public partial class DeviceRuntime : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AvailabilityRate))]
+    [NotifyPropertyChangedFor(nameof(PerformanceRate))]
     [NotifyPropertyChangedFor(nameof(Oee))]
     private double _runTime;
 

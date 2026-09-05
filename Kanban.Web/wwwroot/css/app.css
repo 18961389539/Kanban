@@ -148,22 +148,59 @@ body {
 
 .meta-line { color: var(--text-3); font-size: 12px; margin-top: auto; }
 
-/* ──────────── 缺陷分布 TOP5 卡 ──────────── */
+/* ──────────── 缺陷帕累托 TOP5 卡 ──────────── */
 
-.defect-list { display: flex; flex-direction: column; gap: 8px; }
+.defect-sub { color: var(--text-3); font-size: 11px; margin: 2px 0 6px; }
 
-.defect-row { display: flex; align-items: center; gap: 8px; }
+.defect-summary {
+    display: flex; flex-wrap: wrap; gap: 8px 12px;
+    color: var(--text-2); font-size: 12px; margin-bottom: 10px;
+    font-variant-numeric: tabular-nums;
+}
 
-.defect-name { flex: 0 0 96px; font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defect-list { display: flex; flex-direction: column; gap: 10px; }
+
+.defect-row { display: flex; align-items: flex-start; gap: 8px; }
+
+.defect-rank {
+    flex: 0 0 16px; font-size: 11px; color: var(--text-3);
+    line-height: 16px; font-variant-numeric: tabular-nums;
+}
+
+.defect-main { flex: 1; min-width: 0; }
+
+.defect-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+
+.defect-name {
+    flex: 1; min-width: 0; font-size: 12px; color: var(--text-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.defect-row.vital .defect-name { color: var(--text); font-weight: 600; }
+
+.defect-barline { display: flex; align-items: center; gap: 8px; }
 
 .defect-track {
     flex: 1; height: 8px; border-radius: 4px; overflow: hidden;
     background: var(--card-2);
 }
 
-.defect-fill { height: 100%; border-radius: 4px; background: var(--orange); }
+.defect-fill { height: 100%; border-radius: 4px; background: var(--yellow); }
+.defect-fill.critical { background: var(--red); }
+.defect-fill.major { background: var(--yellow); }
+.defect-fill.minor { background: var(--green); }
+.defect-fill.other { background: var(--gray); }
 
-.defect-count { flex: 0 0 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-1); }
+.defect-count { flex: 0 0 auto; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-1, var(--text)); }
+
+.defect-share, .defect-cumul {
+    flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-3);
+    white-space: nowrap;
+}
+
+.defect-cumul.vital { color: var(--yellow); }
+
+.no-data-hint { color: var(--text-3); font-size: 11px; text-align: center; margin-top: 4px; }
 
 /* ──────────── 断线横幅 ──────────── */
 

@@ -196,7 +196,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.M352}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
                                        Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K027}" />
@@ -304,10 +304,10 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K050}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Ln_ActualCapacity}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
                                        Text="{Binding ActualCycleRate, Converter={StaticResource LocFormatConverter}, ConverterParameter=F267}" />
-                            <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K017}" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.M352}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
                                        Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
                             <TextBlock Grid.Row="2" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K158}" />

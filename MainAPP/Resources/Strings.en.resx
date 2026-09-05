@@ -874,10 +874,10 @@
     <value>Basic Parameters</value>
   </data>
   <data name="K196" xml:space="preserve">
-    <value>Target Cycle (pcs/hour)</value>
+    <value>Target output (pcs/hour)</value>
   </data>
   <data name="K197" xml:space="preserve">
-    <value>Target Cycle</value>
+    <value>Target output</value>
   </data>
   <data name="K198" xml:space="preserve">
     <value>PLC Address Config</value>
@@ -1237,7 +1237,7 @@
     <value>OEE = Quality Rate × Performance Rate × Time Availability</value>
   </data>
   <data name="K317" xml:space="preserve">
-    <value>Defect Pareto (Top 5)</value>
+    <value>Defect Pareto (Top 8)</value>
   </data>
   <data name="K318" xml:space="preserve">
     <value>No status data</value>
@@ -2726,7 +2726,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Device "{0}" not configured: {1}</value>
   </data>
   <data name="F204" xml:space="preserve">
-    <value>Device "{0}" target cycle must be &gt; 0 (current {1})</value>
+    <value>Device "{0}" target output must be &gt; 0 (current {1})</value>
   </data>
   <data name="F205" xml:space="preserve">
     <value>Device "{0}": duplicate defect name "{1}"</value>
@@ -3776,6 +3776,9 @@ A reset command will be written to the PLC and the software-side value cleared; 
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
     <value>Target Cycle</value>
+  </data>
+  <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
+    <value>Target Output</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
     <value>Actual Cycle</value>
@@ -5058,10 +5061,70 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>By OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>Cycle (Actual/Target)</value>
+    <value>Avg cycle (actual/target)</value>
+  </data>
+  <data name="Ln_ShiftPace" xml:space="preserve">
+    <value>Good-count pace (OK/due)</value>
+  </data>
+  <data name="Ln_AvailabilityHint" xml:space="preserve">
+    <value>Counts alarm time only; excludes standby and offline</value>
+  </data>
+  <data name="Ln_ActualCapacity" xml:space="preserve">
+    <value>Actual output</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleAll" xml:space="preserve">
+    <value>Apply to all devices</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
+    <value>Apply to all devices</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
+    <value>Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
+    <value>Target output for {0} devices is now {1:N0} pcs/hour</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleFailed" xml:space="preserve">
+    <value>Failed to save target output: {0}</value>
+  </data>
+  <data name="Hp_DefectSubtitle" xml:space="preserve">
+    <value>Current device · shift increment</value>
+  </data>
+  <data name="Hp_DefectSummary" xml:space="preserve">
+    <value>Defect total {0:N0}</value>
+  </data>
+  <data name="Hp_DefectShareNg" xml:space="preserve">
+    <value>{0:P0} of NG</value>
+  </data>
+  <data name="Hp_DefectCumulative" xml:space="preserve">
+    <value>Cumul. {0:P0}</value>
+  </data>
+  <data name="Hp_DefectOthers" xml:space="preserve">
+    <value>Others ({0})</value>
+  </data>
+  <data name="Hp_DefectEmptyZero" xml:space="preserve">
+    <value>No defect counts right now</value>
+  </data>
+  <data name="Hp_DefectEmptyZeroHint" xml:space="preserve">
+    <value>Configured defect registers are all 0</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfigured" xml:space="preserve">
+    <value>No defect items configured</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfiguredHint" xml:space="preserve">
+    <value>Configure defect names and PLC addresses in Device Manager</value>
+  </data>
+  <data name="Hp_DefectTooltip" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="Hp_DefectTooltipNoAddr" xml:space="preserve">
+    <value>{0} · {1}</value>
   </data>
   <data name="Web_Ln_Downtime" xml:space="preserve">
     <value>Downtime</value>
+  </data>
+  <data name="Web_Ln_AvailabilityHint" xml:space="preserve">
+    <value>Counts alarm time only; excludes standby and offline</value>
   </data>
   <data name="Web_Ln_NoDevices" xml:space="preserve">
     <value>No devices</value>
@@ -5490,7 +5553,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Alarm time(s)</value>
   </data>
   <data name="M352" xml:space="preserve">
-    <value>Target cycle (pcs/h)</value>
+    <value>Target output (pcs/h)</value>
   </data>
   <data name="M353" xml:space="preserve">
     <value># Device: {0}</value>
@@ -5538,7 +5601,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Recipe</value>
   </data>
   <data name="Web_DefectTop" xml:space="preserve">
-    <value>Defect Top 5</value>
+    <value>Defect Pareto (Top 8)</value>
   </data>
   <data name="Web_NoDefectData" xml:space="preserve">
     <value>No defect data</value>
@@ -6148,7 +6211,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Finish</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>Enter the device name and target cycle (both required). PLC addresses are configured on the next step.</value>
+    <value>Enter the device name and target output rate (both required). PLC addresses are configured on the next step.</value>
   </data>
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.</value>
@@ -6172,7 +6235,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Used for OEE performance rate and speed comparison (pieces per hour).</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
-    <value>Target cycle must be greater than 0</value>
+    <value>Target output must be greater than 0</value>
   </data>
   <data name="Ux_DeviceWizardTitle" xml:space="preserve">
     <value>New Device Wizard</value>
@@ -6554,7 +6617,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Alarm Time (s)</value>
   </data>
   <data name="Web_Csv_TargetCycle" xml:space="preserve">
-    <value>Target Cycle (pcs/h)</value>
+    <value>Target Output (pcs/h)</value>
   </data>
   <data name="Web_Csv_SumAlarm" xml:space="preserve">
     <value># Triggered: {0}, Recovered: {1}, Pending: {2}</value>

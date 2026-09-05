@@ -286,8 +286,8 @@ Wpf,K192,PLC 未连接，读取、写入和清零操作已禁用,PLC disconnecte
 Wpf,K193,当前设备存在配置问题,Current device has configuration issues,現在の設備に設定問題があります,O dispositivo atual tem problemas de configuração
 Wpf,K194,配置错误，点击定位,"Config error, click to locate",設定エラー、クリックで移動,Erro de configuração; clique para localizar
 Wpf,K195,基本参数,Basic Parameters,基本パラメータ,Parâmetros básicos
-Wpf,K196,目标周期（个 / 小时）,Target Cycle (pcs/hour),目標タクト（個/時間）,Ciclo alvo (pçs/hora)
-Wpf,K197,目标周期,Target Cycle,目標タクト,Ciclo alvo
+Wpf,K196,目标产能（件/小时）,Target output (pcs/hour),目標能力（個/時間）,Capacidade alvo (pçs/hora)
+Wpf,K197,目标产能,Target output,目標能力,Capacidade alvo
 Wpf,K198,PLC 地址配置,PLC Address Config,PLCアドレス設定,Configuração de endereços PLC
 Wpf,K199,OK 数量地址（如 D100）,OK Count Address (e.g. D100),OK数アドレス（例：D100）,Endereço de contagem OK (ex.: D100)
 Wpf,K200,OK 数量 PLC 地址,OK Count PLC Address,OK数PLCアドレス,Endereço PLC de contagem OK
@@ -407,7 +407,7 @@ Wpf,K313,OEE 班次明细表,OEE Shift Detail Table,OEEシフト明細表,Tabela
 Wpf,K314,班次开始,Shift Start,シフト開始,Início do turno
 Wpf,K315,选择设备和时间范围后点击「查询」，即可计算该时段的 OEE 指标。,"Select a device and time range, then click Query to compute OEE for that period.",設備と時間範囲を選択して「照会」をクリックすると、その期間のOEE指標を計算します。,Selecione o dispositivo e o período e clique em Consultar para calcular o OEE.
 Wpf,K316,OEE = 良品率 × 性能达标率 × 时间稼动率,OEE = Quality Rate × Performance Rate × Time Availability,OEE = 良品率 × 性能達成率 × 時間稼働率,OEE = Taxa de qualidade × Taxa de desempenho × Disponibilidade de tempo
-Wpf,K317,缺陷帕累托（TOP5）,Defect Pareto (Top 5),不良パレート（TOP5）,Pareto de defeitos (Top 5)
+Wpf,K317,缺陷帕累托（TOP8）,Defect Pareto (Top 8),不良パレート（TOP8）,Pareto de defeitos (Top 8)
 Wpf,K318,暂无状态数据,No status data,状態データがありません,Sem dados de estado
 Wpf,K319,OEE 综合效率,Overall OEE,総合効率OEE,OEE geral
 Wpf,K320,暂无 OEE 数据,No OEE data,OEEデータがありません,Sem dados de OEE
@@ -970,7 +970,7 @@ Wpf,F200,设备「{0}」的计划时间与工单 {1} 重叠（{2:MM-dd HH:mm} ~ 
 Wpf,F201,设备「{0}」{1}无效：{2},"Device ""{0}"": {1} invalid: {2}",デバイス「{0}」: {1} が無効です: {2},"Dispositivo ""{0}"": {1} inválido: {2}"
 Wpf,F202,设备「{0}」报警名重复：「{1}」,"Device ""{0}"": duplicate alarm name ""{1}""",デバイス「{0}」: アラーム名「{1}」が重複しています,"Dispositivo ""{0}"": nome de alarme duplicado ""{1}"""
 Wpf,F203,设备「{0}」未配置：{1},"Device ""{0}"" not configured: {1}",デバイス「{0}」が未設定です: {1},"Dispositivo ""{0}"" não configurado: {1}"
-Wpf,F204,设备「{0}」目标周期必须 > 0（当前 {1}）,"Device ""{0}"" target cycle must be > 0 (current {1})",デバイス「{0}」の目標サイクルは 0 より大きい必要があります（現在 {1}）,"O ciclo alvo do dispositivo ""{0}"" deve ser > 0 (atual {1})"
+Wpf,F204,设备「{0}」目标产能必须 > 0（当前 {1}）,"Device ""{0}"" target output must be > 0 (current {1})",デバイス「{0}」の目標能力は 0 より大きい必要があります（現在 {1}）,"A capacidade alvo do dispositivo ""{0}"" deve ser > 0 (atual {1})"
 Wpf,F205,设备「{0}」缺陷名重复：「{1}」,"Device ""{0}"": duplicate defect name ""{1}""",デバイス「{0}」: 不良名「{1}」が重複しています,"Dispositivo ""{0}"": nome de defeito duplicado ""{1}"""
 Wpf,F207,设备「{0}」重复报警 PLC 地址：「{1}」，同一设备内报警地址必须唯一,"Device ""{0}"": duplicate alarm PLC address ""{1}""; alarm addresses must be unique within a device",デバイス「{0}」: アラーム PLC アドレス「{1}」が重複しています。同一デバイス内で一意である必要があります,"Dispositivo ""{0}"": endereço PLC de alarme duplicado ""{1}""; endereços de alarme devem ser únicos por dispositivo"
 Wpf,F208,设备「{0}」已有进行中工单 {1}，请先完成或中止,"Device ""{0}"" already has an in-progress work order {1}; finish or abort it first",デバイス「{0}」には進行中の工単 {1} があります。先に完了または中止してください,"O dispositivo ""{0}"" já tem a ordem em andamento {1}; conclua ou aborte primeiro"
@@ -1350,6 +1350,7 @@ Wpf,Web_Card_Shift,班次进度,Shift Progress,シフト進捗,Progresso do turn
 Wpf,Web_Card_Source,数据源,Data Source,データソース,Fonte de dados
 Wpf,Web_Lbl_RealTimeSpeed,实时速度（件/小时）,Real-time Speed (pcs/h),リアルタイム速度（個/時）,Velocidade em tempo real (pçs/h)
 Wpf,Web_Lbl_TargetCycle,目标节拍,Target Cycle,目標タクト,Ciclo alvo
+Wpf,Web_Lbl_TargetCapacity,目标产能,Target Output,目標能力,Capacidade alvo
 Wpf,Web_Lbl_ActualCycle,实际节拍,Actual Cycle,実タクト,Ciclo real
 Wpf,Web_Lbl_TotalOutput,总产量,Total Output,総生産量,Produção total
 Wpf,Web_Lbl_NgRate,不良率,NG Rate,不良率,Taxa de NG
@@ -1798,8 +1799,28 @@ Wpf,Web_Ln_Search,搜索设备,Search devices,デバイス検索,Pesquisar dispo
 Wpf,Web_Ln_SortName,按名称,By Name,名前順,Por nome
 Wpf,Web_Ln_SortOutput,按产量,By Output,生産順,Por produção
 Wpf,Web_Ln_SortOee,按 OEE,By OEE,OEE 順,Por OEE
-Wpf,Web_Ln_Cycle,节拍（实际/目标）,Cycle (Actual/Target),タクト（実績/目標）,Ciclo (real/alvo)
+Wpf,Web_Ln_Cycle,平均节拍（实际/目标）,Avg cycle (actual/target),平均タクト（実績/目標）,Ciclo médio (real/alvo)
+Wpf,Ln_ShiftPace,良品达成（OK/应产）,Good-count pace (OK/due),良品達成（OK/予定）,Ritmo de OK (OK/previsto)
+Wpf,Ln_AvailabilityHint,只扣报警时间，不含待机和离线,Counts alarm time only; excludes standby and offline,アラーム時間のみ控除（待機・オフライン含まず）,Desconta apenas alarme; exclui espera e offline
+Wpf,Ln_ActualCapacity,实际产能,Actual output,実績能力,Produção real
+Wpf,Ln_ApplyTargetCycleAll,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
+Wpf,Ln_ApplyTargetCycleTitle,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
+Wpf,Ln_ApplyTargetCycleConfirm,将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。,Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.,{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。,Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina.
+Wpf,Ln_ApplyTargetCycleDone,已将 {0} 台设备的目标产能设为 {1:N0} 件/小时,Target output for {0} devices is now {1:N0} pcs/hour,{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました,A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora
+Wpf,Ln_ApplyTargetCycleFailed,保存目标产能失败：{0},Failed to save target output: {0},目標能力の保存に失敗しました：{0},Falha ao salvar a capacidade alvo: {0}
+Wpf,Hp_DefectSubtitle,当前设备 · 本班次新增,Current device · shift increment,現在の設備 · 当シフト増分,Dispositivo atual · incremento do turno
+Wpf,Hp_DefectSummary,缺陷合计 {0:N0},Defect total {0:N0},不良合計 {0:N0},Total de defeitos {0:N0}
+Wpf,Hp_DefectShareNg,占 NG {0:P0},{0:P0} of NG,NG比 {0:P0},{0:P0} do NG
+Wpf,Hp_DefectCumulative,累计 {0:P0},Cumul. {0:P0},累積 {0:P0},Acum. {0:P0}
+Wpf,Hp_DefectOthers,其他（{0} 项）,Others ({0}),その他（{0} 件）,Outros ({0})
+Wpf,Hp_DefectEmptyZero,当前无不良计数,No defect counts right now,現在の不良カウントなし,Sem contagem de defeitos agora
+Wpf,Hp_DefectEmptyZeroHint,已配置的缺陷地址当前均为 0,Configured defect registers are all 0,設定済み不良アドレスはすべて 0,Os endereços de defeito configurados estão em 0
+Wpf,Hp_DefectEmptyUnconfigured,未配置缺陷项,No defect items configured,不良項目未設定,Nenhum item de defeito configurado
+Wpf,Hp_DefectEmptyUnconfiguredHint,请在设备管理中配置缺陷名称和 PLC 地址,Configure defect names and PLC addresses in Device Manager,設備管理で不良名と PLC アドレスを設定してください,Configure nomes e endereços PLC em Gerenciador de dispositivos
+Wpf,Hp_DefectTooltip,{0} · {1} · {2},{0} · {1} · {2},{0} · {1} · {2},{0} · {1} · {2}
+Wpf,Hp_DefectTooltipNoAddr,{0} · {1},{0} · {1},{0} · {1},{0} · {1}
 Wpf,Web_Ln_Downtime,停机,Downtime,停止,Parada
+Wpf,Web_Ln_AvailabilityHint,只扣报警时间，不含待机和离线,Counts alarm time only; excludes standby and offline,アラーム時間のみ控除（待機・オフライン含まず）,Desconta apenas alarme; exclui espera e offline
 Wpf,Web_Ln_NoDevices,暂无设备,No devices,デバイスなし,Sem dispositivos
 Wpf,Web_Ln_NoDevicesHint,请确认采集服务与仿真器已启动,Ensure the collection service and simulator are running,収集サービスとシミュレーターの起動を確認してください,Confirme que o serviço de coleta e o simulador estão em execução
 Wpf,Web_Ln_EmptyFilter,没有匹配的设备,No matching devices,一致するデバイスがありません,Nenhum dispositivo correspondente
@@ -1942,7 +1963,7 @@ Wpf,M348,OK产量,OK Qty,OK 生産数,Quantidade OK
 Wpf,M349,NG产量,NG Qty,NG 生産数,Quantidade NG
 Wpf,M350,运行时长(s),Runtime(s),稼働時間(s),Execução (s)
 Wpf,M351,报警时长(s),Alarm time(s),故障時間(s),Tempo de alarmes (s)
-Wpf,M352,目标节拍(件/小时),Target cycle (pcs/h),目標サイクル(個/時),Ciclo alvo (pçs/h)
+Wpf,M352,目标产能(件/小时),Target output (pcs/h),目標能力(個/時),Capacidade alvo (pçs/h)
 Wpf,M353,# 设备：{0},# Device: {0},# 設備：{0},# Dispositivo: {0}
 Wpf,M354,# 运行时长：{0:F2}h，报警时长：{1:F2}h，待机时长：{2:F2}h,"# Runtime: {0:F2}h, alarm: {1:F2}h, idle: {2:F2}h",# 稼働時間：{0:F2}h、故障時間：{1:F2}h、待機時間：{2:F2}h,"# Execução: {0:F2}h, alarmes: {1:F2}h, espera: {2:F2}h"
 Wpf,M355,退出时部分数据保存失败，可能丢失：,Data could not be fully saved on exit; data may be lost:,終了時に一部データの保存に失敗し、データが失われる可能性があります：,Parte dos dados não pôde ser salva ao sair; dados podem ser perdidos:
@@ -1958,7 +1979,7 @@ Wpf,F327,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Output_{0:yyyyMMdd}_{1:yyyyMMdd}.c
 Wpf,F328,状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,StateDuration_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,状態時間_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,DuracaoEstado_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,F329,报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Alarm_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,警報_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,Alarmes_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,Web_Recipe,配方,Recipe,レシピ,Receita
-Wpf,Web_DefectTop,缺陷分布 TOP5,Defect Top 5,欠陥トップ5,Top 5 de defeitos
+Wpf,Web_DefectTop,缺陷帕累托（TOP8）,Defect Pareto (Top 8),不良パレート（TOP8）,Pareto de defeitos (Top 8)
 Wpf,Web_NoDefectData,暂无缺陷数据,No defect data,欠陥データなし,Sem dados de defeitos
 Wpf,Web_LastShift,上一班次,Last Shift,前シフト,Turno anterior
 Wpf,Web_LastShiftLine,{0}：OK {1}（{2}）· NG {3}（{4}）,{0}: OK {1} ({2}) · NG {3} ({4}),{0}：OK {1}（{2}）· NG {3}（{4}）,{0}: OK {1} ({2}) · NG {3} ({4})
@@ -2247,15 +2268,15 @@ Wpf,Ux_DeviceWizardAddressRequired,请填写全部四个 PLC 地址。,Fill in a
 Wpf,Ux_DeviceWizardBack,上一步,Back,戻る,Voltar
 Wpf,Ux_DeviceWizardCreated,已创建设备「{0}」，请点击保存写入配置。,Created device '{0}'. Click Save to persist the configuration.,設備「{0}」を作成しました。保存をクリックして設定を書き込んでください。,Dispositivo '{0}' criado. Clique em Salvar para gravar a configuracao.
 Wpf,Ux_DeviceWizardFinish,完成,Finish,完了,Concluir
-Wpf,Ux_DeviceWizardIntro,填写设备名称与目标节拍（均为必填），下一步配置 PLC 地址。,Enter the device name and target cycle (both required). PLC addresses are configured on the next step.,設備名と目標サイクルを入力します（いずれも必須）。次のステップで PLC アドレスを設定します。,Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.
+Wpf,Ux_DeviceWizardIntro,填写设备名称与目标产能（均为必填），下一步配置 PLC 地址。,Enter the device name and target output rate (both required). PLC addresses are configured on the next step.,設備名と目標能力を入力します（いずれも必須）。次のステップで PLC アドレスを設定します。,Informe o nome e a capacidade alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.
 Wpf,Ux_DeviceWizardSaveReminder,完成后设备会出现在列表中，还需在设备管理页点击「保存」才会写入配置。,The device will appear in the list after you finish. Click Save on the Device Manager page to persist it.,完了後、設備は一覧に表示されます。設定を書き込むには設備管理ページで「保存」をクリックしてください。,O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar.
 Wpf,Ux_DeviceWizardNameDuplicate,设备名称已存在,Device name already exists,設備名は既に存在します,Nome do dispositivo ja existe
 Wpf,Ux_DeviceWizardNameRequired,设备名称不能为空,Device name is required,設備名は必須です,Nome do dispositivo obrigatorio
 Wpf,Ux_DeviceWizardNext,下一步,Next,次へ,Avancar
 Wpf,Ux_DeviceWizardStepAddresses,PLC 地址,PLC addresses,PLC アドレス,Enderecos PLC
 Wpf,Ux_DeviceWizardStepBasic,基本信息,Basic info,基本情報,Informacoes basicas
-Wpf,Ux_DeviceWizardTargetCycleHint,用于 OEE 性能率与速度对比，单位：个/小时。,Used for OEE performance rate and speed comparison (pieces per hour).,OEE 性能率と速度比較に使用します（単位：個/時間）。,Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).
-Wpf,Ux_DeviceWizardTargetCycleInvalid,目标周期必须大于 0,Target cycle must be greater than 0,目標サイクルは 0 より大きくする必要があります,Ciclo alvo deve ser maior que 0
+Wpf,Ux_DeviceWizardTargetCycleHint,用于 OEE 性能率与速度对比，单位：件/小时。,Used for OEE performance rate and speed comparison (pieces per hour).,OEE 性能率と速度比較に使用します（単位：個/時間）。,Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).
+Wpf,Ux_DeviceWizardTargetCycleInvalid,目标产能必须大于 0,Target output must be greater than 0,目標能力は 0 より大きくする必要があります,Capacidade alvo deve ser maior que 0
 Wpf,Ux_DeviceWizardTitle,新建设备向导,New Device Wizard,新規設備ウィザード,Assistente de novo dispositivo
 Wpf,Ux_QueryFinished,查询完成，共 {0} 条记录,"Query finished, {0} records",照会完了、{0} 件,"Consulta concluida, {0} registros"
 Wpf,Ux_Querying,正在查询…,Querying…,照会中…,Consultando…
@@ -2397,7 +2418,7 @@ Wpf,Web_Csv_Metric,指标,Metric,指標,Métrica
 Wpf,Web_Csv_Value,值,Value,値,Valor
 Wpf,Web_Csv_RunSeconds,运行时长(s),Run Time (s),稼働時間(s),Tempo de execução (s)
 Wpf,Web_Csv_AlarmSeconds,报警时长(s),Alarm Time (s),アラーム時間(s),Tempo de alarme (s)
-Wpf,Web_Csv_TargetCycle,目标节拍(件/小时),Target Cycle (pcs/h),目標タクト(個/時),Ciclo alvo (peças/h)
+Wpf,Web_Csv_TargetCycle,目标产能(件/小时),Target Output (pcs/h),目標能力(個/時),Capacidade alvo (peças/h)
 Wpf,Web_Csv_SumAlarm,# 触发：{0} 次，恢复：{1} 次，待恢复：{2} 条,"# Triggered: {0}, Recovered: {1}, Pending: {2}",# 発報：{0} 回、復旧：{1} 回、未復旧：{2} 件,"# Disparados: {0}, Recuperados: {1}, Pendentes: {2}"
 Wpf,Web_Csv_SumRange,# 查询区间：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Range: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# 照会範囲：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Intervalo: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}
 Wpf,Web_Csv_SumProd,# 总 OK：{0} 件，总 NG：{1} 件，良品率：{2},"# Total OK: {0}, Total NG: {1}, Yield: {2}",# OK合計：{0} 個、NG合計：{1} 個、良品率：{2},"# Total OK: {0}, Total NG: {1}, Rendimento: {2}"

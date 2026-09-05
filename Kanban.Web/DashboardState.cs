@@ -25,6 +25,7 @@ public sealed class DashboardState : IAsyncDisposable
     private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
     private readonly Dictionary<string, WorkOrderDto?> _workOrdersByDevice = new();
     private readonly Dictionary<string, IReadOnlyList<DeviceDefectCountDto>> _defectTopByDevice = new();
+    private readonly Dictionary<string, DeviceDefectSummaryDto> _defectSummaryByDevice = new();
     private readonly Dictionary<string, DeviceShiftSummaryDto> _lastShiftsByDevice = new();
     private readonly Dictionary<int, int> _workOrderOkById = new();
     private readonly Dictionary<string, int> _trackedRunningWorkOrderIdByDevice = new();
@@ -574,17 +575,27 @@ public sealed class DashboardState : IAsyncDisposable
                     _defectTopByDevice[d.DeviceId] = list = new List<DeviceDefectCountDto>();
                 ((List<DeviceDefectCountDto>)list).Add(d);
             }
+            _defectSummaryByDevice.Clear();
+            foreach (var s in meta.DefectSummaries)
+                _defectSummaryByDevice[s.DeviceId] = s;
             _lastShiftsByDevice.Clear();
             foreach (var s in meta.LastShifts)
                 _lastShiftsByDevice[s.DeviceId] = s;
         }
     }
 
-    /// <summary>指定设备当前缺陷计数 TOP5（无数据返回空列表）。</summary>
+    /// <summary>指定设备当前缺陷帕累托行（无数据返回空列表）。</summary>
     public IReadOnlyList<DeviceDefectCountDto> GetDefectTop(string deviceId)
     {
         lock (_lock)
             return _defectTopByDevice.TryGetValue(deviceId, out var list) ? list : [];
+    }
+
+    /// <summary>指定设备缺陷摘要（无推送返回 null）。</summary>
+    public DeviceDefectSummaryDto? GetDefectSummary(string deviceId)
+    {
+        lock (_lock)
+            return _defectSummaryByDevice.TryGetValue(deviceId, out var s) ? s : null;
     }
 
     /// <summary>指定设备上一班次产量汇总（无缓存返回 null）。</summary>

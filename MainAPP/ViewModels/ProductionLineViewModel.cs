@@ -3,6 +3,7 @@ using MainAPP.Resources;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -27,6 +28,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     private readonly IDeviceSelectionService _selection;
     private readonly IPlcDataAcquisitionService? _plcService;
     private readonly AppSettings? _appSettings;
+    private readonly IDialogService? _dialog;
 
     /// <summary>设备项集合（与 Devices/Runtimes 同步）。</summary>
     public ObservableCollection<LineDeviceItem> LineDevices { get; } = new();
@@ -50,16 +52,18 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     /// </summary>
     public event Action<string>? FocusDeviceRequested;
 
-    public ProductionLineViewModel(DeviceRepository deviceRepository, IDeviceSelectionService selection, IPlcDataAcquisitionService? plcService = null, AppSettings? appSettings = null)
+    public ProductionLineViewModel(DeviceRepository deviceRepository, IDeviceSelectionService selection, IPlcDataAcquisitionService? plcService = null, AppSettings? appSettings = null, IDialogService? dialog = null)
     {
         _deviceRepository = deviceRepository;
         _selection = selection;
         _plcService = plcService;
         _appSettings = appSettings;
+        _dialog = dialog;
         _log.Information("ProductionLineViewModel 构造：Devices.Count={DeviceCount}, Runtimes.Count={RuntimeCount}",
             _deviceRepository.Devices.Count, _deviceRepository.Runtimes.Count);
 
         SyncLineDevices();
+        SeedBatchTargetFromDevices();
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged += OnRuntimesCollectionChanged;
         _selection.PropertyChanged += OnSelectionChanged;
@@ -67,6 +71,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged += OnShiftsChanged;
         _kpiTimer = new PageRefreshTimer(TimeSpan.FromMilliseconds(500), OnKpiTimerTick);
+        _shiftProgressTimer = new PageRefreshTimer(TimeSpan.FromSeconds(1), OnShiftProgressTick);
         // 筛选/排序视图：ListCollectionView（源 = LineDevices）+ Filter + CustomSort。
         // 原实现 getter 每次 ToList() 返回新 List 实例 → ItemsSource 收到新引用 → Reset →
         // VirtualizingWrapPanel 全量重建容器、虚拟化失效（排序/筛选态下每台设备每次属性变化都触发）。
@@ -82,6 +87,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     //    避免 6N 次/帧的 O(N²) 重算（N 台设备 × 每台 6 个属性 × 17 个 O(N) KPI getter）。──
 
     private readonly PageRefreshTimer _kpiTimer;
+    private readonly PageRefreshTimer _shiftProgressTimer;
     private bool _kpisDirty;
     private bool _filterDirty;
     /// <summary>Runtime 反查 LineDeviceItem（O(1)，替代原 FirstOrDefault O(N) 线性查找）。</summary>
@@ -99,6 +105,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
             FlushPendingRefresh();
             UpdateCurrentShift();
             RefreshLastShiftComparison();
+            RefreshAllShiftProgress();
+            _shiftProgressTimer.Start();
         }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
@@ -106,7 +114,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     public void OnPageExit()
     {
         _pageActive = false;
-        _kpiTimer.Stop(); // 页面不可见时无 KPI 消费者，停止定时器；脏标记保留，进入页面时统一刷新
+        _kpiTimer.Stop();
+        _shiftProgressTimer.Stop();
     }
 
     /// <summary>应用积压的 KPI / 筛选 / 瞬态文本刷新（一次重算，批量通知）。</summary>
@@ -137,6 +146,18 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         FlushPendingRefresh();
     }
 
+    private void OnShiftProgressTick()
+    {
+        if (!_pageActive) return;
+        RefreshAllShiftProgress();
+    }
+
+    private void RefreshAllShiftProgress()
+    {
+        foreach (var item in LineDevices)
+            item.RefreshShiftProgress();
+    }
+
     // ──────────── 汇总 KPI（顶部条） ────────────
 
     // KPI 聚合缓存：由 RecalculateKpis 单次 O(N) 遍历填充，getter 零分配零 LINQ。
@@ -148,8 +169,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     private int _totalOkProduction;
     private int _totalNgProduction;
     private double _overallQualityRate;
-    private double _weightedOee;
-    private string _totalOutputDetailText = string.Empty;
 
     public int DeviceCount => LineDevices.Count;
     public int RunningCount => _runningCount;
@@ -160,21 +179,16 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     public int TotalOkProduction => _totalOkProduction;
     public int TotalNgProduction => _totalNgProduction;
     public int TotalOutput => _totalOkProduction + _totalNgProduction;
-    /// <summary>总产量卡副标题：OK / NG 分项（与 Web 产线页 kpi-row 一致）。</summary>
-    public string TotalOutputDetailText => _totalOutputDetailText;
     /// <summary>整体合格率 = 总 OK / 总产量。</summary>
     public double OverallQualityRate => _overallQualityRate;
-    /// <summary>产线加权 OEE = 设备 OEE 按产量加权平均（避免少量产量设备拉高均值）。</summary>
-    public double WeightedOee => _weightedOee;
 
     /// <summary>
-    /// 单次 O(N) 遍历累加所有汇总 KPI（状态计数 + 产量 + 加权 OEE + 合格率），缓存到字段。
-    /// 语义与原 17 个独立 LINQ getter 完全一致：四个状态精确等值匹配，其它状态值不计入任何计数。
+    /// 单次 O(N) 遍历累加汇总 KPI（四态计数 + 产量，供班次对比）。
+    /// 四个状态精确等值匹配，其它状态值不计入任何计数。
     /// </summary>
     private void RecalculateKpis()
     {
         int running = 0, alarm = 0, paused = 0, offline = 0, ok = 0, ng = 0;
-        double oeeWeighted = 0;
         foreach (var item in LineDevices)
         {
             var runtime = item.Runtime;
@@ -185,11 +199,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
                 case (int)DeviceStatus.Paused: paused++; break;
                 case (int)DeviceStatus.Offline: offline++; break;
             }
-            var itemOk = runtime.TotalOkProduction;
-            var itemNg = runtime.TotalNgProduction;
-            ok += itemOk;
-            ng += itemNg;
-            oeeWeighted += runtime.Oee * (itemOk + itemNg);
+            ok += runtime.TotalOkProduction;
+            ng += runtime.TotalNgProduction;
         }
         _runningCount = running;
         _alarmCount = alarm;
@@ -197,10 +208,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         _offlineCount = offline;
         _totalOkProduction = ok;
         _totalNgProduction = ng;
-        _totalOutputDetailText = $"{Strings.Web_Lbl_Ok} {ok:N0} · {Strings.Web_Lbl_Ng} {ng:N0}";
         var total = ok + ng;
         _overallQualityRate = total > 0 ? (double)ok / total : 0;
-        _weightedOee = total > 0 ? oeeWeighted / total : 0;
     }
 
     // ──────────── 趋势对比（vs 上一班次，复用 PlcDataAcquisitionService 内存缓存） ────────────
@@ -422,14 +431,13 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         OnPropertyChanged(nameof(TotalOkProduction));
         OnPropertyChanged(nameof(TotalNgProduction));
         OnPropertyChanged(nameof(TotalOutput));
-        OnPropertyChanged(nameof(TotalOutputDetailText));
         OnPropertyChanged(nameof(OverallQualityRate));
-        OnPropertyChanged(nameof(WeightedOee));
         // 产量变化 → diff（current - lastShift）需重算，基线不变故不调 RefreshLastShiftComparison
         OnPropertyChanged(nameof(OutputDiff));
         OnPropertyChanged(nameof(NgDiff));
         OnPropertyChanged(nameof(OutputDiffText));
         OnPropertyChanged(nameof(NgDiffText));
+        ApplyBatchTargetCycleCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>共享选中服务变化 → 同步本视图的选中镜像，触发卡片选中态刷新。</summary>
@@ -449,6 +457,71 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         if (parameter is not string deviceId || string.IsNullOrEmpty(deviceId)) return;
         _selection.SelectedDeviceId = deviceId;
         FocusDeviceRequested?.Invoke(deviceId);
+    }
+
+    /// <summary>批量目标产能（件/小时）。各机相同时预填该值，否则为 0（需用户输入后才能应用）。</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ApplyBatchTargetCycleCommand))]
+    private int _batchTargetPcsPerHour;
+
+    private void SeedBatchTargetFromDevices()
+    {
+        if (LineDevices.Count == 0)
+        {
+            BatchTargetPcsPerHour = 0;
+            return;
+        }
+
+        var first = LineDevices[0].Device.TargetCycle;
+        BatchTargetPcsPerHour = first > 0 && LineDevices.All(item => item.Device.TargetCycle == first)
+            ? first
+            : 0;
+    }
+
+    private bool CanApplyBatchTargetCycle()
+        => BatchTargetPcsPerHour > 0 && LineDevices.Count > 0;
+
+    /// <summary>将输入框中的目标产能写入全部设备配置与运行时，并持久化。</summary>
+    [RelayCommand(CanExecute = nameof(CanApplyBatchTargetCycle))]
+    private async Task ApplyBatchTargetCycle()
+    {
+        var pcs = BatchTargetPcsPerHour;
+        var count = LineDevices.Count;
+        if (pcs <= 0 || count == 0) return;
+
+        if (_dialog != null)
+        {
+            var confirm = _dialog.Show(
+                string.Format(Strings.Ln_ApplyTargetCycleConfirm, count, pcs),
+                Strings.Ln_ApplyTargetCycleTitle,
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) return;
+        }
+
+        try
+        {
+            foreach (var item in LineDevices)
+            {
+                item.Device.TargetCycle = pcs;
+                item.Runtime.SyncTargetCycle(pcs);
+                _deviceRepository.SyncTargetCycle(item.Device.Id, pcs);
+            }
+
+            RefreshAllShiftProgress();
+            await _deviceRepository.SaveAllAsync();
+
+            var done = string.Format(Strings.Ln_ApplyTargetCycleDone, count, pcs);
+            AuditLog.Record("Device.Update", "Device", null,
+                detail: done,
+                after: new { targetCycle = pcs, deviceCount = count });
+            _dialog?.NotifySuccess(done);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to apply batch target capacity");
+            _dialog?.NotifyError(string.Format(Strings.Ln_ApplyTargetCycleFailed, ex.Message));
+        }
     }
 
     /// <summary>
@@ -654,6 +727,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     public void Dispose()
     {
         _kpiTimer.Dispose();
+        _shiftProgressTimer.Dispose();
         _deviceRepository.Devices.CollectionChanged -= OnDevicesCollectionChanged;
         _deviceRepository.Runtimes.CollectionChanged -= OnRuntimesCollectionChanged;
         _selection.PropertyChanged -= OnSelectionChanged;

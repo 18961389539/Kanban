@@ -874,10 +874,10 @@
     <value>Parâmetros básicos</value>
   </data>
   <data name="K196" xml:space="preserve">
-    <value>Ciclo alvo (pçs/hora)</value>
+    <value>Capacidade alvo (pçs/hora)</value>
   </data>
   <data name="K197" xml:space="preserve">
-    <value>Ciclo alvo</value>
+    <value>Capacidade alvo</value>
   </data>
   <data name="K198" xml:space="preserve">
     <value>Configuração de endereços PLC</value>
@@ -1237,7 +1237,7 @@
     <value>OEE = Taxa de qualidade × Taxa de desempenho × Disponibilidade de tempo</value>
   </data>
   <data name="K317" xml:space="preserve">
-    <value>Pareto de defeitos (Top 5)</value>
+    <value>Pareto de defeitos (Top 8)</value>
   </data>
   <data name="K318" xml:space="preserve">
     <value>Sem dados de estado</value>
@@ -2701,7 +2701,7 @@
     <value>Dispositivo "{0}" não configurado: {1}</value>
   </data>
   <data name="F204" xml:space="preserve">
-    <value>O ciclo alvo do dispositivo "{0}" deve ser &gt; 0 (atual {1})</value>
+    <value>A capacidade alvo do dispositivo "{0}" deve ser &gt; 0 (atual {1})</value>
   </data>
   <data name="F205" xml:space="preserve">
     <value>Dispositivo "{0}": nome de defeito duplicado "{1}"</value>
@@ -3740,6 +3740,9 @@
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
     <value>Ciclo alvo</value>
+  </data>
+  <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
+    <value>Capacidade alvo</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
     <value>Ciclo real</value>
@@ -5014,10 +5017,70 @@
     <value>Por OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>Ciclo (real/alvo)</value>
+    <value>Ciclo médio (real/alvo)</value>
+  </data>
+  <data name="Ln_ShiftPace" xml:space="preserve">
+    <value>Ritmo de OK (OK/previsto)</value>
+  </data>
+  <data name="Ln_AvailabilityHint" xml:space="preserve">
+    <value>Desconta apenas alarme; exclui espera e offline</value>
+  </data>
+  <data name="Ln_ActualCapacity" xml:space="preserve">
+    <value>Produção real</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleAll" xml:space="preserve">
+    <value>Aplicar a todos os dispositivos</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
+    <value>Aplicar a todos os dispositivos</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
+    <value>Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina.</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
+    <value>A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora</value>
+  </data>
+  <data name="Ln_ApplyTargetCycleFailed" xml:space="preserve">
+    <value>Falha ao salvar a capacidade alvo: {0}</value>
+  </data>
+  <data name="Hp_DefectSubtitle" xml:space="preserve">
+    <value>Dispositivo atual · incremento do turno</value>
+  </data>
+  <data name="Hp_DefectSummary" xml:space="preserve">
+    <value>Total de defeitos {0:N0}</value>
+  </data>
+  <data name="Hp_DefectShareNg" xml:space="preserve">
+    <value>{0:P0} do NG</value>
+  </data>
+  <data name="Hp_DefectCumulative" xml:space="preserve">
+    <value>Acum. {0:P0}</value>
+  </data>
+  <data name="Hp_DefectOthers" xml:space="preserve">
+    <value>Outros ({0})</value>
+  </data>
+  <data name="Hp_DefectEmptyZero" xml:space="preserve">
+    <value>Sem contagem de defeitos agora</value>
+  </data>
+  <data name="Hp_DefectEmptyZeroHint" xml:space="preserve">
+    <value>Os endereços de defeito configurados estão em 0</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfigured" xml:space="preserve">
+    <value>Nenhum item de defeito configurado</value>
+  </data>
+  <data name="Hp_DefectEmptyUnconfiguredHint" xml:space="preserve">
+    <value>Configure nomes e endereços PLC em Gerenciador de dispositivos</value>
+  </data>
+  <data name="Hp_DefectTooltip" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+  </data>
+  <data name="Hp_DefectTooltipNoAddr" xml:space="preserve">
+    <value>{0} · {1}</value>
   </data>
   <data name="Web_Ln_Downtime" xml:space="preserve">
     <value>Parada</value>
+  </data>
+  <data name="Web_Ln_AvailabilityHint" xml:space="preserve">
+    <value>Desconta apenas alarme; exclui espera e offline</value>
   </data>
   <data name="Web_Ln_NoDevices" xml:space="preserve">
     <value>Sem dispositivos</value>
@@ -5446,7 +5509,7 @@
     <value>Tempo de alarmes (s)</value>
   </data>
   <data name="M352" xml:space="preserve">
-    <value>Ciclo alvo (pçs/h)</value>
+    <value>Capacidade alvo (pçs/h)</value>
   </data>
   <data name="M353" xml:space="preserve">
     <value># Dispositivo: {0}</value>
@@ -5494,7 +5557,7 @@
     <value>Receita</value>
   </data>
   <data name="Web_DefectTop" xml:space="preserve">
-    <value>Top 5 de defeitos</value>
+    <value>Pareto de defeitos (Top 8)</value>
   </data>
   <data name="Web_NoDefectData" xml:space="preserve">
     <value>Sem dados de defeitos</value>
@@ -6104,7 +6167,7 @@
     <value>Concluir</value>
   </data>
   <data name="Ux_DeviceWizardIntro" xml:space="preserve">
-    <value>Informe o nome e o ciclo alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.</value>
+    <value>Informe o nome e a capacidade alvo do dispositivo (ambos obrigatorios). Os enderecos PLC sao configurados na proxima etapa.</value>
   </data>
   <data name="Ux_DeviceWizardSaveReminder" xml:space="preserve">
     <value>O dispositivo aparecera na lista apos concluir. Clique em Salvar na pagina Gerenciador de dispositivos para gravar.</value>
@@ -6128,7 +6191,7 @@
     <value>Usado na taxa de performance OEE e comparacao de velocidade (pecas por hora).</value>
   </data>
   <data name="Ux_DeviceWizardTargetCycleInvalid" xml:space="preserve">
-    <value>Ciclo alvo deve ser maior que 0</value>
+    <value>Capacidade alvo deve ser maior que 0</value>
   </data>
   <data name="Ux_DeviceWizardTitle" xml:space="preserve">
     <value>Assistente de novo dispositivo</value>
@@ -6510,7 +6573,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Tempo de alarme (s)</value>
   </data>
   <data name="Web_Csv_TargetCycle" xml:space="preserve">
-    <value>Ciclo alvo (peças/h)</value>
+    <value>Capacidade alvo (peças/h)</value>
   </data>
   <data name="Web_Csv_SumAlarm" xml:space="preserve">
     <value># Disparados: {0}, Recuperados: {1}, Pendentes: {2}</value>

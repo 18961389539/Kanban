@@ -69,6 +69,21 @@ public class SnapshotMetricsTests
     public void CycleSeconds_VariousSpeeds(double perHour, double expected)
         => Assert.Equal(expected, SnapshotMetrics.CycleSeconds(perHour), precision: 6);
 
+    [Fact]
+    public void AverageCycleSeconds_MatchesSpeedConversion()
+        => Assert.Equal(18, SnapshotMetrics.AverageCycleSeconds(3600, 200, 0), precision: 6);
+
+    [Fact]
+    public void AverageCycleSeconds_ShortRuntime_ReturnsZero()
+        => Assert.Equal(0, SnapshotMetrics.AverageCycleSeconds(4, 10, 0));
+
+    [Theory]
+    [InlineData(400, 6, 2400)]
+    [InlineData(400, 0, 0)]
+    [InlineData(0, 6, 0)]
+    public void ExpectedOutput_RoundsPcs(int target, double hours, int expected)
+        => Assert.Equal(expected, SnapshotMetrics.ExpectedOutput(target, hours));
+
     // ──────────── AchievementRate ────────────
 
     [Theory]

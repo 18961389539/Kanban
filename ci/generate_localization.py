@@ -69,12 +69,18 @@ SHARED_WEB_KEYS = {
     # 回退成键名字面量，并触发 LocalizationGuardTests.Web_LKeys_Have_Corresponding_Wpf_Keys。
     "Lbl_NgRate", "Lbl_Ok", "Lbl_Performance", "Lbl_Quality",
     "Lbl_RealTimeSpeed", "Lbl_Remaining", "Lbl_SnapSeq", "Lbl_SvcAddr", "Lbl_SvcVersion",
-    "Lbl_TargetCycle", "Lbl_TotalOutput", "Meta_PlanWo", "Meta_QualityRate", "Meta_ShiftAuto",
+    "Lbl_TargetCapacity", "Lbl_TargetCycle", "Lbl_TotalOutput", "Meta_PlanWo", "Meta_QualityRate", "Meta_ShiftAuto",
     "Meta_StatusWord", "Meta_TrendCurrent", "Msg_EmptyHint", "Msg_NoDevSelected",
     "Msg_NoDeviceData", "Msg_SelectHint", "Msg_WaitingConn", "Status_Alarm", "Status_Idle",
     "Status_Offline", "Status_Paused", "Status_Running", "Val_DynAddr", "Val_NoAlarms", "Val_NoWorkOrder",
     "Val_WaitData", "Wo_Aborted", "Wo_Completed", "Wo_Pending", "Wo_Progress",
     "Wo_ProgressPending", "Wo_Running",
+    "Hp_DefectSubtitle", "Hp_DefectSummary", "Hp_DefectShareNg", "Hp_DefectCumulative",
+    "Hp_DefectOthers", "Hp_DefectEmptyZero", "Hp_DefectEmptyZeroHint",
+    "Hp_DefectEmptyUnconfigured", "Hp_DefectEmptyUnconfiguredHint",
+    "Hp_DefectTooltip", "Hp_DefectTooltipNoAddr",
+    "Severity_Critical", "Severity_Major", "Severity_Minor",
+    "Defect_Appearance", "Defect_Dimension", "Defect_Function", "Defect_Packaging", "Defect_Other",
 }
 
 # Added only during the one-time RESX -> CSV migration. Afterwards it lives in CSV.

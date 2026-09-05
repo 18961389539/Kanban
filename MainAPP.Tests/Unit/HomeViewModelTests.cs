@@ -3,6 +3,7 @@ using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
+using Kanban.Contracts.Metrics;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -578,5 +579,69 @@ public class HomeViewModelTests : IDisposable
         Assert.Equal(7, vm.ActiveAlarmTotalCount);
         Assert.True(vm.HasActiveAlarmTruncation);
         Assert.Equal("仅显示前 5 条", vm.ActiveTruncationHint);
+    }
+
+    [Fact]
+    public void DefectTop_NoConfiguredKinds_NotConfiguredEmpty()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        Assert.Empty(vm.DefectTop);
+        Assert.Equal(DefectParetoEmptyKind.NotConfigured, vm.DefectParetoEmptyKind);
+        Assert.False(vm.HasDefectParetoData);
+        Assert.Equal("", vm.DefectParetoSummaryText);
+    }
+
+    [Fact]
+    public void DefectTop_AllZero_AllZeroEmpty()
+    {
+        var device = AddDeviceWithRuntime("d1", "设备1");
+        device.Defects.Add(new Defect { Name = "毛边", Count = 0, PlcAddress = "D200" });
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        Assert.Empty(vm.DefectTop);
+        Assert.Equal(DefectParetoEmptyKind.AllZero, vm.DefectParetoEmptyKind);
+        Assert.False(vm.HasDefectParetoData);
+    }
+
+    [Fact]
+    public void DefectTop_ParetoShareRelativeToTotal_OthersAndNgShare()
+    {
+        var device = AddDeviceWithRuntime("d1", "设备1");
+        device.Defects.Add(new Defect
+        {
+            Name = "A", Count = 50, Severity = DefectSeverity.Critical,
+            Category = DefectCategory.Appearance, PlcAddress = "D200",
+        });
+        device.Defects.Add(new Defect { Name = "B", Count = 30, Severity = DefectSeverity.Major, Category = DefectCategory.Dimension, PlcAddress = "D201" });
+        device.Defects.Add(new Defect { Name = "C", Count = 10, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D202" });
+        device.Defects.Add(new Defect { Name = "D", Count = 5, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D203" });
+        device.Defects.Add(new Defect { Name = "E", Count = 4, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D204" });
+        device.Defects.Add(new Defect { Name = "F", Count = 1, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D205" });
+        device.Defects.Add(new Defect { Name = "G", Count = 1, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D206" });
+        device.Defects.Add(new Defect { Name = "H", Count = 1, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D207" });
+        device.Defects.Add(new Defect { Name = "I", Count = 1, Severity = DefectSeverity.Minor, Category = DefectCategory.Other, PlcAddress = "D208" });
+        var rt = _deviceRepository.RuntimeMap["d1"];
+        rt.TotalNgProduction = 100;
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        vm.OnPageEnter();
+
+        Assert.Equal(DefectParetoEmptyKind.HasData, vm.DefectParetoEmptyKind);
+        Assert.True(vm.HasDefectParetoData);
+        Assert.Equal(9, vm.DefectTop.Count);
+        Assert.Equal(50.0 / 103.0, vm.DefectTop[0].BarRatio, precision: 6);
+        Assert.True(vm.DefectTop[0].IsVitalFew);
+        Assert.True(vm.DefectTop[1].IsVitalFew);
+        Assert.True(vm.DefectTop[2].IsVitalFew);
+        Assert.False(vm.DefectTop[3].IsVitalFew);
+        Assert.True(vm.DefectTop[^1].IsOthers);
+        Assert.Equal(1, vm.DefectTop[^1].Count);
+        Assert.Contains("103", vm.DefectParetoSummaryText);
+        Assert.False(string.IsNullOrEmpty(vm.DefectNgShareText));
+        Assert.Contains("D200", vm.DefectTop[0].Tooltip);
     }
 }

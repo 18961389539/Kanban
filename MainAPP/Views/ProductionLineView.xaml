@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:hc="https://handyorg.github.io/handycontrol"
@@ -82,56 +83,65 @@
             </StackPanel>
         </DockPanel>
 
-        <!--  汇总 KPI 条（与 Web ProductionLine kpi-row 对齐）  -->
-        <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,16"
-                     Visibility="{Binding HasNoDevices, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Running}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource SuccessBrush}"
-                               Text="{Binding RunningCount, StringFormat={}{0:N0}}" />
+        <!--  目标产能 + 四态设备数：同一行  -->
+        <Grid Grid.Row="1" Margin="0,0,0,16"
+              Visibility="{Binding HasNoDevices, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource KpiCard}" Padding="12,10" Margin="0,0,8,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <hc:TextBox
+                        Width="220"
+                        hc:InfoElement.Title="{x:Static resources:Strings.K196}"
+                        hc:InfoElement.TitlePlacement="Top"
+                        AutomationProperties.Name="{x:Static resources:Strings.K196}"
+                        Style="{StaticResource TextBoxExtend}"
+                        Text="{Binding BatchTargetPcsPerHour, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Bottom"
+                        Style="{StaticResource IconButtonPrimary}"
+                        Tag="{x:Static mi:MaterialIconKind.CheckAll}"
+                        Content="{x:Static resources:Strings.Ln_ApplyTargetCycleAll}"
+                        Command="{Binding ApplyBatchTargetCycleCommand}"
+                        AutomationProperties.Name="{x:Static resources:Strings.Ln_ApplyTargetCycleAll}" />
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Alarm}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}"
-                               Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Paused}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource WarningBrush}"
-                               Text="{Binding PausedCount, StringFormat={}{0:N0}}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Offline}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{Binding OfflineCount, StringFormat={}{0:N0}}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Web_Lbl_TotalOutput}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource PrimaryTextBrush}"
-                               Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
-                    <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
-                               Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="{Binding TotalOutputDetailText}" />
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource KpiCard}" Padding="10,12">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K414}" />
-                    <TextBlock Style="{StaticResource KpiCellValue}"
-                               Foreground="{Binding WeightedOee, Converter={StaticResource OeeThreshold}}"
-                               Text="{Binding WeightedOee, StringFormat={}{0:P0}}" />
-                </StackPanel>
-            </Border>
-        </UniformGrid>
+
+            <UniformGrid Grid.Column="1" Columns="4">
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Running}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource SuccessBrush}"
+                                   Text="{Binding RunningCount, StringFormat={}{0:N0}}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Alarm}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}"
+                                   Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Paused}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource WarningBrush}"
+                                   Text="{Binding PausedCount, StringFormat={}{0:N0}}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}" Padding="10,12">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Offline}" />
+                        <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{Binding OfflineCount, StringFormat={}{0:N0}}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+        </Grid>
 
         <!--  筛选 / 搜索 / 排序  -->
         <Grid Grid.Row="2" Margin="0,0,0,16"
