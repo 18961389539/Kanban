@@ -143,21 +143,33 @@ public partial class DeviceWorkOrderViewModel : DeviceChildManagerViewModel
     {
         var cts = new CancellationTokenSource();
         _selectedProductionCts = cts;
-        WorkOrderProductionSummary summary;
         try
         {
-            summary = await Task.Run(() => _workOrderService.GetProductionSummary(order), cts.Token);
-        }
-        catch
-        {
-            if (cts.IsCancellationRequested) return;
-            summary = new WorkOrderProductionSummary();
-        }
+            WorkOrderProductionSummary summary;
+            try
+            {
+                summary = await Task.Run(() => _workOrderService.GetProductionSummary(order), cts.Token);
+            }
+            catch
+            {
+                if (cts.IsCancellationRequested) return;
+                summary = new WorkOrderProductionSummary();
+            }
 
-        if (cts.IsCancellationRequested || SelectedWorkOrder?.Id != order.Id) return;
-        SelectedProductionSummary = summary;
-        UpdateEstimateTexts(order, summary);
-        cts.Dispose();
+            if (cts.IsCancellationRequested || SelectedWorkOrder?.Id != order.Id) return;
+            SelectedProductionSummary = summary;
+            UpdateEstimateTexts(order, summary);
+        }
+        finally
+        {
+            // 审查修复 2026-09-05（P2）：原实现仅成功路径 Dispose；取消分支（catch 内 return）
+            // 与"选中项已被替换"分支提前 return 时未释放，依赖下次 OnSelectedWorkOrderChanged
+            // 兜底。统一在 finally 释放，并只在字段仍指向本 cts 时清空——避免把更新一轮
+            // RefreshSelectedProductionAsync 已赋值的 _selectedProductionCts 误清。
+            if (_selectedProductionCts == cts)
+                _selectedProductionCts = null;
+            cts.Dispose();
+        }
     }
 
     private void UpdateEstimateTexts(WorkOrder order, WorkOrderProductionSummary summary)

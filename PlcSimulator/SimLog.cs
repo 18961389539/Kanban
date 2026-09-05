@@ -48,7 +48,19 @@ internal static class SimLog
             var dir = Path.GetDirectoryName(logFile);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            _logWriter = new StreamWriter(logFile, append: true, Encoding.UTF8) { AutoFlush = true };
+            // 审查修复 2026-09-05（P2）：重复 Initialize（测试/重载场景）先释放旧写入器，
+            // 原实现直接覆盖 _logWriter 使旧文件句柄滞留至 GC。
+            lock (_lock)
+            {
+                if (_logWriter != null)
+                {
+                    try { _logWriter.Flush(); } catch { }
+                    _logWriter.Dispose();
+                    _logWriter = null;
+                }
+                _bytesWritten = 0;
+                _logWriter = new StreamWriter(logFile, append: true, Encoding.UTF8) { AutoFlush = true };
+            }
         }
         catch
         {

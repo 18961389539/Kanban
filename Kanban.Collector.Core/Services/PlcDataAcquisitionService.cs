@@ -155,6 +155,18 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 轮询循环的 Task 引用，用于 StopAsync 中等待循环真正退出，确保后续保存数据时采集线程已停止。
     /// </summary>
     private Task? _pollingTask;
+    /// <summary>
+    /// 停止超时期间遗留的轮询任务引用（StopAsync 等待退出超时时暂存，用于判断是否已真正退出）。
+    /// </summary>
+    private Task? _abandonedPollingTask;
+    /// <summary>
+    /// 停止失败闸门：StopAsync 等待轮询退出超时后置位，阻止在同一进程内再次 Start()。
+    /// 审查修复 2026-09-05（P1）：同步 PLC IO（ReadInt32 等）无法被 CancellationToken 中断，
+    /// 超时后旧轮询任务仍可能常驻，而 IsRunning 已置 false —— 若无闸门，再次 Start() 会新建
+    /// 第二个轮询任务，与旧循环并发改写同一批 DeviceRuntime/历史库，导致计数翻倍、OEE 失真。
+    /// 旧任务被观测到已完成时自动解除（见 Start）。
+    /// </summary>
+    private bool _startDisabled;
 
     // ──────────── 拆分出的协作组件（构造时内部创建，不暴露 DI） ────────────
     // 每个组件拥有自己的状态字典与锁，职责独立。本类保留 facade API 委托调用，
@@ -302,11 +314,32 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         lock (_startStopLock)
         {
             if (IsRunning) return;
+
+            if (_startDisabled)
+            {
+                // 上一次 StopAsync 等待轮询退出超时；旧轮询任务仍卡在同步 PLC IO 时拒绝重启，
+                // 否则会与旧循环并发改写同一批运行时状态。旧任务被观测到已完成则自动解除闸门。
+                var abandoned = _abandonedPollingTask;
+                if (abandoned != null && abandoned.IsCompleted)
+                {
+                    _abandonedPollingTask = null;
+                    _startDisabled = false;
+                    _logger.LogWarning("采集服务上一次停止超时遗留的轮询任务已退出，允许重新启动");
+                }
+                else
+                {
+                    _logger.LogError("采集服务上一次停止超时，遗留轮询任务仍在运行，拒绝重新启动以避免双轮询并发");
+                    return;
+                }
+            }
+
             IsRunning = true;
             var cts = new CancellationTokenSource();
             _cts = cts;
-            // P0-5：注册未观察异常处理器，避免轮询任务抛异常时在 GC 时刷错误日志
-            _pollingTask = Task.Run(() => PollingLoopAsync(cts.Token), cts.Token);
+            // 审查修复 2026-09-05（P2）：不再把 cts.Token 作为 Task.Run 的调度取消参数传第二遍。
+            // 该 token 只作"任务启动前取消则不调度"用，若在本句执行前被取消，委托根本不会运行，
+            // 而 IsRunning 已置 true —— 静默"假采集"。取消语义由循环体内部的 cts.Token 承担。
+            _pollingTask = Task.Run(() => PollingLoopAsync(cts.Token));
             _pollingTask.ContinueWith(t =>
             {
                 if (t.IsFaulted)
@@ -332,13 +365,11 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             _cts = null;
             _pollingTask = null;
         }
-        // 停机前将所有处于真实状态的设备标记为离线，
-        // 避免停机时段被算进上一状态（如运行）导致重启后 OEE 历史虚高/失真。
-        foreach (var device in _deviceRepository.GetDevicesSnapshot())
-            LogOfflineTransition(device);
+
         cts?.Cancel();
         // 等待轮询循环真正退出。加 15s 超时保护：若采集线程卡在同步 PLC IO（ReadInt32 等），
         // CancellationToken 无法中断同步调用，避免应用永久挂起无法退出。
+        var loopExited = true;
         if (pollingTask != null)
         {
             try { await Task.WhenAny(pollingTask, Task.Delay(TimeSpan.FromSeconds(15))).ConfigureAwait(false); }
@@ -349,9 +380,34 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             // ContinueWith(OnlyOnFaulted) 仍会观察后续异常。
             if (!pollingTask.IsCompleted)
             {
-                _logger.LogWarning("停止采集服务超时（15s），轮询任务可能仍在运行，将交由 GC 回收");
+                loopExited = false;
+                // 审查修复 2026-09-05（P1）：置停止失败闸门 + 暂存遗留任务引用。
+                // 若无闸门，调用方在超时后再次 Start() 会新建第二个轮询任务，与仍卡在同步 PLC IO
+                // 的旧循环并发改写同一批 DeviceRuntime/历史库（计数翻倍、OEE 失真）。
+                // 遗留任务被观测到已完成时，Start() 会自动解除闸门（见 Start）。
+                lock (_startStopLock)
+                {
+                    _abandonedPollingTask = pollingTask;
+                    _startDisabled = true;
+                }
+                _logger.LogWarning(
+                    "停止采集服务超时（15s），轮询任务可能仍在运行，将交由 GC 回收；" +
+                    "已禁用本进程内重新启动，待遗留任务退出后自动解除");
             }
         }
+
+        if (loopExited)
+        {
+            // 审查修复 2026-09-05（P2）：标记离线移到轮询循环确认退出之后。原实现先
+            // LogOfflineTransition 后 Cancel —— 此时在途轮询迭代（RefreshDeviceData/断线分支）
+            // 可能仍在写同一 DeviceRuntime.StatusWord 等字段，两个线程并发改写共享运行时对象
+            // 属跨线程撕裂写，停机瞬间可能留下错误状态（如停机被算进运行）影响重启后 OEE 基线。
+            // 循环退出后只剩本线程写运行时状态，标记离线即为单线程、无竞态。
+            // 超时未退出时不标记（此时旧循环仍在写，标记反而引入竞态），由上文告警兜底暴露。
+            foreach (var device in _deviceRepository.GetDevicesSnapshot())
+                LogOfflineTransition(device);
+        }
+
         // 仅在任务确实已完成时安全释放 cts
         if (pollingTask?.IsCompleted == true)
         {

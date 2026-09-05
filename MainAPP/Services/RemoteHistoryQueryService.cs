@@ -434,6 +434,11 @@ public sealed class RemoteHistoryQueryService :
                     .ToList(),
             };
             var response = InvokeBatch(request);
+            // 审查修复 2026-09-05（P1）：原实现直接 `response.Results[i]` 索引，未校验服务端返回
+            // 条数。服务端对批量子查询截断/部分失败时结果数少于请求数 → IndexOutOfRangeException，
+            // 中断工单产量聚合回退路径（概览/工单页加载）。与 QueryRemoteList 的校验保持一致。
+            if (response.Results.Count != chunk.Count)
+                throw new InvalidOperationException("远程历史查询返回数量与请求不一致");
             for (var i = 0; i < chunk.Count; i++)
                 result[chunk[i]] = MapDtos<ProductionLog>(response.Results[i]);
         }
@@ -467,6 +472,9 @@ public sealed class RemoteHistoryQueryService :
                     .ToList(),
             };
             var response = InvokeBatch(request);
+            // 审查修复 2026-09-05（P1）：同上，按下标索引前先校验返回条数，避免服务端结果不足时越界。
+            if (response.Results.Count != chunk.Count)
+                throw new InvalidOperationException("远程历史查询返回数量与请求不一致");
             for (var i = 0; i < chunk.Count; i++)
             {
                 var logs = MapDtos<ProductionLog>(response.Results[i]);

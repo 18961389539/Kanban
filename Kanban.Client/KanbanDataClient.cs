@@ -310,7 +310,10 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     public async Task<CollectorDiagnosticsDto> GetDiagnosticsAsync(CancellationToken ct = default)
     {
         EnsureConnected();
-        return await _connection!.InvokeAsync<CollectorDiagnosticsDto>("GetDiagnosticsAsync", ct);
+        // 审查修复 2026-09-05（P2）：改用契约接口名调用（原为字符串字面量，接口未声明该方法，
+        // 服务端改名后仅运行时报错）。IKanbanHubServer.GetDiagnosticsAsync 现已声明。
+        return await _connection!.InvokeAsync<CollectorDiagnosticsDto>(
+            nameof(IKanbanHubServer.GetDiagnosticsAsync), ct);
     }
 
     /// <summary>同步设备配置到 Collector 落盘（Remote 模式设备管理保存）。</summary>

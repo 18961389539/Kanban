@@ -52,7 +52,7 @@ public sealed class DataSourceSnapshotStore : IDataSourceSnapshotStore, IDisposa
         _logger = logger ?? NullLogger<DataSourceSnapshotStore>.Instance;
         _recoveryFilePath = databaseProvider.AppSettings.GetFilePath("datasource_snapshots.recovery.jsonl");
         _recoveryLineCount = CountRecoveryLines();
-        _flushTask = Task.Run(() => FlushLoopAsync(_cts.Token));
+        _flushTask = BackgroundTaskRunner.StartLoop(FlushLoopAsync, _cts.Token, _logger, nameof(DataSourceSnapshotStore));
     }
 
     /// <summary>

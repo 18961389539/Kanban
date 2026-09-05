@@ -385,32 +385,45 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     /// </summary>
     private void OnRuntimePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // 属性名分派留在调用线程：该线程是 PLC 采集后台线程，每个采集周期每台设备触发 3~7 次
+        // 属性变更，其中大部分落进 default 早退；先过滤再封送可避免为无关属性排队 UI 消息。
+        var statusChanged = e.PropertyName == nameof(DeviceRuntime.StatusWord);
         switch (e.PropertyName)
         {
             case nameof(DeviceRuntime.StatusWord):
-                _kpisDirty = true;
-                if (_lineStatusFilter != LineStatusFilter.All)
-                    _filterDirty = true;
-                break;
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):
             case nameof(DeviceRuntime.Oee):
             case nameof(DeviceRuntime.QualityRate):
             case nameof(DeviceRuntime.PerformanceRate):
             case nameof(DeviceRuntime.AvailabilityRate):
-                _kpisDirty = true;
-                if (_lineSortBy != LineSortBy.Default)
-                    _filterDirty = true;
                 break;
             default:
                 return;
         }
 
-        if (sender is DeviceRuntime runtime && _runtimeToItem.TryGetValue(runtime, out var item))
-            _dirtyTransientItems.Add(item);
+        // 审查修复 2026-09-05（P0）：Runtime 属性在 PLC 采集后台线程被修改，原实现在本线程直接
+        // ① 写 _dirtyTransientItems（非线程安全 HashSet，与 UI 定时器 tick 的枚举/Clear 并发）
+        // ② 读写 _kpisDirty/_filterDirty（与 FlushPendingRefresh 并发，且非 volatile）
+        // ③ 访问 _kpiTimer（PageRefreshTimer 内部是 DispatcherTimer，跨线程访问必抛
+        //    InvalidOperationException）→ Local/PLC 模式下每次属性变更抛异常，KPI 永不刷新。
+        // Remote 模式的快照经 Dispatcher.InvokeAsync 落地，本处理器本就在 UI 线程，故缺陷只在
+        // Local 模式暴露。封送后所有共享状态读写收敛到 UI 线程；runtime 在封送前解析完毕，
+        // 避免闭包跨线程捕获。对照 DeviceDetailViewModel 对同一事件的订阅（已用 DispatchOnUi 封送）。
+        var runtime = sender as DeviceRuntime;
+        UiDispatcher.Dispatch(() =>
+        {
+            _kpisDirty = true;
+            if (statusChanged ? _lineStatusFilter != LineStatusFilter.All
+                              : _lineSortBy != LineSortBy.Default)
+                _filterDirty = true;
 
-        if (!_pageActive) return; // 页面不可见时不启动定时器，进入页面时 FlushPendingRefresh 统一应用
-        if (!_kpiTimer.IsEnabled) _kpiTimer.Start();
+            if (runtime != null && _runtimeToItem.TryGetValue(runtime, out var item))
+                _dirtyTransientItems.Add(item);
+
+            if (!_pageActive) return; // 页面不可见时不启动定时器，进入页面时 FlushPendingRefresh 统一应用
+            if (!_kpiTimer.IsEnabled) _kpiTimer.Start();
+        });
     }
 
     /// <summary>重算 KPI 并批量通知所有 KPI 属性（设备增删等低频路径同步调用）。</summary>

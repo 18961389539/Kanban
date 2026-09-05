@@ -45,7 +45,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         _db = db;
         _logger = logger;
         _recoveryFilePath = settings.GetFilePath("production_logs.recovery.jsonl");
-        _flushTask = Task.Run(() => FlushLoopAsync(_cts.Token));
+        _flushTask = BackgroundTaskRunner.StartLoop(FlushLoopAsync, _cts.Token, _logger, nameof(ProductionHistoryWriter));
     }
 
     public ProductionWriterDiagnosticsSnapshot GetDiagnosticsSnapshot()

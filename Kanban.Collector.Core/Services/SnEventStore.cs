@@ -86,7 +86,7 @@ public sealed class SnEventStore : ISnEventStore, IDisposable
     {
         _databaseProvider = databaseProvider;
         _logger = logger ?? NullLogger<SnEventStore>.Instance;
-        _flushTask = Task.Run(() => FlushLoopAsync(_cts.Token));
+        _flushTask = BackgroundTaskRunner.StartLoop(FlushLoopAsync, _cts.Token, _logger, nameof(SnEventStore));
     }
 
     public void Append(SnEventRecord record)

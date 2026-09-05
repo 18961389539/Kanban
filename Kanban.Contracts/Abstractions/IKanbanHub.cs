@@ -122,6 +122,14 @@ public interface IKanbanHubServer
     /// 前端活跃报警墙直查真源，取代"回溯历史事件推断活跃状态"的旧逻辑。
     /// </summary>
     Task<IReadOnlyList<ActiveAlarmStateDto>> QueryActiveAlarmStatesAsync(string? deviceId = null);
+
+    /// <summary>
+    /// 拉取 Collector 运行诊断快照（运行监控页 Remote 模式）。
+    /// 审查修复 2026-09-05（P2）：此前未在契约接口声明，客户端以字符串字面量
+    /// "GetDiagnosticsAsync" 调用（KanbanDataClient.GetDiagnosticsAsync），服务端改名/移除后
+    /// 编译期零感知、仅运行时报"方法不存在"。声明后客户端改用 nameof(IKanbanHubServer.GetDiagnosticsAsync)。
+    /// </summary>
+    Task<CollectorDiagnosticsDto> GetDiagnosticsAsync();
 }
 
 /// <summary>

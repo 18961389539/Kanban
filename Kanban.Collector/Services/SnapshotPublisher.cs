@@ -53,21 +53,37 @@ public sealed class SnapshotPublisher
                 _lastPublished.Remove(staleId);
         }
 
-        foreach (var device in devices)
+        // 审查修复 2026-09-05（P2）：快照组装移入 DeviceRepository.SyncRoot。GetDevicesSnapshot
+        // 只拷 Devices 列表引用，device.Alarms/Sources/Defects 仍是实时共享子集合——采集/配置同步
+        // 线程的结构性修改（ReplaceAll/批量应用）与原实现的锁外 LINQ 枚举并发时会抛
+        // "Collection was modified during enumeration"，每 500ms 丢一帧并刷错误日志。
+        // 仓储约定所有 Devices 子树变更都在 SyncRoot 内进行（见 DeviceRepository 类注释），锁内
+        // 组装可串行化。增量判定与网络扇出留在锁外：锁只护组装，不护发布。
+        List<DeviceSnapshotDto> changed;
+        lock (_deviceRepository.SyncRoot)
         {
-            try
+            changed = new List<DeviceSnapshotDto>(devices.Count);
+            foreach (var device in devices)
             {
-                var snapshot = ToSnapshot(device, runtimeById.TryGetValue(device.Id, out var rt) ? rt : null);
-                if (_lastPublished.TryGetValue(device.Id, out var last) && SameSnapshot(last, snapshot))
-                    continue; // 静止设备：业务字段无变化，跳过（省序列化与带宽）
-                _lastPublished[device.Id] = snapshot;
-                _aggregator.Publish(snapshot);
+                try
+                {
+                    var snapshot = ToSnapshot(device,
+                        runtimeById.TryGetValue(device.Id, out var rt) ? rt : null);
+                    if (_lastPublished.TryGetValue(device.Id, out var last) && SameSnapshot(last, snapshot))
+                        continue; // 静止设备：业务字段无变化，跳过（省序列化与带宽）
+                    changed.Add(snapshot);
+                }
+                catch (Exception ex)
+                {
+                    Interlocked.Increment(ref CollectorMetrics.PublishErrorCount);
+                    _logger.LogError(ex, "发布设备 {DeviceId} 快照失败", device.Id);
+                }
             }
-            catch (Exception ex)
-            {
-                Interlocked.Increment(ref CollectorMetrics.PublishErrorCount);
-                _logger.LogError(ex, "发布设备 {DeviceId} 快照失败", device.Id);
-            }
+        }
+        foreach (var snapshot in changed)
+        {
+            _lastPublished[snapshot.DeviceId] = snapshot;
+            _aggregator.Publish(snapshot);
         }
         Interlocked.Increment(ref CollectorMetrics.SnapshotPublishCount);
     }

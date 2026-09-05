@@ -610,7 +610,25 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private void TrackTask(Task task)
     {
         lock (_taskGate) _backgroundTasks.Add(task);
-        _ = task.ContinueWith(t => _logger.LogError(t.Exception, "RemoteRuntimeSink 后台任务失败"), TaskContinuationOptions.OnlyOnFaulted);
+        // 故障观察必须走线程池：TrackTask 可能在 UI 线程被调用，ContinueWith 默认捕获调用
+        // 线程的 SynchronizationContext —— 若该任务永不完成，续延也永远排不上队。
+        _ = task.ContinueWith(
+            t => _logger.LogError(t.Exception, "RemoteRuntimeSink 后台任务失败"),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted,
+            TaskScheduler.Default);
+        // 审查修复 2026-09-05（P2）：原实现只 Add 从不移除，已完成任务被 _backgroundTasks
+        // 长期引用无法回收（RefreshAsync/SubscribeSnapshotsAsync/StartEventLinkAsync 及重连循环
+        // 会持续产生任务），运行天级后缓慢泄漏。完成后随即从集合移除；DisposeAsync 的 WhenAll
+        // 只关心仍未完成的任务，移除已完成项不影响停机排空语义。
+        _ = task.ContinueWith(
+            _ =>
+            {
+                lock (_taskGate) _backgroundTasks.Remove(task);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
     }
 
     public async ValueTask DisposeAsync()

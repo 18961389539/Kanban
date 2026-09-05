@@ -19,13 +19,7 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
     private const int MaxBatchSize = 512;
     private readonly DatabaseProvider _databaseProvider;
     private readonly Microsoft.Extensions.Logging.ILogger _logger;
-    private readonly Channel<DefectSnapshotRecord> _channel = Channel.CreateBounded<DefectSnapshotRecord>(
-        new BoundedChannelOptions(ChannelCapacity)
-        {
-            // DropOldest：采集线程永不因通道满而阻塞；溢出丢弃最旧快照（最新快照代表当前状态）
-            FullMode = BoundedChannelFullMode.DropOldest,
-            SingleReader = true,
-        });
+    private readonly Channel<DefectSnapshotRecord> _channel;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _flushTask;
     /// <summary>
@@ -43,8 +37,36 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
     {
         _databaseProvider = databaseProvider;
         _logger = logger ?? NullLogger<DefectHistoryStore>.Instance;
-        _flushTask = Task.Run(() => FlushLoopAsync(_cts.Token));
+        // 审查修复 2026-09-05（P1）：通道改在构造内创建，以便注册 itemDropped 回调。
+        // 原实现靠 `if (!TryWrite)` 判溢出并告警，但 DropOldest/DropWrite/DropNewest 语义下
+        // TryWrite 在丢弃后**仍返回 true**（见 BoundedChannel.TryWrite：丢项后 EnqueueTail 成功返回 true），
+        // 只有 Wait 模式才返回 false。故该分支是死代码：缺陷快照被静默丢弃，_overflowCount 恒为 0、
+        // 告警永不触发，运维侧零感知。真正的溢出只能由 itemDropped 回调观测（对照 AuditService 的
+        // DropWrite + OnEntryDropped 二参构造，后者处理正确）。
+        _channel = Channel.CreateBounded<DefectSnapshotRecord>(
+            new BoundedChannelOptions(ChannelCapacity)
+            {
+                // DropOldest：采集线程永不因通道满而阻塞；溢出丢弃最旧快照（最新快照代表当前状态）
+                FullMode = BoundedChannelFullMode.DropOldest,
+                SingleReader = true,
+            },
+            OnItemDropped);
+        _flushTask = BackgroundTaskRunner.StartLoop(FlushLoopAsync, _cts.Token, _logger, nameof(DefectHistoryStore));
     }
+
+    /// <summary>
+    /// 通道溢出丢弃回调：每丢一条最旧快照调一次（可能来自采集线程）。采样告警——溢出时逐条打日志
+    /// 会形成日志风暴（磁盘满/DB 锁死时每秒数百条，反而拖垮磁盘与 I/O，P1-2 修复 2026-09-02）。
+    /// </summary>
+    private void OnItemDropped(DefectSnapshotRecord _)
+    {
+        var n = Interlocked.Increment(ref _overflowCount);
+        if (n == 1 || n % 1000 == 0)
+            _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", n);
+    }
+
+    /// <summary>通道溢出累计丢弃条数（供诊断/健康检查观测；此前因回调缺失恒为 0）。</summary>
+    public long OverflowCount => Interlocked.Read(ref _overflowCount);
 
     /// <summary>
     /// 缺陷快照入队（非阻塞）。由后台 flush 循环批量落库；通道溢出（极端场景）丢弃最旧记录并告警。
@@ -64,14 +86,12 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
 
         foreach (var snapshot in snapshots)
         {
+            // 审查修复 2026-09-05（P1）：此处 TryWrite 返回 false 已**不再表示溢出**——
+            // DropOldest 下溢出走 itemDropped 回调（见 OnItemDropped）。本分支仅在写端已
+            // TryComplete（Dispose 与本方法并发的极窄窗口）时命中，按"通道已关闭"记录，
+            // 不重复计入溢出计数。
             if (!_channel.Writer.TryWrite(snapshot))
-            {
-                var n = Interlocked.Increment(ref _overflowCount);
-                // P1-2 修复 2026-09-02：溢出时逐条打日志会形成日志风暴（磁盘满/DB 锁死时每秒数百条，
-                // 反而拖垮磁盘与 I/O）。采样：仅记录首次与每 1000 条的累计水位。
-                if (n == 1 || n % 1000 == 0)
-                    _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", n);
-            }
+                _logger.LogWarning("缺陷快照通道已关闭，丢弃 1 条快照（存储正在释放）");
         }
     }
 

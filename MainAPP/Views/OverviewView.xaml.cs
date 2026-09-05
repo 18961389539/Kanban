@@ -45,6 +45,12 @@ public partial class OverviewView : UserControl
             oldVm.PropertyChanged -= OnViewModelPropertyChanged;
             oldVm.Entered -= OnVmEntered;
             oldVm.Exited -= OnVmExited;
+            // 审查修复 2026-09-05（P2）：旧 VM 解绑时一并停图表定时器并清脏标记，与 OnVmExited
+            // 对齐。原实现仅在 OnVmExited 里 Stop()；若解绑时旧 VM 仍处于激活态（进入页面后直接
+            // 换页/换 VM 而未走 Exited），定时器保持 IsEnabled 且脏标记残留，多跑一拍空转 tick
+            // （每次 Stop 自己 + 判 DataContext 类型后 return）。
+            _chartRefreshTimer.Stop();
+            _trendDirty = _oeeDirty = _heatmapDirty = _paretoDirty = false;
         }
         if (DataContext is OverviewViewModel vm)
         {

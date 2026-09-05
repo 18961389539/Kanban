@@ -50,7 +50,9 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
                 SingleWriter = false,
             },
             OnEntryDropped);
-        _flushTask = startWorker ? Task.Run(() => FlushLoopAsync(_cts.Token)) : Task.CompletedTask;
+        _flushTask = startWorker
+            ? BackgroundTaskRunner.StartLoop(FlushLoopAsync, _cts.Token, _logger, nameof(AuditService))
+            : Task.CompletedTask;
     }
 
     /// <summary>队列满导致的丢弃条数。</summary>

@@ -61,7 +61,12 @@ public sealed class ProductionDailyReportService : IDisposable
 
         if (worker != null)
         {
-            try { await worker.WaitAsync(TimeSpan.FromSeconds(3)); }
+            // 审查修复 2026-09-05（P2）：原实现未 ConfigureAwait(false)，await 的续延要回到
+            // 捕获的 SynchronizationContext。而 Dispose() 是 `StopAsync().GetAwaiter().GetResult()`
+            // 同步阻塞 —— 一旦在 UI 线程上释放，UI 线程被 GetResult 占住、续延又在等 UI 线程，死锁。
+            // 当前主退出路径（App.xaml.cs 先 await StopAsync 再 Dispose）未触发，但任何未前置
+            // Stop 的释放路径都会在退出时挂死。
+            try { await worker.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false); }
             catch (OperationCanceledException) { }
             catch (TimeoutException) { Log.Warning("自动日报服务停止超时"); }
         }

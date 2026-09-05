@@ -60,7 +60,18 @@ public sealed class MetaPublisher : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        // 审查修复 2026-09-05（P2）：原实现火后不管 _runTask，且 RunAsync 只捕获
+        // OperationCanceledException。启动阶段（WaitUntilReadyAsync / GetService / Timer 创建）
+        // 抛出非取消类异常时，任务故障在 StopAsync 之前无人观察（GC 时才刷 UnobservedTaskException），
+        // 而宿主已认为启动成功 —— 元数据 5s 发布静默停摆，只能等停机才暴露。
+        // 注意：不能 `return RunAsync(...)`，RunAsync 末行是 Task.Delay(Infinite)，
+        // 直接返回会让宿主卡在 StartAsync 永不完成。故保持火后不管，但显式挂接故障观察。
         _runTask = RunAsync(cancellationToken);
+        _ = _runTask.ContinueWith(t =>
+        {
+            if (t.IsFaulted)
+                _logger.LogError(t.Exception, "MetaPublisher 后台任务未观察异常，元数据发布已终止");
+        }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
         return Task.CompletedTask;
     }
 

@@ -680,7 +680,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void ScheduleAutoQuery()
     {
         if (_suspendAutoQuery) return;
+        // 审查修复 2026-09-05（P2）：Cancel 后随即 Dispose。原实现只 Cancel 不 Dispose，
+        // CancellationTokenSource 持有内核等待句柄，每次防抖重排/取消都泄漏一个（长期累积）。
+        // 取消后旧的 DebounceAndQueryAsync 不再使用该 CTS 的 Token 注册回调，可安全释放。
         _autoQueryCts?.Cancel();
+        _autoQueryCts?.Dispose();
         var cts = new CancellationTokenSource();
         _autoQueryCts = cts;
         _ = DebounceAndQueryAsync(cts);
@@ -690,6 +694,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private void CancelAutoQuery()
     {
         _autoQueryCts?.Cancel();
+        _autoQueryCts?.Dispose();
         _autoQueryCts = null;
     }
 
