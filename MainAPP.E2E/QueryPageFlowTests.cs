@@ -16,7 +16,7 @@ namespace MainAPP.E2E;
 /// 报警 / 状态 / OEE 查询页端到端打开流程。
 /// <para>
 /// 这三个 ViewModel（AlarmQueryViewModel / StatusQueryViewModel / OeeQueryViewModel）是
-/// HistoryQueryViewModel 的子 VM，承载在 MainWindow 历史查询页（SelectedIndex = 4）的
+/// HistoryQueryViewModel 的子 VM，承载在 MainWindow 历史查询页（索引 5，HistoryQuery）的
 /// Tab 2 / Tab 1 / Tab 3 上，是此前覆盖率盲区里逻辑最重的几块。
 /// </para>
 /// <para>
@@ -32,14 +32,14 @@ public class QueryPageFlowTests
 
     public QueryPageFlowTests(TestHost host) => _host = host;
 
-    /// <summary>导航到历史查询页（SelectedIndex=4）并触发一次渲染。</summary>
+    /// <summary>导航到历史查询页（索引 5，HistoryQuery）并触发一次渲染。</summary>
     private static void NavigateToHistory(TestHost host)
     {
         var window = host.GetMainWindow();
         window.Show();
         window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
         var vm = host.GetMainWindowViewModel();
-        vm.SelectedIndex = 4;
+        vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
         window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
     }
 

@@ -38,7 +38,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K008}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
-            Text="{Binding OrderNo, UpdateSourceTrigger=PropertyChanged}" />
+            Text="{Binding OrderNo, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 
         <!--  产品编码  -->
         <hc:TextBox
@@ -50,7 +50,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K019}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
-            Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged}" />
+            Text="{Binding ProductCode, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 
         <!--  产品名称  -->
         <hc:TextBox
@@ -62,7 +62,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K020}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
-            Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged}" />
+            Text="{Binding ProductName, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 
         <!--  绑定设备  -->
         <hc:ComboBox
@@ -75,9 +75,10 @@
             DisplayMemberPath="Name"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             ItemsSource="{Binding AvailableDevices}"
-            SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay}"
+            SelectedValue="{Binding SelectedDeviceId, Mode=TwoWay, ValidatesOnNotifyDataErrors=True}"
             SelectedValuePath="Id"
-            Style="{StaticResource ComboBoxExtend}" />
+            Style="{StaticResource ComboBoxExtend}"
+            Validation.ErrorTemplate="{StaticResource SafeValidationErrorTemplate}" />
 
         <!--  计划产量  -->
         <hc:TextBox
@@ -89,7 +90,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K035}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             Style="{StaticResource TextBoxExtend}"
-            Text="{Binding TargetQuantityText, UpdateSourceTrigger=PropertyChanged}" />
+            Text="{Binding TargetQuantityText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 
         <!--  计划开始时间  -->
         <hc:DateTimePicker
@@ -112,8 +113,9 @@
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K120}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
-            SelectedDateTime="{Binding PlannedEnd, Mode=TwoWay}"
-            Style="{StaticResource DateTimePickerExtend}" />
+            SelectedDateTime="{Binding PlannedEnd, Mode=TwoWay, ValidatesOnNotifyDataErrors=True}"
+            Style="{StaticResource DateTimePickerExtend}"
+            Validation.ErrorTemplate="{StaticResource SafeValidationErrorTemplate}" />
 
         <!--  备注  -->
         <hc:TextBox

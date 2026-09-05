@@ -13,11 +13,11 @@ using Xunit;
 namespace MainAPP.E2E;
 
 /// <summary>
-/// 页面导航端到端流程：模拟用户在全部 13 个侧边栏页面（Index 0-8 + 10/11/12/13）间切换，
+/// 页面导航端到端流程：模拟用户在全部 13 个侧边栏页面（Index 0-12）间切换，
 /// 验证每次切换无异常、SelectedIndex 同步、各 View Visibility 切换。
 /// 说明：测试直接设置 SelectedIndex 遍历（绕过侧边栏角色过滤——Operator 仅见 7 项展示页）；
 /// 角色过滤由 <see cref="OperatorRole_HidesGatedPages"/> 断言，管理页渲染由
-/// <see cref="AdminRole_GatedPages_Render"/> 覆盖。Index 9 是设备详情上下文页（不在侧边栏）。
+/// <see cref="AdminRole_GatedPages_Render"/> 覆盖。Index 13 是设备详情上下文页（不在侧边栏；0-12 均为侧边栏可见页）。
 /// </summary>
 [Collection("E2E")]
 public class NavigationFlowTests
@@ -26,24 +26,24 @@ public class NavigationFlowTests
 
     public NavigationFlowTests(TestHost host) => _host = host;
 
-    /// <summary>全部侧边栏可见导航页的 Index 全集（0-8 + 10/11/12/13；9=设备详情隐藏占位）。
+    /// <summary>全部侧边栏可见导航页的 Index 全集（0-12；13=设备详情隐藏占位）。
     /// 含角色受限页（设备管理=Engineer，设置/运行监控/用户管理/审计=Admin，配方管理=Engineer）。</summary>
-    private static readonly int[] s_visiblePageIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13];
+    private static readonly int[] s_visiblePageIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
     [Theory]
     [InlineData(0)] // 主页
     [InlineData(1)] // 产线
     [InlineData(2)] // 报警中心
-    [InlineData(3)] // 设备管理（Engineer）
-    [InlineData(4)] // 工单管理
+    [InlineData(3)] // 工单管理
+    [InlineData(4)] // 概览（生产复盘）
     [InlineData(5)] // 历史查询
-    [InlineData(6)] // 概览（生产复盘）
-    [InlineData(7)] // 设置（Admin）
-    [InlineData(8)] // 运行监控（Admin）
+    [InlineData(6)] // 设备管理（Engineer）
+    [InlineData(7)] // 配方管理（Engineer）
+    [InlineData(8)] // 设置（Admin）
+    [InlineData(9)] // 运行监控（Admin）
     [InlineData(10)] // 用户管理（Admin）
     [InlineData(11)] // 审计日志（Admin）
-    [InlineData(12)] // 配方管理（Engineer）
-    [InlineData(13)] // 采集监控
+    [InlineData(12)] // 采集监控
     public void Navigate_ToEachPage_NoException(int targetIndex)
     {
         _host.ResetState();
@@ -82,7 +82,7 @@ public class NavigationFlowTests
 
             var vm = _host.GetMainWindowViewModel();
 
-            // 模拟用户依次点击每个侧边栏项（13 项：0-8 + 10/11/12/13；9=设备详情隐藏占位）
+            // 模拟用户依次点击每个侧边栏项（13 项：0-12；13=设备详情隐藏占位）
             foreach (var index in s_visiblePageIndexes)
             {
                 vm.SelectedIndex = index;
@@ -290,7 +290,7 @@ public class NavigationFlowTests
                 window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
                 var vm = _host.GetMainWindowViewModel();
-                vm.SelectedIndex = 8;
+                vm.SelectedIndex = NavigationPageCatalog.RuntimeMonitoring.Index;
                 window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
                 window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
                 window.UpdateLayout();
@@ -316,7 +316,7 @@ public class NavigationFlowTests
     /// <summary>
     /// 默认（未登录=Operator）视角下，管理页不应出现在侧边栏导航项中（NavigationPageCatalog.RequiredRole）：
     /// 设备管理/配方管理（Engineer）、设置/运行监控/用户管理/审计日志（Admin）均被 RebuildSidebarItems 过滤。
-    /// Operator 仅可见 7 个无角色限制的展示页（Index 0/1/2/4/5/6/13）。
+    /// Operator 仅可见 7 个无角色限制的展示页（Index 0/1/2/3/4/5/12）。
     /// </summary>
     [Fact]
     public void OperatorRole_HidesGatedPages()
@@ -328,10 +328,10 @@ public class NavigationFlowTests
         {
             var vm = _host.GetMainWindowViewModel();
 
-            // 未登录（Operator）：NavItems 只含无角色限制的 7 项（0/1/2/4/5/6/13）
+            // 未登录（Operator）：NavItems 只含无角色限制的 7 项（0/1/2/3/4/5/12）
             Assert.Equal(7, vm.NavItems.Count);
             var visibleIndexes = vm.NavItems.Select(n => n.Index).ToHashSet();
-            foreach (var gated in new[] { 3, 7, 8, 10, 11, 12 })
+            foreach (var gated in new[] { 6, 7, 8, 9, 10, 11 })
                 Assert.False(visibleIndexes.Contains(gated), $"Operator 视角下不应出现导航项 Index={gated}");
         });
     }
@@ -367,7 +367,7 @@ public class NavigationFlowTests
                 {
                     (10, typeof(UserManagerView), "用户管理"),
                     (11, typeof(AuditQueryView), "审计日志"),
-                    (12, typeof(RecipeManagerView), "配方管理"),
+                    (7, typeof(RecipeManagerView), "配方管理"),
                 };
                 foreach (var (index, viewType, pageName) in cases)
                 {

@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -10,8 +12,13 @@ namespace MainAPP.Views;
 /// <summary>
 /// 工单编辑对话框。参照 <see cref="PasswordInputDialog"/> 模式：
 /// 构造注入 template（null=新增），ShowDialog 返回 true 时通过 <see cref="Result"/> 获取结果。
+///
+/// 校验（易用性 P1-7 改造）：原先只在点「确认」后逐条弹 Growl，一次只暴露一个问题，
+/// 用户要反复点确认才能填完一张单。现改为实现 <see cref="INotifyDataErrorInfo"/>：
+/// 编辑过的字段即时给出字段级错误提示，提交时一次性暴露全部问题并自动定位到第一个错误字段。
+/// 未编辑过的字段不提前报错，避免刚打开的空表单一片红。
 /// </summary>
-public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
+public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INotifyDataErrorInfo
 {
     private string _orderNo = "";
     private string _productCode = "";
@@ -21,6 +28,23 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
     private DateTime _plannedStart = DateTime.Now;
     private DateTime _plannedEnd = DateTime.Now.AddHours(8);
     private string? _remark;
+
+    /// <summary>逐字段错误表（字段名 → 错误文案）。</summary>
+    private readonly Dictionary<string, string> _errors = new(StringComparer.Ordinal);
+
+    /// <summary>已编辑过的字段名：只有编辑过的字段才显示错误。</summary>
+    private readonly HashSet<string> _touched = new(StringComparer.Ordinal);
+
+    /// <summary>表单字段顺序：决定「第一条错误」与焦点定位的先后（与 XAML 视觉顺序一致）。</summary>
+    private static readonly string[] FieldOrder =
+    [
+        nameof(OrderNo),
+        nameof(ProductCode),
+        nameof(ProductName),
+        nameof(SelectedDeviceId),
+        nameof(TargetQuantityText),
+        nameof(PlannedEnd),
+    ];
 
     /// <summary>
     /// 可选设备列表（由调用方传入，绑定到 ComboBox）。
@@ -85,45 +109,117 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
     /// <summary>用户确认后的工单结果。仅当 ShowDialog 返回 true 时有效。</summary>
     public WorkOrder? Result { get; private set; }
 
+    // ──────────── INotifyDataErrorInfo ────────────
+
+    /// <summary>是否存在校验错误（XAML 可绑定，如错误汇总的可见性）。</summary>
+    public bool HasErrors => _errors.Count > 0;
+
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+    public IEnumerable GetErrors(string? propertyName)
+    {
+        if (propertyName is null) return Array.Empty<string>();
+        return _errors.TryGetValue(propertyName, out var message)
+            ? new[] { message }
+            : Array.Empty<string>();
+    }
+
+    /// <summary>写入/清除某字段的错误，仅在状态真正变化时通知（避免无谓的绑定刷新）。</summary>
+    private void SetError(string propertyName, string? message)
+    {
+        var hadError = _errors.ContainsKey(propertyName);
+        if (message is null)
+        {
+            if (!hadError) return;
+            _errors.Remove(propertyName);
+        }
+        else
+        {
+            if (hadError && string.Equals(_errors[propertyName], message, StringComparison.Ordinal)) return;
+            _errors[propertyName] = message;
+        }
+        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+        OnPropertyChanged(nameof(HasErrors));
+    }
+
+    /// <summary>校验单个字段。未编辑过的字段不报错（避免打开空表单即一片红）。</summary>
+    private void ValidateProperty(string propertyName)
+    {
+        string? error = propertyName switch
+        {
+            nameof(OrderNo) => string.IsNullOrWhiteSpace(OrderNo) ? Strings.K599 : null,
+            nameof(ProductCode) => string.IsNullOrWhiteSpace(ProductCode) ? Strings.K600 : null,
+            nameof(ProductName) => string.IsNullOrWhiteSpace(ProductName) ? Strings.K601 : null,
+            // 设备必选：避免产生 DeviceId="" 的孤儿工单
+            nameof(SelectedDeviceId) => string.IsNullOrWhiteSpace(SelectedDeviceId) ? Strings.K602 : null,
+            // 计划产量必须为正整数（0 会导致进度条永远 0%）
+            nameof(TargetQuantityText) =>
+                int.TryParse(TargetQuantityText?.Trim(), out var qty) && qty > 0 ? null : Strings.K603,
+            // 起止时间是交叉校验：任一变化都重算 PlannedEnd 的错误
+            nameof(PlannedStart) or nameof(PlannedEnd) =>
+                PlannedEnd <= PlannedStart ? Strings.K604 : null,
+            _ => null,
+        };
+
+        // 时间错误统一挂在 PlannedEnd 上（与原来提交校验的提示位置一致）
+        var target = propertyName is nameof(PlannedStart) ? nameof(PlannedEnd) : propertyName;
+
+        if (!_touched.Contains(target) && !_touched.Contains(propertyName))
+        {
+            SetError(target, null);
+            return;
+        }
+        SetError(target, error);
+    }
+
+    /// <summary>提交前：把所有字段标记为已编辑并重算，使从未点过的字段也能一次性暴露问题。</summary>
+    private void ValidateAll()
+    {
+        foreach (var name in FieldOrder)
+            _touched.Add(name);
+        _touched.Add(nameof(PlannedStart));
+        foreach (var name in FieldOrder)
+            ValidateProperty(name);
+    }
+
+    /// <summary>按表单顺序取第一条错误文案（提示顺序与视觉顺序一致）。</summary>
+    private string FirstErrorMessage
+    {
+        get
+        {
+            foreach (var name in FieldOrder)
+                if (_errors.TryGetValue(name, out var message))
+                    return message;
+            return string.Empty;
+        }
+    }
+
+    /// <summary>把焦点移到第一个出错的字段，省得用户自己找是哪一项不合规。</summary>
+    private void FocusFirstInvalidField()
+    {
+        foreach (var name in FieldOrder)
+        {
+            if (!_errors.ContainsKey(name)) continue;
+            switch (name)
+            {
+                case nameof(OrderNo): OrderNoBox.Focus(); return;
+                case nameof(ProductCode): ProductCodeBox.Focus(); return;
+                case nameof(ProductName): ProductNameBox.Focus(); return;
+                case nameof(SelectedDeviceId): DeviceComboBox.Focus(); return;
+                case nameof(TargetQuantityText): TargetQuantityBox.Focus(); return;
+                case nameof(PlannedEnd): PlannedEndPicker.Focus(); return;
+            }
+        }
+    }
+
     private void Confirm_Click(object sender, RoutedEventArgs e)
     {
-        // 基本校验：工单号、产品编码、产品名为必填
-        if (string.IsNullOrWhiteSpace(OrderNo))
+        // 提交时一次性校验全部字段（而不是逐条弹 toast、一次只报一个问题）
+        ValidateAll();
+        if (HasErrors)
         {
-            HandyControl.Controls.Growl.Warning(Strings.K599);
-            OrderNoBox.Focus();
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(ProductCode))
-        {
-            HandyControl.Controls.Growl.Warning(Strings.K600);
-            ProductCodeBox.Focus();
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(ProductName))
-        {
-            HandyControl.Controls.Growl.Warning(Strings.K601);
-            ProductNameBox.Focus();
-            return;
-        }
-        // 设备必选：工单必须绑定设备，避免产生 DeviceId="" 的孤儿工单
-        if (string.IsNullOrWhiteSpace(SelectedDeviceId))
-        {
-            HandyControl.Controls.Growl.Warning(Strings.K602);
-            DeviceComboBox.Focus();
-            return;
-        }
-        // 解析计划产量：必须为正整数（0 会导致进度条永远 0%）
-        if (!int.TryParse(TargetQuantityText?.Trim(), out var qty) || qty <= 0)
-        {
-            HandyControl.Controls.Growl.Warning(Strings.K603);
-            TargetQuantityBox.Focus();
-            return;
-        }
-        if (PlannedEnd <= PlannedStart)
-        {
-            HandyControl.Controls.Growl.Warning(Strings.K604);
-            PlannedEndPicker.Focus();
+            FocusFirstInvalidField();
+            HandyControl.Controls.Growl.Warning(FirstErrorMessage);
             return;
         }
 
@@ -138,7 +234,8 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
             ProductName = ProductName.Trim(),
             DeviceId = SelectedDeviceId ?? "",
             DeviceName = deviceName,
-            TargetQuantity = qty,
+            // 校验已保证可解析且 > 0
+            TargetQuantity = int.Parse(TargetQuantityText!.Trim()),
             PlannedStart = PlannedStart,
             PlannedEnd = PlannedEnd,
             Status = OriginalStatus,
@@ -158,11 +255,22 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)
     {
         if (Equals(field, value)) return;
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        if (name is not null)
+        {
+            // 标记为「已编辑」后即时校验：错误随输入实时更新，不必等到点「确认」。
+            // 构造函数里是直接写字段（不经过属性），所以打开对话框不会误触发。
+            _touched.Add(name);
+            ValidateProperty(name);
+        }
     }
 }
 

@@ -31,7 +31,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 {
     // 注意：设备详情页是上下文页面（依赖选中设备），不作为侧边栏常驻导航项。
     // 入口在主页"查看详情"按钮（HomeViewModel.ViewDeviceDetailCommand），通过 SelectedIndex=9 切换。
-    // 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=9 隐藏占位，UserManager=10/Audit=11 视觉位置为 9/10）：
+    // 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=13 隐藏占位，UserManager=10/Audit=11 视觉位置为 9/10）：
     // ListBox 必须绑 SelectedItem（SelectedNavItem，含真实 Index）而非 SelectedIndex（视觉位置），
     // 由 VM 完成"视觉选择 → 页面索引"映射；程序导航到隐藏页时 SelectedNavItem=null（侧边栏无高亮）。
     // 导航名称直接从 s_navItems.AccessibleName 派生（见 GetNavName），避免维护第二份名称数组导致文案分叉。
@@ -225,7 +225,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// 当前页面索引，由 Navigate()/侧边栏选择驱动；具体页面对应 NavigationPageCatalog 命名键（如 "Home"、"DeviceDetail"）。
-    /// 注意：这是"页面索引"（NavigationPageCatalog.Index），与侧边栏视觉位置不同——隐藏页（DeviceDetail=9）
+    /// 注意：这是"页面索引"（NavigationPageCatalog.Index），与侧边栏视觉位置不同——隐藏页（DeviceDetail=13）
     /// 不显示在 NavItems 中，侧边栏点击必须经 <see cref="SelectedNavItem"/>（含 Index）映射后再写本属性，
     /// 禁止把 ListBox.SelectedIndex（视觉位置）直接双向绑到本属性，否则视觉位置 ≥9 的项会错位。
     /// </summary>
@@ -234,7 +234,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// 侧边栏当前选中的导航项（ListBox.SelectedItem 双向绑定）。
-    /// 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=9 隐藏占位），故以 NavItem.Index 为
+    /// 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=13 隐藏占位），故以 NavItem.Index 为
     /// 中介完成"视觉选择 → 页面索引"的映射；程序导航到隐藏页时本属性为 null（侧边栏无高亮）。
     /// </summary>
     [ObservableProperty]
@@ -345,15 +345,22 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     }
 
     /// <summary>
+    /// 当前用户可见的侧边栏页面：按 Viewer 模式 + 角色门禁过滤，顺序沿用 <see cref="NavigationPageCatalog.All"/>。
+    /// 侧边栏渲染与快捷键定位共用本数据源，保证「肉眼看到的第 N 项」与「Ctrl+N」始终一致
+    /// （管理员 13 项 / 工程师 9 项 / 操作员 7 项，若按目录 Index 解析必然错位）。
+    /// </summary>
+    private IEnumerable<NavigationPageDefinition> VisiblePages => PageDefinitions.Where(p => p.ShowInSidebar
+        && (!IsViewerMode || ViewerAllowedPageKeys.Contains(p.Key))
+        && (p.RequiredRole is null || UserSession.CurrentRole.AtLeast(p.RequiredRole.Value)));
+
+    /// <summary>
     /// 重建侧边栏导航项：按 Viewer 模式 + 当前用户角色过滤。
     /// 构造时和登录/退出登录后调用。
     /// </summary>
     private void RebuildSidebarItems()
     {
         _navItemsBacking.Clear();
-        foreach (var page in PageDefinitions.Where(p => p.ShowInSidebar
-            && (!IsViewerMode || ViewerAllowedPageKeys.Contains(p.Key))
-            && (p.RequiredRole is null || UserSession.CurrentRole.AtLeast(p.RequiredRole.Value))))
+        foreach (var page in VisiblePages)
         {
             _navItemsBacking.Add(page.NavItem);
         }
@@ -708,7 +715,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         Log.Debug("导航 切换 {From} → {To} 开始", fromName, toName);
 
         // 反向同步侧边栏高亮：仅当目标页是可见导航项时选中对应 NavItem；
-        // 隐藏页（如 DeviceDetail=9）在 NavItems 中不存在 → 置 null 取消高亮。
+        // 隐藏页（如 DeviceDetail=13）在 NavItems 中不存在 → 置 null 取消高亮。
         var visibleItem = _navItemsBacking.FirstOrDefault(n => n.Index == value);
         if (!ReferenceEquals(SelectedNavItem, visibleItem))
         {
@@ -754,19 +761,28 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     private void GoToLicenseSettings() => Navigate("Settings");
 
     /// <summary>
-    /// 全局快捷键 Ctrl+1~8 切换主导航页（主页/产线/报警中心/设备/历史/复盘/设置/工单）。
-    /// 设备详情页是上下文页面，不在此快捷键范围内（入口在主页"查看详情"按钮）。
+    /// 全局快捷键 Ctrl+1~9 按「侧边栏可见位置」切换主导航页。
+    /// 参数 idx 是可见列表下标（Ctrl+1 → 0），<b>不是</b> NavigationPageCatalog.Index——
+    /// 侧边栏按角色/Viewer 模式过滤后才渲染，若按目录 Index 解析，非管理员角色的 Ctrl+N
+    /// 会与屏幕上第 N 项错位，且越权项被门禁静默吞掉（用户以为软件无响应）。
+    /// DeviceDetail 是上下文页（ShowInSidebar=false），本来就不在可见列表内。
     /// </summary>
     [RelayCommand]
     private void SelectPage(string indexStr)
     {
         // 转调 Navigate 复用同一套权限门禁（Viewer 白名单 + RequiredRole），
-        // 修复快捷键绕过角色/Viewer 限制直达管理页的漏洞（审查修复 2026-08-13）。
-        if (int.TryParse(indexStr, out var idx))
+        // 保留「快捷键不得绕过角色/Viewer 限制直达管理页」的修复（2026-08-13）。
+        if (!int.TryParse(indexStr, out var idx)) return;
+
+        var visible = VisiblePages.ToList();
+        if (idx < 0 || idx >= visible.Count)
         {
-            var page = PageDefinitions.FirstOrDefault(p => p.ShowInSidebar && p.Index == idx);
-            if (page is not null)
-                Navigate(page.Key);
+            // 超出当前角色可见项数（如操作员仅 7 项却按了 Ctrl+8）：确实没有对应页面，
+            // 只记日志，不做无意义的静默导航尝试。
+            Log.Debug("快捷键 Ctrl+{Shortcut} 无对应页面：当前可见 {Count} 项", idx + 1, visible.Count);
+            return;
         }
+
+        Navigate(visible[idx].Key);
     }
 }

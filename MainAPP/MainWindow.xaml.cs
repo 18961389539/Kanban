@@ -255,11 +255,14 @@ public partial class MainWindow : Window
     private void OnNavigationSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_restoringNavigation || e.RemovedItems.Count == 0 || e.AddedItems.Count == 0) return;
+        // 设备页索引取自 Catalog 常量而非硬编码数字：2026-09-05 侧边栏重排后 DeviceManager
+        // 由 3 变为 7，写死 3 会让「离开设备页的未保存拦截」在重排后静默失效。
+        int deviceManagerIndex = NavigationPageCatalog.DeviceManager.Index;
         if (DataContext is not MainWindowViewModel vm
             || e.RemovedItems[0] is not NavItem oldItem
             || e.AddedItems[0] is not NavItem newItem
-            || oldItem.Index != 3
-            || newItem.Index == 3)
+            || oldItem.Index != deviceManagerIndex
+            || newItem.Index == deviceManagerIndex)
             return;
 
         if (vm.DeviceManagerViewModel.TryLeaveWithDirtyCheck()) return;

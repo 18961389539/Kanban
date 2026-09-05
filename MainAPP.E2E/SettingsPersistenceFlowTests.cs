@@ -1,6 +1,7 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -162,7 +163,7 @@ public class SettingsPersistenceFlowTests
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 6; // 设置页（索引 6）
+            vm.SelectedIndex = NavigationPageCatalog.Settings.Index;
             window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
             window.UpdateLayout();
 

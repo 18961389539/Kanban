@@ -274,8 +274,8 @@ public class OverviewFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var mainVm = _host.GetMainWindowViewModel();
-            // 先到概览页（索引 5）
-            mainVm.SelectedIndex = 5;
+            // 先到概览页
+            mainVm.SelectedIndex = NavigationPageCatalog.Overview.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
             var overviewVm = mainVm.OverviewViewModel;
@@ -286,7 +286,7 @@ public class OverviewFlowTests
             overviewVm.FocusDeviceCommand.Execute("ovr-A");
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
-            // 事件链：FocusDeviceRequested → MainWindowViewModel 跳转设备详情页（Index 9）
+            // 事件链：FocusDeviceRequested → MainWindowViewModel 跳转设备详情页（Index 13）
             Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, mainVm.SelectedIndex);
             Assert.Equal("ovr-A", selection.SelectedDeviceId);
 
@@ -308,7 +308,7 @@ public class OverviewFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var mainVm = _host.GetMainWindowViewModel();
-            mainVm.SelectedIndex = 5;
+            mainVm.SelectedIndex = NavigationPageCatalog.Overview.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
             var overviewVm = mainVm.OverviewViewModel;
@@ -320,7 +320,7 @@ public class OverviewFlowTests
             overviewVm.FocusDeviceCommand.Execute("");
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
-            Assert.Equal(5, mainVm.SelectedIndex); // 仍在概览页
+            Assert.Equal(NavigationPageCatalog.Overview.Index, mainVm.SelectedIndex); // 仍在概览页
             Assert.Null(selection.SelectedDeviceId);
 
             window.Hide();
@@ -341,11 +341,11 @@ public class OverviewFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 5;
+            vm.SelectedIndex = NavigationPageCatalog.Overview.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
             window.UpdateLayout();
 
-            Assert.Equal(5, vm.SelectedIndex);
+            Assert.Equal(NavigationPageCatalog.Overview.Index, vm.SelectedIndex);
 
             window.Hide();
         });

@@ -204,66 +204,119 @@ public class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void GoToLicenseSettingsCommand_SetsSelectedIndexToSeven()
+    public void GoToLicenseSettingsCommand_SetsSelectedIndexToSettings()
     {
         var vm = NewVm();
         Assert.Equal(0, vm.SelectedIndex); // 前置：默认在主页
 
-        // 授权状态卡片点击：跳转到设置页（索引 7）
+        // 授权状态卡片点击：跳转到设置页（2026-09-05 侧边栏重排后设置页索引由 7 变为 9）
         vm.GoToLicenseSettingsCommand.Execute(null);
 
-        Assert.Equal(7, vm.SelectedIndex);
+        Assert.Equal(NavigationPageCatalog.Settings.Index, vm.SelectedIndex);
     }
 
     [Fact]
-    public void SelectPageCommand_OperatorRole_BlocksGatedPages_AllowsOpenPages()
+    public void SelectPageCommand_OperatorRole_MapsToVisibleSidebarPosition()
     {
-        // 回归（审查修复 2026-08-13）：Ctrl+1~8 快捷键必须走与 Navigate 相同的角色门禁，
-        // Operator 不能直达设备管理（Engineer）/设置、运行监控（Admin）。
+        // 语义（2026-09-05 起变更）：命令参数是「侧边栏可见位置」下标（Ctrl+1 → 0），
+        // 不再是 NavigationPageCatalog.Index。侧边栏按角色过滤后渲染，Operator 可见 7 项：
+        // 主页/产线/报警中心/工单/复盘/历史查询/数据监控。
+        // 工程页与管理页根本不在可见集合内，因此既不会错位，也不存在越权直达。
         var session = new UserSession();
         session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
         var vm = NewVm(session);
         vm.SelectedIndex = NavigationPageCatalog.Home.Index;
 
-        vm.SelectPageCommand.Execute("3"); // 设备管理 → 被拦
-        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
-        vm.SelectPageCommand.Execute("7"); // 设置 → 被拦
-        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
-        vm.SelectPageCommand.Execute("8"); // 运行监控 → 被拦
+        vm.SelectPageCommand.Execute("0"); // 第 1 项 主页
         Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
 
-        vm.SelectPageCommand.Execute("1"); // 产线（无角色要求）→ 放行
-        Assert.Equal(NavigationPageCatalog.ProductionLine.Index, vm.SelectedIndex);
-    }
-
-    [Fact]
-    public void SelectPageCommand_AdminRole_NavigatesByShortcut()
-    {
-        var vm = NewVm(); // 默认 Admin 会话
-
+        // 旧语义下位置 3 是「设备管理」，会被门禁静默吞掉（用户以为软件无响应）；
+        // 新语义下它应正好落在操作员看到的第 4 项「工单管理」。
         vm.SelectPageCommand.Execute("3");
+        Assert.Equal(NavigationPageCatalog.WorkOrder.Index, vm.SelectedIndex);
 
-        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("6"); // 第 7 项 数据监控
+        Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("7"); // 越界（仅 7 项）→ 无操作
+        Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
+
+        // 回归：遍历 Ctrl+1~9，操作员永远到不了工程管理页
+        for (var i = 0; i < 9; i++)
+        {
+            vm.SelectPageCommand.Execute(i.ToString());
+            Assert.NotEqual(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+            Assert.NotEqual(NavigationPageCatalog.Settings.Index, vm.SelectedIndex);
+        }
     }
 
     [Fact]
-    public void SelectPageCommand_ViewerMode_BlocksNonWhitelistedPages()
+    public void SelectPageCommand_AdminRole_MapsToVisibleSidebarPosition()
     {
-        // 回归（审查修复 2026-08-13）：Viewer 模式白名单 = Home/ProductionLine/AlarmCenter/DeviceDetail，
-        // 快捷键不能绕过白名单进入其他页面。
+        // Admin 可见 13 项（上下文页 DeviceDetail 不进侧边栏），位置下标与视觉顺序一致。
+        var vm = NewVm(); // 默认 Admin 会话
+        vm.SelectedIndex = NavigationPageCatalog.Home.Index;
+
+        vm.SelectPageCommand.Execute("6"); // 第 7 项 设备管理
+        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("7"); // 第 8 项 配方管理
+        Assert.Equal(NavigationPageCatalog.RecipeManager.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("0"); // 第 1 项 主页
+        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
+    }
+
+    [Fact]
+    public void SelectPageCommand_ViewerMode_MapsToVisibleSidebarPosition()
+    {
+        // Viewer 白名单 ∩ ShowInSidebar = 主页/产线/报警中心/数据监控（4 项），
+        // 非白名单页不在可见集合内，快捷键无法绕过白名单。
         _appSettings.RunMode = KanbanRunMode.Viewer;
         var vm = NewVm();
         vm.SelectedIndex = NavigationPageCatalog.Home.Index;
 
-        vm.SelectPageCommand.Execute("3"); // 设备管理 → 被拦
-        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
-        vm.SelectPageCommand.Execute("7"); // 设置 → 被拦
-        Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
-
-        vm.SelectPageCommand.Execute("1"); // 产线（白名单内）→ 放行
+        vm.SelectPageCommand.Execute("1"); // 第 2 项 产线
         Assert.Equal(NavigationPageCatalog.ProductionLine.Index, vm.SelectedIndex);
 
+        vm.SelectPageCommand.Execute("3"); // 第 4 项 数据监控
+        Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("4"); // 越界（仅 4 项）→ 无操作
+        Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
+
         _appSettings.RunMode = KanbanRunMode.Full; // 还原，避免影响同集合其他用例
+    }
+
+    [Fact]
+    public void NavItems_AreOrderedByUsageFrequency()
+    {
+        // 回归（2026-09-05 侧边栏重排）：高频的监控与作业在前（0-3），查询分析居中（4-5），
+        // 设备/配方配置（6-7）与系统管理（8-11）在后，数据监控（诊断，12）置底；
+        // DeviceDetail 是上下文页（13），不出现在侧边栏。
+        var vm = NewVm(); // Admin 会话
+        var expected = new[]
+        {
+            NavigationPageCatalog.Home,
+            NavigationPageCatalog.ProductionLine,
+            NavigationPageCatalog.AlarmCenter,
+            NavigationPageCatalog.WorkOrder,
+            NavigationPageCatalog.Overview,
+            NavigationPageCatalog.HistoryQuery,
+            NavigationPageCatalog.DeviceManager,
+            NavigationPageCatalog.RecipeManager,
+            NavigationPageCatalog.Settings,
+            NavigationPageCatalog.RuntimeMonitoring,
+            NavigationPageCatalog.UserManager,
+            NavigationPageCatalog.Audit,
+            NavigationPageCatalog.DataSourceMonitoring,
+        };
+
+        Assert.Equal(expected.Length, vm.NavItems.Count);
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Index, vm.NavItems[i].Index);
+        }
     }
 
     [Fact]
@@ -319,10 +372,10 @@ public class MainWindowViewModelTests : IDisposable
     public void ProductionLineViewModel_FocusDeviceRequested_SetsSelectedIndexToDeviceDetail()
     {
         var vm = NewVm();
-        vm.SelectedIndex = 1; // 模拟当前停留在产线页
+        vm.SelectedIndex = NavigationPageCatalog.ProductionLine.Index; // 模拟当前停留在产线页
 
         // 产线页点击设备卡片请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
-        // MainWindowViewModel 订阅后跳转到设备详情页（SelectedIndex=9）
+        // MainWindowViewModel 订阅后跳转到设备详情页（上下文页，ShowInSidebar=false）
         vm.ProductionLineViewModel.FocusDeviceCommand.Execute("any-device-id");
 
         Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, vm.SelectedIndex);
@@ -332,10 +385,10 @@ public class MainWindowViewModelTests : IDisposable
     public void OverviewViewModel_FocusDeviceRequested_SetsSelectedIndexToDeviceDetail()
     {
         var vm = NewVm();
-        vm.SelectedIndex = 5; // 模拟当前停留在概览页（索引 5 = 生产复盘）
+        vm.SelectedIndex = NavigationPageCatalog.Overview.Index; // 模拟当前停留在生产复盘页
 
         // 概览页点击设备行请求：通过 FocusDeviceCommand 触发 FocusDeviceRequested 事件，
-        // MainWindowViewModel 订阅后跳转到设备详情页（SelectedIndex=9）
+        // MainWindowViewModel 订阅后跳转到设备详情页（上下文页，ShowInSidebar=false）
         vm.OverviewViewModel.FocusDeviceCommand.Execute("any-device-id");
 
         Assert.Equal(NavigationPageCatalog.DeviceDetail.Index, vm.SelectedIndex);

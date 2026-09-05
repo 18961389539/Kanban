@@ -20,9 +20,11 @@ namespace MainAPP.ViewModels;
 ///  - DeviceRepository.Devices/Runtimes：实时运行时数据与设备配置
 ///  - IHistoryService.QueryAlarmEvents：历史报警事件
 ///  - IDeviceSelectionService.SelectedDeviceId：当前选中设备（跨页同步）
-/// 不引入定时器：实时数据通过 DeviceRuntime.PropertyChanged 推送，历史数据通过手动刷新命令拉取。
+/// 实时源值通过 DeviceRuntime.PropertyChanged 推送；历史查询类数据（KPI/最近报警/小时产量）
+/// 早期只能手动点「刷新」拉取（易用性 P1-6），2026-09-05 起补上自动刷新节拍：
+/// 进入页面启动、离开页面停止，避免后台页面持续查库（节拍沿用 AlarmCenterViewModel 的双定时器模式）。
 /// </summary>
-public partial class DeviceDetailViewModel : ObservableObject, IDisposable
+public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INavigationPageLifecycle
 {
     private readonly DeviceRepository _deviceRepository;
     private readonly IHistoryService _historyService;
@@ -52,6 +54,18 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
     private int? _lastSummaryOrderId;
 
+    /// <summary>KPI/最近报警自动刷新节拍（秒）：与 AlarmCenterViewModel 活跃报警节拍同量级。</summary>
+    private const int LiveRefreshIntervalSeconds = 5;
+
+    /// <summary>小时产量图自动刷新节拍（秒）：图表重建 + 查库成本较高，放慢一个量级。</summary>
+    private const int ChartRefreshIntervalSeconds = 60;
+
+    /// <summary>KPI 与最近报警的自动刷新定时器（仅补历史查询类数据，实时源值仍靠推送）。</summary>
+    private readonly PageRefreshTimer _liveTimer;
+
+    /// <summary>小时产量图的自动刷新定时器。</summary>
+    private readonly PageRefreshTimer _chartTimer;
+
     public DeviceDetailViewModel(
         DeviceRepository deviceRepository,
         IHistoryService historyService,
@@ -74,6 +88,12 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         _selection.PropertyChanged += OnSelectionServiceChanged;
         // 首次加载：尝试用共享选中设备初始化
         ApplySelectedDevice(_selection.SelectedDeviceId);
+
+        // 自动刷新定时器（易用性 P1-6）：命名方法而非 lambda，保证 Dispose 时能解绑。
+        // 仅创建不启动——由 INavigationPageLifecycle.OnPageEnter/OnPageExit 控制启停，
+        // 否则单例 ViewModel 会在应用启动后就持续查库。
+        _liveTimer = new PageRefreshTimer(TimeSpan.FromSeconds(LiveRefreshIntervalSeconds), OnLiveTimerTick);
+        _chartTimer = new PageRefreshTimer(TimeSpan.FromSeconds(ChartRefreshIntervalSeconds), OnChartTimerTick);
     }
 
     // ──────────── 当前设备 ────────────
@@ -624,6 +644,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
         if (_currentRuntime != null)
             _currentRuntime.PropertyChanged -= OnRuntimePropertyChanged;
 
+        // 停止自动刷新定时器（PageRefreshTimer 内部解绑 Tick，避免释放后仍被回调持有）
+        _liveTimer?.Dispose();
+        _chartTimer?.Dispose();
+
         // 取消挂起的后台查询，避免回调访问已释放资源
         _recentAlarmsCts?.Cancel();
         _recentAlarmsCts?.Dispose();
@@ -952,7 +976,12 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// 查询最近报警事件（从历史库，异步）。
     /// 每次查询前取消上一次查询，避免快速切换设备时旧查询覆盖新数据。
     /// </summary>
-    private void RefreshRecentAlarms()
+    /// <param name="notifyErrors">
+    /// 查询失败时是否弹出错误通知。手动刷新传 true（用户需要立刻知道失败原因）；
+    /// 自动刷新节拍传 false——断网/断库期间每 5s 一次 toast 会淹没其他提示，
+    /// 此时状态栏已显示「刷新失败」且日志已记录。
+    /// </param>
+    private void RefreshRecentAlarms(bool notifyErrors = true)
     {
         // 取消上一次未完成的查询
         _recentAlarmsCts?.Cancel();
@@ -1005,7 +1034,8 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
                     IsRefreshing = false;
                     RefreshStatusText = Strings.M157;
                 });
-                DispatchOnUi(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
+                if (notifyErrors)
+                    DispatchOnUi(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
             }
         }, token).Forget(_logger);
     }
@@ -1025,10 +1055,46 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable
     /// <summary>
     /// 设备详情页进入时加载一次最近 24 小时产量图。
     /// ViewModel 为单例，不能放在构造函数中，否则会在应用启动而非页面进入时查询。
+    /// 由 MainWindowViewModel.OnSelectedIndexChanged 以 Background 优先级调用（让导航切换先完成绘制）。
     /// </summary>
     public void RefreshOnEnter()
     {
         RefreshStatusText = Strings.M159;
+        RefreshHourlyProduction();
+    }
+
+    // ──────────── 自动刷新（INavigationPageLifecycle） ────────────
+
+    /// <summary>进入页面：启动自动刷新节拍。首次产量图由 RefreshOnEnter 负责，此处不重复查询。</summary>
+    public void OnPageEnter()
+    {
+        _liveTimer.Start();
+        _chartTimer.Start();
+    }
+
+    /// <summary>离开页面：停止自动刷新，避免不可见页面继续查库与重建图表。</summary>
+    public void OnPageExit()
+    {
+        _liveTimer.Stop();
+        _chartTimer.Stop();
+    }
+
+    /// <summary>
+    /// 5s 节拍：刷新 KPI 与最近报警（历史查询类数据，实时源值由 PropertyChanged 推送，不在此重复）。
+    /// 无设备时直接跳过；失败不弹通知（<see cref="RefreshRecentAlarms"/> 的 notifyErrors:false），
+    /// 否则断网/断库期间每 5 秒弹一次错误 toast，反而淹没真正需要处理的提示。
+    /// </summary>
+    private void OnLiveTimerTick()
+    {
+        if (CurrentDevice == null) return;
+        RefreshKpis();
+        RefreshRecentAlarms(notifyErrors: false);
+    }
+
+    /// <summary>60s 节拍：刷新小时产量图（查库 + 图表重建成本较高，故放慢一个量级）。</summary>
+    private void OnChartTimerTick()
+    {
+        if (CurrentDevice == null) return;
         RefreshHourlyProduction();
     }
 

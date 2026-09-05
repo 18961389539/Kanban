@@ -92,7 +92,7 @@ public class HistoryQueryFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 4;
+            vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
             window.UpdateLayout();
 
@@ -123,7 +123,7 @@ public class HistoryQueryFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 4;
+            vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
             var historyVm = vm.HistoryQueryViewModel;
@@ -152,7 +152,7 @@ public class HistoryQueryFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 4;
+            vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
             var historyVm = vm.HistoryQueryViewModel;
@@ -184,7 +184,7 @@ public class HistoryQueryFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 4;
+            vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
 
             var historyVm = vm.HistoryQueryViewModel;
@@ -231,7 +231,7 @@ public class HistoryQueryFlowTests
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Loaded);
 
             var vm = _host.GetMainWindowViewModel();
-            vm.SelectedIndex = 4;
+            vm.SelectedIndex = NavigationPageCatalog.HistoryQuery.Index;
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
             window.UpdateLayout();
 
