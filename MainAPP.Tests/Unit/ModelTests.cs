@@ -161,7 +161,7 @@ public class ModelTests
         // 目标 100/小时，运行 1 小时，产 50 件 → 性能率 0.5
         Assert.Equal(0.5, runtime.PerformanceRate);
 
-        // 提高目标节拍 → 性能率下降
+        // 提高目标产能 → 性能率下降
         runtime.SyncTargetCycle(200);
         Assert.Equal(0.25, runtime.PerformanceRate);
     }

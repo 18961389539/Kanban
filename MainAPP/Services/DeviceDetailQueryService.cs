@@ -1,5 +1,6 @@
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
+using MainAPP.Models;
 using MainAPP.ViewModels;
 using OxyPlot;
 
@@ -11,6 +12,9 @@ namespace MainAPP.Services;
 /// </summary>
 public static class DeviceDetailQueryService
 {
+    /// <summary>按小时产量差分序列（桶起始时刻 + OK/NG 增量），供柱图与本班小时板共用。</summary>
+    public readonly record struct HourlyProductionSeries(DateTime[] Buckets, int[] OkDiff, int[] NgDiff);
+
     /// <summary>查询指定设备指定时间范围内的报警事件（时间倒序）。</summary>
     public static List<AlarmEventRecord> QueryRecentAlarms(
         IHistoryService historyService,
@@ -32,12 +36,52 @@ public static class DeviceDetailQueryService
         int rangeHours,
         DateTime now)
     {
-        var from = now.AddHours(-rangeHours);
-        var logs = historyService.QueryProductionLogs(from, now, deviceId);
+        var series = QueryHourlySeries(historyService, deviceId, now.AddHours(-rangeHours), now);
+        if (series.Buckets.Length == 0) return null;
+        return ChartService.BuildHourlyProductionBarChart(series.Buckets, series.OkDiff, series.NgDiff, targetCycle);
+    }
 
-        var buckets = HistoryQueryHelper.BuildHourlyBuckets(from, now);
-        if (buckets.Length == 0) return null;
+    /// <summary>
+    /// 当前班次逐小时计划板：计划 = 额定产能按该小时重叠分钟折算，实际 = 与柱图同一套 OK 差分。
+    /// </summary>
+    public static IReadOnlyList<HourBucketItem> BuildHourByHourBoard(
+        IHistoryService historyService,
+        string deviceId,
+        DateTime shiftStart,
+        DateTime shiftEnd,
+        DateTime now,
+        int targetPcsPerHour)
+    {
+        var queryTo = now < shiftEnd ? now : shiftEnd;
+        var okByHour = new Dictionary<DateTime, int>();
+        if (queryTo > shiftStart)
+        {
+            var series = QueryHourlySeries(historyService, deviceId, shiftStart, queryTo);
+            for (int i = 0; i < series.Buckets.Length; i++)
+            {
+                var ok = i < series.OkDiff.Length ? Math.Max(0, series.OkDiff[i]) : 0;
+                okByHour[series.Buckets[i]] = ok;
+            }
+        }
 
+        return HourByHourBoardBuilder.Build(shiftStart, shiftEnd, now, targetPcsPerHour, okByHour);
+    }
+
+    /// <summary>
+    /// 指定窗口内按小时产量差分（累计值差分 + 窗口前基线）。
+    /// 与设备详情小时柱图同一套口径，小时板必须复用，避免两套算法。
+    /// </summary>
+    public static HourlyProductionSeries QueryHourlySeries(
+        IHistoryService historyService,
+        string deviceId,
+        DateTime from,
+        DateTime to)
+    {
+        var buckets = HistoryQueryHelper.BuildHourlyBuckets(from, to);
+        if (buckets.Length == 0)
+            return new HourlyProductionSeries([], [], []);
+
+        var logs = historyService.QueryProductionLogs(from, to, deviceId);
         var okCumulative = new int[buckets.Length];
         var ngCumulative = new int[buckets.Length];
         var hasSample = new bool[buckets.Length];
@@ -73,8 +117,7 @@ public static class DeviceDetailQueryService
         var baseline = historyService.QueryProductionLogs(from.AddHours(-24), from, deviceId).LastOrDefault();
         var okDiff = DiffCumulative(okCumulative, baseline?.OkProduction ?? 0);
         var ngDiff = DiffCumulative(ngCumulative, baseline?.NgProduction ?? 0);
-
-        return ChartService.BuildHourlyProductionBarChart(buckets, okDiff, ngDiff, targetCycle);
+        return new HourlyProductionSeries(buckets, okDiff, ngDiff);
     }
 
     /// <summary>累计值转增量：后一桶减前一桶，负数置零（班次切换重置场景）；首桶扣 baseline。</summary>

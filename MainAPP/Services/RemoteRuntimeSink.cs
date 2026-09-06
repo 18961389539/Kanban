@@ -367,7 +367,8 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         runtime.UpdateFromCollector(
             snapshot.OkProduction, snapshot.NgProduction, snapshot.StatusWord,
             snapshot.TotalOkProduction, snapshot.TotalNgProduction,
-            snapshot.RunTime, snapshot.AlarmTime, snapshot.PausedTime, snapshot.OfflineTime);
+            snapshot.RunTime, snapshot.AlarmTime, snapshot.PausedTime, snapshot.OfflineTime,
+            snapshot.OfflineCause);
 
         // 快照携带"当前活跃报警"（服务端权威）：以快照为准重建报警显示状态。
         // 覆盖场景：Collector 重启后事件流 Seq 归零、触发边沿不再补发，靠快照恢复仍在触发的报警；
@@ -546,7 +547,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 状态事件只更新已存在运行状态的设备（与快照灌入同语义；设备尚未同步时跳过）
         if (!_deviceRepository.RuntimeMap.TryGetValue(evt.DeviceId, out var runtime))
             return;
-        runtime.StatusWord = (int)evt.CurrentState;
+        runtime.ApplyLiveStatus((int)evt.CurrentState, evt.OfflineCause);
     }
 
     /// <summary>

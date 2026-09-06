@@ -29,4 +29,10 @@ public class StatusTransitionRecord
     /// 班次配置修改后不影响历史记录，仅作用于后续写入）。
     /// </summary>
     public string ShiftName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 离线原因（<see cref="Kanban.Contracts.Enums.OfflineCause"/>）。
+    /// CurrentState 非 0 时为 0；旧记录缺列时亦为 0（展示为笼统「离线」）。
+    /// </summary>
+    public int OfflineCause { get; set; }
 }

@@ -71,7 +71,7 @@ public class DatabaseProvider(AppSettings appSettings)
             CreateStatusTransitionContext(),
             "StatusTransitions",
             StatusTransitionInitialMigration,
-            static (_, _) => { });
+            ApplyStatusTransitionLegacyPatch);
         MigrateContext(
             CreateWorkOrderContext(),
             "WorkOrders",
@@ -220,6 +220,11 @@ public class DatabaseProvider(AppSettings appSettings)
         // EventId 幂等键（恢复文件回放去重）：旧库无此列时补列 + 唯一索引
         EnsureColumn(connection, transaction, "ProductionLogs", "EventId", "TEXT");
         EnsureUniqueIndex(connection, transaction, "IX_ProductionLogs_EventId", "ProductionLogs", "EventId");
+    }
+
+    private static void ApplyStatusTransitionLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        EnsureColumn(connection, transaction, "StatusTransitions", "OfflineCause", "INTEGER NOT NULL DEFAULT 0");
     }
 
     private static void ApplyWorkOrderLegacyPatch(SqliteConnection connection, SqliteTransaction transaction)

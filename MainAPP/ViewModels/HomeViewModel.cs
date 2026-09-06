@@ -265,7 +265,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(StatusDisplayText))]
     private int _realtimeStatus;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StatusDisplayText))]
+    private int _offlineCause;
+
+    /// <summary>实时状态文案（离线时带原因）。</summary>
+    public string StatusDisplayText => HistoryQueryHelper.GetStateText(RealtimeStatus, OfflineCause);
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
@@ -462,13 +469,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public double NgRate => SnapshotMetrics.NgRate(TotalOkProduction, TotalNgProduction);
 
     /// <summary>
-    /// 实际节拍（秒/件）= 3600 / 当前速度。速度为 0 时返回 0，UI 显示 "—"。
-    /// 与目标节拍对比，直观反映当前快慢。口径见 SnapshotMetrics。
+    /// 实际周期（秒/件）= 3600 / 当前速度。速度为 0 时返回 0，UI 显示 "—"。
+    /// 与目标周期对比，直观反映当前快慢。口径见 SnapshotMetrics。
     /// </summary>
     public double ActualCycleSec => SnapshotMetrics.CycleSeconds(RealtimeSpeed);
 
     /// <summary>
-    /// 实际节拍与目标节拍的差值文本：无数据返回空，达标返回"● 达标"，
+    /// 实际周期与目标周期的差值文本：无数据返回空，达标返回"● 达标"，
     /// 否则"▲ 快 Xs"（实际更快/每件耗时更短）/"▼ 慢 Xs"（实际更慢/每件耗时更长）。
     /// </summary>
     public string CycleDiffText
@@ -482,7 +489,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }
     }
 
-    /// <summary>实际节拍是否慢于目标节拍（用于 UI 红色警示，快或达标为绿色）。</summary>
+    /// <summary>实际周期是否慢于目标周期（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
     public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null, IDefectHistoryReader? defectHistoryReader = null)
@@ -915,7 +922,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }
 
         // 当前速度（平均速度）= 实际总产量(OK+NG) / 运行时长（小时）
-        // - 与 OEE 性能率口径一致：性能率 = 实际产量 / (目标节拍 × RunTime)
+        // - 与 OEE 性能率口径一致：性能率 = 实际产量 / (目标产能 × RunTime)
         // - 运行时长 RunTime 只在设备运行状态时累计，报警/待机期间不增加
         // - 这样报警/待机时速度保持不变（产量和运行时长都不变），避免归零
         // - RunTime 下限保护见 SnapshotMetrics（<5s 返回 0，避免启动失真）——与 WASM 端共用同一实现
@@ -1039,6 +1046,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         TotalOkProduction = rt.TotalOkProduction;
         TotalNgProduction = rt.TotalNgProduction;
         RealtimeStatus = rt.StatusWord;
+        OfflineCause = (int)rt.OfflineCause;
         TargetCycleSec = SnapshotMetrics.CycleSeconds(dev?.TargetCycle ?? 0);
         if (dev != null) TargetSpeed = dev.TargetCycle;
         // 配方信息同步（设备状态卡显示当前生产型号）
@@ -1108,7 +1116,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// 更新 OEE 4 环图下方的计算式文本（显示计算所用的具体数字）。
     /// OEE = 可用率 × 性能率 × 合格率（显示三率乘积式）
     /// 可用率 = 运行时长 / (运行+报警)
-    /// 性能率 = 实际产量 / 理论产量（理论 = 目标节拍 × 运行时长）
+    /// 性能率 = 实际产量 / 理论产量（理论 = 目标产能 × 运行时长）
     /// 合格率 = OK / (OK+NG)
     /// </summary>
     private void UpdateOeeFormulas(DeviceRuntime rt, Device? dev)
@@ -1142,7 +1150,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OeeValue = 0; QualityRate = 0; PerformanceRate = 0; AvailabilityRate = 0;
         RunTime = 0; AlarmTime = 0; PausedTime = 0; OfflineTime = 0;
         TotalOkProduction = 0; TotalNgProduction = 0;
-        TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Offline;
+        TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Offline; OfflineCause = 0;
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;
         RecipeName = ""; RecipeValue = 0;
         RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";

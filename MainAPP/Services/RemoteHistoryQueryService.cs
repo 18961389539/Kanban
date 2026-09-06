@@ -233,14 +233,14 @@ public sealed class RemoteHistoryQueryService :
 
     public bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
-        string? shiftName = null)
+        string? shiftName = null, int offlineCause = 0)
     {
         if (IsRemote)
         {
             _logger.LogWarning("Remote 模式忽略 LogStatusTransition Device={DeviceId}", deviceId);
             return false;
         }
-        return _local.LogStatusTransition(deviceId, deviceName, previousState, currentState, eventTime, shiftName);
+        return _local.LogStatusTransition(deviceId, deviceName, previousState, currentState, eventTime, shiftName, offlineCause);
     }
 
     // ──────────── IHistoryQueryExecutor（Strict：Remote 网络异常直接抛出） ────────────

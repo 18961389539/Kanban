@@ -67,7 +67,7 @@ public class DeviceDetailViewModelTests : IDisposable
 
     private DeviceDetailViewModel CreateVm()
         => new(_deviceRepo, _historyService, _selection, _dialog,
-            NullLogger<DeviceDetailViewModel>.Instance, _workOrderRepo, _workOrderService);
+            NullLogger<DeviceDetailViewModel>.Instance, _workOrderRepo, _workOrderService, _appSettings);
 
     private static Device CreateDevice(string id = "d1", string name = "设备1")
     {
@@ -175,6 +175,49 @@ public class DeviceDetailViewModelTests : IDisposable
         Assert.Equal(5, vm.TotalNg);
     }
 
+    [Fact]
+    public void RefreshKpis_ConvertsSecondsToHoursAndUsesRunWindowTheoreticalOutput()
+    {
+        var device = CreateDevice("d1", "设备1");
+        device.TargetCycle = 60;
+        _deviceRepo.Devices.Add(device);
+        _deviceRepo.AddRuntime(device);
+        var runtime = _deviceRepo.Runtimes.First(r => r.DeviceId == "d1");
+        runtime.RunTime = 3600;
+        runtime.AlarmTime = 1800;
+        runtime.PausedTime = 900;
+        runtime.OfflineTime = 7200;
+        runtime.TotalOkProduction = 50;
+        runtime.TotalNgProduction = 10;
+
+        var vm = CreateVm();
+        _selection.SelectedDeviceId = "d1";
+
+        Assert.Equal(1.0, vm.RunTimeHours, 5);
+        Assert.Equal(0.5, vm.AlarmTimeHours, 5);
+        Assert.Equal(0.25, vm.PausedTimeHours, 5);
+        Assert.Equal(2.0, vm.OfflineTimeHours, 5);
+        Assert.Equal(60, vm.TheoreticalOutput);
+        Assert.Equal(60, vm.ActualCycleRate, 5);
+        Assert.Equal(1.0 / 3.75, vm.RunTimeRatio, 5);
+        Assert.Equal(2.0 / 3.75, vm.OfflineTimeRatio, 5);
+    }
+
+    [Fact]
+    public void RefreshKpis_OfflineStatusText_IncludesPlcCause()
+    {
+        var device = CreateDevice("d1", "设备1");
+        _deviceRepo.Devices.Add(device);
+        _deviceRepo.AddRuntime(device);
+        var runtime = _deviceRepo.Runtimes.First(r => r.DeviceId == "d1");
+        runtime.ApplyLiveStatus(0, Kanban.Contracts.Enums.OfflineCause.PlcReported);
+
+        var vm = CreateVm();
+        _selection.SelectedDeviceId = "d1";
+
+        Assert.Equal("离线（PLC）", vm.StatusText);
+    }
+
     // ──────────── 设备属性同步 ────────────
 
     [Fact]
@@ -259,7 +302,7 @@ public class DeviceDetailViewModelTests : IDisposable
         });
 
         var vm = new DeviceDetailViewModel(_deviceRepo, _historyService, _selection, _dialog,
-            NullLogger<DeviceDetailViewModel>.Instance, _workOrderRepo, slowService);
+            NullLogger<DeviceDetailViewModel>.Instance, _workOrderRepo, slowService, _appSettings);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         _selection.SelectedDeviceId = "d1";

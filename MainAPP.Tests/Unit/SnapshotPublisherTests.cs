@@ -10,6 +10,7 @@ using NSubstitute;
 using Xunit;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 
 namespace MainAPP.Tests.Unit;
 
@@ -106,6 +107,13 @@ public class SnapshotPublisherTests : IDisposable
         var a = MakeSnapshot("dev-1");
         var b = a with { Status = DeviceStatus.Alarm };
         Assert.False(SnapshotPublisher.SameSnapshot(a, b));
+    }
+
+    [Fact]
+    public void SameSnapshot_OfflineCauseChanged_ReturnsFalse()
+    {
+        var a = MakeSnapshot("dev-1") with { Status = DeviceStatus.Offline };
+        Assert.False(SnapshotPublisher.SameSnapshot(a, a with { OfflineCause = OfflineCause.CommsLost }));
     }
 
     [Fact]

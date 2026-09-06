@@ -502,15 +502,19 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         var count = LineDevices.Count;
         if (pcs <= 0 || count == 0) return;
 
-        if (_dialog != null)
+        // 无对话框服务时不得写入：避免测试桩或误装配跳过确认。
+        if (_dialog is null)
         {
-            var confirm = _dialog.Show(
-                string.Format(Strings.Ln_ApplyTargetCycleConfirm, count, pcs),
-                Strings.Ln_ApplyTargetCycleTitle,
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) return;
+            _log.Warning("Batch target-output apply aborted: no dialog service, refusing to write without confirmation");
+            return;
         }
+
+        var confirm = _dialog.Show(
+            string.Format(Strings.Ln_ApplyTargetCycleConfirm, count, pcs),
+            Strings.Ln_ApplyTargetCycleTitle,
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
 
         try
         {

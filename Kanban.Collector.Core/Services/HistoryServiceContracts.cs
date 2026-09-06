@@ -66,7 +66,7 @@ public interface IStatusTransitionHistoryService
     Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds);
     bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
-        string? shiftName = null);
+        string? shiftName = null, int offlineCause = 0);
 
     /// <summary>分页查询状态转换记录（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。</summary>
     (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(

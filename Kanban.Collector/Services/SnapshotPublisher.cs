@@ -99,7 +99,7 @@ public sealed class SnapshotPublisher
             || a.StatusWord != b.StatusWord || a.OkProduction != b.OkProduction || a.NgProduction != b.NgProduction
             || a.TotalOkProduction != b.TotalOkProduction || a.TotalNgProduction != b.TotalNgProduction
             || a.RunTime != b.RunTime || a.AlarmTime != b.AlarmTime || a.PausedTime != b.PausedTime
-            || a.OfflineTime != b.OfflineTime
+            || a.OfflineTime != b.OfflineTime || a.OfflineCause != b.OfflineCause
             || a.QualityRate != b.QualityRate || a.PerformanceRate != b.PerformanceRate
             || a.AvailabilityRate != b.AvailabilityRate || a.Oee != b.Oee || a.TargetCycle != b.TargetCycle
             || a.RecipeName != b.RecipeName || a.RecipeValue != b.RecipeValue
@@ -162,6 +162,7 @@ public sealed class SnapshotPublisher
             DeviceName = device.Name,
             Status = status,
             StatusWord = runtime?.StatusWord ?? 0,
+            OfflineCause = runtime?.OfflineCause ?? OfflineCause.None,
             OkProduction = runtime?.OkProduction ?? 0,
             NgProduction = runtime?.NgProduction ?? 0,
             TotalOkProduction = runtime?.TotalOkProduction ?? 0,

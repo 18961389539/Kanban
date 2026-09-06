@@ -51,6 +51,18 @@
   <data name="Status_Offline" xml:space="preserve">
     <value>オフライン</value>
   </data>
+  <data name="Status_Offline_PlcReported" xml:space="preserve">
+    <value>オフライン（PLC）</value>
+  </data>
+  <data name="Status_Offline_CommsLost" xml:space="preserve">
+    <value>オフライン（通信切断）</value>
+  </data>
+  <data name="Status_Offline_AcquisitionStopped" xml:space="preserve">
+    <value>オフライン（収集停止）</value>
+  </data>
+  <data name="Status_Offline_GapFilled" xml:space="preserve">
+    <value>オフライン（収集欠落）</value>
+  </data>
   <data name="Status_Running" xml:space="preserve">
     <value>稼働中</value>
   </data>
@@ -355,7 +367,7 @@
     <value>アラーム</value>
   </data>
   <data name="K017" xml:space="preserve">
-    <value>目標タクト</value>
+    <value>目標サイクルタイム</value>
   </data>
   <data name="K018" xml:space="preserve">
     <value>アラーム名</value>
@@ -454,7 +466,7 @@
     <value>現在の工単</value>
   </data>
   <data name="K050" xml:space="preserve">
-    <value>実タクト</value>
+    <value>実サイクルタイム</value>
   </data>
   <data name="K051" xml:space="preserve">
     <value>生産データがありません</value>
@@ -757,19 +769,19 @@
     <value>アクティブな工単なし</value>
   </data>
   <data name="K157" xml:space="preserve">
-    <value>タクト比較</value>
+    <value>能力比較</value>
   </data>
   <data name="K158" xml:space="preserve">
     <value>差</value>
   </data>
   <data name="K159" xml:space="preserve">
-    <value>理論/実績</value>
+    <value>運転応産/実績</value>
   </data>
   <data name="K160" xml:space="preserve">
     <value>OEE分解</value>
   </data>
   <data name="K161" xml:space="preserve">
-    <value>状態時間分布</value>
+    <value>状態時間分布（オフライン含む）</value>
   </data>
   <data name="K162" xml:space="preserve">
     <value>履歴を表示</value>
@@ -2699,7 +2711,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>良品率は {0:P1}、目標 {2:P0} を{1}</value>
   </data>
   <data name="F195" xml:space="preserve">
-    <value>タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
+    <value>能力低下: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
   </data>
   <data name="F196" xml:space="preserve">
     <value>{0:HH:mm:ss} に発生 · {1}</value>
@@ -3472,7 +3484,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>停止分析図</value>
   </data>
   <data name="M201" xml:space="preserve">
-    <value>タクト比較図</value>
+    <value>OEE 指標図</value>
   </data>
   <data name="M202" xml:space="preserve">
     <value>生産量(個)</value>
@@ -3775,13 +3787,13 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>リアルタイム速度（個/時）</value>
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
-    <value>目標タクト</value>
+    <value>目標サイクルタイム</value>
   </data>
   <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
     <value>目標能力</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
-    <value>実タクト</value>
+    <value>実サイクルタイム</value>
   </data>
   <data name="Web_Lbl_TotalOutput" xml:space="preserve">
     <value>総生産量</value>
@@ -4084,7 +4096,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>合計</value>
   </data>
   <data name="K592" xml:space="preserve">
-    <value>サイクル</value>
+    <value>サイクルタイム</value>
   </data>
   <data name="K593" xml:space="preserve">
     <value>実行</value>
@@ -4962,7 +4974,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>この期間には結論を生成するのに十分な生産・警報データがありません</value>
   </data>
   <data name="Web_Rv_HealthLowOutput" xml:space="preserve">
-    <value>タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
+    <value>能力低下：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%</value>
   </data>
   <data name="Web_Rv_HealthAlarmSpike" xml:space="preserve">
     <value>警報急増：今回 {0} 回、前周期 {1} 回</value>
@@ -4977,7 +4989,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>健康上の問題なし</value>
   </data>
   <data name="Web_Rv_OutputAchievement" xml:space="preserve">
-    <value>タクト達成</value>
+    <value>能力達成</value>
   </data>
   <data name="Web_Rv_LongestDowntime" xml:space="preserve">
     <value>最長停止</value>
@@ -5061,7 +5073,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>OEE 順</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>平均タクト（実績/目標）</value>
+    <value>平均サイクルタイム（実績/目標）</value>
   </data>
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>良品達成（OK/予定）</value>
@@ -5076,10 +5088,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>全デバイスに適用</value>
   </data>
   <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
-    <value>全デバイスに適用</value>
+    <value>目標能力の変更確認</value>
   </data>
   <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
-    <value>{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。</value>
+    <value>{0} 台の設備の目標能力をすべて {1:N0} 個/時間に変更し、各機の既存設定を上書きします。この値は OEE 性能率に使われ、確認後に保存されます。</value>
   </data>
   <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
     <value>{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました</value>
@@ -6648,5 +6660,38 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Status_Idle" xml:space="preserve">
     <value>アイドル</value>
+  </data>
+  <data name="Hh_BoardTitle" xml:space="preserve">
+    <value>シフト時間計画</value>
+  </data>
+  <data name="Hh_BoardMeta" xml:space="preserve">
+    <value>{0} · {1} {2}–{3} · 定格 {4} 個/時</value>
+  </data>
+  <data name="Hh_Cumulative" xml:space="preserve">
+    <value>累計 OK {0} / 予定 {1} · {2:F1}%</value>
+  </data>
+  <data name="Hh_Plan" xml:space="preserve">
+    <value>計画 {0}</value>
+  </data>
+  <data name="Hh_Hit" xml:space="preserve">
+    <value>達成</value>
+  </data>
+  <data name="Hh_Miss" xml:space="preserve">
+    <value>未達</value>
+  </data>
+  <data name="Hh_OffShift" xml:space="preserve">
+    <value>シフト外の時間帯</value>
+  </data>
+  <data name="Hh_OffShiftHint" xml:space="preserve">
+    <value>シフト内の各時間で定格能力とOKを対照します。設定でシフトを構成してください。</value>
+  </data>
+  <data name="Hh_BoardHint" xml:space="preserve">
+    <value>シフト壁時計の予定は停止を含みOKのみ。下の運転応産はRunning時間かつOK+NG。</value>
+  </data>
+  <data name="Dd_OeeOutputHint" xml:space="preserve">
+    <value>運転応産 = 定格能力 × 運転時間（OK+NG）。アラーム/待機/オフラインは含みません。</value>
+  </data>
+  <data name="Validator_AddressReuseInDevice" xml:space="preserve">
+    <value>デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2}</value>
   </data>
 </root>

@@ -765,7 +765,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             {
                 DeviceId = d.DeviceId,
                 DeviceName = d.DeviceName,
-                StatusText = RuntimeDeviceStatusText.Format(d.StatusWord),
+                StatusText = RuntimeDeviceStatusText.Format(d.StatusWord, (int)d.OfflineCause),
                 AcquisitionText = d.ConfiguredAddressCount == 0
                     ? Strings.M162
                     : d.LastCycleSucceeded ? Strings.M163 : Strings.M164,

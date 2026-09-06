@@ -890,8 +890,31 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
         // 保留文件中的源 Id（恢复语义）；重名时追加后缀避免混淆
         var copy = CloneDevice(imported, imported.Id);
         copy.Name = EnsureUniqueName(imported.Name, Devices.Select(d => d.Name));
+
+        // 审查修复 2026-09-06（P1）：导入路径此前只校验 Id 非空与 Id 冲突，**不做 PLC 地址校验**，
+        // 于是"缺陷地址填成 M 位/乱码"这类非法配置能先进内存——在缺陷 Tab 里手填会被
+        // PlcAddressValidationRule 拦下，导入却能绕过去，直到点保存才报错（常被误认为保存坏了）。
+        // 现于加入前/后做地址格式与类型级校验（CollectAddressTypeErrors），非法即回滚并弹可定位清单。
+        // 只查地址类型，不做跨设备冲突等结构校验：既有设备的独立错误不阻断本次导入，
+        // "导入地址待改的样板设备再逐台改"的工作流也不受影响（结构问题由保存路径统一把关）。
+        // 先加入再校验是让错误清单能点击定位（copy 尚未在 Devices 中则无法导航）；
+        // 失败时整体回滚（移除设备 + 撤销运行时注册），不留半成品状态。
         Devices.Add(copy);
         _deviceRepository.AddRuntime(copy);
+        var importCodec = _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current;
+        var importErrors = DeviceConfigValidator.CollectAddressTypeErrors([copy], importCodec);
+
+        if (importErrors.Count > 0)
+        {
+            Devices.Remove(copy);
+            _deviceRepository.RemoveRuntime(copy.Id);
+            Feedback.Error(string.Format(Strings.F067, importErrors.Count));
+            _dialog.NotifyWarning(string.Format(Strings.F067, importErrors.Count));
+            if (_dialog.ShowConfigErrors(importErrors) is { } selectedError)
+                NavigateToError(selectedError);
+            return;
+        }
+
         SelectedDevice = copy;
         MarkDirty();
         RefreshAddressConflictFlag();

@@ -51,6 +51,18 @@
   <data name="Status_Offline" xml:space="preserve">
     <value>Offline</value>
   </data>
+  <data name="Status_Offline_PlcReported" xml:space="preserve">
+    <value>Offline (PLC)</value>
+  </data>
+  <data name="Status_Offline_CommsLost" xml:space="preserve">
+    <value>Offline (comms lost)</value>
+  </data>
+  <data name="Status_Offline_AcquisitionStopped" xml:space="preserve">
+    <value>Offline (acquisition stopped)</value>
+  </data>
+  <data name="Status_Offline_GapFilled" xml:space="preserve">
+    <value>Offline (acquisition gap)</value>
+  </data>
   <data name="Status_Running" xml:space="preserve">
     <value>Running</value>
   </data>
@@ -355,7 +367,7 @@
     <value>Alarm</value>
   </data>
   <data name="K017" xml:space="preserve">
-    <value>Target Cycle</value>
+    <value>Target cycle time</value>
   </data>
   <data name="K018" xml:space="preserve">
     <value>Alarm Name</value>
@@ -454,7 +466,7 @@
     <value>Current Work Order</value>
   </data>
   <data name="K050" xml:space="preserve">
-    <value>Actual Cycle</value>
+    <value>Actual cycle time</value>
   </data>
   <data name="K051" xml:space="preserve">
     <value>No output data</value>
@@ -757,19 +769,19 @@
     <value>No Active Work Order</value>
   </data>
   <data name="K157" xml:space="preserve">
-    <value>Cycle Comparison</value>
+    <value>Output comparison</value>
   </data>
   <data name="K158" xml:space="preserve">
     <value>Gap</value>
   </data>
   <data name="K159" xml:space="preserve">
-    <value>Theory/Actual</value>
+    <value>Run-window due/actual</value>
   </data>
   <data name="K160" xml:space="preserve">
     <value>OEE Breakdown</value>
   </data>
   <data name="K161" xml:space="preserve">
-    <value>Status Duration Distribution</value>
+    <value>Status duration (incl. offline)</value>
   </data>
   <data name="K162" xml:space="preserve">
     <value>View History</value>
@@ -2699,7 +2711,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Quality rate is {0:P1}, {1} the {2:P0} target</value>
   </data>
   <data name="F195" xml:space="preserve">
-    <value>Takt anomaly: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%</value>
+    <value>Low output: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%</value>
   </data>
   <data name="F196" xml:space="preserve">
     <value>Triggered at {0:HH:mm:ss} · {1}</value>
@@ -3472,7 +3484,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Downtime Analysis</value>
   </data>
   <data name="M201" xml:space="preserve">
-    <value>Cycle Time Comparison</value>
+    <value>OEE metrics</value>
   </data>
   <data name="M202" xml:space="preserve">
     <value>Percentage</value>
@@ -3775,13 +3787,13 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Real-time Speed (pcs/h)</value>
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
-    <value>Target Cycle</value>
+    <value>Target cycle time</value>
   </data>
   <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
     <value>Target Output</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
-    <value>Actual Cycle</value>
+    <value>Actual cycle time</value>
   </data>
   <data name="Web_Lbl_TotalOutput" xml:space="preserve">
     <value>Total Output</value>
@@ -4084,7 +4096,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Total</value>
   </data>
   <data name="K592" xml:space="preserve">
-    <value>Cycle</value>
+    <value>Cycle time</value>
   </data>
   <data name="K593" xml:space="preserve">
     <value>Run</value>
@@ -4962,7 +4974,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Not enough output or alarm data in this range to generate conclusions</value>
   </data>
   <data name="Web_Rv_HealthLowOutput" xml:space="preserve">
-    <value>Cycle anomaly: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%</value>
+    <value>Low output: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%</value>
   </data>
   <data name="Web_Rv_HealthAlarmSpike" xml:space="preserve">
     <value>Alarm spike: {0} now vs {1} last period</value>
@@ -4977,7 +4989,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>No health issues found</value>
   </data>
   <data name="Web_Rv_OutputAchievement" xml:space="preserve">
-    <value>Cycle Achievement</value>
+    <value>Output achievement</value>
   </data>
   <data name="Web_Rv_LongestDowntime" xml:space="preserve">
     <value>Longest Downtime</value>
@@ -5061,7 +5073,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>By OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>Avg cycle (actual/target)</value>
+    <value>Avg cycle time (actual/target)</value>
   </data>
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>Good-count pace (OK/due)</value>
@@ -5076,10 +5088,10 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Apply to all devices</value>
   </data>
   <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
-    <value>Apply to all devices</value>
+    <value>Confirm target output change</value>
   </data>
   <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
-    <value>Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.</value>
+    <value>This will set the target output of {0} devices to {1:N0} pcs/hour and overwrite each machine's current setting. This value feeds OEE performance and is saved only after you confirm.</value>
   </data>
   <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
     <value>Target output for {0} devices is now {1:N0} pcs/hour</value>
@@ -6648,5 +6660,38 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
     <value>Idle</value>
+  </data>
+  <data name="Hh_BoardTitle" xml:space="preserve">
+    <value>Hour-by-hour plan</value>
+  </data>
+  <data name="Hh_BoardMeta" xml:space="preserve">
+    <value>{0} · {1} {2}–{3} · rated {4} pcs/h</value>
+  </data>
+  <data name="Hh_Cumulative" xml:space="preserve">
+    <value>Cumulative OK {0} / due {1} · {2:F1}%</value>
+  </data>
+  <data name="Hh_Plan" xml:space="preserve">
+    <value>Plan {0}</value>
+  </data>
+  <data name="Hh_Hit" xml:space="preserve">
+    <value>On target</value>
+  </data>
+  <data name="Hh_Miss" xml:space="preserve">
+    <value>Below plan</value>
+  </data>
+  <data name="Hh_OffShift" xml:space="preserve">
+    <value>Currently off shift</value>
+  </data>
+  <data name="Hh_OffShiftHint" xml:space="preserve">
+    <value>Hour plan compares rated output vs OK for each hour of the current shift. Configure shifts in Settings.</value>
+  </data>
+  <data name="Hh_BoardHint" xml:space="preserve">
+    <value>Shift-clock due includes stops and counts OK only. Run-window due below uses Running time and OK+NG.</value>
+  </data>
+  <data name="Dd_OeeOutputHint" xml:space="preserve">
+    <value>Run-window due = rated pcs/h × running hours (OK+NG). Excludes alarm/standby/offline.</value>
+  </data>
+  <data name="Validator_AddressReuseInDevice" xml:space="preserve">
+    <value>Device "{0}": PLC address "{1}" is used by multiple items: {2}</value>
   </data>
 </root>

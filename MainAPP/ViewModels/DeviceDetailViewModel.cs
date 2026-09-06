@@ -11,7 +11,9 @@ using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Helpers;
 using MainAPP.Services;
+using Kanban.Contracts.Metrics;
 using Microsoft.Extensions.Logging;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using OxyPlot;
 using OxyPlot.Series;
 
@@ -33,6 +35,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     private readonly ILogger<DeviceDetailViewModel> _logger;
     private readonly WorkOrderRepository _workOrderRepo;
     private readonly IWorkOrderService _workOrderService;
+    private readonly AppSettings _appSettings;
     private readonly IDataSourceSnapshotStore? _sourceStore;
 
     private Device? _currentDevice;
@@ -74,6 +77,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         ILogger<DeviceDetailViewModel> logger,
         WorkOrderRepository workOrderRepo,
         IWorkOrderService workOrderService,
+        AppSettings appSettings,
         IDataSourceSnapshotStore? sourceStore = null)
     {
         _deviceRepository = deviceRepository;
@@ -83,6 +87,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         _logger = logger;
         _workOrderRepo = workOrderRepo;
         _workOrderService = workOrderService;
+        _appSettings = appSettings;
         _sourceStore = sourceStore;
 
         _selection.PropertyChanged += OnSelectionServiceChanged;
@@ -168,20 +173,28 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     private double _runTimeHours;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     private double _alarmTimeHours;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
     [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     private double _pausedTimeHours;
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalDurationHours))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeFormatted))]
     private double _offlineTimeHours;
     [ObservableProperty] private int _todayAlarmCount;
@@ -195,7 +208,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
 
     // ──────────── 设备配置（从 Device 读取） ────────────
 
-    /// <summary>目标节拍（个/小时）。</summary>
+    /// <summary>目标产能（件/小时）。</summary>
     [ObservableProperty] private int _targetCycle;
     /// <summary>配方名称。</summary>
     [ObservableProperty] private string _recipeName = string.Empty;
@@ -236,13 +249,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     /// <summary>工单完成进度（0~1）。</summary>
     [ObservableProperty] private double _workOrderProgress;
 
-    // ──────────── 节拍与理论产量对比 ────────────
+    // ──────────── 产能与理论产量对比 ────────────
 
-    /// <summary>实际节拍（产量/运行时长，个/小时）。运行时长为 0 时为 0。</summary>
+    /// <summary>实际产能（产量/运行时长，件/小时）。运行时长为 0 时为 0。</summary>
     [ObservableProperty] private double _actualCycleRate;
-    /// <summary>节拍差距百分比（实际 vs 目标，负值表示未达标）。</summary>
+    /// <summary>产能差距百分比（实际 vs 目标，负值表示未达标）。</summary>
     [ObservableProperty] private double _cycleGapPercent;
-    /// <summary>理论产量（目标节拍 × 运行时长）。</summary>
+    /// <summary>理论产量（目标产能 × 运行时长）。</summary>
     [ObservableProperty] private int _theoreticalOutput;
     /// <summary>实际总产量（OK+NG）。</summary>
     [ObservableProperty] private int _actualTotalOutput;
@@ -255,22 +268,43 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     [ObservableProperty] private PlotModel? _defectPieChart;
     [ObservableProperty] private int _hourlyRangeHours = 24;
     [ObservableProperty] private string _hourlyRangeText = Strings.K025;
+
+    /// <summary>本班小时计划格（通栏，按当前班次 8–12 小时）。</summary>
+    public ObservableCollection<HourBucketItem> HourBuckets { get; } = new();
+
+    /// <summary>当前处于班次内且已生成小时格。</summary>
+    [ObservableProperty] private bool _hasHourBoard;
+
+    /// <summary>设备已选但不在任何班次时段（或未配置班次）。</summary>
+    [ObservableProperty] private bool _isOffShift;
+
+    /// <summary>小时板副标题：设备 · 班次 起止 · 额定产能。</summary>
+    [ObservableProperty] private string _hourBoardMetaText = string.Empty;
+
+    /// <summary>小时板累计：已过小时 OK / 应产 · 达成率。</summary>
+    [ObservableProperty] private string _hourBoardSummaryText = string.Empty;
+
+    /// <summary>累计 OK 低于应产时标题数字标红。</summary>
+    [ObservableProperty] private bool _hourBoardIsBehind;
+
     [ObservableProperty] private int _defectTotal;
     [ObservableProperty] private int _defectTypeCount;
     [ObservableProperty] private string _topDefectText = "—";
 
     // ──────────── 状态时长比例（用于堆叠条形图） ────────────
 
-    /// <summary>总时长（运行+报警+待机），用于 OEE 状态时长占比。不含离线。</summary>
-    public double TotalDurationHours => RunTimeHours + AlarmTimeHours + PausedTimeHours;
+    /// <summary>总时长（运行+报警+待机+离线），与首页状态饼分母一致。OEE 三率仍不含离线。</summary>
+    public double TotalDurationHours => RunTimeHours + AlarmTimeHours + PausedTimeHours + OfflineTimeHours;
     /// <summary>运行时长占比（0~1）。无数据时为 0。</summary>
-    public double RunTimeRatio => TotalDurationHours > 0 ? RunTimeHours / TotalDurationHours : 0;
+    public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTimeHours, RunTimeHours, AlarmTimeHours, PausedTimeHours, OfflineTimeHours);
     /// <summary>报警时长占比（0~1）。无数据时为 0。</summary>
-    public double AlarmTimeRatio => TotalDurationHours > 0 ? AlarmTimeHours / TotalDurationHours : 0;
+    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(AlarmTimeHours, RunTimeHours, AlarmTimeHours, PausedTimeHours, OfflineTimeHours);
     /// <summary>待机时长占比（0~1）。无数据时为 0。</summary>
-    public double PausedTimeRatio => TotalDurationHours > 0 ? PausedTimeHours / TotalDurationHours : 0;
-    /// <summary>离线时长格式化（仅统计，不参与 OEE 占比图）。</summary>
-    public string OfflineTimeFormatted => FormatHelper.FormatDuration(OfflineTimeHours);
+    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(PausedTimeHours, RunTimeHours, AlarmTimeHours, PausedTimeHours, OfflineTimeHours);
+    /// <summary>离线时长占比（0~1）。无数据时为 0。</summary>
+    public double OfflineTimeRatio => SnapshotMetrics.TimeRatio(OfflineTimeHours, RunTimeHours, AlarmTimeHours, PausedTimeHours, OfflineTimeHours);
+    /// <summary>离线时长格式化（小时，与同卡运行/报警/待机一致）。</summary>
+    public string OfflineTimeFormatted => $"{OfflineTimeHours:F1}h";
 
     // ──────────── 列表数据 ────────────
 
@@ -507,7 +541,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         WorkOrderStatusText = string.Empty;
         WorkOrderProgress = 0;
 
-        // 节拍与理论产量
+        // 产能与理论产量
         ActualCycleRate = 0;
         CycleGapPercent = 0;
         TheoreticalOutput = 0;
@@ -516,6 +550,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         // 图表
         HourlyProductionChart = null;
         DefectPieChart = null;
+        ClearHourBoard();
     }
 
     // ──────────── 实时数据刷新 ────────────
@@ -674,27 +709,26 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         Oee = rt.Oee;
         AvailabilityRate = rt.AvailabilityRate;
         PerformanceRate = rt.PerformanceRate;
-        RunTimeHours = rt.RunTime;
-        AlarmTimeHours = rt.AlarmTime;
-        PausedTimeHours = rt.PausedTime;
-        OfflineTimeHours = rt.OfflineTime;
+        RunTimeHours = rt.RunTime / 3600.0;
+        AlarmTimeHours = rt.AlarmTime / 3600.0;
+        PausedTimeHours = rt.PausedTime / 3600.0;
+        OfflineTimeHours = rt.OfflineTime / 3600.0;
 
         // PLC 原始值
         PlcOkCount = rt.OkProduction;
         PlcNgCount = rt.NgProduction;
         PlcStatusWord = rt.StatusWord;
 
-        // 节拍与理论产量对比
+        // 产能与理论产量对比：与 OeeCalculator 性能率同一窗口（目标产能 × 运行小时，分子 OK+NG）
         ActualTotalOutput = rt.TotalOkProduction + rt.TotalNgProduction;
-        var runHours = rt.RunTime;
-        ActualCycleRate = runHours > 0 ? ActualTotalOutput / runHours : 0;
-        TheoreticalOutput = (int)Math.Round(rt.TargetCycle * runHours);
+        ActualCycleRate = SnapshotMetrics.RealtimeSpeed(rt.RunTime, rt.TotalOkProduction, rt.TotalNgProduction);
+        TheoreticalOutput = SnapshotMetrics.ExpectedOutput(rt.TargetCycle, rt.RunTime / 3600.0);
         CycleGapPercent = rt.TargetCycle > 0
             ? (ActualCycleRate - rt.TargetCycle) / rt.TargetCycle * 100
             : 0;
 
         // 状态文本与画刷
-        (StatusText, StatusBrushKey) = MapStatus(rt.StatusWord);
+        (StatusText, StatusBrushKey) = MapStatus(rt.StatusWord, rt.OfflineCause);
 
         // 设备配置（从 Device 读取）
         RefreshDeviceConfig();
@@ -871,10 +905,10 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             snapshot.Select(d => (d.Name, d.Count)));
     }
 
-    private static (string text, string brushKey) MapStatus(int statusWord)
+    private static (string text, string brushKey) MapStatus(int statusWord, OfflineCause cause = OfflineCause.None)
     {
         // 状态文本复用 HistoryQueryHelper.GetStateText（全应用统一映射），此处只保留画刷映射。
-        var text = HistoryQueryHelper.GetStateText(statusWord);
+        var text = HistoryQueryHelper.GetStateText(statusWord, (int)cause);
         var brushKey = statusWord switch
         {
             (int)DeviceStatus.Running => "StatusRunBrush",
@@ -1050,6 +1084,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         RefreshStatusText = Strings.M156;
         RefreshKpis();
         RefreshRecentAlarms();
+        RefreshHourlyProduction();
     }
 
     /// <summary>
@@ -1124,18 +1159,46 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         if (CurrentDevice == null)
         {
             HourlyProductionChart = null;
+            ClearHourBoard();
             return;
         }
 
         var deviceId = CurrentDevice.Id;
+        var deviceName = CurrentDevice.Name;
         var targetCycle = CurrentDevice.TargetCycle;
         var rangeHours = HourlyRangeHours;
         Task.Run(() =>
         {
             try
             {
+                var now = DateTime.Now;
                 var chart = DeviceDetailQueryService.BuildHourlyProductionChart(
-                    _historyService, deviceId, targetCycle, rangeHours, DateTime.Now);
+                    _historyService, deviceId, targetCycle, rangeHours, now);
+                var (shift, shiftStart, shiftEnd) = ShiftConfigResolver.ResolveCurrentShift(
+                    _appSettings.GetShiftsSnapshot(), now);
+                IReadOnlyList<HourBucketItem> buckets = [];
+                var meta = string.Empty;
+                var summary = string.Empty;
+                var behind = false;
+                var offShift = shift == null;
+                if (shift != null)
+                {
+                    buckets = DeviceDetailQueryService.BuildHourByHourBoard(
+                        _historyService, deviceId, shiftStart, shiftEnd, now, targetCycle);
+                    meta = string.Format(
+                        Strings.Hh_BoardMeta,
+                        deviceName,
+                        shift.Name,
+                        shiftStart.ToString("HH:mm"),
+                        shiftEnd.ToString("HH:mm"),
+                        targetCycle);
+                    var done = buckets.Where(b => b.Actual.HasValue).ToList();
+                    var ok = done.Sum(b => b.Actual!.Value);
+                    var due = done.Sum(b => b.Plan);
+                    behind = due > 0 && ok < due;
+                    var pct = due > 0 ? ok * 100.0 / due : 0;
+                    summary = string.Format(Strings.Hh_Cumulative, ok, due, pct);
+                }
                 token.ThrowIfCancellationRequested();
 
                 System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
@@ -1143,6 +1206,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                     if (!token.IsCancellationRequested)
                     {
                         HourlyProductionChart = chart;
+                        ApplyHourBoard(buckets, meta, summary, behind, offShift);
                         RefreshStatusText = Strings.M154;
                     }
                 });
@@ -1161,6 +1225,33 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                 });
             }
         }, token).Forget(_logger);
+    }
+
+    private void ApplyHourBoard(
+        IReadOnlyList<HourBucketItem> buckets,
+        string meta,
+        string summary,
+        bool behind,
+        bool offShift)
+    {
+        HourBuckets.Clear();
+        foreach (var bucket in buckets)
+            HourBuckets.Add(bucket);
+        HasHourBoard = buckets.Count > 0;
+        IsOffShift = offShift;
+        HourBoardMetaText = meta;
+        HourBoardSummaryText = summary;
+        HourBoardIsBehind = behind;
+    }
+
+    private void ClearHourBoard()
+    {
+        HourBuckets.Clear();
+        HasHourBoard = false;
+        IsOffShift = false;
+        HourBoardMetaText = string.Empty;
+        HourBoardSummaryText = string.Empty;
+        HourBoardIsBehind = false;
     }
 
     /// <summary>返回主页：触发 GoBackRequested 事件，由 MainWindowViewModel 订阅后置 SelectedIndex=0。</summary>

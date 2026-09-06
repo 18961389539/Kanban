@@ -63,6 +63,22 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "离线", ["en-US"] = "Offline", ["ja-JP"] = "オフライン", ["pt-BR"] = "Offline"
         },
+        ["Wpf|Status_Offline_PlcReported"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "离线（PLC）", ["en-US"] = "Offline (PLC)", ["ja-JP"] = "オフライン（PLC）", ["pt-BR"] = "Offline (PLC)"
+        },
+        ["Wpf|Status_Offline_CommsLost"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "离线（通讯中断）", ["en-US"] = "Offline (comms lost)", ["ja-JP"] = "オフライン（通信切断）", ["pt-BR"] = "Offline (comunicação)"
+        },
+        ["Wpf|Status_Offline_AcquisitionStopped"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "离线（采集停止）", ["en-US"] = "Offline (acquisition stopped)", ["ja-JP"] = "オフライン（収集停止）", ["pt-BR"] = "Offline (coleta parada)"
+        },
+        ["Wpf|Status_Offline_GapFilled"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "离线（采集空窗）", ["en-US"] = "Offline (acquisition gap)", ["ja-JP"] = "オフライン（収集欠落）", ["pt-BR"] = "Offline (lacuna de coleta)"
+        },
         ["Wpf|Status_Running"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "运行", ["en-US"] = "Running", ["ja-JP"] = "稼働中", ["pt-BR"] = "Em execução"
@@ -469,7 +485,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K017"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标节拍", ["en-US"] = "Target Cycle", ["ja-JP"] = "目標タクト", ["pt-BR"] = "Ciclo alvo"
+            ["zh-CN"] = "目标周期", ["en-US"] = "Target cycle time", ["ja-JP"] = "目標サイクルタイム", ["pt-BR"] = "Tempo de ciclo alvo"
         },
         ["Wpf|K018"] = new Dictionary<string, string>
         {
@@ -601,7 +617,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K050"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "实际节拍", ["en-US"] = "Actual Cycle", ["ja-JP"] = "実タクト", ["pt-BR"] = "Ciclo real"
+            ["zh-CN"] = "实际周期", ["en-US"] = "Actual cycle time", ["ja-JP"] = "実サイクルタイム", ["pt-BR"] = "Tempo de ciclo real"
         },
         ["Wpf|K051"] = new Dictionary<string, string>
         {
@@ -1005,7 +1021,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K157"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍对比", ["en-US"] = "Cycle Comparison", ["ja-JP"] = "タクト比較", ["pt-BR"] = "Comparação de ciclo"
+            ["zh-CN"] = "产能对比", ["en-US"] = "Output comparison", ["ja-JP"] = "能力比較", ["pt-BR"] = "Comparação de capacidade"
         },
         ["Wpf|K158"] = new Dictionary<string, string>
         {
@@ -1013,7 +1029,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K159"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "理论/实际", ["en-US"] = "Theory/Actual", ["ja-JP"] = "理論/実績", ["pt-BR"] = "Teórico/Real"
+            ["zh-CN"] = "运行应产/实际", ["en-US"] = "Run-window due/actual", ["ja-JP"] = "運転応産/実績", ["pt-BR"] = "Previsto (run)/real"
         },
         ["Wpf|K160"] = new Dictionary<string, string>
         {
@@ -1021,7 +1037,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K161"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "状态时长分布", ["en-US"] = "Status Duration Distribution", ["ja-JP"] = "状態時間分布", ["pt-BR"] = "Distribuição de duração por estado"
+            ["zh-CN"] = "状态时长分布（含离线）", ["en-US"] = "Status duration (incl. offline)", ["ja-JP"] = "状態時間分布（オフライン含む）", ["pt-BR"] = "Duração por estado (incl. offline)"
         },
         ["Wpf|K162"] = new Dictionary<string, string>
         {
@@ -3561,7 +3577,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F195"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%", ["en-US"] = "Takt anomaly: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%", ["ja-JP"] = "タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%", ["pt-BR"] = "Anomalia de takt: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
+            ["zh-CN"] = "产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%", ["en-US"] = "Low output: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%", ["ja-JP"] = "能力低下: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%", ["pt-BR"] = "Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
         },
         ["Wpf|F196"] = new Dictionary<string, string>
         {
@@ -4577,7 +4593,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|M201"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍对比图", ["en-US"] = "Cycle Time Comparison", ["ja-JP"] = "タクト比較図", ["pt-BR"] = "Gráfico de comparação de ciclo"
+            ["zh-CN"] = "OEE 指标图", ["en-US"] = "OEE metrics", ["ja-JP"] = "OEE 指標図", ["pt-BR"] = "Gráfico de indicadores OEE"
         },
         ["Wpf|M202"] = new Dictionary<string, string>
         {
@@ -4981,7 +4997,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Lbl_TargetCycle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "目标节拍", ["en-US"] = "Target Cycle", ["ja-JP"] = "目標タクト", ["pt-BR"] = "Ciclo alvo"
+            ["zh-CN"] = "目标周期", ["en-US"] = "Target cycle time", ["ja-JP"] = "目標サイクルタイム", ["pt-BR"] = "Tempo de ciclo alvo"
         },
         ["Wpf|Web_Lbl_TargetCapacity"] = new Dictionary<string, string>
         {
@@ -4989,7 +5005,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Lbl_ActualCycle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "实际节拍", ["en-US"] = "Actual Cycle", ["ja-JP"] = "実タクト", ["pt-BR"] = "Ciclo real"
+            ["zh-CN"] = "实际周期", ["en-US"] = "Actual cycle time", ["ja-JP"] = "実サイクルタイム", ["pt-BR"] = "Tempo de ciclo real"
         },
         ["Wpf|Web_Lbl_TotalOutput"] = new Dictionary<string, string>
         {
@@ -5393,7 +5409,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K592"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍", ["en-US"] = "Cycle", ["ja-JP"] = "サイクル", ["pt-BR"] = "Ciclo"
+            ["zh-CN"] = "周期", ["en-US"] = "Cycle time", ["ja-JP"] = "サイクルタイム", ["pt-BR"] = "Tempo de ciclo"
         },
         ["Wpf|K593"] = new Dictionary<string, string>
         {
@@ -6553,7 +6569,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Rv_HealthLowOutput"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%", ["en-US"] = "Cycle anomaly: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%", ["ja-JP"] = "タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%", ["pt-BR"] = "Anomalia de ciclo: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
+            ["zh-CN"] = "产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%", ["en-US"] = "Low output: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%", ["ja-JP"] = "能力低下：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%", ["pt-BR"] = "Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
         },
         ["Wpf|Web_Rv_HealthAlarmSpike"] = new Dictionary<string, string>
         {
@@ -6573,7 +6589,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Rv_OutputAchievement"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "节拍达成", ["en-US"] = "Cycle Achievement", ["ja-JP"] = "タクト達成", ["pt-BR"] = "Realização do ciclo"
+            ["zh-CN"] = "产能达成", ["en-US"] = "Output achievement", ["ja-JP"] = "能力達成", ["pt-BR"] = "Realização da capacidade"
         },
         ["Wpf|Web_Rv_LongestDowntime"] = new Dictionary<string, string>
         {
@@ -6685,7 +6701,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Ln_Cycle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "平均节拍（实际/目标）", ["en-US"] = "Avg cycle (actual/target)", ["ja-JP"] = "平均タクト（実績/目標）", ["pt-BR"] = "Ciclo médio (real/alvo)"
+            ["zh-CN"] = "平均周期（实际/目标）", ["en-US"] = "Avg cycle time (actual/target)", ["ja-JP"] = "平均サイクルタイム（実績/目標）", ["pt-BR"] = "Tempo de ciclo médio (real/alvo)"
         },
         ["Wpf|Ln_ShiftPace"] = new Dictionary<string, string>
         {
@@ -6705,11 +6721,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ln_ApplyTargetCycleTitle"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "应用到全部设备", ["en-US"] = "Apply to all devices", ["ja-JP"] = "全デバイスに適用", ["pt-BR"] = "Aplicar a todos os dispositivos"
+            ["zh-CN"] = "确认修改目标产能", ["en-US"] = "Confirm target output change", ["ja-JP"] = "目標能力の変更確認", ["pt-BR"] = "Confirmar alteração da capacidade alvo"
         },
         ["Wpf|Ln_ApplyTargetCycleConfirm"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。", ["en-US"] = "Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.", ["ja-JP"] = "{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。", ["pt-BR"] = "Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina."
+            ["zh-CN"] = "将把 {0} 台设备的目标产能全部改为 {1:N0} 件/小时，并覆盖各机现有设置。该值用于 OEE 性能率，确认后才会保存。", ["en-US"] = "This will set the target output of {0} devices to {1:N0} pcs/hour and overwrite each machine's current setting. This value feeds OEE performance and is saved only after you confirm.", ["ja-JP"] = "{0} 台の設備の目標能力をすべて {1:N0} 個/時間に変更し、各機の既存設定を上書きします。この値は OEE 性能率に使われ、確認後に保存されます。", ["pt-BR"] = "Isso definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora e substituirá a configuração atual. Esse valor entra no cálculo de performance OEE e só será salvo após a confirmação."
         },
         ["Wpf|Ln_ApplyTargetCycleDone"] = new Dictionary<string, string>
         {
@@ -9122,6 +9138,50 @@ public static class LocalizationCatalog
         ["Wpf|Status_Idle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "空闲", ["en-US"] = "Idle", ["ja-JP"] = "アイドル", ["pt-BR"] = "Ocioso"
+        },
+        ["Wpf|Hh_BoardTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "本班小时计划", ["en-US"] = "Hour-by-hour plan", ["ja-JP"] = "シフト時間計画", ["pt-BR"] = "Plano hora a hora"
+        },
+        ["Wpf|Hh_BoardMeta"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "{0} · {1} {2}–{3} · 额定 {4} 件/时", ["en-US"] = "{0} · {1} {2}–{3} · rated {4} pcs/h", ["ja-JP"] = "{0} · {1} {2}–{3} · 定格 {4} 個/時", ["pt-BR"] = "{0} · {1} {2}–{3} · nominal {4} pçs/h"
+        },
+        ["Wpf|Hh_Cumulative"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "累计 OK {0} / 应产 {1} · {2:F1}%", ["en-US"] = "Cumulative OK {0} / due {1} · {2:F1}%", ["ja-JP"] = "累計 OK {0} / 予定 {1} · {2:F1}%", ["pt-BR"] = "OK acumulado {0} / previsto {1} · {2:F1}%"
+        },
+        ["Wpf|Hh_Plan"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "计划 {0}", ["en-US"] = "Plan {0}", ["ja-JP"] = "計画 {0}", ["pt-BR"] = "Plano {0}"
+        },
+        ["Wpf|Hh_Hit"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "达标", ["en-US"] = "On target", ["ja-JP"] = "達成", ["pt-BR"] = "Na meta"
+        },
+        ["Wpf|Hh_Miss"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "未达标", ["en-US"] = "Below plan", ["ja-JP"] = "未達", ["pt-BR"] = "Abaixo do plano"
+        },
+        ["Wpf|Hh_OffShift"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前不在班次时段", ["en-US"] = "Currently off shift", ["ja-JP"] = "シフト外の時間帯", ["pt-BR"] = "Fora do turno"
+        },
+        ["Wpf|Hh_OffShiftHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "小时计划按当前班次逐小时对照额定产能与 OK 产量。请在设置中配置班次。", ["en-US"] = "Hour plan compares rated output vs OK for each hour of the current shift. Configure shifts in Settings.", ["ja-JP"] = "シフト内の各時間で定格能力とOKを対照します。設定でシフトを構成してください。", ["pt-BR"] = "O plano horário compara a capacidade nominal com o OK de cada hora do turno. Configure os turnos em Configurações."
+        },
+        ["Wpf|Hh_BoardHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "班次墙钟应产（含停机）只计 OK；与下方运行应产不同（仅 Running 时间且含 NG）。", ["en-US"] = "Shift-clock due includes stops and counts OK only. Run-window due below uses Running time and OK+NG.", ["ja-JP"] = "シフト壁時計の予定は停止を含みOKのみ。下の運転応産はRunning時間かつOK+NG。", ["pt-BR"] = "Previsto do turno inclui paradas e conta só OK. O previsto da run abaixo usa tempo Running e OK+NG."
+        },
+        ["Wpf|Dd_OeeOutputHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "运行应产 = 额定产能 × 运行小时（OK+NG）。不含报警/待机/离线。", ["en-US"] = "Run-window due = rated pcs/h × running hours (OK+NG). Excludes alarm/standby/offline.", ["ja-JP"] = "運転応産 = 定格能力 × 運転時間（OK+NG）。アラーム/待機/オフラインは含みません。", ["pt-BR"] = "Previsto da run = capacidade × horas em execução (OK+NG). Exclui alarme/espera/offline."
+        },
+        ["Wpf|Validator_AddressReuseInDevice"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2}", ["en-US"] = "Device \"{0}\": PLC address \"{1}\" is used by multiple items: {2}", ["ja-JP"] = "デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2}", ["pt-BR"] = "Dispositivo \"{0}\": o endereco PLC \"{1}\" e usado por varios itens: {2}"
         },
         };
 

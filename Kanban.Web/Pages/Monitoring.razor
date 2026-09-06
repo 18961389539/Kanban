@@ -51,7 +51,7 @@
                     <div class="mon-card">
                         <div class="dev-head">
                             <span class="dev-name">@s.DeviceName</span>
-                            <span class="status-badge @StateClass(s.Status)">@StateText(s.Status)</span>
+                            <span class="status-badge @StateClass(s.Status)">@StateText(s)</span>
                         </div>
                         <div class="metric-grid">
                             <div><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
@@ -271,12 +271,12 @@ private void OnRenderTick()
 
     // ──────────── 展示辅助（快照换算口径单源 SnapshotMetrics，与 Home 一致） ────────────
 
-    private static string StateText(DeviceStatus status) => status switch
+    private static string StateText(DeviceSnapshotDto s) => s.Status switch
     {
         DeviceStatus.Running => L.T("Status_Running"),
         DeviceStatus.Alarm => L.T("Status_Alarm"),
         DeviceStatus.Paused => L.T("Status_Paused"),
-        _ => L.T("Status_Offline"),
+        _ => L.T(DeviceStatusLocKeys.For(DeviceStatus.Offline, s.OfflineCause)),
     };
 
     private static string StateClass(DeviceStatus status) => status switch

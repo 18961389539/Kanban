@@ -19,7 +19,9 @@ namespace MainAPP.Services;
 public class DeviceConfigIOService(
     DeviceRepository deviceRepository,
     IDialogService dialog,
-    IRemoteDeviceConfigurationStore? remoteStore = null)
+    IRemoteDeviceConfigurationStore? remoteStore = null,
+    IPlcRuntimeProfileProvider? profileProvider = null,
+    IPlcAddressCodecResolver? addressCodecResolver = null)
 {
     private int _remoteBackupAvailable;
 
@@ -80,6 +82,22 @@ public class DeviceConfigIOService(
         if (imported == null)
         {
             dialog.NotifyWarning(Strings.M003);
+            return null;
+        }
+
+        // 审查修复 2026-09-06（P1）：全量 JSON 导入此前**不做 PLC 地址校验**，
+        // "缺陷地址填成 M 位/乱码"这类非法配置能整体替换掉当前配置；而在设备管理器里手填同样
+        // 内容会被 PlcAddressValidationRule 拦下——导入成了绕过保存校验的口子。
+        // 现与保存的地址校验共用同一规则（CollectAddressTypeErrors），解析成功但地址类型非法则
+        // 拒绝替换，当前配置保持原样。放在二次确认之前，避免用户先被问"是否丢弃当前配置"才发现问题。
+        // 只做地址格式/类型级校验：跨设备冲突、名称唯一性等结构性问题由保存路径统一把关，
+        // 避免挡住"先导入地址待改的样板设备、再逐台修改"的常见工作流。
+        var importCodec = profileProvider?.Current.AddressCodec ?? addressCodecResolver?.Current;
+        var importErrors = DeviceConfigValidator.CollectAddressTypeErrors(imported, importCodec);
+        if (importErrors.Count > 0)
+        {
+            dialog.NotifyError(string.Format(Strings.F067, importErrors.Count));
+            dialog.ShowConfigErrors(importErrors);
             return null;
         }
 

@@ -148,7 +148,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 左下：目标节拍 -->
+                    <!-- 左下：目标周期（秒/件） -->
                     <Border Grid.Row="2" Grid.Column="0" Padding="16,12"
                             Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>
@@ -159,7 +159,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 右下：实际节拍 -->
+                    <!-- 右下：实际周期（秒/件） -->
                     <Border Grid.Row="2" Grid.Column="2" Padding="16,12"
                             Style="{StaticResource KpiCardSecondary}">
                         <StackPanel>

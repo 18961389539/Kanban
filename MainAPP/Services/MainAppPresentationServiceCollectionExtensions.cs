@@ -95,6 +95,7 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DeviceDetailViewModel>>(),
             sp.GetRequiredService<WorkOrderRepository>(), sp.GetRequiredService<IWorkOrderService>(),
+            sp.GetRequiredService<AppSettings>(),
             sp.GetService<IDataSourceSnapshotStore>()));
         return services;
     }

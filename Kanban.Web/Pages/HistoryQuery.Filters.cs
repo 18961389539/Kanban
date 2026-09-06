@@ -33,7 +33,7 @@ public partial class HistoryQuery
     /// <summary>跨 Tab 校验消息（时间范围非法 / 未选设备等），渲染在筛选栏下方。</summary>
     private string? ValidationMessage { get; set; }
 
-    /// <summary>设备配置缓存（OEE Tab 的目标节拍/设备名）。</summary>
+    /// <summary>设备配置缓存（OEE Tab 的目标产能/设备名）。</summary>
     private List<DeviceConfigDto> _deviceConfigs = [];
 
     protected override async Task OnInitializedAsync()

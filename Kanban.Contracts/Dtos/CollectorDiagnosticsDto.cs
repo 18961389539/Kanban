@@ -1,3 +1,5 @@
+using Kanban.Contracts.Enums;
+
 namespace Kanban.Contracts.Dtos;
 
 /// <summary>
@@ -83,6 +85,7 @@ public sealed record CollectorDeviceStatusDto
     public string DeviceId { get; init; } = string.Empty;
     public string DeviceName { get; init; } = string.Empty;
     public int StatusWord { get; init; }
+    public OfflineCause OfflineCause { get; init; }
     public int OkProduction { get; init; }
     public int NgProduction { get; init; }
     public int ConfiguredAddressCount { get; init; }

@@ -110,7 +110,7 @@ public sealed class ProductionReviewAnalysisServiceTests
         Assert.Equal(2, alarm.TriggerCount - 1);
         Assert.Equal(5, alarm.AverageIntervalMinutes, precision: 1);
         Assert.True(alarm.IsHighFrequency);
-        Assert.Contains(result.HealthIssues, issue => issue.StartsWith("节拍异常", StringComparison.Ordinal));
+        Assert.Contains(result.HealthIssues, issue => issue.StartsWith("产能偏低", StringComparison.Ordinal));
         Assert.True(result.HealthScore < 100);
     }
 }

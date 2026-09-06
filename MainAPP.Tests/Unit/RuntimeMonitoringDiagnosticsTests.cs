@@ -43,7 +43,7 @@ public sealed class RuntimeMonitoringDiagnosticsTests
     [InlineData(1, "运行")]
     [InlineData(2, "报警")]
     [InlineData(3, "待机")]
-    [InlineData(99, "状态 99")]
+    [InlineData(99, "未知")]
     public void RuntimeDeviceStatusText_HandlesKnownAndUnknownValues(int value, string expected)
     {
         Assert.Equal(expected, RuntimeDeviceStatusText.Format(value));

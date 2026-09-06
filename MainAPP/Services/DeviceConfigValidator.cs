@@ -71,17 +71,7 @@ public static class DeviceConfigValidator
                     Message = string.Format(Strings.F203, device.Name, string.Join("、", missing)),
                 });
 
-            AddAddressError(errors, device, addressCodec, device.OkCountAddress, PlcAddressType.DWord, 0, Strings.M232);
-            AddAddressError(errors, device, addressCodec, device.NgCountAddress, PlcAddressType.DWord, 0, Strings.M233);
-            AddAddressError(errors, device, addressCodec, device.StatusCountAddress, PlcAddressType.DWord, 0, Strings.M230);
-            AddAddressError(errors, device, addressCodec, device.ProductionResetAddress, PlcAddressType.DWord, 0, Strings.M234);
-            AddAddressError(errors, device, addressCodec, device.RecipeAddress, PlcAddressType.DWord, 0, Strings.M235);
-            foreach (var alarm in device.Alarms)
-                AddAddressError(errors, device, addressCodec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
-            foreach (var defect in device.Defects)
-                AddAddressError(errors, device, addressCodec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
-            foreach (var counterAlarm in device.CounterAlarms)
-                AddAddressError(errors, device, addressCodec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
+            AddAddressTypeErrors(errors, device, addressCodec);
             foreach (var source in device.Sources)
             {
                 AddAddressError(errors, device, addressCodec, source.TriggerAddress, PlcAddressType.DWord, (int)DeviceManagerTab.Sources, string.Format(Strings.Validator_SourceTriggerAddressInvalid, source.Name));
@@ -229,7 +219,145 @@ public static class DeviceConfigValidator
         // 同设备内主地址重复（OK/NG/状态/复位/配方互指同一地址，同样会串台）
         errors.AddRange(CollectSameDevicePrimaryAddressConflicts(deviceList, addressCodec));
 
+        // 同设备内地址冲突（不破坏已覆盖的组合：主×主 → F504、报警×报警 → F207、
+        // 同源值项/触发 → Validator_SourceDuplicateAddress；本方法补其余全部组合）
+        errors.AddRange(CollectSameDeviceAddressReuse(deviceList, addressCodec));
+
         return errors;
+    }
+
+    // 同设备内地址占用记录：Kind 决定消息措辞与跳转 Tab，SourceOwner 区分数据源归属。
+    private enum AddressRole { Primary, Alarm, Defect, CounterAlarm, SourceTrigger, SourceValue }
+
+    private readonly record struct AddressOccupancy(AddressRole Role, int Tab, string Name, string SourceOwner, string Key);
+
+    /// <summary>
+    /// 单 PLC 部署下设备内任意两个采集项不得共用同一地址：这里补齐既存检查未覆盖的组合。
+    /// 审查新增 2026-09-06（用户场景：所有设备位于同一 PLC，地址必须全局唯一）。
+    /// 覆盖矩阵（同设备内）：
+    ///   主×主 → 已有 F504；报警×报警 → 已有 F207；同源值项/触发×值项 → 已有；
+    ///   本方法补：{缺陷×缺陷}、{计数报警×计数报警}、{缺陷×计数报警}、
+    ///   {主×缺陷/计数报警/源触发/源值}、{缺陷/计数报警×源触发/源值}、跨源触发×值项 与 报警×布尔值项。
+    /// 跨设备冲突仍由 <see cref="CollectCrossDeviceConflicts"/> 负责，两者互补无重叠。
+    /// </summary>
+    public static List<DeviceConfigError> CollectSameDeviceAddressReuse(
+        IEnumerable<Device> devices,
+        IPlcAddressCodec? addressCodec = null)
+    {
+        List<DeviceConfigError> errors = [];
+        var codec = addressCodec ?? new MitsubishiAddressCodec();
+
+        foreach (var device in devices)
+        {
+            foreach (var group in EnumerateOccupancy(device, codec)
+                .GroupBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1))
+            {
+                var members = group.ToList();
+                var roles = members.Select(m => m.Role).ToHashSet();
+
+                // 已被既有检查覆盖的组合：本方法跳过，避免重复报错。
+                if (roles.Count == 1 && roles.Contains(AddressRole.Primary)) continue;   // 主×主 → F504
+                if (roles.Count == 1 && roles.Contains(AddressRole.Alarm)) continue;     // 报警×报警 → F207
+                if (members.All(m => m.SourceOwner.Length > 0
+                                      && m.SourceOwner == members[0].SourceOwner)) continue;    // 同源内 → 已有
+
+                // 主字段参与的重复 → 复用 F504（语义：设备主地址被多个字段重复使用）
+                if (roles.Contains(AddressRole.Primary))
+                {
+                    errors.Add(new DeviceConfigError
+                    {
+                        Device = device,
+                        TargetTabIndex = (int)DeviceManagerTab.Parameters,
+                        Message = string.Format(Strings.F504, device.Name, group.Key),
+                    });
+                    continue;
+                }
+
+                // 纯子字段重复 → 列出各占用者名称（用户数据本身不翻译）
+                var names = string.Join("、", members.Select(DescribeMember));
+                errors.Add(new DeviceConfigError
+                {
+                    Device = device,
+                    // 定位到第二个占用者所在页：用户看到错误时先改"后来加的那个"
+                    TargetTabIndex = members[1].Tab,
+                    Message = string.Format(Strings.Validator_AddressReuseInDevice, device.Name, group.Key, names),
+                });
+            }
+        }
+
+        return errors;
+    }
+
+    private static string DescribeMember(AddressOccupancy o) => o.Role switch
+    {
+        AddressRole.Defect => $"缺陷「{o.Name}」",
+        AddressRole.CounterAlarm => $"计数报警「{o.Name}」",
+        AddressRole.SourceTrigger => $"数据源「{o.Name}」触发",
+        AddressRole.SourceValue => $"数据源值「{o.Name}」",
+        _ => o.Name,
+    };
+
+    /// <summary>枚举单台设备的全部非空 PLC 地址占用（去重后仍逐条返回——重复地址要靠重复条目暴露）。</summary>
+    private static IEnumerable<AddressOccupancy> EnumerateOccupancy(Device device, IPlcAddressCodec codec)
+    {
+        (string? Address, AddressRole Role, string Name, int Tab)[] primaries =
+        [
+            (device.OkCountAddress, AddressRole.Primary, "OK", (int)DeviceManagerTab.Parameters),
+            (device.NgCountAddress, AddressRole.Primary, "NG", (int)DeviceManagerTab.Parameters),
+            (device.StatusCountAddress, AddressRole.Primary, "状态", (int)DeviceManagerTab.Parameters),
+            (device.ProductionResetAddress, AddressRole.Primary, "复位", (int)DeviceManagerTab.Parameters),
+            (device.RecipeAddress, AddressRole.Primary, "配方", (int)DeviceManagerTab.Parameters),
+        ];
+        foreach (var (addr, role, name, tab) in primaries)
+        {
+            if (string.IsNullOrWhiteSpace(addr)) continue;
+            var key = codec.CanonicalKey(addr.Trim());
+            if (string.IsNullOrWhiteSpace(key)) continue;
+            yield return new AddressOccupancy(role, tab, name, string.Empty, key);
+        }
+
+        foreach (var alarm in device.Alarms)
+        {
+            if (string.IsNullOrWhiteSpace(alarm.PlcAddress)) continue;
+            var key = codec.CanonicalKey(alarm.PlcAddress.Trim());
+            if (string.IsNullOrWhiteSpace(key)) continue;
+            yield return new AddressOccupancy(AddressRole.Alarm, (int)DeviceManagerTab.Alarms, alarm.Name ?? string.Empty, string.Empty, key);
+        }
+
+        foreach (var defect in device.Defects)
+        {
+            if (string.IsNullOrWhiteSpace(defect.PlcAddress)) continue;
+            var key = codec.CanonicalKey(defect.PlcAddress.Trim());
+            if (string.IsNullOrWhiteSpace(key)) continue;
+            yield return new AddressOccupancy(AddressRole.Defect, (int)DeviceManagerTab.Defects, defect.Name ?? string.Empty, string.Empty, key);
+        }
+
+        foreach (var counterAlarm in device.CounterAlarms)
+        {
+            if (string.IsNullOrWhiteSpace(counterAlarm.PlcAddress)) continue;
+            var key = codec.CanonicalKey(counterAlarm.PlcAddress.Trim());
+            if (string.IsNullOrWhiteSpace(key)) continue;
+            yield return new AddressOccupancy(AddressRole.CounterAlarm, (int)DeviceManagerTab.CounterAlarms, counterAlarm.Name ?? string.Empty, string.Empty, key);
+        }
+
+        foreach (var source in device.Sources)
+        {
+            var owner = source.Id ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(source.TriggerAddress))
+            {
+                var key = codec.CanonicalKey(source.TriggerAddress.Trim());
+                if (!string.IsNullOrWhiteSpace(key))
+                    yield return new AddressOccupancy(AddressRole.SourceTrigger, (int)DeviceManagerTab.Sources, source.Name ?? string.Empty, owner, key);
+            }
+            foreach (var value in source.Values)
+            {
+                if (string.IsNullOrWhiteSpace(value.PlcAddress)) continue;
+                var key = codec.CanonicalKey(value.PlcAddress.Trim());
+                if (string.IsNullOrWhiteSpace(key)) continue;
+                yield return new AddressOccupancy(AddressRole.SourceValue, (int)DeviceManagerTab.Sources, value.Name ?? string.Empty, owner, key);
+            }
+        }
     }
 
     /// <summary>
@@ -421,6 +549,45 @@ public static class DeviceConfigValidator
         }
         foreach (var group in list.GroupBy(x => x.Id?.Trim() ?? "", StringComparer.OrdinalIgnoreCase).Where(g => string.IsNullOrEmpty(g.Key) || g.Count() > 1))
             errors.Add(new DeviceConfigError { Device = device, TargetTabIndex = tabIndex, Message = string.Format(Strings.Validator_DuplicateChildId, device.Name, kind) });
+    }
+
+    /// <summary>
+    /// 单台设备的 PLC 地址格式/类型校验（设备主地址 + 报警 MBit + 缺陷/计数报警 DWord）。
+    /// 供 <see cref="CollectValidationErrors"/> 与 <see cref="CollectAddressTypeErrors"/> 共用，
+    /// 保证"保存前全量校验"与"导入前拦截"口径一致。
+    /// </summary>
+    private static void AddAddressTypeErrors(List<DeviceConfigError> errors, Device device, IPlcAddressCodec codec)
+    {
+        AddAddressError(errors, device, codec, device.OkCountAddress, PlcAddressType.DWord, 0, Strings.M232);
+        AddAddressError(errors, device, codec, device.NgCountAddress, PlcAddressType.DWord, 0, Strings.M233);
+        AddAddressError(errors, device, codec, device.StatusCountAddress, PlcAddressType.DWord, 0, Strings.M230);
+        AddAddressError(errors, device, codec, device.ProductionResetAddress, PlcAddressType.DWord, 0, Strings.M234);
+        AddAddressError(errors, device, codec, device.RecipeAddress, PlcAddressType.DWord, 0, Strings.M235);
+        foreach (var alarm in device.Alarms)
+            AddAddressError(errors, device, codec, alarm.PlcAddress, PlcAddressType.MBit, 1, string.Format(Strings.F128, alarm.Name));
+        foreach (var defect in device.Defects)
+            AddAddressError(errors, device, codec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
+        foreach (var counterAlarm in device.CounterAlarms)
+            AddAddressError(errors, device, codec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
+    }
+
+    /// <summary>
+    /// 只收集"PLC 地址格式/类型"错误（不含名称唯一性、跨设备地址冲突、阈值关系等结构性校验）。
+    /// 审查新增 2026-09-06：供配置**导入**路径在替换/加入设备前拦截"缺陷地址填成 M 位/乱码"
+    /// 这类非法值——此前 JSON 导入完全不做地址校验，成了绕过保存校验的口子。
+    /// 刻意**不**检测跨设备地址冲突：导入"地址待改的样板设备"再逐台修改是常见工作流，
+    /// 立即拦截会让这条路走不通；冲突类结构性问题仍由保存时的 <see cref="CollectValidationErrors"/> 统一把关。
+    /// </summary>
+    public static List<DeviceConfigError> CollectAddressTypeErrors(
+        IEnumerable<Device> devices,
+        IPlcAddressCodec? addressCodec = null)
+    {
+        List<DeviceConfigError> errors = [];
+        var deviceList = devices as IList<Device> ?? devices.ToList();
+        addressCodec ??= new MitsubishiAddressCodec();
+        foreach (var device in deviceList)
+            AddAddressTypeErrors(errors, device, addressCodec);
+        return errors;
     }
 
     private static void AddAddressError(

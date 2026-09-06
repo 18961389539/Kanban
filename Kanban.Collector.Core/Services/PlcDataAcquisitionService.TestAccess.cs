@@ -76,4 +76,7 @@ public partial class PlcDataAcquisitionService
     /// 测试用：直接调用 TryScan(Action) 包装器（void 重载），验证无返回值扫描的异常处理路径。
     /// </summary>
     internal void TryScanForTest(Action scanAction, string scanName) => TryScan(scanAction, scanName);
+
+    /// <summary>测试用：直接触发采集空窗补离线（与轮询启动时同一入口）。</summary>
+    internal void SealAcquisitionDowntimeGapsForTest(DateTime now) => SealAcquisitionDowntimeGaps(now);
 }

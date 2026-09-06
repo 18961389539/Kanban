@@ -10,7 +10,7 @@ namespace MainAPP.ViewModels;
 
 /// <summary>
 /// 新设备配置向导的纯交互状态（两步：基本信息 → PLC 地址）。
-/// 名称、目标节拍与四个 PLC 地址均为必填。
+/// 名称、目标产能与四个 PLC 地址均为必填。
 /// </summary>
 public partial class DeviceSetupWizardViewModel : ObservableObject
 {

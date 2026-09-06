@@ -445,13 +445,20 @@ private void OnRenderTick()
     // 换算公式单源：Kanban.Contracts.Metrics.SnapshotMetrics（与 WPF HomeViewModel 共用，禁止内联重复）
 
     private (string Text, string Class) Status
-        => SelectedSnapshot?.Status switch
+    {
+        get
         {
-            DeviceStatus.Running => (L.T("Status_Running"), "run"),
-            DeviceStatus.Alarm => (L.T("Status_Alarm"), "alarm"),
-            DeviceStatus.Paused => (L.T("Status_Paused"), "paused"),
-            _ => (L.T("Status_Offline"), "offline"),
-        };
+            var s = SelectedSnapshot;
+            if (s is null) return (L.T("Status_Offline"), "offline");
+            return s.Status switch
+            {
+                DeviceStatus.Running => (L.T("Status_Running"), "run"),
+                DeviceStatus.Alarm => (L.T("Status_Alarm"), "alarm"),
+                DeviceStatus.Paused => (L.T("Status_Paused"), "paused"),
+                _ => (L.T(DeviceStatusLocKeys.For(DeviceStatus.Offline, s.OfflineCause)), "offline"),
+            };
+        }
+    }
 
     private string WoStatusText => CurrentWorkOrder?.Status switch
     {

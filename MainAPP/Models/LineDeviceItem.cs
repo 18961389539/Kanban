@@ -28,25 +28,25 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public Device Device { get; }
     public DeviceRuntime Runtime { get; }
 
-    /// <summary>运行期间平均节拍（秒/件），与主页实际节拍同源；数据不足时为 0。</summary>
+    /// <summary>运行期间平均周期（秒/件），与主页实际周期同源；数据不足时为 0。</summary>
     public double ActualCycleSec => RealCycleSec;
 
-    /// <summary>目标节拍（秒/件）= 3600 / 目标产能（件/小时）。</summary>
+    /// <summary>目标周期（秒/件）= 3600 / 目标产能（件/小时）。</summary>
     public double TargetCycleSec => SnapshotMetrics.CycleSeconds(Runtime.TargetCycle);
 
     /// <summary>
-    /// 运行期间平均节拍（秒/件）。用产量/运行时长换算，不经性能率 100% 封顶，
+    /// 运行期间平均周期（秒/件）。用产量/运行时长换算，不经性能率 100% 封顶，
     /// 超产时可以快于目标。
     /// </summary>
     public double RealCycleSec => SnapshotMetrics.AverageCycleSeconds(
         Runtime.RunTime, Runtime.TotalOkProduction, Runtime.TotalNgProduction);
 
-    /// <summary>平均节拍对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
+    /// <summary>平均周期对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
     public string CycleText => RealCycleSec > 0 && TargetCycleSec > 0
         ? $"{RealCycleSec:0.0}/{TargetCycleSec:0.0}s"
         : "—";
 
-    /// <summary>平均节拍是否慢于目标（用于节拍对比红色警示）。</summary>
+    /// <summary>平均周期是否慢于目标（用于周期对比红色警示）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && RealCycleSec > TargetCycleSec;
 
     /// <summary>总产量 = OK + NG。</summary>

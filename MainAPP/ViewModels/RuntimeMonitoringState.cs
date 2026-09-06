@@ -9,14 +9,8 @@ namespace MainAPP.ViewModels;
 
 internal static class RuntimeDeviceStatusText
 {
-    public static string Format(int statusWord) => (DeviceStatusWord)statusWord switch
-    {
-        DeviceStatusWord.Running => Strings.Status_Running,
-        DeviceStatusWord.Alarm => Strings.Status_Alarm,
-        DeviceStatusWord.Standby => Strings.Status_Paused,
-        DeviceStatusWord.Offline => Strings.Status_Offline,
-        _ => string.Format(Strings.F164, statusWord),
-    };
+    public static string Format(int statusWord, int offlineCause = 0)
+        => HistoryQueryHelper.GetStateText(statusWord, offlineCause);
 }
 
 internal sealed class PollingTrendBuffer

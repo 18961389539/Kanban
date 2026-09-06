@@ -51,6 +51,18 @@
   <data name="Status_Offline" xml:space="preserve">
     <value>Offline</value>
   </data>
+  <data name="Status_Offline_PlcReported" xml:space="preserve">
+    <value>Offline (PLC)</value>
+  </data>
+  <data name="Status_Offline_CommsLost" xml:space="preserve">
+    <value>Offline (comunicação)</value>
+  </data>
+  <data name="Status_Offline_AcquisitionStopped" xml:space="preserve">
+    <value>Offline (coleta parada)</value>
+  </data>
+  <data name="Status_Offline_GapFilled" xml:space="preserve">
+    <value>Offline (lacuna de coleta)</value>
+  </data>
   <data name="Status_Running" xml:space="preserve">
     <value>Em execução</value>
   </data>
@@ -355,7 +367,7 @@
     <value>Alarme</value>
   </data>
   <data name="K017" xml:space="preserve">
-    <value>Ciclo alvo</value>
+    <value>Tempo de ciclo alvo</value>
   </data>
   <data name="K018" xml:space="preserve">
     <value>Nome do alarme</value>
@@ -454,7 +466,7 @@
     <value>Ordem de produção atual</value>
   </data>
   <data name="K050" xml:space="preserve">
-    <value>Ciclo real</value>
+    <value>Tempo de ciclo real</value>
   </data>
   <data name="K051" xml:space="preserve">
     <value>Sem dados de produção</value>
@@ -757,19 +769,19 @@
     <value>Sem ordem de produção ativa</value>
   </data>
   <data name="K157" xml:space="preserve">
-    <value>Comparação de ciclo</value>
+    <value>Comparação de capacidade</value>
   </data>
   <data name="K158" xml:space="preserve">
     <value>Diferença</value>
   </data>
   <data name="K159" xml:space="preserve">
-    <value>Teórico/Real</value>
+    <value>Previsto (run)/real</value>
   </data>
   <data name="K160" xml:space="preserve">
     <value>Detalhamento do OEE</value>
   </data>
   <data name="K161" xml:space="preserve">
-    <value>Distribuição de duração por estado</value>
+    <value>Duração por estado (incl. offline)</value>
   </data>
   <data name="K162" xml:space="preserve">
     <value>Ver histórico</value>
@@ -2674,7 +2686,7 @@
     <value>A taxa de qualidade é {0:P1}, {1} a meta de {2:P0}</value>
   </data>
   <data name="F195" xml:space="preserve">
-    <value>Anomalia de takt: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%</value>
+    <value>Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%</value>
   </data>
   <data name="F196" xml:space="preserve">
     <value>Disparado às {0:HH:mm:ss} · {1}</value>
@@ -3436,7 +3448,7 @@
     <value>Gráfico de análise de paradas</value>
   </data>
   <data name="M201" xml:space="preserve">
-    <value>Gráfico de comparação de ciclo</value>
+    <value>Gráfico de indicadores OEE</value>
   </data>
   <data name="M202" xml:space="preserve">
     <value>Porcentagem</value>
@@ -3739,13 +3751,13 @@
     <value>Velocidade em tempo real (pçs/h)</value>
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
-    <value>Ciclo alvo</value>
+    <value>Tempo de ciclo alvo</value>
   </data>
   <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
     <value>Capacidade alvo</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
-    <value>Ciclo real</value>
+    <value>Tempo de ciclo real</value>
   </data>
   <data name="Web_Lbl_TotalOutput" xml:space="preserve">
     <value>Produção total</value>
@@ -4048,7 +4060,7 @@
     <value>Total</value>
   </data>
   <data name="K592" xml:space="preserve">
-    <value>Ciclo</value>
+    <value>Tempo de ciclo</value>
   </data>
   <data name="K593" xml:space="preserve">
     <value>Execução</value>
@@ -4918,7 +4930,7 @@
     <value>Dados de produção ou alarmes insuficientes no período para gerar conclusões</value>
   </data>
   <data name="Web_Rv_HealthLowOutput" xml:space="preserve">
-    <value>Anomalia de ciclo: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%</value>
+    <value>Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%</value>
   </data>
   <data name="Web_Rv_HealthAlarmSpike" xml:space="preserve">
     <value>Surto de alarmes: {0} agora vs {1} no período anterior</value>
@@ -4933,7 +4945,7 @@
     <value>Nenhum problema de saúde encontrado</value>
   </data>
   <data name="Web_Rv_OutputAchievement" xml:space="preserve">
-    <value>Realização do ciclo</value>
+    <value>Realização da capacidade</value>
   </data>
   <data name="Web_Rv_LongestDowntime" xml:space="preserve">
     <value>Maior parada</value>
@@ -5017,7 +5029,7 @@
     <value>Por OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>Ciclo médio (real/alvo)</value>
+    <value>Tempo de ciclo médio (real/alvo)</value>
   </data>
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>Ritmo de OK (OK/previsto)</value>
@@ -5032,10 +5044,10 @@
     <value>Aplicar a todos os dispositivos</value>
   </data>
   <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
-    <value>Aplicar a todos os dispositivos</value>
+    <value>Confirmar alteração da capacidade alvo</value>
   </data>
   <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
-    <value>Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina.</value>
+    <value>Isso definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora e substituirá a configuração atual. Esse valor entra no cálculo de performance OEE e só será salvo após a confirmação.</value>
   </data>
   <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
     <value>A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora</value>
@@ -6604,5 +6616,38 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Status_Idle" xml:space="preserve">
     <value>Ocioso</value>
+  </data>
+  <data name="Hh_BoardTitle" xml:space="preserve">
+    <value>Plano hora a hora</value>
+  </data>
+  <data name="Hh_BoardMeta" xml:space="preserve">
+    <value>{0} · {1} {2}–{3} · nominal {4} pçs/h</value>
+  </data>
+  <data name="Hh_Cumulative" xml:space="preserve">
+    <value>OK acumulado {0} / previsto {1} · {2:F1}%</value>
+  </data>
+  <data name="Hh_Plan" xml:space="preserve">
+    <value>Plano {0}</value>
+  </data>
+  <data name="Hh_Hit" xml:space="preserve">
+    <value>Na meta</value>
+  </data>
+  <data name="Hh_Miss" xml:space="preserve">
+    <value>Abaixo do plano</value>
+  </data>
+  <data name="Hh_OffShift" xml:space="preserve">
+    <value>Fora do turno</value>
+  </data>
+  <data name="Hh_OffShiftHint" xml:space="preserve">
+    <value>O plano horário compara a capacidade nominal com o OK de cada hora do turno. Configure os turnos em Configurações.</value>
+  </data>
+  <data name="Hh_BoardHint" xml:space="preserve">
+    <value>Previsto do turno inclui paradas e conta só OK. O previsto da run abaixo usa tempo Running e OK+NG.</value>
+  </data>
+  <data name="Dd_OeeOutputHint" xml:space="preserve">
+    <value>Previsto da run = capacidade × horas em execução (OK+NG). Exclui alarme/espera/offline.</value>
+  </data>
+  <data name="Validator_AddressReuseInDevice" xml:space="preserve">
+    <value>Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}</value>
   </data>
 </root>

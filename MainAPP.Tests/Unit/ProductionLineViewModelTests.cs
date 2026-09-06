@@ -170,7 +170,11 @@ public class ProductionLineViewModelTests
             Assert.Equal(40, repo.RuntimeMap["b"].TargetCycle);
             Assert.Equal(40, vm.LineDevices[0].Runtime.TargetCycle);
             Assert.Equal(40, vm.LineDevices[1].Runtime.TargetCycle);
-            Assert.Single(dialog.ShowCalls);
+            var prompt = Assert.Single(dialog.ShowCalls);
+            Assert.Equal(Strings.Ln_ApplyTargetCycleTitle, prompt.Title);
+            Assert.Equal(MessageBoxButton.YesNo, prompt.Buttons);
+            Assert.Equal(MessageBoxImage.Warning, prompt.Icon);
+            Assert.Equal(string.Format(Strings.Ln_ApplyTargetCycleConfirm, 2, 40), prompt.Message);
             Assert.Equal(string.Format(Strings.Ln_ApplyTargetCycleDone, 2, 40), Assert.Single(dialog.Success));
 
             var verify = new DeviceRepository(settings);
@@ -209,6 +213,31 @@ public class ProductionLineViewModelTests
             Assert.Equal(200, repo.RuntimeMap["b"].TargetCycle);
             Assert.Single(dialog.ShowCalls);
             Assert.Empty(dialog.Success);
+            Assert.False(File.Exists(repo.FilePath));
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ApplyBatchTargetCycle_WhenDialogMissing_LeavesValuesUnchanged()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            var a = new Device { Id = "a", Name = "A", TargetCycle = 100 };
+            repo.Devices.Add(a);
+            repo.AddRuntime(a);
+
+            using var vm = new ProductionLineViewModel(repo, new DeviceSelectionService(), appSettings: settings);
+            vm.BatchTargetPcsPerHour = 40;
+
+            await vm.ApplyBatchTargetCycleCommand.ExecuteAsync(null);
+
+            Assert.Equal(100, a.TargetCycle);
+            Assert.Equal(100, repo.RuntimeMap["a"].TargetCycle);
             Assert.False(File.Exists(repo.FilePath));
         }
         finally

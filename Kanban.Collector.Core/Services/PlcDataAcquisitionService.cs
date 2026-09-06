@@ -6,6 +6,7 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
 using Kanban.Collector.Core.Entities;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 
 namespace Kanban.Collector.Core.Services;
 
@@ -58,6 +59,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     private readonly IPlcRuntimeSessionManager? _runtimeSessions;
     private readonly AppSettings _appSettings;
     private readonly IProductionHistoryWriter _productionWriter;
+    private readonly IProductionHistoryService? _productionHistory;
     private readonly IAlarmHistoryService _alarmHistory;
     private readonly IStatusTransitionHistoryService _statusHistory;
     private readonly DeviceRepository _deviceRepository;
@@ -260,6 +262,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         _runtimeSessions = runtimeSessions;
         _appSettings = appSettings;
         _productionWriter = productionWriter;
+        _productionHistory = productionWriter as IProductionHistoryService;
         _alarmHistory = alarmHistory;
         _statusHistory = statusHistory;
         _deviceRepository = deviceRepository;
@@ -405,7 +408,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
             // 循环退出后只剩本线程写运行时状态，标记离线即为单线程、无竞态。
             // 超时未退出时不标记（此时旧循环仍在写，标记反而引入竞态），由上文告警兜底暴露。
             foreach (var device in _deviceRepository.GetDevicesSnapshot())
-                LogOfflineTransition(device);
+                LogOfflineTransition(device, OfflineCause.AcquisitionStopped);
         }
 
         // 仅在任务确实已完成时安全释放 cts
@@ -496,6 +499,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     {
         _pollingStopwatch.Start();
         _diagnostics.Start();
+        // 首轮刷新前补空窗：必须在第一次读 PLC 之前完成，避免 0→运行 写在离线边沿之前。
+        SealAcquisitionDowntimeGaps(DateTime.Now);
         var loopCount = 0;
         while (!ct.IsCancellationRequested)
         {
@@ -654,8 +659,7 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
                     // 历史回溯时计入 OfflineTime 统计，不参与 OEE 运行/报警/待机累计。
                     foreach (var device in _deviceRepository.GetDevicesSnapshot())
                     {
-                        LogOfflineTransition(device);
-                        GetRuntime(device)?.StatusWord = (int)DeviceStatus.Offline;
+                        LogOfflineTransition(device, OfflineCause.CommsLost);
                     }
 
                     // PLC 断线时清除所有设备的活跃报警，避免遗留报警状态持续显示到 UI
@@ -963,7 +967,9 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
         var result = _scanPipeline.ReadInt32Value(device, addr);
         if (result.IsSuccess)
         {
-            runtime.StatusWord = result.Content;
+            runtime.ApplyLiveStatus(
+                result.Content,
+                result.Content == (int)DeviceStatus.Offline ? OfflineCause.PlcReported : OfflineCause.None);
             _statusTracker.ReadAndUpdate(device, result.Content, _statusHistory, GetCurrentShiftName(), _logger, dto => StatusEdgeDetected?.Invoke(dto));
             return ReadResult.Success;
         }
@@ -977,9 +983,64 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 写入后将 _prevStatusWords 置 0，重连后真实状态读取会自然写入 0→真实状态 转换，不会重复刷写。
     /// 若设备已处于离线(0)或从未有过状态记录，则跳过。
     /// </summary>
-    internal void LogOfflineTransition(Models.Device device)
-        => _statusTracker.LogOfflineTransition(device, _statusHistory, GetCurrentShiftName(), _logger, dto => StatusEdgeDetected?.Invoke(dto));
+    internal void LogOfflineTransition(Models.Device device, OfflineCause cause)
+    {
+        _statusTracker.LogOfflineTransition(
+            device, _statusHistory, GetCurrentShiftName(), _logger, cause, dto => StatusEdgeDetected?.Invoke(dto));
+        GetRuntime(device)?.ApplyLiveStatus((int)DeviceStatus.Offline, cause);
+    }
 
+    /// <summary>
+    /// 进程被杀 / 断电 / Stop 超时未写离线时：把最后一次状态或产量心跳到 <paramref name="now"/> 的空窗补成 Offline。
+    /// EventTime 落在最后心跳，而不是启动时刻，这样重建时长时空窗不会被续成运行。
+    /// 不广播实时状态事件（这是补历史边沿，不是现场刚掉线）。
+    /// </summary>
+    internal void SealAcquisitionDowntimeGaps(DateTime now)
+    {
+        var minGap = TimeSpan.FromMilliseconds(Math.Max(
+            AcquisitionDowntimeGapSealer.DefaultMinGap.TotalMilliseconds,
+            _appSettings.PollingIntervalMs * 2));
+
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            var lastStatus = _statusHistory.GetLatestStatusBefore(device.Id, now.AddSeconds(1));
+            ProductionLog? lastProduction = null;
+            if (_productionHistory != null)
+            {
+                lastProduction = _productionHistory.QueryLatestProductionLog(
+                    now.AddDays(-365), now.AddMinutes(1), device.Id, shiftName: null);
+            }
+
+            if (!AcquisitionDowntimeGapSealer.TryResolve(
+                    lastStatus, lastProduction, now, minGap,
+                    out var previousState, out var sealAt, out var shiftName))
+            {
+                if (lastStatus != null && lastStatus.CurrentState is not (
+                        (int)DeviceStatus.Running or (int)DeviceStatus.Alarm or (int)DeviceStatus.Paused))
+                    _statusTracker.RememberStatus(device.Id, (int)DeviceStatus.Offline);
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(shiftName))
+                shiftName = GetCurrentShiftName();
+
+            var writeOk = _statusHistory.LogStatusTransition(
+                device.Id, device.Name, previousState, (int)DeviceStatus.Offline, sealAt, shiftName,
+                (int)OfflineCause.GapFilled);
+            if (!writeOk)
+            {
+                _logger.LogWarning(
+                    "设备 {Device} 采集空窗补离线失败（{Prev}→离线 @ {At:yyyy-MM-dd HH:mm:ss}），本次不改内存状态",
+                    device.Name, previousState, sealAt);
+                continue;
+            }
+
+            _statusTracker.RememberStatus(device.Id, (int)DeviceStatus.Offline);
+            _logger.LogInformation(
+                "设备 {Device} 采集空窗已补离线：{Prev}→离线，心跳 {At:yyyy-MM-dd HH:mm:ss}，空窗 {Gap:F0}s",
+                device.Name, previousState, sealAt, (now - sealAt).TotalSeconds);
+        }
+    }
 
     /// <summary>
     /// 记录本轮采集成功的设备的当前产量快照到历史数据库。
@@ -1182,6 +1243,8 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     /// 首次启动时从 StatusTransitions 表重建本班次的 RunTime/AlarmTime/PausedTime。
     /// 与运行时 AccumulateOeeTime 使用同一口径（StatusWord 状态字），保证重启前后可用率/性能率可比，
     /// 并消除旧实现中"多个活跃报警时长求和""报警位≠状态字"两类口径偏差（见 #3/#4 业务修正）。
+    /// 重建前由 <see cref="SealAcquisitionDowntimeGaps"/> 把采集空窗补成离线，避免进程被杀后
+    /// 把关机前的运行态延续到本次启动。
     /// 重建范围根据历史完整性确定：
     /// - 班次前有记录（正常崩溃重启）：从班次起始时刻累计，初始状态为班次前最后状态
     /// - 班次前无记录但班次内有记录（清理数据后启动）：从第一条 transition 开始累计，避免从班次起始虚高

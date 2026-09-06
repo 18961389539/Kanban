@@ -9,6 +9,7 @@ using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using Xunit;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
@@ -612,11 +613,12 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         Assert.Single(_history.StatusTransitions);
 
         // 触发离线转换
-        _service.LogOfflineTransition(device);
+        _service.LogOfflineTransition(device, OfflineCause.CommsLost);
 
         Assert.Equal(2, _history.StatusTransitions.Count);
         Assert.Equal((int)DeviceStatus.Running,_history.StatusTransitions[1].PreviousState);
         Assert.Equal(0, _history.StatusTransitions[1].CurrentState);
+        Assert.Equal((int)OfflineCause.CommsLost, _history.StatusTransitions[1].OfflineCause);
         Assert.Equal(0, _service.PrevStatusWordsForTest[device.Id]);
     }
 
@@ -626,8 +628,114 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         var device = AddDevice();
 
         // 设备已是离线状态（_prevStatusWords=0）：不应重复写入
-        _service.LogOfflineTransition(device);
+        _service.LogOfflineTransition(device, OfflineCause.AcquisitionStopped);
         Assert.Empty(_history.StatusTransitions);
+    }
+
+    [Fact]
+    public void SealAcquisitionDowntimeGaps_LastRunningHoursAgo_WritesOfflineAtHeartbeat()
+    {
+        var device = AddDevice();
+        var now = DateTime.Now;
+        var lastSeen = now.AddHours(-4);
+        _history.StatusTransitions.Add(new StatusTransitionRecord
+        {
+            DeviceId = device.Id,
+            DeviceName = device.Name,
+            PreviousState = 0,
+            CurrentState = (int)DeviceStatus.Running,
+            EventTime = lastSeen,
+            ShiftName = "白班",
+        });
+
+        _service.SealAcquisitionDowntimeGapsForTest(now);
+
+        Assert.Equal(2, _history.StatusTransitions.Count);
+        var seal = _history.StatusTransitions[1];
+        Assert.Equal((int)DeviceStatus.Running, seal.PreviousState);
+        Assert.Equal((int)DeviceStatus.Offline, seal.CurrentState);
+        Assert.Equal((int)OfflineCause.GapFilled, seal.OfflineCause);
+        Assert.Equal(lastSeen.AddTicks(1), seal.EventTime);
+        Assert.Equal(0, _service.PrevStatusWordsForTest[device.Id]);
+
+        var (run, _, _, offline) = OeeCalculator.CalculateStateDurations(
+            _history.StatusTransitions.OrderBy(t => t.EventTime).ToList(), lastSeen, now, initialState: 1);
+        Assert.InRange(run, 0, 0.001);
+        Assert.InRange(offline, TimeSpan.FromHours(3.99).TotalSeconds, TimeSpan.FromHours(4.01).TotalSeconds);
+    }
+
+    [Fact]
+    public void SealAcquisitionDowntimeGaps_UsesLaterProductionSnapshotAsHeartbeat()
+    {
+        var device = AddDevice();
+        var now = DateTime.Now;
+        _history.StatusTransitions.Add(new StatusTransitionRecord
+        {
+            DeviceId = device.Id,
+            DeviceName = device.Name,
+            PreviousState = 0,
+            CurrentState = (int)DeviceStatus.Running,
+            EventTime = now.AddHours(-8),
+            ShiftName = "白班",
+        });
+        _history.ProductionLogs.Add(new ProductionLog
+        {
+            DeviceId = device.Id,
+            DeviceName = device.Name,
+            OkProduction = 40,
+            StatusWord = (int)DeviceStatus.Running,
+            Timestamp = now.AddHours(-3),
+            ShiftName = "白班",
+        });
+
+        _service.SealAcquisitionDowntimeGapsForTest(now);
+
+        var seal = Assert.Single(_history.StatusTransitions, t => t.CurrentState == 0);
+        Assert.Equal(now.AddHours(-3).AddTicks(1), seal.EventTime);
+        Assert.Equal((int)DeviceStatus.Running, seal.PreviousState);
+    }
+
+    [Fact]
+    public void SealAcquisitionDowntimeGaps_AlreadyOffline_DoesNotWriteAgain()
+    {
+        var device = AddDevice();
+        var now = DateTime.Now;
+        _history.StatusTransitions.Add(new StatusTransitionRecord
+        {
+            DeviceId = device.Id,
+            DeviceName = device.Name,
+            PreviousState = (int)DeviceStatus.Running,
+            CurrentState = (int)DeviceStatus.Offline,
+            EventTime = now.AddHours(-2),
+            ShiftName = "白班",
+        });
+
+        _service.SealAcquisitionDowntimeGapsForTest(now);
+
+        Assert.Single(_history.StatusTransitions);
+        Assert.Equal(0, _service.PrevStatusWordsForTest[device.Id]);
+    }
+
+    [Fact]
+    public void SealAcquisitionDowntimeGaps_IsIdempotent()
+    {
+        var device = AddDevice();
+        var now = DateTime.Now;
+        _history.StatusTransitions.Add(new StatusTransitionRecord
+        {
+            DeviceId = device.Id,
+            DeviceName = device.Name,
+            PreviousState = 0,
+            CurrentState = (int)DeviceStatus.Running,
+            EventTime = now.AddHours(-2),
+            ShiftName = "白班",
+        });
+
+        _service.SealAcquisitionDowntimeGapsForTest(now);
+        _service.SealAcquisitionDowntimeGapsForTest(now);
+
+        Assert.Equal(2, _history.StatusTransitions.Count);
+        Assert.Equal(1, _history.StatusTransitions.Count(t => t.CurrentState == 0));
     }
 
     // ════════════════════════════════════════════════════════════════

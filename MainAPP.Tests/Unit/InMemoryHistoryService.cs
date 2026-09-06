@@ -278,7 +278,7 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
 
     public bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
-        string? shiftName = null)
+        string? shiftName = null, int offlineCause = 0)
     {
         if (ShouldFailStatusTransitionWrite) return false;
         var rec = new StatusTransitionRecord
@@ -288,7 +288,8 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
             PreviousState = previousState,
             CurrentState = currentState,
             EventTime = eventTime,
-            ShiftName = shiftName ?? string.Empty
+            ShiftName = shiftName ?? string.Empty,
+            OfflineCause = currentState == 0 ? offlineCause : 0
         };
         lock (_lock) StatusTransitions.Add(rec);
         return true;

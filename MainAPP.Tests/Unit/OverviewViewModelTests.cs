@@ -783,7 +783,7 @@ public class OverviewViewModelTests
                 Assert.Equal(3, vm.TopAlarms[0].TriggerCount);
                 Assert.Equal(2, vm.TopAlarms[0].RepeatCount);
                 Assert.True(vm.TopAlarms[0].AverageIntervalMinutes > 0);
-                Assert.Contains(vm.HealthIssues, issue => issue.StartsWith("节拍异常", StringComparison.Ordinal));
+                Assert.Contains(vm.HealthIssues, issue => issue.StartsWith("产能偏低", StringComparison.Ordinal));
                 Assert.True(vm.HealthScore < 100);
             }
             finally { StopTimer(vm); }

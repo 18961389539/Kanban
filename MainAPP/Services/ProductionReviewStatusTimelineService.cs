@@ -1,9 +1,8 @@
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using MainAPP.Models;
-using MainAPP.Resources;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Services;
 
@@ -51,15 +50,17 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
         var segments = new List<ReviewStatusSegmentData>();
         var cursor = from;
         var state = initialState;
+        var offlineCause = 0;
         int alarmCursor = 0;
         foreach (var transition in ordered)
         {
-            AppendOrMerge(segments, orderedAlarms, sortedLogs, state, cursor, transition.EventTime, ref alarmCursor);
+            AppendOrMerge(segments, orderedAlarms, sortedLogs, state, offlineCause, cursor, transition.EventTime, ref alarmCursor);
             cursor = transition.EventTime;
             state = transition.CurrentState;
+            offlineCause = transition.OfflineCause;
         }
         if (to > cursor)
-            AppendOrMerge(segments, orderedAlarms, sortedLogs, state, cursor, to, ref alarmCursor);
+            AppendOrMerge(segments, orderedAlarms, sortedLogs, state, offlineCause, cursor, to, ref alarmCursor);
         return segments;
     }
 
@@ -72,6 +73,7 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
         IReadOnlyList<AlarmEventRecord> orderedAlarms,
         IReadOnlyList<ProductionLog> sortedLogs,
         int state,
+        int offlineCause,
         DateTime start,
         DateTime end,
         ref int alarmCursor)
@@ -81,15 +83,16 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
             if (segments.Count > 0)
             {
                 var prev = segments[^1];
-                segments[^1] = CreateSegment(prev.StatusWord, prev.Start, end, sortedLogs, orderedAlarms, ref alarmCursor);
+                segments[^1] = CreateSegment(prev.StatusWord, offlineCause, prev.Start, end, sortedLogs, orderedAlarms, ref alarmCursor);
             }
             return;
         }
-        segments.Add(CreateSegment(state, start, end, sortedLogs, orderedAlarms, ref alarmCursor));
+        segments.Add(CreateSegment(state, offlineCause, start, end, sortedLogs, orderedAlarms, ref alarmCursor));
     }
 
     private static ReviewStatusSegmentData CreateSegment(
         int state,
+        int offlineCause,
         DateTime start,
         DateTime end,
         IReadOnlyList<ProductionLog> sortedLogs,
@@ -105,14 +108,7 @@ public sealed class ProductionReviewStatusTimelineService : IProductionReviewSta
                 alarmCount++;
             alarmCursor++;
         }
-        var statusText = state switch
-        {
-            (int)DeviceStatus.Offline => Strings.Status_Offline,
-            (int)DeviceStatus.Running => Strings.Status_Running,
-            (int)DeviceStatus.Paused => Strings.Status_Paused,
-            (int)DeviceStatus.Alarm => Strings.Status_Alarm,
-            _ => Strings.Status_Unknown,
-        };
+        var statusText = HistoryQueryHelper.GetStateText(state, offlineCause);
         return new ReviewStatusSegmentData(
             start,
             end,

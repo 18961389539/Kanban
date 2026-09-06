@@ -173,8 +173,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _activeStateStore.QueryActive(deviceId);
 
     public bool LogStatusTransition(string deviceId, string deviceName, int previousState, int currentState,
-        DateTime eventTime, string? shiftName = null)
-        => _statusStore.LogStatusTransition(deviceId, deviceName, previousState, currentState, eventTime, shiftName);
+        DateTime eventTime, string? shiftName = null, int offlineCause = 0)
+        => _statusStore.LogStatusTransition(deviceId, deviceName, previousState, currentState, eventTime, shiftName, offlineCause);
     public List<StatusTransitionRecord> QueryStatusTransitions(string deviceId, DateTime from, DateTime to, string? shiftName = null)
         => _statusStore.QueryStatusTransitions(deviceId, from, to, shiftName);
     public List<StatusTransitionRecord> QueryStatusTransitionsStrict(string deviceId, DateTime from, DateTime to, string? shiftName = null)

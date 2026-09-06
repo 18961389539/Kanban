@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Services;
+using OfflineCauseKind = Kanban.Contracts.Enums.OfflineCause;
 
 namespace Kanban.Collector.Core.Models;
 
@@ -35,6 +36,12 @@ public partial class DeviceRuntime : ObservableObject
 
     [ObservableProperty]
     private int _statusWord;
+
+    /// <summary>
+    /// 当前离线原因。StatusWord 非 0 时为 <see cref="OfflineCauseKind.None"/>。
+    /// </summary>
+    [ObservableProperty]
+    private OfflineCauseKind _offlineCause;
 
     // ──────────── 会话累计值 ────────────
 
@@ -119,16 +126,29 @@ public partial class DeviceRuntime : ObservableObject
     public void UpdateFromCollector(
         int okProduction, int ngProduction, int statusWord,
         int totalOkProduction, int totalNgProduction,
-        double runTime, double alarmTime, double pausedTime, double offlineTime)
+        double runTime, double alarmTime, double pausedTime, double offlineTime,
+        OfflineCauseKind offlineCause = OfflineCauseKind.None)
     {
         OkProduction = okProduction;
         NgProduction = ngProduction;
         StatusWord = statusWord;
+        OfflineCause = statusWord is (int)DeviceStatus.Running or (int)DeviceStatus.Alarm or (int)DeviceStatus.Paused
+            ? OfflineCauseKind.None
+            : offlineCause;
         TotalOkProduction = totalOkProduction;
         TotalNgProduction = totalNgProduction;
         RunTime = runTime;
         AlarmTime = alarmTime;
         PausedTime = pausedTime;
         OfflineTime = offlineTime;
+    }
+
+    /// <summary>采集侧写入状态字时同步离线原因（运行/报警/待机清成 None）。</summary>
+    public void ApplyLiveStatus(int statusWord, OfflineCauseKind causeWhenOffline)
+    {
+        StatusWord = statusWord;
+        OfflineCause = statusWord is (int)DeviceStatus.Running or (int)DeviceStatus.Alarm or (int)DeviceStatus.Paused
+            ? OfflineCauseKind.None
+            : causeWhenOffline;
     }
 }

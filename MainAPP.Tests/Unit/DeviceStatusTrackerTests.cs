@@ -3,6 +3,7 @@ using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -92,6 +93,9 @@ public class DeviceStatusTrackerTests
         Assert.Equal(2, history.StatusTransitions.Count);
         Assert.Equal(from, history.StatusTransitions[1].PreviousState);
         Assert.Equal(to, history.StatusTransitions[1].CurrentState);
+        Assert.Equal(
+            to == (int)DeviceStatus.Offline ? (int)OfflineCause.PlcReported : 0,
+            history.StatusTransitions[1].OfflineCause);
     }
 
     // ──────────── ReadAndUpdate：写失败重试 ────────────
@@ -151,11 +155,12 @@ public class DeviceStatusTrackerTests
         tracker.ReadAndUpdate(device, (int)DeviceStatus.Running, history, "白班", Logger);
 
         // 标记离线
-        tracker.LogOfflineTransition(device, history, "白班", Logger);
+        tracker.LogOfflineTransition(device, history, "白班", Logger, OfflineCause.CommsLost);
 
         Assert.Equal(2, history.StatusTransitions.Count);
         Assert.Equal((int)DeviceStatus.Running, history.StatusTransitions[1].PreviousState);
         Assert.Equal((int)DeviceStatus.Offline, history.StatusTransitions[1].CurrentState);
+        Assert.Equal((int)OfflineCause.CommsLost, history.StatusTransitions[1].OfflineCause);
         Assert.Equal((int)DeviceStatus.Offline, tracker.GetPrevStatusWordsSnapshot()[device.Id]);
     }
 
@@ -170,7 +175,7 @@ public class DeviceStatusTrackerTests
         tracker.ReadAndUpdate(device, (int)DeviceStatus.Offline, history, "白班", Logger);
         Assert.Single(history.StatusTransitions);
 
-        tracker.LogOfflineTransition(device, history, "白班", Logger);
+        tracker.LogOfflineTransition(device, history, "白班", Logger, OfflineCause.CommsLost);
 
         // 已离线，不应重复写入
         Assert.Single(history.StatusTransitions);
@@ -184,7 +189,7 @@ public class DeviceStatusTrackerTests
         var history = new InMemoryHistoryService();
 
         // 设备从未被读取过（_prevStatusWords 中无记录）
-        tracker.LogOfflineTransition(device, history, "白班", Logger);
+        tracker.LogOfflineTransition(device, history, "白班", Logger, OfflineCause.CommsLost);
 
         Assert.Empty(history.StatusTransitions);
     }
@@ -199,7 +204,7 @@ public class DeviceStatusTrackerTests
         tracker.ReadAndUpdate(device, (int)DeviceStatus.Running, history, "白班", Logger);
         history.ShouldFailStatusTransitionWrite = true;
 
-        tracker.LogOfflineTransition(device, history, "白班", Logger);
+        tracker.LogOfflineTransition(device, history, "白班", Logger, OfflineCause.CommsLost);
 
         // 写失败时 _prevStatusWords 不应被置 0
         Assert.Equal((int)DeviceStatus.Running, tracker.GetPrevStatusWordsSnapshot()[device.Id]);
@@ -214,7 +219,7 @@ public class DeviceStatusTrackerTests
 
         // 运行 → 离线
         tracker.ReadAndUpdate(device, (int)DeviceStatus.Running, history, "白班", Logger);
-        tracker.LogOfflineTransition(device, history, "白班", Logger);
+        tracker.LogOfflineTransition(device, history, "白班", Logger, OfflineCause.CommsLost);
         Assert.Equal(2, history.StatusTransitions.Count);
 
         // 重连后真实状态读取：0 → Running，不应重复刷写

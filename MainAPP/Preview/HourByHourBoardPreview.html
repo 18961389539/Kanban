@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>小时计划板 · 设备详情</title>
+<style>
+:root{
+  --bg:#0E1116; --card:#1A2029; --card-2:#212834; --border:#344052;
+  --text:#F1F5F9; --text-2:#B7C0CC; --text-3:#A7AFBC; --text-dis:#7F8A9B;
+  --primary:#378ADD; --primary-soft:#263040;
+  --danger:#F87171; --danger-soft:#3A2326;
+  --success:#34D399; --success-soft:#16352C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Microsoft YaHei","Segoe UI",sans-serif;font-size:14px;padding:20px;min-width:1280px}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.lead{color:var(--text-2);font-size:13px;line-height:1.6;margin-bottom:16px;max-width:1080px}
+.lead b{color:var(--text)}
+.place{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.place .box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.place .box.pick{border-color:var(--primary);background:var(--primary-soft)}
+.place .k{font-size:11px;color:var(--text-dis);font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+.place .t{font-size:15px;font-weight:700;margin-bottom:6px}
+.place .d{font-size:12px;color:var(--text-2);line-height:1.55}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-bottom:8px}
+.tag.main{background:var(--primary);color:#fff}
+.tag.no{background:var(--danger-soft);color:var(--danger)}
+.page{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px 18px 18px}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.topbar .ttl{font-size:18px;font-weight:700}
+.topbar .meta{color:var(--text-2);font-size:13px}
+.topbar .sp{flex:1}
+.hh{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.hh-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.hh-head .title{font-size:14px;font-weight:700}
+.hh-head .shift{color:var(--text-2);font-size:12px}
+.hh-head .sum{margin-left:auto;font-family:Consolas;font-size:13px}
+.hh-head .sum .ok{color:var(--success);font-weight:700}
+.hh-head .sum .bad{color:var(--danger);font-weight:700}
+.hours{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.hour{background:var(--card-2);border:1px solid var(--border);border-radius:8px;padding:8px 8px 10px;min-height:118px;display:flex;flex-direction:column}
+.hour .t{font-size:12px;color:var(--text-3);font-weight:700}
+.hour .nums{font-family:Consolas;font-size:16px;font-weight:700;margin:8px 0 4px}
+.hour .plan{font-size:11px;color:var(--text-dis)}
+.hour .why{margin-top:auto;font-size:11px;font-weight:700;padding:3px 6px;border-radius:4px;align-self:flex-start}
+.hour.hit{border-color:#1f6b52}
+.hour.hit .nums{color:var(--success)}
+.hour.miss{border-color:var(--danger);background:var(--danger-soft)}
+.hour.miss .nums{color:var(--danger)}
+.hour.now{outline:2px solid var(--primary);outline-offset:1px}
+.hour.future{opacity:.55}
+.why.none{background:transparent;color:var(--text-dis);font-weight:400;padding:0}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;opacity:.7}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.kpi .l{font-size:11px;color:var(--text-3)}
+.kpi .v{font-family:Consolas;font-size:18px;font-weight:700;margin-top:2px}
+.foot{margin-top:18px;font-size:12px;color:var(--text-dis);line-height:1.6}
+</style>
+</head>
+<body>
+  <h1>完整小时桶 · 设备详情</h1>
+  <p class="lead">
+    首页 1080p 已经顶满，不能再加一行完整小时桶。完整 8–12 格放在<strong>设备详情</strong>通栏：
+    计划 = 该机额定产能，实际 = 该小时 OK，当前小时按已过分钟折算应产。
+    首页和产线总览不铺整板。
+  </p>
+  <div class="place">
+    <div class="box pick">
+      <span class="tag main">完整小时桶</span>
+      <div class="k">PAGE</div>
+      <div class="t">设备详情</div>
+      <div class="d">KPI 与信息卡下方、三栏图表上方通栏。跟当前这台机走，夜班 12 格也够宽。</div>
+    </div>
+    <div class="box">
+      <span class="tag no">不铺整板</span>
+      <div class="k">PAGE</div>
+      <div class="t">首页</div>
+      <div class="d">2×3 卡已按 1080p 收过一刀。完整小时桶会顶出滚动条。</div>
+    </div>
+    <div class="box">
+      <span class="tag no">不铺整板</span>
+      <div class="k">PAGE</div>
+      <div class="t">产线总览</div>
+      <div class="d">继续一机一卡。不要铺 8 格，也不要整线加总。</div>
+    </div>
+  </div>
+  <div class="page">
+    <div class="topbar">
+      <span class="ttl">设备详情</span>
+      <span class="meta">焊接机 B · 报警</span>
+      <span class="sp"></span>
+      <span class="meta">早班 08:00 – 16:00 · 13:22</span>
+    </div>
+    <section class="hh">
+      <div class="hh-head">
+        <span class="title">本班小时计划</span>
+        <span class="shift">焊接机 B · 早班 08:00–16:00 · 额定 50 件/时</span>
+        <span class="sum">累计 OK <span class="ok">228</span> / 应产 250 · <span class="bad">91.2%</span></span>
+      </div>
+      <div class="hours" id="hours"></div>
+    </section>
+    <div class="kpis">
+      <div class="kpi"><div class="l">OEE 分解</div><div class="v">三环</div></div>
+      <div class="kpi"><div class="l">按小时产量</div><div class="v">8h / 24h 柱</div></div>
+      <div class="kpi"><div class="l">活跃报警</div><div class="v">列表</div></div>
+      <div class="kpi"><div class="l">最近事件</div><div class="v">列表</div></div>
+    </div>
+  </div>
+  <p class="foot">
+    口径：每小时计划 = 该机额定产能（件/时）；实际 = 该小时 OK。当前未结束小时按已过分钟折算应产。
+    未达标原因（故障 / 待料 / 换型 / 待机 / 其他）下一轮再接到这台设备上。
+  </p>
+<script>
+const hours = [
+  { t:"08–09", actual:52, plan:50, state:"hit" },
+  { t:"09–10", actual:50, plan:50, state:"hit" },
+  { t:"10–11", actual:28, plan:50, state:"miss" },
+  { t:"11–12", actual:51, plan:50, state:"hit" },
+  { t:"12–13", actual:29, plan:50, state:"miss" },
+  { t:"13–14", actual:18, plan:50, state:"now" },
+  { t:"14–15", actual:null, plan:50, state:"future" },
+  { t:"15–16", actual:null, plan:50, state:"future" },
+];
+document.getElementById("hours").innerHTML = hours.map(h=>{
+  const nums = h.actual==null ? "—" : h.actual;
+  const why = h.state==="future" ? "" :
+    (h.state==="miss" ? `<span class="why none">未达标</span>` :
+     (h.state==="hit" ? `<span class="why none">达标</span>` : `<span class="why none"></span>`));
+  return `<div class="hour ${h.state}">
+    <span class="t">${h.t}</span>
+    <span class="nums">${nums}</span>
+    <span class="plan">计划 ${h.plan}</span>
+    ${why}
+  </div>`;
+}).join("");
+</script>
+</body>
+</html>

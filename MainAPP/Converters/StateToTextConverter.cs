@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Windows.Data;
-using Kanban.Collector.Core.Models;
-using MainAPP.Models;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Converters;
 
@@ -13,17 +13,10 @@ public class StateToTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
+        if (value is StatusTransitionRecord rec)
+            return HistoryQueryHelper.GetStateText(rec.CurrentState, rec.OfflineCause);
         if (value is int state)
-        {
-            return state switch
-            {
-                (int)DeviceStatus.Offline => Strings.Status_Offline,
-                (int)DeviceStatus.Running => Strings.Status_Running,
-                (int)DeviceStatus.Alarm => Strings.Status_Alarm,
-                (int)DeviceStatus.Paused => Strings.Status_Paused,
-                _ => Strings.Status_Unknown
-            };
-        }
+            return HistoryQueryHelper.GetStateText(state);
         return Strings.Status_Unknown;
     }
 

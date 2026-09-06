@@ -253,12 +253,13 @@
     private string StateText(string deviceId)
     {
         var snap = Dashboard.GetSnapshot(deviceId);
-        return snap?.Status switch
+        if (snap is null) return L.T("Status_Offline");
+        return snap.Status switch
         {
             DeviceStatus.Running => L.T("Status_Running"),
             DeviceStatus.Alarm => L.T("Status_Alarm"),
             DeviceStatus.Paused => L.T("Status_Paused"),
-            _ => L.T("Status_Offline"),
+            _ => L.T(DeviceStatusLocKeys.For(DeviceStatus.Offline, snap.OfflineCause)),
         };
     }
 

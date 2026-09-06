@@ -2,6 +2,7 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 
 namespace Kanban.Collector.Core.Services;
 
@@ -68,8 +69,9 @@ internal sealed class DeviceStatusTracker
         // ── 锁外：DB 写入 ──
         var effectivePrev = hasPrev ? prevStatus : 0;
         var eventTime = System.DateTime.Now;
+        var offlineCause = newStatus == (int)DeviceStatus.Offline ? (int)OfflineCause.PlcReported : 0;
         var writeOk = historyService.LogStatusTransition(
-            device.Id, device.Name, effectivePrev, newStatus, eventTime, shiftName);
+            device.Id, device.Name, effectivePrev, newStatus, eventTime, shiftName, offlineCause);
         if (!writeOk)
         {
             logger.LogWarning("设备 {Device} 状态转换写入失败（{Prev}→{New}），_prevStatusWords 暂不更新", device.Name, effectivePrev, newStatus);
@@ -77,7 +79,7 @@ internal sealed class DeviceStatusTracker
         }
 
         logger.LogInformation("设备 {Device} 状态转换 {Prev}→{New}",
-            device.Name, GetStateText(effectivePrev), GetStateText(newStatus));
+            device.Name, GetStateText(effectivePrev), GetStateText(newStatus, (OfflineCause)offlineCause));
 
         // 状态边沿事件广播（修复 Remote 事件流缺口）：成功落库后推送。
         if (onStatusEdge != null)
@@ -90,6 +92,7 @@ internal sealed class DeviceStatusTracker
                     DeviceName = device.Name,
                     PreviousState = (Kanban.Contracts.Enums.DeviceStatus)effectivePrev,
                     CurrentState = (Kanban.Contracts.Enums.DeviceStatus)newStatus,
+                    OfflineCause = (OfflineCause)offlineCause,
                     EventTime = eventTime,
                     ShiftName = shiftName,
                 });
@@ -121,7 +124,8 @@ internal sealed class DeviceStatusTracker
     /// DB 写入移到锁外执行：锁内读取 prev 判断是否需要写离线转换，锁外执行 LogStatusTransition，
     /// 完成后再加锁更新 _prevStatusWords。避免持锁期间阻塞 UI 线程的 RemoveDevice。
     /// </remarks>
-    internal void LogOfflineTransition(Device device, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger, Action<StatusEventDto>? onStatusEdge = null)
+    /// <param name="cause">离线原因（通讯中断 / 采集停止）。PLC 报 0 走 <see cref="ReadAndUpdate"/>。</param>
+    internal void LogOfflineTransition(Device device, IStatusTransitionHistoryService historyService, string shiftName, ILogger logger, OfflineCause cause, Action<StatusEventDto>? onStatusEdge = null)
     {
         // ── 锁内：读取 prev 判断是否需要写离线转换 ──
         bool shouldWrite;
@@ -134,7 +138,9 @@ internal sealed class DeviceStatusTracker
         if (!shouldWrite) return;
 
         // ── 锁外：DB 写入 ──
-        var writeOk = historyService.LogStatusTransition(device.Id, device.Name, prev, 0, System.DateTime.Now, shiftName);
+        var eventTime = System.DateTime.Now;
+        var writeOk = historyService.LogStatusTransition(
+            device.Id, device.Name, prev, 0, eventTime, shiftName, (int)cause);
         if (!writeOk)
         {
             logger.LogWarning("设备 {Device} 离线状态转换写入失败，_prevStatusWords 暂不更新", device.Name);
@@ -152,7 +158,8 @@ internal sealed class DeviceStatusTracker
                     DeviceName = device.Name,
                     PreviousState = (Kanban.Contracts.Enums.DeviceStatus)prev,
                     CurrentState = Kanban.Contracts.Enums.DeviceStatus.Offline,
-                    EventTime = System.DateTime.Now,
+                    OfflineCause = cause,
+                    EventTime = eventTime,
                     ShiftName = shiftName,
                 });
             }
@@ -178,6 +185,16 @@ internal sealed class DeviceStatusTracker
             _prevStatusWords.Remove(deviceId);
     }
 
+    /// <summary>
+    /// 仅更新内存中的上次状态，不写库。采集空窗补离线后把跟踪器收成 0，
+    /// 避免同进程 Stop 超时后重启时仍以为设备在运行，漏写 离线→真实状态。
+    /// </summary>
+    internal void RememberStatus(string deviceId, int status)
+    {
+        lock (_lock)
+            _prevStatusWords[deviceId] = NormalizeStatus(status);
+    }
+
     /// <summary>班次切换时清空全部状态字记录。</summary>
     internal void ResetAll()
     {
@@ -189,12 +206,19 @@ internal sealed class DeviceStatusTracker
     /// 将状态字转换为可读文本，用于业务事件日志。
     /// 1=运行, 2=报警, 3=待机, 0/其他=离线
     /// </summary>
-    private static string GetStateText(int state) => state switch
+    private static string GetStateText(int state, OfflineCause cause = OfflineCause.None) => state switch
     {
         (int)DeviceStatus.Running => "运行",
         (int)DeviceStatus.Alarm => "报警",
         (int)DeviceStatus.Paused => "待机",
-        _ => "离线"
+        _ => cause switch
+        {
+            OfflineCause.PlcReported => "离线(PLC)",
+            OfflineCause.CommsLost => "离线(通讯中断)",
+            OfflineCause.AcquisitionStopped => "离线(采集停止)",
+            OfflineCause.GapFilled => "离线(采集空窗)",
+            _ => "离线"
+        }
     };
 
     /// <summary>

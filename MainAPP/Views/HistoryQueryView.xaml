@@ -547,7 +547,7 @@
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K037}" Binding="{Binding EventTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K002}" Binding="{Binding DeviceName}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K293}" Binding="{Binding PreviousState, Converter={StaticResource StateToTextConverter}}" />
-                                    <DataGridTextColumn Header="{x:Static resources:Strings.K294}" Binding="{Binding CurrentState, Converter={StaticResource StateToTextConverter}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.K294}" Binding="{Binding Converter={StaticResource StateToTextConverter}}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>

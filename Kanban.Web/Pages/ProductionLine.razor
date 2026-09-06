@@ -65,7 +65,7 @@
                     <div class="mon-card line-card">
                         <div class="dev-head">
                             <span class="dev-name">@d.DeviceName</span>
-                            <span class="status-badge @StateClass(d.Status)">@StateText(d.Status)</span>
+                            <span class="status-badge @StateClass(d.Status)">@StateText(d)</span>
                             @if (!string.IsNullOrEmpty(RecipeOf(d.DeviceId)))
                             {
                                 <span class="line-recipe">@RecipeOf(d.DeviceId)</span>
@@ -216,12 +216,12 @@
         return target > 0 && real > target;
     }
 
-    private static string StateText(DeviceStatus status) => status switch
+    private static string StateText(DeviceSnapshotDto d) => d.Status switch
     {
         DeviceStatus.Running => L.T("Status_Running"),
         DeviceStatus.Alarm => L.T("Status_Alarm"),
         DeviceStatus.Paused => L.T("Status_Paused"),
-        _ => L.T("Status_Offline"),
+        _ => L.T(DeviceStatusLocKeys.For(DeviceStatus.Offline, d.OfflineCause)),
     };
 
     private static string StateClass(DeviceStatus status) => status switch

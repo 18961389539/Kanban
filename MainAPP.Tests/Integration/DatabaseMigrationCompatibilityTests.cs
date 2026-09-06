@@ -109,7 +109,7 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
             using var query = connection.CreateCommand();
             query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
             // alarm_events.db 现含两次迁移（InitialSchema + AddActiveAlarmStates）
-            var expectedHistoryCount = databaseName == "alarm_events.db" ? 2L : 1L;
+            var expectedHistoryCount = databaseName == "alarm_events.db" || databaseName == "status_transitions.db" ? 2L : 1L;
             Assert.Equal(expectedHistoryCount, query.ExecuteScalar());
         }
 
@@ -157,6 +157,30 @@ public sealed class DatabaseMigrationCompatibilityTests : IDisposable
         }
         // 迁移基线已建立（老库走 legacy patch 补列，不一定记录新迁移 ID——由 ApplyWorkOrderLegacyPatch 幂等补列）
         query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20260731070847_InitialSchema'";
+        Assert.Equal(1L, query.ExecuteScalar());
+    }
+
+    [Fact]
+    public void EnsureCreatedAll_LegacyStatusTransitionDatabase_AddsOfflineCauseColumn()
+    {
+        _settings.EnsureDirectory();
+        var path = _settings.GetFilePath("status_transitions.db");
+        using (var connection = new SqliteConnection($"Data Source={path}"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "CREATE TABLE StatusTransitions (Id INTEGER PRIMARY KEY AUTOINCREMENT, DeviceId TEXT NOT NULL, DeviceName TEXT NOT NULL, PreviousState INTEGER NOT NULL, CurrentState INTEGER NOT NULL, EventTime TEXT NOT NULL, ShiftName TEXT NOT NULL); CREATE INDEX IX_StatusTransitions_EventTime ON StatusTransitions (EventTime); CREATE INDEX IX_StatusTransitions_DeviceId_EventTime ON StatusTransitions (DeviceId, EventTime); INSERT INTO StatusTransitions (DeviceId, DeviceName, PreviousState, CurrentState, EventTime, ShiftName) VALUES ('D1', '设备1', 1, 0, '2026-09-01 08:00:00', '白班');";
+            command.ExecuteNonQuery();
+        }
+
+        new DatabaseProvider(_settings).EnsureCreatedAll();
+
+        using var verify = new SqliteConnection($"Data Source={path}");
+        verify.Open();
+        using var query = verify.CreateCommand();
+        query.CommandText = "SELECT OfflineCause FROM StatusTransitions WHERE DeviceId = 'D1'";
+        Assert.Equal(0L, query.ExecuteScalar());
+        query.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = '20260731070839_InitialSchema'";
         Assert.Equal(1L, query.ExecuteScalar());
     }
 

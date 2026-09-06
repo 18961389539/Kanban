@@ -9,7 +9,7 @@ public sealed class StatusTransitionHistoryStore(DatabaseProvider db, ILogger<St
 {
     public bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
-        string? shiftName = null)
+        string? shiftName = null, int offlineCause = 0)
     {
         try
         {
@@ -21,7 +21,8 @@ public sealed class StatusTransitionHistoryStore(DatabaseProvider db, ILogger<St
                 PreviousState = previousState,
                 CurrentState = currentState,
                 EventTime = eventTime,
-                ShiftName = shiftName ?? string.Empty
+                ShiftName = shiftName ?? string.Empty,
+                OfflineCause = currentState == 0 ? offlineCause : 0
             });
             ctx.SaveChanges();
             return true;

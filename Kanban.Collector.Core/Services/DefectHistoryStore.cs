@@ -11,12 +11,14 @@ namespace Kanban.Collector.Core.Services;
 /// 缺陷历史快照存储。写入走 Channel + 后台批量落库（采集线程零阻塞，P1-9 性能修复 2026-09-01），
 /// 复盘页按时间范围读取。
 /// </summary>
-public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
+public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsyncDisposable
 {
     /// <summary>通道容量：正常速率（每 ~5s 一批、每批数十行）远不会触顶；极端溢出丢最旧保最新（快照型数据）。</summary>
     private const int ChannelCapacity = 8192;
     /// <summary>单批最大落库条数。</summary>
     private const int MaxBatchSize = 512;
+    /// <summary>停机时等待后台 flush 排空的超时（同步 Dispose 与 DisposeAsync 共用）。</summary>
+    private static readonly TimeSpan ShutdownFlushTimeout = TimeSpan.FromSeconds(5);
     private readonly DatabaseProvider _databaseProvider;
     private readonly Microsoft.Extensions.Logging.ILogger _logger;
     private readonly Channel<DefectSnapshotRecord> _channel;
@@ -177,17 +179,70 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable
         }
     }
 
+    /// <summary>
+    /// 异步释放：等待后台 flush 完成停机排空（<see cref="FlushLoopAsync"/> 末尾会把通道剩余快照全部落库）。
+    /// 审查修复 2026-09-06（P1-4）：此前本类只实现 <see cref="IDisposable"/>，
+    /// 而宿主关窗走 <c>IHost.DisposeAsync()</c> —— DI 容器对仅有同步 Dispose 的服务只能**同步阻塞**等待，
+    /// 与 <c>ProductionHistoryWriter</c> / <c>AuditService</c> 的异步释放语义不对称；
+    /// 一旦将来有人在 UI 上下文释放本类，<c>Task.Wait</c> 就是教科书级死锁。
+    /// 现补 <see cref="IAsyncDisposable"/>，DI 容器（.NET 6+）会优先选用它。
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (Volatile.Read(ref _disposed)) return;
+        Volatile.Write(ref _disposed, true);
+        SignalShutdown();
+        try
+        {
+            await _flushTask.WaitAsync(ShutdownFlushTimeout).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            _logger.LogWarning("异步释放缺陷历史存储超时（{Seconds:0}s）：剩余快照未完成落库",
+                ShutdownFlushTimeout.TotalSeconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "等待缺陷历史后台写入停止失败");
+        }
+        finally
+        {
+            _cts.Dispose();
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    /// <summary>
+    /// 同步释放（兼容路径：测试与 <c>using</c> 语句仍以 <see cref="IDisposable"/> 使用本类）。
+    /// 刻意**不**转调 <see cref="DisposeAsync"/> 做 sync-over-async——那会把同步路径也拖进死锁风险区。
+    /// 两条路径语义一致：发停机信号 → 等排空 → 释放 CTS，且均幂等（<see cref="_disposed"/> 闸门）。
+    /// </summary>
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _cts.Cancel();
+        if (Volatile.Read(ref _disposed)) return;
+        Volatile.Write(ref _disposed, true);
+        SignalShutdown();
+        try
+        {
+            _flushTask.Wait(ShutdownFlushTimeout);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "等待缺陷历史后台写入停止超时或失败");
+        }
+        finally
+        {
+            _cts.Dispose();
+        }
+    }
+
+    /// <summary>停机信号：取消后台循环 + 完成通道写端（两者均幂等）。</summary>
+    private void SignalShutdown()
+    {
         // P1-1 修复 2026-09-02：显式完成通道，让 WaitToReadAsync 在 Cancel 之外也能自然结束
         // （返回 false → 退出主循环 → 停机排空剩余批次），避免后台任务续延链滞留。
+        _cts.Cancel();
         _channel.Writer.TryComplete();
-        try { _flushTask.Wait(TimeSpan.FromSeconds(5)); }
-        catch (Exception ex) { _logger.LogWarning(ex, "等待缺陷历史后台写入停止超时或失败"); }
-        _cts.Dispose();
     }
 
     public List<DefectSnapshotRecord> Query(DateTime from, DateTime to, string deviceId)

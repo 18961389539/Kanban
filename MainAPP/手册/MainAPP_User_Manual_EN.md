@@ -131,8 +131,8 @@ Home has **six cards in two rows** for quick overview—do not edit device confi
 
 ### 5.2 Current Production (center card)
 
-- **Current speed** and achievement bar vs target cycle.
-- KPIs: total output, defects, target vs actual cycle.
+- **Current speed** and achievement bar vs rated output.
+- KPIs: total output, defects, target vs actual cycle time.
 - **Quality rate** and **OEE** are shown on the bottom-row cards.
 
 Confirm shift and date before comparing numbers across shifts or days.

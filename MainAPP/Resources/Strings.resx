@@ -51,6 +51,18 @@
   <data name="Status_Offline" xml:space="preserve">
     <value>离线</value>
   </data>
+  <data name="Status_Offline_PlcReported" xml:space="preserve">
+    <value>离线（PLC）</value>
+  </data>
+  <data name="Status_Offline_CommsLost" xml:space="preserve">
+    <value>离线（通讯中断）</value>
+  </data>
+  <data name="Status_Offline_AcquisitionStopped" xml:space="preserve">
+    <value>离线（采集停止）</value>
+  </data>
+  <data name="Status_Offline_GapFilled" xml:space="preserve">
+    <value>离线（采集空窗）</value>
+  </data>
   <data name="Status_Running" xml:space="preserve">
     <value>运行</value>
   </data>
@@ -355,7 +367,7 @@
     <value>报警</value>
   </data>
   <data name="K017" xml:space="preserve">
-    <value>目标节拍</value>
+    <value>目标周期</value>
   </data>
   <data name="K018" xml:space="preserve">
     <value>报警名称</value>
@@ -454,7 +466,7 @@
     <value>当前工单</value>
   </data>
   <data name="K050" xml:space="preserve">
-    <value>实际节拍</value>
+    <value>实际周期</value>
   </data>
   <data name="K051" xml:space="preserve">
     <value>暂无产量数据</value>
@@ -757,19 +769,19 @@
     <value>无活跃工单</value>
   </data>
   <data name="K157" xml:space="preserve">
-    <value>节拍对比</value>
+    <value>产能对比</value>
   </data>
   <data name="K158" xml:space="preserve">
     <value>差距</value>
   </data>
   <data name="K159" xml:space="preserve">
-    <value>理论/实际</value>
+    <value>运行应产/实际</value>
   </data>
   <data name="K160" xml:space="preserve">
     <value>OEE 分解</value>
   </data>
   <data name="K161" xml:space="preserve">
-    <value>状态时长分布</value>
+    <value>状态时长分布（含离线）</value>
   </data>
   <data name="K162" xml:space="preserve">
     <value>查看历史</value>
@@ -2699,7 +2711,7 @@
     <value>良品率为 {0:P1}，{1} {2:P0} 目标</value>
   </data>
   <data name="F195" xml:space="preserve">
-    <value>节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%</value>
+    <value>产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%</value>
   </data>
   <data name="F196" xml:space="preserve">
     <value>触发于 {0:HH:mm:ss} · {1}</value>
@@ -3472,7 +3484,7 @@
     <value>停机分析图</value>
   </data>
   <data name="M201" xml:space="preserve">
-    <value>节拍对比图</value>
+    <value>OEE 指标图</value>
   </data>
   <data name="M202" xml:space="preserve">
     <value>百分比</value>
@@ -3775,13 +3787,13 @@
     <value>实时速度（件/小时）</value>
   </data>
   <data name="Web_Lbl_TargetCycle" xml:space="preserve">
-    <value>目标节拍</value>
+    <value>目标周期</value>
   </data>
   <data name="Web_Lbl_TargetCapacity" xml:space="preserve">
     <value>目标产能</value>
   </data>
   <data name="Web_Lbl_ActualCycle" xml:space="preserve">
-    <value>实际节拍</value>
+    <value>实际周期</value>
   </data>
   <data name="Web_Lbl_TotalOutput" xml:space="preserve">
     <value>总产量</value>
@@ -4084,7 +4096,7 @@
     <value>总产量</value>
   </data>
   <data name="K592" xml:space="preserve">
-    <value>节拍</value>
+    <value>周期</value>
   </data>
   <data name="K593" xml:space="preserve">
     <value>运行</value>
@@ -4962,7 +4974,7 @@
     <value>当前时间范围没有足够的产量或报警数据生成复盘结论</value>
   </data>
   <data name="Web_Rv_HealthLowOutput" xml:space="preserve">
-    <value>节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%</value>
+    <value>产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%</value>
   </data>
   <data name="Web_Rv_HealthAlarmSpike" xml:space="preserve">
     <value>报警突增：当前 {0} 次，上一周期 {1} 次</value>
@@ -4977,7 +4989,7 @@
     <value>未发现健康问题</value>
   </data>
   <data name="Web_Rv_OutputAchievement" xml:space="preserve">
-    <value>节拍达成</value>
+    <value>产能达成</value>
   </data>
   <data name="Web_Rv_LongestDowntime" xml:space="preserve">
     <value>最长停机</value>
@@ -5061,7 +5073,7 @@
     <value>按 OEE</value>
   </data>
   <data name="Web_Ln_Cycle" xml:space="preserve">
-    <value>平均节拍（实际/目标）</value>
+    <value>平均周期（实际/目标）</value>
   </data>
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>良品达成（OK/应产）</value>
@@ -5076,10 +5088,10 @@
     <value>应用到全部设备</value>
   </data>
   <data name="Ln_ApplyTargetCycleTitle" xml:space="preserve">
-    <value>应用到全部设备</value>
+    <value>确认修改目标产能</value>
   </data>
   <data name="Ln_ApplyTargetCycleConfirm" xml:space="preserve">
-    <value>将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。</value>
+    <value>将把 {0} 台设备的目标产能全部改为 {1:N0} 件/小时，并覆盖各机现有设置。该值用于 OEE 性能率，确认后才会保存。</value>
   </data>
   <data name="Ln_ApplyTargetCycleDone" xml:space="preserve">
     <value>已将 {0} 台设备的目标产能设为 {1:N0} 件/小时</value>
@@ -6648,5 +6660,38 @@
   </data>
   <data name="Status_Idle" xml:space="preserve">
     <value>空闲</value>
+  </data>
+  <data name="Hh_BoardTitle" xml:space="preserve">
+    <value>本班小时计划</value>
+  </data>
+  <data name="Hh_BoardMeta" xml:space="preserve">
+    <value>{0} · {1} {2}–{3} · 额定 {4} 件/时</value>
+  </data>
+  <data name="Hh_Cumulative" xml:space="preserve">
+    <value>累计 OK {0} / 应产 {1} · {2:F1}%</value>
+  </data>
+  <data name="Hh_Plan" xml:space="preserve">
+    <value>计划 {0}</value>
+  </data>
+  <data name="Hh_Hit" xml:space="preserve">
+    <value>达标</value>
+  </data>
+  <data name="Hh_Miss" xml:space="preserve">
+    <value>未达标</value>
+  </data>
+  <data name="Hh_OffShift" xml:space="preserve">
+    <value>当前不在班次时段</value>
+  </data>
+  <data name="Hh_OffShiftHint" xml:space="preserve">
+    <value>小时计划按当前班次逐小时对照额定产能与 OK 产量。请在设置中配置班次。</value>
+  </data>
+  <data name="Hh_BoardHint" xml:space="preserve">
+    <value>班次墙钟应产（含停机）只计 OK；与下方运行应产不同（仅 Running 时间且含 NG）。</value>
+  </data>
+  <data name="Dd_OeeOutputHint" xml:space="preserve">
+    <value>运行应产 = 额定产能 × 运行小时（OK+NG）。不含报警/待机/离线。</value>
+  </data>
+  <data name="Validator_AddressReuseInDevice" xml:space="preserve">
+    <value>设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2}</value>
   </data>
 </root>

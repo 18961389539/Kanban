@@ -26,6 +26,9 @@ public sealed record StatusEventDto
     /// <summary>转换后状态</summary>
     public required DeviceStatus CurrentState { get; init; }
 
+    /// <summary>离线原因；转入非离线时为 <see cref="OfflineCause.None"/>。</summary>
+    public OfflineCause OfflineCause { get; init; }
+
     public DateTime EventTime { get; init; }
 
     /// <summary>班次名称快照</summary>

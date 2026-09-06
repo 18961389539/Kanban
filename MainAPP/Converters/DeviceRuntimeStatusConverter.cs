@@ -3,8 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
-using MainAPP.Resources;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Converters;
 
@@ -22,19 +21,15 @@ public class DeviceRuntimeStatusConverter : IMultiValueConverter
         var map = values.Length > 1 ? values[1] as IDictionary<string, DeviceRuntime> : null;
 
         int status = (int)DeviceStatus.Offline;
+        var cause = 0;
         if (device != null && map != null && map.TryGetValue(device.Id, out var rt))
+        {
             status = rt.StatusWord;
+            cause = (int)rt.OfflineCause;
+        }
 
         if (parameter as string == "Text")
-        {
-            return status switch
-            {
-                (int)DeviceStatus.Running => Strings.Status_Running,
-                (int)DeviceStatus.Alarm => Strings.Status_Alarm,
-                (int)DeviceStatus.Paused => Strings.Status_Paused,
-                _ => Strings.Status_Offline,
-            };
-        }
+            return HistoryQueryHelper.GetStateText(status, cause);
 
         return status switch
         {

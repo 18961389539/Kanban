@@ -357,6 +357,21 @@ public partial class App : Application
                 else
                 {
                     shutdownCompleted = false;
+                    // 审查修复 2026-09-06（P0-1）：关窗超时意味着 Store 排空可能被截断、
+                    // pending 数据丢失，生产环境必须可追溯。此前只有 Debug.WriteLine，
+                    // Release 下完全静默，事后无法判断"数据丢了还是没丢"。
+                    // 此处**不**调用 Log.CloseAndFlush：清理任务仍在后台运行并向 Serilog 写入，
+                    // 提前释放 logger 会让它在排空过程中抛 ObjectDisposedException，反而毁掉
+                    // 最后一段诊断信息；超时场景下进程退出由 OS 兜底回收资源。
+                    try
+                    {
+                        Serilog.Log.Error("关窗清理超过 {Seconds:0}s 未完成，未排空的数据可能丢失",
+                            ExitTimeout.TotalSeconds);
+                    }
+                    catch (Exception logEx)
+                    {
+                        Debug.WriteLine($"[OnExit] Serilog 记录失败: {logEx.Message}");
+                    }
                     Debug.WriteLine($"[OnExit] shutdown exceeded {ExitTimeout.TotalSeconds:0}s; process exit will release resources");
                 }
             }
@@ -379,66 +394,70 @@ public partial class App : Application
         }
     }
 
+    /// <summary>每个关窗步骤的默认超时上限（实际取 min(上限, 剩余预算)）。</summary>
+    private static readonly TimeSpan StepCoordinatorTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan StepAcquisitionTimeout = TimeSpan.FromSeconds(12);
+    private static readonly TimeSpan StepDailyReportTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan StepConfigSaveTimeout = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan StepSettingsSaveTimeout = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan StepHostStopTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan StepHostDisposeTimeout = TimeSpan.FromSeconds(15);
+    /// <summary>
+    /// 收尾排空预留：前序步骤（协调器/采集/配置落盘…）共用的预算为此值之外的部分，
+    /// 保证 <see cref="StepHostDisposeTimeout"/> 至少能拿到这个时间片，不会因前面慢而被"饿死"。
+    /// </summary>
+    private static readonly TimeSpan ShutdownDisposeReserve = TimeSpan.FromSeconds(8);
+
     private async Task<List<string>> ShutdownCoreAsync()
     {
         List<string> errors = [];
+        // 审查修复 2026-09-06（P0-1）：ExitTimeout 是硬上限，而真正的数据落盘发生在序列
+        // 最后一步——Host 释放时各 Store 执行停机排空（Channel → DB，失败转 recovery.jsonl）。
+        // 此前 SaveAllAsync / AppSettings.Save / _host.StopAsync 均**无超时**，任一步卡在
+        // SQLite 锁等待或 Remote Hub 往返就会挤爆 30s 预算，导致：排空被截断、pending 数据
+        // 全丢（且不会转 recovery，因为转存发生在 flush 失败分支而 flush 根本没跑）、
+        // 单实例 Mutex 不释放（下次启动走 AbandonedMutexException 接管）、日志不 Flush，
+        // 而生产环境零可见性（超时只有 Debug.WriteLine）。
+        // 现改为"剩余预算分配"：前序步骤每步超时 = min(步上限, 剩余预算-reserve)，
+        // reserve 不可侵占，确保收尾排空始终有配额（详见 ShutdownBudget）。
+        var budget = new ShutdownBudget(
+            // 收尾排空在预算耗尽后仍会追加 2s 保底窗口，故最坏总耗时 = total + 2s；
+            // 取 ExitTimeout-3s 保证它落在 OnExit 的 Wait 之内，否则 errors 取不回来、用户看不到提示。
+            ExitTimeout - TimeSpan.FromSeconds(3),
+            ShutdownDisposeReserve);                 // 给收尾排空预留的不可侵占配额
         try
         {
             if (!_hostStarted)
                 return errors;
 
-            try { await _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>().DisposeAsync().ConfigureAwait(false); }
-            catch (Exception ex) { errors.Add($"停止启动协调器失败: {ex.Message}"); }
+            await RunStep(errors, "停止启动协调器", budget, StepCoordinatorTimeout,
+                _ => _host.Services.GetRequiredService<Services.ApplicationStartupCoordinator>().DisposeAsync().AsTask(),
+                ex => $"停止启动协调器失败: {ex.Message}").ConfigureAwait(false);
 
             var isRemote = _host.Services.GetRequiredService<IRuntimeMode>().IsRemote;
             if (!isRemote)
             {
-                try
-                {
-                    await _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(string.Format(Strings.F068, ex.Message));
-                }
+                await RunStep(errors, "停止 PLC 采集", budget, StepAcquisitionTimeout,
+                    _ => _host.Services.GetRequiredService<PlcDataAcquisitionService>().StopAsync(),
+                    ex => string.Format(Strings.F068, ex.Message)).ConfigureAwait(false);
 
-                try
-                {
-                    await _host.Services.GetRequiredService<Services.ProductionDailyReportService>().StopAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    errors.Add(string.Format(Strings.F191, ex.Message));
-                }
+                await RunStep(errors, "停止日报服务", budget, StepDailyReportTimeout,
+                    _ => _host.Services.GetRequiredService<Services.ProductionDailyReportService>().StopAsync(),
+                    ex => string.Format(Strings.F191, ex.Message)).ConfigureAwait(false);
             }
 
-            try
-            {
-                // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector。
-                await _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                errors.Add(string.Format(Strings.F210, ex.Message));
-            }
+            // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector。
+            await RunStep(errors, "保存设备配置", budget, StepConfigSaveTimeout,
+                _ => _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync(),
+                ex => string.Format(Strings.F210, ex.Message)).ConfigureAwait(false);
 
-            try
-            {
-                _host.Services.GetRequiredService<AppSettings>().Save();
-            }
-            catch (Exception ex)
-            {
-                errors.Add(string.Format(Strings.F119, ex.Message));
-            }
+            await RunStep(errors, "保存应用设置", budget, StepSettingsSaveTimeout,
+                _ => Task.Run(() => _host.Services.GetRequiredService<AppSettings>().Save()),
+                ex => string.Format(Strings.F119, ex.Message)).ConfigureAwait(false);
 
-            try
-            {
-                await _host.StopAsync().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                errors.Add($"停止 Host 失败: {ex.Message}");
-            }
+            await RunStep(errors, "停止 Host", budget, StepHostStopTimeout,
+                _ => _host.StopAsync(),
+                ex => $"停止 Host 失败: {ex.Message}").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -446,12 +465,26 @@ public partial class App : Application
         }
         finally
         {
+            // Host 释放是资源回收与数据落盘的最后关口：即使预算耗尽也保留 2s 最短窗口，
+            // 让各 Store 至少有机会跑一次停机排空，而不是"什么都不做直接退出"。
+            // 只有收尾步骤能动用预留配额，因此正常路径下这里至少能拿到 ShutdownDisposeReserve。
+            var disposeSlice = budget.FinalSlice(StepHostDisposeTimeout);
+            if (disposeSlice <= TimeSpan.Zero)
+            {
+                errors.Add("关窗预算已耗尽：释放 Host 仅保留 2s 尝试窗口，未排空数据可能丢失");
+                disposeSlice = TimeSpan.FromSeconds(2);
+            }
+
             try
             {
-                if (_host is IAsyncDisposable asyncHost)
-                    await asyncHost.DisposeAsync().ConfigureAwait(false);
-                else
-                    _host.Dispose();
+                var disposeTask = _host is IAsyncDisposable asyncHost
+                    ? asyncHost.DisposeAsync().AsTask()
+                    : Task.Run(() => _host.Dispose());
+                await disposeTask.WaitAsync(disposeSlice).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                errors.Add($"释放 Host 超时（>{disposeSlice.TotalSeconds:0}s）：Store 排空未完成，未落盘数据可能丢失");
             }
             catch (Exception ex)
             {
@@ -461,6 +494,61 @@ public partial class App : Application
         }
 
         return errors;
+    }
+
+    /// <summary>
+    /// 按剩余预算执行单个关窗步骤：超时即放弃本步并记入错误列表，绝不让单步拖垮整个关窗预算。
+    /// </summary>
+    private static async Task RunStep(
+        List<string> errors,
+        string label,
+        ShutdownBudget budget,
+        TimeSpan cap,
+        Func<CancellationToken, Task> action,
+        Func<Exception, string> formatError)
+    {
+        var slice = budget.Slice(cap);
+        if (slice <= TimeSpan.Zero)
+        {
+            errors.Add($"{label}未执行：关窗预算已耗尽");
+            return;
+        }
+
+        try
+        {
+            await action(CancellationToken.None).WaitAsync(slice).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            errors.Add($"{label}超时（>{slice.TotalSeconds:0}s），已跳过；未落盘数据可能丢失");
+        }
+        catch (Exception ex)
+        {
+            errors.Add(formatError(ex));
+        }
+    }
+
+    /// <summary>
+    /// 关窗预算分配器：总预算固定，其中 <c>reserve</c> 专门留给收尾排空，前序步骤不可侵占。
+    /// 每步取 min(步上限, 剩余可用)，目的：无论前序步骤多慢，收尾的数据排空步骤始终有时间片。
+    /// </summary>
+    /// <param name="total">关窗总预算。</param>
+    /// <param name="reserve">为收尾步骤预留的配额，仅 <see cref="FinalSlice"/> 可动用。</param>
+    private sealed class ShutdownBudget(TimeSpan total, TimeSpan reserve)
+    {
+        private readonly Stopwatch _watch = Stopwatch.StartNew();
+
+        /// <summary>前序步骤可用时间片：已扣除 <c>reserve</c>。</summary>
+        public TimeSpan Slice(TimeSpan cap) => Trim(total - reserve - _watch.Elapsed, cap);
+
+        /// <summary>收尾步骤可用时间片：可动用此前未消耗的 reserve。</summary>
+        public TimeSpan FinalSlice(TimeSpan cap) => Trim(total - _watch.Elapsed, cap);
+
+        private static TimeSpan Trim(TimeSpan remaining, TimeSpan cap)
+        {
+            if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
+            return remaining < cap ? remaining : cap;
+        }
     }
 
     private static void Log(string message)

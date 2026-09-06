@@ -55,6 +55,20 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         Assert.Equal(1, results[0].CurrentState);
         Assert.Equal(0, results[0].PreviousState);
         Assert.Equal("白班", results[0].ShiftName);
+        Assert.Equal(0, results[0].OfflineCause);
+    }
+
+    [Fact]
+    public void LogAndQuery_PersistsOfflineCause()
+    {
+        var t = new DateTime(2026, 7, 23, 8, 0, 0);
+        _historyService.LogStatusTransition(
+            "dev-001", "设备A", 1, 0, t, "白班", (int)Kanban.Contracts.Enums.OfflineCause.CommsLost);
+
+        var results = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddMinutes(1));
+        Assert.Single(results);
+        Assert.Equal(0, results[0].CurrentState);
+        Assert.Equal((int)Kanban.Contracts.Enums.OfflineCause.CommsLost, results[0].OfflineCause);
     }
 
     [Fact]

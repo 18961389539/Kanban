@@ -2,6 +2,8 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
+using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
+using DeviceStatusLocKeys = Kanban.Contracts.Enums.DeviceStatusLocKeys;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -166,15 +168,27 @@ internal static class HistoryQueryHelper
     }
 
     /// <summary>
-    /// 设备状态字 → 统一中文文本。与 <see cref="DeviceStatus"/> 常量对齐：
+    /// 设备状态字 → 统一文本。与 <see cref="DeviceStatus"/> 常量对齐：
     /// 0=离线, 1=运行, 2=报警, 3=待机, 其它=未知。
-    /// 该映射为全应用唯一来源，<see cref="DeviceDetailViewModel.MapStatus"/> 等实时显示处复用本方法，
-    /// 避免历史日志与实时状态文本分叉。文本委托多语言资源（Strings.Status_*），随 UI 语言切换。
+    /// 离线时 <paramref name="offlineCause"/> 区分 PLC 报 0 / 通讯中断 / 采集停止 / 空窗。
+    /// 该映射为全应用唯一来源，<see cref="DeviceDetailViewModel.MapStatus"/> 等实时显示处复用本方法。
     /// </summary>
-    public static string GetStateText(int state) => state switch
+    public static string GetStateText(int state, int offlineCause = 0)
     {
-        0 => Strings.Status_Offline, 1 => Strings.Status_Running, 2 => Strings.Status_Alarm, 3 => Strings.Status_Paused, _ => Strings.Status_Unknown
-    };
+        var key = DeviceStatusLocKeys.For(state, (OfflineCause)offlineCause);
+        return key switch
+        {
+            "Status_Running" => Strings.Status_Running,
+            "Status_Alarm" => Strings.Status_Alarm,
+            "Status_Paused" => Strings.Status_Paused,
+            "Status_Offline_PlcReported" => Strings.Status_Offline_PlcReported,
+            "Status_Offline_CommsLost" => Strings.Status_Offline_CommsLost,
+            "Status_Offline_AcquisitionStopped" => Strings.Status_Offline_AcquisitionStopped,
+            "Status_Offline_GapFilled" => Strings.Status_Offline_GapFilled,
+            "Status_Offline" => Strings.Status_Offline,
+            _ => Strings.Status_Unknown,
+        };
+    }
 
     public static string GetEventTypeText(AlarmEventType type) => type switch
     {

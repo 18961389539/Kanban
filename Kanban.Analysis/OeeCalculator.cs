@@ -22,7 +22,7 @@ public static class OeeCalculator
         return total > 0 ? Clamp((double)ok / total) : 0;
     }
 
-    /// <summary>性能率 = 累计实际产量 / 理想产量；理想产量 = 目标节拍(件/小时) × 运行时间(小时)</summary>
+    /// <summary>性能率 = 累计实际产量 / 理想产量；理想产量 = 目标产能(件/小时) × 运行时间(小时)</summary>
     public static double CalculatePerformanceRate(int totalOk, int totalNg, int targetCycle, double runTimeSeconds)
     {
         if (targetCycle <= 0 || runTimeSeconds <= 0) return 0;

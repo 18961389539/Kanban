@@ -9,6 +9,7 @@
     xmlns:controls="clr-namespace:MainAPP.Controls"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    xmlns:models="clr-namespace:MainAPP.Models"
     d:DataContext="{d:DesignInstance Type=vm:DeviceDetailViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
@@ -43,6 +44,46 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource HoverBrush}" />
                 </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HourBucketCell" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,8,8,10" />
+            <Setter Property="Margin" Value="3,0" />
+            <Setter Property="MinHeight" Value="108" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                    <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                    <Setter Property="Background" Value="#3A2326" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Current}">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Future}">
+                    <Setter Property="Opacity" Value="0.55" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HourBucketActualText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,8,0,4" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
@@ -137,6 +178,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -180,7 +222,7 @@
                 </Border>
             </UniformGrid>
 
-            <!-- ─── 信息卡条：设备配置 | PLC 实时 | 工单信息 | 节拍对比 ─── -->
+            <!-- ─── 信息卡条：设备配置 | PLC 实时 | 工单信息 | 产能对比 ─── -->
             <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,12">
                 <!-- 设备配置 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
@@ -239,7 +281,7 @@
                             <TextBlock Grid.Row="2" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K028}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" FontSize="13" FontWeight="Bold"
                                        Foreground="{Binding PlcStatusWord, Converter={StaticResource StateToBrushConverter}}"
-                                       Text="{Binding PlcStatusWord, Converter={StaticResource StateToTextConverter}}"
+                                       Text="{Binding StatusText}"
                                        ToolTip="{Binding PlcStatusWord, Converter={StaticResource LocFormatConverter}, ConverterParameter=F289}" />
                         </Grid>
                     </StackPanel>
@@ -290,7 +332,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 节拍与理论产量对比 -->
+                <!-- 产能与理论产量对比 -->
                 <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K157}" />
@@ -339,6 +381,8 @@
                                            Text="{Binding ActualTotalOutput, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </DockPanel>
+                        <TextBlock Margin="0,6,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}"
+                                   TextWrapping="Wrap" Text="{x:Static resources:Strings.Dd_OeeOutputHint}" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -437,8 +481,127 @@
                 </DockPanel>
             </Border>
 
+            <!-- ─── 本班小时计划（通栏，按当前班次完整小时桶） ─── -->
+            <Border Grid.Row="3" Margin="0,0,0,12" Style="{StaticResource MainCard}">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
+                        <Border Style="{StaticResource ChartCardTitleBar}" />
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Hh_BoardTitle}" />
+                        <TextBlock
+                            DockPanel.Dock="Right"
+                            FontFamily="Consolas"
+                            FontSize="13"
+                            FontWeight="Bold"
+                            Text="{Binding HourBoardSummaryText}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HourBoardIsBehind}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding HasHourBoard}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DockPanel>
+                    <TextBlock
+                        DockPanel.Dock="Top"
+                        Margin="16,0,16,4"
+                        FontSize="{DynamicResource FontSizeHint}"
+                        Foreground="{StaticResource SecondaryTextBrush}"
+                        Text="{Binding HourBoardMetaText}"
+                        Visibility="{Binding HasHourBoard, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock
+                        DockPanel.Dock="Top"
+                        Margin="16,0,16,8"
+                        FontSize="{DynamicResource FontSizeHint}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{x:Static resources:Strings.Hh_BoardHint}"
+                        TextWrapping="Wrap"
+                        Visibility="{Binding HasHourBoard, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <ItemsControl
+                        Margin="12,0,12,12"
+                        ItemsSource="{Binding HourBuckets}"
+                        Visibility="{Binding HasHourBoard, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:HourBucketItem}">
+                                <Border Style="{StaticResource HourBucketCell}">
+                                    <DockPanel>
+                                        <TextBlock
+                                            DockPanel.Dock="Top"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            Foreground="{StaticResource ThirdlyTextBrush}"
+                                            Text="{Binding TimeLabel}" />
+                                        <TextBlock
+                                            DockPanel.Dock="Bottom"
+                                            FontSize="{DynamicResource FontSizeCaption}"
+                                            FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                                    <Setter Property="Text" Value="" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                                                            <Setter Property="Text" Value="{x:Static resources:Strings.Hh_Hit}" />
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                                                            <Setter Property="Text" Value="{x:Static resources:Strings.Hh_Miss}" />
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock
+                                            DockPanel.Dock="Bottom"
+                                            Margin="0,0,0,4"
+                                            FontSize="{DynamicResource FontSizeCaption}"
+                                            Foreground="{StaticResource ThirdlyTextBrush}"
+                                            Text="{Binding Plan, Converter={StaticResource LocFormatConverter}, ConverterParameter=Hh_Plan}" />
+                                        <TextBlock
+                                            Style="{StaticResource HourBucketActualText}"
+                                            Text="{Binding ActualDisplay}"
+                                            VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel
+                        Margin="16,8,16,16"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding IsOffShift, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="{x:Static resources:Strings.Hh_OffShift}" />
+                        <TextBlock
+                            Margin="0,6,0,0"
+                            HorizontalAlignment="Center"
+                            FontSize="{DynamicResource FontSizeHint}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="{x:Static resources:Strings.Hh_OffShiftHint}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
             <!-- ─── 三栏：OEE分解 + 活跃报警 + 最近事件 ─── -->
-            <Grid Grid.Row="3">
+            <Grid Grid.Row="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="10" />
@@ -519,7 +682,7 @@
                         </DockPanel>
                     </Border>
 
-                    <!-- 状态时长分布（堆叠条形图：按比例展示运行/报警/待机时长） -->
+                    <!-- 状态时长分布（堆叠条：运行/报警/待机/离线，分母与首页一致） -->
                     <Border Grid.Row="2" Style="{StaticResource MainCard}">
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
@@ -527,19 +690,19 @@
                                 <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K161}" />
                             </DockPanel>
                             <StackPanel Margin="16,8,16,16">
-                                <!-- 堆叠条形图：三列按 Ratio 分配宽度，无数据时整条为空 -->
                                 <Grid Height="22" Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="{Binding RunTimeRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
                                         <ColumnDefinition Width="{Binding AlarmTimeRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
                                         <ColumnDefinition Width="{Binding PausedTimeRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
+                                        <ColumnDefinition Width="{Binding OfflineTimeRatio, Converter={StaticResource RatioToGridLengthConverter}}" />
                                     </Grid.ColumnDefinitions>
                                     <Rectangle Grid.Column="0" Fill="{StaticResource StatusRunBrush}" RadiusX="3" RadiusY="3" />
                                     <Rectangle Grid.Column="1" Fill="{StaticResource StatusAlarmBrush}" />
-                                    <Rectangle Grid.Column="2" Fill="{StaticResource StatusPauseBrush}" RadiusX="3" RadiusY="3" />
+                                    <Rectangle Grid.Column="2" Fill="{StaticResource StatusPauseBrush}" />
+                                    <Rectangle Grid.Column="3" Fill="{StaticResource StatusIdleBrush}" RadiusX="3" RadiusY="3" />
                                 </Grid>
-                                <!-- 图例 + 数值 -->
-                                <UniformGrid Columns="3">
+                                <UniformGrid Columns="4">
                                     <StackPanel HorizontalAlignment="Left">
                                         <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusRunBrush}" />
@@ -556,21 +719,23 @@
                                         <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                    Text="{Binding AlarmTimeHours, StringFormat={}{0:F1}h}" />
                                     </StackPanel>
-                                    <StackPanel HorizontalAlignment="Right">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusPauseBrush}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K006}" />
                                         </StackPanel>
-                                        <TextBlock Margin="0,4,16,0" HorizontalAlignment="Right" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                        <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                    Text="{Binding PausedTimeHours, StringFormat={}{0:F1}h}" />
                                     </StackPanel>
+                                    <StackPanel HorizontalAlignment="Right">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Rectangle Width="10" Height="10" Fill="{StaticResource StatusIdleBrush}" />
+                                            <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
+                                        </StackPanel>
+                                        <TextBlock Margin="0,4,16,0" HorizontalAlignment="Right" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
+                                                   Text="{Binding OfflineTimeFormatted}" />
+                                    </StackPanel>
                                 </UniformGrid>
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Rectangle Width="10" Height="10" Fill="{StaticResource StatusIdleBrush}" />
-                                    <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
-                                    <TextBlock Margin="8,0,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
-                                               Foreground="{StaticResource StatusIdleBrush}" Text="{Binding OfflineTimeFormatted}" />
-                                </StackPanel>
                             </StackPanel>
                         </DockPanel>
                     </Border>

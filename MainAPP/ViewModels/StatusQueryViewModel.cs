@@ -174,7 +174,7 @@ public partial class StatusQueryViewModel : ObservableObject
             PrevState = s.PreviousState,
             CurrState = s.CurrentState,
             PrevStateText = HistoryQueryHelper.GetStateText(s.PreviousState),
-            CurrStateText = HistoryQueryHelper.GetStateText(s.CurrentState)
+            CurrStateText = HistoryQueryHelper.GetStateText(s.CurrentState, s.OfflineCause)
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,

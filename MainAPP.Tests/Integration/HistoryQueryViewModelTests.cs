@@ -1056,7 +1056,7 @@ public class HistoryQueryViewModelTests : IDisposable
     [Fact]
     public void Search_OeeShiftDetails_LowPerformanceShiftIdentified()
     {
-        // 构造低性能率场景：实际产量远低于目标节拍产能
+        // 构造低性能率场景：实际产量远低于目标产能
         // dev-001 TargetCycle=600 个/小时 → 期望 1 小时产 600 个
         // 但实际只产 50 个 OK → 性能率 = 50 / 600 ≈ 0.083 < 0.6
         var t0 = new DateTime(2026, 7, 23, 8, 0, 0);

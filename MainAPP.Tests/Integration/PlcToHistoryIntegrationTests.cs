@@ -587,7 +587,7 @@ public class PlcToHistoryIntegrationTests : IDisposable
             // 这里手动调用内部方法模拟 PollingLoopAsync 的断开分支
             foreach (var d in deviceRepo.GetDevicesSnapshot())
             {
-                svc.LogOfflineTransition(d);
+                svc.LogOfflineTransition(d, Kanban.Contracts.Enums.OfflineCause.CommsLost);
             }
 
             await history.DisposeAsync();

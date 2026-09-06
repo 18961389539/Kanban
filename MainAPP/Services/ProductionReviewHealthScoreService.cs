@@ -26,7 +26,7 @@ public sealed class ProductionReviewHealthScoreService : IProductionReviewHealth
     /// <summary>健康问题类型：扣分按结构化枚举判定（P2-15 修复——原按中文字符串前缀 StartsWith，文案一改评分即变）。</summary>
     private enum HealthIssueKind
     {
-        /// <summary>运行无产量 / 节拍异常（低产）：扣 30 分。</summary>
+        /// <summary>运行无产量 / 产能偏低：扣 30 分。</summary>
         NoOutput,
         /// <summary>缺陷率突增：扣 25 分。</summary>
         DefectSpike,

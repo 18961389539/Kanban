@@ -114,7 +114,7 @@ public class MainWindowViewModelTests : IDisposable
         var overviewVm = new OverviewViewModel(_historyService, _deviceRepo, _appSettings, _dialog, _selection);
         var deviceDetailVm = new DeviceDetailViewModel(_deviceRepo, _historyService, _selection, _dialog,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceDetailViewModel>.Instance,
-            _workOrderRepo, workOrderService);
+            _workOrderRepo, workOrderService, _appSettings);
         var settingsVm = new SettingsViewModel(_appSettings, _conn, _dialog, _licenseGate, _services);
         var workOrderVm = new WorkOrderManagerViewModel(_workOrderRepo, workOrderService, _deviceRepo, _dialog, userSession);
         // 页面 VM 懒加载（2026-08-11）：MainWindowViewModel 经 IServiceProvider 惰性解析页面 VM，

@@ -12,6 +12,10 @@ Wpf,Nav_RuntimeMonitoring,运行监控,Runtime Monitor,稼働監視,Monitor de e
 Wpf,Nav_DeviceDetail,设备详情,Device Detail,設備詳細,Detalhes do dispositivo
 Wpf,Nav_Overview_Tip,最近24小时生产复盘,Production review (last 24h),直近24時間の生産レビュー,Revisão da produção (últimas 24 h)
 Wpf,Status_Offline,离线,Offline,オフライン,Offline
+Wpf,Status_Offline_PlcReported,离线（PLC）,Offline (PLC),オフライン（PLC）,Offline (PLC)
+Wpf,Status_Offline_CommsLost,离线（通讯中断）,Offline (comms lost),オフライン（通信切断）,Offline (comunicação)
+Wpf,Status_Offline_AcquisitionStopped,离线（采集停止）,Offline (acquisition stopped),オフライン（収集停止）,Offline (coleta parada)
+Wpf,Status_Offline_GapFilled,离线（采集空窗）,Offline (acquisition gap),オフライン（収集欠落）,Offline (lacuna de coleta)
 Wpf,Status_Running,运行,Running,稼働中,Em execução
 Wpf,Status_Alarm,报警,Alarm,アラーム,Alarme
 Wpf,Status_Paused,待机,Standby,待機,Em espera
@@ -113,7 +117,7 @@ Wpf,K013,已中止,Aborted,中止,Abortado
 Wpf,K014,件,pcs,個,pçs
 Wpf,K015,刷新,Refresh,更新,Atualizar
 Wpf,K016,报警,Alarm,アラーム,Alarme
-Wpf,K017,目标节拍,Target Cycle,目標タクト,Ciclo alvo
+Wpf,K017,目标周期,Target cycle time,目標サイクルタイム,Tempo de ciclo alvo
 Wpf,K018,报警名称,Alarm Name,アラーム名,Nome do alarme
 Wpf,K019,产品编码,Product Code,製品コード,Código do produto
 Wpf,K020,产品名称,Product Name,製品名,Nome do produto
@@ -146,7 +150,7 @@ Wpf,K046,最近事件流,Recent Event Stream,直近イベント,Fluxo de eventos
 Wpf,K047,合格产量,Good Output,良品生産量,Produção boa
 Wpf,K048,PLC 地址,PLC Address,PLCアドレス,Endereço PLC
 Wpf,K049,当前工单,Current Work Order,現在の工単,Ordem de produção atual
-Wpf,K050,实际节拍,Actual Cycle,実タクト,Ciclo real
+Wpf,K050,实际周期,Actual cycle time,実サイクルタイム,Tempo de ciclo real
 Wpf,K051,暂无产量数据,No output data,生産データがありません,Sem dados de produção
 Wpf,K052,暂无缺陷数据,No defect data,不良データがありません,Sem dados de defeitos
 Wpf,K053,新增报警,Add Alarm,アラーム追加,Adicionar alarme
@@ -247,11 +251,11 @@ Wpf,K153,NG计数,NG Count,NGカカウント,Contagem NG
 Wpf,K154,产品,Product,製品,Produto
 Wpf,K155,进度,Progress,進捗,Progresso
 Wpf,K156,无活跃工单,No Active Work Order,アクティブな工単なし,Sem ordem de produção ativa
-Wpf,K157,节拍对比,Cycle Comparison,タクト比較,Comparação de ciclo
+Wpf,K157,产能对比,Output comparison,能力比較,Comparação de capacidade
 Wpf,K158,差距,Gap,差,Diferença
-Wpf,K159,理论/实际,Theory/Actual,理論/実績,Teórico/Real
+Wpf,K159,运行应产/实际,Run-window due/actual,運転応産/実績,Previsto (run)/real
 Wpf,K160,OEE 分解,OEE Breakdown,OEE分解,Detalhamento do OEE
-Wpf,K161,状态时长分布,Status Duration Distribution,状態時間分布,Distribuição de duração por estado
+Wpf,K161,状态时长分布（含离线）,Status duration (incl. offline),状態時間分布（オフライン含む）,Duração por estado (incl. offline)
 Wpf,K162,查看历史,View History,履歴を表示,Ver histórico
 Wpf,K163,当前无活跃报警,No Active Alarms,アクティブなアラームなし,Nenhum alarme ativo
 Wpf,K164,设备当前运行正常,Device is running normally,設備は正常稼働中,O dispositivo está em execução normal
@@ -961,7 +965,7 @@ Wpf,F191,自动日报服务停止失败：{0},Failed to stop the auto daily repo
 Wpf,F192,良品率 {0:P1} / 目标 {1:P0} · OEE {2:P1} / 目标 {3:P0},Quality rate {0:P1} / Target {1:P0} · OEE {2:P1} / Target {3:P0},良品率 {0:P1} / 目標 {1:P0} · OEE {2:P1} / 目標 {3:P0},Taxa de qualidade {0:P1} / Meta {1:P0} · OEE {2:P1} / Meta {3:P0}
 Wpf,F193,良品率 {0:P1}，损失 {1:P1},"Quality rate {0:P1}, loss {1:P1}",良品率 {0:P1}、損失 {1:P1},"Taxa de qualidade {0:P1}, perda {1:P1}"
 Wpf,F194,良品率为 {0:P1}，{1} {2:P0} 目标,"Quality rate is {0:P1}, {1} the {2:P0} target",良品率は {0:P1}、目標 {2:P0} を{1},"A taxa de qualidade é {0:P1}, {1} a meta de {2:P0}"
-Wpf,F195,节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%,"Takt anomaly: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%",タクト異常: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%,"Anomalia de takt: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
+Wpf,F195,产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%,"Low output: actual {0:F1} pcs/hour, target {1:F0} pcs/hour, below 80%",能力低下: 実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%,"Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
 Wpf,F196,触发于 {0:HH:mm:ss} · {1},Triggered at {0:HH:mm:ss} · {1},{0:HH:mm:ss} に発生 · {1},Disparado às {0:HH:mm:ss} · {1}
 Wpf,F197,警告：{0},Warning: {0},警告: {0},Aviso: {0}
 Wpf,F198,计数器报警{0},Count alarm {0},カカカウンタアラーム {0},Alarme de contador {0}
@@ -1248,7 +1252,7 @@ Wpf,M197,班次产量对比,Shift Output Comparison,シフト生産量比較,Com
 Wpf,M198,数量,Count,数量,Quantidade
 Wpf,M199,报警时长排行,Alarm Duration Ranking,警報時間ランキング,Ranking de duração de alarmes
 Wpf,M200,停机分析图,Downtime Analysis,停止分析図,Gráfico de análise de paradas
-Wpf,M201,节拍对比图,Cycle Time Comparison,タクト比較図,Gráfico de comparação de ciclo
+Wpf,M201,OEE 指标图,OEE metrics,OEE 指標図,Gráfico de indicadores OEE
 Wpf,M202,百分比,Percentage,生産量(個),Porcentagem
 Wpf,M203,时间,Time,時間,Hora
 Wpf,M204,持续时间(分钟),Duration (min),継続時間(分),Duração (min)
@@ -1349,9 +1353,9 @@ Wpf,Web_Card_Trend,速度趋势,Speed Trend,速度トレンド,Tendência de vel
 Wpf,Web_Card_Shift,班次进度,Shift Progress,シフト進捗,Progresso do turno
 Wpf,Web_Card_Source,数据源,Data Source,データソース,Fonte de dados
 Wpf,Web_Lbl_RealTimeSpeed,实时速度（件/小时）,Real-time Speed (pcs/h),リアルタイム速度（個/時）,Velocidade em tempo real (pçs/h)
-Wpf,Web_Lbl_TargetCycle,目标节拍,Target Cycle,目標タクト,Ciclo alvo
+Wpf,Web_Lbl_TargetCycle,目标周期,Target cycle time,目標サイクルタイム,Tempo de ciclo alvo
 Wpf,Web_Lbl_TargetCapacity,目标产能,Target Output,目標能力,Capacidade alvo
-Wpf,Web_Lbl_ActualCycle,实际节拍,Actual Cycle,実タクト,Ciclo real
+Wpf,Web_Lbl_ActualCycle,实际周期,Actual cycle time,実サイクルタイム,Tempo de ciclo real
 Wpf,Web_Lbl_TotalOutput,总产量,Total Output,総生産量,Produção total
 Wpf,Web_Lbl_NgRate,不良率,NG Rate,不良率,Taxa de NG
 Wpf,Web_Lbl_Achievement,达成率,Achievement,達成率,Realização
@@ -1452,7 +1456,7 @@ Wpf,K587,OEE,OEE,OEE,OEE
 Wpf,K588,OK,OK,OK,OK
 Wpf,K589,NG,NG,NG,NG
 Wpf,K590,总产量,Total,合計,Total
-Wpf,K592,节拍,Cycle,サイクル,Ciclo
+Wpf,K592,周期,Cycle time,サイクルタイム,Tempo de ciclo
 Wpf,K593,运行,Run,実行,Execução
 Wpf,K594,详情,Details,詳細,Detalhes
 Wpf,K595,暂无,N/A,なし,N/D
@@ -1766,12 +1770,12 @@ Wpf,Web_Rv_BestShiftConclusion,{0}产量最高，共 {1:N0} 件，良品率 {2:P
 Wpf,Web_Rv_TopDefectConclusion,主要缺陷为 {0}（{1}），当前累计 {2:N0} 件，占当前缺陷 Top10 的 {3:F1}%,"Top defect: {0} ({1}), {2:N0} pcs, {3:F1}%",主要欠陥は {0}（{1}）、累計 {2:N0} 個、Top10 の {3:F1}%,"Defeito principal: {0} ({1}), {2:N0} pcs, {3:F1}%"
 Wpf,Web_Rv_AlarmCountConclusion,当前范围共触发 {0:N0} 次报警，请结合 Top 5 报警确认主要停机来源,{0:N0} alarms triggered; check Top 5 alarms for downtime sources,この期間に警報 {0:N0} 回発生、Top5 警報で停止要因を確認してください,{0:N0} disparos de alarme no período; consulte o Top 5 de alarmes para as causas de parada
 Wpf,Web_Rv_NoConclusion,当前时间范围没有足够的产量或报警数据生成复盘结论,Not enough output or alarm data in this range to generate conclusions,この期間には結論を生成するのに十分な生産・警報データがありません,Dados de produção ou alarmes insuficientes no período para gerar conclusões
-Wpf,Web_Rv_HealthLowOutput,节拍异常：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%,"Cycle anomaly: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%",タクト異常：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%,"Anomalia de ciclo: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
+Wpf,Web_Rv_HealthLowOutput,产能偏低：实际 {0:F1} 件/小时，低于目标 {1:F0} 件/小时的 80%,"Low output: actual {0:F1} pcs/h, target {1:F0} pcs/h, below 80%",能力低下：実績 {0:F1} 個/時、目標 {1:F0} 個/時の 80%,"Produção baixa: real {0:F1} pcs/h, meta {1:F0} pcs/h, abaixo de 80%"
 Wpf,Web_Rv_HealthAlarmSpike,报警突增：当前 {0} 次，上一周期 {1} 次,Alarm spike: {0} now vs {1} last period,警報急増：今回 {0} 回、前周期 {1} 回,Surto de alarmes: {0} agora vs {1} no período anterior
 Wpf,Web_Rv_HealthDefectSpike,缺陷率突增：当前 {0} 个，上一周期 {1} 个,Defect spike: {0} now vs {1} last period,欠陥急増：今回 {0} 個、前周期 {1} 個,Surto de defeitos: {0} agora vs {1} no período anterior
 Wpf,Web_Rv_HealthNoOutput,运行无产量：{0}-{1} 持续 {2:F0} min,Running with no output: {0}-{1} for {2:F0} min,稼働中に生産なし：{0}-{1} で {2:F0} 分,Em execução sem produção: {0}-{1} por {2:F0} min
 Wpf,Web_Rv_NoIssues,未发现健康问题,No health issues found,健康上の問題なし,Nenhum problema de saúde encontrado
-Wpf,Web_Rv_OutputAchievement,节拍达成,Cycle Achievement,タクト達成,Realização do ciclo
+Wpf,Web_Rv_OutputAchievement,产能达成,Output achievement,能力達成,Realização da capacidade
 Wpf,Web_Rv_LongestDowntime,最长停机,Longest Downtime,最長停止,Maior parada
 Wpf,Web_Rv_PeakHour,峰值时段,Peak Hour,ピーク時間帯,Hora de pico
 Wpf,Web_Rv_ValleyHour,谷值时段,Valley Hour,ボトム時間帯,Hora de vale
@@ -1799,13 +1803,13 @@ Wpf,Web_Ln_Search,搜索设备,Search devices,デバイス検索,Pesquisar dispo
 Wpf,Web_Ln_SortName,按名称,By Name,名前順,Por nome
 Wpf,Web_Ln_SortOutput,按产量,By Output,生産順,Por produção
 Wpf,Web_Ln_SortOee,按 OEE,By OEE,OEE 順,Por OEE
-Wpf,Web_Ln_Cycle,平均节拍（实际/目标）,Avg cycle (actual/target),平均タクト（実績/目標）,Ciclo médio (real/alvo)
+Wpf,Web_Ln_Cycle,平均周期（实际/目标）,Avg cycle time (actual/target),平均サイクルタイム（実績/目標）,Tempo de ciclo médio (real/alvo)
 Wpf,Ln_ShiftPace,良品达成（OK/应产）,Good-count pace (OK/due),良品達成（OK/予定）,Ritmo de OK (OK/previsto)
 Wpf,Ln_AvailabilityHint,只扣报警时间，不含待机和离线,Counts alarm time only; excludes standby and offline,アラーム時間のみ控除（待機・オフライン含まず）,Desconta apenas alarme; exclui espera e offline
 Wpf,Ln_ActualCapacity,实际产能,Actual output,実績能力,Produção real
 Wpf,Ln_ApplyTargetCycleAll,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
-Wpf,Ln_ApplyTargetCycleTitle,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
-Wpf,Ln_ApplyTargetCycleConfirm,将 {0} 台设备的目标产能全部设为 {1:N0} 件/小时。此操作会覆盖各机现有产能设置。,Set the target output of {0} devices to {1:N0} pcs/hour. This overwrites each machine's current setting.,{0} 台の設備の目標能力をすべて {1:N0} 個/時間に設定します。各機の既存設定は上書きされます。,Definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora. Isso substitui a configuração atual de cada máquina.
+Wpf,Ln_ApplyTargetCycleTitle,确认修改目标产能,Confirm target output change,目標能力の変更確認,Confirmar alteração da capacidade alvo
+Wpf,Ln_ApplyTargetCycleConfirm,将把 {0} 台设备的目标产能全部改为 {1:N0} 件/小时，并覆盖各机现有设置。该值用于 OEE 性能率，确认后才会保存。,"This will set the target output of {0} devices to {1:N0} pcs/hour and overwrite each machine's current setting. This value feeds OEE performance and is saved only after you confirm.",{0} 台の設備の目標能力をすべて {1:N0} 個/時間に変更し、各機の既存設定を上書きします。この値は OEE 性能率に使われ、確認後に保存されます。,"Isso definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora e substituirá a configuração atual. Esse valor entra no cálculo de performance OEE e só será salvo após a confirmação."
 Wpf,Ln_ApplyTargetCycleDone,已将 {0} 台设备的目标产能设为 {1:N0} 件/小时,Target output for {0} devices is now {1:N0} pcs/hour,{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました,A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora
 Wpf,Ln_ApplyTargetCycleFailed,保存目标产能失败：{0},Failed to save target output: {0},目標能力の保存に失敗しました：{0},Falha ao salvar a capacidade alvo: {0}
 Wpf,Hp_DefectSubtitle,当前设备 · 本班次新增,Current device · shift increment,現在の設備 · 当シフト増分,Dispositivo atual · incremento do turno
@@ -2429,3 +2433,14 @@ Wpf,Web_Csv_FileProd,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd
 Wpf,Web_Csv_FileStatus,状态时长_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,status_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,duracao_estado_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,Web_Unit_PerHour,件/h,pcs/h,個/h,peças/h
 Wpf,Status_Idle,空闲,Idle,アイドル,Ocioso
+Wpf,Hh_BoardTitle,本班小时计划,Hour-by-hour plan,シフト時間計画,Plano hora a hora
+Wpf,Hh_BoardMeta,{0} · {1} {2}–{3} · 额定 {4} 件/时,{0} · {1} {2}–{3} · rated {4} pcs/h,{0} · {1} {2}–{3} · 定格 {4} 個/時,{0} · {1} {2}–{3} · nominal {4} pçs/h
+Wpf,Hh_Cumulative,累计 OK {0} / 应产 {1} · {2:F1}%,Cumulative OK {0} / due {1} · {2:F1}%,累計 OK {0} / 予定 {1} · {2:F1}%,OK acumulado {0} / previsto {1} · {2:F1}%
+Wpf,Hh_Plan,计划 {0},Plan {0},計画 {0},Plano {0}
+Wpf,Hh_Hit,达标,On target,達成,Na meta
+Wpf,Hh_Miss,未达标,Below plan,未達,Abaixo do plano
+Wpf,Hh_OffShift,当前不在班次时段,Currently off shift,シフト外の時間帯,Fora do turno
+Wpf,Hh_OffShiftHint,小时计划按当前班次逐小时对照额定产能与 OK 产量。请在设置中配置班次。,Hour plan compares rated output vs OK for each hour of the current shift. Configure shifts in Settings.,シフト内の各時間で定格能力とOKを対照します。設定でシフトを構成してください。,O plano horário compara a capacidade nominal com o OK de cada hora do turno. Configure os turnos em Configurações.
+Wpf,Hh_BoardHint,班次墙钟应产（含停机）只计 OK；与下方运行应产不同（仅 Running 时间且含 NG）。,Shift-clock due includes stops and counts OK only. Run-window due below uses Running time and OK+NG.,シフト壁時計の予定は停止を含みOKのみ。下の運転応産はRunning時間かつOK+NG。,Previsto do turno inclui paradas e conta só OK. O previsto da run abaixo usa tempo Running e OK+NG.
+Wpf,Dd_OeeOutputHint,运行应产 = 额定产能 × 运行小时（OK+NG）。不含报警/待机/离线。,Run-window due = rated pcs/h × running hours (OK+NG). Excludes alarm/standby/offline.,運転応産 = 定格能力 × 運転時間（OK+NG）。アラーム/待機/オフラインは含みません。,Previsto da run = capacidade × horas em execução (OK+NG). Exclui alarme/espera/offline.
+Wpf,Validator_AddressReuseInDevice,设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2},Device "{0}": PLC address "{1}" is used by multiple items: {2},デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2},Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}

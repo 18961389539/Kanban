@@ -115,7 +115,7 @@
                                            FontSize="{DynamicResource FontSizeKpiSm}"
                                            FontWeight="Bold"
                                            Foreground="{Binding RealtimeStatus, Converter={StaticResource StateToBrushConverter}}"
-                                           Text="{Binding RealtimeStatus, Converter={StaticResource StateToTextConverter}}"
+                                           Text="{Binding StatusDisplayText}"
                                            TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                         </Grid>

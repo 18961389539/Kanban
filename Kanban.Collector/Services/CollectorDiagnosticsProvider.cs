@@ -1,4 +1,5 @@
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging;
@@ -183,6 +184,7 @@ public sealed class CollectorDiagnosticsProvider
                 DeviceId = device.Id,
                 DeviceName = device.Name,
                 StatusWord = runtime?.StatusWord ?? 0,
+                OfflineCause = runtime?.OfflineCause ?? OfflineCause.None,
                 OkProduction = runtime?.OkProduction ?? 0,
                 NgProduction = runtime?.NgProduction ?? 0,
                 ConfiguredAddressCount = CountConfiguredAddresses(device),

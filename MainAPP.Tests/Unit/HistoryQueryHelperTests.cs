@@ -239,6 +239,15 @@ public class HistoryQueryHelperTests
         => Assert.Equal(expected, HistoryQueryHelper.GetStateText(state));
 
     [Theory]
+    [InlineData(0, 1, "离线（PLC）")]
+    [InlineData(0, 2, "离线（通讯中断）")]
+    [InlineData(0, 3, "离线（采集停止）")]
+    [InlineData(0, 4, "离线（采集空窗）")]
+    [InlineData(1, 2, "运行")]
+    public void GetStateText_MapsOfflineCause(int state, int cause, string expected)
+        => Assert.Equal(expected, HistoryQueryHelper.GetStateText(state, cause));
+
+    [Theory]
     [InlineData(AlarmEventType.Triggered, "触发")]
     [InlineData(AlarmEventType.Recovered, "恢复")]
     [InlineData(AlarmEventType.ShiftChange, "班次切换")]

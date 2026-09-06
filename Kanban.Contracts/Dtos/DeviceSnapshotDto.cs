@@ -20,6 +20,9 @@ public sealed record DeviceSnapshotDto
     /// <summary>状态字原始值</summary>
     public int StatusWord { get; init; }
 
+    /// <summary>离线原因；非离线为 <see cref="OfflineCause.None"/>。</summary>
+    public OfflineCause OfflineCause { get; init; }
+
     // ──────────── PLC 原始值（本轮） ────────────
     public int OkProduction { get; init; }
     public int NgProduction { get; init; }
