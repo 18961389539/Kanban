@@ -75,7 +75,11 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<ProductionLineViewModel>(sp => new ProductionLineViewModel(
             sp.GetRequiredService<DeviceRepository>(), sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IPlcDataAcquisitionService>(), sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<IDialogService>()));
+            sp.GetRequiredService<IDialogService>(),
+            // 一键全设备 OEE 清零：复用设备参数页的 PLC 命令处理器，另接连接态/权限用于 CanExecute
+            sp.GetRequiredService<DevicePlcCommandHandler>(),
+            sp.GetRequiredService<PlcConnectionManager>(),
+            sp.GetRequiredService<UserSession>()));
         services.AddSingleton<AlarmCenterViewModel>(sp => new AlarmCenterViewModel(
             sp.GetRequiredService<IHistoryService>(), sp.GetRequiredService<DeviceRepository>(),
             sp.GetRequiredService<IDialogService>(),

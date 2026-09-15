@@ -174,4 +174,11 @@ public interface IKanbanAdminServer
     /// 下发配方到指定设备（Remote 模式：写 PLC 由持有连接的 Collector 执行，返回逐项结果，失败已回滚）。
     /// </summary>
     Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId);
+
+    /// <summary>
+    /// 一键清零全部设备的 OEE（Remote 模式：PLC 清零触发位由持有连接的 Collector 写入，
+    /// 软件侧产量/时间/报警累计与产量基线同时在 Collector 侧清零）。
+    /// 危险写操作：调用方负责二次确认；返回写入成功的设备数与参与总数。
+    /// </summary>
+    Task<OeeResetAllResultDto> ResetAllOeeAsync();
 }

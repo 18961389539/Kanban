@@ -18,15 +18,18 @@ public sealed class KanbanAdminHub : Hub<IKanbanHubClient>, IKanbanAdminServer
     private readonly ConfigSyncHandler _configSyncHandler;
     private readonly IAuditService _auditService;
     private readonly ILogger<KanbanAdminHub> _logger;
+    private readonly IPlcDataAcquisitionService? _dataAcquisitionService;
 
     public KanbanAdminHub(
         ConfigSyncHandler configSyncHandler,
         IAuditService auditService,
-        ILogger<KanbanAdminHub> logger)
+        ILogger<KanbanAdminHub> logger,
+        IPlcDataAcquisitionService? dataAcquisitionService = null)
     {
         _configSyncHandler = configSyncHandler;
         _auditService = auditService;
         _logger = logger;
+        _dataAcquisitionService = dataAcquisitionService;
     }
 
     public Task RecordAuditAsync(AuditLogRecordRequest request)
@@ -173,6 +176,33 @@ public sealed class KanbanAdminHub : Hub<IKanbanHubClient>, IKanbanAdminServer
         {
             AuditLog.Record("Recipe.Apply", "Recipe", recipeId,
                 succeeded: false, detail: ex.Message, @operator: ResolveOperator());
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 一键清零全部设备的 OEE：软件侧（产量/时间/报警累计 + 产量基线）与 PLC 触发位清零都在
+    /// Collector 侧完成——只有持有 PLC 连接的进程才能正确清零，故必须经管理 Hub 远程下发。
+    /// 危险写操作：二次确认由调用端负责，服务端只做执行与审计留痕。
+    /// </summary>
+    public Task<OeeResetAllResultDto> ResetAllOeeAsync()
+    {
+        var service = _dataAcquisitionService
+            ?? throw new InvalidOperationException("PLC 采集服务不可用，无法执行全部设备 OEE 清零");
+
+        try
+        {
+            var (triggered, total) = service.ResetAllDevicesProduction();
+            AuditLog.Record("Device.ResetAllOee", "Device", null,
+                detail: $"远程一键清零全部设备 OEE（{triggered}/{total} 台 PLC 触发成功）",
+                after: new { triggered, total },
+                @operator: ResolveOperator());
+            return Task.FromResult(new OeeResetAllResultDto(triggered, total));
+        }
+        catch (Exception ex)
+        {
+            AuditLog.Record("Device.ResetAllOee", "Device", null, succeeded: false,
+                detail: ex.Message, @operator: ResolveOperator());
             throw;
         }
     }

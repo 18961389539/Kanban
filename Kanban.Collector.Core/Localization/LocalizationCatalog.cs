@@ -9183,6 +9183,62 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2}", ["en-US"] = "Device \"{0}\": PLC address \"{1}\" is used by multiple items: {2}", ["ja-JP"] = "デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2}", ["pt-BR"] = "Dispositivo \"{0}\": o endereco PLC \"{1}\" e usado por varios itens: {2}"
         },
+        ["Wpf|K928"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部清零", ["en-US"] = "Reset All", ["ja-JP"] = "一括クリア", ["pt-BR"] = "Zerar tudo"
+        },
+        ["Wpf|K929"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部设备 OEE 清零", ["en-US"] = "Reset OEE for All Devices", ["ja-JP"] = "全デバイスの OEE クリア", ["pt-BR"] = "Zerar OEE de todos os dispositivos"
+        },
+        ["Wpf|K930"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "一键向全部设备写入 OEE 清零指令，并清零软件侧累计；不可撤销，断开连接时不可用。", ["en-US"] = "Writes the OEE reset command to every device and clears software-side totals; irreversible and unavailable when disconnected.", ["ja-JP"] = "全デバイスへ OEE クリア指令を書込み、ソフト側の累計もクリアします。取消不可、切断時は利用不可。", ["pt-BR"] = "Envia o comando de zeramento de OEE a todos os dispositivos e zera os acumulados do software; irreversível e indisponível quando desconectado."
+        },
+        ["Wpf|M385"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "确认全部设备 OEE 清零", ["en-US"] = "Confirm Reset OEE for All", ["ja-JP"] = "全デバイス OEE クリア確認", ["pt-BR"] = "Confirmar zeramento de OEE de todos"
+        },
+        ["Wpf|M386"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "没有可清零的设备", ["en-US"] = "No devices to reset", ["ja-JP"] = "クリア対象のデバイスがありません", ["pt-BR"] = "Nenhum dispositivo para zerar"
+        },
+        ["Wpf|F717"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "确定清零全部 {0} 台设备的 OEE 吗？将清零所有设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。", ["en-US"] = "Reset OEE for all {0} devices? This clears OK/NG output, run/alarm/standby totals and alarm state for every device in the line and cannot be undone.", ["ja-JP"] = "全 {0} 台のデバイスの OEE をクリアしますか？全デバイスの OK/NG 生産数、稼働/警報/待機の累計時間、警報状態をクリアし、取消できません。", ["pt-BR"] = "Zerar o OEE de todos os {0} dispositivos? Isso limpa a produção OK/NG, os totais de execução/alarme/espera e o estado de alarme de todos os dispositivos e não pode ser desfeito."
+        },
+        ["Wpf|F718"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已触发全部设备 OEE 清零（{0}/{1} 台）", ["en-US"] = "OEE reset triggered for all devices ({0}/{1})", ["ja-JP"] = "全デバイスの OEE クリアを実行しました（{0}/{1} 台）", ["pt-BR"] = "Zeramento de OEE acionado para todos os dispositivos ({0}/{1})"
+        },
+        ["Wpf|F719"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部设备 OEE 清零失败：{0}", ["en-US"] = "Reset OEE for all devices failed: {0}", ["ja-JP"] = "全デバイス OEE クリア失敗：{0}", ["pt-BR"] = "Falha ao zerar o OEE de todos os dispositivos: {0}"
+        },
+        ["Wpf|Web_Pl_ResetAll"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部清零", ["en-US"] = "Reset All", ["ja-JP"] = "一括クリア", ["pt-BR"] = "Zerar tudo"
+        },
+        ["Wpf|Web_Pl_ResetAllHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部设备 OEE 清零", ["en-US"] = "Reset OEE for All Devices", ["ja-JP"] = "全デバイスの OEE クリア", ["pt-BR"] = "Zerar OEE de todos os dispositivos"
+        },
+        ["Wpf|Web_Pl_ResetAllConfirm"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "确定清零全部 {0} 台设备的 OEE 吗？此操作不可撤销。", ["en-US"] = "Reset OEE for all {0} devices? This cannot be undone.", ["ja-JP"] = "全 {0} 台のデバイスの OEE をクリアしますか？この操作は取消できません。", ["pt-BR"] = "Zerar o OEE de todos os {0} dispositivos? Esta operação não pode ser desfeita."
+        },
+        ["Wpf|Web_Pl_ResetAllOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已触发全部设备 OEE 清零（{0}/{1} 台）", ["en-US"] = "OEE reset triggered for all devices ({0}/{1})", ["ja-JP"] = "全デバイスの OEE クリアを実行しました（{0}/{1} 台）", ["pt-BR"] = "Zeramento de OEE acionado para todos os dispositivos ({0}/{1})"
+        },
+        ["Wpf|Web_Pl_ResetAllFail"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "全部设备 OEE 清零失败：{0}", ["en-US"] = "Reset OEE for all devices failed: {0}", ["ja-JP"] = "全デバイス OEE クリア失敗：{0}", ["pt-BR"] = "Falha ao zerar o OEE de todos os dispositivos: {0}"
+        },
+        ["Wpf|Web_Pl_Cancel"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "取消", ["en-US"] = "Cancel", ["ja-JP"] = "キャンセル", ["pt-BR"] = "Cancelar"
+        },
         };
 
     private static readonly Dictionary<string, Dictionary<string, string>> LanguageNames =

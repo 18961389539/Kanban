@@ -41,9 +41,9 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
     public double RealCycleSec => SnapshotMetrics.AverageCycleSeconds(
         Runtime.RunTime, Runtime.TotalOkProduction, Runtime.TotalNgProduction);
 
-    /// <summary>平均周期对比文本："18.8/9.0s"（实际/目标）；无数据时为 "—"。</summary>
+    /// <summary>平均周期对比文本："18.80/9.00s"（实际/目标）；无数据时为 "—"。</summary>
     public string CycleText => RealCycleSec > 0 && TargetCycleSec > 0
-        ? $"{RealCycleSec:0.0}/{TargetCycleSec:0.0}s"
+        ? $"{RealCycleSec:0.00}/{TargetCycleSec:0.00}s"
         : "—";
 
     /// <summary>平均周期是否慢于目标（用于周期对比红色警示）。</summary>

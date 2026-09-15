@@ -6694,4 +6694,46 @@
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2}</value>
   </data>
+  <data name="K928" xml:space="preserve">
+    <value>全部清零</value>
+  </data>
+  <data name="K929" xml:space="preserve">
+    <value>全部设备 OEE 清零</value>
+  </data>
+  <data name="K930" xml:space="preserve">
+    <value>一键向全部设备写入 OEE 清零指令，并清零软件侧累计；不可撤销，断开连接时不可用。</value>
+  </data>
+  <data name="M385" xml:space="preserve">
+    <value>确认全部设备 OEE 清零</value>
+  </data>
+  <data name="M386" xml:space="preserve">
+    <value>没有可清零的设备</value>
+  </data>
+  <data name="F717" xml:space="preserve">
+    <value>确定清零全部 {0} 台设备的 OEE 吗？将清零所有设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。</value>
+  </data>
+  <data name="F718" xml:space="preserve">
+    <value>已触发全部设备 OEE 清零（{0}/{1} 台）</value>
+  </data>
+  <data name="F719" xml:space="preserve">
+    <value>全部设备 OEE 清零失败：{0}</value>
+  </data>
+  <data name="Web_Pl_ResetAll" xml:space="preserve">
+    <value>全部清零</value>
+  </data>
+  <data name="Web_Pl_ResetAllHint" xml:space="preserve">
+    <value>全部设备 OEE 清零</value>
+  </data>
+  <data name="Web_Pl_ResetAllConfirm" xml:space="preserve">
+    <value>确定清零全部 {0} 台设备的 OEE 吗？此操作不可撤销。</value>
+  </data>
+  <data name="Web_Pl_ResetAllOk" xml:space="preserve">
+    <value>已触发全部设备 OEE 清零（{0}/{1} 台）</value>
+  </data>
+  <data name="Web_Pl_ResetAllFail" xml:space="preserve">
+    <value>全部设备 OEE 清零失败：{0}</value>
+  </data>
+  <data name="Web_Pl_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
 </root>

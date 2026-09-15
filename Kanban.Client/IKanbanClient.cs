@@ -60,4 +60,10 @@ public interface IKanbanAdminClient
     Task SaveCollectorSettingsAsync(CollectorSettingsDto settings, CancellationToken ct = default);
     Task SaveRecipesAsync(List<RecipeDto> recipes, CancellationToken ct = default);
     Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default);
+
+    /// <summary>
+    /// 一键清零全部设备的 OEE（危险写操作，调用方负责二次确认）。
+    /// PLC 清零触发位与软件侧产量/时间/报警累计均由持有 PLC 连接的 Collector 执行。
+    /// </summary>
+    Task<OeeResetAllResultDto> ResetAllOeeAsync(CancellationToken ct = default);
 }

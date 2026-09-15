@@ -1,5 +1,10 @@
 <Project>
-  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
+  <!-- 【本地调试构建适配 · 临时】原为：
+         <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" />
+       该 SDK 由 NuGet SDK 解析器加载，依赖可用的 NuGet 设置（APPDATA/ProgramData）。
+       在受限 shell / 无 NuGet 设置的沙箱里会报 MSB4236「Failed to load NuGet settings」，
+       导致整棵 oxyplot 子树无法求值、拖垮 MainAPP 构建。下次改动可恢复此行。 -->
+  <!-- <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.1.1" /> -->
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1" PrivateAssets="All"/>
   </ItemGroup>

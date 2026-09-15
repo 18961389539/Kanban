@@ -6650,4 +6650,46 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}</value>
   </data>
+  <data name="K928" xml:space="preserve">
+    <value>Zerar tudo</value>
+  </data>
+  <data name="K929" xml:space="preserve">
+    <value>Zerar OEE de todos os dispositivos</value>
+  </data>
+  <data name="K930" xml:space="preserve">
+    <value>Envia o comando de zeramento de OEE a todos os dispositivos e zera os acumulados do software; irreversível e indisponível quando desconectado.</value>
+  </data>
+  <data name="M385" xml:space="preserve">
+    <value>Confirmar zeramento de OEE de todos</value>
+  </data>
+  <data name="M386" xml:space="preserve">
+    <value>Nenhum dispositivo para zerar</value>
+  </data>
+  <data name="F717" xml:space="preserve">
+    <value>Zerar o OEE de todos os {0} dispositivos? Isso limpa a produção OK/NG, os totais de execução/alarme/espera e o estado de alarme de todos os dispositivos e não pode ser desfeito.</value>
+  </data>
+  <data name="F718" xml:space="preserve">
+    <value>Zeramento de OEE acionado para todos os dispositivos ({0}/{1})</value>
+  </data>
+  <data name="F719" xml:space="preserve">
+    <value>Falha ao zerar o OEE de todos os dispositivos: {0}</value>
+  </data>
+  <data name="Web_Pl_ResetAll" xml:space="preserve">
+    <value>Zerar tudo</value>
+  </data>
+  <data name="Web_Pl_ResetAllHint" xml:space="preserve">
+    <value>Zerar OEE de todos os dispositivos</value>
+  </data>
+  <data name="Web_Pl_ResetAllConfirm" xml:space="preserve">
+    <value>Zerar o OEE de todos os {0} dispositivos? Esta operação não pode ser desfeita.</value>
+  </data>
+  <data name="Web_Pl_ResetAllOk" xml:space="preserve">
+    <value>Zeramento de OEE acionado para todos os dispositivos ({0}/{1})</value>
+  </data>
+  <data name="Web_Pl_ResetAllFail" xml:space="preserve">
+    <value>Falha ao zerar o OEE de todos os dispositivos: {0}</value>
+  </data>
+  <data name="Web_Pl_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
 </root>

@@ -7,6 +7,7 @@ using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -244,6 +245,207 @@ public class ProductionLineViewModelTests
         {
             CleanupIsolated(dir);
         }
+    }
+
+    // ──────────── 一键全部设备 OEE 清零 ────────────
+
+    [Fact]
+    public void ResetAllProductionCommand_WithoutPlcCommandHandler_IsDisabled()
+    {
+        using var vm = CreateViewModelWithDevices((DeviceStatus.Running, "注塑机A"));
+
+        // 未注入 DevicePlcCommandHandler（测试/单机装配缺失）：不得开放危险写入口
+        Assert.False(vm.ResetAllProductionCommand.CanExecute(null));
+        Assert.False(vm.IsPlcConnected);
+        Assert.False(vm.CanManageDevices);
+    }
+
+    [Fact]
+    public void ResetAllProductionCommand_RequiresConnectionAndEngineerRole()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            AddDevice(repo, "a", "A");
+
+            // PLC 未连接 → 禁用
+            using var offline = CreateResetVm(repo, settings, new FakeDialogService(), connected: false, engineer: true);
+            Assert.False(offline.ResetAllProductionCommand.CanExecute(null));
+
+            // 已连接但仅操作员 → 禁用
+            using var operatorVm = CreateResetVm(repo, settings, new FakeDialogService(), connected: true, engineer: false);
+            Assert.False(operatorVm.ResetAllProductionCommand.CanExecute(null));
+
+            // 已连接 + 工程师 → 启用
+            using var engineerVm = CreateResetVm(repo, settings, new FakeDialogService(), connected: true, engineer: true);
+            Assert.True(engineerVm.ResetAllProductionCommand.CanExecute(null));
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public void ResetAllProductionCommand_WithNoDevices_IsDisabled()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            using var vm = CreateResetVm(repo, settings, new FakeDialogService(), connected: true, engineer: true);
+
+            Assert.False(vm.ResetAllProductionCommand.CanExecute(null));
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_ConfirmAccepted_ClearsAllAndNotifiesSuccess()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            AddDevice(repo, "a", "A");
+            AddDevice(repo, "b", "B");
+
+            var service = Substitute.For<IPlcDataAcquisitionService>();
+            service.ResetAllDevicesProduction().Returns(_ => (2, 2));
+
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.Yes };
+            using var vm = CreateResetVm(repo, settings, dialog, connected: true, engineer: true, service: service);
+
+            await vm.ResetAllProductionCommand.ExecuteAsync(null);
+
+            var prompt = Assert.Single(dialog.ShowCalls);
+            Assert.Equal(Strings.M385, prompt.Title);
+            Assert.Equal(string.Format(Strings.F717, 2), prompt.Message);
+            Assert.Equal(MessageBoxButton.YesNo, prompt.Buttons);
+            Assert.Equal(MessageBoxImage.Warning, prompt.Icon);
+
+            Assert.Equal(string.Format(Strings.F718, 2, 2), Assert.Single(dialog.Success));
+            service.Received(1).ResetAllDevicesProduction();
+            Assert.False(vm.IsResettingAll);
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_ConfirmRejected_DoesNotClearAndStaysSilent()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            AddDevice(repo, "a", "A");
+
+            var service = Substitute.For<IPlcDataAcquisitionService>();
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.No };
+            using var vm = CreateResetVm(repo, settings, dialog, connected: true, engineer: true, service: service);
+
+            await vm.ResetAllProductionCommand.ExecuteAsync(null);
+
+            service.DidNotReceive().ResetAllDevicesProduction();
+            Assert.Single(dialog.ShowCalls);
+            // 用户取消：不弹任何结果通知（Cancelled 静默，与设备参数页同口径）
+            Assert.Empty(dialog.Success);
+            Assert.Empty(dialog.Warning);
+            Assert.Empty(dialog.Error);
+            Assert.Empty(dialog.Info);
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_NoResetAddresses_NotifiesInfo()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            AddDevice(repo, "a", "A");
+
+            var service = Substitute.For<IPlcDataAcquisitionService>();
+            service.ResetAllDevicesProduction().Returns(_ => (0, 0));
+
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.Yes };
+            using var vm = CreateResetVm(repo, settings, dialog, connected: true, engineer: true, service: service);
+
+            await vm.ResetAllProductionCommand.ExecuteAsync(null);
+
+            Assert.Equal(Strings.M386, Assert.Single(dialog.Info));
+            Assert.Empty(dialog.Success);
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_ServiceThrows_NotifiesError()
+    {
+        var (dir, settings, repo) = CreateIsolatedRepo();
+        try
+        {
+            AddDevice(repo, "a", "A");
+
+            var service = Substitute.For<IPlcDataAcquisitionService>();
+            service.When(s => s.ResetAllDevicesProduction()).Throw(new InvalidOperationException("boom"));
+
+            var dialog = new FakeDialogService { ShowResult = MessageBoxResult.Yes };
+            using var vm = CreateResetVm(repo, settings, dialog, connected: true, engineer: true, service: service);
+
+            await vm.ResetAllProductionCommand.ExecuteAsync(null);
+
+            Assert.Contains("boom", Assert.Single(dialog.Error));
+            Assert.False(vm.IsResettingAll); // finally 中恢复，可再次点击
+        }
+        finally
+        {
+            CleanupIsolated(dir);
+        }
+    }
+
+    private static void AddDevice(DeviceRepository repo, string id, string name)
+    {
+        var device = new Device { Id = id, Name = name };
+        repo.Devices.Add(device);
+        repo.AddRuntime(device);
+    }
+
+    /// <summary>
+    /// 构造带完整「一键全设备清零」依赖的 ViewModel：真实 PlcConnectionManager（连接态可控）
+    /// + UserSession（角色可控）+ FakePlcDriver 驱动的 DevicePlcCommandHandler。
+    /// </summary>
+    private static ProductionLineViewModel CreateResetVm(
+        DeviceRepository repo,
+        AppSettings settings,
+        FakeDialogService dialog,
+        bool connected,
+        bool engineer,
+        IPlcDataAcquisitionService? service = null)
+    {
+        var plc = new FakePlcDriver();
+        var conn = new PlcConnectionManager(plc, settings);
+        conn.IsConnected = connected;
+
+        var session = new UserSession();
+        if (engineer)
+            session.Login(new User { Username = "eng", Role = UserRole.Engineer });
+
+        var acquisition = service ?? Substitute.For<IPlcDataAcquisitionService>();
+        var handler = new DevicePlcCommandHandler(plc, conn, acquisition);
+
+        return new ProductionLineViewModel(
+            repo, new DeviceSelectionService(), acquisition, settings, dialog,
+            handler, conn, session);
     }
 
     private static ProductionLineViewModel CreateViewModelWithDevices(

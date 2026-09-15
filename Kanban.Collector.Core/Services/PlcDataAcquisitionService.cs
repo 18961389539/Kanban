@@ -1349,47 +1349,71 @@ public partial class PlcDataAcquisitionService : ObservableObject, IPlcDataAcqui
     {
         // _resetLock 保证 ResetShift 与 ResetDeviceProduction 互斥，避免 UI 线程单设备清零
         // 与轮询线程班次重置并发导致状态字典半重置
-        lock (_resetLock)
+        lock (_resetLock) ResetAllDevicesCore("班次重置");
+    }
+
+    /// <summary>
+    /// 手动「全部设备 OEE 清零」（产线总览页一键触发）。
+    /// 效果与班次切换 <see cref="ResetShift"/> 完全一致（同样作用于全部设备、同样有 1 秒基线窗口），
+    /// 仅触发时机不同；复用 <see cref="ResetAllDevicesCore"/> 保证两条路径不会漂移。
+    /// 软件侧清零始终执行，不依赖 PLC 写入结果（PLC 写入失败时软件侧清零无副作用，后续读取会自然跟上实际值）。
+    /// </summary>
+    /// <returns>PLC 触发位写入成功的设备数与参与设备总数，供 UI 反馈"已触发 N/M 台"。</returns>
+    public (int Triggered, int Total) ResetAllDevicesProduction()
+    {
+        lock (_resetLock) return ResetAllDevicesCore("全部设备手动清零");
+    }
+
+    /// <summary>
+    /// <see cref="ResetShift"/> 与 <see cref="ResetAllDevicesProduction"/> 共用的重置主体。
+    /// 调用方必须已持有 <see cref="_resetLock"/>。
+    /// </summary>
+    /// <param name="reason">触发原因，仅用于日志文案。</param>
+    /// <returns>PLC 触发位写入成功的设备数与参与设备总数。</returns>
+    private (int Triggered, int Total) ResetAllDevicesCore(string reason)
+    {
+        // 软件侧 OEE 累计立即清零（断线期间本就没累计，立即清零无副作用）
+        _scanPipeline.ResetAll();
+        _statusTracker.ResetAll();
+        _baselineCoordinator.ResetAll();
+
+        // 清空全部产量基线（内存活动缓存 + 磁盘快照），并以当前班次标识持久化空基线。
+        // 下一轮读取将以当前 PLC 值重建基线，避免跨班次误恢复旧基线。
+        _baselineStore.ClearAll(_shiftContext.CurrentShiftId?.ToString());
+
+        int triggered = 0, total = 0;
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
         {
-            // 软件侧 OEE 累计立即清零（断线期间本就没累计，立即清零无副作用）
-            _scanPipeline.ResetAll();
-            _statusTracker.ResetAll();
-            _baselineCoordinator.ResetAll();
+            total++;
+            GetRuntime(device)?.ResetShift();
 
-            // 清空全部产量基线（内存活动缓存 + 磁盘快照），并以当前班次标识持久化空基线。
-            // 下一轮读取将以当前 PLC 值重建基线，避免跨班次误恢复旧基线。
-            _baselineStore.ClearAll(_shiftContext.CurrentShiftId?.ToString());
-
-            foreach (var device in _deviceRepository.GetDevicesSnapshot())
+            // 同步重置报警时间戳，避免 Alarm.Duration 跨班次导致与 AlarmTime 语义割裂
+            foreach (var alarm in device.Alarms.ToList())
             {
-                GetRuntime(device)?.ResetShift();
-
-                // 同步重置报警时间戳，避免 Alarm.Duration 跨班次导致与 AlarmTime 语义割裂
-                foreach (var alarm in device.Alarms.ToList())
-                {
-                    alarm.StartTime = default;
-                    alarm.EndTime = default;
-                }
-
-                // 每台设备独立触发 PLC 清零 + 延迟清空基线
-                if (IsAnySessionConnected)
-                {
-                    TriggerPlcProductionReset(device);
-                    _baselineCoordinator.ScheduleClear(device.Id);
-                }
-                else
-                {
-                    // PLC 未连接，推迟到重连后再触发清零
-                    _baselineCoordinator.AddPendingReconnect(device.Id);
-                }
+                alarm.StartTime = default;
+                alarm.EndTime = default;
             }
 
-            if (!IsAnySessionConnected)
+            // 每台设备独立触发 PLC 清零 + 延迟清空基线
+            if (IsAnySessionConnected)
             {
-                _logger.LogWarning("班次重置时 PLC 未连接，{Count} 台设备推迟清零到 PLC 重连后",
-                    _baselineCoordinator.PendingReconnectCount);
+                if (TriggerPlcProductionReset(device)) triggered++;
+                _baselineCoordinator.ScheduleClear(device.Id);
+            }
+            else
+            {
+                // PLC 未连接，推迟到重连后再触发清零
+                _baselineCoordinator.AddPendingReconnect(device.Id);
             }
         }
+
+        if (!IsAnySessionConnected)
+        {
+            _logger.LogWarning("{Reason}时 PLC 未连接，{Count} 台设备推迟清零到 PLC 重连后",
+                reason, _baselineCoordinator.PendingReconnectCount);
+        }
+
+        return (triggered, total);
     }
 
     /// <summary>

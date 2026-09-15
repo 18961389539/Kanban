@@ -76,6 +76,9 @@ public sealed class KanbanAdminClient : IKanbanAdminClient, IAsyncDisposable
     public Task<RecipeApplyResultDto> ApplyRecipeAsync(string deviceId, string recipeId, CancellationToken ct = default)
         => _client.ApplyRecipeAsync(deviceId, recipeId, ct);
 
+    public Task<OeeResetAllResultDto> ResetAllOeeAsync(CancellationToken ct = default)
+        => _client.ResetAllOeeAsync(ct);
+
     public Task RecordAuditAsync(AuditLogRecordRequest request, CancellationToken ct = default)
         => _client.RecordAuditAsync(request, ct);
 

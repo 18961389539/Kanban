@@ -42,6 +42,12 @@ public interface IPlcDataAcquisitionService
     bool ResetDeviceProduction(Device device);
 
     /// <summary>
+    /// 手动「全部设备 OEE 清零」：对全部设备执行与班次切换相同的 PLC 触发 + 软件侧清零 + 1 秒基线窗口。
+    /// 返回 (PLC 触发位写入成功的设备数, 参与设备总数)；软件侧清零始终执行，不依赖 PLC 写入结果。
+    /// </summary>
+    (int Triggered, int Total) ResetAllDevicesProduction();
+
+    /// <summary>
     /// 清理已删除设备的残留内存状态（产量基线 + 报警/状态字典），避免内存泄漏。
     /// </summary>
     void RemoveDeviceState(Device device);

@@ -189,11 +189,17 @@
                     Width="*"
                     Binding="{Binding NamePt, UpdateSourceTrigger=PropertyChanged}"
                     Header="{x:Static resources:Strings.Alarm_NamePt}" />
+                <!--  类型下拉框必须显式套 ComboBoxExtend 系样式：不指定 Style 时会回落到 HandyControl 的
+                      默认浅色 ComboBox（底 ~#EAEAEA），而 KanbanDataGridCell 的 Foreground 是
+                      PrimaryTextBrush(#F1F5F9)，两者叠加成「浅底近白字」，对比度约 1.1:1 几乎不可读。
+                      .Small 变体在保持深色配色的同时收紧内边距与下拉项高度，适配 36px 行高。  -->
                 <DataGridComboBoxColumn
                     Width="90"
                     Header="{x:Static resources:Strings.Dsm_Type}"
                     SelectedItemBinding="{Binding DataType, UpdateSourceTrigger=PropertyChanged}"
-                    ItemsSource="{Binding Source={StaticResource DataSourceValueTypeValues}}" />
+                    ItemsSource="{Binding Source={StaticResource DataSourceValueTypeValues}}"
+                    ElementStyle="{StaticResource ComboBoxExtend.Small}"
+                    EditingElementStyle="{StaticResource ComboBoxExtend.Small}" />
                 <DataGridTextColumn
                     Width="*"
                     Binding="{Binding PlcAddress, UpdateSourceTrigger=PropertyChanged}"

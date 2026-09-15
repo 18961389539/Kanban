@@ -809,6 +809,114 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     }
 
     // ════════════════════════════════════════════════════════════════
+    //  手动「全部设备 OEE 清零」（产线总览页一键触发）
+    // ════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ResetAllDevicesProduction_Connected_ClearsEveryRuntimeAndWritesTriggerBit()
+    {
+        var d1 = AddDevice(id: "dev-001", name: "设备1");
+        var d2 = AddDevice(id: "dev-002", name: "设备2",
+            okAddr: "D200", ngAddr: "D201", statusAddr: "D202", resetAddr: "D203", alarmAddr: "M200");
+
+        var rt1 = _deviceRepository.RuntimeMap[d1.Id];
+        var rt2 = _deviceRepository.RuntimeMap[d2.Id];
+        rt1.TotalOkProduction = 100; rt1.TotalNgProduction = 5; rt1.RunTime = 60; rt1.AlarmTime = 10;
+        rt2.TotalOkProduction = 200; rt2.TotalNgProduction = 7; rt2.RunTime = 120; rt2.PausedTime = 30;
+
+        _connectionManager.IsConnected = true;
+
+        var (triggered, total) = _service.ResetAllDevicesProduction();
+
+        Assert.Equal(2, total);
+        Assert.Equal(2, triggered);
+
+        // 软件侧：两台设备的产量/时间/报警累计全部归零
+        foreach (var rt in new[] { rt1, rt2 })
+        {
+            Assert.Equal(0, rt.TotalOkProduction);
+            Assert.Equal(0, rt.TotalNgProduction);
+            Assert.Equal(0, rt.RunTime);
+            Assert.Equal(0, rt.AlarmTime);
+            Assert.Equal(0, rt.PausedTime);
+        }
+
+        // PLC 侧：两台设备的清零触发位都写入 1
+        Assert.Equal(1, _plc.WriteHistory.Single(w => w.Address == d1.ProductionResetAddress).Value);
+        Assert.Equal(1, _plc.WriteHistory.Single(w => w.Address == d2.ProductionResetAddress).Value);
+    }
+
+    [Fact]
+    public void ResetAllDevicesProduction_Disconnected_ClearsSoftwareSideAndDefersPlcWrite()
+    {
+        var device = AddDevice();
+        var runtime = _deviceRepository.RuntimeMap[device.Id];
+        runtime.TotalOkProduction = 42;
+        runtime.RunTime = 30;
+
+        _connectionManager.IsConnected = false;
+
+        var (triggered, total) = _service.ResetAllDevicesProduction();
+
+        // 未连接：不写 PLC（推迟到重连），但软件侧累计仍清零——与 ResetShift 同语义
+        Assert.Empty(_plc.WriteHistory);
+        Assert.Equal(0, triggered);
+        Assert.Equal(1, total);
+        Assert.Equal(0, runtime.TotalOkProduction);
+        Assert.Equal(0, runtime.RunTime);
+    }
+
+    [Fact]
+    public void ResetAllDevicesProduction_DeviceWithoutResetAddress_NotCountedAsTriggeredButStillCleared()
+    {
+        var withAddr = AddDevice(id: "dev-001", name: "有地址");
+        var withoutAddr = AddDevice(id: "dev-002", name: "无地址",
+            okAddr: "D200", ngAddr: "D201", statusAddr: "D202", resetAddr: "", alarmAddr: "M200");
+        _deviceRepository.RuntimeMap[withoutAddr.Id].TotalOkProduction = 9;
+
+        _connectionManager.IsConnected = true;
+
+        var (triggered, total) = _service.ResetAllDevicesProduction();
+
+        Assert.Equal(2, total);
+        Assert.Equal(1, triggered); // 只有配置了合法 D 字清零地址的设备计入触发成功
+        Assert.Equal(0, _deviceRepository.RuntimeMap[withoutAddr.Id].TotalOkProduction); // 软件侧仍清零
+        Assert.Single(_plc.WriteHistory);
+        Assert.Equal(withAddr.ProductionResetAddress, _plc.WriteHistory[0].Address);
+    }
+
+    [Fact]
+    public void ResetAllDevicesProduction_NoDevices_ReturnsZeroPair()
+    {
+        _connectionManager.IsConnected = true;
+
+        var (triggered, total) = _service.ResetAllDevicesProduction();
+
+        Assert.Equal(0, triggered);
+        Assert.Equal(0, total);
+        Assert.Empty(_plc.WriteHistory);
+    }
+
+    [Fact]
+    public void ResetAllDevicesProduction_ResetsAlarmTimestampsAndMemoryState()
+    {
+        var device = AddDevice();
+        var alarm = device.Alarms.First();
+        alarm.StartTime = DateTime.Now.AddMinutes(-5);
+        alarm.EndTime = DateTime.Now;
+        _service.SetPrevAlarmStateForTest(alarm.Id, true);
+
+        _connectionManager.IsConnected = true;
+
+        _service.ResetAllDevicesProduction();
+
+        // 报警时间戳与内存边沿状态一并重置，避免下一次扫描误判边沿
+        Assert.Equal(default, alarm.StartTime);
+        Assert.Equal(default, alarm.EndTime);
+        Assert.Empty(_service.PrevAlarmStatesForTest);
+    }
+
+    // ════════════════════════════════════════════════════════════════
     //  生产快照写入
     // ════════════════════════════════════════════════════════════════
 

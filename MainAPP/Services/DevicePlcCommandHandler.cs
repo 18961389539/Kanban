@@ -123,6 +123,39 @@ public class DevicePlcCommandHandler(
     }
 
     /// <summary>
+    /// 手动一键清零「全部设备」的 OEE：一次对整线触发 PLC 清零 + 软件侧累计清零（产量+时间+报警）+ 基线清零。
+    /// 与 <see cref="ResetProductionAsync"/> 的单设备清零同源（都走 IPlcDataAcquisitionService 的重置主体），
+    /// 区别只是一次作用于全部设备、不逐个校验清零地址（未配置地址的设备仅清零软件侧，由采集服务内部判定）。
+    /// 该操作不可撤销且影响整线，属危险写操作——通过 confirmCallback 让调用方弹出二次确认框，
+    /// 回调返回 false 时直接返回 Cancelled 且不写 PLC。
+    /// </summary>
+    /// <param name="confirmCallback">调用方提供的二次确认回调，返回 true 表示用户确认执行。</param>
+    /// <returns>
+    /// Cancelled=用户拒绝确认；Success=已触发清零（Message 含「触发成功数/设备总数」）；
+    /// Info=当前没有可清零的设备；Warning=PLC 未连接；Error=异常。
+    /// </returns>
+    public async Task<PlcOpResult> ResetAllProductionAsync(Func<bool> confirmCallback)
+    {
+        if (!_connectionManager.IsConnected)
+            return new PlcOpResult(PlcOpStatus.Warning, Strings.M181);
+
+        if (!confirmCallback())
+            return new PlcOpResult(PlcOpStatus.Cancelled, Strings.M183);
+
+        try
+        {
+            var (triggered, total) = await Task.Run(() => _dataAcquisitionService.ResetAllDevicesProduction());
+            return total == 0
+                ? new PlcOpResult(PlcOpStatus.Info, Strings.M386)
+                : new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F718, triggered, total));
+        }
+        catch (Exception ex)
+        {
+            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F719, ex.Message));
+        }
+    }
+
+    /// <summary>
     /// 从 PLC 读取指定 D 字地址的当前值，用于调试/验证地址配置是否正确。
     /// </summary>
     /// <param name="address">PLC D 字地址（如 D100）。</param>

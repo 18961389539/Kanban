@@ -78,7 +78,7 @@ public class LineDeviceItemTests
         Assert.Equal(9.0, item.TargetCycleSec, 3);
         Assert.Equal(18.0, item.RealCycleSec, 3);
         Assert.Equal(18.0, item.ActualCycleSec, 3);
-        Assert.Equal("18.0/9.0s", item.CycleText);
+        Assert.Equal("18.00/9.00s", item.CycleText);
         Assert.True(item.IsCycleSlow);
     }
 
@@ -93,7 +93,7 @@ public class LineDeviceItemTests
         var item = new LineDeviceItem(device, runtime);
 
         Assert.Equal(4.5, item.RealCycleSec, 3);
-        Assert.Equal("4.5/9.0s", item.CycleText);
+        Assert.Equal("4.50/9.00s", item.CycleText);
         Assert.False(item.IsCycleSlow);
     }
 

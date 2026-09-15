@@ -154,7 +154,10 @@
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <!--  显式套 ComboBoxExtend 系样式；裸 ComboBox 会回落到 HandyControl 默认浅色样式，
+                      与本页深色底形成「浅底近白字」的低对比度。  -->
                 <ComboBox Width="150" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                          Style="{StaticResource ComboBoxExtend.Small}"
                           ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
                           SelectedValue="{Binding SelectedDeviceId}" SelectedValuePath="Id"
                           ToolTip="{x:Static resources:Strings.K024}" />

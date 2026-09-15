@@ -326,7 +326,7 @@
                                    FontSize="{DynamicResource FontSizeCaption}"
                                    Foreground="{StaticResource SecondaryTextBrush}"
                                    Text="{x:Static resources:Strings.Ln_ShiftPace}" />
-                        <ProgressBar Height="8" Maximum="1"
+                        <ProgressBar Height="12" Maximum="1"
                                      Foreground="{StaticResource PrimaryBrush}"
                                      Background="{StaticResource RegionBrush}"
                                      Value="{Binding ShiftProgressBarValue, Mode=OneWay}" />

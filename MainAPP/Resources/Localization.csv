@@ -2444,3 +2444,17 @@ Wpf,Hh_OffShiftHint,小时计划按当前班次逐小时对照额定产能与 OK
 Wpf,Hh_BoardHint,班次墙钟应产（含停机）只计 OK；与下方运行应产不同（仅 Running 时间且含 NG）。,Shift-clock due includes stops and counts OK only. Run-window due below uses Running time and OK+NG.,シフト壁時計の予定は停止を含みOKのみ。下の運転応産はRunning時間かつOK+NG。,Previsto do turno inclui paradas e conta só OK. O previsto da run abaixo usa tempo Running e OK+NG.
 Wpf,Dd_OeeOutputHint,运行应产 = 额定产能 × 运行小时（OK+NG）。不含报警/待机/离线。,Run-window due = rated pcs/h × running hours (OK+NG). Excludes alarm/standby/offline.,運転応産 = 定格能力 × 運転時間（OK+NG）。アラーム/待機/オフラインは含みません。,Previsto da run = capacidade × horas em execução (OK+NG). Exclui alarme/espera/offline.
 Wpf,Validator_AddressReuseInDevice,设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2},Device "{0}": PLC address "{1}" is used by multiple items: {2},デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2},Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}
+Wpf,K928,全部清零,Reset All,一括クリア,Zerar tudo
+Wpf,K929,全部设备 OEE 清零,Reset OEE for All Devices,全デバイスの OEE クリア,Zerar OEE de todos os dispositivos
+Wpf,K930,一键向全部设备写入 OEE 清零指令，并清零软件侧累计；不可撤销，断开连接时不可用。,Writes the OEE reset command to every device and clears software-side totals; irreversible and unavailable when disconnected.,全デバイスへ OEE クリア指令を書込み、ソフト側の累計もクリアします。取消不可、切断時は利用不可。,Envia o comando de zeramento de OEE a todos os dispositivos e zera os acumulados do software; irreversível e indisponível quando desconectado.
+Wpf,M385,确认全部设备 OEE 清零,Confirm Reset OEE for All,全デバイス OEE クリア確認,Confirmar zeramento de OEE de todos
+Wpf,M386,没有可清零的设备,No devices to reset,クリア対象のデバイスがありません,Nenhum dispositivo para zerar
+Wpf,F717,确定清零全部 {0} 台设备的 OEE 吗？将清零所有设备的 OK/NG 产量、运行/报警/待机累计时间及报警状态，且无法撤销。,"Reset OEE for all {0} devices? This clears OK/NG output, run/alarm/standby totals and alarm state for every device in the line and cannot be undone.",全 {0} 台のデバイスの OEE をクリアしますか？全デバイスの OK/NG 生産数、稼働/警報/待機の累計時間、警報状態をクリアし、取消できません。,"Zerar o OEE de todos os {0} dispositivos? Isso limpa a produção OK/NG, os totais de execução/alarme/espera e o estado de alarme de todos os dispositivos e não pode ser desfeito."
+Wpf,F718,已触发全部设备 OEE 清零（{0}/{1} 台）,OEE reset triggered for all devices ({0}/{1}),全デバイスの OEE クリアを実行しました（{0}/{1} 台）,Zeramento de OEE acionado para todos os dispositivos ({0}/{1})
+Wpf,F719,全部设备 OEE 清零失败：{0},Reset OEE for all devices failed: {0},全デバイス OEE クリア失敗：{0},Falha ao zerar o OEE de todos os dispositivos: {0}
+Wpf,Web_Pl_ResetAll,全部清零,Reset All,一括クリア,Zerar tudo
+Wpf,Web_Pl_ResetAllHint,全部设备 OEE 清零,Reset OEE for All Devices,全デバイスの OEE クリア,Zerar OEE de todos os dispositivos
+Wpf,Web_Pl_ResetAllConfirm,确定清零全部 {0} 台设备的 OEE 吗？此操作不可撤销。,Reset OEE for all {0} devices? This cannot be undone.,全 {0} 台のデバイスの OEE をクリアしますか？この操作は取消できません。,Zerar o OEE de todos os {0} dispositivos? Esta operação não pode ser desfeita.
+Wpf,Web_Pl_ResetAllOk,已触发全部设备 OEE 清零（{0}/{1} 台）,OEE reset triggered for all devices ({0}/{1}),全デバイスの OEE クリアを実行しました（{0}/{1} 台）,Zeramento de OEE acionado para todos os dispositivos ({0}/{1})
+Wpf,Web_Pl_ResetAllFail,全部设备 OEE 清零失败：{0},Reset OEE for all devices failed: {0},全デバイス OEE クリア失敗：{0},Falha ao zerar o OEE de todos os dispositivos: {0}
+Wpf,Web_Pl_Cancel,取消,Cancel,キャンセル,Cancelar

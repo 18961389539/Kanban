@@ -23,6 +23,14 @@ builder.Services.AddSingleton(sp => new KanbanDataClient(
     sp.GetRequiredService<ILogger<KanbanDataClient>>(),
     useMessagePack: false));
 
+// ──────────── 管理域写通道（独立 Hub 路径，与只读监控连接分离） ────────────
+// 仅产线总览页的「全部设备 OEE 清零」使用；管理 Hub 由 Collector 单写者持有 PLC 连接，
+// 因此屏端的清零请求必须经此通道转发，不能（也无法）在浏览器侧直接写 PLC。
+builder.Services.AddSingleton(sp => new KanbanAdminClient(
+    collectorHubUrl,
+    sp.GetRequiredService<ILogger<KanbanDataClient>>(),
+    useMessagePack: false));
+
 // ──────────── 看板内存状态（连接 + 快照订阅 + 渲染节流的数据源） ────────────
 builder.Services.AddSingleton<DashboardState>();
 

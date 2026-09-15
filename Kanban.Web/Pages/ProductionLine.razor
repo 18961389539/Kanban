@@ -1,6 +1,7 @@
 @page "/line"
 @implements IDisposable
 @inject DashboardState Dashboard
+@inject KanbanAdminClient Admin
 @inject ILogger<ProductionLine> Logger
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
@@ -24,18 +25,68 @@
         }
     </div>
 
+    @* ──── 一键全部设备 OEE 清零的结果提示（成功/失败） ──── *@
+    @if (!string.IsNullOrEmpty(_resetNotice))
+    {
+        <div class="msg-banner @(_resetNoticeIsError ? "msg-error" : "msg-ok")">
+            <span>@_resetNotice</span>
+            <button class="msg-close" title="@L.T("Pl_Cancel")" @onclick="() => _resetNotice = null">✕</button>
+        </div>
+    }
+
+    @* ──── 危险操作二次确认（屏端内联模态，避免浏览器原生 confirm 的样式割裂） ──── *@
+    @if (_confirmResetOpen)
+    {
+        <div class="modal-mask">
+            <div class="modal-box">
+                <div class="modal-title">@L.T("Pl_ResetAllHint")</div>
+                <div class="modal-body">@L.T("Pl_ResetAllConfirm", Dashboard.DeviceCount)</div>
+                <div class="modal-actions">
+                    <button class="btn" disabled="@_resettingAll" @onclick="CloseResetConfirm">@L.T("Pl_Cancel")</button>
+                    <button class="btn btn-danger" disabled="@_resettingAll" @onclick="ConfirmResetAllAsync">
+                        @L.T("Pl_ResetAll")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
     @if (Dashboard.Snapshots.Count == 0)
     {
         <EmptyState Title="@L.T("Ln_NoDevices")" Hint="@L.T("Ln_NoDevicesHint")" Icon="🏭" />
     }
     else
     {
-        @* ──── 汇总 KPI 条 ──── *@
+        @* ──── 汇总 KPI 条：四态合并为两张双指标卡（运行|报警、待机|离线） ──── *@
         <section class="kpi-row">
-            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value kpi-ok">@Summary.Running</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@Summary.Alarm</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@Summary.Paused</span></div>
-            <div class="kpi-card"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@Summary.Idle</span></div>
+            <div class="kpi-card dual">
+                <div class="kpi-metric">
+                    <span class="kpi-label">@L.T("Status_Running")</span>
+                    <span class="kpi-value kpi-ok">@Summary.Running</span>
+                </div>
+                <div class="kpi-metric">
+                    <span class="kpi-label">@L.T("Status_Alarm")</span>
+                    <span class="kpi-value kpi-ng">@Summary.Alarm</span>
+                </div>
+            </div>
+            <div class="kpi-card dual">
+                <div class="kpi-metric">
+                    <span class="kpi-label">@L.T("Status_Paused")</span>
+                    <span class="kpi-value">@Summary.Paused</span>
+                </div>
+                <div class="kpi-metric">
+                    <span class="kpi-label">@L.T("Status_Offline")</span>
+                    <span class="kpi-value">@Summary.Idle</span>
+                </div>
+            </div>
+
+            @* ──── 一键全部设备 OEE 清零：危险写操作，需二次确认；断线/执行中禁用 ──── *@
+            <div class="kpi-card action">
+                <button class="btn btn-danger" disabled="@(!CanResetAll)" @onclick="OpenResetConfirm">
+                    @L.T("Pl_ResetAll")
+                </button>
+                <span class="kpi-sub">@L.T("Pl_ResetAllHint")</span>
+            </div>
         </section>
 
         @* ──── 筛选：状态 / 搜索 / 排序 ──── *@
@@ -119,6 +170,52 @@
     private int StatusFilter { get; set; } // 0=全部 1=运行 2=报警 3=待机 4=空闲
     private string SearchText { get; set; } = "";
     private string SortBy { get; set; } = "name";
+
+    // ──── 一键全部设备 OEE 清零状态 ────
+    private bool _confirmResetOpen;
+    private bool _resettingAll;
+    private string? _resetNotice;
+    private bool _resetNoticeIsError;
+
+    /// <summary>
+    /// 断线 / 无设备 / 执行中时禁用清零入口。
+    /// 注意：屏端目前没有登录与角色模型（只读看板），此处只按连接态与设备数兜底，
+    /// 不等价于权限控制——危险写操作的访问控制应由部署网络或后续接入的统一鉴权承担。
+    /// </summary>
+    private bool CanResetAll => !_resettingAll && Dashboard.IsConnected && Dashboard.DeviceCount > 0;
+
+    private void OpenResetConfirm()
+    {
+        if (!CanResetAll) return;
+        _confirmResetOpen = true;
+    }
+
+    private void CloseResetConfirm() => _confirmResetOpen = false;
+
+    /// <summary>确认后经管理 Hub 远程清零：PLC 触发位与软件侧累计都由持有 PLC 连接的 Collector 执行。</summary>
+    private async Task ConfirmResetAllAsync()
+    {
+        if (_resettingAll) return;
+        _resettingAll = true;
+        try
+        {
+            if (!Admin.IsConnected) await Admin.ConnectAsync();
+            var result = await Admin.ResetAllOeeAsync();
+            _resetNotice = L.T("Pl_ResetAllOk", result.Triggered, result.Total);
+            _resetNoticeIsError = false;
+            _confirmResetOpen = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "全部设备 OEE 清零失败");
+            _resetNotice = L.T("Pl_ResetAllFail", ex.Message);
+            _resetNoticeIsError = true;
+        }
+        finally
+        {
+            _resettingAll = false;
+        }
+    }
 
     // ──── 渲染缓存：快照每帧变化、筛选条件交互变化时置脏，避免单次渲染内重复全量计算 ────
     private LineSummary? _summaryCache;
@@ -206,7 +303,7 @@
     {
         var target = SnapshotMetrics.CycleSeconds(d.TargetCycle);
         var real = SnapshotMetrics.AverageCycleSeconds(d.RunTime, d.TotalOkProduction, d.TotalNgProduction);
-        return real > 0 && target > 0 ? $"{real:0.0}/{target:0.0}s" : "—";
+        return real > 0 && target > 0 ? $"{real:0.00}/{target:0.00}s" : "—";
     }
 
     private static bool IsCycleSlow(DeviceSnapshotDto d)

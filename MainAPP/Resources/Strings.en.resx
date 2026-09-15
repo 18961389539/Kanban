@@ -6694,4 +6694,46 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>Device "{0}": PLC address "{1}" is used by multiple items: {2}</value>
   </data>
+  <data name="K928" xml:space="preserve">
+    <value>Reset All</value>
+  </data>
+  <data name="K929" xml:space="preserve">
+    <value>Reset OEE for All Devices</value>
+  </data>
+  <data name="K930" xml:space="preserve">
+    <value>Writes the OEE reset command to every device and clears software-side totals; irreversible and unavailable when disconnected.</value>
+  </data>
+  <data name="M385" xml:space="preserve">
+    <value>Confirm Reset OEE for All</value>
+  </data>
+  <data name="M386" xml:space="preserve">
+    <value>No devices to reset</value>
+  </data>
+  <data name="F717" xml:space="preserve">
+    <value>Reset OEE for all {0} devices? This clears OK/NG output, run/alarm/standby totals and alarm state for every device in the line and cannot be undone.</value>
+  </data>
+  <data name="F718" xml:space="preserve">
+    <value>OEE reset triggered for all devices ({0}/{1})</value>
+  </data>
+  <data name="F719" xml:space="preserve">
+    <value>Reset OEE for all devices failed: {0}</value>
+  </data>
+  <data name="Web_Pl_ResetAll" xml:space="preserve">
+    <value>Reset All</value>
+  </data>
+  <data name="Web_Pl_ResetAllHint" xml:space="preserve">
+    <value>Reset OEE for All Devices</value>
+  </data>
+  <data name="Web_Pl_ResetAllConfirm" xml:space="preserve">
+    <value>Reset OEE for all {0} devices? This cannot be undone.</value>
+  </data>
+  <data name="Web_Pl_ResetAllOk" xml:space="preserve">
+    <value>OEE reset triggered for all devices ({0}/{1})</value>
+  </data>
+  <data name="Web_Pl_ResetAllFail" xml:space="preserve">
+    <value>Reset OEE for all devices failed: {0}</value>
+  </data>
+  <data name="Web_Pl_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

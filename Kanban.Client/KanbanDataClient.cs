@@ -367,6 +367,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<RecipeApplyResultDto>(nameof(IKanbanAdminServer.ApplyRecipeAsync), deviceId, recipeId, ct);
     }
 
+    /// <summary>一键清零全部设备 OEE（Remote 模式：PLC 触发位与软件侧累计均由 Collector 清零）。</summary>
+    internal async Task<OeeResetAllResultDto> ResetAllOeeAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<OeeResetAllResultDto>(nameof(IKanbanAdminServer.ResetAllOeeAsync), ct);
+    }
+
     /// <summary>向 Collector 管理 Hub 写入一条审计记录。</summary>
     internal async Task RecordAuditAsync(AuditLogRecordRequest request, CancellationToken ct = default)
     {

@@ -210,8 +210,11 @@
                     FontSize="{DynamicResource FontSizeHint}"
                     Foreground="{StaticResource SecondaryTextBrush}"
                     Text="{x:Static resources:Strings.K619}" />
+                <!--  显式套 ComboBoxExtend 系样式；裸 ComboBox 会回落到 HandyControl 默认浅色样式，
+                      与本页深色底形成「浅底近白字」的低对比度。  -->
                 <ComboBox
                     Width="90"
+                    Style="{StaticResource ComboBoxExtend.Small}"
                     SelectedIndex="{Binding ResultFilterIndex}">
                     <ComboBoxItem Content="{x:Static resources:Strings.K004}" />
                     <ComboBoxItem Content="{x:Static resources:Strings.K620}" />

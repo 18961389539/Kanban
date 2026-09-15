@@ -2,6 +2,7 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using NSubstitute;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -150,6 +151,81 @@ public class DevicePlcCommandHandlerTests
 
         Assert.Equal(PlcOpStatus.Cancelled, r.Status);
         Assert.Contains("取消", r.Message);
+    }
+
+    // ──────────── ResetAllProductionAsync（整线危险操作，二次确认） ────────────
+
+    private static (DevicePlcCommandHandler handler, IPlcDataAcquisitionService service) NewAllResetHandler(
+        bool connected, Action<IPlcDataAcquisitionService>? configure = null)
+    {
+        var plc = new FakePlcDriver();
+        var conn = new PlcConnectionManager(plc, new AppSettings());
+        conn.IsConnected = connected;
+        var service = Substitute.For<IPlcDataAcquisitionService>();
+        configure?.Invoke(service);
+        return (new DevicePlcCommandHandler(plc, conn, service), service);
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_NotConnected_ReturnsWarningAndSkipsService()
+    {
+        var (handler, service) = NewAllResetHandler(connected: false);
+
+        var r = await handler.ResetAllProductionAsync(() => true);
+
+        Assert.Equal(PlcOpStatus.Warning, r.Status);
+        Assert.Contains("未连接", r.Message);
+        service.DidNotReceive().ResetAllDevicesProduction();
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_ConfirmRejected_ReturnsCancelledAndSkipsService()
+    {
+        var (handler, service) = NewAllResetHandler(connected: true);
+
+        var r = await handler.ResetAllProductionAsync(() => false);
+
+        Assert.Equal(PlcOpStatus.Cancelled, r.Status);
+        Assert.Contains("取消", r.Message);
+        service.DidNotReceive().ResetAllDevicesProduction();
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_Confirmed_ReturnsSuccessWithTriggeredOverTotal()
+    {
+        var (handler, service) = NewAllResetHandler(connected: true,
+            configure: s => s.ResetAllDevicesProduction().Returns(_ => (3, 4)));
+
+        var r = await handler.ResetAllProductionAsync(() => true);
+
+        Assert.Equal(PlcOpStatus.Success, r.Status);
+        Assert.Contains("3", r.Message);
+        Assert.Contains("4", r.Message);
+        service.Received(1).ResetAllDevicesProduction();
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_NoDevices_ReturnsInfo()
+    {
+        var (handler, _) = NewAllResetHandler(connected: true,
+            configure: s => s.ResetAllDevicesProduction().Returns(_ => (0, 0)));
+
+        var r = await handler.ResetAllProductionAsync(() => true);
+
+        Assert.Equal(PlcOpStatus.Info, r.Status);
+    }
+
+    [Fact]
+    public async Task ResetAllProduction_ServiceThrows_ReturnsError()
+    {
+        var (handler, _) = NewAllResetHandler(connected: true,
+            configure: s => s.When(x => x.ResetAllDevicesProduction())
+                .Do(_ => throw new InvalidOperationException("boom")));
+
+        var r = await handler.ResetAllProductionAsync(() => true);
+
+        Assert.Equal(PlcOpStatus.Error, r.Status);
+        Assert.Contains("boom", r.Message);
     }
 
     // ──────────── ReadPlcValueAsync ────────────

@@ -6694,4 +6694,46 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2}</value>
   </data>
+  <data name="K928" xml:space="preserve">
+    <value>一括クリア</value>
+  </data>
+  <data name="K929" xml:space="preserve">
+    <value>全デバイスの OEE クリア</value>
+  </data>
+  <data name="K930" xml:space="preserve">
+    <value>全デバイスへ OEE クリア指令を書込み、ソフト側の累計もクリアします。取消不可、切断時は利用不可。</value>
+  </data>
+  <data name="M385" xml:space="preserve">
+    <value>全デバイス OEE クリア確認</value>
+  </data>
+  <data name="M386" xml:space="preserve">
+    <value>クリア対象のデバイスがありません</value>
+  </data>
+  <data name="F717" xml:space="preserve">
+    <value>全 {0} 台のデバイスの OEE をクリアしますか？全デバイスの OK/NG 生産数、稼働/警報/待機の累計時間、警報状態をクリアし、取消できません。</value>
+  </data>
+  <data name="F718" xml:space="preserve">
+    <value>全デバイスの OEE クリアを実行しました（{0}/{1} 台）</value>
+  </data>
+  <data name="F719" xml:space="preserve">
+    <value>全デバイス OEE クリア失敗：{0}</value>
+  </data>
+  <data name="Web_Pl_ResetAll" xml:space="preserve">
+    <value>一括クリア</value>
+  </data>
+  <data name="Web_Pl_ResetAllHint" xml:space="preserve">
+    <value>全デバイスの OEE クリア</value>
+  </data>
+  <data name="Web_Pl_ResetAllConfirm" xml:space="preserve">
+    <value>全 {0} 台のデバイスの OEE をクリアしますか？この操作は取消できません。</value>
+  </data>
+  <data name="Web_Pl_ResetAllOk" xml:space="preserve">
+    <value>全デバイスの OEE クリアを実行しました（{0}/{1} 台）</value>
+  </data>
+  <data name="Web_Pl_ResetAllFail" xml:space="preserve">
+    <value>全デバイス OEE クリア失敗：{0}</value>
+  </data>
+  <data name="Web_Pl_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
 </root>

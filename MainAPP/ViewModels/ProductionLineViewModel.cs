@@ -29,6 +29,9 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     private readonly IPlcDataAcquisitionService? _plcService;
     private readonly AppSettings? _appSettings;
     private readonly IDialogService? _dialog;
+    private readonly DevicePlcCommandHandler? _plcCommands;
+    private readonly PlcConnectionManager? _connectionManager;
+    private readonly UserSession? _userSession;
 
     /// <summary>设备项集合（与 Devices/Runtimes 同步）。</summary>
     public ObservableCollection<LineDeviceItem> LineDevices { get; } = new();
@@ -52,13 +55,24 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     /// </summary>
     public event Action<string>? FocusDeviceRequested;
 
-    public ProductionLineViewModel(DeviceRepository deviceRepository, IDeviceSelectionService selection, IPlcDataAcquisitionService? plcService = null, AppSettings? appSettings = null, IDialogService? dialog = null)
+    public ProductionLineViewModel(
+        DeviceRepository deviceRepository,
+        IDeviceSelectionService selection,
+        IPlcDataAcquisitionService? plcService = null,
+        AppSettings? appSettings = null,
+        IDialogService? dialog = null,
+        DevicePlcCommandHandler? plcCommands = null,
+        PlcConnectionManager? connectionManager = null,
+        UserSession? userSession = null)
     {
         _deviceRepository = deviceRepository;
         _selection = selection;
         _plcService = plcService;
         _appSettings = appSettings;
         _dialog = dialog;
+        _plcCommands = plcCommands;
+        _connectionManager = connectionManager;
+        _userSession = userSession;
         _log.Information("ProductionLineViewModel 构造：Devices.Count={DeviceCount}, Runtimes.Count={RuntimeCount}",
             _deviceRepository.Devices.Count, _deviceRepository.Runtimes.Count);
 
@@ -70,6 +84,11 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         SelectedDeviceId = _selection.SelectedDeviceId;
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged += OnShiftsChanged;
+        // 一键全设备清零的 CanExecute 依赖 PLC 连接态与工程师权限，需订阅变化后重新求值
+        if (_connectionManager != null)
+            _connectionManager.PropertyChanged += OnConnectionPropertyChanged;
+        if (_userSession != null)
+            _userSession.PropertyChanged += OnUserSessionPropertyChanged;
         _kpiTimer = new PageRefreshTimer(TimeSpan.FromMilliseconds(500), OnKpiTimerTick);
         _shiftProgressTimer = new PageRefreshTimer(TimeSpan.FromSeconds(1), OnShiftProgressTick);
         // 筛选/排序视图：ListCollectionView（源 = LineDevices）+ Filter + CustomSort。
@@ -541,6 +560,110 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         }
     }
 
+    // ──────────── 一键全设备 OEE 清零（危险写操作） ────────────
+
+    /// <summary>未注入连接管理器（测试/单机场景）视为未连接，避免离线时误触发整线清零。</summary>
+    public bool IsPlcConnected => _connectionManager?.IsConnected ?? false;
+
+    /// <summary>整线 OEE 清零要求工程师及以上权限（与设备管理页 CanManageDevices 同口径）。</summary>
+    public bool CanManageDevices => _userSession?.IsEngineerOrAbove ?? false;
+
+    /// <summary>整线清零执行中（用于禁用按钮，防连点重复下发）。</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetAllProductionCommand))]
+    private bool _isResettingAll;
+
+    private void OnConnectionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(PlcConnectionManager.IsConnected)) return;
+
+        // 连接状态在 PLC 采集后台线程变更：取不到 Dispatcher（测试环境）时直接求值，
+        // 否则封送回 UI 线程（与 DeviceManagerViewModel 同一处理约定）。
+        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            _ = dispatcher.InvokeAsync(() => OnConnectionPropertyChanged(sender, e));
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsPlcConnected));
+        ResetAllProductionCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnUserSessionPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(UserSession.IsEngineerOrAbove)) return;
+
+        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
+        {
+            _ = dispatcher.InvokeAsync(() => OnUserSessionPropertyChanged(sender, e));
+            return;
+        }
+
+        OnPropertyChanged(nameof(CanManageDevices));
+        ResetAllProductionCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>有设备 + PLC 已连接 + 工程师权限 + 未在执行中，才允许整线清零。</summary>
+    private bool CanResetAllProduction()
+        => _plcCommands != null && _dialog != null
+           && LineDevices.Count > 0 && IsPlcConnected && CanManageDevices && !IsResettingAll;
+
+    /// <summary>
+    /// 一键清零全部设备的 OEE（危险写操作）：二次确认后触发整线 PLC 清零 + 软件侧累计清零。
+    /// 参考设备参数页的单设备清零（<c>DevicePlcCommandViewModel.ResetProductionAsync</c>），
+    /// 区别在于一次作用于整线，故确认文案带设备台数、并在成功后立即刷新页面累计。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanResetAllProduction))]
+    private async Task ResetAllProductionAsync()
+    {
+        if (!CanResetAllProduction()) return;
+        var commands = _plcCommands;
+        var dialog = _dialog;
+        if (commands is null || dialog is null)
+        {
+            _log.Warning("Reset-all OEE aborted: PLC command handler or dialog service unavailable");
+            return;
+        }
+
+        var count = LineDevices.Count;
+        IsResettingAll = true;
+        try
+        {
+            var result = await commands.ResetAllProductionAsync(() =>
+                dialog.Show(
+                    string.Format(Strings.F717, count),
+                    Strings.M385, MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes);
+
+            if (result.Status == PlcOpStatus.Cancelled) return;
+
+            if (result.Status == PlcOpStatus.Success)
+            {
+                AuditLog.Record("Device.ResetAllOee", "Device", null, detail: result.Message);
+                // 清零是全设备累计归零：立刻刷新页面汇总与班次进度，避免等下一次采集 tick 才归零
+                RefreshSummaryKpis();
+                RefreshLastShiftComparison();
+                RefreshAllShiftProgress();
+            }
+
+            switch (result.Status)
+            {
+                case PlcOpStatus.Success: dialog.NotifySuccess(result.Message); break;
+                case PlcOpStatus.Info: dialog.NotifyInfo(result.Message); break;
+                case PlcOpStatus.Warning: dialog.NotifyWarning(result.Message); break;
+                case PlcOpStatus.Error: dialog.NotifyError(result.Message); break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "全部设备 OEE 清零命令异常");
+            dialog.NotifyError(string.Format(Strings.F719, ex.Message));
+        }
+        finally
+        {
+            IsResettingAll = false;
+        }
+    }
+
     /// <summary>
     /// 筛选/排序变化后刷新视图：Filter 委托读取字段最新状态，Refresh 重跑过滤 + CustomSort。
     /// 与结构变化（设备增删）不同——结构变化由 ListCollectionView 自动感知源集合 CollectionChanged，
@@ -750,6 +873,10 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         _selection.PropertyChanged -= OnSelectionChanged;
         if (_appSettings != null)
             _appSettings.Shifts.CollectionChanged -= OnShiftsChanged;
+        if (_connectionManager != null)
+            _connectionManager.PropertyChanged -= OnConnectionPropertyChanged;
+        if (_userSession != null)
+            _userSession.PropertyChanged -= OnUserSessionPropertyChanged;
 
         // LineDeviceItem 自身持有 Runtime 引用并订阅了 PropertyChanged，统一解绑
         foreach (var item in LineDevices)
