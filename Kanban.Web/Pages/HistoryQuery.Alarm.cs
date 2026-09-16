@@ -98,7 +98,7 @@ public partial class HistoryQuery
             var stats = AlarmAnalysis.BuildStats(filtered);
             AlBuildChartOption(stats);
 
-            var effectiveTo = _alTo > DateTime.Now ? DateTime.Now : _alTo;
+            var effectiveTo = _alTo > Dashboard.ServerNow ? Dashboard.ServerNow : _alTo;
             if (stats.Count > 0 && AlTriggered > 0)
                 AlInsight = AlarmAnalysis.BuildInsight(stats, AlTriggered, filtered, effectiveTo, L.T);
 
@@ -165,9 +165,10 @@ public partial class HistoryQuery
         (AlRows, AlTotalPages) = PageItems(_alAll, AlPage, AlarmTablePageSize);
     }
 
+    /// <summary>导出窗口全量（_alAll，含报警名过滤），与头部汇总行口径一致（旧实现只导出当前页）。</summary>
     private async Task AlExportCsvAsync()
     {
-        if (AlRows.Count == 0)
+        if (_alAll.Count == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
@@ -178,7 +179,7 @@ public partial class HistoryQuery
         sb.AppendLine($"# {AlInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_AlarmId")), C(L.T("Csv_AlarmName")), C(L.T("Csv_PlcAddress")), C(L.T("Csv_EventType")), C(L.T("Csv_EventTypeText")), C(L.T("Csv_Shift"))));
-        foreach (var r in AlRows)
+        foreach (var r in _alAll)
         {
             sb.AppendLine(string.Join(',',
                 C(r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName),

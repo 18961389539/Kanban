@@ -89,8 +89,10 @@ public static class ReviewAnalysis
         int TriggerCount, double AverageIntervalMinutes, bool IsHighFrequency,
         int OutputBefore, int OutputAfter, string ShiftName, double TotalDurationHours);
 
+    /// <param name="now">未恢复报警截断用的"当前时刻"——浏览器时区与工厂不同时须传 Dashboard.ServerNow（默认回退本机时间）。</param>
     public static List<ReviewAlarmItem> AnalyzeAlarms(
-        List<AlarmEventRecordDto> events, List<ProductionLogDto> productionLogs, DateTime windowTo)
+        List<AlarmEventRecordDto> events, List<ProductionLogDto> productionLogs, DateTime windowTo,
+        DateTime? now = null)
     {
         var sortedLogs = productionLogs.OrderBy(log => log.Timestamp).ToList();
         var durationGroups = events
@@ -116,7 +118,7 @@ public static class ReviewAnalysis
                     triggers.Sum(trigger => CalculateProductionDeltaSorted(sortedLogs, trigger.EventTime.AddMinutes(-15), trigger.EventTime)),
                     triggers.Sum(trigger => CalculateProductionDeltaSorted(sortedLogs, trigger.EventTime, trigger.EventTime.AddMinutes(15))),
                     triggers[0].ShiftName,
-                    CalculateAlarmDurationHours(durationGroups.GetValueOrDefault((group.Key.AlarmName, group.Key.DeviceName)), windowTo));
+                    CalculateAlarmDurationHours(durationGroups.GetValueOrDefault((group.Key.AlarmName, group.Key.DeviceName)), windowTo, now));
             })
             .OrderByDescending(item => item.TriggerCount)
             .ThenBy(item => item.AverageIntervalMinutes == 0 ? double.MaxValue : item.AverageIntervalMinutes)
@@ -126,10 +128,11 @@ public static class ReviewAnalysis
 
     /// <summary>报警触发→恢复配对时长：未恢复按 min(now, windowTo) 截断；每个 Recovered 只消费一次。与 WPF 一致。
     /// O(n)：用 Recovered 游标顺序消费替代原「每 Triggered 内层前扫 + HashSet」，消除 O(n²)。</summary>
-    private static double CalculateAlarmDurationHours(List<AlarmEventRecordDto>? grouped, DateTime windowTo)
+    private static double CalculateAlarmDurationHours(List<AlarmEventRecordDto>? grouped, DateTime windowTo, DateTime? now = null)
     {
         if (grouped is null || grouped.Count == 0) return 0;
-        var cutoff = windowTo < DateTime.Now ? windowTo : DateTime.Now;
+        var nowValue = now ?? DateTime.Now;
+        var cutoff = windowTo < nowValue ? windowTo : nowValue;
         double seconds = 0;
 
         // Recovered 按时间升序，游标只前进——等价于原「consumed HashSet + 内层 for」，但 O(n)
@@ -153,13 +156,14 @@ public static class ReviewAnalysis
         return seconds / 3600.0;
     }
 
-    /// <summary>持续时间最长的报警（按 AlarmName 配对总时长最大者），返回值单位为**小时**。与 WPF FindLongestAlarm 一致。</summary>
-    public static (string Name, double Hours) FindLongestAlarm(List<AlarmEventRecordDto> events, DateTime windowTo)
+    /// <summary>持续时间最长的报警（按 AlarmName 配对总时长最大者），返回值单位为**小时**。与 WPF FindLongestAlarm 一致。
+    /// now：未恢复报警截断用的"当前时刻"——浏览器时区与工厂不同时须传 Dashboard.ServerNow（默认回退本机时间）。</summary>
+    public static (string Name, double Hours) FindLongestAlarm(List<AlarmEventRecordDto> events, DateTime windowTo, DateTime? now = null)
     {
         if (events.Count == 0) return (string.Empty, 0);
         var durations = events
             .GroupBy(e => e.AlarmName)
-            .ToDictionary(g => g.Key, g => CalculateAlarmDurationHours(g.OrderBy(e => e.EventTime).ToList(), windowTo));
+            .ToDictionary(g => g.Key, g => CalculateAlarmDurationHours(g.OrderBy(e => e.EventTime).ToList(), windowTo, now));
         if (durations.Count == 0) return (string.Empty, 0);
         var max = durations.Aggregate((a, b) => a.Value >= b.Value ? a : b);
         return (max.Key, max.Value);

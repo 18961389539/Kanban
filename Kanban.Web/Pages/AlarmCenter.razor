@@ -1,4 +1,4 @@
-@page "/alarms"
+﻿@page "/alarms"
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
@@ -9,16 +9,17 @@
 <div class="query-page">
     @* ──────────── KPI 汇总 ──────────── *@
     <section class="kpi-row">
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value kpi-ng">@ActiveCountText</span></div>
+        @* 计数颜色状态联动：0 时中性色，非 0 才用红/绿（原恒红/恒绿，无报警也红误导） *@
+        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
         <div class="kpi-card"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value kpi-ng">@TodayTriggerText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value kpi-ok">@TodayRecoverText</span></div>
+        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span></div>
+        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
         <div class="kpi-card"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
     </section>
 
     @* ──────────── 实时活跃报警 ──────────── *@
     <section class="card">
-        <div class="card-title">@L.T("Ac_ActiveTitle") <span class="badge-count">@ActiveCount</span></div>
+        <div class="card-title">@L.T("Ac_ActiveTitle") <span class="badge-count @(ActiveCount == 0 ? "zero" : "")">@ActiveCount</span></div>
         <div class="filter-bar compact">
             <button class="chip-btn @(ShowHigh ? "active" : "")" @onclick="() => ShowHigh = !ShowHigh">@L.T("Ac_LevelHigh")</button>
             <button class="chip-btn @(ShowMedium ? "active" : "")" @onclick="() => ShowMedium = !ShowMedium">@L.T("Ac_LevelMedium")</button>
@@ -43,7 +44,7 @@
                     <div class="alarm-item">
                         <span class="lvl-dot @LevelClass(a.Level)"></span>
                         <span class="alarm-name">@a.DeviceName · @a.AlarmName</span>
-                        <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
+                        <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                     </div>
                 }
             </div>
@@ -61,7 +62,7 @@
             </select>
             @if (StatsLoading)
             {
-                <span class="badge-soft">@L.T("Hq_Analyzing")…</span>
+                <span class="badge-soft">@L.T("Hq_Analyzing")</span>
             }
         </div>
         @if (StatsError is not null)
@@ -73,7 +74,8 @@
             <div class="chart-grid two">
                 <div>
                     <div class="card-title sub">@L.T("Ac_TopTitle")</div>
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <thead>
                             <tr>
                                 <th class="num">@L.T("Ac_Rank")</th>
@@ -98,10 +100,12 @@
                             }
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 <div>
                     <div class="card-title sub">@L.T("Ac_RecentTitle")</div>
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <thead>
                             <tr>
                                 <th>@L.T("Hq_EventTime")</th>
@@ -122,6 +126,7 @@
                             }
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         }
@@ -196,7 +201,7 @@
             var filtered = FilteredActiveAlarms;
             if (filtered.Count == 0) return "—";
             var oldest = filtered.MinBy(a => a.StartTime)!;
-            return $"{FmtDuration((DateTime.Now - oldest.StartTime).TotalSeconds)} · {oldest.DeviceName} · {oldest.AlarmName}";
+            return $"{FmtDuration((Dashboard.ServerNow - oldest.StartTime).TotalSeconds)} · {oldest.DeviceName} · {oldest.AlarmName}";
         }
     }
 
@@ -291,7 +296,8 @@ private void OnRenderTick()
         StatsError = null;
         try
         {
-            var now = DateTime.Now;
+            // 统计窗口以工厂墙钟为准（浏览器时区可能与工厂不同）
+            var now = Dashboard.ServerNow;
             var from = now.AddHours(-RangeHours);
             var todayStart = now.Date;
 

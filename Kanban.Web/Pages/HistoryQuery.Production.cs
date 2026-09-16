@@ -220,9 +220,13 @@ public partial class HistoryQuery
         await ProdLoadTablePageAsync();
     }
 
+    /// <summary>
+    /// 导出窗口全量（_prodWindow），与 CSV 头部汇总行（全窗口口径）一致——
+    /// 旧实现只导出表格当前页 50 行，与头部汇总口径矛盾。行序与表格一致：最新在前。
+    /// </summary>
     private async Task ProdExportCsvAsync()
     {
-        if (ProdRows.Count == 0)
+        if (_prodWindow.Count == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
@@ -234,7 +238,7 @@ public partial class HistoryQuery
         sb.AppendLine($"# {ProdInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_Time")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_Shift")), C(L.T("Csv_OkCount")), C(L.T("Csv_NgCount")), C(L.T("Csv_StatusWord"))));
-        foreach (var r in ProdRows)
+        foreach (var r in _prodWindow.AsEnumerable().Reverse())
         {
             sb.AppendLine(string.Join(',',
                 C(r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName), C(r.ShiftName),

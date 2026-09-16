@@ -54,7 +54,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     private CancellationTokenSource? _workOrderSummaryCts;
 
     /// <summary>工单产量聚合节流：上次查询时刻与工单 Id（采集周期每秒触发，Remote 模式每次查询是一次 SignalR 往返）。</summary>
-    private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private DateTime _lastSummaryQueryAt = DateTime.MinValue;
     private int? _lastSummaryOrderId;
 
     /// <summary>KPI/最近报警自动刷新节拍（秒）：与 AlarmCenterViewModel 活跃报警节拍同量级。</summary>
@@ -435,7 +435,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         _workOrderSummaryCts?.Dispose();
         _workOrderSummaryCts = null;
         _lastSummaryOrderId = null;
-        _lastSummaryQueryUtc = DateTime.MinValue;
+        _lastSummaryQueryAt = DateTime.MinValue;
 
         CurrentDevice = device;
         CurrentRuntime = runtime;
@@ -821,7 +821,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         {
             // 节流：同一工单 2s 内（采集周期 1 次/秒）复用上次结果——底层数据按
             // HistoryWriteIntervalScans 才变化，无需每秒重复查询（Remote 模式每次是一次 SignalR 往返）。
-            if (_lastSummaryOrderId == order.Id && (DateTime.UtcNow - _lastSummaryQueryUtc).TotalSeconds < 2)
+            if (_lastSummaryOrderId == order.Id && (DateTime.Now - _lastSummaryQueryAt).TotalSeconds < 2)
                 return;
 
             // 查询移出 UI 线程：Local 模式为 SQLite 查询，Remote 模式 GetProductionSummary
@@ -831,7 +831,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             var cts = _workOrderSummaryCts = new CancellationTokenSource();
             var token = cts.Token;
             _lastSummaryOrderId = order.Id;
-            _lastSummaryQueryUtc = DateTime.UtcNow;
+            _lastSummaryQueryAt = DateTime.Now;
 
             Task.Run(() =>
             {

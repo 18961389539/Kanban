@@ -21,8 +21,8 @@ public class AlarmLevelConvertersTests
 
     [Theory]
     [InlineData(AlarmLevel.High, "#FFF87171")]
-    [InlineData(AlarmLevel.Medium, "#FFFBBF24")]
-    [InlineData(AlarmLevel.Low, "#FFFB923C")]
+    [InlineData(AlarmLevel.Medium, "#FFFB923C")]
+    [InlineData(AlarmLevel.Low, "#FFFBBF24")]
     public void Brush_KnownLevel_ReturnsExpected(AlarmLevel level, string expectedHex)
     {
         var brush = (SolidColorBrush)_brush.Convert(level, typeof(Brush), null!, CultureInfo.InvariantCulture);

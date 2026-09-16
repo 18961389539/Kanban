@@ -53,14 +53,15 @@ public class HistoryServiceAlarmEventTests : IDisposable
     }
 
     [Fact]
-    public void LogAlarmEvent_TriggerEvent_WritesSyncAndQueryable()
+    public void LogAlarmEvent_TriggerEvent_WritesAndQueryable()
     {
-        // EventType=Triggered（触发）走同步写入路径
+        // 2026-09-16 设计审查：边沿写入已异步批量——断言前排空在途写入
         var eventTime = new DateTime(2026, 7, 22, 10, 30, 0);
         var ok = _historyService.LogAlarmEvent(
             "dev-001", "测试设备", "alm-001", "高温报警", "M100", AlarmEventType.Triggered, eventTime);
 
         Assert.True(ok);
+        _historyService.FlushEdgeEventsForTest();
 
         var results = _historyService.QueryAlarmEvents(
             eventTime.AddMinutes(-1), eventTime.AddMinutes(1));
@@ -81,6 +82,7 @@ public class HistoryServiceAlarmEventTests : IDisposable
         var t = new DateTime(2026, 7, 22, 10, 0, 0);
         _historyService.LogAlarmEvent("dev-A", "设备A", "alm-A1", "A报警", "M100", AlarmEventType.Triggered, t);
         _historyService.LogAlarmEvent("dev-B", "设备B", "alm-B1", "B报警", "M200", AlarmEventType.Triggered, t);
+        _historyService.FlushEdgeEventsForTest();
 
         var allResults = _historyService.QueryAlarmEvents(t.AddMinutes(-1), t.AddMinutes(1));
         Assert.Equal(2, allResults.Count);
@@ -96,10 +98,11 @@ public class HistoryServiceAlarmEventTests : IDisposable
     {
         var t1 = new DateTime(2026, 7, 22, 10, 0, 0);
         var t2 = new DateTime(2026, 7, 22, 11, 0, 0);
-        // EventType=Triggered（触发）和 EventType=ShiftChange（班次切换）走同步写入，确保查询时已落库
+        // 边沿写入已异步批量（2026-09-16）：断言前排空在途写入
         _historyService.LogAlarmEvent("dev-1", "设备1", "alm-001", "报警", "M100", AlarmEventType.Triggered, t1);
         _historyService.LogAlarmEvent("dev-1", "设备1", "alm-001", "报警", "M100", AlarmEventType.ShiftChange, t2);
         _historyService.LogAlarmEvent("dev-1", "设备1", "alm-002", "其他报警", "M200", AlarmEventType.Triggered, t1);
+        _historyService.FlushEdgeEventsForTest();
 
         var results = _historyService.QueryAlarmEvents(t1.AddMinutes(-1), t2.AddMinutes(1))
             .Where(r => r.AlarmId == "alm-001")
@@ -119,6 +122,7 @@ public class HistoryServiceAlarmEventTests : IDisposable
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t1);
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t2);
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t3);
+        _historyService.FlushEdgeEventsForTest();
 
         // 只查 11:00-13:00
         var results = _historyService.QueryAlarmEvents(
@@ -146,6 +150,7 @@ public class HistoryServiceAlarmEventTests : IDisposable
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t3);
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t1);
         _historyService.LogAlarmEvent("d", "n", "a", "x", "M1", AlarmEventType.Triggered, t2);
+        _historyService.FlushEdgeEventsForTest();
 
         var results = _historyService.QueryAlarmEvents(
             new DateTime(2026, 7, 22, 0, 0, 0),

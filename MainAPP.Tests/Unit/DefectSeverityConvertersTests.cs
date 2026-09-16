@@ -8,7 +8,8 @@ using Xunit;
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
-/// 缺陷严重度转换器：画刷（Critical=红/Major=橙/Minor=绿，内联创建）
+/// 缺陷严重度转换器：画刷（Critical=红/Major=橙/Minor=黄，内联创建；
+/// 绿色仅保留给“运行/成功”语义，缺陷不再使用绿色）
 /// 与文本（Critical=严重/Major=一般/Minor=轻微）双重覆盖。
 /// </summary>
 [Trait("Category","Unit")]
@@ -21,8 +22,8 @@ public class DefectSeverityConvertersTests
 
     [Theory]
     [InlineData(DefectSeverity.Critical, "#FFF87171")]
-    [InlineData(DefectSeverity.Major, "#FFFBBF24")]
-    [InlineData(DefectSeverity.Minor, "#FF34D399")]
+    [InlineData(DefectSeverity.Major, "#FFFB923C")]
+    [InlineData(DefectSeverity.Minor, "#FFFBBF24")]
     public void Brush_KnownSeverity_ReturnsExpected(DefectSeverity severity, string expectedHex)
     {
         var brush = (SolidColorBrush)_brush.Convert(severity, typeof(Brush), null!, CultureInfo.InvariantCulture);

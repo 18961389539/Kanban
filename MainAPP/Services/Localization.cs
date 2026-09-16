@@ -40,12 +40,29 @@ public static class Localization
 
     public static void Apply(string languageCode)
     {
-        var culture = new CultureInfo(GetCultureName(languageCode));
+        var culture = CreateCultureWith24HourClock(GetCultureName(languageCode));
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
+        CultureInfo.CurrentCulture = culture;
         CultureInfo.CurrentUICulture = culture;
         s_appliedLanguageCode = culture.Name;
         MainAPP.Resources.Strings.CaptureCulture(culture);
+    }
+
+    /// <summary>
+    /// 界面语言切换时强制 24 小时制。en-US 等文化默认 ShortTimePattern 为 h:mm tt，
+    /// HandyControl 模拟时钟 / 未指定格式的 ToString 会显示 AM/PM。
+    /// </summary>
+    internal static CultureInfo CreateCultureWith24HourClock(string cultureName)
+    {
+        var culture = new CultureInfo(cultureName, useUserOverride: false);
+        var format = culture.DateTimeFormat;
+        format.AMDesignator = string.Empty;
+        format.PMDesignator = string.Empty;
+        format.ShortTimePattern = "HH:mm";
+        format.LongTimePattern = "HH:mm:ss";
+        format.FullDateTimePattern = $"{format.ShortDatePattern} HH:mm:ss";
+        return culture;
     }
 
     /// <summary>当前界面语言代码（与资源字符串同源，不依赖线程 CurrentUICulture）。</summary>

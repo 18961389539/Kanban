@@ -32,4 +32,10 @@ public static class FormatHelper
     /// </summary>
     public static string FormatDurationFull(double secs)
         => Kanban.Contracts.Formatting.DurationFormatter.FormatFull(secs);
+
+    /// <summary>时刻显示：始终 24 小时制 HH:mm（00–23）。勿对 DateTime 使用 hh（12 小时且无 AM/PM）。</summary>
+    public static string FormatClock(DateTime time) => time.ToString("HH:mm");
+
+    /// <summary>班次配置时刻：TimeSpan.Hours 为 0–23，按 HH:mm 输出。勿用 DateTime 的 hh 自定义格式。</summary>
+    public static string FormatClock(TimeSpan time) => $"{time.Hours:D2}:{time.Minutes:D2}";
 }

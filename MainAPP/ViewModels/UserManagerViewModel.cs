@@ -282,7 +282,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
                 isDanger = true;
             }
             if (string.IsNullOrEmpty(u.PasswordHash)) parts.Add(Strings.M374);
-            if (u.LastLoginAt is null && DateTime.UtcNow - u.CreatedAt > SecurityRiskItem.NeverLoginThreshold)
+            if (u.LastLoginAt is null && DateTime.Now - u.CreatedAt > SecurityRiskItem.NeverLoginThreshold)
                 parts.Add(Strings.M375);
             if (parts.Count > 0)
             {
@@ -338,7 +338,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
             Role = NewUserRole,
             PasswordHash = PasswordHasher.Hash(password),
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.Now,
             MustChangePassword = NewMustChangePassword,
         };
 
@@ -358,7 +358,10 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         NewPasswordStrength = 0;
         OnPropertyChanged(nameof(NewPasswordStrengthText));
         _dialog.NotifySuccess(string.Format(Strings.M322));
-        AuditLog.Record("User.Add", "User", user.Username, detail: $"角色={user.Role}" + (user.MustChangePassword ? "，首登改密" : ""));
+        // 审计详情走本地化（原硬编码中文在非中文界面下仍写中文详情）
+        AuditLog.Record("User.Add", "User", user.Username, detail: user.MustChangePassword
+            ? string.Format(Strings.Audit_Detail_RoleMustChangePwd, RoleText(user.Role))
+            : string.Format(Strings.Audit_Detail_Role, RoleText(user.Role)));
     }
 
     // ──────────── 编辑选中用户 ────────────
@@ -432,8 +435,10 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
             return;
         }
 
-        AuditLog.Record("User.Delete", "User", username, detail: $"角色={role}");
+        AuditLog.Record("User.Delete", "User", username, detail: string.Format(Strings.Audit_Detail_Role, RoleText(role)));
         SelectedUser = null;
+        // 删除成功补齐反馈（新增/重置密码均有 NotifySuccess，唯独删除只有行消失）
+        _dialog.NotifySuccess(Strings.M323);
     }
 
     /// <summary>重置用户密码（列表选中/行内快捷共用；密码经 ChangePasswordDialog 收集）。</summary>

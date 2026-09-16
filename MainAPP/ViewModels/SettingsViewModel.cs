@@ -860,6 +860,22 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 _lastSavedLanguageCode = DraftSettings.EffectiveLanguageCode;
                 _dialog.NotifyInfo(Resources.Strings.Common_RestartRequired);
             }
+            // DataMode（本地/远程）决定 Host 组装、采集启停与 IAuditService 绑定，均在启动期完成，
+            // 热切换会造成审计/历史查询通道错位（设计审查修复 2026-09-16）：
+            // 明确"须重启生效"并供用户选择立即重启，替代此前"保存后即切换"的误导性暗示。
+            if (dataModeChanged)
+            {
+                var restart = _dialog.Show(
+                    Strings.Settings_DataModeRestartPrompt,
+                    Strings.Settings_DataModeRestartTitle,
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (restart == MessageBoxResult.Yes)
+                {
+                    RestartApplication();
+                    return;
+                }
+            }
             var syncResult = await SyncCollectorSettingsAsync(_disposeCts.Token); // Remote 模式：采集参数同步到 Collector（热生效）
             var remoteMode = _services.GetService<IRuntimeMode>()?.IsRemote == true;
             CollectorSyncPending = remoteMode && (!syncResult.WasAttempted || !syncResult.IsSuccess);
@@ -904,6 +920,28 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (dataModeChanged) reasons.Add(Strings.Settings_Warn_DataModeChanged);
         if (runModeChanged) reasons.Add(Strings.Settings_Warn_RunModeChanged);
         return string.Join("\n", reasons) + "\n" + Strings.Settings_ConfirmSave;
+    }
+
+    /// <summary>延迟 2s 经 cmd 拉起新实例后退出当前进程：单实例互斥体在进程退出时才释放，
+    /// 立即拉起会被新实例的 WaitOne(0) 误判为重复启动（设计审查修复 2026-09-16）。</summary>
+    private static void RestartApplication()
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe)) return; // 取不到路径：保持提示文案，由用户手动重启
+        // 测试宿主：不拉起进程、不 Shutdown（FakeDialog 默认 Yes 会走到这里）
+        var processName = System.IO.Path.GetFileNameWithoutExtension(exe);
+        if (processName.Contains("testhost", StringComparison.OrdinalIgnoreCase)
+            || processName.Contains(".Tests", StringComparison.OrdinalIgnoreCase)
+            || System.Windows.Application.Current is null)
+            return;
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c timeout /t 2 /nobreak >nul & start \"\" \"{exe}\"",
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        });
+        System.Windows.Application.Current?.Shutdown();
     }
 
     /// <summary>

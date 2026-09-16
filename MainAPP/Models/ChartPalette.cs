@@ -18,7 +18,8 @@ public static class ChartPalette
     public static readonly OxyColor Run = OxyColor.FromRgb(0x34, 0xD3, 0x99);
     public static readonly OxyColor Alarm = OxyColor.FromRgb(0xF8, 0x71, 0x71);
     public static readonly OxyColor Pause = OxyColor.FromRgb(0xFB, 0xBF, 0x24);
-    public static readonly OxyColor Idle = OxyColor.FromRgb(0x6B, 0x72, 0x80);
+    // 离线/无数据灰：与 Brushes.xaml StatusIdleBrush 一致（全应用离线色统一，原为 #6B7280 第三种灰）
+    public static readonly OxyColor Idle = OxyColor.FromRgb(0x9C, 0xA3, 0xAF);
     public static readonly OxyColor Border = OxyColor.FromRgb(0x1A, 0x20, 0x29);
     public static readonly OxyColor Axis = OxyColor.FromRgb(0x4A, 0x55, 0x68);
     public static readonly OxyColor GridStrong = OxyColor.FromRgb(0x2D, 0x37, 0x48);

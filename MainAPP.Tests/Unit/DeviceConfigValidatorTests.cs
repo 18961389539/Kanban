@@ -178,7 +178,7 @@ public class DeviceConfigValidatorTests
         device.TargetCycle = 0;
         var errors = DeviceConfigValidator.CollectValidationErrors(new[] { device });
         var e = Assert.Single(errors);
-        Assert.Contains("目标周期必须 > 0", e.Message);
+        Assert.Contains("目标产能必须 > 0", e.Message);
     }
 
     [Fact]

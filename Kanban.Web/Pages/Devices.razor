@@ -1,4 +1,4 @@
-@page "/devices"
+﻿@page "/devices"
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject ILogger<Devices> Logger
@@ -68,7 +68,8 @@
                 <div class="card-title">@L.T("Dv_Detail", sel.Name)</div>
 
                 <div class="card-title sub">@L.T("Dv_AddressConfig")</div>
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <tbody>
                         <tr><td>@L.T("Dv_OkCountAddr")</td><td class="mono">@sel.OkCountAddress</td></tr>
                         <tr><td>@L.T("Dv_NgCountAddr")</td><td class="mono">@sel.NgCountAddress</td></tr>
@@ -77,6 +78,7 @@
                         <tr><td>@L.T("Dv_RecipeAddr")</td><td class="mono">@sel.RecipeAddress</td></tr>
                     </tbody>
                 </table>
+                </div>
 
                 <div class="card-title sub">@L.T("Dv_AlarmConfig")</div>
                 @if (sel.Alarms.Count == 0)
@@ -85,7 +87,8 @@
                 }
                 else
                 {
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <thead>
                             <tr>
                                 <th>@L.T("Dv_Name")</th>
@@ -106,6 +109,7 @@
                             }
                         </tbody>
                     </table>
+                    </div>
                 }
 
                 <div class="card-title sub">@L.T("Dv_DefectConfig")</div>
@@ -115,7 +119,8 @@
                 }
                 else
                 {
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <thead>
                             <tr>
                                 <th>@L.T("Dv_Name")</th>
@@ -130,12 +135,13 @@
                                 <tr>
                                     <td>@d.Name</td>
                                     <td class="mono">@d.PlcAddress</td>
-                                    <td>@d.Severity</td>
-                                    <td>@d.Category</td>
+                                    <td>@SeverityText(d.Severity)</td>
+                                    <td>@CategoryText(d.Category)</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
+                    </div>
                 }
 
                 <div class="card-title sub">@L.T("Dv_CountAlarmConfig")</div>
@@ -145,7 +151,8 @@
                 }
                 else
                 {
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <thead>
                             <tr>
                                 <th>@L.T("Dv_Name")</th>
@@ -164,6 +171,7 @@
                             }
                         </tbody>
                     </table>
+                    </div>
                 }
             </section>
         }
@@ -180,7 +188,7 @@
     // ──── 加载状态：首次加载中 / 失败 / 真空态三分支，避免拉取失败伪装成"暂无设备" ────
     private bool _firstLoadDone;
     private bool _loadFailed;
-    private DateTime _lastLoadAttemptUtc = DateTime.MinValue;
+    private DateTime _lastLoadAttemptAt = DateTime.MinValue;
 
     /// <summary>设备配置重拉节流：与 DashboardState 查询连接失败后的 30s 冷却守卫对齐。</summary>
     private static readonly TimeSpan ReloadInterval = TimeSpan.FromSeconds(30);
@@ -194,7 +202,7 @@
 
     private async Task LoadDevicesAsync()
     {
-        _lastLoadAttemptUtc = DateTime.UtcNow;
+        _lastLoadAttemptAt = DateTime.Now;
         try
         {
             DeviceList = [.. await Dashboard.QueryDevicesAsync()];
@@ -243,7 +251,7 @@
     {
         if (_disposed) return;
         // 设备配置无推送通道：低频重拉（30s 节流）兜底 Collector 侧配置变更；状态徽标仍按 3s 快照刷新
-        if (DateTime.UtcNow - _lastLoadAttemptUtc >= ReloadInterval)
+        if (DateTime.Now - _lastLoadAttemptAt >= ReloadInterval)
         {
             _ = LoadDevicesAsync(); // 内部全捕获，不会 fault
         }
@@ -283,6 +291,23 @@
         AlarmLevel.High => "lvl-high",
         AlarmLevel.Medium => "lvl-medium",
         _ => "lvl-low",
+    };
+
+    // 缺陷严重度/类别枚举 → 本地化文本（与首页帕累托 tooltip 同一组键，原直接输出枚举英文名）
+    private static string SeverityText(DefectSeverity severity) => severity switch
+    {
+        DefectSeverity.Critical => L.T("Severity_Critical"),
+        DefectSeverity.Major => L.T("Severity_Major"),
+        _ => L.T("Severity_Minor"),
+    };
+
+    private static string CategoryText(DefectCategory category) => category switch
+    {
+        DefectCategory.Appearance => L.T("Defect_Appearance"),
+        DefectCategory.Dimension => L.T("Defect_Dimension"),
+        DefectCategory.Function => L.T("Defect_Function"),
+        DefectCategory.Packaging => L.T("Defect_Packaging"),
+        _ => L.T("Defect_Other"),
     };
 
     public void Dispose()

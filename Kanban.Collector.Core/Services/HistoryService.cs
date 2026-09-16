@@ -51,6 +51,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     private readonly DataSourceSnapshotStore? _dataSourceSnapshotStore;
     private readonly bool _ownsWriter;
     private readonly bool _ownsDefectStore;
+    private readonly bool _ownsAlarmStore;
+    private readonly bool _ownsStatusStore;
     private readonly bool _ownsStorageDiagnostics;
     private readonly Timer _walCheckpointTimer;
     private readonly ILogger<HistoryService> _logger;
@@ -78,6 +80,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _dataSourceSnapshotStore = dataSourceSnapshotStore;
         _ownsWriter = productionWriter is null;
         _ownsDefectStore = defectStore is null; // 自建缺陷存储须本类负责释放（后台 flush 任务）
+        _ownsAlarmStore = alarmStore is null;   // 自建报警/状态存储含后台批量写入任务（2026-09-16 异步化），须本类负责释放
+        _ownsStatusStore = statusStore is null;
         _ownsStorageDiagnostics = storageDiagnostics is null;
         _walCheckpointTimer = new Timer(_ => CheckpointWal(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
@@ -222,6 +226,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _walCheckpointTimer.Dispose();
         if (_ownsWriter) _productionWriter.Dispose();
         if (_ownsDefectStore) _defectStore.Dispose();
+        if (_ownsAlarmStore) _alarmStore.Dispose();
+        if (_ownsStatusStore) _statusStore.Dispose();
         if (_ownsStorageDiagnostics) _storageDiagnostics.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -231,7 +237,18 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         _walCheckpointTimer.Dispose();
         if (_ownsWriter) await _productionWriter.DisposeAsync();
         if (_ownsDefectStore) _defectStore.Dispose();
+        if (_ownsAlarmStore) _alarmStore.Dispose();
+        if (_ownsStatusStore) _statusStore.Dispose();
         if (_ownsStorageDiagnostics) _storageDiagnostics.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>测试入口：排空报警/状态边沿事件的在途异步写入（2026-09-16 边沿写异步化后，
+    /// 集成测试断言"写入即可查"前需先排空；生产代码不调用——查询路径自带的写完立即可读
+    /// 由 GetLatestAlarmEvent/GetLatestStatusBefore 内部 Flush 保证）。</summary>
+    internal void FlushEdgeEventsForTest()
+    {
+        _alarmStore.FlushPendingWrites();
+        _statusStore.FlushPendingWrites();
     }
 }

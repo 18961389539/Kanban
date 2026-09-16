@@ -876,7 +876,7 @@
                                                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center"
                                                            FontSize="{DynamicResource FontSizeMicro}" FontFamily="Consolas"
                                                            Foreground="{StaticResource ThirdlyTextBrush}"
-                                                           Text="{Binding EventTime, StringFormat={}{0:HH:mm}}" />
+                                                           Text="{Binding EventTime, StringFormat={}{0:MM-dd HH:mm:ss}}" />
                                                 <TextBlock FontSize="13" Text="{Binding AlarmName}" />
                                             </DockPanel>
                                         </Border>

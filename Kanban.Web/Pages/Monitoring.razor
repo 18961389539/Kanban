@@ -60,10 +60,10 @@
                             <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
                         </div>
                         <div class="ring-row">
-                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="#34D399" />
-                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
-                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
-                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(s.DeviceId)" />
+                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder(s.DeviceId)" />
+                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(s.DeviceId)" />
+                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(s.DeviceId)" />
                         </div>
                         <div class="meta-line">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
                     </div>
@@ -287,7 +287,11 @@ private void OnRenderTick()
         _ => "offline",
     };
 
-    private static string Pct(double v) => $"{v:P0}";
+    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
+    private static string Pct(double v) => UiPalette.Pct(v);
+
+    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
+    private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;
 
     private static string SpeedText(DeviceSnapshotDto s)
     {
@@ -298,10 +302,10 @@ private void OnRenderTick()
     private static string AchievementText(DeviceSnapshotDto s)
         => s.TargetCycle > 0 ? $"{SnapshotMetrics.AchievementRate(SnapshotMetrics.RealtimeSpeed(s.RunTime, s.TotalOkProduction, s.TotalNgProduction), s.TargetCycle):P0}" : "—";
 
-    /// <summary>数据新鲜度（距快照时间的秒数，三语）。</summary>
-    private static string FreshnessText(DateTime timestamp)
+    /// <summary>数据新鲜度（距快照时间的秒数，三语）。快照时间戳是工厂墙钟，须与 ServerNow 比较（浏览器时区可能与工厂不同）。</summary>
+    private string FreshnessText(DateTime timestamp)
     {
-        var secs = (int)(DateTime.Now - timestamp).TotalSeconds;
+        var secs = (int)(Dashboard.ServerNow - timestamp).TotalSeconds;
         return secs switch
         {
             < 3 => L.T("Fresh_Live"),

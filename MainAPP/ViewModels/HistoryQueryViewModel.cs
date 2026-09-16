@@ -1063,8 +1063,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             }).ConfigureAwait(true);
 
             Log.Information("已导出当前页 {CurrentPage} → {Path}", CurrentPage, fullPath);
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: $"当前页导出 Tab={tabIndex} Page={CurrentPage}");
-            _dialog.NotifySuccess($"已导出当前页数据 → {fullPath}");
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(fullPath), detail: string.Format(Strings.Audit_Detail_PageExport, tabIndex, CurrentPage));
+            _dialog.NotifySuccess(string.Format(Strings.Msg_PageExported, fullPath));
         }
         catch (Exception ex)
         {

@@ -80,7 +80,7 @@
             </Border>
         </Grid>
 
-        <!-- 汇总统计 -->
+        <!-- 汇总统计（口径 = 整个查询结果，与列表同一过滤条件；记录总数见标题栏徽章，不再重复设卡） -->
         <Grid Grid.Row="2" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -88,13 +88,10 @@
                 <ColumnDefinition />
                 <ColumnDefinition Width="12" />
                 <ColumnDefinition />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K640}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding Total}" /></StackPanel></Border>
-            <Border Grid.Column="2" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K641}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding PageSucceeded}" /></StackPanel></Border>
-            <Border Grid.Column="4" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K642}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding PageFailed}" /></StackPanel></Border>
-            <Border Grid.Column="6" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K643}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding PageSuccessRateDisplay}" /></StackPanel></Border>
+            <Border Grid.Column="0" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K641}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" Text="{Binding SucceededCount}" /></StackPanel></Border>
+            <Border Grid.Column="2" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K642}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Text="{Binding FailedCount}" /></StackPanel></Border>
+            <Border Grid.Column="4" Padding="12" Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8"><StackPanel><TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K643}" /><TextBlock Margin="0,3,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SuccessRateDisplay}" /></StackPanel></Border>
         </Grid>
 
         <!--  过滤区  -->

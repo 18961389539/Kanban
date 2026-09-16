@@ -97,7 +97,7 @@ public class PagedQueryStableOrderTests : IDisposable
             ctx.SaveChanges();
         }
 
-        var store = new AlarmHistoryStore(_db, NullLogger<AlarmHistoryStore>.Instance);
+        using var store = new AlarmHistoryStore(_db, NullLogger<AlarmHistoryStore>.Instance);
         var ids = new List<int>();
         for (int page = 1; page <= 3; page++)
         {
@@ -127,7 +127,7 @@ public class PagedQueryStableOrderTests : IDisposable
             ctx.SaveChanges();
         }
 
-        var store = new StatusTransitionHistoryStore(_db, NullLogger<StatusTransitionHistoryStore>.Instance);
+        using var store = new StatusTransitionHistoryStore(_db, NullLogger<StatusTransitionHistoryStore>.Instance);
         var ids = new List<int>();
         for (int page = 1; page <= 3; page++)
         {
@@ -158,7 +158,7 @@ public class PagedQueryStableOrderTests : IDisposable
             ctx.SaveChanges();
         }
 
-        var store = new DefectHistoryStore(_db, NullLogger<DefectHistoryStore>.Instance);
+        using var store = new DefectHistoryStore(_db, NullLogger<DefectHistoryStore>.Instance);
         var ids = new List<int>();
         for (int page = 1; page <= 3; page++)
         {

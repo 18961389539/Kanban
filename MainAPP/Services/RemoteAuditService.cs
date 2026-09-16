@@ -96,6 +96,27 @@ public sealed class RemoteAuditService : IAuditService, IAsyncDisposable
         return (response.Items.Select(ToEntity).ToList(), response.Total);
     }
 
+    /// <summary>
+    /// 远程模式无聚合接口：用 PageSize=1 的查询取 Total 代替 COUNT，最多两次往返。
+    /// 与本地实现同一口径（含 succeeded 过滤）。
+    /// </summary>
+    public (int Succeeded, int Failed) CountByResult(
+        DateTime from,
+        DateTime to,
+        string? operatorName,
+        string? action,
+        string? targetType,
+        bool? succeeded)
+    {
+        int CountFor(bool? s) => QueryPaged(from, to, operatorName, action, targetType, s, 1, 1).Total;
+        return succeeded switch
+        {
+            true => (CountFor(true), 0),
+            false => (0, CountFor(false)),
+            _ => (CountFor(true), CountFor(false)),
+        };
+    }
+
     public (List<AuditEntry> Items, int Total) QueryAll(
         DateTime from,
         DateTime to,

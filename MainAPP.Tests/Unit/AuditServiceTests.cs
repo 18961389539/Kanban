@@ -332,6 +332,29 @@ public class AuditServiceTests : IDisposable
     }
 
     [Fact]
+    public void Record_WhenQueueFull_SpillsToRecoveryFile_AndReplayPersists()
+    {
+        // 设计审查回归（2026-09-16）：队列满不再静默丢失——转存恢复文件，回放后落库。
+        using var service = CreateSaturatedService(queueLength: 2);
+        service.Record("A", "Test", "1");
+        service.Record("B", "Test", "2");
+        service.Record("C", "Test", "3"); // 队列已满 → 转存恢复文件
+
+        Assert.Equal(1, service.QueueDroppedCount);
+        Assert.True(File.Exists(service.RecoveryFilePathForTest), "溢出条目应转存恢复文件");
+        Assert.Single(File.ReadAllLines(service.RecoveryFilePathForTest));
+
+        service.ReplayRecoveryForTestAsync().GetAwaiter().GetResult();
+
+        Assert.False(File.Exists(service.RecoveryFilePathForTest), "回放成功后恢复文件应删除");
+        var (items, total) = service.QueryPaged(
+            DateTime.Now.AddMinutes(-1), DateTime.Now.AddMinutes(1),
+            null, null, null, null, 1, 100);
+        Assert.Equal(1, total); // 仅回放的 C 落库（通道内 A/B 因消费者暂停未落库）
+        Assert.Equal("C", Assert.Single(items).Action);
+    }
+
+    [Fact]
     public void AuditLog_TruncatedJson_RemainsParseable()
     {
         AuditLog.ResetForTest();

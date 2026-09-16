@@ -86,7 +86,7 @@ public class UserStoreLoginTests : IDisposable
 
         var user = store.Authenticate("admin", "gly");
         Assert.NotNull(user);
-        Assert.True(user!.LastLoginAt > DateTime.UtcNow.AddMinutes(-1));
+        Assert.True(user!.LastLoginAt > DateTime.Now.AddMinutes(-1));
 
         Assert.Null(store.Authenticate("admin", "wrong"));
         Assert.Null(store.Authenticate("ADMIN", "wrong")); // 用户名大小写不敏感

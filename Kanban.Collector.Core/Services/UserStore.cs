@@ -137,7 +137,7 @@ public class UserStore
             {
                 result = null;
             }
-            else if (user.LockedUntil is { } until && until > DateTime.UtcNow)
+            else if (user.LockedUntil is { } until && until > DateTime.Now)
             {
                 // 锁定期间拒绝（计数不清零，解锁/重置密码时清零）
                 result = null;
@@ -153,7 +153,7 @@ public class UserStore
                 user.FailedAttempts++;
                 if (user.FailedAttempts >= MaxFailedAttempts)
                 {
-                    user.LockedUntil = DateTime.UtcNow.Add(LockoutDuration);
+                    user.LockedUntil = DateTime.Now.Add(LockoutDuration);
                     user.FailedAttempts = 0;
                     Log.Warning("账号 {Username} 连续失败 {Count} 次，已锁定 {Minutes} 分钟",
                         username, MaxFailedAttempts, (int)LockoutDuration.TotalMinutes);
@@ -183,7 +183,7 @@ public class UserStore
             var user = _users.FirstOrDefault(u =>
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
             if (user?.LockedUntil is not { } until) return null;
-            var remaining = until - DateTime.UtcNow;
+            var remaining = until - DateTime.Now;
             return remaining > TimeSpan.Zero ? remaining : null;
         }
     }
@@ -207,7 +207,7 @@ public class UserStore
     /// <summary>登录成功收尾：更新 LastLoginAt 并持久化。</summary>
     private User FinalizeLogin(User user)
     {
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = DateTime.Now;
         Save();
         return user;
     }
@@ -307,7 +307,7 @@ public class UserStore
                 Role = UserRole.Admin,
                 PasswordHash = PasswordHasher.Hash(DefaultAdminPassword),
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
             },
             new User
             {
@@ -316,7 +316,7 @@ public class UserStore
                 Role = UserRole.Engineer,
                 PasswordHash = PasswordHasher.Hash(DefaultEngineerPassword),
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
             },
             new User
             {
@@ -325,7 +325,7 @@ public class UserStore
                 Role = UserRole.Operator,
                 PasswordHash = string.Empty, // 免密账号
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
             },
         ];
     }
@@ -347,7 +347,7 @@ public class UserStore
             Role = UserRole.Operator,
             PasswordHash = string.Empty, // 免密账号
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.Now,
         });
         Save();
         Log.Information("已补齐默认 operator 账号（旧版本升级迁移）");

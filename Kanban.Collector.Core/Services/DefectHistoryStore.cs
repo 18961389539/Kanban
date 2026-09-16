@@ -19,6 +19,8 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
     private const int MaxBatchSize = 512;
     /// <summary>停机时等待后台 flush 排空的超时（同步 Dispose 与 DisposeAsync 共用）。</summary>
     private static readonly TimeSpan ShutdownFlushTimeout = TimeSpan.FromSeconds(5);
+    /// <summary>恢复文件大小上限：超过后停止追加并告警（有界且大声的丢失 &gt; 无限磁盘占用）。</summary>
+    private const long MaxRecoveryFileBytes = 200 * 1024 * 1024;
     private readonly DatabaseProvider _databaseProvider;
     private readonly Microsoft.Extensions.Logging.ILogger _logger;
     private readonly Channel<DefectSnapshotRecord> _channel;
@@ -32,6 +34,9 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
     private readonly SemaphoreSlim _flushGate = new(1, 1);
     private long _overflowCount;
     private bool _disposed;
+    /// <summary>溢出恢复通道：DropOldest 丢弃项与批写失败批次转存磁盘、后台循环回放——
+    /// 快照型数据可容忍延迟，但不静默丢失（设计审查修复 2026-09-16，照搬 ProductionHistoryWriter 语义）。</summary>
+    private readonly SpilloverRecoveryFile<DefectSnapshotRecord> _spillover;
 
     public DefectHistoryStore(
         DatabaseProvider databaseProvider,
@@ -39,6 +44,9 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
     {
         _databaseProvider = databaseProvider;
         _logger = logger ?? NullLogger<DefectHistoryStore>.Instance;
+        _spillover = new SpilloverRecoveryFile<DefectSnapshotRecord>(
+            databaseProvider.AppSettings.GetFilePath("defect_snapshots.recovery.jsonl"),
+            MaxRecoveryFileBytes, _logger, "缺陷快照");
         // 审查修复 2026-09-05（P1）：通道改在构造内创建，以便注册 itemDropped 回调。
         // 原实现靠 `if (!TryWrite)` 判溢出并告警，但 DropOldest/DropWrite/DropNewest 语义下
         // TryWrite 在丢弃后**仍返回 true**（见 BoundedChannel.TryWrite：丢项后 EnqueueTail 成功返回 true），
@@ -60,11 +68,13 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
     /// 通道溢出丢弃回调：每丢一条最旧快照调一次（可能来自采集线程）。采样告警——溢出时逐条打日志
     /// 会形成日志风暴（磁盘满/DB 锁死时每秒数百条，反而拖垮磁盘与 I/O，P1-2 修复 2026-09-02）。
     /// </summary>
-    private void OnItemDropped(DefectSnapshotRecord _)
+    private void OnItemDropped(DefectSnapshotRecord dropped)
     {
         var n = Interlocked.Increment(ref _overflowCount);
+        // 不再静默丢弃：被挤出的最旧快照转存恢复文件，后台回放补落库（设计审查修复 2026-09-16）
+        _spillover.Append([dropped]);
         if (n == 1 || n % 1000 == 0)
-            _logger.LogWarning("缺陷快照通道已满，丢弃最旧记录（累计溢出 {Count} 条）", n);
+            _logger.LogWarning("缺陷快照通道已满，最旧记录转存恢复文件（累计溢出 {Count} 条）", n);
     }
 
     /// <summary>通道溢出累计丢弃条数（供诊断/健康检查观测；此前因回调缺失恒为 0）。</summary>
@@ -111,7 +121,17 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
                 FlushPendingAsync(CancellationToken.None).GetAwaiter().GetResult();
         }
         finally { _flushGate.Release(); }
+        // 同步路径顺带回放恢复文件：测试断言"溢出转存 → Flush → 全部落库"可确定性地验证
+        _spillover.ReplayAsync(InsertRecoveryBatchAsync, MaxBatchSize, CancellationToken.None)
+            .GetAwaiter().GetResult();
     }
+
+    /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
+    internal Task ReplayRecoveryForTestAsync(CancellationToken ct = default)
+        => _spillover.ReplayAsync(InsertRecoveryBatchAsync, MaxBatchSize, ct);
+
+    /// <summary>测试入口：恢复文件路径（断言溢出转存）。</summary>
+    internal string RecoveryFilePathForTest => _spillover.Path;
 
     private async Task FlushLoopAsync(CancellationToken ct)
     {
@@ -124,6 +144,7 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
                     .WaitAsync(TimeSpan.FromSeconds(1), ct);
                 if (!hasData) break;
                 await FlushBatchAsync(ct);
+                await _spillover.ReplayAsync(InsertRecoveryBatchAsync, MaxBatchSize, ct);
             }
             catch (TimeoutException)
             {
@@ -149,6 +170,23 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
             await FlushBatchAsync(CancellationToken.None);
             if (reader.Count >= before) break;
         }
+        // 再尝试回放一次恢复文件（溢出/批写失败转存的条目不遗留到下次启动）
+        try
+        {
+            await _spillover.ReplayAsync(InsertRecoveryBatchAsync, MaxBatchSize, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "停机时回放缺陷快照恢复文件失败（留待下次启动回放）");
+        }
+    }
+
+    /// <summary>恢复文件回放批次落库（经 <see cref="_flushGate"/> 与正常批量写串行）。</summary>
+    private async Task InsertRecoveryBatchAsync(IReadOnlyList<DefectSnapshotRecord> batch)
+    {
+        using var context = _databaseProvider.CreateDefectHistoryContext();
+        context.DefectSnapshots.AddRange(batch);
+        await context.SaveChangesAsync(CancellationToken.None);
     }
 
     /// <summary>经 <see cref="_flushGate"/> 互斥地执行一次批量落库（P0-4：串行化所有读者）。</summary>
@@ -174,8 +212,10 @@ public sealed class DefectHistoryStore : IDefectHistoryReader, IDisposable, IAsy
         }
         catch (Exception ex)
         {
-            // 与原有语义一致：失败丢弃本批并记日志（快照型数据可容忍，不做回放避免拖累后台线程）
-            _logger.LogWarning(ex, "写入缺陷历史快照失败，数量={Count}", batch.Count);
+            // 失败批次不再丢弃：转存恢复文件由后台循环回放（设计审查修复 2026-09-16；
+            // 快照型数据可容忍延迟，但不静默丢失）
+            _spillover.Append(batch);
+            _logger.LogWarning(ex, "写入缺陷历史快照失败，{Count} 条已转存恢复文件待回放", batch.Count);
         }
     }
 

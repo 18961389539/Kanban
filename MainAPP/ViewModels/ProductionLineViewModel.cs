@@ -851,7 +851,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
             return;
         }
         CurrentShiftName = shift.Name;
-        CurrentShiftTimeRange = $"{shift.StartTime:hh\\:mm}-{shift.EndTime:hh\\:mm}";
+        CurrentShiftTimeRange = $"{FormatHelper.FormatClock(shift.StartTime)}-{FormatHelper.FormatClock(shift.EndTime)}";
     }
 
     /// <summary>
@@ -886,6 +886,10 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         }
         _runtimeToItem.Clear();
         _dirtyTransientItems.Clear();
+        // 先摘除筛选视图对源集合的挂接再清空：非 UI 线程 Dispose（测试宿主/容器释放）时，
+        // Clear 触发的 CollectionChanged 会让 UI 线程创建的 ListCollectionView 抛
+        // NotSupportedException（ResetAllProduction_* 测试崩溃根因，设计审查修复 2026-09-16）。
+        FilteredLineDevices.DetachFromSourceCollection();
         LineDevices.Clear();
     }
 }

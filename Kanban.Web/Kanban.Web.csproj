@@ -7,6 +7,8 @@
     <RootNamespace>Kanban.Web</RootNamespace>
     <AssemblyName>Kanban.Web</AssemblyName>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!-- 加载全部全球化数据：WASM 默认只带 invariant 文化，语言切换后 CultureInfo 格式化需要完整 ICU 数据 -->
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
   </PropertyGroup>
 
   <!-- 编译前从统一 Localization.csv 重新生成 Localization.cs。 -->

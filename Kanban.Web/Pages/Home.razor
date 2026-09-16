@@ -103,7 +103,7 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("Card_Alarms") <span class="badge-count">@SelectedSnapshot.ActiveAlarms.Count</span></div>
+                <div class="card-title">@L.T("Card_Alarms") <span class="badge-count @(SelectedSnapshot.ActiveAlarms.Count == 0 ? "zero" : "")">@SelectedSnapshot.ActiveAlarms.Count</span></div>
                 @if (SelectedSnapshot.ActiveAlarms.Count == 0)
                 {
                     <div class="no-data">@L.T("Val_NoAlarms")</div>
@@ -116,7 +116,7 @@
                             <div class="alarm-item">
                                 <span class="lvl-dot @LevelClass(a.Level)"></span>
                                 <span class="alarm-name">@a.Name</span>
-                                <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
+                                <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                             </div>
                         }
                     </div>
@@ -126,12 +126,12 @@
             <section class="card">
                 <div class="card-title">@L.T("Card_Oee")</div>
                 <div class="ring-row">
-                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="#34D399" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasActiveWorkOrder" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasActiveWorkOrder" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasActiveWorkOrder" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasActiveWorkOrder" />
                 </div>
-                <div class="oee-formula">@Pct(SelectedSnapshot.AvailabilityRate) × @Pct(SelectedSnapshot.PerformanceRate) × @Pct(SelectedSnapshot.QualityRate)</div>
+                <div class="oee-formula">@(HasActiveWorkOrder ? $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}" : "—")</div>
             </section>
 
             <section class="card">
@@ -339,6 +339,9 @@
     /// <summary>当前选中设备的工单（Collector 5s 推送缓存，切换设备即时取用）。</summary>
     private WorkOrderDto? CurrentWorkOrder => Dashboard.GetWorkOrder(SelectedDeviceId);
 
+    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
+    private bool HasActiveWorkOrder => CurrentWorkOrder is not null;
+
     /// <summary>当前选中设备的缺陷帕累托行（Meta 5s 推送；无数据返回空列表）。</summary>
     private IReadOnlyList<DeviceDefectCountDto> DefectTop
         => SelectedDeviceId is null ? [] : Dashboard.GetDefectTop(SelectedDeviceId);
@@ -536,7 +539,8 @@ private void OnRenderTick()
         }
     }
 
-    private static string Pct(double v) => $"{v:P0}";
+    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
+    private static string Pct(double v) => UiPalette.Pct(v);
 
     // 时长格式化口径单源：Kanban.Contracts.DurationFormatter.FormatStandard（与 WPF 状态卡一致）
     private static string FmtDuration(double secs)

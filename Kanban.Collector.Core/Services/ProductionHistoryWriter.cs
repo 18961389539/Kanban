@@ -223,7 +223,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         if (!File.Exists(_recoveryFilePath)) return Task.CompletedTask;
 
         // 失败退避：上次回放失败后 30s 内不再重试（成功路径会清零标记）
-        if (_lastReplayFailureAt is { } lastFailure && DateTime.UtcNow - lastFailure < ReplayRetryDelay)
+        if (_lastReplayFailureAt is { } lastFailure && DateTime.Now - lastFailure < ReplayRetryDelay)
             return Task.CompletedTask;
 
         try
@@ -342,7 +342,7 @@ public sealed class ProductionHistoryWriter : IProductionHistoryWriter, IDisposa
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "生产快照恢复文件回放失败，{Delay}s 后重试", (int)ReplayRetryDelay.TotalSeconds);
-            _lastReplayFailureAt = DateTime.UtcNow;
+            _lastReplayFailureAt = DateTime.Now;
         }
         return Task.CompletedTask;
     }

@@ -1,4 +1,4 @@
-@page "/recipes"
+﻿@page "/recipes"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using Kanban.Contracts.Dtos
@@ -38,7 +38,8 @@
                         }
                         <span class="kpi-sub" style="margin-left:auto">@L.T("Rc_ItemCount", r.Items.Count)</span>
                     </div>
-                    <table class="hq-table">
+                    <div class="table-scroll">
+                        <table class="hq-table">
                         <tbody>
                             @foreach (var item in r.Items)
                             {
@@ -50,6 +51,7 @@
                             }
                         </tbody>
                     </table>
+                    </div>
                 </div>
             }
         </div>

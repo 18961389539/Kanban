@@ -1,5 +1,6 @@
 using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Serialization;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,9 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     private HubConnection? _connection;
     private CancellationTokenSource? _reconnectCts;
     private int _consecutiveFailures;
+    // 释放后禁止再连接：Closed 事件可能触发上层重试循环（WASM DashboardState），
+    // 无此守卫时 Dispose 后仍可能被重试路径重建连接（泄漏）。
+    private volatile bool _disposed;
     // 连接建立互斥：并发 ConnectAsync 时串行化，防止各自建连接互相覆盖 _connection（旧连接泄漏）
     private readonly SemaphoreSlim _connectGate = new(1, 1);
 
@@ -52,6 +56,11 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
 
     /// <summary>自动重连成功事件（订阅方可恢复快照/按游标补拉事件）</summary>
     public event EventHandler? Reconnected;
+
+    /// <summary>自动重连全部耗尽、连接彻底关闭事件。本客户端按设计不自行循环重连
+    /// （重连所有权归调用方：WASM DashboardState.RetryLoop / WPF Coordinator）——
+    /// 订阅方收到本事件后应接管重试，否则连接永久断开。</summary>
+    public event EventHandler? Closed;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
@@ -87,6 +96,7 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     /// </summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         // 并发保护：同一实例的并发 ConnectAsync 串行化（double-check 已连接则直接返回），
         // 避免多个调用各自建连接、后者覆盖 _connection 导致前者泄漏。
         await _connectGate.WaitAsync(cancellationToken);
@@ -94,6 +104,18 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         try
         {
             if (_connection is { State: HubConnectionState.Connected }) return;
+
+            // Closed 后上层重试会再次 ConnectAsync：先释放已断开的旧实例，避免泄漏。
+            // 必须先把 _connection 置空，再 Dispose——旧实例 Dispose 会再触发 Closed，
+            // 处理函数用 ReferenceEquals(_connection, thisConnection) 判定陈旧连接并忽略，
+            // 防止"释放旧连接 → Closed → 上层又重试"形成重入。
+            var previous = _connection;
+            _connection = null;
+            if (previous is not null)
+            {
+                try { await previous.DisposeAsync(); }
+                catch (Exception disposeEx) { _logger.LogDebug(disposeEx, "释放旧 Collector 连接异常"); }
+            }
 
             _reconnectCts?.Dispose();
             _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -114,13 +136,20 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                             MessagePack.Resolvers.NativeDateTimeResolver.Instance,
                             MessagePack.Resolvers.ContractlessStandardResolver.Instance));
                 });
+            else
+                // 浏览器时区漂移修复：JSON 通道 DateTime 按字面墙钟透传（不带偏移、零时区换算），
+                // Blazor WASM 端始终显示工厂本地时间，与 WPF 端口径一致（与 Collector 服务端成对注册）。
+                builder.AddJsonProtocol(options =>
+                    options.PayloadSerializerOptions.Converters.Add(new WallClockDateTimeConverter()));
             created = builder.Build();
             _connection = created;
+            var thisConnection = created;
             // 新连接实例：已注册回调作废（回调挂在旧实例上，新实例需重新注册——按连接实例去重语义）
             lock (_registeredHandlers) _registeredHandlers.Clear();
 
             _connection.Reconnecting += _ =>
             {
+                if (!ReferenceEquals(_connection, thisConnection)) return Task.CompletedTask;
                 _logger.LogWarning("Collector 连接断开，正在重连...");
                 Interlocked.Increment(ref _consecutiveFailures);
                 // 重连中：连接状态已非 Connected，通知 UI 徽标切换（否则断线期间仍显示"实时"误导）
@@ -130,6 +159,7 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             };
             _connection.Reconnected += _ =>
             {
+                if (!ReferenceEquals(_connection, thisConnection)) return Task.CompletedTask;
                 _logger.LogInformation("Collector 重连成功");
                 _consecutiveFailures = 0;
                 ConnectionStateChanged?.Invoke(this, true);
@@ -138,10 +168,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             };
             _connection.Closed += ex =>
             {
-                // WithAutomaticReconnect 全部耗尽后触发：仅通知 UI 状态（保持 Disconnected），
-                // 不再自行循环重连——重连所有权在调用方（首次连接重试循环 / 上层策略）。
+                // WithAutomaticReconnect 全部耗尽后触发：通知 UI 状态（保持 Disconnected）并抛出
+                // Closed 事件由调用方接管重试——本客户端不自行循环重连（避免与调用方重试循环双重重连）。
+                // 陈旧连接（已被后续 ConnectAsync 替换）的 Closed 必须忽略，否则释放旧实例会重入上层重试。
+                if (_disposed || !ReferenceEquals(_connection, thisConnection)) return Task.CompletedTask;
                 _logger.LogWarning(ex, "Collector 自动重连已耗尽，连接保持断开（等待上层重试策略）");
                 ConnectionStateChanged?.Invoke(this, false);
+                Closed?.Invoke(this, EventArgs.Empty);
                 return Task.CompletedTask;
             };
 
@@ -494,6 +527,7 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         // 幂等：首次调用把 _reconnectCts 置 null 并取消/释放；二次调用直接释放连接
         // （HubConnection.DisposeAsync 本身幂等）。修复：二次调用对已 Dispose 的 CTS 再 Cancel()
         // 会抛 ObjectDisposedException——IAsyncDisposable 契约要求重复调用安全。
+        _disposed = true;
         var cts = Interlocked.Exchange(ref _reconnectCts, null);
         if (cts is not null)
         {

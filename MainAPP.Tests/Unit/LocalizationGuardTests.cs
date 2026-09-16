@@ -336,11 +336,12 @@ public sealed class LocalizationGuardTests
             // 排除 nameof()
             if (trimmed.Contains("nameof("))
                 continue;
-            // 排除日志调用
+            // 排除日志调用（_logger.Log*/Log.*/Serilog.Log.* 以及 _log.* 字段命名变体）
             if (trimmed.Contains("_logger.Log") || trimmed.Contains("Log.Warning") ||
                 trimmed.Contains("Log.Error") || trimmed.Contains("Log.Information") ||
                 trimmed.Contains("Log.Debug") || trimmed.Contains("Log.Fatal") ||
-                trimmed.Contains("Serilog.Log.") || trimmed.Contains("logger.Log"))
+                trimmed.Contains("Serilog.Log.") || trimmed.Contains("logger.Log") ||
+                trimmed.Contains("_log."))
                 continue;
             // 排除异常构造
             if (trimmed.Contains("throw new "))

@@ -4,6 +4,7 @@ using Kanban.Collector.Core.DependencyInjection;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using Kanban.Contracts.Serialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -111,6 +112,12 @@ public static class Program
                 // 默认 32KB 接收上限会拒收导致客户端连接被服务端关闭（WPF Remote 同步同路径）。
                 // 10MB 覆盖全部管理写接口的最大请求体。
                 options.MaximumReceiveMessageSize = 10 * 1024 * 1024;
+            }).AddJsonProtocol(options =>
+            {
+                // 浏览器时区漂移修复：JSON 通道（Blazor WASM 端）DateTime 按字面墙钟透传
+                // （不带偏移、零时区换算）——Web 看板始终显示工厂本地时间，与 WPF 端口径一致。
+                // 与 Kanban.Client useMessagePack:false 分支成对使用，两端必须同时注册。
+                options.PayloadSerializerOptions.Converters.Add(new WallClockDateTimeConverter());
             }).AddMessagePackProtocol(options =>
             {
                 // 时区漂移修复（P1）：MessagePack-CSharp 默认 StandardResolver 把 DateTime

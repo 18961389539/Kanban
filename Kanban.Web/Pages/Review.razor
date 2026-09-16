@@ -1,4 +1,4 @@
-@page "/review"
+﻿@page "/review"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using System.Globalization
@@ -31,11 +31,11 @@
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_From")</span>
-            <input class="filter-input" type="datetime-local" value="@FromText" @onchange="OnFromChanged" />
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@FromText" @onchange="OnFromChanged" />
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_To")</span>
-            <input class="filter-input" type="datetime-local" value="@ToText" @onchange="OnToChanged" />
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@ToText" @onchange="OnToChanged" />
         </label>
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
@@ -54,7 +54,7 @@
 
     @if (IsLoading)
     {
-        <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+        <div class="loading-row">@L.T("Hq_Analyzing")</div>
     }
     else if (QueryError is not null)
     {
@@ -203,7 +203,8 @@
         @* ──── 班次明细 ──── *@
         <section class="card">
             <div class="card-title">@L.T("Rv_ShiftDetails")</div>
-            <table class="hq-table">
+            <div class="table-scroll">
+                <table class="hq-table">
                 <thead>
                     <tr>
                         <th>@L.T("Hq_Shift")</th>
@@ -227,6 +228,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         </section>
     }
 </div>
@@ -306,7 +308,8 @@
 
     private void ApplyQuickRange(int index)
     {
-        var now = DateTime.Now;
+        // 快捷窗口以工厂墙钟为准（浏览器时区可能与工厂不同）
+        var now = Dashboard.ServerNow;
         (FromText, ToText) = index switch
         {
             1 => (now.Date.ToString(TimeFormat), now.ToString(TimeFormat)),
@@ -400,8 +403,8 @@
             r.TotalOk = ok;
             r.TotalNg = ng;
             r.QualityRate = OeeCalculator.CalculateQualityRate(ok, ng);
-            var effectiveTo = to > DateTime.Now ? DateTime.Now : to;
-            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState);
+            var effectiveTo = to > Dashboard.ServerNow ? Dashboard.ServerNow : to;
+            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState, Dashboard.ServerNow);
             var targetCycle = device?.TargetCycle ?? 0;
             r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
             r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate,
@@ -411,8 +414,8 @@
             r.AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered);
             r.AlarmRecovered = alarms.Count(e => e.EventType == AlarmEventType.Recovered);
             r.AlarmPending = AlarmAnalysis.CountPending(alarms);
-            r.Alarms = ReviewAnalysis.AnalyzeAlarms(alarms, prod, effectiveTo);
-            var (longestName, longestHours) = ReviewAnalysis.FindLongestAlarm(alarms, effectiveTo);
+            r.Alarms = ReviewAnalysis.AnalyzeAlarms(alarms, prod, effectiveTo, Dashboard.ServerNow);
+            var (longestName, longestHours) = ReviewAnalysis.FindLongestAlarm(alarms, effectiveTo, Dashboard.ServerNow);
             // 审查修复 2026-08-13：FindLongestAlarm 返回的已是小时，此前再除 3600 导致显示恒 ≈0.0 h
             r.LongestDowntimeText = longestHours > 0 ? $"{longestHours:F1} h" : "—";
             if (longestHours > 0)
@@ -446,7 +449,7 @@
             var compOkNg = ProductionAnalysis.SumWindowProduction(compProdL, [], comparisonFrom);
             r.BaselineOutput = compOkNg.Ok + compOkNg.Ng;
             r.BaselineQuality = OeeCalculator.CalculateQualityRate(compOkNg.Ok, compOkNg.Ng);
-            var compDurations = StatusAnalysis.CalculateStateDurations(compTransL, comparisonFrom, from, compInitial);
+            var compDurations = StatusAnalysis.CalculateStateDurations(compTransL, comparisonFrom, from, compInitial, Dashboard.ServerNow);
             var compPerf = OeeCalculator.CalculatePerformanceRate(compOkNg.Ok, compOkNg.Ng, targetCycle, compDurations.RunTime);
             r.BaselineOee = OeeCalculator.CalculateOee(r.BaselineQuality, compPerf,
                 OeeCalculator.CalculateAvailabilityRate(compDurations.RunTime, compDurations.AlarmTime));
@@ -547,46 +550,58 @@
             };
         }
 
-        // 状态时间线（4 状态行：运行/报警/待机/未知；时间轴 [起点, 时长] bar）
+        // 状态时间线（4 状态行：运行/报警/待机/离线；custom series 区间矩形——
+        // bar 系列不支持 [起点,时长] 数据（旧实现整图空白），'__gantt' 标记由 echartsInterop.js 解析）
         if (r.Timeline.Count > 0)
         {
-            var byState = new Dictionary<int, List<object[]>>();
+            var stateNames = new[] { L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused"), L.T("Status_Offline") };
+            // 行序按 DeviceStatus 枚举值：Running=1→行0 … Offline=0→行3
+            var rowOf = new[] { 3, 0, 1, 2 };
+            var stateColors = new[] { UiPalette.Run, UiPalette.Alarm, UiPalette.Pause, UiPalette.Offline };
+
+            var data = new List<Dictionary<string, object?>>();
             foreach (var s in r.Timeline)
             {
+                if (s.StatusWord < 0 || s.StatusWord > 3) continue;
                 var startMs = new DateTimeOffset(s.Start).ToUnixTimeMilliseconds();
-                var durMs = (long)(s.End - s.Start).TotalMilliseconds;
-                if (durMs <= 0) continue;
-                if (!byState.TryGetValue(s.StatusWord, out var list))
-                    byState[s.StatusWord] = list = [];
-                list.Add([startMs, durMs]);
+                var endMs = new DateTimeOffset(s.End).ToUnixTimeMilliseconds();
+                if (endMs <= startMs) continue;
+                var row = rowOf[s.StatusWord];
+                data.Add(new Dictionary<string, object?>
+                {
+                    ["value"] = new object[] { startMs, endMs, row },
+                    ["itemStyle"] = new Dictionary<string, object?> { ["color"] = stateColors[row] },
+                });
             }
-            Dictionary<string, object?> MakeSeries(int state, string name, string color) => new()
-            {
-                ["name"] = name,
-                ["type"] = "bar",
-                ["data"] = byState.TryGetValue(state, out var d) ? d : [],
-                ["itemStyle"] = new Dictionary<string, object?> { ["color"] = color },
-            };
             r.TimelineOption = new Dictionary<string, object?>
             {
                 ["backgroundColor"] = "transparent",
-                ["tooltip"] = Tooltip(),
-                ["legend"] = Legend([L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused"), L.T("Hq_StateUnknown")]),
-                ["grid"] = new Dictionary<string, object?> { ["left"] = 16, ["right"] = 24, ["top"] = 36, ["bottom"] = 28 },
+                ["__ganttStateNames"] = stateNames,
+                ["tooltip"] = new Dictionary<string, object?>
+                {
+                    ["trigger"] = "item",
+                    ["formatter"] = "__ganttTooltip",
+                    ["backgroundColor"] = "#212834",
+                    ["borderColor"] = "#2A323F",
+                    ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#E5E7EB" },
+                },
+                ["grid"] = new Dictionary<string, object?> { ["left"] = 16, ["right"] = 24, ["top"] = 16, ["bottom"] = 28 },
                 ["xAxis"] = new Dictionary<string, object?> { ["type"] = "time", ["axisLabel"] = AxisLabel(), ["axisLine"] = AxisLine() },
                 ["yAxis"] = new Dictionary<string, object?>
                 {
                     ["type"] = "category",
-                    ["data"] = new[] { L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused"), L.T("Hq_StateUnknown") },
+                    ["data"] = stateNames,
                     ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF" },
                     ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
                 },
                 ["series"] = new object[]
                 {
-                    MakeSeries(1, L.T("Status_Running"), "#34D399"),
-                    MakeSeries(2, L.T("Status_Alarm"), "#F87171"),
-                    MakeSeries(3, L.T("Status_Paused"), "#FBBF24"),
-                    MakeSeries(0, L.T("Hq_StateUnknown"), "#6B7280"),
+                    new Dictionary<string, object?>
+                    {
+                        ["type"] = "custom",
+                        ["renderItem"] = "__gantt",
+                        ["data"] = data,
+                    },
                 },
             };
         }
@@ -594,7 +609,8 @@
 
     // ──────────── 展示辅助 ────────────
 
-    private static string Pct(double v) => $"{v:P1}";
+    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
+    private static string Pct(double v) => UiPalette.Pct(v);
 
     private static string ConclusionIcon(string kind) => kind switch
     {

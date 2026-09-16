@@ -419,7 +419,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         AppendSection(sb, Strings.K450);
         sb.AppendLine($"  {Strings.K451}: {PendingHistoryCount}");
         sb.AppendLine($"  {Strings.K452}: {RecoveryFileText}");
-        sb.AppendLine($"  {Strings.K453}: {LastHistoryFlushAt?.ToString("HH:mm:ss") ?? Strings.K595}");
+        sb.AppendLine($"  {Strings.K453}: {LastHistoryFlushAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? Strings.K595}");
         sb.AppendLine($"  {Strings.K454}: {HistoryFlushFailureCount}");
         sb.AppendLine($"  {Strings.K455}: {HistoryStorageText}");
         sb.AppendLine($"  {Strings.Rtmon_DataSourcePending}: {PendingDataSourceCount}");

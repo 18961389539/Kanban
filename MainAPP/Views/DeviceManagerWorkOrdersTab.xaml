@@ -211,10 +211,10 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}"
                                                Foreground="{StaticResource PrimaryTextBrush}"
-                                               Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:MM-dd HH:mm}}" />
+                                               Text="{Binding SelectedWorkOrder.PlannedStart, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
                                     <TextBlock Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}"
                                                Foreground="{StaticResource ThirdlyTextBrush}"
-                                               Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}~ {0:MM-dd HH:mm}}" />
+                                               Text="{Binding SelectedWorkOrder.PlannedEnd, StringFormat={}~ {0:yyyy-MM-dd HH:mm}}" />
                                 </StackPanel>
                             </DockPanel>
                             <!--  预计剩余 / 预计完成  -->

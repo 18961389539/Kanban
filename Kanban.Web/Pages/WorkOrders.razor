@@ -1,4 +1,4 @@
-@page "/workorders"
+﻿@page "/workorders"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using Kanban.Contracts.Dtos
@@ -30,7 +30,8 @@
     {
         <section class="card">
             <div class="card-title">@L.T("Wo_List") <span class="badge-soft">@PageSummaryText</span></div>
-            <table class="hq-table">
+            <div class="table-scroll">
+                <table class="hq-table">
                 <thead>
                     <tr>
                         <th>@L.T("Wo_OrderNo")</th>
@@ -61,6 +62,7 @@
                     }
                 </tbody>
             </table>
+            </div>
             <div class="pager">
                 <button class="btn" disabled="@(Page <= 1)" @onclick="PrevPage">@L.T("Hq_PrevPage")</button>
                 <span class="pager-info">@PageSummaryText</span>

@@ -28,16 +28,16 @@ public partial class User : ObservableObject
     /// <summary>是否启用（禁用账号不可登录）。</summary>
     public bool IsActive { get; set; } = true;
 
-    /// <summary>创建时间（UTC）。</summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>创建时间（本地时间，与工单/审计等域口径一致）。</summary>
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-    /// <summary>最后登录时间（UTC，本地显示时转换）。持久化到 users.json。</summary>
+    /// <summary>最后登录时间（本地时间）。持久化到 users.json。</summary>
     public DateTime? LastLoginAt { get; set; }
 
     /// <summary>连续登录失败次数（达到阈值触发锁定；登录成功/解锁/重置密码时清零）。</summary>
     public int FailedAttempts { get; set; }
 
-    /// <summary>锁定截止时间（UTC）。null = 未锁定。</summary>
+    /// <summary>锁定截止时间（本地时间）。null = 未锁定。</summary>
     public DateTime? LockedUntil { get; set; }
 
     /// <summary>首次登录必须修改密码（登录成功后强制弹改密对话框）。</summary>

@@ -102,6 +102,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K119}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             SelectedDateTime="{Binding PlannedStart, Mode=TwoWay}"
+            DateTimeFormat="yyyy-MM-dd HH:mm:ss"
             Style="{StaticResource DateTimePickerExtend}" />
 
         <!--  计划结束时间  -->
@@ -114,6 +115,7 @@
             AutomationProperties.Name="{x:Static resources:Strings.K120}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
             SelectedDateTime="{Binding PlannedEnd, Mode=TwoWay, ValidatesOnNotifyDataErrors=True}"
+            DateTimeFormat="yyyy-MM-dd HH:mm:ss"
             Style="{StaticResource DateTimePickerExtend}"
             Validation.ErrorTemplate="{StaticResource SafeValidationErrorTemplate}" />
 

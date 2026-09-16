@@ -20,6 +20,7 @@ public partial class HistoryQuery
     private double StRunSeconds { get; set; }
     private double StAlarmSeconds { get; set; }
     private double StPauseSeconds { get; set; }
+    private double StOfflineSeconds { get; set; }
     private object? StPieOption { get; set; }
     private object? StDailyOption { get; set; }
     private object? StGanttOption { get; set; }
@@ -37,6 +38,7 @@ public partial class HistoryQuery
     private string StRunText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StRunSeconds);
     private string StAlarmText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StAlarmSeconds);
     private string StPauseText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StPauseSeconds);
+    private string StOfflineText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StOfflineSeconds);
     private string StPageSummaryText => PageSummary(StPage, StTotalPages, StTotalCount);
 
     private async Task StSearchAsync(DateTime from, DateTime to)
@@ -78,19 +80,21 @@ public partial class HistoryQuery
                 initialState = (int)lastBefore[0].CurrentState;
             _stInitialState = initialState;
 
-            var effectiveTo = _stTo > DateTime.Now ? DateTime.Now : _stTo;
-            var durations = StatusAnalysis.CalculateStateDurations(_stAll, _stFrom, effectiveTo, initialState);
+            var effectiveTo = _stTo > Dashboard.ServerNow ? Dashboard.ServerNow : _stTo;
+            var durations = StatusAnalysis.CalculateStateDurations(_stAll, _stFrom, effectiveTo, initialState, Dashboard.ServerNow);
             StRunSeconds = durations.RunTime;
             StAlarmSeconds = durations.AlarmTime;
             StPauseSeconds = durations.PausedTime;
+            // 离线时长仅统计展示，不参与 OEE（与 WPF StatusQueryViewModel 同口径）
+            StOfflineSeconds = durations.OfflineTime;
 
-            var daily = StatusAnalysis.BuildDailyDurations(_stAll, _stFrom, effectiveTo, initialState);
+            var daily = StatusAnalysis.BuildDailyDurations(_stAll, _stFrom, effectiveTo, initialState, Dashboard.ServerNow);
             StBuildPieOption();
             StBuildDailyOption(daily);
-            StBuildGanttOption(StatusAnalysis.BuildSegments(_stAll, _stFrom, _stTo, initialState));
+            StBuildGanttOption(StatusAnalysis.BuildSegments(_stAll, _stFrom, _stTo, initialState, Dashboard.ServerNow));
 
             if (StTotalCount > 0)
-                StInsight = StatusAnalysis.BuildInsight(_stAll, _stFrom, _stTo, initialState, L.T);
+                StInsight = StatusAnalysis.BuildInsight(_stAll, _stFrom, _stTo, initialState, L.T, Dashboard.ServerNow);
 
             ActiveShiftOptions = _stAll.Select(t => t.ShiftName)
                 .Where(n => !string.IsNullOrEmpty(n))
@@ -139,9 +143,9 @@ public partial class HistoryQuery
                     ["label"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF", ["formatter"] = "{b}: {c} h" },
                     ["data"] = new object[]
                     {
-                        new Dictionary<string, object?> { ["name"] = L.T("Status_Running"), ["value"] = Math.Round(StRunSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#34D399" } },
-                        new Dictionary<string, object?> { ["name"] = L.T("Status_Alarm"), ["value"] = Math.Round(StAlarmSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" } },
-                        new Dictionary<string, object?> { ["name"] = L.T("Status_Paused"), ["value"] = Math.Round(StPauseSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#FBBF24" } },
+                        new Dictionary<string, object?> { ["name"] = L.T("Status_Running"), ["value"] = Math.Round(StRunSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Run } },
+                        new Dictionary<string, object?> { ["name"] = L.T("Status_Alarm"), ["value"] = Math.Round(StAlarmSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Alarm } },
+                        new Dictionary<string, object?> { ["name"] = L.T("Status_Paused"), ["value"] = Math.Round(StPauseSeconds / 3600.0, 2), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Pause } },
                     },
                 },
             },
@@ -167,53 +171,51 @@ public partial class HistoryQuery
             ["yAxis"] = ValueAxis(),
             ["series"] = new object[]
             {
-                new Dictionary<string, object?> { ["name"] = L.T("Status_Running"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.RunHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#34D399" } },
-                new Dictionary<string, object?> { ["name"] = L.T("Status_Alarm"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.AlarmHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" } },
-                new Dictionary<string, object?> { ["name"] = L.T("Status_Paused"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.PauseHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#FBBF24" } },
+                new Dictionary<string, object?> { ["name"] = L.T("Status_Running"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.RunHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Run } },
+                new Dictionary<string, object?> { ["name"] = L.T("Status_Alarm"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.AlarmHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Alarm } },
+                new Dictionary<string, object?> { ["name"] = L.T("Status_Paused"), ["type"] = "bar", ["stack"] = "st", ["data"] = daily.Select(d => Math.Round(d.PauseHours, 2)).ToList(), ["itemStyle"] = new Dictionary<string, object?> { ["color"] = UiPalette.Pause } },
             },
         };
     }
 
     /// <summary>
-    /// 状态甘特图：横轴时间、纵轴三状态（运行/报警/待机）。
-    /// 用 ECharts 时间轴上 [起点, 时长] 的 bar 数据项实现（纯数据方案，无需 custom series）。
-    /// 对齐 WPF BuildStatusGanttChart 语义。
+    /// 状态甘特图：横轴时间、纵轴三状态（运行/报警/待机；离线段不入行，与 WPF BuildStatusGanttChart 同口径）。
+    /// custom series + renderItem 标记实现：ECharts bar 系列不支持 [起点,时长] 区间数据
+    /// （旧实现因此整图空白）；'__gantt'/'__ganttTooltip' 标记由 echartsInterop.js 替换为真实函数。
     /// </summary>
     private void StBuildGanttOption(List<(DateTime Start, DateTime End, int State)> segments)
     {
-        var valid = segments.Where(s => s.State >= (int)DeviceStatus.Running && s.State <= (int)DeviceStatus.Paused).ToList();
-        var byState = new Dictionary<int, List<object[]>>();
-        foreach (var s in valid)
-        {
-            var startMs = new DateTimeOffset(s.Start).ToUnixTimeMilliseconds();
-            var durMs = (long)(s.End - s.Start).TotalMilliseconds;
-            if (durMs <= 0) continue;
-            if (!byState.TryGetValue(s.State, out var list))
-                byState[s.State] = list = [];
-            list.Add([startMs, durMs]);
-        }
+        var stateNames = new[] { L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused") };
+        var stateColors = new[] { UiPalette.Run, UiPalette.Alarm, UiPalette.Pause };
 
-        Dictionary<string, object?> MakeSeries(int state, string name, string color) => new()
+        var data = new List<Dictionary<string, object?>>();
+        foreach (var s in segments)
         {
-            ["name"] = name,
-            ["type"] = "bar",
-            ["data"] = byState.TryGetValue(state, out var d) ? d : [],
-            ["itemStyle"] = new Dictionary<string, object?> { ["color"] = color },
-            ["barCategoryGap"] = "30%",
-        };
+            var row = s.State - (int)DeviceStatus.Running; // Running=1 → 行 0
+            if (row < 0 || row >= stateNames.Length) continue;
+            var startMs = new DateTimeOffset(s.Start).ToUnixTimeMilliseconds();
+            var endMs = new DateTimeOffset(s.End).ToUnixTimeMilliseconds();
+            if (endMs <= startMs) continue;
+            data.Add(new Dictionary<string, object?>
+            {
+                ["value"] = new object[] { startMs, endMs, row },
+                ["itemStyle"] = new Dictionary<string, object?> { ["color"] = stateColors[row] },
+            });
+        }
 
         StGanttOption = new Dictionary<string, object?>
         {
             ["backgroundColor"] = "transparent",
+            ["__ganttStateNames"] = stateNames,
             ["tooltip"] = new Dictionary<string, object?>
             {
                 ["trigger"] = "item",
+                ["formatter"] = "__ganttTooltip",
                 ["backgroundColor"] = "#212834",
                 ["borderColor"] = "#2A323F",
                 ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#E5E7EB" },
             },
-            ["legend"] = Legend([L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused")]),
-            ["grid"] = new Dictionary<string, object?> { ["left"] = 16, ["right"] = 24, ["top"] = 36, ["bottom"] = 44 },
+            ["grid"] = new Dictionary<string, object?> { ["left"] = 16, ["right"] = 24, ["top"] = 16, ["bottom"] = 44 },
             ["xAxis"] = new Dictionary<string, object?>
             {
                 ["type"] = "time",
@@ -223,16 +225,19 @@ public partial class HistoryQuery
             ["yAxis"] = new Dictionary<string, object?>
             {
                 ["type"] = "category",
-                ["data"] = new[] { L.T("Status_Running"), L.T("Status_Alarm"), L.T("Status_Paused") },
+                ["data"] = stateNames,
                 ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF" },
                 ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
             },
             ["dataZoom"] = DataZoom(),
             ["series"] = new object[]
             {
-                MakeSeries((int)DeviceStatus.Running, L.T("Status_Running"), "#34D399"),
-                MakeSeries((int)DeviceStatus.Alarm, L.T("Status_Alarm"), "#F87171"),
-                MakeSeries((int)DeviceStatus.Paused, L.T("Status_Paused"), "#FBBF24"),
+                new Dictionary<string, object?>
+                {
+                    ["type"] = "custom",
+                    ["renderItem"] = "__gantt",
+                    ["data"] = data,
+                },
             },
         };
     }
@@ -251,9 +256,10 @@ public partial class HistoryQuery
         (StRows, StTotalPages) = PageItems(_stAll, StPage, StatusTablePageSize);
     }
 
+    /// <summary>导出窗口全量（_stAll），与头部汇总行口径一致（旧实现只导出当前页）。</summary>
     private async Task StExportCsvAsync()
     {
-        if (StRows.Count == 0)
+        if (_stAll.Count == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
@@ -263,11 +269,12 @@ public partial class HistoryQuery
         sb.AppendLine(L.T("Csv_SumStatus",
             (StRunSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
             (StAlarmSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
-            (StPauseSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)));
+            (StPauseSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            (StOfflineSeconds / 3600.0).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine($"# {StInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_PrevState")), C(L.T("Csv_CurrState")), C(L.T("Csv_PrevStateText")), C(L.T("Csv_CurrStateText")), C(L.T("Csv_Shift"))));
-        foreach (var r in StRows)
+        foreach (var r in _stAll)
         {
             sb.AppendLine(string.Join(',',
                 C(r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName),
@@ -290,6 +297,7 @@ public partial class HistoryQuery
         StRunSeconds = 0;
         StAlarmSeconds = 0;
         StPauseSeconds = 0;
+        StOfflineSeconds = 0;
         StPieOption = null;
         StDailyOption = null;
         StGanttOption = null;

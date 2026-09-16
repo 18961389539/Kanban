@@ -11,6 +11,7 @@
     --text-3: #8B92A0;
     --green: #34D399;
     --red: #F87171;
+    --orange: #FB923C;
     --yellow: #FBBF24;
     --gray: #9CA3AF;
 }
@@ -114,6 +115,11 @@ body {
 .badge-count {
     background: var(--red); color: #fff; font-size: 11px;
     border-radius: 999px; padding: 1px 8px;
+}
+
+/* 计数为 0 时的中性态（原恒红，无报警时也显示红色误导） */
+.badge-count.zero {
+    background: var(--card-2); color: var(--text-3);
 }
 
 /* ──────────── 设备状态卡 ──────────── */
@@ -372,9 +378,10 @@ body {
 .time-bar .seg.wo { background: var(--green); }
 .time-bar .seg.shift { background: #378ADD; }
 
+/* 报警级别色与 WPF 统一：高=红 / 中=橙 / 低=黄（旧实现 中=黄/低=灰，与 WPF 倒挂且灰色与离线混淆） */
 .lvl-high { background: var(--red); }
-.lvl-medium { background: var(--yellow); }
-.lvl-low { background: var(--gray); }
+.lvl-medium { background: var(--orange); }
+.lvl-low { background: var(--yellow); }
 
 
 /* ──────────── 多页面壳：顶栏导航 ──────────── */
@@ -491,6 +498,8 @@ body {
 
 .kpi-ng { color: var(--red); }
 
+.kpi-offline { color: var(--text-2); }
+
 /* 洞察文本 */
 
 .insight {
@@ -505,6 +514,13 @@ body {
 .echart-host { width: 100%; }
 
 /* 结果表格 */
+
+/* 表格横向滚动容器：单元格 nowrap 的宽表在窄屏/小窗口下溢出卡片，
+   统一包一层可横向滚动的容器（滚动条只出现在表格区域，不撑破页面布局）。 */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 
 .hq-table {
     width: 100%;

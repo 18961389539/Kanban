@@ -34,6 +34,14 @@ public interface IAuditService
         int page, int pageSize);
 
     /// <summary>
+    /// 统计当前过滤条件下（含 succeeded 过滤）成功/失败条数。
+    /// 供审计查询页统计卡使用：口径与列表一致（全部结果，而非仅当前页）。
+    /// </summary>
+    (int Succeeded, int Failed) CountByResult(
+        DateTime from, DateTime to,
+        string? operatorName, string? action, string? targetType, bool? succeeded);
+
+    /// <summary>
     /// 按当前过滤条件导出全部记录（归档用，不分页）。
     /// 超过 <paramref name="maxResults"/> 条时截断，Total 返回截断前总数。
     /// </summary>

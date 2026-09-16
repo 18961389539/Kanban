@@ -32,7 +32,7 @@
             Foreground="{StaticResource PrimaryTextBrush}"
             Text="{x:Static resources:Strings.M315}" />
 
-        <!--  用户名（可编辑下拉框：支持选择或手动输入）  -->
+        <!--  用户名（下拉选择已有账号；不可手输——账号均在用户管理中登记，手输无匹配账号无意义）  -->
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
             <TextBlock
                 Margin="0,0,0,4"

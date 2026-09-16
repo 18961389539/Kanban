@@ -1,10 +1,10 @@
-<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="@($"{(int)(Value * 100)}%")" title="@Title">
+<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="@AriaLabel" title="@Title">
     <circle class="ring-bg" cx="60" cy="60" r="50" />
     <circle class="ring-fg" cx="60" cy="60" r="50"
             stroke="@Color"
             stroke-dasharray="@($"{Circumference:f1} {Circumference:f1}")"
             stroke-dashoffset="@Offset" />
-    <text class="ring-value" x="60" y="56">@ValueText</text>
+    <text class="ring-value" x="60" y="56">@(HasData ? ValueText : "—")</text>
     <text class="ring-label" x="60" y="74">@Label</text>
 </svg>
 
@@ -14,7 +14,7 @@
     /// <summary>进度值（0.0 ~ 1.0）。</summary>
     [Parameter] public double Value { get; set; }
 
-    /// <summary>环中心显示文本（如 "65%"）。</summary>
+    /// <summary>环中心显示文本（如 "65%"）。HasData=false 时忽略本值统一显示 "—"。</summary>
     [Parameter] public string ValueText { get; set; } = "--";
 
     /// <summary>环下方标签。</summary>
@@ -26,7 +26,12 @@
     /// <summary>鼠标悬停说明（空则不显示）。</summary>
     [Parameter] public string? Title { get; set; }
 
+    /// <summary>是否有有效数据：false（如无在制工单）时环置空、中心显示 "—"，避免与真实 0% 混淆。</summary>
+    [Parameter] public bool HasData { get; set; } = true;
+
     private double Circumference => 2 * Math.PI * Radius;
 
-    private double Offset => Circumference * (1 - Math.Clamp(Value, 0, 1));
+    private double Offset => Circumference * (1 - (HasData ? Math.Clamp(Value, 0, 1) : 0));
+
+    private string AriaLabel => HasData ? $"{(int)(Value * 100)}%" : "—";
 }

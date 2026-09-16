@@ -1,4 +1,4 @@
-@page "/history"
+﻿@page "/history"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using System.Globalization
@@ -41,11 +41,11 @@
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_From")</span>
-            <input class="filter-input" type="datetime-local" value="@FromText" @onchange="OnFromChanged" />
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@FromText" @onchange="OnFromChanged" />
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_To")</span>
-            <input class="filter-input" type="datetime-local" value="@ToText" @onchange="OnToChanged" />
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@ToText" @onchange="OnToChanged" />
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_Shift")</span>
@@ -138,13 +138,14 @@
                 }
                 else
                 {
-                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                    <div class="loading-row">@L.T("Hq_Analyzing")</div>
                 }
             </section>
 
             <section class="card">
                 <div class="card-title">@L.T("Card_Output") <span class="badge-soft">@ProdPageSummaryText</span></div>
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <thead>
                         <tr>
                             <th>@L.T("Hq_Time")</th>
@@ -171,6 +172,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
                 <div class="pager">
                     <button class="btn" disabled="@(ProdPage <= 1 || ProdIsLoading)" @onclick="ProdPrevPageAsync">@L.T("Hq_PrevPage")</button>
                     <span class="pager-info">@ProdPageSummaryText</span>
@@ -209,6 +211,7 @@
                 <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value kpi-ok">@StRunText</span></div>
                 <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value kpi-ng">@StAlarmText</span></div>
                 <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusPause")</span><span class="kpi-value">@StPauseText</span></div>
+                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusOffline")</span><span class="kpi-value kpi-offline">@StOfflineText</span></div>
             </section>
 
             <div class="chart-grid">
@@ -233,7 +236,8 @@
 
             <section class="card">
                 <div class="card-title">@L.T("Hq_StatusTransitions") <span class="badge-soft">@StPageSummaryText</span></div>
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <thead>
                         <tr>
                             <th>@L.T("Hq_EventTime")</th>
@@ -258,6 +262,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
                 <div class="pager">
                     <button class="btn" disabled="@(StPage <= 1 || StIsLoading)" @onclick="StPrevPage">@L.T("Hq_PrevPage")</button>
                     <span class="pager-info">@StPageSummaryText</span>
@@ -309,13 +314,14 @@
                 }
                 else
                 {
-                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                    <div class="loading-row">@L.T("Hq_Analyzing")</div>
                 }
             </section>
 
             <section class="card">
                 <div class="card-title">@L.T("Hq_AlarmEvents") <span class="badge-soft">@AlPageSummaryText</span></div>
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <thead>
                         <tr>
                             <th>@L.T("Hq_EventTime")</th>
@@ -344,6 +350,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
                 <div class="pager">
                     <button class="btn" disabled="@(AlPage <= 1 || AlIsLoading)" @onclick="AlPrevPage">@L.T("Hq_PrevPage")</button>
                     <span class="pager-info">@AlPageSummaryText</span>
@@ -380,10 +387,10 @@
             <section class="card">
                 <div class="card-title">@L.T("Hq_OeeOverview")</div>
                 <div class="ring-row">
-                    <Ring Value="@OeValue" ValueText="@Pct(OeValue)" Label="OEE" Color="#34D399" />
-                    <Ring Value="@OeQ" ValueText="@Pct(OeQ)" Label="@L.T("Lbl_Quality")" Color="#639922" />
-                    <Ring Value="@OeP" ValueText="@Pct(OeP)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
-                    <Ring Value="@OeA" ValueText="@Pct(OeA)" Label="@L.T("Lbl_Availability")" Color="#378ADD" />
+                    <Ring Value="@OeValue" ValueText="@Pct(OeValue)" Label="OEE" Color="@UiPalette.Oee" />
+                    <Ring Value="@OeA" ValueText="@Pct(OeA)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" />
+                    <Ring Value="@OeP" ValueText="@Pct(OeP)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" />
+                    <Ring Value="@OeQ" ValueText="@Pct(OeQ)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" />
                 </div>
                 <div class="metric-grid">
                     <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value">@OeOkText</span></div>
@@ -411,13 +418,14 @@
                 }
                 else
                 {
-                    <div class="loading-row">@L.T("Hq_Analyzing")…</div>
+                    <div class="loading-row">@L.T("Hq_Analyzing")</div>
                 }
             </section>
 
             <section class="card">
                 <div class="card-title">@L.T("Hq_OeeDetails")</div>
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <thead>
                         <tr>
                             <th>@L.T("Hq_Shift")</th>
@@ -433,7 +441,7 @@
                         {
                             <tr>
                                 <td>@s.ShiftName</td>
-                                <td>@s.ShiftTime.ToString("MM-dd HH:mm")</td>
+                                <td>@s.ShiftTime.ToString("yyyy-MM-dd HH:mm")</td>
                                 <td class="num">@Pct(s.Quality)</td>
                                 <td class="num">@Pct(s.Performance)</td>
                                 <td class="num">@Pct(s.Availability)</td>
@@ -442,6 +450,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
             </section>
         }
     }

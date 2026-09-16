@@ -126,6 +126,7 @@
                         hc:InfoElement.TitlePlacement="Top"
                         AutomationProperties.Name="{x:Static resources:Strings.K264}"
                         SelectedDateTime="{Binding FromDate}"
+                        DateTimeFormat="yyyy-MM-dd HH:mm:ss"
                         Style="{StaticResource DateTimePickerExtend}" />
 
                     <TextBlock
@@ -142,6 +143,7 @@
                         hc:InfoElement.TitlePlacement="Top"
                         AutomationProperties.Name="{x:Static resources:Strings.K266}"
                         SelectedDateTime="{Binding ToDate}"
+                        DateTimeFormat="yyyy-MM-dd HH:mm:ss"
                         Style="{StaticResource DateTimePickerExtend}" />
 
                     <Button
@@ -723,7 +725,8 @@
                         <Border Style="{StaticResource KpiCard}">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeQualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding OeeQuery.OeeQualityRate, StringFormat={}{0:P1}}" />
+                                <!-- 合格率着色与首页质量卡同阈值（QualityThreshold），避免跨页同一数值颜色不同 -->
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeQualityRate, Converter={StaticResource QualityThreshold}}" Text="{Binding OeeQuery.OeeQualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}">
@@ -903,6 +906,11 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="1">
+                        <!-- 不支持 SN 追溯时的空状态（原实现直接隐藏全部内容，整页空白无任何说明） -->
+                        <controls:EmptyState
+                            Message="{x:Static resources:Strings.Hq_SnNotSupported}"
+                            Hint="{x:Static resources:Strings.Hq_SnNotSupportedHint}"
+                            Visibility="{Binding SnQuery.IsSupported, Converter={StaticResource InvertedBooleanToVisibilityConverter}}" />
                         <!-- 查询输入 + 结果区 -->
                         <StackPanel Margin="0,0,0,12"
                                     Visibility="{Binding SnQuery.IsSupported, Converter={StaticResource BooleanToVisibilityConverter}}">

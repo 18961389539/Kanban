@@ -45,4 +45,12 @@ public class FormatHelperTests
     [InlineData(7325, "2h 2m")]
     public void FormatDuration_OneHourOrMore_HoursMinutes(double secs, string expected)
         => Assert.Equal(expected, FormatHelper.FormatDuration(secs));
+
+    [Fact]
+    public void FormatClock_DateTimeAfternoon_Uses24Hour()
+        => Assert.Equal("20:05", FormatHelper.FormatClock(new DateTime(2026, 9, 16, 20, 5, 0)));
+
+    [Fact]
+    public void FormatClock_TimeSpanAfternoon_Uses24Hour()
+        => Assert.Equal("20:05", FormatHelper.FormatClock(new TimeSpan(20, 5, 0)));
 }

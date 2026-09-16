@@ -124,7 +124,13 @@
     <value>Os parâmetros de conexão do PLC foram alterados. Ao salvar, a conexão atual será encerrada e restabelecida com os novos parâmetros.</value>
   </data>
   <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
-    <value>O modo de aquisição de dados foi alterado. Ao salvar, a fonte de dados será alternada (serviço local/remoto de coleta).</value>
+    <value>O modo de aquisição de dados foi alterado. É necessário reiniciar o aplicativo após salvar (serviço local/remoto de coleta).</value>
+  </data>
+  <data name="Settings_DataModeRestartTitle" xml:space="preserve">
+    <value>Modo de dados alterado</value>
+  </data>
+  <data name="Settings_DataModeRestartPrompt" xml:space="preserve">
+    <value>Modo de dados salvo. Entra em vigor após reiniciar. Reiniciar agora? Se escolher Não, reinicie manualmente depois.</value>
   </data>
   <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
     <value>O modo de execução foi alterado. Ao salvar, o modo será alterado (completo/somente visualização).</value>
@@ -4537,7 +4543,7 @@
     <value>{0} queda(s) súbita(s), a pior {1} -{2:P0} ({3} → {4} pçs)</value>
   </data>
   <data name="Web_Hq_Analyzing" xml:space="preserve">
-    <value>Analisando dados de produção</value>
+    <value>Analisando dados…</value>
   </data>
   <data name="Web_Hq_Truncated" xml:space="preserve">
     <value>Mais de 100 mil linhas; KPI/gráfico com base na parte obtida (reduza o período)</value>
@@ -4558,7 +4564,7 @@
     <value>Selecione primeiro um dispositivo (esta aba consulta um por vez)</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>Offline</value>
+    <value>Desconhecido</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>Tempo de execução</value>
@@ -6597,7 +6603,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value># Total OK: {0}, Total NG: {1}, Rendimento: {2}</value>
   </data>
   <data name="Web_Csv_SumStatus" xml:space="preserve">
-    <value># Execução: {0}h, Alarme: {1}h, Ocioso: {2}h</value>
+    <value># Execução: {0}h, Alarme: {1}h, Ocioso: {2}h, Offline: {3}h</value>
   </data>
   <data name="Web_Csv_SumDevice" xml:space="preserve">
     <value># Dispositivo: {0}</value>
@@ -6650,6 +6656,27 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}</value>
   </data>
+  <data name="Validator_RoleDefect" xml:space="preserve">
+    <value>Defeito "{0}"</value>
+  </data>
+  <data name="Validator_RoleCounterAlarm" xml:space="preserve">
+    <value>Alarme de contagem "{0}"</value>
+  </data>
+  <data name="Validator_RoleSourceTrigger" xml:space="preserve">
+    <value>Gatilho da fonte "{0}"</value>
+  </data>
+  <data name="Validator_RoleSourceValue" xml:space="preserve">
+    <value>Valor da fonte "{0}"</value>
+  </data>
+  <data name="Validator_PrimaryStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Validator_PrimaryReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Validator_PrimaryRecipe" xml:space="preserve">
+    <value>Receita</value>
+  </data>
   <data name="K928" xml:space="preserve">
     <value>Zerar tudo</value>
   </data>
@@ -6691,5 +6718,71 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>Cancelar</value>
+  </data>
+  <data name="Wo_AddTitle" xml:space="preserve">
+    <value>Nova ordem de produção</value>
+  </data>
+  <data name="Audit_Detail_Role" xml:space="preserve">
+    <value>Função={0}</value>
+  </data>
+  <data name="Audit_Detail_RoleMustChangePwd" xml:space="preserve">
+    <value>Função={0}, alteração de senha no primeiro login</value>
+  </data>
+  <data name="Audit_Detail_AutoLogin" xml:space="preserve">
+    <value>Login automático na inicialização</value>
+  </data>
+  <data name="Audit_Detail_AutoLoginFallback" xml:space="preserve">
+    <value>Login automático na inicialização (conta de administrador ausente, revertido para Operator)</value>
+  </data>
+  <data name="Audit_Detail_ReviewReport" xml:space="preserve">
+    <value>Relatório de revisão de produção</value>
+  </data>
+  <data name="Audit_Detail_ReviewPdf" xml:space="preserve">
+    <value>PDF de revisão de produção</value>
+  </data>
+  <data name="Audit_Detail_AuditArchive" xml:space="preserve">
+    <value>Arquivo de auditoria: {0} registros</value>
+  </data>
+  <data name="Audit_Detail_WoAdd" xml:space="preserve">
+    <value>Produto={0} Meta={1}</value>
+  </data>
+  <data name="Audit_Detail_PageExport" xml:space="preserve">
+    <value>Exportação da página atual Tab={0} Page={1}</value>
+  </data>
+  <data name="Hq_SnNotSupported" xml:space="preserve">
+    <value>A rastreabilidade de SN não está disponível no modo atual</value>
+  </data>
+  <data name="Hq_SnNotSupportedHint" xml:space="preserve">
+    <value>O registro de eventos de SN está desativado, ou a conexão remota atual não tem canal de consulta de SN</value>
+  </data>
+  <data name="Web_App_Title" xml:space="preserve">
+    <value>Painel de Produção</value>
+  </data>
+  <data name="Web_Hq_StatusOffline" xml:space="preserve">
+    <value>Tempo offline</value>
+  </data>
+  <data name="Web_Au_OperatorHint" xml:space="preserve">
+    <value>ex.: Remote / admin</value>
+  </data>
+  <data name="Web_Au_ActionHint" xml:space="preserve">
+    <value>ex.: Device.Update</value>
+  </data>
+  <data name="Web_St_RackSlot" xml:space="preserve">
+    <value>Rack / Slot</value>
+  </data>
+  <data name="Web_St_UnitId" xml:space="preserve">
+    <value>UnitId</value>
+  </data>
+  <data name="Web_St_BatchInt32" xml:space="preserve">
+    <value>Limite de BatchInt32</value>
+  </data>
+  <data name="Web_Val_Yes" xml:space="preserve">
+    <value>Sim</value>
+  </data>
+  <data name="Web_Val_No" xml:space="preserve">
+    <value>Não</value>
+  </data>
+  <data name="Msg_PageExported" xml:space="preserve">
+    <value>Página atual exportada → {0}</value>
   </data>
 </root>

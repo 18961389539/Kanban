@@ -1,4 +1,4 @@
-﻿Resource,Key,zh-CN,en-US,ja-JP,pt-BR
+Resource,Key,zh-CN,en-US,ja-JP,pt-BR
 Wpf,Nav_Home,主页,Home,ホーム,Início
 Wpf,Nav_ProductionLine,产线总览,Production Line,生産ライン,Visão geral da linha
 Wpf,Nav_AlarmCenter,报警中心,Alarm Center,アラームセンター,Central de alarmes
@@ -36,7 +36,9 @@ Wpf,Common_Show,显示,Show,表示,Mostrar
 Wpf,Common_Hide,隐藏,Hide,非表示,Ocultar
 Wpf,Settings_DangerConfirmTitle,危险操作确认,Dangerous Operation Confirmation,危険操作の確認,Confirmação de operação perigosa
 Wpf,Settings_Warn_PlcChanged,PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。,PLC connection parameters changed. Saving will disconnect the current PLC and reconnect with the new parameters.,PLC接続パラメータが変更されました。保存すると現在のPLC接続を切断し、新しいパラメータで再接続します。,"Os parâmetros de conexão do PLC foram alterados. Ao salvar, a conexão atual será encerrada e restabelecida com os novos parâmetros."
-Wpf,Settings_Warn_DataModeChanged,数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。,Data acquisition mode changed. Saving will switch the data source (local / remote collector service).,データ収集モードが変更されました。保存するとデータソース（ローカル / リモート収集サービス）が切り替わります。,"O modo de aquisição de dados foi alterado. Ao salvar, a fonte de dados será alternada (serviço local/remoto de coleta)."
+Wpf,Settings_Warn_DataModeChanged,数据采集模式已变更，保存后需重启应用才能生效（本地 / 远端采集服务）。,Data acquisition mode changed. A restart is required after saving for it to take effect (local / remote collector service).,データ収集モードが変更されました。保存後、アプリの再起動が必要です（ローカル / リモート収集サービス）,"O modo de aquisição de dados foi alterado. É necessário reiniciar o aplicativo após salvar (serviço local/remoto de coleta)."
+Wpf,Settings_DataModeRestartTitle,数据模式已更改,Data Mode Changed,データモードが変更されました,Modo de dados alterado
+Wpf,Settings_DataModeRestartPrompt,数据模式已保存，需重启应用后生效。是否立即重启？选择「否」请稍后手动重启。,"Data mode saved. It takes effect after a restart. Restart now? If you choose No, restart manually later.",データモードを保存しました。再起動後に有効になります。今すぐ再起動しますか？「いいえ」の場合は後で手動で再起動してください。,"Modo de dados salvo. Entra em vigor após reiniciar. Reiniciar agora? Se escolher Não, reinicie manualmente depois."
 Wpf,Settings_Warn_RunModeChanged,运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。,Run mode changed. Saving will change the run mode (full / viewer only).,実行モードが変更されました。保存すると実行モード（フル / 表示のみ）が変更されます。,"O modo de execução foi alterado. Ao salvar, o modo será alterado (completo/somente visualização)."
 Wpf,Settings_ConfirmSave,是否继续保存？,Continue saving?,保存を続行しますか？,Continuar salvando?
 Wpf,Settings_DailyReportMaster,日报主节点,Daily report master node,日報マスターノード,Nó mestre do relatório diário
@@ -1639,14 +1641,14 @@ Wpf,Web_Hq_InsightPeakHigh,峰值 {0} 件（{1}），高于均值 {2:P0},"Peak {
 Wpf,Web_Hq_InsightPeakLow,峰值 {0} 件（{1}），低于均值 {2:P0},"Peak {0} ({1}), {2:P0} below avg",ピーク {0} 個（{1}）、平均より {2:P0} 低い,"Pico {0} ({1}), {2:P0} abaixo da média"
 Wpf,Web_Hq_InsightSteady,平均 {0} 件/桶，峰值 {1} 件（{2}），产量平稳,"Avg {0}/bucket, peak {1} ({2}), steady output",平均 {0} 個/バケット、ピーク {1} 個（{2}）、安定,"Média {0}/balde, pico {1} ({2}), produção estável"
 Wpf,Web_Hq_InsightDrop,检测到 {0} 次突降，最严重 {1} 下降 {2:P0}（{3} → {4} 件）,"{0} sudden drop(s), worst {1} -{2:P0} ({3} → {4} pcs)",急落 {0} 回、最悪 {1} -{2:P0}（{3} → {4} 個）,"{0} queda(s) súbita(s), a pior {1} -{2:P0} ({3} → {4} pçs)"
-Wpf,Web_Hq_Analyzing,正在分析产量数据,Analyzing production data,生産データを分析中,Analisando dados de produção
+Wpf,Web_Hq_Analyzing,正在分析数据…,Analyzing data…,データを分析中…,Analisando dados…
 Wpf,Web_Hq_Truncated,数据量超过 10 万条上限，KPI/图表基于已取部分数据（建议缩小时间范围）,Over 100k rows; KPI/chart based on fetched subset (narrow the time range),10万件超のため、KPI・グラフは取得済みデータに基づきます（時間範囲を絞ってください）,Mais de 100 mil linhas; KPI/gráfico com base na parte obtida (reduza o período)
 Wpf,Web_Tab_Production,产量,Production,生産,Produção
 Wpf,Web_Tab_Status,状态,Status,状態,Estado
 Wpf,Web_Tab_Alarm,报警,Alarm,警報,Alarme
 Wpf,Web_Tab_Oee,OEE,OEE,OEE,OEE
 Wpf,Web_Hq_NeedDevice,请先选择设备（该 Tab 按单设备查询）,Select a device first (this tab queries one device),先にデバイスを選択してください（このタブは単一デバイス照会）,Selecione primeiro um dispositivo (esta aba consulta um por vez)
-Wpf,Web_Hq_StateUnknown,离线,Offline,オフライン,Offline
+Wpf,Web_Hq_StateUnknown,未知,Unknown,不明,Desconhecido
 Wpf,Web_Hq_StatusRun,运行时长,Run Time,稼働時間,Tempo de execução
 Wpf,Web_Hq_StatusAlarm,报警时长,Alarm Time,アラーム時間,Tempo de alarmes
 Wpf,Web_Hq_StatusPause,待机时长,Paused Time,待機時間,Tempo em espera
@@ -1809,7 +1811,7 @@ Wpf,Ln_AvailabilityHint,只扣报警时间，不含待机和离线,Counts alarm 
 Wpf,Ln_ActualCapacity,实际产能,Actual output,実績能力,Produção real
 Wpf,Ln_ApplyTargetCycleAll,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
 Wpf,Ln_ApplyTargetCycleTitle,确认修改目标产能,Confirm target output change,目標能力の変更確認,Confirmar alteração da capacidade alvo
-Wpf,Ln_ApplyTargetCycleConfirm,将把 {0} 台设备的目标产能全部改为 {1:N0} 件/小时，并覆盖各机现有设置。该值用于 OEE 性能率，确认后才会保存。,"This will set the target output of {0} devices to {1:N0} pcs/hour and overwrite each machine's current setting. This value feeds OEE performance and is saved only after you confirm.",{0} 台の設備の目標能力をすべて {1:N0} 個/時間に変更し、各機の既存設定を上書きします。この値は OEE 性能率に使われ、確認後に保存されます。,"Isso definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora e substituirá a configuração atual. Esse valor entra no cálculo de performance OEE e só será salvo após a confirmação."
+Wpf,Ln_ApplyTargetCycleConfirm,将把 {0} 台设备的目标产能全部改为 {1:N0} 件/小时，并覆盖各机现有设置。该值用于 OEE 性能率，确认后才会保存。,This will set the target output of {0} devices to {1:N0} pcs/hour and overwrite each machine's current setting. This value feeds OEE performance and is saved only after you confirm.,{0} 台の設備の目標能力をすべて {1:N0} 個/時間に変更し、各機の既存設定を上書きします。この値は OEE 性能率に使われ、確認後に保存されます。,Isso definirá a capacidade alvo de {0} dispositivos para {1:N0} pçs/hora e substituirá a configuração atual. Esse valor entra no cálculo de performance OEE e só será salvo após a confirmação.
 Wpf,Ln_ApplyTargetCycleDone,已将 {0} 台设备的目标产能设为 {1:N0} 件/小时,Target output for {0} devices is now {1:N0} pcs/hour,{0} 台の設備の目標能力を {1:N0} 個/時間に設定しました,A capacidade alvo de {0} dispositivos foi definida para {1:N0} pçs/hora
 Wpf,Ln_ApplyTargetCycleFailed,保存目标产能失败：{0},Failed to save target output: {0},目標能力の保存に失敗しました：{0},Falha ao salvar a capacidade alvo: {0}
 Wpf,Hp_DefectSubtitle,当前设备 · 本班次新增,Current device · shift increment,現在の設備 · 当シフト増分,Dispositivo atual · incremento do turno
@@ -2426,7 +2428,7 @@ Wpf,Web_Csv_TargetCycle,目标产能(件/小时),Target Output (pcs/h),目標能
 Wpf,Web_Csv_SumAlarm,# 触发：{0} 次，恢复：{1} 次，待恢复：{2} 条,"# Triggered: {0}, Recovered: {1}, Pending: {2}",# 発報：{0} 回、復旧：{1} 回、未復旧：{2} 件,"# Disparados: {0}, Recuperados: {1}, Pendentes: {2}"
 Wpf,Web_Csv_SumRange,# 查询区间：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Range: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# 照会範囲：{0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss},# Intervalo: {0:yyyy-MM-dd HH:mm:ss} ~ {1:yyyy-MM-dd HH:mm:ss}
 Wpf,Web_Csv_SumProd,# 总 OK：{0} 件，总 NG：{1} 件，良品率：{2},"# Total OK: {0}, Total NG: {1}, Yield: {2}",# OK合計：{0} 個、NG合計：{1} 個、良品率：{2},"# Total OK: {0}, Total NG: {1}, Rendimento: {2}"
-Wpf,Web_Csv_SumStatus,# 运行时长：{0}h，报警时长：{1}h，待机时长：{2}h,"# Run: {0}h, Alarm: {1}h, Idle: {2}h",# 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h,"# Execução: {0}h, Alarme: {1}h, Ocioso: {2}h"
+Wpf,Web_Csv_SumStatus,# 运行时长：{0}h，报警时长：{1}h，待机时长：{2}h，离线时长：{3}h,"# Run: {0}h, Alarm: {1}h, Idle: {2}h, Offline: {3}h",# 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h、オフライン時間：{3}h,"# Execução: {0}h, Alarme: {1}h, Ocioso: {2}h, Offline: {3}h"
 Wpf,Web_Csv_SumDevice,# 设备：{0},# Device: {0},# 設備：{0},# Dispositivo: {0}
 Wpf,Web_Csv_FileAlarm,报警_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarms_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,alarmes_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
 Wpf,Web_Csv_FileProd,产量_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,production_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,producao_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
@@ -2443,7 +2445,14 @@ Wpf,Hh_OffShift,当前不在班次时段,Currently off shift,シフト外の時�
 Wpf,Hh_OffShiftHint,小时计划按当前班次逐小时对照额定产能与 OK 产量。请在设置中配置班次。,Hour plan compares rated output vs OK for each hour of the current shift. Configure shifts in Settings.,シフト内の各時間で定格能力とOKを対照します。設定でシフトを構成してください。,O plano horário compara a capacidade nominal com o OK de cada hora do turno. Configure os turnos em Configurações.
 Wpf,Hh_BoardHint,班次墙钟应产（含停机）只计 OK；与下方运行应产不同（仅 Running 时间且含 NG）。,Shift-clock due includes stops and counts OK only. Run-window due below uses Running time and OK+NG.,シフト壁時計の予定は停止を含みOKのみ。下の運転応産はRunning時間かつOK+NG。,Previsto do turno inclui paradas e conta só OK. O previsto da run abaixo usa tempo Running e OK+NG.
 Wpf,Dd_OeeOutputHint,运行应产 = 额定产能 × 运行小时（OK+NG）。不含报警/待机/离线。,Run-window due = rated pcs/h × running hours (OK+NG). Excludes alarm/standby/offline.,運転応産 = 定格能力 × 運転時間（OK+NG）。アラーム/待機/オフラインは含みません。,Previsto da run = capacidade × horas em execução (OK+NG). Exclui alarme/espera/offline.
-Wpf,Validator_AddressReuseInDevice,设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2},Device "{0}": PLC address "{1}" is used by multiple items: {2},デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2},Dispositivo "{0}": o endereco PLC "{1}" e usado por varios itens: {2}
+Wpf,Validator_AddressReuseInDevice,设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2},"Device ""{0}"": PLC address ""{1}"" is used by multiple items: {2}",デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2},"Dispositivo ""{0}"": o endereco PLC ""{1}"" e usado por varios itens: {2}"
+Wpf,Validator_RoleDefect,缺陷「{0}」,"Defect ""{0}""",欠陥「{0}」,"Defeito ""{0}"""
+Wpf,Validator_RoleCounterAlarm,计数报警「{0}」,"Counter alarm ""{0}""",カウンタアラーム「{0}」,"Alarme de contagem ""{0}"""
+Wpf,Validator_RoleSourceTrigger,数据源「{0}」触发,"Data source ""{0}"" trigger",データソース「{0}」トリガー,"Gatilho da fonte ""{0}"""
+Wpf,Validator_RoleSourceValue,数据源值「{0}」,"Data source value ""{0}""",データソース値「{0}」,"Valor da fonte ""{0}"""
+Wpf,Validator_PrimaryStatus,状态,Status,状態,Status
+Wpf,Validator_PrimaryReset,复位,Reset,リセット,Reset
+Wpf,Validator_PrimaryRecipe,配方,Recipe,レシピ,Receita
 Wpf,K928,全部清零,Reset All,一括クリア,Zerar tudo
 Wpf,K929,全部设备 OEE 清零,Reset OEE for All Devices,全デバイスの OEE クリア,Zerar OEE de todos os dispositivos
 Wpf,K930,一键向全部设备写入 OEE 清零指令，并清零软件侧累计；不可撤销，断开连接时不可用。,Writes the OEE reset command to every device and clears software-side totals; irreversible and unavailable when disconnected.,全デバイスへ OEE クリア指令を書込み、ソフト側の累計もクリアします。取消不可、切断時は利用不可。,Envia o comando de zeramento de OEE a todos os dispositivos e zera os acumulados do software; irreversível e indisponível quando desconectado.
@@ -2458,3 +2467,25 @@ Wpf,Web_Pl_ResetAllConfirm,确定清零全部 {0} 台设备的 OEE 吗？此操�
 Wpf,Web_Pl_ResetAllOk,已触发全部设备 OEE 清零（{0}/{1} 台）,OEE reset triggered for all devices ({0}/{1}),全デバイスの OEE クリアを実行しました（{0}/{1} 台）,Zeramento de OEE acionado para todos os dispositivos ({0}/{1})
 Wpf,Web_Pl_ResetAllFail,全部设备 OEE 清零失败：{0},Reset OEE for all devices failed: {0},全デバイス OEE クリア失敗：{0},Falha ao zerar o OEE de todos os dispositivos: {0}
 Wpf,Web_Pl_Cancel,取消,Cancel,キャンセル,Cancelar
+Wpf,Wo_AddTitle,新增工单,New Work Order,新規作業指示,Nova ordem de produção
+Wpf,Audit_Detail_Role,角色={0},Role={0},ロール={0},Função={0}
+Wpf,Audit_Detail_RoleMustChangePwd,角色={0}，首登改密,"Role={0}, first-login password change required",ロール={0}、初回ログインでパスワード変更,"Função={0}, alteração de senha no primeiro login"
+Wpf,Audit_Detail_AutoLogin,启动自动登录,Auto login at startup,起動時自動ログイン,Login automático na inicialização
+Wpf,Audit_Detail_AutoLoginFallback,启动自动登录（管理员账号缺失，回退 Operator）,"Auto login at startup (admin account missing, fell back to Operator)",起動時自動ログイン（管理者アカウント不在のため Operator にフォールバック）,"Login automático na inicialização (conta de administrador ausente, revertido para Operator)"
+Wpf,Audit_Detail_ReviewReport,生产复盘报表,Production review report,生産振り返りレポート,Relatório de revisão de produção
+Wpf,Audit_Detail_ReviewPdf,生产复盘 PDF,Production review PDF,生産振り返り PDF,PDF de revisão de produção
+Wpf,Audit_Detail_AuditArchive,审计归档 {0} 条,Audit archive: {0} entries,監査アーカイブ {0} 件,Arquivo de auditoria: {0} registros
+Wpf,Audit_Detail_WoAdd,产品={0} 目标={1},Product={0} Target={1},製品={0} 目標={1},Produto={0} Meta={1}
+Wpf,Audit_Detail_PageExport,当前页导出 Tab={0} Page={1},Current page export Tab={0} Page={1},現在のページをエクスポート Tab={0} Page={1},Exportação da página atual Tab={0} Page={1}
+Wpf,Hq_SnNotSupported,当前运行模式不支持 SN 追溯,SN traceability is not available in the current mode,現在のモードでは SN トレーサビリティは利用できません,A rastreabilidade de SN não está disponível no modo atual
+Wpf,Hq_SnNotSupportedHint,SN 事件记录未启用，或当前远程连接无 SN 查询通道,"SN event recording is disabled, or the current remote connection has no SN query channel",SN イベント記録が無効、または現在のリモート接続に SN クエリチャネルがありません,"O registro de eventos de SN está desativado, ou a conexão remota atual não tem canal de consulta de SN"
+Wpf,Web_App_Title,生产看板,Production Dashboard,生産ダッシュボード,Painel de Produção
+Wpf,Web_Hq_StatusOffline,离线时长,Offline Time,オフライン時間,Tempo offline
+Wpf,Web_Au_OperatorHint,如 Remote / admin,e.g. Remote / admin,例: Remote / admin,ex.: Remote / admin
+Wpf,Web_Au_ActionHint,如 Device.Update,e.g. Device.Update,例: Device.Update,ex.: Device.Update
+Wpf,Web_St_RackSlot,机架 / 槽位,Rack / Slot,ラック / スロット,Rack / Slot
+Wpf,Web_St_UnitId,站号（UnitId）,UnitId,ユニット ID,UnitId
+Wpf,Web_St_BatchInt32,BatchInt32 上限,BatchInt32 Limit,BatchInt32 上限,Limite de BatchInt32
+Wpf,Web_Val_Yes,是,Yes,はい,Sim
+Wpf,Web_Val_No,否,No,いいえ,Não
+Wpf,Msg_PageExported,已导出当前页数据 → {0},Current page exported → {0},現在のページをエクスポートしました → {0},Página atual exportada → {0}

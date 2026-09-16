@@ -28,10 +28,12 @@ public static class OeeAnalysis
         List<StatusTransitionRecordDto> transitions,
         int initialInitialState,
         DateTime fromDate,
-        DateTime toDate)
+        DateTime toDate,
+        DateTime? now = null)
     {
         List<ShiftOee> result = [];
-        var now = DateTime.Now;
+        // 截断用"当前时刻"：浏览器时区与工厂不同时调用方须传 Dashboard.ServerNow
+        var nowValue = now ?? DateTime.Now;
 
         var sortedTrans = transitions.OrderBy(t => t.EventTime).ToList();
 
@@ -44,7 +46,7 @@ public static class OeeAnalysis
             // 无班次配置回退：班次范围 = 实例首条 ~ 末条（截到当前时刻）
             var shiftFrom = firstLog.Timestamp;
             var shiftTo = lastLog.Timestamp;
-            if (shiftTo > now) shiftTo = now;
+            if (shiftTo > nowValue) shiftTo = nowValue;
             if (shiftFrom > toDate) continue;
 
             // 回退路径下 shiftFrom == 实例首条时间 → 差分基准即首条累计值（班次内累计自班次起始重置）
@@ -62,7 +64,7 @@ public static class OeeAnalysis
                 initState = (int)prevBefore.CurrentState;
             else if (shiftFrom <= fromDate) initState = initialInitialState;
 
-            var durations = StatusAnalysis.CalculateStateDurations(subTrans, shiftFrom, shiftTo, initState);
+            var durations = StatusAnalysis.CalculateStateDurations(subTrans, shiftFrom, shiftTo, initState, now);
 
             double quality = OeeCalculator.CalculateQualityRate(ok, ng);
             double perf = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);

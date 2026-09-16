@@ -139,6 +139,16 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void Apply_Forces24HourTimePatterns_EvenForEnglishCulture()
+    {
+        Localization.Apply(AppLanguage.En);
+        Assert.Equal("HH:mm", CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern);
+        Assert.Equal("HH:mm:ss", CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern);
+        Assert.Equal("20:05", new DateTime(2026, 9, 16, 20, 5, 0).ToString("t"));
+        Localization.Apply(AppLanguage.Zh);
+    }
+
+    [Fact]
     public void Strings_ResolvesPerCulture()
     {
         Localization.Apply(AppLanguage.Zh);

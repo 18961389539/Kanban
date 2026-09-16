@@ -33,7 +33,7 @@ public class StateToBrushConverterTests
     [InlineData((int)DeviceStatus.Running, "StatusRunBrush")]
     [InlineData((int)DeviceStatus.Alarm, "StatusAlarmBrush")]
     [InlineData((int)DeviceStatus.Paused, "StatusPauseBrush")]
-    [InlineData((int)DeviceStatus.Offline, "SecondaryBorderBrush")]
+    [InlineData((int)DeviceStatus.Offline, "StatusIdleBrush")]
     public void KnownState_ReturnsExpectedBrush(int state, string expectedKey)
     {
         var brush = (Brush)_conv.Convert(state, typeof(Brush), null!, CultureInfo.InvariantCulture);
@@ -41,10 +41,10 @@ public class StateToBrushConverterTests
     }
 
     [Fact]
-    public void UnknownStateValue_ReturnsSecondaryBorderBrush()
+    public void UnknownStateValue_ReturnsStatusIdleBrush()
     {
         var brush = (Brush)_conv.Convert(99, typeof(Brush), null!, CultureInfo.InvariantCulture);
-        Assert.Same(ResolveBrush("SecondaryBorderBrush"), brush);
+        Assert.Same(ResolveBrush("StatusIdleBrush"), brush);
     }
 
     [Fact]

@@ -245,7 +245,7 @@
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                                                         <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                                   Text="{Binding EventTime, StringFormat={}{0:HH:mm:ss}}" />
+                                                                   Text="{Binding EventTime, StringFormat={}{0:MM-dd HH:mm:ss}}" />
                                                         <TextBlock Margin="10,0,0,0" FontSize="{DynamicResource FontSizeKpiLabel}"
                                                                    Foreground="{StaticResource ThirdlyTextBrush}"
                                                                    Text="{Binding DeviceName}" />

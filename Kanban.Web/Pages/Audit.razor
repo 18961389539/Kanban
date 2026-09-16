@@ -1,4 +1,4 @@
-@page "/audit"
+﻿@page "/audit"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using Kanban.Contracts.Dtos
@@ -13,13 +13,22 @@
     </div>
 
     <div class="filter-bar">
+        @* 时间范围（与 WPF 审计页一致：默认近 7 天；此前无时间过滤，全量翻页慢且定位难） *@
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_From")</span>
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@FromText" @onchange="OnFromChanged" />
+        </label>
+        <label class="filter-item">
+            <span class="filter-label">@L.T("Hq_To")</span>
+            <input class="filter-input" type="datetime-local" lang="en-GB" value="@ToText" @onchange="OnToChanged" />
+        </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Au_Operator")</span>
-            <input class="filter-input" type="text" value="@OperatorFilter" @oninput="OnOperatorInput" placeholder="Remote / admin…" />
+            <input class="filter-input" type="text" value="@OperatorFilter" @oninput="OnOperatorInput" placeholder="@L.T("Au_OperatorHint")" />
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Au_Action")</span>
-            <input class="filter-input" type="text" value="@ActionFilter" @oninput="OnActionInput" placeholder="Device.Update…" />
+            <input class="filter-input" type="text" value="@ActionFilter" @oninput="OnActionInput" placeholder="@L.T("Au_ActionHint")" />
         </label>
         <label class="filter-item">
             <span class="filter-label">@L.T("Au_Result")</span>
@@ -50,7 +59,8 @@
     {
         <section class="card">
             <div class="card-title">@L.T("Au_List") <span class="badge-soft">@PageSummaryText</span></div>
-            <table class="hq-table">
+            <div class="table-scroll">
+                <table class="hq-table">
                 <thead>
                     <tr>
                         <th>@L.T("Hq_EventTime")</th>
@@ -86,6 +96,7 @@
                     }
                 </tbody>
             </table>
+            </div>
             <div class="pager">
                 <button class="btn" disabled="@(Page <= 1 || IsLoading)" @onclick="PrevPageAsync">@L.T("Hq_PrevPage")</button>
                 <span class="pager-info">@PageSummaryText</span>
@@ -97,10 +108,13 @@
 
 @code {
     private const int PageSize = 50;
+    private const string TimeFormat = "yyyy-MM-ddTHH:mm";
 
     private string OperatorFilter { get; set; } = "";
     private string ActionFilter { get; set; } = "";
     private string SucceededFilter { get; set; } = "";
+    private string FromText { get; set; } = "";
+    private string ToText { get; set; } = "";
 
     private List<AuditLogEntryDto> Rows { get; set; } = [];
     private int Page { get; set; } = 1;
@@ -116,10 +130,16 @@
     private void OnActionInput(ChangeEventArgs e) => ActionFilter = e.Value?.ToString() ?? "";
 
     private void OnSucceededChanged(ChangeEventArgs e) => SucceededFilter = e.Value?.ToString() ?? "";
+    private void OnFromChanged(ChangeEventArgs e) => FromText = e.Value?.ToString() ?? "";
+    private void OnToChanged(ChangeEventArgs e) => ToText = e.Value?.ToString() ?? "";
 
     protected override async Task OnInitializedAsync()
     {
         await Dashboard.InitializeAsync();
+        // 默认近 7 天（与 WPF 审计页一致）；以工厂墙钟为准
+        var now = Dashboard.ServerNow;
+        FromText = now.Date.AddDays(-7).ToString(TimeFormat);
+        ToText = now.ToString(TimeFormat);
         await SearchAsync();
     }
 
@@ -133,10 +153,21 @@
     {
         IsLoading = true;
         Error = null;
+        // 时间范围解析失败/倒置：按校验提示处理，不发查询（与历史查询页同口径）
+        if (!DateTime.TryParseExact(FromText, TimeFormat, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var from)
+            || !DateTime.TryParseExact(ToText, TimeFormat, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var to)
+            || from > to)
+        {
+            Error = L.T("Hq_ValidationRange");
+            IsLoading = false;
+            return;
+        }
         try
         {
             var resp = await Dashboard.QueryAuditLogsAsync(new AuditLogQueryRequest
             {
+                From = from,
+                To = to,
                 Operator = string.IsNullOrWhiteSpace(OperatorFilter) ? null : OperatorFilter.Trim(),
                 Action = string.IsNullOrWhiteSpace(ActionFilter) ? null : ActionFilter.Trim(),
                 Succeeded = SucceededFilter switch

@@ -301,7 +301,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
 
     /// <summary>选中工单产量查询节流 + 取消（Remote 模式 GetProductionSummary 是 SignalR 往返，不能同步查）。</summary>
     private int? _lastProductionOrderId;
-    private DateTime _lastProductionQueryUtc = DateTime.MinValue;
+    private DateTime _lastProductionQueryAt = DateTime.MinValue;
     private CancellationTokenSource? _productionCts;
     private static readonly TimeSpan ProductionThrottle = TimeSpan.FromSeconds(2);
 
@@ -434,6 +434,14 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     /// 一律全量重算（工单量百级，Count 开销可忽略），修复口径漂移（2026-08-16）。</summary>
     private void OnWorkOrdersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
+        // 集合变更可能来自非 UI 线程（后台加载/远程推送路径）：绑定计数与 ListCollectionView.Refresh
+        // 必须封送 UI 线程（设计审查修复 2026-09-16）。BeginInvoke 按投递顺序执行，
+        // 依赖事件参数的增量计数（AdjustCounts）顺序不乱。
+        Helpers.UiDispatcher.Dispatch(() => OnWorkOrdersCollectionChangedCore(e));
+    }
+
+    private void OnWorkOrdersCollectionChangedCore(System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
         switch (e.Action)
         {
             case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
@@ -529,9 +537,12 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         if (!IsOverdue(w) || w.PlannedEnd == default) return null;
         var overdue = DateTime.Now - w.PlannedEnd;
+        // 分级单位：<1h 显示分钟，<1d 显示小时，否则显示天（避免"逾期 72h"这类难读文本）
         var duration = overdue.TotalHours < 1
             ? Math.Max(1, (int)overdue.TotalMinutes) + "m"
-            : (int)overdue.TotalHours + "h";
+            : overdue.TotalDays < 1
+                ? (int)overdue.TotalHours + "h"
+                : (int)overdue.TotalDays + "d";
         return string.Format(Strings.K799, duration);
     }
 
@@ -874,7 +885,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
 
         // 节流：同一工单 2s 内复用上次结果；无缓存或上次失败时仍重试
         if (_lastProductionOrderId == order.Id
-            && DateTime.UtcNow - _lastProductionQueryUtc < ProductionThrottle
+            && DateTime.Now - _lastProductionQueryAt < ProductionThrottle
             && SelectedProduction != null
             && !IsProductionLoadFailed)
         {
@@ -893,7 +904,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         var cts = _productionCts = new CancellationTokenSource();
         var token = cts.Token;
         _lastProductionOrderId = order.Id;
-        _lastProductionQueryUtc = DateTime.UtcNow;
+        _lastProductionQueryAt = DateTime.Now;
         IsProductionLoading = true;
         IsProductionLoadFailed = false;
 
@@ -982,7 +993,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             IsProductionLoading = false;
             IsProductionLoadFailed = false;
             _lastProductionOrderId = SelectedWorkOrder.Id;
-            _lastProductionQueryUtc = DateTime.UtcNow;
+            _lastProductionQueryAt = DateTime.Now;
         }
         _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
     }
@@ -1019,7 +1030,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         if (saved != null)
         {
             SelectedWorkOrder = saved;
-            AuditLog.Record("WorkOrder.Add", "WorkOrder", saved.OrderNo, detail: $"产品={saved.ProductCode} 目标={saved.TargetQuantity}");
+            AuditLog.Record("WorkOrder.Add", "WorkOrder", saved.OrderNo, detail: string.Format(Strings.Audit_Detail_WoAdd, saved.ProductCode, saved.TargetQuantity));
         }
     }
 

@@ -49,7 +49,7 @@ public sealed class UserRoleToTextConverter : IValueConverter
 public sealed class UserIsLockedToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is User { LockedUntil: { } until } && until > DateTime.UtcNow
+        => value is User { LockedUntil: { } until } && until > DateTime.Now
             ? System.Windows.Visibility.Visible
             : System.Windows.Visibility.Collapsed;
 
@@ -63,7 +63,7 @@ public sealed class UserStatusToTextConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not User user) return string.Empty;
-        if (user.LockedUntil is { } until && until > DateTime.UtcNow) return Strings.M376;
+        if (user.LockedUntil is { } until && until > DateTime.Now) return Strings.M376;
         return user.IsActive ? Strings.M331 : Strings.M378;
     }
 
@@ -77,7 +77,7 @@ public sealed class UserStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not User user) return AppBrushes.Thirdly;
-        if (user.LockedUntil is { } until && until > DateTime.UtcNow) return AppBrushes.Warning;
+        if (user.LockedUntil is { } until && until > DateTime.Now) return AppBrushes.Warning;
         return user.IsActive ? AppBrushes.Success : AppBrushes.Thirdly;
     }
 
@@ -104,7 +104,7 @@ public sealed class UserRiskToTextConverter : IValueConverter
             parts.Add(Strings.M373);
         }
         if (string.IsNullOrEmpty(user.PasswordHash)) parts.Add(Strings.M374);
-        if (user.LastLoginAt is null && DateTime.UtcNow - user.CreatedAt > NeverLoginThreshold)
+        if (user.LastLoginAt is null && DateTime.Now - user.CreatedAt > NeverLoginThreshold)
             parts.Add(Strings.M375);
         return parts.Count == 0 ? string.Empty : string.Join("、", parts);
     }

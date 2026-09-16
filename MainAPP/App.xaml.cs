@@ -218,7 +218,7 @@ public partial class App : Application
                 if (adminUser is not null)
                 {
                     userSession.Login(adminUser);
-                    Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", adminUser.Username, detail: "启动自动登录");
+                    Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", adminUser.Username, detail: Strings.Audit_Detail_AutoLogin);
                     Log($"默认以管理员自动登录：{adminUser.Username}");
                 }
                 else
@@ -228,7 +228,7 @@ public partial class App : Application
                     if (operatorUser is not null)
                     {
                         userSession.Login(operatorUser);
-                        Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", operatorUser.Username, detail: "启动自动登录（管理员账号缺失，回退 Operator）");
+                        Kanban.Collector.Core.Services.AuditLog.Record("Auth.AutoLogin", "User", operatorUser.Username, detail: Strings.Audit_Detail_AutoLoginFallback);
                         Log($"管理员账号缺失，回退以 Operator 自动登录：{operatorUser.Username}");
                     }
                     else

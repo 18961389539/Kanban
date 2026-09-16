@@ -7,6 +7,7 @@
     xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:AlarmCenterViewModel}"
     d:DesignHeight="900"
@@ -163,9 +164,12 @@
                           ToolTip="{x:Static resources:Strings.K024}" />
                 <Button Content="{x:Static resources:Strings.K004}" Padding="8,3" Margin="0,0,8,0"
                     Command="{Binding ClearDeviceFilterCommand}" ToolTip="{x:Static resources:Strings.K123}" />
-                <TextBox Width="170" Margin="0,0,8,0" VerticalContentAlignment="Center"
-                         Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
-                         ToolTip="{x:Static resources:Strings.K124}" />
+                <!-- 搜索框：占位符常驻可见（原仅 ToolTip，未悬停时看不出这是搜索框） -->
+                <hc:TextBox Width="170" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                            Style="{StaticResource TextBoxExtend}"
+                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
+                            Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
+                            ToolTip="{x:Static resources:Strings.K124}" />
                 <!-- 时间范围切换（RadioButton 互斥，双向绑定 IsXxx 派生属性） -->
                 <RadioButton GroupName="TimeRange"
                     AutomationProperties.Name="{x:Static resources:Strings.K042}"
@@ -365,9 +369,18 @@
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K045}" />
-                                <!-- 活跃计数徽章 -->
-                                <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10"
-                                        Background="{StaticResource DangerBrush}">
+                                <!-- 活跃计数徽章：0 条时中性灰（红色保留给"有待处理"语义，避免恒红误导） -->
+                                <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ActiveCount}" Value="0">
+                                                    <Setter Property="Background" Value="{StaticResource StatusIdleBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <TextBlock FontSize="12" FontWeight="Bold" Foreground="White"
                                                Text="{Binding ActiveCount}" />
                                 </Border>
@@ -461,7 +474,7 @@
                                                         </StackPanel>
                                                         <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                                                             <TextBlock FontSize="13" Foreground="{StaticResource ThirdlyTextBrush}"
-                                                                       Text="{Binding EventTime, StringFormat={}{0:HH:mm:ss}}" />
+                                                                       Text="{Binding EventTime, StringFormat={}{0:MM-dd HH:mm:ss}}" />
                                                             <TextBlock Margin="10,0,0,0" FontSize="13"
                                                                        Foreground="{StaticResource ThirdlyTextBrush}"
                                                                        Text="{Binding DeviceName}" />

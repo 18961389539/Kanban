@@ -473,7 +473,7 @@
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K452}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding RecoveryFileText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K453}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding LastHistoryFlushAt, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}, TargetNullValue={x:Static resources:Strings.K595}}" />
                         <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K454}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding HistoryFlushFailureCount}" />
                         <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K455}" />

@@ -291,10 +291,10 @@ public static class DeviceConfigValidator
 
     private static string DescribeMember(AddressOccupancy o) => o.Role switch
     {
-        AddressRole.Defect => $"缺陷「{o.Name}」",
-        AddressRole.CounterAlarm => $"计数报警「{o.Name}」",
-        AddressRole.SourceTrigger => $"数据源「{o.Name}」触发",
-        AddressRole.SourceValue => $"数据源值「{o.Name}」",
+        AddressRole.Defect => string.Format(Strings.Validator_RoleDefect, o.Name),
+        AddressRole.CounterAlarm => string.Format(Strings.Validator_RoleCounterAlarm, o.Name),
+        AddressRole.SourceTrigger => string.Format(Strings.Validator_RoleSourceTrigger, o.Name),
+        AddressRole.SourceValue => string.Format(Strings.Validator_RoleSourceValue, o.Name),
         _ => o.Name,
     };
 
@@ -305,9 +305,9 @@ public static class DeviceConfigValidator
         [
             (device.OkCountAddress, AddressRole.Primary, "OK", (int)DeviceManagerTab.Parameters),
             (device.NgCountAddress, AddressRole.Primary, "NG", (int)DeviceManagerTab.Parameters),
-            (device.StatusCountAddress, AddressRole.Primary, "状态", (int)DeviceManagerTab.Parameters),
-            (device.ProductionResetAddress, AddressRole.Primary, "复位", (int)DeviceManagerTab.Parameters),
-            (device.RecipeAddress, AddressRole.Primary, "配方", (int)DeviceManagerTab.Parameters),
+            (device.StatusCountAddress, AddressRole.Primary, Strings.Validator_PrimaryStatus, (int)DeviceManagerTab.Parameters),
+            (device.ProductionResetAddress, AddressRole.Primary, Strings.Validator_PrimaryReset, (int)DeviceManagerTab.Parameters),
+            (device.RecipeAddress, AddressRole.Primary, Strings.Validator_PrimaryRecipe, (int)DeviceManagerTab.Parameters),
         ];
         foreach (var (addr, role, name, tab) in primaries)
         {

@@ -130,7 +130,7 @@
                             <div class="line-alarm">
                                 <span class="lvl-dot @LevelClass(a.Level)"></span>
                                 <span>@a.Name</span>
-                                <span class="alarm-dur">@FmtDuration((DateTime.Now - a.StartTime).TotalSeconds)</span>
+                                <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                                 @if (d.ActiveAlarms.Count > 1)
                                 {
                                     <span class="kpi-sub">+@(d.ActiveAlarms.Count - 1)</span>
@@ -148,11 +148,11 @@
                         </div>
 
                         <div class="ring-row">
-                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="#34D399" />
-                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="#378ADD"
-                                  Title="@L.T("Ln_AvailabilityHint")" />
-                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="#BA7517" />
-                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="#639922" />
+                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(d.DeviceId)" />
+                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability"
+                                  Title="@L.T("Ln_AvailabilityHint")" HasData="@HasWorkOrder(d.DeviceId)" />
+                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(d.DeviceId)" />
+                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(d.DeviceId)" />
                         </div>
                         <div class="meta-line">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime) · @L.T("Lbl_SnapSeq") #@d.Seq</div>
                     </div>
@@ -336,7 +336,11 @@
         _ => "lvl-low",
     };
 
-    private static string Pct(double v) => $"{v:P1}";
+    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
+    private static string Pct(double v) => UiPalette.Pct(v);
+
+    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
+    private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;
 
     private static string FmtDuration(double seconds) => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
 

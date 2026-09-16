@@ -124,7 +124,13 @@
     <value>PLC接続パラメータが変更されました。保存すると現在のPLC接続を切断し、新しいパラメータで再接続します。</value>
   </data>
   <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
-    <value>データ収集モードが変更されました。保存するとデータソース（ローカル / リモート収集サービス）が切り替わります。</value>
+    <value>データ収集モードが変更されました。保存後、アプリの再起動が必要です（ローカル / リモート収集サービス）</value>
+  </data>
+  <data name="Settings_DataModeRestartTitle" xml:space="preserve">
+    <value>データモードが変更されました</value>
+  </data>
+  <data name="Settings_DataModeRestartPrompt" xml:space="preserve">
+    <value>データモードを保存しました。再起動後に有効になります。今すぐ再起動しますか？「いいえ」の場合は後で手動で再起動してください。</value>
   </data>
   <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
     <value>実行モードが変更されました。保存すると実行モード（フル / 表示のみ）が変更されます。</value>
@@ -4581,7 +4587,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>急落 {0} 回、最悪 {1} -{2:P0}（{3} → {4} 個）</value>
   </data>
   <data name="Web_Hq_Analyzing" xml:space="preserve">
-    <value>生産データを分析中</value>
+    <value>データを分析中…</value>
   </data>
   <data name="Web_Hq_Truncated" xml:space="preserve">
     <value>10万件超のため、KPI・グラフは取得済みデータに基づきます（時間範囲を絞ってください）</value>
@@ -4602,7 +4608,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>先にデバイスを選択してください（このタブは単一デバイス照会）</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>オフライン</value>
+    <value>不明</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>稼働時間</value>
@@ -6641,7 +6647,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value># OK合計：{0} 個、NG合計：{1} 個、良品率：{2}</value>
   </data>
   <data name="Web_Csv_SumStatus" xml:space="preserve">
-    <value># 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h</value>
+    <value># 稼働時間：{0}h、アラーム時間：{1}h、待機時間：{2}h、オフライン時間：{3}h</value>
   </data>
   <data name="Web_Csv_SumDevice" xml:space="preserve">
     <value># 設備：{0}</value>
@@ -6694,6 +6700,27 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>デバイス「{0}」内の PLC アドレス「{1}」が複数の項目で使用されています：{2}</value>
   </data>
+  <data name="Validator_RoleDefect" xml:space="preserve">
+    <value>欠陥「{0}」</value>
+  </data>
+  <data name="Validator_RoleCounterAlarm" xml:space="preserve">
+    <value>カウンタアラーム「{0}」</value>
+  </data>
+  <data name="Validator_RoleSourceTrigger" xml:space="preserve">
+    <value>データソース「{0}」トリガー</value>
+  </data>
+  <data name="Validator_RoleSourceValue" xml:space="preserve">
+    <value>データソース値「{0}」</value>
+  </data>
+  <data name="Validator_PrimaryStatus" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="Validator_PrimaryReset" xml:space="preserve">
+    <value>リセット</value>
+  </data>
+  <data name="Validator_PrimaryRecipe" xml:space="preserve">
+    <value>レシピ</value>
+  </data>
   <data name="K928" xml:space="preserve">
     <value>一括クリア</value>
   </data>
@@ -6735,5 +6762,71 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>キャンセル</value>
+  </data>
+  <data name="Wo_AddTitle" xml:space="preserve">
+    <value>新規作業指示</value>
+  </data>
+  <data name="Audit_Detail_Role" xml:space="preserve">
+    <value>ロール={0}</value>
+  </data>
+  <data name="Audit_Detail_RoleMustChangePwd" xml:space="preserve">
+    <value>ロール={0}、初回ログインでパスワード変更</value>
+  </data>
+  <data name="Audit_Detail_AutoLogin" xml:space="preserve">
+    <value>起動時自動ログイン</value>
+  </data>
+  <data name="Audit_Detail_AutoLoginFallback" xml:space="preserve">
+    <value>起動時自動ログイン（管理者アカウント不在のため Operator にフォールバック）</value>
+  </data>
+  <data name="Audit_Detail_ReviewReport" xml:space="preserve">
+    <value>生産振り返りレポート</value>
+  </data>
+  <data name="Audit_Detail_ReviewPdf" xml:space="preserve">
+    <value>生産振り返り PDF</value>
+  </data>
+  <data name="Audit_Detail_AuditArchive" xml:space="preserve">
+    <value>監査アーカイブ {0} 件</value>
+  </data>
+  <data name="Audit_Detail_WoAdd" xml:space="preserve">
+    <value>製品={0} 目標={1}</value>
+  </data>
+  <data name="Audit_Detail_PageExport" xml:space="preserve">
+    <value>現在のページをエクスポート Tab={0} Page={1}</value>
+  </data>
+  <data name="Hq_SnNotSupported" xml:space="preserve">
+    <value>現在のモードでは SN トレーサビリティは利用できません</value>
+  </data>
+  <data name="Hq_SnNotSupportedHint" xml:space="preserve">
+    <value>SN イベント記録が無効、または現在のリモート接続に SN クエリチャネルがありません</value>
+  </data>
+  <data name="Web_App_Title" xml:space="preserve">
+    <value>生産ダッシュボード</value>
+  </data>
+  <data name="Web_Hq_StatusOffline" xml:space="preserve">
+    <value>オフライン時間</value>
+  </data>
+  <data name="Web_Au_OperatorHint" xml:space="preserve">
+    <value>例: Remote / admin</value>
+  </data>
+  <data name="Web_Au_ActionHint" xml:space="preserve">
+    <value>例: Device.Update</value>
+  </data>
+  <data name="Web_St_RackSlot" xml:space="preserve">
+    <value>ラック / スロット</value>
+  </data>
+  <data name="Web_St_UnitId" xml:space="preserve">
+    <value>ユニット ID</value>
+  </data>
+  <data name="Web_St_BatchInt32" xml:space="preserve">
+    <value>BatchInt32 上限</value>
+  </data>
+  <data name="Web_Val_Yes" xml:space="preserve">
+    <value>はい</value>
+  </data>
+  <data name="Web_Val_No" xml:space="preserve">
+    <value>いいえ</value>
+  </data>
+  <data name="Msg_PageExported" xml:space="preserve">
+    <value>現在のページをエクスポートしました → {0}</value>
   </data>
 </root>

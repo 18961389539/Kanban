@@ -1,4 +1,4 @@
-@page "/settings"
+﻿@page "/settings"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using Kanban.Contracts.Dtos
@@ -22,6 +22,7 @@
     }
     else if (SettingsData is { } s)
     {
+        var shifts = s.Shifts ?? [];
         <div class="chart-grid two">
             <section class="card">
                 <div class="card-title">@L.T("St_Acquisition")</div>
@@ -47,19 +48,19 @@
                     <div class="card-title sub" style="margin-top:12px">Siemens</div>
                     <div class="diag-grid">
                         <div class="diag-item"><span class="kpi-label">@L.T("St_SiemensModel")</span><span class="kpi-value">@siemens.Model</span></div>
-                        <div class="diag-item"><span class="kpi-label">Rack / Slot</span><span class="kpi-value">@siemens.Rack / @siemens.Slot</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_RackSlot")</span><span class="kpi-value">@siemens.Rack / @siemens.Slot</span></div>
                         <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@siemens.DataFormat</span></div>
-                        <div class="diag-item"><span class="kpi-label">BatchInt32</span><span class="kpi-value">@siemens.BatchInt32Limit</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_BatchInt32")</span><span class="kpi-value">@siemens.BatchInt32Limit</span></div>
                     </div>
                 }
                 @if (s.ModbusTcp is { } modbus)
                 {
                     <div class="card-title sub" style="margin-top:12px">Modbus TCP</div>
                     <div class="diag-grid">
-                        <div class="diag-item"><span class="kpi-label">UnitId</span><span class="kpi-value">@modbus.UnitId</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_UnitId")</span><span class="kpi-value">@modbus.UnitId</span></div>
                         <div class="diag-item"><span class="kpi-label">@L.T("St_AddrZero")</span><span class="kpi-value">@((modbus.AddressStartWithZero ?? false) ? "✓" : "—")</span></div>
                         <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@modbus.DataFormat</span></div>
-                        <div class="diag-item"><span class="kpi-label">BatchInt32</span><span class="kpi-value">@modbus.BatchInt32Limit</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_BatchInt32")</span><span class="kpi-value">@modbus.BatchInt32Limit</span></div>
                     </div>
                 }
                 @if (s.Omron is { } omron)
@@ -73,14 +74,15 @@
         </div>
 
         <section class="card">
-            <div class="card-title">@L.T("St_Shifts") <span class="badge-soft">@s.Shifts.Count</span></div>
-            @if (s.Shifts.Count == 0)
+            <div class="card-title">@L.T("St_Shifts") <span class="badge-soft">@shifts.Count</span></div>
+            @if (shifts.Count == 0)
             {
                 <div class="no-data">@L.T("St_NoShifts")</div>
             }
             else
             {
-                <table class="hq-table">
+                <div class="table-scroll">
+                    <table class="hq-table">
                     <thead>
                         <tr>
                             <th>@L.T("Hq_Shift")</th>
@@ -89,7 +91,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var sh in s.Shifts)
+                        @foreach (var sh in shifts)
                         {
                             <tr>
                                 <td>@sh.Name</td>
@@ -99,6 +101,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
             }
         </section>
     }

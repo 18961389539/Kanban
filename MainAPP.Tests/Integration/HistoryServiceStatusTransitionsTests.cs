@@ -48,6 +48,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
     {
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
         _historyService.LogStatusTransition("dev-001", "设备A", 0, 1, t, "白班");
+        _historyService.FlushEdgeEventsForTest(); // 2026-09-16 边沿写异步批量：断言前排空
 
         var results = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddMinutes(1));
         Assert.Single(results);
@@ -64,6 +65,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
         _historyService.LogStatusTransition(
             "dev-001", "设备A", 1, 0, t, "白班", (int)Kanban.Contracts.Enums.OfflineCause.CommsLost);
+        _historyService.FlushEdgeEventsForTest();
 
         var results = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddMinutes(1));
         Assert.Single(results);
@@ -77,6 +79,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
         _historyService.LogStatusTransition("dev-001", "设备A", 0, 1, t, "白班");
         _historyService.LogStatusTransition("dev-002", "设备B", 0, 2, t, "白班");
+        _historyService.FlushEdgeEventsForTest();
 
         var dev1 = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddMinutes(1));
         Assert.Single(dev1);
@@ -93,6 +96,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
         _historyService.LogStatusTransition("dev-001", "设备A", 0, 1, t);
         _historyService.LogStatusTransition("dev-001", "设备A", 1, 2, t.AddHours(2));
+        _historyService.FlushEdgeEventsForTest();
 
         // 仅查 8:00 附近 → 只返回第一条
         var near = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddMinutes(1));
@@ -110,6 +114,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
         _historyService.LogStatusTransition("dev-001", "设备A", 0, 1, t, "白班");
         _historyService.LogStatusTransition("dev-001", "设备A", 1, 2, t.AddHours(1), "夜班");
+        _historyService.FlushEdgeEventsForTest();
 
         var day = _historyService.QueryStatusTransitions("dev-001", t.AddMinutes(-1), t.AddHours(3), shiftName: "白班");
         Assert.Single(day);
@@ -128,6 +133,7 @@ public class HistoryServiceStatusTransitionsTests : IDisposable
         _historyService.LogStatusTransition("dev-001", "设备A", 1, 2, t0.AddMinutes(20));
         _historyService.LogStatusTransition("dev-001", "设备A", 0, 1, t0);
         _historyService.LogStatusTransition("dev-001", "设备A", 2, 3, t0.AddMinutes(40));
+        _historyService.FlushEdgeEventsForTest();
 
         var results = _historyService.QueryStatusTransitions("dev-001", t0.AddMinutes(-1), t0.AddMinutes(60));
         Assert.Equal(3, results.Count);

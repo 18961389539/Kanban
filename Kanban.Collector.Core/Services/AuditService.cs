@@ -18,6 +18,8 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     private const int CleanupIntervalMinutes = 30;
     private const int RetentionDays = 30;
     private const int PersistenceRetryCount = 3;
+    /// <summary>恢复文件大小上限：超过后停止追加并告警（有界且大声的丢失 &gt; 无限磁盘占用）。</summary>
+    private const long MaxRecoveryFileBytes = 100 * 1024 * 1024;
 
     private readonly DatabaseProvider _db;
     private readonly ILogger<AuditService> _logger;
@@ -26,11 +28,14 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     private readonly Task _flushTask;
     /// <summary>每次批量落库成功释放一个令牌，供测试确定性等待（事件驱动，避免固定预算轮询在高并发下偶发超时）。</summary>
     private readonly SemaphoreSlim _flushSignal = new(0);
-    private DateTime _lastCleanupUtc = DateTime.UtcNow;
+    private DateTime _lastCleanupAt = DateTime.Now;
     private int _queueDroppedCount;
     private int _persistenceFailedCount;
     private int _flushedCount;
     private int _disposeStarted;
+    /// <summary>溢出恢复通道：队列满/重试耗尽的条目转存磁盘，后台循环回放——审计不允许静默丢失
+    /// （设计审查修复 2026-09-16，照搬 ProductionHistoryWriter 恢复文件语义）。</summary>
+    private readonly SpilloverRecoveryFile<AuditEntry> _spillover;
 
     public AuditService(DatabaseProvider db, ILogger<AuditService> logger)
         : this(db, logger, MaxQueueLength, startWorker: true)
@@ -42,6 +47,8 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     {
         _db = db;
         _logger = logger;
+        _spillover = new SpilloverRecoveryFile<AuditEntry>(
+            db.AppSettings.GetFilePath("audit.recovery.jsonl"), MaxRecoveryFileBytes, logger, "审计");
         _channel = Channel.CreateBounded<AuditEntry>(
             new BoundedChannelOptions(Math.Max(1, queueLength))
             {
@@ -73,10 +80,10 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     /// </summary>
     internal async Task<bool> WaitFlushedAsync(int minCount, TimeSpan timeout)
     {
-        var deadline = DateTime.UtcNow + timeout;
+        var deadline = DateTime.Now + timeout;
         while (FlushedCount < minCount)
         {
-            var remaining = deadline - DateTime.UtcNow;
+            var remaining = deadline - DateTime.Now;
             if (remaining <= TimeSpan.Zero) return false;
             // 令牌可能在“计数检查与等待之间”已被释放并排队，WaitAsync 立即返回后循环重查即可
             await _flushSignal.WaitAsync(remaining);
@@ -106,11 +113,13 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
             OnEntryDropped(entry);
     }
 
-    private void OnEntryDropped(AuditEntry _)
+    private void OnEntryDropped(AuditEntry entry)
     {
         var dropped = Interlocked.Increment(ref _queueDroppedCount);
+        // 不再静默丢弃：转存恢复文件，后台循环回放落库（合规审计不允许缺口）
+        _spillover.Append([entry]);
         if (dropped == 1 || dropped % 100 == 0)
-            _logger.LogWarning("审计队列已丢弃 {Dropped} 条记录", dropped);
+            _logger.LogWarning("审计队列已满，{Dropped} 条记录已转存恢复文件待回放", dropped);
     }
 
     public (List<AuditEntry> Items, int Total) QueryAll(
@@ -145,6 +154,21 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
         if (succeeded.HasValue)
             query = query.Where(entry => entry.Succeeded == succeeded.Value);
         return query;
+    }
+
+    public (int Succeeded, int Failed) CountByResult(
+        DateTime from, DateTime to,
+        string? operatorName, string? action, string? targetType, bool? succeeded)
+    {
+        using var context = _db.CreateAuditContext();
+        var query = BuildFilteredQuery(context, from, to, operatorName, action, targetType, succeeded);
+        // 单次 GROUP BY 取回两类计数，避免两次 COUNT 重复扫描
+        var groups = query
+            .GroupBy(entry => entry.Succeeded)
+            .Select(g => new { Succeeded = g.Key, Count = g.Count() })
+            .ToList();
+        var ok = groups.FirstOrDefault(g => g.Succeeded)?.Count ?? 0;
+        return (ok, groups.Sum(g => g.Count) - ok);
     }
 
     public (List<AuditEntry> Items, int Total) QueryPaged(
@@ -199,6 +223,7 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
                     .WaitAsync(TimeSpan.FromMilliseconds(FlushIntervalMs), ct);
                 if (!hasData) break;
                 await FlushPendingAsync(ct);
+                await _spillover.ReplayAsync(InsertRecoveryBatchAsync, BatchSize, ct);
                 MaybeCleanup();
             }
             catch (TimeoutException)
@@ -214,9 +239,26 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
             }
         }
 
-        // 正常完成或强制取消后，尽最大努力排空已经接收的记录。
+        // 正常完成或强制取消后，尽最大努力排空已经接收的记录；
+        // 再尝试回放一次恢复文件（上次运行/本次批写失败转存的条目不遗留到下次启动）。
         while (reader.TryPeek(out _))
             await FlushPendingAsync(CancellationToken.None);
+        try
+        {
+            await _spillover.ReplayAsync(InsertRecoveryBatchAsync, BatchSize, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "停机时回放审计恢复文件失败（留待下次启动回放）");
+        }
+    }
+
+    /// <summary>恢复文件回放批次落库（回放线程 = 后台 flush 循环，与正常批量写串行）。</summary>
+    private async Task InsertRecoveryBatchAsync(IReadOnlyList<AuditEntry> batch)
+    {
+        using var context = _db.CreateAuditContext();
+        context.AuditEntries.AddRange(batch);
+        await context.SaveChangesAsync(CancellationToken.None);
     }
 
     private async Task FlushPendingAsync(CancellationToken ct)
@@ -255,7 +297,9 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
             catch (Exception ex)
             {
                 Interlocked.Add(ref _persistenceFailedCount, batch.Count);
-                _logger.LogError(ex, "审计批量写入重试耗尽，丢弃 {Count} 条（累计失败 {Failed} 条）",
+                // 重试耗尽不再丢弃：转存恢复文件，由后台循环回放（设计审查修复 2026-09-16）
+                _spillover.Append(batch);
+                _logger.LogError(ex, "审计批量写入重试耗尽，{Count} 条已转存恢复文件（累计转存 {Failed} 条）",
                     batch.Count, PersistenceFailedCount);
                 return;
             }
@@ -264,8 +308,8 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
 
     private void MaybeCleanup()
     {
-        if ((DateTime.UtcNow - _lastCleanupUtc).TotalMinutes < CleanupIntervalMinutes) return;
-        _lastCleanupUtc = DateTime.UtcNow;
+        if ((DateTime.Now - _lastCleanupAt).TotalMinutes < CleanupIntervalMinutes) return;
+        _lastCleanupAt = DateTime.Now;
         var deleted = CleanupOldEntries(RetentionDays);
         if (deleted > 0)
             _logger.LogInformation("审计记录已清理 {Count} 条（保留 {Days} 天）", deleted, RetentionDays);
@@ -294,4 +338,11 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     }
 
     public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
+    internal Task ReplayRecoveryForTestAsync(CancellationToken ct = default)
+        => _spillover.ReplayAsync(InsertRecoveryBatchAsync, BatchSize, ct);
+
+    /// <summary>测试入口：恢复文件路径（断言溢出转存）。</summary>
+    internal string RecoveryFilePathForTest => _spillover.Path;
 }

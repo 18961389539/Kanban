@@ -36,7 +36,8 @@ public class DeviceRuntimeStatusConverter : IMultiValueConverter
             (int)DeviceStatus.Running => FindBrush("SuccessBrush"),
             (int)DeviceStatus.Alarm => FindBrush("DangerBrush"),
             (int)DeviceStatus.Paused => FindBrush("WarningBrush"),
-            _ => FindBrush("SecondaryBorderBrush"),
+            // 离线统一用 StatusIdleBrush（全应用离线灰一致），不再借用边框色。
+            _ => FindBrush("StatusIdleBrush"),
         };
     }
 

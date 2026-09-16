@@ -98,6 +98,7 @@ public class HistoryQueryViewModelTests : IDisposable
         int prev, int cur, DateTime ts)
     {
         _historyService.LogStatusTransition(deviceId, deviceName, prev, cur, ts);
+        _historyService.FlushEdgeEventsForTest(); // 2026-09-16 边沿写异步批量：断言前排空
     }
 
     private void InsertAlarmEvent(string deviceId, string deviceName, string alarmId,

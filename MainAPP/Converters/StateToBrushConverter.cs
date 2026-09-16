@@ -20,10 +20,12 @@ public class StateToBrushConverter : IValueConverter
                 (int)DeviceStatus.Running => FindBrush("StatusRunBrush"),
                 (int)DeviceStatus.Alarm => FindBrush("StatusAlarmBrush"),
                 (int)DeviceStatus.Paused => FindBrush("StatusPauseBrush"),
-                _ => FindBrush("SecondaryBorderBrush")
+                // 离线/未知统一用 StatusIdleBrush（#9CA3AF），与详情页徽章、图表离线色一致；
+                // 原先借用的 SecondaryBorderBrush 是边框色，深色卡片上几乎不可见。
+                _ => FindBrush("StatusIdleBrush")
             };
         }
-        return FindBrush("SecondaryBorderBrush");
+        return FindBrush("StatusIdleBrush");
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

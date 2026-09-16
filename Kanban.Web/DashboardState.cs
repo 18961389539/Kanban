@@ -30,7 +30,7 @@ public sealed class DashboardState : IAsyncDisposable
     private readonly Dictionary<int, int> _workOrderOkById = new();
     private readonly Dictionary<string, int> _trackedRunningWorkOrderIdByDevice = new();
     private int _lastSummaryWorkOrderId = -1;
-    private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private DateTime _lastSummaryQueryAt = DateTime.MinValue;
     private bool _workOrderSummaryInFlight;
     private static readonly TimeSpan WorkOrderSummaryThrottle = TimeSpan.FromSeconds(2);
     private readonly object _lock = new();
@@ -41,8 +41,12 @@ public sealed class DashboardState : IAsyncDisposable
     private ShiftProgressDto? _shiftProgress;
     private KanbanDataClient? _invokeClient;
     private bool _initialized;
+    private bool _disposed;
     private CancellationTokenSource? _retryCts;
     private DateTime _invokeFailedUntil;
+    // 服务器墙钟偏移（秒）= 快照时间戳 - 浏览器收到时刻；500ms 快照帧持续校准（单帧撕裂下一帧自愈），
+    // 网络延迟引入的误差 <1s，对"截断到当前时刻"类语义足够；未收到快照前为 0（回退浏览器本地时间）。
+    private double _serverClockOffsetSeconds;
     // 订阅单飞（single-flight，审查修复 2026-08-13）：重连事件与初始化路径可能并发触发订阅刷新，
     // 无互斥时服务端收到两条长驻订阅、每个快照推两次（速度队列双写、CPU 翻倍）。
     // 仅 runner 执行；其余调用只置"重跑"标记，由 runner 在本次结束后按最新连接状态再跑一次。
@@ -50,6 +54,10 @@ public sealed class DashboardState : IAsyncDisposable
     private bool _subscribeRerunRequested;
     private bool _metaRunnerActive;
     private bool _metaRerunRequested;
+    // 快照长驻订阅在途标记：部分断线（仅元数据连接 Closed）时 SubscribeAndRefreshCoreAsync 会重跑，
+    // 若无在途守卫会对仍健康的订阅连接发起第二条长驻订阅（服务端双推——2026-08-13 单飞修复的同类问题）。
+    private bool _snapshotSubscribeActive;
+    private bool _snapshotSubscribePending;
 
     public DashboardState(
         KanbanDataClient client,
@@ -75,6 +83,22 @@ public sealed class DashboardState : IAsyncDisposable
         };
         // 元数据连接重连成功后：重新订阅 Meta（长驻订阅随连接断开而结束）；单飞防双订阅
         _metaClient.Reconnected += (_, _) => _ = RequestMetaSubscribeAsync();
+        // 彻底断线（自动重连耗尽）接管：KanbanDataClient 按设计 Closed 后不自行重连，
+        // 此前只有首次 InitializeAsync 失败才进 RetryLoop——运行期彻底断线会永久离线直到用户刷新。
+        _client.Closed += (_, _) => OnConnectionClosed("订阅");
+        _metaClient.Closed += (_, _) => OnConnectionClosed("元数据");
+        // 元数据连接状态变化也驱动 UI 刷新（此前仅订阅连接接入，Meta 断线时连接徽标无感知）
+        _metaClient.ConnectionStateChanged += (_, _) => StateChanged?.Invoke();
+    }
+
+    /// <summary>自动重连耗尽后的上层接管：重置初始化标记并进入 5s 重试循环（与首次失败同路径，
+    /// RetryLoop 成功条件要求双连接均连通；InitializeAsync 幂等，健康连接会跳过重连只补订阅）。</summary>
+    private void OnConnectionClosed(string name)
+    {
+        if (_disposed) return;
+        _logger.LogWarning("Collector {Name}连接彻底关闭（自动重连耗尽），转入 5s 间隔重试", name);
+        _initialized = false; // 允许 InitializeAsync 重新连接 + 重注册回调 + 恢复订阅
+        ScheduleRetry();
     }
 
     /// <summary>连接状态变化通知（UI 刷新连接指示器）。</summary>
@@ -132,6 +156,13 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Collector 服务器（工厂）墙钟的当前时间。浏览器时区与工厂不同时 DateTime.Now 是浏览器时间，
+    /// 与服务器数据时间戳（工厂墙钟，JSON 墙钟透传）混合运算会偏差——所有与服务器数据比较的
+    /// "当前时刻"（报警持续时长、查询窗口截断、快捷范围的"今天"等）必须用本属性。
+    /// </summary>
+    public DateTime ServerNow => DateTime.Now.AddSeconds(_serverClockOffsetSeconds);
+
     // ──────────── 低频元数据（Collector 5s 推送，非轮询） ────────────
 
     /// <summary>当前班次进度（Collector 推送，5s 更新一次）。</summary>
@@ -171,7 +202,7 @@ public sealed class DashboardState : IAsyncDisposable
         {
             if (_workOrderSummaryInFlight) return;
             if (_lastSummaryWorkOrderId == wo.Id
-                && DateTime.UtcNow - _lastSummaryQueryUtc < WorkOrderSummaryThrottle)
+                && DateTime.Now - _lastSummaryQueryAt < WorkOrderSummaryThrottle)
                 return;
             _workOrderSummaryInFlight = true;
         }
@@ -185,7 +216,7 @@ public sealed class DashboardState : IAsyncDisposable
             {
                 _workOrderOkById[wo.Id] = summary.OkCount;
                 _lastSummaryWorkOrderId = wo.Id;
-                _lastSummaryQueryUtc = DateTime.UtcNow;
+                _lastSummaryQueryAt = DateTime.Now;
             }
             StateChanged?.Invoke();
         }
@@ -461,14 +492,37 @@ public sealed class DashboardState : IAsyncDisposable
 
     private void OnLocalizationChanged(LocalizationChangedDto localization)
     {
-        Language = L.NormalizeLanguage(localization.LanguageCode);
-        L.Current = Language;
+        ApplyLanguage(L.NormalizeLanguage(localization.LanguageCode));
         L.ApplyOverrides(localization.Overrides);
         StateChanged?.Invoke();
     }
 
+    /// <summary>
+    /// 应用界面语言：除 L.Current 外同步 CultureInfo（数字/百分比/日期格式化跟随语言），
+    /// 此前只设 L.Current，导致 en-US 下 ToString("N0")/Pct 仍按 zh-CN 格式输出。
+    /// 依赖 csproj 的 BlazorWebAssemblyLoadAllGlobalizationData（WASM 默认只带 invariant 文化）。
+    /// </summary>
+    private void ApplyLanguage(string language)
+    {
+        Language = language;
+        L.Current = language;
+        try
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            System.Globalization.CultureInfo.CurrentCulture = culture;
+            System.Globalization.CultureInfo.CurrentUICulture = culture;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "设置 CultureInfo 失败（{Language}），保持当前文化", language);
+        }
+    }
+
     private void OnSnapshotReceivedCore(DeviceSnapshotDto snapshot)
     {
+        // 校准服务器墙钟偏移（tombstone 帧同样携带服务器时间戳；500ms 帧率下持续刷新）
+        _serverClockOffsetSeconds = (snapshot.Timestamp - DateTime.Now).TotalSeconds;
+
         // tombstone：Collector 设备配置删除广播，从内存移除该设备（快照流只有 upsert 语义，删除须显式表达）
         if (snapshot.Removed)
         {
@@ -706,16 +760,14 @@ public sealed class DashboardState : IAsyncDisposable
         try
         {
             var languageCode = await _client.GetLanguageCodeAsync();
-            Language = L.NormalizeLanguage(languageCode);
-            L.Current = Language;
+            ApplyLanguage(L.NormalizeLanguage(languageCode));
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "获取动态界面语言失败，尝试兼容旧版语言接口");
             try
             {
-                Language = L.FromLegacyIndex(await _client.GetLanguageAsync());
-                L.Current = Language;
+                ApplyLanguage(L.FromLegacyIndex(await _client.GetLanguageAsync()));
             }
             catch (Exception legacyEx)
             {
@@ -734,8 +786,47 @@ public sealed class DashboardState : IAsyncDisposable
         }
 
         // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）
-        _ = SubscribeSnapshotsSafeAsync();   // 长驻调用，fire-and-forget（包装避免 fault 未观察触发 Blazor 错误 UI）
+        EnsureSnapshotSubscription();        // 长驻调用，在途守卫防健康连接被重复订阅
         _ = RequestMetaSubscribeAsync();     // 元数据订阅走元数据连接（每连接单长驻订阅约束；单飞防双订阅）
+    }
+
+    /// <summary>快照订阅入口（在途守卫 + lost-wakeup 补订）：订阅 Invoke 是长驻调用，连接存活期间一直挂着；
+    /// 仅在无在途订阅时发起。订阅结束（连接断开 fault）期间若积有重订阅请求且连接仍健康，立即补订。</summary>
+    private void EnsureSnapshotSubscription()
+    {
+        lock (_lock)
+        {
+            _snapshotSubscribePending = true;
+            if (_snapshotSubscribeActive) return;
+            _snapshotSubscribeActive = true;
+            _snapshotSubscribePending = false;
+        }
+        _ = RunSnapshotSubscriptionAsync();
+    }
+
+    private async Task RunSnapshotSubscriptionAsync()
+    {
+        try
+        {
+            await _client.SubscribeSnapshotsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "快照订阅结束（连接断开/重连触发，属正常）");
+        }
+        finally
+        {
+            bool resubscribe;
+            lock (_lock)
+            {
+                _snapshotSubscribeActive = false;
+                resubscribe = _snapshotSubscribePending;
+                _snapshotSubscribePending = false;
+            }
+            // 竞态补订：Reconnected/Closed 重试与旧订阅 fault 存在先后窗口，连接仍健康则立即补订
+            if (resubscribe && !_disposed && _client.IsConnected)
+                EnsureSnapshotSubscription();
+        }
     }
 
     /// <summary>元数据订阅单飞入口：与 Reconnected 处理器共用，防并发双订阅（审查修复 2026-08-13）。</summary>
@@ -779,19 +870,6 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>快照订阅包装：长驻 Invoke 在连接断开时会 fault（属正常生命周期），观察异常防全局错误 UI。</summary>
-    private async Task SubscribeSnapshotsSafeAsync()
-    {
-        try
-        {
-            await _client.SubscribeSnapshotsAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "快照订阅结束（连接断开/重连触发，属正常）");
-        }
-    }
-
     /// <summary>元数据订阅包装（元数据连接上长驻；断开/重连自动重订阅，观察 fault 防未观察异常）。</summary>
     private async Task SubscribeMetaSafeAsync()
     {
@@ -807,6 +885,7 @@ public sealed class DashboardState : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true; // 阻止 Closed 事件在释放过程中触发新的重试循环
         _retryCts?.Cancel();
         _retryCts?.Dispose();
         _retryCts = null;

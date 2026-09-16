@@ -90,8 +90,8 @@ public partial class HistoryQuery
             if (lastBefore.Count > 0)
                 initialState = (int)lastBefore[0].CurrentState;
 
-            var effectiveTo = to > DateTime.Now ? DateTime.Now : to;
-            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState);
+            var effectiveTo = to > Dashboard.ServerNow ? Dashboard.ServerNow : to;
+            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState, Dashboard.ServerNow);
             OeRunSeconds = durations.RunTime;
             OeAlarmSeconds = durations.AlarmTime;
 
@@ -102,7 +102,7 @@ public partial class HistoryQuery
             OeValue = OeeCalculator.CalculateOee(OeQ, OeP, OeA);
 
             // 4) 分班次 OEE + 趋势图 + 洞察
-            OeShifts = OeeAnalysis.ComputePerShiftOee(window, OeTargetCycle, trans, initialState, from, to);
+            OeShifts = OeeAnalysis.ComputePerShiftOee(window, OeTargetCycle, trans, initialState, from, to, Dashboard.ServerNow);
             OeBuildTrendOption();
             OeInsight = OeeAnalysis.BuildInsight(OeQ, OeP, OeA, OeShifts, L.T);
 
@@ -186,7 +186,7 @@ public partial class HistoryQuery
         sb.AppendLine(string.Join(',', C(L.T("Csv_AlarmSeconds")), OeAlarmSeconds.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)));
         sb.AppendLine(string.Join(',', C(L.T("Csv_TargetCycle")), OeTargetCycle.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
-        var fileName = $"OEE_{(OeRunSeconds > 0 ? DateTime.Now.ToString("yyyyMMdd") : "query")}.csv";
+        var fileName = $"OEE_{(OeRunSeconds > 0 ? Dashboard.ServerNow.ToString("yyyyMMdd") : "query")}.csv";
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
     }
 

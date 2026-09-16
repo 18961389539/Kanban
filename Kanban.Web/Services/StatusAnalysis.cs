@@ -9,11 +9,13 @@ namespace Kanban.Web.Services;
 /// </summary>
 public static class StatusAnalysis
 {
-    /// <summary>按天汇总各状态时长（小时）。与 WPF BuildDailyDurations 一致：跨天段按午夜切分累计。</summary>
+    /// <summary>按天汇总各状态时长（小时）。与 WPF BuildDailyDurations 一致：跨天段按午夜切分累计。
+    /// now：截断用的"当前时刻"——浏览器时区与工厂不同时须传 Dashboard.ServerNow（默认回退本机时间）。</summary>
     public static List<(DateTime Date, double RunHours, double AlarmHours, double PauseHours)> BuildDailyDurations(
-        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState)
+        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState,
+        DateTime? now = null)
     {
-        var rawSegments = BuildSegments(transitions, from, to, initialState);
+        var rawSegments = BuildSegments(transitions, from, to, initialState, now);
 
         Dictionary<DateTime, (double Run, double Alarm, double Pause)> byDay = [];
         foreach (var seg in rawSegments)
@@ -43,13 +45,15 @@ public static class StatusAnalysis
             .ToList();
     }
 
-    /// <summary>状态段（Start, End, State）升序列表；to 防御性截断到当前时刻。与 WPF BuildGanttSegments + ClampToNow 一致。</summary>
+    /// <summary>状态段（Start, End, State）升序列表；to 防御性截断到当前时刻。与 WPF BuildGanttSegments + ClampToNow 一致。
+    /// now：截断用的"当前时刻"——浏览器时区与工厂不同时须传 Dashboard.ServerNow（默认回退本机时间）。</summary>
     public static List<(DateTime Start, DateTime End, int State)> BuildSegments(
-        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState)
+        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState,
+        DateTime? now = null)
     {
-        var now = DateTime.Now;
-        if (to > now) to = now;
-        if (from > now) return [];
+        var nowValue = now ?? DateTime.Now;
+        if (to > nowValue) to = nowValue;
+        if (from > nowValue) return [];
 
         List<(DateTime Start, DateTime End, int State)> segments = [];
         var currentState = initialState;
@@ -69,13 +73,15 @@ public static class StatusAnalysis
         return segments;
     }
 
-    /// <summary>各状态累计时长（秒）。Run/Alarm/Paused 用于 OEE；Offline 仅统计。</summary>
+    /// <summary>各状态累计时长（秒）。Run/Alarm/Paused 用于 OEE；Offline 仅统计。
+    /// now：截断用的"当前时刻"——浏览器时区与工厂不同时须传 Dashboard.ServerNow（默认回退本机时间）。</summary>
     public static (double RunTime, double AlarmTime, double PausedTime, double OfflineTime) CalculateStateDurations(
-        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState)
+        List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState,
+        DateTime? now = null)
     {
-        var now = DateTime.Now;
-        if (to > now) to = now;
-        if (from > now) return (0, 0, 0, 0);
+        var nowValue = now ?? DateTime.Now;
+        if (to > nowValue) to = nowValue;
+        if (from > nowValue) return (0, 0, 0, 0);
 
         double run = 0, alarm = 0, paused = 0, offline = 0;
         var currentState = initialState;
@@ -116,12 +122,12 @@ public static class StatusAnalysis
     /// </summary>
     public static string? BuildInsight(
         List<StatusTransitionRecordDto> transitions, DateTime from, DateTime to, int initialState,
-        Func<string, object[], string> localize)
+        Func<string, object[], string> localize, DateTime? now = null)
     {
         const double LongAlarmThresholdMin = 30;
         const double HighPauseRatioThreshold = 0.20;
 
-        var segments = BuildSegments(transitions, from, to, initialState);
+        var segments = BuildSegments(transitions, from, to, initialState, now);
         if (segments.Count == 0) return null;
 
         List<string> parts = [];

@@ -76,7 +76,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>工单产量聚合查询节流：上次查询的工单 Id 与时刻（同一 Running 工单 2s 内复用）。</summary>
     private int? _lastSummaryOrderId;
-    private DateTime _lastSummaryQueryUtc = DateTime.MinValue;
+    private DateTime _lastSummaryQueryAt = DateTime.MinValue;
     private int _workOrderSummaryRunning;
     private int _workOrderSummaryRefreshRequested;
     private readonly object _workOrderSummaryGate = new();
@@ -671,7 +671,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             Volatile.Write(ref _workOrderSummaryRefreshRequested, 1);
         CancelWorkOrderSummaryQuery();
         _lastSummaryOrderId = null;
-        _lastSummaryQueryUtc = DateTime.MinValue;
+        _lastSummaryQueryAt = DateTime.MinValue;
         _currentWorkOrderOk = 0;
         // 达标提示记录修剪：只保留当前工单（若有），避免长期运行集合无限增长
         _notifiedWorkOrderIds.RemoveWhere(id => value == null || id != value.Id);
@@ -698,7 +698,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (_workOrderService == null) return;
 
         // 节流：同一 Running 工单 2s 内复用上次结果
-        if (_lastSummaryOrderId == order.Id && DateTime.UtcNow - _lastSummaryQueryUtc < WorkOrderSummaryThrottle)
+        if (_lastSummaryOrderId == order.Id && DateTime.Now - _lastSummaryQueryAt < WorkOrderSummaryThrottle)
             return;
 
         if (Interlocked.CompareExchange(ref _workOrderSummaryRunning, 1, 0) != 0)
@@ -709,7 +709,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }
 
         _lastSummaryOrderId = order.Id;
-        _lastSummaryQueryUtc = DateTime.UtcNow;
+        _lastSummaryQueryAt = DateTime.Now;
         var queryCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
         lock (_workOrderSummaryGate)
             _workOrderSummaryCts = queryCts;
@@ -1390,7 +1390,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         var shift = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now); // P0-1 修复 2026-09-02
         DeviceStatusShiftTag = shift.Shift == null
             ? string.Empty
-            : $"{shift.Shift.Name} {shift.Start:hh\\:mm}-{shift.End:hh\\:mm}";
+            : $"{shift.Shift.Name} {FormatHelper.FormatClock(shift.Start)}-{FormatHelper.FormatClock(shift.End)}";
         DeviceStatusClock = now.ToString("MM-dd HH:mm");
     }
 

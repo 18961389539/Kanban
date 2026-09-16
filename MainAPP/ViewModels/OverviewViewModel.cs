@@ -312,7 +312,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                 ShiftComparisons.ToList(),
                 TopAlarms.ToList())));
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: "生产复盘报表");
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: Strings.Audit_Detail_ReviewReport);
             _dialog.NotifySuccess(string.Format(Strings.F168, Path.GetFileName(path)));
         }
         catch (Exception ex)
@@ -377,7 +377,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         try
         {
             await Task.Run(() => _pdfService.Export(path, data));
-            AuditLog.Record("Export.Pdf", "Export", Path.GetFileName(path), detail: "生产复盘 PDF");
+            AuditLog.Record("Export.Pdf", "Export", Path.GetFileName(path), detail: Strings.Audit_Detail_ReviewPdf);
             _dialog.NotifySuccess(string.Format(Strings.F167, Path.GetFileName(path)));
         }
         catch (Exception ex)
@@ -554,7 +554,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
             CurrentShiftDateRange = string.Empty;
             return;
         }
-        CurrentShiftName = $"{shift.Name} {shift.StartTime:hh\\:mm}-{shift.EndTime:hh\\:mm}";
+        CurrentShiftName = $"{shift.Name} {FormatHelper.FormatClock(shift.StartTime)}-{FormatHelper.FormatClock(shift.EndTime)}";
 
         // 计算班次实际日期区间（跨天班次如夜班 20:00-08:00 需正确跨越午夜）
         DateTime shiftStart, shiftEnd;

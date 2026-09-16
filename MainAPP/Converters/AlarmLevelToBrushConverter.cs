@@ -9,12 +9,14 @@ namespace MainAPP.Converters;
 /// <summary>
 /// 报警级别转画刷：High=红, Medium=橙, Low=黄。
 /// 用于实时故障卡片左侧色条与图标颜色。
+/// 色阶与 Brushes.xaml 语义一致（StatusAlarmBrush 红 &gt; StatusWarnBrush 橙 &gt; StatusPauseBrush 黄），
+/// 避免低级报警（橙）比中级（黄）更醒目的倒挂。
 /// </summary>
 public class AlarmLevelToBrushConverter : IValueConverter
 {
     private static readonly SolidColorBrush HighBrush = new(Color.FromRgb(0xF8, 0x71, 0x71));
-    private static readonly SolidColorBrush MediumBrush = new(Color.FromRgb(0xFB, 0xBF, 0x24));
-    private static readonly SolidColorBrush LowBrush = new(Color.FromRgb(0xFB, 0x92, 0x3C));
+    private static readonly SolidColorBrush MediumBrush = new(Color.FromRgb(0xFB, 0x92, 0x3C));
+    private static readonly SolidColorBrush LowBrush = new(Color.FromRgb(0xFB, 0xBF, 0x24));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {

@@ -99,7 +99,20 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
     private void OnStoreRecipesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (_isSaving) return;
-        RefreshRecipes();
+        // 集合变更可能来自非 UI 线程（Remote 启动时 RemoteDataLinkBootstrapper 在线程池续体
+        // 调用 recipeStore.ReplaceAll）：绑定集合刷新必须封送回 UI 线程，否则
+        // ListCollectionView/绑定跨线程抛 NotSupportedException（设计审查修复 2026-09-16）。
+        if (_uiDispatcher.CheckAccess())
+        {
+            RefreshRecipes();
+        }
+        else
+        {
+            _uiDispatcher.BeginInvoke(() =>
+            {
+                if (!_isSaving) RefreshRecipes();
+            });
+        }
     }
 
     /// <summary>全部配方列表（含通用 + 各机型）——展示列表的单一数据源。</summary>

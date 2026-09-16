@@ -172,7 +172,7 @@ public class DatabaseProvider(AppSettings appSettings)
 
     private static void BackupDatabase(string databasePath)
     {
-        var backupPath = $"{databasePath}.pre-migration-{DateTime.UtcNow:yyyyMMddHHmmssfff}.bak";
+        var backupPath = $"{databasePath}.pre-migration-{DateTime.Now:yyyyMMddHHmmssfff}.bak";
         using var source = new SqliteConnection($"Data Source={databasePath};Mode=ReadOnly;Cache=Shared");
         using var destination = new SqliteConnection($"Data Source={backupPath}");
         source.Open();

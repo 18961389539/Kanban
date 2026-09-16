@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@inject DashboardState Dashboard
+@inject IJSRuntime JS
+@implements IDisposable
 
 <div class="app-shell">
     <nav class="topnav">
@@ -28,4 +31,34 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    // ─── 壳层同步 ───
+    // 1) 订阅 StateChanged：语言切换时顶栏导航文本即时重渲染（此前仅页面级订阅，导航标签滞留旧语言）。
+    // 2) 推送 <html lang>/document.title 到 DOM（js/shell.js），供浏览器翻译/无障碍/标签页标题。
+    private string? _appliedShellKey;
+
+    protected override void OnInitialized()
+    {
+        Dashboard.StateChanged += OnStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var key = Dashboard.Language + "|" + Dashboard.Title;
+        if (key == _appliedShellKey) return;
+        _appliedShellKey = key;
+        try
+        {
+            await JS.InvokeVoidAsync("KanbanShell.applyMetadata", Dashboard.Language, Dashboard.Title);
+        }
+        catch (Exception)
+        {
+            // JS 不可用（预渲染/启动早期）时忽略——下次渲染重试
+            _appliedShellKey = null;
+        }
+    }
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Dashboard.StateChanged -= OnStateChanged;
 }

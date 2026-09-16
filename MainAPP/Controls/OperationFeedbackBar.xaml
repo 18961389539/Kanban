@@ -55,7 +55,33 @@
             Visibility="{Binding Feedback.HasMessage, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}"
             ToolTip="{Binding Feedback.Message, RelativeSource={RelativeSource AncestorType=UserControl}}">
         <StackPanel Orientation="Horizontal">
-            <materialIcons:MaterialIcon Width="15" Height="15" Margin="0,0,6,0" VerticalAlignment="Center" Kind="InformationOutline" />
+            <!-- 图标随反馈类型切换（原恒为信息图标，成功/警告/错误均无视觉区分）；颜色与文字同色 -->
+            <materialIcons:MaterialIcon Width="15" Height="15" Margin="0,0,6,0" VerticalAlignment="Center">
+                <materialIcons:MaterialIcon.Style>
+                    <Style TargetType="materialIcons:MaterialIcon">
+                        <Setter Property="Kind" Value="InformationOutline" />
+                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Feedback.Kind, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Static models:OperationFeedbackKind.Working}">
+                                <Setter Property="Kind" Value="ClockOutline" />
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Feedback.Kind, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Static models:OperationFeedbackKind.Success}">
+                                <Setter Property="Kind" Value="CheckCircleOutline" />
+                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Feedback.Kind, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Static models:OperationFeedbackKind.Warning}">
+                                <Setter Property="Kind" Value="AlertOutline" />
+                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Feedback.Kind, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="{x:Static models:OperationFeedbackKind.Error}">
+                                <Setter Property="Kind" Value="AlertCircleOutline" />
+                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </materialIcons:MaterialIcon.Style>
+            </materialIcons:MaterialIcon>
             <TextBlock VerticalAlignment="Center" Style="{StaticResource FeedbackText}"
                        Text="{Binding Feedback.Message, RelativeSource={RelativeSource AncestorType=UserControl}}" />
         </StackPanel>

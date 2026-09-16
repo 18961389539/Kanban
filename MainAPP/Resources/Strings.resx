@@ -124,7 +124,13 @@
     <value>PLC 连接参数已变更，保存后将断开当前 PLC 连接并按新参数重连。</value>
   </data>
   <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
-    <value>数据采集模式已变更，保存后将切换数据来源（本地 / 远端采集服务）。</value>
+    <value>数据采集模式已变更，保存后需重启应用才能生效（本地 / 远端采集服务）。</value>
+  </data>
+  <data name="Settings_DataModeRestartTitle" xml:space="preserve">
+    <value>数据模式已更改</value>
+  </data>
+  <data name="Settings_DataModeRestartPrompt" xml:space="preserve">
+    <value>数据模式已保存，需重启应用后生效。是否立即重启？选择「否」请稍后手动重启。</value>
   </data>
   <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
     <value>运行模式已变更，保存后将改变运行模式（完整 / 仅展示）。</value>
@@ -4581,7 +4587,7 @@
     <value>检测到 {0} 次突降，最严重 {1} 下降 {2:P0}（{3} → {4} 件）</value>
   </data>
   <data name="Web_Hq_Analyzing" xml:space="preserve">
-    <value>正在分析产量数据</value>
+    <value>正在分析数据…</value>
   </data>
   <data name="Web_Hq_Truncated" xml:space="preserve">
     <value>数据量超过 10 万条上限，KPI/图表基于已取部分数据（建议缩小时间范围）</value>
@@ -4602,7 +4608,7 @@
     <value>请先选择设备（该 Tab 按单设备查询）</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>离线</value>
+    <value>未知</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>运行时长</value>
@@ -6641,7 +6647,7 @@
     <value># 总 OK：{0} 件，总 NG：{1} 件，良品率：{2}</value>
   </data>
   <data name="Web_Csv_SumStatus" xml:space="preserve">
-    <value># 运行时长：{0}h，报警时长：{1}h，待机时长：{2}h</value>
+    <value># 运行时长：{0}h，报警时长：{1}h，待机时长：{2}h，离线时长：{3}h</value>
   </data>
   <data name="Web_Csv_SumDevice" xml:space="preserve">
     <value># 设备：{0}</value>
@@ -6694,6 +6700,27 @@
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>设备「{0}」内 PLC 地址「{1}」被多个采集项使用：{2}</value>
   </data>
+  <data name="Validator_RoleDefect" xml:space="preserve">
+    <value>缺陷「{0}」</value>
+  </data>
+  <data name="Validator_RoleCounterAlarm" xml:space="preserve">
+    <value>计数报警「{0}」</value>
+  </data>
+  <data name="Validator_RoleSourceTrigger" xml:space="preserve">
+    <value>数据源「{0}」触发</value>
+  </data>
+  <data name="Validator_RoleSourceValue" xml:space="preserve">
+    <value>数据源值「{0}」</value>
+  </data>
+  <data name="Validator_PrimaryStatus" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="Validator_PrimaryReset" xml:space="preserve">
+    <value>复位</value>
+  </data>
+  <data name="Validator_PrimaryRecipe" xml:space="preserve">
+    <value>配方</value>
+  </data>
   <data name="K928" xml:space="preserve">
     <value>全部清零</value>
   </data>
@@ -6735,5 +6762,71 @@
   </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>取消</value>
+  </data>
+  <data name="Wo_AddTitle" xml:space="preserve">
+    <value>新增工单</value>
+  </data>
+  <data name="Audit_Detail_Role" xml:space="preserve">
+    <value>角色={0}</value>
+  </data>
+  <data name="Audit_Detail_RoleMustChangePwd" xml:space="preserve">
+    <value>角色={0}，首登改密</value>
+  </data>
+  <data name="Audit_Detail_AutoLogin" xml:space="preserve">
+    <value>启动自动登录</value>
+  </data>
+  <data name="Audit_Detail_AutoLoginFallback" xml:space="preserve">
+    <value>启动自动登录（管理员账号缺失，回退 Operator）</value>
+  </data>
+  <data name="Audit_Detail_ReviewReport" xml:space="preserve">
+    <value>生产复盘报表</value>
+  </data>
+  <data name="Audit_Detail_ReviewPdf" xml:space="preserve">
+    <value>生产复盘 PDF</value>
+  </data>
+  <data name="Audit_Detail_AuditArchive" xml:space="preserve">
+    <value>审计归档 {0} 条</value>
+  </data>
+  <data name="Audit_Detail_WoAdd" xml:space="preserve">
+    <value>产品={0} 目标={1}</value>
+  </data>
+  <data name="Audit_Detail_PageExport" xml:space="preserve">
+    <value>当前页导出 Tab={0} Page={1}</value>
+  </data>
+  <data name="Hq_SnNotSupported" xml:space="preserve">
+    <value>当前运行模式不支持 SN 追溯</value>
+  </data>
+  <data name="Hq_SnNotSupportedHint" xml:space="preserve">
+    <value>SN 事件记录未启用，或当前远程连接无 SN 查询通道</value>
+  </data>
+  <data name="Web_App_Title" xml:space="preserve">
+    <value>生产看板</value>
+  </data>
+  <data name="Web_Hq_StatusOffline" xml:space="preserve">
+    <value>离线时长</value>
+  </data>
+  <data name="Web_Au_OperatorHint" xml:space="preserve">
+    <value>如 Remote / admin</value>
+  </data>
+  <data name="Web_Au_ActionHint" xml:space="preserve">
+    <value>如 Device.Update</value>
+  </data>
+  <data name="Web_St_RackSlot" xml:space="preserve">
+    <value>机架 / 槽位</value>
+  </data>
+  <data name="Web_St_UnitId" xml:space="preserve">
+    <value>站号（UnitId）</value>
+  </data>
+  <data name="Web_St_BatchInt32" xml:space="preserve">
+    <value>BatchInt32 上限</value>
+  </data>
+  <data name="Web_Val_Yes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="Web_Val_No" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="Msg_PageExported" xml:space="preserve">
+    <value>已导出当前页数据 → {0}</value>
   </data>
 </root>

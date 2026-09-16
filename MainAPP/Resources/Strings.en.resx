@@ -124,7 +124,13 @@
     <value>PLC connection parameters changed. Saving will disconnect the current PLC and reconnect with the new parameters.</value>
   </data>
   <data name="Settings_Warn_DataModeChanged" xml:space="preserve">
-    <value>Data acquisition mode changed. Saving will switch the data source (local / remote collector service).</value>
+    <value>Data acquisition mode changed. A restart is required after saving for it to take effect (local / remote collector service).</value>
+  </data>
+  <data name="Settings_DataModeRestartTitle" xml:space="preserve">
+    <value>Data Mode Changed</value>
+  </data>
+  <data name="Settings_DataModeRestartPrompt" xml:space="preserve">
+    <value>Data mode saved. It takes effect after a restart. Restart now? If you choose No, restart manually later.</value>
   </data>
   <data name="Settings_Warn_RunModeChanged" xml:space="preserve">
     <value>Run mode changed. Saving will change the run mode (full / viewer only).</value>
@@ -4581,7 +4587,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>{0} sudden drop(s), worst {1} -{2:P0} ({3} → {4} pcs)</value>
   </data>
   <data name="Web_Hq_Analyzing" xml:space="preserve">
-    <value>Analyzing production data</value>
+    <value>Analyzing data…</value>
   </data>
   <data name="Web_Hq_Truncated" xml:space="preserve">
     <value>Over 100k rows; KPI/chart based on fetched subset (narrow the time range)</value>
@@ -4602,7 +4608,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Select a device first (this tab queries one device)</value>
   </data>
   <data name="Web_Hq_StateUnknown" xml:space="preserve">
-    <value>Offline</value>
+    <value>Unknown</value>
   </data>
   <data name="Web_Hq_StatusRun" xml:space="preserve">
     <value>Run Time</value>
@@ -6641,7 +6647,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value># Total OK: {0}, Total NG: {1}, Yield: {2}</value>
   </data>
   <data name="Web_Csv_SumStatus" xml:space="preserve">
-    <value># Run: {0}h, Alarm: {1}h, Idle: {2}h</value>
+    <value># Run: {0}h, Alarm: {1}h, Idle: {2}h, Offline: {3}h</value>
   </data>
   <data name="Web_Csv_SumDevice" xml:space="preserve">
     <value># Device: {0}</value>
@@ -6694,6 +6700,27 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Validator_AddressReuseInDevice" xml:space="preserve">
     <value>Device "{0}": PLC address "{1}" is used by multiple items: {2}</value>
   </data>
+  <data name="Validator_RoleDefect" xml:space="preserve">
+    <value>Defect "{0}"</value>
+  </data>
+  <data name="Validator_RoleCounterAlarm" xml:space="preserve">
+    <value>Counter alarm "{0}"</value>
+  </data>
+  <data name="Validator_RoleSourceTrigger" xml:space="preserve">
+    <value>Data source "{0}" trigger</value>
+  </data>
+  <data name="Validator_RoleSourceValue" xml:space="preserve">
+    <value>Data source value "{0}"</value>
+  </data>
+  <data name="Validator_PrimaryStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Validator_PrimaryReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Validator_PrimaryRecipe" xml:space="preserve">
+    <value>Recipe</value>
+  </data>
   <data name="K928" xml:space="preserve">
     <value>Reset All</value>
   </data>
@@ -6735,5 +6762,71 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="Wo_AddTitle" xml:space="preserve">
+    <value>New Work Order</value>
+  </data>
+  <data name="Audit_Detail_Role" xml:space="preserve">
+    <value>Role={0}</value>
+  </data>
+  <data name="Audit_Detail_RoleMustChangePwd" xml:space="preserve">
+    <value>Role={0}, first-login password change required</value>
+  </data>
+  <data name="Audit_Detail_AutoLogin" xml:space="preserve">
+    <value>Auto login at startup</value>
+  </data>
+  <data name="Audit_Detail_AutoLoginFallback" xml:space="preserve">
+    <value>Auto login at startup (admin account missing, fell back to Operator)</value>
+  </data>
+  <data name="Audit_Detail_ReviewReport" xml:space="preserve">
+    <value>Production review report</value>
+  </data>
+  <data name="Audit_Detail_ReviewPdf" xml:space="preserve">
+    <value>Production review PDF</value>
+  </data>
+  <data name="Audit_Detail_AuditArchive" xml:space="preserve">
+    <value>Audit archive: {0} entries</value>
+  </data>
+  <data name="Audit_Detail_WoAdd" xml:space="preserve">
+    <value>Product={0} Target={1}</value>
+  </data>
+  <data name="Audit_Detail_PageExport" xml:space="preserve">
+    <value>Current page export Tab={0} Page={1}</value>
+  </data>
+  <data name="Hq_SnNotSupported" xml:space="preserve">
+    <value>SN traceability is not available in the current mode</value>
+  </data>
+  <data name="Hq_SnNotSupportedHint" xml:space="preserve">
+    <value>SN event recording is disabled, or the current remote connection has no SN query channel</value>
+  </data>
+  <data name="Web_App_Title" xml:space="preserve">
+    <value>Production Dashboard</value>
+  </data>
+  <data name="Web_Hq_StatusOffline" xml:space="preserve">
+    <value>Offline Time</value>
+  </data>
+  <data name="Web_Au_OperatorHint" xml:space="preserve">
+    <value>e.g. Remote / admin</value>
+  </data>
+  <data name="Web_Au_ActionHint" xml:space="preserve">
+    <value>e.g. Device.Update</value>
+  </data>
+  <data name="Web_St_RackSlot" xml:space="preserve">
+    <value>Rack / Slot</value>
+  </data>
+  <data name="Web_St_UnitId" xml:space="preserve">
+    <value>UnitId</value>
+  </data>
+  <data name="Web_St_BatchInt32" xml:space="preserve">
+    <value>BatchInt32 Limit</value>
+  </data>
+  <data name="Web_Val_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Web_Val_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Msg_PageExported" xml:space="preserve">
+    <value>Current page exported → {0}</value>
   </data>
 </root>

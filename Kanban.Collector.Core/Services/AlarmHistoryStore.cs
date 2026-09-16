@@ -5,40 +5,68 @@ using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Core.Services;
 
-public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryStore> logger, ActiveAlarmStateStore? activeStateStore = null) : IAlarmHistoryService
+public sealed class AlarmHistoryStore : IAlarmHistoryService, IDisposable
 {
-    private readonly ActiveAlarmStateStore _activeStateStore
-        = activeStateStore ?? new ActiveAlarmStateStore(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<ActiveAlarmStateStore>.Instance);
+    /// <summary>恢复文件大小上限：超过后停止追加并告警（有界且大声的丢失 &gt; 无限磁盘占用）。</summary>
+    private const long MaxRecoveryFileBytes = 100 * 1024 * 1024;
+
+    private readonly DatabaseProvider _db;
+    private readonly ILogger<AlarmHistoryStore> _logger;
+    private readonly ActiveAlarmStateStore _activeStateStore;
+    /// <summary>边沿事件异步批量写入（设计审查修复 2026-09-16）：此前采集热路径同步 SaveChanges，
+    /// SQLite 写锁竞争直接拖停采集循环；现入队即返回，后台批量落库，溢出/失败转存恢复文件回放。</summary>
+    private readonly AsyncBatchWriter<AlarmEventRecord> _writer;
+
+    public AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryStore> logger, ActiveAlarmStateStore? activeStateStore = null)
+    {
+        _db = db;
+        _logger = logger;
+        _activeStateStore = activeStateStore
+            ?? new ActiveAlarmStateStore(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<ActiveAlarmStateStore>.Instance);
+        _writer = new AsyncBatchWriter<AlarmEventRecord>(
+            "报警事件",
+            db.AppSettings.GetFilePath("alarm_events.recovery.jsonl"),
+            MaxRecoveryFileBytes,
+            InsertBatchAsync,
+            logger);
+    }
+
+    private async Task InsertBatchAsync(IReadOnlyList<AlarmEventRecord> batch, CancellationToken ct)
+    {
+        using var ctx = _db.CreateAlarmEventContext();
+        ctx.AlarmEvents.AddRange(batch);
+        await ctx.SaveChangesAsync(ct);
+    }
 
     public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
         => _activeStateStore.QueryActive(deviceId);
+
+    /// <summary>
+    /// 记录报警边沿事件（非阻塞）。返回 true = 已接收（入队或转存恢复文件，保证最终落库）；
+    /// false = 存储已释放。调用方的"写失败下轮重试"路径仅在释放后命中——正常 DB 故障由恢复文件兜底。
+    /// </summary>
     public bool LogAlarmEvent(string deviceId, string deviceName, string alarmId,
         string alarmName, string plcAddress, AlarmEventType eventType, DateTime eventTime,
         string? shiftName = null)
-    {
-        try
+        => _writer.TryAccept(new AlarmEventRecord
         {
-            using var ctx = db.CreateAlarmEventContext();
-            ctx.AlarmEvents.Add(new AlarmEventRecord
-            {
-                DeviceId = deviceId,
-                DeviceName = deviceName,
-                AlarmId = alarmId,
-                AlarmName = alarmName,
-                PlcAddress = plcAddress,
-                EventType = eventType,
-                EventTime = eventTime,
-                ShiftName = shiftName ?? string.Empty
-            });
-            ctx.SaveChanges();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "同步写入报警事件失败");
-            return false;
-        }
-    }
+            DeviceId = deviceId,
+            DeviceName = deviceName,
+            AlarmId = alarmId,
+            AlarmName = alarmName,
+            PlcAddress = plcAddress,
+            EventType = eventType,
+            EventTime = eventTime,
+            ShiftName = shiftName ?? string.Empty
+        });
+
+    /// <summary>排空在途写入（"写完立即可读"路径与测试用；生产热路径不调用）。</summary>
+    public void FlushPendingWrites() => _writer.Flush();
+
+    /// <summary>测试入口：异步写入器（等待落库/断言恢复文件）。</summary>
+    internal AsyncBatchWriter<AlarmEventRecord> WriterForTest => _writer;
+
+    public void Dispose() => _writer.Dispose();
 
     public List<AlarmEventRecord> QueryAlarmEvents(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
     {
@@ -48,14 +76,14 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "查询报警事件失败");
+            _logger.LogWarning(ex, "查询报警事件失败");
             return [];
         }
     }
 
     public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
     {
-        using var ctx = db.CreateAlarmEventContext();
+        using var ctx = _db.CreateAlarmEventContext();
         var query = HistoryQueryFilter.ApplyRange(
             ctx.AlarmEvents, from, to, deviceId, shiftName,
             nameof(AlarmEventRecord.EventTime), nameof(AlarmEventRecord.DeviceId), nameof(AlarmEventRecord.ShiftName));
@@ -69,7 +97,7 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
         DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
     {
-        using var ctx = db.CreateAlarmEventContext();
+        using var ctx = _db.CreateAlarmEventContext();
         var query = HistoryQueryFilter.ApplyRange(
             ctx.AlarmEvents, from, to, deviceId, shiftName,
             nameof(AlarmEventRecord.EventTime), nameof(AlarmEventRecord.DeviceId), nameof(AlarmEventRecord.ShiftName));
@@ -95,14 +123,15 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "查询最新报警事件失败");
+            _logger.LogWarning(ex, "查询最新报警事件失败");
             return null;
         }
     }
 
     public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId)
     {
-        using var ctx = db.CreateAlarmEventContext();
+        _writer.Flush(); // 写完立即可读：异步批量化后先排空在途批次（边沿量小，排空代价可忽略）
+        using var ctx = _db.CreateAlarmEventContext();
         return ctx.AlarmEvents
             .Where(e => e.AlarmId == alarmId)
             .OrderByDescending(e => e.EventTime)
@@ -115,7 +144,7 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
     {
         try
         {
-            using var ctx = db.CreateAlarmEventContext();
+            using var ctx = _db.CreateAlarmEventContext();
             var idSet = deviceIds.ToHashSet();
             return ctx.AlarmEvents.AsNoTracking()
                 .Where(e => idSet.Contains(e.DeviceId) && e.EventTime >= from && e.EventTime <= to)
@@ -126,17 +155,17 @@ public sealed class AlarmHistoryStore(DatabaseProvider db, ILogger<AlarmHistoryS
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "批量查询报警事件失败");
+            _logger.LogWarning(ex, "批量查询报警事件失败");
             return [];
         }
     }
 
     public int CleanupOldAlarmEvents(int retentionDays = 365) =>
         HistoryRetentionCleanup.DeleteBefore(
-            db.CreateAlarmEventContext,
+            _db.CreateAlarmEventContext,
             context => ((AlarmEventDbContext)context).AlarmEvents,
             record => record.EventTime,
             "报警事件",
             retentionDays,
-            logger);
+            _logger);
 }

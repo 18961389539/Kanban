@@ -65,11 +65,16 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
     [ObservableProperty]
     private string? _queryError;
 
+    /// <summary>
+    /// 当前查询结果（全部页，非仅当前页）中的成功条数。
+    /// 口径修复 2026-09-16：原先统计卡只数当前页 50/100 条，"成功率"被误读为整个查询结果的口径。
+    /// </summary>
     [ObservableProperty]
-    private int _pageSucceeded;
+    private int _succeededCount;
 
+    /// <summary>当前查询结果（全部页）中的失败条数。</summary>
     [ObservableProperty]
-    private int _pageFailed;
+    private int _failedCount;
 
     /// <summary>快捷时间预设：0=自定义 1=今天 2=近7天(默认) 3=近30天 4=本月；手动改日期自动回到 0。</summary>
     [ObservableProperty]
@@ -81,14 +86,14 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
 
     private bool _applyingPreset;
 
-    public double PageSuccessRate => Entries.Count == 0 ? 0 : PageSucceeded * 100d / Entries.Count;
+    public double SuccessRate => Total == 0 ? 0 : SucceededCount * 100d / Total;
 
     /// <summary>
-    /// 本页成功率展示文案（P0-4 修复 2026-09-02）：无记录时显示 "—"，
+    /// 成功率展示文案（P0-4 修复 2026-09-02）：无记录时显示 "—"，
     /// 避免空态下显示 "0.0%" 误导用户以为成功率真的为零（无数据 ≠ 成功率 0）。
     /// </summary>
     [ObservableProperty]
-    private string _pageSuccessRateDisplay = "—";
+    private string _successRateDisplay = "—";
 
     public AuditQueryViewModel(IAuditService auditService, IDialogService dialog)
     {
@@ -250,7 +255,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                 return HistoryQueryHelper.BuildCsv(rows);
             });
             await Task.Run(() => File.WriteAllText(path, csv, new UTF8Encoding(true)));
-            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: $"审计归档 {items.Count} 条");
+            AuditLog.Record("Export.Csv", "Export", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_AuditArchive, items.Count));
             _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
         }
         catch (Exception ex)
@@ -294,7 +299,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             var json = await Task.Run(() => JsonSerializer.Serialize(items,
                 new JsonSerializerOptions { WriteIndented = true }));
             await Task.Run(() => File.WriteAllText(path, json, new UTF8Encoding(true)));
-            AuditLog.Record("Export.Json", "Export", Path.GetFileName(path), detail: $"审计归档 {items.Count} 条");
+            AuditLog.Record("Export.Json", "Export", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_AuditArchive, items.Count));
             _dialog.NotifySuccess(string.Format(Strings.K631, items.Count));
         }
         catch (Exception ex)
@@ -351,6 +356,8 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             try
             {
                 var (items, total) = _auditService.QueryPaged(from, to, op, action, null, succeeded, page, pageSize);
+                // 统计卡口径 = 整个查询结果（与列表同一过滤条件），而非仅当前页
+                var (okCount, failCount) = _auditService.CountByResult(from, to, op, action, null, succeeded);
                 Dispatch(() =>
                 {
                     if (requestVersion != _queryVersion) return;
@@ -358,12 +365,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                     foreach (var item in items)
                         Entries.Add(item);
 
-                    PageSucceeded = items.Count(item => item.Succeeded);
-                    PageFailed = items.Count - PageSucceeded;
-                    PageSuccessRateDisplay = items.Count == 0 ? "—" : PageSuccessRate.ToString("F1") + "%";
-                    OnPropertyChanged(nameof(PageSuccessRate));
-
+                    SucceededCount = okCount;
+                    FailedCount = failCount;
                     Total = total;
+                    // 直接用本地变量计算，避免依赖属性赋值顺序（SuccessRate 依赖 Total）
+                    SuccessRateDisplay = total == 0 ? "—" : (okCount * 100d / total).ToString("F1") + "%";
+                    OnPropertyChanged(nameof(SuccessRate));
                     TotalPages = Math.Max(1, (total + pageSize - 1) / pageSize);
                     OnPropertyChanged(nameof(HasPreviousPage));
                     OnPropertyChanged(nameof(HasNextPage));
@@ -382,7 +389,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                     QueryError = ex.Message;
                     Total = 0;
                     TotalPages = 1;
-                    PageSuccessRateDisplay = "—";
+                    SuccessRateDisplay = "—";
                     OnPropertyChanged(nameof(HasPreviousPage));
                     OnPropertyChanged(nameof(HasNextPage));
                     OnPropertyChanged(nameof(PageSummary));

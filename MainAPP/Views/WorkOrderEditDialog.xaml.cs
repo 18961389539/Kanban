@@ -67,7 +67,8 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INoti
         {
             // 编辑模式：预填字段（拷贝值，避免修改调用方传入的对象）
             // template.Id == 0 时为"新增并预填设备"模式（如从设备管理页新增工单），标题显示"新增工单"
-            Title = template.Id == 0 ? "新增工单" : "编辑工单";
+            // 标题走本地化资源（原硬编码中文会覆盖 XAML 的 K552，非中文环境仍显示中文）
+            Title = template.Id == 0 ? Strings.Wo_AddTitle : Strings.K552;
             _orderNo = template.OrderNo;
             _productCode = template.ProductCode;
             _productName = template.ProductName;
@@ -83,7 +84,7 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INoti
         }
         else
         {
-            Title = "新增工单";
+            Title = Strings.Wo_AddTitle;
         }
 
         // 若未选中设备且列表非空，默认选中第一项

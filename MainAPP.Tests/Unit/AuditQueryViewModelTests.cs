@@ -141,8 +141,9 @@ public class AuditQueryViewModelTests
     }
 
     [Fact]
-    public async Task QueryCountsSucceededAndFailedOnCurrentPage()
+    public async Task QueryCountsSucceededAndFailedAcrossWholeResult()
     {
+        // 统计卡口径 = 整个查询结果（CountByResult），而非仅当前页
         var entries = new List<AuditEntry>
         {
             new() { Succeeded = true },
@@ -153,18 +154,21 @@ public class AuditQueryViewModelTests
                 Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(),
                 Arg.Any<int>(), Arg.Any<int>())
             .Returns((entries, 3));
+        _audit.CountByResult(Arg.Any<DateTime>(), Arg.Any<DateTime>(),
+                Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>())
+            .Returns((2, 1));
 
         var vm = NewVm();
         vm.QueryCommand.Execute(null);
 
         // 查询已后台化（审查修复 2026-08-13），轮询等待结果回写（无 Dispatcher 环境直接同步回写）
         var deadline = DateTime.UtcNow.AddSeconds(5);
-        while (vm.PageSucceeded != 2 && DateTime.UtcNow < deadline)
+        while (vm.SucceededCount != 2 && DateTime.UtcNow < deadline)
             await Task.Delay(10, TestContext.Current.CancellationToken);
 
-        Assert.Equal(2, vm.PageSucceeded);
-        Assert.Equal(1, vm.PageFailed);
-        Assert.Equal(66.67, vm.PageSuccessRate, 1);
+        Assert.Equal(2, vm.SucceededCount);
+        Assert.Equal(1, vm.FailedCount);
+        Assert.Equal(66.67, vm.SuccessRate, 1);
     }
 
     [Fact]

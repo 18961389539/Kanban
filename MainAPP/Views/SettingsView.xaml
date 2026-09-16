@@ -516,8 +516,13 @@
                                             AutomationProperties.Name="{x:Static resources:Strings.K115}"
                                             IsEnabled="{Binding DraftSettings.EnableAutomaticDailyReport}"
                                             SelectedTime="{Binding DraftSettings.AutomaticDailyReportTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                            TimeFormat="HH:mm"
                                             MinHeight="40"
-                                            ToolTip="{x:Static resources:Strings.K538}" />
+                                            ToolTip="{x:Static resources:Strings.K538}">
+                                            <hc:TimePicker.Clock>
+                                                <hc:ListClock TimeFormat="HH:mm" />
+                                            </hc:TimePicker.Clock>
+                                        </hc:TimePicker>
                                         <CheckBox
                                             Margin="0,16,0,0"
                                             AutomationProperties.Name="{x:Static resources:Strings.Settings_DailyReportMaster}"
@@ -992,8 +997,13 @@
                                                                         hc:InfoElement.TitlePlacement="Top"
                                                                         AutomationProperties.Name="{x:Static resources:Strings.K543}"
                                                                         SelectedTime="{Binding StartTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        TimeFormat="HH:mm"
                                                                         MinHeight="40"
-                                                                        ToolTip="{x:Static resources:Strings.K118}" />
+                                                                        ToolTip="{x:Static resources:Strings.K118}">
+                                                                        <hc:TimePicker.Clock>
+                                                                            <hc:ListClock TimeFormat="HH:mm" />
+                                                                        </hc:TimePicker.Clock>
+                                                                    </hc:TimePicker>
                                                                     <TextBlock
                                                                         Grid.Column="1"
                                                                         Margin="0,0,0,8"
@@ -1007,8 +1017,13 @@
                                                                         hc:InfoElement.TitlePlacement="Top"
                                                                         AutomationProperties.Name="{x:Static resources:Strings.K545}"
                                                                         SelectedTime="{Binding EndTime, Converter={StaticResource TimeSpanToDateTimeConverter}}"
+                                                                        TimeFormat="HH:mm"
                                                                         MinHeight="40"
-                                                                        ToolTip="{x:Static resources:Strings.K118}" />
+                                                                        ToolTip="{x:Static resources:Strings.K118}">
+                                                                        <hc:TimePicker.Clock>
+                                                                            <hc:ListClock TimeFormat="HH:mm" />
+                                                                        </hc:TimePicker.Clock>
+                                                                    </hc:TimePicker>
                                                                 </Grid>
                                                             </StackPanel>
                                                         </Border>

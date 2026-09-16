@@ -80,10 +80,11 @@ public partial class HistoryQuery
 
     private void OnToChanged(ChangeEventArgs e) => ToText = e.Value?.ToString() ?? "";
 
-    /// <summary>快捷时间范围（与 WPF HistoryQueryViewModel 的 1..8 口径对齐，Web 取到"当前时刻"而非"当日末"）。</summary>
+    /// <summary>快捷时间范围（与 WPF HistoryQueryViewModel 的 1..8 口径对齐，Web 取到"当前时刻"而非"当日末"）。
+    /// "当前时刻"用工厂墙钟（Dashboard.ServerNow）——浏览器时区与工厂不同时，"今天/昨天"仍按工厂日历计算。</summary>
     private void ApplyQuickRange(int index)
     {
-        var now = DateTime.Now;
+        var now = Dashboard.ServerNow;
         (FromText, ToText) = index switch
         {
             1 => (now.Date.ToString(TimeFormat), now.ToString(TimeFormat)),                                  // 今天
@@ -128,9 +129,11 @@ public partial class HistoryQuery
         }
     }
 
+    // 导出口径 = 窗口全量：产量 Tab 须等全量分析完成（_prodWindow 就绪）才允许导出，
+    // 否则表格页已出但全量未回，会导出空 CSV。
     private bool CanExportCurrentTab => TabIndex switch
     {
-        0 => ProdHasQueried && ProdTotalCount > 0 && !ProdIsLoading,
+        0 => ProdHasQueried && ProdTotalCount > 0 && !ProdIsLoading && ProdAnalysisDone,
         1 => StHasQueried && StTotalCount > 0 && !StIsLoading,
         2 => AlHasQueried && AlTotalCount > 0 && !AlIsLoading,
         _ => OeHasQueried && !OeIsLoading,
@@ -186,7 +189,8 @@ public partial class HistoryQuery
         return (rows, totalPages);
     }
 
-    private static string Pct(double v) => $"{v:P0}";
+    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致；此前本页 P0 与复盘页 P1 不一致）
+    private static string Pct(double v) => UiPalette.Pct(v);
 
     /// <summary>设备状态字 → 当前语言文本（对齐 WPF HistoryQueryHelper.GetStateText）。</summary>
     private static string StateText(int state) => state switch
@@ -194,6 +198,7 @@ public partial class HistoryQuery
         (int)Kanban.Contracts.Enums.DeviceStatus.Running => L.T("Status_Running"),
         (int)Kanban.Contracts.Enums.DeviceStatus.Alarm => L.T("Status_Alarm"),
         (int)Kanban.Contracts.Enums.DeviceStatus.Paused => L.T("Status_Paused"),
+        (int)Kanban.Contracts.Enums.DeviceStatus.Offline => L.T("Status_Offline"),
         _ => L.T("Hq_StateUnknown"),
     };
 
