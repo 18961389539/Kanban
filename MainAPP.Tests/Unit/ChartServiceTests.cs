@@ -249,6 +249,45 @@ public class ChartServiceTests
         Assert.Contains("NG", pie.Slices[1].Label);
     }
 
+    [Fact]
+    public void BuildShiftQualityTrendChart_Empty_ReturnsModelWithoutSeries()
+    {
+        var chart = ChartService.BuildShiftQualityTrendChart([]);
+        Assert.NotNull(chart);
+        Assert.Empty(chart.Series);
+    }
+
+    [Fact]
+    public void BuildShiftQualityTrendChart_Points_DrawsQualityAndTarget()
+    {
+        var now = DateTime.Today.AddHours(8);
+        var shiftEnd = now.AddHours(8);
+        var chart = ChartService.BuildShiftQualityTrendChart(
+        [
+            (now, 0.98),
+            (now.AddHours(1), 0.96),
+            (now.AddHours(2), 0.94),
+        ], 0.95, now, shiftEnd);
+        var lines = chart.Series.OfType<LineSeries>().ToList();
+        Assert.Equal(2, lines.Count);
+        Assert.Equal(3, lines[0].Points.Count);
+        Assert.Equal(2, lines[1].Points.Count);
+        var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
+        Assert.Equal(DateTimeAxis.ToDouble(now), xAxis.Minimum);
+        Assert.Equal(DateTimeAxis.ToDouble(shiftEnd), xAxis.Maximum);
+    }
+
+    [Fact]
+    public void BuildShiftQualityTrendChart_SinglePoint_PadsTimeAxis()
+    {
+        var now = DateTime.Today.AddHours(8);
+        var shiftEnd = now.AddHours(8);
+        var chart = ChartService.BuildShiftQualityTrendChart([(now, 0.97)], 0.95, now, shiftEnd);
+        var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
+        Assert.Equal(DateTimeAxis.ToDouble(now), xAxis.Minimum);
+        Assert.Equal(DateTimeAxis.ToDouble(shiftEnd), xAxis.Maximum);
+    }
+
     // ═══════════════ BuildStatusGanttChart ═══════════════
 
     [Fact]

@@ -23,4 +23,10 @@ public sealed record ShiftProgressDto
 
     /// <summary>进度百分比文本（如 "70%"）。</summary>
     public string Pct { get; init; } = "";
+
+    /// <summary>当前班次开始时刻（工厂墙钟；非班次时段为 null）。</summary>
+    public DateTime? ShiftStart { get; init; }
+
+    /// <summary>当前班次结束时刻（工厂墙钟；非班次时段为 null）。</summary>
+    public DateTime? ShiftEnd { get; init; }
 }

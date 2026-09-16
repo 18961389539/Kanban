@@ -26,6 +26,13 @@ public static class SnapshotMetrics
         return total > 0 ? (double)ng / total : 0;
     }
 
+    /// <summary>良品率（OK / 总产量）；总产量为 0 返回 0，避免无产量时显示 100%。</summary>
+    public static double QualityRate(int ok, int ng)
+    {
+        var total = ok + ng;
+        return total > 0 ? (double)ok / total : 0;
+    }
+
     /// <summary>
     /// 时长占比 = value / (运行+报警+暂停[+离线])；总时长为 0 返回 0。offlineTime 仅用于展示口径，不参与 OEE。
     /// </summary>

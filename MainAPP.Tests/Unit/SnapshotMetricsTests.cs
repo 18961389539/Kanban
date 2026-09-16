@@ -49,6 +49,14 @@ public class SnapshotMetricsTests
     public void NgRate_VariousInputs(int ok, int ng, double expected)
         => Assert.Equal(expected, SnapshotMetrics.NgRate(ok, ng), precision: 6);
 
+    [Theory]
+    [InlineData(0, 0, 0.0)]
+    [InlineData(100, 0, 1.0)]
+    [InlineData(100, 100, 0.5)]
+    [InlineData(0, 100, 0.0)]
+    public void QualityRate_VariousInputs(int ok, int ng, double expected)
+        => Assert.Equal(expected, SnapshotMetrics.QualityRate(ok, ng), precision: 6);
+
     // ──────────── TimeRatio ────────────
 
     [Fact]

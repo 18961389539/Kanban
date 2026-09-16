@@ -38,4 +38,7 @@ public static class FormatHelper
 
     /// <summary>班次配置时刻：TimeSpan.Hours 为 0–23，按 HH:mm 输出。勿用 DateTime 的 hh 自定义格式。</summary>
     public static string FormatClock(TimeSpan time) => $"{time.Hours:D2}:{time.Minutes:D2}";
+
+    /// <summary>设备状态卡右上角日期时钟：月-日 + 24 小时制时分秒。</summary>
+    public static string FormatDeviceStatusClock(DateTime time) => time.ToString("MM-dd HH:mm:ss");
 }

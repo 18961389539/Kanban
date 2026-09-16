@@ -35,7 +35,9 @@
         DataContext 由父级 HomeView 传入 HomeViewModel。
         共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
     -->
-    <Border Style="{StaticResource DashboardCard}">
+    <Border Style="{StaticResource DashboardCard}"
+            ToolTipService.InitialShowDelay="300"
+            ToolTipService.ShowDuration="30000">
         <!--  内边距 20→16：紧凑化以容纳 2×3 看板在 1080 设计高度内的完整展示（修复 2026-08-30，见 HomeView.xaml 说明）  -->
         <Grid Margin="16">
             <Grid.RowDefinitions>
@@ -51,7 +53,8 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <!-- 当前班次 -->
                     <Border Margin="0,0,8,0" Padding="6,4" CornerRadius="8"
-                            Background="#1B2431" BorderBrush="#2C3A4D" BorderThickness="1">
+                            Background="#1B2431" BorderBrush="#2C3A4D" BorderThickness="1"
+                            ToolTip="{Binding ShiftTooltip}">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -75,7 +78,8 @@
                     </Border>
                     <!-- 日期 + 时钟 -->
                     <Border Padding="6,4" CornerRadius="8"
-                            Background="#1B2431" BorderBrush="#2C3A4D" BorderThickness="1">
+                            Background="#1B2431" BorderBrush="#2C3A4D" BorderThickness="1"
+                            ToolTip="{Binding ClockTooltip}">
                         <TextBlock VerticalAlignment="Center" FontFamily="Consolas"
                                    FontSize="{DynamicResource FontSizeCaption}"
                                    Foreground="{StaticResource SecondaryTextBrush}"
@@ -123,7 +127,7 @@
                         <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                             <Border Style="{StaticResource KpiCardSecondary}">
                                 <StackPanel>
-                                    <StackPanel Margin="0,0,0,12">
+                                    <StackPanel Margin="0,0,0,12" ToolTip="{Binding RunTimeTooltip}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -148,7 +152,7 @@
                                                      Foreground="{StaticResource SuccessBrush}"
                                                      Value="{Binding RunTimeRatio, Mode=OneWay}" />
                                     </StackPanel>
-                                    <StackPanel Margin="0,0,0,12">
+                                    <StackPanel Margin="0,0,0,12" ToolTip="{Binding AlarmTimeTooltip}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -173,7 +177,7 @@
                                                      Foreground="{StaticResource StatusAlarmBrush}"
                                                      Value="{Binding AlarmTimeRatio, Mode=OneWay}" />
                                     </StackPanel>
-                                    <StackPanel Margin="0,0,0,12">
+                                    <StackPanel Margin="0,0,0,12" ToolTip="{Binding PausedTimeTooltip}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -198,7 +202,7 @@
                                                      Foreground="{StaticResource StatusPauseBrush}"
                                                      Value="{Binding PausedTimeRatio, Mode=OneWay}" />
                                     </StackPanel>
-                                    <StackPanel Margin="0,0,0,12">
+                                    <StackPanel Margin="0,0,0,12" ToolTip="{Binding OfflineTimeTooltip}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -223,10 +227,25 @@
                                                      Foreground="{StaticResource StatusIdleBrush}"
                                                      Value="{Binding OfflineTimeRatio, Mode=OneWay}" />
                                     </StackPanel>
-                                    <!-- 设备健康 -->
+                                    <!-- 目标周期（秒/件，设备配置） -->
                                     <Border Margin="0,10,0,0" Padding="0,10,0,0"
                                             BorderBrush="#2D3548" BorderThickness="0,1,0,0"
-                                            ToolTip="{Binding DeviceHealthScoreTooltip}">
+                                            ToolTip="{Binding TargetCycleTooltip}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                       Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K017}" />
+                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                                       Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding TargetCycleDisplay}" />
+                                        </Grid>
+                                    </Border>
+                                    <!-- 实际周期（秒/件，实时速度换算） -->
+                                    <Border Margin="0,10,0,0" Padding="0,10,0,0"
+                                            BorderBrush="#2D3548" BorderThickness="0,1,0,0"
+                                            ToolTip="{Binding ActualCycleTooltip}">
                                         <StackPanel>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -234,36 +253,28 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Home_DeviceHealth}" />
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock VerticalAlignment="Center" FontSize="22" FontWeight="Bold"
-                                                               Foreground="{Binding DeviceHealthBrush}"
-                                                               Text="{Binding DeviceHealthScoreText}" />
-                                                    <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="999"
-                                                            Background="{Binding DeviceHealthBrush}">
-                                                        <TextBlock Foreground="White" FontSize="11" FontWeight="Bold"
-                                                                   Text="{Binding DeviceHealthLevel}" />
-                                                    </Border>
-                                                </StackPanel>
+                                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K050}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                                           Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ActualCycleDisplay}" />
                                             </Grid>
-                                            <ProgressBar Style="{StaticResource RecessedProgressBar}" Maximum="100"
-                                                         Foreground="{Binding DeviceHealthBrush}"
-                                                         Value="{Binding DeviceHealthScore, Mode=OneWay}" />
+                                            <TextBlock Margin="0,4,0,0" HorizontalAlignment="Right"
+                                                       FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
+                                                       Text="{Binding CycleDiffText}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsCycleSlow}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding CycleDiffText}" Value="">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </StackPanel>
-                                    </Border>
-                                    <!-- 总时长 -->
-                                    <Border Margin="0,10,0,0" Padding="0,10,0,0"
-                                            BorderBrush="#2D3548" BorderThickness="0,1,0,0">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
-                                                       Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Home_TotalDuration}" />
-                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
-                                                       Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding TotalTimeFullFormatted}" />
-                                        </Grid>
                                     </Border>
                                 </StackPanel>
                             </Border>

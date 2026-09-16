@@ -1,6 +1,7 @@
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
+using Kanban.Contracts.Metrics;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Web;
@@ -23,11 +24,13 @@ public sealed class DashboardState : IAsyncDisposable
     private readonly ILogger<DashboardState> _logger;
     private readonly Dictionary<string, DeviceSnapshotDto> _snapshots = new();
     private readonly Dictionary<string, Queue<SpeedPoint>> _speedHistoryByDevice = new();
+    private readonly Dictionary<string, List<(DateTime Time, double Quality)>> _qualityHistoryByDevice = new();
+    private readonly Dictionary<string, string> _qualityShiftKeyByDevice = new();
     private readonly Dictionary<string, WorkOrderDto?> _workOrdersByDevice = new();
     private readonly Dictionary<string, IReadOnlyList<DeviceDefectCountDto>> _defectTopByDevice = new();
     private readonly Dictionary<string, DeviceDefectSummaryDto> _defectSummaryByDevice = new();
     private readonly Dictionary<string, DeviceShiftSummaryDto> _lastShiftsByDevice = new();
-    private readonly Dictionary<int, int> _workOrderOkById = new();
+    private readonly Dictionary<int, (int Ok, int Ng)> _workOrderCountsById = new();
     private readonly Dictionary<string, int> _trackedRunningWorkOrderIdByDevice = new();
     private int _lastSummaryWorkOrderId = -1;
     private DateTime _lastSummaryQueryAt = DateTime.MinValue;
@@ -181,11 +184,18 @@ public sealed class DashboardState : IAsyncDisposable
 
     /// <summary>Running 工单的工单内 OK 产量（Hub 差分聚合缓存）；无 Running 或尚未查询时 null。</summary>
     public int? GetWorkOrderOkCount(string? deviceId)
+        => GetWorkOrderCounts(deviceId)?.Ok;
+
+    /// <summary>Running 工单的工单内 NG 产量（Hub 差分聚合缓存）；无 Running 或尚未查询时 null。</summary>
+    public int? GetWorkOrderNgCount(string? deviceId)
+        => GetWorkOrderCounts(deviceId)?.Ng;
+
+    private (int Ok, int Ng)? GetWorkOrderCounts(string? deviceId)
     {
         var wo = GetWorkOrder(deviceId);
         if (wo is null || wo.Status != WorkOrderStatus.Running) return null;
         lock (_lock)
-            return _workOrderOkById.TryGetValue(wo.Id, out var ok) ? ok : null;
+            return _workOrderCountsById.TryGetValue(wo.Id, out var counts) ? counts : null;
     }
 
     /// <summary>节流刷新 Running 工单产量（2s，对齐 WPF HomeViewModel.RefreshWorkOrderSummary）。</summary>
@@ -214,7 +224,7 @@ public sealed class DashboardState : IAsyncDisposable
                 CancellationToken.None);
             lock (_lock)
             {
-                _workOrderOkById[wo.Id] = summary.OkCount;
+                _workOrderCountsById[wo.Id] = (summary.OkCount, summary.NgCount);
                 _lastSummaryWorkOrderId = wo.Id;
                 _lastSummaryQueryAt = DateTime.Now;
             }
@@ -295,6 +305,17 @@ public sealed class DashboardState : IAsyncDisposable
     {
         lock (_lock)
             return _speedHistoryByDevice.TryGetValue(deviceId, out var q) ? q.ToList() : [];
+    }
+
+    /// <summary>指定设备当前班次良率点（会话累计 OK/(OK+NG)，最多 80 点覆盖整班）。</summary>
+    public IReadOnlyList<QualityPoint> GetQualityHistory(string deviceId)
+    {
+        lock (_lock)
+        {
+            if (!_qualityHistoryByDevice.TryGetValue(deviceId, out var list) || list.Count == 0)
+                return [];
+            return list.Select(p => new QualityPoint(p.Time, p.Quality)).ToList();
+        }
     }
 
     // ──────────── 查询连接（懒连接，历史查询等 Invoke 专用，无长驻订阅） ────────────
@@ -530,6 +551,8 @@ public sealed class DashboardState : IAsyncDisposable
             {
                 if (_snapshots.Remove(snapshot.DeviceId))
                 {
+                    _qualityHistoryByDevice.Remove(snapshot.DeviceId);
+                    _qualityShiftKeyByDevice.Remove(snapshot.DeviceId);
                     _sortedSnapshotsDirty = true;
                     _statusSummaryDirty = true;
                 }
@@ -567,6 +590,8 @@ public sealed class DashboardState : IAsyncDisposable
             }
             queue.Enqueue(new SpeedPoint(DateTime.Now, speed));
             while (queue.Count > 120) queue.Dequeue();
+
+            RecordShiftQuality(snapshot);
         }
         _client.MarkDataReceived(); // 统一数据新鲜度来源
     }
@@ -599,7 +624,7 @@ public sealed class DashboardState : IAsyncDisposable
                 if (_trackedRunningWorkOrderIdByDevice.TryGetValue(d.DeviceId, out var prevId) && prevId != runningId)
                 {
                     _lastSummaryWorkOrderId = -1;
-                    if (prevId > 0) _workOrderOkById.Remove(prevId);
+                    if (prevId > 0) _workOrderCountsById.Remove(prevId);
                 }
                 _trackedRunningWorkOrderIdByDevice[d.DeviceId] = runningId;
             }
@@ -883,6 +908,32 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
+    /// <summary>班次良率采样：换班清空；20s 内更新末点，否则追加，再压到 80 点。</summary>
+    private void RecordShiftQuality(DeviceSnapshotDto snapshot)
+    {
+        var shiftName = _shiftProgress?.Name ?? "";
+        var shiftKey = string.IsNullOrEmpty(shiftName) ? "" : $"{snapshot.DeviceId}|{shiftName}";
+        if (_qualityShiftKeyByDevice.TryGetValue(snapshot.DeviceId, out var oldKey)
+            && !string.IsNullOrEmpty(oldKey)
+            && !string.IsNullOrEmpty(shiftKey)
+            && !string.Equals(oldKey, shiftKey, StringComparison.Ordinal))
+        {
+            _qualityHistoryByDevice.Remove(snapshot.DeviceId);
+        }
+        if (!string.IsNullOrEmpty(shiftKey))
+            _qualityShiftKeyByDevice[snapshot.DeviceId] = shiftKey;
+
+        if (!_qualityHistoryByDevice.TryGetValue(snapshot.DeviceId, out var history))
+            history = [];
+
+        var hasOutput = snapshot.TotalOkProduction + snapshot.TotalNgProduction > 0;
+        _qualityHistoryByDevice[snapshot.DeviceId] = ShiftQualityTrendBuilder.MergeLive(
+            history,
+            snapshot.Timestamp,
+            snapshot.QualityRate,
+            hasOutput);
+    }
+
     public async ValueTask DisposeAsync()
     {
         _disposed = true; // 阻止 Closed 事件在释放过程中触发新的重试循环
@@ -908,3 +959,6 @@ public sealed class DeviceSnapshotStatusSummary
 
 /// <summary>速度趋势点（时间 + 实时速度 件/小时）。</summary>
 public sealed record SpeedPoint(DateTime Time, double Speed);
+
+/// <summary>当前班次良率点（时间 + 会话累计良率）。</summary>
+public sealed record QualityPoint(DateTime Time, double Quality);

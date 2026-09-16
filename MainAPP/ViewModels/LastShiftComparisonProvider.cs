@@ -15,7 +15,7 @@ public sealed class LastShiftComparisonProvider : IDisposable
 
     private readonly IPlcDataAcquisitionService _plcService;
     private readonly IRuntimeMode _runtimeMode;
-    private readonly ProductionHistoryStore? _historyStore;
+    private readonly IProductionHistoryReader? _productionHistory;
     private readonly AppSettings _appSettings;
 
     private readonly Dictionary<string, DateTime> _fallbackAttemptAtByKey = new(StringComparer.OrdinalIgnoreCase);
@@ -24,12 +24,12 @@ public sealed class LastShiftComparisonProvider : IDisposable
     public LastShiftComparisonProvider(
         IPlcDataAcquisitionService plcService,
         IRuntimeMode runtimeMode,
-        ProductionHistoryStore? historyStore,
+        IProductionHistoryReader? productionHistory,
         AppSettings appSettings)
     {
         _plcService = plcService;
         _runtimeMode = runtimeMode;
-        _historyStore = historyStore;
+        _productionHistory = productionHistory;
         _appSettings = appSettings;
     }
 
@@ -48,7 +48,7 @@ public sealed class LastShiftComparisonProvider : IDisposable
             return;
         }
 
-        if (_historyStore == null || _runtimeMode.IsRemote)
+        if (_productionHistory == null || _runtimeMode.IsRemote)
         {
             onResult(new LastShiftSnapshot("", 0, 0));
             return;
@@ -76,7 +76,7 @@ public sealed class LastShiftComparisonProvider : IDisposable
             ProductionLog? lastOther;
             try
             {
-                var logs = _historyStore.QueryProductionLogs(now.AddDays(-1), now, deviceId);
+                var logs = _productionHistory.QueryProductionLogs(now.AddDays(-1), now, deviceId);
                 lastOther = FindLastOtherShiftLog(logs, currentShift?.Name);
             }
             catch (Exception ex)

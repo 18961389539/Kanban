@@ -276,7 +276,8 @@ internal class Program
             ReadInt, ReadBool,
             writeFloat: WriteFloatCallback,
             writeString: WriteStringCallback,
-            registerOffset: idx * 50)).ToList();
+            // 每台 10 字（Float32×4 + 触发 Int32），使 20 台模拟量落在 D600-D799，不踩缺陷 D8xx。
+            registerOffset: idx * 10)).ToList();
         foreach (var sim in _simulators)
             sim.Log += msg => SimLog.Info(msg);
 
@@ -974,7 +975,7 @@ internal class Program
             ReadInt, ReadBool,
             writeFloat: WriteFloatCallback,
             writeString: WriteStringCallback,
-            registerOffset: idx * 50)).ToList();
+            registerOffset: idx * 10)).ToList();
         foreach (var sim in _simulators)
         {
             sim.Log += msg => SimLog.Info(msg);

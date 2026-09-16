@@ -260,10 +260,33 @@ public class HomeViewModelTests : IDisposable
             TargetQuantity = 100,
         };
         vm.CurrentWorkOrder = order;
-        vm.ApplyWorkOrderSummaryForTest(order, 42);
+        vm.ApplyWorkOrderSummaryForTest(order, 42, 8);
 
         Assert.Contains("42", vm.WorkOrderOkProductionDisplay);
         Assert.DoesNotContain("100", vm.WorkOrderOkProductionDisplay);
+        Assert.Equal("8", vm.WorkOrderNgProductionDisplay);
+        Assert.Equal(0.84, vm.WorkOrderQualityRate, precision: 6);
+        Assert.Contains("84", vm.WorkOrderQualityDisplay);
+    }
+
+    [Fact]
+    public void WorkOrderSummaryDisplay_EmptyOutput_HidesQualityRate()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings, null!, _selection);
+        var order = new WorkOrder
+        {
+            Id = 1,
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+        vm.CurrentWorkOrder = order;
+        vm.ApplyWorkOrderSummaryForTest(order, 0, 0);
+
+        Assert.Equal("0", vm.WorkOrderNgProductionDisplay);
+        Assert.Equal("—", vm.WorkOrderQualityDisplay);
     }
 
     [Fact]

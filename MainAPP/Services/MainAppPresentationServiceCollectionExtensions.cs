@@ -68,6 +68,7 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<IDeviceSelectionService>(), sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetRequiredService<IDialogService>(), sp.GetRequiredService<IWorkOrderService>(),
             sp.GetRequiredService<IRuntimeMode>(),
+            productionHistory: sp.GetRequiredService<IProductionHistoryReader>(),
             remoteRuntimeSink: sp.GetService<RemoteRuntimeSink>(),
             alarmSessionMute: sp.GetRequiredService<IAlarmSessionMute>(),
             alarmHistoryService: sp.GetRequiredService<IHistoryService>(),

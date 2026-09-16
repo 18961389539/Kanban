@@ -1261,7 +1261,7 @@
     <value>状態データがありません</value>
   </data>
   <data name="K319" xml:space="preserve">
-    <value>総合効率OEE</value>
+    <value>OEE設備総合使用効率</value>
   </data>
   <data name="K320" xml:space="preserve">
     <value>OEEデータがありません</value>
@@ -1273,7 +1273,7 @@
     <value>B:性能達成率</value>
   </data>
   <data name="K323" xml:space="preserve">
-    <value>現在の生産状態</value>
+    <value>現在の生産進捗状態</value>
   </data>
   <data name="K324" xml:space="preserve">
     <value>現在速度</value>
@@ -1288,7 +1288,7 @@
     <value>工単完了</value>
   </data>
   <data name="K328" xml:space="preserve">
-    <value>C:良品率概況</value>
+    <value>当シフト良品率</value>
   </data>
   <data name="K329" xml:space="preserve">
     <value>リアルタイム故障</value>
@@ -3766,13 +3766,13 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>設備状態</value>
   </data>
   <data name="Web_Card_ProdStatus" xml:space="preserve">
-    <value>現在の生産状態</value>
+    <value>現在の生産進捗状態</value>
   </data>
   <data name="Web_Card_Alarms" xml:space="preserve">
     <value>リアルタイム故障</value>
   </data>
   <data name="Web_Card_Oee" xml:space="preserve">
-    <value>OEE 概要</value>
+    <value>OEE設備総合使用効率</value>
   </data>
   <data name="Web_Card_Output" xml:space="preserve">
     <value>生産明細</value>
@@ -6828,5 +6828,86 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Msg_PageExported" xml:space="preserve">
     <value>現在のページをエクスポートしました → {0}</value>
+  </data>
+  <data name="Home_Tip_SpeedAchievement" xml:space="preserve">
+    <value>速度達成率 = 現在速度 ÷ 目標能力（0～100% に制限）。\n現在速度 = (OK+NG) ÷ 稼働時間（時間）；稼働状態のみ累計し、警報/待機中は変わりません。稼働が 5 秒未満なら 0。\n現在：{0:N0} 個/h ÷ {1:N0} 個/h = {2:P0}\n色：≥90% 緑 / ≥70% 黄 / &lt;70% 赤。工単完成率ではありません。</value>
+  </data>
+  <data name="Home_Tip_RealtimeSpeed" xml:space="preserve">
+    <value>現在速度（個/時）= (OK + NG) ÷ 稼働時間（時間）。\n稼働時間は運転中のみ累計。警報/待機中は生産も時間も増えないため速度は維持。稼働 5 秒未満は 0（起動直後の歪み防止）。\n現在：({0:N0}+{1:N0}) ÷ {2} = {3} 個/h</value>
+  </data>
+  <data name="Home_Tip_WorkOrderProgress" xml:space="preserve">
+    <value>工単完成率 = 工単内 OK 生産量 ÷ 計画数量（100% 上限）。\n工単時間窓の合格数（作業指示ページと同じ）。セッション累計でも速度達成率でもありません。\n現在：{0:N0} / {1:N0} 個 = {2}</value>
+  </data>
+  <data name="Home_Tip_WorkOrderTarget" xml:space="preserve">
+    <value>工単設定数量 = この工単の計画生産数。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Home_Tip_WorkOrderOk" xml:space="preserve">
+    <value>工単生産済 = 工単時間窓の OK 数（セッション累計ではなく、NG を含まない）。\n現在：{0} 個</value>
+  </data>
+  <data name="Home_WorkOrderNg" xml:space="preserve">
+    <value>工単不良</value>
+  </data>
+  <data name="Home_WorkOrderQuality" xml:space="preserve">
+    <value>工単良品率</value>
+  </data>
+  <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
+    <value>工単不良 = 工単時間窓の NG 数（セッション累計ではない）。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Home_Tip_WorkOrderQuality" xml:space="preserve">
+    <value>工単良品率 = 工単内 OK ÷ (OK+NG)。生産なしは —。目標 95%。\n現在：{0:N0} / {1:N0} = {2}\n品質カードのセッション累計良品率とは口径が異なります。</value>
+  </data>
+  <data name="Home_Tip_TargetCycle" xml:space="preserve">
+    <value>目標サイクル（秒/個）= 3600 ÷ デバイス目標能力（個/時）。デバイス設定値。\n目標能力 {0:N0} 個/h → {1}</value>
+  </data>
+  <data name="Home_Tip_ActualCycle" xml:space="preserve">
+    <value>実サイクル（秒/個）= 3600 ÷ 現在速度。速度 0 のときは —。\n現在速度 {0:N0} 個/h → {1}\n目標との差：{2}</value>
+  </data>
+  <data name="Home_Tip_RunTime" xml:space="preserve">
+    <value>稼働時間：運転状態の累計。比率の分母 = 運転+警報+待機+オフライン。\n現在：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_AlarmTime" xml:space="preserve">
+    <value>警報時間：警報状態の累計。比率の分母にオフラインを含む。\n現在：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_PausedTime" xml:space="preserve">
+    <value>待機時間：一時停止/待機状態の累計。比率の分母にオフラインを含む。\n現在：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_OfflineTime" xml:space="preserve">
+    <value>オフライン時間：通信途絶・収集停止・状態語オフラインの累計。表示比率には含むが、OEE 可動率の分母には含めない。\n現在：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_Clock" xml:space="preserve">
+    <value>ローカル壁時計。形式 月-日 時:分:秒。ホーム表示中は毎秒更新。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_Shift" xml:space="preserve">
+    <value>現在のシフト名と時間帯。パーセントは経過 / シフト全長。\n{0}\n{1}</value>
+  </data>
+  <data name="Home_Tip_Oee" xml:space="preserve">
+    <value>OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / &lt;60% 赤。</value>
+  </data>
+  <data name="Home_Tip_Availability" xml:space="preserve">
+    <value>可動率 = 稼働時間 ÷ (稼働+警報)。待機とオフラインは分母に含めない。\n現在：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Performance" xml:space="preserve">
+    <value>性能率 = 実績総生産(OK+NG) ÷ (目標能力 × 稼働時間)。\n現在：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Quality" xml:space="preserve">
+    <value>良品率 = OK ÷ (OK+NG)。目標 95%：達成で緑、未達で赤。\n現在：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_TotalOutput" xml:space="preserve">
+    <value>総生産 = OK + NG（セッション累計、不良含む）。\n現在：OK {0:N0} + NG {1:N0} = {2:N0} 個</value>
+  </data>
+  <data name="Home_Tip_NgRate" xml:space="preserve">
+    <value>不良率 = NG ÷ (OK+NG)。低いほど良い。生産なしは 0。\n現在：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Home_Tip_QualityGap" xml:space="preserve">
+    <value>良品率目標 95% との差。正=目標超過、負=未達。\n現在の良品率 {0}、差 {1}</value>
+  </data>
+  <data name="Home_Tip_QualityTrend" xml:space="preserve">
+    <value>折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。シフト生産スナップショットに現在値を接続。</value>
+  </data>
+  <data name="Home_Tip_CurrentShift" xml:space="preserve">
+    <value>当シフトのセッション累計 OK / NG。矢印は前シフトとの差。\nOK {0}   NG {1}</value>
+  </data>
+  <data name="Home_Tip_LastShift" xml:space="preserve">
+    <value>直前の完了シフトの生産集計。\n{0}\nOK {1:N0}   NG {2:N0}</value>
   </data>
 </root>

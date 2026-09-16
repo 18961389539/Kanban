@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Collections.ObjectModel;
 using MainAPP.Resources;
 using System.ComponentModel;
@@ -48,6 +49,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IAlarmHistoryService? _alarmHistoryService;
     private readonly IDefectHistoryReader? _defectHistoryReader;
     private readonly PageRefreshTimer _liveTimer;
+    private readonly PageRefreshTimer _clockTimer;
 
     /// <summary>
     /// 设备快照缓存：仅在 Devices.CollectionChanged 时重建，RefreshActiveAlarms 每 tick 直接遍历，
@@ -61,6 +63,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private int _pendingDataSourceQueryVersion;
     private readonly ShiftProgressProvider _shiftProgress;
     private readonly LastShiftComparisonProvider _lastShiftProvider;
+    private readonly IProductionHistoryReader? _productionHistory;
 
     /// <summary>
     /// 已提示产量达标的工单 Id 集合（去重，每个工单仅弹一次 Growl）。
@@ -69,10 +72,17 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly HashSet<int> _notifiedWorkOrderIds = [];
 
     /// <summary>
-    /// 当前工单的「工单内 OK 产量」缓存（按工单口径，非会话累计）。
+    /// 当前工单的「工单内 OK / NG 产量」缓存（按工单口径，非会话累计）。
     /// 由 RefreshWorkOrderSummary 经可取消的工单产量查询后台回填。
     /// </summary>
     private int _currentWorkOrderOk;
+    private int _currentWorkOrderNg;
+
+    private int _qualityHistoryRunning;
+    private DateTime _lastQualityHistoryQueryAt = DateTime.MinValue;
+    private string? _qualityTrendShiftKey;
+    private List<(DateTime Time, double Quality)> _qualityTrendHistory = [];
+    private static readonly TimeSpan QualityHistoryThrottle = TimeSpan.FromSeconds(15);
 
     /// <summary>工单产量聚合查询节流：上次查询的工单 Id 与时刻（同一 Running 工单 2s 内复用）。</summary>
     private int? _lastSummaryOrderId;
@@ -96,7 +106,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly ChartDiffGate _oeeRingGate;
     private readonly ChartDiffGate _statusPieGate;
     private readonly ChartDiffGate _defectTopGate;
-    private readonly ChartDiffGate _qualityPieGate;
+    private readonly ChartDiffGate _qualityTrendGate;
 
     // ──────────── 设备选择 ────────────
 
@@ -111,9 +121,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     // ──────────── 班次进度 ────────────
 
     [ObservableProperty] private string _shiftProgressName = "";
-    [ObservableProperty] private string _shiftProgressText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShiftTooltip))]
+    private string _shiftProgressText = "";
     [ObservableProperty] private double _shiftProgressRatio;
-    [ObservableProperty] private string _shiftProgressPct = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShiftTooltip))]
+    private string _shiftProgressPct = "";
     /// <summary>
     /// 是否显示班次进度区域：无班次配置或非班次时段时为 false，隐藏顶部班次 UI。
     /// </summary>
@@ -122,9 +136,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     // ──────────── 设备状态卡右上角：当前班次 + 日期时钟 ────────────
 
     /// <summary>设备状态卡右上角班次标签，如 "早班 08:00-20:00"。</summary>
-    [ObservableProperty] private string _deviceStatusShiftTag = "";
-    /// <summary>设备状态卡右上角日期时钟，格式 "MM-dd HH:mm"。</summary>
-    [ObservableProperty] private string _deviceStatusClock = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShiftTooltip))]
+    private string _deviceStatusShiftTag = "";
+    /// <summary>设备状态卡右上角日期时钟，格式 "MM-dd HH:mm:ss"。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClockTooltip))]
+    private string _deviceStatusClock = "";
 
     // ──────────── 当前工单（顶部栏工单条） ────────────
 
@@ -135,6 +153,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(WorkOrderProgressRatio))]
     [NotifyPropertyChangedFor(nameof(WorkOrderProgressPct))]
     [NotifyPropertyChangedFor(nameof(WorkOrderTargetQuantity))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderProgressTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderTargetTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderOkTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderNgTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderQualityTooltip))]
     private WorkOrder? _currentWorkOrder;
 
     /// <summary>是否当前有工单（控制顶部工单条可见性）。</summary>
@@ -158,6 +181,23 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>主页工单卡片显示的工单内 OK 产量，与顶部工单进度使用同一口径。</summary>
     public string WorkOrderOkProductionDisplay => CanDisplayKpiData && CurrentWorkOrder != null
         ? $"{_currentWorkOrderOk:N0}"
+        : "—";
+
+    /// <summary>工单时间窗口内的 NG 产量。</summary>
+    public int WorkOrderNgCount => _currentWorkOrderNg;
+
+    /// <summary>主页工单卡片显示的工单内 NG 产量。</summary>
+    public string WorkOrderNgProductionDisplay => CanDisplayKpiData && CurrentWorkOrder != null
+        ? $"{_currentWorkOrderNg:N0}"
+        : "—";
+
+    /// <summary>工单良率 = 工单内 OK / (OK+NG)；无产量时为 0。</summary>
+    public double WorkOrderQualityRate => SnapshotMetrics.QualityRate(_currentWorkOrderOk, _currentWorkOrderNg);
+
+    /// <summary>工单良率文本；无产量时显示 —。</summary>
+    public string WorkOrderQualityDisplay => CanDisplayKpiData && CurrentWorkOrder != null
+        && (_currentWorkOrderOk + _currentWorkOrderNg) > 0
+        ? $"{WorkOrderQualityRate:P1}"
         : "—";
 
     /// <summary>工单设置数量（计划产量）。无工单时返回 0。</summary>
@@ -230,7 +270,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _performanceFormulaText = "";
     [ObservableProperty] private string _qualityFormulaText = "";
 
-    // ──────────── 第 1 行 列 2：当前生产状态 ────────────
+    // ──────────── 第 1 行 列 2：当前生产进度状态 ────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedAchievementRate))]
@@ -371,13 +411,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         ? string.Format(Strings.K708, MaxHomeActiveAlarms)
         : string.Empty;
 
-    // ──────────── 第 2 行 列 2：合格率概览 ────────────
+    // ──────────── 第 2 行 列 2：当前班次良率 ────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CycleDiffText))]
     [NotifyPropertyChangedFor(nameof(IsCycleSlow))]
     private double _targetCycleSec;
-    [ObservableProperty] private PlotModel? _qualityPieChart;
+    [ObservableProperty] private PlotModel? _qualityTrendChart;
 
     [ObservableProperty] private HomeDataStatus _dataStatusKind = HomeDataStatus.NoDevice;
 
@@ -424,6 +464,37 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string TargetCycleDisplay => TargetCycleSec > 0 ? $"{TargetCycleSec:F2}s" : "—";
     public string ActualCycleDisplay => CanDisplayKpiData && ActualCycleSec > 0 ? $"{ActualCycleSec:F2}s" : "—";
 
+    private static string Tip(string format, params object[] args)
+        => string.Format(CultureInfo.CurrentCulture, format, args)
+            .Replace("\\n", Environment.NewLine, StringComparison.Ordinal);
+
+    public string SpeedAchievementTooltip => Tip(Strings.Home_Tip_SpeedAchievement, RealtimeSpeed, TargetSpeed, SpeedAchievementRate);
+    public string RealtimeSpeedTooltip => Tip(Strings.Home_Tip_RealtimeSpeed, TotalOkProduction, TotalNgProduction, FormatHelper.FormatDuration(RunTime), RealtimeSpeedDisplay);
+    public string WorkOrderProgressTooltip => CurrentWorkOrder is null
+        ? ""
+        : Tip(Strings.Home_Tip_WorkOrderProgress, _currentWorkOrderOk, CurrentWorkOrder.TargetQuantity, WorkOrderProgressPct);
+    public string WorkOrderTargetTooltip => Tip(Strings.Home_Tip_WorkOrderTarget, WorkOrderTargetQuantity);
+    public string WorkOrderOkTooltip => Tip(Strings.Home_Tip_WorkOrderOk, WorkOrderOkProductionDisplay);
+    public string WorkOrderNgTooltip => Tip(Strings.Home_Tip_WorkOrderNg, _currentWorkOrderNg);
+    public string WorkOrderQualityTooltip => Tip(Strings.Home_Tip_WorkOrderQuality, _currentWorkOrderOk, _currentWorkOrderNg, WorkOrderQualityDisplay);
+    public string TargetCycleTooltip => Tip(Strings.Home_Tip_TargetCycle, TargetSpeed, TargetCycleDisplay);
+    public string ActualCycleTooltip => Tip(Strings.Home_Tip_ActualCycle, RealtimeSpeed, ActualCycleDisplay, string.IsNullOrEmpty(CycleDiffText) ? "—" : CycleDiffText);
+    public string RunTimeTooltip => Tip(Strings.Home_Tip_RunTime, RunTimeFullFormatted, RunTimeRatio);
+    public string AlarmTimeTooltip => Tip(Strings.Home_Tip_AlarmTime, AlarmTimeFullFormatted, AlarmTimeRatio);
+    public string PausedTimeTooltip => Tip(Strings.Home_Tip_PausedTime, PausedTimeFullFormatted, PausedTimeRatio);
+    public string OfflineTimeTooltip => Tip(Strings.Home_Tip_OfflineTime, OfflineTimeFullFormatted, OfflineTimeRatio);
+    public string ClockTooltip => Tip(Strings.Home_Tip_Clock, string.IsNullOrEmpty(DeviceStatusClock) ? "—" : DeviceStatusClock);
+    public string ShiftTooltip => Tip(Strings.Home_Tip_Shift, string.IsNullOrEmpty(DeviceStatusShiftTag) ? "—" : DeviceStatusShiftTag, string.IsNullOrEmpty(ShiftProgressText) ? ShiftProgressPct : ShiftProgressText);
+    public string OeeTooltip => Tip(Strings.Home_Tip_Oee, string.IsNullOrEmpty(OeeFormulaText) ? "—" : OeeFormulaText, OeeDisplay);
+    public string AvailabilityTooltip => Tip(Strings.Home_Tip_Availability, string.IsNullOrEmpty(AvailabilityFormulaText) ? "—" : AvailabilityFormulaText, AvailabilityRateDisplay);
+    public string PerformanceTooltip => Tip(Strings.Home_Tip_Performance, string.IsNullOrEmpty(PerformanceFormulaText) ? "—" : PerformanceFormulaText, PerformanceRateDisplay);
+    public string QualityTooltip => Tip(Strings.Home_Tip_Quality, string.IsNullOrEmpty(QualityFormulaText) ? "—" : QualityFormulaText, QualityRateDisplay);
+    public string TotalOutputTooltip => Tip(Strings.Home_Tip_TotalOutput, TotalOkProduction, TotalNgProduction, TotalOutput);
+    public string NgRateTooltip => Tip(Strings.Home_Tip_NgRate, TotalNgProduction, TotalOutput, NgRateDisplay);
+    public string QualityGapTooltip => Tip(Strings.Home_Tip_QualityGap, QualityRateDisplay, QualityGapText);
+    public string CurrentShiftTooltip => Tip(Strings.Home_Tip_CurrentShift, ShiftOkProductionDisplay, ShiftNgProductionDisplay);
+    public string LastShiftTooltip => Tip(Strings.Home_Tip_LastShift, LastShiftLabel, LastShiftOk, LastShiftNg);
+
     /// <summary>
     /// PLC 连接管理器：暴露给 UI 绑定连接状态指示器
     /// </summary>
@@ -459,7 +530,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private string _activeEmptyStateMessage = Strings.M061;
 
     /// <summary>
-    /// 总产量 = OK + NG（会话累计，用于当前生产状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
+    /// 总产量 = OK + NG（会话累计，用于当前生产进度状态卡片）。口径见 SnapshotMetrics（与 WASM 共用）。
     /// </summary>
     public int TotalOutput => SnapshotMetrics.TotalOutput(TotalOkProduction, TotalNgProduction);
 
@@ -492,7 +563,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>实际周期是否慢于目标周期（用于 UI 红色警示，快或达标为绿色）。</summary>
     public bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
 
-    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, Kanban.Collector.Core.Services.ProductionHistoryStore? historyStore = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null, IDefectHistoryReader? defectHistoryReader = null)
+    public HomeViewModel(IDeviceRepository deviceRepo, IPlcConnectionManager connectionManager, AppSettings appSettings, IPlcDataAcquisitionService plcService, IDeviceSelectionService selection, IWorkOrderRepository? workOrderRepo = null, IDialogService? dialog = null, IWorkOrderService? workOrderService = null, IRuntimeMode? runtimeMode = null, IProductionHistoryReader? productionHistory = null, RemoteRuntimeSink? remoteRuntimeSink = null, IAlarmSessionMute? alarmSessionMute = null, IAlarmHistoryService? alarmHistoryService = null, IDefectHistoryReader? defectHistoryReader = null)
     {
         _deviceRepository = deviceRepo;
         _connectionManager = connectionManager;
@@ -508,13 +579,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _defectHistoryReader = defectHistoryReader;
         _runtimeMode = runtimeMode ?? new RuntimeMode(appSettings);
         _shiftProgress = new ShiftProgressProvider(appSettings);
-        _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, historyStore, appSettings);
+        _lastShiftProvider = new LastShiftComparisonProvider(plcService, _runtimeMode, productionHistory, appSettings);
+        _productionHistory = productionHistory;
 
         // 图表差分门必须在首次选中设备（会触发 RefreshSelected → ClearLiveData 的 Reset）之前就绪
         _oeeRingGate = new ChartDiffGate(BuildOeeRingCharts);
         _statusPieGate = new ChartDiffGate(BuildStatusPieChart);
         _defectTopGate = new ChartDiffGate(RefreshDefectTop);
-        _qualityPieGate = new ChartDiffGate(BuildQualityPieChart);
+        _qualityTrendGate = new ChartDiffGate(BuildQualityTrendChart);
 
         RefreshDeviceFilterItems();
         // 使用命名方法而非 lambda，确保 Dispose 时能正确取消订阅（lambda 每次创建新委托实例，-= 不生效）
@@ -533,6 +605,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         // 统一刷新管道：PageRefreshTimer 固定 DispatcherPriority.Background（历史性能审查 P1-13 补丁）。
         _liveTimer = new PageRefreshTimer(
             TimeSpan.FromMilliseconds(_appSettings.DashboardRefreshIntervalMs), OnLiveTimerTick);
+        _clockTimer = new PageRefreshTimer(TimeSpan.FromSeconds(1), UpdateDeviceStatusClock);
     }
 
     public void OnPageEnter()
@@ -544,6 +617,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
             SelectedDeviceId = _deviceRepository.Devices[0].Id;
         _liveTimer.Start();
+        _clockTimer.Start();
+        UpdateDeviceStatusClock();
         // 让导航切换先完成绘制再重算；无 Dispatcher（单元测试/设计期）时同步执行，
         // 保持 OnPageEnter 的「进入即完成一次同步」语义（与 WorkOrderManagerViewModel.OnPageEnter 同模式）。
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
@@ -559,7 +634,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }, DispatcherPriority.Background);
     }
 
-    public void OnPageExit() => _liveTimer.Stop();
+    public void OnPageExit()
+    {
+        _liveTimer.Stop();
+        _clockTimer.Stop();
+    }
 
     /// <summary>
     /// 判断指定级别是否在当前筛选范围内（用于 FilteredActiveAlarms 过滤谓词）。
@@ -673,6 +752,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _lastSummaryOrderId = null;
         _lastSummaryQueryAt = DateTime.MinValue;
         _currentWorkOrderOk = 0;
+        _currentWorkOrderNg = 0;
         // 达标提示记录修剪：只保留当前工单（若有），避免长期运行集合无限增长
         _notifiedWorkOrderIds.RemoveWhere(id => value == null || id != value.Id);
         NotifyWorkOrderProgress();
@@ -691,6 +771,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         if (order == null || order.Status != WorkOrderStatus.Running)
         {
             _currentWorkOrderOk = 0;
+            _currentWorkOrderNg = 0;
             NotifyWorkOrderProgress();
             return;
         }
@@ -719,11 +800,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         {
             try
             {
-                var ok = _workOrderService is IAsyncWorkOrderProductionSummary asyncService
-                    ? (await asyncService.GetProductionSummaryAsync(order, cancellationToken).ConfigureAwait(false)).OkCount
-                    : _workOrderService.GetProductionSummary(order).OkCount;
+                var summary = _workOrderService is IAsyncWorkOrderProductionSummary asyncService
+                    ? await asyncService.GetProductionSummaryAsync(order, cancellationToken).ConfigureAwait(false)
+                    : _workOrderService.GetProductionSummary(order);
                 if (!cancellationToken.IsCancellationRequested)
-                    UiDispatcher.Dispatch(() => ApplyWorkOrderSummary(order, ok));
+                    UiDispatcher.Dispatch(() => ApplyWorkOrderSummary(order, summary.OkCount, summary.NgCount));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -755,16 +836,17 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             _workOrderSummaryCts?.Cancel();
     }
 
-    private void ApplyWorkOrderSummary(WorkOrder order, int okCount)
+    private void ApplyWorkOrderSummary(WorkOrder order, int okCount, int ngCount)
     {
         // 工单已切换时丢弃过期结果
         if (CurrentWorkOrder?.Id != order.Id) return;
         _currentWorkOrderOk = okCount;
+        _currentWorkOrderNg = ngCount;
         NotifyWorkOrderProgress();
     }
 
-    internal void ApplyWorkOrderSummaryForTest(WorkOrder order, int okCount)
-        => ApplyWorkOrderSummary(order, okCount);
+    internal void ApplyWorkOrderSummaryForTest(WorkOrder order, int okCount, int ngCount = 0)
+        => ApplyWorkOrderSummary(order, okCount, ngCount);
 
     internal void RefreshWorkOrderSummaryForTest()
         => RefreshWorkOrderSummary();
@@ -775,6 +857,15 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(WorkOrderProgressRatio));
         OnPropertyChanged(nameof(WorkOrderProgressPct));
         OnPropertyChanged(nameof(WorkOrderOkProductionDisplay));
+        OnPropertyChanged(nameof(WorkOrderNgCount));
+        OnPropertyChanged(nameof(WorkOrderNgProductionDisplay));
+        OnPropertyChanged(nameof(WorkOrderQualityRate));
+        OnPropertyChanged(nameof(WorkOrderQualityDisplay));
+        OnPropertyChanged(nameof(WorkOrderProgressTooltip));
+        OnPropertyChanged(nameof(WorkOrderTargetTooltip));
+        OnPropertyChanged(nameof(WorkOrderOkTooltip));
+        OnPropertyChanged(nameof(WorkOrderNgTooltip));
+        OnPropertyChanged(nameof(WorkOrderQualityTooltip));
     }
 
     partial void OnSelectedDeviceIdChanged(string? value)
@@ -845,6 +936,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         hash.Add(TargetCycleDisplay);
         hash.Add(ActualCycleDisplay);
         hash.Add(WorkOrderOkProductionDisplay);
+        hash.Add(WorkOrderNgProductionDisplay);
+        hash.Add(WorkOrderQualityDisplay);
         var signature = hash.ToHashCode();
         if (signature == _lastDisplaySignature) return;
         _lastDisplaySignature = signature;
@@ -896,6 +989,31 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(TargetCycleDisplay));
         OnPropertyChanged(nameof(ActualCycleDisplay));
         OnPropertyChanged(nameof(WorkOrderOkProductionDisplay));
+        OnPropertyChanged(nameof(WorkOrderNgProductionDisplay));
+        OnPropertyChanged(nameof(WorkOrderQualityRate));
+        OnPropertyChanged(nameof(WorkOrderQualityDisplay));
+        OnPropertyChanged(nameof(SpeedAchievementTooltip));
+        OnPropertyChanged(nameof(RealtimeSpeedTooltip));
+        OnPropertyChanged(nameof(TargetCycleTooltip));
+        OnPropertyChanged(nameof(ActualCycleTooltip));
+        OnPropertyChanged(nameof(RunTimeTooltip));
+        OnPropertyChanged(nameof(AlarmTimeTooltip));
+        OnPropertyChanged(nameof(PausedTimeTooltip));
+        OnPropertyChanged(nameof(OfflineTimeTooltip));
+        OnPropertyChanged(nameof(OeeTooltip));
+        OnPropertyChanged(nameof(AvailabilityTooltip));
+        OnPropertyChanged(nameof(PerformanceTooltip));
+        OnPropertyChanged(nameof(QualityTooltip));
+        OnPropertyChanged(nameof(TotalOutputTooltip));
+        OnPropertyChanged(nameof(NgRateTooltip));
+        OnPropertyChanged(nameof(QualityGapTooltip));
+        OnPropertyChanged(nameof(CurrentShiftTooltip));
+        OnPropertyChanged(nameof(LastShiftTooltip));
+        OnPropertyChanged(nameof(WorkOrderProgressTooltip));
+        OnPropertyChanged(nameof(WorkOrderTargetTooltip));
+        OnPropertyChanged(nameof(WorkOrderOkTooltip));
+        OnPropertyChanged(nameof(WorkOrderNgTooltip));
+        OnPropertyChanged(nameof(WorkOrderQualityTooltip));
     }
 
     private void SyncRuntime()
@@ -936,7 +1054,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         // 即"几乎每 tick 重建"；5s 桶将重建频率降 5 倍且显示口径不变）
         _statusPieGate.Evaluate(((int)(RunTime / 5), (int)(AlarmTime / 5), (int)(PausedTime / 5), (int)(OfflineTime / 5)));
         _defectTopGate.Evaluate(DefectSignature(CurrentDevice));
-        _qualityPieGate.Evaluate((TotalOkProduction, TotalNgProduction));
+        RefreshQualityTrend();
         RefreshActiveAlarms();
         // 刷新所有活跃报警的持续时间文本（基于当前时间）
         foreach (var a in ActiveAlarms)
@@ -1008,14 +1126,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         _oeeRingGate.Reset();
         _statusPieGate.Reset();
         _defectTopGate.Reset();
-        _qualityPieGate.Reset();
+        _qualityTrendGate.Reset();
 
         if (CurrentRuntime != null && HasFreshData())
         {
             BuildOeeRingCharts();
             BuildStatusPieChart();
             RefreshDefectTop();
-            BuildQualityPieChart();
+            RefreshQualityTrend();
         }
         RefreshActiveAlarms();
         RefreshDataStatus();
@@ -1163,13 +1281,15 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         HasHighLevelAlarm = false;
         ActiveAlarmTotalCount = 0;
         // 断线/无数据时不保留旧图表，交给各卡片的空状态显示，避免旧数据继续误导。
-        _oeeRingGate.Reset(); _statusPieGate.Reset(); _defectTopGate.Reset(); _qualityPieGate.Reset();
+        _oeeRingGate.Reset(); _statusPieGate.Reset(); _defectTopGate.Reset(); _qualityTrendGate.Reset();
         OeeRingChart = null;
         AvailabilityRingChart = null;
         PerformanceRingChart = null;
         QualityRingChart = null;
         StatusPieChart = null;
-        QualityPieChart = null;
+        QualityTrendChart = null;
+        _qualityTrendHistory = [];
+        _qualityTrendShiftKey = null;
         DefectTop.Clear();
         ResetDefectParetoPresentation(DefectParetoEmptyKind.NoDevice);
     }
@@ -1186,8 +1306,91 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         QualityRingChart = ChartService.BuildQualityRing(QualityRate);
     }
 
-    private void BuildQualityPieChart()
-        => QualityPieChart = ChartService.BuildQualityPieChart(TotalOkProduction, TotalNgProduction);
+    private void BuildQualityTrendChart()
+    {
+        if (_qualityTrendHistory.Count == 0)
+        {
+            QualityTrendChart = null;
+            return;
+        }
+
+        var now = DateTime.Now;
+        var (shift, shiftStart, shiftEnd) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
+        QualityTrendChart = ChartService.BuildShiftQualityTrendChart(
+            _qualityTrendHistory,
+            KpiThresholds.QualityGood,
+            shift != null ? shiftStart : null,
+            shift != null ? shiftEnd : null);
+    }
+
+    /// <summary>
+    /// 当前班次良率折线：读班次产量快照（Local/Remote 均经 IProductionHistoryReader），叠实时良率并写回内存。
+    /// </summary>
+    private void RefreshQualityTrend()
+    {
+        var now = DateTime.Now;
+        var (shift, start, _) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
+        var key = $"{SelectedDeviceId}|{shift?.Name}|{start:O}";
+        if (!string.Equals(key, _qualityTrendShiftKey, StringComparison.Ordinal))
+        {
+            _qualityTrendShiftKey = key;
+            _qualityTrendHistory = [];
+            _lastQualityHistoryQueryAt = DateTime.MinValue;
+        }
+
+        MaybeQueryQualityHistory(start, now, shift?.Name);
+
+        _qualityTrendHistory = ShiftQualityTrendBuilder.MergeLive(
+            _qualityTrendHistory,
+            now,
+            QualityRate,
+            CanDisplayKpiData && TotalOutput > 0);
+        var lastQuality = _qualityTrendHistory.Count == 0 ? 0 : Math.Round(_qualityTrendHistory[^1].Quality, 4);
+        var lastBucket = _qualityTrendHistory.Count == 0 ? 0 : _qualityTrendHistory[^1].Time.Ticks / TimeSpan.TicksPerMinute;
+        _qualityTrendGate.Evaluate((_qualityTrendHistory.Count, lastQuality, lastBucket));
+    }
+
+    private void MaybeQueryQualityHistory(DateTime shiftStart, DateTime now, string? shiftName)
+    {
+        if (_productionHistory == null) return;
+        if (string.IsNullOrEmpty(SelectedDeviceId) || shiftStart == default) return;
+        if (now - _lastQualityHistoryQueryAt < QualityHistoryThrottle) return;
+        if (Interlocked.CompareExchange(ref _qualityHistoryRunning, 1, 0) != 0) return;
+
+        _lastQualityHistoryQueryAt = now;
+        var deviceId = SelectedDeviceId;
+        var token = _disposeCts.Token;
+        Task.Run(() =>
+        {
+            try
+            {
+                var logs = _productionHistory.QueryProductionLogs(shiftStart, now, deviceId, shiftName);
+                var points = ShiftQualityTrendBuilder.FromSamples(
+                    logs.Select(log => (log.Timestamp, log.OkProduction, log.NgProduction, log.ShiftName)),
+                    shiftName, shiftStart, now);
+                if (token.IsCancellationRequested) return;
+                UiDispatcher.Dispatch(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    if (!string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal)) return;
+                    _qualityTrendHistory = ShiftQualityTrendBuilder.MergeLive(
+                        points,
+                        DateTime.Now,
+                        QualityRate,
+                        CanDisplayKpiData && TotalOutput > 0);
+                    _qualityTrendGate.Force();
+                });
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "查询当前班次良率折线失败（设备 {DeviceId}）", deviceId);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _qualityHistoryRunning, 0);
+            }
+        }, token).Forget();
+    }
 
     /// <summary>缺陷签名：名称/计数/严重度/类别/地址 + NG（占 NG 文案依赖产量）。</summary>
     private int DefectSignature(Device? device)
@@ -1391,12 +1594,19 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         DeviceStatusShiftTag = shift.Shift == null
             ? string.Empty
             : $"{shift.Shift.Name} {FormatHelper.FormatClock(shift.Start)}-{FormatHelper.FormatClock(shift.End)}";
-        DeviceStatusClock = now.ToString("MM-dd HH:mm");
+        UpdateDeviceStatusClock(now);
     }
+
+    private void UpdateDeviceStatusClock()
+        => UpdateDeviceStatusClock(DateTime.Now);
+
+    private void UpdateDeviceStatusClock(DateTime now)
+        => DeviceStatusClock = FormatHelper.FormatDeviceStatusClock(now);
 
     public void Dispose()
     {
         _liveTimer?.Dispose();
+        _clockTimer?.Dispose();
         CancelWorkOrderSummaryQuery();
         _disposeCts.Cancel();
         _disposeCts.Dispose();

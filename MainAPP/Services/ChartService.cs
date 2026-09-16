@@ -941,6 +941,69 @@ public static class ChartService
     }
 
     /// <summary>
+    /// 当前班次累计良率折线。Y 轴按数据下限收缩，并画 95% 达标虚线。
+    /// 横轴默认覆盖整班时段（<paramref name="axisStart"/>–<paramref name="axisEnd"/>），
+    /// 未指定时回退为首尾数据点时间。无点时返回空模型（调用方显示空状态）。
+    /// </summary>
+    public static PlotModel BuildShiftQualityTrendChart(
+        IReadOnlyList<(DateTime Time, double Quality)> points,
+        double target = 0.95,
+        DateTime? axisStart = null,
+        DateTime? axisEnd = null)
+    {
+        var model = CreateBaseModel();
+        model.IsLegendVisible = false;
+        model.Padding = new OxyThickness(0);
+        model.PlotMargins = new OxyThickness(46, 8, 8, 28);
+        if (points.Count == 0)
+            return model;
+
+        var tStart = axisStart ?? points[0].Time;
+        var tEnd = axisEnd ?? points[^1].Time;
+        if (tEnd <= tStart)
+            tEnd = tStart.AddMinutes(1);
+        var xAxis = CreateDateTimeAxis("", "HH:mm");
+        xAxis.Minimum = DateTimeAxis.ToDouble(tStart);
+        xAxis.Maximum = DateTimeAxis.ToDouble(tEnd);
+        model.Axes.Add(xAxis);
+
+        var minQuality = points.Min(p => p.Quality);
+        var yMin = Math.Clamp(Math.Min(target - 0.08, minQuality - 0.04), 0, 0.98);
+        var yAxis = CreateLinearAxis("", AxisPosition.Left, "P0");
+        yAxis.Minimum = yMin;
+        yAxis.Maximum = 1;
+        yAxis.MajorStep = 0.05;
+        model.Axes.Add(yAxis);
+
+        var series = new LineSeries
+        {
+            Title = Strings.K084,
+            Color = _runColor,
+            StrokeThickness = 2.2,
+            MarkerType = points.Count <= 24 ? MarkerType.Circle : MarkerType.None,
+            MarkerSize = 3,
+            MarkerFill = _runColor,
+            TrackerFormatString = "{2:HH:mm}\n{4:P1}",
+        };
+        foreach (var point in points)
+            series.Points.Add(DateTimeAxis.CreateDataPoint(point.Time, point.Quality));
+        model.Series.Add(series);
+
+        var targetLine = new LineSeries
+        {
+            Title = string.Format(Strings.F171, target),
+            Color = _alarmColor,
+            StrokeThickness = 1.4,
+            LineStyle = LineStyle.Dash,
+            TrackerFormatString = "{4:P0}",
+        };
+        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tStart, target));
+        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tEnd, target));
+        model.Series.Add(targetLine);
+        return model;
+    }
+
+    /// <summary>
     /// 构建缺陷帕累托图：TOP5 缺陷柱状图（左 Y 轴·数量）+ 累计百分比折线（右次轴·0-100%）。
     /// 无缺陷或全为 0 时返回 null。帕累托原则：聚焦贡献最大的少数缺陷。
     /// </summary>

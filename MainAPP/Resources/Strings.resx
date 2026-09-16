@@ -1261,7 +1261,7 @@
     <value>暂无状态数据</value>
   </data>
   <data name="K319" xml:space="preserve">
-    <value>OEE 综合效率</value>
+    <value>OEE设备综合使用效率</value>
   </data>
   <data name="K320" xml:space="preserve">
     <value>暂无 OEE 数据</value>
@@ -1273,7 +1273,7 @@
     <value>B性能达标率</value>
   </data>
   <data name="K323" xml:space="preserve">
-    <value>当前生产状态</value>
+    <value>当前生产进度状态</value>
   </data>
   <data name="K324" xml:space="preserve">
     <value>当前速度</value>
@@ -1288,7 +1288,7 @@
     <value>工单完成</value>
   </data>
   <data name="K328" xml:space="preserve">
-    <value>C良品率概览</value>
+    <value>当前班次良率</value>
   </data>
   <data name="K329" xml:space="preserve">
     <value>实时故障</value>
@@ -3766,13 +3766,13 @@
     <value>设备状态</value>
   </data>
   <data name="Web_Card_ProdStatus" xml:space="preserve">
-    <value>当前生产状态</value>
+    <value>当前生产进度状态</value>
   </data>
   <data name="Web_Card_Alarms" xml:space="preserve">
     <value>实时故障</value>
   </data>
   <data name="Web_Card_Oee" xml:space="preserve">
-    <value>OEE 概览</value>
+    <value>OEE设备综合使用效率</value>
   </data>
   <data name="Web_Card_Output" xml:space="preserve">
     <value>产量明细</value>
@@ -6828,5 +6828,86 @@
   </data>
   <data name="Msg_PageExported" xml:space="preserve">
     <value>已导出当前页数据 → {0}</value>
+  </data>
+  <data name="Home_Tip_SpeedAchievement" xml:space="preserve">
+    <value>速度达成率 = 当前速度 ÷ 目标产能，结果限制在 0～100%。\n当前速度 = (OK+NG) ÷ 运行小时；仅运行状态累计时长，报警/待机时速度保持不变；运行不足 5 秒时速度为 0。\n当前：{0:N0} 件/h ÷ {1:N0} 件/h = {2:P0}\n着色：≥90% 绿 / ≥70% 黄 / &lt;70% 红。这不是工单完成率。</value>
+  </data>
+  <data name="Home_Tip_RealtimeSpeed" xml:space="preserve">
+    <value>当前速度（件/小时）= (OK产量 + NG产量) ÷ 运行时长（小时）。\n运行时长只在设备运行时累计；报警/待机期间产量与时长都不变，故速度保持。运行不足 5 秒显示为 0，避免启动瞬间失真。\n当前：({0:N0}+{1:N0}) ÷ {2} = {3} 件/h</value>
+  </data>
+  <data name="Home_Tip_WorkOrderProgress" xml:space="preserve">
+    <value>工单完成率 = 工单内 OK 产量 ÷ 计划产量，超额时封顶 100%。\n口径为工单时间窗口内的合格产量（与工单管理页一致），不是会话累计，也不是速度达成率。\n当前：{0:N0} / {1:N0} 件 = {2}</value>
+  </data>
+  <data name="Home_Tip_WorkOrderTarget" xml:space="preserve">
+    <value>工单设置数量 = 该工单的计划产量（目标件数）。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Home_Tip_WorkOrderOk" xml:space="preserve">
+    <value>工单已生产 = 工单时间窗口内的 OK 产量（非会话累计、不含 NG）。\n当前：{0} 件</value>
+  </data>
+  <data name="Home_WorkOrderNg" xml:space="preserve">
+    <value>工单不良</value>
+  </data>
+  <data name="Home_WorkOrderQuality" xml:space="preserve">
+    <value>工单良率</value>
+  </data>
+  <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
+    <value>工单不良 = 工单时间窗口内的 NG 产量（非会话累计）。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Home_Tip_WorkOrderQuality" xml:space="preserve">
+    <value>工单良率 = 工单内 OK ÷ (OK+NG)。无产量时显示 —。达标线 95%。\n当前：{0:N0} / {1:N0} = {2}\n与合格率卡片的会话累计良率口径不同。</value>
+  </data>
+  <data name="Home_Tip_TargetCycle" xml:space="preserve">
+    <value>目标周期（秒/件）= 3600 ÷ 设备目标产能（件/小时），来自设备配置。\n当前目标产能 {0:N0} 件/h → {1}</value>
+  </data>
+  <data name="Home_Tip_ActualCycle" xml:space="preserve">
+    <value>实际周期（秒/件）= 3600 ÷ 当前速度。当前速度为 0 时显示 —。\n当前速度 {0:N0} 件/h → {1}\n与目标对比：{2}</value>
+  </data>
+  <data name="Home_Tip_RunTime" xml:space="preserve">
+    <value>运行时长：设备处于「运行」状态的累计时间。占比分母 = 运行+报警+待机+离线。\n当前：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_AlarmTime" xml:space="preserve">
+    <value>报警时长：设备处于「报警」状态的累计时间。占比分母含离线。\n当前：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_PausedTime" xml:space="preserve">
+    <value>待机时长：设备处于「待机/暂停」状态的累计时间。占比分母含离线。\n当前：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_OfflineTime" xml:space="preserve">
+    <value>离线时长：通讯中断、采集停止或状态字离线的累计时间。计入展示占比，不计入 OEE 可用率分母。\n当前：{0}（{1:P0}）</value>
+  </data>
+  <data name="Home_Tip_Clock" xml:space="preserve">
+    <value>本机当前墙钟时间，格式 月-日 时:分:秒，主页可见时每秒刷新。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_Shift" xml:space="preserve">
+    <value>当前班次名称与时间窗。百分比为班次已用时长 / 班次总时长。\n{0}\n{1}</value>
+  </data>
+  <data name="Home_Tip_Oee" xml:space="preserve">
+    <value>OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / &lt;60% 红。</value>
+  </data>
+  <data name="Home_Tip_Availability" xml:space="preserve">
+    <value>可用率 = 运行时长 ÷ (运行+报警)。待机与离线不计入分母。\n当前：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Performance" xml:space="preserve">
+    <value>性能率 = 实际总产量(OK+NG) ÷ (目标产能 × 运行小时)。\n当前：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Quality" xml:space="preserve">
+    <value>合格率 = OK ÷ (OK+NG)。良品率达标线 95%：达到为绿，否则为红。\n当前：{0} = {1}</value>
+  </data>
+  <data name="Home_Tip_TotalOutput" xml:space="preserve">
+    <value>总产量 = OK + NG（会话累计，含不良品）。\n当前：OK {0:N0} + NG {1:N0} = {2:N0} 件</value>
+  </data>
+  <data name="Home_Tip_NgRate" xml:space="preserve">
+    <value>不良率 = NG ÷ (OK+NG)，越低越好。无产量时为 0。\n当前：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Home_Tip_QualityGap" xml:space="preserve">
+    <value>相对良品率目标 95% 的差距。正数=超出目标，负数=尚未达标。\n当前合格率 {0}，差距 {1}</value>
+  </data>
+  <data name="Home_Tip_QualityTrend" xml:space="preserve">
+    <value>折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。数据来自班次产量快照，并接上当前实时值。</value>
+  </data>
+  <data name="Home_Tip_CurrentShift" xml:space="preserve">
+    <value>本班次会话累计 OK / NG。箭头对比上一班次同期口径。\nOK {0}   NG {1}</value>
+  </data>
+  <data name="Home_Tip_LastShift" xml:space="preserve">
+    <value>上一完整班次的产量汇总。\n{0}\nOK {1:N0}   NG {2:N0}</value>
   </data>
 </root>

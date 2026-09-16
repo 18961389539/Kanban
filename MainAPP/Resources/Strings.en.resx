@@ -1261,7 +1261,7 @@
     <value>No status data</value>
   </data>
   <data name="K319" xml:space="preserve">
-    <value>Overall OEE</value>
+    <value>OEE Overall Equipment Effectiveness</value>
   </data>
   <data name="K320" xml:space="preserve">
     <value>No OEE data</value>
@@ -1273,7 +1273,7 @@
     <value>B: Performance Rate</value>
   </data>
   <data name="K323" xml:space="preserve">
-    <value>Current Production Status</value>
+    <value>Current Production Progress</value>
   </data>
   <data name="K324" xml:space="preserve">
     <value>Current Speed</value>
@@ -1288,7 +1288,7 @@
     <value>Order Completion</value>
   </data>
   <data name="K328" xml:space="preserve">
-    <value>C: Quality Rate Overview</value>
+    <value>Current Shift Quality</value>
   </data>
   <data name="K329" xml:space="preserve">
     <value>Real-time Faults</value>
@@ -3766,13 +3766,13 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Device Status</value>
   </data>
   <data name="Web_Card_ProdStatus" xml:space="preserve">
-    <value>Current Production</value>
+    <value>Current Production Progress</value>
   </data>
   <data name="Web_Card_Alarms" xml:space="preserve">
     <value>Live Alarms</value>
   </data>
   <data name="Web_Card_Oee" xml:space="preserve">
-    <value>OEE Overview</value>
+    <value>OEE Overall Equipment Effectiveness</value>
   </data>
   <data name="Web_Card_Output" xml:space="preserve">
     <value>Output Details</value>
@@ -6828,5 +6828,86 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Msg_PageExported" xml:space="preserve">
     <value>Current page exported → {0}</value>
+  </data>
+  <data name="Home_Tip_SpeedAchievement" xml:space="preserve">
+    <value>Speed achievement = current speed ÷ target capacity, clamped to 0–100%.\nCurrent speed = (OK+NG) ÷ running hours; RunTime accumulates only while Running and stays unchanged during alarm/standby; speed is 0 if RunTime &lt; 5s.\nNow: {0:N0} pcs/h ÷ {1:N0} pcs/h = {2:P0}\nColors: ≥90% green / ≥70% yellow / &lt;70% red. This is not work-order completion.</value>
+  </data>
+  <data name="Home_Tip_RealtimeSpeed" xml:space="preserve">
+    <value>Current speed (pcs/h) = (OK + NG) ÷ running hours.\nRunTime accumulates only while Running; during alarm/standby both output and time stay still so speed holds. Below 5s running time the speed is 0 to avoid startup spikes.\nNow: ({0:N0}+{1:N0}) ÷ {2} = {3} pcs/h</value>
+  </data>
+  <data name="Home_Tip_WorkOrderProgress" xml:space="preserve">
+    <value>Work-order completion = OK output in the order window ÷ planned quantity, capped at 100%.\nUses OK count in the work-order time window (same as the Work Order page), not session totals and not speed achievement.\nNow: {0:N0} / {1:N0} pcs = {2}</value>
+  </data>
+  <data name="Home_Tip_WorkOrderTarget" xml:space="preserve">
+    <value>Work-order target = planned quantity for this order.\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderOk" xml:space="preserve">
+    <value>Work-order produced = OK output in the order time window (not session total, excludes NG).\nNow: {0} pcs</value>
+  </data>
+  <data name="Home_WorkOrderNg" xml:space="preserve">
+    <value>Order NG</value>
+  </data>
+  <data name="Home_WorkOrderQuality" xml:space="preserve">
+    <value>Order Quality</value>
+  </data>
+  <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
+    <value>Work-order NG = reject count in the order time window (not session total).\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderQuality" xml:space="preserve">
+    <value>Work-order quality = OK ÷ (OK+NG) in the order window. Shows — when there is no output. Target is 95%.\nNow: {0:N0} / {1:N0} = {2}\nThis is not the session quality on the Quality card.</value>
+  </data>
+  <data name="Home_Tip_TargetCycle" xml:space="preserve">
+    <value>Target cycle (s/pc) = 3600 ÷ device target capacity (pcs/h), from device setup.\nTarget capacity {0:N0} pcs/h → {1}</value>
+  </data>
+  <data name="Home_Tip_ActualCycle" xml:space="preserve">
+    <value>Actual cycle (s/pc) = 3600 ÷ current speed. Shows — when speed is 0.\nCurrent speed {0:N0} pcs/h → {1}\nVs target: {2}</value>
+  </data>
+  <data name="Home_Tip_RunTime" xml:space="preserve">
+    <value>Running time: accumulated time in Running. Share denominator = run+alarm+standby+offline.\nNow: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_AlarmTime" xml:space="preserve">
+    <value>Alarm time: accumulated time in Alarm. Share includes offline in the denominator.\nNow: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_PausedTime" xml:space="preserve">
+    <value>Standby time: accumulated time in Paused/Standby. Share includes offline in the denominator.\nNow: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_OfflineTime" xml:space="preserve">
+    <value>Offline time: accumulated time from comms loss, acquisition stop, or PLC offline. Included in display share, excluded from OEE availability denominator.\nNow: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_Clock" xml:space="preserve">
+    <value>Local wall-clock time as MM-dd HH:mm:ss, refreshed every second while Home is visible.\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_Shift" xml:space="preserve">
+    <value>Current shift name and window. Percentage is elapsed / total shift length.\n{0}\n{1}</value>
+  </data>
+  <data name="Home_Tip_Oee" xml:space="preserve">
+    <value>OEE = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / &lt;60% red.</value>
+  </data>
+  <data name="Home_Tip_Availability" xml:space="preserve">
+    <value>Availability = running time ÷ (running + alarm). Standby and offline are excluded from the denominator.\nNow: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Performance" xml:space="preserve">
+    <value>Performance = actual output (OK+NG) ÷ (target capacity × running hours).\nNow: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Quality" xml:space="preserve">
+    <value>Quality = OK ÷ (OK+NG). Target is 95%: green if met, otherwise red.\nNow: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_TotalOutput" xml:space="preserve">
+    <value>Total output = OK + NG (session cumulative, includes rejects).\nNow: OK {0:N0} + NG {1:N0} = {2:N0} pcs</value>
+  </data>
+  <data name="Home_Tip_NgRate" xml:space="preserve">
+    <value>NG rate = NG ÷ (OK+NG); lower is better. 0 when there is no output.\nNow: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Home_Tip_QualityGap" xml:space="preserve">
+    <value>Gap versus the 95% quality target. Positive = above target, negative = still short.\nQuality now {0}, gap {1}</value>
+  </data>
+  <data name="Home_Tip_QualityTrend" xml:space="preserve">
+    <value>The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. Points come from shift production snapshots plus the live value.</value>
+  </data>
+  <data name="Home_Tip_CurrentShift" xml:space="preserve">
+    <value>Current-shift session OK / NG. Arrows compare with the previous shift.\nOK {0}   NG {1}</value>
+  </data>
+  <data name="Home_Tip_LastShift" xml:space="preserve">
+    <value>Previous complete shift output summary.\n{0}\nOK {1:N0}   NG {2:N0}</value>
   </data>
 </root>

@@ -44,7 +44,9 @@ public sealed class ShiftProgressProvider
                     ElapsedText = FormatShiftTime(elapsedSecs),
                     RemainingText = FormatShiftTime(remainingSecs),
                     Ratio = ratio,
-                    Pct = $"{ratio * 100:F0}%"
+                    Pct = $"{ratio * 100:F0}%",
+                    ShiftStart = start,
+                    ShiftEnd = end,
                 };
             }
         }

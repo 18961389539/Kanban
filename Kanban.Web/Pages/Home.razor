@@ -68,10 +68,10 @@
                     <span class="status-badge @Status.Class">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span><span class="ratio-hint">@PctRatio(RunRatio)</span></div>
-                    <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span><span class="ratio-hint">@PctRatio(AlarmRatio)</span></div>
-                    <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span><span class="ratio-hint">@PctRatio(PauseRatio)</span></div>
-                    <div><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value idle">@FmtDuration(SelectedSnapshot.OfflineTime)</span><span class="ratio-hint">@PctRatio(OfflineRatio)</span></div>
+                    <div title="@RunTimeTooltip"><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span><span class="ratio-hint">@PctRatio(RunRatio)</span></div>
+                    <div title="@AlarmTimeTooltip"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span><span class="ratio-hint">@PctRatio(AlarmRatio)</span></div>
+                    <div title="@PausedTimeTooltip"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span><span class="ratio-hint">@PctRatio(PauseRatio)</span></div>
+                    <div title="@OfflineTimeTooltip"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value idle">@FmtDuration(SelectedSnapshot.OfflineTime)</span><span class="ratio-hint">@PctRatio(OfflineRatio)</span></div>
                 </div>
                 <div class="time-bar">
                     <div class="seg run" style="width:@RunRatio%"></div>
@@ -79,7 +79,19 @@
                     <div class="seg paused" style="width:@PauseRatio%"></div>
                     <div class="seg offline" style="width:@OfflineRatio%"></div>
                 </div>
-                <div class="meta-line">@L.T("Meta_StatusWord", SelectedSnapshot.StatusWord.ToString("X4"), SelectedSnapshot.TargetCycle)</div>
+                <div class="device-kpi-row" title="@TargetCycleTooltip">
+                    <span class="kpi-label">@L.T("Lbl_TargetCycle")</span>
+                    <span class="kpi-value">@TargetCycleText</span>
+                </div>
+                <div class="device-kpi-row" title="@ActualCycleTooltip">
+                    <span class="kpi-label">@L.T("Lbl_ActualCycle")</span>
+                    <span class="kpi-value">@ActualCycleText</span>
+                    @if (!string.IsNullOrEmpty(CycleDiffText))
+                    {
+                        <span class="cycle-diff @(IsCycleSlow ? "slow" : "ok")">@CycleDiffText</span>
+                    }
+                </div>
+                <div class="meta-line">@L.T("Hq_StatusWord") 0x@(SelectedSnapshot.StatusWord.ToString("X4"))</div>
                 @if (!string.IsNullOrEmpty(SelectedSnapshot.RecipeName))
                 {
                     <div class="meta-line">@L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue)</div>
@@ -88,15 +100,37 @@
 
             <section class="card">
                 <div class="card-title">@L.T("Card_ProdStatus")</div>
-                <div class="big-number">@RealtimeSpeedText</div>
+                @if (CurrentWorkOrder is not null)
+                {
+                    <div class="wo-progress-hero" title="@WorkOrderProgressTooltip">
+                        <div class="wo-progress-head">
+                            <span class="wo-order">@CurrentWorkOrder.OrderNo</span>
+                            <span class="wo-product-inline">@CurrentWorkOrder.ProductCode</span>
+                        </div>
+                        <div class="wo-progress-main">
+                            <div class="wo-progress-meta">
+                                <span class="wo-progress-text">@WoProgressText</span>
+                            </div>
+                            <span class="wo-progress-pct @WoProgressPctClass">@WoProgressPctText</span>
+                        </div>
+                        <div class="time-bar wo-progress-bar">
+                            <div class="seg wo @WoProgressPctClass" style="width:@WoProgressRatio%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-grid wo-kpi-grid">
+                        <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326")</span><span class="kpi-value">@CurrentWorkOrder.TargetQuantity.ToString("N0")</span></div>
+                        <div title="@WorkOrderOkTooltip"><span class="kpi-label">@L.T("K327")</span><span class="kpi-value">@WorkOrderOkText</span></div>
+                        <div title="@WorkOrderNgTooltip"><span class="kpi-label">@L.T("Home_WorkOrderNg")</span><span class="kpi-value danger">@WorkOrderNgText</span></div>
+                        <div title="@WorkOrderQualityTooltip"><span class="kpi-label">@L.T("Home_WorkOrderQuality")</span><span class="@WorkOrderQualityCssClass">@WorkOrderQualityText</span></div>
+                    </div>
+                }
+                <div class="big-number" title="@RealtimeSpeedTooltip">@RealtimeSpeedText</div>
                 <div class="big-label">@L.T("Lbl_RealTimeSpeed")</div>
                 <div class="metric-grid">
-                    <div><span class="kpi-label">@L.T("Lbl_TargetCycle")</span><span class="kpi-value">@TargetCycleText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_ActualCycle")</span><span class="kpi-value">@ActualCycleText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@TotalOutputText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@NgRateCssClass">@NgRateText</span></div>
+                    <div title="@TotalOutputTooltip"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@TotalOutputText</span></div>
+                    <div title="@NgRateTooltip"><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@NgRateCssClass">@NgRateText</span></div>
                 </div>
-                <div class="speed-meter">
+                <div class="speed-meter" title="@SpeedAchievementTooltip">
                     <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
                     <span class="meter-text">@L.T("Lbl_Achievement") @SpeedAchievementRateText</span>
                 </div>
@@ -124,12 +158,21 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("Card_Oee")</div>
+                <div class="card-title oee-title">
+                    <span>@L.T("Card_Oee")</span>
+                    @if (DeviceHealthScore > 0)
+                    {
+                        <span class="oee-health" title="@DeviceHealthTooltip">
+                            @L.T("Rv_Health") <b class="@DeviceHealthCssClass">@DeviceHealthScoreText</b>
+                            <span class="health-level @DeviceHealthCssClass">@DeviceHealthLevel</span>
+                        </span>
+                    }
+                </div>
                 <div class="ring-row">
-                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasActiveWorkOrder" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasActiveWorkOrder" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasActiveWorkOrder" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasActiveWorkOrder" />
+                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasActiveWorkOrder" Title="@OeeTooltip" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasActiveWorkOrder" Title="@AvailabilityTooltip" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasActiveWorkOrder" Title="@PerformanceTooltip" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasActiveWorkOrder" Title="@QualityTooltip" />
                 </div>
                 <div class="oee-formula">@(HasActiveWorkOrder ? $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}" : "—")</div>
             </section>
@@ -186,25 +229,41 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("Card_Output")</div>
-                <div class="quality-row">
-                    <div class="quality-block">
+                <div class="card-title">
+                    @L.T("K328")
+                    <span class="quality-live @QualityCssClass" title="@QualityTooltip">@QualityLiveText</span>
+                    <span class="quality-gap @QualityCssClass" title="@QualityGapTooltip">@QualityGapText</span>
+                </div>
+                <div class="quality-chart" title="@L.T("Home_Tip_QualityTrend")">
+                    @if (QualityHistory.Count == 0)
+                    {
+                        <div class="no-data">@L.T("Val_WaitData")</div>
+                    }
+                    else
+                    {
+                        <svg class="spark spark-quality" viewBox="0 0 300 80" preserveAspectRatio="none">
+                            <line x1="0" y1="@QualityTargetY" x2="300" y2="@QualityTargetY" fill="none" stroke="#F87171" stroke-width="1" stroke-dasharray="4 3" />
+                            @if (QualityPointsText is not null)
+                            {
+                                <polyline points="@QualityPointsText" fill="none" stroke="#34D399" stroke-width="1.8" />
+                            }
+                        </svg>
+                    }
+                </div>
+                <div class="quality-row quality-row-compact">
+                    <div class="quality-block" title="@TotalOutputTooltip">
                         <div class="quality-num ok">@SelectedSnapshot.TotalOkProduction.ToString("N0")</div>
                         <div class="quality-label">@L.T("Lbl_Ok")</div>
                     </div>
-                    <div class="quality-block">
+                    <div class="quality-block" title="@NgRateTooltip">
                         <div class="quality-num ng">@SelectedSnapshot.TotalNgProduction.ToString("N0")</div>
                         <div class="quality-label">@L.T("Lbl_Ng")</div>
                     </div>
                 </div>
-                <div class="time-bar">
-                    <div class="seg ok" style="width:@OkRatio%"></div>
-                    <div class="seg ng" style="width:@NgRatio%"></div>
-                </div>
-                <div class="meta-line">@L.T("Meta_QualityRate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
+                <div class="meta-line" title="@QualityTooltip">@L.T("Meta_QualityRate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
                 @if (LastShift is not null)
                 {
-                    <div class="meta-line">@L.T("LastShiftLine", LastShift.ShiftName, LastShift.Ok.ToString("N0"), FmtDiff(SelectedSnapshot.TotalOkProduction - LastShift.Ok), LastShift.Ng.ToString("N0"), FmtDiff(SelectedSnapshot.TotalNgProduction - LastShift.Ng))</div>
+                    <div class="meta-line" title="@LastShiftTooltip">@L.T("LastShiftLine", LastShift.ShiftName, LastShift.Ok.ToString("N0"), FmtDiff(SelectedSnapshot.TotalOkProduction - LastShift.Ok), LastShift.Ng.ToString("N0"), FmtDiff(SelectedSnapshot.TotalNgProduction - LastShift.Ng))</div>
                 }
             </section>
 
@@ -221,11 +280,13 @@
                         <span class="status-badge @WoStatusClass">@WoStatusText</span>
                     </div>
                     <div class="wo-product">@CurrentWorkOrder.ProductCode · @CurrentWorkOrder.ProductName</div>
-                    <div class="wo-progress-text">@WoProgressText</div>
+                    <div class="wo-progress-text" title="@WorkOrderProgressTooltip">@WoProgressText</div>
                     <div class="time-bar">
                         <div class="seg wo" style="width:@WoProgressRatio%"></div>
                     </div>
-                    <div class="meta-line">@L.T("Meta_PlanWo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
+                    <div class="meta-line" title="@WorkOrderTargetTooltip">@L.T("Meta_PlanWo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
+                    <div class="meta-line" title="@WorkOrderNgTooltip">@L.T("Home_WorkOrderNg") @WorkOrderNgText</div>
+                    <div class="meta-line" title="@WorkOrderQualityTooltip">@L.T("Home_WorkOrderQuality") @WorkOrderQualityText</div>
                 }
             </section>
 
@@ -504,6 +565,16 @@ private void OnRenderTick()
         }
     }
 
+    private string WoProgressPctText => CurrentWorkOrder is null ? "" : $"{WoProgressRatio:F0}%";
+
+    private string WoProgressPctClass => WoProgressRatio switch
+    {
+        >= 80 => "wo-pct-good",
+        >= 50 => "wo-pct-warn",
+        > 0 => "wo-pct-low",
+        _ => "wo-pct-none",
+    };
+
     /// <summary>数据新鲜度文本（距最后收到快照的秒数）。</summary>
     private string FreshnessText
     {
@@ -539,6 +610,98 @@ private void OnRenderTick()
         }
     }
 
+    private IReadOnlyList<QualityPoint> QualityHistory
+        => Dashboard.GetQualityHistory(SelectedSnapshot?.DeviceId ?? "");
+
+    private const double QualityTarget = 0.95;
+
+    private string QualityLiveText
+        => SelectedSnapshot is null || TotalOutput <= 0 ? "—" : Pct(SelectedSnapshot.QualityRate);
+
+    private string QualityGapText
+        => SelectedSnapshot is null || TotalOutput <= 0
+            ? "—"
+            : $"{SelectedSnapshot.QualityRate - QualityTarget:+#0.0%;-#0.0%;+0.0%}";
+
+    private string QualityCssClass
+        => SelectedSnapshot is null || TotalOutput <= 0 ? ""
+        : SelectedSnapshot.QualityRate >= QualityTarget ? "good" : "bad";
+
+    private string QualityGapTooltip
+        => Tip("Home_Tip_QualityGap", QualityLiveText, QualityGapText);
+
+    private (double YMin, double Range) QualityScale
+    {
+        get
+        {
+            var pts = QualityHistory;
+            if (pts.Count == 0) return (0.87, 0.13);
+            var minQ = pts.Min(p => p.Quality);
+            var yMin = Math.Clamp(Math.Min(QualityTarget - 0.08, minQ - 0.04), 0, 0.98);
+            return (yMin, Math.Max(1 - yMin, 0.02));
+        }
+    }
+
+    private string QualityTargetY
+    {
+        get
+        {
+            var (yMin, range) = QualityScale;
+            var y = 72 - (QualityTarget - yMin) / range * 64;
+            return y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private bool TryGetQualityAxisWindow(out DateTime axisStart, out DateTime axisEnd)
+    {
+        axisStart = default;
+        axisEnd = default;
+        var sp = Dashboard.ShiftProgress;
+        if (sp is { IsInShift: true, ShiftStart: not null, ShiftEnd: not null })
+        {
+            axisStart = sp.ShiftStart.Value;
+            axisEnd = sp.ShiftEnd.Value;
+            if (axisEnd <= axisStart)
+                axisEnd = axisStart.AddMinutes(1);
+            return true;
+        }
+
+        var pts = QualityHistory;
+        if (pts.Count == 0)
+            return false;
+        axisStart = pts[0].Time;
+        axisEnd = pts.Count >= 2 ? pts[^1].Time : pts[0].Time.AddMinutes(1);
+        if (axisEnd <= axisStart)
+            axisEnd = axisStart.AddMinutes(1);
+        return true;
+    }
+
+    private static double MapQualityX(DateTime time, DateTime axisStart, DateTime axisEnd)
+    {
+        var span = (axisEnd - axisStart).TotalSeconds;
+        if (span <= 0) return 0;
+        return Math.Clamp((time - axisStart).TotalSeconds / span * 300, 0, 300);
+    }
+
+    /// <summary>当前班次良率 sparkline（viewBox 300x80）。横轴对齐整班时段；单点时只画达标线，等第二点再连线。</summary>
+    private string? QualityPointsText
+    {
+        get
+        {
+            var pts = QualityHistory;
+            if (pts.Count < 2 || !TryGetQualityAxisWindow(out var axisStart, out var axisEnd))
+                return null;
+            var (yMin, range) = QualityScale;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            return string.Join(" ", pts.Select(p =>
+            {
+                var x = MapQualityX(p.Time, axisStart, axisEnd);
+                var y = 72 - (p.Quality - yMin) / range * 64;
+                return x.ToString("F0", inv) + "," + y.ToString("F0", inv);
+            }));
+        }
+    }
+
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
 
@@ -558,6 +721,20 @@ private void OnRenderTick()
     private string TotalOutputText => TotalOutput.ToString("N0");
     private string TargetCycleText => SelectedSnapshot is { TargetCycle: > 0 } ? $"{SnapshotMetrics.CycleSeconds(SelectedSnapshot.TargetCycle):F2}s" : "—";
     private string ActualCycleText => RealtimeSpeed > 0 ? $"{SnapshotMetrics.CycleSeconds(RealtimeSpeed):F2}s" : "—";
+    private double TargetCycleSec => SelectedSnapshot is { TargetCycle: > 0 }
+        ? SnapshotMetrics.CycleSeconds(SelectedSnapshot.TargetCycle) : 0;
+    private double ActualCycleSec => RealtimeSpeed > 0 ? SnapshotMetrics.CycleSeconds(RealtimeSpeed) : 0;
+    private bool IsCycleSlow => TargetCycleSec > 0 && ActualCycleSec > 0 && ActualCycleSec > TargetCycleSec;
+    private string CycleDiffText
+    {
+        get
+        {
+            if (TargetCycleSec <= 0 || ActualCycleSec <= 0) return "";
+            var diff = ActualCycleSec - TargetCycleSec;
+            if (Math.Abs(diff) < 0.01) return "●";
+            return diff > 0 ? $"▼ {diff:F2}s" : $"▲ {Math.Abs(diff):F2}s";
+        }
+    }
     private double NgRate => SelectedSnapshot is null ? 0
         : SnapshotMetrics.NgRate(SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
     private string NgRateText => TotalOutput > 0 ? $"{NgRate:P1}" : "—";
@@ -567,6 +744,110 @@ private void OnRenderTick()
     private double SpeedAchievementRate => SelectedSnapshot is { TargetCycle: > 0 }
         ? SnapshotMetrics.AchievementRate(RealtimeSpeed, SelectedSnapshot.TargetCycle) : 0;
     private string SpeedAchievementRateText => $"{SpeedAchievementRate:P0}";
+
+    private static string Tip(string key, params object[] args)
+        => L.T(key, args).Replace("\\n", "\n", StringComparison.Ordinal);
+
+    private int WorkOrderOkCount => Dashboard.GetWorkOrderOkCount(SelectedDeviceId) ?? 0;
+    private int WorkOrderNgCount => Dashboard.GetWorkOrderNgCount(SelectedDeviceId) ?? 0;
+    private string WorkOrderOkText => WorkOrderOkCount.ToString("N0");
+    private string WorkOrderNgText => WorkOrderNgCount.ToString("N0");
+    private double WorkOrderQualityRate => SnapshotMetrics.QualityRate(WorkOrderOkCount, WorkOrderNgCount);
+    private string WorkOrderQualityText
+        => WorkOrderOkCount + WorkOrderNgCount > 0 ? $"{WorkOrderQualityRate:P1}" : "—";
+    private string WorkOrderQualityCssClass
+        => WorkOrderOkCount + WorkOrderNgCount <= 0 ? "kpi-value"
+        : WorkOrderQualityRate >= 0.95 ? "kpi-value run"
+        : "kpi-value danger";
+    private string WorkOrderOkTooltip => Tip("Home_Tip_WorkOrderOk", WorkOrderOkText);
+    private string WorkOrderNgTooltip => Tip("Home_Tip_WorkOrderNg", WorkOrderNgCount);
+    private string WorkOrderQualityTooltip => Tip("Home_Tip_WorkOrderQuality", WorkOrderOkCount, WorkOrderNgCount, WorkOrderQualityText);
+    private string SpeedAchievementTooltip => Tip("Home_Tip_SpeedAchievement", RealtimeSpeed, SelectedSnapshot?.TargetCycle ?? 0, SpeedAchievementRate);
+    private string RealtimeSpeedTooltip => Tip("Home_Tip_RealtimeSpeed", SelectedSnapshot?.TotalOkProduction ?? 0, SelectedSnapshot?.TotalNgProduction ?? 0, FmtDuration(SelectedSnapshot?.RunTime ?? 0), RealtimeSpeedText);
+    private string WorkOrderProgressTooltip => CurrentWorkOrder is null
+        ? ""
+        : Tip("Home_Tip_WorkOrderProgress", WorkOrderOkCount, CurrentWorkOrder.TargetQuantity, WoProgressPctText);
+    private string WorkOrderTargetTooltip => Tip("Home_Tip_WorkOrderTarget", CurrentWorkOrder?.TargetQuantity ?? 0);
+    private string TargetCycleTooltip => Tip("Home_Tip_TargetCycle", SelectedSnapshot?.TargetCycle ?? 0, TargetCycleText);
+    private string ActualCycleTooltip => Tip("Home_Tip_ActualCycle", RealtimeSpeed, ActualCycleText, string.IsNullOrEmpty(CycleDiffText) ? "—" : CycleDiffText);
+    private string RunTimeTooltip => Tip("Home_Tip_RunTime", FmtDuration(SelectedSnapshot?.RunTime ?? 0), RunRatio / 100.0);
+    private string AlarmTimeTooltip => Tip("Home_Tip_AlarmTime", FmtDuration(SelectedSnapshot?.AlarmTime ?? 0), AlarmRatio / 100.0);
+    private string PausedTimeTooltip => Tip("Home_Tip_PausedTime", FmtDuration(SelectedSnapshot?.PausedTime ?? 0), PauseRatio / 100.0);
+    private string OfflineTimeTooltip => Tip("Home_Tip_OfflineTime", FmtDuration(SelectedSnapshot?.OfflineTime ?? 0), OfflineRatio / 100.0);
+    private string OeeFormulaText => SelectedSnapshot is null || !HasActiveWorkOrder
+        ? "—"
+        : $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}";
+    private string AvailabilityFormulaText
+    {
+        get
+        {
+            var s = SelectedSnapshot;
+            if (s is null || s.RunTime + s.AlarmTime <= 0) return "— / —";
+            return $"{FmtDuration(s.RunTime)} / {FmtDuration(s.RunTime + s.AlarmTime)}";
+        }
+    }
+    private string PerformanceFormulaText
+    {
+        get
+        {
+            var s = SelectedSnapshot;
+            if (s is null || s.TargetCycle <= 0 || s.RunTime <= 0) return "— / —";
+            var ideal = s.TargetCycle * (s.RunTime / 3600.0);
+            return $"{s.TotalOkProduction}+{s.TotalNgProduction} / {ideal:N0}";
+        }
+    }
+    private string QualityFormulaText
+    {
+        get
+        {
+            if (SelectedSnapshot is null || TotalOutput <= 0) return "— / —";
+            return $"{SelectedSnapshot.TotalOkProduction} / {TotalOutput}";
+        }
+    }
+    private string OeeTooltip => Tip("Home_Tip_Oee", OeeFormulaText, SelectedSnapshot is null ? "—" : Pct(SelectedSnapshot.Oee));
+    private string AvailabilityTooltip => Tip("Home_Tip_Availability", AvailabilityFormulaText, SelectedSnapshot is null ? "—" : Pct(SelectedSnapshot.AvailabilityRate));
+    private string PerformanceTooltip => Tip("Home_Tip_Performance", PerformanceFormulaText, SelectedSnapshot is null ? "—" : Pct(SelectedSnapshot.PerformanceRate));
+    private string QualityTooltip => Tip("Home_Tip_Quality", QualityFormulaText, SelectedSnapshot is null ? "—" : Pct(SelectedSnapshot.QualityRate));
+    private string TotalOutputTooltip => Tip("Home_Tip_TotalOutput", SelectedSnapshot?.TotalOkProduction ?? 0, SelectedSnapshot?.TotalNgProduction ?? 0, TotalOutput);
+    private string NgRateTooltip => Tip("Home_Tip_NgRate", SelectedSnapshot?.TotalNgProduction ?? 0, TotalOutput, NgRateText);
+    private string LastShiftTooltip => LastShift is null
+        ? ""
+        : Tip("Home_Tip_LastShift", LastShift.ShiftName, LastShift.Ok, LastShift.Ng);
+
+    private double DeviceHealthScore => SelectedSnapshot is null
+        || SelectedSnapshot.RunTime + SelectedSnapshot.AlarmTime + SelectedSnapshot.PausedTime <= 0
+        ? 0
+        : SnapshotMetrics.DeviceHealthScore(
+            SelectedSnapshot.AvailabilityRate,
+            SelectedSnapshot.PerformanceRate,
+            SelectedSnapshot.QualityRate,
+            SelectedSnapshot.RunTime,
+            SelectedSnapshot.AlarmTime,
+            SelectedSnapshot.PausedTime);
+
+    private string DeviceHealthScoreText => DeviceHealthScore <= 0 ? "—" : $"{DeviceHealthScore:0}";
+
+    private string DeviceHealthLevel => DeviceHealthScore switch
+    {
+        >= 85 => "OK",
+        >= 70 => "Good",
+        >= 60 => "Watch",
+        > 0 => "Low",
+        _ => "—",
+    };
+
+    private string DeviceHealthCssClass => DeviceHealthScore switch
+    {
+        >= 85 => "health-ok",
+        >= 70 => "health-good",
+        >= 60 => "health-watch",
+        > 0 => "health-low",
+        _ => "",
+    };
+
+    private string DeviceHealthTooltip => SelectedSnapshot is null || DeviceHealthScore <= 0
+        ? ""
+        : $"A {Pct(SelectedSnapshot.AvailabilityRate)} · P {Pct(SelectedSnapshot.PerformanceRate)} · Q {Pct(SelectedSnapshot.QualityRate)} · {DeviceHealthScore:0}";
 
     private double RunRatio => RatioPercentOf(SelectedSnapshot?.RunTime ?? 0, SelectedSnapshot);
     private double AlarmRatio => RatioPercentOf(SelectedSnapshot?.AlarmTime ?? 0, SelectedSnapshot);

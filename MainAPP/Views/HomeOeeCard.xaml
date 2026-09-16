@@ -11,11 +11,13 @@
     d:DesignHeight="400"
     d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
-        主页仪表板卡片 4：OEE 综合效率（OEE 主环 + 可用率/性能率/合格率三环小卡）。
+        主页仪表板卡片 4：OEE设备综合使用效率（OEE 主环 + 可用率/性能率/合格率三环小卡 + 标题栏设备健康分）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
         共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
     -->
-    <Border Style="{StaticResource DashboardCard}">
+    <Border Style="{StaticResource DashboardCard}"
+            ToolTipService.InitialShowDelay="300"
+            ToolTipService.ShowDuration="30000">
         <!--  内边距 20→16：紧凑化以容纳 2×3 看板在 1080 设计高度内的完整展示（修复 2026-08-30，见 HomeView.xaml 说明）  -->
         <Grid Margin="16">
             <Grid.RowDefinitions>
@@ -23,11 +25,27 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!--  标题  -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,10" Orientation="Horizontal">
-                <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
-                <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
-            </StackPanel>
+            <!--  标题 + 压缩设备健康分（自设备状态卡迁入）  -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
+                    <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                            ToolTip="{Binding DeviceHealthScoreTooltip}">
+                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               Text="{x:Static resources:Strings.Home_DeviceHealth}" />
+                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
+                               Foreground="{Binding DeviceHealthBrush}"
+                               Text="{Binding DeviceHealthScoreText}" />
+                    <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="999"
+                            Background="{Binding DeviceHealthBrush}">
+                        <TextBlock Foreground="White" FontSize="11" FontWeight="Bold"
+                                   Text="{Binding DeviceHealthLevel}" />
+                    </Border>
+                </StackPanel>
+            </DockPanel>
 
             <!--  左右布局：OEE 主环居左，A/P/Q 三环指标居右，避免上下堆叠导致底部文字被压缩/重叠  -->
             <Grid Grid.Row="1">
@@ -42,7 +60,7 @@
                         <oxy:PlotView Model="{Binding OeeRingChart}" Width="235" Height="235"
                                       Background="Transparent" />
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    ToolTip="{Binding OeeFormulaText, StringFormat='OEE = {0}'}">
+                                    ToolTip="{Binding OeeTooltip}">
                             <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLg}" FontWeight="Bold"
                                        Foreground="{Binding OeeValue, Converter={StaticResource OeeThreshold}}"
                                        Text="{Binding OeeDisplay}" />
@@ -68,7 +86,8 @@
                 <!--  右：可用率 / 性能率 / 合格率 三环小卡  -->
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                     <!--  可用率  -->
-                    <Border Padding="8" Margin="0,0,0,6" Style="{StaticResource KpiCardSecondary}">
+                    <Border Padding="8" Margin="0,0,0,6" Style="{StaticResource KpiCardSecondary}"
+                            ToolTip="{Binding AvailabilityTooltip}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -92,7 +111,8 @@
                     </Border>
 
                     <!--  性能率  -->
-                    <Border Padding="8" Margin="0,0,0,6" Style="{StaticResource KpiCardSecondary}">
+                    <Border Padding="8" Margin="0,0,0,6" Style="{StaticResource KpiCardSecondary}"
+                            ToolTip="{Binding PerformanceTooltip}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -116,7 +136,8 @@
                     </Border>
 
                     <!--  合格率  -->
-                    <Border Padding="8" Style="{StaticResource KpiCardSecondary}">
+                    <Border Padding="8" Style="{StaticResource KpiCardSecondary}"
+                            ToolTip="{Binding QualityTooltip}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

@@ -1261,7 +1261,7 @@
     <value>Sem dados de estado</value>
   </data>
   <data name="K319" xml:space="preserve">
-    <value>OEE geral</value>
+    <value>OEE eficiência geral de uso do equipamento</value>
   </data>
   <data name="K320" xml:space="preserve">
     <value>Sem dados de OEE</value>
@@ -1273,7 +1273,7 @@
     <value>B: Taxa de desempenho</value>
   </data>
   <data name="K323" xml:space="preserve">
-    <value>Status de produção atual</value>
+    <value>Progresso da produção atual</value>
   </data>
   <data name="K324" xml:space="preserve">
     <value>Velocidade atual</value>
@@ -1288,7 +1288,7 @@
     <value>Conclusão da ordem</value>
   </data>
   <data name="K328" xml:space="preserve">
-    <value>Visão geral C: taxa de qualidade</value>
+    <value>Qualidade do turno atual</value>
   </data>
   <data name="K329" xml:space="preserve">
     <value>Falhas em tempo real</value>
@@ -3730,13 +3730,13 @@
     <value>Status dos dispositivos</value>
   </data>
   <data name="Web_Card_ProdStatus" xml:space="preserve">
-    <value>Produção atual</value>
+    <value>Progresso da produção atual</value>
   </data>
   <data name="Web_Card_Alarms" xml:space="preserve">
     <value>Alarmes em tempo real</value>
   </data>
   <data name="Web_Card_Oee" xml:space="preserve">
-    <value>Visão geral do OEE</value>
+    <value>OEE eficiência geral de uso do equipamento</value>
   </data>
   <data name="Web_Card_Output" xml:space="preserve">
     <value>Detalhes de produção</value>
@@ -6784,5 +6784,86 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Msg_PageExported" xml:space="preserve">
     <value>Página atual exportada → {0}</value>
+  </data>
+  <data name="Home_Tip_SpeedAchievement" xml:space="preserve">
+    <value>Taxa de realização = velocidade atual ÷ capacidade alvo, limitada a 0–100%.\nVelocidade = (OK+NG) ÷ horas em execução; o tempo só acumula em Running e não muda em alarme/espera; 0 se RunTime &lt; 5s.\nAgora: {0:N0} pçs/h ÷ {1:N0} pçs/h = {2:P0}\nCores: ≥90% verde / ≥70% amarelo / &lt;70% vermelho. Não é a conclusão da ordem.</value>
+  </data>
+  <data name="Home_Tip_RealtimeSpeed" xml:space="preserve">
+    <value>Velocidade atual (pçs/h) = (OK + NG) ÷ horas em execução.\nO tempo só acumula em Running; em alarme/espera a velocidade permanece. Abaixo de 5s a velocidade é 0.\nAgora: ({0:N0}+{1:N0}) ÷ {2} = {3} pçs/h</value>
+  </data>
+  <data name="Home_Tip_WorkOrderProgress" xml:space="preserve">
+    <value>Conclusão da ordem = OK na janela da ordem ÷ quantidade planejada, limitado a 100%.\nUsa OK da janela da ordem (igual à página de Ordens), não o total da sessão nem a realização de velocidade.\nAgora: {0:N0} / {1:N0} pçs = {2}</value>
+  </data>
+  <data name="Home_Tip_WorkOrderTarget" xml:space="preserve">
+    <value>Quantidade da ordem = quantidade planejada desta ordem.\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderOk" xml:space="preserve">
+    <value>Produzido na ordem = OK na janela da ordem (não o total da sessão; exclui NG).\nAgora: {0} pçs</value>
+  </data>
+  <data name="Home_WorkOrderNg" xml:space="preserve">
+    <value>NG da ordem</value>
+  </data>
+  <data name="Home_WorkOrderQuality" xml:space="preserve">
+    <value>Qualidade da ordem</value>
+  </data>
+  <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
+    <value>NG da ordem = rejeitos na janela da ordem (não o total da sessão).\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderQuality" xml:space="preserve">
+    <value>Qualidade da ordem = OK ÷ (OK+NG) na janela da ordem. Mostra — sem produção. Meta 95%.\nAgora: {0:N0} / {1:N0} = {2}\nNão é a qualidade acumulada da sessão no cartão de Qualidade.</value>
+  </data>
+  <data name="Home_Tip_TargetCycle" xml:space="preserve">
+    <value>Ciclo alvo (s/pç) = 3600 ÷ capacidade alvo do dispositivo (pçs/h), da configuração.\nCapacidade {0:N0} pçs/h → {1}</value>
+  </data>
+  <data name="Home_Tip_ActualCycle" xml:space="preserve">
+    <value>Ciclo real (s/pç) = 3600 ÷ velocidade atual. Mostra — se a velocidade for 0.\nVelocidade {0:N0} pçs/h → {1}\nVs alvo: {2}</value>
+  </data>
+  <data name="Home_Tip_RunTime" xml:space="preserve">
+    <value>Tempo em execução: acumulado em Running. Denominador = execução+alarme+espera+offline.\nAgora: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_AlarmTime" xml:space="preserve">
+    <value>Tempo em alarme: acumulado em Alarm. A parcela inclui offline no denominador.\nAgora: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_PausedTime" xml:space="preserve">
+    <value>Tempo em espera: acumulado em Paused/Standby. A parcela inclui offline no denominador.\nAgora: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_OfflineTime" xml:space="preserve">
+    <value>Tempo offline: perda de comunicação, coleta parada ou PLC offline. Entra na parcela de exibição, não no denominador da disponibilidade do OEE.\nAgora: {0} ({1:P0})</value>
+  </data>
+  <data name="Home_Tip_Clock" xml:space="preserve">
+    <value>Relógio local no formato MM-dd HH:mm:ss, atualizado a cada segundo na Home.\nAgora: {0}</value>
+  </data>
+  <data name="Home_Tip_Shift" xml:space="preserve">
+    <value>Turno atual e janela. A porcentagem é decorrido / duração total do turno.\n{0}\n{1}</value>
+  </data>
+  <data name="Home_Tip_Oee" xml:space="preserve">
+    <value>OEE = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / &lt;60% vermelho.</value>
+  </data>
+  <data name="Home_Tip_Availability" xml:space="preserve">
+    <value>Disponibilidade = tempo em execução ÷ (execução + alarme). Espera e offline ficam de fora do denominador.\nAgora: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Performance" xml:space="preserve">
+    <value>Desempenho = produção real (OK+NG) ÷ (capacidade alvo × horas em execução).\nAgora: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_Quality" xml:space="preserve">
+    <value>Qualidade = OK ÷ (OK+NG). Meta 95%: verde se atingida, senão vermelho.\nAgora: {0} = {1}</value>
+  </data>
+  <data name="Home_Tip_TotalOutput" xml:space="preserve">
+    <value>Produção total = OK + NG (acumulado da sessão, inclui rejeitos).\nAgora: OK {0:N0} + NG {1:N0} = {2:N0} pçs</value>
+  </data>
+  <data name="Home_Tip_NgRate" xml:space="preserve">
+    <value>Taxa de NG = NG ÷ (OK+NG); quanto menor, melhor. 0 sem produção.\nAgora: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Home_Tip_QualityGap" xml:space="preserve">
+    <value>Diferença em relação à meta de 95%. Positivo = acima, negativo = ainda abaixo.\nQualidade agora {0}, diferença {1}</value>
+  </data>
+  <data name="Home_Tip_QualityTrend" xml:space="preserve">
+    <value>A linha é a qualidade acumulada do turno: OK ÷ (OK+NG) em cada amostra. A linha vermelha tracejada é a meta de 95%. Pontos vêm dos snapshots do turno mais o valor ao vivo.</value>
+  </data>
+  <data name="Home_Tip_CurrentShift" xml:space="preserve">
+    <value>OK / NG acumulados do turno atual. Setas comparam com o turno anterior.\nOK {0}   NG {1}</value>
+  </data>
+  <data name="Home_Tip_LastShift" xml:space="preserve">
+    <value>Resumo do turno completo anterior.\n{0}\nOK {1:N0}   NG {2:N0}</value>
   </data>
 </root>

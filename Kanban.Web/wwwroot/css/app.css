@@ -154,6 +154,45 @@ body {
 
 .meta-line { color: var(--text-3); font-size: 12px; margin-top: auto; }
 
+.device-kpi-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+
+.device-kpi-row .kpi-label { color: var(--text-3); font-size: 12px; font-weight: 600; }
+
+.device-kpi-row .kpi-value { color: var(--text-1); font-size: 13px; font-weight: 700; margin-left: auto; }
+
+.cycle-diff { font-size: 12px; font-weight: 700; width: 100%; text-align: right; }
+
+.cycle-diff.ok { color: var(--ok); }
+
+.cycle-diff.slow { color: var(--danger); }
+
+.oee-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+.oee-health { font-size: 12px; color: var(--text-3); font-weight: 500; }
+
+.oee-health b { font-size: 14px; margin: 0 6px; }
+
+.health-level {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; color: #fff;
+}
+
+.health-ok { color: var(--ok); background: var(--ok); }
+
+.health-good { color: var(--run); background: var(--run); }
+
+.health-watch { color: var(--paused); background: var(--paused); }
+
+.health-low { color: var(--danger); background: var(--danger); }
+
+.health-level.health-ok,
+.health-level.health-good,
+.health-level.health-watch,
+.health-level.health-low { color: #fff; }
+
 /* ──────────── 缺陷帕累托 TOP5 卡 ──────────── */
 
 .defect-sub { color: var(--text-3); font-size: 11px; margin: 2px 0 6px; }
@@ -282,24 +321,91 @@ body {
 
 .oee-formula { color: var(--text-3); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
 
-/* ──────────── 产量明细卡 ──────────── */
+/* ──────────── 当前班次良率卡 ──────────── */
 
 .quality-row { display: flex; gap: 20px; justify-content: center; text-align: center; }
+
+.quality-row-compact { gap: 12px; }
 
 .quality-block { flex: 1; }
 
 .quality-num { font-size: 30px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.quality-row-compact .quality-num { font-size: 20px; }
 
 .quality-num.ok { color: var(--green); }
 .quality-num.ng { color: var(--red); }
 
 .quality-label { color: var(--text-3); font-size: 12px; }
 
+.quality-live {
+    margin-left: auto;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+    color: var(--text);
+}
+
+.quality-gap {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.quality-live.good, .quality-gap.good { color: var(--green); }
+.quality-live.bad, .quality-gap.bad { color: var(--red); }
+
+.quality-chart { min-height: 72px; }
+
+.spark-quality { height: 88px; }
+
 /* ──────────── 当前工单卡 / 速度趋势卡 ──────────── */
 
 .wo-product { color: var(--text-2); font-size: 13px; }
 
 .wo-progress-text { color: var(--text); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.wo-progress-hero {
+    margin-bottom: 14px; padding: 12px 14px; border-radius: 10px;
+    background: var(--card-2); border: 1px solid var(--border);
+}
+
+.wo-progress-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+
+.wo-order { font-size: 14px; font-weight: 700; color: var(--text-1); }
+
+.wo-product-inline { font-size: 12px; color: var(--text-2); }
+
+.wo-progress-main {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+}
+
+.wo-progress-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.wo-progress-label { font-size: 12px; font-weight: 700; color: var(--text-3); }
+
+.wo-progress-pct {
+    font-size: 34px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+}
+
+.wo-progress-pct.wo-pct-good { color: var(--ok); }
+
+.wo-progress-pct.wo-pct-warn { color: var(--paused); }
+
+.wo-progress-pct.wo-pct-low { color: var(--danger); }
+
+.wo-progress-pct.wo-pct-none { color: var(--text-3); }
+
+.wo-progress-bar { margin-top: 10px; height: 10px; }
+
+.wo-kpi-grid { margin-top: 2px; }
+
+.time-bar .seg.wo.wo-pct-good { background: var(--ok); }
+
+.time-bar .seg.wo.wo-pct-warn { background: var(--paused); }
+
+.time-bar .seg.wo.wo-pct-low { background: var(--danger); }
 
 .badge-soft {
     color: var(--text-3); font-size: 11px; font-weight: 400;

@@ -94,7 +94,7 @@ public class DeviceSimulator
     // 数据源模拟地址约定（三菱 D 地址，MelsecMcServer 任意 D 字可读写）：
     // D(600+off)=温度(°C, Float32)、D(602+off)=湿度(%, Float32)、D(604+off)=工艺压力(bar/MPa, Float32)、
     // D(606+off)=工艺电流/转速(A, Float32)、D(608+off)=数据源采集触发命令字（Int32 握手）。
-    // 地址区取 D6xx（与 OK/NG 计数 D1xx、缺陷 D2xx、配方 D5xx 错开，避免冲突）。
+    // 地址区取 D6xx（与 OK/NG 计数 D1xx、缺陷 D8xx/D9xx/D10xx、配方 D5xx 错开，避免冲突）。
     // 注意：相邻 Float32 各占 2 字，地址间隔留 2 字避免值污染。
     private int TemperatureAddress => 600 + _registerOffset;
     private int HumidityAddress => 602 + _registerOffset;

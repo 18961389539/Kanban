@@ -62,4 +62,53 @@ public class SampleDeviceBuilderTests
         var errors = DeviceConfigValidator.CollectValidationErrors(devices);
         Assert.Empty(errors);
     }
+
+    [Fact]
+    public void BuildSampleDevices_DefectAddressesAreEvenInt32AlignedAndDoNotOverlap()
+    {
+        var devices = SampleDeviceBuilder.BuildSampleDevices();
+        var occupied = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var d in devices)
+        {
+            foreach (var def in d.Defects)
+            {
+                var parsed = PlcAddressParser.Parse(def.PlcAddress);
+                Assert.True(parsed.IsValid && parsed.Type == PlcAddressType.DWord, $"{d.Name}.{def.Name} {def.PlcAddress}");
+                Assert.Equal(2, parsed.AddressStride);
+                Assert.Equal(0, parsed.AddressOffset % 2);
+
+                for (var i = 0; i < parsed.AddressStride; i++)
+                {
+                    var word = $"{parsed.AddressGroup}{parsed.AddressOffset + i}";
+                    Assert.False(occupied.ContainsKey(word),
+                        $"{word} 已被 {occupied.GetValueOrDefault(word)} 占用，与 {d.Name}.Defect[{def.Name}] 冲突");
+                    occupied[word] = $"{d.Name}.Defect[{def.Name}]";
+                }
+            }
+        }
+
+        foreach (var d in devices)
+        {
+            string[] primaries =
+            [
+                d.OkCountAddress, d.NgCountAddress, d.StatusCountAddress,
+                d.ProductionResetAddress, d.RecipeAddress,
+            ];
+            foreach (var addr in primaries.Concat(d.CounterAlarms.Select(c => c.PlcAddress)))
+            {
+                var parsed = PlcAddressParser.Parse(addr);
+                if (!parsed.IsValid) continue;
+                var words = parsed.Type == PlcAddressType.DWord ? Math.Max(parsed.AddressStride, 1) : 1;
+                for (var i = 0; i < words; i++)
+                {
+                    var word = i == 0 && parsed.Type != PlcAddressType.DWord
+                        ? parsed.Original
+                        : $"{parsed.AddressGroup}{parsed.AddressOffset + i}";
+                    Assert.False(occupied.ContainsKey(word),
+                        $"{word} 与缺陷 {occupied.GetValueOrDefault(word)} 重叠（{d.Name} {addr}）");
+                }
+            }
+        }
+    }
 }
