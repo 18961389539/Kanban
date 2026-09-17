@@ -10,7 +10,14 @@
     <RootNamespace>MainAPP</RootNamespace>
     <AssemblyName>MainAPP</AssemblyName>
     <NeutralLanguage>zh-CN</NeutralLanguage>
+    <!-- 应用图标：由 ci 生成的 app_icon.png 转换而来，同时用于 exe 与窗口标题栏 -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 窗口标题栏图标（MainWindow.Icon 经 App.xaml 的 AppIcon 资源引用） -->
+    <Resource Include="app_icon.png" />
+  </ItemGroup>
 
   <!-- 编译前从统一 Localization.csv 生成 WPF 资源和 Strings.cs。 -->
   <Target Name="GenerateStrings" BeforeTargets="AssignCulture">

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Models;
+using MainAPP.Helpers;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
@@ -52,11 +53,8 @@ public abstract partial class DeviceChildManagerViewModel : ObservableObject
     private void OnHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // 父级属性可能在 PLC 采集后台线程被触发（如 IsPlcConnected），必须封送回 UI 线程
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnHostPropertyChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnHostPropertyChanged(sender, e)))
             return;
-        }
 
         if (e.PropertyName == nameof(IDeviceManagerHost.SelectedDevice))
         {

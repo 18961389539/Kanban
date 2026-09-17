@@ -258,7 +258,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         if (_refreshTimer.IsEnabled) return;
         RaiseConfigMetricsChanged();
         _refreshTimer.Start();
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        UiDispatcher.PostOrDrop(() =>
         {
             if (!_refreshTimer.IsEnabled) return;
             Refresh();

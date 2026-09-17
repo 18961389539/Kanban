@@ -899,10 +899,10 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                         ? string.Format(Strings.F033, mostFrequent.DisplayName, mostFrequent.TriggerCount)
                         : "—";
                     StatsLastUpdateTime = now;
-                    RefreshActiveAlarms(blockUntilApplied: Application.Current != null);
+                    RefreshActiveAlarms(blockUntilApplied: UiDispatcher.HasWpfAppHost);
                 }
 
-                if (Application.Current != null)
+                if (UiDispatcher.HasWpfAppHost)
                     _uiDispatcher.Invoke(ApplyStats);
                 else
                     ApplyStats();
@@ -926,14 +926,14 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                     StatsLastUpdateTime = now;
                 }
 
-                if (Application.Current != null)
+                if (UiDispatcher.HasWpfAppHost)
                     _uiDispatcher.Invoke(ApplyError);
                 else
                     ApplyError();
             }
         }
 
-        if (Application.Current != null)
+        if (UiDispatcher.HasWpfAppHost)
             Task.Run(RefreshStatsCore).Forget();
         else
             RefreshStatsCore();

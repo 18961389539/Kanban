@@ -442,7 +442,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         // 状态筛选 chip 的 Pending/Running/Completed/Aborted 计数会长期停留在 0。
         // RefreshStatusCounts 内部以同一快照完成状态计数 + 派生计数，并刷新筛选视图。
         // 让导航切换先完成绘制，再在后台优先级重算计数/触发甘特图异步构建。
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        var dispatcher = UiDispatcher.CurrentDispatcher;
         if (dispatcher == null || dispatcher.HasShutdownStarted)
         {
             RefreshStatusCounts();
@@ -794,11 +794,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
                 WorkOrderGanttChartModel = chart;
                 OnPropertyChanged(nameof(WorkOrderGanttChartModel));
             }
-            var dispatcher = System.Windows.Application.Current?.Dispatcher;
-            if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
-                ApplyGanttModel();
-            else
-                dispatcher.BeginInvoke(new Action(ApplyGanttModel), System.Windows.Threading.DispatcherPriority.Background);
+            UiDispatcher.Dispatch(ApplyGanttModel, System.Windows.Threading.DispatcherPriority.Background);
         }).Forget();
     }
 

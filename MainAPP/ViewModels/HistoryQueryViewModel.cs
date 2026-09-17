@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
+using MainAPP.Helpers;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -401,26 +402,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         // UI 线程封送（审查修复 2026-08-13）：Devices 可能被后台线程修改（RemoteRuntimeSink 数据灌入），
         // DeviceFilterItems 是 ObservableCollection——跨线程 Clear/Add 会抛 NotSupportedException。
         // 与 HomeViewModel/OverviewViewModel 的 OnDevicesCollectionChanged 同模式（含关闭守卫）。
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher == null || dispatcher.HasShutdownStarted)
+        UiDispatcher.Dispatch(() =>
         {
             RefreshDeviceFilterItems();
             SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
-            return;
-        }
-        if (dispatcher.CheckAccess())
-        {
-            RefreshDeviceFilterItems();
-            SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
-        }
-        else
-        {
-            dispatcher.BeginInvoke(() =>
-            {
-                RefreshDeviceFilterItems();
-                SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
-            });
-        }
+        });
     }
 
     private string? NormalizeDeviceId() =>
@@ -562,10 +548,10 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         try
         {
             if (!File.Exists(LastQueryFilePath)) return;
-            // P1-8 修复 2026-09-02：构造函数一次性调用、不能 await，用同步等待线程池读盘
-            //（IO 在池线程执行，UI 线程仅等待小文件读取完成，不参与磁盘操作）。
-            var json = Task.Run(() => File.ReadAllText(LastQueryFilePath))
-                .ConfigureAwait(false).GetAwaiter().GetResult();
+            // 构造函数内直接同步读盘（文件为几百字节的查询条件快照，读取代价可忽略；
+            // 审查修复 2026-09-17：此前用 Task.Run+GetResult 做 sync-over-async，
+            // 非但没减少阻塞，反而额外引入线程切换与死锁风险）。
+            var json = File.ReadAllText(LastQueryFilePath);
             var snapshot = JsonSerializer.Deserialize<LastQuerySnapshot>(json);
             if (snapshot == null) return;
 
@@ -746,7 +732,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void QueryCurrentTab()
     {
-        if (Application.Current?.Dispatcher.CheckAccess() == true)
+        if (UiDispatcher.IsOnLiveUiThread)
         {
             _ = QueryCurrentTabAsync();
             return;

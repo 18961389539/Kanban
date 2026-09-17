@@ -59,11 +59,11 @@ public partial class App : Application
         Log("App 构造完成 (Host 构建完成)");
     }
 
-    protected override async void OnStartup(StartupEventArgs e)
+    protected override void OnStartup(StartupEventArgs e)
     {
         Log("OnStartup 开始");
 
-        // 全局未捕获异常日志：WPF 运行时异常（XamlParseException 等）在启动流程之外发生时不进 OnStartup 的
+        // 全局未捕获异常日志：WPF 运行时异常（XamlParseException 等）在启动流程之外发生时不进启动
         // try/catch，此前静默崩溃无日志（如设备管理页资源缺失闪退）。此处统一记录到 Serilog；
         // 只有明确可恢复的异常才阻止 WPF 默认故障路径，未知异常不再被无条件吞掉。
         DispatcherUnhandledException += (_, args) =>
@@ -84,9 +84,25 @@ public partial class App : Application
             if (args.ExceptionObject is Exception ex)
                 Serilog.Log.Error(ex, "AppDomain 未处理异常（进程将终止）");
         };
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Serilog.Log.Error(args.Exception, "未观察的 Task 异常（启动主流程或后台任务漏网异常）");
+            args.SetObserved();
+        };
 
-        // OnStartup 是 async void，未捕获异常会直接终止进程且无错误提示。
-        // 用 try/catch 包裹整个启动流程（Host.StartAsync / Load / EnsureCreated / MainWindow.Show 等），
+        base.OnStartup(e);
+
+        // 启动主流程改为普通 Task（审查修复 2026-09-17）：不再用 async void——
+        // async void 的未捕获异常会直接终止进程且无错误提示；Task + 内部 try/catch 兜底后，
+        // 任何漏网异常只产生未观察 Task 异常（由上方 UnobservedTaskException 记录），不会无提示崩溃。
+        _ = RunStartupAsync(e);
+    }
+
+    /// <summary>启动主流程（原 OnStartup 的 async 主体，async void → Task 迁移）。</summary>
+    private async Task RunStartupAsync(StartupEventArgs e)
+    {
+        // OnStartup 不再 async void；此处仍用 try/catch 包裹整个启动流程
+        // （Host.StartAsync / Load / EnsureCreated / MainWindow.Show 等），
         // 任一步骤抛异常时记录日志、提示用户并优雅退出，避免无提示崩溃。
         try
         {
@@ -292,7 +308,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                // 后台初始化失败不崩溃应用（OnStartup 是 async void，未捕获异常会终止进程），
+                // 后台初始化失败不崩溃应用（启动主流程异常已由外层 catch 兜底），
                 // 记录日志并提示用户，窗口保持可用，用户至少能查看/修改配置。
                 // 此时 MainWindow 已 Show，Growl 容器已就绪，用非模态通知避免阻塞。
                 Log($"后台初始化失败: {ex.Message}");
@@ -303,7 +319,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             // 启动主流程异常（Host.StartAsync / Load / EnsureCreated / MainWindow.Show 等）：
-            // async void 未捕获异常会终止进程，此处捕获后记录日志并提示用户，再优雅退出。
+            // 捕获后记录日志并提示用户，再优雅退出；不再依赖 async void 的进程级崩溃语义。
             // 尽可能释放已构造的 Host 资源，避免互斥锁残留导致下次启动误判。
             try { Serilog.Log.Error(ex, "OnStartup 启动失败"); }
             catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Serilog 记录失败: {logEx.Message}"); }
@@ -315,8 +331,7 @@ public partial class App : Application
             Shutdown();
             return;
         }
-        base.OnStartup(e);
-        Log("OnStartup 结束");
+        Log("RunStartupAsync 结束");
     }
 
     private static bool IsRecoverableDispatcherException(Exception exception)

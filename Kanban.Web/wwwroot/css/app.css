@@ -435,13 +435,14 @@ body {
     .topbar { flex-wrap: nowrap; }
     .device-select { width: auto; min-width: 180px; }
     .brand-title { font-size: 22px; }
-    .grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 14px; grid-auto-rows: 1fr; }
     .ring-row { grid-template-columns: repeat(4, 1fr); }
     .ring { width: 96px; height: 96px; }
 }
 
 @media (min-width: 1100px) {
     .grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: 1fr 1fr 1fr; grid-auto-rows: 1fr; }
 }
 
 /* ──────────── 状态语义类（收敛 razor 行内色，与调色板变量同源） ──────────── */
@@ -780,7 +781,7 @@ body {
 }
 
 @media (min-width: 900px) {
-    .mon-grid { grid-template-columns: 1fr 1fr; }
+    .mon-grid { grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; }
 }
 
 @media (min-width: 1400px) {
@@ -843,7 +844,7 @@ body {
 }
 
 @media (min-width: 900px) {
-    .review-grid3 { grid-template-columns: 1fr 1fr 1fr; }
+    .review-grid3 { grid-template-columns: 1fr 1fr 1fr; grid-auto-rows: 1fr; }
 }
 
 .health-score { font-size: 42px; font-weight: 600; line-height: 1.1; }
@@ -1005,6 +1006,20 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #3A4453; }
+
+/* Firefox 滚动条（与 webkit 尺寸/配色对齐） */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* 键盘焦点可见性：按钮/输入/链接统一聚焦环（仅键盘导航显示，不污染鼠标点击） */
+.btn:focus-visible,
+.chip-btn:focus-visible,
+.tab-btn:focus-visible,
+.filter-input:focus-visible,
+.device-select:focus-visible,
+.topnav-link:focus-visible {
+    outline: 2px solid #378ADD;
+    outline-offset: 2px;
+}
 
 /* 统一过渡节奏 */
 .card, .kpi-card, .mon-card, .filter-bar, .tab-bar, .btn, .chip-btn, .tab-btn,

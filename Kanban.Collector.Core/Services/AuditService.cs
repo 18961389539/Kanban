@@ -337,7 +337,33 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
         }
     }
 
-    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+    /// <summary>
+    /// 同步释放（兼容路径：测试/<c>using</c> 语句仍以 <see cref="IDisposable"/> 使用本类）。
+    /// 刻意**不**转调 <see cref="DisposeAsync"/>（DisposeAsync().AsTask().GetAwaiter().GetResult()
+    /// 是 sync-over-async，UI 上下文会死锁）；改为与 <see cref="DisposeAsync"/> 同语义的直接 Wait，
+    /// 与 DefectHistoryStore 的同步释放惯例一致（审查修复 2026-09-17）。
+    /// </summary>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposeStarted, 1) != 0) return;
+        _channel.Writer.TryComplete();
+        try
+        {
+            _flushTask.Wait(TimeSpan.FromSeconds(8));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "等待审计队列排空超时，剩余 {Count} 条", _channel.Reader.Count);
+            _cts.Cancel();
+            try { _flushTask.Wait(TimeSpan.FromSeconds(2)); } catch { }
+        }
+        finally
+        {
+            _cts.Dispose();
+            _flushSignal.Dispose();
+            GC.SuppressFinalize(this);
+        }
+    }
 
     /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
     internal Task ReplayRecoveryForTestAsync(CancellationToken ct = default)

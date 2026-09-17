@@ -612,10 +612,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
                 OnPropertyChanged(nameof(PlcConnectionBannerText));
             }
 
-            if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-                _ = dispatcher.InvokeAsync(NotifyConnectionState);
-            else
-                NotifyConnectionState();
+            if (UiDispatcher.MarshalIfNeeded(NotifyConnectionState))
+                return;
+            NotifyConnectionState();
         }
     }
 
@@ -750,7 +749,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     [RelayCommand]
     private void OpenHelp()
     {
-        var owner = Application.Current?.MainWindow;
+        var owner = UiDispatcher.MainWindow;
         _userHelpService?.OpenUserManual(owner);
     }
 

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Helpers;
 using MainAPP.Resources;
 using MainAPP.Models;
 using MainAPP.Services;
@@ -141,9 +142,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
     /// <inheritdoc />
     public void OnPageEnter()
     {
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
-            RefreshUsers,
-            System.Windows.Threading.DispatcherPriority.Background);
+        UiDispatcher.PostOrDrop(RefreshUsers, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     /// <inheritdoc />
@@ -152,11 +151,8 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
     private void OnUsersChanged()
     {
         // UsersChanged 现在由 UserStore 锁外派发，可能来自后台登录线程；统一封送到 UI 线程刷新集合
-        if (System.Windows.Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            dispatcher.BeginInvoke(RefreshUsers);
+        if (UiDispatcher.MarshalIfNeeded(RefreshUsers))
             return;
-        }
         RefreshUsers();
     }
 
@@ -449,7 +445,7 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         if (target is null) return;
 
         var dialog = new Views.ChangePasswordDialog(Strings.M324, target.DisplayLabel);
-        if (Application.Current?.MainWindow is Window owner) dialog.Owner = owner;
+        if (UiDispatcher.MainWindow is Window owner) dialog.Owner = owner;
         if (dialog.ShowDialog() != true) return;
 
         var password = dialog.Password;

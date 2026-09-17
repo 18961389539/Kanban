@@ -494,7 +494,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     /// <summary>启动授权状态定时刷新（60 秒）。仅在有 UI 调度器的宿主下启动。</summary>
     private void StartLicenseStatusTimer()
     {
-        if (Application.Current is null) return;
+        if (!UiDispatcher.HasWpfAppHost) return;
         _licenseRefreshTimer = new PageRefreshTimer(TimeSpan.FromSeconds(60), () => RefreshLicenseStatus(recheck: false));
         _licenseRefreshTimer.Start();
     }
@@ -932,7 +932,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         var processName = System.IO.Path.GetFileNameWithoutExtension(exe);
         if (processName.Contains("testhost", StringComparison.OrdinalIgnoreCase)
             || processName.Contains(".Tests", StringComparison.OrdinalIgnoreCase)
-            || System.Windows.Application.Current is null)
+            || !UiDispatcher.HasWpfAppHost)
             return;
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
@@ -941,7 +941,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             CreateNoWindow = true,
             UseShellExecute = false,
         });
-        System.Windows.Application.Current?.Shutdown();
+        UiDispatcher.RequestShutdown();
     }
 
     /// <summary>

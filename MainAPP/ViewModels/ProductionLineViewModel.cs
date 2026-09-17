@@ -118,7 +118,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     public void OnPageEnter()
     {
         _pageActive = true;
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        UiDispatcher.PostOrDrop(() =>
         {
             if (!_pageActive) return;
             FlushPendingRefresh();
@@ -297,7 +297,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         // Devices 可能被后台线程（DeviceManagerViewModel.RemoveDevice 等）修改，
         // CollectionChanged 会在修改方所在线程触发。此处操作绑定的 ObservableCollection
         // 必须切回 UI 线程，否则会抛跨线程 InvalidOperationException
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        UiDispatcher.PostOrDrop(new Action(() =>
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
             {
@@ -335,7 +335,7 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     {
         if (e.NewItems == null) return;
         // 与 OnDevicesCollectionChanged 同理：操作绑定的 ObservableCollection 需切回 UI 线程
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        UiDispatcher.PostOrDrop(new Action(() =>
         {
             if (e.NewItems == null) return;
             foreach (DeviceRuntime rt in e.NewItems)
@@ -592,11 +592,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
 
         // 连接状态在 PLC 采集后台线程变更：取不到 Dispatcher（测试环境）时直接求值，
         // 否则封送回 UI 线程（与 DeviceManagerViewModel 同一处理约定）。
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnConnectionPropertyChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnConnectionPropertyChanged(sender, e)))
             return;
-        }
 
         OnPropertyChanged(nameof(IsPlcConnected));
         ResetAllProductionCommand.NotifyCanExecuteChanged();
@@ -606,11 +603,8 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     {
         if (e.PropertyName != nameof(UserSession.IsEngineerOrAbove)) return;
 
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnUserSessionPropertyChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnUserSessionPropertyChanged(sender, e)))
             return;
-        }
 
         OnPropertyChanged(nameof(CanManageDevices));
         ResetAllProductionCommand.NotifyCanExecuteChanged();

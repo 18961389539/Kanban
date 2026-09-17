@@ -93,15 +93,20 @@ internal sealed class AsyncBatchWriter<T> : IDisposable
 
     /// <summary>
     /// 同步排空通道并落库（供"写完立即可读"路径与测试使用；生产热路径不调用）。
-    /// 与后台循环经 <see cref="_flushGate"/> 互斥：返回时保证"已 TryRead 的数据均已落库"。
+    /// 与后台循环经 <see cref="_flushGate"/> 互斥；返回时保证"已入队数据均已落库"。
+    /// 注意：同步入口属 sync-over-async 简易桥，只允许在后台/采集线程调用
+    /// （无 UI 同步上下文，不会死锁）；UI/异步调用方请使用 <see cref="FlushAsync"/>。
     /// </summary>
-    public void Flush()
+    public void Flush() => FlushAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    /// <summary>异步排空通道并落库（与 <see cref="Flush"/> 同一闸门，无阻塞线程）。</summary>
+    public async Task FlushAsync(CancellationToken ct = default)
     {
-        _flushGate.Wait();
+        await _flushGate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             while (_channel.Reader.Count > 0)
-                FlushPendingAsync(CancellationToken.None).GetAwaiter().GetResult();
+                await FlushPendingAsync(ct).ConfigureAwait(false);
         }
         finally { _flushGate.Release(); }
     }

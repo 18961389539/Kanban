@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
+using MainAPP.Helpers;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -259,7 +260,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     public void OnPageEnter()
     {
         _pageActive = true;
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        UiDispatcher.PostOrDrop(() =>
         {
             if (!_pageActive) return;
             RefreshAddressConflictFlag();
@@ -338,11 +339,8 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (e.PropertyName != nameof(UserSession.IsEngineerOrAbove)) return;
 
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnUserSessionPropertyChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnUserSessionPropertyChanged(sender, e)))
             return;
-        }
 
         OnPropertyChanged(nameof(CanManageDevices));
         OnPropertyChanged(nameof(IsConfigurationReadOnly));
@@ -360,22 +358,16 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
     {
         if (e.PropertyName != nameof(PlcConnectionManager.IsConnected)) return;
 
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnConnectionPropertyChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnConnectionPropertyChanged(sender, e)))
             return;
-        }
 
         OnPropertyChanged(nameof(IsPlcConnected));
     }
 
     private void OnBackupAvailabilityChanged(object? sender, EventArgs e)
     {
-        if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
-        {
-            _ = dispatcher.InvokeAsync(() => OnBackupAvailabilityChanged(sender, e));
+        if (UiDispatcher.MarshalIfNeeded(() => OnBackupAvailabilityChanged(sender, e)))
             return;
-        }
 
         RollbackToBackupCommand.NotifyCanExecuteChanged();
     }
@@ -1128,7 +1120,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
     private void ScheduleAddressConflictRefresh()
     {
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        var dispatcher = UiDispatcher.CurrentDispatcher;
         if (dispatcher == null || dispatcher.HasShutdownStarted)
         {
             RefreshAddressConflictFlag();

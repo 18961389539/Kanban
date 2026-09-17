@@ -656,7 +656,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         UpdateDeviceStatusClock();
         // 让导航切换先完成绘制再重算；无 Dispatcher（单元测试/设计期）时同步执行，
         // 保持 OnPageEnter 的「进入即完成一次同步」语义（与 WorkOrderManagerViewModel.OnPageEnter 同模式）。
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        var dispatcher = UiDispatcher.CurrentDispatcher;
         if (dispatcher == null || dispatcher.HasShutdownStarted)
         {
             SyncRuntime();

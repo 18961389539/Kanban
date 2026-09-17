@@ -273,7 +273,14 @@ public class WorkOrderService(
     public WorkOrder? AddWorkOrder(WorkOrder? template = null)
     {
         EnsureSyncApiAllowed();
-        return AddWorkOrderCore(template).GetAwaiter().GetResult();
+        // 同步变体：Local 模式整体同步执行（对话框在 UI 线程、Upsert 即刻落库），
+        // 与异步 Core 走同一对话框/校验/通知流程，但不用 async 机制，规避 sync-over-async 阻塞。
+        var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
+        if (result == null) return null;
+        if (!ValidateOrderIdentityAndSchedule(result)) return null;
+        var saved = _workOrderRepo.Upsert(result);
+        _dialog.NotifySuccess(string.Format(Strings.F109, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />
@@ -294,7 +301,25 @@ public class WorkOrderService(
     public WorkOrder? CopyWorkOrder(WorkOrder source)
     {
         EnsureSyncApiAllowed();
-        return CopyWorkOrderCore(source).GetAwaiter().GetResult();
+        // 与 AddWorkOrder 同步变体同理：整体同步执行，不引入 async 机制。
+        var template = Clone(source);
+        template.Id = 0;
+        template.OrderNo = string.IsNullOrWhiteSpace(source.OrderNo) ? string.Empty : $"{source.OrderNo}-COPY";
+        template.Status = WorkOrderStatus.Pending;
+        template.CompletedOkCount = null;
+        template.CompletedNgCount = null;
+        template.Production = null;
+        template.StartedAt = null;
+        template.CompletedAt = null;
+        template.CreatedAt = DateTime.Now;
+        template.UpdatedAt = template.CreatedAt;
+
+        var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
+        if (result == null) return null;
+        if (!ValidateOrderIdentityAndSchedule(result)) return null;
+        var saved = _workOrderRepo.Upsert(result);
+        _dialog.NotifySuccess(string.Format(Strings.F099, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />
@@ -327,7 +352,14 @@ public class WorkOrderService(
     public WorkOrder? EditWorkOrder(WorkOrder source)
     {
         EnsureSyncApiAllowed();
-        return EditWorkOrderCore(source).GetAwaiter().GetResult();
+        // 同步变体：与 EditWorkOrderCore 同流程，仅落库走同步 Upsert。
+        var template = Clone(source);
+        var result = _dialog.ShowWorkOrderEditor(template, GetAvailableDevices());
+        if (result == null) return null;
+        if (!ValidateOrderIdentityAndSchedule(result)) return null;
+        var saved = _workOrderRepo.Upsert(result);
+        _dialog.NotifySuccess(string.Format(Strings.F110, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />
@@ -349,7 +381,14 @@ public class WorkOrderService(
     public bool DeleteWorkOrder(WorkOrder target)
     {
         EnsureSyncApiAllowed();
-        return DeleteWorkOrderCore(target).GetAwaiter().GetResult();
+        // 同步变体：与 DeleteWorkOrderCore 同流程，仅落库走同步 Delete。
+        var r = _dialog.Show(
+            string.Format(Strings.F174, target.OrderNo, target.ProductName),
+            Strings.M_ConfirmDelete, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r != MessageBoxResult.Yes) return false;
+        _workOrderRepo.Delete(target.Id);
+        _dialog.NotifySuccess(Strings.M006);
+        return true;
     }
 
     /// <inheritdoc />
@@ -398,7 +437,26 @@ public class WorkOrderService(
     public WorkOrder? StartWorkOrder(WorkOrder target)
     {
         EnsureSyncApiAllowed();
-        return StartWorkOrderCore(target).GetAwaiter().GetResult();
+        // 同步变体：与 StartWorkOrderCore 同流程，仅落库走同步 Upsert。
+        var running = _workOrderRepo.GetRunningByDevice(target.DeviceId);
+        if (running != null && running.Id != target.Id)
+        {
+            _dialog.NotifyWarning(string.Format(Strings.F208, target.DeviceName, running.OrderNo));
+            return null;
+        }
+        var updated = Clone(target);
+        try
+        {
+            updated.Start();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _dialog.NotifyWarning(ex.Message);
+            return null;
+        }
+        var saved = _workOrderRepo.Upsert(updated);
+        _dialog.NotifySuccess(string.Format(Strings.F096, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />
@@ -434,7 +492,23 @@ public class WorkOrderService(
     public WorkOrder? CompleteWorkOrder(WorkOrder target)
     {
         EnsureSyncApiAllowed();
-        return CompleteWorkOrderCore(target).GetAwaiter().GetResult();
+        // 同步变体：与 CompleteWorkOrderCore 同流程（含产量快照回填），仅落库走同步 Upsert。
+        var updated = Clone(target);
+        try
+        {
+            updated.Complete();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _dialog.NotifyWarning(ex.Message);
+            return null;
+        }
+        var summary = GetProductionSummary(updated);
+        updated.CompletedOkCount = summary.OkCount;
+        updated.CompletedNgCount = summary.NgCount;
+        var saved = _workOrderRepo.Upsert(updated);
+        _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />
@@ -468,7 +542,30 @@ public class WorkOrderService(
     public WorkOrder? AbortWorkOrder(WorkOrder target)
     {
         EnsureSyncApiAllowed();
-        return AbortWorkOrderCore(target).GetAwaiter().GetResult();
+        // 同步变体：与 AbortWorkOrderCore 同流程（Running 中止回填产量快照），仅落库走同步 Upsert。
+        var updated = Clone(target);
+        try
+        {
+            updated.Abort();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _dialog.NotifyWarning(ex.Message);
+            return null;
+        }
+        var r = _dialog.Show(
+            string.Format(Strings.F173, target.OrderNo),
+            Strings.M_ConfirmAbort, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r != MessageBoxResult.Yes) return null;
+        if (target.Status == WorkOrderStatus.Running)
+        {
+            var summary = GetProductionSummary(updated);
+            updated.CompletedOkCount = summary.OkCount;
+            updated.CompletedNgCount = summary.NgCount;
+        }
+        var saved = _workOrderRepo.Upsert(updated);
+        _dialog.NotifySuccess(string.Format(Strings.F094, saved.OrderNo));
+        return saved;
     }
 
     /// <inheritdoc />

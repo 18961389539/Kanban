@@ -311,7 +311,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
         ResetTrendSession();
         UpdateTrendChart();
         _refreshTimer.Start();
-        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        UiDispatcher.PostOrDrop(() =>
         {
             if (!_pageActive) return;
             Refresh();

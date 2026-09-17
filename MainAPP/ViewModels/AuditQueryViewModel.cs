@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
+using MainAPP.Helpers;
 using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
@@ -329,18 +330,6 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
     /// <summary>查询版本号（审查修复 2026-08-13）：后台查询返回时校验，旧查询结果直接丢弃防覆盖新查询。</summary>
     private int _queryVersion;
 
-    /// <summary>封送回 UI 线程（Dispatcher 缺失/关闭时直接执行，兼容测试环境）。</summary>
-    private void Dispatch(Action action)
-    {
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
-        {
-            action();
-            return;
-        }
-        dispatcher.BeginInvoke(action);
-    }
-
     private void RunQuery()
     {
         // 后台执行（审查修复 2026-08-13）：审计查询是同步 EF/SQLite，此前在 UI 线程执行，
@@ -358,7 +347,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                 var (items, total) = _auditService.QueryPaged(from, to, op, action, null, succeeded, page, pageSize);
                 // 统计卡口径 = 整个查询结果（与列表同一过滤条件），而非仅当前页
                 var (okCount, failCount) = _auditService.CountByResult(from, to, op, action, null, succeeded);
-                Dispatch(() =>
+                UiDispatcher.Dispatch(() =>
                 {
                     if (requestVersion != _queryVersion) return;
                     Entries.Clear();
@@ -382,7 +371,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
             }
             catch (Exception ex)
             {
-                Dispatch(() =>
+                UiDispatcher.Dispatch(() =>
                 {
                     if (requestVersion != _queryVersion) return;
                     Log.Error(ex, "审计查询失败");

@@ -527,7 +527,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             or nameof(DataSourceValue.CurrentBoolValue)
             or nameof(DataSourceValue.CurrentStringValue)
             or nameof(DataSourceValue.IsTriggered))) return;
-        DispatchOnUi(() => { });
+        UiDispatcher.DispatchOrDrop(() => { });
     }
 
     /// <summary>清空所有集合数据（活跃报警 + 最近报警事件 + 数据源卡片）。</summary>
@@ -627,7 +627,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         // 避免 BeginInvoke 排队淹没 UI 线程（每次全刷含仓储查询 + 报警/缺陷集合重建）。
         if (_kpiRefreshScheduled) return;
         _kpiRefreshScheduled = true;
-        DispatchOnUi(() =>
+        UiDispatcher.DispatchOrDrop(() =>
         {
             _kpiRefreshScheduled = false;
             RefreshKpis();
@@ -637,7 +637,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     private void OnDevicePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Device 配置变更（如修改报警级别、PLC地址）时刷新活跃报警列表
-        DispatchOnUi(() =>
+        UiDispatcher.DispatchOrDrop(() =>
         {
             RefreshActiveAlarms();
             RefreshDefectChart();
@@ -652,7 +652,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         if (e.NewItems != null)
             foreach (Defect defect in e.NewItems)
                 defect.PropertyChanged += OnDefectPropertyChanged;
-        DispatchOnUi(RefreshDefectChart);
+        UiDispatcher.DispatchOrDrop(RefreshDefectChart);
     }
 
     private void OnAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -663,19 +663,19 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         if (e.NewItems != null)
             foreach (Alarm alarm in e.NewItems)
                 alarm.PropertyChanged += OnAlarmPropertyChanged;
-        DispatchOnUi(RefreshActiveAlarms);
+        UiDispatcher.DispatchOrDrop(RefreshActiveAlarms);
     }
 
     private void OnAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(Alarm.StartTime) or nameof(Alarm.EndTime))
-            DispatchOnUi(RefreshActiveAlarms);
+            UiDispatcher.DispatchOrDrop(RefreshActiveAlarms);
     }
 
     private void OnDefectPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(Defect.Count) or nameof(Defect.Name))
-            DispatchOnUi(RefreshDefectChart);
+            UiDispatcher.DispatchOrDrop(RefreshDefectChart);
     }
 
     private void OnCounterAlarmsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -686,27 +686,14 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         if (e.NewItems != null)
             foreach (CounterAlarm alarm in e.NewItems)
                 alarm.PropertyChanged += OnCounterAlarmPropertyChanged;
-        DispatchOnUi(RefreshActiveAlarms);
+        UiDispatcher.DispatchOrDrop(RefreshActiveAlarms);
     }
 
     private void OnCounterAlarmPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(CounterAlarm.CurrentValue) or nameof(CounterAlarm.MaxValue)
             or nameof(CounterAlarm.Enabled))
-            DispatchOnUi(RefreshActiveAlarms);
-    }
-
-    /// <summary>
-    /// 将操作切换到 UI 线程执行：runtime/device 属性变更来自 PLC 采集后台线程，
-    /// 而 ObservableCollection 和 ObservableProperty 绑定的 UI 元素必须在调度线程访问。
-    /// 应用关闭时 Dispatcher 可能已终止，故做空守卫。
-    /// </summary>
-    private static void DispatchOnUi(Action action)
-    {
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher == null || dispatcher.HasShutdownStarted) return;
-        if (dispatcher.CheckAccess()) action();
-        else dispatcher.BeginInvoke(action);
+            UiDispatcher.DispatchOrDrop(RefreshActiveAlarms);
     }
 
     /// <summary>
@@ -923,15 +910,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     /// 生产环境经 BeginInvoke 封送（审查修复 2026-08-13）。
     /// </summary>
     private void DispatchWorkOrderSummary(WorkOrder order, int okCount)
-    {
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher == null || dispatcher.HasShutdownStarted || dispatcher.CheckAccess())
-        {
-            ApplyWorkOrderSummary(order, okCount);
-            return;
-        }
-        dispatcher.BeginInvoke(() => ApplyWorkOrderSummary(order, okCount));
-    }
+        => UiDispatcher.Dispatch(() => ApplyWorkOrderSummary(order, okCount));
 
     private void ApplyWorkOrderSummary(WorkOrder order, int okCount)
     {
@@ -1108,7 +1087,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                 var list = ordered.Take(50).ToList();
                 var todayTrigger = ordered.Count(r => r.EventType == AlarmEventType.Triggered);
 
-                System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                UiDispatcher.PostOrDrop(() =>
                 {
                     if (token.IsCancellationRequested) return;
                     RecentAlarms.Clear();
@@ -1127,13 +1106,13 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             catch (Exception ex)
             {
                 _logger.LogError(ex, "查询设备 {DeviceId} 报警事件失败", deviceId);
-                DispatchOnUi(() =>
+                UiDispatcher.DispatchOrDrop(() =>
                 {
                     IsRefreshing = false;
                     RefreshStatusText = Strings.M157;
                 });
                 if (notifyErrors)
-                    DispatchOnUi(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
+                    UiDispatcher.DispatchOrDrop(() => _dialog.NotifyError(string.Format(Strings.F155, ex.Message)));
             }
         }, token).Forget(_logger);
     }
@@ -1265,7 +1244,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                 }
                 token.ThrowIfCancellationRequested();
 
-                System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                UiDispatcher.PostOrDrop(() =>
                 {
                     if (!token.IsCancellationRequested)
                     {
@@ -1282,7 +1261,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
             catch (Exception ex)
             {
                 _logger.LogError(ex, "查询设备 {DeviceId} 按小时产量失败", deviceId);
-                DispatchOnUi(() =>
+                UiDispatcher.DispatchOrDrop(() =>
                 {
                     RefreshStatusText = Strings.M158;
                     _dialog.NotifyError(string.Format(Strings.F153, ex.Message));
