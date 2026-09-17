@@ -39,9 +39,10 @@ run-demo/
 # ── 前端依赖（wasm-smoke.js 用 playwright-core，node_modules 勿入库） ──
 node_modules/
 
-# ── 中间/输出重定向目录（*.tmpbin* 含历史误配置的
-#    "SourceCodeKanban0731Kanban.tmpbin 2Debug" 类目录） ──
+# ── 中间/输出重定向目录（*.tmpbin* / *objverify* 覆盖历史误配置的
+#    "SourceCodeKanban0731Kanban.tmpbin 2Debug"、"objverify-bin 2Debug" 类目录） ──
 *tmpbin*
+*objverify*
 
 # ── 工具数据（编辑器/工作台） ──
 .arts/
