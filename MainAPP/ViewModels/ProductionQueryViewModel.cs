@@ -11,6 +11,7 @@ using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using Serilog;
 using MainAPP.Resources;
+using MainAPP.Helpers;
 
 namespace MainAPP.ViewModels;
 
@@ -39,16 +40,37 @@ public partial class ProductionQueryViewModel : ObservableObject
     /// <summary>不良率（NG / 总产量），KPI 卡显示用；无产量时为 0。</summary>
     public double DefectRate => TotalProduction > 0 ? TotalNg / (double)TotalProduction : 0;
 
+    public string TotalOutputTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowOutput, TotalOk, TotalNg, TotalProduction);
+    public string OkTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowOk, TotalOk);
+    public string NgTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowNg, TotalNg);
+    public string QualityTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowQuality, TotalOk, TotalProduction, $"{QualityRate:P1}");
+    public string DefectRateTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowNgRate, TotalNg, TotalProduction, $"{DefectRate:P1}");
+
     partial void OnTotalOkChanged(int value)
     {
         OnPropertyChanged(nameof(TotalProduction));
         OnPropertyChanged(nameof(DefectRate));
+        NotifyTooltips();
     }
 
     partial void OnTotalNgChanged(int value)
     {
         OnPropertyChanged(nameof(TotalProduction));
         OnPropertyChanged(nameof(DefectRate));
+        NotifyTooltips();
+    }
+
+    partial void OnQualityRateChanged(double value) => NotifyTooltips();
+
+    private void NotifyTooltips()
+    {
+        OnPropertyChanged(nameof(TotalOutputTooltip));
+        OnPropertyChanged(nameof(OkTooltip));
+        OnPropertyChanged(nameof(NgTooltip));
+        OnPropertyChanged(nameof(QualityTooltip));
+        OnPropertyChanged(nameof(DefectRateTooltip));
     }
 
     [ObservableProperty]

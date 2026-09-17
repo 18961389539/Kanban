@@ -6850,6 +6850,30 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Home_WorkOrderQuality" xml:space="preserve">
     <value>工単良品率</value>
   </data>
+  <data name="Home_ShiftOk" xml:space="preserve">
+    <value>当シフト良品数</value>
+  </data>
+  <data name="Home_ShiftTotalOutput" xml:space="preserve">
+    <value>当シフト総生産</value>
+  </data>
+  <data name="Home_CumulativeQuality" xml:space="preserve">
+    <value>累計良品率</value>
+  </data>
+  <data name="Home_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>工単累計良品数</value>
+  </data>
+  <data name="Home_WorkOrderAchievement" xml:space="preserve">
+    <value>工単達成率</value>
+  </data>
+  <data name="Home_Tip_ShiftOk" xml:space="preserve">
+    <value>当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\n現在：{0} 個</value>
+  </data>
+  <data name="Home_Tip_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>工単累計良品数 = 工単時間窓の OK 数（当シフトのセッション累計ではなく、NG を含まない）。\n現在：{0} 個</value>
+  </data>
+  <data name="Home_Tip_WorkOrderAchievement" xml:space="preserve">
+    <value>工単達成率 = 工単内 OK 生産量 ÷ 計画数量（100% 上限）。\n工単時間窓の合格数（作業指示ページと同じ）。当シフト累計でも速度達成率でもありません。\n現在：{0:N0} / {1:N0} 個 = {2}</value>
+  </data>
   <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
     <value>工単不良 = 工単時間窓の NG 数（セッション累計ではない）。\n現在：{0:N0} 個</value>
   </data>
@@ -6902,12 +6926,72 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>良品率目標 95% との差。正=目標超過、負=未達。\n現在の良品率 {0}、差 {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。シフト生産スナップショットに現在値を接続。</value>
+    <value>緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。横軸はシフト全時間。</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>当シフトのセッション累計 OK / NG。矢印は前シフトとの差。\nOK {0}   NG {1}</value>
   </data>
   <data name="Home_Tip_LastShift" xml:space="preserve">
     <value>直前の完了シフトの生産集計。\n{0}\nOK {1:N0}   NG {2:N0}</value>
+  </data>
+  <data name="Ln_Tip_SessionOk" xml:space="preserve">
+    <value>セッション累計 OK（NG を含まない）。工単時間窓の数量とは異なります。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Ln_Tip_SessionNg" xml:space="preserve">
+    <value>セッション累計 NG。工単時間窓の不良数とは異なります。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Ln_Tip_CycleCompare" xml:space="preserve">
+    <value>サイクル比較 = 実サイクル / 目標。実 = 稼働秒 ÷ (OK+NG)。目標より遅いと赤。\n現在：{0}</value>
+  </data>
+  <data name="Ln_Tip_ShiftPace" xml:space="preserve">
+    <value>シフト達成 = 当シフト OK ÷ (目標能力 × 経過時間)。バーは 100% 上限、文字は実達成。\n現在：{0}</value>
+  </data>
+  <data name="Ln_Tip_StatusCount" xml:space="preserve">
+    <value>現在「{0}」状態の設備台数。\n現在：{1:N0} 台</value>
+  </data>
+  <data name="Dd_Tip_TodayAlarms" xml:space="preserve">
+    <value>本日 0:00 以降のこの設備の発生回数（復帰済み含む）。\n現在：{0:N0} 回</value>
+  </data>
+  <data name="Dd_Tip_PlcRaw" xml:space="preserve">
+    <value>PLC 生カウント（セッション累計ではない）。リセット後に跳ねます。\n現在：OK {0:N0} · NG {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_Theoretical" xml:space="preserve">
+    <value>理論生産 = 目標能力 × 稼働時間。実績 = 同窓の OK+NG。\n現在：理論 {0:N0} / 実績 {1:N0} 個</value>
+  </data>
+  <data name="Dd_Tip_CycleGap" xml:space="preserve">
+    <value>能力差 = (実能力 − 目標) ÷ 目標。負は未達。\n現在：{0:F1}%</value>
+  </data>
+  <data name="Dd_Tip_ActualCapacity" xml:space="preserve">
+    <value>実能力（個/時）= (OK+NG) ÷ 稼働時間。稼働 5 秒未満は 0。\n現在：{0:N0} 個/h（目標 {1:N0}）</value>
+  </data>
+  <data name="Hq_Tip_WindowOutput" xml:space="preserve">
+    <value>選択した照会窓の総生産 = OK+NG（現在セッションではない）。\n現在：OK {0:N0} + NG {1:N0} = {2:N0} 個</value>
+  </data>
+  <data name="Hq_Tip_WindowOk" xml:space="preserve">
+    <value>選択した照会窓の OK（窓差分、セッション累計ではない）。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Hq_Tip_WindowNg" xml:space="preserve">
+    <value>選択した照会窓の NG（窓差分、セッション累計ではない）。\n現在：{0:N0} 個</value>
+  </data>
+  <data name="Hq_Tip_WindowQuality" xml:space="preserve">
+    <value>照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。\n現在：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
+    <value>照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。\n現在：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowOee" xml:space="preserve">
+    <value>照会窓の OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / &lt;60% 赤。</value>
+  </data>
+  <data name="Mo_Tip_SuccessRate" xml:space="preserve">
+    <value>収集成功率 = 成功サイクル ÷ 完了サイクル（失敗は完了の部分集合）。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_ConsecutiveFail" xml:space="preserve">
+    <value>連続失敗サイクル。0 超は収集経路の異常。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_PendingHistory" xml:space="preserve">
+    <value>未フラッシュの履歴件数。増加は書込が収集に追いついていないことを示す。\n現在：{0}</value>
+  </data>
+  <data name="Rv_Tip_Health" xml:space="preserve">
+    <value>復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\n現在：{0}</value>
   </data>
 </root>

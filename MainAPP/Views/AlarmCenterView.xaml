@@ -243,14 +243,14 @@
             <!--  ─── KPI 条（6 格）───  -->
             <UniformGrid Grid.Row="0" Columns="6" Margin="0,0,0,12">
                 <!-- 活跃报警数 -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K709}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding ActiveCountTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K125}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding ActiveCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 今日触发 -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayTriggerKpiToolTip}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayTriggerKpiToolTip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K126}" />
                         <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayTriggerCountDisplay}" />
@@ -271,7 +271,7 @@
                     </StackPanel>
                 </Border>
                 <!-- 今日恢复 -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayRecoverKpiToolTip}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayRecoverKpiToolTip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K127}" />
                         <TextBlock Style="{StaticResource StatsKpiValue}" Text="{Binding TodayRecoverCountDisplay}" />
@@ -292,7 +292,7 @@
                     </StackPanel>
                 </Border>
                 <!-- 最长持续 -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K712}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding LongestDurationTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K128}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDurationText}" />
@@ -302,14 +302,14 @@
                     </StackPanel>
                 </Border>
                 <!-- 影响设备数 -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{x:Static resources:Strings.K713}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding AffectedDeviceTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K129}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding AffectedDeviceCount}" />
                     </StackPanel>
                 </Border>
                 <!-- 最频繁报警（标签带时间范围标注，与"今日"口径区分） -->
-                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding MostFrequentKpiToolTip}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding MostFrequentKpiToolTip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding MostFrequentLabel}" />
                         <TextBlock FontSize="16" Text="{Binding MostFrequentAlarm}" TextTrimming="CharacterEllipsis">

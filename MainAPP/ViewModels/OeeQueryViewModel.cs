@@ -9,6 +9,8 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using MainAPP.Helpers;
+using Kanban.Contracts.Metrics;
 using OxyPlot;
 using Serilog;
 
@@ -51,6 +53,35 @@ public partial class OeeQueryViewModel : ObservableObject
     /// 源值 OeeRunTime 为秒，此处除以 3600 转换。
     /// </summary>
     public double OeeRunTimeHours => OeeRunTime / 3600.0;
+
+    public string QualityTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowQuality, OeeOkProduction, OeeOkProduction + OeeNgProduction, $"{OeeQualityRate:P1}");
+    public string PerformanceTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Performance,
+        OeeTargetCycle > 0 && OeeRunTime > 0
+            ? string.Format(Strings.F037, OeeOkProduction, OeeNgProduction, OeeTargetCycle * OeeRunTimeHours)
+            : "— / —",
+        $"{OeePerformanceRate:P1}");
+    public string AvailabilityTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Availability,
+        OeeRunTime + OeeAlarmTime > 0
+            ? $"{FormatHelper.FormatDuration(OeeRunTime)} / {FormatHelper.FormatDuration(OeeRunTime + OeeAlarmTime)}"
+            : "— / —",
+        $"{OeeAvailabilityRate:P1}");
+    public string OeeTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowOee,
+        $"{OeeAvailabilityRate:P0} × {OeePerformanceRate:P0} × {OeeQualityRate:P0}",
+        $"{OeeValue:P1}");
+    public string OkTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowOk, OeeOkProduction);
+    public string NgTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowNg, OeeNgProduction);
+    public string RunTimeTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_RunTime,
+        FormatHelper.FormatDuration(OeeRunTime),
+        SnapshotMetrics.TimeRatio(OeeRunTime, OeeRunTime, OeeAlarmTime, 0, 0));
+    public string TargetCycleTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_TargetCycle,
+        OeeTargetCycle,
+        OeeTargetCycle > 0 ? $"{SnapshotMetrics.CycleSeconds(OeeTargetCycle):F2}s" : "—");
 
     [ObservableProperty]
     private int _oeeTargetCycle;
@@ -154,6 +185,7 @@ public partial class OeeQueryViewModel : ObservableObject
             OeeInsight = BuildOeeInsight(OeeQualityRate, OeePerformanceRate, OeeAvailabilityRate, perShiftOee);
 
             _hasQueried = true;
+            NotifyOeeTooltips();
             return (1, 1);
         }
         catch (Exception ex)
@@ -186,6 +218,19 @@ public partial class OeeQueryViewModel : ObservableObject
         OeeChart = null; OeeTrendChart = null; OeeShiftBarChart = null;
         OeeInsight = null;
         OeeShiftDetails.Clear();
+        NotifyOeeTooltips();
+    }
+
+    private void NotifyOeeTooltips()
+    {
+        OnPropertyChanged(nameof(QualityTooltip));
+        OnPropertyChanged(nameof(PerformanceTooltip));
+        OnPropertyChanged(nameof(AvailabilityTooltip));
+        OnPropertyChanged(nameof(OeeTooltip));
+        OnPropertyChanged(nameof(OkTooltip));
+        OnPropertyChanged(nameof(NgTooltip));
+        OnPropertyChanged(nameof(RunTimeTooltip));
+        OnPropertyChanged(nameof(TargetCycleTooltip));
     }
 
     public string? BuildCsv(string? deviceId)

@@ -307,31 +307,31 @@
                     <!-- 统计卡片 -->
                     <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="5"
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.TotalOutputTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K910}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding ProductionQuery.TotalProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.OkTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K281}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding ProductionQuery.TotalOk, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.NgTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K282}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding ProductionQuery.TotalNg, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.QualityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.DefectRateTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K911}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.DefectRate, Converter={StaticResource InverseRatioThreshold}}" Text="{Binding ProductionQuery.DefectRate, StringFormat={}{0:P1}}" />
@@ -449,25 +449,25 @@
 
                     <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K007}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding StatusQuery.RunTimeFormatted}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.AlarmTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K038}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource WarningBrush}" Text="{Binding StatusQuery.AlarmTimeFormatted}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.PausedTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K289}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding StatusQuery.PausedTimeFormatted}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding StatusQuery.OfflineTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.Status_Offline}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusIdleBrush}" Text="{Binding StatusQuery.OfflineTimeFormatted}" />
@@ -722,26 +722,26 @@
                     <!-- KPI 卡片 -->
                     <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
                                  Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.QualityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
                                 <!-- 合格率着色与首页质量卡同阈值（QualityThreshold），避免跨页同一数值颜色不同 -->
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeQualityRate, Converter={StaticResource QualityThreshold}}" Text="{Binding OeeQuery.OeeQualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.PerformanceTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K029}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeePerformanceRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeePerformanceRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding OeeQuery.AvailabilityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K009}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding OeeQuery.OeeAvailabilityRate, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeAvailabilityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCardAccent}">
+                        <Border Style="{StaticResource KpiCardAccent}" ToolTip="{Binding OeeQuery.OeeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Foreground="{StaticResource PrimaryBrush}" Text="{x:Static resources:Strings.K308}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueLg}" Foreground="{Binding OeeQuery.OeeValue, Converter={StaticResource OeeThreshold}}" Text="{Binding OeeQuery.OeeValue, StringFormat={}{0:P1}}" />
@@ -802,25 +802,25 @@
 
                     <!-- 明细 -->
                     <UniformGrid Grid.Row="3" Margin="0,0,0,12" Columns="4">
-                        <Border Style="{StaticResource KpiCardSecondary}">
+                        <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.OkTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K311}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCardSecondary}">
+                        <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.NgTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K312}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCardSecondary}">
+                        <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.K007}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeRunTimeHours, StringFormat={}{0:F1}h}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCardSecondary}">
+                        <Border Style="{StaticResource KpiCardSecondary}" ToolTip="{Binding OeeQuery.TargetCycleTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource HintText}" Text="{x:Static resources:Strings.M352}" />
                                 <TextBlock Margin="0,4,0,0" Style="{StaticResource KpiValueXs}" Text="{Binding OeeQuery.OeeTargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />

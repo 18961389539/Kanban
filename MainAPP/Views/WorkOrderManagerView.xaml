@@ -442,20 +442,23 @@
                                         <ColumnDefinition Width="8" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}">
+                                    <Border Grid.Column="0" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
+                                            ToolTip="{Binding TargetTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
                                             <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K035}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold"
                                                        Text="{Binding SelectedWorkOrder.TargetQuantity, Converter={StaticResource LocFormatConverter}, ConverterParameter=F244}" />
                                         </StackPanel>
                                     </Border>
-                                    <Border Grid.Column="2" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}">
+                                    <Border Grid.Column="2" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
+                                            ToolTip="{Binding AchievementTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
                                             <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K576}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Text="{Binding SelectedAchievementText}" />
                                         </StackPanel>
                                     </Border>
-                                    <Border Grid.Column="4" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}">
+                                    <Border Grid.Column="4" Padding="12" CornerRadius="8" Background="{StaticResource SecondaryRegionBrush}"
+                                            ToolTip="{Binding DefectRateTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel>
                                             <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
                                             <TextBlock Margin="0,4,0,0" FontSize="22" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" Text="{Binding SelectedDefectRateText}" />
@@ -478,7 +481,9 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" Text="{Binding SelectedOkCountText}" />
+                                            <TextBlock Grid.Column="0" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold"
+                                                       Text="{Binding SelectedOkCountText}"
+                                                       ToolTip="{Binding OkTooltip}" ToolTipService.ShowDuration="30000" />
                                             <Grid Grid.Column="1" Margin="12,0" Height="8">
                                                 <Border CornerRadius="4" Background="{StaticResource RegionBrush}" />
                                                 <Grid ClipToBounds="True" Visibility="{Binding HasSelectedProductionBar, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -490,7 +495,9 @@
                                                     <Border Grid.Column="1" Background="{StaticResource DangerBrush}" />
                                                 </Grid>
                                             </Grid>
-                                            <TextBlock Grid.Column="2" Foreground="{StaticResource DangerBrush}" FontWeight="Bold" Text="{Binding SelectedNgCountText}" />
+                                            <TextBlock Grid.Column="2" Foreground="{StaticResource DangerBrush}" FontWeight="Bold"
+                                                       Text="{Binding SelectedNgCountText}"
+                                                       ToolTip="{Binding NgTooltip}" ToolTipService.ShowDuration="30000" />
                                         </Grid>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K075}" />

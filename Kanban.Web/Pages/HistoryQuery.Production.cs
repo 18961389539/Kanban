@@ -40,6 +40,11 @@ public partial class HistoryQuery
     private string ProdTotalOkText => ProdTotalOk.ToString("N0");
     private string ProdTotalNgText => ProdTotalNg.ToString("N0");
     private string ProdQualityRateText => $"{ProdQualityRate:P2}";
+    private string ProdQualityTooltip => L.Tip(
+        "Hq_Tip_WindowQuality",
+        ProdTotalOk,
+        ProdTotalOk + ProdTotalNg,
+        ProdQualityRateText);
     private string ProdPageSummaryText => PageSummary(ProdPage, ProdTotalPages, ProdTotalCount);
 
     private async Task ProdSearchAsync(DateTime from, DateTime to)

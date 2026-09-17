@@ -16,6 +16,9 @@ public sealed class HomeDefectTopItem
     /// <summary>相对缺陷合计的柱宽（0–1）。</summary>
     public double BarRatio { get; init; }
 
+    /// <summary>从第一名累计到本行的占比（0–1），折线用此值。</summary>
+    public double CumulativeShare { get; init; }
+
     public string ShareText { get; init; } = "";
 
     public string CumulativeText { get; init; } = "";

@@ -11,49 +11,10 @@
     d:DesignHeight="400"
     d:DesignWidth="500" xmlns:resources="clr-namespace:MainAPP.Resources">
     <!--
-        主页仪表板卡片 5：当前班次良率（折线 + 当前良率 + 班次对比）。
+        主页仪表板卡片 5：当前班次良率（当班总产量 + 累计良率，下为小时良品柱与累计良率折线）。
         DataContext 由父级 HomeView 传入 HomeViewModel。
         共享样式（DashboardCard/CardTitleIcon/CardTitleText）从全局资源字典 HomeResources.xaml 查找。
-        OkDiffBadge/NgDiffBadge 仅本卡片使用，放本地 Resources。
     -->
-    <UserControl.Resources>
-        <!--
-            班次对比差异徽章共用样式：基于 ComparisonConverter 判断 diff 正负切换颜色。
-            空文本（无差异）时隐藏徽章。
-            - OkDiffBadge：默认绿色（OK 增长=好），diff<0 时变红（OK 下降=坏）
-            - NgDiffBadge：默认红色（NG 增加=坏），diff<0 时变绿（NG 减少=好）
-            抽取为命名样式避免在 XAML 主体中重复内联 Style。
-        -->
-        <Style x:Key="OkDiffBadge" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding ShiftOutputDiffText}" Value="">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding ShiftOutputDiff, Converter={StaticResource ComparisonConverter}, ConverterParameter=&lt;0}" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="NgDiffBadge" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding ShiftNgDiffText}" Value="">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding ShiftNgDiff, Converter={StaticResource ComparisonConverter}, ConverterParameter=&lt;0}" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
     <Border Style="{StaticResource DashboardCard}"
             ToolTipService.InitialShowDelay="300"
             ToolTipService.ShowDuration="30000">
@@ -61,29 +22,78 @@
         <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="CheckCircle" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K328}" />
                 </StackPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
-                            ToolTip="{Binding QualityTooltip}">
-                    <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHero}" FontWeight="Bold"
-                               Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
-                               Text="{Binding QualityRateDisplay}" />
-                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-                               FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold"
-                               Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
-                               Text="{Binding QualityGapText}"
-                               ToolTip="{Binding QualityGapTooltip}" />
-                </StackPanel>
             </DockPanel>
 
-            <Grid Grid.Row="1" ToolTip="{x:Static resources:Strings.Home_Tip_QualityTrend}">
+            <Grid Grid.Row="1" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                            ToolTip="{Binding TotalOutputTooltip}">
+                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}"
+                               Foreground="{StaticResource ThirdlyTextBrush}"
+                               Text="{x:Static resources:Strings.Home_ShiftTotalOutput}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding TotalOutputDisplay}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Bottom"
+                                   FontSize="{DynamicResource FontSizeKpiLabel}"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.K014}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                            ToolTip="{Binding QualityTooltip}">
+                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}"
+                               Foreground="{StaticResource ThirdlyTextBrush}"
+                               Text="{x:Static resources:Strings.Home_CumulativeQuality}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <TextBlock FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                   Text="{Binding QualityRateDisplay}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{Binding QualityRate, Converter={StaticResource QualityThreshold}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding QualityRateDisplay}" Value="—">
+                                            <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Margin="8,0,0,0" VerticalAlignment="Bottom"
+                                   FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold"
+                                   Text="{Binding QualityGapText}"
+                                   ToolTip="{Binding QualityGapTooltip}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{Binding QualityRate, Converter={StaticResource QualityThreshold}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding QualityRateDisplay}" Value="—">
+                                            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="2" ToolTip="{x:Static resources:Strings.Home_Tip_QualityTrend}">
                 <oxy:PlotView Model="{Binding QualityTrendChart}" Background="Transparent">
                     <oxy:PlotView.Style>
                         <Style TargetType="oxy:PlotView">
@@ -108,119 +118,6 @@
                     </controls:EmptyState.Style>
                 </controls:EmptyState>
             </Grid>
-
-            <Grid Grid.Row="2" Margin="0,8,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <DockPanel Grid.Column="0" ToolTip="{Binding TotalOutputTooltip}">
-                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K023}" />
-                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
-                                   Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding TotalOutputDisplay}" />
-                        <TextBlock Margin="4,0,0,0" VerticalAlignment="Bottom"
-                                   FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K014}" />
-                    </StackPanel>
-                </DockPanel>
-                <DockPanel Grid.Column="2" ToolTip="{Binding NgRateTooltip}">
-                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiLabel}"
-                               Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K085}" />
-                    <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center"
-                               FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
-                               Foreground="{Binding NgRate, Converter={StaticResource InverseRatioThreshold}}"
-                               Text="{Binding NgRateDisplay}" />
-                </DockPanel>
-            </Grid>
-
-            <!-- 班次产量对比：本班次 vs 上班次（顶部间距 12→4，2026-08-11 按用户要求上移贴近主体区） -->
-            <StackPanel Grid.Row="3" Margin="0,0,0,0">
-                <!-- 本班次 -->
-                <Border Padding="10,6" CornerRadius="6"
-                        Background="{StaticResource SecondaryRegionBrush}"
-                        ToolTip="{Binding CurrentShiftTooltip}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource PrimaryBrush}" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource PrimaryTextBrush}" Text="{x:Static resources:Strings.K078}" />
-                        </StackPanel>
-                        <!-- OK + diff -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource SuccessBrush}" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="OK" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding ShiftOkProductionDisplay, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
-                            <TextBlock Style="{StaticResource OkDiffBadge}"
-                                       Text="{Binding ShiftOutputDiffText}" />
-                        </StackPanel>
-                        <!-- NG + diff -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource DangerBrush}" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="NG" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding ShiftNgProductionDisplay, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
-                            <TextBlock Style="{StaticResource NgDiffBadge}"
-                                       Text="{Binding ShiftNgDiffText}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- 上班次：始终显示；无数据时标签只显示"上班次"、OK/NG 显示 0（2026-08-11 用户要求） -->
-                <Border Margin="0,6,0,0" Padding="10,6" CornerRadius="6"
-                        Background="{StaticResource SecondaryRegionBrush}"
-                        ToolTip="{Binding LastShiftTooltip}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource ThirdlyTextBrush}" />
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
-                                       Foreground="{StaticResource SecondaryTextBrush}"
-                                       Text="{Binding LastShiftLabel}" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource SuccessBrush}" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="OK" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding LastShiftOk, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{StaticResource DangerBrush}" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}"
-                                       Foreground="{StaticResource SecondaryTextBrush}" Text="NG" />
-                            <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeKpiSm}"
-                                       FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                       Text="{Binding LastShiftNg, Converter={StaticResource LocFormatConverter}, ConverterParameter=F245}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </StackPanel>
         </Grid>
     </Border>
 </UserControl>

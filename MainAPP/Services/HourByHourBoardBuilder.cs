@@ -10,7 +10,7 @@ public static class HourByHourBoardBuilder
 {
     /// <summary>
     /// 生成 [shiftStart, shiftEnd) 内每一整点小时格。
-    /// <paramref name="okByHourStart"/> 的键为该格墙钟整点（与 <c>HistoryQueryHelper.BuildHourlyBuckets</c> 对齐）。
+    /// <paramref name="okByHourStart"/> 的键为该格墙钟整点（与 <see cref="Kanban.Contracts.Metrics.HourlyProductionDiff.BuildHourStarts"/> 对齐）。
     /// </summary>
     public static IReadOnlyList<HourBucketItem> Build(
         DateTime shiftStart,

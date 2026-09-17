@@ -83,12 +83,22 @@ SHARED_WEB_KEYS = {
     "Hp_DefectTooltip", "Hp_DefectTooltipNoAddr",
     "Home_Tip_SpeedAchievement", "Home_Tip_RealtimeSpeed", "Home_Tip_WorkOrderProgress",
     "Home_WorkOrderNg", "Home_WorkOrderQuality",
+    "Home_ShiftOk", "Home_ShiftTotalOutput", "Home_CumulativeQuality",
+    "Home_WorkOrderCumulativeOk", "Home_WorkOrderAchievement",
+    "Home_Tip_ShiftOk", "Home_Tip_WorkOrderCumulativeOk", "Home_Tip_WorkOrderAchievement",
     "Home_Tip_WorkOrderTarget", "Home_Tip_WorkOrderOk", "Home_Tip_WorkOrderNg", "Home_Tip_WorkOrderQuality",
     "Home_Tip_TargetCycle", "Home_Tip_ActualCycle",
     "Home_Tip_RunTime", "Home_Tip_AlarmTime", "Home_Tip_PausedTime", "Home_Tip_OfflineTime",
     "Home_Tip_Clock", "Home_Tip_Shift", "Home_Tip_Oee", "Home_Tip_Availability",
     "Home_Tip_Performance", "Home_Tip_Quality", "Home_Tip_TotalOutput", "Home_Tip_NgRate",
     "Home_Tip_QualityGap", "Home_Tip_QualityTrend", "Home_Tip_CurrentShift", "Home_Tip_LastShift",
+    "Ln_Tip_SessionOk", "Ln_Tip_SessionNg", "Ln_Tip_CycleCompare", "Ln_Tip_ShiftPace", "Ln_Tip_StatusCount",
+    "Hq_Tip_WindowOutput", "Hq_Tip_WindowOk", "Hq_Tip_WindowNg", "Hq_Tip_WindowQuality",
+    "Hq_Tip_WindowNgRate", "Hq_Tip_WindowOee",
+    "Mo_Tip_SuccessRate", "Mo_Tip_ConsecutiveFail", "Mo_Tip_PendingHistory",
+    "Rv_Tip_Health", "Dd_Tip_TodayAlarms", "Dd_Tip_PlcRaw", "Dd_Tip_Theoretical",
+    "Dd_Tip_CycleGap", "Dd_Tip_ActualCapacity",
+    "K709", "K710", "K711", "K712", "K713", "K714",
     "Severity_Critical", "Severity_Major", "Severity_Minor",
     "Defect_Appearance", "Defect_Dimension", "Defect_Function", "Defect_Packaging", "Defect_Other",
 }
@@ -819,6 +829,10 @@ public static class L
         }}
         return key;
     }}
+
+    /// <summary>指标说明 Tip：把资源里的 \\n 换成真实换行，供 title / tooltip 使用。</summary>
+    public static string Tip(string key, params object[] args)
+        => T(key, args).Replace("\\\\n", "\\n", StringComparison.Ordinal);
 }}
 '''
 

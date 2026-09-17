@@ -6806,6 +6806,30 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Home_WorkOrderQuality" xml:space="preserve">
     <value>Qualidade da ordem</value>
   </data>
+  <data name="Home_ShiftOk" xml:space="preserve">
+    <value>OK do turno</value>
+  </data>
+  <data name="Home_ShiftTotalOutput" xml:space="preserve">
+    <value>Produção total do turno</value>
+  </data>
+  <data name="Home_CumulativeQuality" xml:space="preserve">
+    <value>Qualidade acumulada</value>
+  </data>
+  <data name="Home_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>OK acumulado da ordem</value>
+  </data>
+  <data name="Home_WorkOrderAchievement" xml:space="preserve">
+    <value>Realização da ordem</value>
+  </data>
+  <data name="Home_Tip_ShiftOk" xml:space="preserve">
+    <value>OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\nAgora: {0} pçs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>OK acumulado da ordem = OK na janela da ordem (não o total da sessão do turno; exclui NG).\nAgora: {0} pçs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderAchievement" xml:space="preserve">
+    <value>Realização da ordem = OK na janela da ordem ÷ quantidade planejada, limitado a 100%.\nUsa OK da janela da ordem (igual à página de Ordens), não o total da sessão do turno nem a realização de velocidade.\nAgora: {0:N0} / {1:N0} pçs = {2}</value>
+  </data>
   <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
     <value>NG da ordem = rejeitos na janela da ordem (não o total da sessão).\nAgora: {0:N0} pçs</value>
   </data>
@@ -6858,12 +6882,72 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Diferença em relação à meta de 95%. Positivo = acima, negativo = ainda abaixo.\nQualidade agora {0}, diferença {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>A linha é a qualidade acumulada do turno: OK ÷ (OK+NG) em cada amostra. A linha vermelha tracejada é a meta de 95%. Pontos vêm dos snapshots do turno mais o valor ao vivo.</value>
+    <value>Barras verdes = OK por hora do turno. A linha é a qualidade acumulada: OK ÷ (OK+NG). A linha vermelha tracejada é a meta de 95%. O eixo cobre o turno inteiro.</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>OK / NG acumulados do turno atual. Setas comparam com o turno anterior.\nOK {0}   NG {1}</value>
   </data>
   <data name="Home_Tip_LastShift" xml:space="preserve">
     <value>Resumo do turno completo anterior.\n{0}\nOK {1:N0}   NG {2:N0}</value>
+  </data>
+  <data name="Ln_Tip_SessionOk" xml:space="preserve">
+    <value>OK acumulado da sessão (exclui NG). Não é a contagem da janela da ordem.\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Ln_Tip_SessionNg" xml:space="preserve">
+    <value>NG acumulado da sessão. Não é o rejeito da janela da ordem.\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Ln_Tip_CycleCompare" xml:space="preserve">
+    <value>Comparação de ciclo = real / alvo. Real = segundos em execução ÷ (OK+NG); vermelho se mais lento.\nAgora: {0}</value>
+  </data>
+  <data name="Ln_Tip_ShiftPace" xml:space="preserve">
+    <value>Ritmo do turno = OK da sessão ÷ (capacidade × horas decorridas). A barra limita em 100%; o texto mostra o real.\nAgora: {0}</value>
+  </data>
+  <data name="Ln_Tip_StatusCount" xml:space="preserve">
+    <value>Dispositivos atualmente no estado “{0}”.\nAgora: {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_TodayAlarms" xml:space="preserve">
+    <value>Disparos históricos deste dispositivo desde 0:00 de hoje (inclui recuperados).\nAgora: {0:N0}</value>
+  </data>
+  <data name="Dd_Tip_PlcRaw" xml:space="preserve">
+    <value>Contadores brutos do PLC (não totais da sessão). Saltam após reset.\nAgora: OK {0:N0} · NG {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_Theoretical" xml:space="preserve">
+    <value>Teórico = capacidade × horas em execução; real = OK+NG na mesma janela.\nAgora: teórico {0:N0} / real {1:N0} pçs</value>
+  </data>
+  <data name="Dd_Tip_CycleGap" xml:space="preserve">
+    <value>Diferença de capacidade = (taxa real − alvo) ÷ alvo. Negativo = abaixo da meta.\nAgora: {0:F1}%</value>
+  </data>
+  <data name="Dd_Tip_ActualCapacity" xml:space="preserve">
+    <value>Capacidade real (pçs/h) = (OK+NG) ÷ horas em execução; 0 se RunTime &lt; 5s.\nAgora: {0:N0} pçs/h (alvo {1:N0})</value>
+  </data>
+  <data name="Hq_Tip_WindowOutput" xml:space="preserve">
+    <value>Produção total na janela da consulta = OK+NG (não a sessão ao vivo).\nAgora: OK {0:N0} + NG {1:N0} = {2:N0} pçs</value>
+  </data>
+  <data name="Hq_Tip_WindowOk" xml:space="preserve">
+    <value>OK na janela da consulta (delta da janela, não o total da sessão).\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Hq_Tip_WindowNg" xml:space="preserve">
+    <value>NG na janela da consulta (delta da janela, não o total da sessão).\nAgora: {0:N0} pçs</value>
+  </data>
+  <data name="Hq_Tip_WindowQuality" xml:space="preserve">
+    <value>Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%.\nAgora: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
+    <value>Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor.\nAgora: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowOee" xml:space="preserve">
+    <value>OEE na janela da consulta = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / &lt;60% vermelho.</value>
+  </data>
+  <data name="Mo_Tip_SuccessRate" xml:space="preserve">
+    <value>Taxa de sucesso da coleta = ciclos ok ÷ ciclos concluídos (falhas são subconjunto dos concluídos).\nAgora: {0}</value>
+  </data>
+  <data name="Mo_Tip_ConsecutiveFail" xml:space="preserve">
+    <value>Ciclos falhos consecutivos; &gt; 0 indica caminho de coleta instável agora.\nAgora: {0}</value>
+  </data>
+  <data name="Mo_Tip_PendingHistory" xml:space="preserve">
+    <value>Registros de histórico aguardando gravação; alta persistente = escrita atrasada.\nAgora: {0}</value>
+  </data>
+  <data name="Rv_Tip_Health" xml:space="preserve">
+    <value>Pontuação de saúde da revisão combina disponibilidade, desempenho, qualidade e estabilidade de alarmes.\nAgora: {0}</value>
   </data>
 </root>

@@ -96,6 +96,8 @@
         <Border CornerRadius="12" Padding="24,18" MinHeight="368" Margin="8"
                 HorizontalAlignment="Stretch" VerticalAlignment="Top"
                 Style="{StaticResource DeviceCardBorder}"
+                ToolTipService.InitialShowDelay="300"
+                ToolTipService.ShowDuration="30000"
                 AutomationProperties.Name="{Binding Device.Name}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -181,21 +183,24 @@
                                 <ColumnDefinition Width="80" />
                                 <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
+                            <Border Grid.Column="0" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
+                                    ToolTip="{Binding OkTooltip}">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K588}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource SuccessBrush}"
                                                Text="{Binding Runtime.TotalOkProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F315}" />
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
+                            <Border Grid.Column="1" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
+                                    ToolTip="{Binding NgTooltip}">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K589}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource DangerBrush}"
                                                Text="{Binding Runtime.TotalNgProduction, Converter={StaticResource LocFormatConverter}, ConverterParameter=F316}" />
                                 </StackPanel>
                             </Border>
-                            <Border Grid.Column="2" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0">
+                            <Border Grid.Column="2" Style="{StaticResource MiniStatCell}" Margin="0,0,2,0"
+                                    ToolTip="{Binding TotalOutputTooltip}">
                                 <StackPanel>
                                     <TextBlock Style="{StaticResource MiniStatLabel}" Text="{x:Static resources:Strings.K590}" />
                                     <TextBlock Style="{StaticResource MiniStatValue}" Foreground="{StaticResource PrimaryTextBrush}"
@@ -206,7 +211,7 @@
 
                         <!--  辅助指标：节拍 / 运行 / 报警 / 待机 / 离线（不再把报警+待机合成「停机」）  -->
                         <StackPanel Margin="0,10,0,0">
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding CycleTooltip}">
                                 <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Web_Ln_Cycle}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
@@ -222,25 +227,25 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" ToolTip="{Binding RunTimeTooltip}">
                                 <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K593}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource PrimaryTextBrush}"
                                            Text="{Binding RunTimeFormatted}" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" ToolTip="{Binding AlarmTimeTooltip}">
                                 <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Alarm}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource DangerBrush}"
                                            Text="{Binding AlarmTimeFormatted}" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" ToolTip="{Binding PausedTimeTooltip}">
                                 <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Paused}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource WarningBrush}"
                                            Text="{Binding PausedTimeFormatted}" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" ToolTip="{Binding OfflineTimeTooltip}">
                                 <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />
                                 <TextBlock Margin="5,0,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                            Foreground="{StaticResource StatusIdleBrush}"
@@ -262,12 +267,13 @@
                                        FontSize="{DynamicResource FontSizeKpiMd}"
                                        FontWeight="Bold"
                                        Foreground="{Binding Runtime.Oee, Converter={StaticResource OeeThreshold}}"
-                                       Text="{Binding Runtime.Oee, StringFormat={}{0:P1}}" />
+                                       Text="{Binding Runtime.Oee, StringFormat={}{0:P1}}"
+                                       ToolTip="{Binding OeeTooltip}" />
                             <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0"
                                        FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="{x:Static resources:Strings.K587}" />
                             <StackPanel Style="{StaticResource RateBarRow}"
-                                        ToolTip="{x:Static resources:Strings.Ln_AvailabilityHint}">
+                                        ToolTip="{Binding AvailabilityTooltip}">
                                 <Grid>
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
                                     <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
@@ -278,7 +284,7 @@
                                              Foreground="{StaticResource StatusRunBrush}"
                                              Value="{Binding Runtime.AvailabilityRate, Mode=OneWay}" />
                             </StackPanel>
-                            <StackPanel Style="{StaticResource RateBarRow}">
+                            <StackPanel Style="{StaticResource RateBarRow}" ToolTip="{Binding PerformanceTooltip}">
                                 <Grid>
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
                                     <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
@@ -289,7 +295,7 @@
                                              Foreground="{StaticResource PrimaryBrush}"
                                              Value="{Binding Runtime.PerformanceRate, Mode=OneWay}" />
                             </StackPanel>
-                            <StackPanel Style="{StaticResource RateBarRow}">
+                            <StackPanel Style="{StaticResource RateBarRow}" ToolTip="{Binding QualityTooltip}">
                                 <Grid>
                                     <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
                                     <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
@@ -311,7 +317,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                                ToolTip="{Binding ShiftPaceTooltip}">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Setter Property="Visibility" Value="Visible" />

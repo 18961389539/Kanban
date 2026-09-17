@@ -39,6 +39,13 @@ public static class FormatHelper
     /// <summary>班次配置时刻：TimeSpan.Hours 为 0–23，按 HH:mm 输出。勿用 DateTime 的 hh 自定义格式。</summary>
     public static string FormatClock(TimeSpan time) => $"{time.Hours:D2}:{time.Minutes:D2}";
 
-    /// <summary>设备状态卡右上角日期时钟：月-日 + 24 小时制时分秒。</summary>
+    /// <summary>设备状态卡日期时钟：月-日 时:分:秒（24 小时制）。</summary>
     public static string FormatDeviceStatusClock(DateTime time) => time.ToString("MM-dd HH:mm:ss");
+
+    /// <summary>
+    /// 将本地化 Tip 模板格式化为多行文本（资源里的 \\n 换成换行）。
+    /// </summary>
+    public static string Tip(string format, params object[] args)
+        => string.Format(System.Globalization.CultureInfo.CurrentCulture, format, args)
+            .Replace("\\n", Environment.NewLine, StringComparison.Ordinal);
 }

@@ -17,7 +17,7 @@
         </div>
         @if (Dashboard.ShiftProgress is { } shift)
         {
-            <div class="line-shift">
+            <div class="line-shift" title="@L.Tip("Home_Tip_Shift", shift.Name, $"{shift.ElapsedText} · {shift.Pct}")">
                 <span class="kpi-label">@L.T("Ln_CurrentShift")</span>
                 <b>@shift.Name</b>
                 <span class="kpi-sub">@L.T("Ln_ShiftProgress") @shift.Pct</span>
@@ -60,21 +60,21 @@
         @* ──── 汇总 KPI 条：四态合并为两张双指标卡（运行|报警、待机|离线） ──── *@
         <section class="kpi-row">
             <div class="kpi-card dual">
-                <div class="kpi-metric">
+                <div class="kpi-metric" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Running"), Summary.Running)">
                     <span class="kpi-label">@L.T("Status_Running")</span>
                     <span class="kpi-value kpi-ok">@Summary.Running</span>
                 </div>
-                <div class="kpi-metric">
+                <div class="kpi-metric" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Alarm"), Summary.Alarm)">
                     <span class="kpi-label">@L.T("Status_Alarm")</span>
                     <span class="kpi-value kpi-ng">@Summary.Alarm</span>
                 </div>
             </div>
             <div class="kpi-card dual">
-                <div class="kpi-metric">
+                <div class="kpi-metric" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Paused"), Summary.Paused)">
                     <span class="kpi-label">@L.T("Status_Paused")</span>
                     <span class="kpi-value">@Summary.Paused</span>
                 </div>
-                <div class="kpi-metric">
+                <div class="kpi-metric" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Offline"), Summary.Idle)">
                     <span class="kpi-label">@L.T("Status_Offline")</span>
                     <span class="kpi-value">@Summary.Idle</span>
                 </div>
@@ -139,22 +139,22 @@
                         }
 
                         <div class="metric-grid">
-                            <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span></div>
-                            <div><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span></div>
-                            <div><span class="kpi-label">@L.T("Ln_Cycle")</span><span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span></div>
-                            <div><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@FmtDuration(d.AlarmTime)</span></div>
-                            <div><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@FmtDuration(d.PausedTime)</span></div>
-                            <div><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@FmtDuration(d.OfflineTime)</span></div>
+                            <div title="@L.Tip("Ln_Tip_SessionOk", d.TotalOkProduction)"><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span></div>
+                            <div title="@L.Tip("Ln_Tip_SessionNg", d.TotalNgProduction)"><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span></div>
+                            <div title="@L.Tip("Ln_Tip_CycleCompare", CycleText(d))"><span class="kpi-label">@L.T("Ln_Cycle")</span><span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span></div>
+                            <div title="@L.Tip("Home_Tip_AlarmTime", FmtDuration(d.AlarmTime), SnapshotMetrics.TimeRatio(d.AlarmTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@FmtDuration(d.AlarmTime)</span></div>
+                            <div title="@L.Tip("Home_Tip_PausedTime", FmtDuration(d.PausedTime), SnapshotMetrics.TimeRatio(d.PausedTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@FmtDuration(d.PausedTime)</span></div>
+                            <div title="@L.Tip("Home_Tip_OfflineTime", FmtDuration(d.OfflineTime), SnapshotMetrics.TimeRatio(d.OfflineTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@FmtDuration(d.OfflineTime)</span></div>
                         </div>
 
                         <div class="ring-row">
-                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(d.DeviceId)" />
+                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(d.DeviceId)" Title="@OeeTip(d)" />
                             <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability"
-                                  Title="@L.T("Ln_AvailabilityHint")" HasData="@HasWorkOrder(d.DeviceId)" />
-                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(d.DeviceId)" />
-                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(d.DeviceId)" />
+                                  Title="@AvailabilityTip(d)" HasData="@HasWorkOrder(d.DeviceId)" />
+                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(d.DeviceId)" Title="@PerformanceTip(d)" />
+                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(d.DeviceId)" Title="@QualityTip(d)" />
                         </div>
-                        <div class="meta-line">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime) · @L.T("Lbl_SnapSeq") #@d.Seq</div>
+                        <div class="meta-line" title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime) · @L.T("Lbl_SnapSeq") #@d.Seq</div>
                     </div>
                 }
             </div>
@@ -343,6 +343,31 @@
     private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;
 
     private static string FmtDuration(double seconds) => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
+
+    private static string OeeTip(DeviceSnapshotDto d)
+        => L.Tip("Home_Tip_Oee", $"{Pct(d.AvailabilityRate)} × {Pct(d.PerformanceRate)} × {Pct(d.QualityRate)}", Pct(d.Oee));
+
+    private static string AvailabilityTip(DeviceSnapshotDto d)
+        => L.Tip("Home_Tip_Availability",
+            d.RunTime + d.AlarmTime > 0
+                ? $"{FmtDuration(d.RunTime)} / {FmtDuration(d.RunTime + d.AlarmTime)}"
+                : "— / —",
+            Pct(d.AvailabilityRate));
+
+    private static string PerformanceTip(DeviceSnapshotDto d)
+        => L.Tip("Home_Tip_Performance",
+            d.TargetCycle > 0 && d.RunTime > 0
+                ? $"{d.TotalOkProduction}+{d.TotalNgProduction} / {d.TargetCycle * (d.RunTime / 3600.0):N0}"
+                : "— / —",
+            Pct(d.PerformanceRate));
+
+    private static string QualityTip(DeviceSnapshotDto d)
+    {
+        var total = SnapshotMetrics.TotalOutput(d.TotalOkProduction, d.TotalNgProduction);
+        return L.Tip("Home_Tip_Quality",
+            total > 0 ? $"{d.TotalOkProduction} / {total}" : "— / —",
+            Pct(d.QualityRate));
+    }
 
     protected override async Task OnInitializedAsync()
     {

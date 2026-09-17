@@ -73,7 +73,9 @@
                            Foreground="{StaticResource SecondaryTextBrush}"
                            Text="{Binding DeviceCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F248}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        ToolTip="{Binding ShiftTooltip}"
+                        ToolTipService.ShowDuration="30000">
                 <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
                     <Run Text="{x:Static resources:Strings.K415}" />
                     <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentShiftName, Mode=OneWay}" />
@@ -134,13 +136,17 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                    ToolTip="{Binding RunningCountTooltip}"
+                                    ToolTipService.ShowDuration="30000">
                             <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Running}" />
                             <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource SuccessBrush}"
                                        Text="{Binding RunningCount, StringFormat={}{0:N0}}" />
                         </StackPanel>
                         <Border Grid.Column="1" Width="1" Margin="12,2" Background="{StaticResource DividerBrush}" />
-                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                    ToolTip="{Binding AlarmCountTooltip}"
+                                    ToolTipService.ShowDuration="30000">
                             <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Alarm}" />
                             <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}"
                                        Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
@@ -154,13 +160,17 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                    ToolTip="{Binding PausedCountTooltip}"
+                                    ToolTipService.ShowDuration="30000">
                             <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Paused}" />
                             <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource WarningBrush}"
                                        Text="{Binding PausedCount, StringFormat={}{0:N0}}" />
                         </StackPanel>
                         <Border Grid.Column="1" Width="1" Margin="12,2" Background="{StaticResource DividerBrush}" />
-                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                    ToolTip="{Binding OfflineCountTooltip}"
+                                    ToolTipService.ShowDuration="30000">
                             <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.Status_Offline}" />
                             <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource ThirdlyTextBrush}"
                                        Text="{Binding OfflineCount, StringFormat={}{0:N0}}" />

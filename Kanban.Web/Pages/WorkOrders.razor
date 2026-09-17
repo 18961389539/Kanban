@@ -52,9 +52,9 @@
                             <td class="mono">@w.OrderNo</td>
                             <td>@w.ProductCode · @w.ProductName</td>
                             <td>@w.DeviceName</td>
-                            <td class="num">@w.TargetQuantity.ToString("N0")</td>
-                            <td class="num kpi-ok">@(w.CompletedOkCount?.ToString("N0") ?? "—")</td>
-                            <td class="num kpi-ng">@(w.CompletedNgCount?.ToString("N0") ?? "—")</td>
+                            <td class="num" title="@L.Tip("Home_Tip_WorkOrderTarget", w.TargetQuantity)">@w.TargetQuantity.ToString("N0")</td>
+                            <td class="num kpi-ok" title="@L.Tip("Home_Tip_WorkOrderOk", w.CompletedOkCount?.ToString("N0") ?? "—")">@(w.CompletedOkCount?.ToString("N0") ?? "—")</td>
+                            <td class="num kpi-ng" title="@L.Tip("Home_Tip_WorkOrderNg", w.CompletedNgCount ?? 0)">@(w.CompletedNgCount?.ToString("N0") ?? "—")</td>
                             <td>@w.PlannedStart.ToString("MM-dd HH:mm")</td>
                             <td>@w.PlannedEnd.ToString("MM-dd HH:mm")</td>
                             <td><span class="status-badge @WoClass(w.Status)">@WoText(w.Status)</span></td>

@@ -128,6 +128,43 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         }
     }
 
+    public double RunTimeRatio => SnapshotMetrics.TimeRatio(Runtime.RunTime, Runtime.RunTime, Runtime.AlarmTime, Runtime.PausedTime, Runtime.OfflineTime);
+    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(Runtime.AlarmTime, Runtime.RunTime, Runtime.AlarmTime, Runtime.PausedTime, Runtime.OfflineTime);
+    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(Runtime.PausedTime, Runtime.RunTime, Runtime.AlarmTime, Runtime.PausedTime, Runtime.OfflineTime);
+    public double OfflineTimeRatio => SnapshotMetrics.TimeRatio(Runtime.OfflineTime, Runtime.RunTime, Runtime.AlarmTime, Runtime.PausedTime, Runtime.OfflineTime);
+
+    public string OkTooltip => FormatHelper.Tip(Strings.Ln_Tip_SessionOk, Runtime.TotalOkProduction);
+    public string NgTooltip => FormatHelper.Tip(Strings.Ln_Tip_SessionNg, Runtime.TotalNgProduction);
+    public string TotalOutputTooltip => FormatHelper.Tip(Strings.Home_Tip_TotalOutput, Runtime.TotalOkProduction, Runtime.TotalNgProduction, TotalOutput);
+    public string CycleTooltip => FormatHelper.Tip(Strings.Ln_Tip_CycleCompare, CycleText);
+    public string RunTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_RunTime, RunTimeFormatted, RunTimeRatio);
+    public string AlarmTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_AlarmTime, AlarmTimeFormatted, AlarmTimeRatio);
+    public string PausedTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_PausedTime, PausedTimeFormatted, PausedTimeRatio);
+    public string OfflineTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_OfflineTime, OfflineTimeFormatted, OfflineTimeRatio);
+    public string OeeTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Oee,
+        $"{Runtime.AvailabilityRate:P0} × {Runtime.PerformanceRate:P0} × {Runtime.QualityRate:P0}",
+        $"{Runtime.Oee:P0}");
+    public string AvailabilityTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Availability,
+        Runtime.RunTime + Runtime.AlarmTime > 0
+            ? $"{RunTimeFormatted} / {FormatHelper.FormatDuration(Runtime.RunTime + Runtime.AlarmTime)}"
+            : "— / —",
+        $"{Runtime.AvailabilityRate:P0}");
+    public string PerformanceTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Performance,
+        Runtime.TargetCycle > 0 && Runtime.RunTime > 0
+            ? string.Format(Strings.F037, Runtime.TotalOkProduction, Runtime.TotalNgProduction, Runtime.TargetCycle * (Runtime.RunTime / 3600.0))
+            : "— / —",
+        $"{Runtime.PerformanceRate:P0}");
+    public string QualityTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Quality,
+        TotalOutput > 0 ? string.Format(Strings.F036, Runtime.TotalOkProduction, TotalOutput) : "— / —",
+        $"{Runtime.QualityRate:P0}");
+    public string ShiftPaceTooltip => string.IsNullOrEmpty(ShiftProgressFullText)
+        ? ""
+        : FormatHelper.Tip(Strings.Ln_Tip_ShiftPace, ShiftProgressFullText);
+
     /// <summary>是否有班次与目标产能（进度条可见性，不要求已过时间）。</summary>
     public bool HasShiftTarget
     {
@@ -175,29 +212,38 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         {
             case nameof(DeviceRuntime.TargetCycle):
             case nameof(DeviceRuntime.PerformanceRate):
+            case nameof(DeviceRuntime.Oee):
+            case nameof(DeviceRuntime.AvailabilityRate):
+            case nameof(DeviceRuntime.QualityRate):
                 NotifyCycleChanged();
                 RefreshShiftProgress();
+                NotifyMetricTooltips();
                 break;
             case nameof(DeviceRuntime.RunTime):
                 OnPropertyChanged(nameof(RunTimeFormatted));
                 NotifyCycleChanged();
+                NotifyMetricTooltips();
                 break;
             case nameof(DeviceRuntime.AlarmTime):
                 OnPropertyChanged(nameof(AlarmTimeFormatted));
                 OnPropertyChanged(nameof(DowntimeFormatted));
+                NotifyMetricTooltips();
                 break;
             case nameof(DeviceRuntime.PausedTime):
                 OnPropertyChanged(nameof(PausedTimeFormatted));
                 OnPropertyChanged(nameof(DowntimeFormatted));
+                NotifyMetricTooltips();
                 break;
             case nameof(DeviceRuntime.OfflineTime):
                 OnPropertyChanged(nameof(OfflineTimeFormatted));
+                NotifyMetricTooltips();
                 break;
             case nameof(DeviceRuntime.TotalOkProduction):
             case nameof(DeviceRuntime.TotalNgProduction):
                 OnPropertyChanged(nameof(TotalOutput));
                 NotifyCycleChanged();
                 RefreshShiftProgress();
+                NotifyMetricTooltips();
                 break;
         }
     }
@@ -209,6 +255,7 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         OnPropertyChanged(nameof(RealCycleSec));
         OnPropertyChanged(nameof(CycleText));
         OnPropertyChanged(nameof(IsCycleSlow));
+        OnPropertyChanged(nameof(CycleTooltip));
     }
 
     private (ShiftConfig? Shift, DateTime Start, DateTime End) ResolveCurrentShift()
@@ -224,6 +271,28 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         OnPropertyChanged(nameof(ShiftProgressText));
         OnPropertyChanged(nameof(ShiftProgressFullText));
         OnPropertyChanged(nameof(HasShiftTarget));
+        OnPropertyChanged(nameof(ShiftPaceTooltip));
+    }
+
+    private void NotifyMetricTooltips()
+    {
+        OnPropertyChanged(nameof(RunTimeRatio));
+        OnPropertyChanged(nameof(AlarmTimeRatio));
+        OnPropertyChanged(nameof(PausedTimeRatio));
+        OnPropertyChanged(nameof(OfflineTimeRatio));
+        OnPropertyChanged(nameof(OkTooltip));
+        OnPropertyChanged(nameof(NgTooltip));
+        OnPropertyChanged(nameof(TotalOutputTooltip));
+        OnPropertyChanged(nameof(CycleTooltip));
+        OnPropertyChanged(nameof(RunTimeTooltip));
+        OnPropertyChanged(nameof(AlarmTimeTooltip));
+        OnPropertyChanged(nameof(PausedTimeTooltip));
+        OnPropertyChanged(nameof(OfflineTimeTooltip));
+        OnPropertyChanged(nameof(OeeTooltip));
+        OnPropertyChanged(nameof(AvailabilityTooltip));
+        OnPropertyChanged(nameof(PerformanceTooltip));
+        OnPropertyChanged(nameof(QualityTooltip));
+        OnPropertyChanged(nameof(ShiftPaceTooltip));
     }
 
     /// <summary>当前触发的报警名称（StartTime 已置、EndTime 为空），顿号拼接；无则空字符串。</summary>

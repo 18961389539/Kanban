@@ -2,6 +2,7 @@ using System.Linq;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP.Models;
 using MainAPP.Services;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -288,6 +289,71 @@ public class ChartServiceTests
         Assert.Equal(DateTimeAxis.ToDouble(shiftEnd), xAxis.Maximum);
     }
 
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_DrawsOkBarsAndQualityLine()
+    {
+        var start = DateTime.Today.AddHours(8);
+        var end = start.AddHours(12);
+        var chart = ChartService.BuildShiftQualityAndOutputChart(
+            [start, start.AddHours(1), start.AddHours(2)],
+            [12, 0, 7],
+            [(start.AddMinutes(30), 0.98), (start.AddHours(2), 0.94)],
+            0.95, start, end);
+
+        var bars = Assert.Single(chart.Series.OfType<RectangleBarSeries>());
+        Assert.Equal(2, bars.Items.Count); // 中间 0 不画柱
+        var lines = chart.Series.OfType<LineSeries>().ToList();
+        Assert.Equal(2, lines.Count); // 良率 + 达标线
+        Assert.Equal(2, lines[0].Points.Count);
+        Assert.Equal("shiftQuality", lines[0].YAxisKey);
+        var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
+        Assert.Equal(DateTimeAxis.ToDouble(start), xAxis.Minimum);
+        Assert.Equal(DateTimeAxis.ToDouble(end), xAxis.Maximum);
+        Assert.Contains(chart.Axes.OfType<LinearAxis>(), a => a.Position == AxisPosition.Right);
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_Empty_ReturnsModelWithoutSeries()
+    {
+        var chart = ChartService.BuildShiftQualityAndOutputChart([], [], []);
+        Assert.Empty(chart.Series);
+    }
+
+    [Fact]
+    public void BuildShiftHourlyOkBarChart_OneBarPerHour_OkOnly()
+    {
+        var from = DateTime.Today.AddHours(8);
+        var chart = ChartService.BuildShiftHourlyOkBarChart(
+            [from, from.AddHours(1), from.AddHours(2)],
+            [12, 20, 7]);
+        var bars = Assert.Single(chart.Series.OfType<BarSeries>());
+        Assert.Equal(3, bars.Items.Count);
+        Assert.Equal(12, bars.Items[0].Value);
+        Assert.Equal(20, bars.Items[1].Value);
+        Assert.Equal(7, bars.Items[2].Value);
+        Assert.Empty(chart.Series.OfType<LineSeries>());
+    }
+
+    [Fact]
+    public void BuildShiftHourlyOkBarChart_EmptyBuckets_NoSeries()
+    {
+        var chart = ChartService.BuildShiftHourlyOkBarChart([], []);
+        Assert.Empty(chart.Series);
+    }
+
+    [Fact]
+    public void BuildShiftHourlyOkBarChart_AllZero_UsesIntegerAxis()
+    {
+        var from = DateTime.Today.AddHours(20);
+        var hours = Enumerable.Range(0, 12).Select(i => from.AddHours(i)).ToArray();
+        var chart = ChartService.BuildShiftHourlyOkBarChart(hours, new int[12]);
+        var y = chart.Axes.OfType<LinearAxis>().Single(a => a.Position == AxisPosition.Left);
+        Assert.Equal(8, y.Maximum);
+        Assert.Equal(2, y.MajorStep);
+        var cat = chart.Axes.OfType<CategoryAxis>().Single();
+        Assert.Equal(12, ((System.Collections.IList)cat.ItemsSource!).Count);
+    }
+
     // ═══════════════ BuildStatusGanttChart ═══════════════
 
     [Fact]
@@ -361,6 +427,21 @@ public class ChartServiceTests
         var pie = chart!.Series.OfType<PieSeries>().FirstOrDefault();
         Assert.NotNull(pie);
         Assert.Equal(4, pie!.Slices.Count); // 运行/报警/暂停/离线
+    }
+
+    [Fact]
+    public void BuildStatusPieChart_HidesOutsideTicksAndLegend()
+    {
+        // 空 OutsideLabelFormat 仍会画径向刻度，裁切后像小扇区上的白刺；图例由卡片承载。
+        var chart = ChartService.BuildStatusPieChart(3600, 120, 60, 30);
+        var pie = chart.Series.OfType<PieSeries>().Single();
+
+        Assert.Null(pie.OutsideLabelFormat);
+        Assert.Null(pie.InsideLabelFormat);
+        Assert.True(pie.Diameter < 1);
+        Assert.Equal(-90, pie.StartAngle);
+        Assert.False(chart.IsLegendVisible);
+        Assert.Empty(chart.Legends);
     }
 
     // ═══════════════ BuildDefectBarChart ═══════════════
@@ -450,6 +531,41 @@ public class ChartServiceTests
         // 柱顶数字标签（纯数字 TextAnnotation，原 AddBarLabels 方式）已移除
         Assert.DoesNotContain(chart.Annotations, a => a is OxyPlot.Annotations.TextAnnotation ta
             && ta.Text != null && ta.Text.All(char.IsDigit));
+    }
+
+    [Fact]
+    public void BuildHomeDefectParetoChart_Empty_ReturnsNull()
+    {
+        Assert.Null(ChartService.BuildHomeDefectParetoChart([]));
+    }
+
+    [Fact]
+    public void BuildHomeDefectParetoChart_VerticalBarsAndCumulativeLine()
+    {
+        var rows = new[]
+        {
+            new HomeDefectTopItem { Name = "划痕", Count = 12, CumulativeShare = 0.60, Severity = DefectSeverity.Critical },
+            new HomeDefectTopItem { Name = "毛刺", Count = 8, CumulativeShare = 1.00, Severity = DefectSeverity.Minor },
+        };
+        var chart = ChartService.BuildHomeDefectParetoChart(rows);
+        Assert.NotNull(chart);
+
+        var cat = chart!.Axes.OfType<CategoryAxis>().Single();
+        Assert.Equal(AxisPosition.Bottom, cat.Position);
+
+        var bars = Assert.Single(chart.Series.OfType<BarSeries>());
+        Assert.Equal(2, bars.Items.Count);
+        Assert.Equal(12, bars.Items[0].Value);
+
+        var line = Assert.Single(chart.Series.OfType<LineSeries>());
+        Assert.Equal(MainAPP.Resources.Strings.M271, line.Title);
+        Assert.Equal(2, line.Points.Count);
+        Assert.Equal(60, line.Points[0].Y, precision: 6);
+        Assert.Equal(100, line.Points[1].Y, precision: 6);
+
+        var pct = chart.Axes.OfType<LinearAxis>().Single(a => a.Position == AxisPosition.Right);
+        Assert.Equal(0, pct.Minimum);
+        Assert.Equal(100, pct.Maximum);
     }
 
     // ═══════════════ BuildWorkOrderGanttChart（工单排程甘特）═══════════════

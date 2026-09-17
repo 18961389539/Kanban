@@ -163,7 +163,7 @@ body {
 
 .device-kpi-row .kpi-value { color: var(--text-1); font-size: 13px; font-weight: 700; margin-left: auto; }
 
-.cycle-diff { font-size: 12px; font-weight: 700; width: 100%; text-align: right; }
+.cycle-diff { font-size: 12px; font-weight: 700; margin-left: 8px; white-space: nowrap; }
 
 .cycle-diff.ok { color: var(--ok); }
 
@@ -193,7 +193,7 @@ body {
 .health-level.health-watch,
 .health-level.health-low { color: #fff; }
 
-/* ──────────── 缺陷帕累托 TOP5 卡 ──────────── */
+/* ──────────── 缺陷帕累托卡（竖柱 + 累计折线） ──────────── */
 
 .defect-sub { color: var(--text-3); font-size: 11px; margin: 2px 0 6px; }
 
@@ -203,47 +203,27 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-.defect-list { display: flex; flex-direction: column; gap: 10px; }
+.defect-pareto { min-height: 88px; }
 
-.defect-row { display: flex; align-items: flex-start; gap: 8px; }
+.defect-pareto-svg { height: 96px; width: 100%; }
 
-.defect-rank {
-    flex: 0 0 16px; font-size: 11px; color: var(--text-3);
-    line-height: 16px; font-variant-numeric: tabular-nums;
+.defect-pareto-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 2px;
+    margin-top: 4px;
+    color: var(--text-3);
+    font-size: 10px;
 }
 
-.defect-main { flex: 1; min-width: 0; }
-
-.defect-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
-
-.defect-name {
-    flex: 1; min-width: 0; font-size: 12px; color: var(--text-2);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-.defect-row.vital .defect-name { color: var(--text); font-weight: 600; }
-
-.defect-barline { display: flex; align-items: center; gap: 8px; }
-
-.defect-track {
-    flex: 1; height: 8px; border-radius: 4px; overflow: hidden;
-    background: var(--card-2);
-}
-
-.defect-fill { height: 100%; border-radius: 4px; background: var(--yellow); }
-.defect-fill.critical { background: var(--red); }
-.defect-fill.major { background: var(--yellow); }
-.defect-fill.minor { background: var(--green); }
-.defect-fill.other { background: var(--gray); }
-
-.defect-count { flex: 0 0 auto; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-1, var(--text)); }
-
-.defect-share, .defect-cumul {
-    flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-3);
+.defect-pareto-labels span {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
-
-.defect-cumul.vital { color: var(--yellow); }
 
 .no-data-hint { color: var(--text-3); font-size: 11px; text-align: center; margin-top: 4px; }
 
@@ -338,8 +318,20 @@ body {
 
 .quality-label { color: var(--text-3); font-size: 12px; }
 
+.quality-kpi-grid { margin: 0 0 10px; }
+
+.quality-kpi-grid .kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.quality-kpi-value {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
 .quality-live {
-    margin-left: auto;
     font-size: 22px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -358,7 +350,7 @@ body {
 
 .quality-chart { min-height: 72px; }
 
-.spark-quality { height: 88px; }
+.spark-quality { height: 88px; width: 100%; }
 
 /* ──────────── 当前工单卡 / 速度趋势卡 ──────────── */
 

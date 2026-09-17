@@ -117,9 +117,9 @@
                 <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
             }
             <section class="kpi-row">
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_TotalOk")</span><span class="kpi-value kpi-ok">@(ProdAnalysisDone ? ProdTotalOkText : "…")</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_TotalNg")</span><span class="kpi-value kpi-ng">@(ProdAnalysisDone ? ProdTotalNgText : "…")</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdQualityRateText : "…")</span></div>
+                <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowOk", ProdTotalOk)"><span class="kpi-label">@L.T("Hq_TotalOk")</span><span class="kpi-value kpi-ok">@(ProdAnalysisDone ? ProdTotalOkText : "…")</span></div>
+                <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowNg", ProdTotalNg)"><span class="kpi-label">@L.T("Hq_TotalNg")</span><span class="kpi-value kpi-ng">@(ProdAnalysisDone ? ProdTotalNgText : "…")</span></div>
+                <div class="kpi-card" title="@ProdQualityTooltip"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdQualityRateText : "…")</span></div>
             </section>
 
             <section class="card">
@@ -208,10 +208,10 @@
         else
         {
             <section class="kpi-row">
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value kpi-ok">@StRunText</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value kpi-ng">@StAlarmText</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusPause")</span><span class="kpi-value">@StPauseText</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_StatusOffline")</span><span class="kpi-value kpi-offline">@StOfflineText</span></div>
+                <div class="kpi-card" title="@StRunTooltip"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value kpi-ok">@StRunText</span></div>
+                <div class="kpi-card" title="@StAlarmTooltip"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value kpi-ng">@StAlarmText</span></div>
+                <div class="kpi-card" title="@StPauseTooltip"><span class="kpi-label">@L.T("Hq_StatusPause")</span><span class="kpi-value">@StPauseText</span></div>
+                <div class="kpi-card" title="@StOfflineTooltip"><span class="kpi-label">@L.T("Hq_StatusOffline")</span><span class="kpi-value kpi-offline">@StOfflineText</span></div>
             </section>
 
             <div class="chart-grid">
@@ -297,9 +297,9 @@
         else
         {
             <section class="kpi-row">
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_AlarmPending")</span><span class="kpi-value">@AlPendingText</span></div>
+                <div class="kpi-card" title="@($"{L.T("Hq_AlarmTriggered")}\n{AlTriggeredText}")"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
+                <div class="kpi-card" title="@($"{L.T("Hq_AlarmRecovered")}\n{AlRecoveredText}")"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
+                <div class="kpi-card" title="@($"{L.T("Hq_AlarmPending")}\n{AlPendingText}")"><span class="kpi-label">@L.T("Hq_AlarmPending")</span><span class="kpi-value">@AlPendingText</span></div>
             </section>
 
             <section class="card">
@@ -387,17 +387,17 @@
             <section class="card">
                 <div class="card-title">@L.T("Hq_OeeOverview")</div>
                 <div class="ring-row">
-                    <Ring Value="@OeValue" ValueText="@Pct(OeValue)" Label="OEE" Color="@UiPalette.Oee" />
-                    <Ring Value="@OeA" ValueText="@Pct(OeA)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" />
-                    <Ring Value="@OeP" ValueText="@Pct(OeP)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" />
-                    <Ring Value="@OeQ" ValueText="@Pct(OeQ)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" />
+                    <Ring Value="@OeValue" ValueText="@Pct(OeValue)" Label="OEE" Color="@UiPalette.Oee" Title="@OeOeeTooltip" />
+                    <Ring Value="@OeA" ValueText="@Pct(OeA)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@OeAvailabilityTooltip" />
+                    <Ring Value="@OeP" ValueText="@Pct(OeP)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@OePerformanceTooltip" />
+                    <Ring Value="@OeQ" ValueText="@Pct(OeQ)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@OeQualityTooltip" />
                 </div>
                 <div class="metric-grid">
-                    <div><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value">@OeOkText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value">@OeNgText</span></div>
-                    <div><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value">@OeRunText</span></div>
-                    <div><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value">@OeAlarmText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@OeTargetText</span></div>
+                    <div title="@L.Tip("Hq_Tip_WindowOk", OeOk)"><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value">@OeOkText</span></div>
+                    <div title="@L.Tip("Hq_Tip_WindowNg", OeNg)"><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value">@OeNgText</span></div>
+                    <div title="@OeRunTooltip"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value">@OeRunText</span></div>
+                    <div title="@OeAlarmTooltip"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value">@OeAlarmText</span></div>
+                    <div title="@L.Tip("Home_Tip_TargetCycle", OeTargetCycle, OeTargetCycle > 0 ? $"{Kanban.Contracts.Metrics.SnapshotMetrics.CycleSeconds(OeTargetCycle):F2}s" : "—")"><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@OeTargetText</span></div>
                     <div><span class="kpi-label">@L.T("Hq_DeviceName")</span><span class="kpi-value">@OeDeviceNameText</span></div>
                 </div>
                 @if (!string.IsNullOrEmpty(OeInsight))

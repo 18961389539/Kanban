@@ -82,6 +82,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private DateTime _lastQualityHistoryQueryAt = DateTime.MinValue;
     private string? _qualityTrendShiftKey;
     private List<(DateTime Time, double Quality)> _qualityTrendHistory = [];
+    private DateTime[] _hourlyOkBuckets = [];
+    private int[] _hourlyOkCounts = [];
     private static readonly TimeSpan QualityHistoryThrottle = TimeSpan.FromSeconds(15);
 
     /// <summary>工单产量聚合查询节流：上次查询的工单 Id 与时刻（同一 Running 工单 2s 内复用）。</summary>
@@ -158,6 +160,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(WorkOrderOkTooltip))]
     [NotifyPropertyChangedFor(nameof(WorkOrderNgTooltip))]
     [NotifyPropertyChangedFor(nameof(WorkOrderQualityTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderCumulativeOkTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderAchievementTooltip))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderAchievementDisplay))]
     private WorkOrder? _currentWorkOrder;
 
     /// <summary>是否当前有工单（控制顶部工单条可见性）。</summary>
@@ -198,6 +203,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string WorkOrderQualityDisplay => CanDisplayKpiData && CurrentWorkOrder != null
         && (_currentWorkOrderOk + _currentWorkOrderNg) > 0
         ? $"{WorkOrderQualityRate:P1}"
+        : "—";
+
+    /// <summary>工单达成率文本 = 工单内 OK ÷ 计划产量；无工单或目标为 0 时显示 —。</summary>
+    public string WorkOrderAchievementDisplay => CanDisplayKpiData && CurrentWorkOrder != null
+        && CurrentWorkOrder.TargetQuantity > 0
+        ? WorkOrderProgressPct
         : "—";
 
     /// <summary>工单设置数量（计划产量）。无工单时返回 0。</summary>
@@ -253,6 +264,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>良品率（0-1）。</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(QualityGapText))]
+    [NotifyPropertyChangedFor(nameof(QualityRateDisplay))]
+    [NotifyPropertyChangedFor(nameof(QualityTooltip))]
+    [NotifyPropertyChangedFor(nameof(QualityGapTooltip))]
     private double _qualityRate;
     [ObservableProperty] private double _performanceRate;
     [ObservableProperty] private double _availabilityRate;
@@ -283,13 +297,19 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty] private int _targetSpeed;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
+    [NotifyPropertyChangedFor(nameof(TotalOutputDisplay))]
+    [NotifyPropertyChangedFor(nameof(TotalOutputTooltip))]
     [NotifyPropertyChangedFor(nameof(NgRate))]
     [NotifyPropertyChangedFor(nameof(NgRateDisplay))]
     [NotifyPropertyChangedFor(nameof(ShiftOutputDiff))]
     [NotifyPropertyChangedFor(nameof(ShiftOutputDiffText))]
+    [NotifyPropertyChangedFor(nameof(ShiftOkProductionDisplay))]
+    [NotifyPropertyChangedFor(nameof(ShiftOkTooltip))]
     private int _totalOkProduction;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
+    [NotifyPropertyChangedFor(nameof(TotalOutputDisplay))]
+    [NotifyPropertyChangedFor(nameof(TotalOutputTooltip))]
     [NotifyPropertyChangedFor(nameof(NgRate))]
     [NotifyPropertyChangedFor(nameof(NgRateDisplay))]
     [NotifyPropertyChangedFor(nameof(ShiftNgDiff))]
@@ -319,6 +339,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(StatusDurationTotalFormatted))]
     private double _runTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -326,6 +347,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(StatusDurationTotalFormatted))]
     private double _alarmTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -333,6 +355,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(StatusDurationTotalFormatted))]
     private double _pausedTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
@@ -340,10 +363,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
     [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
     [NotifyPropertyChangedFor(nameof(TotalTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(StatusDurationTotalFormatted))]
     private double _offlineTime;
     [ObservableProperty] private string _runTimeFormatted = "";
     [ObservableProperty] private string _alarmTimeFormatted = "";
     [ObservableProperty] private string _pausedTimeFormatted = "";
+    [ObservableProperty] private string _offlineTimeFormatted = "";
     [ObservableProperty] private string _runTimeFullFormatted = "";
     [ObservableProperty] private string _alarmTimeFullFormatted = "";
     [ObservableProperty] private string _pausedTimeFullFormatted = "";
@@ -373,7 +398,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// <summary>状态总时长（运行+报警+暂停）格式化文本。</summary>
     public string TotalTimeFormatted => FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime);
 
-    // ──────────── 第 2 行 列 3：设备缺陷 TOP5 列表 ────────────
+    /// <summary>环形图中心：含离线的当班状态总时长（标准格式，与图例同口径）。</summary>
+    public string StatusDurationTotalFormatted =>
+        FormatHelper.FormatDuration(RunTime + AlarmTime + PausedTime + OfflineTime);
+
+    // ──────────── 第 2 行 列 3：设备缺陷帕累托（竖柱 + 累计折线） ────────────
 
     public ObservableCollection<HomeDefectTopItem> DefectTop { get; } = [];
 
@@ -387,6 +416,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     [ObservableProperty] private string _defectParetoSummaryText = "";
     [ObservableProperty] private string _defectNgShareText = "";
+    [ObservableProperty] private PlotModel? _defectParetoChart;
 
     // ──────────── 第 1 行 列 3：实时故障 ────────────
 
@@ -477,6 +507,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string WorkOrderOkTooltip => Tip(Strings.Home_Tip_WorkOrderOk, WorkOrderOkProductionDisplay);
     public string WorkOrderNgTooltip => Tip(Strings.Home_Tip_WorkOrderNg, _currentWorkOrderNg);
     public string WorkOrderQualityTooltip => Tip(Strings.Home_Tip_WorkOrderQuality, _currentWorkOrderOk, _currentWorkOrderNg, WorkOrderQualityDisplay);
+    public string ShiftOkTooltip => Tip(Strings.Home_Tip_ShiftOk, ShiftOkProductionDisplay);
+    public string WorkOrderCumulativeOkTooltip => Tip(Strings.Home_Tip_WorkOrderCumulativeOk, WorkOrderOkProductionDisplay);
+    public string WorkOrderAchievementTooltip => CurrentWorkOrder is null
+        ? ""
+        : Tip(Strings.Home_Tip_WorkOrderAchievement, _currentWorkOrderOk, CurrentWorkOrder.TargetQuantity, WorkOrderAchievementDisplay);
     public string TargetCycleTooltip => Tip(Strings.Home_Tip_TargetCycle, TargetSpeed, TargetCycleDisplay);
     public string ActualCycleTooltip => Tip(Strings.Home_Tip_ActualCycle, RealtimeSpeed, ActualCycleDisplay, string.IsNullOrEmpty(CycleDiffText) ? "—" : CycleDiffText);
     public string RunTimeTooltip => Tip(Strings.Home_Tip_RunTime, RunTimeFullFormatted, RunTimeRatio);
@@ -861,11 +896,14 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(WorkOrderNgProductionDisplay));
         OnPropertyChanged(nameof(WorkOrderQualityRate));
         OnPropertyChanged(nameof(WorkOrderQualityDisplay));
+        OnPropertyChanged(nameof(WorkOrderAchievementDisplay));
         OnPropertyChanged(nameof(WorkOrderProgressTooltip));
         OnPropertyChanged(nameof(WorkOrderTargetTooltip));
         OnPropertyChanged(nameof(WorkOrderOkTooltip));
         OnPropertyChanged(nameof(WorkOrderNgTooltip));
         OnPropertyChanged(nameof(WorkOrderQualityTooltip));
+        OnPropertyChanged(nameof(WorkOrderCumulativeOkTooltip));
+        OnPropertyChanged(nameof(WorkOrderAchievementTooltip));
     }
 
     partial void OnSelectedDeviceIdChanged(string? value)
@@ -938,6 +976,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         hash.Add(WorkOrderOkProductionDisplay);
         hash.Add(WorkOrderNgProductionDisplay);
         hash.Add(WorkOrderQualityDisplay);
+        hash.Add(WorkOrderAchievementDisplay);
         var signature = hash.ToHashCode();
         if (signature == _lastDisplaySignature) return;
         _lastDisplaySignature = signature;
@@ -992,6 +1031,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(WorkOrderNgProductionDisplay));
         OnPropertyChanged(nameof(WorkOrderQualityRate));
         OnPropertyChanged(nameof(WorkOrderQualityDisplay));
+        OnPropertyChanged(nameof(WorkOrderAchievementDisplay));
         OnPropertyChanged(nameof(SpeedAchievementTooltip));
         OnPropertyChanged(nameof(RealtimeSpeedTooltip));
         OnPropertyChanged(nameof(TargetCycleTooltip));
@@ -1014,6 +1054,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(WorkOrderOkTooltip));
         OnPropertyChanged(nameof(WorkOrderNgTooltip));
         OnPropertyChanged(nameof(WorkOrderQualityTooltip));
+        OnPropertyChanged(nameof(ShiftOkTooltip));
+        OnPropertyChanged(nameof(WorkOrderCumulativeOkTooltip));
+        OnPropertyChanged(nameof(WorkOrderAchievementTooltip));
     }
 
     private void SyncRuntime()
@@ -1175,6 +1218,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RunTimeFormatted = FormatHelper.FormatDuration(rt.RunTime);
         AlarmTimeFormatted = FormatHelper.FormatDuration(rt.AlarmTime);
         PausedTimeFormatted = FormatHelper.FormatDuration(rt.PausedTime);
+        OfflineTimeFormatted = FormatHelper.FormatDuration(rt.OfflineTime);
         RunTimeFullFormatted = FormatHelper.FormatDurationFull(rt.RunTime);
         AlarmTimeFullFormatted = FormatHelper.FormatDurationFull(rt.AlarmTime);
         PausedTimeFullFormatted = FormatHelper.FormatDurationFull(rt.PausedTime);
@@ -1271,7 +1315,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         TargetSpeed = 0; RealtimeStatus = (int)DeviceStatus.Offline; OfflineCause = 0;
         RealtimeSpeed = 0; SpeedAchievementRate = 0; TargetCycleSec = 0;
         RecipeName = ""; RecipeValue = 0;
-        RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = "";
+        RunTimeFormatted = ""; AlarmTimeFormatted = ""; PausedTimeFormatted = ""; OfflineTimeFormatted = "";
         RunTimeFullFormatted = ""; AlarmTimeFullFormatted = ""; PausedTimeFullFormatted = ""; OfflineTimeFullFormatted = ""; TotalTimeFullFormatted = "";
         DeviceHealthScore = 0; DeviceHealthLevel = "—"; DeviceHealthBrush = Brushes.Gray;
         DeviceHealthScoreTooltip = Strings.Home_DeviceHealthTooltip;
@@ -1289,6 +1333,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         StatusPieChart = null;
         QualityTrendChart = null;
         _qualityTrendHistory = [];
+        _hourlyOkBuckets = [];
+        _hourlyOkCounts = [];
         _qualityTrendShiftKey = null;
         DefectTop.Clear();
         ResetDefectParetoPresentation(DefectParetoEmptyKind.NoDevice);
@@ -1308,7 +1354,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     private void BuildQualityTrendChart()
     {
-        if (_qualityTrendHistory.Count == 0)
+        if (_qualityTrendHistory.Count == 0 && _hourlyOkBuckets.Length == 0)
         {
             QualityTrendChart = null;
             return;
@@ -1316,7 +1362,9 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
         var now = DateTime.Now;
         var (shift, shiftStart, shiftEnd) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
-        QualityTrendChart = ChartService.BuildShiftQualityTrendChart(
+        QualityTrendChart = ChartService.BuildShiftQualityAndOutputChart(
+            _hourlyOkBuckets,
+            _hourlyOkCounts,
             _qualityTrendHistory,
             KpiThresholds.QualityGood,
             shift != null ? shiftStart : null,
@@ -1324,21 +1372,23 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     }
 
     /// <summary>
-    /// 当前班次良率折线：读班次产量快照（Local/Remote 均经 IProductionHistoryReader），叠实时良率并写回内存。
+    /// 当前班次良率折线 + 小时良品柱：产量快照回填历史点与每小时 OK 增量，再叠实时良率。
     /// </summary>
     private void RefreshQualityTrend()
     {
         var now = DateTime.Now;
-        var (shift, start, _) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
-        var key = $"{SelectedDeviceId}|{shift?.Name}|{start:O}";
+        var (shift, start, end) = ShiftConfigResolver.ResolveCurrentShift(_appSettings.GetShiftsSnapshot(), now);
+        var key = $"{SelectedDeviceId}|{shift?.Name}|{start:O}|{end:O}";
         if (!string.Equals(key, _qualityTrendShiftKey, StringComparison.Ordinal))
         {
             _qualityTrendShiftKey = key;
             _qualityTrendHistory = [];
+            _hourlyOkBuckets = [];
+            _hourlyOkCounts = [];
             _lastQualityHistoryQueryAt = DateTime.MinValue;
         }
 
-        MaybeQueryQualityHistory(start, now, shift?.Name);
+        MaybeQueryQualityHistory(start, end, now, shift?.Name);
 
         _qualityTrendHistory = ShiftQualityTrendBuilder.MergeLive(
             _qualityTrendHistory,
@@ -1347,10 +1397,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             CanDisplayKpiData && TotalOutput > 0);
         var lastQuality = _qualityTrendHistory.Count == 0 ? 0 : Math.Round(_qualityTrendHistory[^1].Quality, 4);
         var lastBucket = _qualityTrendHistory.Count == 0 ? 0 : _qualityTrendHistory[^1].Time.Ticks / TimeSpan.TicksPerMinute;
-        _qualityTrendGate.Evaluate((_qualityTrendHistory.Count, lastQuality, lastBucket));
+        _qualityTrendGate.Evaluate((_qualityTrendHistory.Count, lastQuality, lastBucket, _hourlyOkBuckets.Length, SumOk(_hourlyOkCounts)));
     }
 
-    private void MaybeQueryQualityHistory(DateTime shiftStart, DateTime now, string? shiftName)
+    private void MaybeQueryQualityHistory(DateTime shiftStart, DateTime shiftEnd, DateTime now, string? shiftName)
     {
         if (_productionHistory == null) return;
         if (string.IsNullOrEmpty(SelectedDeviceId) || shiftStart == default) return;
@@ -1368,11 +1418,29 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
                 var points = ShiftQualityTrendBuilder.FromSamples(
                     logs.Select(log => (log.Timestamp, log.OkProduction, log.NgProduction, log.ShiftName)),
                     shiftName, shiftStart, now);
+
+                DateTime[] hours = [];
+                int[] okCounts = [];
+                if (shiftEnd > shiftStart)
+                {
+                    var queryTo = now < shiftEnd ? now : shiftEnd.AddTicks(-1);
+                    if (queryTo < shiftStart)
+                        queryTo = shiftStart;
+                    var series = DeviceDetailQueryService.QueryHourlySeries(_productionHistory, deviceId, shiftStart, queryTo);
+                    var padded = HourlyProductionDiff.PadToShiftWindow(
+                        new HourlyProductionDiff.Series(series.Buckets, series.OkDiff, series.NgDiff),
+                        shiftStart, shiftEnd);
+                    hours = padded.Hours;
+                    okCounts = padded.OkDiff;
+                }
+
                 if (token.IsCancellationRequested) return;
                 UiDispatcher.Dispatch(() =>
                 {
                     if (token.IsCancellationRequested) return;
                     if (!string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal)) return;
+                    _hourlyOkBuckets = hours;
+                    _hourlyOkCounts = okCounts;
                     _qualityTrendHistory = ShiftQualityTrendBuilder.MergeLive(
                         points,
                         DateTime.Now,
@@ -1383,13 +1451,21 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             }
             catch (Exception ex)
             {
-                Serilog.Log.Warning(ex, "查询当前班次良率折线失败（设备 {DeviceId}）", deviceId);
+                Serilog.Log.Warning(ex, "查询当前班次良率/产量失败（设备 {DeviceId}）", deviceId);
             }
             finally
             {
                 Interlocked.Exchange(ref _qualityHistoryRunning, 0);
             }
         }, token).Forget();
+    }
+
+    private static int SumOk(int[] counts)
+    {
+        var sum = 0;
+        for (var i = 0; i < counts.Length; i++)
+            sum += counts[i];
+        return sum;
     }
 
     /// <summary>缺陷签名：名称/计数/严重度/类别/地址 + NG（占 NG 文案依赖产量）。</summary>
@@ -1431,6 +1507,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         foreach (var row in result.Rows)
             DefectTop.Add(ToHomeDefectRow(row));
 
+        DefectParetoChart = ChartService.BuildHomeDefectParetoChart(DefectTop);
         OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
@@ -1439,6 +1516,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         DefectParetoEmptyKind = kind;
         DefectParetoSummaryText = "";
         DefectNgShareText = "";
+        DefectParetoChart = null;
         OnPropertyChanged(nameof(IsDefectTopEmpty));
     }
 
@@ -1457,6 +1535,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             Name = name,
             Count = row.Count,
             BarRatio = row.ShareOfTotal,
+            CumulativeShare = row.CumulativeShare,
             ShareText = row.ShareOfTotal.ToString("P0"),
             CumulativeText = string.Format(Strings.Hp_DefectCumulative, row.CumulativeShare),
             IsVitalFew = row.IsVitalFew,

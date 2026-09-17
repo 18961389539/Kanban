@@ -306,6 +306,45 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
     /// <summary>离线时长格式化（小时，与同卡运行/报警/待机一致）。</summary>
     public string OfflineTimeFormatted => $"{OfflineTimeHours:F1}h";
 
+    public string OkTooltip => FormatHelper.Tip(Strings.Ln_Tip_SessionOk, TotalOk);
+    public string NgTooltip => FormatHelper.Tip(Strings.Ln_Tip_SessionNg, TotalNg);
+    public string QualityTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Quality,
+        TotalOk + TotalNg > 0 ? string.Format(Strings.F036, TotalOk, TotalOk + TotalNg) : "— / —",
+        $"{QualityRate:P0}");
+    public string OeeTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Oee,
+        $"{AvailabilityRate:P0} × {PerformanceRate:P0} × {QualityRate:P0}",
+        $"{Oee:P0}");
+    public string AvailabilityTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Availability,
+        RunTimeHours + AlarmTimeHours > 0
+            ? $"{RunTimeHours:F1}h / {RunTimeHours + AlarmTimeHours:F1}h"
+            : "— / —",
+        $"{AvailabilityRate:P0}");
+    public string PerformanceTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Performance,
+        TargetCycle > 0 && RunTimeHours > 0
+            ? string.Format(Strings.F037, TotalOk, TotalNg, TargetCycle * RunTimeHours)
+            : "— / —",
+        $"{PerformanceRate:P0}");
+    public string RunTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_RunTime, $"{RunTimeHours:F1}h", RunTimeRatio);
+    public string AlarmTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_AlarmTime, $"{AlarmTimeHours:F1}h", AlarmTimeRatio);
+    public string PausedTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_PausedTime, $"{PausedTimeHours:F1}h", PausedTimeRatio);
+    public string OfflineTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_OfflineTime, OfflineTimeFormatted, OfflineTimeRatio);
+    public string TodayAlarmTooltip => FormatHelper.Tip(Strings.Dd_Tip_TodayAlarms, TodayAlarmCount);
+    public string PlcRawTooltip => FormatHelper.Tip(Strings.Dd_Tip_PlcRaw, PlcOkCount, PlcNgCount);
+    public string TargetCycleTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_TargetCycle,
+        TargetCycle,
+        TargetCycle > 0 ? $"{SnapshotMetrics.CycleSeconds(TargetCycle):F2}s" : "—");
+    public string ActualCapacityTooltip => FormatHelper.Tip(Strings.Dd_Tip_ActualCapacity, ActualCycleRate, TargetCycle);
+    public string CycleGapTooltip => FormatHelper.Tip(Strings.Dd_Tip_CycleGap, CycleGapPercent);
+    public string TheoreticalTooltip => FormatHelper.Tip(Strings.Dd_Tip_Theoretical, TheoreticalOutput, ActualTotalOutput);
+    public string WorkOrderProgressTooltip => HasWorkOrder
+        ? FormatHelper.Tip(Strings.Home_Tip_WorkOrderProgress, CompletedQuantity, PlannedQuantity, $"{WorkOrderProgress:P0}")
+        : "";
+
     // ──────────── 列表数据 ────────────
 
     /// <summary>最近报警事件（从历史库查询）。</summary>
@@ -551,6 +590,28 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         HourlyProductionChart = null;
         DefectPieChart = null;
         ClearHourBoard();
+        NotifyMetricTooltips();
+    }
+
+    private void NotifyMetricTooltips()
+    {
+        OnPropertyChanged(nameof(OkTooltip));
+        OnPropertyChanged(nameof(NgTooltip));
+        OnPropertyChanged(nameof(QualityTooltip));
+        OnPropertyChanged(nameof(OeeTooltip));
+        OnPropertyChanged(nameof(AvailabilityTooltip));
+        OnPropertyChanged(nameof(PerformanceTooltip));
+        OnPropertyChanged(nameof(RunTimeTooltip));
+        OnPropertyChanged(nameof(AlarmTimeTooltip));
+        OnPropertyChanged(nameof(PausedTimeTooltip));
+        OnPropertyChanged(nameof(OfflineTimeTooltip));
+        OnPropertyChanged(nameof(TodayAlarmTooltip));
+        OnPropertyChanged(nameof(PlcRawTooltip));
+        OnPropertyChanged(nameof(TargetCycleTooltip));
+        OnPropertyChanged(nameof(ActualCapacityTooltip));
+        OnPropertyChanged(nameof(CycleGapTooltip));
+        OnPropertyChanged(nameof(TheoreticalTooltip));
+        OnPropertyChanged(nameof(WorkOrderProgressTooltip));
     }
 
     // ──────────── 实时数据刷新 ────────────
@@ -726,6 +787,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         CycleGapPercent = rt.TargetCycle > 0
             ? (ActualCycleRate - rt.TargetCycle) / rt.TargetCycle * 100
             : 0;
+        NotifyMetricTooltips();
 
         // 状态文本与画刷
         (StatusText, StatusBrushKey) = MapStatus(rt.StatusWord, rt.OfflineCause);
@@ -879,6 +941,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
         WorkOrderProgress = order.TargetQuantity > 0
             ? Math.Clamp((double)okCount / order.TargetQuantity, 0, 1)
             : 0;
+        OnPropertyChanged(nameof(WorkOrderProgressTooltip));
     }
 
     /// <summary>
@@ -1054,6 +1117,7 @@ public partial class DeviceDetailViewModel : ObservableObject, IDisposable, INav
                     TodayAlarmCount = todayTrigger;
                     IsRefreshing = false;
                     RefreshStatusText = Strings.M155;
+                    OnPropertyChanged(nameof(TodayAlarmTooltip));
                 });
             }
             catch (OperationCanceledException)

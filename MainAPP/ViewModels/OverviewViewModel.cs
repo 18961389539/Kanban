@@ -82,12 +82,22 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
+    [NotifyPropertyChangedFor(nameof(OutputTooltip))]
+    [NotifyPropertyChangedFor(nameof(QualityTooltip))]
+    [NotifyPropertyChangedFor(nameof(OeeTooltip))]
     private int _totalOk;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalOutput))]
+    [NotifyPropertyChangedFor(nameof(OutputTooltip))]
+    [NotifyPropertyChangedFor(nameof(QualityTooltip))]
     private int _totalNg;
-    [ObservableProperty] private double _qualityRate;
-    [ObservableProperty] private double _oee;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(QualityTooltip))]
+    [NotifyPropertyChangedFor(nameof(OeeTooltip))]
+    private double _qualityRate;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OeeTooltip))]
+    private double _oee;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RecoveredAlarmCount))]
     private int _alarmCount;
@@ -130,7 +140,10 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     [ObservableProperty] private string _availabilityLossText = string.Empty;
     [ObservableProperty] private string _performanceLossText = string.Empty;
     [ObservableProperty] private string _qualityLossText = string.Empty;
-    [ObservableProperty] private int _healthScore = 100;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HealthScoreText))]
+    [NotifyPropertyChangedFor(nameof(HealthTooltip))]
+    private int _healthScore = 100;
     [ObservableProperty] private string _currentWorkOrderText = Strings.M055;
     [ObservableProperty] private string _currentProductText = Strings.M056;
     [ObservableProperty] private string _currentRecipeText = Strings.M057;
@@ -151,6 +164,22 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         ChartPalette.Pause);
 
     public int TotalOutput => TotalOk + TotalNg;
+    public string HealthTooltip => FormatHelper.Tip(Strings.Rv_Tip_Health, HealthScoreText);
+    public string OutputTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowOutput, TotalOk, TotalNg, TotalOutput);
+    public string QualityTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowQuality, TotalOk, TotalOutput, $"{QualityRate:P1}");
+    public string OeeTooltip => FormatHelper.Tip(
+        Strings.Hq_Tip_WindowOee,
+        $"{Availability:P0} × {Performance:P0} × {QualityRate:P0}",
+        $"{Oee:P1}");
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OeeTooltip))]
+    private double _availability;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OeeTooltip))]
+    private double _performance;
+
     public string ComparisonSummaryText =>
         string.Format(Strings.F021, ComparisonLabel, FormatSigned(OutputDelta), FormatPercentageDelta(QualityRateDelta), FormatPercentageDelta(OeeDelta));
 
@@ -253,8 +282,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         if (_isInitialized)
             _ = RefreshAsync();
     }
-
-    partial void OnHealthScoreChanged(int value) => OnPropertyChanged(nameof(HealthScoreText));
 
     partial void OnIsLoadingChanged(bool value)
     {
@@ -702,6 +729,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         LongestDowntimeHours = result.LongestDowntimeHours;
         QualityRate = result.QualityRate;
         Oee = result.Oee;
+        Availability = result.Availability;
+        Performance = result.Performance;
         RunTimeHours = result.RunTimeHours;
         PausedTimeHours = result.PausedTimeHours;
         AlarmDurationHours = result.AlarmDurationHours;
@@ -793,6 +822,7 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
                 if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
                 TotalOk = 0; TotalNg = 0;
                 QualityRate = 0; Oee = 0;
+                Availability = 0; Performance = 0;
                 AlarmCount = 0; PendingAlarmCount = 0;
                 RunTimeHours = 0; PausedTimeHours = 0; AlarmDurationHours = 0;
                 PeakHour = string.Empty; ValleyHour = string.Empty;

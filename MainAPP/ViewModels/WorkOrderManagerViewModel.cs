@@ -60,6 +60,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     [NotifyCanExecuteChangedFor(nameof(StartCommand))]
     [NotifyCanExecuteChangedFor(nameof(CompleteCommand))]
     [NotifyCanExecuteChangedFor(nameof(AbortCommand))]
+    [NotifyPropertyChangedFor(nameof(TargetTooltip))]
+    [NotifyPropertyChangedFor(nameof(AchievementTooltip))]
+    [NotifyPropertyChangedFor(nameof(DefectRateTooltip))]
+    [NotifyPropertyChangedFor(nameof(OkTooltip))]
+    [NotifyPropertyChangedFor(nameof(NgTooltip))]
     private WorkOrder? _selectedWorkOrder;
 
     /// <summary>搜索关键字（按工单号/产品名称模糊匹配）。</summary>
@@ -118,6 +123,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
     [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
     [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
+    [NotifyPropertyChangedFor(nameof(TargetTooltip))]
+    [NotifyPropertyChangedFor(nameof(AchievementTooltip))]
+    [NotifyPropertyChangedFor(nameof(DefectRateTooltip))]
+    [NotifyPropertyChangedFor(nameof(OkTooltip))]
+    [NotifyPropertyChangedFor(nameof(NgTooltip))]
     private WorkOrderProductionSummary? _selectedProduction;
 
     /// <summary>选中工单产量查询中（详情卡片显示加载态）。</summary>
@@ -130,6 +140,11 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
     [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
     [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
+    [NotifyPropertyChangedFor(nameof(TargetTooltip))]
+    [NotifyPropertyChangedFor(nameof(AchievementTooltip))]
+    [NotifyPropertyChangedFor(nameof(DefectRateTooltip))]
+    [NotifyPropertyChangedFor(nameof(OkTooltip))]
+    [NotifyPropertyChangedFor(nameof(NgTooltip))]
     private bool _isProductionLoading;
 
     /// <summary>选中工单产量查询失败（详情卡片显示错误提示，可点「刷新产量」重试）。</summary>
@@ -142,12 +157,36 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     [NotifyPropertyChangedFor(nameof(SelectedOkBarGridLength))]
     [NotifyPropertyChangedFor(nameof(SelectedNgBarGridLength))]
     [NotifyPropertyChangedFor(nameof(HasSelectedProductionBar))]
+    [NotifyPropertyChangedFor(nameof(TargetTooltip))]
+    [NotifyPropertyChangedFor(nameof(AchievementTooltip))]
+    [NotifyPropertyChangedFor(nameof(DefectRateTooltip))]
+    [NotifyPropertyChangedFor(nameof(OkTooltip))]
+    [NotifyPropertyChangedFor(nameof(NgTooltip))]
     private bool _isProductionLoadFailed;
 
     public string SelectedOkCountText => FormatProductionCount(SelectedProduction?.OkCount);
     public string SelectedNgCountText => FormatProductionCount(SelectedProduction?.NgCount);
     public string SelectedAchievementText => FormatProductionRate(SelectedProduction?.AchievementRate);
     public string SelectedDefectRateText => FormatProductionRate(SelectedProduction?.DefectRate);
+
+    public string TargetTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_WorkOrderTarget, SelectedWorkOrder?.TargetQuantity ?? 0);
+    public string AchievementTooltip => SelectedWorkOrder is null
+        ? ""
+        : FormatHelper.Tip(
+            Strings.Home_Tip_WorkOrderProgress,
+            SelectedProduction?.OkCount ?? 0,
+            SelectedWorkOrder.TargetQuantity,
+            SelectedAchievementText);
+    public string DefectRateTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_NgRate,
+        SelectedProduction?.NgCount ?? 0,
+        SelectedProduction?.TotalCount ?? 0,
+        SelectedDefectRateText);
+    public string OkTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_WorkOrderOk,
+        SelectedProduction?.OkCount.ToString("N0") ?? "—");
+    public string NgTooltip => FormatHelper.Tip(Strings.Home_Tip_WorkOrderNg, SelectedProduction?.NgCount ?? 0);
 
     /// <summary>达成率进度条绑定值（0~1）。</summary>
     public double SelectedAchievementRateValue => SelectedProduction?.AchievementRate ?? 0;
@@ -927,7 +966,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             {
                 if (token.IsCancellationRequested || SelectedWorkOrder?.Id != order.Id) return;
                 IsProductionLoading = false;
-                if (failed)
+                if (failed || summary is null)
                 {
                     IsProductionLoadFailed = true;
                     return;

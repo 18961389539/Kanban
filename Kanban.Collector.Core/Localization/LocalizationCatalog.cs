@@ -9391,6 +9391,38 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "工单良率", ["en-US"] = "Order Quality", ["ja-JP"] = "工単良品率", ["pt-BR"] = "Qualidade da ordem"
         },
+        ["Wpf|Home_ShiftOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当班良品数", ["en-US"] = "Shift OK", ["ja-JP"] = "当シフト良品数", ["pt-BR"] = "OK do turno"
+        },
+        ["Wpf|Home_ShiftTotalOutput"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当班总产量", ["en-US"] = "Shift total output", ["ja-JP"] = "当シフト総生産", ["pt-BR"] = "Produção total do turno"
+        },
+        ["Wpf|Home_CumulativeQuality"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "累计良率", ["en-US"] = "Cumulative quality", ["ja-JP"] = "累計良品率", ["pt-BR"] = "Qualidade acumulada"
+        },
+        ["Wpf|Home_WorkOrderCumulativeOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单累计良品数", ["en-US"] = "Order cumulative OK", ["ja-JP"] = "工単累計良品数", ["pt-BR"] = "OK acumulado da ordem"
+        },
+        ["Wpf|Home_WorkOrderAchievement"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单达成率", ["en-US"] = "Order achievement", ["ja-JP"] = "工単達成率", ["pt-BR"] = "Realização da ordem"
+        },
+        ["Wpf|Home_Tip_ShiftOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\\n当前：{0} 件", ["en-US"] = "Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\\nNow: {0} pcs", ["ja-JP"] = "当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\\n現在：{0} 個", ["pt-BR"] = "OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\\nAgora: {0} pçs"
+        },
+        ["Wpf|Home_Tip_WorkOrderCumulativeOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单累计良品数 = 工单时间窗口内的 OK 产量（非当班会话累计、不含 NG）。\\n当前：{0} 件", ["en-US"] = "Order cumulative OK = OK output in the order time window (not shift session total, excludes NG).\\nNow: {0} pcs", ["ja-JP"] = "工単累計良品数 = 工単時間窓の OK 数（当シフトのセッション累計ではなく、NG を含まない）。\\n現在：{0} 個", ["pt-BR"] = "OK acumulado da ordem = OK na janela da ordem (não o total da sessão do turno; exclui NG).\\nAgora: {0} pçs"
+        },
+        ["Wpf|Home_Tip_WorkOrderAchievement"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "工单达成率 = 工单内 OK 产量 ÷ 计划产量，超额时封顶 100%。\\n口径为工单时间窗口内的合格产量（与工单管理页一致），不是当班会话累计，也不是速度达成率。\\n当前：{0:N0} / {1:N0} 件 = {2}", ["en-US"] = "Order achievement = OK output in the order window ÷ planned quantity, capped at 100%.\\nUses OK count in the work-order time window (same as the Work Order page), not shift session totals and not speed achievement.\\nNow: {0:N0} / {1:N0} pcs = {2}", ["ja-JP"] = "工単達成率 = 工単内 OK 生産量 ÷ 計画数量（100% 上限）。\\n工単時間窓の合格数（作業指示ページと同じ）。当シフト累計でも速度達成率でもありません。\\n現在：{0:N0} / {1:N0} 個 = {2}", ["pt-BR"] = "Realização da ordem = OK na janela da ordem ÷ quantidade planejada, limitado a 100%.\\nUsa OK da janela da ordem (igual à página de Ordens), não o total da sessão do turno nem a realização de velocidade.\\nAgora: {0:N0} / {1:N0} pçs = {2}"
+        },
         ["Wpf|Home_Tip_WorkOrderNg"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单不良 = 工单时间窗口内的 NG 产量（非会话累计）。\\n当前：{0:N0} 件", ["en-US"] = "Work-order NG = reject count in the order time window (not session total).\\nNow: {0:N0} pcs", ["ja-JP"] = "工単不良 = 工単時間窓の NG 数（セッション累計ではない）。\\n現在：{0:N0} 個", ["pt-BR"] = "NG da ordem = rejeitos na janela da ordem (não o total da sessão).\\nAgora: {0:N0} pçs"
@@ -9461,7 +9493,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Home_Tip_QualityTrend"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。数据来自班次产量快照，并接上当前实时值。", ["en-US"] = "The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. Points come from shift production snapshots plus the live value.", ["ja-JP"] = "折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。シフト生産スナップショットに現在値を接続。", ["pt-BR"] = "A linha é a qualidade acumulada do turno: OK ÷ (OK+NG) em cada amostra. A linha vermelha tracejada é a meta de 95%. Pontos vêm dos snapshots do turno mais o valor ao vivo."
+            ["zh-CN"] = "绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。横轴覆盖整班。", ["en-US"] = "Green bars are hourly OK output this shift. The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. The axis covers the whole shift.", ["ja-JP"] = "緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。横軸はシフト全時間。", ["pt-BR"] = "Barras verdes = OK por hora do turno. A linha é a qualidade acumulada: OK ÷ (OK+NG). A linha vermelha tracejada é a meta de 95%. O eixo cobre o turno inteiro."
         },
         ["Wpf|Home_Tip_CurrentShift"] = new Dictionary<string, string>
         {
@@ -9470,6 +9502,86 @@ public static class LocalizationCatalog
         ["Wpf|Home_Tip_LastShift"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "上一完整班次的产量汇总。\\n{0}\\nOK {1:N0}   NG {2:N0}", ["en-US"] = "Previous complete shift output summary.\\n{0}\\nOK {1:N0}   NG {2:N0}", ["ja-JP"] = "直前の完了シフトの生産集計。\\n{0}\\nOK {1:N0}   NG {2:N0}", ["pt-BR"] = "Resumo do turno completo anterior.\\n{0}\\nOK {1:N0}   NG {2:N0}"
+        },
+        ["Wpf|Ln_Tip_SessionOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "会话累计 OK 产量（不含 NG）。与工单窗口产量不是同一口径。\\n当前：{0:N0} 件", ["en-US"] = "Session cumulative OK (excludes NG). Not the work-order window count.\\nNow: {0:N0} pcs", ["ja-JP"] = "セッション累計 OK（NG を含まない）。工単時間窓の数量とは異なります。\\n現在：{0:N0} 個", ["pt-BR"] = "OK acumulado da sessão (exclui NG). Não é a contagem da janela da ordem.\\nAgora: {0:N0} pçs"
+        },
+        ["Wpf|Ln_Tip_SessionNg"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "会话累计 NG 产量。与工单窗口不良不是同一口径。\\n当前：{0:N0} 件", ["en-US"] = "Session cumulative NG. Not the work-order window reject count.\\nNow: {0:N0} pcs", ["ja-JP"] = "セッション累計 NG。工単時間窓の不良数とは異なります。\\n現在：{0:N0} 個", ["pt-BR"] = "NG acumulado da sessão. Não é o rejeito da janela da ordem.\\nAgora: {0:N0} pçs"
+        },
+        ["Wpf|Ln_Tip_CycleCompare"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "节拍对比 = 实际周期 / 目标周期。实际周期 = 运行秒 ÷ (OK+NG)；慢于目标时标红。\\n当前：{0}", ["en-US"] = "Cycle compare = actual / target. Actual = running seconds ÷ (OK+NG); red when slower than target.\\nNow: {0}", ["ja-JP"] = "サイクル比較 = 実サイクル / 目標。実 = 稼働秒 ÷ (OK+NG)。目標より遅いと赤。\\n現在：{0}", ["pt-BR"] = "Comparação de ciclo = real / alvo. Real = segundos em execução ÷ (OK+NG); vermelho se mais lento.\\nAgora: {0}"
+        },
+        ["Wpf|Ln_Tip_ShiftPace"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "班次达成 = 本班会话 OK ÷ (目标产能 × 班次已过小时)。进度条超额封顶 100%，文字显示真实达成。\\n当前：{0}", ["en-US"] = "Shift pace = session OK ÷ (target capacity × elapsed shift hours). Bar caps at 100%; text shows true ratio.\\nNow: {0}", ["ja-JP"] = "シフト達成 = 当シフト OK ÷ (目標能力 × 経過時間)。バーは 100% 上限、文字は実達成。\\n現在：{0}", ["pt-BR"] = "Ritmo do turno = OK da sessão ÷ (capacidade × horas decorridas). A barra limita em 100%; o texto mostra o real.\\nAgora: {0}"
+        },
+        ["Wpf|Ln_Tip_StatusCount"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前处于「{0}」状态的设备台数。\\n当前：{1:N0} 台", ["en-US"] = "Devices currently in the “{0}” state.\\nNow: {1:N0}", ["ja-JP"] = "現在「{0}」状態の設備台数。\\n現在：{1:N0} 台", ["pt-BR"] = "Dispositivos atualmente no estado “{0}”.\\nAgora: {1:N0}"
+        },
+        ["Wpf|Dd_Tip_TodayAlarms"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "今日 0:00 起该设备的历史触发次数（含已恢复）。\\n当前：{0:N0} 次", ["en-US"] = "Historical trigger count for this device since midnight today (includes recovered).\\nNow: {0:N0}", ["ja-JP"] = "本日 0:00 以降のこの設備の発生回数（復帰済み含む）。\\n現在：{0:N0} 回", ["pt-BR"] = "Disparos históricos deste dispositivo desde 0:00 de hoje (inclui recuperados).\\nAgora: {0:N0}"
+        },
+        ["Wpf|Dd_Tip_PlcRaw"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "PLC 原始计数（未经会话累计换算）。复位后会跳变。\\n当前：OK {0:N0} · NG {1:N0}", ["en-US"] = "Raw PLC counters (not session totals). They jump after a reset.\\nNow: OK {0:N0} · NG {1:N0}", ["ja-JP"] = "PLC 生カウント（セッション累計ではない）。リセット後に跳ねます。\\n現在：OK {0:N0} · NG {1:N0}", ["pt-BR"] = "Contadores brutos do PLC (não totais da sessão). Saltam após reset.\\nAgora: OK {0:N0} · NG {1:N0}"
+        },
+        ["Wpf|Dd_Tip_Theoretical"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "理论产量 = 目标产能 × 运行小时；实际产量 = OK + NG（同一运行窗口）。\\n当前：理论 {0:N0} / 实际 {1:N0} 件", ["en-US"] = "Theoretical output = target capacity × running hours; actual = OK + NG in the same window.\\nNow: theoretical {0:N0} / actual {1:N0} pcs", ["ja-JP"] = "理論生産 = 目標能力 × 稼働時間。実績 = 同窓の OK+NG。\\n現在：理論 {0:N0} / 実績 {1:N0} 個", ["pt-BR"] = "Teórico = capacidade × horas em execução; real = OK+NG na mesma janela.\\nAgora: teórico {0:N0} / real {1:N0} pçs"
+        },
+        ["Wpf|Dd_Tip_CycleGap"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "产能差距 = (实际产能 − 目标产能) ÷ 目标产能。负值表示未达标。\\n当前：{0:F1}%", ["en-US"] = "Capacity gap = (actual rate − target) ÷ target. Negative means below target.\\nNow: {0:F1}%", ["ja-JP"] = "能力差 = (実能力 − 目標) ÷ 目標。負は未達。\\n現在：{0:F1}%", ["pt-BR"] = "Diferença de capacidade = (taxa real − alvo) ÷ alvo. Negativo = abaixo da meta.\\nAgora: {0:F1}%"
+        },
+        ["Wpf|Dd_Tip_ActualCapacity"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "实际产能（件/小时）= (OK+NG) ÷ 运行小时；运行不足 5 秒为 0。\\n当前：{0:N0} 件/h（目标 {1:N0}）", ["en-US"] = "Actual capacity (pcs/h) = (OK+NG) ÷ running hours; 0 if RunTime < 5s.\\nNow: {0:N0} pcs/h (target {1:N0})", ["ja-JP"] = "実能力（個/時）= (OK+NG) ÷ 稼働時間。稼働 5 秒未満は 0。\\n現在：{0:N0} 個/h（目標 {1:N0}）", ["pt-BR"] = "Capacidade real (pçs/h) = (OK+NG) ÷ horas em execução; 0 se RunTime < 5s.\\nAgora: {0:N0} pçs/h (alvo {1:N0})"
+        },
+        ["Wpf|Hq_Tip_WindowOutput"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内总产量 = OK + NG（不是当前会话累计）。\\n当前：OK {0:N0} + NG {1:N0} = {2:N0} 件", ["en-US"] = "Total output in the selected query window = OK + NG (not the live session).\\nNow: OK {0:N0} + NG {1:N0} = {2:N0} pcs", ["ja-JP"] = "選択した照会窓の総生産 = OK+NG（現在セッションではない）。\\n現在：OK {0:N0} + NG {1:N0} = {2:N0} 個", ["pt-BR"] = "Produção total na janela da consulta = OK+NG (não a sessão ao vivo).\\nAgora: OK {0:N0} + NG {1:N0} = {2:N0} pçs"
+        },
+        ["Wpf|Hq_Tip_WindowOk"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内 OK 产量（窗口差分，不是会话累计）。\\n当前：{0:N0} 件", ["en-US"] = "OK output in the selected query window (window delta, not session total).\\nNow: {0:N0} pcs", ["ja-JP"] = "選択した照会窓の OK（窓差分、セッション累計ではない）。\\n現在：{0:N0} 個", ["pt-BR"] = "OK na janela da consulta (delta da janela, não o total da sessão).\\nAgora: {0:N0} pçs"
+        },
+        ["Wpf|Hq_Tip_WindowNg"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内 NG 产量（窗口差分，不是会话累计）。\\n当前：{0:N0} 件", ["en-US"] = "NG output in the selected query window (window delta, not session total).\\nNow: {0:N0} pcs", ["ja-JP"] = "選択した照会窓の NG（窓差分、セッション累計ではない）。\\n現在：{0:N0} 個", ["pt-BR"] = "NG na janela da consulta (delta da janela, não o total da sessão).\\nAgora: {0:N0} pçs"
+        },
+        ["Wpf|Hq_Tip_WindowQuality"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "Quality in the selected query window = OK ÷ (OK+NG). Target 95%.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%.\\nAgora: {0:N0} / {1:N0} = {2}"
+        },
+        ["Wpf|Hq_Tip_WindowNgRate"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "NG rate in the selected query window = NG ÷ (OK+NG); lower is better.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor.\\nAgora: {0:N0} / {1:N0} = {2}"
+        },
+        ["Wpf|Hq_Tip_WindowOee"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "所选查询时间窗内 OEE = 可用率 × 性能率 × 合格率。\\n当前：{0} = {1}\\n着色：≥85% 绿 / ≥60% 黄 / <60% 红。", ["en-US"] = "OEE in the selected query window = Availability × Performance × Quality.\\nNow: {0} = {1}\\nColors: ≥85% green / ≥60% yellow / <60% red.", ["ja-JP"] = "照会窓の OEE = 可動率 × 性能率 × 良品率。\\n現在：{0} = {1}\\n色：≥85% 緑 / ≥60% 黄 / <60% 赤。", ["pt-BR"] = "OEE na janela da consulta = Disponibilidade × Desempenho × Qualidade.\\nAgora: {0} = {1}\\nCores: ≥85% verde / ≥60% amarelo / <60% vermelho."
+        },
+        ["Wpf|Mo_Tip_SuccessRate"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "采集成功率 = 成功轮次 ÷ 完成轮次（失败轮是完成轮的子集，不重复计入分母）。\\n当前：{0}", ["en-US"] = "Acquisition success rate = successful cycles ÷ completed cycles (failures are a subset of completed).\\nNow: {0}", ["ja-JP"] = "収集成功率 = 成功サイクル ÷ 完了サイクル（失敗は完了の部分集合）。\\n現在：{0}", ["pt-BR"] = "Taxa de sucesso da coleta = ciclos ok ÷ ciclos concluídos (falhas são subconjunto dos concluídos).\\nAgora: {0}"
+        },
+        ["Wpf|Mo_Tip_ConsecutiveFail"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "连续失败轮次；大于 0 表示采集链路当前异常。\\n当前：{0}", ["en-US"] = "Consecutive failed cycles; greater than 0 means the acquisition path is currently unhealthy.\\nNow: {0}", ["ja-JP"] = "連続失敗サイクル。0 超は収集経路の異常。\\n現在：{0}", ["pt-BR"] = "Ciclos falhos consecutivos; > 0 indica caminho de coleta instável agora.\\nAgora: {0}"
+        },
+        ["Wpf|Mo_Tip_PendingHistory"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "尚未落库的历史队列条数；持续升高表示写库跟不上采集。\\n当前：{0}", ["en-US"] = "History records waiting to flush; a rising count means writes are lagging acquisition.\\nNow: {0}", ["ja-JP"] = "未フラッシュの履歴件数。増加は書込が収集に追いついていないことを示す。\\n現在：{0}", ["pt-BR"] = "Registros de histórico aguardando gravação; alta persistente = escrita atrasada.\\nAgora: {0}"
+        },
+        ["Wpf|Rv_Tip_Health"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\\n当前：{0}", ["en-US"] = "Review health score combines availability, performance, quality and alarm stability; lower means more issues.\\nNow: {0}", ["ja-JP"] = "復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\\n現在：{0}", ["pt-BR"] = "Pontuação de saúde da revisão combina disponibilidade, desempenho, qualidade e estabilidade de alarmes.\\nAgora: {0}"
         },
         };
 

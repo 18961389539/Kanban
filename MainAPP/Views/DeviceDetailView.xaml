@@ -184,37 +184,37 @@
 
             <!-- ─── KPI 条 ─── -->
             <UniformGrid Grid.Row="0" Columns="6" Margin="0,0,0,12">
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding OkTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K047}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalOk}" />
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding NgTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K148}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource DangerBrush}" Text="{Binding TotalNg}" />
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding QualityTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K001}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding QualityRate, StringFormat={}{0:P0}}" />
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding OeeTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="OEE" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding Oee, StringFormat={}{0:P0}}" />
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding TodayAlarmTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K149}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TodayAlarmCount}" />
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource KpiCell}">
+                <Border Style="{StaticResource KpiCell}" ToolTip="{Binding RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K007}" />
                         <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding RunTimeHours, StringFormat={}{0:F1}h}" />
@@ -240,7 +240,8 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.M352}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
+                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}"
+                                       ToolTip="{Binding TargetCycleTooltip}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K027}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontWeight="Bold"
                                        Text="{Binding RecipeName}" />
@@ -259,7 +260,7 @@
                 </Border>
 
                 <!-- PLC 实时数据 -->
-                <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2">
+                <Border Style="{StaticResource KpiCell}" Margin="2,2,4,2" ToolTip="{Binding PlcRawTooltip}" ToolTipService.ShowDuration="30000">
                     <StackPanel>
                         <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K151}" />
                         <Grid Margin="0,4,0,0">
@@ -313,7 +314,8 @@
                                 <!-- 进度条 -->
                                 <ProgressBar Style="{x:Null}" Height="6" Margin="0,4,0,0" Minimum="0" Maximum="1"
                                              Value="{Binding WorkOrderProgress}" Background="{StaticResource SecondaryRegionBrush}"
-                                             Foreground="{StaticResource PrimaryBrush}" />
+                                             Foreground="{StaticResource PrimaryBrush}"
+                                             ToolTip="{Binding WorkOrderProgressTooltip}" />
                             </StackPanel>
                         </Grid>
                         <!-- 无工单时显示空状态文本 -->
@@ -348,13 +350,16 @@
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Ln_ActualCapacity}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding ActualCycleRate, Converter={StaticResource LocFormatConverter}, ConverterParameter=F267}" />
+                                       Text="{Binding ActualCycleRate, Converter={StaticResource LocFormatConverter}, ConverterParameter=F267}"
+                                       ToolTip="{Binding ActualCapacityTooltip}" />
                             <TextBlock Grid.Row="1" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.M352}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}" />
+                                       Text="{Binding TargetCycle, Converter={StaticResource LocFormatConverter}, ConverterParameter=F246}"
+                                       ToolTip="{Binding TargetCycleTooltip}" />
                             <TextBlock Grid.Row="2" Grid.Column="0" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K158}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Margin="8,0,0,0" FontSize="12" FontFamily="Consolas" FontWeight="Bold"
-                                       Text="{Binding CycleGapPercent, StringFormat={}{0:F1}%}">
+                                       Text="{Binding CycleGapPercent, StringFormat={}{0:F1}%}"
+                                       ToolTip="{Binding CycleGapTooltip}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
@@ -371,7 +376,7 @@
                             </TextBlock>
                         </Grid>
                         <!-- 理论 vs 实际产量 -->
-                        <DockPanel Margin="0,8,0,0">
+                        <DockPanel Margin="0,8,0,0" ToolTip="{Binding TheoreticalTooltip}" ToolTipService.ShowDuration="30000">
                             <TextBlock DockPanel.Dock="Left" FontSize="{DynamicResource FontSizeMicro}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K159}" />
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                 <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontFamily="Consolas" Foreground="{StaticResource SecondaryTextBrush}"
@@ -628,7 +633,7 @@
                                 <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K160}" />
                             </DockPanel>
                             <UniformGrid Columns="3" Margin="16,8,16,16">
-                                <StackPanel HorizontalAlignment="Center">
+                                <StackPanel HorizontalAlignment="Center" ToolTip="{Binding AvailabilityTooltip}" ToolTipService.ShowDuration="30000">
                                     <Grid Width="90" Height="90">
                                         <!-- 背景圆环 -->
                                         <Ellipse Stroke="{StaticResource DividerBrush}" StrokeThickness="8" />
@@ -646,7 +651,7 @@
                                         <Button Style="{StaticResource ButtonDefault}" Padding="0" Background="Transparent" BorderThickness="0" Content="{x:Static resources:Strings.K009}"
                                             Command="{Binding ShowOeeExplanationCommand}" CommandParameter="Availability" />
                                 </StackPanel>
-                                <StackPanel HorizontalAlignment="Center">
+                                <StackPanel HorizontalAlignment="Center" ToolTip="{Binding PerformanceTooltip}" ToolTipService.ShowDuration="30000">
                                     <Grid Width="90" Height="90">
                                         <Ellipse Stroke="{StaticResource DividerBrush}" StrokeThickness="8" />
                                         <Ellipse Stroke="{StaticResource WarningBrush}" StrokeThickness="8"
@@ -662,7 +667,7 @@
                                         <Button Style="{StaticResource ButtonDefault}" Padding="0" Background="Transparent" BorderThickness="0" Content="{x:Static resources:Strings.K029}"
                                             Command="{Binding ShowOeeExplanationCommand}" CommandParameter="Performance" />
                                 </StackPanel>
-                                <StackPanel HorizontalAlignment="Center">
+                                <StackPanel HorizontalAlignment="Center" ToolTip="{Binding QualityTooltip}" ToolTipService.ShowDuration="30000">
                                     <Grid Width="90" Height="90">
                                         <Ellipse Stroke="{StaticResource DividerBrush}" StrokeThickness="8" />
                                         <Ellipse Stroke="{StaticResource SuccessBrush}" StrokeThickness="8"
@@ -703,7 +708,7 @@
                                     <Rectangle Grid.Column="3" Fill="{StaticResource StatusIdleBrush}" RadiusX="3" RadiusY="3" />
                                 </Grid>
                                 <UniformGrid Columns="4">
-                                    <StackPanel HorizontalAlignment="Left">
+                                    <StackPanel HorizontalAlignment="Left" ToolTip="{Binding RunTimeTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusRunBrush}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K005}" />
@@ -711,7 +716,7 @@
                                         <TextBlock Margin="16,4,0,0" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                    Text="{Binding RunTimeHours, StringFormat={}{0:F1}h}" />
                                     </StackPanel>
-                                    <StackPanel HorizontalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Center" ToolTip="{Binding AlarmTimeTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusAlarmBrush}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K016}" />
@@ -719,7 +724,7 @@
                                         <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                    Text="{Binding AlarmTimeHours, StringFormat={}{0:F1}h}" />
                                     </StackPanel>
-                                    <StackPanel HorizontalAlignment="Center">
+                                    <StackPanel HorizontalAlignment="Center" ToolTip="{Binding PausedTimeTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusPauseBrush}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K006}" />
@@ -727,7 +732,7 @@
                                         <TextBlock Margin="0,4,0,0" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Consolas"
                                                    Text="{Binding PausedTimeHours, StringFormat={}{0:F1}h}" />
                                     </StackPanel>
-                                    <StackPanel HorizontalAlignment="Right">
+                                    <StackPanel HorizontalAlignment="Right" ToolTip="{Binding OfflineTimeTooltip}" ToolTipService.ShowDuration="30000">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                             <Rectangle Width="10" Height="10" Fill="{StaticResource StatusIdleBrush}" />
                                             <TextBlock Margin="6,0,0,0" FontSize="12" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.Status_Offline}" />

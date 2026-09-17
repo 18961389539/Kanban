@@ -294,13 +294,24 @@
                             FontSize="{DynamicResource FontSizeHint}"
                             FontWeight="Bold"
                             Foreground="{StaticResource PrimaryTextBrush}"
-                            Text="{Binding HealthScoreText}" />
+                            Text="{Binding HealthScoreText}"
+                            ToolTip="{Binding HealthTooltip}"
+                            ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K587}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding Oee, StringFormat={}{0:P1}}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding Oee, StringFormat={}{0:P1}}"
+                                   ToolTip="{Binding OeeTooltip}"
+                                   ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M238}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding QualityRate, StringFormat={}{0:P1}}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding QualityRate, StringFormat={}{0:P1}}"
+                                   ToolTip="{Binding QualityTooltip}"
+                                   ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K023}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                   Text="{Binding TotalOutput, StringFormat={}{0:N0}}"
+                                   ToolTip="{Binding OutputTooltip}"
+                                   ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K090}" />
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding CurrentShiftName}" />
@@ -343,7 +354,8 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K354}" />
-                            <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding HealthScoreText}" Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding HealthScoreText}" Foreground="{StaticResource PrimaryBrush}"
+                                       ToolTip="{Binding HealthTooltip}" ToolTipService.ShowDuration="30000" />
                             <ItemsControl ItemsSource="{Binding HealthIssues}" Margin="0,4,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -485,7 +497,9 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Style="{StaticResource KpiCell}"
-                            Background="{StaticResource PrimarySoftBrush}">
+                            Background="{StaticResource PrimarySoftBrush}"
+                            ToolTip="{Binding OutputTooltip}"
+                            ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K023}" />
                                 <StackPanel Orientation="Horizontal">
@@ -597,7 +611,7 @@
                                    Foreground="{StaticResource SecondaryTextBrush}"
                                    Text="{Binding ComparisonSummaryText}" />
                         <UniformGrid Columns="4" Margin="24,0,24,0">
-                            <StackPanel>
+                            <StackPanel ToolTip="{Binding OutputTooltip}" ToolTipService.ShowDuration="30000">
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K366}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
                             </StackPanel>
@@ -605,11 +619,11 @@
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{Binding ComparisonLabel}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding BaselineTotalOutput, StringFormat={}{0:N0}}" />
                             </StackPanel>
-                            <StackPanel>
+                            <StackPanel ToolTip="{Binding QualityTooltip}" ToolTipService.ShowDuration="30000">
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K367}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
-                            <StackPanel>
+                            <StackPanel ToolTip="{Binding OeeTooltip}" ToolTipService.ShowDuration="30000">
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K368}" />
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding Oee, StringFormat={}{0:P1}}" />
                             </StackPanel>

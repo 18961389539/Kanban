@@ -774,13 +774,23 @@ public static class ChartService
     {
         var total = runTime + alarmTime + pausedTime + offlineTime;
         var model = CreateBaseModel();
+        // 空图例仍会占用 PlotArea；环形图由卡片中心文案 + 右侧图例承载，不需要 OxyPlot 图例。
+        model.IsLegendVisible = false;
+        model.Legends.Clear();
+        model.Padding = new OxyThickness(2);
         var series = new PieSeries
         {
-            // 状态环上不显示任何文字（2026-08-15 用户要求），由右侧图例承载名称/时长/占比
-            InsideLabelFormat = "",
-            OutsideLabelFormat = "",
-            StrokeThickness = 0, Stroke = _borderColor,
-            // 内凹环形仪表：中心由 UI 叠加显示当前状态 + 总时长（方案 B）
+            // null（不是空字符串）：OxyPlot 对 OutsideLabelFormat != null 仍会画径向刻度，
+            // 刻度伸出 PlotArea 后被 PlotView 裁成小扇区上的白色凸起。
+            InsideLabelFormat = null,
+            OutsideLabelFormat = null,
+            TickRadialLength = 0,
+            TickHorizontalLength = 0,
+            TickLabelDistance = 0,
+            StrokeThickness = 0,
+            Stroke = _borderColor,
+            Diameter = 0.92,
+            StartAngle = -90, // 12 点方向起，与图例「运行在上」的阅读顺序一致
             InnerDiameter = 0.62,
         };
         if (total <= 0)
@@ -790,7 +800,7 @@ public static class ChartService
         }
         else
         {
-            // 扇区顺序（顺时针，顶部起始）与图例自上而下顺序一致，避免颜色对照错乱
+            // 扇区顺序（屏幕坐标下角度递增=顺时针，自 12 点起）与图例自上而下一致
             series.Slices.Add(new PieSlice("", runTime) { Fill = _runColor });
             series.Slices.Add(new PieSlice("", alarmTime) { Fill = _alarmColor });
             series.Slices.Add(new PieSlice("", pausedTime) { Fill = _pauseColor });
@@ -1004,6 +1014,203 @@ public static class ChartService
     }
 
     /// <summary>
+    /// 当前班次产量 + 良率：左轴每小时 OK 增量柱，右轴会话累计良率折线与达标虚线。
+    /// 横轴覆盖整班时段。无柱且无折线点时返回空模型（调用方显示空状态）。
+    /// </summary>
+    public static PlotModel BuildShiftQualityAndOutputChart(
+        DateTime[] buckets,
+        int[] okCounts,
+        IReadOnlyList<(DateTime Time, double Quality)> qualityPoints,
+        double target = 0.95,
+        DateTime? axisStart = null,
+        DateTime? axisEnd = null)
+    {
+        var model = CreateBaseModel();
+        model.IsLegendVisible = false;
+        model.Padding = new OxyThickness(0);
+        model.PlotMargins = new OxyThickness(40, 8, 42, 28);
+        if (buckets.Length == 0 && qualityPoints.Count == 0)
+            return model;
+
+        var tStart = axisStart
+            ?? (buckets.Length > 0 ? buckets[0] : qualityPoints[0].Time);
+        var tEnd = axisEnd
+            ?? (buckets.Length > 0 ? buckets[^1].AddHours(1) : qualityPoints[^1].Time);
+        if (tEnd <= tStart)
+            tEnd = tStart.AddMinutes(1);
+
+        var xAxis = CreateDateTimeAxis("", "HH:mm");
+        xAxis.Minimum = DateTimeAxis.ToDouble(tStart);
+        xAxis.Maximum = DateTimeAxis.ToDouble(tEnd);
+        model.Axes.Add(xAxis);
+
+        var maxOk = 0;
+        for (int i = 0; i < okCounts.Length; i++)
+            maxOk = Math.Max(maxOk, Math.Max(0, okCounts[i]));
+        var okAxis = CreateLinearAxis("", AxisPosition.Left, "0");
+        okAxis.Minimum = 0;
+        okAxis.MinimumPadding = 0;
+        if (maxOk <= 0)
+        {
+            okAxis.Maximum = 8;
+            okAxis.MajorStep = 2;
+            okAxis.MaximumPadding = 0;
+        }
+        else
+        {
+            okAxis.MaximumPadding = 0.15;
+            if (maxOk <= 8)
+                okAxis.MajorStep = 1;
+            else if (maxOk <= 20)
+                okAxis.MajorStep = 2;
+            else if (maxOk <= 50)
+                okAxis.MajorStep = 10;
+        }
+        model.Axes.Add(okAxis);
+
+        var minQuality = qualityPoints.Count == 0 ? target : Math.Min(target, qualityPoints.Min(p => p.Quality));
+        var yMin = Math.Clamp(Math.Min(target - 0.08, minQuality - 0.04), 0, 0.98);
+        var qualityAxis = new LinearAxis
+        {
+            Key = "shiftQuality",
+            Position = AxisPosition.Right,
+            Minimum = yMin,
+            Maximum = 1,
+            StringFormat = "P0",
+            MajorStep = 0.05,
+            TicklineColor = _axisColor,
+            MajorGridlineStyle = LineStyle.None,
+            AxislineColor = _axisColor,
+            TitleColor = _textColor,
+            TextColor = _textColor,
+        };
+        model.Axes.Add(qualityAxis);
+
+        if (buckets.Length > 0)
+        {
+            var okSeries = new RectangleBarSeries
+            {
+                Title = Strings.M191,
+                FillColor = _okFill,
+                StrokeColor = OxyColors.Transparent,
+                TrackerFormatString = "{7}",
+            };
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                var ok = i < okCounts.Length ? Math.Max(0, okCounts[i]) : 0;
+                if (ok <= 0)
+                    continue;
+                var hour = buckets[i];
+                var x0 = DateTimeAxis.ToDouble(hour);
+                var x1 = DateTimeAxis.ToDouble(hour.AddHours(1));
+                okSeries.Items.Add(new RectangleBarItem(x0, 0, x1, ok)
+                {
+                    Color = _okFill,
+                    Title = $"{hour:HH:mm}\n{Strings.M191}: {ok:N0}",
+                });
+            }
+            if (okSeries.Items.Count > 0)
+                model.Series.Add(okSeries);
+        }
+
+        if (qualityPoints.Count > 0)
+        {
+            var series = new LineSeries
+            {
+                Title = Strings.K001,
+                Color = _primaryColor,
+                StrokeThickness = 2.2,
+                MarkerType = qualityPoints.Count <= 24 ? MarkerType.Circle : MarkerType.None,
+                MarkerSize = 3,
+                MarkerFill = _primaryColor,
+                YAxisKey = "shiftQuality",
+                TrackerFormatString = "{2:HH:mm}\n{4:P1}",
+            };
+            foreach (var point in qualityPoints)
+                series.Points.Add(DateTimeAxis.CreateDataPoint(point.Time, point.Quality));
+            model.Series.Add(series);
+        }
+
+        var targetLine = new LineSeries
+        {
+            Title = string.Format(Strings.F171, target),
+            Color = _alarmColor,
+            StrokeThickness = 1.4,
+            LineStyle = LineStyle.Dash,
+            YAxisKey = "shiftQuality",
+            TrackerFormatString = "{4:P0}",
+        };
+        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tStart, target));
+        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tEnd, target));
+        model.Series.Add(targetLine);
+        return model;
+    }
+
+    /// <summary>
+    /// 当前班次小时良品柱图：一小时一根绿色柱，横轴覆盖整班每一小时（未到的小时为 0）。
+    /// 无桶时返回空模型（调用方显示空状态）；全 0 仍画轴，方便看出已过小时。
+    /// </summary>
+    public static PlotModel BuildShiftHourlyOkBarChart(DateTime[] buckets, int[] okCounts)
+    {
+        var model = CreateBaseModel();
+        model.IsLegendVisible = false;
+        model.Padding = new OxyThickness(0);
+        model.PlotMargins = new OxyThickness(40, 6, 8, buckets.Length > 8 ? 36 : 24);
+        if (buckets.Length == 0)
+            return model;
+
+        var catLabels = buckets.Select(b => b.ToString("HH:mm")).ToList();
+        var catAxis = CreateCategoryAxis("", catLabels);
+        catAxis.Key = "hourCat";
+        if (buckets.Length > 8)
+            catAxis.Angle = -45;
+        model.Axes.Add(catAxis);
+
+        var valAxis = CreateLinearAxis("", AxisPosition.Left, "0");
+        valAxis.Key = "hourVal";
+        valAxis.Minimum = 0;
+        valAxis.MinimumPadding = 0;
+        var maxOk = 0;
+        for (int i = 0; i < okCounts.Length; i++)
+            maxOk = Math.Max(maxOk, Math.Max(0, okCounts[i]));
+        if (maxOk <= 0)
+        {
+            // 全 0 时若 Maximum=1 + N0，刻度 0/0.2/…/1 会显示成 0、1 重复（夜班刚开始常见）。
+            valAxis.Maximum = 8;
+            valAxis.MajorStep = 2;
+            valAxis.MaximumPadding = 0;
+        }
+        else
+        {
+            valAxis.MaximumPadding = 0.15;
+            if (maxOk <= 8)
+                valAxis.MajorStep = 1;
+            else if (maxOk <= 20)
+                valAxis.MajorStep = 2;
+            else if (maxOk <= 50)
+                valAxis.MajorStep = 10;
+        }
+        model.Axes.Add(valAxis);
+
+        var okSeries = new BarSeries
+        {
+            Title = Strings.M191,
+            FillColor = _runColor,
+            StrokeThickness = 0,
+            XAxisKey = "hourVal",
+            YAxisKey = "hourCat",
+            TrackerFormatString = "{1}\n{2:N0}",
+        };
+        for (int i = 0; i < buckets.Length; i++)
+        {
+            var ok = i < okCounts.Length ? Math.Max(0, okCounts[i]) : 0;
+            okSeries.Items.Add(new BarItem { Value = ok });
+        }
+        model.Series.Add(okSeries);
+        return model;
+    }
+
+    /// <summary>
     /// 构建缺陷帕累托图：TOP5 缺陷柱状图（左 Y 轴·数量）+ 累计百分比折线（右次轴·0-100%）。
     /// 无缺陷或全为 0 时返回 null。帕累托原则：聚焦贡献最大的少数缺陷。
     /// </summary>
@@ -1108,6 +1315,101 @@ public static class ChartService
         // 不再叠加柱顶 TextAnnotation（2026-08-11 与复盘页帕累托统一）
 
         return model;
+    }
+
+    /// <summary>
+    /// 主页缺陷帕累托：竖柱（件数，左轴）+ 累计占比折线（右轴 0–100%）。
+    /// 柱色按严重度；「其他」灰色。无行时返回 null（调用方显示空状态）。
+    /// </summary>
+    public static PlotModel? BuildHomeDefectParetoChart(IReadOnlyList<HomeDefectTopItem> rows)
+    {
+        if (rows == null || rows.Count == 0)
+            return null;
+
+        var model = CreateBaseModel();
+        model.Padding = new OxyThickness(0);
+        model.PlotMargins = new OxyThickness(36, 8, 40, rows.Count > 4 ? 40 : 28);
+        if (model.Legends.Count > 0)
+        {
+            model.Legends[0].LegendPlacement = LegendPlacement.Inside;
+            model.Legends[0].LegendPosition = LegendPosition.TopRight;
+            model.Legends[0].LegendBorder = OxyColors.Transparent;
+            model.Legends[0].LegendFontSize = 11;
+        }
+
+        var catAxis = CreateCategoryAxis("", rows.Select(r => r.Name));
+        catAxis.Key = "defectCat";
+        if (rows.Count > 4)
+            catAxis.Angle = -30;
+        model.Axes.Add(catAxis);
+
+        var valAxis = CreateLinearAxis("", AxisPosition.Left, "N0");
+        valAxis.Key = "defectVal";
+        valAxis.Minimum = 0;
+        valAxis.MinimumPadding = 0;
+        model.Axes.Add(valAxis);
+
+        var pctAxis = new LinearAxis
+        {
+            Title = Strings.M271,
+            Position = AxisPosition.Right,
+            Key = "defectPct",
+            Minimum = 0,
+            Maximum = 100,
+            MinimumPadding = 0,
+            MaximumPadding = 0,
+            TextColor = _textColor,
+            TicklineColor = _axisColor,
+            MajorGridlineStyle = LineStyle.None,
+            AxislineColor = _axisColor,
+            LabelFormatter = v => $"{v:F0}%",
+        };
+        model.Axes.Add(pctAxis);
+
+        var barSeries = new BarSeries
+        {
+            FillColor = ChartPalette.Base,
+            StrokeThickness = 0,
+            XAxisKey = "defectVal",
+            YAxisKey = "defectCat",
+            LabelFormatString = "{0:N0}",
+            LabelPlacement = LabelPlacement.Outside,
+            LabelMargin = 2,
+            TextColor = _textColor,
+            TrackerFormatString = "{1}: {2:N0}",
+        };
+        foreach (var row in rows)
+            barSeries.Items.Add(new BarItem { Value = row.Count, Color = DefectParetoBarColor(row) });
+        model.Series.Add(barSeries);
+
+        var cumSeries = new LineSeries
+        {
+            Title = Strings.M271,
+            Color = ChartPalette.Ok,
+            StrokeThickness = 2,
+            MarkerType = MarkerType.Circle,
+            MarkerSize = 4,
+            MarkerFill = ChartPalette.Ok,
+            XAxisKey = "defectCat",
+            YAxisKey = "defectPct",
+            TrackerFormatString = "{0}\n{4:F0}%",
+        };
+        for (var i = 0; i < rows.Count; i++)
+            cumSeries.Points.Add(new DataPoint(i, rows[i].CumulativeShare * 100.0));
+        model.Series.Add(cumSeries);
+        return model;
+    }
+
+    private static OxyColor DefectParetoBarColor(HomeDefectTopItem row)
+    {
+        if (row.IsOthers)
+            return ChartPalette.Idle;
+        return row.Severity switch
+        {
+            DefectSeverity.Critical => ChartPalette.Alarm,
+            DefectSeverity.Major => OxyColor.FromRgb(0xFB, 0x92, 0x3C),
+            _ => ChartPalette.Pause,
+        };
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Entities;
+using Kanban.Contracts.Metrics;
 using MainAPP.Resources;
 using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using DeviceStatusLocKeys = Kanban.Contracts.Enums.DeviceStatusLocKeys;
@@ -34,33 +35,13 @@ internal static class HistoryQueryHelper
         return (null, -1);
     }
 
-    /// <summary>小时桶序列：从 from 对齐整点 AddHours(1) 累计到 to（DeviceDetail 产量图的桶聚合单源）。</summary>
+    /// <summary>小时桶序列：从 from 对齐整点 AddHours(1) 累计到 to（与 <see cref="HourlyProductionDiff.BuildHourStarts"/> 同一套）。</summary>
     internal static DateTime[] BuildHourlyBuckets(DateTime from, DateTime to)
-    {
-        List<DateTime> list = [];
-        var cur = new DateTime(from.Year, from.Month, from.Day, from.Hour, 0, 0);
-        while (cur <= to)
-        {
-            list.Add(cur);
-            cur = cur.AddHours(1);
-        }
-        return list.ToArray();
-    }
+        => HourlyProductionDiff.BuildHourStarts(from, to);
 
     /// <summary>定位时刻所属桶索引：先精确对齐，再回退到第一个 ≥ 对齐时刻的桶；无则 -1。</summary>
     internal static int GetBucketIndex(DateTime[] buckets, DateTime time)
-    {
-        var aligned = new DateTime(time.Year, time.Month, time.Day, time.Hour, 0, 0);
-        for (int i = 0; i < buckets.Length; i++)
-        {
-            if (buckets[i] == aligned) return i;
-        }
-        for (int i = 0; i < buckets.Length; i++)
-        {
-            if (buckets[i] >= aligned) return i;
-        }
-        return -1;
-    }
+        => HourlyProductionDiff.GetBucketIndex(buckets, time);
 
     public static List<List<ProductionLog>> SplitShiftInstances(List<ProductionLog> sortedLogs)
     {

@@ -10,11 +10,11 @@
     @* ──────────── KPI 汇总 ──────────── *@
     <section class="kpi-row">
         @* 计数颜色状态联动：0 时中性色，非 0 才用红/绿（原恒红/恒绿，无报警也红误导） *@
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
-        <div class="kpi-card"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K709")}\n{ActiveCountText}")"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K713")}\n{AffectedDeviceCountText}")"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K710")}\n{TodayTriggerText}")"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K711")}\n{TodayRecoverText}")"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K712")}\n{LongestText}")"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
     </section>
 
     @* ──────────── 实时活跃报警 ──────────── *@

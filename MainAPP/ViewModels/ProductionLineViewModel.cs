@@ -470,7 +470,20 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         OnPropertyChanged(nameof(OutputDiffText));
         OnPropertyChanged(nameof(NgDiffText));
         ApplyBatchTargetCycleCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(RunningCountTooltip));
+        OnPropertyChanged(nameof(AlarmCountTooltip));
+        OnPropertyChanged(nameof(PausedCountTooltip));
+        OnPropertyChanged(nameof(OfflineCountTooltip));
     }
+
+    public string RunningCountTooltip => FormatHelper.Tip(Strings.Ln_Tip_StatusCount, Strings.Status_Running, RunningCount);
+    public string AlarmCountTooltip => FormatHelper.Tip(Strings.Ln_Tip_StatusCount, Strings.Status_Alarm, AlarmCount);
+    public string PausedCountTooltip => FormatHelper.Tip(Strings.Ln_Tip_StatusCount, Strings.Status_Paused, PausedCount);
+    public string OfflineCountTooltip => FormatHelper.Tip(Strings.Ln_Tip_StatusCount, Strings.Status_Offline, OfflineCount);
+    public string ShiftTooltip => FormatHelper.Tip(
+        Strings.Home_Tip_Shift,
+        string.IsNullOrEmpty(CurrentShiftName) ? "—" : CurrentShiftName,
+        string.IsNullOrEmpty(CurrentShiftTimeRange) ? "—" : CurrentShiftTimeRange);
 
     /// <summary>共享选中服务变化 → 同步本视图的选中镜像，触发卡片选中态刷新。</summary>
     private void OnSelectionChanged(object? sender, PropertyChangedEventArgs e)
@@ -848,10 +861,12 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
         {
             CurrentShiftName = (shifts == null || shifts.Count == 0) ? Strings.M110 : Strings.M111;
             CurrentShiftTimeRange = string.Empty;
+            OnPropertyChanged(nameof(ShiftTooltip));
             return;
         }
         CurrentShiftName = shift.Name;
         CurrentShiftTimeRange = $"{FormatHelper.FormatClock(shift.StartTime)}-{FormatHelper.FormatClock(shift.EndTime)}";
+        OnPropertyChanged(nameof(ShiftTooltip));
     }
 
     /// <summary>

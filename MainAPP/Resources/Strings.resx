@@ -6850,6 +6850,30 @@
   <data name="Home_WorkOrderQuality" xml:space="preserve">
     <value>工单良率</value>
   </data>
+  <data name="Home_ShiftOk" xml:space="preserve">
+    <value>当班良品数</value>
+  </data>
+  <data name="Home_ShiftTotalOutput" xml:space="preserve">
+    <value>当班总产量</value>
+  </data>
+  <data name="Home_CumulativeQuality" xml:space="preserve">
+    <value>累计良率</value>
+  </data>
+  <data name="Home_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>工单累计良品数</value>
+  </data>
+  <data name="Home_WorkOrderAchievement" xml:space="preserve">
+    <value>工单达成率</value>
+  </data>
+  <data name="Home_Tip_ShiftOk" xml:space="preserve">
+    <value>当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\n当前：{0} 件</value>
+  </data>
+  <data name="Home_Tip_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>工单累计良品数 = 工单时间窗口内的 OK 产量（非当班会话累计、不含 NG）。\n当前：{0} 件</value>
+  </data>
+  <data name="Home_Tip_WorkOrderAchievement" xml:space="preserve">
+    <value>工单达成率 = 工单内 OK 产量 ÷ 计划产量，超额时封顶 100%。\n口径为工单时间窗口内的合格产量（与工单管理页一致），不是当班会话累计，也不是速度达成率。\n当前：{0:N0} / {1:N0} 件 = {2}</value>
+  </data>
   <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
     <value>工单不良 = 工单时间窗口内的 NG 产量（非会话累计）。\n当前：{0:N0} 件</value>
   </data>
@@ -6902,12 +6926,72 @@
     <value>相对良品率目标 95% 的差距。正数=超出目标，负数=尚未达标。\n当前合格率 {0}，差距 {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。数据来自班次产量快照，并接上当前实时值。</value>
+    <value>绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。横轴覆盖整班。</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>本班次会话累计 OK / NG。箭头对比上一班次同期口径。\nOK {0}   NG {1}</value>
   </data>
   <data name="Home_Tip_LastShift" xml:space="preserve">
     <value>上一完整班次的产量汇总。\n{0}\nOK {1:N0}   NG {2:N0}</value>
+  </data>
+  <data name="Ln_Tip_SessionOk" xml:space="preserve">
+    <value>会话累计 OK 产量（不含 NG）。与工单窗口产量不是同一口径。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Ln_Tip_SessionNg" xml:space="preserve">
+    <value>会话累计 NG 产量。与工单窗口不良不是同一口径。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Ln_Tip_CycleCompare" xml:space="preserve">
+    <value>节拍对比 = 实际周期 / 目标周期。实际周期 = 运行秒 ÷ (OK+NG)；慢于目标时标红。\n当前：{0}</value>
+  </data>
+  <data name="Ln_Tip_ShiftPace" xml:space="preserve">
+    <value>班次达成 = 本班会话 OK ÷ (目标产能 × 班次已过小时)。进度条超额封顶 100%，文字显示真实达成。\n当前：{0}</value>
+  </data>
+  <data name="Ln_Tip_StatusCount" xml:space="preserve">
+    <value>当前处于「{0}」状态的设备台数。\n当前：{1:N0} 台</value>
+  </data>
+  <data name="Dd_Tip_TodayAlarms" xml:space="preserve">
+    <value>今日 0:00 起该设备的历史触发次数（含已恢复）。\n当前：{0:N0} 次</value>
+  </data>
+  <data name="Dd_Tip_PlcRaw" xml:space="preserve">
+    <value>PLC 原始计数（未经会话累计换算）。复位后会跳变。\n当前：OK {0:N0} · NG {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_Theoretical" xml:space="preserve">
+    <value>理论产量 = 目标产能 × 运行小时；实际产量 = OK + NG（同一运行窗口）。\n当前：理论 {0:N0} / 实际 {1:N0} 件</value>
+  </data>
+  <data name="Dd_Tip_CycleGap" xml:space="preserve">
+    <value>产能差距 = (实际产能 − 目标产能) ÷ 目标产能。负值表示未达标。\n当前：{0:F1}%</value>
+  </data>
+  <data name="Dd_Tip_ActualCapacity" xml:space="preserve">
+    <value>实际产能（件/小时）= (OK+NG) ÷ 运行小时；运行不足 5 秒为 0。\n当前：{0:N0} 件/h（目标 {1:N0}）</value>
+  </data>
+  <data name="Hq_Tip_WindowOutput" xml:space="preserve">
+    <value>所选查询时间窗内总产量 = OK + NG（不是当前会话累计）。\n当前：OK {0:N0} + NG {1:N0} = {2:N0} 件</value>
+  </data>
+  <data name="Hq_Tip_WindowOk" xml:space="preserve">
+    <value>所选查询时间窗内 OK 产量（窗口差分，不是会话累计）。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Hq_Tip_WindowNg" xml:space="preserve">
+    <value>所选查询时间窗内 NG 产量（窗口差分，不是会话累计）。\n当前：{0:N0} 件</value>
+  </data>
+  <data name="Hq_Tip_WindowQuality" xml:space="preserve">
+    <value>所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。\n当前：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
+    <value>所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。\n当前：{0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowOee" xml:space="preserve">
+    <value>所选查询时间窗内 OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / &lt;60% 红。</value>
+  </data>
+  <data name="Mo_Tip_SuccessRate" xml:space="preserve">
+    <value>采集成功率 = 成功轮次 ÷ 完成轮次（失败轮是完成轮的子集，不重复计入分母）。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_ConsecutiveFail" xml:space="preserve">
+    <value>连续失败轮次；大于 0 表示采集链路当前异常。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_PendingHistory" xml:space="preserve">
+    <value>尚未落库的历史队列条数；持续升高表示写库跟不上采集。\n当前：{0}</value>
+  </data>
+  <data name="Rv_Tip_Health" xml:space="preserve">
+    <value>复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\n当前：{0}</value>
   </data>
 </root>

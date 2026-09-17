@@ -17,15 +17,15 @@
             <span class="kpi-label">@L.T("Mo_AcqStatus")</span>
             <span class="kpi-value @(Diag is { IsRunning: true } ? "kpi-ok" : "kpi-ng")">@AcqText</span>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" title="@SuccessRateTooltip">
             <span class="kpi-label">@L.T("Mo_SuccessRate")</span>
             <span class="kpi-value">@SuccessRateText</span>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" title="@L.Tip("Mo_Tip_ConsecutiveFail", ConsecutiveFailText)">
             <span class="kpi-label">@L.T("Mo_ConsecutiveFail")</span>
             <span class="kpi-value @(Diag is { ConsecutiveFailures: > 0 } ? "kpi-ng" : "")">@ConsecutiveFailText</span>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" title="@L.Tip("Mo_Tip_PendingHistory", PendingText)">
             <span class="kpi-label">@L.T("Mo_PendingHistory")</span>
             <span class="kpi-value @(Diag is { PendingHistoryCount: > 0 } ? "kpi-ng" : "")">@PendingText</span>
         </div>
@@ -54,16 +54,16 @@
                             <span class="status-badge @StateClass(s.Status)">@StateText(s)</span>
                         </div>
                         <div class="metric-grid">
-                            <div><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
-                            <div><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction).ToString("N0")</span></div>
-                            <div><span class="kpi-label">@L.T("Lbl_Achievement")</span><span class="kpi-value">@AchievementText(s)</span></div>
+                            <div title="@SpeedTooltip(s)"><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
+                            <div title="@L.Tip("Home_Tip_TotalOutput", s.TotalOkProduction, s.TotalNgProduction, SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction))"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction).ToString("N0")</span></div>
+                            <div title="@AchievementTooltip(s)"><span class="kpi-label">@L.T("Lbl_Achievement")</span><span class="kpi-value">@AchievementText(s)</span></div>
                             <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
                         </div>
                         <div class="ring-row">
-                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(s.DeviceId)" />
-                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder(s.DeviceId)" />
-                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(s.DeviceId)" />
-                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(s.DeviceId)" />
+                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(s.DeviceId)" Title="@OeeTip(s)" />
+                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder(s.DeviceId)" Title="@AvailabilityTip(s)" />
+                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(s.DeviceId)" Title="@PerformanceTip(s)" />
+                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(s.DeviceId)" Title="@QualityTip(s)" />
                         </div>
                         <div class="meta-line">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
                     </div>
@@ -148,6 +148,7 @@
     // 成功率系统性偏低（如 8 成 2 败显示 66.7% 而非 80%）（审查修复 2026-08-15）
     private string SuccessRateText => Diag is null || Diag.CompletedCycles <= 0 ? "—"
         : $"{100.0 * Diag.SuccessfulCycles / Diag.CompletedCycles:F1}%";
+    private string SuccessRateTooltip => L.Tip("Mo_Tip_SuccessRate", SuccessRateText);
     private string ConsecutiveFailText => Diag?.ConsecutiveFailures.ToString() ?? "—";
     private string PendingText => Diag?.PendingHistoryCount.ToString("N0") ?? "—";
 
@@ -301,6 +302,44 @@ private void OnRenderTick()
 
     private static string AchievementText(DeviceSnapshotDto s)
         => s.TargetCycle > 0 ? $"{SnapshotMetrics.AchievementRate(SnapshotMetrics.RealtimeSpeed(s.RunTime, s.TotalOkProduction, s.TotalNgProduction), s.TargetCycle):P0}" : "—";
+
+    private static string FmtDuration(double seconds)
+        => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
+
+    private static string SpeedTooltip(DeviceSnapshotDto s)
+        => L.Tip("Home_Tip_RealtimeSpeed", s.TotalOkProduction, s.TotalNgProduction, FmtDuration(s.RunTime), SpeedText(s));
+
+    private static string AchievementTooltip(DeviceSnapshotDto s)
+    {
+        var speed = SnapshotMetrics.RealtimeSpeed(s.RunTime, s.TotalOkProduction, s.TotalNgProduction);
+        var rate = s.TargetCycle > 0 ? SnapshotMetrics.AchievementRate(speed, s.TargetCycle) : 0;
+        return L.Tip("Home_Tip_SpeedAchievement", speed, s.TargetCycle, rate);
+    }
+
+    private static string OeeTip(DeviceSnapshotDto s)
+        => L.Tip("Home_Tip_Oee", $"{Pct(s.AvailabilityRate)} × {Pct(s.PerformanceRate)} × {Pct(s.QualityRate)}", Pct(s.Oee));
+
+    private static string AvailabilityTip(DeviceSnapshotDto s)
+        => L.Tip("Home_Tip_Availability",
+            s.RunTime + s.AlarmTime > 0
+                ? $"{FmtDuration(s.RunTime)} / {FmtDuration(s.RunTime + s.AlarmTime)}"
+                : "— / —",
+            Pct(s.AvailabilityRate));
+
+    private static string PerformanceTip(DeviceSnapshotDto s)
+        => L.Tip("Home_Tip_Performance",
+            s.TargetCycle > 0 && s.RunTime > 0
+                ? $"{s.TotalOkProduction}+{s.TotalNgProduction} / {s.TargetCycle * (s.RunTime / 3600.0):N0}"
+                : "— / —",
+            Pct(s.PerformanceRate));
+
+    private static string QualityTip(DeviceSnapshotDto s)
+    {
+        var total = SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction);
+        return L.Tip("Home_Tip_Quality",
+            total > 0 ? $"{s.TotalOkProduction} / {total}" : "— / —",
+            Pct(s.QualityRate));
+    }
 
     /// <summary>数据新鲜度（距快照时间的秒数，三语）。快照时间戳是工厂墙钟，须与 ServerNow 比较（浏览器时区可能与工厂不同）。</summary>
     private string FreshnessText(DateTime timestamp)

@@ -181,6 +181,8 @@ public class HomeViewModelTests : IDisposable
         Assert.Equal("1h 0m", vm.RunTimeFormatted);
         Assert.Equal("5m 0s", vm.AlarmTimeFormatted);
         Assert.Equal("10m 0s", vm.PausedTimeFormatted);
+        Assert.Equal("0s", vm.OfflineTimeFormatted);
+        Assert.Equal("1h 15m", vm.StatusDurationTotalFormatted);
         Assert.Equal(100, vm.TargetSpeed);
         Assert.Equal(36, vm.TargetCycleSec, 1);
     }
@@ -267,6 +269,7 @@ public class HomeViewModelTests : IDisposable
         Assert.Equal("8", vm.WorkOrderNgProductionDisplay);
         Assert.Equal(0.84, vm.WorkOrderQualityRate, precision: 6);
         Assert.Contains("84", vm.WorkOrderQualityDisplay);
+        Assert.Equal("42%", vm.WorkOrderAchievementDisplay);
     }
 
     [Fact]
@@ -287,6 +290,7 @@ public class HomeViewModelTests : IDisposable
 
         Assert.Equal("0", vm.WorkOrderNgProductionDisplay);
         Assert.Equal("—", vm.WorkOrderQualityDisplay);
+        Assert.Equal("0%", vm.WorkOrderAchievementDisplay);
     }
 
     [Fact]
@@ -612,6 +616,7 @@ public class HomeViewModelTests : IDisposable
         vm.OnPageEnter();
 
         Assert.Empty(vm.DefectTop);
+        Assert.Null(vm.DefectParetoChart);
         Assert.Equal(DefectParetoEmptyKind.NotConfigured, vm.DefectParetoEmptyKind);
         Assert.False(vm.HasDefectParetoData);
         Assert.Equal("", vm.DefectParetoSummaryText);
@@ -626,6 +631,7 @@ public class HomeViewModelTests : IDisposable
         vm.OnPageEnter();
 
         Assert.Empty(vm.DefectTop);
+        Assert.Null(vm.DefectParetoChart);
         Assert.Equal(DefectParetoEmptyKind.AllZero, vm.DefectParetoEmptyKind);
         Assert.False(vm.HasDefectParetoData);
     }
@@ -666,5 +672,8 @@ public class HomeViewModelTests : IDisposable
         Assert.Contains("103", vm.DefectParetoSummaryText);
         Assert.False(string.IsNullOrEmpty(vm.DefectNgShareText));
         Assert.Contains("D200", vm.DefectTop[0].Tooltip);
+        Assert.NotNull(vm.DefectParetoChart);
+        Assert.Single(vm.DefectParetoChart!.Series.OfType<OxyPlot.Series.BarSeries>());
+        Assert.Single(vm.DefectParetoChart.Series.OfType<OxyPlot.Series.LineSeries>());
     }
 }

@@ -116,13 +116,13 @@
 
             <!--  列 1：设备状态  -->
             <views:HomeDeviceStatusCard Grid.Column="0" />
-            <!--  列 2：当前生产进度状态（速度进度条 + 工单 2×1 KPI）  -->
+            <!--  列 2：当前生产进度状态（工单标识 + 2×2 KPI）  -->
             <views:HomeProductionOverviewCard Grid.Column="2" />
             <!--  列 3：实时故障（卡片式列表，按级别+时间排序，新报警闪烁）  -->
             <views:HomeRealtimeAlarmsCard Grid.Column="4" />
         </Grid>
 
-        <!--  ============ 第 2 行：OEE 预览 | 当前班次良率折线 | 缺陷图表 ============  -->
+        <!--  ============ 第 2 行：OEE 预览 | 当前班次良率（总产量 + 累计良率 + 产量柱/良率折线） | 缺陷图表 ============  -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -134,7 +134,7 @@
 
             <!--  列 1：OEE设备综合使用效率（大环 + 三行指标条，公式收至 ToolTip）  -->
             <views:HomeOeeCard Grid.Column="0" />
-            <!--  列 2：当前班次良率折线  -->
+            <!--  列 2：当前班次良率（当班总产量 + 累计良率，下为产量柱 + 良率折线）  -->
             <views:HomeQualityRateCard Grid.Column="2" />
             <!--  列 3：设备缺陷图表  -->
             <views:HomeDefectParetoCard Grid.Column="4" />

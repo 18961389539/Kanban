@@ -1,5 +1,6 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
+using Kanban.Contracts.Metrics;
 using Kanban.Web.Services;
 using Microsoft.JSInterop;
 
@@ -40,6 +41,10 @@ public partial class HistoryQuery
     private string StPauseText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StPauseSeconds);
     private string StOfflineText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(StOfflineSeconds);
     private string StPageSummaryText => PageSummary(StPage, StTotalPages, StTotalCount);
+    private string StRunTooltip => L.Tip("Home_Tip_RunTime", StRunText, SnapshotMetrics.TimeRatio(StRunSeconds, StRunSeconds, StAlarmSeconds, StPauseSeconds, StOfflineSeconds));
+    private string StAlarmTooltip => L.Tip("Home_Tip_AlarmTime", StAlarmText, SnapshotMetrics.TimeRatio(StAlarmSeconds, StRunSeconds, StAlarmSeconds, StPauseSeconds, StOfflineSeconds));
+    private string StPauseTooltip => L.Tip("Home_Tip_PausedTime", StPauseText, SnapshotMetrics.TimeRatio(StPauseSeconds, StRunSeconds, StAlarmSeconds, StPauseSeconds, StOfflineSeconds));
+    private string StOfflineTooltip => L.Tip("Home_Tip_OfflineTime", StOfflineText, SnapshotMetrics.TimeRatio(StOfflineSeconds, StRunSeconds, StAlarmSeconds, StPauseSeconds, StOfflineSeconds));
 
     private async Task StSearchAsync(DateTime from, DateTime to)
     {

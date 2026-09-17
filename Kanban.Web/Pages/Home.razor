@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@using Kanban.Web.Services
 
 <div class="dashboard">
     <header class="topbar">
@@ -102,37 +103,16 @@
                 <div class="card-title">@L.T("Card_ProdStatus")</div>
                 @if (CurrentWorkOrder is not null)
                 {
-                    <div class="wo-progress-hero" title="@WorkOrderProgressTooltip">
-                        <div class="wo-progress-head">
-                            <span class="wo-order">@CurrentWorkOrder.OrderNo</span>
-                            <span class="wo-product-inline">@CurrentWorkOrder.ProductCode</span>
-                        </div>
-                        <div class="wo-progress-main">
-                            <div class="wo-progress-meta">
-                                <span class="wo-progress-text">@WoProgressText</span>
-                            </div>
-                            <span class="wo-progress-pct @WoProgressPctClass">@WoProgressPctText</span>
-                        </div>
-                        <div class="time-bar wo-progress-bar">
-                            <div class="seg wo @WoProgressPctClass" style="width:@WoProgressRatio%"></div>
-                        </div>
-                    </div>
-                    <div class="metric-grid wo-kpi-grid">
-                        <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326")</span><span class="kpi-value">@CurrentWorkOrder.TargetQuantity.ToString("N0")</span></div>
-                        <div title="@WorkOrderOkTooltip"><span class="kpi-label">@L.T("K327")</span><span class="kpi-value">@WorkOrderOkText</span></div>
-                        <div title="@WorkOrderNgTooltip"><span class="kpi-label">@L.T("Home_WorkOrderNg")</span><span class="kpi-value danger">@WorkOrderNgText</span></div>
-                        <div title="@WorkOrderQualityTooltip"><span class="kpi-label">@L.T("Home_WorkOrderQuality")</span><span class="@WorkOrderQualityCssClass">@WorkOrderQualityText</span></div>
+                    <div class="wo-progress-head">
+                        <span class="wo-order">@CurrentWorkOrder.OrderNo</span>
+                        <span class="wo-product-inline">@CurrentWorkOrder.ProductCode</span>
                     </div>
                 }
-                <div class="big-number" title="@RealtimeSpeedTooltip">@RealtimeSpeedText</div>
-                <div class="big-label">@L.T("Lbl_RealTimeSpeed")</div>
-                <div class="metric-grid">
-                    <div title="@TotalOutputTooltip"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@TotalOutputText</span></div>
-                    <div title="@NgRateTooltip"><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="@NgRateCssClass">@NgRateText</span></div>
-                </div>
-                <div class="speed-meter" title="@SpeedAchievementTooltip">
-                    <div class="meter-track"><div class="meter-fill" style="width:@(SpeedAchievementRate * 100)%"></div></div>
-                    <span class="meter-text">@L.T("Lbl_Achievement") @SpeedAchievementRateText</span>
+                <div class="metric-grid wo-kpi-grid">
+                    <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326")</span><span class="kpi-value">@(CurrentWorkOrder is null ? "—" : CurrentWorkOrder.TargetQuantity.ToString("N0"))</span></div>
+                    <div title="@ShiftOkTooltip"><span class="kpi-label">@L.T("Home_ShiftOk")</span><span class="kpi-value">@ShiftOkText</span></div>
+                    <div title="@WorkOrderCumulativeOkTooltip"><span class="kpi-label">@L.T("Home_WorkOrderCumulativeOk")</span><span class="kpi-value">@(CurrentWorkOrder is null ? "—" : WorkOrderOkText)</span></div>
+                    <div title="@WorkOrderAchievementTooltip"><span class="kpi-label">@L.T("Home_WorkOrderAchievement")</span><span class="@WorkOrderAchievementCssClass">@WorkOrderAchievementText</span></div>
                 </div>
             </section>
 
@@ -189,27 +169,29 @@
                             <span>@L.T("Hp_DefectShareNg", ngShare)</span>
                         }
                     </div>
-                    <div class="defect-list">
-                        @foreach (var d in DefectTop)
-                        {
-                            var barPct = DefectBarPercent(d);
-                            var fillClass = d.IsOthers ? "other" : DefectFillClass(d.Severity);
-                            var displayName = d.IsOthers ? L.T("Hp_DefectOthers", d.OtherKindCount) : d.Name;
-                            <div class="defect-row @(d.IsVitalFew ? "vital" : "")" title="@DefectTooltip(d, displayName)">
-                                <span class="defect-rank">@(d.Rank > 0 ? d.Rank.ToString() : "")</span>
-                                <div class="defect-main">
-                                    <div class="defect-head">
-                                        <span class="defect-name">@displayName</span>
-                                        <span class="defect-count">@d.Count.ToString("N0")</span>
-                                    </div>
-                                    <div class="defect-barline">
-                                        <div class="defect-track"><div class="defect-fill @fillClass" style="width:@barPct.ToString("F1")%"></div></div>
-                                        <span class="defect-share">@Pct(DefectItemShare(d))</span>
-                                        <span class="defect-cumul @(d.IsVitalFew ? "vital" : "")">@L.T("Hp_DefectCumulative", d.CumulativeShare > 0 ? d.CumulativeShare : DefectItemShare(d))</span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
+                    <div class="defect-pareto">
+                        <svg class="defect-pareto-svg" viewBox="0 0 300 86" preserveAspectRatio="none">
+                            @if (DefectParetoLinePoints is not null)
+                            {
+                                <polyline points="@DefectParetoLinePoints" fill="none" stroke="#818CF8" stroke-width="1.8" />
+                            }
+                            @foreach (var bar in DefectParetoBars)
+                            {
+                                <rect x="@bar.X" y="@bar.Y" width="@bar.W" height="@bar.H" rx="1" fill="@bar.Fill">
+                                    <title>@bar.Title</title>
+                                </rect>
+                                <circle cx="@bar.Cx" cy="@bar.Cy" r="2.4" fill="#818CF8">
+                                    <title>@bar.CumTitle</title>
+                                </circle>
+                            }
+                        </svg>
+                        <div class="defect-pareto-labels">
+                            @foreach (var d in DefectTop)
+                            {
+                                var name = d.IsOthers ? L.T("Hp_DefectOthers", d.OtherKindCount) : d.Name;
+                                <span title="@name">@name</span>
+                            }
+                        </div>
                     </div>
                 }
                 else if (DefectEmptyKind == DefectParetoEmptyKind.NotConfigured)
@@ -229,42 +211,42 @@
             </section>
 
             <section class="card">
-                <div class="card-title">
-                    @L.T("K328")
-                    <span class="quality-live @QualityCssClass" title="@QualityTooltip">@QualityLiveText</span>
-                    <span class="quality-gap @QualityCssClass" title="@QualityGapTooltip">@QualityGapText</span>
+                <div class="card-title">@L.T("K328")</div>
+                <div class="metric-grid quality-kpi-grid">
+                    <div title="@TotalOutputTooltip">
+                        <span class="kpi-label">@L.T("Home_ShiftTotalOutput")</span>
+                        <span class="kpi-value">@TotalOutputText</span>
+                    </div>
+                    <div>
+                        <span class="kpi-label">@L.T("Home_CumulativeQuality")</span>
+                        <span class="quality-kpi-value">
+                            <span class="quality-live @QualityCssClass" title="@QualityTooltip">@QualityLiveText</span>
+                            <span class="quality-gap @QualityCssClass" title="@QualityGapTooltip">@QualityGapText</span>
+                        </span>
+                    </div>
                 </div>
                 <div class="quality-chart" title="@L.T("Home_Tip_QualityTrend")">
-                    @if (QualityHistory.Count == 0)
+                    @if (QualityHistory.Count == 0 && _hourlyOkHours.Length == 0)
                     {
                         <div class="no-data">@L.T("Val_WaitData")</div>
                     }
                     else
                     {
                         <svg class="spark spark-quality" viewBox="0 0 300 80" preserveAspectRatio="none">
+                            @foreach (var bar in HourlyOkBars)
+                            {
+                                <rect x="@bar.X" y="@bar.Y" width="@bar.W" height="@bar.H" rx="1" fill="#34D399" fill-opacity="0.45">
+                                    <title>@bar.Hour.ToString("HH:mm") @bar.Ok.ToString("N0")</title>
+                                </rect>
+                            }
                             <line x1="0" y1="@QualityTargetY" x2="300" y2="@QualityTargetY" fill="none" stroke="#F87171" stroke-width="1" stroke-dasharray="4 3" />
                             @if (QualityPointsText is not null)
                             {
-                                <polyline points="@QualityPointsText" fill="none" stroke="#34D399" stroke-width="1.8" />
+                                <polyline points="@QualityPointsText" fill="none" stroke="#818CF8" stroke-width="1.8" />
                             }
                         </svg>
                     }
                 </div>
-                <div class="quality-row quality-row-compact">
-                    <div class="quality-block" title="@TotalOutputTooltip">
-                        <div class="quality-num ok">@SelectedSnapshot.TotalOkProduction.ToString("N0")</div>
-                        <div class="quality-label">@L.T("Lbl_Ok")</div>
-                    </div>
-                    <div class="quality-block" title="@NgRateTooltip">
-                        <div class="quality-num ng">@SelectedSnapshot.TotalNgProduction.ToString("N0")</div>
-                        <div class="quality-label">@L.T("Lbl_Ng")</div>
-                    </div>
-                </div>
-                <div class="meta-line" title="@QualityTooltip">@L.T("Meta_QualityRate", Pct(SelectedSnapshot.QualityRate), NgRateText)</div>
-                @if (LastShift is not null)
-                {
-                    <div class="meta-line" title="@LastShiftTooltip">@L.T("LastShiftLine", LastShift.ShiftName, LastShift.Ok.ToString("N0"), FmtDiff(SelectedSnapshot.TotalOkProduction - LastShift.Ok), LastShift.Ng.ToString("N0"), FmtDiff(SelectedSnapshot.TotalNgProduction - LastShift.Ng))</div>
-                }
             </section>
 
             <section class="card">
@@ -353,6 +335,13 @@
     private string? _selectedDeviceId;
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
+    private DateTime[] _hourlyOkHours = [];
+    private int[] _hourlyOkCounts = [];
+    private DateTime _lastHourlyOkQueryAt = DateTime.MinValue;
+    private int _hourlyOkRunning;
+    private string? _hourlyOkKey;
+    private CancellationTokenSource? _hourlyOkCts;
+    private static readonly TimeSpan HourlyOkThrottle = TimeSpan.FromSeconds(15);
 
     private const string DevicePreferenceKey = "kanban.selected-device";
 
@@ -368,6 +357,10 @@
                 return;
 
             _selectedDeviceId = value;
+            _hourlyOkKey = null;
+            _hourlyOkHours = [];
+            _hourlyOkCounts = [];
+            _lastHourlyOkQueryAt = DateTime.MinValue;
             if (value is null)
                 _ = JS.InvokeVoidAsync("localStorage.removeItem", DevicePreferenceKey);
             else
@@ -484,6 +477,7 @@ private void OnRenderTick()
         if (_disposed) return;
         EnsureSelectedDevice();
         Dashboard.RequestWorkOrderProductionRefresh(SelectedDeviceId);
+        _ = MaybeRefreshHourlyOkAsync();
         StateHasChanged();
     }
 
@@ -502,6 +496,8 @@ private void OnRenderTick()
         _disposed = true;
         Dashboard.StateChanged -= OnDashboardStateChanged;
         _renderTimer?.Dispose();
+        _hourlyOkCts?.Cancel();
+        _hourlyOkCts?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -610,9 +606,6 @@ private void OnRenderTick()
         }
     }
 
-    private IReadOnlyList<QualityPoint> QualityHistory
-        => Dashboard.GetQualityHistory(SelectedSnapshot?.DeviceId ?? "");
-
     private const double QualityTarget = 0.95;
 
     private string QualityLiveText
@@ -629,6 +622,108 @@ private void OnRenderTick()
 
     private string QualityGapTooltip
         => Tip("Home_Tip_QualityGap", QualityLiveText, QualityGapText);
+
+    private IReadOnlyList<QualityPoint> QualityHistory
+        => Dashboard.GetQualityHistory(SelectedSnapshot?.DeviceId ?? "");
+
+    private readonly record struct HourlyOkBar(DateTime Hour, int Ok, string X, string Y, string W, string H);
+
+    private IReadOnlyList<HourlyOkBar> HourlyOkBars
+    {
+        get
+        {
+            if (_hourlyOkHours.Length == 0 || !TryGetQualityAxisWindow(out var axisStart, out var axisEnd))
+                return [];
+            var n = _hourlyOkHours.Length;
+            var max = 1;
+            for (var i = 0; i < _hourlyOkCounts.Length && i < n; i++)
+                max = Math.Max(max, Math.Max(0, _hourlyOkCounts[i]));
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var list = new List<HourlyOkBar>(n);
+            for (var i = 0; i < n; i++)
+            {
+                var ok = i < _hourlyOkCounts.Length ? Math.Max(0, _hourlyOkCounts[i]) : 0;
+                if (ok <= 0) continue;
+                var x0 = MapQualityX(_hourlyOkHours[i], axisStart, axisEnd);
+                var x1 = MapQualityX(_hourlyOkHours[i].AddHours(1), axisStart, axisEnd);
+                var gap = Math.Max(1, (x1 - x0) * 0.12);
+                var w = Math.Max(2, x1 - x0 - gap);
+                var h = Math.Max(1, ok / (double)max * 64);
+                list.Add(new HourlyOkBar(
+                    _hourlyOkHours[i],
+                    ok,
+                    (x0 + gap / 2).ToString("0.##", inv),
+                    (72 - h).ToString("0.##", inv),
+                    w.ToString("0.##", inv),
+                    h.ToString("0.##", inv)));
+            }
+            return list;
+        }
+    }
+
+    private async Task MaybeRefreshHourlyOkAsync()
+    {
+        if (_disposed) return;
+        var deviceId = SelectedDeviceId;
+        var sp = Dashboard.ShiftProgress;
+        if (string.IsNullOrEmpty(deviceId) || sp is not { IsInShift: true, ShiftStart: not null, ShiftEnd: not null })
+        {
+            if (_hourlyOkHours.Length != 0)
+            {
+                _hourlyOkHours = [];
+                _hourlyOkCounts = [];
+            }
+            return;
+        }
+
+        var start = sp.ShiftStart.Value;
+        var end = sp.ShiftEnd.Value;
+        var key = $"{deviceId}|{sp.Name}|{start:O}|{end:O}";
+        var now = DateTime.Now;
+        if (!string.Equals(key, _hourlyOkKey, StringComparison.Ordinal))
+        {
+            _hourlyOkKey = key;
+            _hourlyOkHours = [];
+            _hourlyOkCounts = [];
+            _lastHourlyOkQueryAt = DateTime.MinValue;
+        }
+        if (now - _lastHourlyOkQueryAt < HourlyOkThrottle) return;
+        if (Interlocked.CompareExchange(ref _hourlyOkRunning, 1, 0) != 0) return;
+
+        _lastHourlyOkQueryAt = now;
+        _hourlyOkCts?.Cancel();
+        _hourlyOkCts?.Dispose();
+        _hourlyOkCts = new CancellationTokenSource();
+        var ct = _hourlyOkCts.Token;
+        try
+        {
+            var (window, _) = await HistoryFetch.FetchAllAsync<ProductionLogDto>(
+                Dashboard, HistoryQueryType.ProductionLog, start, now, deviceId, null,
+                r => r.ProductionLogs, ct);
+            var baselineList = await HistoryFetch.FetchLatestBeforeAsync<ProductionLogDto>(
+                Dashboard, HistoryQueryType.ProductionLog, start, deviceId, null,
+                r => r.ProductionLogs, ct);
+            if (ct.IsCancellationRequested || _disposed) return;
+            var baseline = baselineList.Count > 0 ? baselineList[0] : null;
+            var series = HourlyProductionDiff.FromSamples(
+                window.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
+                start, now,
+                baseline?.OkProduction ?? 0,
+                baseline?.NgProduction ?? 0);
+            var padded = HourlyProductionDiff.PadToShiftWindow(series, start, end);
+            _hourlyOkHours = padded.Hours;
+            _hourlyOkCounts = padded.OkDiff;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // 查询连接未就绪时保留上一轮柱，避免首页闪空。
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _hourlyOkRunning, 0);
+        }
+    }
 
     private (double YMin, double Range) QualityScale
     {
@@ -683,7 +778,7 @@ private void OnRenderTick()
         return Math.Clamp((time - axisStart).TotalSeconds / span * 300, 0, 300);
     }
 
-    /// <summary>当前班次良率 sparkline（viewBox 300x80）。横轴对齐整班时段；单点时只画达标线，等第二点再连线。</summary>
+    /// <summary>当前班次良率 sparkline（viewBox 300x80）。横轴对齐整班时段；单点时只画达标线，从第二点再连线。</summary>
     private string? QualityPointsText
     {
         get
@@ -702,7 +797,6 @@ private void OnRenderTick()
         }
     }
 
-    // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
 
     // 时长格式化口径单源：Kanban.Contracts.DurationFormatter.FormatStandard（与 WPF 状态卡一致）
@@ -752,6 +846,12 @@ private void OnRenderTick()
     private int WorkOrderNgCount => Dashboard.GetWorkOrderNgCount(SelectedDeviceId) ?? 0;
     private string WorkOrderOkText => WorkOrderOkCount.ToString("N0");
     private string WorkOrderNgText => WorkOrderNgCount.ToString("N0");
+    private string ShiftOkText => SelectedSnapshot is null ? "—" : SelectedSnapshot.TotalOkProduction.ToString("N0");
+    private string WorkOrderAchievementText => CurrentWorkOrder is { TargetQuantity: > 0 } ? WoProgressPctText : "—";
+    private string WorkOrderAchievementCssClass => CurrentWorkOrder is null || CurrentWorkOrder.TargetQuantity <= 0 ? "kpi-value"
+        : WoProgressRatio >= 80 ? "kpi-value run"
+        : WoProgressRatio >= 50 ? "kpi-value paused"
+        : "kpi-value danger";
     private double WorkOrderQualityRate => SnapshotMetrics.QualityRate(WorkOrderOkCount, WorkOrderNgCount);
     private string WorkOrderQualityText
         => WorkOrderOkCount + WorkOrderNgCount > 0 ? $"{WorkOrderQualityRate:P1}" : "—";
@@ -762,6 +862,11 @@ private void OnRenderTick()
     private string WorkOrderOkTooltip => Tip("Home_Tip_WorkOrderOk", WorkOrderOkText);
     private string WorkOrderNgTooltip => Tip("Home_Tip_WorkOrderNg", WorkOrderNgCount);
     private string WorkOrderQualityTooltip => Tip("Home_Tip_WorkOrderQuality", WorkOrderOkCount, WorkOrderNgCount, WorkOrderQualityText);
+    private string ShiftOkTooltip => Tip("Home_Tip_ShiftOk", ShiftOkText);
+    private string WorkOrderCumulativeOkTooltip => Tip("Home_Tip_WorkOrderCumulativeOk", WorkOrderOkText);
+    private string WorkOrderAchievementTooltip => CurrentWorkOrder is null
+        ? ""
+        : Tip("Home_Tip_WorkOrderAchievement", WorkOrderOkCount, CurrentWorkOrder.TargetQuantity, WorkOrderAchievementText);
     private string SpeedAchievementTooltip => Tip("Home_Tip_SpeedAchievement", RealtimeSpeed, SelectedSnapshot?.TargetCycle ?? 0, SpeedAchievementRate);
     private string RealtimeSpeedTooltip => Tip("Home_Tip_RealtimeSpeed", SelectedSnapshot?.TotalOkProduction ?? 0, SelectedSnapshot?.TotalNgProduction ?? 0, FmtDuration(SelectedSnapshot?.RunTime ?? 0), RealtimeSpeedText);
     private string WorkOrderProgressTooltip => CurrentWorkOrder is null
@@ -870,22 +975,66 @@ private void OnRenderTick()
         _ => "lvl-low",
     };
 
-    private double DefectBarPercent(DeviceDefectCountDto d)
+    private readonly record struct DefectParetoBarVis(
+        string X, string Y, string W, string H, string Fill,
+        string Cx, string Cy, string Title, string CumTitle);
+
+    private IReadOnlyList<DefectParetoBarVis> DefectParetoBars
     {
-        var share = DefectItemShare(d);
-        if (share > 0) return 100.0 * share;
-        var max = DefectTop.Count == 0 ? 0 : DefectTop.Max(x => x.Count);
-        return max > 0 ? 100.0 * d.Count / max : 0;
+        get
+        {
+            var rows = DefectTop;
+            if (rows.Count == 0) return [];
+            const double left = 6, right = 294, top = 6, bottom = 80;
+            var n = rows.Count;
+            var max = Math.Max(1, rows.Max(r => r.Count));
+            const double gap = 4;
+            var barW = Math.Max(3, (right - left - gap * (n + 1)) / n);
+            var plotH = bottom - top;
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var list = new List<DefectParetoBarVis>(n);
+            for (var i = 0; i < n; i++)
+            {
+                var d = rows[i];
+                var displayName = d.IsOthers ? L.T("Hp_DefectOthers", d.OtherKindCount) : d.Name;
+                var h = d.Count <= 0 ? 0 : Math.Max(1, d.Count / (double)max * plotH);
+                var x = left + gap + i * (barW + gap);
+                var y = bottom - h;
+                var cum = d.CumulativeShare > 0 ? d.CumulativeShare : DefectItemShare(d);
+                var cx = x + barW / 2;
+                var cy = bottom - cum * plotH;
+                var fill = d.IsOthers ? "#9CA3AF" : d.Severity switch
+                {
+                    DefectSeverity.Critical => "#F87171",
+                    DefectSeverity.Major => "#FB923C",
+                    _ => "#FBBF24",
+                };
+                list.Add(new DefectParetoBarVis(
+                    x.ToString("0.##", inv),
+                    y.ToString("0.##", inv),
+                    barW.ToString("0.##", inv),
+                    h.ToString("0.##", inv),
+                    fill,
+                    cx.ToString("0.##", inv),
+                    cy.ToString("0.##", inv),
+                    DefectTooltip(d, displayName) + $"\n{d.Count:N0}",
+                    L.T("Hp_DefectCumulative", cum)));
+            }
+            return list;
+        }
+    }
+
+    private string? DefectParetoLinePoints
+    {
+        get
+        {
+            var bars = DefectParetoBars;
+            if (bars.Count == 0) return null;
+            return string.Join(" ", bars.Select(b => $"{b.Cx},{b.Cy}"));
+        }
     }
 
     private static double DefectItemShare(DeviceDefectCountDto d) => d.ShareOfTotal;
-
-    private static string DefectFillClass(DefectSeverity severity) => severity switch
-    {
-        DefectSeverity.Critical => "critical",
-        DefectSeverity.Major => "major",
-        _ => "minor",
-    };
 
     private static string DefectTooltip(DeviceDefectCountDto d, string displayName)
     {

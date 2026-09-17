@@ -1,5 +1,6 @@
 using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
+using Kanban.Contracts.Metrics;
 using Kanban.Web.Services;
 using Microsoft.JSInterop;
 
@@ -33,6 +34,32 @@ public partial class HistoryQuery
     private string OeAlarmText => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(OeAlarmSeconds);
     private string OeTargetText => OeTargetCycle > 0 ? $"{OeTargetCycle} {L.T("Unit_PerHour")}" : "—";
     private string OeDeviceNameText => OeDeviceName ?? "—";
+    private string OeOeeTooltip => L.Tip("Hq_Tip_WindowOee", $"{Pct(OeA)} × {Pct(OeP)} × {Pct(OeQ)}", Pct(OeValue));
+    private string OeAvailabilityTooltip => L.Tip(
+        "Home_Tip_Availability",
+        OeRunSeconds + OeAlarmSeconds > 0
+            ? $"{OeRunText} / {Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(OeRunSeconds + OeAlarmSeconds)}"
+            : "— / —",
+        Pct(OeA));
+    private string OePerformanceTooltip => L.Tip(
+        "Home_Tip_Performance",
+        OeTargetCycle > 0 && OeRunSeconds > 0
+            ? $"{OeOk}+{OeNg} / {OeTargetCycle * (OeRunSeconds / 3600.0):N0}"
+            : "— / —",
+        Pct(OeP));
+    private string OeQualityTooltip => L.Tip(
+        "Hq_Tip_WindowQuality",
+        OeOk,
+        OeOk + OeNg,
+        Pct(OeQ));
+    private string OeRunTooltip => L.Tip(
+        "Home_Tip_RunTime",
+        OeRunText,
+        SnapshotMetrics.TimeRatio(OeRunSeconds, OeRunSeconds, OeAlarmSeconds, 0, 0));
+    private string OeAlarmTooltip => L.Tip(
+        "Home_Tip_AlarmTime",
+        OeAlarmText,
+        SnapshotMetrics.TimeRatio(OeAlarmSeconds, OeRunSeconds, OeAlarmSeconds, 0, 0));
 
     private async Task OeSearchAsync(DateTime from, DateTime to)
     {

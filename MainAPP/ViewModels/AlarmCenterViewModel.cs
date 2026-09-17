@@ -183,17 +183,26 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActiveEmptyStateMessage))]
+    [NotifyPropertyChangedFor(nameof(ActiveCountTooltip))]
     private int _activeCount;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TodayTriggerCountDisplay))]
+    [NotifyPropertyChangedFor(nameof(TodayTriggerKpiToolTip))]
     private int _todayTriggerCount;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TodayRecoverCountDisplay))]
+    [NotifyPropertyChangedFor(nameof(TodayRecoverKpiToolTip))]
     private int _todayRecoverCount;
-    [ObservableProperty] private string _longestDurationText = "—";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LongestDurationTooltip))]
+    private string _longestDurationText = "—";
     [ObservableProperty] private string _longestAlarmText = "—";
-    [ObservableProperty] private string _mostFrequentAlarm = "—";
-    [ObservableProperty] private int _affectedDeviceCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MostFrequentKpiToolTip))]
+    private string _mostFrequentAlarm = "—";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AffectedDeviceTooltip))]
+    private int _affectedDeviceCount;
     [ObservableProperty] private DateTime _activeLastUpdateTime;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowStatsLastUpdateTime))]
@@ -224,11 +233,21 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     /// <summary>今日恢复 KPI 展示值（统计失败时显示 —）。</summary>
     public string TodayRecoverCountDisplay => HasStatsError ? "—" : TodayRecoverCount.ToString();
 
-    public string TodayTriggerKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K710;
+    public string ActiveCountTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K709, ActiveCount);
+    public string AffectedDeviceTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K713, AffectedDeviceCount);
+    public string LongestDurationTooltip => FormatHelper.Tip("{0}\\n{1}", Strings.K712, LongestDurationText);
 
-    public string TodayRecoverKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K711;
+    public string TodayTriggerKpiToolTip => HasStatsError
+        ? StatsErrorText!
+        : FormatHelper.Tip("{0}\\n{1}", Strings.K710, TodayTriggerCount);
 
-    public string MostFrequentKpiToolTip => HasStatsError ? StatsErrorText! : Strings.K714;
+    public string TodayRecoverKpiToolTip => HasStatsError
+        ? StatsErrorText!
+        : FormatHelper.Tip("{0}\\n{1}", Strings.K711, TodayRecoverCount);
+
+    public string MostFrequentKpiToolTip => HasStatsError
+        ? StatsErrorText!
+        : FormatHelper.Tip("{0}\\n{1}", Strings.K714, MostFrequentAlarm);
 
     public bool HasTruncation => FilteredAlarmCount > MaxActiveAlarms;
 

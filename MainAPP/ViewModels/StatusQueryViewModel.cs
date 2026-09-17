@@ -10,6 +10,8 @@ using MainAPP.Services;
 using OxyPlot;
 using Serilog;
 using MainAPP.Resources;
+using MainAPP.Helpers;
+using Kanban.Contracts.Metrics;
 
 namespace MainAPP.ViewModels;
 
@@ -25,18 +27,50 @@ public partial class StatusQueryViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RunTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(RunTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeTooltip))]
     private double _runTimeSeconds;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AlarmTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(RunTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeTooltip))]
     private double _alarmTimeSeconds;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PausedTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(RunTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeTooltip))]
     private double _pausedTimeSeconds;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(OfflineTimeFormatted))]
+    [NotifyPropertyChangedFor(nameof(RunTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeRatio))]
+    [NotifyPropertyChangedFor(nameof(RunTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(AlarmTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(PausedTimeTooltip))]
+    [NotifyPropertyChangedFor(nameof(OfflineTimeTooltip))]
     private double _offlineTimeSeconds;
 
     /// <summary>运行时长格式化（Xd Yh / Xh Ym / Xm），便于人眼阅读。</summary>
@@ -47,6 +81,16 @@ public partial class StatusQueryViewModel : ObservableObject
     public string PausedTimeFormatted => FormatDuration(PausedTimeSeconds);
     /// <summary>离线时长格式化（仅统计，不参与 OEE）。</summary>
     public string OfflineTimeFormatted => FormatDuration(OfflineTimeSeconds);
+
+    public double RunTimeRatio => SnapshotMetrics.TimeRatio(RunTimeSeconds, RunTimeSeconds, AlarmTimeSeconds, PausedTimeSeconds, OfflineTimeSeconds);
+    public double AlarmTimeRatio => SnapshotMetrics.TimeRatio(AlarmTimeSeconds, RunTimeSeconds, AlarmTimeSeconds, PausedTimeSeconds, OfflineTimeSeconds);
+    public double PausedTimeRatio => SnapshotMetrics.TimeRatio(PausedTimeSeconds, RunTimeSeconds, AlarmTimeSeconds, PausedTimeSeconds, OfflineTimeSeconds);
+    public double OfflineTimeRatio => SnapshotMetrics.TimeRatio(OfflineTimeSeconds, RunTimeSeconds, AlarmTimeSeconds, PausedTimeSeconds, OfflineTimeSeconds);
+
+    public string RunTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_RunTime, RunTimeFormatted, RunTimeRatio);
+    public string AlarmTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_AlarmTime, AlarmTimeFormatted, AlarmTimeRatio);
+    public string PausedTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_PausedTime, PausedTimeFormatted, PausedTimeRatio);
+    public string OfflineTimeTooltip => FormatHelper.Tip(Strings.Home_Tip_OfflineTime, OfflineTimeFormatted, OfflineTimeRatio);
 
     /// <summary>秒数 → "Xd Yh" / "Xh Ym" / "Xm" 格式（与旧实现逐分支等价，委托跨进程单源，
     /// 避免与 HomeViewModel 等处的时长口径分叉）。</summary>

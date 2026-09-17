@@ -6850,6 +6850,30 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Home_WorkOrderQuality" xml:space="preserve">
     <value>Order Quality</value>
   </data>
+  <data name="Home_ShiftOk" xml:space="preserve">
+    <value>Shift OK</value>
+  </data>
+  <data name="Home_ShiftTotalOutput" xml:space="preserve">
+    <value>Shift total output</value>
+  </data>
+  <data name="Home_CumulativeQuality" xml:space="preserve">
+    <value>Cumulative quality</value>
+  </data>
+  <data name="Home_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>Order cumulative OK</value>
+  </data>
+  <data name="Home_WorkOrderAchievement" xml:space="preserve">
+    <value>Order achievement</value>
+  </data>
+  <data name="Home_Tip_ShiftOk" xml:space="preserve">
+    <value>Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\nNow: {0} pcs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderCumulativeOk" xml:space="preserve">
+    <value>Order cumulative OK = OK output in the order time window (not shift session total, excludes NG).\nNow: {0} pcs</value>
+  </data>
+  <data name="Home_Tip_WorkOrderAchievement" xml:space="preserve">
+    <value>Order achievement = OK output in the order window ÷ planned quantity, capped at 100%.\nUses OK count in the work-order time window (same as the Work Order page), not shift session totals and not speed achievement.\nNow: {0:N0} / {1:N0} pcs = {2}</value>
+  </data>
   <data name="Home_Tip_WorkOrderNg" xml:space="preserve">
     <value>Work-order NG = reject count in the order time window (not session total).\nNow: {0:N0} pcs</value>
   </data>
@@ -6902,12 +6926,72 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Gap versus the 95% quality target. Positive = above target, negative = still short.\nQuality now {0}, gap {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. Points come from shift production snapshots plus the live value.</value>
+    <value>Green bars are hourly OK output this shift. The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. The axis covers the whole shift.</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>Current-shift session OK / NG. Arrows compare with the previous shift.\nOK {0}   NG {1}</value>
   </data>
   <data name="Home_Tip_LastShift" xml:space="preserve">
     <value>Previous complete shift output summary.\n{0}\nOK {1:N0}   NG {2:N0}</value>
+  </data>
+  <data name="Ln_Tip_SessionOk" xml:space="preserve">
+    <value>Session cumulative OK (excludes NG). Not the work-order window count.\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Ln_Tip_SessionNg" xml:space="preserve">
+    <value>Session cumulative NG. Not the work-order window reject count.\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Ln_Tip_CycleCompare" xml:space="preserve">
+    <value>Cycle compare = actual / target. Actual = running seconds ÷ (OK+NG); red when slower than target.\nNow: {0}</value>
+  </data>
+  <data name="Ln_Tip_ShiftPace" xml:space="preserve">
+    <value>Shift pace = session OK ÷ (target capacity × elapsed shift hours). Bar caps at 100%; text shows true ratio.\nNow: {0}</value>
+  </data>
+  <data name="Ln_Tip_StatusCount" xml:space="preserve">
+    <value>Devices currently in the “{0}” state.\nNow: {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_TodayAlarms" xml:space="preserve">
+    <value>Historical trigger count for this device since midnight today (includes recovered).\nNow: {0:N0}</value>
+  </data>
+  <data name="Dd_Tip_PlcRaw" xml:space="preserve">
+    <value>Raw PLC counters (not session totals). They jump after a reset.\nNow: OK {0:N0} · NG {1:N0}</value>
+  </data>
+  <data name="Dd_Tip_Theoretical" xml:space="preserve">
+    <value>Theoretical output = target capacity × running hours; actual = OK + NG in the same window.\nNow: theoretical {0:N0} / actual {1:N0} pcs</value>
+  </data>
+  <data name="Dd_Tip_CycleGap" xml:space="preserve">
+    <value>Capacity gap = (actual rate − target) ÷ target. Negative means below target.\nNow: {0:F1}%</value>
+  </data>
+  <data name="Dd_Tip_ActualCapacity" xml:space="preserve">
+    <value>Actual capacity (pcs/h) = (OK+NG) ÷ running hours; 0 if RunTime &lt; 5s.\nNow: {0:N0} pcs/h (target {1:N0})</value>
+  </data>
+  <data name="Hq_Tip_WindowOutput" xml:space="preserve">
+    <value>Total output in the selected query window = OK + NG (not the live session).\nNow: OK {0:N0} + NG {1:N0} = {2:N0} pcs</value>
+  </data>
+  <data name="Hq_Tip_WindowOk" xml:space="preserve">
+    <value>OK output in the selected query window (window delta, not session total).\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Hq_Tip_WindowNg" xml:space="preserve">
+    <value>NG output in the selected query window (window delta, not session total).\nNow: {0:N0} pcs</value>
+  </data>
+  <data name="Hq_Tip_WindowQuality" xml:space="preserve">
+    <value>Quality in the selected query window = OK ÷ (OK+NG). Target 95%.\nNow: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
+    <value>NG rate in the selected query window = NG ÷ (OK+NG); lower is better.\nNow: {0:N0} / {1:N0} = {2}</value>
+  </data>
+  <data name="Hq_Tip_WindowOee" xml:space="preserve">
+    <value>OEE in the selected query window = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / &lt;60% red.</value>
+  </data>
+  <data name="Mo_Tip_SuccessRate" xml:space="preserve">
+    <value>Acquisition success rate = successful cycles ÷ completed cycles (failures are a subset of completed).\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_ConsecutiveFail" xml:space="preserve">
+    <value>Consecutive failed cycles; greater than 0 means the acquisition path is currently unhealthy.\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_PendingHistory" xml:space="preserve">
+    <value>History records waiting to flush; a rising count means writes are lagging acquisition.\nNow: {0}</value>
+  </data>
+  <data name="Rv_Tip_Health" xml:space="preserve">
+    <value>Review health score combines availability, performance, quality and alarm stability; lower means more issues.\nNow: {0}</value>
   </data>
 </root>

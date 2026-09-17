@@ -71,10 +71,10 @@
     {
         @* ──── 首屏摘要条 ──── *@
         <div class="review-summary">
-            <span class="rs-item"><b>@L.T("Rv_Health")</b> <span class="rs-strong">@Result.HealthScore</span></span>
-            <span class="rs-item"><b>OEE</b> <span class="rs-strong">@Pct(Result.Oee)</span></span>
-            <span class="rs-item"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
-            <span class="rs-item"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span></span>
+            <span class="rs-item" title="@L.Tip("Rv_Tip_Health", Result.HealthScore)"><b>@L.T("Rv_Health")</b> <span class="rs-strong">@Result.HealthScore</span></span>
+            <span class="rs-item" title="@ReviewOeeTooltip"><b>OEE</b> <span class="rs-strong">@Pct(Result.Oee)</span></span>
+            <span class="rs-item" title="@ReviewQualityTooltip"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
+            <span class="rs-item" title="@ReviewOutputTooltip"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span></span>
             <span class="rs-item"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
             <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@Result.ShiftName</span></span>
         </div>
@@ -84,7 +84,7 @@
             <div class="review-grid3">
                 <div>
                     <div class="card-title">@L.T("Rv_Health")</div>
-                    <div class="health-score">@Result.HealthScore</div>
+                    <div class="health-score" title="@L.Tip("Rv_Tip_Health", Result.HealthScore)">@Result.HealthScore</div>
                     @foreach (var issue in Result.HealthIssues)
                     {
                         <div class="health-issue">⚠ @issue</div>
@@ -126,7 +126,7 @@
 
         @* ──── 核心指标 ──── *@
         <section class="kpi-row">
-            <div class="kpi-card">
+            <div class="kpi-card" title="@ReviewOutputTooltip">
                 <span class="kpi-label">@L.T("Lbl_TotalOutput")</span>
                 <span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span>
                 <span class="kpi-sub">@L.T("Lbl_Ok") @Result.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Result.TotalNg.ToString("N0")</span>
@@ -155,9 +155,9 @@
         <section class="card">
             <div class="card-title">@L.T("Rv_Comparison") <span class="badge-soft">@L.T("Rv_ComparisonHint")</span></div>
             <div class="kpi-row">
-                <div class="kpi-card"><span class="kpi-label">@L.T("Rv_CurrentOutput")</span><span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span><span class="kpi-sub dim">@L.T("Rv_BaselineOutput") @Result.BaselineOutput.ToString("N0")</span></div>
-                <div class="kpi-card"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@Pct(Result.QualityRate)</span><span class="kpi-sub dim">@L.T("Rv_BaselineQuality") @Pct(Result.BaselineQuality)</span></div>
-                <div class="kpi-card"><span class="kpi-label">OEE</span><span class="kpi-value">@Pct(Result.Oee)</span><span class="kpi-sub dim">@L.T("Rv_BaselineOee") @Pct(Result.BaselineOee)</span></div>
+                <div class="kpi-card" title="@ReviewOutputTooltip"><span class="kpi-label">@L.T("Rv_CurrentOutput")</span><span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span><span class="kpi-sub dim">@L.T("Rv_BaselineOutput") @Result.BaselineOutput.ToString("N0")</span></div>
+                <div class="kpi-card" title="@ReviewQualityTooltip"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@Pct(Result.QualityRate)</span><span class="kpi-sub dim">@L.T("Rv_BaselineQuality") @Pct(Result.BaselineQuality)</span></div>
+                <div class="kpi-card" title="@ReviewOeeTooltip"><span class="kpi-label">OEE</span><span class="kpi-value">@Pct(Result.Oee)</span><span class="kpi-sub dim">@L.T("Rv_BaselineOee") @Pct(Result.BaselineOee)</span></div>
             </div>
         </section>
 
@@ -256,7 +256,7 @@
     private sealed class ReviewResult
     {
         public int TotalOk, TotalNg, AlarmTriggered, AlarmRecovered, AlarmPending;
-        public double QualityRate, PerformanceRate, Oee, PeakShare, ValleyShare;
+        public double QualityRate, PerformanceRate, AvailabilityRate, Oee, PeakShare, ValleyShare;
         public string LongestDowntimeText = "—", LongestDowntimeDevice = "", LongestDowntimeAlarm = "";
         public string PeakHour = "—", ValleyHour = "—";
         public int PeakOk, ValleyOk;
@@ -407,8 +407,8 @@
             var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState, Dashboard.ServerNow);
             var targetCycle = device?.TargetCycle ?? 0;
             r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
-            r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate,
-                OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime));
+            r.AvailabilityRate = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
+            r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate, r.AvailabilityRate);
 
             // ── 报警统计 ──
             r.AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered);
@@ -611,6 +611,18 @@
 
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
+
+    private string ReviewOutputTooltip => Result is null
+        ? ""
+        : L.Tip("Hq_Tip_WindowOutput", Result.TotalOk, Result.TotalNg, Result.TotalOk + Result.TotalNg);
+    private string ReviewQualityTooltip => Result is null
+        ? ""
+        : L.Tip("Hq_Tip_WindowQuality", Result.TotalOk, Result.TotalOk + Result.TotalNg, Pct(Result.QualityRate));
+    private string ReviewOeeTooltip => Result is null
+        ? ""
+        : L.Tip("Hq_Tip_WindowOee",
+            $"{Pct(Result.AvailabilityRate)} × {Pct(Result.PerformanceRate)} × {Pct(Result.QualityRate)}",
+            Pct(Result.Oee));
 
     private static string ConclusionIcon(string kind) => kind switch
     {

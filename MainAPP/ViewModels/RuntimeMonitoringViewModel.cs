@@ -93,7 +93,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private int _completedCycles;
     [ObservableProperty] private int _failedCycles;
     [ObservableProperty] private bool _lastCycleSucceeded;
-    [ObservableProperty] private int _consecutiveFailureCycles;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ConsecutiveFailTooltip))]
+    private int _consecutiveFailureCycles;
     [ObservableProperty] private DateTime? _lastFailureAt;
     [ObservableProperty] private string? _lastFailureMessage;
     [ObservableProperty] private long _lastCycleMilliseconds;
@@ -108,7 +110,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private int _successfulCycles;
     [ObservableProperty] private double _successRatePercent;
     [ObservableProperty] private int _estimatedReadOperations;
-    [ObservableProperty] private int _pendingHistoryCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PendingHistoryTooltip))]
+    private int _pendingHistoryCount;
     [ObservableProperty] private bool _recoveryFileExists;
     [ObservableProperty] private long _recoveryFileBytes;
     [ObservableProperty] private DateTime? _lastHistoryFlushAt;
@@ -196,6 +200,11 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
     public int TotalDeviceCount => _deviceRepository.GetDevicesSnapshot().Count;
     public string HealthText => RuntimeHealthText.Format(IsConnected, IsAcquisitionRunning, LastCycleSucceeded, ConsecutiveFailureCycles);
+    public string SuccessRateTooltip => FormatHelper.Tip(
+        Strings.Mo_Tip_SuccessRate,
+        SuccessRateDisplay is { } rate ? $"{rate:F1}%" : Strings.K595);
+    public string ConsecutiveFailTooltip => FormatHelper.Tip(Strings.Mo_Tip_ConsecutiveFail, ConsecutiveFailureCycles);
+    public string PendingHistoryTooltip => FormatHelper.Tip(Strings.Mo_Tip_PendingHistory, PendingHistoryCount);
     public bool HasRefreshError => !string.IsNullOrWhiteSpace(RefreshErrorMessage);
     public bool HasActiveFailure => !IsConnected
         || HasRefreshError
@@ -557,6 +566,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         OnPropertyChanged(nameof(HasActiveFailure));
         OnPropertyChanged(nameof(TotalDeviceCount));
         OnPropertyChanged(nameof(SuccessRateDisplay));
+        OnPropertyChanged(nameof(SuccessRateTooltip));
         OnPropertyChanged(nameof(RecoveryFileText));
         OnPropertyChanged(nameof(DataConsistencyText));
         OnPropertyChanged(nameof(DeviceReadSummary));
@@ -662,6 +672,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             OnPropertyChanged(nameof(HasActiveFailure));
             OnPropertyChanged(nameof(TotalDeviceCount));
             OnPropertyChanged(nameof(SuccessRateDisplay));
+            OnPropertyChanged(nameof(SuccessRateTooltip));
             OnPropertyChanged(nameof(RecoveryFileText));
             OnPropertyChanged(nameof(DataConsistencyText));
             OnPropertyChanged(nameof(DeviceReadSummary));
@@ -697,6 +708,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
             OnPropertyChanged(nameof(HealthText));
             OnPropertyChanged(nameof(HasActiveFailure));
             OnPropertyChanged(nameof(SuccessRateDisplay));
+            OnPropertyChanged(nameof(SuccessRateTooltip));
         }
     }
 

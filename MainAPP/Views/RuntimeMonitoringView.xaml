@@ -203,7 +203,9 @@
                      断连状态下改展示断线持续时长——此时用户真正想知道的是"断了多久"。 -->
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K424}" />
-                    <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding ConsecutiveFailureCycles}" />
+                    <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}"
+                               Text="{Binding ConsecutiveFailureCycles}"
+                               ToolTip="{Binding ConsecutiveFailTooltip}" ToolTipService.ShowDuration="30000" />
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Visible" />
@@ -424,7 +426,9 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K445}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding SuccessRateDisplay, StringFormat={}{0:F1}%, TargetNullValue={x:Static resources:Strings.K595}}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                   Text="{Binding SuccessRateDisplay, StringFormat={}{0:F1}%, TargetNullValue={x:Static resources:Strings.K595}}"
+                                   ToolTip="{Binding SuccessRateTooltip}" ToolTipService.ShowDuration="30000" />
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P95Cycle}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding CycleP95Milliseconds, StringFormat={}{0} ms}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.Rtmon_P99Cycle}" />
@@ -469,7 +473,9 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K451}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding PendingHistoryCount}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                   Text="{Binding PendingHistoryCount}"
+                                   ToolTip="{Binding PendingHistoryTooltip}" ToolTipService.ShowDuration="30000" />
                         <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K452}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding RecoveryFileText}" />
                         <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{x:Static resources:Strings.K453}" />
