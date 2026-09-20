@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 @using Kanban.Web.Services
 
 <div class="dashboard">
@@ -9,7 +10,8 @@
         <div class="brand">
             <span class="brand-title">@Dashboard.Title</span>
         </div>
-        <div class="conn-badge @(Dashboard.IsConnected ? "conn-ok" : "conn-bad")">
+        <div class="conn-badge @(Dashboard.IsConnected ? "conn-ok" : "conn-bad")"
+             title="@L.Tip("Home_Tip_ConnBadge", Dashboard.IsConnected ? L.T("Conn_Live") : L.T("Conn_Disconnected"))">
             <span class="dot"></span>
             @(Dashboard.IsConnected ? L.T("Conn_Live") : L.T("Conn_Disconnected"))
         </div>
@@ -45,34 +47,36 @@
     else
     {
         <div class="summary-bar">
-            <span class="sum-item run"><span class="dot"></span>@L.T("Status_Running") <b>@Dashboard.StatusSummary.Running</b></span>
-            <span class="sum-item alarm"><span class="dot"></span>@L.T("Status_Alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
-            <span class="sum-item paused"><span class="dot"></span>@L.T("Status_Paused") <b>@Dashboard.StatusSummary.Paused</b></span>
-            <span class="sum-item offline"><span class="dot"></span>@L.T("Status_Offline") <b>@Dashboard.StatusSummary.Idle</b></span>
-            <span class="sum-item">@L.T("Card_DevCount") <b>@Dashboard.DeviceCount</b></span>
+            <span class="sum-item run" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Running"), Dashboard.StatusSummary.Running)"><span class="dot"></span>@L.T("Status_Running") <b>@Dashboard.StatusSummary.Running</b></span>
+            <span class="sum-item alarm" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Alarm"), Dashboard.StatusSummary.Alarm)"><span class="dot"></span>@L.T("Status_Alarm") <b>@Dashboard.StatusSummary.Alarm</b></span>
+            <span class="sum-item paused" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Paused"), Dashboard.StatusSummary.Paused)"><span class="dot"></span>@L.T("Status_Paused") <b>@Dashboard.StatusSummary.Paused</b></span>
+            <span class="sum-item offline" title="@L.Tip("Ln_Tip_StatusCount", L.T("Status_Offline"), Dashboard.StatusSummary.Idle)"><span class="dot"></span>@L.T("Status_Offline") <b>@Dashboard.StatusSummary.Idle</b></span>
+            <span class="sum-item" title="@L.Tip("Home_Tip_DeviceCount", Dashboard.DeviceCount)">@L.T("Card_DevCount") <b>@Dashboard.DeviceCount</b></span>
         </div>
-    }
 
-    @if (SelectedSnapshot is null)
-    {
-        <EmptyState Title="@L.T("Msg_NoDevSelected")"
-                    Hint="@L.T("Msg_SelectHint")"
-                    Icon="🖱️" />
-    }
-    else
-    {
+        @if (SelectedSnapshot is null)
+        {
+            <EmptyState Title="@L.T("Msg_NoDevSelected")"
+                        Hint="@L.T("Msg_SelectHint")"
+                        Icon="🖱️" />
+        }
+        else
+        {
         <main class="grid">
             <section class="card">
-                <div class="card-title">@L.T("Card_DevStatus")</div>
+                <div class="card-title">
+                    <span>@L.T("Card_DevStatus")</span>
+                    <button class="chip-btn" title="@L.T("Dd_OpenRuntime")" @onclick="OpenSelectedDevice">@L.T("Dd_OpenRuntime")</button>
+                </div>
                 <div class="dev-head">
-                    <span class="dev-name">@SelectedSnapshot.DeviceName</span>
-                    <span class="status-badge @Status.Class">@Status.Text</span>
+                    <span class="dev-name linkish" @onclick="OpenSelectedDevice">@SelectedSnapshot.DeviceName</span>
+                    <span class="status-badge @Status.Class" title="@L.Tip("Home_Tip_DeviceStatus", Status.Text)">@Status.Text</span>
                 </div>
                 <div class="duration-row">
-                    <div title="@RunTimeTooltip"><span class="kpi-label">@L.T("Status_Running")</span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span><span class="ratio-hint">@PctRatio(RunRatio)</span></div>
-                    <div title="@AlarmTimeTooltip"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span><span class="ratio-hint">@PctRatio(AlarmRatio)</span></div>
-                    <div title="@PausedTimeTooltip"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span><span class="ratio-hint">@PctRatio(PauseRatio)</span></div>
-                    <div title="@OfflineTimeTooltip"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value idle">@FmtDuration(SelectedSnapshot.OfflineTime)</span><span class="ratio-hint">@PctRatio(OfflineRatio)</span></div>
+                    <div title="@RunTimeTooltip"><span class="kpi-label">@L.T("Status_Running") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value run">@FmtDuration(SelectedSnapshot.RunTime)</span><span class="ratio-hint">@PctRatio(RunRatio)</span></div>
+                    <div title="@AlarmTimeTooltip"><span class="kpi-label">@L.T("Status_Alarm") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value alarm">@FmtDuration(SelectedSnapshot.AlarmTime)</span><span class="ratio-hint">@PctRatio(AlarmRatio)</span></div>
+                    <div title="@PausedTimeTooltip"><span class="kpi-label">@L.T("Status_Paused") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value paused">@FmtDuration(SelectedSnapshot.PausedTime)</span><span class="ratio-hint">@PctRatio(PauseRatio)</span></div>
+                    <div title="@OfflineTimeTooltip"><span class="kpi-label">@L.T("Status_Offline") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value idle">@FmtDuration(SelectedSnapshot.OfflineTime)</span><span class="ratio-hint">@PctRatio(OfflineRatio)</span></div>
                 </div>
                 <div class="time-bar">
                     <div class="seg run" style="width:@RunRatio%"></div>
@@ -80,44 +84,63 @@
                     <div class="seg paused" style="width:@PauseRatio%"></div>
                     <div class="seg offline" style="width:@OfflineRatio%"></div>
                 </div>
-                <div class="device-kpi-row" title="@TargetCycleTooltip">
-                    <span class="kpi-label">@L.T("Lbl_TargetCycle")</span>
-                    <span class="kpi-value">@TargetCycleText</span>
-                </div>
-                <div class="device-kpi-row" title="@ActualCycleTooltip">
-                    <span class="kpi-label">@L.T("Lbl_ActualCycle")</span>
-                    <span class="kpi-value">@ActualCycleText</span>
+                @* 2026-09-18 精修：目标/实际周期由两行等权改为「实际为主 + 目标为注 + 差值药丸」 *@
+                <div class="cycle-block">
+                    <div class="cycle-main" title="@ActualCycleTooltip">
+                        <span class="kpi-label">@L.T("Lbl_ActualCycle") <KpiScopeChip Kind="Realtime" /></span>
+                        <span class="cycle-actual">@ActualCycleText</span>
+                    </div>
+                    <div class="cycle-target" title="@TargetCycleTooltip">
+                        <span class="kpi-label">@L.T("Lbl_TargetCycle") <KpiScopeChip Kind="Realtime" /></span>
+                        <span class="cycle-target-value">@TargetCycleText</span>
+                    </div>
                     @if (!string.IsNullOrEmpty(CycleDiffText))
                     {
-                        <span class="cycle-diff @(IsCycleSlow ? "slow" : "ok")">@CycleDiffText</span>
+                        <span class="cycle-diff pill @(IsCycleSlow ? "slow" : "ok")" title="@CycleDiffTooltip">@CycleDiffText</span>
                     }
                 </div>
-                <div class="meta-line">@L.T("Hq_StatusWord") 0x@(SelectedSnapshot.StatusWord.ToString("X4"))</div>
+                <div class="meta-line" title="@L.Tip("Home_Tip_StatusWord", $"0x{SelectedSnapshot.StatusWord:X4}")">@L.T("Hq_StatusWord") 0x@(SelectedSnapshot.StatusWord.ToString("X4"))</div>
                 @if (!string.IsNullOrEmpty(SelectedSnapshot.RecipeName))
                 {
-                    <div class="meta-line">@L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue)</div>
+                    <div class="meta-line" title="@L.Tip("Home_Tip_Recipe", L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue))">@L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue)</div>
                 }
             </section>
 
-            <section class="card">
+            <section class="card card-click" @onclick="OpenCurrentWorkOrder">
                 <div class="card-title">@L.T("Card_ProdStatus")</div>
-                @if (CurrentWorkOrder is not null)
+                @if (CurrentWorkOrder is null)
                 {
-                    <div class="wo-progress-head">
-                        <span class="wo-order">@CurrentWorkOrder.OrderNo</span>
-                        <span class="wo-product-inline">@CurrentWorkOrder.ProductCode</span>
+                    <EmptyState Compact="true" Title="@L.T("Home_WorkOrderEmpty")" Hint="@L.T("Home_WorkOrderEmptyHint")" Icon="📋" />
+                }
+                else
+                {
+                    <div class="wo-progress-hero">
+                        <div class="wo-progress-head">
+                            <span class="wo-order">@CurrentWorkOrder.OrderNo</span>
+                            <span class="wo-product-inline">@CurrentWorkOrder.ProductCode</span>
+                        </div>
+                    </div>
+                    @* 工单四槽位（固定，不做成可配置）：工单目标 / 当班良品 / 工单累计良品 / 工单达成率 *@
+                    <div class="metric-grid wo-kpi-grid">
+                        <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@CurrentWorkOrder.TargetQuantity.ToString("N0")</span></div>
+                        <div title="@ShiftOkTooltip"><span class="kpi-label">@L.T("Home_ShiftOk") <KpiScopeChip Kind="Shift" /></span><span class="kpi-value">@ShiftOkText</span></div>
+                        <div title="@WorkOrderCumulativeOkTooltip"><span class="kpi-label">@L.T("Home_WorkOrderCumulativeOk") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderOkText</span></div>
+                        <div title="@WorkOrderAchievementTooltip"><span class="kpi-label">@L.T("Home_WorkOrderAchievement") <KpiScopeChip Kind="WorkOrder" /></span><span class="@WorkOrderAchievementCssClass">@WorkOrderAchievementText</span></div>
+                    </div>
+                    <div class="wo-schedule" title="@WorkOrderProgressTooltip">
+                        <div class="wo-progress-main">
+                            <span class="wo-progress-text">@WoProgressText</span>
+                            <span class="wo-progress-pct @WoProgressPctClass">@WoProgressPctText</span>
+                        </div>
+                        <div class="time-bar wo-progress-bar">
+                            <div class="seg wo @WoProgressPctClass" style="width:@WoProgressRatio%"></div>
+                        </div>
                     </div>
                 }
-                <div class="metric-grid wo-kpi-grid">
-                    <div title="@WorkOrderTargetTooltip"><span class="kpi-label">@L.T("K326")</span><span class="kpi-value">@(CurrentWorkOrder is null ? "—" : CurrentWorkOrder.TargetQuantity.ToString("N0"))</span></div>
-                    <div title="@ShiftOkTooltip"><span class="kpi-label">@L.T("Home_ShiftOk")</span><span class="kpi-value">@ShiftOkText</span></div>
-                    <div title="@WorkOrderCumulativeOkTooltip"><span class="kpi-label">@L.T("Home_WorkOrderCumulativeOk")</span><span class="kpi-value">@(CurrentWorkOrder is null ? "—" : WorkOrderOkText)</span></div>
-                    <div title="@WorkOrderAchievementTooltip"><span class="kpi-label">@L.T("Home_WorkOrderAchievement")</span><span class="@WorkOrderAchievementCssClass">@WorkOrderAchievementText</span></div>
-                </div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("Card_Alarms") <span class="badge-count @(SelectedSnapshot.ActiveAlarms.Count == 0 ? "zero" : "")">@SelectedSnapshot.ActiveAlarms.Count</span></div>
+                <div class="card-title">@L.T("Card_Alarms") <span class="badge-count @(SelectedSnapshot.ActiveAlarms.Count == 0 ? "zero" : "")" title="@L.Tip("Home_Tip_ActiveAlarmCount", SelectedSnapshot.ActiveAlarms.Count)">@SelectedSnapshot.ActiveAlarms.Count</span></div>
                 @if (SelectedSnapshot.ActiveAlarms.Count == 0)
                 {
                     <div class="no-data">@L.T("Val_NoAlarms")</div>
@@ -127,10 +150,10 @@
                     <div class="alarm-list">
                         @foreach (var a in SelectedSnapshot.ActiveAlarms)
                         {
-                            <div class="alarm-item">
+                            <div class="alarm-item row-click" @onclick="() => OpenAlarm(a.Name, a.StartTime)" @onclick:stopPropagation="true">
                                 <span class="lvl-dot @LevelClass(a.Level)"></span>
                                 <span class="alarm-name">@a.Name</span>
-                                <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
+                                <span class="alarm-dur" title="@Tip("Home_Tip_ActiveAlarmDuration", FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds))">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                             </div>
                         }
                     </div>
@@ -139,7 +162,7 @@
 
             <section class="card">
                 <div class="card-title oee-title">
-                    <span>@L.T("Card_Oee")</span>
+                    <span>@L.T("Card_Oee") <KpiScopeChip Kind="Shift" /></span>
                     @if (DeviceHealthScore > 0)
                     {
                         <span class="oee-health" title="@DeviceHealthTooltip">
@@ -154,19 +177,19 @@
                     <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasActiveWorkOrder" Title="@PerformanceTooltip" />
                     <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasActiveWorkOrder" Title="@QualityTooltip" />
                 </div>
-                <div class="oee-formula">@(HasActiveWorkOrder ? $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}" : "—")</div>
+                <div class="oee-formula" title="@OeeTooltip">@(HasActiveWorkOrder ? $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}" : "—")</div>
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("DefectTop")</div>
+                <div class="card-title">@L.T("DefectTop") <KpiScopeChip Kind="Shift" /></div>
                 <div class="defect-sub">@L.T("Hp_DefectSubtitle")</div>
                 @if (DefectEmptyKind == DefectParetoEmptyKind.HasData)
                 {
                     <div class="defect-summary">
-                        <span>@L.T("Hp_DefectSummary", DefectTotalCount)</span>
+                        <span title="@Tip("Home_Tip_DefectSummary", L.T("Hp_DefectSummary", DefectTotalCount))">@L.T("Hp_DefectSummary", DefectTotalCount)</span>
                         @if (DefectNgShare is { } ngShare)
                         {
-                            <span>@L.T("Hp_DefectShareNg", ngShare)</span>
+                            <span title="@Tip("Home_Tip_DefectNgShare", L.T("Hp_DefectShareNg", ngShare))">@L.T("Hp_DefectShareNg", ngShare)</span>
                         }
                     </div>
                     <div class="defect-pareto">
@@ -211,14 +234,14 @@
             </section>
 
             <section class="card">
-                <div class="card-title">@L.T("K328")</div>
+                <div class="card-title">@L.T("K328") <KpiScopeChip Kind="Shift" /></div>
                 <div class="metric-grid quality-kpi-grid">
                     <div title="@TotalOutputTooltip">
-                        <span class="kpi-label">@L.T("Home_ShiftTotalOutput")</span>
+                        <span class="kpi-label">@L.T("Home_ShiftTotalOutput") <KpiScopeChip Kind="Shift" /></span>
                         <span class="kpi-value">@TotalOutputText</span>
                     </div>
                     <div>
-                        <span class="kpi-label">@L.T("Home_CumulativeQuality")</span>
+                        <span class="kpi-label">@L.T("Home_CumulativeQuality") <KpiScopeChip Kind="Shift" /></span>
                         <span class="quality-kpi-value">
                             <span class="quality-live @QualityCssClass" title="@QualityTooltip">@QualityLiveText</span>
                             <span class="quality-gap @QualityCssClass" title="@QualityGapTooltip">@QualityGapText</span>
@@ -262,17 +285,14 @@
                         <span class="status-badge @WoStatusClass">@WoStatusText</span>
                     </div>
                     <div class="wo-product">@CurrentWorkOrder.ProductCode · @CurrentWorkOrder.ProductName</div>
-                    <div class="wo-progress-text" title="@WorkOrderProgressTooltip">@WoProgressText</div>
-                    <div class="time-bar">
-                        <div class="seg wo" style="width:@WoProgressRatio%"></div>
+                    <div class="metric-grid">
+                        <div title="@WorkOrderNgTooltip"><span class="kpi-label">@L.T("Home_WorkOrderNg") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderNgText</span></div>
+                        <div title="@WorkOrderQualityTooltip"><span class="kpi-label">@L.T("Home_WorkOrderQuality") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderQualityText</span></div>
                     </div>
-                    <div class="meta-line" title="@WorkOrderTargetTooltip">@L.T("Meta_PlanWo", CurrentWorkOrder.TargetQuantity.ToString("N0"))</div>
-                    <div class="meta-line" title="@WorkOrderNgTooltip">@L.T("Home_WorkOrderNg") @WorkOrderNgText</div>
-                    <div class="meta-line" title="@WorkOrderQualityTooltip">@L.T("Home_WorkOrderQuality") @WorkOrderQualityText</div>
                 }
             </section>
 
-            <section class="card">
+            <section class="card" title="@L.Tip("Home_Tip_TrendWindow", RealtimeSpeedText)">
                 <div class="card-title">@L.T("Card_Trend") <span class="badge-soft">@L.T("Badge_Recent1Min")</span></div>
                 @if (SpeedPointsText is null)
                 {
@@ -283,11 +303,11 @@
                     <svg class="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
                         <polyline points="@SpeedPointsText" fill="none" stroke="#34D399" stroke-width="1.5" />
                     </svg>
-                    <div class="meta-line">@L.T("Meta_TrendCurrent", RealtimeSpeedText)</div>
+                    <div class="meta-line">@L.T("Meta_TrendCurrent", RealtimeSpeedText) <KpiScopeChip Kind="Realtime" /></div>
                 }
             </section>
 
-            <section class="card">
+            <section class="card" title="@(Dashboard.ShiftProgress is { } sp ? L.Tip("Home_Tip_Shift", sp.Name, $"{sp.ElapsedText} · {sp.Pct}") : "")">
                 <div class="card-title">@L.T("Card_Shift")</div>
                 @if (Dashboard.ShiftProgress is null)
                 {
@@ -313,10 +333,10 @@
             <section class="card">
                 <div class="card-title">@L.T("Card_Source")</div>
                 <div class="info-list">
-                    <div><span class="kpi-label">@L.T("Lbl_ConnStatus")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_DevTotal")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_DataFresh")</span><span class="kpi-value">@FreshnessText</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
+                    <div title="@L.Tip("Home_Tip_ConnBadge", Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))"><span class="kpi-label">@L.T("Lbl_ConnStatus")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))</span></div>
+                    <div title="@L.Tip("Home_Tip_DeviceCount", Dashboard.DeviceCount)"><span class="kpi-label">@L.T("Lbl_DevTotal")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
+                    <div title="@L.Tip("Home_Tip_DataFresh", FreshnessText)"><span class="kpi-label">@L.T("Lbl_DataFresh")</span><span class="kpi-value">@FreshnessText</span></div>
+                    <div title="@L.Tip("Home_Tip_SnapSeq", SelectedSnapshot.Seq)"><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
                     <div><span class="kpi-label">@L.T("Lbl_SvcAddr")</span><span class="kpi-value mono">@L.T("Val_DynAddr")</span></div>
                     @if (!string.IsNullOrEmpty(Dashboard.ServerVersion))
                     {
@@ -325,6 +345,7 @@
                 </div>
             </section>
         </main>
+        }
     }
 </div>
 
@@ -344,6 +365,30 @@
     private static readonly TimeSpan HourlyOkThrottle = TimeSpan.FromSeconds(15);
 
     private const string DevicePreferenceKey = "kanban.selected-device";
+
+    private void OpenSelectedDevice()
+    {
+        if (string.IsNullOrEmpty(SelectedDeviceId)) return;
+        Nav.NavigateTo($"/device/{Uri.EscapeDataString(SelectedDeviceId)}");
+    }
+
+    private void OpenCurrentWorkOrder()
+    {
+        if (CurrentWorkOrder is null)
+        {
+            Nav.NavigateTo("/workorders");
+            return;
+        }
+        Nav.NavigateTo($"/workorders?id={CurrentWorkOrder.Id}");
+    }
+
+    private void OpenAlarm(string alarmName, DateTime start)
+    {
+        if (string.IsNullOrEmpty(SelectedDeviceId)) return;
+        var from = start.ToString("yyyy-MM-ddTHH:mm");
+        var to = Dashboard.ServerNow.ToString("yyyy-MM-ddTHH:mm");
+        Nav.NavigateTo($"/history?tab=2&deviceId={Uri.EscapeDataString(SelectedDeviceId)}&alarmName={Uri.EscapeDataString(alarmName)}&from={from}&to={to}");
+    }
 
     /// <summary>用户切换设备或兜底回退时写入，并同步 localStorage。</summary>
     private string? SelectedDeviceId
@@ -618,7 +663,9 @@ private void OnRenderTick()
 
     private string QualityCssClass
         => SelectedSnapshot is null || TotalOutput <= 0 ? ""
-        : SelectedSnapshot.QualityRate >= QualityTarget ? "good" : "bad";
+        : SelectedSnapshot.QualityRate >= QualityTarget ? "good"
+        : SelectedSnapshot.QualityRate >= QualityTarget - 0.05 ? "warn"
+        : "bad";
 
     private string QualityGapTooltip
         => Tip("Home_Tip_QualityGap", QualityLiveText, QualityGapText);
@@ -875,6 +922,9 @@ private void OnRenderTick()
     private string WorkOrderTargetTooltip => Tip("Home_Tip_WorkOrderTarget", CurrentWorkOrder?.TargetQuantity ?? 0);
     private string TargetCycleTooltip => Tip("Home_Tip_TargetCycle", SelectedSnapshot?.TargetCycle ?? 0, TargetCycleText);
     private string ActualCycleTooltip => Tip("Home_Tip_ActualCycle", RealtimeSpeed, ActualCycleText, string.IsNullOrEmpty(CycleDiffText) ? "—" : CycleDiffText);
+    private string CycleDiffTooltip => string.IsNullOrEmpty(CycleDiffText)
+        ? ""
+        : Tip("Home_Tip_CycleDiff", TargetCycleText, ActualCycleText, CycleDiffText);
     private string RunTimeTooltip => Tip("Home_Tip_RunTime", FmtDuration(SelectedSnapshot?.RunTime ?? 0), RunRatio / 100.0);
     private string AlarmTimeTooltip => Tip("Home_Tip_AlarmTime", FmtDuration(SelectedSnapshot?.AlarmTime ?? 0), AlarmRatio / 100.0);
     private string PausedTimeTooltip => Tip("Home_Tip_PausedTime", FmtDuration(SelectedSnapshot?.PausedTime ?? 0), PauseRatio / 100.0);

@@ -32,6 +32,25 @@ public partial class ProductionLineView : UserControl
         }
     }
 
+    /// <summary>
+    /// 进入页面（切换为当前页时 Visibility 变 Visible）自动聚焦设备搜索框，
+    /// 免点击直接输入关键字过滤设备。
+    /// </summary>
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (IsVisible && FindVisualChild<TextBox>(LineSearchBar) is { } searchBox)
+                {
+                    searchBox.Focus();
+                    Keyboard.Focus(searchBox);
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+    }
+
     private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
     {
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)

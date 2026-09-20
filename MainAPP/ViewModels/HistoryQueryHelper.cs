@@ -10,8 +10,11 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using CsvHelper;
+using CsvHelper.Configuration;
+using CsvHelper.Configuration.Attributes;
 
 namespace MainAPP.ViewModels;
 
@@ -180,8 +183,9 @@ internal static class HistoryQueryHelper
     };
 
     /// <summary>
-    /// 将记录集合序列化为 CSV 文本，并在末尾追加可选注释行（每条注释行成为独立一行）。
-    /// 集中替代各 QueryViewModel 中重复的 StringBuilder + CsvWriter 样板。
+    /// 生成导出 CSV。表头按当前 UI 文化从 `Csv_Hd_&lt;属性名&gt;` 资源键解析
+    /// （多语言修复 2026-09-18：此前行 DTO 用静态中文 [Name] 特性，切换语言后表头仍是中文）。
+    /// 未配置资源键的属性回退为属性名（如审计导出的英文标识，保持原样）。
     /// </summary>
     public static string BuildCsv<T>(IEnumerable<T> rows, params string[] footerLines)
     {
@@ -189,6 +193,7 @@ internal static class HistoryQueryHelper
         using (var writer = new StringWriter(sb))
         using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
         {
+            RegisterLocalizedHeaderMap<T>(csv);
             csv.WriteRecords(rows);
         }
         if (footerLines.Length > 0)
@@ -198,6 +203,18 @@ internal static class HistoryQueryHelper
                 sb.AppendLine(line);
         }
         return sb.ToString();
+    }
+
+    /// <summary>按当前文化为行类型成员注册本地化表头映射（数据行 DTO 上的静态 [Name] 特性会被映射覆盖）。</summary>
+    private static void RegisterLocalizedHeaderMap<T>(CsvWriter csv)
+    {
+        var map = new DefaultClassMap<T>();
+        foreach (var prop in typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (prop.GetCustomAttribute<IgnoreAttribute>() != null) continue;
+            map.Map(typeof(T), prop)?.Name(Strings.S("Csv_Hd_" + prop.Name, prop.Name));
+        }
+        csv.Context.RegisterClassMap(map);
     }
 
     /// <summary>

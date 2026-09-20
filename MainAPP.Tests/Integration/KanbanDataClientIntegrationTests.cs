@@ -32,6 +32,8 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
 
         public Task<string> GetTitleAsync() => Task.FromResult("测试看板");
 
+        public Task<bool> GetDisplayCarouselEnabledAsync() => Task.FromResult(true);
+
         public Task<int> GetLanguageAsync() => Task.FromResult(1); // En
 
         public Task<string> GetLanguageCodeAsync() => Task.FromResult("en-US");
@@ -153,6 +155,14 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         var title = await client.GetTitleAsync(TestContext.Current.CancellationToken);
         Assert.Equal("测试看板", title);
+    }
+
+    [Fact]
+    public async Task GetDisplayCarouselEnabled_ReturnsServerValue()
+    {
+        await using var client = CreateClient();
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.True(await client.GetDisplayCarouselEnabledAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -355,6 +365,7 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
             () => adminClient.SaveCollectorSettingsAsync(new CollectorSettingsDto(), TestContext.Current.CancellationToken),
             () => client.GetServerVersionAsync(TestContext.Current.CancellationToken),
             () => client.GetTitleAsync(TestContext.Current.CancellationToken),
+            () => client.GetDisplayCarouselEnabledAsync(TestContext.Current.CancellationToken),
             () => client.GetLanguageAsync(TestContext.Current.CancellationToken),
         };
         foreach (var call in calls)

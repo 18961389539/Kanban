@@ -39,12 +39,17 @@ public partial class HistoryQuery
 
     private string ProdTotalOkText => ProdTotalOk.ToString("N0");
     private string ProdTotalNgText => ProdTotalNg.ToString("N0");
+    private string ProdOutputText => (ProdTotalOk + ProdTotalNg).ToString("N0");
     private string ProdQualityRateText => $"{ProdQualityRate:P2}";
+    private double ProdNgRate => ProdTotalOk + ProdTotalNg > 0 ? (double)ProdTotalNg / (ProdTotalOk + ProdTotalNg) : 0;
+    private string ProdNgRateText => $"{ProdNgRate:P2}";
     private string ProdQualityTooltip => L.Tip(
         "Hq_Tip_WindowQuality",
         ProdTotalOk,
         ProdTotalOk + ProdTotalNg,
         ProdQualityRateText);
+    private string ProdOutputTooltip => L.Tip("Hq_Tip_WindowOutput", ProdTotalOk, ProdTotalNg, ProdTotalOk + ProdTotalNg);
+    private string ProdNgRateTooltip => L.Tip("Hq_Tip_WindowNgRate", ProdTotalNg, ProdTotalOk + ProdTotalNg, ProdNgRateText);
     private string ProdPageSummaryText => PageSummary(ProdPage, ProdTotalPages, ProdTotalCount);
 
     private async Task ProdSearchAsync(DateTime from, DateTime to)

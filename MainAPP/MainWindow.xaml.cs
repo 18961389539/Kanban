@@ -108,6 +108,9 @@ public partial class MainWindow : Window
 
     private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (DataContext is MainWindowViewModel vm)
+            vm.NoteCarouselInteraction();
+
         if (e.Key == System.Windows.Input.Key.F11)
         {
             ToggleFullscreen();
@@ -118,6 +121,12 @@ public partial class MainWindow : Window
             ExitFullscreen();
             e.Handled = true;
         }
+    }
+
+    private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+            vm.NoteCarouselInteraction();
     }
 
     private void ToggleFullscreen()

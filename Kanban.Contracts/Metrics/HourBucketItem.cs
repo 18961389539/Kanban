@@ -1,4 +1,4 @@
-namespace MainAPP.Models;
+namespace Kanban.Contracts.Metrics;
 
 /// <summary>本班小时计划格的状态：过去达标 / 过去未达标 / 当前小时 / 未到点。</summary>
 public enum HourBucketState

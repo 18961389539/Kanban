@@ -16,8 +16,8 @@ public partial class HistoryQuery
 
     // ──────────── Tab 状态 ────────────
     private int TabIndex { get; set; }
-    private string[] TabTitles => [L.T("Tab_Production"), L.T("Tab_Status"), L.T("Tab_Alarm"), L.T("Tab_Oee")];
-    private bool IsAnyLoading => ProdIsLoading || StIsLoading || AlIsLoading || OeIsLoading;
+    private string[] TabTitles => [L.T("Tab_Production"), L.T("Tab_Status"), L.T("Tab_Alarm"), L.T("Tab_Oee"), L.T("K914")];
+    private bool IsAnyLoading => ProdIsLoading || StIsLoading || AlIsLoading || OeIsLoading || SnIsLoading;
 
     // ──────────── 共享筛选条件 ────────────
     private List<(string Id, string Name)> DeviceOptions { get; set; } = [];
@@ -36,12 +36,51 @@ public partial class HistoryQuery
     /// <summary>设备配置缓存（OEE Tab 的目标产能/设备名）。</summary>
     private List<DeviceConfigDto> _deviceConfigs = [];
 
+    [SupplyParameterFromQuery(Name = "tab")] public string? QueryTab { get; set; }
+    [SupplyParameterFromQuery(Name = "deviceId")] public string? QueryDeviceId { get; set; }
+    [SupplyParameterFromQuery(Name = "alarmName")] public string? QueryAlarmName { get; set; }
+    [SupplyParameterFromQuery(Name = "sn")] public string? QuerySn { get; set; }
+    [SupplyParameterFromQuery(Name = "from")] public string? QueryFrom { get; set; }
+    [SupplyParameterFromQuery(Name = "to")] public string? QueryTo { get; set; }
+    private string? _appliedQuery;
+
     protected override async Task OnInitializedAsync()
     {
         ApplyQuickRange(QuickIndex);
         // 连接 Collector（DashboardState 幂等 + 失败自动重试；历史查询走独立 Invoke 连接，见 ADR-1）
         await Dashboard.InitializeAsync();
         await LoadDevicesAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = $"{QueryTab}|{QueryDeviceId}|{QueryAlarmName}|{QuerySn}|{QueryFrom}|{QueryTo}";
+        if (string.IsNullOrEmpty(QueryTab) && string.IsNullOrEmpty(QueryDeviceId)
+            && string.IsNullOrEmpty(QueryAlarmName) && string.IsNullOrEmpty(QuerySn)
+            && string.IsNullOrEmpty(QueryFrom) && string.IsNullOrEmpty(QueryTo))
+            return;
+        if (key == _appliedQuery) return;
+        _appliedQuery = key;
+        ApplyIncomingQuery();
+        await SearchAsync();
+    }
+
+    private void ApplyIncomingQuery()
+    {
+        if (int.TryParse(QueryTab, out var tab) && tab >= 0 && tab < TabTitles.Length)
+            TabIndex = tab;
+        if (!string.IsNullOrEmpty(QueryDeviceId))
+            DeviceId = QueryDeviceId;
+        if (!string.IsNullOrEmpty(QueryAlarmName))
+            AlarmName = QueryAlarmName;
+        if (!string.IsNullOrEmpty(QuerySn))
+            SnInput = QuerySn;
+        if (!string.IsNullOrEmpty(QueryFrom) && !string.IsNullOrEmpty(QueryTo))
+        {
+            FromText = QueryFrom;
+            ToText = QueryTo;
+            QuickIndex = -1;
+        }
     }
 
     /// <summary>设备下拉：优先快照列表（实时数据源），未就绪时兜底设备配置。</summary>
@@ -114,6 +153,11 @@ public partial class HistoryQuery
     /// <summary>查询入口：校验共享时间范围后分发到当前 Tab。</summary>
     private async Task SearchAsync()
     {
+        if (TabIndex == 4)
+        {
+            await SnSearchAsync();
+            return;
+        }
         ValidationMessage = null;
         if (!TryParseRange(out var from, out var to))
         {
@@ -136,6 +180,7 @@ public partial class HistoryQuery
         0 => ProdHasQueried && ProdTotalCount > 0 && !ProdIsLoading && ProdAnalysisDone,
         1 => StHasQueried && StTotalCount > 0 && !StIsLoading,
         2 => AlHasQueried && AlTotalCount > 0 && !AlIsLoading,
+        4 => SnHasQueried && SnRows.Count > 0 && !SnIsLoading,
         _ => OeHasQueried && !OeIsLoading,
     };
 
@@ -146,6 +191,7 @@ public partial class HistoryQuery
             case 0: await ProdExportCsvAsync(); break;
             case 1: await StExportCsvAsync(); break;
             case 2: await AlExportCsvAsync(); break;
+            case 4: await SnExportCsvAsync(); break;
             default: await OeExportCsvAsync(); break;
         }
     }
@@ -160,6 +206,7 @@ public partial class HistoryQuery
         ResetStatus();
         ResetAlarm();
         ResetOee();
+        ResetSn();
     }
 
     // ──────────── 通用查询助手 ────────────

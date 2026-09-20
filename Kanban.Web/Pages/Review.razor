@@ -2,6 +2,7 @@
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @using System.Globalization
+@using System.Text
 @using Kanban.Analysis
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
@@ -40,6 +41,9 @@
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
             <button class="btn" disabled="@IsLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
+            <button class="btn" disabled="@IsLoading" @onclick="ExportYesterdayAsync">@L.T("Rv_Daily")</button>
+            <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
+            <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
         </div>
     </div>
 
@@ -75,7 +79,7 @@
             <span class="rs-item" title="@ReviewOeeTooltip"><b>OEE</b> <span class="rs-strong">@Pct(Result.Oee)</span></span>
             <span class="rs-item" title="@ReviewQualityTooltip"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
             <span class="rs-item" title="@ReviewOutputTooltip"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span></span>
-            <span class="rs-item"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
+            <span class="rs-item" title="@ReviewAlarmTooltip"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
             <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@Result.ShiftName</span></span>
         </div>
 
@@ -111,6 +115,10 @@
         @* ──── 复盘结论 ──── *@
         <section class="card">
             <div class="card-title">@L.T("Rv_Conclusions") <span class="badge-soft">@L.T("Rv_ConclusionsHint")</span></div>
+            @if (!string.IsNullOrEmpty(Result.Takeaway))
+            {
+                <div class="review-takeaway">@Result.Takeaway</div>
+            }
             @foreach (var c in Result.Conclusions)
             {
                 <div class="conclusion-row">
@@ -132,18 +140,18 @@
                 <span class="kpi-sub">@L.T("Lbl_Ok") @Result.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Result.TotalNg.ToString("N0")</span>
                 <span class="kpi-sub dim">@L.T("Rv_OutputAchievement") @Pct(Result.PerformanceRate)</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card" title="@ReviewAlarmTooltip">
                 <span class="kpi-label">@L.T("Rv_AlarmCount")</span>
                 <span class="kpi-value kpi-ng">@Result.AlarmTriggered.ToString("N0")</span>
                 <span class="kpi-sub">@L.T("Hq_AlarmRecovered") @Result.AlarmRecovered.ToString("N0") · @L.T("Hq_AlarmPending") @Result.AlarmPending.ToString("N0")</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card" title="@ReviewDowntimeTooltip">
                 <span class="kpi-label">@L.T("Rv_LongestDowntime")</span>
                 <span class="kpi-value kpi-ng">@Result.LongestDowntimeText</span>
                 <span class="kpi-sub">@Result.LongestDowntimeDevice</span>
                 <span class="kpi-sub dim">@Result.LongestDowntimeAlarm</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card" title="@ReviewPeakValleyTooltip">
                 <span class="kpi-label">@L.T("Rv_PeakHour") ▲ / @L.T("Rv_ValleyHour") ▼</span>
                 <span class="kpi-value">@Result.PeakHour / @Result.ValleyHour</span>
                 <span class="kpi-sub kpi-ok">@L.T("Rv_PeakValleyOk", Result.PeakOk.ToString("N0"), Result.PeakShare)</span>
@@ -252,6 +260,9 @@
     private string? ValidationMessage { get; set; }
     private string? QueryError { get; set; }
     private ReviewResult? Result { get; set; }
+    private DateTime _reviewFrom;
+    private DateTime _reviewTo;
+    private bool _exportDailyAfterSearch;
 
     private sealed class ReviewResult
     {
@@ -271,6 +282,7 @@
         public double BaselineQuality, BaselineOee;
         public string WorkOrderText = "—", ProductText = "—", RecipeText = "—";
         public string ShiftName = "—";
+        public string Takeaway = "";
         public List<(DateTime Time, int Ok, int Ng)> ChartData = [];
         public object? TrendOption, AlarmOption, TimelineOption;
     }
@@ -329,11 +341,13 @@
             || from > to)
         {
             ValidationMessage = L.T("Hq_ValidationRange");
+            _exportDailyAfterSearch = false;
             return;
         }
         if (string.IsNullOrEmpty(DeviceId))
         {
             ValidationMessage = L.T("Hq_NeedDevice");
+            _exportDailyAfterSearch = false;
             return;
         }
         await RunReviewAsync(from, to);
@@ -468,15 +482,26 @@
             r.WorkOrderText = wo is null ? "—" : $"{wo.OrderNo} · {L.T("Meta_PlanWo", wo.TargetQuantity.ToString("N0"))}";
             r.ProductText = wo is null ? "—" : $"{wo.ProductCode} · {wo.ProductName}";
             r.RecipeText = string.IsNullOrWhiteSpace(device?.RecipeName) ? "—" : $"{device.RecipeName} · {device.RecipeValue:N0}";
+            var metText = r.Oee >= ReviewAnalysis.OeeTarget ? L.T("Rv_Met") : L.T("Rv_NotMet");
+            r.Takeaway = L.T("Rv_Takeaway", r.HealthScore, metText, r.LongestDowntimeText,
+                string.IsNullOrEmpty(r.LongestDowntimeDevice) ? "—" : r.LongestDowntimeDevice);
 
             BuildCharts(r);
+            _reviewFrom = from;
+            _reviewTo = to;
             Result = r;
             HasQueried = true;
+            if (_exportDailyAfterSearch)
+            {
+                _exportDailyAfterSearch = false;
+                await ExportCsvAsync(daily: true);
+            }
         }
         catch (Exception)
         {
             QueryError = L.T("Hq_QueryFailed");
             HasQueried = true;
+            _exportDailyAfterSearch = false;
         }
         finally
         {
@@ -623,6 +648,20 @@
         : L.Tip("Hq_Tip_WindowOee",
             $"{Pct(Result.AvailabilityRate)} × {Pct(Result.PerformanceRate)} × {Pct(Result.QualityRate)}",
             Pct(Result.Oee));
+    private string ReviewAlarmTooltip => Result is null
+        ? ""
+        : L.Tip("Rv_Tip_AlarmCount", Result.AlarmTriggered, Result.AlarmRecovered, Result.AlarmPending);
+    private string ReviewDowntimeTooltip => Result is null
+        ? ""
+        : L.Tip("Rv_Tip_LongestDowntime",
+            Result.LongestDowntimeText,
+            string.IsNullOrEmpty(Result.LongestDowntimeDevice) ? "—" : Result.LongestDowntimeDevice,
+            string.IsNullOrEmpty(Result.LongestDowntimeAlarm) ? "—" : Result.LongestDowntimeAlarm);
+    private string ReviewPeakValleyTooltip => Result is null
+        ? ""
+        : L.Tip("Rv_Tip_PeakHour", Result.PeakHour, Result.PeakOk, Pct(Result.PeakShare))
+          + "\n"
+          + L.Tip("Rv_Tip_ValleyHour", Result.ValleyHour, Result.ValleyOk, Pct(Result.ValleyShare));
 
     private static string ConclusionIcon(string kind) => kind switch
     {
@@ -667,4 +706,60 @@
         ["textStyle"] = new Dictionary<string, object?> { ["color"] = "#9CA3AF" },
     };
 
+    private async Task ExportYesterdayAsync()
+    {
+        QuickIndex = 2;
+        ApplyQuickRange(2);
+        _exportDailyAfterSearch = true;
+        await SearchAsync();
+    }
+
+    private Task ExportCsvAsync() => ExportCsvAsync(daily: false);
+
+    private async Task ExportCsvAsync(bool daily)
+    {
+        if (Result is null)
+            return;
+        var sb = new StringBuilder();
+        sb.AppendLine(C(Result.Takeaway));
+        sb.AppendLine(L.T("Csv_SumRange", _reviewFrom, _reviewTo));
+        sb.AppendLine($"{C(L.T("Rv_Health"))},{Result.HealthScore}");
+        sb.AppendLine($"OEE,{Pct(Result.Oee)}");
+        sb.AppendLine($"{C(L.T("Hq_QualityRate"))},{Pct(Result.QualityRate)}");
+        sb.AppendLine($"{C(L.T("Lbl_TotalOutput"))},{Result.TotalOk + Result.TotalNg}");
+        sb.AppendLine($"{C(L.T("Lbl_Ok"))},{Result.TotalOk}");
+        sb.AppendLine($"{C(L.T("Lbl_Ng"))},{Result.TotalNg}");
+        sb.AppendLine($"{C(L.T("Rv_AlarmCount"))},{Result.AlarmTriggered}");
+        sb.AppendLine($"{C(L.T("Rv_LongestDowntime"))},{C(Result.LongestDowntimeText)},{C(Result.LongestDowntimeDevice)},{C(Result.LongestDowntimeAlarm)}");
+        foreach (var issue in Result.HealthIssues)
+            sb.AppendLine($"{C(L.T("Rv_Health"))},{C(issue)}");
+        foreach (var c in Result.Conclusions)
+            sb.AppendLine($"{C(L.T("Rv_Conclusions"))},{C(c.Text)}");
+        sb.AppendLine(string.Join(',', C(L.T("Hq_Shift")), C(L.T("Hq_OkCol")), C(L.T("Hq_NgCol")), C(L.T("Rv_AlarmCol")), C(L.T("Hq_QualityRate"))));
+        foreach (var s in Result.Shifts)
+        {
+            var total = s.OkCount + s.NgCount;
+            sb.AppendLine(string.Join(',',
+                C(s.ShiftName), s.OkCount.ToString(), s.NgCount.ToString(), s.AlarmCount.ToString(),
+                total > 0 ? $"{(double)s.OkCount / total:P1}" : "—"));
+        }
+
+        var fileName = daily
+            ? L.T("Rv_DailyCsvFile", _reviewFrom.Date)
+            : L.T("Rv_CsvFile", _reviewFrom, _reviewTo);
+        await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
+    }
+
+    private async Task PrintAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("window.print");
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private static string C(string? value) => ProductionAnalysis.CsvEscape(value);
 }

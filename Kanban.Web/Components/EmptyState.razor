@@ -1,7 +1,7 @@
 @* 统一空状态组件：对齐 WPF 端 MainAPP/Controls/EmptyState.xaml 的语义。
    用法：<EmptyState Title="暂无数据" Hint="请检查连接" />
    原 Home.razor 中散落的 <div class="empty-state"> / <div class="no-data"> 通过本组件统一。 *@
-<div class="empty-state">
+<div class="empty-state @(Compact ? "compact" : "")">
     @if (!string.IsNullOrEmpty(Icon))
     {
         <span class="empty-icon" aria-hidden="true">@Icon</span>
@@ -22,4 +22,7 @@
 
     /// <summary>图标符号（emoji 或单字符），可选。预留扩展为 SVG 图标。</summary>
     [Parameter] public string Icon { get; set; } = "";
+
+    /// <summary>卡片内空态：取消整页 60vh 高度，只占内容区。</summary>
+    [Parameter] public bool Compact { get; set; }
 }

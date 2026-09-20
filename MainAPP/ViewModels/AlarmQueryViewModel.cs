@@ -11,6 +11,7 @@ using MainAPP.Services;
 using OxyPlot;
 using Serilog;
 using MainAPP.Resources;
+using MainAPP.Helpers;
 
 namespace MainAPP.ViewModels;
 
@@ -25,17 +26,28 @@ public partial class AlarmQueryViewModel : ObservableObject
     private ObservableCollection<AlarmEventRecord> _alarmEvents = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TriggerTooltip))]
     private int _alarmTriggerCount;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RecoverTooltip))]
     private int _alarmRecoverCount;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PendingTooltip))]
     private int _alarmPendingCount;
 
     /// <summary>平均恢复耗时（MTTR）文本，如 "12min" / "1.5h"；无配对样本时为 null（不显示）。</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MttrTooltip))]
     private string? _alarmMttrText;
+
+    public string TriggerTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowTriggered, AlarmTriggerCount);
+    public string RecoverTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowRecovered, AlarmRecoverCount);
+    public string PendingTooltip => FormatHelper.Tip(Strings.Hq_Tip_WindowPending, AlarmPendingCount);
+    public string MttrTooltip => string.IsNullOrEmpty(AlarmMttrText)
+        ? ""
+        : FormatHelper.Tip(Strings.Hq_Tip_WindowMttr, AlarmMttrText);
 
     [ObservableProperty]
     private PlotModel? _alarmChart;
@@ -221,7 +233,7 @@ public partial class AlarmQueryViewModel : ObservableObject
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,
-            $"# 触发：{AlarmTriggerCount} 次，恢复：{AlarmRecoverCount} 次，待恢复：{AlarmPendingCount} 条",
+            $"# {string.Format(Strings.Csv_Alarm_Summary, AlarmTriggerCount, AlarmRecoverCount, AlarmPendingCount)}",
             $"# {AlarmInsight ?? Strings.M176}");
     }
 
@@ -341,14 +353,15 @@ public partial class AlarmQueryViewModel : ObservableObject
 
     private class AlarmCsvRow
     {
-        [Name("事件时间")] public DateTime Timestamp { get; set; }
-        [Name("设备ID")] public string? DeviceId { get; set; }
-        [Name("设备名称")] public string? DeviceName { get; set; }
-        [Name("报警ID")] public string? AlarmId { get; set; }
-        [Name("报警名称")] public string? AlarmName { get; set; }
-        [Name("PLC地址")] public string? PlcAddress { get; set; }
-        [Name("事件类型")] public AlarmEventType EventType { get; set; }
-        [Name("事件类型文本")] public string? EventTypeText { get; set; }
-        [Name("持续时间")] public string? DurationText { get; set; }
+        // 表头本地化由 HistoryQueryHelper.BuildCsv 按 Csv_Hd_<属性名> 运行时注入（多语言修复 2026-09-18）
+        public DateTime Timestamp { get; set; }
+        public string? DeviceId { get; set; }
+        public string? DeviceName { get; set; }
+        public string? AlarmId { get; set; }
+        public string? AlarmName { get; set; }
+        public string? PlcAddress { get; set; }
+        public AlarmEventType EventType { get; set; }
+        public string? EventTypeText { get; set; }
+        public string? DurationText { get; set; }
     }
 }

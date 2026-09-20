@@ -13,6 +13,7 @@
     d:DesignHeight="1080"
     d:DesignWidth="1920"
     PreviewKeyDown="OnPreviewKeyDown"
+    IsVisibleChanged="OnIsVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
 
     <UserControl.Resources>
@@ -90,8 +91,8 @@
               Visibility="{Binding HasNoDevices, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource KpiCard}" Padding="12,10" Margin="0,0,8,0">
@@ -114,21 +115,8 @@
                 </StackPanel>
             </Border>
 
-            <!--  一键全部设备 OEE 清零：危险写操作（二次确认 + 断线/无权限时禁用），置于每小时产能卡片之后  -->
-            <Border Grid.Column="1" Style="{StaticResource KpiCard}" Padding="12,10" Margin="0,0,12,0">
-                <Button
-                    VerticalAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.K929}"
-                    Command="{Binding ResetAllProductionCommand}"
-                    Content="{x:Static resources:Strings.K928}"
-                    Style="{StaticResource IconButtonDanger}"
-                    Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
-                    ToolTip="{x:Static resources:Strings.K930}"
-                    ToolTipService.ShowOnDisabled="True" />
-            </Border>
-
             <!--  四态设备数：合并为两张双指标卡（运行|报警、待机|离线），卡内细分隔线分隔  -->
-            <UniformGrid Grid.Column="2" Columns="2">
+            <UniformGrid Grid.Column="1" Columns="2">
                 <Border Style="{StaticResource KpiCard}" Margin="0,0,6,0" Padding="10,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -178,6 +166,20 @@
                     </Grid>
                 </Border>
             </UniformGrid>
+
+            <!--  一键全部设备 OEE 清零：危险写操作（二次确认 + 断线/无权限时禁用）。
+                  2026-09-17 UI 精修：与筛选区拉开距离移至最右 + ghost 红边样式，
+                  避免与「应用到全部设备」等常规操作混淆误触。  -->
+            <Button Grid.Column="2"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"
+                    AutomationProperties.Name="{x:Static resources:Strings.K929}"
+                    Command="{Binding ResetAllProductionCommand}"
+                    Content="{x:Static resources:Strings.K928}"
+                    Style="{StaticResource GhostDangerButton}"
+                    Tag="{x:Static mi:MaterialIconKind.DeleteSweep}"
+                    ToolTip="{x:Static resources:Strings.K930}"
+                    ToolTipService.ShowOnDisabled="True" />
         </Grid>
 
         <!--  筛选 / 搜索 / 排序  -->

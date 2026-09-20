@@ -227,6 +227,33 @@
         <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
         <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
     </Style>
+    <!--  纯图标危险按钮（2026-09-18 UI 精修）：配方/参数行内删除等操作。
+          GhostDangerButton 带 IconButtonContent 模板（Tag 图标 + 文本），
+          图标按钮不能复用，故单独给一个 32×32 触摸目标 + 红边红图标的变体。  -->
+    <Style x:Key="GhostDangerIconButton" TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+        <Setter Property="MinWidth" Value="32" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+    </Style>
+
+    <!--  危险操作 ghost 变体（2026-09-17 UI 精修）：透明底 + 红边红字，
+          用于与筛选控件同区但需要拉开视觉距离的危险写操作（产线总览「全部清零」），
+          降低与普通主操作按钮的混淆与误触概率；二次确认逻辑不变。  -->
+    <Style x:Key="GhostDangerButton" TargetType="Button" BasedOn="{StaticResource ButtonDanger}">
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource TouchFocusVisual}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource IconButtonContent}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+    </Style>
     <Style x:Key="IconButtonSuccess" TargetType="Button" BasedOn="{StaticResource ButtonSuccess}">
         <Setter Property="MinHeight" Value="40" />
         <Setter Property="Padding" Value="14,0" />
@@ -258,6 +285,82 @@
                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                 <Setter Property="FontWeight" Value="Bold" />
             </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  ============ 语义色药丸（2026-09-18 多页 UI 精修统一） ============
+          规则：15% 语义色底 + 同色文字 + 同色 1px 描边；禁止「白字压满色块」
+          （琥珀/灰档位对比度仅 1.8–2.5:1）。报警中心 / 设备管理三处共用。
+          Border 用 XxxPill，内部文字用对应的 XxxPillText，二者 DataTrigger 值必须一致。  -->
+    <Style x:Key="AlarmLevelPill" TargetType="Border">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="6,1" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{StaticResource StatusIdleSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource StatusIdleBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Level}" Value="Medium">
+                <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Level}" Value="High">
+                <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Level}" Value="Low">
+                <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="AlarmLevelPillText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeHint}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource StatusIdleBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Level}" Value="Medium">
+                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Level}" Value="High">
+                <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Level}" Value="Low">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  缺陷严重度药丸：Minor=灰 / Major=琥珀 / Critical=红  -->
+    <Style x:Key="DefectSeverityPill" TargetType="Border">
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="6,1" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="{StaticResource StatusIdleSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource StatusIdleBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="Major">
+                <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="DefectSeverityPillText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeHint}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource StatusIdleBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Severity}" Value="Major">
+                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+            </DataTrigger>
         </Style.Triggers>
     </Style>
 

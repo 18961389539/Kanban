@@ -1,5 +1,7 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Models;
+using MainAPP.Resources;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;
@@ -26,7 +28,9 @@ public partial class ActiveAlarmInfo : ObservableObject
     /// </summary>
     public string DisplayName => AlarmNameLocalizer.Resolve(AlarmName, AlarmNameEn, AlarmNameJa, AlarmNamePt);
 
-    [ObservableProperty] private string _durationText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DurationTooltip))]
+    private string _durationText = "";
     /// <summary>
     /// 是否为新加入报警（用于 UI 高亮闪烁，30 秒后由 SyncRuntime 清除）。
     /// 默认 false，仅 RefreshActiveAlarms 中新加入列表时设为 true。
@@ -35,6 +39,12 @@ public partial class ActiveAlarmInfo : ObservableObject
 
     /// <summary>加入列表的时刻，用于清除 IsNew 标志。重新触发时重置。</summary>
     public DateTime AddedAt { get; set; } = DateTime.Now;
+
+    /// <summary>持续时长说明（从触发到现在尚未恢复）。</summary>
+    public string DurationTooltip => string.IsNullOrEmpty(DurationText)
+        ? ""
+        : string.Format(CultureInfo.CurrentCulture, Strings.Home_Tip_ActiveAlarmDuration, DurationText)
+            .Replace("\\n", Environment.NewLine, StringComparison.Ordinal);
 
     public ActiveAlarmInfo(
         DateTime eventTime,

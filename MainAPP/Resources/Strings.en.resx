@@ -1296,6 +1296,12 @@
   <data name="K330" xml:space="preserve">
     <value>Mute New Alarms</value>
   </data>
+  <data name="Home_MuteShort" xml:space="preserve">
+    <value>Mute</value>
+  </data>
+  <data name="Home_SelectDeviceHint" xml:space="preserve">
+    <value>Select device</value>
+  </data>
   <data name="K331" xml:space="preserve">
     <value>Toggle sound and flashing for new alarms; the alarm list still updates</value>
   </data>
@@ -3166,7 +3172,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Only active orders can complete</value>
   </data>
   <data name="M089" xml:space="preserve">
-    <value>Complete and save snapshot</value>
+    <value>Complete and save snapshot; then pick the next order</value>
   </data>
   <data name="M090" xml:space="preserve">
     <value>Cannot abort completed order</value>
@@ -5084,6 +5090,9 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>Good-count pace (OK/due)</value>
   </data>
+  <data name="Ln_ShiftPaceExceeded" xml:space="preserve">
+    <value>Over 100%+</value>
+  </data>
   <data name="Ln_AvailabilityHint" xml:space="preserve">
     <value>Counts alarm time only; excludes standby and offline</value>
   </data>
@@ -6349,6 +6358,9 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Validator_DuplicateChildId" xml:space="preserve">
     <value>Duplicate {1} ID for device '{0}'</value>
   </data>
+  <data name="Validator_DWordAddressOverlap" xml:space="preserve">
+    <value>Device '{0}' DWord addresses {1} and {2} overlap (a DWord uses 2 words; use even-aligned addresses with stride &gt;= 2)</value>
+  </data>
   <data name="Validator_DuplicateSourceName" xml:space="preserve">
     <value>Duplicate source name '{0}'</value>
   </data>
@@ -6766,6 +6778,42 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Wo_AddTitle" xml:space="preserve">
     <value>New Work Order</value>
   </data>
+  <data name="Wo_ContinueTitle" xml:space="preserve">
+    <value>Work Order Completed</value>
+  </data>
+  <data name="Wo_ContinueMessage" xml:space="preserve">
+    <value>Work order {0} is complete. Choose the next step to continue.</value>
+  </data>
+  <data name="Wo_ContinueSelect" xml:space="preserve">
+    <value>Select another order</value>
+  </data>
+  <data name="Wo_ContinueSelectHint" xml:space="preserve">
+    <value>Pick a pending order and start it</value>
+  </data>
+  <data name="Wo_ContinuePendingList" xml:space="preserve">
+    <value>Pending orders</value>
+  </data>
+  <data name="Wo_ContinueNoPending" xml:space="preserve">
+    <value>No pending orders</value>
+  </data>
+  <data name="Wo_ContinueCreate" xml:space="preserve">
+    <value>Create new order</value>
+  </data>
+  <data name="Wo_ContinueCreateHint" xml:space="preserve">
+    <value>Create a blank order and start it</value>
+  </data>
+  <data name="Wo_ContinueCopy" xml:space="preserve">
+    <value>Copy current order</value>
+  </data>
+  <data name="Wo_ContinueCopyHint" xml:space="preserve">
+    <value>Copy this order as a new one and start it</value>
+  </data>
+  <data name="Wo_ContinueLater" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="Wo_ContinueItemFormat" xml:space="preserve">
+    <value>{0}  ·  {1}  ·  {2}</value>
+  </data>
   <data name="Audit_Detail_Role" xml:space="preserve">
     <value>Role={0}</value>
   </data>
@@ -6864,6 +6912,102 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Home_WorkOrderAchievement" xml:space="preserve">
     <value>Order achievement</value>
+  </data>
+  <data name="Home_WorkOrderSchedule" xml:space="preserve">
+    <value>Est. end {0} · {1} left</value>
+  </data>
+  <data name="Home_WorkOrderOverdue" xml:space="preserve">
+    <value>Overdue by {0}</value>
+  </data>
+  <data name="Home_WorkOrderBehind" xml:space="preserve">
+    <value>{0}pp behind plan</value>
+  </data>
+  <data name="Home_WorkOrderAhead" xml:space="preserve">
+    <value>{0}pp ahead of plan</value>
+  </data>
+  <data name="Home_WorkOrderEmpty" xml:space="preserve">
+    <value>No active work order</value>
+  </data>
+  <data name="Home_WorkOrderEmptyHint" xml:space="preserve">
+    <value>No running order is linked to the current device. Start one in Work Orders.</value>
+  </data>
+  <data name="Csv_Hd_Timestamp" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Csv_Hd_DeviceId" xml:space="preserve">
+    <value>Device ID</value>
+  </data>
+  <data name="Csv_Hd_DeviceName" xml:space="preserve">
+    <value>Device name</value>
+  </data>
+  <data name="Csv_Hd_AlarmId" xml:space="preserve">
+    <value>Alarm ID</value>
+  </data>
+  <data name="Csv_Hd_AlarmName" xml:space="preserve">
+    <value>Alarm name</value>
+  </data>
+  <data name="Csv_Hd_PlcAddress" xml:space="preserve">
+    <value>PLC address</value>
+  </data>
+  <data name="Csv_Hd_EventType" xml:space="preserve">
+    <value>Event type</value>
+  </data>
+  <data name="Csv_Hd_EventTypeText" xml:space="preserve">
+    <value>Event type (text)</value>
+  </data>
+  <data name="Csv_Hd_DurationText" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Csv_Hd_ShiftName" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="Csv_Hd_OkProduction" xml:space="preserve">
+    <value>OK output</value>
+  </data>
+  <data name="Csv_Hd_NgProduction" xml:space="preserve">
+    <value>NG output</value>
+  </data>
+  <data name="Csv_Hd_StatusWord" xml:space="preserve">
+    <value>Status word</value>
+  </data>
+  <data name="Csv_Hd_PrevState" xml:space="preserve">
+    <value>Prev state</value>
+  </data>
+  <data name="Csv_Hd_CurrState" xml:space="preserve">
+    <value>Current state</value>
+  </data>
+  <data name="Csv_Hd_PrevStateText" xml:space="preserve">
+    <value>Prev state (text)</value>
+  </data>
+  <data name="Csv_Hd_CurrStateText" xml:space="preserve">
+    <value>Current state (text)</value>
+  </data>
+  <data name="Csv_Hd_Metric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Csv_Hd_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Csv_Alarm_Summary" xml:space="preserve">
+    <value>Triggered: {0}, recovered: {1}, pending: {2}</value>
+  </data>
+  <data name="Csv_Prod_Range" xml:space="preserve">
+    <value>Range: {0} ~ {1}</value>
+  </data>
+  <data name="Csv_Prod_Summary" xml:space="preserve">
+    <value>Total OK: {0}, total NG: {1}, quality: {2}</value>
+  </data>
+  <data name="Csv_Export_PageHint" xml:space="preserve">
+    <value>This file contains only the current page (max {0} rows), not the full export.</value>
+  </data>
+  <data name="Csv_WorkOrder_FileName" xml:space="preserve">
+    <value>work_orders_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Csv_DailyReport_FileName" xml:space="preserve">
+    <value>daily_report_{0:yyyyMMdd}_{1}.pdf</value>
+  </data>
+  <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
+    <value>Switching recipes discards unsaved edits. Continue?</value>
   </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\nNow: {0} pcs</value>
@@ -6993,5 +7137,263 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>Review health score combines availability, performance, quality and alarm stability; lower means more issues.\nNow: {0}</value>
+  </data>
+  <data name="Home_Scope_WorkOrder" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="Home_Scope_Shift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="Home_Scope_Realtime" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
+    <value>Counted in the work-order time window; same as the Work Order page</value>
+  </data>
+  <data name="Home_Scope_Shift_Tip" xml:space="preserve">
+    <value>Shift session cumulative; not the work-order window</value>
+  </data>
+  <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
+    <value>Live value while running (based on run time)</value>
+  </data>
+  <data name="Settings_DisplayCarousel" xml:space="preserve">
+    <value>TV carousel</value>
+  </data>
+  <data name="Settings_DisplayCarouselHint" xml:space="preserve">
+    <value>On by default. Home 40s → line 30s → alarms 20s (skip if none). Touch pauses 16s. High alarms freeze on the alarm page. Uncheck in full mode to disable.</value>
+  </data>
+  <data name="Carousel_Frozen" xml:space="preserve">
+    <value>Frozen on high alarm</value>
+  </data>
+  <data name="Carousel_Paused" xml:space="preserve">
+    <value>Paused · {0} · {1}s</value>
+  </data>
+  <data name="Carousel_Running" xml:space="preserve">
+    <value>{0} · {1}s left</value>
+  </data>
+  <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
+    <value>Schedule check: actual achievement versus planned time progress. Positive = ahead, negative = behind.\nActual {0} · planned {1} · {2}\n{3}</value>
+  </data>
+  <data name="Home_Tip_CycleDiff" xml:space="preserve">
+    <value>Cycle gap = actual cycle − target cycle. Positive = slower (longer per piece), negative = faster.\nTarget {0} · actual {1} · {2}</value>
+  </data>
+  <data name="Home_Tip_DefectSummary" xml:space="preserve">
+    <value>Shift defect Pareto total count (classified defects only; NG without a reason is excluded).\n{0}</value>
+  </data>
+  <data name="Home_Tip_DefectNgShare" xml:space="preserve">
+    <value>Classified defect count as a share of shift NG. Uncoded NG is not in the Pareto.\n{0}</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmCount" xml:space="preserve">
+    <value>Active unrecovered alarms on this device. The badge is the untruncated total.\nNow: {0:N0}</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmDuration" xml:space="preserve">
+    <value>Elapsed time since the alarm triggered and has not recovered.\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_ConnBadge" xml:space="preserve">
+    <value>Live link between this board and the collector. Green = connected and receiving snapshots; red = disconnected.\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_DeviceCount" xml:space="preserve">
+    <value>Number of devices currently on this board.\nNow: {0:N0}</value>
+  </data>
+  <data name="Home_Tip_DeviceStatus" xml:space="preserve">
+    <value>Device run state (from status word and acquisition).\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_SnapSeq" xml:space="preserve">
+    <value>Snapshot sequence: +1 on each successful acquisition cycle. A stuck number means acquisition is not advancing.\nNow: #{0}</value>
+  </data>
+  <data name="Home_Tip_DataFresh" xml:space="preserve">
+    <value>Age of the last snapshot for this device. Live data should be a few seconds old.\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_TrendWindow" xml:space="preserve">
+    <value>Speed sparkline for the last 1 minute (pcs/h). Points are samples, not shift totals.\nCurrent speed: {0} pcs/h</value>
+  </data>
+  <data name="Home_Tip_StatusWord" xml:space="preserve">
+    <value>Raw PLC status word (hex). Use it to verify comms and run state.\nNow: {0}</value>
+  </data>
+  <data name="Home_Tip_Recipe" xml:space="preserve">
+    <value>Current device recipe name and value.\nNow: {0}</value>
+  </data>
+  <data name="Carousel_Tip" xml:space="preserve">
+    <value>TV carousel status. A click pauses for 16 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0}</value>
+  </data>
+  <data name="Mo_Tip_ConnStatus" xml:space="preserve">
+    <value>Collector connection to the device/PLC.\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_AcqStatus" xml:space="preserve">
+    <value>Whether the acquisition loop is running. When stopped, snapshots stop updating.\nNow: {0}</value>
+  </data>
+  <data name="Rv_Tip_AlarmCount" xml:space="preserve">
+    <value>Trigger count in the review window (not currently active alarms). Recovered {1:N0} · pending {2:N0}.\nNow: {0:N0}</value>
+  </data>
+  <data name="Rv_Tip_LongestDowntime" xml:space="preserve">
+    <value>Longest paired alarm duration in the review window (trigger to recover or query end).\nNow: {0}\n{1} · {2}</value>
+  </data>
+  <data name="Rv_Tip_PeakHour" xml:space="preserve">
+    <value>Hour with the most OK in the review window (not live speed).\nNow: {0} · {1:N0} pcs ({2})</value>
+  </data>
+  <data name="Rv_Tip_ValleyHour" xml:space="preserve">
+    <value>Hour with the least OK in the review window (not live speed).\nNow: {0} · {1:N0} pcs ({2})</value>
+  </data>
+  <data name="Hq_Tip_WindowTriggered" xml:space="preserve">
+    <value>Trigger events in the selected query window (not currently active alarms).\nNow: {0:N0}</value>
+  </data>
+  <data name="Hq_Tip_WindowRecovered" xml:space="preserve">
+    <value>Recover events in the selected query window.\nNow: {0:N0}</value>
+  </data>
+  <data name="Hq_Tip_WindowPending" xml:space="preserve">
+    <value>Alarms still unrecovered at query end (triggered in the window with no matching recover).\nNow: {0:N0}</value>
+  </data>
+  <data name="Hq_Tip_WindowMttr" xml:space="preserve">
+    <value>Average recovery time (MTTR) of paired alarms in the query window. Hidden when there is no pair.\nNow: {0}</value>
+  </data>
+  <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
+    <value>More unrecovered alarms on this device are not expanded. The card shows the first only.\n{0:N0} more</value>
+  </data>
+  <data name="Ac_Tip_RankDuration" xml:space="preserve">
+    <value>Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_Health" xml:space="preserve">
+    <value>Combines PLC connection, whether the acquisition loop is running, and whether the last cycle succeeded.\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_DisconnectDuration" xml:space="preserve">
+    <value>How long the collector has been disconnected from the PLC.\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_CompletedCycles" xml:space="preserve">
+    <value>Completed acquisition cycles (success and failure both count).\nNow: {0:N0}</value>
+  </data>
+  <data name="Mo_Tip_FailedCycles" xml:space="preserve">
+    <value>Failed acquisition cycles (a subset of completed cycles; not added again to the success-rate denominator).\nNow: {0:N0}</value>
+  </data>
+  <data name="Mo_Tip_LastCycleMs" xml:space="preserve">
+    <value>Duration of the latest acquisition cycle.\nNow: {0} ms</value>
+  </data>
+  <data name="Mo_Tip_AvgCycleMs" xml:space="preserve">
+    <value>Average acquisition cycle duration.\nNow: {0} ms</value>
+  </data>
+  <data name="Mo_Tip_MaxCycleMs" xml:space="preserve">
+    <value>Longest acquisition cycle duration.\nNow: {0} ms</value>
+  </data>
+  <data name="Mo_Tip_DevicesRead" xml:space="preserve">
+    <value>Devices read in the last successful cycle / configured devices.\nNow: {0} / {1}</value>
+  </data>
+  <data name="Mo_Tip_LastSuccessAt" xml:space="preserve">
+    <value>Time of the last successful acquisition cycle.\nNow: {0}</value>
+  </data>
+  <data name="Mo_Tip_LastFailureAt" xml:space="preserve">
+    <value>Time of the last failed acquisition cycle.\nNow: {0}</value>
+  </data>
+  <data name="Web_Wo_Achievement" xml:space="preserve">
+    <value>Achievement</value>
+  </data>
+  <data name="Web_Wo_ScheduleChip" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="Web_Wo_Detail" xml:space="preserve">
+    <value>Work Order Detail</value>
+  </data>
+  <data name="Web_Wo_Remark" xml:space="preserve">
+    <value>Remark</value>
+  </data>
+  <data name="Web_Wo_SnTitle" xml:space="preserve">
+    <value>Piece Trace</value>
+  </data>
+  <data name="Web_Hq_SnCol" xml:space="preserve">
+    <value>Serial Number</value>
+  </data>
+  <data name="Web_Hq_SnWorkOrder" xml:space="preserve">
+    <value>Work Order</value>
+  </data>
+  <data name="Web_Hq_SnSource" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Web_Csv_FileSn" xml:space="preserve">
+    <value>sn_trace_{0}.csv</value>
+  </data>
+  <data name="Web_Ac_MutedCount" xml:space="preserve">
+    <value>Muted {0}</value>
+  </data>
+  <data name="Web_Ac_GroupAlarms" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="Web_Ac_Copy" xml:space="preserve">
+    <value>Copy handover</value>
+  </data>
+  <data name="Web_Rv_Daily" xml:space="preserve">
+    <value>Yesterday report</value>
+  </data>
+  <data name="Web_Rv_Export" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="Web_Rv_Print" xml:space="preserve">
+    <value>Print / PDF</value>
+  </data>
+  <data name="Web_Rv_Takeaway" xml:space="preserve">
+    <value>Health {0} · {1} · longest downtime {2} ({3})</value>
+  </data>
+  <data name="Web_Rv_CsvFile" xml:space="preserve">
+    <value>review_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Rv_DailyCsvFile" xml:space="preserve">
+    <value>daily_report_{0:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Dd_Title" xml:space="preserve">
+    <value>Device runtime</value>
+  </data>
+  <data name="Web_Dd_HourBoard" xml:space="preserve">
+    <value>Hour-by-hour board</value>
+  </data>
+  <data name="Web_Dd_NoShift" xml:space="preserve">
+    <value>Not in a shift window</value>
+  </data>
+  <data name="Web_Dd_RecentAlarms" xml:space="preserve">
+    <value>Today's alarms</value>
+  </data>
+  <data name="Web_Dd_Sources" xml:space="preserve">
+    <value>Data sources</value>
+  </data>
+  <data name="Web_Dd_OpenRuntime" xml:space="preserve">
+    <value>Runtime</value>
+  </data>
+  <data name="Web_Dd_Plan" xml:space="preserve">
+    <value>Plan</value>
+  </data>
+  <data name="Web_Dd_Actual" xml:space="preserve">
+    <value>Actual</value>
+  </data>
+  <data name="Web_Dd_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Web_Dd_NoDevice" xml:space="preserve">
+    <value>No device specified</value>
+  </data>
+  <data name="Web_Mo_Sources" xml:space="preserve">
+    <value>Live data sources</value>
+  </data>
+  <data name="Web_Mo_SourceEmpty" xml:space="preserve">
+    <value>No source values</value>
+  </data>
+  <data name="Web_Mo_SourceEmptyHint" xml:space="preserve">
+    <value>Configured sources such as humidity and energy appear here</value>
+  </data>
+  <data name="Web_Mo_Triggered" xml:space="preserve">
+    <value>Triggered</value>
+  </data>
+  <data name="Web_Mo_Updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="Web_Dv_Sources" xml:space="preserve">
+    <value>Data source config</value>
+  </data>
+  <data name="Web_Dv_SourceType" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Web_Dv_TriggerAddr" xml:space="preserve">
+    <value>Trigger address</value>
+  </data>
+  <data name="Web_Dv_ValueItems" xml:space="preserve">
+    <value>Value items</value>
+  </data>
+  <data name="Web_Dv_SourceEnabled" xml:space="preserve">
+    <value>Enabled</value>
   </data>
 </root>

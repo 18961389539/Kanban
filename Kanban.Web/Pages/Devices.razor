@@ -1,9 +1,11 @@
 ﻿@page "/devices"
 @implements IDisposable
 @inject DashboardState Dashboard
+@inject NavigationManager Nav
 @inject ILogger<Devices> Logger
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
+@using Kanban.Contracts.Metrics
 @using Microsoft.Extensions.Logging
 
 <div class="query-page">
@@ -49,13 +51,13 @@
                 <div class="mon-card line-card @(SelectedDeviceId == d.Id ? "selected" : "")" @onclick="() => SelectDevice(d.Id)">
                     <div class="dev-head">
                         <span class="dev-name">@d.Name</span>
-                        <span class="status-badge @StateClass(d.Id)">@StateText(d.Id)</span>
+                        <span class="status-badge @StateClass(d.Id)" title="@L.Tip("Home_Tip_DeviceStatus", StateText(d.Id))">@StateText(d.Id)</span>
                     </div>
                     <div class="metric-grid">
                         <div><span class="kpi-label">@L.T("Dv_DeviceId")</span><span class="kpi-value mono">@d.Id</span></div>
                         <div><span class="kpi-label">@L.T("Dv_MachineType")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.MachineType) ? "—" : d.MachineType)</span></div>
-                        <div><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
-                        <div><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
+                        <div title="@L.Tip("Home_Tip_Recipe", string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)"><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
+                        <div title="@L.Tip("Home_Tip_TargetCycle", d.TargetCycle, d.TargetCycle > 0 ? $"{SnapshotMetrics.CycleSeconds(d.TargetCycle):F2}s" : "—")"><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
                     </div>
                     <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CounterAlarms.Count)</div>
                 </div>
@@ -65,7 +67,10 @@
         @if (Selected is { } sel)
         {
             <section class="card">
-                <div class="card-title">@L.T("Dv_Detail", sel.Name)</div>
+                <div class="card-title">
+                    <span>@L.T("Dv_Detail", sel.Name)</span>
+                    <button class="chip-btn" @onclick="() => OpenRuntime(sel.Id)">@L.T("Dd_OpenRuntime")</button>
+                </div>
 
                 <div class="card-title sub">@L.T("Dv_AddressConfig")</div>
                 <div class="table-scroll">
@@ -173,6 +178,40 @@
                     </table>
                     </div>
                 }
+
+                <div class="card-title sub">@L.T("Dv_Sources")</div>
+                @if (sel.Sources.Count == 0)
+                {
+                    <div class="no-data">@L.T("Dv_None")</div>
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table class="hq-table">
+                        <thead>
+                            <tr>
+                                <th>@L.T("Dv_Name")</th>
+                                <th>@L.T("Dv_SourceType")</th>
+                                <th>@L.T("Dv_TriggerAddr")</th>
+                                <th>@L.T("Dv_ValueItems")</th>
+                                <th>@L.T("Dv_SourceEnabled")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var src in sel.Sources)
+                            {
+                                <tr>
+                                    <td>@src.Name</td>
+                                    <td>@src.Type</td>
+                                    <td class="mono">@src.TriggerAddress</td>
+                                    <td>@src.Values.Count</td>
+                                    <td>@(src.Enabled ? L.T("Dv_SourceEnabled") : L.T("Dv_None"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        </table>
+                    </div>
+                }
             </section>
         }
     }
@@ -224,6 +263,8 @@
     private async Task RetryAsync() => await LoadDevicesAsync();
 
     private void SelectDevice(string id) => SelectedDeviceId = SelectedDeviceId == id ? null : id;
+
+    private void OpenRuntime(string id) => Nav.NavigateTo("/device/" + Uri.EscapeDataString(id));
 
     /// <summary>
     /// 安全渲染 tick：Timer 回调在组件 Dispose 前后触发时，InvokeAsync 会抛 ObjectDisposedException；

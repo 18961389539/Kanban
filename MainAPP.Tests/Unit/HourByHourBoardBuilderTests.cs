@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using MainAPP.Models;
-using MainAPP.Services;
+using Kanban.Contracts.Metrics;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;

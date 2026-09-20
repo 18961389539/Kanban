@@ -252,6 +252,10 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         => Task.FromResult(_configSyncHandler.GetTitle());
 
     /// <inheritdoc />
+    public Task<bool> GetDisplayCarouselEnabledAsync()
+        => Task.FromResult(_configSyncHandler.GetDisplayCarouselEnabled());
+
+    /// <inheritdoc />
     public Task<int> GetLanguageAsync()
         => Task.FromResult(_configSyncHandler.GetLanguage());
 

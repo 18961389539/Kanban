@@ -355,6 +355,22 @@ public class WorkOrderManagerViewModelTests : IDisposable
         Assert.False(vm.CompleteCommand.CanExecute(null));
     }
 
+    [Fact]
+    public void Complete_WhenContinueSelectsPending_SelectsStartedOrder()
+    {
+        var vm = CreateVm();
+        var running = _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-RUN", status: WorkOrderStatus.Running));
+        var pending = _workOrderRepo.Upsert(CreateWorkOrder(orderNo: "WO-NEXT", status: WorkOrderStatus.Pending));
+        vm.SelectedWorkOrder = running;
+        _dialog.ContinueResult = WorkOrderContinueChoice.ForSelect(pending);
+
+        vm.CompleteCommand.Execute(null);
+
+        Assert.Equal("WO-NEXT", vm.SelectedWorkOrder?.OrderNo);
+        Assert.Equal(WorkOrderStatus.Running, vm.SelectedWorkOrder?.Status);
+        Assert.Equal(WorkOrderStatus.Completed, _workOrderRepo.GetSnapshot().Single(w => w.OrderNo == "WO-RUN").Status);
+    }
+
     // ──────────── Abort 命令 ────────────
 
     [Fact]

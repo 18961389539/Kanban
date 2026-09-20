@@ -259,6 +259,17 @@ public partial class AppSettings : ObservableObject
     private KanbanRunMode _runMode = KanbanRunMode.Full;
 
     /// <summary>
+    /// 过道电视轮播：首页 → 产线 → 报警（无报警跳过）。
+    /// 默认开启；完整模式可在显示设置中关闭。展示模式始终开启。
+    /// </summary>
+    [ObservableProperty]
+    private bool _displayCarouselEnabled = true;
+
+    /// <summary>当前是否应跑轮播（展示模式或显式勾选）。</summary>
+    [JsonIgnore]
+    public bool IsDisplayCarouselActive => DisplayCarouselEnabled || RunMode == KanbanRunMode.Viewer;
+
+    /// <summary>
     /// 是否已完成首次运行引导（欢迎向导）。完成后不再自动弹出，仍可通过 F1 / 帮助按钮打开手册。
     /// </summary>
     [ObservableProperty]
@@ -507,6 +518,7 @@ public partial class AppSettings : ObservableObject
             DataMode = DataMode,
             CollectorHubUrl = CollectorHubUrl,
             RunMode = RunMode,
+            DisplayCarouselEnabled = DisplayCarouselEnabled,
             HasCompletedFirstRunGuide = HasCompletedFirstRunGuide,
             // 锁内快照拷贝：与原地写入方互斥（审查修复 2026-08-13）
             Shifts = LockedShiftsSnapshot(),
@@ -579,6 +591,8 @@ public partial class AppSettings : ObservableObject
                 if (!string.IsNullOrWhiteSpace(settings.CollectorHubUrl))
                     CollectorHubUrl = settings.CollectorHubUrl;
                 RunMode = Enum.IsDefined(settings.RunMode) ? settings.RunMode : KanbanRunMode.Full;
+                // 旧配置没有该字段时保持默认开启，避免升级后主页静默不转。
+                DisplayCarouselEnabled = JsonCarouselEnabledOrDefault(json);
                 HasCompletedFirstRunGuide = settings.HasCompletedFirstRunGuide;
                 // 保证至少一个班次：若加载到空集合或 null，回退到默认两个班次
                 Shifts = (settings.Shifts is { Count: > 0 } shifts)
@@ -613,6 +627,23 @@ public partial class AppSettings : ObservableObject
             // 使用默认值继续运行，不崩溃
             Shifts = GetDefaultShifts();
         }
+    }
+
+    /// <summary>旧 settings.json 没有该字段时默认开，避免升级后主页静默不转。</summary>
+    internal static bool JsonCarouselEnabledOrDefault(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("DisplayCarouselEnabled", out var flag)
+                && (flag.ValueKind is JsonValueKind.True or JsonValueKind.False))
+                return flag.GetBoolean();
+        }
+        catch (JsonException)
+        {
+        }
+
+        return true;
     }
 
     /// <summary>

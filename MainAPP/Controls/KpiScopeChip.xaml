@@ -1,0 +1,53 @@
+<UserControl
+    x:Class="MainAPP.Controls.KpiScopeChip"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:MainAPP.Controls"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    VerticalAlignment="Center"
+    Margin="6,0,0,0">
+    <!--
+        口径芯片：钉在每个数字旁，标明工单窗口 / 当班会话 / 实时，
+        避免「当班良品」与「工单累计良品」被看成同一指标。
+    -->
+    <Border Padding="5,1" CornerRadius="8" BorderThickness="1" SnapsToDevicePixels="True">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource ChartBaseSeriesBrush}" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Shift}">
+                        <Setter Property="Background" Value="{StaticResource StatusRunSoftBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource StatusRunBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Realtime}">
+                        <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource StatusPauseBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <TextBlock FontSize="10" FontWeight="Bold" VerticalAlignment="Center">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="{x:Static resources:Strings.Home_Scope_WorkOrder}" />
+                    <Setter Property="Foreground" Value="{StaticResource ChartBaseSeriesBrush}" />
+                    <Setter Property="ToolTip" Value="{x:Static resources:Strings.Home_Scope_WorkOrder_Tip}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Shift}">
+                            <Setter Property="Text" Value="{x:Static resources:Strings.Home_Scope_Shift}" />
+                            <Setter Property="Foreground" Value="{StaticResource StatusRunBrush}" />
+                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.Home_Scope_Shift_Tip}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Realtime}">
+                            <Setter Property="Text" Value="{x:Static resources:Strings.Home_Scope_Realtime}" />
+                            <Setter Property="Foreground" Value="{StaticResource StatusPauseBrush}" />
+                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.Home_Scope_Realtime_Tip}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+    </Border>
+</UserControl>

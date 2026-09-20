@@ -105,12 +105,14 @@ public class SettingsViewModelTests : IDisposable
         vm.DraftSettings.DataMode = KanbanDataMode.Remote;
         vm.DraftSettings.RunMode = KanbanRunMode.Viewer;
         vm.DraftSettings.CollectorHubUrl = "http://192.168.1.50:5129/hubs/kanban";
+        vm.DraftSettings.DisplayCarouselEnabled = true;
 
         vm.SaveCommand.Execute(null);
 
         Assert.Equal(KanbanDataMode.Remote, _appSettings.DataMode);
         Assert.Equal(KanbanRunMode.Viewer, _appSettings.RunMode);
         Assert.Equal("http://192.168.1.50:5129/hubs/kanban", _appSettings.CollectorHubUrl);
+        Assert.True(_appSettings.DisplayCarouselEnabled);
         // 数据模式变更须二次确认"立即重启"（默认 FakeDialog Yes；测试宿主不真正拉起进程）
         Assert.Contains(_dialog.ShowCalls, c => c.Title == MainAPP.Resources.Strings.Settings_DataModeRestartTitle);
     }

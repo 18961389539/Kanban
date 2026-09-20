@@ -1,9 +1,11 @@
 ﻿@page "/workorders"
 @inject DashboardState Dashboard
-@inject IJSRuntime JS
+@inject NavigationManager Nav
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
+@using Kanban.Contracts.Metrics
 @using Kanban.Web.Services
+@using Microsoft.AspNetCore.Components
 
 <div class="query-page">
     <div class="line-header">
@@ -38,8 +40,10 @@
                         <th>@L.T("Wo_Product")</th>
                         <th>@L.T("Ac_Device")</th>
                         <th class="num">@L.T("Wo_PlanQty")</th>
-                        <th class="num">@L.T("Wo_DoneOk")</th>
-                        <th class="num">@L.T("Wo_DoneNg")</th>
+                        <th class="num">@L.T("Lbl_Ok")</th>
+                        <th class="num">@L.T("Lbl_Ng")</th>
+                        <th>@L.T("Wo_Achievement")</th>
+                        <th>@L.T("Wo_ScheduleChip")</th>
                         <th>@L.T("Wo_PlanStart")</th>
                         <th>@L.T("Wo_PlanEnd")</th>
                         <th>@L.T("Wo_Status")</th>
@@ -48,13 +52,23 @@
                 <tbody>
                     @foreach (var w in Rows)
                     {
-                        <tr>
+                        var counts = Counts(w);
+                        var rate = WorkOrderSchedule.AchievementRate(counts.Ok, w.TargetQuantity);
+                        var kind = ScheduleKind(w, rate);
+                        <tr class="row-click @(SelectedId == w.Id ? "selected" : "")" @onclick="() => SelectRow(w.Id)">
                             <td class="mono">@w.OrderNo</td>
                             <td>@w.ProductCode · @w.ProductName</td>
                             <td>@w.DeviceName</td>
                             <td class="num" title="@L.Tip("Home_Tip_WorkOrderTarget", w.TargetQuantity)">@w.TargetQuantity.ToString("N0")</td>
-                            <td class="num kpi-ok" title="@L.Tip("Home_Tip_WorkOrderOk", w.CompletedOkCount?.ToString("N0") ?? "—")">@(w.CompletedOkCount?.ToString("N0") ?? "—")</td>
-                            <td class="num kpi-ng" title="@L.Tip("Home_Tip_WorkOrderNg", w.CompletedNgCount ?? 0)">@(w.CompletedNgCount?.ToString("N0") ?? "—")</td>
+                            <td class="num kpi-ok" title="@L.Tip("Home_Tip_WorkOrderOk", counts.Ok.ToString("N0"))">@(LiveOrDash(w, counts.Ok))</td>
+                            <td class="num kpi-ng" title="@L.Tip("Home_Tip_WorkOrderNg", counts.Ng)">@(LiveOrDash(w, counts.Ng))</td>
+                            <td>
+                                <div class="wo-mini-bar" title="@UiPalette.Pct(rate)">
+                                    <div class="seg wo @WorkOrderSchedule.CssClass(kind)" style="width:@($"{Math.Clamp(rate * 100, 0, 100):F0}%")"></div>
+                                </div>
+                                <span class="kpi-sub">@UiPalette.Pct(rate)</span>
+                            </td>
+                            <td><span class="wo-chip @WorkOrderSchedule.CssClass(kind)">@L.T(WorkOrderSchedule.StatusKey(kind))</span></td>
                             <td>@w.PlannedStart.ToString("MM-dd HH:mm")</td>
                             <td>@w.PlannedEnd.ToString("MM-dd HH:mm")</td>
                             <td><span class="status-badge @WoClass(w.Status)">@WoText(w.Status)</span></td>
@@ -70,25 +84,120 @@
             </div>
         </section>
     }
+
+    @if (Selected is { } sel)
+    {
+        var counts = Counts(sel);
+        var rate = WorkOrderSchedule.AchievementRate(counts.Ok, sel.TargetQuantity);
+        var kind = ScheduleKind(sel, rate);
+        <section class="card">
+            <div class="card-title">@L.T("Wo_Detail") · @sel.OrderNo</div>
+            <div class="metric-grid wo-kpi-grid">
+                <div><span class="kpi-label">@L.T("Wo_Product")</span><span class="kpi-value">@sel.ProductCode</span><span class="kpi-sub dim">@sel.ProductName</span></div>
+                <div><span class="kpi-label">@L.T("Ac_Device")</span><span class="kpi-value">@sel.DeviceName</span></div>
+                <div title="@L.Tip("Home_Tip_WorkOrderTarget", sel.TargetQuantity)"><span class="kpi-label">@L.T("Wo_PlanQty")</span><span class="kpi-value">@sel.TargetQuantity.ToString("N0")</span></div>
+                <div><span class="kpi-label">@L.T("Wo_Achievement")</span><span class="kpi-value @WorkOrderSchedule.CssClass(kind)">@UiPalette.Pct(rate)</span><span class="kpi-sub">@L.T(WorkOrderSchedule.StatusKey(kind))</span></div>
+                <div title="@L.Tip("Home_Tip_WorkOrderOk", counts.Ok.ToString("N0"))"><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@counts.Ok.ToString("N0")</span></div>
+                <div title="@L.Tip("Home_Tip_WorkOrderNg", counts.Ng)"><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@counts.Ng.ToString("N0")</span></div>
+                <div><span class="kpi-label">@L.T("Wo_PlanStart")</span><span class="kpi-value">@sel.PlannedStart.ToString("MM-dd HH:mm")</span></div>
+                <div><span class="kpi-label">@L.T("Wo_PlanEnd")</span><span class="kpi-value">@sel.PlannedEnd.ToString("MM-dd HH:mm")</span></div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(sel.Remark))
+            {
+                <div class="meta-line">@L.T("Wo_Remark") · @sel.Remark</div>
+            }
+            <div class="card-title sub">@L.T("Wo_SnTitle") <span class="badge-soft">@SnPageSummary</span></div>
+            @if (SnLoading)
+            {
+                <div class="loading-row">@L.T("Hq_Loading")…</div>
+            }
+            else if (SnError is not null)
+            {
+                <div class="msg-banner msg-error">@SnError</div>
+            }
+            else if (SnRows.Count == 0)
+            {
+                <div class="no-data">@L.T("K920")</div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_SnCol")</th>
+                            <th>@L.T("Hq_Time")</th>
+                            <th>@L.T("Ac_Device")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th>@L.T("K924")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ev in SnRows)
+                        {
+                            <tr class="row-click" @onclick="() => OpenSn(ev.Sn)">
+                                <td class="mono">@ev.Sn</td>
+                                <td>@ev.Timestamp.ToString("MM-dd HH:mm:ss")</td>
+                                <td>@ev.DeviceName</td>
+                                <td>@ev.ShiftName</td>
+                                <td class="@(ev.Result == 0 ? "kpi-ok" : "kpi-ng")">@(ev.Result == 0 ? L.T("Lbl_Ok") : L.T("Lbl_Ng"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    </table>
+                </div>
+                <div class="pager">
+                    <button class="btn" disabled="@(SnPage <= 1 || SnLoading)" @onclick="SnPrev">@L.T("Hq_PrevPage")</button>
+                    <span class="pager-info">@SnPageSummary</span>
+                    <button class="btn" disabled="@(SnPage >= SnTotalPages || SnLoading)" @onclick="SnNext">@L.T("Hq_NextPage")</button>
+                </div>
+            }
+        </section>
+    }
 </div>
 
 @code {
     private const int PageSize = 50;
+    private const int SnPageSize = 20;
+
+    [SupplyParameterFromQuery(Name = "id")]
+    public string? QueryId { get; set; }
 
     private List<WorkOrderDto> All { get; set; } = [];
     private List<WorkOrderDto> Rows { get; set; } = [];
+    private Dictionary<int, WorkOrderProductionSummaryDto> Summaries { get; set; } = [];
     private int Page { get; set; } = 1;
     private int TotalPages { get; set; }
     private bool Loaded { get; set; }
     private bool IsLoading { get; set; }
     private string? Error { get; set; }
+    private int? SelectedId { get; set; }
+    private WorkOrderDto? Selected => All.FirstOrDefault(w => w.Id == SelectedId);
+
+    private List<SnEventRecordDto> SnRows { get; set; } = [];
+    private int SnPage { get; set; } = 1;
+    private int SnTotal { get; set; }
+    private int SnTotalPages { get; set; } = 1;
+    private bool SnLoading { get; set; }
+    private string? SnError { get; set; }
+    private string? _appliedQuery;
 
     private string PageSummaryText => PageSummary(Page, TotalPages, All.Count);
+    private string SnPageSummary => PageSummary(SnPage, SnTotalPages, SnTotal);
 
     protected override async Task OnInitializedAsync()
     {
         await Dashboard.InitializeAsync();
         await LoadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = QueryId ?? "";
+        if (key == _appliedQuery) return;
+        _appliedQuery = key;
+        if (int.TryParse(QueryId, out var id) && id > 0)
+            await SelectRow(id);
     }
 
     private async Task LoadAsync()
@@ -100,7 +209,10 @@
             All = [.. await Dashboard.QueryWorkOrdersAsync()];
             All = All.OrderByDescending(w => w.PlannedStart).ToList();
             ApplyPage();
+            await FillSummariesAsync();
             Loaded = true;
+            if (SelectedId is { } id && All.All(w => w.Id != id))
+                SelectedId = null;
         }
         catch (Exception)
         {
@@ -112,6 +224,46 @@
         }
     }
 
+    private async Task FillSummariesAsync()
+    {
+        var running = Rows.Where(w => w.Status == WorkOrderStatus.Running && w.Id > 0).ToList();
+        if (running.Count == 0) return;
+        var tasks = running.Select(async w =>
+        {
+            try
+            {
+                var s = await Dashboard.GetWorkOrderProductionSummaryAsync(w.Id);
+                return (w.Id, (WorkOrderProductionSummaryDto?)s);
+            }
+            catch (Exception)
+            {
+                return (w.Id, (WorkOrderProductionSummaryDto?)null);
+            }
+        });
+        foreach (var (id, summary) in await Task.WhenAll(tasks))
+        {
+            if (summary is not null)
+                Summaries[id] = summary;
+        }
+    }
+
+    private (int Ok, int Ng) Counts(WorkOrderDto w)
+    {
+        if (w.Status == WorkOrderStatus.Running && Summaries.TryGetValue(w.Id, out var s))
+            return (s.OkCount, s.NgCount);
+        return (w.CompletedOkCount ?? 0, w.CompletedNgCount ?? 0);
+    }
+
+    private string LiveOrDash(WorkOrderDto w, int value)
+    {
+        if (w.Status == WorkOrderStatus.Running && !Summaries.ContainsKey(w.Id) && w.CompletedOkCount is null)
+            return "—";
+        return value.ToString("N0");
+    }
+
+    private WorkOrderScheduleKind ScheduleKind(WorkOrderDto w, double rate)
+        => WorkOrderSchedule.Classify(w.Status, w.PlannedStart, w.PlannedEnd, rate, Dashboard.ServerNow);
+
     private void ApplyPage()
     {
         TotalPages = ProductionAnalysis.CalcTotalPages(All.Count, PageSize);
@@ -119,19 +271,96 @@
         Rows = All.Skip((Page - 1) * PageSize).Take(PageSize).ToList();
     }
 
-    private void PrevPage()
+    private async Task PrevPage()
     {
         if (Page <= 1) return;
         Page--;
         ApplyPage();
+        await FillSummariesAsync();
     }
 
-    private void NextPage()
+    private async Task NextPage()
     {
         if (Page >= TotalPages) return;
         Page++;
         ApplyPage();
+        await FillSummariesAsync();
     }
+
+    private async Task SelectRow(int id)
+    {
+        if (SelectedId == id)
+        {
+            SelectedId = null;
+            SnRows = [];
+            return;
+        }
+        SelectedId = id;
+        var match = All.FirstOrDefault(w => w.Id == id);
+        if (match is not null)
+        {
+            var index = All.IndexOf(match);
+            var targetPage = index / PageSize + 1;
+            if (targetPage != Page)
+            {
+                Page = targetPage;
+                ApplyPage();
+                await FillSummariesAsync();
+            }
+        }
+        SnPage = 1;
+        await LoadSnAsync();
+    }
+
+    private async Task LoadSnAsync()
+    {
+        if (SelectedId is not { } id || id <= 0)
+        {
+            SnRows = [];
+            SnTotal = 0;
+            return;
+        }
+        SnLoading = true;
+        SnError = null;
+        try
+        {
+            var response = await Dashboard.QuerySnEventsAsync(new SnEventQueryRequest
+            {
+                WorkOrderId = id,
+                Page = SnPage,
+                PageSize = SnPageSize,
+            });
+            SnRows = [.. response.Items];
+            SnTotal = response.Total;
+            SnTotalPages = ProductionAnalysis.CalcTotalPages(SnTotal, SnPageSize);
+        }
+        catch (Exception)
+        {
+            SnError = L.T("Hq_QueryFailed");
+            SnRows = [];
+        }
+        finally
+        {
+            SnLoading = false;
+        }
+    }
+
+    private async Task SnPrev()
+    {
+        if (SnPage <= 1) return;
+        SnPage--;
+        await LoadSnAsync();
+    }
+
+    private async Task SnNext()
+    {
+        if (SnPage >= SnTotalPages) return;
+        SnPage++;
+        await LoadSnAsync();
+    }
+
+    private void OpenSn(string sn)
+        => Nav.NavigateTo($"/history?tab=4&sn={Uri.EscapeDataString(sn)}");
 
     private static string WoText(WorkOrderStatus status) => status switch
     {

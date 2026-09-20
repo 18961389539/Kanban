@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
@@ -356,5 +357,31 @@ public class IDialogServiceContractTests
 
         Assert.Equal("secret123", result);
         Assert.Single(svc.PasswordInputCalls, ("标题", "请输入密码"));
+    }
+
+    [Fact]
+    public void FakeDialogService_ShowWorkOrderContinue_ReturnsConfiguredChoice()
+    {
+        var pending = new WorkOrder { Id = 2, OrderNo = "WO-NEXT", Status = WorkOrderStatus.Pending };
+        var svc = new FakeDialogService { ContinueResult = WorkOrderContinueChoice.ForSelect(pending) };
+        var completed = new WorkOrder { Id = 1, OrderNo = "WO-DONE", Status = WorkOrderStatus.Completed };
+
+        var result = svc.ShowWorkOrderContinue(completed, new[] { pending });
+
+        Assert.Equal(WorkOrderContinueAction.SelectExisting, result.Action);
+        Assert.Same(pending, result.SelectedWorkOrder);
+        Assert.Single(svc.ContinueCalls);
+        Assert.Same(completed, svc.ContinueCalls[0].Completed);
+    }
+
+    [Theory]
+    [MemberData(nameof(Implementations))]
+    public void ShowWorkOrderContinue_DoesNotThrow(Func<IDialogService> factory)
+    {
+        var svc = factory();
+        var result = svc.ShowWorkOrderContinue(
+            new WorkOrder { OrderNo = "WO-1" },
+            Array.Empty<WorkOrder>());
+        Assert.Equal(WorkOrderContinueAction.Dismiss, result.Action);
     }
 }

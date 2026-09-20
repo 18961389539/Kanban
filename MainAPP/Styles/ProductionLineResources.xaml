@@ -81,16 +81,8 @@
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
-            <!--  OEE 拆解三率条：label+值 一行 + 4px 进度条  -->
-            <Style x:Key="RateBarRow" TargetType="StackPanel">
-                <Setter Property="Margin" Value="0,8,0,0" />
-            </Style>
-            <Style x:Key="RateBar" TargetType="ProgressBar">
-                <Setter Property="Height" Value="5" />
-                <Setter Property="Maximum" Value="1" />
-                <Setter Property="Background" Value="{StaticResource RegionBrush}" />
-                <Setter Property="BorderThickness" Value="0" />
-            </Style>
+            <!--  OEE 拆解三率条样式（RateBarRow/RateBar）已于 2026-09-17 随「三列等宽」精修移除使用，
+                  保留占位说明避免误以为遗漏；如需恢复迷你条布局可从 git 历史找回。  -->
         </DataTemplate.Resources>
 
         <Border CornerRadius="12" Padding="24,18" MinHeight="368" Margin="8"
@@ -272,40 +264,37 @@
                             <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0"
                                        FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
                                        Text="{x:Static resources:Strings.K587}" />
-                            <StackPanel Style="{StaticResource RateBarRow}"
-                                        ToolTip="{Binding AvailabilityTooltip}">
-                                <Grid>
-                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
+                            <!--  2026-09-17 UI 精修：A/P/Q 三率由「右缘窄列 + 迷你条」改等宽三列 + 分隔线，
+                                  数值居中不再挤压裁切；明细仍可从各自 ToolTip 获取。  -->
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" ToolTip="{Binding AvailabilityTooltip}">
+                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
+                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource StatusRunBrush}"
                                                Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
-                                </Grid>
-                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
-                                             Foreground="{StaticResource StatusRunBrush}"
-                                             Value="{Binding Runtime.AvailabilityRate, Mode=OneWay}" />
-                            </StackPanel>
-                            <StackPanel Style="{StaticResource RateBarRow}" ToolTip="{Binding PerformanceTooltip}">
-                                <Grid>
-                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
+                                </StackPanel>
+                                <Border Grid.Column="1" Width="1" Margin="4,2" Background="{StaticResource DividerBrush}" />
+                                <StackPanel Grid.Column="2" ToolTip="{Binding PerformanceTooltip}">
+                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
+                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource PrimaryBrush}"
                                                Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
-                                </Grid>
-                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
-                                             Foreground="{StaticResource PrimaryBrush}"
-                                             Value="{Binding Runtime.PerformanceRate, Mode=OneWay}" />
-                            </StackPanel>
-                            <StackPanel Style="{StaticResource RateBarRow}" ToolTip="{Binding QualityTooltip}">
-                                <Grid>
-                                    <TextBlock FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
-                                    <TextBlock HorizontalAlignment="Right" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
+                                </StackPanel>
+                                <Border Grid.Column="3" Width="1" Margin="4,2" Background="{StaticResource DividerBrush}" />
+                                <StackPanel Grid.Column="4" ToolTip="{Binding QualityTooltip}">
+                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
+                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
                                                Foreground="{StaticResource ChartOkSeriesBrush}"
                                                Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
-                                </Grid>
-                                <ProgressBar Style="{StaticResource RateBar}" Margin="0,2,0,0"
-                                             Foreground="{StaticResource ChartOkSeriesBrush}"
-                                             Value="{Binding Runtime.QualityRate, Mode=OneWay}" />
-                            </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Grid>
                 </Grid>

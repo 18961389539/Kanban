@@ -561,4 +561,170 @@ public class WorkOrderServiceTests : IDisposable
         Assert.Equal(source.StartedAt, clone.StartedAt);
         Assert.Equal(source.CompletedAt, clone.CompletedAt);
     }
+
+    // ──────────── 完成后后续工单选择 ────────────
+
+    [Fact]
+    public void CompleteWorkOrder_WhenNotRunning_DoesNotPromptContinue()
+    {
+        var dialog = new FakeDialogService();
+        var svc = CreateService(dialog);
+        var result = svc.CompleteWorkOrder(new WorkOrder { OrderNo = "WO-PEND", Status = WorkOrderStatus.Pending });
+
+        Assert.Null(result);
+        Assert.Empty(dialog.ContinueCalls);
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_DismissContinue_ReturnsCompleted()
+    {
+        var dialog = new FakeDialogService { ContinueResult = WorkOrderContinueChoice.Dismissed };
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-DONE",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+        });
+        var svc = CreateService(dialog);
+
+        var result = svc.CompleteWorkOrder(wo);
+
+        Assert.NotNull(result);
+        Assert.Equal(WorkOrderStatus.Completed, result!.Status);
+        Assert.Equal("WO-DONE", result.OrderNo);
+        Assert.Single(dialog.ContinueCalls);
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_SelectExisting_StartsPendingOrder()
+    {
+        var running = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-RUN",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            PlannedStart = DateTime.Now.AddHours(-2),
+            PlannedEnd = DateTime.Now.AddHours(2),
+        });
+        var pending = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-NEXT",
+            ProductCode = "P",
+            ProductName = "Next",
+            Status = WorkOrderStatus.Pending,
+            DeviceId = "dev-1",
+            DeviceName = "D1",
+            TargetQuantity = 100,
+            PlannedStart = DateTime.Now.AddHours(3),
+            PlannedEnd = DateTime.Now.AddHours(11),
+        });
+        var dialog = new FakeDialogService { ContinueResult = WorkOrderContinueChoice.ForSelect(pending) };
+        var svc = CreateService(dialog);
+
+        var result = svc.CompleteWorkOrder(running);
+
+        Assert.NotNull(result);
+        Assert.Equal("WO-NEXT", result!.OrderNo);
+        Assert.Equal(WorkOrderStatus.Running, result.Status);
+        Assert.Equal(WorkOrderStatus.Completed, _workOrderRepo.GetSnapshot().Single(w => w.OrderNo == "WO-RUN").Status);
+        Assert.Contains(dialog.ContinueCalls[0].Selectable, w => w.OrderNo == "WO-NEXT");
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_CreateNew_StartsCreatedOrder()
+    {
+        var running = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-RUN2",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            DeviceName = "D1",
+        });
+        var created = NewPendingOrder("WO-NEW", "dev-1");
+        var dialog = new FakeDialogService
+        {
+            ContinueResult = WorkOrderContinueChoice.ForCreate,
+            WorkOrderEditorResult = created,
+        };
+        var svc = CreateService(dialog);
+
+        var result = svc.CompleteWorkOrder(running);
+
+        Assert.NotNull(result);
+        Assert.Equal("WO-NEW", result!.OrderNo);
+        Assert.Equal(WorkOrderStatus.Running, result.Status);
+        Assert.Single(dialog.WorkOrderEditorCalls);
+        Assert.Equal("dev-1", dialog.WorkOrderEditorCalls[0].Template?.DeviceId);
+        Assert.Equal(0, dialog.WorkOrderEditorCalls[0].Template?.Id);
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_CopyCurrent_StartsCopiedOrder()
+    {
+        var running = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-COPYSRC",
+            ProductCode = "P-A",
+            ProductName = "Product A",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            DeviceName = "D1",
+            TargetQuantity = 500,
+            PlannedStart = DateTime.Now.AddHours(-4),
+            PlannedEnd = DateTime.Now.AddHours(4),
+        });
+        var copied = NewPendingOrder("WO-COPIED", "dev-1");
+        var dialog = new FakeDialogService
+        {
+            ContinueResult = WorkOrderContinueChoice.ForCopy,
+            WorkOrderEditorResult = copied,
+        };
+        var svc = CreateService(dialog);
+
+        var result = svc.CompleteWorkOrder(running);
+
+        Assert.NotNull(result);
+        Assert.Equal("WO-COPIED", result!.OrderNo);
+        Assert.Equal(WorkOrderStatus.Running, result.Status);
+        Assert.Single(dialog.WorkOrderEditorCalls);
+        Assert.Equal("WO-COPYSRC-COPY", dialog.WorkOrderEditorCalls[0].Template?.OrderNo);
+        Assert.Equal(WorkOrderStatus.Pending, dialog.WorkOrderEditorCalls[0].Template?.Status);
+        Assert.True(dialog.WorkOrderEditorCalls[0].Template?.PlannedStart >= DateTime.Now.AddMinutes(-1));
+    }
+
+    [Fact]
+    public void CompleteWorkOrder_CreateNew_WhenEditorCancelled_ReturnsCompleted()
+    {
+        var running = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-RUN3",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+        });
+        var dialog = new FakeDialogService
+        {
+            ContinueResult = WorkOrderContinueChoice.ForCreate,
+            WorkOrderEditorResult = null,
+        };
+        var svc = CreateService(dialog);
+
+        var result = svc.CompleteWorkOrder(running);
+
+        Assert.NotNull(result);
+        Assert.Equal("WO-RUN3", result!.OrderNo);
+        Assert.Equal(WorkOrderStatus.Completed, result.Status);
+    }
+
+    private static WorkOrder NewPendingOrder(string orderNo, string deviceId) => new()
+    {
+        OrderNo = orderNo,
+        ProductCode = "P",
+        ProductName = "N",
+        DeviceId = deviceId,
+        DeviceName = "D1",
+        TargetQuantity = 100,
+        PlannedStart = DateTime.Now,
+        PlannedEnd = DateTime.Now.AddHours(8),
+        Status = WorkOrderStatus.Pending,
+    };
 }

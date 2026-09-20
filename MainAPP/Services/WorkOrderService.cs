@@ -89,11 +89,15 @@ public interface IWorkOrderService
     Task<WorkOrder?> StartWorkOrderAsync(WorkOrder target);
 
     /// <summary>
-    /// 完成工单：校验 Status==Running，通过后置 Completed。
-    /// <returns>已保存的工单；校验失败时返回 null（已提示原因）。</returns>
+    /// 完成工单：校验 Status==Running，通过后置 Completed 并保存产量快照。
+    /// 完成后弹出后续工单选择（选择其他待开始工单 / 新建 / 复制当前工单），选中后自动开始以便继续生产。
+    /// </summary>
+    /// <returns>
+    /// 校验失败返回 null。成功时：若用户开始了下一张工单则返回该工单，否则返回已完成工单。
+    /// </returns>
     WorkOrder? CompleteWorkOrder(WorkOrder target);
 
-    /// <summary>异步完成工单（Remote 模式用）。</summary>
+    /// <summary>异步完成工单（Remote 模式用）。完成后同样弹出后续工单选择。</summary>
     Task<WorkOrder?> CompleteWorkOrderAsync(WorkOrder target);
 
     /// <summary>
@@ -508,7 +512,7 @@ public class WorkOrderService(
         updated.CompletedNgCount = summary.NgCount;
         var saved = _workOrderRepo.Upsert(updated);
         _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
-        return saved;
+        return ContinueAfterComplete(saved) ?? saved;
     }
 
     /// <inheritdoc />
@@ -535,7 +539,75 @@ public class WorkOrderService(
         updated.CompletedNgCount = summary.NgCount;
         var saved = await _workOrderRepo.UpsertAsync(updated);
         _dialog.NotifySuccess(string.Format(Strings.F095, saved.OrderNo));
-        return saved;
+        return await ContinueAfterCompleteAsync(saved) ?? saved;
+    }
+
+    private WorkOrderContinueChoice AskContinueAfterComplete(WorkOrder completed)
+    {
+        var pending = _workOrderRepo.GetSnapshot()
+            .Where(w => w.Status == WorkOrderStatus.Pending
+                && w.Id != completed.Id
+                && string.Equals(w.DeviceId, completed.DeviceId, StringComparison.Ordinal))
+            .OrderBy(w => w.PlannedStart)
+            .ToList();
+        return _dialog.ShowWorkOrderContinue(completed, pending);
+    }
+
+    private static WorkOrder NewOrderTemplateFrom(WorkOrder completed) => new()
+    {
+        DeviceId = completed.DeviceId,
+        DeviceName = completed.DeviceName,
+    };
+
+    /// <summary>复制刚完成的工单时，计划窗口改到当前时刻，便于立刻继续生产。</summary>
+    private WorkOrder CopySourceForContinue(WorkOrder completed)
+    {
+        var source = Clone(completed);
+        var duration = completed.PlannedEnd - completed.PlannedStart;
+        if (duration <= TimeSpan.Zero)
+            duration = TimeSpan.FromHours(8);
+        source.PlannedStart = DateTime.Now;
+        source.PlannedEnd = source.PlannedStart + duration;
+        return source;
+    }
+
+    private WorkOrder? ResolveSelectedPending(WorkOrderContinueChoice choice)
+    {
+        if (choice.SelectedWorkOrder is not { } selected)
+            return null;
+        return _workOrderRepo.GetSnapshot().FirstOrDefault(w => w.Id == selected.Id) ?? selected;
+    }
+
+    private WorkOrder? ContinueAfterComplete(WorkOrder completed)
+    {
+        var choice = AskContinueAfterComplete(completed);
+        WorkOrder? next = choice.Action switch
+        {
+            WorkOrderContinueAction.SelectExisting => ResolveSelectedPending(choice),
+            WorkOrderContinueAction.CreateNew => AddWorkOrder(NewOrderTemplateFrom(completed)),
+            WorkOrderContinueAction.CopyCurrent => CopyWorkOrder(CopySourceForContinue(completed)),
+            _ => null,
+        };
+        if (next == null) return null;
+        if (next.Status == WorkOrderStatus.Pending)
+            return StartWorkOrder(next) ?? next;
+        return next;
+    }
+
+    private async Task<WorkOrder?> ContinueAfterCompleteAsync(WorkOrder completed)
+    {
+        var choice = AskContinueAfterComplete(completed);
+        WorkOrder? next = choice.Action switch
+        {
+            WorkOrderContinueAction.SelectExisting => ResolveSelectedPending(choice),
+            WorkOrderContinueAction.CreateNew => await AddWorkOrderCore(NewOrderTemplateFrom(completed)),
+            WorkOrderContinueAction.CopyCurrent => await CopyWorkOrderCore(CopySourceForContinue(completed)),
+            _ => null,
+        };
+        if (next == null) return null;
+        if (next.Status == WorkOrderStatus.Pending)
+            return await StartWorkOrderCore(next) ?? next;
+        return next;
     }
 
     /// <inheritdoc />

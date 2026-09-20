@@ -48,6 +48,8 @@ public class AlarmTopItem
     public TimeSpan TotalDuration { get; set; }
     /// <summary>排行右侧数值文案：按触发次数时为触发数，按持续时长时为格式化时长（由 VM 按当前维度填充）。</summary>
     public string RankValueText { get; set; } = string.Empty;
+    /// <summary>按持续时长排序时解释「窗口内各次持续时长之和」；按次数排序时为空。</summary>
+    public string? RankValueTooltip { get; set; }
     public AlarmLevel Level { get; set; }
     /// <summary>排名序号（1-based，由 ViewModel 填充）</summary>
     public int Rank { get; set; }
@@ -862,9 +864,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
                 for (int i = 0; i < topItems.Count; i++)
                 {
                     topItems[i].Rank = i + 1;
-                    topItems[i].RankValueText = sortMode == AlarmTopSortMode.ByTotalDuration
-                        ? Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(topItems[i].TotalDuration.TotalSeconds)
-                        : topItems[i].TriggerCount.ToString();
+                    var durationText = Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(topItems[i].TotalDuration.TotalSeconds);
+                    if (sortMode == AlarmTopSortMode.ByTotalDuration)
+                    {
+                        topItems[i].RankValueText = durationText;
+                        topItems[i].RankValueTooltip = FormatHelper.Tip(Strings.Ac_Tip_RankDuration, durationText);
+                    }
+                    else
+                    {
+                        topItems[i].RankValueText = topItems[i].TriggerCount.ToString();
+                        topItems[i].RankValueTooltip = null;
+                    }
                 }
 
                 var recent = recentAll

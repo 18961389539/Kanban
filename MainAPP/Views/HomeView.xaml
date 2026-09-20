@@ -74,6 +74,7 @@
                            ToolTip="{Binding DataStatusTooltip}" />
 
                 <!--  设备切换  -->
+                <!--  2026-09-18 UI 精修：补占位文案，空态时（未选设备）能看出这是设备切换器  -->
                 <ComboBox
                     Width="200"
                     VerticalAlignment="Center"
@@ -82,7 +83,9 @@
                     ItemsSource="{Binding DeviceFilterItems}"
                     SelectedValue="{Binding SelectedDeviceId}"
                     SelectedValuePath="Id"
-                    Style="{StaticResource ComboBoxExtend}" />
+                    Style="{StaticResource ComboBoxExtend}"
+                    hc:InfoElement.Placeholder="{x:Static resources:Strings.Home_SelectDeviceHint}"
+                    ToolTip="{x:Static resources:Strings.K024}" />
 
                 <!--  工单管理入口  -->
                 <Button Margin="10,0,0,0" VerticalAlignment="Center"

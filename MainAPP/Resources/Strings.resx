@@ -1296,6 +1296,12 @@
   <data name="K330" xml:space="preserve">
     <value>新报警静音</value>
   </data>
+  <data name="Home_MuteShort" xml:space="preserve">
+    <value>静音</value>
+  </data>
+  <data name="Home_SelectDeviceHint" xml:space="preserve">
+    <value>选择设备</value>
+  </data>
   <data name="K331" xml:space="preserve">
     <value>切换新报警声音与闪烁；报警列表仍照常更新</value>
   </data>
@@ -3166,7 +3172,7 @@
     <value>仅进行中工单可完成</value>
   </data>
   <data name="M089" xml:space="preserve">
-    <value>完成工单并保存产量快照</value>
+    <value>完成工单并保存产量快照。随后可选择下一张工单</value>
   </data>
   <data name="M090" xml:space="preserve">
     <value>已完成或已中止工单不可中止</value>
@@ -5084,6 +5090,9 @@
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>良品达成（OK/应产）</value>
   </data>
+  <data name="Ln_ShiftPaceExceeded" xml:space="preserve">
+    <value>超额 100%+</value>
+  </data>
   <data name="Ln_AvailabilityHint" xml:space="preserve">
     <value>只扣报警时间，不含待机和离线</value>
   </data>
@@ -6349,6 +6358,9 @@
   <data name="Validator_DuplicateChildId" xml:space="preserve">
     <value>设备「{0}」{1} ID 重复</value>
   </data>
+  <data name="Validator_DWordAddressOverlap" xml:space="preserve">
+    <value>设备「{0}」的 DWord 地址 {1} 与 {2} 重叠（DWord 占 2 个字，需按偶数字对齐且步进 ≥2，否则会读到邻近地址的高字）</value>
+  </data>
   <data name="Validator_DuplicateSourceName" xml:space="preserve">
     <value>数据源名称「{0}」重复</value>
   </data>
@@ -6766,6 +6778,42 @@
   <data name="Wo_AddTitle" xml:space="preserve">
     <value>新增工单</value>
   </data>
+  <data name="Wo_ContinueTitle" xml:space="preserve">
+    <value>工单已完成</value>
+  </data>
+  <data name="Wo_ContinueMessage" xml:space="preserve">
+    <value>工单 {0} 已完成。请选择下一步以继续生产。</value>
+  </data>
+  <data name="Wo_ContinueSelect" xml:space="preserve">
+    <value>选择其他工单</value>
+  </data>
+  <data name="Wo_ContinueSelectHint" xml:space="preserve">
+    <value>从待开始工单中选择一张并开始</value>
+  </data>
+  <data name="Wo_ContinuePendingList" xml:space="preserve">
+    <value>待开始工单</value>
+  </data>
+  <data name="Wo_ContinueNoPending" xml:space="preserve">
+    <value>暂无待开始工单</value>
+  </data>
+  <data name="Wo_ContinueCreate" xml:space="preserve">
+    <value>新建工单</value>
+  </data>
+  <data name="Wo_ContinueCreateHint" xml:space="preserve">
+    <value>空白新建一张工单并开始</value>
+  </data>
+  <data name="Wo_ContinueCopy" xml:space="preserve">
+    <value>复制当前工单</value>
+  </data>
+  <data name="Wo_ContinueCopyHint" xml:space="preserve">
+    <value>复制本单为新工单并开始</value>
+  </data>
+  <data name="Wo_ContinueLater" xml:space="preserve">
+    <value>稍后再说</value>
+  </data>
+  <data name="Wo_ContinueItemFormat" xml:space="preserve">
+    <value>{0}  ·  {1}  ·  {2}</value>
+  </data>
   <data name="Audit_Detail_Role" xml:space="preserve">
     <value>角色={0}</value>
   </data>
@@ -6864,6 +6912,102 @@
   </data>
   <data name="Home_WorkOrderAchievement" xml:space="preserve">
     <value>工单达成率</value>
+  </data>
+  <data name="Home_WorkOrderSchedule" xml:space="preserve">
+    <value>计划结束 {0} · 剩余 {1}</value>
+  </data>
+  <data name="Home_WorkOrderOverdue" xml:space="preserve">
+    <value>已超时 {0}</value>
+  </data>
+  <data name="Home_WorkOrderBehind" xml:space="preserve">
+    <value>滞后计划 {0}pp</value>
+  </data>
+  <data name="Home_WorkOrderAhead" xml:space="preserve">
+    <value>超前计划 {0}pp</value>
+  </data>
+  <data name="Home_WorkOrderEmpty" xml:space="preserve">
+    <value>暂无进行中工单</value>
+  </data>
+  <data name="Home_WorkOrderEmptyHint" xml:space="preserve">
+    <value>当前设备未关联进行中的工单,请先到工单管理开始一张工单</value>
+  </data>
+  <data name="Csv_Hd_Timestamp" xml:space="preserve">
+    <value>事件时间</value>
+  </data>
+  <data name="Csv_Hd_DeviceId" xml:space="preserve">
+    <value>设备ID</value>
+  </data>
+  <data name="Csv_Hd_DeviceName" xml:space="preserve">
+    <value>设备名称</value>
+  </data>
+  <data name="Csv_Hd_AlarmId" xml:space="preserve">
+    <value>报警ID</value>
+  </data>
+  <data name="Csv_Hd_AlarmName" xml:space="preserve">
+    <value>报警名称</value>
+  </data>
+  <data name="Csv_Hd_PlcAddress" xml:space="preserve">
+    <value>PLC地址</value>
+  </data>
+  <data name="Csv_Hd_EventType" xml:space="preserve">
+    <value>事件类型</value>
+  </data>
+  <data name="Csv_Hd_EventTypeText" xml:space="preserve">
+    <value>事件类型文本</value>
+  </data>
+  <data name="Csv_Hd_DurationText" xml:space="preserve">
+    <value>持续时间</value>
+  </data>
+  <data name="Csv_Hd_ShiftName" xml:space="preserve">
+    <value>班次</value>
+  </data>
+  <data name="Csv_Hd_OkProduction" xml:space="preserve">
+    <value>OK产量</value>
+  </data>
+  <data name="Csv_Hd_NgProduction" xml:space="preserve">
+    <value>NG产量</value>
+  </data>
+  <data name="Csv_Hd_StatusWord" xml:space="preserve">
+    <value>状态字</value>
+  </data>
+  <data name="Csv_Hd_PrevState" xml:space="preserve">
+    <value>前一状态</value>
+  </data>
+  <data name="Csv_Hd_CurrState" xml:space="preserve">
+    <value>当前状态</value>
+  </data>
+  <data name="Csv_Hd_PrevStateText" xml:space="preserve">
+    <value>前一状态文本</value>
+  </data>
+  <data name="Csv_Hd_CurrStateText" xml:space="preserve">
+    <value>当前状态文本</value>
+  </data>
+  <data name="Csv_Hd_Metric" xml:space="preserve">
+    <value>指标</value>
+  </data>
+  <data name="Csv_Hd_Value" xml:space="preserve">
+    <value>值</value>
+  </data>
+  <data name="Csv_Alarm_Summary" xml:space="preserve">
+    <value>触发：{0} 次，恢复：{1} 次，待恢复：{2} 条</value>
+  </data>
+  <data name="Csv_Prod_Range" xml:space="preserve">
+    <value>查询区间：{0} ~ {1}</value>
+  </data>
+  <data name="Csv_Prod_Summary" xml:space="preserve">
+    <value>总 OK：{0} 件，总 NG：{1} 件，良品率：{2}</value>
+  </data>
+  <data name="Csv_Export_PageHint" xml:space="preserve">
+    <value>本文件仅包含当前页数据（每页最多 {0} 条），并非全量导出。</value>
+  </data>
+  <data name="Csv_WorkOrder_FileName" xml:space="preserve">
+    <value>工单列表_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Csv_DailyReport_FileName" xml:space="preserve">
+    <value>生产日报_{0:yyyyMMdd}_{1}.pdf</value>
+  </data>
+  <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
+    <value>切换配方会放弃当前未保存的编辑，是否继续？</value>
   </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\n当前：{0} 件</value>
@@ -6993,5 +7137,263 @@
   </data>
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\n当前：{0}</value>
+  </data>
+  <data name="Home_Scope_WorkOrder" xml:space="preserve">
+    <value>工单</value>
+  </data>
+  <data name="Home_Scope_Shift" xml:space="preserve">
+    <value>当班</value>
+  </data>
+  <data name="Home_Scope_Realtime" xml:space="preserve">
+    <value>实时</value>
+  </data>
+  <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
+    <value>工单时间窗口内统计，与工单管理页一致</value>
+  </data>
+  <data name="Home_Scope_Shift_Tip" xml:space="preserve">
+    <value>本班次会话累计，不是工单窗口</value>
+  </data>
+  <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
+    <value>当前运行态即时值（按运行时长）</value>
+  </data>
+  <data name="Settings_DisplayCarousel" xml:space="preserve">
+    <value>过道电视轮播</value>
+  </data>
+  <data name="Settings_DisplayCarouselHint" xml:space="preserve">
+    <value>默认开启。首页 40 秒 → 产线 30 秒 → 报警 20 秒（无报警跳过）。点按暂停 16 秒。High 报警冻结在报警页。完整模式可取消勾选。</value>
+  </data>
+  <data name="Carousel_Frozen" xml:space="preserve">
+    <value>高报警冻结</value>
+  </data>
+  <data name="Carousel_Paused" xml:space="preserve">
+    <value>已暂停 · {0} · {1}s</value>
+  </data>
+  <data name="Carousel_Running" xml:space="preserve">
+    <value>{0} · 剩余 {1}s</value>
+  </data>
+  <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
+    <value>排期对照：实际达成率对照计划时间进度。正差=超前，负差=滞后。\n实际 {0} · 计划 {1} · {2}\n{3}</value>
+  </data>
+  <data name="Home_Tip_CycleDiff" xml:space="preserve">
+    <value>周期差 = 实际周期 − 目标周期。正数=慢（每件更久），负数=快。\n目标 {0} · 实际 {1} · {2}</value>
+  </data>
+  <data name="Home_Tip_DefectSummary" xml:space="preserve">
+    <value>本班次缺陷帕累托合计件数（已分类缺陷，不含未录入原因的 NG）。\n{0}</value>
+  </data>
+  <data name="Home_Tip_DefectNgShare" xml:space="preserve">
+    <value>已分类缺陷件数占本班次 NG 的比例。未录入原因的 NG 不在帕累托中。\n{0}</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmCount" xml:space="preserve">
+    <value>当前设备未恢复的活跃报警条数。徽章为截断前总数。\n当前：{0:N0} 条</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmDuration" xml:space="preserve">
+    <value>从触发时刻起尚未恢复的持续时长。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_ConnBadge" xml:space="preserve">
+    <value>看板与采集服务的实时连接。绿=已连接并收快照；红=断连。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_DeviceCount" xml:space="preserve">
+    <value>当前已接入看板的设备台数。\n当前：{0:N0} 台</value>
+  </data>
+  <data name="Home_Tip_DeviceStatus" xml:space="preserve">
+    <value>设备运行态（来自状态字与采集判定）。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_SnapSeq" xml:space="preserve">
+    <value>快照序号：采集每成功一轮加 1。序号停滞表示采集未推进。\n当前：#{0}</value>
+  </data>
+  <data name="Home_Tip_DataFresh" xml:space="preserve">
+    <value>距最近一次收到该设备快照的时间。正常应在数秒内。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_TrendWindow" xml:space="preserve">
+    <value>最近 1 分钟速度折线（件/小时）。点为采样，不是班次累计。\n当前速度：{0} 件/h</value>
+  </data>
+  <data name="Home_Tip_StatusWord" xml:space="preserve">
+    <value>PLC 状态字原始值（十六进制）。用于核对通讯与运行态。\n当前：{0}</value>
+  </data>
+  <data name="Home_Tip_Recipe" xml:space="preserve">
+    <value>当前设备配方名称与配方值。\n当前：{0}</value>
+  </data>
+  <data name="Carousel_Tip" xml:space="preserve">
+    <value>过道电视轮播状态。点按画面暂停 16 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0}</value>
+  </data>
+  <data name="Mo_Tip_ConnStatus" xml:space="preserve">
+    <value>采集服务与设备/PLC 的连接状态。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_AcqStatus" xml:space="preserve">
+    <value>数据采集循环是否正在运行。停止则快照不再更新。\n当前：{0}</value>
+  </data>
+  <data name="Rv_Tip_AlarmCount" xml:space="preserve">
+    <value>复盘时间窗内历史触发次数（不是当前活跃条数）。已恢复 {1:N0} · 待恢复 {2:N0}。\n当前：{0:N0} 次</value>
+  </data>
+  <data name="Rv_Tip_LongestDowntime" xml:space="preserve">
+    <value>复盘时间窗内配对后最长一次报警持续时长（从触发到恢复或查询截止）。\n当前：{0}\n{1} · {2}</value>
+  </data>
+  <data name="Rv_Tip_PeakHour" xml:space="preserve">
+    <value>复盘时间窗内按小时汇总 OK 最高的时段（不是实时速度）。\n当前：{0} · {1:N0} 件（{2}）</value>
+  </data>
+  <data name="Rv_Tip_ValleyHour" xml:space="preserve">
+    <value>复盘时间窗内按小时汇总 OK 最低的时段（不是实时速度）。\n当前：{0} · {1:N0} 件（{2}）</value>
+  </data>
+  <data name="Hq_Tip_WindowTriggered" xml:space="preserve">
+    <value>所选查询时间窗内历史触发次数（Triggered 事件，不是当前活跃条数）。\n当前：{0:N0} 次</value>
+  </data>
+  <data name="Hq_Tip_WindowRecovered" xml:space="preserve">
+    <value>所选查询时间窗内历史恢复次数（Recovered 事件）。\n当前：{0:N0} 次</value>
+  </data>
+  <data name="Hq_Tip_WindowPending" xml:space="preserve">
+    <value>查询截止时仍未恢复的报警条数（窗口内已触发且无对应恢复）。\n当前：{0:N0} 条</value>
+  </data>
+  <data name="Hq_Tip_WindowMttr" xml:space="preserve">
+    <value>所选查询时间窗内已配对报警的平均恢复耗时（MTTR）。无配对时不显示。\n当前：{0}</value>
+  </data>
+  <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
+    <value>该设备还有未展开的未恢复报警。卡片只展示第一条。\n另有 {0:N0} 条</value>
+  </data>
+  <data name="Ac_Tip_RankDuration" xml:space="preserve">
+    <value>统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_Health" xml:space="preserve">
+    <value>综合 PLC 连接、采集循环是否运行、最近一轮是否成功。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_DisconnectDuration" xml:space="preserve">
+    <value>采集服务与 PLC 断开后的持续时长。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_CompletedCycles" xml:space="preserve">
+    <value>采集循环已完成的总轮次（成功与失败都计入）。\n当前：{0:N0}</value>
+  </data>
+  <data name="Mo_Tip_FailedCycles" xml:space="preserve">
+    <value>采集循环失败轮次（是完成轮的子集，不重复计入成功率分母）。\n当前：{0:N0}</value>
+  </data>
+  <data name="Mo_Tip_LastCycleMs" xml:space="preserve">
+    <value>最近一轮采集耗时。\n当前：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_AvgCycleMs" xml:space="preserve">
+    <value>采集循环平均耗时。\n当前：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_MaxCycleMs" xml:space="preserve">
+    <value>采集循环最大一轮耗时。\n当前：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_DevicesRead" xml:space="preserve">
+    <value>最近成功一轮读到的设备数 / 已配置设备数。\n当前：{0} / {1}</value>
+  </data>
+  <data name="Mo_Tip_LastSuccessAt" xml:space="preserve">
+    <value>最近一次采集成功时刻。\n当前：{0}</value>
+  </data>
+  <data name="Mo_Tip_LastFailureAt" xml:space="preserve">
+    <value>最近一次采集失败时刻。\n当前：{0}</value>
+  </data>
+  <data name="Web_Wo_Achievement" xml:space="preserve">
+    <value>达成率</value>
+  </data>
+  <data name="Web_Wo_ScheduleChip" xml:space="preserve">
+    <value>进度</value>
+  </data>
+  <data name="Web_Wo_Detail" xml:space="preserve">
+    <value>工单详情</value>
+  </data>
+  <data name="Web_Wo_Remark" xml:space="preserve">
+    <value>备注</value>
+  </data>
+  <data name="Web_Wo_SnTitle" xml:space="preserve">
+    <value>单件追溯</value>
+  </data>
+  <data name="Web_Hq_SnCol" xml:space="preserve">
+    <value>序列号</value>
+  </data>
+  <data name="Web_Hq_SnWorkOrder" xml:space="preserve">
+    <value>工单</value>
+  </data>
+  <data name="Web_Hq_SnSource" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="Web_Csv_FileSn" xml:space="preserve">
+    <value>SN追溯_{0}.csv</value>
+  </data>
+  <data name="Web_Ac_MutedCount" xml:space="preserve">
+    <value>已静音 {0}</value>
+  </data>
+  <data name="Web_Ac_GroupAlarms" xml:space="preserve">
+    <value>{0} 条</value>
+  </data>
+  <data name="Web_Ac_Copy" xml:space="preserve">
+    <value>复制交接</value>
+  </data>
+  <data name="Web_Rv_Daily" xml:space="preserve">
+    <value>昨日日报</value>
+  </data>
+  <data name="Web_Rv_Export" xml:space="preserve">
+    <value>导出 CSV</value>
+  </data>
+  <data name="Web_Rv_Print" xml:space="preserve">
+    <value>打印 / PDF</value>
+  </data>
+  <data name="Web_Rv_Takeaway" xml:space="preserve">
+    <value>健康分 {0} · {1} · 最长停机 {2}（{3}）</value>
+  </data>
+  <data name="Web_Rv_CsvFile" xml:space="preserve">
+    <value>生产复盘_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Rv_DailyCsvFile" xml:space="preserve">
+    <value>生产日报_{0:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Dd_Title" xml:space="preserve">
+    <value>设备运行详情</value>
+  </data>
+  <data name="Web_Dd_HourBoard" xml:space="preserve">
+    <value>本班小时计划</value>
+  </data>
+  <data name="Web_Dd_NoShift" xml:space="preserve">
+    <value>当前不在班次窗口</value>
+  </data>
+  <data name="Web_Dd_RecentAlarms" xml:space="preserve">
+    <value>今日报警</value>
+  </data>
+  <data name="Web_Dd_Sources" xml:space="preserve">
+    <value>采集源</value>
+  </data>
+  <data name="Web_Dd_OpenRuntime" xml:space="preserve">
+    <value>运行详情</value>
+  </data>
+  <data name="Web_Dd_Plan" xml:space="preserve">
+    <value>计划</value>
+  </data>
+  <data name="Web_Dd_Actual" xml:space="preserve">
+    <value>实际</value>
+  </data>
+  <data name="Web_Dd_Back" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Web_Dd_NoDevice" xml:space="preserve">
+    <value>未指定设备</value>
+  </data>
+  <data name="Web_Mo_Sources" xml:space="preserve">
+    <value>数据源实时值</value>
+  </data>
+  <data name="Web_Mo_SourceEmpty" xml:space="preserve">
+    <value>暂无采集源值</value>
+  </data>
+  <data name="Web_Mo_SourceEmptyHint" xml:space="preserve">
+    <value>设备配置了数据源后会显示湿度、能耗等实时值</value>
+  </data>
+  <data name="Web_Mo_Triggered" xml:space="preserve">
+    <value>已触发</value>
+  </data>
+  <data name="Web_Mo_Updated" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="Web_Dv_Sources" xml:space="preserve">
+    <value>数据源配置</value>
+  </data>
+  <data name="Web_Dv_SourceType" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="Web_Dv_TriggerAddr" xml:space="preserve">
+    <value>触发地址</value>
+  </data>
+  <data name="Web_Dv_ValueItems" xml:space="preserve">
+    <value>值项</value>
+  </data>
+  <data name="Web_Dv_SourceEnabled" xml:space="preserve">
+    <value>启用</value>
   </data>
 </root>

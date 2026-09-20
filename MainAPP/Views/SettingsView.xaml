@@ -506,6 +506,18 @@
                                             ToolTip="{x:Static resources:Strings.K534}" />
                                         <CheckBox
                                             Margin="0,0,0,8"
+                                            AutomationProperties.Name="{x:Static resources:Strings.Settings_DisplayCarousel}"
+                                            Content="{x:Static resources:Strings.Settings_DisplayCarousel}"
+                                            IsChecked="{Binding DraftSettings.DisplayCarouselEnabled, Mode=TwoWay}"
+                                            ToolTip="{x:Static resources:Strings.Settings_DisplayCarouselHint}" />
+                                        <TextBlock
+                                            Margin="24,-4,0,16"
+                                            FontSize="11"
+                                            Foreground="{StaticResource ThirdlyTextBrush}"
+                                            Text="{x:Static resources:Strings.Settings_DisplayCarouselHint}"
+                                            TextWrapping="Wrap" />
+                                        <CheckBox
+                                            Margin="0,0,0,8"
                                             AutomationProperties.Name="{x:Static resources:Strings.K535}"
                                             Content="{x:Static resources:Strings.K536}"
                                             IsChecked="{Binding DraftSettings.EnableAutomaticDailyReport, Mode=TwoWay}"

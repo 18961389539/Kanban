@@ -119,6 +119,9 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>看板标题（Collector settings.json 的 AppTitle；拉取失败时保持默认"生产看板"）。</summary>
     public string Title { get; private set; } = "生产看板";
 
+    /// <summary>过道电视轮播（展示模式或显示设置勾选；旧 Collector 无此接口时保持关闭）。</summary>
+    public bool DisplayCarouselEnabled { get; private set; }
+
     /// <summary>界面语言文化代码（Collector settings.json 的 LanguageCode；拉取失败时保持默认中文）。</summary>
     public string Language { get; private set; } = L.DefaultLanguage;
 
@@ -246,6 +249,43 @@ public sealed class DashboardState : IAsyncDisposable
     public int DeviceCount
     {
         get { lock (_lock) return _snapshots.Count; }
+    }
+
+    /// <summary>全厂是否有任意活跃报警或已触发的数据源（轮播跳过空报警页）。</summary>
+    public bool HasAnyActiveAlarm
+    {
+        get
+        {
+            foreach (var snapshot in Snapshots)
+            {
+                if (snapshot.Removed) continue;
+                if (snapshot.ActiveAlarms.Count > 0) return true;
+                foreach (var value in snapshot.SourceValues)
+                {
+                    if (value.IsTriggered) return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>全厂是否有 High 活跃报警（轮播冻结并切到报警页）。</summary>
+    public bool HasAnyHighLevelAlarm
+    {
+        get
+        {
+            foreach (var snapshot in Snapshots)
+            {
+                if (snapshot.Removed) continue;
+                foreach (var alarm in snapshot.ActiveAlarms)
+                {
+                    if (alarm.Level == AlarmLevel.High) return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     /// <summary>全部设备快照（按设备名排序，设备集合变化时才重排）。</summary>
@@ -381,6 +421,14 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>工单列表（只读工单页数据源）。</summary>
     public Task<IReadOnlyList<WorkOrderDto>> QueryWorkOrdersAsync(CancellationToken ct = default)
         => InvokeWithGuardAsync((client, token) => client.GetWorkOrdersAsync(token), ct);
+
+    /// <summary>单工单产量聚合（Running 用工单窗口差分；Completed 用快照）。</summary>
+    public Task<WorkOrderProductionSummaryDto> GetWorkOrderProductionSummaryAsync(int workOrderId, CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.GetWorkOrderProductionSummaryAsync(workOrderId, token), ct);
+
+    /// <summary>SN 追溯查询（精确 SN / 工单 / 设备+时间）。</summary>
+    public Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request, CancellationToken ct = default)
+        => InvokeWithGuardAsync((client, token) => client.QuerySnEventsAsync(request, token), ct);
 
     /// <summary>配方列表（只读配方页数据源）。</summary>
     public Task<IReadOnlyList<RecipeDto>> QueryRecipesAsync(CancellationToken ct = default)
@@ -780,6 +828,15 @@ public sealed class DashboardState : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "获取看板标题失败（使用默认标题）");
+        }
+        try
+        {
+            DisplayCarouselEnabled = await _client.GetDisplayCarouselEnabledAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "获取轮播开关失败（保持关闭）");
+            DisplayCarouselEnabled = false;
         }
         // 界面语言（屏端零配置——从服务端拉取；失败保持默认中文）
         try

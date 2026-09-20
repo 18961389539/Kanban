@@ -596,26 +596,27 @@
 
                     <UniformGrid Grid.Row="0" Margin="0,0,0,12" Columns="4"
                          Visibility="{Binding IsKpiVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.TriggerTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K299}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource DangerBrush}" Text="{Binding AlarmQuery.AlarmTriggerCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.RecoverTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K300}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusRunBrush}" Text="{Binding AlarmQuery.AlarmRecoverCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource KpiCard}">
+                        <Border Style="{StaticResource KpiCard}" ToolTip="{Binding AlarmQuery.PendingTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K301}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{StaticResource StatusPauseBrush}" Text="{Binding AlarmQuery.AlarmPendingCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F291}" />
                             </StackPanel>
                         </Border>
                         <!-- 平均恢复耗时（MTTR）：无配对样本时不显示 -->
-                        <Border Style="{StaticResource KpiCard}" Visibility="{Binding AlarmQuery.AlarmMttrText, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Border Style="{StaticResource KpiCard}" Visibility="{Binding AlarmQuery.AlarmMttrText, Converter={StaticResource NullToVisibilityConverter}}"
+                                ToolTip="{Binding AlarmQuery.MttrTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K912}" />
                                 <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Text="{Binding AlarmQuery.AlarmMttrText}" />
@@ -871,7 +872,7 @@
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K001}" Binding="{Binding Quality, StringFormat={}{0:P1}}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K029}" Binding="{Binding Performance, StringFormat={}{0:P1}}" />
                                     <DataGridTextColumn Header="{x:Static resources:Strings.K009}" Binding="{Binding Availability, StringFormat={}{0:P1}}" />
-                                    <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat={}{0:P1}}" />
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" />
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Border>

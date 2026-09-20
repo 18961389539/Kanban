@@ -1,9 +1,11 @@
 @inherits LayoutComponentBase
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@inject NavigationManager Nav
+@using Kanban.Contracts.Display
 @implements IDisposable
 
-<div class="app-shell">
+<div class="app-shell" @onpointerdown="OnPointerDown">
     <nav class="topnav">
         <NavLink class="topnav-link" href="/" Match="NavLinkMatch.All">@L.T("Nav_Dashboard")</NavLink>
         <NavLink class="topnav-link" href="/line">@L.T("Nav_Line")</NavLink>
@@ -20,6 +22,16 @@
     <main class="app-body">
         @Body
     </main>
+    @if (_overlayVisible)
+    {
+        <div class="carousel-overlay" title="@L.Tip("Carousel_Tip", _statusText)" aria-hidden="true">
+            @for (var i = 0; i < DisplayCarousel.Playlist.Length; i++)
+            {
+                <span class="carousel-dot @(i == _sceneIndex ? "on" : "")"></span>
+            }
+            <span class="carousel-status">@_statusText</span>
+        </div>
+    }
 </div>
 
 @code {
@@ -36,10 +48,18 @@
     // 1) 订阅 StateChanged：语言切换时顶栏导航文本即时重渲染（此前仅页面级订阅，导航标签滞留旧语言）。
     // 2) 推送 <html lang>/document.title 到 DOM（js/shell.js），供浏览器翻译/无障碍/标签页标题。
     private string? _appliedShellKey;
+    private readonly DisplayCarouselClock _carouselClock = new();
+    private System.Threading.Timer? _carouselTimer;
+    private bool _disposed;
+    private bool _overlayVisible;
+    private int _sceneIndex;
+    private string _statusText = "";
 
     protected override void OnInitialized()
     {
         Dashboard.StateChanged += OnStateChanged;
+        Nav.LocationChanged += OnLocationChanged;
+        _carouselTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(DisplayCarousel.TickMs), null, DisplayCarousel.TickMs, DisplayCarousel.TickMs);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -58,7 +78,89 @@
         }
     }
 
-    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+    private void OnStateChanged() => _ = SafeTickAsync(0);
 
-    public void Dispose() => Dashboard.StateChanged -= OnStateChanged;
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => _ = SafeTickAsync(0);
+
+    private void OnPointerDown(PointerEventArgs _) => _carouselClock.NoteInteraction(DateTime.UtcNow);
+
+    private async Task SafeTickAsync(int deltaMs)
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(() => Tick(deltaMs));
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private void Tick(int deltaMs)
+    {
+        if (_disposed) return;
+        var status = _carouselClock.Step(new DisplayCarouselInput(
+            UtcNow: DateTime.UtcNow,
+            DeltaMs: deltaMs,
+            Enabled: Dashboard.DisplayCarouselEnabled,
+            HasHighAlarm: Dashboard.HasAnyHighLevelAlarm,
+            HasActiveAlarms: Dashboard.HasAnyActiveAlarm,
+            CurrentPageKey: CurrentPageKey));
+
+        _overlayVisible = status.OverlayVisible;
+        _sceneIndex = status.SceneIndex;
+        _statusText = FormatCarouselStatus(status);
+        StateHasChanged();
+
+        if (status.NavigateTo is { } target && target != CurrentPageKey)
+            Nav.NavigateTo(RouteFor(target));
+    }
+
+    private string CurrentPageKey
+    {
+        get
+        {
+            var path = "/" + Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
+            if (path == "/") return DisplayCarousel.Home;
+            return path switch
+            {
+                "/line" => DisplayCarousel.ProductionLine,
+                "/alarms" => DisplayCarousel.AlarmCenter,
+                _ => path.TrimStart('/'),
+            };
+        }
+    }
+
+    private static string RouteFor(string scene) => scene switch
+    {
+        DisplayCarousel.ProductionLine => "/line",
+        DisplayCarousel.AlarmCenter => "/alarms",
+        _ => "/",
+    };
+
+    private static string FormatCarouselStatus(DisplayCarouselStatus status)
+    {
+        if (!status.OverlayVisible) return "";
+        if (status.Frozen) return L.T("Carousel_Frozen");
+        var scene = status.Scene switch
+        {
+            DisplayCarousel.ProductionLine => L.T("Nav_Line"),
+            DisplayCarousel.AlarmCenter => L.T("Nav_AlarmCenter"),
+            _ => L.T("Nav_Dashboard"),
+        };
+        return status.Paused
+            ? L.T("Carousel_Paused", scene, status.RemainingSeconds)
+            : L.T("Carousel_Running", scene, status.RemainingSeconds);
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        Dashboard.StateChanged -= OnStateChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+        _carouselTimer?.Dispose();
+    }
 }

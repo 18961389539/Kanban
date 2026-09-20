@@ -65,6 +65,11 @@ public sealed class PlcScanPipeline
     private int _cycleBatchReadFallbacks;
     private readonly HashSet<string> _lastCommunicationFailureProfileIds = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>缺陷/计数报警的最近一次可信值（键 = {deviceId}:{address}），用于异常读值识别。</summary>
+    private readonly Dictionary<string, int> _lastPlausibleCounts = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>已告警过的异常读值键：同一地址只告警一次，恢复可信值后清除，避免日志刷屏。</summary>
+    private readonly HashSet<string> _warnedImplausibleCountKeys = new(StringComparer.OrdinalIgnoreCase);
+
     public PlcScanPipeline(
         IDeviceAdapterResolver adapterResolver,
         IDeviceRepository deviceRepository,
@@ -288,6 +293,40 @@ public sealed class PlcScanPipeline
         return allSuccessful;
     }
 
+    /// <summary>缺陷计数的可信上限：超过视为寄存器异常（干扰/未初始化/字序错误），不采信。</summary>
+    private const int PlausibleCountCeiling = 1_000_000;
+
+    /// <summary>
+    /// 同一地址相邻两次采样允许的最大跳变：缺陷/计数报警是累计量，班次内不会瞬间暴涨。
+    /// 超过即判为异常读值（如 0xFFFF=65535、DWord 高低字错位、字地址重叠拼值），保持上次可信值。
+    /// </summary>
+    private const int PlausibleCountJump = 1_000;
+
+    /// <summary>
+    /// 累计读值合理性校验：过滤 PLC 干扰/未初始化寄存器导致的异常大值。
+    /// 通过时更新可信值并返回 true；不通过时保留上次可信值、只告警一次（恢复后自动清除告警标记）。
+    /// </summary>
+    private bool TryAcceptPlausibleCount(string key, int value, string deviceName, string itemName, string address)
+    {
+        var implausible = value < 0 || value > PlausibleCountCeiling
+            || (_lastPlausibleCounts.TryGetValue(key, out var last) && value > last + PlausibleCountJump);
+
+        if (!implausible)
+        {
+            _lastPlausibleCounts[key] = value;
+            _warnedImplausibleCountKeys.Remove(key);
+            return true;
+        }
+
+        if (_warnedImplausibleCountKeys.Add(key))
+            _logger.LogWarning(
+                "忽略异常读值：设备 {Device} 的 {Item} 地址 {Address} 读到 {Value}（上次可信值 {Last}）。" +
+                "可能原因：PLC 干扰、寄存器未初始化、或 DWord 地址未按 2 字对齐导致字重叠。本次保持上次可信值。",
+                deviceName, itemName, address, value,
+                _lastPlausibleCounts.TryGetValue(key, out var prev) ? prev.ToString() : "无");
+        return false;
+    }
+
     /// <summary>
     /// 遍历所有缺陷，从 PLC 读取缺陷计数（直接来自 PLC，不累加）。
     /// 返回 false 表示至少一次读取失败。
@@ -312,7 +351,12 @@ public sealed class PlcScanPipeline
 
                 var result = ReadInt32Value(device, addr);
                 if (result.IsSuccess)
-                    defect.Count = result.Content;
+                {
+                    // 2026-09-18：缺陷计数先做合理性校验，异常大值（干扰/字重叠/未初始化）不落库、不进 UI。
+                    var defectKey = $"{device.Id}:{addr}";
+                    if (TryAcceptPlausibleCount(defectKey, result.Content, device.Name, "缺陷 " + defect.Name, addr))
+                        defect.Count = result.Content;
+                }
                 else
                     allSuccessful = false;
             }
@@ -361,7 +405,12 @@ public sealed class PlcScanPipeline
                 if (result.IsSuccess)
                 {
                     var wasTriggered = ca.IsTriggered;
-                    ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
+                    // 2026-09-18：与缺陷同源的合理性校验——异常大值会误触发计数报警（含误告警通知）。
+                    var counterKey = $"{device.Id}:{addr}";
+                    if (TryAcceptPlausibleCount(counterKey, result.Content, device.Name, "计数报警 " + ca.Name, addr))
+                        ca.CurrentValue = result.Content;   // IsTriggered 由 CurrentValue > MaxValue 自动派生
+                    else
+                        continue;
                     // 首次有效采样只建立基线：应用启动时已经超阈值的报警不算新报警。
                     var isFirstObservation = _initializedCounterAlarmIds.Add(key);
                     if (!isFirstObservation && !wasTriggered && ca.IsTriggered)

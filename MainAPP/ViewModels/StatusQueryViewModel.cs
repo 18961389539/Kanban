@@ -360,12 +360,13 @@ public partial class StatusQueryViewModel : ObservableObject
 
     private class StatusCsvRow
     {
-        [Name("事件时间")] public DateTime Timestamp { get; set; }
-        [Name("设备ID")] public string? DeviceId { get; set; }
-        [Name("设备名称")] public string? DeviceName { get; set; }
-        [Name("前一状态")] public int PrevState { get; set; }
-        [Name("当前状态")] public int CurrState { get; set; }
-        [Name("前一状态文本")] public string? PrevStateText { get; set; }
-        [Name("当前状态文本")] public string? CurrStateText { get; set; }
+        // 表头本地化由 HistoryQueryHelper.BuildCsv 按 Csv_Hd_<属性名> 运行时注入（多语言修复 2026-09-18）
+        public DateTime Timestamp { get; set; }
+        public string? DeviceId { get; set; }
+        public string? DeviceName { get; set; }
+        public int PrevState { get; set; }
+        public int CurrState { get; set; }
+        public string? PrevStateText { get; set; }
+        public string? CurrStateText { get; set; }
     }
 }

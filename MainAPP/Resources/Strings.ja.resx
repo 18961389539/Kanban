@@ -1296,6 +1296,12 @@
   <data name="K330" xml:space="preserve">
     <value>新規アラームをミュート</value>
   </data>
+  <data name="Home_MuteShort" xml:space="preserve">
+    <value>ミュート</value>
+  </data>
+  <data name="Home_SelectDeviceHint" xml:space="preserve">
+    <value>設備を選択</value>
+  </data>
   <data name="K331" xml:space="preserve">
     <value>新規アラームの音と点滅を切替（一覧は更新されます）</value>
   </data>
@@ -3166,7 +3172,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>進行中の作業指示のみ完了可能</value>
   </data>
   <data name="M089" xml:space="preserve">
-    <value>完了して生産スナップショットを保存</value>
+    <value>完了してスナップショットを保存し次の工単を選べます</value>
   </data>
   <data name="M090" xml:space="preserve">
     <value>完了/中止済みの作業指示は中止不可</value>
@@ -5084,6 +5090,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Ln_ShiftPace" xml:space="preserve">
     <value>良品達成（OK/予定）</value>
   </data>
+  <data name="Ln_ShiftPaceExceeded" xml:space="preserve">
+    <value>超過 100%+</value>
+  </data>
   <data name="Ln_AvailabilityHint" xml:space="preserve">
     <value>アラーム時間のみ控除（待機・オフライン含まず）</value>
   </data>
@@ -6349,6 +6358,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Validator_DuplicateChildId" xml:space="preserve">
     <value>設備「{0}」の{1} ID が重複しています</value>
   </data>
+  <data name="Validator_DWordAddressOverlap" xml:space="preserve">
+    <value>設備「{0}」の DWord アドレス {1} と {2} が重複しています（DWord は 2 ワード使用。偶数アドレスに間隔 2 で配置してください）</value>
+  </data>
   <data name="Validator_DuplicateSourceName" xml:space="preserve">
     <value>データソース名「{0}」が重複しています</value>
   </data>
@@ -6766,6 +6778,42 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Wo_AddTitle" xml:space="preserve">
     <value>新規作業指示</value>
   </data>
+  <data name="Wo_ContinueTitle" xml:space="preserve">
+    <value>工単完了</value>
+  </data>
+  <data name="Wo_ContinueMessage" xml:space="preserve">
+    <value>工単 {0} を完了しました。次の作業を選んでください。</value>
+  </data>
+  <data name="Wo_ContinueSelect" xml:space="preserve">
+    <value>他の工単を選択</value>
+  </data>
+  <data name="Wo_ContinueSelectHint" xml:space="preserve">
+    <value>未開始の工単を選んで開始します</value>
+  </data>
+  <data name="Wo_ContinuePendingList" xml:space="preserve">
+    <value>未開始の工単</value>
+  </data>
+  <data name="Wo_ContinueNoPending" xml:space="preserve">
+    <value>未開始の工単はありません</value>
+  </data>
+  <data name="Wo_ContinueCreate" xml:space="preserve">
+    <value>新規工単</value>
+  </data>
+  <data name="Wo_ContinueCreateHint" xml:space="preserve">
+    <value>空の工単を作成して開始します</value>
+  </data>
+  <data name="Wo_ContinueCopy" xml:space="preserve">
+    <value>現在の工単を複製</value>
+  </data>
+  <data name="Wo_ContinueCopyHint" xml:space="preserve">
+    <value>この工単を複製して開始します</value>
+  </data>
+  <data name="Wo_ContinueLater" xml:space="preserve">
+    <value>後で</value>
+  </data>
+  <data name="Wo_ContinueItemFormat" xml:space="preserve">
+    <value>{0}  ·  {1}  ·  {2}</value>
+  </data>
   <data name="Audit_Detail_Role" xml:space="preserve">
     <value>ロール={0}</value>
   </data>
@@ -6864,6 +6912,102 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Home_WorkOrderAchievement" xml:space="preserve">
     <value>工単達成率</value>
+  </data>
+  <data name="Home_WorkOrderSchedule" xml:space="preserve">
+    <value>計画終了 {0}・残り {1}</value>
+  </data>
+  <data name="Home_WorkOrderOverdue" xml:space="preserve">
+    <value>超過 {0}</value>
+  </data>
+  <data name="Home_WorkOrderBehind" xml:space="preserve">
+    <value>計画より {0}pp 遅れ</value>
+  </data>
+  <data name="Home_WorkOrderAhead" xml:space="preserve">
+    <value>計画より {0}pp 先行</value>
+  </data>
+  <data name="Home_WorkOrderEmpty" xml:space="preserve">
+    <value>進行中の工単なし</value>
+  </data>
+  <data name="Home_WorkOrderEmptyHint" xml:space="preserve">
+    <value>現在の設備に進行中の工単がありません。工単管理で開始してください。</value>
+  </data>
+  <data name="Csv_Hd_Timestamp" xml:space="preserve">
+    <value>時刻</value>
+  </data>
+  <data name="Csv_Hd_DeviceId" xml:space="preserve">
+    <value>設備ID</value>
+  </data>
+  <data name="Csv_Hd_DeviceName" xml:space="preserve">
+    <value>設備名</value>
+  </data>
+  <data name="Csv_Hd_AlarmId" xml:space="preserve">
+    <value>アラームID</value>
+  </data>
+  <data name="Csv_Hd_AlarmName" xml:space="preserve">
+    <value>アラーム名</value>
+  </data>
+  <data name="Csv_Hd_PlcAddress" xml:space="preserve">
+    <value>PLCアドレス</value>
+  </data>
+  <data name="Csv_Hd_EventType" xml:space="preserve">
+    <value>イベント種別</value>
+  </data>
+  <data name="Csv_Hd_EventTypeText" xml:space="preserve">
+    <value>イベント種別（文字列）</value>
+  </data>
+  <data name="Csv_Hd_DurationText" xml:space="preserve">
+    <value>継続時間</value>
+  </data>
+  <data name="Csv_Hd_ShiftName" xml:space="preserve">
+    <value>シフト</value>
+  </data>
+  <data name="Csv_Hd_OkProduction" xml:space="preserve">
+    <value>OK生産数</value>
+  </data>
+  <data name="Csv_Hd_NgProduction" xml:space="preserve">
+    <value>NG生産数</value>
+  </data>
+  <data name="Csv_Hd_StatusWord" xml:space="preserve">
+    <value>ステータスワード</value>
+  </data>
+  <data name="Csv_Hd_PrevState" xml:space="preserve">
+    <value>前状態</value>
+  </data>
+  <data name="Csv_Hd_CurrState" xml:space="preserve">
+    <value>現在状態</value>
+  </data>
+  <data name="Csv_Hd_PrevStateText" xml:space="preserve">
+    <value>前状態（文字列）</value>
+  </data>
+  <data name="Csv_Hd_CurrStateText" xml:space="preserve">
+    <value>現在状態（文字列）</value>
+  </data>
+  <data name="Csv_Hd_Metric" xml:space="preserve">
+    <value>指標</value>
+  </data>
+  <data name="Csv_Hd_Value" xml:space="preserve">
+    <value>値</value>
+  </data>
+  <data name="Csv_Alarm_Summary" xml:space="preserve">
+    <value>トリガー：{0} 回、復旧：{1} 回、未復旧：{2} 件</value>
+  </data>
+  <data name="Csv_Prod_Range" xml:space="preserve">
+    <value>照会期間：{0} ~ {1}</value>
+  </data>
+  <data name="Csv_Prod_Summary" xml:space="preserve">
+    <value>合計 OK：{0} 個、合計 NG：{1} 個、良品率：{2}</value>
+  </data>
+  <data name="Csv_Export_PageHint" xml:space="preserve">
+    <value>このファイルは現在のページのみ（1ページ最大 {0} 件）、一括エクスポートではありません。</value>
+  </data>
+  <data name="Csv_WorkOrder_FileName" xml:space="preserve">
+    <value>工単リスト_{0:yyyyMMddHHmm}.csv</value>
+  </data>
+  <data name="Csv_DailyReport_FileName" xml:space="preserve">
+    <value>生産日報_{0:yyyyMMdd}_{1}.pdf</value>
+  </data>
+  <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
+    <value>レシピ切替で未保存の編集が失われます。続行しますか？</value>
   </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\n現在：{0} 個</value>
@@ -6993,5 +7137,263 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\n現在：{0}</value>
+  </data>
+  <data name="Home_Scope_WorkOrder" xml:space="preserve">
+    <value>工単</value>
+  </data>
+  <data name="Home_Scope_Shift" xml:space="preserve">
+    <value>当シフト</value>
+  </data>
+  <data name="Home_Scope_Realtime" xml:space="preserve">
+    <value>リアルタイム</value>
+  </data>
+  <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
+    <value>工単時間窓で集計。作業指示ページと同じ</value>
+  </data>
+  <data name="Home_Scope_Shift_Tip" xml:space="preserve">
+    <value>当シフトのセッション累計。工単時間窓ではない</value>
+  </data>
+  <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
+    <value>稼働中の即時値（稼働時間ベース）</value>
+  </data>
+  <data name="Settings_DisplayCarousel" xml:space="preserve">
+    <value>通路TVローテーション</value>
+  </data>
+  <data name="Settings_DisplayCarouselHint" xml:space="preserve">
+    <value>デフォルトでオン。ホーム40秒→ライン30秒→警報20秒（警報なしはスキップ）。操作で16秒停止。High警報は警報ページで固定。完全モードではオフにできます。</value>
+  </data>
+  <data name="Carousel_Frozen" xml:space="preserve">
+    <value>高警報で固定</value>
+  </data>
+  <data name="Carousel_Paused" xml:space="preserve">
+    <value>一時停止 · {0} · {1}s</value>
+  </data>
+  <data name="Carousel_Running" xml:space="preserve">
+    <value>{0} · 残り {1}s</value>
+  </data>
+  <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
+    <value>計画対比：実績達成率と計画時間進捗。正=先行、負=遅れ。\n実績 {0} · 計画 {1} · {2}\n{3}</value>
+  </data>
+  <data name="Home_Tip_CycleDiff" xml:space="preserve">
+    <value>サイクル差 = 実サイクル − 目標サイクル。正=遅い（1個あたり長い）、負=速い。\n目標 {0} · 実績 {1} · {2}</value>
+  </data>
+  <data name="Home_Tip_DefectSummary" xml:space="preserve">
+    <value>当シフトのパレート不良合計（分類済みのみ。原因未入力の NG は含まない）。\n{0}</value>
+  </data>
+  <data name="Home_Tip_DefectNgShare" xml:space="preserve">
+    <value>分類済み不良件数が当シフト NG に占める割合。原因未入力の NG はパレートに含まない。\n{0}</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmCount" xml:space="preserve">
+    <value>このデバイスの未復旧アラーム件数。バッジは切り詰め前の総数。\n現在：{0:N0} 件</value>
+  </data>
+  <data name="Home_Tip_ActiveAlarmDuration" xml:space="preserve">
+    <value>発生から未復旧までの経過時間。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_ConnBadge" xml:space="preserve">
+    <value>看板とコレクタのリアルタイム接続。緑=接続してスナップショット受信、赤=切断。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_DeviceCount" xml:space="preserve">
+    <value>この看板に接続中のデバイス台数。\n現在：{0:N0} 台</value>
+  </data>
+  <data name="Home_Tip_DeviceStatus" xml:space="preserve">
+    <value>デバイス稼働状態（状態語と収集判定）。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_SnapSeq" xml:space="preserve">
+    <value>スナップショット番号：収集成功のたびに +1。止まっていれば収集が進んでいません。\n現在：#{0}</value>
+  </data>
+  <data name="Home_Tip_DataFresh" xml:space="preserve">
+    <value>このデバイスの最新スナップショットからの経過。通常は数秒以内。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_TrendWindow" xml:space="preserve">
+    <value>直近 1 分の速度折れ線（個/時）。点はサンプルでありシフト累計ではありません。\n現在速度：{0} 個/h</value>
+  </data>
+  <data name="Home_Tip_StatusWord" xml:space="preserve">
+    <value>PLC 状態語の生値（16 進）。通信と稼働状態の照合用。\n現在：{0}</value>
+  </data>
+  <data name="Home_Tip_Recipe" xml:space="preserve">
+    <value>現在のデバイスレシピ名と値。\n現在：{0}</value>
+  </data>
+  <data name="Carousel_Tip" xml:space="preserve">
+    <value>通路 TV ローテーションの状態。操作で 16 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0}</value>
+  </data>
+  <data name="Mo_Tip_ConnStatus" xml:space="preserve">
+    <value>コレクタとデバイス/PLC の接続状態。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_AcqStatus" xml:space="preserve">
+    <value>収集ループが動作中か。停止するとスナップショットは更新されません。\n現在：{0}</value>
+  </data>
+  <data name="Rv_Tip_AlarmCount" xml:space="preserve">
+    <value>復盤時間窓の発生回数（現在の未復旧件数ではない）。復帰 {1:N0} · 未復帰 {2:N0}。\n現在：{0:N0} 回</value>
+  </data>
+  <data name="Rv_Tip_LongestDowntime" xml:space="preserve">
+    <value>復盤時間窓で最長の警報継続（発生から復帰または照会終了）。\n現在：{0}\n{1} · {2}</value>
+  </data>
+  <data name="Rv_Tip_PeakHour" xml:space="preserve">
+    <value>復盤時間窓で時間集計 OK が最多の時間帯（リアルタイム速度ではない）。\n現在：{0} · {1:N0} 個（{2}）</value>
+  </data>
+  <data name="Rv_Tip_ValleyHour" xml:space="preserve">
+    <value>復盤時間窓で時間集計 OK が最少の時間帯（リアルタイム速度ではない）。\n現在：{0} · {1:N0} 個（{2}）</value>
+  </data>
+  <data name="Hq_Tip_WindowTriggered" xml:space="preserve">
+    <value>選択した照会窓の発生回数（Triggered。現在の未復旧件数ではない）。\n現在：{0:N0} 回</value>
+  </data>
+  <data name="Hq_Tip_WindowRecovered" xml:space="preserve">
+    <value>選択した照会窓の復帰回数（Recovered）。\n現在：{0:N0} 回</value>
+  </data>
+  <data name="Hq_Tip_WindowPending" xml:space="preserve">
+    <value>照会終了時点で未復帰の件数（窓内で発生し対応する復帰なし）。\n現在：{0:N0} 件</value>
+  </data>
+  <data name="Hq_Tip_WindowMttr" xml:space="preserve">
+    <value>照会窓でペアになった警報の平均復旧時間（MTTR）。ペアなしは非表示。\n現在：{0}</value>
+  </data>
+  <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
+    <value>このデバイスには未展開の未復旧アラームがあります。カードは先頭のみ表示。\nほか {0:N0} 件</value>
+  </data>
+  <data name="Ac_Tip_RankDuration" xml:space="preserve">
+    <value>統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_Health" xml:space="preserve">
+    <value>PLC 接続、収集ループ稼働、直近サイクル成功を総合。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_DisconnectDuration" xml:space="preserve">
+    <value>コレクタが PLC から切断されてからの経過。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_CompletedCycles" xml:space="preserve">
+    <value>収集ループの完了回数（成功も失敗も含む）。\n現在：{0:N0}</value>
+  </data>
+  <data name="Mo_Tip_FailedCycles" xml:space="preserve">
+    <value>収集失敗回数（完了回数の部分集合。成功率の分母に二重計上しない）。\n現在：{0:N0}</value>
+  </data>
+  <data name="Mo_Tip_LastCycleMs" xml:space="preserve">
+    <value>直近の収集サイクル所要時間。\n現在：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_AvgCycleMs" xml:space="preserve">
+    <value>収集サイクルの平均所要時間。\n現在：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_MaxCycleMs" xml:space="preserve">
+    <value>収集サイクルの最大所要時間。\n現在：{0} ms</value>
+  </data>
+  <data name="Mo_Tip_DevicesRead" xml:space="preserve">
+    <value>直近成功サイクルで読めたデバイス数 / 設定台数。\n現在：{0} / {1}</value>
+  </data>
+  <data name="Mo_Tip_LastSuccessAt" xml:space="preserve">
+    <value>直近の収集成功時刻。\n現在：{0}</value>
+  </data>
+  <data name="Mo_Tip_LastFailureAt" xml:space="preserve">
+    <value>直近の収集失敗時刻。\n現在：{0}</value>
+  </data>
+  <data name="Web_Wo_Achievement" xml:space="preserve">
+    <value>達成率</value>
+  </data>
+  <data name="Web_Wo_ScheduleChip" xml:space="preserve">
+    <value>進捗</value>
+  </data>
+  <data name="Web_Wo_Detail" xml:space="preserve">
+    <value>工単詳細</value>
+  </data>
+  <data name="Web_Wo_Remark" xml:space="preserve">
+    <value>備考</value>
+  </data>
+  <data name="Web_Wo_SnTitle" xml:space="preserve">
+    <value>単品トレース</value>
+  </data>
+  <data name="Web_Hq_SnCol" xml:space="preserve">
+    <value>シリアル番号</value>
+  </data>
+  <data name="Web_Hq_SnWorkOrder" xml:space="preserve">
+    <value>工単</value>
+  </data>
+  <data name="Web_Hq_SnSource" xml:space="preserve">
+    <value>ソース</value>
+  </data>
+  <data name="Web_Csv_FileSn" xml:space="preserve">
+    <value>SNトレース_{0}.csv</value>
+  </data>
+  <data name="Web_Ac_MutedCount" xml:space="preserve">
+    <value>ミュート {0}</value>
+  </data>
+  <data name="Web_Ac_GroupAlarms" xml:space="preserve">
+    <value>{0} 件</value>
+  </data>
+  <data name="Web_Ac_Copy" xml:space="preserve">
+    <value>引継ぎをコピー</value>
+  </data>
+  <data name="Web_Rv_Daily" xml:space="preserve">
+    <value>昨日の日報</value>
+  </data>
+  <data name="Web_Rv_Export" xml:space="preserve">
+    <value>CSV エクスポート</value>
+  </data>
+  <data name="Web_Rv_Print" xml:space="preserve">
+    <value>印刷 / PDF</value>
+  </data>
+  <data name="Web_Rv_Takeaway" xml:space="preserve">
+    <value>健康スコア {0} · {1} · 最長停止 {2}（{3}）</value>
+  </data>
+  <data name="Web_Rv_CsvFile" xml:space="preserve">
+    <value>生産レビュー_{0:yyyyMMdd}_{1:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Rv_DailyCsvFile" xml:space="preserve">
+    <value>生産日報_{0:yyyyMMdd}.csv</value>
+  </data>
+  <data name="Web_Dd_Title" xml:space="preserve">
+    <value>デバイス稼働詳細</value>
+  </data>
+  <data name="Web_Dd_HourBoard" xml:space="preserve">
+    <value>当シフト時間板</value>
+  </data>
+  <data name="Web_Dd_NoShift" xml:space="preserve">
+    <value>シフト時間外</value>
+  </data>
+  <data name="Web_Dd_RecentAlarms" xml:space="preserve">
+    <value>今日の警報</value>
+  </data>
+  <data name="Web_Dd_Sources" xml:space="preserve">
+    <value>データソース</value>
+  </data>
+  <data name="Web_Dd_OpenRuntime" xml:space="preserve">
+    <value>稼働詳細</value>
+  </data>
+  <data name="Web_Dd_Plan" xml:space="preserve">
+    <value>計画</value>
+  </data>
+  <data name="Web_Dd_Actual" xml:space="preserve">
+    <value>実績</value>
+  </data>
+  <data name="Web_Dd_Back" xml:space="preserve">
+    <value>戻る</value>
+  </data>
+  <data name="Web_Dd_NoDevice" xml:space="preserve">
+    <value>デバイス未指定</value>
+  </data>
+  <data name="Web_Mo_Sources" xml:space="preserve">
+    <value>データソースリアルタイム</value>
+  </data>
+  <data name="Web_Mo_SourceEmpty" xml:space="preserve">
+    <value>ソース値なし</value>
+  </data>
+  <data name="Web_Mo_SourceEmptyHint" xml:space="preserve">
+    <value>湿度・エネルギーなど設定済みソースのリアルタイム値を表示します</value>
+  </data>
+  <data name="Web_Mo_Triggered" xml:space="preserve">
+    <value>トリガー済み</value>
+  </data>
+  <data name="Web_Mo_Updated" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="Web_Dv_Sources" xml:space="preserve">
+    <value>データソース設定</value>
+  </data>
+  <data name="Web_Dv_SourceType" xml:space="preserve">
+    <value>種別</value>
+  </data>
+  <data name="Web_Dv_TriggerAddr" xml:space="preserve">
+    <value>トリガーアドレス</value>
+  </data>
+  <data name="Web_Dv_ValueItems" xml:space="preserve">
+    <value>値項目</value>
+  </data>
+  <data name="Web_Dv_SourceEnabled" xml:space="preserve">
+    <value>有効</value>
   </data>
 </root>

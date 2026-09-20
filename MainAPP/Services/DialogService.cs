@@ -54,6 +54,12 @@ public interface IDialogService
     /// 返回用户确认后的工单副本；用户取消返回 null。
     /// </summary>
     WorkOrder? ShowWorkOrderEditor(WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null);
+
+    /// <summary>
+    /// 工单完成后的后续选择：选择其他待开始工单、新建或复制当前工单。
+    /// 关闭/稍后再说返回 <see cref="WorkOrderContinueChoice.Dismissed"/>。
+    /// </summary>
+    WorkOrderContinueChoice ShowWorkOrderContinue(WorkOrder completed, IReadOnlyList<WorkOrder> selectableOrders);
 }
 
 /// <summary>
@@ -124,5 +130,13 @@ public class DialogService : IDialogService
         if (Application.Current?.MainWindow is Window owner)
             window.Owner = owner;
         return window.ShowDialog() == true ? window.Result : null;
+    }
+
+    public WorkOrderContinueChoice ShowWorkOrderContinue(WorkOrder completed, IReadOnlyList<WorkOrder> selectableOrders)
+    {
+        var window = new WorkOrderContinueDialog(completed, selectableOrders);
+        if (Application.Current?.MainWindow is Window owner)
+            window.Owner = owner;
+        return window.ShowDialog() == true ? window.Result : WorkOrderContinueChoice.Dismissed;
     }
 }

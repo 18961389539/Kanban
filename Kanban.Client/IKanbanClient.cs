@@ -23,6 +23,7 @@ public interface IKanbanMonitoringClient
     Task<ShiftProgressDto> GetShiftProgressAsync(CancellationToken ct = default);
     Task SubscribeMetaAsync(CancellationToken ct = default);
     Task<string> GetServerVersionAsync(CancellationToken ct = default);
+    Task<bool> GetDisplayCarouselEnabledAsync(CancellationToken ct = default);
     Task<int> GetLanguageAsync(CancellationToken ct = default);
     Task<string> GetLanguageCodeAsync(CancellationToken ct = default);
     Task<IReadOnlyList<LocalizationOverrideDto>> GetLocalizationOverridesAsync(CancellationToken ct = default);

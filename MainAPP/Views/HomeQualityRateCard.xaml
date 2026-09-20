@@ -29,6 +29,7 @@
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="CheckCircle" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K328}" />
+                    <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
             </DockPanel>
 
@@ -41,9 +42,12 @@
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center"
                             ToolTip="{Binding TotalOutputTooltip}">
-                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}"
-                               Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{x:Static resources:Strings.Home_ShiftTotalOutput}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" VerticalAlignment="Center"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.Home_ShiftTotalOutput}" />
+                        <controls:KpiScopeChip Kind="Shift" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <TextBlock FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                    Foreground="{StaticResource PrimaryTextBrush}"
@@ -57,9 +61,12 @@
 
                 <StackPanel Grid.Column="2" VerticalAlignment="Center"
                             ToolTip="{Binding QualityTooltip}">
-                    <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}"
-                               Foreground="{StaticResource ThirdlyTextBrush}"
-                               Text="{x:Static resources:Strings.Home_CumulativeQuality}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" VerticalAlignment="Center"
+                                   Foreground="{StaticResource ThirdlyTextBrush}"
+                                   Text="{x:Static resources:Strings.Home_CumulativeQuality}" />
+                        <controls:KpiScopeChip Kind="Shift" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                         <TextBlock FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
                                    Text="{Binding QualityRateDisplay}">

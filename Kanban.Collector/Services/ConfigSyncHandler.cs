@@ -454,6 +454,9 @@ public sealed class ConfigSyncHandler
     /// <summary>看板标题（Collector 侧 settings.json 的 AppTitle；屏端经 Hub 拉取，零配置）。</summary>
     public string GetTitle() => string.IsNullOrWhiteSpace(_appSettings.AppTitle) ? "生产看板" : _appSettings.AppTitle;
 
+    /// <summary>过道电视轮播：展示模式始终开，完整模式看 DisplayCarouselEnabled。</summary>
+    public bool GetDisplayCarouselEnabled() => _appSettings.IsDisplayCarouselActive;
+
     /// <summary>旧版界面语言枚举值；由有效文化代码映射，兼容旧版屏端。</summary>
     public int GetLanguage() => (int)AppSettings.LegacyLanguage(_appSettings.EffectiveLanguageCode);
 

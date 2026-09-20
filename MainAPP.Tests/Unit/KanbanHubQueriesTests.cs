@@ -276,4 +276,16 @@ public sealed class KanbanHubQueriesTests : IDisposable
         Assert.Equal("en-US", await _hub.GetLanguageCodeAsync());
         Assert.False(string.IsNullOrEmpty(await _hub.GetServerVersionAsync()));
     }
+
+    [Fact]
+    public async Task GetDisplayCarouselEnabled_ViewerOrCheckbox()
+    {
+        Assert.True(await _hub.GetDisplayCarouselEnabledAsync());
+
+        _settings.DisplayCarouselEnabled = false;
+        Assert.False(await _hub.GetDisplayCarouselEnabledAsync());
+
+        _settings.RunMode = KanbanRunMode.Viewer;
+        Assert.True(await _hub.GetDisplayCarouselEnabledAsync());
+    }
 }

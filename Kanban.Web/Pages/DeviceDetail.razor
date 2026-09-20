@@ -1,0 +1,306 @@
+@page "/device/{DeviceId}"
+@implements IDisposable
+@inject DashboardState Dashboard
+@inject NavigationManager Nav
+@using Kanban.Contracts.Dtos
+@using Kanban.Contracts.Enums
+@using Kanban.Contracts.Metrics
+@using Kanban.Web.Services
+
+<div class="query-page">
+    <div class="line-header">
+        <div class="brand">
+            <button class="btn" @onclick="GoBack">@L.T("Dd_Back")</button>
+            <span class="brand-title">@(Snapshot?.DeviceName ?? DeviceId)</span>
+            @if (Snapshot is { } snap)
+            {
+                <span class="status-badge @StateClass(snap.Status)" title="@L.Tip("Home_Tip_DeviceStatus", StateText(snap))">@StateText(snap)</span>
+            }
+            <span class="brand-sub">@L.T("Dd_Title")</span>
+        </div>
+    </div>
+
+    @if (string.IsNullOrEmpty(DeviceId))
+    {
+        <EmptyState Title="@L.T("Dd_NoDevice")" Hint="" Icon="🖥️" />
+    }
+    else if (Snapshot is null)
+    {
+        <EmptyState Title="@(Dashboard.IsConnected ? L.T("Msg_NoDeviceData") : L.T("Msg_WaitingConn"))" Hint="@L.T("Msg_EmptyHint")" Icon="🔌" />
+    }
+    else
+    {
+        <section class="kpi-row">
+            <div class="kpi-card" title="@L.Tip("Home_Tip_Recipe", string.IsNullOrEmpty(Snapshot.RecipeName) ? "—" : Snapshot.RecipeName)">
+                <span class="kpi-label">@L.T("Rv_Recipe")</span>
+                <span class="kpi-value">@(string.IsNullOrEmpty(Snapshot.RecipeName) ? "—" : Snapshot.RecipeName)</span>
+            </div>
+            <div class="kpi-card card-click" @onclick="OpenWorkOrder">
+                <span class="kpi-label">@L.T("Card_WorkOrder")</span>
+                <span class="kpi-value">@(WorkOrder?.OrderNo ?? L.T("Val_NoWorkOrder"))</span>
+                <span class="kpi-sub dim">@(WorkOrder is null ? "" : WorkOrder.ProductCode)</span>
+            </div>
+            <div class="kpi-card" title="@L.Tip("Home_Tip_TotalOutput", Snapshot.TotalOkProduction, Snapshot.TotalNgProduction, SnapshotMetrics.TotalOutput(Snapshot.TotalOkProduction, Snapshot.TotalNgProduction))">
+                <span class="kpi-label">@L.T("Lbl_TotalOutput")</span>
+                <span class="kpi-value">@SnapshotMetrics.TotalOutput(Snapshot.TotalOkProduction, Snapshot.TotalNgProduction).ToString("N0")</span>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-title">@L.T("Card_Oee") <KpiScopeChip Kind="Shift" /></div>
+            <div class="ring-row">
+                <Ring Value="@Snapshot.Oee" ValueText="@Pct(Snapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder" Title="@OeeTip" />
+                <Ring Value="@Snapshot.AvailabilityRate" ValueText="@Pct(Snapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder" />
+                <Ring Value="@Snapshot.PerformanceRate" ValueText="@Pct(Snapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder" />
+                <Ring Value="@Snapshot.QualityRate" ValueText="@Pct(Snapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder" />
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-title">@L.T("Dd_HourBoard")</div>
+            @if (HourBuckets.Count == 0)
+            {
+                <EmptyState Compact="true" Title="@L.T("Dd_NoShift")" Hint="" Icon="⏱" />
+            }
+            else
+            {
+                <div class="hour-board">
+                    @foreach (var b in HourBuckets)
+                    {
+                        <div class="hour-cell @b.State.ToString().ToLowerInvariant()">
+                            <span class="hour-label">@b.TimeLabel</span>
+                            <span class="hour-actual">@b.ActualDisplay</span>
+                            <span class="hour-plan">@L.T("Dd_Plan") @b.Plan</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-title">@L.T("Dd_RecentAlarms")</div>
+            @if (AlarmLoading)
+            {
+                <div class="loading-row">@L.T("Hq_Loading")…</div>
+            }
+            else if (RecentAlarms.Count == 0)
+            {
+                <div class="no-data">@L.T("Val_NoAlarms")</div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_EventTime")</th>
+                            <th>@L.T("Ac_AlarmName")</th>
+                            <th>@L.T("Hq_AlarmType")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in RecentAlarms)
+                        {
+                            <tr class="row-click" @onclick="() => OpenAlarm(e)">
+                                <td>@e.EventTime.ToString("MM-dd HH:mm:ss")</td>
+                                <td>@e.AlarmName</td>
+                                <td>@AlarmAnalysis.GetEventTypeText(e.EventType, L.T)</td>
+                            </tr>
+                        }
+                    </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-title">@L.T("Dd_Sources")</div>
+            @if (Snapshot.SourceValues.Count == 0)
+            {
+                <EmptyState Compact="true" Title="@L.T("Mo_SourceEmpty")" Hint="@L.T("Mo_SourceEmptyHint")" Icon="📡" />
+            }
+            else
+            {
+                <div class="src-grid">
+                    @foreach (var v in Snapshot.SourceValues)
+                    {
+                        <div class="src-item @(v.IsTriggered ? "triggered" : "")">
+                            <span class="kpi-label">@v.SourceName · @v.ValueName</span>
+                            <span class="kpi-value">@(string.IsNullOrEmpty(v.DisplayText) ? "—" : v.DisplayText) @v.Unit</span>
+                            <span class="kpi-sub dim">@(v.LastUpdatedAt?.ToString("HH:mm:ss") ?? "—")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public string DeviceId { get; set; } = "";
+
+    private System.Threading.Timer? _renderTimer;
+    private bool _disposed;
+    private IReadOnlyList<HourBucketItem> HourBuckets { get; set; } = [];
+    private List<AlarmEventRecordDto> RecentAlarms { get; set; } = [];
+    private bool AlarmLoading { get; set; }
+    private string? _hourKey;
+    private int _hourRunning;
+    private DateTime _lastHourAt = DateTime.MinValue;
+    private static readonly TimeSpan HourThrottle = TimeSpan.FromSeconds(15);
+
+    private DeviceSnapshotDto? Snapshot => string.IsNullOrEmpty(DeviceId) ? null : Dashboard.GetSnapshot(DeviceId);
+    private WorkOrderDto? WorkOrder => Dashboard.GetWorkOrder(DeviceId);
+    private bool HasWorkOrder => WorkOrder is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Dashboard.InitializeAsync();
+        _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
+        _ = RefreshHourBoardAsync();
+        _ = RefreshAlarmsAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        _hourKey = null;
+        _ = RefreshHourBoardAsync();
+        _ = RefreshAlarmsAsync();
+    }
+
+    private async Task RefreshHourBoardAsync()
+    {
+        var snap = Snapshot;
+        var sp = Dashboard.ShiftProgress;
+        if (snap is null || sp is not { IsInShift: true, ShiftStart: not null, ShiftEnd: not null })
+        {
+            HourBuckets = [];
+            return;
+        }
+
+        var start = sp.ShiftStart.Value;
+        var end = sp.ShiftEnd.Value;
+        var now = Dashboard.ServerNow;
+        var key = $"{DeviceId}|{start:O}|{end:O}";
+        if (key == _hourKey && DateTime.Now - _lastHourAt < HourThrottle)
+            return;
+        if (Interlocked.CompareExchange(ref _hourRunning, 1, 0) != 0)
+            return;
+        _hourKey = key;
+        _lastHourAt = DateTime.Now;
+        try
+        {
+            var queryTo = now < end ? now : end;
+            var (window, _) = await HistoryFetch.FetchAllAsync<ProductionLogDto>(
+                Dashboard, HistoryQueryType.ProductionLog, start, queryTo, DeviceId, null, r => r.ProductionLogs);
+            var baselineList = await HistoryFetch.FetchLatestBeforeAsync<ProductionLogDto>(
+                Dashboard, HistoryQueryType.ProductionLog, start, DeviceId, null, r => r.ProductionLogs);
+            if (_disposed) return;
+            var baseline = baselineList.Count > 0 ? baselineList[0] : null;
+            var series = HourlyProductionDiff.FromSamples(
+                window.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
+                start, queryTo,
+                baseline?.OkProduction ?? 0,
+                baseline?.NgProduction ?? 0);
+            Dictionary<DateTime, int> okByHour = [];
+            for (var i = 0; i < series.Hours.Length; i++)
+                okByHour[series.Hours[i]] = i < series.OkDiff.Length ? Math.Max(0, series.OkDiff[i]) : 0;
+            HourBuckets = HourByHourBoardBuilder.Build(start, end, now, snap.TargetCycle, okByHour);
+        }
+        catch (Exception)
+        {
+            HourBuckets = [];
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _hourRunning, 0);
+        }
+    }
+
+    private async Task RefreshAlarmsAsync()
+    {
+        if (string.IsNullOrEmpty(DeviceId)) return;
+        AlarmLoading = true;
+        try
+        {
+            var now = Dashboard.ServerNow;
+            var (all, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
+                Dashboard, HistoryQueryType.AlarmEvent, now.Date, now, DeviceId, null, r => r.AlarmEvents);
+            if (_disposed) return;
+            RecentAlarms = all.OrderByDescending(e => e.EventTime).Take(30).ToList();
+        }
+        catch (Exception)
+        {
+            RecentAlarms = [];
+        }
+        finally
+        {
+            AlarmLoading = false;
+        }
+    }
+
+    private async Task SafeTickAsync()
+    {
+        if (_disposed) return;
+        try
+        {
+            await InvokeAsync(() =>
+            {
+                if (_disposed) return;
+                StateHasChanged();
+                _ = RefreshHourBoardAsync();
+            });
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/line");
+
+    private void OpenWorkOrder()
+    {
+        if (WorkOrder is null)
+        {
+            Nav.NavigateTo("/workorders");
+            return;
+        }
+        Nav.NavigateTo($"/workorders?id={WorkOrder.Id}");
+    }
+
+    private void OpenAlarm(AlarmEventRecordDto e)
+    {
+        var from = e.EventTime.ToString("yyyy-MM-ddTHH:mm");
+        var to = Dashboard.ServerNow.ToString("yyyy-MM-ddTHH:mm");
+        Nav.NavigateTo($"/history?tab=2&deviceId={Uri.EscapeDataString(DeviceId)}&alarmName={Uri.EscapeDataString(e.AlarmName)}&from={from}&to={to}");
+    }
+
+    private static string Pct(double v) => UiPalette.Pct(v);
+
+    private static string StateText(DeviceSnapshotDto s) => s.Status switch
+    {
+        DeviceStatus.Running => L.T("Status_Running"),
+        DeviceStatus.Alarm => L.T("Status_Alarm"),
+        DeviceStatus.Paused => L.T("Status_Paused"),
+        _ => L.T(DeviceStatusLocKeys.For(DeviceStatus.Offline, s.OfflineCause)),
+    };
+
+    private static string StateClass(DeviceStatus status) => status switch
+    {
+        DeviceStatus.Running => "run",
+        DeviceStatus.Alarm => "alarm",
+        DeviceStatus.Paused => "paused",
+        _ => "offline",
+    };
+
+    private string OeeTip => Snapshot is null
+        ? ""
+        : L.Tip("Home_Tip_Oee", $"{Pct(Snapshot.AvailabilityRate)} × {Pct(Snapshot.PerformanceRate)} × {Pct(Snapshot.QualityRate)}", Pct(Snapshot.Oee));
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _renderTimer?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

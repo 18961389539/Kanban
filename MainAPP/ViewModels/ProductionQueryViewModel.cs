@@ -199,8 +199,8 @@ public partial class ProductionQueryViewModel : ObservableObject
         }).ToList();
 
         return HistoryQueryHelper.BuildCsv(rows,
-            $"# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}",
-            $"# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，良品率：{QualityRate:P2}",
+            $"# {string.Format(Strings.Csv_Prod_Range, fromDate.ToString("yyyy-MM-dd HH:mm:ss"), toDate.ToString("yyyy-MM-dd HH:mm:ss"))}",
+            $"# {string.Format(Strings.Csv_Prod_Summary, TotalOk, TotalNg, QualityRate.ToString("P2"))}",
             $"# {ProductionInsight ?? Strings.M176}");
     }
 
@@ -276,12 +276,13 @@ public partial class ProductionQueryViewModel : ObservableObject
 
     private class ProductionCsvRow
     {
-        [Name("时间")] public DateTime Timestamp { get; set; }
-        [Name("设备ID")] public string? DeviceId { get; set; }
-        [Name("设备名称")] public string? DeviceName { get; set; }
-        [Name("班次")] public string? ShiftName { get; set; }
-        [Name("OK产量")] public int OkProduction { get; set; }
-        [Name("NG产量")] public int NgProduction { get; set; }
-        [Name("状态字")] public int StatusWord { get; set; }
+        // 表头本地化由 HistoryQueryHelper.BuildCsv 按 Csv_Hd_<属性名> 运行时注入（多语言修复 2026-09-18）
+        public DateTime Timestamp { get; set; }
+        public string? DeviceId { get; set; }
+        public string? DeviceName { get; set; }
+        public string? ShiftName { get; set; }
+        public int OkProduction { get; set; }
+        public int NgProduction { get; set; }
+        public int StatusWord { get; set; }
     }
 }

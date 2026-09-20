@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="MainAPP.Views.DeviceDetailView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,6 +10,7 @@
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:models="clr-namespace:MainAPP.Models"
+    xmlns:cm="clr-namespace:Kanban.Contracts.Metrics;assembly=Kanban.Contracts"
     d:DataContext="{d:DesignInstance Type=vm:DeviceDetailViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
@@ -55,18 +56,18 @@
             <Setter Property="Margin" Value="3,0" />
             <Setter Property="MinHeight" Value="108" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Hit}">
                     <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Miss}">
                     <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
                     <Setter Property="Background" Value="#3A2326" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Current}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Current}">
                     <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                     <Setter Property="BorderThickness" Value="2" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Future}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Future}">
                     <Setter Property="Opacity" Value="0.55" />
                 </DataTrigger>
             </Style.Triggers>
@@ -78,10 +79,10 @@
             <Setter Property="Margin" Value="0,8,0,4" />
             <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Hit}">
                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Miss}">
                     <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
             </Style.Triggers>
@@ -121,28 +122,67 @@
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Harddisk" Margin="16,0,0,0" />
                 <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
                            Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}" />
-                <!-- 状态徽章：根据 StatusText 切换背景色 -->
-                <Border Margin="16,0,0,0" Padding="10,3" CornerRadius="11">
+                <!-- 状态徽章：15% 软底 + 同色文字 + 同色描边 + 同色色点（2026-09-19 全站统一，
+                     替换原「白字压满色块」——琥珀/灰档位白字对比度仅约 1.9–2.4:1 不可读） -->
+                <Border Margin="16,0,0,0" Padding="10,3" CornerRadius="11" BorderThickness="1">
                     <Border.Style>
                         <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource StatusIdleBrush}" />
+                            <Setter Property="Background" Value="{StaticResource StatusIdleSoftBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource StatusIdleBrush}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K005}">
-                                    <Setter Property="Background" Value="{StaticResource StatusRunBrush}" />
+                                    <Setter Property="Background" Value="{StaticResource StatusRunSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusRunBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K016}">
-                                    <Setter Property="Background" Value="{StaticResource StatusAlarmBrush}" />
+                                    <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K006}">
-                                    <Setter Property="Background" Value="{StaticResource StatusPauseBrush}" />
+                                    <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusPauseBrush}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="8" Height="8" Fill="White" />
-                        <TextBlock Margin="6,0,0,0" FontSize="12" FontWeight="Bold" Foreground="White"
-                                   Text="{Binding StatusText}" />
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource StatusIdleBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K005}">
+                                            <Setter Property="Fill" Value="{StaticResource StatusRunBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K016}">
+                                            <Setter Property="Fill" Value="{StaticResource StatusAlarmBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K006}">
+                                            <Setter Property="Fill" Value="{StaticResource StatusPauseBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Margin="6,0,0,0" FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
+                                   Text="{Binding StatusText}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource StatusIdleBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K005}">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusRunBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K016}">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding StatusText}" Value="{x:Static resources:Strings.K006}">
+                                            <Setter Property="Foreground" Value="{StaticResource StatusPauseBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
                 <!-- 设备 Id -->
@@ -538,7 +578,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:HourBucketItem}">
+                            <DataTemplate DataType="{x:Type cm:HourBucketItem}">
                                 <Border Style="{StaticResource HourBucketCell}">
                                     <DockPanel>
                                         <TextBlock
@@ -556,11 +596,11 @@
                                                     <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
                                                     <Setter Property="Text" Value="" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Hit}">
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Hit}">
                                                             <Setter Property="Text" Value="{x:Static resources:Strings.Hh_Hit}" />
                                                             <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static models:HourBucketState.Miss}">
+                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static cm:HourBucketState.Miss}">
                                                             <Setter Property="Text" Value="{x:Static resources:Strings.Hh_Miss}" />
                                                             <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                                                         </DataTrigger>

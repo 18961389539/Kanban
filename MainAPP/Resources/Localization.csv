@@ -427,6 +427,8 @@ Wpf,K327,工单完成,Order Completion,工単完了,Conclusão da ordem
 Wpf,K328,当前班次良率,Current Shift Quality,当シフト良品率,Qualidade do turno atual
 Wpf,K329,实时故障,Real-time Faults,リアルタイム故障,Falhas em tempo real
 Wpf,K330,新报警静音,Mute New Alarms,新規アラームをミュート,Silenciar novos alarmes
+Wpf,Home_MuteShort,静音,Mute,ミュート,Silenciar
+Wpf,Home_SelectDeviceHint,选择设备,Select device,設備を選択,Selecione o dispositivo
 Wpf,K331,切换新报警声音与闪烁；报警列表仍照常更新,Toggle sound and flashing for new alarms; the alarm list still updates,新規アラームの音と点滅を切替（一覧は更新されます）,Alterna som e piscada de novos alarmes; a lista de alarmes continua atualizando
 Wpf,K332,级别,Level,レベル,Nível
 Wpf,K333,实时故障列表,Real-time Fault List,リアルタイム故障一覧,Lista de falhas em tempo real
@@ -1146,7 +1148,7 @@ Wpf,M085,仅待开始工单可启动,Only pending orders can start,未開始の�
 Wpf,M086,该设备已有进行中工单,Device has an active order,この設備には進行中の作業指示があります,O dispositivo já tem uma ordem em andamento
 Wpf,M087,启动工单,Start Order,作業指示を開始,Iniciar ordem
 Wpf,M088,仅进行中工单可完成,Only active orders can complete,進行中の作業指示のみ完了可能,Somente ordens em andamento podem ser concluídas
-Wpf,M089,完成工单并保存产量快照,Complete and save snapshot,完了して生産スナップショットを保存,Conclui a ordem e salva o snapshot de produção
+Wpf,M089,完成工单并保存产量快照。随后可选择下一张工单,Complete and save snapshot; then pick the next order,完了してスナップショットを保存し次の工単を選べます,Conclui a ordem salva o snapshot e permite escolher a próxima
 Wpf,M090,已完成或已中止工单不可中止,Cannot abort completed order,完了/中止済みの作業指示は中止不可,Ordem concluída ou abortada não pode ser abortada
 Wpf,M091,中止后不可恢复为进行中,Cannot resume aborted order,中止後は進行中に戻せません,Após abortar não é possível voltar a Em andamento
 Wpf,M092,已达标完成,Target Met,目標達成で完了,Meta atingida
@@ -1807,6 +1809,7 @@ Wpf,Web_Ln_SortOutput,按产量,By Output,生産順,Por produção
 Wpf,Web_Ln_SortOee,按 OEE,By OEE,OEE 順,Por OEE
 Wpf,Web_Ln_Cycle,平均周期（实际/目标）,Avg cycle time (actual/target),平均サイクルタイム（実績/目標）,Tempo de ciclo médio (real/alvo)
 Wpf,Ln_ShiftPace,良品达成（OK/应产）,Good-count pace (OK/due),良品達成（OK/予定）,Ritmo de OK (OK/previsto)
+Wpf,Ln_ShiftPaceExceeded,超额 100%+,Over 100%+,超過 100%+,Acima de 100%+
 Wpf,Ln_AvailabilityHint,只扣报警时间，不含待机和离线,Counts alarm time only; excludes standby and offline,アラーム時間のみ控除（待機・オフライン含まず）,Desconta apenas alarme; exclui espera e offline
 Wpf,Ln_ActualCapacity,实际产能,Actual output,実績能力,Produção real
 Wpf,Ln_ApplyTargetCycleAll,应用到全部设备,Apply to all devices,全デバイスに適用,Aplicar a todos os dispositivos
@@ -2329,6 +2332,7 @@ Wpf,Validator_DefectKind,缺陷,defect,不良,defeito
 Wpf,Validator_DeviceIdDuplicate,设备 ID「{0}」重复,Duplicate device ID '{0}',設備 ID「{0}」が重複しています,ID de dispositivo duplicado '{0}'
 Wpf,Validator_DeviceIdRequired,设备「{0}」未配置设备 ID,Device '{0}' has no device ID,設備「{0}」に設備 ID がありません,Dispositivo '{0}' sem ID
 Wpf,Validator_DuplicateChildId,设备「{0}」{1} ID 重复,Duplicate {1} ID for device '{0}',設備「{0}」の{1} ID が重複しています,ID de {1} duplicado para dispositivo '{0}'
+Wpf,Validator_DWordAddressOverlap,设备「{0}」的 DWord 地址 {1} 与 {2} 重叠（DWord 占 2 个字，需按偶数字对齐且步进 ≥2，否则会读到邻近地址的高字）,Device '{0}' DWord addresses {1} and {2} overlap (a DWord uses 2 words; use even-aligned addresses with stride >= 2),設備「{0}」の DWord アドレス {1} と {2} が重複しています（DWord は 2 ワード使用。偶数アドレスに間隔 2 で配置してください）,Os endereços DWord {1} e {2} do dispositivo '{0}' se sobrepõem (um DWord usa 2 words; use endereços pares com passo >= 2)
 Wpf,Validator_DuplicateSourceName,数据源名称「{0}」重复,Duplicate source name '{0}',データソース名「{0}」が重複しています,Nome de fonte duplicado '{0}'
 Wpf,Validator_DuplicateValueName,数据源「{0}」值项名称「{1}」重复,Duplicate value name '{1}' in source '{0}',データソース「{0}」の値項目名「{1}」が重複しています,Nome de valor duplicado '{1}' na fonte '{0}'
 Wpf,Validator_EmptyChildName,设备「{0}」{1}名称为空,Empty {1} name for device '{0}',設備「{0}」の{1}名が空です,Nome de {1} vazio para dispositivo '{0}'
@@ -2468,6 +2472,18 @@ Wpf,Web_Pl_ResetAllOk,已触发全部设备 OEE 清零（{0}/{1} 台）,OEE rese
 Wpf,Web_Pl_ResetAllFail,全部设备 OEE 清零失败：{0},Reset OEE for all devices failed: {0},全デバイス OEE クリア失敗：{0},Falha ao zerar o OEE de todos os dispositivos: {0}
 Wpf,Web_Pl_Cancel,取消,Cancel,キャンセル,Cancelar
 Wpf,Wo_AddTitle,新增工单,New Work Order,新規作業指示,Nova ordem de produção
+Wpf,Wo_ContinueTitle,工单已完成,Work Order Completed,工単完了,Ordem concluída
+Wpf,Wo_ContinueMessage,工单 {0} 已完成。请选择下一步以继续生产。,Work order {0} is complete. Choose the next step to continue.,工単 {0} を完了しました。次の作業を選んでください。,A ordem {0} foi concluída. Escolha o próximo passo para continuar.
+Wpf,Wo_ContinueSelect,选择其他工单,Select another order,他の工単を選択,Selecionar outra ordem
+Wpf,Wo_ContinueSelectHint,从待开始工单中选择一张并开始,Pick a pending order and start it,未開始の工単を選んで開始します,Escolha uma ordem pendente e inicie
+Wpf,Wo_ContinuePendingList,待开始工单,Pending orders,未開始の工単,Ordens pendentes
+Wpf,Wo_ContinueNoPending,暂无待开始工单,No pending orders,未開始の工単はありません,Não há ordens pendentes
+Wpf,Wo_ContinueCreate,新建工单,Create new order,新規工単,Nova ordem
+Wpf,Wo_ContinueCreateHint,空白新建一张工单并开始,Create a blank order and start it,空の工単を作成して開始します,Criar uma ordem em branco e iniciar
+Wpf,Wo_ContinueCopy,复制当前工单,Copy current order,現在の工単を複製,Copiar ordem atual
+Wpf,Wo_ContinueCopyHint,复制本单为新工单并开始,Copy this order as a new one and start it,この工単を複製して開始します,Copiar esta ordem e iniciar
+Wpf,Wo_ContinueLater,稍后再说,Not now,後で,Agora não
+Wpf,Wo_ContinueItemFormat,{0}  ·  {1}  ·  {2},{0}  ·  {1}  ·  {2},{0}  ·  {1}  ·  {2},{0}  ·  {1}  ·  {2}
 Wpf,Audit_Detail_Role,角色={0},Role={0},ロール={0},Função={0}
 Wpf,Audit_Detail_RoleMustChangePwd,角色={0}，首登改密,"Role={0}, first-login password change required",ロール={0}、初回ログインでパスワード変更,"Função={0}, alteração de senha no primeiro login"
 Wpf,Audit_Detail_AutoLogin,启动自动登录,Auto login at startup,起動時自動ログイン,Login automático na inicialização
@@ -2501,6 +2517,38 @@ Wpf,Home_ShiftTotalOutput,当班总产量,Shift total output,当シフト総生�
 Wpf,Home_CumulativeQuality,累计良率,Cumulative quality,累計良品率,Qualidade acumulada
 Wpf,Home_WorkOrderCumulativeOk,工单累计良品数,Order cumulative OK,工単累計良品数,OK acumulado da ordem
 Wpf,Home_WorkOrderAchievement,工单达成率,Order achievement,工単達成率,Realização da ordem
+Wpf,Home_WorkOrderSchedule,"计划结束 {0} · 剩余 {1}","Est. end {0} · {1} left","計画終了 {0}・残り {1}","Fim prev. {0} · restam {1}"
+Wpf,Home_WorkOrderOverdue,"已超时 {0}","Overdue by {0}","超過 {0}","Atrasada em {0}"
+Wpf,Home_WorkOrderBehind,"滞后计划 {0}pp","{0}pp behind plan","計画より {0}pp 遅れ","{0}pp atrás do plano"
+Wpf,Home_WorkOrderAhead,"超前计划 {0}pp","{0}pp ahead of plan","計画より {0}pp 先行","{0}pp à frente do plano"
+Wpf,Home_WorkOrderEmpty,暂无进行中工单,No active work order,進行中の工単なし,Nenhuma ordem ativa
+Wpf,Home_WorkOrderEmptyHint,"当前设备未关联进行中的工单,请先到工单管理开始一张工单","No running order is linked to the current device. Start one in Work Orders.","現在の設備に進行中の工単がありません。工単管理で開始してください。","Nenhuma ordem em andamento vinculada ao dispositivo atual. Inicie uma em Ordens de produção."
+Wpf,Csv_Hd_Timestamp,事件时间,Time,時刻,Hora
+Wpf,Csv_Hd_DeviceId,设备ID,Device ID,設備ID,ID do dispositivo
+Wpf,Csv_Hd_DeviceName,设备名称,Device name,設備名,Nome do dispositivo
+Wpf,Csv_Hd_AlarmId,报警ID,Alarm ID,アラームID,ID do alarme
+Wpf,Csv_Hd_AlarmName,报警名称,Alarm name,アラーム名,Nome do alarme
+Wpf,Csv_Hd_PlcAddress,PLC地址,PLC address,PLCアドレス,Endereço PLC
+Wpf,Csv_Hd_EventType,事件类型,Event type,イベント種別,Tipo de evento
+Wpf,Csv_Hd_EventTypeText,事件类型文本,Event type (text),イベント種別（文字列）,Tipo de evento (texto)
+Wpf,Csv_Hd_DurationText,持续时间,Duration,継続時間,Duração
+Wpf,Csv_Hd_ShiftName,班次,Shift,シフト,Turno
+Wpf,Csv_Hd_OkProduction,OK产量,OK output,OK生産数,Produção OK
+Wpf,Csv_Hd_NgProduction,NG产量,NG output,NG生産数,Produção NG
+Wpf,Csv_Hd_StatusWord,状态字,Status word,ステータスワード,Palavra de status
+Wpf,Csv_Hd_PrevState,前一状态,Prev state,前状態,Estado anterior
+Wpf,Csv_Hd_CurrState,当前状态,Current state,現在状態,Estado atual
+Wpf,Csv_Hd_PrevStateText,前一状态文本,Prev state (text),前状態（文字列）,Estado anterior (texto)
+Wpf,Csv_Hd_CurrStateText,当前状态文本,Current state (text),現在状態（文字列）,Estado atual (texto)
+Wpf,Csv_Hd_Metric,指标,Metric,指標,Métrica
+Wpf,Csv_Hd_Value,值,Value,値,Valor
+Wpf,Csv_Alarm_Summary,"触发：{0} 次，恢复：{1} 次，待恢复：{2} 条","Triggered: {0}, recovered: {1}, pending: {2}","トリガー：{0} 回、復旧：{1} 回、未復旧：{2} 件","Disparos: {0}, recuperados: {1}, pendentes: {2}"
+Wpf,Csv_Prod_Range,"查询区间：{0} ~ {1}","Range: {0} ~ {1}","照会期間：{0} ~ {1}","Período: {0} ~ {1}"
+Wpf,Csv_Prod_Summary,"总 OK：{0} 件，总 NG：{1} 件，良品率：{2}","Total OK: {0}, total NG: {1}, quality: {2}","合計 OK：{0} 個、合計 NG：{1} 個、良品率：{2}","OK total: {0}, NG total: {1}, qualidade: {2}"
+Wpf,Csv_Export_PageHint,"本文件仅包含当前页数据（每页最多 {0} 条），并非全量导出。","This file contains only the current page (max {0} rows), not the full export.","このファイルは現在のページのみ（1ページ最大 {0} 件）、一括エクスポートではありません。","Este arquivo contém apenas a página atual (máx. {0} linhas), não a exportação completa."
+Wpf,Csv_WorkOrder_FileName,"工单列表_{0:yyyyMMddHHmm}.csv","work_orders_{0:yyyyMMddHHmm}.csv","工単リスト_{0:yyyyMMddHHmm}.csv","ordens_{0:yyyyMMddHHmm}.csv"
+Wpf,Csv_DailyReport_FileName,"生产日报_{0:yyyyMMdd}_{1}.pdf","daily_report_{0:yyyyMMdd}_{1}.pdf","生産日報_{0:yyyyMMdd}_{1}.pdf","relatorio_diario_{0:yyyyMMdd}_{1}.pdf"
+Wpf,Recipe_SwitchDiscardConfirm,"切换配方会放弃当前未保存的编辑，是否继续？","Switching recipes discards unsaved edits. Continue?","レシピ切替で未保存の編集が失われます。続行しますか？","Trocar de receita descartará edições não salvas. Continuar?"
 Wpf,Home_Tip_ShiftOk,"当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\n当前：{0} 件","Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\nNow: {0} pcs","当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\n現在：{0} 個","OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\nAgora: {0} pçs"
 Wpf,Home_Tip_WorkOrderCumulativeOk,"工单累计良品数 = 工单时间窗口内的 OK 产量（非当班会话累计、不含 NG）。\n当前：{0} 件","Order cumulative OK = OK output in the order time window (not shift session total, excludes NG).\nNow: {0} pcs","工単累計良品数 = 工単時間窓の OK 数（当シフトのセッション累計ではなく、NG を含まない）。\n現在：{0} 個","OK acumulado da ordem = OK na janela da ordem (não o total da sessão do turno; exclui NG).\nAgora: {0} pçs"
 Wpf,Home_Tip_WorkOrderAchievement,"工单达成率 = 工单内 OK 产量 ÷ 计划产量，超额时封顶 100%。\n口径为工单时间窗口内的合格产量（与工单管理页一致），不是当班会话累计，也不是速度达成率。\n当前：{0:N0} / {1:N0} 件 = {2}","Order achievement = OK output in the order window ÷ planned quantity, capped at 100%.\nUses OK count in the work-order time window (same as the Work Order page), not shift session totals and not speed achievement.\nNow: {0:N0} / {1:N0} pcs = {2}","工単達成率 = 工単内 OK 生産量 ÷ 計画数量（100% 上限）。\n工単時間窓の合格数（作業指示ページと同じ）。当シフト累計でも速度達成率でもありません。\n現在：{0:N0} / {1:N0} 個 = {2}","Realização da ordem = OK na janela da ordem ÷ quantidade planejada, limitado a 100%.\nUsa OK da janela da ordem (igual à página de Ordens), não o total da sessão do turno nem a realização de velocidade.\nAgora: {0:N0} / {1:N0} pçs = {2}"
@@ -2544,3 +2592,90 @@ Wpf,Mo_Tip_SuccessRate,采集成功率 = 成功轮次 ÷ 完成轮次（失败�
 Wpf,Mo_Tip_ConsecutiveFail,连续失败轮次；大于 0 表示采集链路当前异常。\n当前：{0},Consecutive failed cycles; greater than 0 means the acquisition path is currently unhealthy.\nNow: {0},連続失敗サイクル。0 超は収集経路の異常。\n現在：{0},Ciclos falhos consecutivos; > 0 indica caminho de coleta instável agora.\nAgora: {0}
 Wpf,Mo_Tip_PendingHistory,尚未落库的历史队列条数；持续升高表示写库跟不上采集。\n当前：{0},History records waiting to flush; a rising count means writes are lagging acquisition.\nNow: {0},未フラッシュの履歴件数。増加は書込が収集に追いついていないことを示す。\n現在：{0},Registros de histórico aguardando gravação; alta persistente = escrita atrasada.\nAgora: {0}
 Wpf,Rv_Tip_Health,复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\n当前：{0},"Review health score combines availability, performance, quality and alarm stability; lower means more issues.\nNow: {0}",復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\n現在：{0},"Pontuação de saúde da revisão combina disponibilidade, desempenho, qualidade e estabilidade de alarmes.\nAgora: {0}"
+Wpf,Home_Scope_WorkOrder,工单,Order,工単,Ordem
+Wpf,Home_Scope_Shift,当班,Shift,当シフト,Turno
+Wpf,Home_Scope_Realtime,实时,Live,リアルタイム,Ao vivo
+Wpf,Home_Scope_WorkOrder_Tip,工单时间窗口内统计，与工单管理页一致,Counted in the work-order time window; same as the Work Order page,工単時間窓で集計。作業指示ページと同じ,Contado na janela da ordem; igual à página de Ordens
+Wpf,Home_Scope_Shift_Tip,本班次会话累计，不是工单窗口,Shift session cumulative; not the work-order window,当シフトのセッション累計。工単時間窓ではない,Acumulado da sessão do turno; não é a janela da ordem
+Wpf,Home_Scope_Realtime_Tip,当前运行态即时值（按运行时长）,Live value while running (based on run time),稼働中の即時値（稼働時間ベース）,Valor ao vivo em execução (pelo tempo em run)
+Wpf,Settings_DisplayCarousel,过道电视轮播,TV carousel,通路TVローテーション,Carrossel da TV
+Wpf,Settings_DisplayCarouselHint,默认开启。首页 40 秒 → 产线 30 秒 → 报警 20 秒（无报警跳过）。点按暂停 16 秒。High 报警冻结在报警页。完整模式可取消勾选。,On by default. Home 40s → line 30s → alarms 20s (skip if none). Touch pauses 16s. High alarms freeze on the alarm page. Uncheck in full mode to disable.,デフォルトでオン。ホーム40秒→ライン30秒→警報20秒（警報なしはスキップ）。操作で16秒停止。High警報は警報ページで固定。完全モードではオフにできます。,Ligado por padrão. Início 40s → linha 30s → alarmes 20s (pula se vazio). Toque pausa 16s. Alarmes High travam na página de alarmes. Desmarque no modo completo para desligar.
+Wpf,Carousel_Frozen,高报警冻结,Frozen on high alarm,高警報で固定,Congelado em alarme alto
+Wpf,Carousel_Paused,已暂停 · {0} · {1}s,Paused · {0} · {1}s,一時停止 · {0} · {1}s,Pausado · {0} · {1}s
+Wpf,Carousel_Running,{0} · 剩余 {1}s,{0} · {1}s left,{0} · 残り {1}s,{0} · restam {1}s
+Wpf,Home_Tip_WorkOrderSchedule,排期对照：实际达成率对照计划时间进度。正差=超前，负差=滞后。\n实际 {0} · 计划 {1} · {2}\n{3},"Schedule check: actual achievement versus planned time progress. Positive = ahead, negative = behind.\nActual {0} · planned {1} · {2}\n{3}",計画対比：実績達成率と計画時間進捗。正=先行、負=遅れ。\n実績 {0} · 計画 {1} · {2}\n{3},"Comparação de prazo: realização real versus progresso planejado. Positivo = adiantado, negativo = atrasado.\nReal {0} · planejado {1} · {2}\n{3}"
+Wpf,Home_Tip_CycleDiff,周期差 = 实际周期 − 目标周期。正数=慢（每件更久），负数=快。\n目标 {0} · 实际 {1} · {2},"Cycle gap = actual cycle − target cycle. Positive = slower (longer per piece), negative = faster.\nTarget {0} · actual {1} · {2}",サイクル差 = 実サイクル − 目標サイクル。正=遅い（1個あたり長い）、負=速い。\n目標 {0} · 実績 {1} · {2},"Diferença de ciclo = ciclo real − ciclo alvo. Positivo = mais lento, negativo = mais rápido.\nAlvo {0} · real {1} · {2}"
+Wpf,Home_Tip_DefectSummary,本班次缺陷帕累托合计件数（已分类缺陷，不含未录入原因的 NG）。\n{0},Shift defect Pareto total count (classified defects only; NG without a reason is excluded).\n{0},当シフトのパレート不良合計（分類済みのみ。原因未入力の NG は含まない）。\n{0},Total da Pareto de defeitos do turno (somente classificados; NG sem motivo fica de fora).\n{0}
+Wpf,Home_Tip_DefectNgShare,已分类缺陷件数占本班次 NG 的比例。未录入原因的 NG 不在帕累托中。\n{0},Classified defect count as a share of shift NG. Uncoded NG is not in the Pareto.\n{0},分類済み不良件数が当シフト NG に占める割合。原因未入力の NG はパレートに含まない。\n{0},Parte dos NG do turno que já tem motivo classificado. NG sem código não entra na Pareto.\n{0}
+Wpf,Home_Tip_ActiveAlarmCount,当前设备未恢复的活跃报警条数。徽章为截断前总数。\n当前：{0:N0} 条,Active unrecovered alarms on this device. The badge is the untruncated total.\nNow: {0:N0},このデバイスの未復旧アラーム件数。バッジは切り詰め前の総数。\n現在：{0:N0} 件,Alarmes ativos sem recuperação neste dispositivo. O distintivo é o total sem corte.\nAgora: {0:N0}
+Wpf,Home_Tip_ActiveAlarmDuration,从触发时刻起尚未恢复的持续时长。\n当前：{0},Elapsed time since the alarm triggered and has not recovered.\nNow: {0},発生から未復旧までの経過時間。\n現在：{0},"Tempo decorrido desde o disparo, ainda sem recuperação.\nAgora: {0}"
+Wpf,Home_Tip_ConnBadge,看板与采集服务的实时连接。绿=已连接并收快照；红=断连。\n当前：{0},Live link between this board and the collector. Green = connected and receiving snapshots; red = disconnected.\nNow: {0},看板とコレクタのリアルタイム接続。緑=接続してスナップショット受信、赤=切断。\n現在：{0},Ligação ao vivo deste painel com o coletor. Verde = ligado e recebendo snapshots; vermelho = desligado.\nAgora: {0}
+Wpf,Home_Tip_DeviceCount,当前已接入看板的设备台数。\n当前：{0:N0} 台,Number of devices currently on this board.\nNow: {0:N0},この看板に接続中のデバイス台数。\n現在：{0:N0} 台,Número de dispositivos neste painel.\nAgora: {0:N0}
+Wpf,Home_Tip_DeviceStatus,设备运行态（来自状态字与采集判定）。\n当前：{0},Device run state (from status word and acquisition).\nNow: {0},デバイス稼働状態（状態語と収集判定）。\n現在：{0},Estado de execução do dispositivo (palavra de status e coleta).\nAgora: {0}
+Wpf,Home_Tip_SnapSeq,快照序号：采集每成功一轮加 1。序号停滞表示采集未推进。\n当前：#{0},Snapshot sequence: +1 on each successful acquisition cycle. A stuck number means acquisition is not advancing.\nNow: #{0},スナップショット番号：収集成功のたびに +1。止まっていれば収集が進んでいません。\n現在：#{0},Sequência do snapshot: +1 a cada ciclo de coleta bem-sucedido. Número parado significa coleta sem avanço.\nAgora: #{0}
+Wpf,Home_Tip_DataFresh,距最近一次收到该设备快照的时间。正常应在数秒内。\n当前：{0},Age of the last snapshot for this device. Live data should be a few seconds old.\nNow: {0},このデバイスの最新スナップショットからの経過。通常は数秒以内。\n現在：{0},Idade do último snapshot deste dispositivo. Ao vivo deve ser poucos segundos.\nAgora: {0}
+Wpf,Home_Tip_TrendWindow,最近 1 分钟速度折线（件/小时）。点为采样，不是班次累计。\n当前速度：{0} 件/h,"Speed sparkline for the last 1 minute (pcs/h). Points are samples, not shift totals.\nCurrent speed: {0} pcs/h",直近 1 分の速度折れ線（個/時）。点はサンプルでありシフト累計ではありません。\n現在速度：{0} 個/h,"Linha de velocidade do último 1 minuto (pçs/h). Pontos são amostras, não o total do turno.\nVelocidade agora: {0} pçs/h"
+Wpf,Home_Tip_StatusWord,PLC 状态字原始值（十六进制）。用于核对通讯与运行态。\n当前：{0},Raw PLC status word (hex). Use it to verify comms and run state.\nNow: {0},PLC 状態語の生値（16 進）。通信と稼働状態の照合用。\n現在：{0},Palavra de status bruta do PLC (hex). Serve para conferir comunicação e estado.\nAgora: {0}
+Wpf,Home_Tip_Recipe,当前设备配方名称与配方值。\n当前：{0},Current device recipe name and value.\nNow: {0},現在のデバイスレシピ名と値。\n現在：{0},Nome e valor da receita atual do dispositivo.\nAgora: {0}
+Wpf,Carousel_Tip,过道电视轮播状态。点按画面暂停 16 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0},TV carousel status. A click pauses for 16 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0},通路 TV ローテーションの状態。操作で 16 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0},Estado do carrossel da TV. Um clique pausa 16 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\n{0}
+Wpf,Mo_Tip_ConnStatus,采集服务与设备/PLC 的连接状态。\n当前：{0},Collector connection to the device/PLC.\nNow: {0},コレクタとデバイス/PLC の接続状態。\n現在：{0},Ligação do coletor ao dispositivo/PLC.\nAgora: {0}
+Wpf,Mo_Tip_AcqStatus,数据采集循环是否正在运行。停止则快照不再更新。\n当前：{0},"Whether the acquisition loop is running. When stopped, snapshots stop updating.\nNow: {0}",収集ループが動作中か。停止するとスナップショットは更新されません。\n現在：{0},"Se o loop de coleta está em execução. Parado, os snapshots deixam de atualizar.\nAgora: {0}"
+Wpf,Rv_Tip_AlarmCount,复盘时间窗内历史触发次数（不是当前活跃条数）。已恢复 {1:N0} · 待恢复 {2:N0}。\n当前：{0:N0} 次,Trigger count in the review window (not currently active alarms). Recovered {1:N0} · pending {2:N0}.\nNow: {0:N0},復盤時間窓の発生回数（現在の未復旧件数ではない）。復帰 {1:N0} · 未復帰 {2:N0}。\n現在：{0:N0} 回,Disparos na janela da revisão (não alarmes ativos agora). Recuperados {1:N0} · pendentes {2:N0}.\nAgora: {0:N0}
+Wpf,Rv_Tip_LongestDowntime,复盘时间窗内配对后最长一次报警持续时长（从触发到恢复或查询截止）。\n当前：{0}\n{1} · {2},Longest paired alarm duration in the review window (trigger to recover or query end).\nNow: {0}\n{1} · {2},復盤時間窓で最長の警報継続（発生から復帰または照会終了）。\n現在：{0}\n{1} · {2},Maior duração de alarme pareado na janela da revisão (disparo até recuperação ou fim da consulta).\nAgora: {0}\n{1} · {2}
+Wpf,Rv_Tip_PeakHour,复盘时间窗内按小时汇总 OK 最高的时段（不是实时速度）。\n当前：{0} · {1:N0} 件（{2}）,Hour with the most OK in the review window (not live speed).\nNow: {0} · {1:N0} pcs ({2}),復盤時間窓で時間集計 OK が最多の時間帯（リアルタイム速度ではない）。\n現在：{0} · {1:N0} 個（{2}）,Hora com mais OK na janela da revisão (não a velocidade ao vivo).\nAgora: {0} · {1:N0} pçs ({2})
+Wpf,Rv_Tip_ValleyHour,复盘时间窗内按小时汇总 OK 最低的时段（不是实时速度）。\n当前：{0} · {1:N0} 件（{2}）,Hour with the least OK in the review window (not live speed).\nNow: {0} · {1:N0} pcs ({2}),復盤時間窓で時間集計 OK が最少の時間帯（リアルタイム速度ではない）。\n現在：{0} · {1:N0} 個（{2}）,Hora com menos OK na janela da revisão (não a velocidade ao vivo).\nAgora: {0} · {1:N0} pçs ({2})
+Wpf,Hq_Tip_WindowTriggered,所选查询时间窗内历史触发次数（Triggered 事件，不是当前活跃条数）。\n当前：{0:N0} 次,Trigger events in the selected query window (not currently active alarms).\nNow: {0:N0},選択した照会窓の発生回数（Triggered。現在の未復旧件数ではない）。\n現在：{0:N0} 回,Eventos de disparo na janela da consulta (não alarmes ativos agora).\nAgora: {0:N0}
+Wpf,Hq_Tip_WindowRecovered,所选查询时间窗内历史恢复次数（Recovered 事件）。\n当前：{0:N0} 次,Recover events in the selected query window.\nNow: {0:N0},選択した照会窓の復帰回数（Recovered）。\n現在：{0:N0} 回,Eventos de recuperação na janela da consulta.\nAgora: {0:N0}
+Wpf,Hq_Tip_WindowPending,查询截止时仍未恢复的报警条数（窗口内已触发且无对应恢复）。\n当前：{0:N0} 条,Alarms still unrecovered at query end (triggered in the window with no matching recover).\nNow: {0:N0},照会終了時点で未復帰の件数（窓内で発生し対応する復帰なし）。\n現在：{0:N0} 件,Alarmes ainda sem recuperação no fim da consulta (disparados na janela sem recover).\nAgora: {0:N0}
+Wpf,Hq_Tip_WindowMttr,所选查询时间窗内已配对报警的平均恢复耗时（MTTR）。无配对时不显示。\n当前：{0},Average recovery time (MTTR) of paired alarms in the query window. Hidden when there is no pair.\nNow: {0},照会窓でペアになった警報の平均復旧時間（MTTR）。ペアなしは非表示。\n現在：{0},Tempo médio de recuperação (MTTR) dos alarmes pareados na janela. Oculto sem par.\nAgora: {0}
+Wpf,Ln_Tip_ExtraAlarms,该设备还有未展开的未恢复报警。卡片只展示第一条。\n另有 {0:N0} 条,More unrecovered alarms on this device are not expanded. The card shows the first only.\n{0:N0} more,このデバイスには未展開の未復旧アラームがあります。カードは先頭のみ表示。\nほか {0:N0} 件,Há mais alarmes sem recuperação neste dispositivo. O cartão mostra só o primeiro.\nMais {0:N0}
+Wpf,Ac_Tip_RankDuration,统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\n当前：{0},"Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\nNow: {0}",統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\n現在：{0},"Soma das durações deste alarme na janela (pareado se recuperado, senão até agora).\nAgora: {0}"
+Wpf,Mo_Tip_Health,综合 PLC 连接、采集循环是否运行、最近一轮是否成功。\n当前：{0},"Combines PLC connection, whether the acquisition loop is running, and whether the last cycle succeeded.\nNow: {0}",PLC 接続、収集ループ稼働、直近サイクル成功を総合。\n現在：{0},"Junta ligação PLC, se o loop de coleta está a correr e se o último ciclo teve sucesso.\nAgora: {0}"
+Wpf,Mo_Tip_DisconnectDuration,采集服务与 PLC 断开后的持续时长。\n当前：{0},How long the collector has been disconnected from the PLC.\nNow: {0},コレクタが PLC から切断されてからの経過。\n現在：{0},Há quanto tempo o coletor está desligado do PLC.\nAgora: {0}
+Wpf,Mo_Tip_CompletedCycles,采集循环已完成的总轮次（成功与失败都计入）。\n当前：{0:N0},Completed acquisition cycles (success and failure both count).\nNow: {0:N0},収集ループの完了回数（成功も失敗も含む）。\n現在：{0:N0},Ciclos de coleta concluídos (sucesso e falha entram).\nAgora: {0:N0}
+Wpf,Mo_Tip_FailedCycles,采集循环失败轮次（是完成轮的子集，不重复计入成功率分母）。\n当前：{0:N0},Failed acquisition cycles (a subset of completed cycles; not added again to the success-rate denominator).\nNow: {0:N0},収集失敗回数（完了回数の部分集合。成功率の分母に二重計上しない）。\n現在：{0:N0},Ciclos de coleta falhados (subconjunto dos concluídos; não entram de novo no denominador da taxa).\nAgora: {0:N0}
+Wpf,Mo_Tip_LastCycleMs,最近一轮采集耗时。\n当前：{0} ms,Duration of the latest acquisition cycle.\nNow: {0} ms,直近の収集サイクル所要時間。\n現在：{0} ms,Duração do último ciclo de coleta.\nAgora: {0} ms
+Wpf,Mo_Tip_AvgCycleMs,采集循环平均耗时。\n当前：{0} ms,Average acquisition cycle duration.\nNow: {0} ms,収集サイクルの平均所要時間。\n現在：{0} ms,Duração média do ciclo de coleta.\nAgora: {0} ms
+Wpf,Mo_Tip_MaxCycleMs,采集循环最大一轮耗时。\n当前：{0} ms,Longest acquisition cycle duration.\nNow: {0} ms,収集サイクルの最大所要時間。\n現在：{0} ms,Maior duração de um ciclo de coleta.\nAgora: {0} ms
+Wpf,Mo_Tip_DevicesRead,最近成功一轮读到的设备数 / 已配置设备数。\n当前：{0} / {1},Devices read in the last successful cycle / configured devices.\nNow: {0} / {1},直近成功サイクルで読めたデバイス数 / 設定台数。\n現在：{0} / {1},Dispositivos lidos no último ciclo com sucesso / configurados.\nAgora: {0} / {1}
+Wpf,Mo_Tip_LastSuccessAt,最近一次采集成功时刻。\n当前：{0},Time of the last successful acquisition cycle.\nNow: {0},直近の収集成功時刻。\n現在：{0},Hora do último ciclo de coleta com sucesso.\nAgora: {0}
+Wpf,Mo_Tip_LastFailureAt,最近一次采集失败时刻。\n当前：{0},Time of the last failed acquisition cycle.\nNow: {0},直近の収集失敗時刻。\n現在：{0},Hora do último ciclo de coleta falhado.\nAgora: {0}
+Wpf,Web_Wo_Achievement,达成率,Achievement,達成率,Realização
+Wpf,Web_Wo_ScheduleChip,进度,Schedule,進捗,Prazo
+Wpf,Web_Wo_Detail,工单详情,Work Order Detail,工単詳細,Detalhe da ordem
+Wpf,Web_Wo_Remark,备注,Remark,備考,Observação
+Wpf,Web_Wo_SnTitle,单件追溯,Piece Trace,単品トレース,Rastreio da peça
+Wpf,Web_Hq_SnCol,序列号,Serial Number,シリアル番号,Número de série
+Wpf,Web_Hq_SnWorkOrder,工单,Work Order,工単,Ordem
+Wpf,Web_Hq_SnSource,来源,Source,ソース,Origem
+Wpf,Web_Csv_FileSn,SN追溯_{0}.csv,sn_trace_{0}.csv,SNトレース_{0}.csv,rastreio_sn_{0}.csv
+Wpf,Web_Ac_MutedCount,已静音 {0},Muted {0},ミュート {0},Silenciados {0}
+Wpf,Web_Ac_GroupAlarms,{0} 条,{0} items,{0} 件,{0} itens
+Wpf,Web_Ac_Copy,复制交接,Copy handover,引継ぎをコピー,Copiar passagem
+Wpf,Web_Rv_Daily,昨日日报,Yesterday report,昨日の日報,Relatório de ontem
+Wpf,Web_Rv_Export,导出 CSV,Export CSV,CSV エクスポート,Exportar CSV
+Wpf,Web_Rv_Print,打印 / PDF,Print / PDF,印刷 / PDF,Imprimir / PDF
+Wpf,Web_Rv_Takeaway,健康分 {0} · {1} · 最长停机 {2}（{3}）,Health {0} · {1} · longest downtime {2} ({3}),健康スコア {0} · {1} · 最長停止 {2}（{3}）,Saúde {0} · {1} · maior parada {2} ({3})
+Wpf,Web_Rv_CsvFile,生产复盘_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,review_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,生産レビュー_{0:yyyyMMdd}_{1:yyyyMMdd}.csv,revisao_{0:yyyyMMdd}_{1:yyyyMMdd}.csv
+Wpf,Web_Rv_DailyCsvFile,生产日报_{0:yyyyMMdd}.csv,daily_report_{0:yyyyMMdd}.csv,生産日報_{0:yyyyMMdd}.csv,relatorio_diario_{0:yyyyMMdd}.csv
+Wpf,Web_Dd_Title,设备运行详情,Device runtime,デバイス稼働詳細,Detalhe de execução
+Wpf,Web_Dd_HourBoard,本班小时计划,Hour-by-hour board,当シフト時間板,Quadro hora a hora
+Wpf,Web_Dd_NoShift,当前不在班次窗口,Not in a shift window,シフト時間外,Fora da janela de turno
+Wpf,Web_Dd_RecentAlarms,今日报警,Today's alarms,今日の警報,Alarmes de hoje
+Wpf,Web_Dd_Sources,采集源,Data sources,データソース,Fontes de dados
+Wpf,Web_Dd_OpenRuntime,运行详情,Runtime,稼働詳細,Execução
+Wpf,Web_Dd_Plan,计划,Plan,計画,Plano
+Wpf,Web_Dd_Actual,实际,Actual,実績,Real
+Wpf,Web_Dd_Back,返回,Back,戻る,Voltar
+Wpf,Web_Dd_NoDevice,未指定设备,No device specified,デバイス未指定,Nenhum dispositivo
+Wpf,Web_Mo_Sources,数据源实时值,Live data sources,データソースリアルタイム,Fontes ao vivo
+Wpf,Web_Mo_SourceEmpty,暂无采集源值,No source values,ソース値なし,Sem valores de fonte
+Wpf,Web_Mo_SourceEmptyHint,设备配置了数据源后会显示湿度、能耗等实时值,Configured sources such as humidity and energy appear here,湿度・エネルギーなど設定済みソースのリアルタイム値を表示します,Fontes configuradas como umidade e energia aparecem aqui
+Wpf,Web_Mo_Triggered,已触发,Triggered,トリガー済み,Disparado
+Wpf,Web_Mo_Updated,更新,Updated,更新,Atualizado
+Wpf,Web_Dv_Sources,数据源配置,Data source config,データソース設定,Configuração de fontes
+Wpf,Web_Dv_SourceType,类型,Type,種別,Tipo
+Wpf,Web_Dv_TriggerAddr,触发地址,Trigger address,トリガーアドレス,Endereço de disparo
+Wpf,Web_Dv_ValueItems,值项,Value items,値項目,Itens de valor
+Wpf,Web_Dv_SourceEnabled,启用,Enabled,有効,Ativo
+

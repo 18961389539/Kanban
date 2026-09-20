@@ -255,6 +255,15 @@ public partial class WorkOrderEditDialog : Window, INotifyPropertyChanged, INoti
         Close();
     }
 
+    /// <summary>
+    /// 计划产量聚焦时全选既有值：Tab 进入可直接输入新数值覆盖，
+    /// 免去手动 Ctrl+A / 逐字删除（数字类字段的常见易用性细节）。
+    /// </summary>
+    private void OnTargetQuantityGotKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
+    {
+        TargetQuantityBox.SelectAll();
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>

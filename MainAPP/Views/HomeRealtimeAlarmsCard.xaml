@@ -28,7 +28,8 @@
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="BellAlert" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K329}" />
                     <Border Margin="10,0,0,0" Padding="8,3" CornerRadius="11"
-                            VerticalAlignment="Center">
+                            VerticalAlignment="Center"
+                            ToolTip="{Binding ActiveAlarmCountTooltip}">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
@@ -62,26 +63,32 @@
                 </StackPanel>
 
                 <!--  右：静音按钮（抑制新报警声音与闪烁）  -->
-                <Button DockPanel.Dock="Right" Width="30" Height="30" Padding="0" Margin="8,0,0,0"
+                <!--  2026-09-18 UI 精修：30×30 纯图标按钮补上文字标签，点击区域扩到带文字的宽按钮  -->
+                <Button DockPanel.Dock="Right" Height="30" Padding="10,0" Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         AutomationProperties.Name="{x:Static resources:Strings.K330}"
                         Command="{Binding ToggleAlarmMuteCommand}"
                         Style="{StaticResource ButtonDefault}"
                         ToolTip="{x:Static resources:Strings.K331}">
-                    <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
-                        <materialIcons:MaterialIcon.Style>
-                            <Style TargetType="materialIcons:MaterialIcon">
-                                <Setter Property="Kind" Value="VolumeHigh" />
-                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsAlarmMuted}" Value="True">
-                                        <Setter Property="Kind" Value="VolumeMute" />
-                                        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </materialIcons:MaterialIcon.Style>
-                    </materialIcons:MaterialIcon>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
+                            <materialIcons:MaterialIcon.Style>
+                                <Style TargetType="materialIcons:MaterialIcon">
+                                    <Setter Property="Kind" Value="VolumeHigh" />
+                                    <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAlarmMuted}" Value="True">
+                                            <Setter Property="Kind" Value="VolumeMute" />
+                                            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialIcons:MaterialIcon.Style>
+                        </materialIcons:MaterialIcon>
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource FontSizeMicro}"
+                                   Text="{x:Static resources:Strings.Home_MuteShort}" />
+                    </StackPanel>
                 </Button>
 
                 <!--  右：级别筛选 chips（H / M / L），ToggleButton 双向绑定 ShowXxxAlarms  -->
@@ -89,21 +96,35 @@
                             VerticalAlignment="Center">
                     <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Margin="0,0,6,0"
                                Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K332}" />
-                    <!--  High：红色，对应 Danger  -->
-                    <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                    <!--  High：红色，对应 Danger
+                          2026-09-18 UI 精修：chip 28×24→34×26 并加 SecondaryRegionBrush 底（未选中也可见），
+                          选中态由「满色块 + 白字」改为 15% 语义色底 + 同色文字 + 同色描边，与全站药丸一致。  -->
+                    <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                   AutomationProperties.Name="{x:Static resources:Strings.K086}"
                                   IsChecked="{Binding ShowHighAlarms, Mode=TwoWay}"
                                   ToolTip="{x:Static resources:Strings.K086}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border CornerRadius="6"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                                 <Style.Triggers>
                                     <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Foreground" Value="White" />
-                                        <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
                                         <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
                                     </Trigger>
                                 </Style.Triggers>
@@ -112,20 +133,32 @@
                         <ToggleButton.Content>H</ToggleButton.Content>
                     </ToggleButton>
                     <!--  Medium：黄色，对应 Warning  -->
-                    <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                    <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                   AutomationProperties.Name="{x:Static resources:Strings.K087}"
                                   IsChecked="{Binding ShowMediumAlarms, Mode=TwoWay}"
                                   ToolTip="{x:Static resources:Strings.K087}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border CornerRadius="6"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                                 <Style.Triggers>
                                     <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Foreground" Value="White" />
-                                        <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                        <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
                                         <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
                                     </Trigger>
                                 </Style.Triggers>
@@ -134,20 +167,32 @@
                         <ToggleButton.Content>M</ToggleButton.Content>
                     </ToggleButton>
                     <!--  Low：主色蓝紫，对应 Primary  -->
-                    <ToggleButton Width="28" Height="24" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
+                    <ToggleButton Width="34" Height="26" Margin="2,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
                                   AutomationProperties.Name="{x:Static resources:Strings.K088}"
                                   IsChecked="{Binding ShowLowAlarms, Mode=TwoWay}"
                                   ToolTip="{x:Static resources:Strings.K088}">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
                                 <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border CornerRadius="6"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                                 <Style.Triggers>
                                     <Trigger Property="IsChecked" Value="True">
-                                        <Setter Property="Foreground" Value="White" />
-                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                        <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
                                         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
                                     </Trigger>
                                 </Style.Triggers>
@@ -235,11 +280,9 @@
                                                                    Text="{Binding DisplayName}"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    ToolTip="{Binding DisplayName}" />
-                                                        <!-- 级别徽章：与设备管理页一致，色条+文字双重显示，色盲友好 -->
-                                                        <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
-                                                                VerticalAlignment="Center"
-                                                                Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
-                                                            <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="White"
+                                                        <!-- 级别徽章：与报警中心/设备管理页一致（AlarmLevelPill 软底+同色文字+描边），色盲友好 -->
+                                                        <Border Margin="8,0,0,0" Style="{StaticResource AlarmLevelPill}">
+                                                            <TextBlock Style="{StaticResource AlarmLevelPillText}"
                                                                        Text="{Binding Level, Converter={StaticResource AlarmLevelToTextConverter}}" />
                                                         </Border>
                                                     </StackPanel>
@@ -255,7 +298,8 @@
                                                 <TextBlock Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"
                                                            Margin="12,0,0,0"
                                                            FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                                           Text="{Binding DurationText}" />
+                                                           Text="{Binding DurationText}"
+                                                           ToolTip="{Binding DurationTooltip}" />
                                             </Grid>
 
                                         <!-- 独立脉冲层：只改变边框透明度，不影响卡片文字可读性 -->

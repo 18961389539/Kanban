@@ -73,10 +73,21 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ReconnectCommand))]
+    [NotifyPropertyChangedFor(nameof(HealthText))]
+    [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
     private bool _isConnected;
-    [ObservableProperty] private bool _isAcquisitionRunning;
-    [ObservableProperty] private string _connectionStatus = Strings.Conn_Disconnected;
-    [ObservableProperty] private DateTime? _disconnectedAt;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HealthText))]
+    [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
+    private bool _isAcquisitionRunning;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ConnectionTooltip))]
+    [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
+    private string _connectionStatus = Strings.Conn_Disconnected;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisconnectDurationText))]
+    [NotifyPropertyChangedFor(nameof(DisconnectDurationTooltip))]
+    private DateTime? _disconnectedAt;
     [ObservableProperty] private bool _isCollectorUnreachable;
     /// <summary>正在发起重连（用于禁用"重试连接"按钮，避免连点把 PLC 驱动建链请求打爆）。</summary>
     [ObservableProperty]
@@ -92,9 +103,14 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [ObservableProperty] private int _totalDisconnectCount;
     [ObservableProperty] private int _completedCycles;
     [ObservableProperty] private int _failedCycles;
-    [ObservableProperty] private bool _lastCycleSucceeded;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HealthText))]
+    [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
+    private bool _lastCycleSucceeded;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ConsecutiveFailTooltip))]
+    [NotifyPropertyChangedFor(nameof(HealthText))]
+    [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
     private int _consecutiveFailureCycles;
     [ObservableProperty] private DateTime? _lastFailureAt;
     [ObservableProperty] private string? _lastFailureMessage;
@@ -165,6 +181,11 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string DisconnectDurationText => DisconnectedAt is { } disconnectedAt
         ? FormatDuration(DateTime.Now - disconnectedAt)
         : Strings.M049;
+    public string ConnectionTooltip => FormatHelper.Tip(Strings.Mo_Tip_ConnStatus, ConnectionStatus);
+    public string AcquisitionHealthTooltip => FormatHelper.Tip(Strings.Mo_Tip_Health, HealthText);
+    public string DisconnectDurationTooltip => FormatHelper.Tip(
+        Strings.Mo_Tip_DisconnectDuration,
+        string.IsNullOrEmpty(DisconnectDurationText) ? "—" : DisconnectDurationText);
     public string RecoveryFileText => RecoveryFileExists ? string.Format(Strings.F088, FormatBytes(RecoveryFileBytes)) : Strings.M052;
     public string DataConsistencyText => ConfigurationIssueCount == 0 ? Strings.M053 : string.Format(Strings.F078, ConfigurationIssueCount);
     public string DeviceReadSummary => $"{LastSuccessfulDevices} / {ConfiguredDevices}";

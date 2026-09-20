@@ -1,0 +1,30 @@
+@*
+    口径芯片：钉在每个数字旁，标明工单窗口 / 当班会话 / 实时。
+    Kind: WorkOrder | Shift | Realtime（与 WPF KpiScopeKind 对齐）
+*@
+<span class="kpi-scope @CssClass" title="@L.T(TipKey)">@L.T(LabelKey)</span>
+
+@code {
+    [Parameter] public string Kind { get; set; } = "WorkOrder";
+
+    private string CssClass => Kind switch
+    {
+        "Shift" => "shift",
+        "Realtime" => "live",
+        _ => "wo"
+    };
+
+    private string LabelKey => Kind switch
+    {
+        "Shift" => "Home_Scope_Shift",
+        "Realtime" => "Home_Scope_Realtime",
+        _ => "Home_Scope_WorkOrder"
+    };
+
+    private string TipKey => Kind switch
+    {
+        "Shift" => "Home_Scope_Shift_Tip",
+        "Realtime" => "Home_Scope_Realtime_Tip",
+        _ => "Home_Scope_WorkOrder_Tip"
+    };
+}

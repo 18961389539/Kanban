@@ -19,6 +19,7 @@ public class CollectorSettingsMapperTests
 
         var dto = CollectorSettingsMapper.ToDto(settings);
 
+        Assert.Equal(settings.DisplayCarouselEnabled, dto.DisplayCarouselEnabled);
         Assert.Equal(settings.PollingIntervalMs, dto.PollingIntervalMs);
         Assert.Equal(settings.HistoryWriteIntervalScans, dto.HistoryWriteIntervalScans);
         Assert.Equal(settings.PlcBatchReadMaxLength, dto.PlcBatchReadMaxLength);
@@ -59,6 +60,7 @@ public class CollectorSettingsMapperTests
 
         CollectorSettingsMapper.ApplyPatch(CollectorSettingsMapper.ToDto(source), target);
 
+        Assert.Equal(source.DisplayCarouselEnabled, target.DisplayCarouselEnabled);
         Assert.Equal(source.PollingIntervalMs, target.PollingIntervalMs);
         Assert.Equal(source.HistoryWriteIntervalScans, target.HistoryWriteIntervalScans);
         Assert.Equal(source.PlcBatchReadMaxLength, target.PlcBatchReadMaxLength);
@@ -107,6 +109,7 @@ public class CollectorSettingsMapperTests
         Assert.Equal(originalSiemensRack, target.PlcConfig.Siemens.Rack);
         Assert.Equal(4, target.PlcConfig.ModbusTcp.RegisterFunction);
         Assert.Equal(originalModbusUnitId, target.PlcConfig.ModbusTcp.UnitId);
+        Assert.True(target.DisplayCarouselEnabled);
     }
 
     [Fact]
@@ -115,6 +118,7 @@ public class CollectorSettingsMapperTests
         var target = CreateSettings();
         var originalIp = target.PlcConfig.IpAddress;
         var originalShiftNames = target.Shifts.Select(shift => shift.Name).ToArray();
+        Assert.True(target.DisplayCarouselEnabled);
 
         CollectorSettingsMapper.ApplyPatch(new CollectorSettingsDto
         {
@@ -125,6 +129,7 @@ public class CollectorSettingsMapperTests
 
         Assert.Equal(originalIp, target.PlcConfig.IpAddress);
         Assert.Equal(originalShiftNames, target.Shifts.Select(shift => shift.Name).ToArray());
+        Assert.True(target.DisplayCarouselEnabled);
     }
 
     [Fact]
@@ -204,6 +209,7 @@ public class CollectorSettingsMapperTests
     {
         var settings = new AppSettings
         {
+            DisplayCarouselEnabled = true,
             PollingIntervalMs = 350,
             HistoryWriteIntervalScans = 17,
             PlcBatchReadMaxLength = 48,

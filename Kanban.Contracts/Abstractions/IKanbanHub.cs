@@ -91,6 +91,9 @@ public interface IKanbanHubServer
     /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端零配置——从服务端拉取而非逐屏配置）。</summary>
     Task<string> GetTitleAsync();
 
+    /// <summary>过道电视是否轮播（展示模式或显示设置勾选）。旧 Collector 无此方法时屏端保持关闭。</summary>
+    Task<bool> GetDisplayCarouselEnabledAsync();
+
     /// <summary>
     /// 旧版界面语言枚举值（兼容旧版屏端）。新屏端应调用 GetLanguageCodeAsync。
     /// </summary>

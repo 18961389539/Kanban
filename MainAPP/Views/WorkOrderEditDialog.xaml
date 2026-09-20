@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="MainAPP.Views.WorkOrderEditDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -89,6 +89,7 @@
             hc:InfoElement.TitlePlacement="Top"
             AutomationProperties.Name="{x:Static resources:Strings.K035}"
             FontSize="{DynamicResource FontSizeKpiLabel}"
+            GotKeyboardFocus="OnTargetQuantityGotKeyboardFocus"
             Style="{StaticResource TextBoxExtend}"
             Text="{Binding TargetQuantityText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 

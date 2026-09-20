@@ -1025,7 +1025,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             {
                 // 明确标注当前页导出，避免大表被误解为全量导出（审查修复 2026-08-15）
                 fileName = $"{Path.GetFileNameWithoutExtension(fileName)}_page{CurrentPage}{Path.GetExtension(fileName)}";
-                csv += $"\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。";
+                csv += "\n# " + string.Format(Strings.Csv_Export_PageHint, PageSize);
             }
             else
             {

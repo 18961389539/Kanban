@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
 @using Kanban.Web.Services
@@ -21,9 +22,9 @@
     <section class="card">
         <div class="card-title">@L.T("Ac_ActiveTitle") <span class="badge-count @(ActiveCount == 0 ? "zero" : "")">@ActiveCount</span></div>
         <div class="filter-bar compact">
-            <button class="chip-btn @(ShowHigh ? "active" : "")" @onclick="() => ShowHigh = !ShowHigh">@L.T("Ac_LevelHigh")</button>
-            <button class="chip-btn @(ShowMedium ? "active" : "")" @onclick="() => ShowMedium = !ShowMedium">@L.T("Ac_LevelMedium")</button>
-            <button class="chip-btn @(ShowLow ? "active" : "")" @onclick="() => ShowLow = !ShowLow">@L.T("Ac_LevelLow")</button>
+            <button class="chip-btn @(ShowHigh ? "active" : "")" title="@L.T("K086")" @onclick="() => ShowHigh = !ShowHigh">@L.T("Ac_LevelHigh")</button>
+            <button class="chip-btn @(ShowMedium ? "active" : "")" title="@L.T("K087")" @onclick="() => ShowMedium = !ShowMedium">@L.T("Ac_LevelMedium")</button>
+            <button class="chip-btn @(ShowLow ? "active" : "")" title="@L.T("K088")" @onclick="() => ShowLow = !ShowLow">@L.T("Ac_LevelLow")</button>
             <select class="filter-input device-filter" @bind="SelectedDeviceId">
                 <option value="">@L.T("Hq_AllDevices")</option>
                 @foreach (var d in Dashboard.Snapshots)
@@ -31,20 +32,32 @@
                     <option value="@d.DeviceId">@d.DeviceName</option>
                 }
             </select>
+            @if (MutedCount > 0)
+            {
+                <button class="chip-btn active" title="@L.T("K331")" @onclick="ClearMute">@L.T("Ac_MutedCount", MutedCount)</button>
+            }
         </div>
-        @if (VisibleActiveAlarms.Count == 0)
+        @if (VisibleGroupedAlarms.Count == 0)
         {
             <div class="no-data">@L.T("Val_NoAlarms")</div>
         }
         else
         {
             <div class="alarm-list">
-                @foreach (var a in VisibleActiveAlarms)
+                @foreach (var group in VisibleGroupedAlarms)
                 {
-                    <div class="alarm-item">
-                        <span class="lvl-dot @LevelClass(a.Level)"></span>
-                        <span class="alarm-name">@a.DeviceName · @a.AlarmName</span>
-                        <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
+                    <div class="alarm-group">
+                        <div class="alarm-group-head">@group.DeviceName <span class="badge-soft">@L.T("Ac_GroupAlarms", group.Items.Count)</span></div>
+                        @foreach (var a in group.Items)
+                        {
+                            <div class="alarm-item row-click" @onclick="() => OpenAlarmHistory(a.DeviceId, a.AlarmName, a.StartTime)">
+                                <span class="lvl-dot @LevelClass(a.Level)"></span>
+                                <span class="alarm-name">@a.AlarmName</span>
+                                <span class="alarm-dur" title="@L.Tip("Home_Tip_ActiveAlarmDuration", FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds))">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
+                                <button class="icon-btn" title="@L.T("Ac_Copy")" @onclick="() => CopyAlarmAsync(a)" @onclick:stopPropagation="true">⧉</button>
+                                <button class="icon-btn" title="@L.T("K330")" @onclick="() => MuteAlarm(a)" @onclick:stopPropagation="true">🔇</button>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -89,13 +102,13 @@
                         <tbody>
                             @foreach (var t in TopAlarms)
                             {
-                                <tr>
+                                <tr class="row-click" @onclick="() => OpenAlarmHistory(LookupDeviceId(t.DeviceName), t.AlarmName, Dashboard.ServerNow.AddHours(-RangeHours))">
                                     <td class="num">@t.Rank</td>
                                     <td>@t.AlarmName</td>
                                     <td>@t.DeviceName</td>
                                     <td><span class="lvl-dot @LevelClass(t.Level)"></span>@LevelText(t.Level)</td>
                                     <td class="num">@t.TriggerCount</td>
-                                    <td class="num">@FmtDuration(t.TotalDurationMinutes * 60)</td>
+                                    <td class="num" title="@L.Tip("Ac_Tip_RankDuration", FmtDuration(t.TotalDurationMinutes * 60))">@FmtDuration(t.TotalDurationMinutes * 60)</td>
                                 </tr>
                             }
                         </tbody>
@@ -117,7 +130,7 @@
                         <tbody>
                             @foreach (var e in RecentEvents)
                             {
-                                <tr>
+                                <tr class="row-click" @onclick="() => OpenAlarmHistory(e.DeviceId, e.AlarmName, e.EventTime)">
                                     <td>@e.EventTime.ToString("MM-dd HH:mm:ss")</td>
                                     <td>@e.DeviceName</td>
                                     <td>@e.AlarmName</td>
@@ -154,14 +167,17 @@
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
 
-    private sealed record ActiveItem(string DeviceName, string AlarmName, AlarmLevel Level, DateTime StartTime);
+    private sealed record ActiveItem(string DeviceId, string DeviceName, string AlarmName, AlarmLevel Level, DateTime StartTime);
+
+    private HashSet<string> _mutedKeys = new(StringComparer.Ordinal);
+    private const string MuteStorageKey = "kanban.alarmMute";
 
     /// <summary>活跃报警缓存：仅在渲染 tick（3s）刷新，避免 AllActiveAlarms 被多个属性重复 SelectMany 物化。</summary>
     private List<ActiveItem> _allActiveAlarms = [];
 
     private void RefreshActiveCache()
         => _allActiveAlarms = Dashboard.Snapshots
-            .SelectMany(s => s.ActiveAlarms.Select(a => new ActiveItem(s.DeviceName, a.Name, a.Level, a.StartTime)))
+            .SelectMany(s => s.ActiveAlarms.Select(a => new ActiveItem(s.DeviceId, s.DeviceName, a.Name, a.Level, a.StartTime)))
             .ToList();
 
     private bool IsLevelVisible(AlarmLevel level) => level switch
@@ -186,9 +202,19 @@
         }
     }
 
-    private List<ActiveItem> VisibleActiveAlarms => FilteredActiveAlarms.Take(MaxActiveAlarms).ToList();
+    private List<ActiveItem> VisibleActiveAlarms => FilteredActiveAlarms
+        .Where(a => !_mutedKeys.Contains(MuteKey(a.DeviceId, a.AlarmName)))
+        .Take(MaxActiveAlarms)
+        .ToList();
+
+    private List<(string DeviceName, List<ActiveItem> Items)> VisibleGroupedAlarms
+        => VisibleActiveAlarms
+            .GroupBy(a => a.DeviceName)
+            .Select(g => (g.Key, g.ToList()))
+            .ToList();
 
     private int ActiveCount => _allActiveAlarms.Count;
+    private int MutedCount => _allActiveAlarms.Count(a => _mutedKeys.Contains(MuteKey(a.DeviceId, a.AlarmName)));
     private int AffectedDeviceCount => FilteredActiveAlarms.Select(a => a.DeviceName).Distinct().Count();
     private string ActiveCountText => ActiveCount.ToString("N0");
     private string AffectedDeviceCountText => AffectedDeviceCount.ToString("N0");
@@ -255,6 +281,7 @@
             // 配置不可用：级别回退 Medium（LookupAlarmLevel 兜底）
         }
         RefreshActiveCache(); // 首屏活跃报警缓存（后续由 3s tick 刷新）
+        await LoadMuteAsync();
         _ = RefreshStatsAsync(); // 首屏统计（fire-and-forget，失败由横幅提示）
         _renderTimer = new System.Threading.Timer(_ => _ = SafeTickAsync(), null, 3000, 3000);
         await Task.CompletedTask;
@@ -355,6 +382,70 @@ private void OnRenderTick()
             return AlarmLevel.Medium;
         }
     }
+
+    private static string MuteKey(string deviceId, string alarmName) => $"{deviceId}|{alarmName}";
+
+    private async Task LoadMuteAsync()
+    {
+        try
+        {
+            var raw = await JS.InvokeAsync<string?>("KanbanShell.getSession", MuteStorageKey);
+            if (string.IsNullOrEmpty(raw)) return;
+            _mutedKeys = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries).ToHashSet(StringComparer.Ordinal);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private async Task PersistMuteAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("KanbanShell.setSession", MuteStorageKey, string.Join('\n', _mutedKeys));
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private async Task MuteAlarm(ActiveItem a)
+    {
+        _mutedKeys.Add(MuteKey(a.DeviceId, a.AlarmName));
+        await PersistMuteAsync();
+    }
+
+    private async Task ClearMute()
+    {
+        _mutedKeys.Clear();
+        await PersistMuteAsync();
+    }
+
+    private async Task CopyAlarmAsync(ActiveItem a)
+    {
+        var text = $"{a.DeviceName} · {a.AlarmName} · {FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)}";
+        try
+        {
+            await JS.InvokeVoidAsync("KanbanShell.copy", text);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private void OpenAlarmHistory(string deviceId, string alarmName, DateTime from)
+    {
+        if (string.IsNullOrEmpty(deviceId)) return;
+        var start = from < Dashboard.ServerNow.AddDays(-7) ? Dashboard.ServerNow.AddDays(-7) : from;
+        var fromText = start.ToString("yyyy-MM-ddTHH:mm");
+        var toText = Dashboard.ServerNow.ToString("yyyy-MM-ddTHH:mm");
+        Nav.NavigateTo($"/history?tab=2&deviceId={Uri.EscapeDataString(deviceId)}&alarmName={Uri.EscapeDataString(alarmName)}&from={fromText}&to={toText}");
+    }
+
+    private string LookupDeviceId(string deviceName)
+        => Dashboard.Snapshots.FirstOrDefault(s => s.DeviceName == deviceName)?.DeviceId
+           ?? _deviceConfigs.FirstOrDefault(d => d.Name == deviceName)?.Id
+           ?? "";
 
     public void Dispose()
     {

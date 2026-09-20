@@ -18,7 +18,10 @@ public static class KpiThresholds
     // 良品率阈值（2026-08-11 方案 E）：复盘页结论/状态文案已改为引用本常量（2026-08-16 唯一源），
     // 良品率卡片的状态 chip 与数字着色统一使用，避免 OEE 阈值(0.85)误用于良品率导致
     // "92% 数字绿但未达 95% 目标"的矛盾观感。
+    // 2026-09-17 UI 精修：新增 Warning 档（距目标 5pt 内），着色从两态改三态——
+    // 未达标但接近目标用琥珀而非报警红，语义区分「未达标」与「故障级偏差」。
     public const double QualityGood = 0.95;
+    public const double QualityWarning = 0.90;
 
     // 不良率阈值（低=好）：委托 Kanban.Contracts 单源，与 WASM 主页及 InverseRatioThreshold 共用。
     public const double NgRateWarning = NgRateThresholds.Warning;

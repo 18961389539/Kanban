@@ -222,5 +222,6 @@ public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
         public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
         public string? ShowPasswordInput(string title, string message) => null;
         public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+        public WorkOrderContinueChoice ShowWorkOrderContinue(Kanban.Collector.Core.Entities.WorkOrder completed, IReadOnlyList<Kanban.Collector.Core.Entities.WorkOrder> selectableOrders) => WorkOrderContinueChoice.Dismissed;
     }
 }

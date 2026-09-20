@@ -163,6 +163,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(WorkOrderCumulativeOkTooltip))]
     [NotifyPropertyChangedFor(nameof(WorkOrderAchievementTooltip))]
     [NotifyPropertyChangedFor(nameof(WorkOrderAchievementDisplay))]
+    [NotifyPropertyChangedFor(nameof(HasWorkOrderSchedule))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderPlannedProgressRatio))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderScheduleText))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderScheduleDeltaText))]
+    [NotifyPropertyChangedFor(nameof(IsWorkOrderBehindSchedule))]
+    [NotifyPropertyChangedFor(nameof(IsWorkOrderAheadSchedule))]
+    [NotifyPropertyChangedFor(nameof(WorkOrderScheduleTooltip))]
     private WorkOrder? _currentWorkOrder;
 
     /// <summary>是否当前有工单（控制顶部工单条可见性）。</summary>
@@ -213,6 +220,67 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>工单设置数量（计划产量）。无工单时返回 0。</summary>
     public int WorkOrderTargetQuantity => CurrentWorkOrder?.TargetQuantity ?? 0;
+
+    // ──────────── 工单排期与计划进度（主页工单卡改进 2026-09-17） ────────────
+
+    /// <summary>计划时间是否有效（PlannedEnd &gt; PlannedStart），控制排期信息区可见性。</summary>
+    public bool HasWorkOrderSchedule
+        => CurrentWorkOrder is { } wo && wo.PlannedEnd > wo.PlannedStart;
+
+    /// <summary>计划进度比例（0-1，按工单计划起止时间线性推算）；计划时间无效时为 0。</summary>
+    public double WorkOrderPlannedProgressRatio
+        => CurrentWorkOrder is { } wo && wo.PlannedEnd > wo.PlannedStart
+            ? Math.Clamp((DateTime.Now - wo.PlannedStart).Ticks
+                / (double)(wo.PlannedEnd - wo.PlannedStart).Ticks, 0, 1)
+            : 0;
+
+    /// <summary>实际达成率相对计划进度的差异（百分点，正=超前，负=滞后）；无计划参照时为 null。</summary>
+    public double? WorkOrderScheduleDeltaPp
+        => HasWorkOrderSchedule
+            ? (WorkOrderProgressRatio - WorkOrderPlannedProgressRatio) * 100
+            : null;
+
+    /// <summary>是否滞后于计划（≥1pp 才算滞后，避免时间误差抖动出警示）。</summary>
+    public bool IsWorkOrderBehindSchedule
+        => WorkOrderScheduleDeltaPp is { } pp && pp <= -1;
+
+    /// <summary>是否超前于计划（≥1pp）。</summary>
+    public bool IsWorkOrderAheadSchedule
+        => WorkOrderScheduleDeltaPp is { } pp && pp >= 1;
+
+    /// <summary>超前/滞后文本（如 "滞后 8pp" / "超前 5pp"）；无参照或差异不足 1pp 时为空。</summary>
+    public string WorkOrderScheduleDeltaText
+    {
+        get
+        {
+            if (WorkOrderScheduleDeltaPp is not { } pp || Math.Abs(pp) < 1) return "";
+            return pp < 0
+                ? string.Format(Strings.Home_WorkOrderBehind, (int)Math.Round(Math.Abs(pp)))
+                : string.Format(Strings.Home_WorkOrderAhead, (int)Math.Round(pp));
+        }
+    }
+
+    /// <summary>计划排期文本：如 "计划结束 18:00 · 剩余 2.0h"；已超时显示 "已超时"；计划无效时为空。</summary>
+    public string WorkOrderScheduleText => FormatWorkOrderSchedule(DateTime.Now);
+
+    private string FormatWorkOrderSchedule(DateTime now)
+    {
+        if (CurrentWorkOrder is not { } wo || wo.PlannedEnd <= wo.PlannedStart) return "";
+        if (wo.PlannedEnd <= now)
+            return string.Format(Strings.Home_WorkOrderOverdue, FormatRoughDuration(now - wo.PlannedEnd));
+        return string.Format(Strings.Home_WorkOrderSchedule,
+            FormatHelper.FormatClock(wo.PlannedEnd),
+            FormatRoughDuration(wo.PlannedEnd - now));
+    }
+
+    /// <summary>粗略时长文本：不足 1 小时显示分钟（如 "45m"），否则显示小时（如 "2.0h"）。</summary>
+    private static string FormatRoughDuration(TimeSpan duration)
+    {
+        if (duration < TimeSpan.Zero) duration = -duration;
+        if (duration.TotalMinutes < 60)
+            return $"{(int)Math.Max(1, duration.TotalMinutes)}m";
+        return $"{Math.Round(duration.TotalHours, 1):0.#}h";
+    }
 
     // ──────────── 班次产量目标进度（已移除：UI 不再绑定，相关字段删除） ────────────
 
@@ -291,6 +359,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [NotifyPropertyChangedFor(nameof(ActualCycleSec))]
     [NotifyPropertyChangedFor(nameof(CycleDiffText))]
     [NotifyPropertyChangedFor(nameof(IsCycleSlow))]
+    [NotifyPropertyChangedFor(nameof(CycleDiffTooltip))]
     private double _realtimeSpeed;
     [ObservableProperty] private double _speedAchievementRate;
     /// <summary>目标速度（件/小时），即设备 TargetCycle。用于计算速度达成率。</summary>
@@ -414,8 +483,12 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     public bool HasDefectParetoData => DefectParetoEmptyKind == DefectParetoEmptyKind.HasData;
 
-    [ObservableProperty] private string _defectParetoSummaryText = "";
-    [ObservableProperty] private string _defectNgShareText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DefectSummaryTooltip))]
+    private string _defectParetoSummaryText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DefectNgShareTooltip))]
+    private string _defectNgShareText = "";
     [ObservableProperty] private PlotModel? _defectParetoChart;
 
     // ──────────── 第 1 行 列 3：实时故障 ────────────
@@ -427,10 +500,17 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// </summary>
     [ObservableProperty] private bool _hasHighLevelAlarm;
 
+    /// <summary>全厂是否有任意活跃报警（轮播跳过空报警页）。</summary>
+    [ObservableProperty] private bool _hasAnyActiveAlarm;
+
+    /// <summary>全厂是否有 High 活跃报警（轮播冻结并切到报警页）。</summary>
+    [ObservableProperty] private bool _hasAnyHighLevelAlarm;
+
     /// <summary>当前设备截断前的活跃报警总数（供计数徽章与截断提示）。</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveAlarmTruncation))]
     [NotifyPropertyChangedFor(nameof(ActiveTruncationHint))]
+    [NotifyPropertyChangedFor(nameof(ActiveAlarmCountTooltip))]
     private int _activeAlarmTotalCount;
 
     /// <summary>活跃报警是否因主页展示上限被截断。</summary>
@@ -446,6 +526,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CycleDiffText))]
     [NotifyPropertyChangedFor(nameof(IsCycleSlow))]
+    [NotifyPropertyChangedFor(nameof(CycleDiffTooltip))]
     private double _targetCycleSec;
     [ObservableProperty] private PlotModel? _qualityTrendChart;
 
@@ -477,7 +558,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
     /// <summary>
     /// 距目标差距文本（2026-08-11 用户选定）：纯数据格式 "+0.6%"（超目标）/ "-0.5%"（还差），
-    /// 颜色由 QualityThresholdConverter 表达（≥95% 绿 / 未达红）；不新增 resx key。
+    /// 颜色由 QualityThresholdConverter 表达（2026-09-17 三态：≥95% 绿 / ≥90% 琥珀 / 更低红）；不新增 resx key。
     /// </summary>
     public string QualityGapText => CanDisplayKpiData ? FormatQualityGap(QualityRate) : "—";
 
@@ -529,6 +610,23 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     public string QualityGapTooltip => Tip(Strings.Home_Tip_QualityGap, QualityRateDisplay, QualityGapText);
     public string CurrentShiftTooltip => Tip(Strings.Home_Tip_CurrentShift, ShiftOkProductionDisplay, ShiftNgProductionDisplay);
     public string LastShiftTooltip => Tip(Strings.Home_Tip_LastShift, LastShiftLabel, LastShiftOk, LastShiftNg);
+    public string WorkOrderScheduleTooltip => !HasWorkOrderSchedule
+        ? ""
+        : Tip(Strings.Home_Tip_WorkOrderSchedule,
+            WorkOrderProgressPct,
+            $"{WorkOrderPlannedProgressRatio * 100:F0}%",
+            string.IsNullOrEmpty(WorkOrderScheduleDeltaText) ? "—" : WorkOrderScheduleDeltaText,
+            string.IsNullOrEmpty(WorkOrderScheduleText) ? "—" : WorkOrderScheduleText);
+    public string CycleDiffTooltip => string.IsNullOrEmpty(CycleDiffText)
+        ? ""
+        : Tip(Strings.Home_Tip_CycleDiff, TargetCycleDisplay, ActualCycleDisplay, CycleDiffText);
+    public string DefectSummaryTooltip => string.IsNullOrEmpty(DefectParetoSummaryText)
+        ? ""
+        : Tip(Strings.Home_Tip_DefectSummary, DefectParetoSummaryText);
+    public string DefectNgShareTooltip => string.IsNullOrEmpty(DefectNgShareText)
+        ? ""
+        : Tip(Strings.Home_Tip_DefectNgShare, DefectNgShareText);
+    public string ActiveAlarmCountTooltip => Tip(Strings.Home_Tip_ActiveAlarmCount, ActiveAlarmTotalCount);
 
     /// <summary>
     /// PLC 连接管理器：暴露给 UI 绑定连接状态指示器
@@ -904,6 +1002,13 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(WorkOrderQualityTooltip));
         OnPropertyChanged(nameof(WorkOrderCumulativeOkTooltip));
         OnPropertyChanged(nameof(WorkOrderAchievementTooltip));
+        OnPropertyChanged(nameof(HasWorkOrderSchedule));
+        OnPropertyChanged(nameof(WorkOrderPlannedProgressRatio));
+        OnPropertyChanged(nameof(WorkOrderScheduleText));
+        OnPropertyChanged(nameof(WorkOrderScheduleDeltaText));
+        OnPropertyChanged(nameof(IsWorkOrderBehindSchedule));
+        OnPropertyChanged(nameof(IsWorkOrderAheadSchedule));
+        OnPropertyChanged(nameof(WorkOrderScheduleTooltip));
     }
 
     partial void OnSelectedDeviceIdChanged(string? value)
@@ -1057,6 +1162,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         OnPropertyChanged(nameof(ShiftOkTooltip));
         OnPropertyChanged(nameof(WorkOrderCumulativeOkTooltip));
         OnPropertyChanged(nameof(WorkOrderAchievementTooltip));
+        OnPropertyChanged(nameof(CycleDiffTooltip));
+        OnPropertyChanged(nameof(WorkOrderScheduleTooltip));
     }
 
     private void SyncRuntime()
@@ -1323,6 +1430,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         PerformanceFormulaText = ""; QualityFormulaText = "";
         ActiveAlarms.Clear();
         HasHighLevelAlarm = false;
+        HasAnyActiveAlarm = false;
+        HasAnyHighLevelAlarm = false;
         ActiveAlarmTotalCount = 0;
         // 断线/无数据时不保留旧图表，交给各卡片的空状态显示，避免旧数据继续误导。
         _oeeRingGate.Reset(); _statusPieGate.Reset(); _defectTopGate.Reset(); _qualityTrendGate.Reset();
@@ -1573,6 +1682,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     /// </summary>
     private void RefreshActiveAlarms()
     {
+        RefreshPlantAlarmFlags();
         if (string.IsNullOrEmpty(SelectedDeviceId))
         {
             ActiveAlarms.Clear();
@@ -1629,7 +1739,35 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             _deviceRepository);
         HasHighLevelAlarm = refreshResult.HasHighLevelAlarm;
         ActiveAlarmTotalCount = refreshResult.TotalActiveCount;
+        RefreshPlantAlarmFlags();
         RefreshActiveAlarmPresentation();
+    }
+
+    /// <summary>扫描全部设备的活跃报警，供轮播跳过/冻结，不依赖当前选中设备。</summary>
+    private void RefreshPlantAlarmFlags()
+    {
+        var hasAny = false;
+        var hasHigh = false;
+        foreach (var device in _deviceRepository.GetDevicesSnapshot())
+        {
+            foreach (var alarm in device.Alarms)
+            {
+                if (alarm.StartTime == default || alarm.EndTime != default)
+                    continue;
+                hasAny = true;
+                if (alarm.Level == AlarmLevel.High)
+                    hasHigh = true;
+            }
+
+            foreach (var counter in device.CounterAlarms)
+            {
+                if (counter.Enabled && counter.IsTriggered)
+                    hasAny = true;
+            }
+        }
+
+        HasAnyActiveAlarm = hasAny;
+        HasAnyHighLevelAlarm = hasHigh;
     }
 
     private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -1680,7 +1818,16 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         => UpdateDeviceStatusClock(DateTime.Now);
 
     private void UpdateDeviceStatusClock(DateTime now)
-        => DeviceStatusClock = FormatHelper.FormatDeviceStatusClock(now);
+    {
+        DeviceStatusClock = FormatHelper.FormatDeviceStatusClock(now);
+        // 排期信息随时钟走（每秒刷新剩余时间/计划进度，保持"剩余 2.0h"等文案实时）
+        OnPropertyChanged(nameof(WorkOrderPlannedProgressRatio));
+        OnPropertyChanged(nameof(WorkOrderScheduleText));
+        OnPropertyChanged(nameof(WorkOrderScheduleDeltaText));
+        OnPropertyChanged(nameof(IsWorkOrderBehindSchedule));
+        OnPropertyChanged(nameof(IsWorkOrderAheadSchedule));
+        OnPropertyChanged(nameof(WorkOrderScheduleTooltip));
+    }
 
     public void Dispose()
     {

@@ -569,6 +569,59 @@ public static class DeviceConfigValidator
             AddAddressError(errors, device, codec, defect.PlcAddress, PlcAddressType.DWord, 2, string.Format(Strings.F189, defect.Name));
         foreach (var counterAlarm in device.CounterAlarms)
             AddAddressError(errors, device, codec, counterAlarm.PlcAddress, PlcAddressType.DWord, 3, string.Format(Strings.F199, counterAlarm.Name));
+        AddDWordOverlapErrors(errors, device, codec);
+    }
+
+    /// <summary>
+    /// DWord 地址重叠检测（2026-09-18 缺陷数值异常根因防线）：
+    /// 缺陷/计数报警/产量等 DWord 项占 2 个字，若相邻地址只差 1 个字（如 D200 与 D201），
+    /// 读取时会把邻近地址的值当成高字拼进来，产生 65535 / 百万级 / 21 亿级异常计数。
+    /// 这里在保存校验阶段直接报出重叠对，避免把问题留到运行期。
+    /// </summary>
+    private static void AddDWordOverlapErrors(List<DeviceConfigError> errors, Device device, IPlcAddressCodec codec)
+    {
+        var entries = new List<(string Address, string Label)>();
+        void Add(string? address, string label)
+        {
+            if (!string.IsNullOrWhiteSpace(address)) entries.Add((address!, label));
+        }
+
+        Add(device.OkCountAddress, Strings.M232);
+        Add(device.NgCountAddress, Strings.M233);
+        Add(device.StatusCountAddress, Strings.M230);
+        Add(device.ProductionResetAddress, Strings.M234);
+        Add(device.RecipeAddress, Strings.M235);
+        foreach (var defect in device.Defects)
+            Add(defect.PlcAddress, string.Format(Strings.F189, defect.Name));
+        foreach (var counterAlarm in device.CounterAlarms)
+            Add(counterAlarm.PlcAddress, string.Format(Strings.F199, counterAlarm.Name));
+
+        var spans = new List<(string Group, int Start, int End, string Address, string Label)>();
+        foreach (var (address, label) in entries)
+        {
+            var parsed = codec.Parse(address);
+            if (parsed is not { IsValid: true, Type: PlcAddressType.DWord }) continue;
+            // DWord 占 2 个地址单位；AddressStride 为品牌相关步长（默认 1 字/单位）。
+            var stride = parsed.AddressStride > 0 ? parsed.AddressStride : 1;
+            spans.Add((parsed.AddressGroup, parsed.AddressOffset,
+                parsed.AddressOffset + 2 * stride - 1, address, label));
+        }
+
+        for (var i = 0; i < spans.Count; i++)
+        for (var j = i + 1; j < spans.Count; j++)
+        {
+            var a = spans[i];
+            var b = spans[j];
+            if (!string.Equals(a.Group, b.Group, StringComparison.OrdinalIgnoreCase)) continue;
+            if (a.Start > b.End || b.Start > a.End) continue;
+            errors.Add(new DeviceConfigError
+            {
+                Device = device,
+                TargetTabIndex = 2,
+                Message = string.Format(Strings.Validator_DWordAddressOverlap, device.Name, a.Address, b.Address),
+            });
+            return; // 同一台设备只报第一对，避免 N² 组合刷屏
+        }
     }
 
     /// <summary>

@@ -499,6 +499,13 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<string>(nameof(IKanbanHubServer.GetTitleAsync), ct);
     }
 
+    /// <summary>过道电视是否轮播。旧 Collector 无此方法时返回 false。</summary>
+    public async Task<bool> GetDisplayCarouselEnabledAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<bool>(nameof(IKanbanHubServer.GetDisplayCarouselEnabledAsync), ct);
+    }
+
     /// <summary>旧版界面语言枚举值（兼容旧版 Collector；新屏端使用 GetLanguageCodeAsync）。</summary>
     public async Task<int> GetLanguageAsync(CancellationToken ct = default)
     {

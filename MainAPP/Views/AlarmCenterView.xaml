@@ -12,6 +12,8 @@
     d:DataContext="{d:DesignInstance Type=vm:AlarmCenterViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
+    PreviewKeyDown="OnPreviewKeyDown"
+    IsVisibleChanged="OnIsVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}" />
@@ -165,7 +167,7 @@
                 <Button Content="{x:Static resources:Strings.K004}" Padding="8,3" Margin="0,0,8,0"
                     Command="{Binding ClearDeviceFilterCommand}" ToolTip="{x:Static resources:Strings.K123}" />
                 <!-- 搜索框：占位符常驻可见（原仅 ToolTip，未悬停时看不出这是搜索框） -->
-                <hc:TextBox Width="170" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                <hc:TextBox Width="170" Margin="0,0,8,0" x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
                             Style="{StaticResource TextBoxExtend}"
                             hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
                             Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
@@ -369,20 +371,33 @@
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K045}" />
-                                <!-- 活跃计数徽章：0 条时中性灰（红色保留给"有待处理"语义，避免恒红误导） -->
-                                <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10">
+                                <!--  活跃计数徽章：>0 用红色语义药丸；0 条改中性药丸
+                                      （原 0 条为「灰块白字」，对比度约 2.5:1 且与"无待处理"语义打架）  -->
+                                <Border Margin="8,0,0,0" Padding="8,1" CornerRadius="10" BorderThickness="1">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                            <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ActiveCount}" Value="0">
-                                                    <Setter Property="Background" Value="{StaticResource StatusIdleBrush}" />
+                                                    <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock FontSize="12" FontWeight="Bold" Foreground="White"
-                                               Text="{Binding ActiveCount}" />
+                                    <TextBlock FontSize="12" FontWeight="Bold" Text="{Binding ActiveCount}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{StaticResource StatusAlarmBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ActiveCount}" Value="0">
+                                                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Border>
                                 <!-- 截断提示：过滤后条数超过展示上限时显示 -->
                                 <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
@@ -465,10 +480,9 @@
                                                                        Text="{Binding DisplayName}"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        ToolTip="{Binding DisplayName}" />
-                                                            <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="8"
-                                                                    VerticalAlignment="Center"
-                                                                    Background="{Binding Level, Converter={StaticResource AlarmLevelToBrushConverter}}">
-                                                                <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="White"
+                                                            <!--  2026-09-18 UI 精修：级别徽章改语义色药丸（原白字压满色块）  -->
+                                                            <Border Margin="8,0,0,0" Style="{StaticResource AlarmLevelPill}">
+                                                                <TextBlock Style="{StaticResource AlarmLevelPillText}"
                                                                            Text="{Binding Level, Converter={StaticResource AlarmLevelToTextConverter}}" />
                                                             </Border>
                                                         </StackPanel>
@@ -493,7 +507,8 @@
                                                                Margin="12,0,0,0"
                                                                FontSize="{DynamicResource FontSizeCaption}"
                                                                Foreground="{StaticResource SecondaryTextBrush}"
-                                                               Text="{Binding DurationText}" />
+                                                               Text="{Binding DurationText}"
+                                                               ToolTip="{Binding DurationTooltip}" />
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -602,12 +617,15 @@
                                                     </StackPanel>
                                                     <!-- 右侧：风暴合并角标（重复触发时显示）+ 时间 -->
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <!--  2026-09-18 UI 精修：风暴角标改橙色语义药丸（原白字压琥珀块）  -->
                                                         <Border Margin="0,0,8,0" Padding="6,1" CornerRadius="8"
-                                                                VerticalAlignment="Center"
-                                                                Background="{StaticResource WarningBrush}"
+                                                                VerticalAlignment="Center" BorderThickness="1"
+                                                                Background="{StaticResource StatusWarnSoftBrush}"
+                                                                BorderBrush="{StaticResource StatusWarnBrush}"
                                                                 Visibility="{Binding IsStormGroup, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                                 ToolTip="{Binding RepeatTooltip}">
-                                                            <TextBlock FontSize="12" FontWeight="Bold" Foreground="White"
+                                                            <TextBlock FontSize="12" FontWeight="Bold"
+                                                                       Foreground="{StaticResource StatusWarnBrush}"
                                                                        Text="{Binding RepeatBadge}" />
                                                         </Border>
                                                         <TextBlock
@@ -692,7 +710,9 @@
                                                 </StackPanel>
                                                 <!-- 右侧排序值（按触发次数显示次数 / 按持续时长显示格式化时长） -->
                                                 <Border Grid.Column="2" Padding="8,1" CornerRadius="8"
-                                                        Background="{StaticResource SecondaryRegionBrush}">
+                                                        Background="{StaticResource SecondaryRegionBrush}"
+                                                        ToolTip="{Binding RankValueTooltip}"
+                                                        ToolTipService.ShowDuration="30000">
                                                     <TextBlock FontSize="12" Foreground="{StaticResource SecondaryTextBrush}"
                                                                Text="{Binding RankValueText}" />
                                                 </Border>

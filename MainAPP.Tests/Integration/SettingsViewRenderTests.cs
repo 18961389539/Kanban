@@ -122,5 +122,6 @@ public class SettingsViewRenderTests : WpfTestHost, IDisposable
         public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
         public string? ShowPasswordInput(string title, string message) => null;
         public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+        public MainAPP.Models.WorkOrderContinueChoice ShowWorkOrderContinue(Kanban.Collector.Core.Entities.WorkOrder completed, IReadOnlyList<Kanban.Collector.Core.Entities.WorkOrder> selectableOrders) => MainAPP.Models.WorkOrderContinueChoice.Dismissed;
     }
 }

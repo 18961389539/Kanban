@@ -14,6 +14,9 @@ public sealed record CollectorSettingsDto
     /// <summary>界面语言文化代码，由 Localization.csv 语言列驱动。</summary>
     public string? LanguageCode { get; init; }
 
+    /// <summary>过道电视轮播（完整模式勾选；展示模式由 Collector RunMode 自动开）。</summary>
+    public bool? DisplayCarouselEnabled { get; init; }
+
     /// <summary>PLC 数据采集轮询间隔（毫秒）。</summary>
     public int? PollingIntervalMs { get; init; }
 

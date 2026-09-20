@@ -118,7 +118,7 @@ public sealed class ProductionDailyReportService : IDisposable
             try
             {
                 var safeName = string.Join("_", device.Name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-                var path = Path.Combine(outputDirectory, $"生产日报_{reportDate:yyyyMMdd}_{safeName}.pdf");
+                var path = Path.Combine(outputDirectory, string.Format(MainAPP.Resources.Strings.Csv_DailyReport_FileName, reportDate, safeName));
                 if (File.Exists(path)) continue;
 
                 var data = BuildData(device, reportDate);

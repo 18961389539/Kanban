@@ -48,6 +48,12 @@ internal sealed class FakeDialogService : IDialogService
     /// <summary>ShowWorkOrderEditor 应返回的工单副本；null 表示用户取消。</summary>
     public WorkOrder? WorkOrderEditorResult { get; set; }
 
+    /// <summary>每次 ShowWorkOrderContinue 调用传入的 (completed, selectable) 记录。</summary>
+    public List<(WorkOrder Completed, IReadOnlyList<WorkOrder> Selectable)> ContinueCalls { get; } = new();
+
+    /// <summary>ShowWorkOrderContinue 应返回的选择；默认稍后再说。</summary>
+    public WorkOrderContinueChoice ContinueResult { get; set; } = WorkOrderContinueChoice.Dismissed;
+
     public List<string> SaveFileDialogTitles { get; } = new();
     public List<string> OpenFileDialogTitles { get; } = new();
 
@@ -90,5 +96,11 @@ internal sealed class FakeDialogService : IDialogService
     {
         WorkOrderEditorCalls.Add((template, availableDevices));
         return WorkOrderEditorResult;
+    }
+
+    public WorkOrderContinueChoice ShowWorkOrderContinue(WorkOrder completed, IReadOnlyList<WorkOrder> selectableOrders)
+    {
+        ContinueCalls.Add((completed, selectableOrders ?? Array.Empty<WorkOrder>()));
+        return ContinueResult;
     }
 }

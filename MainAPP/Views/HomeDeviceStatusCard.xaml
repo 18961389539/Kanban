@@ -157,10 +157,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock VerticalAlignment="Center"
-                                   FontSize="{DynamicResource FontSizeCaption}"
-                                   Foreground="{StaticResource ThirdlyTextBrush}"
-                                   Text="{x:Static resources:Strings.K324}" />
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="{DynamicResource FontSizeCaption}"
+                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                       Text="{x:Static resources:Strings.K324}" />
+                            <controls:KpiScopeChip Kind="Realtime" />
+                        </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                     ToolTip="{Binding RealtimeSpeedTooltip}">
                             <TextBlock FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
@@ -196,10 +199,13 @@
                             <oxy:PlotView Model="{Binding StatusPieChart}" Background="Transparent" />
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                                         IsHitTestVisible="False">
-                                <TextBlock HorizontalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeHint}"
-                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{x:Static resources:Strings.Web_Hq_StatusPie}" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeHint}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}"
+                                               Text="{x:Static resources:Strings.Web_Hq_StatusPie}" />
+                                    <controls:KpiScopeChip Kind="Shift" />
+                                </StackPanel>
                                 <TextBlock Margin="0,4,0,0"
                                            HorizontalAlignment="Center"
                                            FontFamily="Consolas"
@@ -329,48 +335,85 @@
                                              Foreground="{StaticResource StatusIdleBrush}"
                                              Value="{Binding OfflineTimeRatio, Mode=OneWay}" />
                             </StackPanel>
-                            <!-- 目标 / 实际周期：同一区块，差值与实际周期同一行 -->
+                            <!--  目标 / 实际周期（2026-09-18 UI 精修）：原两行等权平铺，
+                                  90.00s 与 0.71s 视觉权重相同、落差需读者心算，差值还挤在数值右侧。
+                                  改为「实际为主数值 + 目标降为注脚 + 差值药丸徽章」三段式，竖分隔线分区。  -->
                             <Border Margin="0,8,0,0" Padding="0,10,0,0"
                                     BorderBrush="#2D3548" BorderThickness="0,1,0,0">
-                                <StackPanel>
-                                    <Grid ToolTip="{Binding TargetCycleTooltip}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Style="{StaticResource CycleRowLabel}" Text="{x:Static resources:Strings.K017}" />
-                                        <TextBlock Grid.Column="1" Style="{StaticResource CycleRowValue}"
-                                                   Text="{Binding TargetCycleDisplay}" />
-                                    </Grid>
-                                    <Grid Margin="0,8,0,0" ToolTip="{Binding ActualCycleTooltip}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Style="{StaticResource CycleRowLabel}" Text="{x:Static resources:Strings.K050}" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                            <TextBlock Style="{StaticResource CycleRowValue}"
-                                                       Text="{Binding ActualCycleDisplay}" />
-                                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
-                                                       FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold"
-                                                       Text="{Binding CycleDiffText}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsCycleSlow}" Value="True">
-                                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding CycleDiffText}" Value="">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center"
+                                                ToolTip="{Binding ActualCycleTooltip}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource CycleRowLabel}" VerticalAlignment="Center"
+                                                       Text="{x:Static resources:Strings.K050}" />
+                                            <controls:KpiScopeChip Kind="Realtime" />
                                         </StackPanel>
-                                    </Grid>
-                                </StackPanel>
+                                        <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
+                                                   FontFamily="Consolas"
+                                                   FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryTextBrush}"
+                                                   Text="{Binding ActualCycleDisplay}" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1" Width="1" Margin="12,2" Background="{StaticResource DividerBrush}" />
+
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                ToolTip="{Binding TargetCycleTooltip}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontSize="{DynamicResource FontSizeMicro}" VerticalAlignment="Center"
+                                                       Foreground="{StaticResource ThirdlyTextBrush}"
+                                                       Text="{x:Static resources:Strings.K017}" />
+                                            <controls:KpiScopeChip Kind="Realtime" />
+                                        </StackPanel>
+                                        <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
+                                                   FontFamily="Consolas"
+                                                   FontSize="{DynamicResource FontSizeCaption}"
+                                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                                   Text="{Binding TargetCycleDisplay}" />
+                                    </StackPanel>
+
+                                    <!--  差值药丸：达标绿（快）/ 超差红（慢）；无差值时整块隐藏  -->
+                                    <Border Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0"
+                                            Padding="10,4" CornerRadius="12" BorderThickness="1"
+                                            ToolTip="{Binding CycleDiffTooltip}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{StaticResource StatusRunSoftBrush}" />
+                                                <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCycleSlow}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding CycleDiffText}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                   FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
+                                                   Text="{Binding CycleDiffText}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsCycleSlow}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>

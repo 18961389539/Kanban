@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
 @using Kanban.Contracts.Metrics
@@ -9,11 +10,11 @@
 <div class="query-page">
     @* ──────────── 采集健康 KPI ──────────── *@
     <section class="kpi-row">
-        <div class="kpi-card">
+        <div class="kpi-card" title="@L.Tip("Mo_Tip_ConnStatus", ConnText)">
             <span class="kpi-label">@L.T("Lbl_ConnStatus")</span>
             <span class="kpi-value @(Diag is { IsConnected: true } ? "kpi-ok" : "kpi-ng")">@ConnText</span>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" title="@L.Tip("Mo_Tip_AcqStatus", AcqText)">
             <span class="kpi-label">@L.T("Mo_AcqStatus")</span>
             <span class="kpi-value @(Diag is { IsRunning: true } ? "kpi-ok" : "kpi-ng")">@AcqText</span>
         </div>
@@ -48,7 +49,7 @@
             <div class="mon-grid">
                 @foreach (var s in Dashboard.Snapshots)
                 {
-                    <div class="mon-card">
+                    <div class="mon-card line-card" @onclick="() => OpenDevice(s.DeviceId)">
                         <div class="dev-head">
                             <span class="dev-name">@s.DeviceName</span>
                             <span class="status-badge @StateClass(s.Status)">@StateText(s)</span>
@@ -57,7 +58,7 @@
                             <div title="@SpeedTooltip(s)"><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
                             <div title="@L.Tip("Home_Tip_TotalOutput", s.TotalOkProduction, s.TotalNgProduction, SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction))"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction).ToString("N0")</span></div>
                             <div title="@AchievementTooltip(s)"><span class="kpi-label">@L.T("Lbl_Achievement")</span><span class="kpi-value">@AchievementText(s)</span></div>
-                            <div><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
+                            <div title="@L.Tip("Home_Tip_SnapSeq", s.Seq)"><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
                         </div>
                         <div class="ring-row">
                             <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(s.DeviceId)" Title="@OeeTip(s)" />
@@ -65,10 +66,36 @@
                             <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(s.DeviceId)" Title="@PerformanceTip(s)" />
                             <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(s.DeviceId)" Title="@QualityTip(s)" />
                         </div>
-                        <div class="meta-line">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
+                        <div class="meta-line" title="@L.Tip("Home_Tip_DataFresh", FreshnessText(s.Timestamp))">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
                     </div>
                 }
             </div>
+        }
+    </section>
+
+    @* ──────────── 采集源实时值 ──────────── *@
+    <section class="card">
+        <div class="card-title">@L.T("Mo_Sources")</div>
+        @if (!Dashboard.Snapshots.Any(s => s.SourceValues.Count > 0))
+        {
+            <EmptyState Compact="true" Title="@L.T("Mo_SourceEmpty")" Hint="@L.T("Mo_SourceEmptyHint")" Icon="📡" />
+        }
+        else
+        {
+            @foreach (var s in Dashboard.Snapshots.Where(x => x.SourceValues.Count > 0))
+            {
+                <div class="card-title sub linkish" @onclick="() => OpenDevice(s.DeviceId)">@s.DeviceName</div>
+                <div class="src-grid">
+                    @foreach (var v in s.SourceValues)
+                    {
+                        <div class="src-item @(v.IsTriggered ? "triggered" : "")">
+                            <span class="kpi-label">@v.SourceName · @v.ValueName</span>
+                            <span class="kpi-value">@(string.IsNullOrEmpty(v.DisplayText) ? "—" : v.DisplayText) @v.Unit</span>
+                            <span class="kpi-sub dim">@(v.IsTriggered ? L.T("Mo_Triggered") : L.T("Mo_Updated")) @(v.LastUpdatedAt?.ToString("HH:mm:ss") ?? "—")</span>
+                        </div>
+                    }
+                </div>
+            }
         }
     </section>
 
@@ -82,14 +109,14 @@
         else
         {
             <div class="diag-grid">
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_CompletedCycles")</span><span class="kpi-value">@Diag.CompletedCycles.ToString("N0")</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_FailedCycles")</span><span class="kpi-value">@Diag.FailedCycles.ToString("N0")</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastCycleMs")</span><span class="kpi-value">@Diag.LastCycleMilliseconds ms</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_AvgCycleMs")</span><span class="kpi-value">@(Diag.AverageCycleMilliseconds.ToString("F1")) ms</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_MaxCycleMs")</span><span class="kpi-value">@Diag.MaxCycleMilliseconds ms</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_DevicesRead")</span><span class="kpi-value">@Diag.LastSuccessfulDevices / @Diag.ConfiguredDevices</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastSuccessAt")</span><span class="kpi-value">@(Diag.LastSuccessfulAt?.ToString("HH:mm:ss") ?? "—")</span></div>
-                <div class="diag-item"><span class="kpi-label">@L.T("Mo_LastFailureAt")</span><span class="kpi-value">@(Diag.LastFailureAt?.ToString("HH:mm:ss") ?? "—")</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_CompletedCycles", Diag.CompletedCycles)"><span class="kpi-label">@L.T("Mo_CompletedCycles")</span><span class="kpi-value">@Diag.CompletedCycles.ToString("N0")</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_FailedCycles", Diag.FailedCycles)"><span class="kpi-label">@L.T("Mo_FailedCycles")</span><span class="kpi-value">@Diag.FailedCycles.ToString("N0")</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_LastCycleMs", Diag.LastCycleMilliseconds)"><span class="kpi-label">@L.T("Mo_LastCycleMs")</span><span class="kpi-value">@Diag.LastCycleMilliseconds ms</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_AvgCycleMs", Diag.AverageCycleMilliseconds.ToString("F1"))"><span class="kpi-label">@L.T("Mo_AvgCycleMs")</span><span class="kpi-value">@(Diag.AverageCycleMilliseconds.ToString("F1")) ms</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_MaxCycleMs", Diag.MaxCycleMilliseconds)"><span class="kpi-label">@L.T("Mo_MaxCycleMs")</span><span class="kpi-value">@Diag.MaxCycleMilliseconds ms</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_DevicesRead", Diag.LastSuccessfulDevices, Diag.ConfiguredDevices)"><span class="kpi-label">@L.T("Mo_DevicesRead")</span><span class="kpi-value">@Diag.LastSuccessfulDevices / @Diag.ConfiguredDevices</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_LastSuccessAt", Diag.LastSuccessfulAt?.ToString("HH:mm:ss") ?? "—")"><span class="kpi-label">@L.T("Mo_LastSuccessAt")</span><span class="kpi-value">@(Diag.LastSuccessfulAt?.ToString("HH:mm:ss") ?? "—")</span></div>
+                <div class="diag-item" title="@L.Tip("Mo_Tip_LastFailureAt", Diag.LastFailureAt?.ToString("HH:mm:ss") ?? "—")"><span class="kpi-label">@L.T("Mo_LastFailureAt")</span><span class="kpi-value">@(Diag.LastFailureAt?.ToString("HH:mm:ss") ?? "—")</span></div>
             </div>
             @if (Diag.LastFailureMessage is { Length: > 0 })
             {
@@ -290,6 +317,8 @@ private void OnRenderTick()
 
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
+
+    private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
 
     /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
     private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;

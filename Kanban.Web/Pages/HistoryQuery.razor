@@ -17,6 +17,16 @@
     </div>
 
     <div class="filter-bar">
+        @if (TabIndex == 4)
+        {
+            <label class="filter-item grow">
+                <span class="filter-label">@L.T("Hq_SnCol")</span>
+                <input class="filter-input" value="@SnInput" @onchange="OnSnInput"
+                       placeholder="@L.T("K915")" @onkeydown="OnSnKey" />
+            </label>
+        }
+        else
+        {
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_Device")</span>
             <select class="filter-input" @bind="DeviceId">
@@ -70,6 +80,7 @@
                 </select>
             </label>
         }
+        }
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsAnyLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
             <button class="btn" disabled="@IsAnyLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
@@ -117,9 +128,11 @@
                 <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
             }
             <section class="kpi-row">
+                <div class="kpi-card" title="@ProdOutputTooltip"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdOutputText : "…")</span></div>
                 <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowOk", ProdTotalOk)"><span class="kpi-label">@L.T("Hq_TotalOk")</span><span class="kpi-value kpi-ok">@(ProdAnalysisDone ? ProdTotalOkText : "…")</span></div>
                 <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowNg", ProdTotalNg)"><span class="kpi-label">@L.T("Hq_TotalNg")</span><span class="kpi-value kpi-ng">@(ProdAnalysisDone ? ProdTotalNgText : "…")</span></div>
                 <div class="kpi-card" title="@ProdQualityTooltip"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdQualityRateText : "…")</span></div>
+                <div class="kpi-card" title="@ProdNgRateTooltip"><span class="kpi-label">@L.T("Lbl_NgRate")</span><span class="kpi-value">@(ProdAnalysisDone ? ProdNgRateText : "…")</span></div>
             </section>
 
             <section class="card">
@@ -297,9 +310,9 @@
         else
         {
             <section class="kpi-row">
-                <div class="kpi-card" title="@($"{L.T("Hq_AlarmTriggered")}\n{AlTriggeredText}")"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
-                <div class="kpi-card" title="@($"{L.T("Hq_AlarmRecovered")}\n{AlRecoveredText}")"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
-                <div class="kpi-card" title="@($"{L.T("Hq_AlarmPending")}\n{AlPendingText}")"><span class="kpi-label">@L.T("Hq_AlarmPending")</span><span class="kpi-value">@AlPendingText</span></div>
+                <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowTriggered", AlTriggered)"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
+                <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowRecovered", AlRecovered)"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
+                <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowPending", AlPending)"><span class="kpi-label">@L.T("Hq_AlarmPending")</span><span class="kpi-value">@AlPendingText</span></div>
             </section>
 
             <section class="card">
@@ -450,6 +463,62 @@
                         }
                     </tbody>
                 </table>
+                </div>
+            </section>
+        }
+    }
+
+    @* ──────────── Tab 4：SN 追溯 ──────────── *@
+    @if (TabIndex == 4)
+    {
+        @if (!string.IsNullOrEmpty(SnError) && SnRows.Count == 0)
+        {
+            <div class="msg-banner msg-error">@SnError</div>
+        }
+        @if (SnIsLoading)
+        {
+            <div class="loading-row">@L.T("Hq_Loading")…</div>
+        }
+        else if (!SnHasQueried)
+        {
+            <EmptyState Title="@L.T("K916")" Hint="@L.T("K917")" Icon="🔍" />
+        }
+        else if (SnRows.Count == 0)
+        {
+            <EmptyState Title="@L.T("Hq_NoData")" Hint="@(SnError ?? L.T("Hq_NoDataHint"))" Icon="📭" />
+        }
+        else
+        {
+            <section class="card">
+                <div class="card-title">@L.T("K914") <span class="badge-soft">@L.T("K919", SnRows.Count)</span></div>
+                <div class="table-scroll">
+                    <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_SnCol")</th>
+                            <th>@L.T("Hq_Time")</th>
+                            <th>@L.T("Hq_DeviceName")</th>
+                            <th>@L.T("Hq_SnWorkOrder")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th>@L.T("K924")</th>
+                            <th>@L.T("Hq_SnSource")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in SnRows)
+                        {
+                            <tr>
+                                <td class="mono">@r.Sn</td>
+                                <td>@r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>@r.DeviceName</td>
+                                <td class="mono">@(r.WorkOrderId?.ToString() ?? "—")</td>
+                                <td>@r.ShiftName</td>
+                                <td class="@(r.Result == 0 ? "kpi-ok" : "kpi-ng")">@(r.Result == 0 ? L.T("Lbl_Ok") : L.T("Lbl_Ng"))</td>
+                                <td>@r.Source</td>
+                            </tr>
+                        }
+                    </tbody>
+                    </table>
                 </div>
             </section>
         }

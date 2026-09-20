@@ -10,5 +10,30 @@
             if (title) document.title = title;
             return true;
         },
+
+        copy(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            return true;
+        },
+
+        getSession(key) {
+            try { return sessionStorage.getItem(key); } catch { return null; }
+        },
+
+        setSession(key, value) {
+            try { sessionStorage.setItem(key, value); } catch { /* ignore quota */ }
+            return true;
+        },
     };
 })();

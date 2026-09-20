@@ -1,7 +1,6 @@
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using Kanban.Contracts.Metrics;
-using MainAPP.Models;
 using OxyPlot;
 
 namespace MainAPP.Services;

@@ -412,7 +412,8 @@ public partial class OeeQueryViewModel : ObservableObject
 
     private class OeeCsvRow
     {
-        [Name("指标")] public string? Metric { get; set; }
-        [Name("值")] public string? Value { get; set; }
+        // 表头本地化由 HistoryQueryHelper.BuildCsv 按 Csv_Hd_<属性名> 运行时注入（多语言修复 2026-09-18）
+        public string? Metric { get; set; }
+        public string? Value { get; set; }
     }
 }

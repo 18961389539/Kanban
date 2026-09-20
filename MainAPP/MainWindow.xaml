@@ -15,6 +15,7 @@
     FontFamily="Microsoft YaHei"
     FontSize="14"
     PreviewKeyDown="OnPreviewKeyDown"
+    PreviewMouseDown="OnPreviewMouseDown"
     WindowStyle="None"
     ResizeMode="NoResize"
     WindowState="Maximized"
@@ -482,6 +483,62 @@
                 <materialIcons:MaterialIcon Width="20" Height="20" Kind="Menu" />
             </Button>
         </Grid>
+
+        <Border Grid.ColumnSpan="2"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,28"
+                Padding="14,8"
+                CornerRadius="16"
+                Panel.ZIndex="960"
+                Background="{StaticResource SecondaryRegionBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                ToolTip="{Binding CarouselOverlayTooltip}"
+                Visibility="{Binding IsCarouselOverlayVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CarouselSceneIndex}" Value="0">
+                                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CarouselSceneIndex}" Value="1">
+                                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <Ellipse Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource ThirdlyTextBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CarouselSceneIndex}" Value="2">
+                                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="{DynamicResource FontSizeCaption}"
+                           Foreground="{StaticResource PrimaryTextBrush}"
+                           Text="{Binding CarouselStatusText}" />
+            </StackPanel>
+        </Border>
 
         <!--  全局 Growl 通知容器（右下角）。
               HandyControl 的 Growl 需要一个 Panel 容器才能在 UI 显示通知；

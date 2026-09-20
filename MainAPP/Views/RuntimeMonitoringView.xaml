@@ -219,7 +219,8 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Margin="20,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K442}" />
-                    <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding DisconnectDurationText}" />
+                    <TextBlock HorizontalAlignment="Right" FontSize="22" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding DisconnectDurationText}"
+                               ToolTip="{Binding DisconnectDurationTooltip}" ToolTipService.ShowDuration="30000" />
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -251,7 +252,8 @@
                     </Style.Triggers>
                 </Style>
             </UniformGrid.Style>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8"
+                    ToolTip="{Binding ConnectionTooltip}" ToolTipService.ShowDuration="30000">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K099}" />
                     <StackPanel Orientation="Horizontal">
@@ -286,7 +288,8 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
-            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8">
+            <Border Style="{StaticResource KpiCard}" Margin="0,0,8,8"
+                    ToolTip="{Binding AcquisitionHealthTooltip}" ToolTipService.ShowDuration="30000">
                 <StackPanel>
                     <TextBlock Style="{StaticResource KpiLabel}" Text="{x:Static resources:Strings.K425}" />
                     <TextBlock Style="{StaticResource HealthKpiValue}" Text="{Binding HealthText}" />

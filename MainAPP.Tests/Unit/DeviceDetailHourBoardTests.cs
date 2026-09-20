@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Kanban.Collector.Core.Entities;
-using MainAPP.Models;
+using Kanban.Contracts.Metrics;
 using MainAPP.Services;
 using Xunit;
 

@@ -28,6 +28,7 @@
                 <StackPanel Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Bug" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K317}" />
+                    <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
                 <TextBlock Margin="0,4,0,0"
                            FontSize="{DynamicResource FontSizeHint}"
@@ -37,11 +38,13 @@
                             Visibility="{Binding HasDefectParetoData, Converter={StaticResource BoolToVis}}">
                     <TextBlock FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="{Binding DefectParetoSummaryText}" />
+                               Text="{Binding DefectParetoSummaryText}"
+                               ToolTip="{Binding DefectSummaryTooltip}" />
                     <TextBlock Margin="6,0,0,0"
                                FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="{Binding DefectNgShareText}">
+                               Text="{Binding DefectNgShareText}"
+                               ToolTip="{Binding DefectNgShareTooltip}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>

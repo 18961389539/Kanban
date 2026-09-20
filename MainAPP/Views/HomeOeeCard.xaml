@@ -30,6 +30,7 @@
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <materialIcons:MaterialIcon Style="{StaticResource CardTitleIcon}" Kind="Gauge" />
                     <TextBlock Style="{StaticResource CardTitleText}" Text="{x:Static resources:Strings.K319}" />
+                    <controls:KpiScopeChip Kind="Shift" />
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
                             ToolTip="{Binding DeviceHealthScoreTooltip}">
@@ -39,11 +40,18 @@
                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
                                Foreground="{Binding DeviceHealthBrush}"
                                Text="{Binding DeviceHealthScoreText}" />
-                    <Border Margin="8,0,0,0" Padding="6,2" CornerRadius="999"
-                            Background="{Binding DeviceHealthBrush}">
-                        <TextBlock Foreground="White" FontSize="11" FontWeight="Bold"
+                    <!--  2026-09-18 UI 精修：原「白字压满色块」在琥珀/黄等浅语义色档位下
+                          对比度约 1.8:1 不可读。改为 18% 语义色底 + 同色文字 + 同色描边
+                          （与全站状态药丸一致），任何档位都满足可读性。  -->
+                    <Grid Margin="8,0,0,0" VerticalAlignment="Center">
+                        <Border CornerRadius="999" Background="{Binding DeviceHealthBrush}" Opacity="0.18" />
+                        <Border CornerRadius="999" BorderBrush="{Binding DeviceHealthBrush}"
+                                BorderThickness="1" Opacity="0.55" />
+                        <TextBlock Padding="6,2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{Binding DeviceHealthBrush}"
                                    Text="{Binding DeviceHealthLevel}" />
-                    </Border>
+                    </Grid>
                 </StackPanel>
             </DockPanel>
 
@@ -95,17 +103,20 @@
                             </Grid.ColumnDefinitions>
                             <oxy:PlotView Grid.Column="0" Model="{Binding AvailabilityRingChart}"
                                           Width="42" Height="42" Background="Transparent" />
+                            <!--  2026-09-18 UI 精修：名称 16→12、数值 26→20 两行紧凑排布，
+                                  可见的公式行删除（Tooltip 已含公式：HomeViewModel.AvailabilityTooltip），
+                                  单卡高度 76→约 56，三卡不再高过左侧 OEE 主环。  -->
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K321}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeMicro}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K321}" />
+                                    <controls:KpiScopeChip Kind="Shift" />
+                                </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                            Foreground="{Binding AvailabilityRate, Converter={StaticResource OeeThreshold}}"
                                            Text="{Binding AvailabilityRateDisplay}" />
-                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
-                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{Binding AvailabilityFormulaText}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -121,16 +132,16 @@
                             <oxy:PlotView Grid.Column="0" Model="{Binding PerformanceRingChart}"
                                           Width="42" Height="42" Background="Transparent" />
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K322}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeMicro}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K322}" />
+                                    <controls:KpiScopeChip Kind="Shift" />
+                                </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                            Foreground="{Binding PerformanceRate, Converter={StaticResource OeeThreshold}}"
                                            Text="{Binding PerformanceRateDisplay}" />
-                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
-                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{Binding PerformanceFormulaText}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -146,16 +157,16 @@
                             <oxy:PlotView Grid.Column="0" Model="{Binding QualityRingChart}"
                                           Width="42" Height="42" Background="Transparent" />
                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold"
-                                           Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K084}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center"
+                                               FontSize="{DynamicResource FontSizeMicro}"
+                                               Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K084}" />
+                                    <controls:KpiScopeChip Kind="Shift" />
+                                </StackPanel>
                                 <TextBlock Margin="0,2,0,0" VerticalAlignment="Center"
-                                           FontSize="{DynamicResource FontSizeKpiMd}" FontWeight="Bold"
+                                           FontSize="{DynamicResource FontSizeKpiSm}" FontWeight="Bold"
                                            Foreground="{Binding QualityRate, Converter={StaticResource QualityThreshold}}"
                                            Text="{Binding QualityRateDisplay}" />
-                                <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
-                                           Foreground="{StaticResource ThirdlyTextBrush}"
-                                           Text="{Binding QualityFormulaText}" />
                             </StackPanel>
                         </Grid>
                     </Border>

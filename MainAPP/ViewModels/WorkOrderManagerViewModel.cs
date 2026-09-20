@@ -14,6 +14,8 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
+using ContractStatus = Kanban.Contracts.Enums.WorkOrderStatus;
+using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Services;
 using MainAPP.Helpers;
 using MainAPP.Services;
@@ -985,7 +987,12 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             NgCount = summary.NgCount,
             AchievementRate = summary.AchievementRate,
             ScheduleStatusText = GetScheduleStatusText(workOrder, summary.AchievementRate),
-            ProgressDeviation = GetProgressDeviation(workOrder, summary.AchievementRate),
+            ProgressDeviation = WorkOrderSchedule.ProgressDeviation(
+                (ContractStatus)(int)workOrder.Status,
+                workOrder.PlannedStart,
+                workOrder.PlannedEnd,
+                summary.AchievementRate,
+                DateTime.Now),
         };
         if (refreshListRow)
             NotifyWorkOrderProductionChanged(workOrder);
@@ -1033,29 +1040,24 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
         _dialog.NotifyInfo(string.Format(Strings.F098, WorkOrders.Count));
     }
 
-    private static double GetProgressDeviation(WorkOrder workOrder, double achievementRate)
-    {
-        if (workOrder.Status is WorkOrderStatus.Completed or WorkOrderStatus.Aborted)
-            return achievementRate - 1.0;
-        if (workOrder.PlannedStart == default || workOrder.PlannedEnd <= workOrder.PlannedStart)
-            return 0;
-        var total = (workOrder.PlannedEnd - workOrder.PlannedStart).TotalSeconds;
-        var elapsed = (DateTime.Now - workOrder.PlannedStart).TotalSeconds;
-        var plannedRate = Math.Clamp(elapsed / total, 0, 1);
-        return achievementRate - plannedRate;
-    }
-
     private static string GetScheduleStatusText(WorkOrder workOrder, double achievementRate)
     {
-        if (workOrder.Status == WorkOrderStatus.Completed)
-            return achievementRate >= 1 ? Strings.M092 : Strings.M093;
-        if (workOrder.Status == WorkOrderStatus.Aborted)
-            return Strings.M031;
-        if (achievementRate >= 1.0)
-            return Strings.M032;
-        if (workOrder.PlannedEnd < DateTime.Now)
-            return Strings.M033;
-        return GetProgressDeviation(workOrder, achievementRate) < -0.1 ? Strings.M094 : Strings.M095;
+        var kind = WorkOrderSchedule.Classify(
+            (ContractStatus)(int)workOrder.Status,
+            workOrder.PlannedStart,
+            workOrder.PlannedEnd,
+            achievementRate,
+            DateTime.Now);
+        return kind switch
+        {
+            WorkOrderScheduleKind.CompletedMet => Strings.M092,
+            WorkOrderScheduleKind.CompletedShort => Strings.M093,
+            WorkOrderScheduleKind.Aborted => Strings.M031,
+            WorkOrderScheduleKind.MetPendingComplete => Strings.M032,
+            WorkOrderScheduleKind.OverdueIncomplete => Strings.M033,
+            WorkOrderScheduleKind.Behind => Strings.M094,
+            _ => Strings.M095,
+        };
     }
 
     [RelayCommand]
@@ -1127,13 +1129,21 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
     {
         if (SelectedWorkOrder == null) return;
         var statusBefore = SelectedWorkOrder.Status;
+        var completedOrderNo = SelectedWorkOrder.OrderNo;
+        var completedId = SelectedWorkOrder.Id;
         var saved = await _workOrderService.CompleteWorkOrderAsync(SelectedWorkOrder);
         if (saved != null)
         {
             SelectedWorkOrder = saved;
-            AuditLog.Record("WorkOrder.Complete", "WorkOrder", saved.OrderNo,
+            AuditLog.Record("WorkOrder.Complete", "WorkOrder", completedOrderNo,
                 before: new { Status = statusBefore.ToString() },
-                after: new { Status = saved.Status.ToString() });
+                after: new { Status = nameof(WorkOrderStatus.Completed) });
+            if (saved.Id != completedId && saved.Status == WorkOrderStatus.Running)
+            {
+                AuditLog.Record("WorkOrder.Start", "WorkOrder", saved.OrderNo,
+                    before: new { Status = nameof(WorkOrderStatus.Pending) },
+                    after: new { Status = saved.Status.ToString() });
+            }
         }
     }
 
@@ -1172,7 +1182,7 @@ public partial class WorkOrderManagerViewModel : ObservableObject, IDisposable, 
             return;
         }
 
-        var defaultFileName = $"工单列表_{DateTime.Now:yyyyMMddHHmm}.csv";
+        var defaultFileName = string.Format(Strings.Csv_WorkOrder_FileName, DateTime.Now);
         var path = _dialog.ShowSaveFileDialog(Strings.M_ExportWorkOrders, defaultFileName, Strings.M310);
         if (string.IsNullOrEmpty(path)) return;
 

@@ -24,6 +24,7 @@ public static class CollectorSettingsMapper
             {
                 Language = (int)AppSettings.LegacyLanguage(settings.EffectiveLanguageCode),
                 LanguageCode = settings.EffectiveLanguageCode,
+                DisplayCarouselEnabled = settings.DisplayCarouselEnabled,
                 PollingIntervalMs = settings.PollingIntervalMs,
                 HistoryWriteIntervalScans = settings.HistoryWriteIntervalScans,
                 PlcBatchReadMaxLength = settings.PlcBatchReadMaxLength,
@@ -87,6 +88,7 @@ public static class CollectorSettingsMapper
             target.LanguageCode = AppSettings.LegacyLanguageCode(target.Language);
         }
 
+        if (dto.DisplayCarouselEnabled.HasValue) target.DisplayCarouselEnabled = dto.DisplayCarouselEnabled.Value;
         if (dto.PollingIntervalMs.HasValue) target.PollingIntervalMs = dto.PollingIntervalMs.Value;
         if (dto.HistoryWriteIntervalScans.HasValue) target.HistoryWriteIntervalScans = dto.HistoryWriteIntervalScans.Value;
         if (dto.PlcBatchReadMaxLength.HasValue) target.PlcBatchReadMaxLength = dto.PlcBatchReadMaxLength.Value;

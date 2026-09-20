@@ -99,10 +99,14 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>进度条填充 0–1（超额时停在满格，百分比仍显示真实达成）。</summary>
+    /// <summary>进度条填充 0–1（超额时停在满格，文本封顶显示「超额 100%+」，真实比率见 ShiftPaceTooltip）。</summary>
     public double ShiftProgressBarValue => Math.Clamp(ShiftProgressRatio, 0, 1);
 
-    /// <summary>良品达成文本："1,284 / 1,600 · 80.3%"；应产尚未形成时分母为 "—"。</summary>
+    /// <summary>
+    /// 良品达成文本："1,284 / 1,600 · 80.3%"；应产尚未形成时分母为 "—"。
+    /// 2026-09-17 UI 精修：超额时不再裸奔真实比率（如 2,485.7%），封顶显示「超额 100%+」；
+    /// 真实比率仍可从悬浮提示（ShiftProgressFullText）获取。
+    /// </summary>
     public string ShiftProgressText
     {
         get
@@ -111,7 +115,9 @@ public partial class LineDeviceItem : ObservableObject, IDisposable
             var expected = ShiftExpectedQuantity;
             var ok = $"{Runtime.TotalOkProduction:N0}";
             if (expected <= 0) return $"{ok} / —";
-            return $"{ok} / {expected:N0} · {ShiftProgressRatio:P1}";
+            return ShiftProgressRatio >= 1
+                ? $"{ok} / {expected:N0} · {Strings.Ln_ShiftPaceExceeded}"
+                : $"{ok} / {expected:N0} · {ShiftProgressRatio:P1}";
         }
     }
 

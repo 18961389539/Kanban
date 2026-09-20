@@ -340,5 +340,6 @@ public sealed class TestHost : IDisposable
         public string? ShowPasswordInput(string title, string message) => null;
         public MainAPP.Models.DeviceConfigError? ShowConfigErrors(System.Collections.Generic.IReadOnlyList<MainAPP.Models.DeviceConfigError> errors) => null;
         public Kanban.Collector.Core.Entities.WorkOrder? ShowWorkOrderEditor(Kanban.Collector.Core.Entities.WorkOrder? template, System.Collections.Generic.IReadOnlyList<(string Id, string Name)>? availableDevices = null) => null;
+        public MainAPP.Models.WorkOrderContinueChoice ShowWorkOrderContinue(Kanban.Collector.Core.Entities.WorkOrder completed, System.Collections.Generic.IReadOnlyList<Kanban.Collector.Core.Entities.WorkOrder> selectableOrders) => MainAPP.Models.WorkOrderContinueChoice.Dismissed;
     }
 }

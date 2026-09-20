@@ -14,6 +14,7 @@
     d:DesignWidth="1100"
     Loaded="OnLoaded"
     PreviewKeyDown="OnPreviewKeyDown"
+    IsVisibleChanged="OnIsVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.Resources>
         <!--  ObjectDataProvider（AlarmLevelValues/DefectSeverityValues/DefectCategoryValues）
@@ -213,9 +214,12 @@
                                         Foreground="{StaticResource WarningBrush}"
                                         Text="*"
                                         Visibility="{Binding DataContext.IsDirty, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <!--  2026-09-18 UI 精修：地址冲突图标按钮补 32px 最小触摸目标  -->
                                     <Button
                                         Margin="6,0,0,0"
                                         Padding="0"
+                                        MinWidth="32"
+                                        MinHeight="32"
                                         AutomationProperties.Name="{x:Static resources:Strings.K226}"
                                         Command="{Binding DataContext.SelectAddressConflictCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"

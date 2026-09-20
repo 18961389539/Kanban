@@ -118,16 +118,15 @@
                                 Margin="0,0,8,0"
                                 VerticalAlignment="Stretch"
                                 Fill="{Binding Severity, Converter={StaticResource DefectSeverityToBrushConverter}}" />
+                            <!--  2026-09-18 UI 精修：严重度徽章改语义色药丸（原白字压满色块）  -->
                             <Border
                                 Margin="6,0,0,0"
-                                Padding="8,1"
                                 VerticalAlignment="Center"
                                 DockPanel.Dock="Right"
-                                CornerRadius="10"
-                                Background="{Binding Severity, Converter={StaticResource DefectSeverityToBrushConverter}}">
+                                Style="{StaticResource DefectSeverityPill}">
                                 <TextBlock
                                     FontSize="{DynamicResource FontSizeMicro}"
-                                    Foreground="White"
+                                    Style="{StaticResource DefectSeverityPillText}"
                                     Text="{Binding Severity, Converter={StaticResource DefectSeverityToTextConverter}}" />
                             </Border>
                             <TextBlock

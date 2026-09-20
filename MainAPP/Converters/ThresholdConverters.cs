@@ -61,15 +61,16 @@ public class OeeThresholdConverter : ThresholdBrushCacheBase, IValueConverter
 }
 
 /// <summary>
-/// 良品率阈值着色（2026-08-11 方案 E）：>=QualityGood(0.95) → SuccessBrush，否则 → DangerBrush。
-/// 阈值与复盘页 QualityTarget 同源；只做两态（达标/未达标），避免 OEE 阈值误用于良品率。
+/// 良品率阈值着色（2026-08-11 方案 E；2026-09-17 改三态）：
+/// >=QualityGood(0.95) → SuccessBrush，>=QualityWarning(0.90) → WarningBrush（接近目标），否则 → DangerBrush。
+/// 阈值与复盘页 QualityTarget 同源；琥珀档语义是「未达标但接近」，与故障级偏差（红）区分。
 /// </summary>
 public class QualityThresholdConverter : ThresholdBrushCacheBase, IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is double d)
-            return d >= KpiThresholds.QualityGood ? Green : Red;
+            return d >= KpiThresholds.QualityGood ? Green : d >= KpiThresholds.QualityWarning ? Yellow : Red;
         return Green;
     }
 

@@ -313,8 +313,8 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         if (value != old && IsEditorDirty())
         {
             var keepEditing = _dialog.Show(
-                "切换配方会放弃当前未保存的编辑，是否继续？",
-                "提示", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                Strings.Recipe_SwitchDiscardConfirm,
+                Strings.M036, MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (keepEditing != MessageBoxResult.Yes)
             {
                 _skipSelectionGuard = true;

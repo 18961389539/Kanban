@@ -477,10 +477,15 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <Button Grid.Column="8" Margin="4,0,0,0" Padding="6,3" Cursor="Hand"
+                                    <!--  2026-09-18 UI 精修：删除是危险写操作，原为中性小图标按钮
+                                          （约 26×22，触摸目标不足）。改 32×32 红边 ghost。  -->
+                                    <Button Grid.Column="8" Margin="4,0,0,0" Cursor="Hand"
+                                            Style="{StaticResource GhostDangerIconButton}"
+                                            AutomationProperties.Name="{x:Static resources:Strings.K664}"
+                                            ToolTip="{x:Static resources:Strings.K664}"
                                             Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}">
-                                        <materialIcons:MaterialIcon Width="14" Height="14"
+                                        <materialIcons:MaterialIcon Width="16" Height="16"
                                                                     Kind="DeleteOutline" />
                                     </Button>
                                 </Grid>

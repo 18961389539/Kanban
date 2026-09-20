@@ -100,19 +100,58 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     private double _oee;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RecoveredAlarmCount))]
+    [NotifyPropertyChangedFor(nameof(AlarmCountTooltip))]
     private int _alarmCount;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RecoveredAlarmCount))]
+    [NotifyPropertyChangedFor(nameof(AlarmCountTooltip))]
     private int _pendingAlarmCount;
 
     public int RecoveredAlarmCount => Math.Max(0, AlarmCount - PendingAlarmCount);
-    [ObservableProperty] private string _peakHour = string.Empty;
-    [ObservableProperty] private int _peakHourOk;
-    [ObservableProperty] private string _valleyHour = string.Empty;
-    [ObservableProperty] private int _valleyHourOk;
-    [ObservableProperty] private string _longestDowntimeDevice = string.Empty;
-    [ObservableProperty] private string _longestDowntimeAlarm = string.Empty;
-    [ObservableProperty] private double _longestDowntimeHours;
+
+    public string AlarmCountTooltip => FormatHelper.Tip(
+        Strings.Rv_Tip_AlarmCount, AlarmCount, RecoveredAlarmCount, PendingAlarmCount);
+    public string LongestDowntimeTooltip => FormatHelper.Tip(
+        Strings.Rv_Tip_LongestDowntime,
+        FormatReviewHours(LongestDowntimeHours),
+        string.IsNullOrEmpty(LongestDowntimeDevice) ? "—" : LongestDowntimeDevice,
+        string.IsNullOrEmpty(LongestDowntimeAlarm) ? "—" : LongestDowntimeAlarm);
+    public string PeakHourTooltip => FormatHelper.Tip(
+        Strings.Rv_Tip_PeakHour,
+        string.IsNullOrEmpty(PeakHour) ? "—" : PeakHour,
+        PeakHourOk,
+        PeakShareText);
+    public string ValleyHourTooltip => FormatHelper.Tip(
+        Strings.Rv_Tip_ValleyHour,
+        string.IsNullOrEmpty(ValleyHour) ? "—" : ValleyHour,
+        ValleyHourOk,
+        ValleyShareText);
+
+    private static string FormatReviewHours(double hours)
+        => hours >= 1.0 ? $"{hours:F1}h" : $"{(int)Math.Round(hours * 60)}m";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PeakHourTooltip))]
+    private string _peakHour = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PeakShareText))]
+    [NotifyPropertyChangedFor(nameof(PeakHourTooltip))]
+    private int _peakHourOk;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValleyHourTooltip))]
+    private string _valleyHour = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ValleyShareText))]
+    [NotifyPropertyChangedFor(nameof(ValleyHourTooltip))]
+    private int _valleyHourOk;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LongestDowntimeTooltip))]
+    private string _longestDowntimeDevice = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LongestDowntimeTooltip))]
+    private string _longestDowntimeAlarm = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LongestDowntimeTooltip))]
+    private double _longestDowntimeHours;
     [ObservableProperty] private DateTime _lastUpdateTime;
     [ObservableProperty] private string _currentShiftName = string.Empty;
     [ObservableProperty] private string _currentShiftDateRange = string.Empty;
@@ -251,6 +290,8 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         OnPropertyChanged(nameof(ComparisonSummaryText));
         OnPropertyChanged(nameof(PeakShareText));
         OnPropertyChanged(nameof(ValleyShareText));
+        OnPropertyChanged(nameof(PeakHourTooltip));
+        OnPropertyChanged(nameof(ValleyHourTooltip));
     }
 
     partial void OnTotalNgChanged(int value)

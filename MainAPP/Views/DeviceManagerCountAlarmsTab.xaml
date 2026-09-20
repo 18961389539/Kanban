@@ -326,11 +326,13 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <Border Margin="12,0,0,0" CornerRadius="3">
+                        <!--  2026-09-18 UI 精修：触发角标改红色语义药丸（原白字压满色块）  -->
+                        <Border Margin="12,0,0,0" CornerRadius="3" BorderThickness="1">
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Setter Property="Visibility" Value="Collapsed" />
-                                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                                    <Setter Property="Background" Value="{StaticResource StatusAlarmSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource StatusAlarmBrush}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsTriggered}" Value="True">
                                             <Setter Property="Visibility" Value="Visible" />
@@ -341,7 +343,8 @@
                             <TextBlock
                                 Margin="6,2"
                                 FontSize="{DynamicResource FontSizeHint}"
-                                Foreground="White"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource StatusAlarmBrush}"
                                 Text="{x:Static resources:Strings.K184}" />
                         </Border>
                     </StackPanel>

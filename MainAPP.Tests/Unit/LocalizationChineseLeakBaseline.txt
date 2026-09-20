@@ -1,56 +1,15 @@
-AlarmQueryViewModel.cs	# 触发：{AlarmTriggerCount} 次，恢复：{AlarmRecoverCount} 次，待恢复：{AlarmPendingCount} 条
-AlarmQueryViewModel.cs	PLC地址
-AlarmQueryViewModel.cs	事件时间
-AlarmQueryViewModel.cs	事件类型
-AlarmQueryViewModel.cs	事件类型文本
-AlarmQueryViewModel.cs	报警ID
-AlarmQueryViewModel.cs	报警名称
-AlarmQueryViewModel.cs	持续时间
-AlarmQueryViewModel.cs	设备ID
-AlarmQueryViewModel.cs	设备名称
-AuditQueryViewModel.cs	审计归档 {items.Count} 条
 ChartService.cs	停机时长(分钟)
-HistoryQueryViewModel.cs	\n# 本文件仅包含当前页数据（每页最多 {PageSize} 条），并非全量导出。
-HistoryQueryViewModel.cs	已导出当前页数据 → {fullPath}
-HistoryQueryViewModel.cs	当前页导出 Tab={tabIndex} Page={CurrentPage}
 MainWindowViewModel.cs	初始
-OeeQueryViewModel.cs	值
-OeeQueryViewModel.cs	指标
 OverviewViewModel.cs	仅供测试/旧调用适配；生产路径使用分层构造器
-OverviewViewModel.cs	生产复盘 PDF
-OverviewViewModel.cs	生产复盘报表
-ProductionDailyReportService.cs	生产日报_{reportDate:yyyyMMdd}_{safeName}.pdf
 ProductionLineViewModel.cs	ProductionLineViewModel 构造完成：LineDevices.Count={LineCount}
 ProductionLineViewModel.cs	ProductionLineViewModel 构造：Devices.Count={DeviceCount}, Runtimes.Count={RuntimeCount}
 ProductionLineViewModel.cs	TryAddLineDevice 成功：{Name}({Id})，当前 LineDevices.Count={Count}
 ProductionLineViewModel.cs	TryAddLineDevice 跳过：设备 {Name}({Id}) 未找到对应 Runtime
-ProductionQueryViewModel.cs	# 总 OK：{TotalOk} 件，总 NG：{TotalNg} 件，良品率：{QualityRate:P2}
-ProductionQueryViewModel.cs	# 查询区间：{fromDate:yyyy-MM-dd HH:mm:ss} ~ {toDate:yyyy-MM-dd HH:mm:ss}
-ProductionQueryViewModel.cs	NG产量
-ProductionQueryViewModel.cs	OK产量
-ProductionQueryViewModel.cs	时间
-ProductionQueryViewModel.cs	状态字
-ProductionQueryViewModel.cs	班次
-ProductionQueryViewModel.cs	设备ID
-ProductionQueryViewModel.cs	设备名称
-RecipeManagerViewModel.cs	切换配方会放弃当前未保存的编辑，是否继续？
-RecipeManagerViewModel.cs	提示
+ProductionLineViewModel.cs	全部设备 OEE 清零命令异常
 SettingsViewModel.cs	PLC={DraftSettings.PlcConfig.IpAddress}:{DraftSettings.PlcConfig.Port} 班次={DraftSettings.Shifts.Coun
-StatusQueryViewModel.cs	事件时间
-StatusQueryViewModel.cs	前一状态
-StatusQueryViewModel.cs	前一状态文本
-StatusQueryViewModel.cs	当前状态
-StatusQueryViewModel.cs	当前状态文本
-StatusQueryViewModel.cs	设备ID
-StatusQueryViewModel.cs	设备名称
 TaskExtensions.cs	Fire-and-forget Task 发生未观察异常
 UserHelpService.cs	MainAPP用户使用手册.md
 UserHelpService.cs	手册
-UserManagerViewModel.cs	角色={role}
-UserManagerViewModel.cs	角色={user.Role}
-UserManagerViewModel.cs	，首登改密
-WorkOrderManagerViewModel.cs	产品={saved.ProductCode} 目标={saved.TargetQuantity}
-WorkOrderManagerViewModel.cs	工单列表_{DateTime.Now:yyyyMMddHHmm}.csv
 WorkOrderSampleBuilder.cs	传感器模组
 WorkOrderSampleBuilder.cs	因设备故障中止
 WorkOrderSampleBuilder.cs	外壳组件A

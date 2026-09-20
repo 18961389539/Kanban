@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using Kanban.Collector.Core.Entities;
 using MainAPP.ViewModels;
 
@@ -15,6 +16,60 @@ public partial class WorkOrderManagerView : UserControl
     public WorkOrderManagerView()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// 页面级快捷键（Preview 隧道事件）：
+    /// - Ctrl+F：焦点切到工单搜索框（与设备管理/产线页一致，全站搜索统一入口）。
+    /// </summary>
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+        {
+            WorkOrderSearchBox.Focus();
+            Keyboard.Focus(WorkOrderSearchBox);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// 进入页面（页面切换为当前页时 Visibility 变 Visible）自动聚焦搜索框，
+    /// 免点击直接输入关键字过滤工单。
+    /// </summary>
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (IsVisible)
+                {
+                    WorkOrderSearchBox.Focus();
+                    Keyboard.Focus(WorkOrderSearchBox);
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+    }
+
+    /// <summary>
+    /// 列表键盘操作（焦点在工单列表时）：
+    /// - Enter：编辑当前选中工单（与双击行为一致）。
+    /// - Delete：删除当前选中工单（DeleteCommand 内部有二次确认）。
+    /// </summary>
+    private void OnWorkOrderListKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not WorkOrderManagerViewModel vm) return;
+
+        if (e.Key == Key.Enter && vm.EditCommand.CanExecute(null))
+        {
+            vm.EditCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Delete && vm.DeleteCommand.CanExecute(null))
+        {
+            vm.DeleteCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -118,6 +118,25 @@ public partial class DeviceManagerView : UserControl
                 Keyboard.Focus(searchBox);
                 e.Handled = true;
             }
+        }
+    }
+
+    /// <summary>
+    /// 进入页面（切换为当前页时 Visibility 变 Visible）自动聚焦设备搜索框，
+    /// 免点击直接输入关键字过滤设备。
+    /// </summary>
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (IsVisible && FindVisualChild<TextBox>(DeviceSearchBar) is { } searchBox)
+                {
+                    searchBox.Focus();
+                    Keyboard.Focus(searchBox);
+                }
+            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
 

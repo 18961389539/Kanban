@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,6 +11,7 @@ using LicenseManager.Models;
 using LicenseManager.Services;
 using Kanban.Client;
 using Kanban.Collector.Core.Models;
+using Kanban.Contracts.Display;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -264,6 +266,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     private readonly KanbanDataClient? _dataClient;
     private readonly IPlcDataAcquisitionService? _acquisitionService;
     private readonly PageRefreshTimer _staleCheckTimer;
+    private readonly PageRefreshTimer _carouselTimer;
+    private readonly DisplayCarouselClock _carouselClock = new();
 
     private void OnStaleCheckTick()
     {
@@ -278,6 +282,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     {
         if (e.PropertyName == nameof(AppSettings.AppTitle))
             OnPropertyChanged(nameof(WindowTitle));
+        if (e.PropertyName is nameof(AppSettings.DisplayCarouselEnabled) or nameof(AppSettings.RunMode))
+            OnCarouselTick();
     }
 
     private static IReadOnlyList<NavigationPageDefinition> CatalogDefinitions => NavigationPageCatalog.All;
@@ -445,6 +451,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         // 数据新鲜度检查：2s 轮询刷新"数据停滞"横幅（连接正常但采集卡死时提示）
         _staleCheckTimer = new PageRefreshTimer(TimeSpan.FromSeconds(2), OnStaleCheckTick);
         _staleCheckTimer.Start();
+        _carouselTimer = new PageRefreshTimer(TimeSpan.FromMilliseconds(DisplayCarousel.TickMs), OnCarouselTick);
+        _carouselTimer.Start();
         // 窗口标题跟随看板标题配置（设置页保存后实时生效；AppSettings 为进程级单例，生命周期与本 VM 一致）。
         // 命名方法订阅（遵守本文件"事件全部用命名方法"约定），Dispose 精确解绑。
         AppSettings.PropertyChanged += OnAppSettingsPropertyChanged;
@@ -563,6 +571,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         _disposed = true;
 
         _staleCheckTimer.Dispose();
+        _carouselTimer.Dispose();
         AppSettings.PropertyChanged -= OnAppSettingsPropertyChanged;
         ConnectionManager.ConnectionStateChanged -= OnConnectionStateChanged;
         ConnectionManager.PropertyChanged -= OnConnectionManagerPropertyChanged;
@@ -783,5 +792,60 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         }
 
         Navigate(visible[idx].Key);
+    }
+
+    /// <summary>鼠标/键盘操作：轮播暂停 16s 后再转。</summary>
+    public void NoteCarouselInteraction() => _carouselClock.NoteInteraction(DateTime.UtcNow);
+
+    [ObservableProperty] private bool _isCarouselOverlayVisible;
+    [ObservableProperty] private bool _isCarouselPaused;
+    [ObservableProperty] private bool _isCarouselFrozen;
+    [ObservableProperty] private int _carouselSceneIndex;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CarouselOverlayTooltip))]
+    private string _carouselStatusText = "";
+
+    public string CarouselOverlayTooltip => string.IsNullOrEmpty(CarouselStatusText)
+        ? ""
+        : string.Format(CultureInfo.CurrentCulture, Strings.Carousel_Tip, CarouselStatusText)
+            .Replace("\\n", Environment.NewLine, StringComparison.Ordinal);
+
+    private string CurrentPageKey =>
+        CatalogDefinitions.FirstOrDefault(page => page.Index == SelectedIndex)?.Key ?? DisplayCarousel.Home;
+
+    private void OnCarouselTick()
+    {
+        var home = _homeLazy.IsValueCreated ? _homeLazy.Value : null;
+        var status = _carouselClock.Step(new DisplayCarouselInput(
+            UtcNow: DateTime.UtcNow,
+            DeltaMs: DisplayCarousel.TickMs,
+            Enabled: AppSettings.IsDisplayCarouselActive,
+            HasHighAlarm: home?.HasAnyHighLevelAlarm ?? false,
+            HasActiveAlarms: home?.HasAnyActiveAlarm ?? false,
+            CurrentPageKey: CurrentPageKey));
+
+        IsCarouselOverlayVisible = status.OverlayVisible;
+        IsCarouselPaused = status.Paused;
+        IsCarouselFrozen = status.Frozen;
+        CarouselSceneIndex = status.SceneIndex;
+        CarouselStatusText = FormatCarouselStatus(status);
+
+        if (status.NavigateTo is { } target && target != CurrentPageKey)
+            Navigate(target);
+    }
+
+    private static string FormatCarouselStatus(DisplayCarouselStatus status)
+    {
+        if (!status.OverlayVisible) return "";
+        if (status.Frozen) return Strings.Carousel_Frozen;
+        var scene = status.Scene switch
+        {
+            DisplayCarousel.ProductionLine => Strings.Nav_ProductionLine,
+            DisplayCarousel.AlarmCenter => Strings.Nav_AlarmCenter,
+            _ => Strings.Nav_Home,
+        };
+        if (status.Paused)
+            return string.Format(Strings.Carousel_Paused, scene, status.RemainingSeconds);
+        return string.Format(Strings.Carousel_Running, scene, status.RemainingSeconds);
     }
 }

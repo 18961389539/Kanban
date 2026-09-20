@@ -12,12 +12,18 @@
     xmlns:entities="clr-namespace:Kanban.Collector.Core.Entities;assembly=Kanban.Collector.Core"
     d:DesignHeight="700"
     d:DesignWidth="1100"
+    PreviewKeyDown="OnPreviewKeyDown"
+    IsVisibleChanged="OnIsVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
+    <UserControl.InputBindings>
+        <!--  F5：刷新全部可见工单产量（与总览/报警/运行监控等页一致）  -->
+        <KeyBinding Key="F5" Command="{Binding RefreshAllProductionCommand}" />
+    </UserControl.InputBindings>
     <UserControl.Resources>
-        <!--  宸ュ崟鐘舵€佽壊鐐?鏂囨湰/绛涢€?chip 宸插叏灞€鍖栬嚦 Styles/Components.xaml锛圫tatusDot/StatusText/TimePresetChip锛? -->
-        <!--  鍒楄〃琛屽彸閿彍鍗曪細ContextMenu 闄勫姞鍦?ListBox 涓婏紝PlacementTarget=ListBox锛?
-              DataContext=WorkOrderManagerViewModel銆傚懡浠ゆ棤鍙傦紙浣滅敤浜?SelectedWorkOrder锛夛紱
-              code-behind 鍦?PreviewMouseRightButtonDown 鍏堥€変腑鍙抽敭琛岋紝淇濊瘉鑿滃崟鎿嶄綔鐨勬槸璇ヨ銆? -->
+        <!--  工单状态色点/文本/筛选 chip 已全局化至 Styles/Components.xaml（StatusDot/StatusText/TimePresetChip） -->
+        <!--  列表行右键菜单：ContextMenu 附加在 ListBox 上，PlacementTarget=ListBox；
+              DataContext=WorkOrderManagerViewModel。命令无参（作用于 SelectedWorkOrder）；
+              code-behind 在 PreviewMouseRightButtonDown 先选中右键行，保证菜单操作的是该行。 -->
         <ContextMenu x:Key="WorkOrderRowContextMenu">
             <MenuItem Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Header="{x:Static resources:Strings.K072}" />
@@ -37,14 +43,14 @@
 
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
-            <!--  鍝嶅簲寮忥細宸﹀垪宸ュ崟鍒楄〃涓庡彸鍒楄鎯呮寜 2:3 鍒嗛厤锛岄厤鍚?MinWidth 闃叉杩囩獎銆?
-                  涓棿鍒椾负鍙嫋鎷藉垎闅旀潯鍗犱綅鍒楋紙鍙傜収璁惧绠＄悊鍣ㄩ〉锛夛紝鍒嗛殧鏉″父椹汇€? -->
+            <!--  响应式：左列工单列表与右侧详情按 2:3 分配，配合 MinWidth 防止过挤。
+                 中间列为可拖拽分隔条占位列（参照设备管理器页），分隔条常驻。 -->
             <ColumnDefinition Width="1.1*" MinWidth="360" />
             <ColumnDefinition Width="10" />
             <ColumnDefinition Width="1.4*" MinWidth="480" />
         </Grid.ColumnDefinitions>
 
-        <!--  ============ 宸︿晶锛氬伐鍗曞垪琛紙绮剧畝锛氭悳绱?+ 鐘舵€?+ 鍒楄〃 + 鎿嶄綔锛? ============  -->
+        <!--  ============ 左侧：工单列表（精简：搜索 + 状态 + 列表 + 操作） ============  -->
         <Border Grid.Column="0" Padding="0" Style="{StaticResource MainCard}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -55,7 +61,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  鏍囬  -->
+                <!--  标题  -->
                 <DockPanel Grid.Row="0" Margin="18,18,18,10">
                     <materialIcons:MaterialIcon Kind="ClipboardListOutline" Style="{StaticResource SectionTitleIcon}" />
                     <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K554}" />
@@ -64,14 +70,14 @@
                                Text="{Binding FilteredCount, StringFormat={}({0})}" />
                 </DockPanel>
 
-                <!--  鎼滅储 + 璁惧绛涢€? -->
+                <!--  搜索 + 设备筛选  -->
                 <Grid Grid.Row="1" Margin="18,0,18,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="160" />
                     </Grid.ColumnDefinitions>
-                    <hc:TextBox Grid.Column="0"
+                    <hc:TextBox Grid.Column="0" x:Name="WorkOrderSearchBox"
                                 hc:InfoElement.Placeholder="{x:Static resources:Strings.K555}"
                                 FontSize="{DynamicResource FontSizeCaption}"
                                 Style="{StaticResource TextBoxExtend}"
@@ -86,7 +92,7 @@
                                  Style="{StaticResource ComboBoxExtend}" />
                 </Grid>
 
-                <!--  鐘舵€佸垎甯冿細鐐瑰嚮鍒囨崲绛涢€? -->
+                <!--  状态分布：点击切换筛选  -->
                 <ScrollViewer Grid.Row="2" Margin="18,0,18,8" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal">
                     <RadioButton GroupName="WoStatusFilter" Click="OnStatusChipClick" Tag="{x:Null}"
@@ -146,7 +152,7 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!--  宸ュ崟鍒楄〃锛圴5 绱у噾琛岋細宸ュ崟鍙?+ 鎽樿涓€琛岋級  -->
+                <!--  工单列表（紧凑行：工单号 + 摘要一行）  -->
                 <Grid Grid.Row="3">
                     <ListBox
                         x:Name="WorkOrderListBox"
@@ -160,6 +166,7 @@
                         VirtualizingStackPanel.ScrollUnit="Pixel"
                         MouseDoubleClick="OnWorkOrderListDoubleClick"
                         PreviewMouseRightButtonDown="OnWorkOrderListPreviewMouseRightButtonDown"
+                        KeyDown="OnWorkOrderListKeyDown"
                         ContextMenu="{StaticResource WorkOrderRowContextMenu}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -228,7 +235,7 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!--  绌虹姸鎬侊細绛涢€夋棤缁撴灉鎴栨棤宸ュ崟鏃舵彁绀? -->
+                    <!--  空状态：筛选无结果或无工单时提示  -->
                     <controls:EmptyState
                         Hint="{x:Static resources:Strings.K565}"
                         IconKind="ClipboardListOutline"
@@ -246,7 +253,7 @@
                     </controls:EmptyState>
                 </Grid>
 
-                <!--  搴曢儴鎿嶄綔锛氭柊寤?/ 缂栬緫 / 鍒犻櫎 + 鏇村锛堝鍒躲€佹牱鏈伐鍗曪級  -->
+                <!--  底部操作：新建 / 编辑 / 删除 + 更多（复制、样本工单）  -->
                 <StackPanel Grid.Row="4" Margin="18,12,18,18" Orientation="Horizontal">
                     <Button Margin="0,0,6,0"
                             Command="{Binding AddCommand}" Content="{x:Static resources:Strings.K033}" Style="{StaticResource IconButtonPrimary}"
@@ -287,7 +294,7 @@
             </Grid>
         </Border>
 
-        <!--  ============ 涓棿锛氬彲鎷栨嫿鍒嗛殧鏉★紙鍙傜収璁惧绠＄悊鍣ㄩ〉锛屽父椹伙級  ============  -->
+        <!--  ============ 中间：可拖拽分隔条（参照设备管理器页，常驻） ============  -->
         <GridSplitter
             Grid.Column="1"
             Width="10"
@@ -319,7 +326,7 @@
         </GridSplitter>
 
 
-        <!--  ============ 鍙充晶锛歏5 鍒?Tab 璇︽儏 ============  -->
+        <!--  ============ 右侧：筛选 + 详情 Tab ============  -->
         <Border Grid.Column="2" Padding="0" Style="{StaticResource MainCard}">
             <Grid>
                 <Grid.RowDefinitions>
@@ -328,7 +335,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!--  绱у噾绛涢€夋潯 + 楂樼骇绛涢€夋姌鍙? -->
+                <!--  紧凑筛选条 + 高级筛选折叠  -->
                 <Border Grid.Row="0" Margin="18,16,18,10" Padding="12,10" CornerRadius="10"
                         Background="{StaticResource SecondaryRegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                     <StackPanel>
@@ -387,7 +394,7 @@
                     </StackPanel>
                 </Border>
 
-                <!--  璇︽儏 Tab 鍖? -->
+                <!--  详情 Tab 区  -->
                 <Grid Grid.Row="1" Margin="18,0,18,0">
                     <controls:EmptyState IconKind="ClipboardTextOutline" Message="{x:Static resources:Strings.K074}" Hint="{x:Static resources:Strings.K574}">
                         <controls:EmptyState.Style>
@@ -408,7 +415,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <!--  宸ュ崟澶? -->
+                        <!--  工单头  -->
                         <StackPanel Grid.Row="0" Margin="0,0,0,8">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock FontSize="{DynamicResource FontSizeSubtitle}" FontWeight="Bold" Text="{Binding SelectedWorkOrder.OrderNo}" />
@@ -657,7 +664,7 @@
                     </Grid>
                 </Grid>
 
-                <!--  搴曟爮鎿嶄綔  -->
+                <!--  底栏操作  -->
                 <StackPanel Grid.Row="2" Margin="18,10,18,16" Orientation="Horizontal"
                             Visibility="{Binding SelectedWorkOrder, Converter={StaticResource NullToVisibilityConverter}}">
                     <Button Command="{Binding StartCommand}" Content="{x:Static resources:Strings.K036}" Style="{StaticResource IconButtonPrimary}"

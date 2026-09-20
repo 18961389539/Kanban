@@ -1029,6 +1029,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             // 均读写草稿），漏拷会导致保存后改动被静默丢弃（审查修复 2026-08-13）。
             target.DataMode = source.DataMode;
             target.RunMode = source.RunMode;
+            target.DisplayCarouselEnabled = source.DisplayCarouselEnabled;
             target.CollectorHubUrl = source.CollectorHubUrl;
             // 用快照整体复制，避免逐字段漏拷（如 ModbusTcp.BatchInt32Limit）；快照含全部嵌套 Options。
             target.PlcConfig = source.PlcConfig.CreateSnapshot();

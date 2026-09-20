@@ -313,7 +313,9 @@
                                    ToolTip="{Binding OutputTooltip}"
                                    ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K090}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}"
+                                   ToolTip="{Binding AlarmCountTooltip}"
+                                   ToolTipService.ShowDuration="30000" />
                         <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding CurrentShiftName}" />
                     </StackPanel>
                 </Border>
@@ -401,11 +403,12 @@
                                             Width="32" Height="32" CornerRadius="8"
                                             VerticalAlignment="Top"
                                             Background="{StaticResource PrimarySoftBrush}">
+                                            <!--  2026-09-17 修复：Kind/Foreground 不能写在元素本地——
+                                                  本地值优先级高于 Style.Triggers，会导致分类图标全部
+                                                  退化为默认 InformationOutline 灰色。默认值由 Style Setter 提供。  -->
                                             <materialIcons:MaterialIcon
                                                 Width="16" Height="16"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Kind="InformationOutline"
-                                                Foreground="{StaticResource ThirdlyTextBrush}">
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <materialIcons:MaterialIcon.Style>
                                                     <Style TargetType="materialIcons:MaterialIcon">
                                                         <Setter Property="Kind" Value="InformationOutline" />
@@ -514,7 +517,9 @@
                             </StackPanel>
                         </Border>
                         <!-- 报警次数 -->
-                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KpiCell}">
+                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource KpiCell}"
+                                ToolTip="{Binding AlarmCountTooltip}"
+                                ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K090}" />
                                 <StackPanel Orientation="Horizontal">
@@ -540,7 +545,9 @@
                             </StackPanel>
                         </Border>
                         <!-- 最长停机设备：大数字为停机时长，副标题为设备名+报警名，与其它 KPI 节奏一致 -->
-                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource KpiCell}">
+                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource KpiCell}"
+                                ToolTip="{Binding LongestDowntimeTooltip}"
+                                ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
                                 <StackPanel Orientation="Horizontal">
@@ -551,7 +558,9 @@
                             </StackPanel>
                         </Border>
                         <!-- 峰值时段（方案 A：▲ 图标 + 时间 + 件数 + 占比，2026-08-11） -->
-                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource KpiCell}">
+                        <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource KpiCell}"
+                                ToolTip="{Binding PeakHourTooltip}"
+                                ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource StatusRunSoftBrush}">
@@ -573,7 +582,9 @@
                             </StackPanel>
                         </Border>
                         <!-- 谷值时段（方案 A：▼ 图标 + 时间 + 件数 + 占比，2026-08-11） -->
-                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource KpiCell}">
+                        <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource KpiCell}"
+                                ToolTip="{Binding ValleyHourTooltip}"
+                                ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource StatusAlarmSoftBrush}">
@@ -963,7 +974,7 @@
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86" MinWidth="80">
+                                <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86" MinWidth="80">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource DeviceCoreMetricCell}" />
                                     </DataGridTextColumn.ElementStyle>
@@ -1122,7 +1133,7 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
-                                    <DataGridTextColumn Header="OEE" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86">
+                                    <DataGridTextColumn Header="{x:Static resources:Strings.K587}" Binding="{Binding Oee, StringFormat={}{0:P1}}" Width="86">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -1281,7 +1292,9 @@
                             </StackPanel>
                             <StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
-                                <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDowntimeHours, Converter={StaticResource DurationToTextConverter}}" />
+                                <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding LongestDowntimeHours, Converter={StaticResource DurationToTextConverter}}"
+                                           ToolTip="{Binding LongestDowntimeTooltip}"
+                                           ToolTipService.ShowDuration="30000" />
                             </StackPanel>
                         </UniformGrid>
                     </DockPanel>

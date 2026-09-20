@@ -379,6 +379,18 @@ public class ConfigSyncHandlerTests : IDisposable
     }
 
     [Fact]
+    public void GetDisplayCarouselEnabled_ViewerOrCheckbox()
+    {
+        Assert.True(_handler.GetDisplayCarouselEnabled());
+
+        _appSettings.DisplayCarouselEnabled = false;
+        Assert.False(_handler.GetDisplayCarouselEnabled());
+
+        _appSettings.RunMode = KanbanRunMode.Viewer;
+        Assert.True(_handler.GetDisplayCarouselEnabled());
+    }
+
+    [Fact]
     public void GetLanguage_ReturnsAppSettingsLanguage()
     {
         // 默认中文
@@ -588,6 +600,7 @@ public class ConfigSyncHandlerTests : IDisposable
         _appSettings.IsDarkTheme = true;
         _appSettings.UiScale = 1.3;
         _appSettings.EnableAlarmSound = false;
+        _appSettings.DisplayCarouselEnabled = false;
         _appSettings.EnableAutomaticDailyReport = true;
         _appSettings.AutomaticDailyReportTime = new TimeSpan(6, 30, 0);
         _appSettings.DashboardRefreshIntervalMs = 5000;
@@ -607,6 +620,7 @@ public class ConfigSyncHandlerTests : IDisposable
         Assert.True(root.GetProperty("IsDarkTheme").GetBoolean());
         Assert.Equal(1.3, root.GetProperty("UiScale").GetDouble());
         Assert.False(root.GetProperty("EnableAlarmSound").GetBoolean());
+        Assert.False(root.GetProperty("DisplayCarouselEnabled").GetBoolean());
         Assert.True(root.GetProperty("EnableAutomaticDailyReport").GetBoolean());
         Assert.Equal("06:30:00", root.GetProperty("AutomaticDailyReportTime").GetString());
         Assert.Equal(5000, root.GetProperty("DashboardRefreshIntervalMs").GetInt32());
@@ -626,6 +640,7 @@ public class ConfigSyncHandlerTests : IDisposable
         _appSettings.IsDarkTheme = true;
         _appSettings.UiScale = 1.15;
         _appSettings.EnableAlarmSound = false;
+        _appSettings.DisplayCarouselEnabled = true;
         _appSettings.EnableAutomaticDailyReport = true;
         _appSettings.AutomaticDailyReportTime = new TimeSpan(5, 0, 0);
         _appSettings.DashboardRefreshIntervalMs = 4000;
@@ -647,6 +662,7 @@ public class ConfigSyncHandlerTests : IDisposable
         Assert.True(draft.IsDarkTheme);
         Assert.Equal(1.15, draft.UiScale);
         Assert.False(draft.EnableAlarmSound);
+        Assert.True(draft.DisplayCarouselEnabled);
         Assert.True(draft.EnableAutomaticDailyReport);
         Assert.Equal(new TimeSpan(5, 0, 0), draft.AutomaticDailyReportTime);
         Assert.Equal(4000, draft.DashboardRefreshIntervalMs);

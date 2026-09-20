@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject KanbanAdminClient Admin
+@inject NavigationManager Nav
 @inject ILogger<ProductionLine> Logger
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
@@ -82,7 +83,7 @@
 
             @* ──── 一键全部设备 OEE 清零：危险写操作，需二次确认；断线/执行中禁用 ──── *@
             <div class="kpi-card action">
-                <button class="btn btn-danger" disabled="@(!CanResetAll)" @onclick="OpenResetConfirm">
+                <button class="btn btn-danger" disabled="@(!CanResetAll)" title="@L.T("K930")" @onclick="OpenResetConfirm">
                     @L.T("Pl_ResetAll")
                 </button>
                 <span class="kpi-sub">@L.T("Pl_ResetAllHint")</span>
@@ -113,13 +114,13 @@
             <div class="mon-grid">
                 @foreach (var d in FilteredDevices)
                 {
-                    <div class="mon-card line-card">
+                    <div class="mon-card line-card" @onclick="() => OpenDevice(d.DeviceId)">
                         <div class="dev-head">
                             <span class="dev-name">@d.DeviceName</span>
-                            <span class="status-badge @StateClass(d.Status)">@StateText(d)</span>
+                            <span class="status-badge @StateClass(d.Status)" title="@L.Tip("Home_Tip_DeviceStatus", StateText(d))">@StateText(d)</span>
                             @if (!string.IsNullOrEmpty(RecipeOf(d.DeviceId)))
                             {
-                                <span class="line-recipe">@RecipeOf(d.DeviceId)</span>
+                                <span class="line-recipe" title="@L.Tip("Home_Tip_Recipe", RecipeOf(d.DeviceId))">@RecipeOf(d.DeviceId)</span>
                             }
                         </div>
 
@@ -130,10 +131,10 @@
                             <div class="line-alarm">
                                 <span class="lvl-dot @LevelClass(a.Level)"></span>
                                 <span>@a.Name</span>
-                                <span class="alarm-dur">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
+                                <span class="alarm-dur" title="@L.Tip("Home_Tip_ActiveAlarmDuration", FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds))">@FmtDuration((Dashboard.ServerNow - a.StartTime).TotalSeconds)</span>
                                 @if (d.ActiveAlarms.Count > 1)
                                 {
-                                    <span class="kpi-sub">+@(d.ActiveAlarms.Count - 1)</span>
+                                    <span class="kpi-sub" title="@L.Tip("Ln_Tip_ExtraAlarms", d.ActiveAlarms.Count - 1)">+@(d.ActiveAlarms.Count - 1)</span>
                                 }
                             </div>
                         }
@@ -154,7 +155,11 @@
                             <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(d.DeviceId)" Title="@PerformanceTip(d)" />
                             <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(d.DeviceId)" Title="@QualityTip(d)" />
                         </div>
-                        <div class="meta-line" title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime) · @L.T("Lbl_SnapSeq") #@d.Seq</div>
+                        <div class="meta-line">
+                            <span title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime)</span>
+                            <span> · </span>
+                            <span title="@L.Tip("Home_Tip_SnapSeq", d.Seq)">@L.T("Lbl_SnapSeq") #@d.Seq</span>
+                        </div>
                     </div>
                 }
             </div>
@@ -183,6 +188,8 @@
     /// 不等价于权限控制——危险写操作的访问控制应由部署网络或后续接入的统一鉴权承担。
     /// </summary>
     private bool CanResetAll => !_resettingAll && Dashboard.IsConnected && Dashboard.DeviceCount > 0;
+
+    private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
 
     private void OpenResetConfirm()
     {

@@ -489,7 +489,8 @@ public class SimulationFlowTests
         UIA3Automation automation,
         Button button,
         string dialogTitleHint,
-        int dialogTimeoutMs = 10000)
+        int dialogTimeoutMs = 10000,
+        byte confirmVirtualKey = VK_RETURN)
     {
         // 先确保主窗口在前台（否则按钮点击可能不触发）
         try { mainWindow.Focus(); Thread.Sleep(500); } catch { }
@@ -509,12 +510,12 @@ public class SimulationFlowTests
                     var dialogHwnd = FindDialogWindow(dialogTitleHint);
                     if (dialogHwnd != IntPtr.Zero)
                     {
-                        Console.WriteLine($"  [诊断] 找到对话框 HWND={dialogHwnd}，发送回车键确认");
-                        // 用 keybd_event 发送全局回车键（由系统路由到前台窗口）
+                        Console.WriteLine($"  [诊断] 找到对话框 HWND={dialogHwnd}，发送按键 {confirmVirtualKey}");
+                        // 用 keybd_event 发送全局按键（由系统路由到前台窗口）
                         // 比 PostMessage 更可靠：WPF 窗口通过 InputManager 处理全局键盘事件
-                        keybd_event(VK_RETURN, 0, 0, IntPtr.Zero);     // 按下
+                        keybd_event(confirmVirtualKey, 0, 0, IntPtr.Zero);     // 按下
                         Thread.Sleep(50);
-                        keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, IntPtr.Zero);  // 释放
+                        keybd_event(confirmVirtualKey, 0, KEYEVENTF_KEYUP, IntPtr.Zero);  // 释放
                         confirmed = true;
                     }
                     else
@@ -530,11 +531,11 @@ public class SimulationFlowTests
                             // 前台窗口不是主窗口（标题不匹配"看板系统"）时发送回车键
                             if (!fgTitle.Contains("看板系统"))
                             {
-                                Console.WriteLine($"  [诊断] 前台窗口变更 HWND={fg} Title='{fgTitle}'，发送回车键");
-                                // 用 keybd_event 发送全局回车键（与主路径一致，比 PostMessage 更可靠）
-                                keybd_event(VK_RETURN, 0, 0, IntPtr.Zero);
+                                Console.WriteLine($"  [诊断] 前台窗口变更 HWND={fg} Title='{fgTitle}'，发送按键 {confirmVirtualKey}");
+                                // 用 keybd_event 发送全局按键（与主路径一致，比 PostMessage 更可靠）
+                                keybd_event(confirmVirtualKey, 0, 0, IntPtr.Zero);
                                 Thread.Sleep(50);
-                                keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, IntPtr.Zero);
+                                keybd_event(confirmVirtualKey, 0, KEYEVENTF_KEYUP, IntPtr.Zero);
                                 confirmed = true;
                             }
                         }
@@ -607,7 +608,8 @@ public class SimulationFlowTests
 
     private const uint WM_KEYDOWN = 0x0100;
     private const uint WM_KEYUP = 0x0101;
-    private const int VK_RETURN = 0x0D;
+    private const byte VK_RETURN = 0x0D;
+    private const byte VK_ESCAPE = 0x1B;
     private const uint KEYEVENTF_KEYUP = 0x0002;
 
     /// <summary>
@@ -717,8 +719,8 @@ public class SimulationFlowTests
         Assert.NotNull(completeBtn);
         Assert.True(completeBtn!.IsEnabled, "完成按钮未启用（SelectedWorkOrder 可能非 Running 状态）");
 
-        // 点击完成按钮（无确认对话框，直接执行）
-        completeBtn.Invoke();
+        // 点击完成按钮：完成后弹出后续工单选择，Esc 关闭（稍后再说），工单本身已落库为已完成
+        ClickButtonAndConfirmDialog(window, automation, completeBtn, "工单已完成", confirmVirtualKey: VK_ESCAPE);
         Thread.Sleep(2000); // 等待命令执行 + 数据库写入
 
         // 断言：工单状态变为已完成（Status=2）
