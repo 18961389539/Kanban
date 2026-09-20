@@ -226,7 +226,7 @@ public partial class HistoryQuery
         Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
         => await HistoryFetch.FetchLatestBeforeAsync(Dashboard, type, before, deviceId, shiftName, selector);
 
-    /// <summary>客户端分页（状态/报警 Tab 与 WPF Remote 模式一致：全量拉取后客户端翻页）。</summary>
+    /// <summary>客户端分页（仅回退路径；状态/报警 Tab 默认服务端分页）。</summary>
     private static (List<T> Rows, int TotalPages) PageItems<T>(List<T> all, int page, int pageSize)
     {
         var totalPages = ProductionAnalysis.CalcTotalPages(all.Count, pageSize);
@@ -234,6 +234,26 @@ public partial class HistoryQuery
         if (page < 1) page = 1;
         var rows = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return (rows, totalPages);
+    }
+
+    private async Task<HistoryQueryResponse> QueryTablePageAsync(
+        HistoryQueryType type, DateTime from, DateTime to, string? deviceId, string? shiftName,
+        int page, int pageSize, string? alarmName = null)
+    {
+        var resp = await Dashboard.QueryHistoryAsync(new HistoryQueryRequest
+        {
+            QueryType = type,
+            From = from,
+            To = to,
+            DeviceId = deviceId,
+            ShiftName = shiftName,
+            AlarmName = alarmName,
+            Page = page,
+            PageSize = pageSize,
+        });
+        if (resp.ErrorCode != HistoryErrorCode.None)
+            throw new InvalidOperationException(resp.Error ?? "history query failed");
+        return resp;
     }
 
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致；此前本页 P0 与复盘页 P1 不一致）

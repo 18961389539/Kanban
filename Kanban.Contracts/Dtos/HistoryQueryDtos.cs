@@ -54,6 +54,9 @@ public sealed record HistoryQueryRequest
     /// <summary>报警 Id 过滤（仅报警事件有效，GetLatestAlarmEvent 语义）</summary>
     public string? AlarmId { get; init; }
 
+    /// <summary>报警名称过滤（仅报警事件有效；历史查询页下拉与 WPF 同口径）</summary>
+    public string? AlarmName { get; init; }
+
     /// <summary>是否只取最新一条（按时间倒序第一条，配合 To 实现 GetLatest* 语义）。默认 false。</summary>
     public bool LatestFirst { get; init; }
 

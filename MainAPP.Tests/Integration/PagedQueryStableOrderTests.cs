@@ -77,6 +77,26 @@ public class PagedQueryStableOrderTests : IDisposable
     }
 
     [Fact]
+    public void ProductionLogs_Sampled15Min_KeepsLastInBucket()
+    {
+        var t = new DateTime(2026, 7, 22, 10, 0, 0);
+        using (var ctx = _db.CreateProductionLogContext())
+        {
+            ctx.ProductionLogs.AddRange(
+                new ProductionLog { DeviceId = "dev-1", DeviceName = "设备1", ShiftName = "白班", OkProduction = 10, Timestamp = t.AddMinutes(1) },
+                new ProductionLog { DeviceId = "dev-1", DeviceName = "设备1", ShiftName = "白班", OkProduction = 12, Timestamp = t.AddMinutes(10) },
+                new ProductionLog { DeviceId = "dev-1", DeviceName = "设备1", ShiftName = "白班", OkProduction = 20, Timestamp = t.AddMinutes(16) });
+            ctx.SaveChanges();
+        }
+
+        var store = new ProductionHistoryStore(_db, NullLogger<ProductionHistoryStore>.Instance);
+        var sampled = store.QueryProductionLogsSampled15Min(t.AddMinutes(-1), t.AddMinutes(30), "dev-1", "白班");
+        Assert.Equal(2, sampled.Count);
+        Assert.Equal(12, sampled[0].OkProduction);
+        Assert.Equal(20, sampled[1].OkProduction);
+    }
+
+    [Fact]
     public void AlarmEvents_SameTimestamp_PagedWithoutDupOrLoss()
     {
         var t = new DateTime(2026, 7, 22, 10, 0, 0);

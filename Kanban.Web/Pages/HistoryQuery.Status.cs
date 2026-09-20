@@ -27,10 +27,9 @@ public partial class HistoryQuery
     private object? StGanttOption { get; set; }
     private string? StInsight { get; set; }
     private string? StError { get; set; }
+    private bool StTruncated { get; set; }
 
-    // 窗口缓存：全量拉取一次（事件型数据量小，与 WPF Remote 一致），翻页客户端切
-    private List<StatusTransitionRecordDto> _stAll = [];
-    private int _stInitialState = 1;
+    // 窗口缓存：分析走服务端 DTO；表格服务端分页
     private DateTime _stFrom;
     private DateTime _stTo;
     private string? _stDevice;
@@ -70,44 +69,28 @@ public partial class HistoryQuery
         StDailyOption = null;
         StGanttOption = null;
         StInsight = null;
+        StTruncated = false;
         try
         {
-            var (all, _) = await FetchAllAsync<StatusTransitionRecordDto>(
-                HistoryQueryType.StatusTransition, _stFrom, _stTo, _stDevice, _stShift, r => r.StatusTransitions);
-            _stAll = all;
-            StTotalCount = all.Count;
+            var analysis = await HistoryFetch.AnalyzeStatusWindowAsync(
+                Dashboard, _stFrom, _stTo, _stDevice, _stShift);
+            StTruncated = analysis.Truncated;
+            StTotalCount = analysis.TotalCount;
+            StRunSeconds = analysis.RunSeconds;
+            StAlarmSeconds = analysis.AlarmSeconds;
+            StPauseSeconds = analysis.PausedSeconds;
+            StOfflineSeconds = analysis.OfflineSeconds;
 
-            // 初始状态：窗口前最近一条的 CurrentState（LatestFirst 语义，WPF Remote 同实现）
-            var initialState = 1;
-            var lastBefore = await FetchLatestBeforeAsync<StatusTransitionRecordDto>(
-                HistoryQueryType.StatusTransition, _stFrom, _stDevice, _stShift, r => r.StatusTransitions);
-            if (lastBefore.Count > 0)
-                initialState = (int)lastBefore[0].CurrentState;
-            _stInitialState = initialState;
-
-            var effectiveTo = _stTo > Dashboard.ServerNow ? Dashboard.ServerNow : _stTo;
-            var durations = StatusAnalysis.CalculateStateDurations(_stAll, _stFrom, effectiveTo, initialState, Dashboard.ServerNow);
-            StRunSeconds = durations.RunTime;
-            StAlarmSeconds = durations.AlarmTime;
-            StPauseSeconds = durations.PausedTime;
-            // 离线时长仅统计展示，不参与 OEE（与 WPF StatusQueryViewModel 同口径）
-            StOfflineSeconds = durations.OfflineTime;
-
-            var daily = StatusAnalysis.BuildDailyDurations(_stAll, _stFrom, effectiveTo, initialState, Dashboard.ServerNow);
             StBuildPieOption();
-            StBuildDailyOption(daily);
-            StBuildGanttOption(StatusAnalysis.BuildSegments(_stAll, _stFrom, _stTo, initialState, Dashboard.ServerNow));
+            StBuildDailyOption(analysis.Daily.Select(d => (d.Date, d.RunHours, d.AlarmHours, d.PauseHours)).ToList());
+            StBuildGanttOption(analysis.Segments.Select(s => (s.Start, s.End, s.State)).ToList());
 
             if (StTotalCount > 0)
-                StInsight = StatusAnalysis.BuildInsight(_stAll, _stFrom, _stTo, initialState, L.T, Dashboard.ServerNow);
+                StInsight = StatusAnalysis.BuildInsight(analysis.Segments, _stFrom, _stTo, L.T);
 
-            ActiveShiftOptions = _stAll.Select(t => t.ShiftName)
-                .Where(n => !string.IsNullOrEmpty(n))
-                .Distinct()
-                .OrderBy(n => n)
-                .ToList();
+            ActiveShiftOptions = analysis.ShiftNames.ToList();
 
-            (StRows, StTotalPages) = PageItems(_stAll, StPage, StatusTablePageSize);
+            await StLoadTablePageAsync();
             StHasQueried = true;
         }
         catch (Exception)
@@ -247,28 +230,40 @@ public partial class HistoryQuery
         };
     }
 
-    private void StPrevPage()
+    private async Task StLoadTablePageAsync()
+    {
+        var resp = await QueryTablePageAsync(
+            HistoryQueryType.StatusTransition, _stFrom, _stTo, _stDevice, _stShift, StPage, StatusTablePageSize);
+        StTotalCount = resp.Total;
+        StTotalPages = ProductionAnalysis.CalcTotalPages(resp.Total, StatusTablePageSize);
+        StRows = resp.StatusTransitions.ToList();
+    }
+
+    private async Task StPrevPage()
     {
         if (StPage <= 1) return;
         StPage--;
-        (StRows, StTotalPages) = PageItems(_stAll, StPage, StatusTablePageSize);
+        await StLoadTablePageAsync();
     }
 
-    private void StNextPage()
+    private async Task StNextPage()
     {
         if (StPage >= StTotalPages) return;
         StPage++;
-        (StRows, StTotalPages) = PageItems(_stAll, StPage, StatusTablePageSize);
+        await StLoadTablePageAsync();
     }
 
-    /// <summary>导出窗口全量（_stAll），与头部汇总行口径一致（旧实现只导出当前页）。</summary>
+    /// <summary>导出窗口全量（用户点击时分页拉取；与头部汇总行口径一致）。</summary>
     private async Task StExportCsvAsync()
     {
-        if (_stAll.Count == 0)
+        if (StTotalCount == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
         }
+
+        var (all, _) = await FetchAllAsync<StatusTransitionRecordDto>(
+            HistoryQueryType.StatusTransition, _stFrom, _stTo, _stDevice, _stShift, r => r.StatusTransitions);
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine(L.T("Csv_SumStatus",
@@ -279,7 +274,7 @@ public partial class HistoryQuery
         sb.AppendLine($"# {StInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_PrevState")), C(L.T("Csv_CurrState")), C(L.T("Csv_PrevStateText")), C(L.T("Csv_CurrStateText")), C(L.T("Csv_Shift"))));
-        foreach (var r in _stAll)
+        foreach (var r in all)
         {
             sb.AppendLine(string.Join(',',
                 C(r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName),
@@ -308,6 +303,6 @@ public partial class HistoryQuery
         StGanttOption = null;
         StInsight = null;
         StError = null;
-        _stAll = [];
+        StTruncated = false;
     }
 }

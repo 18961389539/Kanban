@@ -85,20 +85,14 @@ public partial class HistoryQuery
             ProdIsLoading = false; // 表格就绪：立即渲染结果区（KPI/图表显示占位/分析中）
             StateHasChanged();
 
-            // 2) 窗口全量（KPI/图表/洞察）——并发拉取，完成后填充
+            // 2) 窗口分析（KPI/图表/洞察）——服务端聚合，旧 Collector 自动回退分页全量
             ProdAnalyzing = true;
-            var (window, windowTruncated) = await FetchAllAsync<ProductionLogDto>(
-                HistoryQueryType.ProductionLog, _prodFrom, _prodTo, _prodDeviceFilter, _prodShiftFilter, r => r.ProductionLogs);
-            _prodWindow = window;
-            if (_prodWindow.Count > 0)
-            {
-                // 基准：窗口起点前 1 天、全部班次（不按班次过滤，靠班次名变化识别同一班次实例）
-                var (baseline, baselineTruncated) = await FetchAllAsync<ProductionLogDto>(
-                    HistoryQueryType.ProductionLog, _prodFrom.AddDays(-1), _prodFrom, _prodDeviceFilter, null, r => r.ProductionLogs);
-                _prodBaseline = baseline;
-                ProdTruncated = windowTruncated || baselineTruncated;
-            }
-            ProdApplyAnalysis();
+            var analysis = await HistoryFetch.AnalyzeProductionWindowAsync(
+                Dashboard, _prodFrom, _prodTo, _prodDeviceFilter, _prodShiftFilter);
+            _prodWindow = analysis.CompactLogs.ToList();
+            _prodBaseline = [];
+            ProdTruncated = analysis.Truncated;
+            ProdApplyAnalysis(analysis);
         }
         catch (Exception)
         {
@@ -117,24 +111,18 @@ public partial class HistoryQuery
     }
 
     /// <summary>KPI/图表/洞察/班次下拉（口径与 WPF ProductionQueryViewModel.Query 对齐）。</summary>
-    private void ProdApplyAnalysis()
+    private void ProdApplyAnalysis(ProductionWindowAnalysisDto analysis)
     {
-        ProdTotalOk = 0;
-        ProdTotalNg = 0;
-        ProdQualityRate = 0;
-        ProdChartData = [];
+        ProdTotalOk = analysis.Ok;
+        ProdTotalNg = analysis.Ng;
+        ProdQualityRate = analysis.QualityRate;
+        ProdChartData = analysis.ChartPoints.Select(p => (p.Time, p.Ok, p.Ng)).ToList();
         ProdInsight = null;
-        if (_prodWindow.Count == 0)
+        if (_prodWindow.Count == 0 && ProdChartData.Count == 0)
         {
             ProdAnalysisDone = true;
             return;
         }
-
-        var (ok, ng) = ProductionAnalysis.SumWindowProduction(_prodWindow, _prodBaseline, _prodFrom);
-        ProdTotalOk = ok;
-        ProdTotalNg = ng;
-        // 合格率口径：OeeCalculator.CalculateQualityRate = ok / (ok+ng)（0 保底），Web 端本地移植
-        ProdQualityRate = ok + ng > 0 ? Math.Clamp((double)ok / (ok + ng), 0, 1) : 0;
 
         ActiveShiftOptions = _prodWindow.Select(p => p.ShiftName)
             .Where(n => !string.IsNullOrEmpty(n))
@@ -142,13 +130,10 @@ public partial class HistoryQuery
             .OrderBy(n => n)
             .ToList();
 
-        ProdChartData = ProductionAnalysis.BuildChartData(_prodWindow);
+        if (ProdChartData.Count >= 2)
+            ProdInsight = ProductionAnalysis.BuildInsight(ProdChartData, L.T);
         if (ProdChartData.Count > 0)
-        {
-            if (ProdChartData.Count >= 2)
-                ProdInsight = ProductionAnalysis.BuildInsight(ProdChartData, L.T);
             ProdBuildChartOption();
-        }
         ProdAnalysisDone = true;
     }
 
@@ -231,12 +216,20 @@ public partial class HistoryQuery
     }
 
     /// <summary>
-    /// 导出窗口全量（_prodWindow），与 CSV 头部汇总行（全窗口口径）一致——
-    /// 旧实现只导出表格当前页 50 行，与头部汇总口径矛盾。行序与表格一致：最新在前。
+    /// 导出窗口全量（点击时再分页拉取），与 CSV 头部汇总行（全窗口口径）一致——
+    /// 查询阶段只保留 15 分钟抽样，不能直接当明细导出。
     /// </summary>
     private async Task ProdExportCsvAsync()
     {
-        if (_prodWindow.Count == 0)
+        if (ProdTotalCount == 0 && ProdTotalOk + ProdTotalNg == 0)
+        {
+            ValidationMessage = L.T("Hq_ExportEmpty");
+            return;
+        }
+
+        var (all, _) = await FetchAllAsync<ProductionLogDto>(
+            HistoryQueryType.ProductionLog, _prodFrom, _prodTo, _prodDeviceFilter, _prodShiftFilter, r => r.ProductionLogs);
+        if (all.Count == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
@@ -248,7 +241,7 @@ public partial class HistoryQuery
         sb.AppendLine($"# {ProdInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_Time")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_Shift")), C(L.T("Csv_OkCount")), C(L.T("Csv_NgCount")), C(L.T("Csv_StatusWord"))));
-        foreach (var r in _prodWindow.AsEnumerable().Reverse())
+        foreach (var r in all.AsEnumerable().Reverse())
         {
             sb.AppendLine(string.Join(',',
                 C(r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName), C(r.ShiftName),

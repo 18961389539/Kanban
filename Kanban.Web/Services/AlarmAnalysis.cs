@@ -1,3 +1,4 @@
+using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 
@@ -60,9 +61,36 @@ public static class AlarmAnalysis
 
     /// <summary>待恢复计数：最近事件为 Triggered 的 (DeviceId, AlarmId) 组数（ShiftChange 末事件不算待恢复）。</summary>
     public static int CountPending(List<AlarmEventRecordDto> events)
-        => events
-            .GroupBy(e => new { e.DeviceId, e.AlarmId })
-            .Count(g => g.OrderByDescending(e => e.EventTime).First().EventType == AlarmEventType.Triggered);
+        => AlarmWindowMetrics.CountPending(events);
+
+    /// <summary>服务端窗口统计上的洞察（无全量事件：连锁/待恢复由 DTO 结构化字段承载）。</summary>
+    public static string? BuildInsight(
+        AlarmWindowStatsDto stats,
+        DateTime effectiveTo,
+        Func<string, object[], string> localize)
+    {
+        var chart = stats.Chart.Select(s => (s.AlarmName, s.TriggerCount, s.AvgDurationMin)).ToList();
+        if (chart.Count == 0 || stats.WindowTriggered <= 0) return null;
+
+        var top3 = chart.Take(3).Select(t =>
+        {
+            var ratio = (double)t.TriggerCount / stats.WindowTriggered;
+            return localize("Hq_InsAlarmTop", [t.AlarmName, t.TriggerCount, ratio]);
+        });
+        var sb = new System.Text.StringBuilder(localize("Hq_InsAlarmTop3", [string.Join(" / ", top3)]));
+        if (!string.IsNullOrEmpty(stats.CorrelationPattern) && stats.CorrelationCount >= 2)
+            sb.Append('\n').Append(localize("Hq_InsAlarmChain", [stats.CorrelationPattern, stats.CorrelationCount]));
+        if (stats.PendingTop.Count > 0)
+        {
+            var top = stats.PendingTop.Select(p =>
+            {
+                var dur = p.Minutes >= 60 ? $"{p.Minutes / 60.0:F1}h" : $"{p.Minutes:F0}min";
+                return localize("Hq_InsAlarmPendingItem", [p.AlarmName, dur, p.TriggerTime.ToString("MM-dd HH:mm")]);
+            });
+            sb.Append('\n').Append(localize("Hq_InsAlarmPending", [string.Join(" / ", top)]));
+        }
+        return sb.ToString();
+    }
 
     /// <summary>
     /// 报警洞察（按需本地化）：TOP3 频次 + 连锁触发模式（5 分钟窗口，≥2 次才报告）+ 待恢复时长排行 Top3。
@@ -167,41 +195,12 @@ public static class AlarmAnalysis
     public sealed record AlarmTop(string AlarmName, string DeviceName, int TriggerCount, double TotalDurationMinutes);
 
     /// <summary>
-    /// Top 排行：按 (报警名, 设备名) 分组统计触发次数与累计持续时长（Triggered→首个后续 Recovered 配对，
-    /// 每条 Recovered 只消费一次——重触发/抖动场景下避免两条触发配对到同一条恢复导致时长重复累计，
-    /// 与 ReviewAnalysis.CalculateAlarmDurationHours 同范式，审查修复 2026-08-15）。
-    /// 按触发次数降序，与 WPF AlarmCenterViewModel.RefreshStats 的 Top N 口径一致（审查修复 2026-08-14）。
+    /// Top 排行：委托 <see cref="Kanban.Analysis.AlarmWindowMetrics.BuildTop"/>（Collector 窗口统计同口径）。
     /// </summary>
     public static List<AlarmTop> BuildTopStats(List<AlarmEventRecordDto> events)
-    {
-        // 每个 (DeviceId, AlarmId) 的恢复记录按时间升序入队，消费后出队
-        var recovers = events
-            .Where(e => e.EventType == AlarmEventType.Recovered)
-            .GroupBy(e => new { e.DeviceId, e.AlarmId })
-            .ToDictionary(k => k.Key, v => new Queue<AlarmEventRecordDto>(v.OrderBy(e => e.EventTime)));
-
-        return events
-            .Where(e => e.EventType == AlarmEventType.Triggered)
-            .GroupBy(e => new { e.AlarmName, e.DeviceName })
-            .Select(g =>
-            {
-                double totalMinutes = 0;
-                foreach (var t in g.OrderBy(e => e.EventTime))
-                {
-                    var key = new { t.DeviceId, t.AlarmId };
-                    if (!recovers.TryGetValue(key, out var recQueue)) continue;
-                    // 丢弃早于本次触发的恢复（上次触发已消费或触发前残留）
-                    while (recQueue.Count > 0 && recQueue.Peek().EventTime <= t.EventTime)
-                        recQueue.Dequeue();
-                    if (recQueue.Count == 0) continue;
-                    var recovery = recQueue.Dequeue();  // 消费：每条恢复只配对一次
-                    totalMinutes += (recovery.EventTime - t.EventTime).TotalMinutes;
-                }
-                return new AlarmTop(g.Key.AlarmName, g.Key.DeviceName, g.Count(), totalMinutes);
-            })
-            .OrderByDescending(x => x.TriggerCount)
+        => Kanban.Analysis.AlarmWindowMetrics.BuildTop(events, int.MaxValue)
+            .Select(t => new AlarmTop(t.AlarmName, t.DeviceName, t.TriggerCount, t.TotalDurationMinutes))
             .ToList();
-    }
 
     /// <summary>报警事件类型 → 当前语言文本（对齐 WPF HistoryQueryHelper.GetEventTypeText）。</summary>
     public static string GetEventTypeText(AlarmEventType type, Func<string, object[], string> localize) => type switch

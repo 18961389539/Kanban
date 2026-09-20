@@ -24,13 +24,13 @@ public partial class HistoryQuery
     private object? AlChartOption { get; set; }
     private string? AlInsight { get; set; }
     private string? AlError { get; set; }
+    private bool AlTruncated { get; set; }
 
     /// <summary>报警名称筛选（查询后按窗口实际报警名刷新下拉，WPF 同口径）。</summary>
     private string AlarmName { get; set; } = "";
     private List<string> AlarmNameOptions { get; set; } = [];
 
-    // 窗口缓存：全量拉取一次，翻页客户端切（事件型数据量小，与 WPF Remote 一致）
-    private List<AlarmEventRecordDto> _alAll = [];
+    // 窗口缓存：分析走服务端 DTO；表格服务端分页
     private DateTime _alFrom;
     private DateTime _alTo;
     private string? _alDevice;
@@ -66,43 +66,25 @@ public partial class HistoryQuery
         AlAnalysisDone = false;
         AlChartOption = null;
         AlInsight = null;
+        AlTruncated = false;
         try
         {
-            var (all, _) = await FetchAllAsync<AlarmEventRecordDto>(
-                HistoryQueryType.AlarmEvent, _alFrom, _alTo, _alDevice, _alShift, r => r.AlarmEvents);
+            var stats = await HistoryFetch.AnalyzeAlarmWindowAsync(
+                Dashboard, _alFrom, _alTo, _alDevice, _alShift, alarmName: _alAlarmName);
 
-            // 报警名称过滤（WPF Remote 同语义：服务端不支持按名过滤，拉全量后客户端过滤）
-            var filtered = _alAlarmName is null
-                ? all
-                : all.Where(e => e.AlarmName == _alAlarmName).ToList();
-            _alAll = filtered;
-            AlTotalCount = filtered.Count;
+            AlTruncated = stats.Truncated;
+            AlTriggered = stats.WindowTriggered;
+            AlRecovered = stats.WindowRecovered;
+            AlPending = stats.Pending;
+            AlarmNameOptions = stats.AlarmNames.ToList();
+            ActiveShiftOptions = stats.ShiftNames.ToList();
 
-            AlTriggered = filtered.Count(e => e.EventType == AlarmEventType.Triggered);
-            AlRecovered = filtered.Count(e => e.EventType == AlarmEventType.Recovered);
-            AlPending = AlarmAnalysis.CountPending(filtered);
-
-            AlarmNameOptions = filtered
-                .Where(e => !string.IsNullOrEmpty(e.AlarmName))
-                .Select(e => e.AlarmName!)
-                .Distinct()
-                .OrderBy(n => n)
-                .ToList();
-
-            ActiveShiftOptions = filtered.Select(e => e.ShiftName)
-                .Where(n => !string.IsNullOrEmpty(n))
-                .Distinct()
-                .OrderBy(n => n)
-                .ToList();
-
-            var stats = AlarmAnalysis.BuildStats(filtered);
-            AlBuildChartOption(stats);
-
+            AlBuildChartOption(stats.Chart.Select(s => (s.AlarmName, s.TriggerCount, s.AvgDurationMin)).ToList());
             var effectiveTo = _alTo > Dashboard.ServerNow ? Dashboard.ServerNow : _alTo;
-            if (stats.Count > 0 && AlTriggered > 0)
-                AlInsight = AlarmAnalysis.BuildInsight(stats, AlTriggered, filtered, effectiveTo, L.T);
+            if (stats.Chart.Count > 0 && AlTriggered > 0)
+                AlInsight = AlarmAnalysis.BuildInsight(stats, effectiveTo, L.T);
 
-            (AlRows, AlTotalPages) = PageItems(filtered, AlPage, AlarmTablePageSize);
+            await AlLoadTablePageAsync();
             AlAnalysisDone = true;
             AlHasQueried = true;
         }
@@ -151,35 +133,49 @@ public partial class HistoryQuery
         };
     }
 
-    private void AlPrevPage()
+    private async Task AlLoadTablePageAsync()
+    {
+        var resp = await QueryTablePageAsync(
+            HistoryQueryType.AlarmEvent, _alFrom, _alTo, _alDevice, _alShift, AlPage, AlarmTablePageSize, _alAlarmName);
+        AlTotalCount = resp.Total;
+        AlTotalPages = ProductionAnalysis.CalcTotalPages(resp.Total, AlarmTablePageSize);
+        AlRows = resp.AlarmEvents.ToList();
+    }
+
+    private async Task AlPrevPage()
     {
         if (AlPage <= 1) return;
         AlPage--;
-        (AlRows, AlTotalPages) = PageItems(_alAll, AlPage, AlarmTablePageSize);
+        await AlLoadTablePageAsync();
     }
 
-    private void AlNextPage()
+    private async Task AlNextPage()
     {
         if (AlPage >= AlTotalPages) return;
         AlPage++;
-        (AlRows, AlTotalPages) = PageItems(_alAll, AlPage, AlarmTablePageSize);
+        await AlLoadTablePageAsync();
     }
 
-    /// <summary>导出窗口全量（_alAll，含报警名过滤），与头部汇总行口径一致（旧实现只导出当前页）。</summary>
+    /// <summary>导出窗口全量（用户点击时分页拉取；含报警名过滤）。</summary>
     private async Task AlExportCsvAsync()
     {
-        if (_alAll.Count == 0)
+        if (AlTotalCount == 0)
         {
             ValidationMessage = L.T("Hq_ExportEmpty");
             return;
         }
+
+        var (all, _) = await FetchAllAsync<AlarmEventRecordDto>(
+            HistoryQueryType.AlarmEvent, _alFrom, _alTo, _alDevice, _alShift, r => r.AlarmEvents);
+        if (_alAlarmName is not null)
+            all = all.Where(e => e.AlarmName == _alAlarmName).ToList();
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine(L.T("Csv_SumAlarm", AlTriggered, AlRecovered, AlPending));
         sb.AppendLine($"# {AlInsight ?? "—"}");
         sb.AppendLine(string.Join(',',
             C(L.T("Csv_EventTime")), C(L.T("Csv_DeviceId")), C(L.T("Csv_DeviceName")), C(L.T("Csv_AlarmId")), C(L.T("Csv_AlarmName")), C(L.T("Csv_PlcAddress")), C(L.T("Csv_EventType")), C(L.T("Csv_EventTypeText")), C(L.T("Csv_Shift"))));
-        foreach (var r in _alAll)
+        foreach (var r in all)
         {
             sb.AppendLine(string.Join(',',
                 C(r.EventTime.ToString("yyyy-MM-dd HH:mm:ss")), C(r.DeviceId), C(r.DeviceName),
@@ -206,8 +202,8 @@ public partial class HistoryQuery
         AlChartOption = null;
         AlInsight = null;
         AlError = null;
+        AlTruncated = false;
         AlarmName = "";
         AlarmNameOptions = [];
-        _alAll = [];
     }
 }

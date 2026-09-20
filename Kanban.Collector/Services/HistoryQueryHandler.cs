@@ -1,8 +1,10 @@
+using Kanban.Analysis;
 using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using DefectSeverity = Kanban.Contracts.Enums.DefectSeverity;
@@ -22,23 +24,319 @@ public sealed class HistoryQueryHandler
     private readonly IHistoryQueryExecutor _executor;
     private readonly DefectHistoryStore _defectStore;
     private readonly ILogger<HistoryQueryHandler> _logger;
+    private readonly IMemoryCache? _cache;
+
+    private const int ProductionCacheTtlSeconds = 12;
+    private const int ProductionCacheBucketSeconds = 15;
 
     public HistoryQueryHandler(
         IHistoryService history,
         IHistoryQueryExecutor executor,
         DefectHistoryStore defectStore,
-        ILogger<HistoryQueryHandler> logger)
+        ILogger<HistoryQueryHandler> logger,
+        IMemoryCache? cache = null)
     {
         _history = history;
         _executor = executor;
         _defectStore = defectStore;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<HistoryQueryResponse> QueryAsync(HistoryQueryRequest request, CancellationToken cancellationToken = default)
     {
         // EF Core 查询为同步 IO，且批量落在后台线程；直接包 Task.Run 避免阻塞 SignalR 调度线程
         return await Task.Run(() => QueryCore(request), cancellationToken);
+    }
+
+    /// <summary>
+    /// 产量窗口服务端分析：全量 SQL 留在 Collector，屏端只收 KPI + 15 分钟抽样。
+    /// </summary>
+    public async Task<ProductionWindowAnalysisDto> AnalyzeProductionWindowAsync(
+        HistoryQueryRequest request, CancellationToken cancellationToken = default)
+        => await Task.Run(() => AnalyzeProductionWindowCore(request), cancellationToken);
+
+    private ProductionWindowAnalysisDto AnalyzeProductionWindowCore(HistoryQueryRequest request)
+    {
+        try
+        {
+            var (from, to, truncated) = NormalizeRange(request);
+            if (_cache != null && !request.WorkOrderId.HasValue && !string.IsNullOrEmpty(request.DeviceId))
+            {
+                var key = ProductionCacheKey(request.DeviceId, request.ShiftName, from, to);
+                if (_cache.TryGetValue(key, out ProductionWindowAnalysisDto? cached) && cached is not null)
+                    return cached;
+                var computed = ComputeProductionWindow(request, from, to, truncated);
+                if (computed.ErrorCode == HistoryErrorCode.None)
+                    _cache.Set(key, computed, TimeSpan.FromSeconds(ProductionCacheTtlSeconds));
+                return computed;
+            }
+            return ComputeProductionWindow(request, from, to, truncated);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "产量窗口分析失败 Device={DeviceId}", request.DeviceId);
+            return new ProductionWindowAnalysisDto
+            {
+                ErrorCode = HistoryErrorCode.QueryFailed,
+                Error = $"产量窗口分析失败: {ex.Message}",
+            };
+        }
+    }
+
+    private ProductionWindowAnalysisDto ComputeProductionWindow(
+        HistoryQueryRequest request, DateTime from, DateTime to, bool truncated)
+    {
+        List<ProductionLogDto> logs;
+        List<ProductionLogDto> baseline;
+
+        if (request.WorkOrderId.HasValue)
+        {
+            var all = (_history.QueryProductionLogsByWorkOrder(request.WorkOrderId.Value) ?? [])
+                .Select(ToDto)
+                .ToList();
+            logs = all.Where(p => p.Timestamp >= from && p.Timestamp <= to).ToList();
+            var baselineFrom = from.AddDays(-1);
+            baseline = all.Where(p => p.Timestamp >= baselineFrom && p.Timestamp < from).ToList();
+        }
+        else
+        {
+            var spanFrom = from.AddDays(-1);
+            List<ProductionLogDto> sampled;
+            try
+            {
+                sampled = (_executor.QueryProductionLogsSampled15Min(spanFrom, to, request.DeviceId, request.ShiftName) ?? [])
+                    .Select(ToDto)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "产量 15 分钟抽样失败，回退两次 Strict");
+                var window = (_executor.QueryProductionLogsStrict(from, to, request.DeviceId, request.ShiftName) ?? [])
+                    .Select(ToDto)
+                    .ToList();
+                var baseLogs = (_executor.QueryProductionLogsStrict(spanFrom, from, request.DeviceId, request.ShiftName) ?? [])
+                    .Select(ToDto)
+                    .ToList();
+                sampled = window.Concat(baseLogs).OrderBy(p => p.Timestamp).ToList();
+            }
+            logs = sampled.Where(p => p.Timestamp >= from && p.Timestamp <= to).ToList();
+            baseline = sampled.Where(p => p.Timestamp >= spanFrom && p.Timestamp < from).ToList();
+        }
+
+        var (ok, ng) = ProductionWindowMetrics.SumWindowProduction(logs, baseline, from);
+        var compact = ProductionWindowMetrics.Sample15Min(logs);
+        var chart = ProductionWindowMetrics.BuildChartData(logs);
+        return new ProductionWindowAnalysisDto
+        {
+            Truncated = truncated,
+            Ok = ok,
+            Ng = ng,
+            QualityRate = Kanban.Analysis.OeeCalculator.CalculateQualityRate(ok, ng),
+            ChartPoints = chart
+                .Select(p => new ProductionChartPointDto { Time = p.Time, Ok = p.Ok, Ng = p.Ng })
+                .ToList(),
+            CompactLogs = compact,
+        };
+    }
+
+    private static string ProductionCacheKey(string deviceId, string? shiftName, DateTime from, DateTime to)
+    {
+        var ticks = TimeSpan.FromSeconds(ProductionCacheBucketSeconds).Ticks;
+        var bucket = new DateTime(to.Ticks / ticks * ticks, to.Kind);
+        return $"prodwin|{deviceId}|{shiftName}|{from.Ticks}|{bucket.Ticks}";
+    }
+
+    /// <summary>
+    /// 报警窗口服务端统计：全量 SQL 留在 Collector，屏端只收 KPI / Top / 最近事件。
+    /// </summary>
+    public async Task<AlarmWindowStatsDto> AnalyzeAlarmWindowAsync(
+        HistoryQueryRequest request, CancellationToken cancellationToken = default)
+        => await Task.Run(() => AnalyzeAlarmWindowCore(request), cancellationToken);
+
+    private AlarmWindowStatsDto AnalyzeAlarmWindowCore(HistoryQueryRequest request)
+    {
+        try
+        {
+            var (from, to, truncated) = NormalizeRange(request);
+            var todayStart = to.Date;
+            var yesterdayStart = todayStart.AddDays(-1);
+            var spanFrom = from < yesterdayStart ? from : yesterdayStart;
+            var events = (_executor.QueryAlarmEventsStrict(spanFrom, to, request.DeviceId, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+            if (!string.IsNullOrWhiteSpace(request.AlarmName))
+                events = events.Where(e => e.AlarmName == request.AlarmName).ToList();
+            var dto = AlarmWindowMetrics.Build(events, from, to, truncated);
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "报警窗口统计失败 Device={DeviceId}", request.DeviceId);
+            return new AlarmWindowStatsDto
+            {
+                ErrorCode = HistoryErrorCode.QueryFailed,
+                Error = $"报警窗口统计失败: {ex.Message}",
+            };
+        }
+    }
+
+    public async Task<StatusWindowAnalysisDto> AnalyzeStatusWindowAsync(
+        HistoryQueryRequest request, CancellationToken cancellationToken = default)
+        => await Task.Run(() => AnalyzeStatusWindowCore(request), cancellationToken);
+
+    private StatusWindowAnalysisDto AnalyzeStatusWindowCore(HistoryQueryRequest request)
+    {
+        try
+        {
+            var (from, to, truncated) = NormalizeRange(request);
+            if (string.IsNullOrEmpty(request.DeviceId))
+                return new StatusWindowAnalysisDto { Truncated = truncated };
+
+            var trans = (_executor.QueryStatusTransitionsStrict(request.DeviceId, from, to, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+            var lastBefore = _executor.GetLatestStatusBeforeStrict(request.DeviceId, from, request.ShiftName);
+            var initialState = lastBefore is null ? 1 : lastBefore.CurrentState;
+            var now = DateTime.Now;
+            var durations = StatusWindowMetrics.CalculateStateDurations(trans, from, to, initialState, now);
+            var daily = StatusWindowMetrics.BuildDailyDurations(trans, from, to, initialState, now);
+            var segments = StatusWindowMetrics.BuildSegments(trans, from, to, initialState, now);
+            return new StatusWindowAnalysisDto
+            {
+                Truncated = truncated,
+                InitialState = initialState,
+                TotalCount = trans.Count,
+                RunSeconds = durations.RunTime,
+                AlarmSeconds = durations.AlarmTime,
+                PausedSeconds = durations.PausedTime,
+                OfflineSeconds = durations.OfflineTime,
+                Daily = daily,
+                Segments = segments,
+                ShiftNames = trans.Select(t => t.ShiftName)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList(),
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "状态窗口分析失败 Device={DeviceId}", request.DeviceId);
+            return new StatusWindowAnalysisDto
+            {
+                ErrorCode = HistoryErrorCode.QueryFailed,
+                Error = $"状态窗口分析失败: {ex.Message}",
+            };
+        }
+    }
+
+    public async Task<ReviewWindowAnalysisDto> AnalyzeReviewWindowAsync(
+        HistoryQueryRequest request, CancellationToken cancellationToken = default)
+        => await Task.Run(() => AnalyzeReviewWindowCore(request), cancellationToken);
+
+    private ReviewWindowAnalysisDto AnalyzeReviewWindowCore(HistoryQueryRequest request)
+    {
+        try
+        {
+            var (from, to, truncated) = NormalizeRange(request);
+            if (string.IsNullOrEmpty(request.DeviceId))
+                return new ReviewWindowAnalysisDto { Truncated = truncated };
+
+            var comparisonFrom = from - (to - from);
+            var windowProd = AnalyzeProductionWindowCore(request);
+            if (windowProd.ErrorCode != HistoryErrorCode.None)
+            {
+                return new ReviewWindowAnalysisDto
+                {
+                    ErrorCode = windowProd.ErrorCode,
+                    Error = windowProd.Error,
+                    Truncated = windowProd.Truncated,
+                };
+            }
+            var compareProd = AnalyzeProductionWindowCore(request with
+            {
+                QueryType = HistoryQueryType.ProductionLog,
+                From = comparisonFrom,
+                To = from,
+            });
+
+            var trans = (_executor.QueryStatusTransitionsStrict(request.DeviceId, from, to, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+            var compTrans = (_executor.QueryStatusTransitionsStrict(request.DeviceId, comparisonFrom, from, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+            var alarms = (_executor.QueryAlarmEventsStrict(from, to, request.DeviceId, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+            var compAlarms = (_executor.QueryAlarmEventsStrict(comparisonFrom, from, request.DeviceId, request.ShiftName) ?? [])
+                .Select(ToDto)
+                .ToList();
+
+            List<DefectSnapshotRecordDto> defects = [];
+            List<DefectSnapshotRecordDto> compDefects = [];
+            if (_defectStore is not null)
+            {
+                defects = _defectStore.QueryHourlyBounds(from, to, request.DeviceId).Select(ToDto).ToList();
+                compDefects = _defectStore.QueryHourlyBounds(comparisonFrom, from, request.DeviceId).Select(ToDto).ToList();
+            }
+
+            var lastBefore = _executor.GetLatestStatusBeforeStrict(request.DeviceId, from, request.ShiftName);
+            var initialState = lastBefore is null ? 1 : lastBefore.CurrentState;
+            var compLastBefore = _executor.GetLatestStatusBeforeStrict(request.DeviceId, comparisonFrom, request.ShiftName);
+            var compInitial = compLastBefore is null ? 1 : compLastBefore.CurrentState;
+            var now = DateTime.Now;
+            var effectiveTo = to > now ? now : to;
+            var prod = windowProd.CompactLogs.ToList();
+            var durations = StatusWindowMetrics.CalculateStateDurations(trans, from, effectiveTo, initialState, now);
+            var compDurations = StatusWindowMetrics.CalculateStateDurations(compTrans, comparisonFrom, from, compInitial, now);
+            var defectRows = ReviewWindowMetrics.BuildDefectConcentrations(defects, from, to);
+            var (longestName, longestHours) = ReviewWindowMetrics.FindLongestAlarm(alarms, effectiveTo, now);
+            var (peakHour, peakOk, valleyHour, valleyOk) = ReviewWindowMetrics.FindPeakValley(prod, from, to);
+
+            return new ReviewWindowAnalysisDto
+            {
+                Truncated = truncated || windowProd.Truncated || compareProd.Truncated,
+                Ok = windowProd.Ok,
+                Ng = windowProd.Ng,
+                QualityRate = windowProd.QualityRate,
+                RunSeconds = durations.RunTime,
+                AlarmSeconds = durations.AlarmTime,
+                PausedSeconds = durations.PausedTime,
+                OfflineSeconds = durations.OfflineTime,
+                AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered),
+                AlarmRecovered = alarms.Count(e => e.EventType == AlarmEventType.Recovered),
+                AlarmPending = AlarmWindowMetrics.CountPending(alarms),
+                LongestAlarmName = longestName,
+                LongestAlarmHours = longestHours,
+                PeakHour = peakHour,
+                PeakOk = peakOk,
+                ValleyHour = valleyHour,
+                ValleyOk = valleyOk,
+                BaselineOutput = compareProd.Ok + compareProd.Ng,
+                BaselineQuality = compareProd.QualityRate,
+                BaselineRunSeconds = compDurations.RunTime,
+                BaselineAlarmSeconds = compDurations.AlarmTime,
+                PreviousAlarmTriggered = compAlarms.Count(e => e.EventType == AlarmEventType.Triggered),
+                PreviousDefectCount = ReviewWindowMetrics.BuildDefectConcentrations(compDefects, comparisonFrom, from).Sum(d => d.Count),
+                ChartPoints = windowProd.ChartPoints,
+                Alarms = ReviewWindowMetrics.AnalyzeAlarms(alarms, prod, effectiveTo, now),
+                Timeline = ReviewWindowMetrics.BuildTimeline(trans, alarms, prod, initialState, from, effectiveTo),
+                Defects = defectRows,
+                Shifts = ReviewWindowMetrics.BuildShiftSummaries(prod, alarms),
+                CompactLogs = prod,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "复盘窗口分析失败 Device={DeviceId}", request.DeviceId);
+            return new ReviewWindowAnalysisDto
+            {
+                ErrorCode = HistoryErrorCode.QueryFailed,
+                Error = $"复盘窗口分析失败: {ex.Message}",
+            };
+        }
     }
 
     /// <summary>
@@ -115,7 +413,8 @@ public sealed class HistoryQueryHandler
                 HistoryQueryType.StatusTransition => deviceId is null
                     ? Empty(request, truncated)
                     : BuildStatus(_executor.QueryStatusTransitionsStrict(deviceId, from, to, request.ShiftName).Select(ToDto).ToList(), request, isWindowTruncated: truncated),
-                HistoryQueryType.DefectSnapshot => QueryDefectSnapshotsAll(request, from, to, deviceId, truncated),
+                HistoryQueryType.DefectSnapshot or HistoryQueryType.DefectSnapshotHourly
+                    => QueryDefectSnapshotsAll(request, from, to, deviceId, truncated),
                 _ => Empty(request, truncated),
             };
         }
@@ -219,11 +518,11 @@ public sealed class HistoryQueryHandler
         var (page, pageSize) = HistoryPagination.Normalize(request.Page, request.PageSize);
         if (request.LatestFirst)
         {
-            var (latestItems, _) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, 1, 1);
+            var (latestItems, _) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, 1, 1, request.AlarmName);
             return BuildAlarm(latestItems.Select(ToDto).ToList(), request, totalOverride: 1, isWindowTruncated: truncated);
         }
 
-        var (pageItems, total) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, page, pageSize);
+        var (pageItems, total) = _history.QueryAlarmEventsPaged(from, to, deviceId, request.ShiftName, page, pageSize, request.AlarmName);
         return BuildAlarm(pageItems.Select(ToDto).ToList(), request, total, truncated);
     }
 

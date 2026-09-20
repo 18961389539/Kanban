@@ -13,7 +13,7 @@
         @* 计数颜色状态联动：0 时中性色，非 0 才用红/绿（原恒红/恒绿，无报警也红误导） *@
         <div class="kpi-card" title="@($"{L.T("K709")}\n{ActiveCountText}")"><span class="kpi-label">@L.T("Ac_ActiveCount")</span><span class="kpi-value @(ActiveCount > 0 ? "kpi-ng" : "")">@ActiveCountText</span></div>
         <div class="kpi-card" title="@($"{L.T("K713")}\n{AffectedDeviceCountText}")"><span class="kpi-label">@L.T("Ac_AffectedDevices")</span><span class="kpi-value">@AffectedDeviceCountText</span></div>
-        <div class="kpi-card" title="@($"{L.T("K710")}\n{TodayTriggerText}")"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span></div>
+        <div class="kpi-card" title="@($"{L.T("K710")}\n{TodayTriggerText}")"><span class="kpi-label">@L.T("Ac_TodayTrigger")</span><span class="kpi-value @(TodayTrigger > 0 ? "kpi-ng" : "")">@TodayTriggerText</span><span class="kpi-sub dim">@L.T("Ac_VsYesterday", YesterdayDiffText)</span></div>
         <div class="kpi-card" title="@($"{L.T("K711")}\n{TodayRecoverText}")"><span class="kpi-label">@L.T("Ac_TodayRecover")</span><span class="kpi-value @(TodayRecover > 0 ? "kpi-ok" : "")">@TodayRecoverText</span></div>
         <div class="kpi-card" title="@($"{L.T("K712")}\n{LongestText}")"><span class="kpi-label">@L.T("Ac_Longest")</span><span class="kpi-value">@LongestText</span></div>
     </section>
@@ -84,6 +84,10 @@
         }
         else if (StatsLoaded)
         {
+            @if (StatsTruncated)
+            {
+                <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+            }
             <div class="chart-grid two">
                 <div>
                     <div class="card-title sub">@L.T("Ac_TopTitle")</div>
@@ -241,11 +245,21 @@
     private int _statsVersion;
     private int TodayTrigger { get; set; }
     private int TodayRecover { get; set; }
+    private int YesterdayTrigger { get; set; }
+    private bool StatsTruncated { get; set; }
     private List<(int Rank, string AlarmName, string DeviceName, AlarmLevel Level, int TriggerCount, double TotalDurationMinutes)> TopAlarms { get; set; } = [];
     private List<AlarmEventRecordDto> RecentEvents { get; set; } = [];
 
     private string TodayTriggerText => TodayTrigger.ToString("N0");
     private string TodayRecoverText => TodayRecover.ToString("N0");
+    private string YesterdayDiffText
+    {
+        get
+        {
+            var diff = TodayTrigger - YesterdayTrigger;
+            return diff > 0 ? $"+{diff:N0}" : diff.ToString("N0");
+        }
+    }
 
     private void OnRangeChanged(ChangeEventArgs e)
     {
@@ -321,30 +335,22 @@ private void OnRenderTick()
         var version = ++_statsVersion;
         StatsLoading = true;
         StatsError = null;
+        StatsTruncated = false;
         try
         {
             // 统计窗口以工厂墙钟为准（浏览器时区可能与工厂不同）
             var now = Dashboard.ServerNow;
             var from = now.AddHours(-RangeHours);
-            var todayStart = now.Date;
+            var stats = await HistoryFetch.AnalyzeAlarmWindowAsync(Dashboard, from, now, null, null);
 
-            // 单次拉取 [min(窗口起点, 今日0点), now]，内存切分窗口事件与今日事件（审查修复 2026-08-14，
-            // 原实现每次刷新两次全量拉取，24h 范围时高度重叠）
-            var (allEvents, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
-                Dashboard, HistoryQueryType.AlarmEvent, from < todayStart ? from : todayStart, now, null, null, r => r.AlarmEvents);
-
-            var windowEvents = allEvents.Where(e => e.EventTime >= from).ToList();
-            var todayEvents = allEvents.Where(e => e.EventTime >= todayStart).ToList();
-
-            // 版本守卫：期间已有更新的刷新发起（如再次切换范围），本次结果作废
             if (version != _statsVersion) return;
 
-            TodayTrigger = todayEvents.Count(e => e.EventType == AlarmEventType.Triggered);
-            TodayRecover = todayEvents.Count(e => e.EventType == AlarmEventType.Recovered);
+            TodayTrigger = stats.TodayTriggered;
+            TodayRecover = stats.TodayRecovered;
+            YesterdayTrigger = stats.YesterdayTriggered;
+            StatsTruncated = stats.Truncated;
 
-            // Top 排行（按触发次数降序，与 WPF 口径一致）
-            var top = AlarmAnalysis.BuildTopStats(windowEvents).Take(TopAlarmsCount).ToList();
-            TopAlarms = top.Select((t, i) => (
+            TopAlarms = stats.Top.Take(TopAlarmsCount).Select((t, i) => (
                 Rank: i + 1,
                 t.AlarmName,
                 t.DeviceName,
@@ -352,7 +358,7 @@ private void OnRenderTick()
                 t.TriggerCount,
                 t.TotalDurationMinutes)).ToList();
 
-            RecentEvents = windowEvents.OrderByDescending(e => e.EventTime).Take(MaxRecentEvents).ToList();
+            RecentEvents = stats.Recent.ToList();
             StatsLoaded = true;
         }
         catch (Exception)

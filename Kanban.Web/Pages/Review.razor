@@ -73,6 +73,10 @@
     }
     else
     {
+        @if (Result.Truncated)
+        {
+            <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+        }
         @* ──── 首屏摘要条 ──── *@
         <div class="review-summary">
             <span class="rs-item" title="@L.Tip("Rv_Tip_Health", Result.HealthScore)"><b>@L.T("Rv_Health")</b> <span class="rs-strong">@Result.HealthScore</span></span>
@@ -238,6 +242,47 @@
             </table>
             </div>
         </section>
+
+        @* ──── 缺陷集中度 ──── *@
+        <section class="card">
+            <div class="card-title">@L.T("Rv_Defects")</div>
+            @if (Result.Defects.Count == 0)
+            {
+                <div class="no-data">@L.T("Rv_DefectEmpty")</div>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Rv_DefectName")</th>
+                            <th>@L.T("Hq_Shift")</th>
+                            <th>@L.T("Rv_DefectHour")</th>
+                            <th class="num">@L.T("Ac_Count")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Result.Defects)
+                        {
+                            <tr>
+                                <td>@d.DefectName</td>
+                                <td>@d.ShiftName</td>
+                                <td>@d.TimeRangeText</td>
+                                <td class="num kpi-ng">@d.Count.ToString("N0")</td>
+                                <td>
+                                    <div class="time-bar">
+                                        <div class="seg alarm" style="width:@(Math.Clamp(d.Share, 0, 1) * 100)%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    </table>
+                </div>
+            }
+        </section>
     }
 </div>
 
@@ -247,9 +292,6 @@
 
     private List<(string Id, string Name)> DeviceOptions { get; set; } = [];
     private List<DeviceConfigDto> _deviceConfigs = [];
-    // 复盘页并发闸门：限制同时进行的全量历史拉取路数。9 路 FetchAllAsync 全部走同一 SignalR
-    // 查询连接，服务端按序处理 invocation，全并发只会造成 9×内存与请求排队；闸到 2 路降低峰值压力。
-    private readonly SemaphoreSlim _fetchGate = new(2, 2);
     private string DeviceId { get; set; } = "";
     private int QuickIndex { get; set; } = DefaultQuickIndex;
     private string FromText { get; set; } = "";
@@ -274,10 +316,10 @@
         public int HealthScore;
         public List<string> HealthIssues = [];
         public List<ReviewAnalysis.ReviewConclusion> Conclusions = [];
-        public List<ReviewAnalysis.ReviewAlarmItem> Alarms = [];
-        public List<ReviewAnalysis.ReviewSegment> Timeline = [];
-        public List<ReviewAnalysis.ReviewDefectConcentration> Defects = [];
-        public List<ReviewAnalysis.ReviewShiftSummary> Shifts = [];
+        public List<ReviewAlarmItemDto> Alarms = [];
+        public List<ReviewTimelineSegmentDto> Timeline = [];
+        public List<ReviewDefectRowDto> Defects = [];
+        public List<ReviewShiftRowDto> Shifts = [];
         public int BaselineOutput;
         public double BaselineQuality, BaselineOee;
         public string WorkOrderText = "—", ProductText = "—", RecipeText = "—";
@@ -285,6 +327,7 @@
         public string Takeaway = "";
         public List<(DateTime Time, int Ok, int Ng)> ChartData = [];
         public object? TrendOption, AlarmOption, TimelineOption;
+        public bool Truncated;
     }
 
     protected override async Task OnInitializedAsync()
@@ -376,105 +419,65 @@
         {
             var deviceId = DeviceId;
             var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId);
-            var comparisonFrom = from - (to - from);
+            var dto = await HistoryFetch.AnalyzeReviewWindowAsync(Dashboard, from, to, deviceId, null);
 
-            // ── 窗口数据（经并发闸门限流，避免 9 路全量查询同时冲击单一查询连接） ──
-            var windowProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from, to, deviceId, null, r => r.ProductionLogs);
-            var windowTrans = FetchGatedAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, from, to, deviceId, null, r => r.StatusTransitions);
-            var windowAlarm = FetchGatedAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, from, to, deviceId, null, r => r.AlarmEvents);
-            var windowDefect = FetchGatedAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, from, to, deviceId, null, r => r.DefectSnapshots);
-            var baselineProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, from.AddDays(-1), from, deviceId, null, r => r.ProductionLogs);
+            var r = new ReviewResult
+            {
+                Truncated = dto.Truncated,
+            };
 
-            // ── 对比周期数据（经并发闸门限流） ──
-            var compProd = FetchGatedAsync<ProductionLogDto>(Dashboard, HistoryQueryType.ProductionLog, comparisonFrom, from, deviceId, null, r => r.ProductionLogs);
-            var compTrans = FetchGatedAsync<StatusTransitionRecordDto>(Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, from, deviceId, null, r => r.StatusTransitions);
-            var compAlarm = FetchGatedAsync<AlarmEventRecordDto>(Dashboard, HistoryQueryType.AlarmEvent, comparisonFrom, from, deviceId, null, r => r.AlarmEvents);
-            var compDefect = FetchGatedAsync<DefectSnapshotRecordDto>(Dashboard, HistoryQueryType.DefectSnapshotHourly, comparisonFrom, from, deviceId, null, r => r.DefectSnapshots);
-
-            await Task.WhenAll(windowProd, windowTrans, windowAlarm, windowDefect, baselineProd, compProd, compTrans, compAlarm, compDefect);
-
-            var (prod, _) = await windowProd;
-            var (trans, _) = await windowTrans;
-            var (alarms, _) = await windowAlarm;
-            var (defects, _) = await windowDefect;
-            var (baseline, _) = await baselineProd;
-            var (compProdL, _) = await compProd;
-            var (compTransL, _) = await compTrans;
-            var (compAlarmL, _) = await compAlarm;
-            var (compDefectL, _) = await compDefect;
-
-            // 初始状态（LatestFirst）
-            var initialState = 1;
-            var lastBefore = await HistoryFetch.FetchLatestBeforeAsync<StatusTransitionRecordDto>(
-                Dashboard, HistoryQueryType.StatusTransition, from, deviceId, null, r => r.StatusTransitions);
-            if (lastBefore.Count > 0)
-                initialState = (int)lastBefore[0].CurrentState;
-
-            var r = new ReviewResult();
-
-            // ── 产量与 OEE（窗口差分 + 状态时长，口径与 OEE 查询页一致） ──
-            var (ok, ng) = ProductionAnalysis.SumWindowProduction(prod, baseline, from);
+            var ok = dto.Ok;
+            var ng = dto.Ng;
             r.TotalOk = ok;
             r.TotalNg = ng;
-            r.QualityRate = OeeCalculator.CalculateQualityRate(ok, ng);
-            var effectiveTo = to > Dashboard.ServerNow ? Dashboard.ServerNow : to;
-            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState, Dashboard.ServerNow);
+            r.QualityRate = dto.QualityRate;
             var targetCycle = device?.TargetCycle ?? 0;
-            r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, durations.RunTime);
-            r.AvailabilityRate = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
+            r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, dto.RunSeconds);
+            r.AvailabilityRate = OeeCalculator.CalculateAvailabilityRate(dto.RunSeconds, dto.AlarmSeconds);
             r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate, r.AvailabilityRate);
 
-            // ── 报警统计 ──
-            r.AlarmTriggered = alarms.Count(e => e.EventType == AlarmEventType.Triggered);
-            r.AlarmRecovered = alarms.Count(e => e.EventType == AlarmEventType.Recovered);
-            r.AlarmPending = AlarmAnalysis.CountPending(alarms);
-            r.Alarms = ReviewAnalysis.AnalyzeAlarms(alarms, prod, effectiveTo, Dashboard.ServerNow);
-            var (longestName, longestHours) = ReviewAnalysis.FindLongestAlarm(alarms, effectiveTo, Dashboard.ServerNow);
-            // 审查修复 2026-08-13：FindLongestAlarm 返回的已是小时，此前再除 3600 导致显示恒 ≈0.0 h
-            r.LongestDowntimeText = longestHours > 0 ? $"{longestHours:F1} h" : "—";
-            if (longestHours > 0)
+            r.AlarmTriggered = dto.AlarmTriggered;
+            r.AlarmRecovered = dto.AlarmRecovered;
+            r.AlarmPending = dto.AlarmPending;
+            r.Alarms = dto.Alarms.ToList();
+            r.LongestDowntimeText = dto.LongestAlarmHours > 0 ? $"{dto.LongestAlarmHours:F1} h" : "—";
+            if (dto.LongestAlarmHours > 0)
             {
                 r.LongestDowntimeDevice = device?.Name ?? deviceId;
-                r.LongestDowntimeAlarm = longestName;
+                r.LongestDowntimeAlarm = dto.LongestAlarmName;
             }
 
-            // ── 峰值/谷值 + 产量趋势 ──
-            var (peakHour, peakOk, valleyHour, valleyOk) = ReviewAnalysis.FindPeakValley(prod, from, to);
-            r.PeakHour = peakHour;
-            r.PeakOk = peakOk;
-            r.ValleyHour = valleyHour;
-            r.ValleyOk = valleyOk;
-            r.PeakShare = ok > 0 ? (double)peakOk / ok : 0;
-            r.ValleyShare = ok > 0 ? (double)valleyOk / ok : 0;
-            r.ChartData = ProductionAnalysis.BuildChartData(prod);
+            r.PeakHour = dto.PeakHour;
+            r.PeakOk = dto.PeakOk;
+            r.ValleyHour = dto.ValleyHour;
+            r.ValleyOk = dto.ValleyOk;
+            r.PeakShare = ok > 0 ? (double)dto.PeakOk / ok : 0;
+            r.ValleyShare = ok > 0 ? (double)dto.ValleyOk / ok : 0;
+            r.ChartData = dto.ChartPoints.Count > 0
+                ? dto.ChartPoints.Select(p => (p.Time, p.Ok, p.Ng)).ToList()
+                : [];
 
-            // ── 时间线 + 缺陷集中度 + 班次汇总 ──
-            r.Timeline = ReviewAnalysis.BuildTimeline(trans, alarms, prod, initialState, from, effectiveTo);
-            r.Defects = ReviewAnalysis.BuildDefectConcentrations(defects, from, to);
-            r.Shifts = ReviewAnalysis.BuildShiftSummaries(prod, alarms);
+            r.Timeline = dto.Timeline.ToList();
+            r.Defects = dto.Defects.ToList();
+            r.Shifts = dto.Shifts.ToList();
             r.ShiftName = r.Shifts.FirstOrDefault()?.ShiftName ?? "—";
 
-            // ── 对比周期指标 ──
-            var compInitial = 1;
-            var compLastBefore = await HistoryFetch.FetchLatestBeforeAsync<StatusTransitionRecordDto>(
-                Dashboard, HistoryQueryType.StatusTransition, comparisonFrom, deviceId, null, r2 => r2.StatusTransitions);
-            if (compLastBefore.Count > 0)
-                compInitial = (int)compLastBefore[0].CurrentState;
-            var compOkNg = ProductionAnalysis.SumWindowProduction(compProdL, [], comparisonFrom);
-            r.BaselineOutput = compOkNg.Ok + compOkNg.Ng;
-            r.BaselineQuality = OeeCalculator.CalculateQualityRate(compOkNg.Ok, compOkNg.Ng);
-            var compDurations = StatusAnalysis.CalculateStateDurations(compTransL, comparisonFrom, from, compInitial, Dashboard.ServerNow);
-            var compPerf = OeeCalculator.CalculatePerformanceRate(compOkNg.Ok, compOkNg.Ng, targetCycle, compDurations.RunTime);
-            r.BaselineOee = OeeCalculator.CalculateOee(r.BaselineQuality, compPerf,
-                OeeCalculator.CalculateAvailabilityRate(compDurations.RunTime, compDurations.AlarmTime));
+            r.BaselineOutput = dto.BaselineOutput;
+            r.BaselineQuality = dto.BaselineQuality;
+            var baselineOk = dto.BaselineOutput == 0
+                ? 0
+                : (int)Math.Round(dto.BaselineOutput * dto.BaselineQuality);
+            var baselineNg = Math.Max(0, dto.BaselineOutput - baselineOk);
+            r.BaselineOee = OeeCalculator.CalculateOee(
+                dto.BaselineQuality,
+                OeeCalculator.CalculatePerformanceRate(baselineOk, baselineNg, targetCycle, dto.BaselineRunSeconds),
+                OeeCalculator.CalculateAvailabilityRate(dto.BaselineRunSeconds, dto.BaselineAlarmSeconds));
 
-            // ── 健康分 + 结论 ──
-            var prevAlarmCount = compAlarmL.Count(e => e.EventType == AlarmEventType.Triggered);
-            var prevDefectCount = ReviewAnalysis.BuildDefectConcentrations(compDefectL, comparisonFrom, from).Sum(d => d.Count);
             (r.HealthIssues, r.HealthScore) = ReviewAnalysis.CalculateHealth(
-                targetCycle, prod, alarms, r.Timeline, r.Defects, prevAlarmCount, prevDefectCount, from, to, L.T);
+                targetCycle, dto.Ok + dto.Ng, dto.AlarmTriggered, r.Timeline, r.Defects,
+                dto.PreviousAlarmTriggered, dto.PreviousDefectCount, from, to, L.T);
             r.Conclusions = ReviewAnalysis.BuildConclusions(
-                ok, ng, r.AlarmTriggered, longestHours, r.LongestDowntimeDevice, longestName,
+                ok, ng, r.AlarmTriggered, dto.LongestAlarmHours, r.LongestDowntimeDevice, dto.LongestAlarmName,
                 r.Shifts, r.Defects, r.QualityRate, r.Oee, L.T);
 
             // ── 工单/产品/配方 ──
@@ -506,22 +509,6 @@
         finally
         {
             IsLoading = false;
-        }
-    }
-
-    /// <summary>经并发闸门执行全量历史拉取：把同时进行的 FetchAllAsync 路数限制在 _fetchGate 上限内。</summary>
-    private async Task<(List<T> Items, bool Truncated)> FetchGatedAsync<T>(
-        DashboardState dashboard, HistoryQueryType type, DateTime from, DateTime to,
-        string? deviceId, string? shiftName, Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
-    {
-        await _fetchGate.WaitAsync();
-        try
-        {
-            return await HistoryFetch.FetchAllAsync<T>(dashboard, type, from, to, deviceId, shiftName, selector);
-        }
-        finally
-        {
-            _fetchGate.Release();
         }
     }
 

@@ -79,12 +79,26 @@ public sealed class KanbanHubQueriesTests : IDisposable
                 Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns((new List<Kanban.Collector.Core.Entities.ProductionLog>(), 0));
 
+        var executor = Substitute.For<IHistoryQueryExecutor>();
+        executor.QueryProductionLogsStrict(
+                Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>())
+            .Returns(new List<Kanban.Collector.Core.Entities.ProductionLog>());
+        executor.QueryProductionLogsSampled15Min(
+                Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>())
+            .Returns(new List<Kanban.Collector.Core.Entities.ProductionLog>());
+        executor.QueryAlarmEventsStrict(
+                Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>())
+            .Returns(new List<Kanban.Collector.Core.Entities.AlarmEventRecord>());
+        executor.QueryStatusTransitionsStrict(
+                Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<DateTime>(), Arg.Any<string?>())
+            .Returns(new List<Kanban.Collector.Core.Entities.StatusTransitionRecord>());
+
         _hub = new KanbanHub(
             _aggregator,
             new EventBroadcaster(NullLogger<EventBroadcaster>.Instance),
             new HistoryQueryHandler(
                 historyService,
-                Substitute.For<IHistoryQueryExecutor>(),
+                executor,
                 new DefectHistoryStore(_db),
                 NullLogger<HistoryQueryHandler>.Instance),
             null!, // CollectorDiagnosticsProvider：本测试不触达诊断接口
@@ -142,6 +156,74 @@ public sealed class KanbanHubQueriesTests : IDisposable
 
         Assert.True(string.IsNullOrEmpty(response.Error));
         Assert.Empty(response.ProductionLogs);
+    }
+
+    [Fact]
+    public async Task QueryProductionWindowAnalysis_NoData_ReturnsEmptySuccess()
+    {
+        var response = await _hub.QueryProductionWindowAnalysisAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = DateTime.Now.AddHours(-1),
+            To = DateTime.Now,
+        });
+
+        Assert.Equal(HistoryErrorCode.None, response.ErrorCode);
+        Assert.True(string.IsNullOrEmpty(response.Error));
+        Assert.Equal(0, response.Ok);
+        Assert.Equal(0, response.Ng);
+        Assert.Empty(response.ChartPoints);
+        Assert.Empty(response.CompactLogs);
+    }
+
+    [Fact]
+    public async Task QueryAlarmWindowStats_NoData_ReturnsEmptySuccess()
+    {
+        var response = await _hub.QueryAlarmWindowStatsAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.AlarmEvent,
+            From = DateTime.Now.AddHours(-1),
+            To = DateTime.Now,
+        });
+
+        Assert.Equal(HistoryErrorCode.None, response.ErrorCode);
+        Assert.True(string.IsNullOrEmpty(response.Error));
+        Assert.Equal(0, response.TodayTriggered);
+        Assert.Empty(response.Top);
+        Assert.Empty(response.Recent);
+    }
+
+    [Fact]
+    public async Task QueryStatusWindowAnalysis_NoData_ReturnsEmptySuccess()
+    {
+        var response = await _hub.QueryStatusWindowAnalysisAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.StatusTransition,
+            From = DateTime.Now.AddHours(-1),
+            To = DateTime.Now,
+            DeviceId = "dev-1",
+        });
+
+        Assert.Equal(HistoryErrorCode.None, response.ErrorCode);
+        Assert.Equal(0, response.TotalCount);
+        Assert.Equal(1, response.InitialState);
+        Assert.NotEmpty(response.Segments);
+    }
+
+    [Fact]
+    public async Task QueryReviewAnalysis_NoData_ReturnsEmptySuccess()
+    {
+        var response = await _hub.QueryReviewAnalysisAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = DateTime.Now.AddHours(-1),
+            To = DateTime.Now,
+            DeviceId = "dev-1",
+        });
+
+        Assert.Equal(HistoryErrorCode.None, response.ErrorCode);
+        Assert.Equal(0, response.Ok);
+        Assert.Empty(response.Alarms);
     }
 
     [Fact]

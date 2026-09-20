@@ -143,6 +143,9 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     public List<ProductionLog> QueryProductionLogsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
         => _productionStore.QueryProductionLogsStrict(from, to, deviceId, shiftName);
 
+    public List<ProductionLog> QueryProductionLogsSampled15Min(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
+        => _productionStore.QueryProductionLogsSampled15Min(from, to, deviceId, shiftName);
+
     /// <summary>分页查询生产日志（服务端 SQL 层 Skip/Take + Count；历史查询页用，避免百万级全量传输）。</summary>
     public (List<ProductionLog> Items, int Total) QueryProductionLogsPaged(
         DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
@@ -166,8 +169,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
     public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
         => _alarmStore.QueryAlarmEventsStrict(from, to, deviceId, shiftName);
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
-        => _alarmStore.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize);
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
+        => _alarmStore.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize, alarmName);
     public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _alarmStore.QueryAlarmEventsBatch(from, to, ids);
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId) => _alarmStore.GetLatestAlarmEvent(alarmId);

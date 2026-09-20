@@ -7,8 +7,10 @@
     <RootNamespace>Kanban.Web</RootNamespace>
     <AssemblyName>Kanban.Web</AssemblyName>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
-    <!-- 加载全部全球化数据：WASM 默认只带 invariant 文化，语言切换后 CultureInfo 格式化需要完整 ICU 数据 -->
-    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <!-- HybridGlobalization：用 JS Intl 承担 zh/en/ja/pt 格式化，避免打包完整 ICU。
+         不启用 AOT：MessagePack Contractless resolver 依赖反射。 -->
+    <BlazorWebAssemblyLoadAllGlobalizationData>false</BlazorWebAssemblyLoadAllGlobalizationData>
+    <HybridGlobalization>true</HybridGlobalization>
   </PropertyGroup>
 
   <!-- 编译前从统一 Localization.csv 重新生成 Localization.cs。 -->
@@ -25,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 共享 SignalR 客户端：WASM 端 useMessagePack=false 走 JSON（Collector 双协议并存） -->
+    <!-- 共享 SignalR 客户端：优先 MessagePack（Collector 双协议并存，旧 JSON-only 可协商回退） -->
     <ProjectReference Include="..\Kanban.Client\Kanban.Client.csproj" />
     <!-- 共享分析层（ADR-4 单源）：OEE 公式/CSV 转义不再在 Web 侧复制（此前 OeeAnalysis/ProductionAnalysis 本地实现） -->
     <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />

@@ -6772,6 +6772,15 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Web_Pl_ResetAllFail" xml:space="preserve">
     <value>全デバイス OEE クリア失敗：{0}</value>
   </data>
+  <data name="Web_Pl_ResetAllTypeToken" xml:space="preserve">
+    <value>クリア確認</value>
+  </data>
+  <data name="Web_Pl_ResetAllTypeHint" xml:space="preserve">
+    <value>「{0}」と入力して、この取消できない操作を確認してください。</value>
+  </data>
+  <data name="Web_Pl_ResetAllCarouselBlocked" xml:space="preserve">
+    <value>通路テレビのカルーセル中はライン OEE クリアをロックします。</value>
+  </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>キャンセル</value>
   </data>
@@ -7413,5 +7422,20 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Dv_SourceEnabled" xml:space="preserve">
     <value>有効</value>
+  </data>
+  <data name="Web_Ac_VsYesterday" xml:space="preserve">
+    <value>昨日比 {0}</value>
+  </data>
+  <data name="Web_Rv_Defects" xml:space="preserve">
+    <value>不良集中度</value>
+  </data>
+  <data name="Web_Rv_DefectEmpty" xml:space="preserve">
+    <value>窓内に不良増分なし</value>
+  </data>
+  <data name="Web_Rv_DefectName" xml:space="preserve">
+    <value>不良</value>
+  </data>
+  <data name="Web_Rv_DefectHour" xml:space="preserve">
+    <value>時間帯</value>
   </data>
 </root>

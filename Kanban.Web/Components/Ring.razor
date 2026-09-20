@@ -26,7 +26,7 @@
     /// <summary>鼠标悬停说明（空则不显示）。</summary>
     [Parameter] public string? Title { get; set; }
 
-    /// <summary>是否有有效数据：false（如无在制工单）时环置空、中心显示 "—"，避免与真实 0% 混淆。</summary>
+    /// <summary>是否有有效数据：false 时环置空、中心显示 "—"。OEE 四环按班次累计，不再绑工单。</summary>
     [Parameter] public bool HasData { get; set; } = true;
 
     private double Circumference => 2 * Math.PI * Radius;

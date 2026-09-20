@@ -25,27 +25,7 @@ public static class ProductionAnalysis
     /// 累计值回落或班次切换 → 新实例。与 WPF HistoryQueryHelper.SplitShiftInstances 一致。
     /// </summary>
     public static List<List<ProductionLogDto>> SplitShiftInstances(List<ProductionLogDto> sortedLogs)
-    {
-        List<List<ProductionLogDto>> groups = [];
-        List<ProductionLogDto> cur = [];
-        foreach (var p in sortedLogs)
-        {
-            if (cur.Count > 0)
-            {
-                var prev = cur[^1];
-                if (p.OkProduction < prev.OkProduction
-                    || p.NgProduction < prev.NgProduction
-                    || p.ShiftName != prev.ShiftName)
-                {
-                    groups.Add(cur);
-                    cur = [];
-                }
-            }
-            cur.Add(p);
-        }
-        if (cur.Count > 0) groups.Add(cur);
-        return groups;
-    }
+        => ProductionWindowMetrics.SplitShiftInstances(sortedLogs);
 
     /// <summary>
     /// 窗口内产量（窗口差分）：Ok/NG 存的是「班次内累计值」，窗口内产量 = 窗口末条累计 − 窗口起点同班次实例的累计。
@@ -61,30 +41,7 @@ public static class ProductionAnalysis
         List<ProductionLogDto> baselineCandidates,
         DateTime windowFrom)
     {
-        if (logsInWindow.Count == 0) return (0, 0);
-        var all = new List<ProductionLogDto>(logsInWindow.Count + baselineCandidates.Count);
-        all.AddRange(logsInWindow);
-        all.AddRange(baselineCandidates);
-        int ok = 0, ng = 0;
-        foreach (var group in SplitShiftInstances(all.OrderBy(p => p.Timestamp).ToList()))
-        {
-            var winPart = group.Where(p => p.Timestamp >= windowFrom).ToList();
-            if (winPart.Count == 0) continue;
-            var last = winPart[^1];
-            ProductionLogDto baseRec;
-            if (winPart[0].Timestamp <= windowFrom)
-            {
-                baseRec = winPart[0]; // 窗口起点恰有快照 → 其累计值即基线
-            }
-            else
-            {
-                var before = group.LastOrDefault(p => p.Timestamp < windowFrom);
-                baseRec = before ?? winPart[0]; // 窗口前同实例末条；无则回退实例首条（只统计窗口可见部分）
-            }
-            ok += Math.Max(0, last.OkProduction - baseRec.OkProduction);
-            ng += Math.Max(0, last.NgProduction - baseRec.NgProduction);
-        }
-        return (ok, ng);
+        return ProductionWindowMetrics.SumWindowProduction(logsInWindow, baselineCandidates, windowFrom);
     }
 
     /// <summary>
@@ -108,16 +65,7 @@ public static class ProductionAnalysis
     /// </summary>
     public static List<(DateTime Time, int Ok, int Ng)> BuildChartData(List<ProductionLogDto> logs)
     {
-        return SplitShiftInstances(logs)
-            .SelectMany(g => g
-                .GroupBy(p => new DateTime(
-                    p.Timestamp.Year, p.Timestamp.Month, p.Timestamp.Day,
-                    p.Timestamp.Hour, p.Timestamp.Minute / 15 * 15, 0))
-                .OrderBy(b => b.Key)
-                .Select(b => b.MaxBy(p => p.Timestamp)!))
-            .OrderBy(p => p.Timestamp)
-            .Select(p => (p.Timestamp, p.OkProduction, p.NgProduction))
-            .ToList();
+        return ProductionWindowMetrics.BuildChartData(logs);
     }
 
     /// <summary>

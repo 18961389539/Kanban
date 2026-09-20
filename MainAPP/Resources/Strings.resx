@@ -6772,6 +6772,15 @@
   <data name="Web_Pl_ResetAllFail" xml:space="preserve">
     <value>全部设备 OEE 清零失败：{0}</value>
   </data>
+  <data name="Web_Pl_ResetAllTypeToken" xml:space="preserve">
+    <value>确认清零</value>
+  </data>
+  <data name="Web_Pl_ResetAllTypeHint" xml:space="preserve">
+    <value>请输入「{0}」以确认此不可撤销操作。</value>
+  </data>
+  <data name="Web_Pl_ResetAllCarouselBlocked" xml:space="preserve">
+    <value>过道电视轮播开启时已锁定产线清零。</value>
+  </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>取消</value>
   </data>
@@ -7413,5 +7422,20 @@
   </data>
   <data name="Web_Dv_SourceEnabled" xml:space="preserve">
     <value>启用</value>
+  </data>
+  <data name="Web_Ac_VsYesterday" xml:space="preserve">
+    <value>较昨日 {0}</value>
+  </data>
+  <data name="Web_Rv_Defects" xml:space="preserve">
+    <value>缺陷集中度</value>
+  </data>
+  <data name="Web_Rv_DefectEmpty" xml:space="preserve">
+    <value>窗口内无缺陷增量</value>
+  </data>
+  <data name="Web_Rv_DefectName" xml:space="preserve">
+    <value>缺陷</value>
+  </data>
+  <data name="Web_Rv_DefectHour" xml:space="preserve">
+    <value>时段</value>
   </data>
 </root>

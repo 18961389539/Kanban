@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanban.Contracts\Kanban.Contracts.csproj" />
+    <ProjectReference Include="..\Kanban.Analysis\Kanban.Analysis.csproj" />
     <ProjectReference Include="..\Kanban.Collector.Core\Kanban.Collector.Core.csproj" />
   </ItemGroup>
 

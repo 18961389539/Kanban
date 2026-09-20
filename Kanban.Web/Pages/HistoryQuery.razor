@@ -220,6 +220,10 @@
         }
         else
         {
+            @if (StTruncated)
+            {
+                <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+            }
             <section class="kpi-row">
                 <div class="kpi-card" title="@StRunTooltip"><span class="kpi-label">@L.T("Hq_StatusRun")</span><span class="kpi-value kpi-ok">@StRunText</span></div>
                 <div class="kpi-card" title="@StAlarmTooltip"><span class="kpi-label">@L.T("Hq_StatusAlarm")</span><span class="kpi-value kpi-ng">@StAlarmText</span></div>
@@ -309,6 +313,10 @@
         }
         else
         {
+            @if (AlTruncated)
+            {
+                <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+            }
             <section class="kpi-row">
                 <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowTriggered", AlTriggered)"><span class="kpi-label">@L.T("Hq_AlarmTriggered")</span><span class="kpi-value kpi-ng">@AlTriggeredText</span></div>
                 <div class="kpi-card" title="@L.Tip("Hq_Tip_WindowRecovered", AlRecovered)"><span class="kpi-label">@L.T("Hq_AlarmRecovered")</span><span class="kpi-value kpi-ok">@AlRecoveredText</span></div>
@@ -397,6 +405,10 @@
         }
         else
         {
+            @if (OeTruncated)
+            {
+                <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
+            }
             <section class="card">
                 <div class="card-title">@L.T("Hq_OeeOverview")</div>
                 <div class="ring-row">

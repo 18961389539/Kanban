@@ -53,6 +53,26 @@ public interface IKanbanHubServer
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request);
 
     /// <summary>
+    /// 产量窗口服务端分析：全量在 Collector 侧做差分与 15 分钟抽样，屏端只收 KPI + 压缩点。
+    /// </summary>
+    Task<ProductionWindowAnalysisDto> QueryProductionWindowAnalysisAsync(HistoryQueryRequest request);
+
+    /// <summary>
+    /// 报警窗口服务端统计：全量在 Collector 侧做计数/排行，屏端只收 KPI + Top + 最近事件。
+    /// </summary>
+    Task<AlarmWindowStatsDto> QueryAlarmWindowStatsAsync(HistoryQueryRequest request);
+
+    /// <summary>
+    /// 状态窗口服务端分析：时长 / 按天 / 甘特段。旧 Collector 无此方法时屏端回退分页全量。
+    /// </summary>
+    Task<StatusWindowAnalysisDto> QueryStatusWindowAnalysisAsync(HistoryQueryRequest request);
+
+    /// <summary>
+    /// 复盘窗口服务端分析：产量/状态/报警/缺陷在 Collector 侧聚合。旧 Collector 无此方法时屏端回退批量全量。
+    /// </summary>
+    Task<ReviewWindowAnalysisDto> QueryReviewAnalysisAsync(HistoryQueryRequest request);
+
+    /// <summary>
     /// 批量历史查询（Unary）：多个子查询一次往返，服务端对每个子查询做全量翻页聚合。
     /// 用于生产复盘等「多设备 × 多类型」批查场景，避免逐设备逐页串行往返的分钟级延迟。
     /// </summary>

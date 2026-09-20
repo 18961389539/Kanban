@@ -6,6 +6,7 @@ using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using CoreAlarm = Kanban.Collector.Core.Entities.AlarmEventType;
 
 namespace MainAPP.Tests.Unit;
 
@@ -208,6 +209,167 @@ public class HistoryQueryHandlerTests
             Arg.Is<DateTime>(t => t == to),
             "dev1", null);
     }
+
+    [Fact]
+    public async Task AnalyzeProductionWindow_ComputesWindowDiffAndSamples()
+    {
+        var from = new DateTime(2026, 8, 8, 8, 0, 0);
+        var to = new DateTime(2026, 8, 8, 10, 0, 0);
+        _executor.QueryProductionLogsSampled15Min(from.AddDays(-1), to, "dev1", null)
+            .Returns(
+            [
+                MakeLogAt(1, "dev1", from, 10, 0),
+                MakeLogAt(2, "dev1", from.AddMinutes(20), 25, 1),
+            ]);
+
+        var dto = await _handler.AnalyzeProductionWindowAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = from,
+            To = to,
+            DeviceId = "dev1",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HistoryErrorCode.None, dto.ErrorCode);
+        Assert.Equal(15, dto.Ok);
+        Assert.Equal(1, dto.Ng);
+        Assert.NotEmpty(dto.ChartPoints);
+        Assert.NotEmpty(dto.CompactLogs);
+    }
+
+    [Fact]
+    public async Task AnalyzeAlarmWindow_CountsTodayAndYesterday()
+    {
+        var to = new DateTime(2026, 8, 8, 10, 0, 0);
+        var from = to.AddHours(-4);
+        var yesterday = to.Date.AddDays(-1).AddHours(8);
+        _executor.QueryAlarmEventsStrict(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
+            .Returns(
+            [
+                MakeAlarm(1, "A", CoreAlarm.Triggered, yesterday),
+                MakeAlarm(2, "B", CoreAlarm.Triggered, to.Date.AddHours(1)),
+                MakeAlarm(3, "B", CoreAlarm.Recovered, to.Date.AddHours(1).AddMinutes(5)),
+                MakeAlarm(4, "C", CoreAlarm.Triggered, from.AddMinutes(10)),
+            ]);
+
+        var dto = await _handler.AnalyzeAlarmWindowAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.AlarmEvent,
+            From = from,
+            To = to,
+            DeviceId = "dev1",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HistoryErrorCode.None, dto.ErrorCode);
+        Assert.Equal(1, dto.WindowTriggered);
+        Assert.Equal(2, dto.TodayTriggered);
+        Assert.Equal(1, dto.YesterdayTriggered);
+        Assert.Equal("C", Assert.Single(dto.Top).AlarmName);
+        Assert.Equal("C", Assert.Single(dto.Recent).AlarmName);
+        Assert.NotEmpty(dto.Chart);
+        Assert.Equal(1, dto.Pending);
+    }
+
+    [Fact]
+    public async Task AnalyzeStatusWindow_UsesInitialStateAndDurations()
+    {
+        var from = new DateTime(2026, 8, 8, 8, 0, 0);
+        var to = new DateTime(2026, 8, 8, 10, 0, 0);
+        _executor.GetLatestStatusBeforeStrict("dev1", from, null)
+            .Returns(new StatusTransitionRecord
+            {
+                DeviceId = "dev1",
+                DeviceName = "设备dev1",
+                PreviousState = 1,
+                CurrentState = 1,
+                EventTime = from.AddHours(-1),
+                ShiftName = "早班",
+            });
+        _executor.QueryStatusTransitionsStrict("dev1", from, to, null)
+            .Returns(
+            [
+                new StatusTransitionRecord
+                {
+                    Id = 1,
+                    DeviceId = "dev1",
+                    DeviceName = "设备dev1",
+                    PreviousState = 1,
+                    CurrentState = 2,
+                    EventTime = from.AddHours(1),
+                    ShiftName = "早班",
+                },
+            ]);
+
+        var dto = await _handler.AnalyzeStatusWindowAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.StatusTransition,
+            From = from,
+            To = to,
+            DeviceId = "dev1",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HistoryErrorCode.None, dto.ErrorCode);
+        Assert.Equal(1, dto.InitialState);
+        Assert.Equal(1, dto.TotalCount);
+        Assert.True(dto.RunSeconds > 0);
+        Assert.True(dto.AlarmSeconds > 0);
+        Assert.NotEmpty(dto.Segments);
+    }
+
+    [Fact]
+    public async Task AnalyzeReviewWindow_ReturnsKpiWithoutRawEvents()
+    {
+        var from = new DateTime(2026, 8, 8, 8, 0, 0);
+        var to = new DateTime(2026, 8, 8, 10, 0, 0);
+        _executor.QueryProductionLogsSampled15Min(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
+            .Returns(
+            [
+                MakeLogAt(1, "dev1", from, 10, 0),
+                MakeLogAt(2, "dev1", from.AddMinutes(20), 25, 1),
+            ]);
+        _executor.QueryStatusTransitionsStrict("dev1", Arg.Any<DateTime>(), Arg.Any<DateTime>(), null)
+            .Returns([]);
+        _executor.QueryAlarmEventsStrict(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
+            .Returns([]);
+
+        var dto = await _handler.AnalyzeReviewWindowAsync(new HistoryQueryRequest
+        {
+            QueryType = HistoryQueryType.ProductionLog,
+            From = from,
+            To = to,
+            DeviceId = "dev1",
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HistoryErrorCode.None, dto.ErrorCode);
+        Assert.Equal(15, dto.Ok);
+        Assert.Equal(1, dto.Ng);
+        Assert.Empty(dto.Alarms);
+    }
+
+    private static AlarmEventRecord MakeAlarm(int id, string name, CoreAlarm type, DateTime time) => new()
+    {
+        Id = id,
+        DeviceId = "dev1",
+        DeviceName = "设备dev1",
+        AlarmId = name,
+        AlarmName = name,
+        PlcAddress = "D0",
+        EventType = type,
+        EventTime = time,
+        ShiftName = "早班",
+    };
+
+    private static ProductionLog MakeLogAt(int id, string deviceId, DateTime timestamp, int ok, int ng) => new()
+    {
+        Id = id,
+        DeviceId = deviceId,
+        DeviceName = $"设备{deviceId}",
+        ShiftName = "早班",
+        OkProduction = ok,
+        NgProduction = ng,
+        StatusWord = 1,
+        Timestamp = timestamp,
+    };
 
     private static ProductionLog MakeLog(int id, string deviceId) => new()
     {

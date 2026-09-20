@@ -6772,6 +6772,15 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Web_Pl_ResetAllFail" xml:space="preserve">
     <value>Reset OEE for all devices failed: {0}</value>
   </data>
+  <data name="Web_Pl_ResetAllTypeToken" xml:space="preserve">
+    <value>RESET</value>
+  </data>
+  <data name="Web_Pl_ResetAllTypeHint" xml:space="preserve">
+    <value>Type {0} to confirm this irreversible action.</value>
+  </data>
+  <data name="Web_Pl_ResetAllCarouselBlocked" xml:space="preserve">
+    <value>Line OEE reset is locked while kiosk carousel is on.</value>
+  </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
@@ -7413,5 +7422,20 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Web_Dv_SourceEnabled" xml:space="preserve">
     <value>Enabled</value>
+  </data>
+  <data name="Web_Ac_VsYesterday" xml:space="preserve">
+    <value>vs yesterday {0}</value>
+  </data>
+  <data name="Web_Rv_Defects" xml:space="preserve">
+    <value>Defect concentration</value>
+  </data>
+  <data name="Web_Rv_DefectEmpty" xml:space="preserve">
+    <value>No defect increment in the window</value>
+  </data>
+  <data name="Web_Rv_DefectName" xml:space="preserve">
+    <value>Defect</value>
+  </data>
+  <data name="Web_Rv_DefectHour" xml:space="preserve">
+    <value>Hour</value>
   </data>
 </root>

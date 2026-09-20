@@ -49,10 +49,10 @@
         <section class="card">
             <div class="card-title">@L.T("Card_Oee") <KpiScopeChip Kind="Shift" /></div>
             <div class="ring-row">
-                <Ring Value="@Snapshot.Oee" ValueText="@Pct(Snapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder" Title="@OeeTip" />
-                <Ring Value="@Snapshot.AvailabilityRate" ValueText="@Pct(Snapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder" />
-                <Ring Value="@Snapshot.PerformanceRate" ValueText="@Pct(Snapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder" />
-                <Ring Value="@Snapshot.QualityRate" ValueText="@Pct(Snapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder" />
+                <Ring Value="@Snapshot.Oee" ValueText="@Pct(Snapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip" />
+                <Ring Value="@Snapshot.AvailabilityRate" ValueText="@Pct(Snapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" />
+                <Ring Value="@Snapshot.PerformanceRate" ValueText="@Pct(Snapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" />
+                <Ring Value="@Snapshot.QualityRate" ValueText="@Pct(Snapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" />
             </div>
         </section>
 
@@ -151,7 +151,6 @@
 
     private DeviceSnapshotDto? Snapshot => string.IsNullOrEmpty(DeviceId) ? null : Dashboard.GetSnapshot(DeviceId);
     private WorkOrderDto? WorkOrder => Dashboard.GetWorkOrder(DeviceId);
-    private bool HasWorkOrder => WorkOrder is not null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -191,14 +190,14 @@
         try
         {
             var queryTo = now < end ? now : end;
-            var (window, _) = await HistoryFetch.FetchAllAsync<ProductionLogDto>(
-                Dashboard, HistoryQueryType.ProductionLog, start, queryTo, DeviceId, null, r => r.ProductionLogs);
+            var analysis = await HistoryFetch.AnalyzeProductionWindowAsync(
+                Dashboard, start, queryTo, DeviceId, null);
             var baselineList = await HistoryFetch.FetchLatestBeforeAsync<ProductionLogDto>(
                 Dashboard, HistoryQueryType.ProductionLog, start, DeviceId, null, r => r.ProductionLogs);
             if (_disposed) return;
             var baseline = baselineList.Count > 0 ? baselineList[0] : null;
             var series = HourlyProductionDiff.FromSamples(
-                window.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
+                analysis.CompactLogs.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
                 start, queryTo,
                 baseline?.OkProduction ?? 0,
                 baseline?.NgProduction ?? 0);
@@ -224,10 +223,19 @@
         try
         {
             var now = Dashboard.ServerNow;
-            var (all, _) = await HistoryFetch.FetchAllAsync<AlarmEventRecordDto>(
-                Dashboard, HistoryQueryType.AlarmEvent, now.Date, now, DeviceId, null, r => r.AlarmEvents);
+            var resp = await Dashboard.QueryHistoryAsync(new HistoryQueryRequest
+            {
+                QueryType = HistoryQueryType.AlarmEvent,
+                From = now.Date,
+                To = now,
+                DeviceId = DeviceId,
+                Page = 1,
+                PageSize = 30,
+            });
             if (_disposed) return;
-            RecentAlarms = all.OrderByDescending(e => e.EventTime).Take(30).ToList();
+            RecentAlarms = resp.ErrorCode == HistoryErrorCode.None
+                ? resp.AlarmEvents.OrderByDescending(e => e.EventTime).Take(30).ToList()
+                : [];
         }
         catch (Exception)
         {

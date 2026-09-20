@@ -112,6 +112,22 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
         => _historyQueryHandler.QueryAsync(request, Context.ConnectionAborted);
 
     /// <inheritdoc />
+    public Task<ProductionWindowAnalysisDto> QueryProductionWindowAnalysisAsync(HistoryQueryRequest request)
+        => _historyQueryHandler.AnalyzeProductionWindowAsync(request, Context.ConnectionAborted);
+
+    /// <inheritdoc />
+    public Task<AlarmWindowStatsDto> QueryAlarmWindowStatsAsync(HistoryQueryRequest request)
+        => _historyQueryHandler.AnalyzeAlarmWindowAsync(request, Context.ConnectionAborted);
+
+    /// <inheritdoc />
+    public Task<StatusWindowAnalysisDto> QueryStatusWindowAnalysisAsync(HistoryQueryRequest request)
+        => _historyQueryHandler.AnalyzeStatusWindowAsync(request, Context.ConnectionAborted);
+
+    /// <inheritdoc />
+    public Task<ReviewWindowAnalysisDto> QueryReviewAnalysisAsync(HistoryQueryRequest request)
+        => _historyQueryHandler.AnalyzeReviewWindowAsync(request, Context.ConnectionAborted);
+
+    /// <inheritdoc />
     public Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(BatchHistoryQueryRequest request)
         => _historyQueryHandler.QueryBatchAsync(request, Context.ConnectionAborted);
 

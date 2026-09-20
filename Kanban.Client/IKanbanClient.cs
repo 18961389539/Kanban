@@ -15,6 +15,21 @@ public interface IKanbanMonitoringClient
     Task SubscribeStatusEventsAsync(long afterSeq, CancellationToken ct = default);
     Task<HistoryQueryResponse> QueryHistoryAsync(HistoryQueryRequest request, CancellationToken ct = default);
 
+    /// <summary>产量窗口服务端分析（KPI + 15 分钟抽样）。旧 Collector 无此方法时由调用方回退分页全量。</summary>
+    Task<ProductionWindowAnalysisDto> QueryProductionWindowAnalysisAsync(HistoryQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>报警窗口服务端统计（KPI + Top + 最近事件）。旧 Collector 无此方法时由调用方回退分页全量。</summary>
+    Task<AlarmWindowStatsDto> QueryAlarmWindowStatsAsync(HistoryQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>状态窗口服务端分析。旧 Collector 无此方法时由调用方回退分页全量。</summary>
+    Task<StatusWindowAnalysisDto> QueryStatusWindowAnalysisAsync(HistoryQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>复盘窗口服务端分析。旧 Collector 无此方法时由调用方回退批量全量。</summary>
+    Task<ReviewWindowAnalysisDto> QueryReviewAnalysisAsync(HistoryQueryRequest request, CancellationToken ct = default);
+
+    /// <summary>批量历史查询：多个子查询一次往返。旧 Collector 无此方法时由调用方回退逐条全量。</summary>
+    Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(BatchHistoryQueryRequest request, CancellationToken ct = default);
+
     /// <summary>SN 序列号追溯查询（按 SN 精确 / 工单 / 设备+时间范围，服务端分页）。</summary>
     Task<SnEventQueryResponse> QuerySnEventsAsync(SnEventQueryRequest request, CancellationToken ct = default);
     Task<IReadOnlyList<DeviceConfigDto>> GetDevicesAsync(CancellationToken ct = default);

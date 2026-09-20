@@ -7,8 +7,8 @@ namespace Kanban.Web.Services;
 /// OEE 历史分析（Web 端）：从 WPF OeeQueryViewModel + OeeCalculator 移植。
 /// 四率公式（合格/性能/可用/OEE）**委托 Kanban.Analysis.OeeCalculator**（ADR-4 单源，
 /// 2026-08-13 收敛——此前在本地复制，Core 因 WPF 依赖无法被 WASM 引用，现已去 WPF 化）；
-/// 窗口差分产量、状态时长、分班次 OEE（Web 无班次配置 API，走 WPF 的"无配置回退路径"：
-/// 班次范围 = 实例首条/末条时间）、洞察（短板因子 / 班次对比）。
+/// 窗口差分产量、状态时长、分班次 OEE（有班次配置时按配置 ResolveRange 切窗，与 WPF OeeQueryViewModel 对齐；
+/// 无配置时回退实例首条/末条）、洞察（短板因子 / 班次对比）。
 /// </summary>
 public static class OeeAnalysis
 {
@@ -18,9 +18,7 @@ public static class OeeAnalysis
 
     /// <summary>
     /// 分班次 OEE：按班次实例切分产量快照，每个实例做窗口差分 + 状态时长 → 四率。
-    /// Web 端无班次配置（AppSettings.Shifts 在 Collector 侧、无 Hub API），走 WPF 的无配置回退：
-    /// shiftFrom = 实例首条时间（窗口差分基准即实例首条累计值，无需外部基准取数），
-    /// shiftTo = min(实例末条时间, now)。
+    /// 有班次配置时按名称 ResolveRange（与 WPF OeeQueryViewModel 同口径）；否则回退实例首末条。
     /// </summary>
     public static List<ShiftOee> ComputePerShiftOee(
         List<ProductionLogDto> shiftGroupedLogs,
@@ -29,7 +27,8 @@ public static class OeeAnalysis
         int initialInitialState,
         DateTime fromDate,
         DateTime toDate,
-        DateTime? now = null)
+        DateTime? now = null,
+        IReadOnlyList<ShiftConfigDto>? shifts = null)
     {
         List<ShiftOee> result = [];
         // 截断用"当前时刻"：浏览器时区与工厂不同时调用方须传 Dashboard.ServerNow
@@ -43,13 +42,28 @@ public static class OeeAnalysis
             var lastLog = group.Last();
             var shiftName = firstLog.ShiftName;
 
-            // 无班次配置回退：班次范围 = 实例首条 ~ 末条（截到当前时刻）
-            var shiftFrom = firstLog.Timestamp;
-            var shiftTo = lastLog.Timestamp;
-            if (shiftTo > nowValue) shiftTo = nowValue;
+            DateTime shiftFrom;
+            DateTime shiftTo;
+            var shiftConfig = FindShift(shifts, shiftName);
+            if (shiftConfig != null)
+            {
+                var range = Kanban.Contracts.Metrics.ShiftWindowResolver.ResolveRange(
+                    shiftConfig.StartTime, shiftConfig.EndTime, firstLog.Timestamp);
+                shiftFrom = range.Start;
+                shiftTo = range.End;
+                if (shiftFrom < fromDate) shiftFrom = fromDate;
+                if (shiftTo > toDate) shiftTo = toDate;
+                if (shiftTo > nowValue) shiftTo = nowValue;
+            }
+            else
+            {
+                shiftFrom = firstLog.Timestamp;
+                shiftTo = lastLog.Timestamp;
+                if (shiftTo > nowValue) shiftTo = nowValue;
+            }
             if (shiftFrom > toDate) continue;
 
-            // 回退路径下 shiftFrom == 实例首条时间 → 差分基准即首条累计值（班次内累计自班次起始重置）
+            // 配置路径下产量仍用实例首末条（抽样点无窗口前基线）；时长窗口按 ResolveRange 与 WPF 对齐
             int okBase = firstLog.OkProduction;
             int ngBase = firstLog.NgProduction;
             int ok = Math.Max(0, lastLog.OkProduction - okBase);
@@ -75,6 +89,18 @@ public static class OeeAnalysis
         }
 
         return result;
+    }
+
+    private static ShiftConfigDto? FindShift(IReadOnlyList<ShiftConfigDto>? shifts, string? name)
+    {
+        if (shifts == null || string.IsNullOrEmpty(name))
+            return null;
+        foreach (var s in shifts)
+        {
+            if (string.Equals(s.Name, name, StringComparison.Ordinal))
+                return s;
+        }
+        return null;
     }
 
     /// <summary>OEE 洞察：短板因子检测 + 平衡口径 + 班次对比（差距 ≥10pp 时定位拖累项）。</summary>

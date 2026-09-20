@@ -41,10 +41,15 @@
         <div class="modal-mask">
             <div class="modal-box">
                 <div class="modal-title">@L.T("Pl_ResetAllHint")</div>
-                <div class="modal-body">@L.T("Pl_ResetAllConfirm", Dashboard.DeviceCount)</div>
+                <div class="modal-body">
+                    <p>@L.T("Pl_ResetAllConfirm", Dashboard.DeviceCount)</p>
+                    <p>@L.T("Pl_ResetAllTypeHint", L.T("Pl_ResetAllTypeToken"))</p>
+                    <input class="filter-input reset-confirm-input" type="text" value="@_resetConfirmText"
+                           @oninput="OnResetConfirmInput" placeholder="@L.T("Pl_ResetAllTypeToken")" />
+                </div>
                 <div class="modal-actions">
                     <button class="btn" disabled="@_resettingAll" @onclick="CloseResetConfirm">@L.T("Pl_Cancel")</button>
-                    <button class="btn btn-danger" disabled="@_resettingAll" @onclick="ConfirmResetAllAsync">
+                    <button class="btn btn-danger" disabled="@(!CanConfirmReset)" @onclick="ConfirmResetAllAsync">
                         @L.T("Pl_ResetAll")
                     </button>
                 </div>
@@ -81,13 +86,25 @@
                 </div>
             </div>
 
-            @* ──── 一键全部设备 OEE 清零：危险写操作，需二次确认；断线/执行中禁用 ──── *@
+            @* ──── 一键全部设备 OEE 清零：过道轮播锁定；危险写操作需输入确认词 ──── *@
+            @if (!Dashboard.DisplayCarouselEnabled)
+            {
             <div class="kpi-card action">
                 <button class="btn btn-danger" disabled="@(!CanResetAll)" title="@L.T("K930")" @onclick="OpenResetConfirm">
                     @L.T("Pl_ResetAll")
                 </button>
                 <span class="kpi-sub">@L.T("Pl_ResetAllHint")</span>
             </div>
+            }
+            else
+            {
+            <div class="kpi-card action">
+                <button class="btn btn-danger" disabled="true" title="@L.T("Pl_ResetAllCarouselBlocked")">
+                    @L.T("Pl_ResetAll")
+                </button>
+                <span class="kpi-sub">@L.T("Pl_ResetAllCarouselBlocked")</span>
+            </div>
+            }
         </section>
 
         @* ──── 筛选：状态 / 搜索 / 排序 ──── *@
@@ -149,11 +166,11 @@
                         </div>
 
                         <div class="ring-row">
-                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(d.DeviceId)" Title="@OeeTip(d)" />
+                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip(d)" />
                             <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability"
-                                  Title="@AvailabilityTip(d)" HasData="@HasWorkOrder(d.DeviceId)" />
-                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(d.DeviceId)" Title="@PerformanceTip(d)" />
-                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(d.DeviceId)" Title="@QualityTip(d)" />
+                                  Title="@AvailabilityTip(d)" />
+                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTip(d)" />
+                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTip(d)" />
                         </div>
                         <div class="meta-line">
                             <span title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime)</span>
@@ -181,28 +198,43 @@
     private bool _resettingAll;
     private string? _resetNotice;
     private bool _resetNoticeIsError;
+    private string _resetConfirmText = "";
 
     /// <summary>
-    /// 断线 / 无设备 / 执行中时禁用清零入口。
-    /// 注意：屏端目前没有登录与角色模型（只读看板），此处只按连接态与设备数兜底，
-    /// 不等价于权限控制——危险写操作的访问控制应由部署网络或后续接入的统一鉴权承担。
+    /// 断线 / 无设备 / 执行中 / 过道轮播时禁用清零入口。
     /// </summary>
-    private bool CanResetAll => !_resettingAll && Dashboard.IsConnected && Dashboard.DeviceCount > 0;
+    private bool CanResetAll =>
+        !_resettingAll
+        && !Dashboard.DisplayCarouselEnabled
+        && Dashboard.IsConnected
+        && Dashboard.DeviceCount > 0;
+
+    private bool CanConfirmReset =>
+        CanResetAll
+        && string.Equals(_resetConfirmText.Trim(), L.T("Pl_ResetAllTypeToken"), StringComparison.Ordinal);
+
+    private void OnResetConfirmInput(ChangeEventArgs e)
+        => _resetConfirmText = e.Value?.ToString() ?? "";
 
     private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
 
     private void OpenResetConfirm()
     {
         if (!CanResetAll) return;
+        _resetConfirmText = "";
         _confirmResetOpen = true;
     }
 
-    private void CloseResetConfirm() => _confirmResetOpen = false;
+    private void CloseResetConfirm()
+    {
+        _confirmResetOpen = false;
+        _resetConfirmText = "";
+    }
 
     /// <summary>确认后经管理 Hub 远程清零：PLC 触发位与软件侧累计都由持有 PLC 连接的 Collector 执行。</summary>
     private async Task ConfirmResetAllAsync()
     {
-        if (_resettingAll) return;
+        if (!CanConfirmReset) return;
         _resettingAll = true;
         try
         {
@@ -211,6 +243,7 @@
             _resetNotice = L.T("Pl_ResetAllOk", result.Triggered, result.Total);
             _resetNoticeIsError = false;
             _confirmResetOpen = false;
+            _resetConfirmText = "";
         }
         catch (Exception ex)
         {
@@ -345,9 +378,6 @@
 
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
-
-    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
-    private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;
 
     private static string FmtDuration(double seconds) => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(seconds);
 

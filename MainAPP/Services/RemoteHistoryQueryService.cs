@@ -250,6 +250,11 @@ public sealed class RemoteHistoryQueryService :
             ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, from, to, deviceId, shiftName)
             : _local.QueryProductionLogsStrict(from, to, deviceId, shiftName);
 
+    public List<ProductionLog> QueryProductionLogsSampled15Min(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
+        => IsRemote
+            ? SampleRemoteProduction(from, to, deviceId, shiftName)
+            : _local.QueryProductionLogsSampled15Min(from, to, deviceId, shiftName);
+
     public ProductionLog? GetLatestProductionBeforeStrict(string deviceId, DateTime before, string shiftName)
         => IsRemote
             ? QueryRemoteList<ProductionLog>(HistoryQueryType.ProductionLog, DateTime.MinValue, before, deviceId, shiftName, latestFirst: true).FirstOrDefault()
@@ -283,10 +288,10 @@ public sealed class RemoteHistoryQueryService :
 
     /// <summary>分页查询报警事件（Remote 走 SignalR 服务端 SQL 分页，避免全量拉取）。</summary>
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
         => IsRemote
-            ? QueryRemotePaged<AlarmEventRecord>(HistoryQueryType.AlarmEvent, from, to, deviceId, shiftName, page, pageSize)
-            : _local.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize);
+            ? QueryRemotePaged<AlarmEventRecord>(HistoryQueryType.AlarmEvent, from, to, deviceId, shiftName, page, pageSize, alarmName)
+            : _local.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize, alarmName);
 
     /// <summary>分页查询状态转换记录（Remote 走 SignalR 服务端 SQL 分页）。</summary>
     public (List<StatusTransitionRecord> Items, int Total) QueryStatusTransitionsPaged(
@@ -303,9 +308,30 @@ public sealed class RemoteHistoryQueryService :
             : _localDefectStore.QueryDefectSnapshotsPaged(from, to, deviceId, page, pageSize);
 
     /// <summary>Remote 分页查询：服务端 SQL 层 Skip/Take + Count（配合 Collector 的 Query*Paged 实现）。</summary>
+    private List<ProductionLog> SampleRemoteProduction(DateTime from, DateTime to, string? deviceId, string? shiftName)
+    {
+        var logs = QueryProductionLogsStrict(from, to, deviceId, shiftName);
+        if (logs.Count == 0) return [];
+        var dtos = logs.Select(p => new ProductionLogDto
+        {
+            Id = p.Id,
+            DeviceId = p.DeviceId,
+            DeviceName = p.DeviceName,
+            ShiftName = p.ShiftName,
+            WorkOrderId = p.WorkOrderId,
+            OkProduction = p.OkProduction,
+            NgProduction = p.NgProduction,
+            StatusWord = p.StatusWord,
+            Timestamp = p.Timestamp,
+        }).ToList();
+        var sampled = Kanban.Analysis.ProductionWindowMetrics.Sample15Min(dtos);
+        var byId = logs.ToDictionary(l => l.Id);
+        return sampled.Select(d => byId[d.Id]).ToList();
+    }
+
     private (List<T> Items, int Total) QueryRemotePaged<T>(
         HistoryQueryType type,
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
     {
         var request = new HistoryQueryRequest
         {
@@ -314,6 +340,7 @@ public sealed class RemoteHistoryQueryService :
             To = to == DateTime.MaxValue ? null : to,
             DeviceId = deviceId,
             ShiftName = shiftName,
+            AlarmName = alarmName,
             LatestFirst = false,
             Page = page,
             PageSize = pageSize,

@@ -50,7 +50,7 @@ public interface IAlarmHistoryService
 
     /// <summary>分页查询报警事件（SQL 层 Count + OrderByDescending + Skip/Take；异常向调用方抛出）。</summary>
     (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize);
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null);
 
     /// <summary>查询当前活跃报警状态快照（取代"回溯历史事件推断活跃状态"的旧逻辑）。</summary>
     List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null);

@@ -139,9 +139,12 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
         => QueryAlarmEvents(from, to, deviceId, shiftName);
 
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
     {
-        var filtered = QueryAlarmEvents(from, to, deviceId, shiftName).OrderByDescending(e => e.EventTime).ToList();
+        var filtered = QueryAlarmEvents(from, to, deviceId, shiftName)
+            .Where(e => alarmName == null || e.AlarmName == alarmName)
+            .OrderByDescending(e => e.EventTime)
+            .ToList();
         var (p, s) = HistoryPagination.Normalize(page, pageSize);
         return (filtered.Skip((p - 1) * s).Take(s).ToList(), filtered.Count);
     }

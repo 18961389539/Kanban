@@ -440,9 +440,12 @@ body {
 .quality-live.warn, .quality-gap.warn { color: var(--yellow); }
 .quality-live.bad, .quality-gap.bad { color: var(--red); }
 
-.quality-chart { min-height: 72px; }
+.quality-chart { min-height: 120px; }
+.quality-chart .echart-host { height: 120px; width: 100%; }
 
 .spark-quality { height: 88px; width: 100%; }
+
+.reset-confirm-input { width: 100%; margin-top: 10px; }
 
 /* ──────────── 当前工单卡 / 速度趋势卡 ──────────── */
 

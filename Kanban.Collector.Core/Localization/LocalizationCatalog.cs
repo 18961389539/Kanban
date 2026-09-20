@@ -9287,6 +9287,18 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "全部设备 OEE 清零失败：{0}", ["en-US"] = "Reset OEE for all devices failed: {0}", ["ja-JP"] = "全デバイス OEE クリア失敗：{0}", ["pt-BR"] = "Falha ao zerar o OEE de todos os dispositivos: {0}"
         },
+        ["Wpf|Web_Pl_ResetAllTypeToken"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "确认清零", ["en-US"] = "RESET", ["ja-JP"] = "クリア確認", ["pt-BR"] = "ZERAR"
+        },
+        ["Wpf|Web_Pl_ResetAllTypeHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请输入「{0}」以确认此不可撤销操作。", ["en-US"] = "Type {0} to confirm this irreversible action.", ["ja-JP"] = "「{0}」と入力して、この取消できない操作を確認してください。", ["pt-BR"] = "Digite {0} para confirmar esta operação irreversível."
+        },
+        ["Wpf|Web_Pl_ResetAllCarouselBlocked"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "过道电视轮播开启时已锁定产线清零。", ["en-US"] = "Line OEE reset is locked while kiosk carousel is on.", ["ja-JP"] = "通路テレビのカルーセル中はライン OEE クリアをロックします。", ["pt-BR"] = "A redefinição de OEE da linha está bloqueada com o carrossel do kiosk ligado."
+        },
         ["Wpf|Web_Pl_Cancel"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "取消", ["en-US"] = "Cancel", ["ja-JP"] = "キャンセル", ["pt-BR"] = "Cancelar"
@@ -10142,6 +10154,26 @@ public static class LocalizationCatalog
         ["Wpf|Web_Dv_SourceEnabled"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "启用", ["en-US"] = "Enabled", ["ja-JP"] = "有効", ["pt-BR"] = "Ativo"
+        },
+        ["Wpf|Web_Ac_VsYesterday"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "较昨日 {0}", ["en-US"] = "vs yesterday {0}", ["ja-JP"] = "昨日比 {0}", ["pt-BR"] = "vs ontem {0}"
+        },
+        ["Wpf|Web_Rv_Defects"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "缺陷集中度", ["en-US"] = "Defect concentration", ["ja-JP"] = "不良集中度", ["pt-BR"] = "Concentração de defeitos"
+        },
+        ["Wpf|Web_Rv_DefectEmpty"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "窗口内无缺陷增量", ["en-US"] = "No defect increment in the window", ["ja-JP"] = "窓内に不良増分なし", ["pt-BR"] = "Sem incremento de defeitos na janela"
+        },
+        ["Wpf|Web_Rv_DefectName"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "缺陷", ["en-US"] = "Defect", ["ja-JP"] = "不良", ["pt-BR"] = "Defeito"
+        },
+        ["Wpf|Web_Rv_DefectHour"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "时段", ["en-US"] = "Hour", ["ja-JP"] = "時間帯", ["pt-BR"] = "Hora"
         },
         };
 

@@ -7,7 +7,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// ──────────── 共享 SignalR 客户端（JSON 协议，Collector 双协议并存） ────────────
+// ──────────── 共享 SignalR 客户端（优先 MessagePack，JSON 协商回退） ────────────
 // Collector 地址解析优先级：wwwroot/appsettings.json 的 Kanban:CollectorHubUrl（显式配置，
 // 适配 Collector 部署在独立主机/非默认端口）→ 留空时自动派生：与页面同主机同端口
 // （单端口部署：从 http://host:5129/ 打开看板时页面与 Hub 同源，无需跨端口；
@@ -21,7 +21,7 @@ var collectorHubUrl = string.IsNullOrWhiteSpace(configuredHubUrl)
 builder.Services.AddSingleton(sp => new KanbanDataClient(
     collectorHubUrl,
     sp.GetRequiredService<ILogger<KanbanDataClient>>(),
-    useMessagePack: false));
+    useMessagePack: true));
 
 // ──────────── 管理域写通道（独立 Hub 路径，与只读监控连接分离） ────────────
 // 仅产线总览页的「全部设备 OEE 清零」使用；管理 Hub 由 Collector 单写者持有 PLC 连接，
@@ -29,7 +29,7 @@ builder.Services.AddSingleton(sp => new KanbanDataClient(
 builder.Services.AddSingleton(sp => new KanbanAdminClient(
     collectorHubUrl,
     sp.GetRequiredService<ILogger<KanbanDataClient>>(),
-    useMessagePack: false));
+    useMessagePack: true));
 
 // ──────────── 看板内存状态（连接 + 快照订阅 + 渲染节流的数据源） ────────────
 builder.Services.AddSingleton<DashboardState>();

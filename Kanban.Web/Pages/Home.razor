@@ -172,12 +172,12 @@
                     }
                 </div>
                 <div class="ring-row">
-                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasActiveWorkOrder" Title="@OeeTooltip" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasActiveWorkOrder" Title="@AvailabilityTooltip" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasActiveWorkOrder" Title="@PerformanceTooltip" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasActiveWorkOrder" Title="@QualityTooltip" />
+                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTooltip" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTooltip" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTooltip" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTooltip" />
                 </div>
-                <div class="oee-formula" title="@OeeTooltip">@(HasActiveWorkOrder ? $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}" : "—")</div>
+                <div class="oee-formula" title="@OeeTooltip">@OeeFormulaText</div>
             </section>
 
             <section class="card">
@@ -249,25 +249,13 @@
                     </div>
                 </div>
                 <div class="quality-chart" title="@L.T("Home_Tip_QualityTrend")">
-                    @if (QualityHistory.Count == 0 && _hourlyOkHours.Length == 0)
+                    @if (QualityChartOption is null)
                     {
                         <div class="no-data">@L.T("Val_WaitData")</div>
                     }
                     else
                     {
-                        <svg class="spark spark-quality" viewBox="0 0 300 80" preserveAspectRatio="none">
-                            @foreach (var bar in HourlyOkBars)
-                            {
-                                <rect x="@bar.X" y="@bar.Y" width="@bar.W" height="@bar.H" rx="1" fill="#34D399" fill-opacity="0.45">
-                                    <title>@bar.Hour.ToString("HH:mm") @bar.Ok.ToString("N0")</title>
-                                </rect>
-                            }
-                            <line x1="0" y1="@QualityTargetY" x2="300" y2="@QualityTargetY" fill="none" stroke="#F87171" stroke-width="1" stroke-dasharray="4 3" />
-                            @if (QualityPointsText is not null)
-                            {
-                                <polyline points="@QualityPointsText" fill="none" stroke="#818CF8" stroke-width="1.8" />
-                            }
-                        </svg>
+                        <EChart Option="@QualityChartOption" Height="120px" />
                     }
                 </div>
             </section>
@@ -326,6 +314,7 @@
                         <div><span class="kpi-label">@L.T("Lbl_Elapsed")</span><span class="kpi-value">@Dashboard.ShiftProgress.ElapsedText</span></div>
                         <div><span class="kpi-label">@L.T("Lbl_Remaining")</span><span class="kpi-value">@Dashboard.ShiftProgress.RemainingText</span></div>
                     </div>
+                    <div class="meta-line" title="@LastShiftTooltip">@LastShiftLineText</div>
                     <div class="meta-line">@L.T("Meta_ShiftAuto")</div>
                 }
             </section>
@@ -438,9 +427,6 @@
     /// <summary>当前选中设备的工单（Collector 5s 推送缓存，切换设备即时取用）。</summary>
     private WorkOrderDto? CurrentWorkOrder => Dashboard.GetWorkOrder(SelectedDeviceId);
 
-    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
-    private bool HasActiveWorkOrder => CurrentWorkOrder is not null;
-
     /// <summary>当前选中设备的缺陷帕累托行（Meta 5s 推送；无数据返回空列表）。</summary>
     private IReadOnlyList<DeviceDefectCountDto> DefectTop
         => SelectedDeviceId is null ? [] : Dashboard.GetDefectTop(SelectedDeviceId);
@@ -517,13 +503,44 @@
         }
     }
 
-private void OnRenderTick()
+    private int _lastRenderFingerprint;
+
+    private void OnRenderTick()
     {
         if (_disposed) return;
         EnsureSelectedDevice();
         Dashboard.RequestWorkOrderProductionRefresh(SelectedDeviceId);
         _ = MaybeRefreshHourlyOkAsync();
+        var fingerprint = ComputeRenderFingerprint();
+        if (fingerprint == _lastRenderFingerprint) return;
+        _lastRenderFingerprint = fingerprint;
         StateHasChanged();
+    }
+
+    private int ComputeRenderFingerprint()
+    {
+        var snap = SelectedSnapshot;
+        var sp = Dashboard.ShiftProgress;
+        var wo = CurrentWorkOrder;
+        var hash = new HashCode();
+        hash.Add(SelectedDeviceId);
+        hash.Add(snap?.Seq);
+        hash.Add(snap?.Status);
+        hash.Add(snap?.Oee);
+        hash.Add(snap?.TotalOkProduction);
+        hash.Add(snap?.TotalNgProduction);
+        hash.Add(snap?.ActiveAlarms.Count);
+        hash.Add(sp?.Ratio);
+        hash.Add(sp?.Name);
+        hash.Add(sp?.ElapsedText);
+        hash.Add(WorkOrderOkCount);
+        hash.Add(WorkOrderNgCount);
+        hash.Add(wo?.Id);
+        hash.Add(Dashboard.IsConnected);
+        hash.Add(_hourlyOkHours.Length);
+        if (_hourlyOkCounts.Length > 0)
+            hash.Add(_hourlyOkCounts[^1]);
+        return hash.ToHashCode();
     }
 
     private void OnDashboardStateChanged()
@@ -673,40 +690,107 @@ private void OnRenderTick()
     private IReadOnlyList<QualityPoint> QualityHistory
         => Dashboard.GetQualityHistory(SelectedSnapshot?.DeviceId ?? "");
 
-    private readonly record struct HourlyOkBar(DateTime Hour, int Ok, string X, string Y, string W, string H);
-
-    private IReadOnlyList<HourlyOkBar> HourlyOkBars
+    private object? QualityChartOption
     {
         get
         {
-            if (_hourlyOkHours.Length == 0 || !TryGetQualityAxisWindow(out var axisStart, out var axisEnd))
-                return [];
+            if ((QualityHistory.Count == 0 && _hourlyOkHours.Length == 0)
+                || !TryGetQualityAxisWindow(out var axisStart, out var axisEnd))
+                return null;
+
+            var (yMin, _) = QualityScale;
+            var qualityMin = Math.Round(yMin * 100, 0);
+            var okData = new List<object[]>();
             var n = _hourlyOkHours.Length;
-            var max = 1;
-            for (var i = 0; i < _hourlyOkCounts.Length && i < n; i++)
-                max = Math.Max(max, Math.Max(0, _hourlyOkCounts[i]));
-            var inv = System.Globalization.CultureInfo.InvariantCulture;
-            var list = new List<HourlyOkBar>(n);
             for (var i = 0; i < n; i++)
             {
                 var ok = i < _hourlyOkCounts.Length ? Math.Max(0, _hourlyOkCounts[i]) : 0;
                 if (ok <= 0) continue;
-                var x0 = MapQualityX(_hourlyOkHours[i], axisStart, axisEnd);
-                var x1 = MapQualityX(_hourlyOkHours[i].AddHours(1), axisStart, axisEnd);
-                var gap = Math.Max(1, (x1 - x0) * 0.12);
-                var w = Math.Max(2, x1 - x0 - gap);
-                var h = Math.Max(1, ok / (double)max * 64);
-                list.Add(new HourlyOkBar(
-                    _hourlyOkHours[i],
-                    ok,
-                    (x0 + gap / 2).ToString("0.##", inv),
-                    (72 - h).ToString("0.##", inv),
-                    w.ToString("0.##", inv),
-                    h.ToString("0.##", inv)));
+                okData.Add([IsoLocal(_hourlyOkHours[i]), ok]);
             }
-            return list;
+            var qualityData = QualityHistory
+                .Select(p => (object[])[IsoLocal(p.Time), Math.Round(p.Quality * 100, 1)])
+                .ToList();
+
+            return new Dictionary<string, object?>
+            {
+                ["backgroundColor"] = "transparent",
+                ["tooltip"] = new Dictionary<string, object?> { ["trigger"] = "axis" },
+                ["grid"] = new Dictionary<string, object?> { ["left"] = 40, ["right"] = 42, ["top"] = 8, ["bottom"] = 22 },
+                ["xAxis"] = new Dictionary<string, object?>
+                {
+                    ["type"] = "time",
+                    ["min"] = IsoLocal(axisStart),
+                    ["max"] = IsoLocal(axisEnd),
+                    ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+                    ["axisLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
+                },
+                ["yAxis"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["type"] = "value",
+                        ["min"] = 0,
+                        ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+                        ["splitLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["type"] = "value",
+                        ["min"] = qualityMin,
+                        ["max"] = 100,
+                        ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0", ["formatter"] = "{value}%" },
+                        ["splitLine"] = new Dictionary<string, object?> { ["show"] = false },
+                    },
+                },
+                ["series"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["name"] = L.T("Hq_ChartOk"),
+                        ["type"] = "bar",
+                        ["yAxisIndex"] = 0,
+                        ["barMaxWidth"] = 18,
+                        ["data"] = okData,
+                        ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "rgba(52, 211, 153, 0.45)" },
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["name"] = L.T("Lbl_Quality"),
+                        ["type"] = "line",
+                        ["yAxisIndex"] = 1,
+                        ["smooth"] = false,
+                        ["showSymbol"] = qualityData.Count <= 24,
+                        ["symbolSize"] = 6,
+                        ["data"] = qualityData,
+                        ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#818CF8" },
+                        ["lineStyle"] = new Dictionary<string, object?> { ["width"] = 2.2, ["color"] = "#818CF8" },
+                        ["markLine"] = new Dictionary<string, object?>
+                        {
+                            ["silent"] = true,
+                            ["symbol"] = "none",
+                            ["data"] = new object[]
+                            {
+                                new Dictionary<string, object?>
+                                {
+                                    ["yAxis"] = QualityTarget * 100,
+                                    ["lineStyle"] = new Dictionary<string, object?>
+                                    {
+                                        ["type"] = "dashed",
+                                        ["color"] = "#F87171",
+                                        ["width"] = 1.4,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
         }
     }
+
+    private static string IsoLocal(DateTime time)
+        => time.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
 
     private async Task MaybeRefreshHourlyOkAsync()
     {
@@ -744,16 +828,15 @@ private void OnRenderTick()
         var ct = _hourlyOkCts.Token;
         try
         {
-            var (window, _) = await HistoryFetch.FetchAllAsync<ProductionLogDto>(
-                Dashboard, HistoryQueryType.ProductionLog, start, now, deviceId, null,
-                r => r.ProductionLogs, ct);
+            var analysis = await HistoryFetch.AnalyzeProductionWindowAsync(
+                Dashboard, start, now, deviceId, null, ct);
             var baselineList = await HistoryFetch.FetchLatestBeforeAsync<ProductionLogDto>(
                 Dashboard, HistoryQueryType.ProductionLog, start, deviceId, null,
                 r => r.ProductionLogs, ct);
             if (ct.IsCancellationRequested || _disposed) return;
             var baseline = baselineList.Count > 0 ? baselineList[0] : null;
             var series = HourlyProductionDiff.FromSamples(
-                window.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
+                analysis.CompactLogs.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
                 start, now,
                 baseline?.OkProduction ?? 0,
                 baseline?.NgProduction ?? 0);
@@ -784,16 +867,6 @@ private void OnRenderTick()
         }
     }
 
-    private string QualityTargetY
-    {
-        get
-        {
-            var (yMin, range) = QualityScale;
-            var y = 72 - (QualityTarget - yMin) / range * 64;
-            return y.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-        }
-    }
-
     private bool TryGetQualityAxisWindow(out DateTime axisStart, out DateTime axisEnd)
     {
         axisStart = default;
@@ -816,32 +889,6 @@ private void OnRenderTick()
         if (axisEnd <= axisStart)
             axisEnd = axisStart.AddMinutes(1);
         return true;
-    }
-
-    private static double MapQualityX(DateTime time, DateTime axisStart, DateTime axisEnd)
-    {
-        var span = (axisEnd - axisStart).TotalSeconds;
-        if (span <= 0) return 0;
-        return Math.Clamp((time - axisStart).TotalSeconds / span * 300, 0, 300);
-    }
-
-    /// <summary>当前班次良率 sparkline（viewBox 300x80）。横轴对齐整班时段；单点时只画达标线，从第二点再连线。</summary>
-    private string? QualityPointsText
-    {
-        get
-        {
-            var pts = QualityHistory;
-            if (pts.Count < 2 || !TryGetQualityAxisWindow(out var axisStart, out var axisEnd))
-                return null;
-            var (yMin, range) = QualityScale;
-            var inv = System.Globalization.CultureInfo.InvariantCulture;
-            return string.Join(" ", pts.Select(p =>
-            {
-                var x = MapQualityX(p.Time, axisStart, axisEnd);
-                var y = 72 - (p.Quality - yMin) / range * 64;
-                return x.ToString("F0", inv) + "," + y.ToString("F0", inv);
-            }));
-        }
     }
 
     private static string Pct(double v) => UiPalette.Pct(v);
@@ -929,7 +976,7 @@ private void OnRenderTick()
     private string AlarmTimeTooltip => Tip("Home_Tip_AlarmTime", FmtDuration(SelectedSnapshot?.AlarmTime ?? 0), AlarmRatio / 100.0);
     private string PausedTimeTooltip => Tip("Home_Tip_PausedTime", FmtDuration(SelectedSnapshot?.PausedTime ?? 0), PauseRatio / 100.0);
     private string OfflineTimeTooltip => Tip("Home_Tip_OfflineTime", FmtDuration(SelectedSnapshot?.OfflineTime ?? 0), OfflineRatio / 100.0);
-    private string OeeFormulaText => SelectedSnapshot is null || !HasActiveWorkOrder
+    private string OeeFormulaText => SelectedSnapshot is null
         ? "—"
         : $"{Pct(SelectedSnapshot.AvailabilityRate)} × {Pct(SelectedSnapshot.PerformanceRate)} × {Pct(SelectedSnapshot.QualityRate)}";
     private string AvailabilityFormulaText
@@ -968,6 +1015,25 @@ private void OnRenderTick()
     private string LastShiftTooltip => LastShift is null
         ? ""
         : Tip("Home_Tip_LastShift", LastShift.ShiftName, LastShift.Ok, LastShift.Ng);
+
+    private string LastShiftLineText
+    {
+        get
+        {
+            if (LastShift is null) return $"{L.T("LastShift")} —";
+            var snap = SelectedSnapshot;
+            var okDiff = snap is null ? "" : FormatDiff(snap.TotalOkProduction - LastShift.Ok);
+            var ngDiff = snap is null ? "" : FormatDiff(snap.TotalNgProduction - LastShift.Ng);
+            return L.T("LastShiftLine",
+                LastShift.ShiftName,
+                LastShift.Ok.ToString("N0"),
+                string.IsNullOrEmpty(okDiff) ? "—" : okDiff,
+                LastShift.Ng.ToString("N0"),
+                string.IsNullOrEmpty(ngDiff) ? "—" : ngDiff);
+        }
+    }
+
+    private static string FormatDiff(int value) => value == 0 ? "" : value > 0 ? $"+{value:N0}" : value.ToString("N0");
 
     private double DeviceHealthScore => SelectedSnapshot is null
         || SelectedSnapshot.RunTime + SelectedSnapshot.AlarmTime + SelectedSnapshot.PausedTime <= 0

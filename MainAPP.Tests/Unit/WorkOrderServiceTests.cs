@@ -327,7 +327,7 @@ public class WorkOrderServiceTests : IDisposable
         public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
             => throw new InvalidOperationException("测试异常");
         public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-            DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+            DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
             => throw new InvalidOperationException("测试异常");
         public List<ActiveAlarmStateRecord> QueryActiveAlarmStates(string? deviceId = null)
             => throw new InvalidOperationException("测试异常");

@@ -2470,6 +2470,9 @@ Wpf,Web_Pl_ResetAllHint,全部设备 OEE 清零,Reset OEE for All Devices,全デ
 Wpf,Web_Pl_ResetAllConfirm,确定清零全部 {0} 台设备的 OEE 吗？此操作不可撤销。,Reset OEE for all {0} devices? This cannot be undone.,全 {0} 台のデバイスの OEE をクリアしますか？この操作は取消できません。,Zerar o OEE de todos os {0} dispositivos? Esta operação não pode ser desfeita.
 Wpf,Web_Pl_ResetAllOk,已触发全部设备 OEE 清零（{0}/{1} 台）,OEE reset triggered for all devices ({0}/{1}),全デバイスの OEE クリアを実行しました（{0}/{1} 台）,Zeramento de OEE acionado para todos os dispositivos ({0}/{1})
 Wpf,Web_Pl_ResetAllFail,全部设备 OEE 清零失败：{0},Reset OEE for all devices failed: {0},全デバイス OEE クリア失敗：{0},Falha ao zerar o OEE de todos os dispositivos: {0}
+Wpf,Web_Pl_ResetAllTypeToken,确认清零,RESET,クリア確認,ZERAR
+Wpf,Web_Pl_ResetAllTypeHint,请输入「{0}」以确认此不可撤销操作。,Type {0} to confirm this irreversible action.,「{0}」と入力して、この取消できない操作を確認してください。,Digite {0} para confirmar esta operação irreversível.
+Wpf,Web_Pl_ResetAllCarouselBlocked,过道电视轮播开启时已锁定产线清零。,Line OEE reset is locked while kiosk carousel is on.,通路テレビのカルーセル中はライン OEE クリアをロックします。,A redefinição de OEE da linha está bloqueada com o carrossel do kiosk ligado.
 Wpf,Web_Pl_Cancel,取消,Cancel,キャンセル,Cancelar
 Wpf,Wo_AddTitle,新增工单,New Work Order,新規作業指示,Nova ordem de produção
 Wpf,Wo_ContinueTitle,工单已完成,Work Order Completed,工単完了,Ordem concluída
@@ -2684,4 +2687,9 @@ Wpf,Web_Dv_SourceType,类型,Type,種別,Tipo
 Wpf,Web_Dv_TriggerAddr,触发地址,Trigger address,トリガーアドレス,Endereço de disparo
 Wpf,Web_Dv_ValueItems,值项,Value items,値項目,Itens de valor
 Wpf,Web_Dv_SourceEnabled,启用,Enabled,有効,Ativo
+Wpf,Web_Ac_VsYesterday,较昨日 {0},vs yesterday {0},昨日比 {0},vs ontem {0}
+Wpf,Web_Rv_Defects,缺陷集中度,Defect concentration,不良集中度,Concentração de defeitos
+Wpf,Web_Rv_DefectEmpty,窗口内无缺陷增量,No defect increment in the window,窓内に不良増分なし,Sem incremento de defeitos na janela
+Wpf,Web_Rv_DefectName,缺陷,Defect,不良,Defeito
+Wpf,Web_Rv_DefectHour,时段,Hour,時間帯,Hora
 

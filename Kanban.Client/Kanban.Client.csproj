@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- SignalR 客户端：WPF 端走 MessagePack（与 Collector 协议对齐），Blazor WASM 端 useMessagePack=false 走 JSON -->
+    <!-- SignalR 客户端：优先 MessagePack，同时注册 JSON 供旧 Collector 协商回退 -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />
   </ItemGroup>

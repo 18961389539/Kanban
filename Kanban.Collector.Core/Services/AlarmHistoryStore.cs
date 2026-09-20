@@ -95,12 +95,14 @@ public sealed class AlarmHistoryStore : IAlarmHistoryService, IDisposable
     /// 供历史查询页使用——此前全量 ToList 后客户端内存分页，长时间范围可一次拉取数十万条。
     /// </summary>
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
-        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize)
+        DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)
     {
         using var ctx = _db.CreateAlarmEventContext();
         var query = HistoryQueryFilter.ApplyRange(
             ctx.AlarmEvents, from, to, deviceId, shiftName,
             nameof(AlarmEventRecord.EventTime), nameof(AlarmEventRecord.DeviceId), nameof(AlarmEventRecord.ShiftName));
+        if (!string.IsNullOrWhiteSpace(alarmName))
+            query = query.Where(e => e.AlarmName == alarmName);
         var total = query.Count();
         var offset = HistoryPagination.Offset(page, pageSize);
         var (_, size) = HistoryPagination.Normalize(page, pageSize);

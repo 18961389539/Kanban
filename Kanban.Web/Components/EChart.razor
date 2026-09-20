@@ -11,17 +11,20 @@
     [Parameter] public string Height { get; set; } = "320px";
 
     private string ChartId { get; } = "echart_" + Guid.NewGuid().ToString("N");
-
-    /// <summary>已推送给 JS 的 option 序列化快照：OnAfterRenderAsync 每次渲染都会触发，
-    /// 用 JSON 比较跳过未变化的重复推送（页面其它状态刷新时图表不重建）。</summary>
     private string? _pushedJson;
+    private object? _pushedOption;
     private bool _disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_disposed || Option is null) return;
+        if (!firstRender && ReferenceEquals(Option, _pushedOption)) return;
         var json = System.Text.Json.JsonSerializer.Serialize(Option);
-        if (json == _pushedJson) return;
+        if (json == _pushedJson)
+        {
+            _pushedOption = Option;
+            return;
+        }
 
         try
         {
@@ -32,6 +35,7 @@
             else
                 await JS.InvokeVoidAsync("KanbanECharts.setOption", ChartId, Option);
             _pushedJson = json;
+            _pushedOption = Option;
         }
         catch (Exception)
         {

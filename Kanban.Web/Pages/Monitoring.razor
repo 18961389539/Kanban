@@ -61,10 +61,10 @@
                             <div title="@L.Tip("Home_Tip_SnapSeq", s.Seq)"><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
                         </div>
                         <div class="ring-row">
-                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" HasData="@HasWorkOrder(s.DeviceId)" Title="@OeeTip(s)" />
-                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasWorkOrder(s.DeviceId)" Title="@AvailabilityTip(s)" />
-                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasWorkOrder(s.DeviceId)" Title="@PerformanceTip(s)" />
-                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasWorkOrder(s.DeviceId)" Title="@QualityTip(s)" />
+                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip(s)" />
+                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTip(s)" />
+                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTip(s)" />
+                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTip(s)" />
                         </div>
                         <div class="meta-line" title="@L.Tip("Home_Tip_DataFresh", FreshnessText(s.Timestamp))">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
                     </div>
@@ -319,9 +319,6 @@ private void OnRenderTick()
     private static string Pct(double v) => UiPalette.Pct(v);
 
     private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
-
-    /// <summary>有在制工单才显示 OEE 四环数值；无工单显示 "—"（等待投产语义，避免与真实 0% 混淆）。</summary>
-    private bool HasWorkOrder(string deviceId) => Dashboard.GetWorkOrder(deviceId) is not null;
 
     private static string SpeedText(DeviceSnapshotDto s)
     {

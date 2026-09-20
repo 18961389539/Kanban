@@ -82,6 +82,7 @@ public static class Program
             builder.Services.AddSingleton<EventBroadcaster>();
             builder.Services.AddSingleton<SnapshotAggregator>();
             builder.Services.AddSingleton<SnapshotPublisher>();
+            builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<HistoryQueryHandler>();
             builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddSingleton<ConfigSyncHandler>();

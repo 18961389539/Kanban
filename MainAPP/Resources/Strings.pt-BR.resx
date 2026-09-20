@@ -6728,6 +6728,15 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Web_Pl_ResetAllFail" xml:space="preserve">
     <value>Falha ao zerar o OEE de todos os dispositivos: {0}</value>
   </data>
+  <data name="Web_Pl_ResetAllTypeToken" xml:space="preserve">
+    <value>ZERAR</value>
+  </data>
+  <data name="Web_Pl_ResetAllTypeHint" xml:space="preserve">
+    <value>Digite {0} para confirmar esta operação irreversível.</value>
+  </data>
+  <data name="Web_Pl_ResetAllCarouselBlocked" xml:space="preserve">
+    <value>A redefinição de OEE da linha está bloqueada com o carrossel do kiosk ligado.</value>
+  </data>
   <data name="Web_Pl_Cancel" xml:space="preserve">
     <value>Cancelar</value>
   </data>
@@ -7369,5 +7378,20 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Web_Dv_SourceEnabled" xml:space="preserve">
     <value>Ativo</value>
+  </data>
+  <data name="Web_Ac_VsYesterday" xml:space="preserve">
+    <value>vs ontem {0}</value>
+  </data>
+  <data name="Web_Rv_Defects" xml:space="preserve">
+    <value>Concentração de defeitos</value>
+  </data>
+  <data name="Web_Rv_DefectEmpty" xml:space="preserve">
+    <value>Sem incremento de defeitos na janela</value>
+  </data>
+  <data name="Web_Rv_DefectName" xml:space="preserve">
+    <value>Defeito</value>
+  </data>
+  <data name="Web_Rv_DefectHour" xml:space="preserve">
+    <value>Hora</value>
   </data>
 </root>

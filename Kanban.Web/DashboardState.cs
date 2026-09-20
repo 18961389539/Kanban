@@ -2,6 +2,7 @@ using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Contracts.Metrics;
+using Kanban.Web.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Web;
@@ -44,6 +45,11 @@ public sealed class DashboardState : IAsyncDisposable
     private ShiftProgressDto? _shiftProgress;
     private KanbanDataClient? _invokeClient;
     private bool _initialized;
+    private bool _productionWindowAnalysisUnsupported;
+    private bool _alarmWindowStatsUnsupported;
+    private bool _statusWindowAnalysisUnsupported;
+    private bool _reviewAnalysisUnsupported;
+    private bool _historyBatchUnsupported;
     private bool _disposed;
     private CancellationTokenSource? _retryCts;
     private DateTime _invokeFailedUntil;
@@ -71,7 +77,7 @@ public sealed class DashboardState : IAsyncDisposable
         _loggerFactory = loggerFactory;
         _logger = logger;
         // 元数据连接：与订阅连接分开（每连接单长驻订阅约束），专职工单/班次推送
-        _metaClient = new KanbanDataClient(client.HubUrl, loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: false);
+        _metaClient = new KanbanDataClient(client.HubUrl, loggerFactory.CreateLogger<KanbanDataClient>(), client.UsesMessagePack);
         _client.ConnectionStateChanged += (_, connected) =>
         {
             IsConnected = connected;
@@ -121,6 +127,9 @@ public sealed class DashboardState : IAsyncDisposable
 
     /// <summary>过道电视轮播（展示模式或显示设置勾选；旧 Collector 无此接口时保持关闭）。</summary>
     public bool DisplayCarouselEnabled { get; private set; }
+
+    /// <summary>Collector 班次表（OEE 分班次切窗；拉取失败时为空，分析回退实例首末条）。</summary>
+    public IReadOnlyList<ShiftConfigDto> Shifts { get; private set; } = [];
 
     /// <summary>界面语言文化代码（Collector settings.json 的 LanguageCode；拉取失败时保持默认中文）。</summary>
     public string Language { get; private set; } = L.DefaultLanguage;
@@ -380,6 +389,141 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
+    /// <summary>产量窗口服务端分析。旧 Collector 无此 Hub 方法时抛 <see cref="NotSupportedException"/>，不进入 30s 冷却。</summary>
+    public async Task<ProductionWindowAnalysisDto> QueryProductionWindowAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        if (_productionWindowAnalysisUnsupported)
+            throw new NotSupportedException(nameof(QueryProductionWindowAnalysisAsync));
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryProductionWindowAnalysisAsync(request, ct);
+        }
+        catch (Exception ex) when (HistoryFetch.IsMissingHubMethod(ex))
+        {
+            _productionWindowAnalysisUnsupported = true;
+            throw new NotSupportedException(nameof(QueryProductionWindowAnalysisAsync), ex);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>报警窗口服务端统计。旧 Collector 无此 Hub 方法时抛 <see cref="NotSupportedException"/>，不进入 30s 冷却。</summary>
+    public async Task<AlarmWindowStatsDto> QueryAlarmWindowStatsAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        if (_alarmWindowStatsUnsupported)
+            throw new NotSupportedException(nameof(QueryAlarmWindowStatsAsync));
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryAlarmWindowStatsAsync(request, ct);
+        }
+        catch (Exception ex) when (HistoryFetch.IsMissingHubMethod(ex))
+        {
+            _alarmWindowStatsUnsupported = true;
+            throw new NotSupportedException(nameof(QueryAlarmWindowStatsAsync), ex);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>状态窗口服务端分析。旧 Collector 无此 Hub 方法时抛 <see cref="NotSupportedException"/>，不进入 30s 冷却。</summary>
+    public async Task<StatusWindowAnalysisDto> QueryStatusWindowAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        if (_statusWindowAnalysisUnsupported)
+            throw new NotSupportedException(nameof(QueryStatusWindowAnalysisAsync));
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryStatusWindowAnalysisAsync(request, ct);
+        }
+        catch (Exception ex) when (HistoryFetch.IsMissingHubMethod(ex))
+        {
+            _statusWindowAnalysisUnsupported = true;
+            throw new NotSupportedException(nameof(QueryStatusWindowAnalysisAsync), ex);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>复盘窗口服务端分析。旧 Collector 无此 Hub 方法时抛 <see cref="NotSupportedException"/>，不进入 30s 冷却。</summary>
+    public async Task<ReviewWindowAnalysisDto> QueryReviewAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        if (_reviewAnalysisUnsupported)
+            throw new NotSupportedException(nameof(QueryReviewAnalysisAsync));
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryReviewAnalysisAsync(request, ct);
+        }
+        catch (Exception ex) when (HistoryFetch.IsMissingHubMethod(ex))
+        {
+            _reviewAnalysisUnsupported = true;
+            throw new NotSupportedException(nameof(QueryReviewAnalysisAsync), ex);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
+    /// <summary>批量历史查询。旧 Collector 无此 Hub 方法时抛 <see cref="NotSupportedException"/>，不进入 30s 冷却。</summary>
+    public async Task<BatchHistoryQueryResponse> QueryHistoryBatchAsync(
+        BatchHistoryQueryRequest request, CancellationToken ct = default)
+    {
+        if (_historyBatchUnsupported)
+            throw new NotSupportedException(nameof(QueryHistoryBatchAsync));
+        if (DateTime.Now < _invokeFailedUntil)
+            throw new InvalidOperationException("查询连接暂不可用（上次连接失败），请稍后重试");
+        var client = GetInvokeClient();
+        try
+        {
+            if (!client.IsConnected)
+                await client.ConnectAsync(ct);
+            return await client.QueryHistoryBatchAsync(request, ct);
+        }
+        catch (Exception ex) when (HistoryFetch.IsMissingHubMethod(ex))
+        {
+            _historyBatchUnsupported = true;
+            throw new NotSupportedException(nameof(QueryHistoryBatchAsync), ex);
+        }
+        catch
+        {
+            _invokeFailedUntil = DateTime.Now.AddSeconds(30);
+            throw;
+        }
+    }
+
     /// <summary>设备配置列表（历史查询等管理页面的设备下拉数据源；与 QueryHistoryAsync 同走独立 Invoke 连接）。</summary>
     public async Task<IReadOnlyList<DeviceConfigDto>> QueryDevicesAsync(CancellationToken ct = default)
     {
@@ -467,7 +611,7 @@ public sealed class DashboardState : IAsyncDisposable
         lock (_lock)
         {
             return _invokeClient ??= new KanbanDataClient(
-                _client.HubUrl, _loggerFactory.CreateLogger<KanbanDataClient>(), useMessagePack: false);
+                _client.HubUrl, _loggerFactory.CreateLogger<KanbanDataClient>(), _client.UsesMessagePack);
         }
     }
 
@@ -837,6 +981,16 @@ public sealed class DashboardState : IAsyncDisposable
         {
             _logger.LogWarning(ex, "获取轮播开关失败（保持关闭）");
             DisplayCarouselEnabled = false;
+        }
+        try
+        {
+            var settings = await _client.GetCollectorSettingsAsync();
+            Shifts = settings.Shifts ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "获取班次配置失败（分班次 OEE 回退实例首末条）");
+            Shifts = [];
         }
         // 界面语言（屏端零配置——从服务端拉取；失败保持默认中文）
         try

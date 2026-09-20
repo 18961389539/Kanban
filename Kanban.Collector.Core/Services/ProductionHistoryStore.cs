@@ -31,6 +31,61 @@ public sealed class ProductionHistoryStore(DatabaseProvider db, ILogger<Producti
     }
 
     /// <summary>
+    /// SQL 层 15 分钟桶末抽样：GROUP BY DeviceId + ShiftName + 墙钟 15 分钟桶，保留 MAX(Id)。
+    /// 失败时回退全量 Strict + 内存抽样（口径对齐 <see cref="Kanban.Analysis.ProductionWindowMetrics.Sample15Min"/>）。
+    /// </summary>
+    public List<ProductionLog> QueryProductionLogsSampled15Min(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
+    {
+        try
+        {
+            using var context = db.CreateProductionLogContext();
+            var device = string.IsNullOrEmpty(deviceId) ? null : deviceId;
+            var shift = string.IsNullOrEmpty(shiftName) ? null : shiftName;
+            return context.ProductionLogs
+                .FromSqlInterpolated($@"
+SELECT p.Id, p.DeviceId, p.DeviceName, p.ShiftName, p.WorkOrderId, p.OkProduction, p.NgProduction, p.StatusWord, p.Timestamp, p.EventId
+FROM ProductionLogs p
+INNER JOIN (
+  SELECT MAX(Id) AS Id
+  FROM ProductionLogs
+  WHERE Timestamp >= {from} AND Timestamp <= {to}
+    AND ({device} IS NULL OR DeviceId = {device})
+    AND ({shift} IS NULL OR ShiftName = {shift})
+  GROUP BY DeviceId, ShiftName,
+    strftime('%Y-%m-%d %H:', Timestamp) || printf('%02d', (CAST(strftime('%M', Timestamp) AS INTEGER) / 15) * 15)
+) b ON p.Id = b.Id
+ORDER BY p.Timestamp")
+                .AsNoTracking()
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "15 分钟抽样 SQL 失败，回退内存抽样");
+            return SampleInMemory(QueryProductionLogsStrict(from, to, deviceId, shiftName));
+        }
+    }
+
+    private static List<ProductionLog> SampleInMemory(List<ProductionLog> logs)
+    {
+        if (logs.Count == 0) return [];
+        var dtos = logs.Select(p => new Kanban.Contracts.Dtos.ProductionLogDto
+        {
+            Id = p.Id,
+            DeviceId = p.DeviceId,
+            DeviceName = p.DeviceName,
+            ShiftName = p.ShiftName,
+            WorkOrderId = p.WorkOrderId,
+            OkProduction = p.OkProduction,
+            NgProduction = p.NgProduction,
+            StatusWord = p.StatusWord,
+            Timestamp = p.Timestamp,
+        }).ToList();
+        var sampled = Kanban.Analysis.ProductionWindowMetrics.Sample15Min(dtos);
+        var byId = logs.ToDictionary(l => l.Id);
+        return sampled.Select(d => byId[d.Id]).ToList();
+    }
+
+    /// <summary>
     /// 分页查询生产日志（服务端分页下推 SQL：Skip/Take + 独立 Count）。
     /// 供历史查询页使用——历史查询此前全量 ToList 再客户端内存分页，7 天 × 500ms 采样
     /// 可达百万级记录全量经 SignalR 传输；分页下推后只传输单页。

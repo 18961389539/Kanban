@@ -6,7 +6,7 @@ using Microsoft.JSInterop;
 
 namespace Kanban.Web.Pages;
 
-/// <summary>历史查询页 Tab 3：OEE（与 WPF OeeQueryViewModel 对等；无班次配置 API，走无配置回退口径）。</summary>
+/// <summary>历史查询页 Tab 3：OEE（与 WPF OeeQueryViewModel 对等；有班次配置时按 ResolveRange 切窗）。</summary>
 public partial class HistoryQuery
 {
     // ──────────── OEE Tab 状态 ────────────
@@ -27,6 +27,7 @@ public partial class HistoryQuery
     private object? OeTrendOption { get; set; }
     private string? OeInsight { get; set; }
     private string? OeError { get; set; }
+    private bool OeTruncated { get; set; }
 
     private string OeOkText => OeOk.ToString("N0");
     private string OeNgText => OeNg.ToString("N0");
@@ -79,6 +80,7 @@ public partial class HistoryQuery
         OeAnalysisDone = false;
         OeTrendOption = null;
         OeInsight = null;
+        OeTruncated = false;
         try
         {
             var device = _deviceConfigs.FirstOrDefault(d => d.Id == DeviceId)
@@ -94,42 +96,32 @@ public partial class HistoryQuery
 
             var shiftFilter = string.IsNullOrEmpty(ShiftName) ? null : ShiftName;
 
-            // 1) 窗口产量 + 基准（窗口差分，口径与 WPF SumWindowProduction 一致）
-            var (window, _) = await FetchAllAsync<ProductionLogDto>(
-                HistoryQueryType.ProductionLog, from, to, DeviceId, shiftFilter, r => r.ProductionLogs);
-            List<ProductionLogDto> baseline = [];
-            if (window.Count > 0)
-            {
-                var (b, _) = await FetchAllAsync<ProductionLogDto>(
-                    HistoryQueryType.ProductionLog, from.AddDays(-1), from, DeviceId, null, r => r.ProductionLogs);
-                baseline = b;
-            }
-            var (ok, ng) = ProductionAnalysis.SumWindowProduction(window, baseline, from);
-            OeOk = ok;
-            OeNg = ng;
+            // 1) 窗口产量（服务端差分 + 15 分钟抽样；旧 Collector 回退全量）
+            var analysis = await HistoryFetch.AnalyzeProductionWindowAsync(
+                Dashboard, from, to, DeviceId, shiftFilter);
+            var window = analysis.CompactLogs.ToList();
+            OeOk = analysis.Ok;
+            OeNg = analysis.Ng;
+            var ok = analysis.Ok;
+            var ng = analysis.Ng;
 
-            // 2) 状态转换 + 初始状态 → 时长
-            var (trans, _) = await FetchAllAsync<StatusTransitionRecordDto>(
-                HistoryQueryType.StatusTransition, from, to, DeviceId, shiftFilter, r => r.StatusTransitions);
-            var initialState = 1;
-            var lastBefore = await FetchLatestBeforeAsync<StatusTransitionRecordDto>(
-                HistoryQueryType.StatusTransition, from, DeviceId, shiftFilter, r => r.StatusTransitions);
-            if (lastBefore.Count > 0)
-                initialState = (int)lastBefore[0].CurrentState;
-
-            var effectiveTo = to > Dashboard.ServerNow ? Dashboard.ServerNow : to;
-            var durations = StatusAnalysis.CalculateStateDurations(trans, from, effectiveTo, initialState, Dashboard.ServerNow);
-            OeRunSeconds = durations.RunTime;
-            OeAlarmSeconds = durations.AlarmTime;
+            // 2) 状态窗口服务端分析（旧 Collector 回退全量）
+            var status = await HistoryFetch.AnalyzeStatusWindowAsync(
+                Dashboard, from, to, DeviceId, shiftFilter);
+            OeTruncated = analysis.Truncated || status.Truncated;
+            var trans = StatusWindowMetrics.ToTransitions(status.Segments, status.InitialState);
+            OeRunSeconds = status.RunSeconds;
+            OeAlarmSeconds = status.AlarmSeconds;
 
             // 3) 四率
             OeQ = OeeCalculator.CalculateQualityRate(ok, ng);
-            OeP = OeeCalculator.CalculatePerformanceRate(ok, ng, OeTargetCycle, durations.RunTime);
-            OeA = OeeCalculator.CalculateAvailabilityRate(durations.RunTime, durations.AlarmTime);
+            OeP = OeeCalculator.CalculatePerformanceRate(ok, ng, OeTargetCycle, status.RunSeconds);
+            OeA = OeeCalculator.CalculateAvailabilityRate(status.RunSeconds, status.AlarmSeconds);
             OeValue = OeeCalculator.CalculateOee(OeQ, OeP, OeA);
 
             // 4) 分班次 OEE + 趋势图 + 洞察
-            OeShifts = OeeAnalysis.ComputePerShiftOee(window, OeTargetCycle, trans, initialState, from, to, Dashboard.ServerNow);
+            OeShifts = OeeAnalysis.ComputePerShiftOee(
+                window, OeTargetCycle, trans, status.InitialState, from, to, Dashboard.ServerNow, Dashboard.Shifts);
             OeBuildTrendOption();
             OeInsight = OeeAnalysis.BuildInsight(OeQ, OeP, OeA, OeShifts, L.T);
 
@@ -236,5 +228,6 @@ public partial class HistoryQuery
         OeTrendOption = null;
         OeInsight = null;
         OeError = null;
+        OeTruncated = false;
     }
 }

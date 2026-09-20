@@ -29,6 +29,9 @@ public interface IHistoryService :
 public interface IHistoryQueryExecutor
 {
     List<Entities.ProductionLog> QueryProductionLogsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
+
+    /// <summary>每设备每班次每 15 分钟桶保留桶末一条（SQL GROUP BY；失败由存储层回退内存抽样）。</summary>
+    List<Entities.ProductionLog> QueryProductionLogsSampled15Min(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
     Entities.ProductionLog? GetLatestProductionBeforeStrict(string deviceId, DateTime before, string shiftName);
     List<Entities.AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
     List<Entities.StatusTransitionRecord> QueryStatusTransitionsStrict(string deviceId, DateTime from, DateTime to, string? shiftName = null);

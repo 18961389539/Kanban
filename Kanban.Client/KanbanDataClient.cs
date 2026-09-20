@@ -10,8 +10,8 @@ namespace Kanban.Client;
 /// <summary>
 /// Kanban.Collector SignalR 客户端（共享库，WPF 与 Blazor WASM 展示端共用）。
 /// 管理连接生命周期：指数退避重连、快照/事件订阅、历史查询。
-/// 不依赖任何 UI/WPF 类型：桌面端（MainAPP）以 <c>useMessagePack: true</c> 使用 MessagePack 协议，
-/// 浏览器端（Blazor WASM）以 <c>useMessagePack: false</c> 使用默认 JSON 协议（Collector 双协议并存）。
+/// 不依赖任何 UI/WPF 类型：桌面端（MainAPP）与浏览器端（Blazor WASM）均优先 MessagePack；
+/// 同时注册 JSON 作为旧 Collector 的协商回退（Collector 双协议并存）。
 /// </summary>
 public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
 {
@@ -63,6 +63,9 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
     public event EventHandler? Closed;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
+
+    /// <summary>是否优先协商 MessagePack（仍注册 JSON，供仅 JSON 的旧 Collector 回退）。</summary>
+    public bool UsesMessagePack => _useMessagePack;
 
     /// <summary>Hub 地址（供创建同地址的独立查询连接，如 WASM 端双连接架构）。</summary>
     public string HubUrl => _hubUrl;
@@ -121,9 +124,10 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
             _reconnectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var builder = new HubConnectionBuilder()
                 .WithUrl(BuildConnectionUrl())
-                // 与 Collector 服务端一致：MessagePack 二进制序列化（需两端同时启用）；WASM 端走默认 JSON
+                // 与 Collector 服务端一致：优先 MessagePack，JSON 始终注册供旧 Collector 协商回退
                 .WithAutomaticReconnect(new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(30) });
             if (_useMessagePack)
+            {
                 builder.AddMessagePackProtocol(options =>
                 {
                     // 时区漂移修复（P1）：保留 DateTime.Kind（默认 resolver 会把 DateTime 转
@@ -136,11 +140,10 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
                             MessagePack.Resolvers.NativeDateTimeResolver.Instance,
                             MessagePack.Resolvers.ContractlessStandardResolver.Instance));
                 });
-            else
-                // 浏览器时区漂移修复：JSON 通道 DateTime 按字面墙钟透传（不带偏移、零时区换算），
-                // Blazor WASM 端始终显示工厂本地时间，与 WPF 端口径一致（与 Collector 服务端成对注册）。
-                builder.AddJsonProtocol(options =>
-                    options.PayloadSerializerOptions.Converters.Add(new WallClockDateTimeConverter()));
+            }
+            // JSON 始终注册：旧 Collector 仅 JSON 时可协商回退；新 Collector 双协议时优先 MessagePack。
+            builder.AddJsonProtocol(options =>
+                options.PayloadSerializerOptions.Converters.Add(new WallClockDateTimeConverter()));
             created = builder.Build();
             _connection = created;
             var thisConnection = created;
@@ -316,6 +319,38 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         EnsureConnected();
         return await _connection!.InvokeAsync<HistoryQueryResponse>(
             nameof(IKanbanHubServer.QueryHistoryAsync), request, ct);
+    }
+
+    public async Task<ProductionWindowAnalysisDto> QueryProductionWindowAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<ProductionWindowAnalysisDto>(
+            nameof(IKanbanHubServer.QueryProductionWindowAnalysisAsync), request, ct);
+    }
+
+    public async Task<AlarmWindowStatsDto> QueryAlarmWindowStatsAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<AlarmWindowStatsDto>(
+            nameof(IKanbanHubServer.QueryAlarmWindowStatsAsync), request, ct);
+    }
+
+    public async Task<StatusWindowAnalysisDto> QueryStatusWindowAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<StatusWindowAnalysisDto>(
+            nameof(IKanbanHubServer.QueryStatusWindowAnalysisAsync), request, ct);
+    }
+
+    public async Task<ReviewWindowAnalysisDto> QueryReviewAnalysisAsync(
+        HistoryQueryRequest request, CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<ReviewWindowAnalysisDto>(
+            nameof(IKanbanHubServer.QueryReviewAnalysisAsync), request, ct);
     }
 
     /// <summary>SN 序列号追溯查询（按 SN 精确 / 工单 / 设备+时间范围，服务端分页）。</summary>
