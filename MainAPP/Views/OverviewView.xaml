@@ -96,6 +96,15 @@
                 <TextBlock
                     Style="{StaticResource PageTitleText}"
                     Margin="10,0,0,0" Text="{x:Static resources:Strings.K342}" />
+                <controls:KpiScopeChip Kind="Range" Margin="10,0,0,0" />
+                <TextBlock
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="{DynamicResource FontSizeCaption}"
+                    Foreground="{StaticResource SecondaryTextBrush}"
+                    TextWrapping="Wrap"
+                    MaxWidth="420"
+                    Text="{x:Static resources:Strings.Overview_ScopeHint}" />
                 <ComboBox
                     Width="180"
                     Margin="16,0,0,0"
@@ -504,7 +513,10 @@
                             ToolTip="{Binding OutputTooltip}"
                             ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K023}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K023}" />
+                                    <controls:KpiScopeChip Kind="Range" />
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource PrimaryBrush}" Text="{Binding TotalOutput, StringFormat={}{0:N0}}" />
                                     <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.K014}" />
@@ -521,7 +533,10 @@
                                 ToolTip="{Binding AlarmCountTooltip}"
                                 ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K090}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K090}" />
+                                    <controls:KpiScopeChip Kind="Range" />
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}" />
                                     <TextBlock Style="{StaticResource KpiSub}" Margin="4,0,0,0" Text="{x:Static resources:Strings.K361}" />
@@ -549,7 +564,10 @@
                                 ToolTip="{Binding LongestDowntimeTooltip}"
                                 ToolTipService.ShowDuration="30000">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K091}" />
+                                    <controls:KpiScopeChip Kind="Range" />
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding LongestDowntimeHours, Converter={StaticResource DurationToTextConverter}}" />
                                 </StackPanel>
@@ -573,6 +591,7 @@
                                         Margin="8,0,0,0" VerticalAlignment="Center"
                                         Style="{StaticResource KpiCellLabel}"
                                         Text="{x:Static resources:Strings.K362}" />
+                                    <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding PeakHour}" />
@@ -597,6 +616,7 @@
                                         Margin="8,0,0,0" VerticalAlignment="Center"
                                         Style="{StaticResource KpiCellLabel}"
                                         Text="{x:Static resources:Strings.K363}" />
+                                    <controls:KpiScopeChip Kind="Range" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                                     <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding ValleyHour}" />
@@ -631,7 +651,10 @@
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding BaselineTotalOutput, StringFormat={}{0:N0}}" />
                             </StackPanel>
                             <StackPanel ToolTip="{Binding QualityTooltip}" ToolTipService.ShowDuration="30000">
-                                <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K367}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource KpiCellLabel}" Text="{x:Static resources:Strings.K367}" />
+                                    <controls:KpiScopeChip Kind="Range" />
+                                </StackPanel>
                                 <TextBlock Style="{StaticResource KpiCellValue}" Text="{Binding QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                             <StackPanel ToolTip="{Binding OeeTooltip}" ToolTipService.ShowDuration="30000">

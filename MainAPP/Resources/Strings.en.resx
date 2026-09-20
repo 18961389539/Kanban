@@ -7052,7 +7052,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>OEE = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / &lt;60% red.</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>Availability = running time ÷ (running + alarm). Standby and offline are excluded from the denominator.\nNow: {0} = {1}</value>
+    <value>Time availability = actual production time / planned production time. Planned production time = shift time − standby time.</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>Performance = actual output (OK+NG) ÷ (target capacity × running hours).\nNow: {0} = {1}</value>
@@ -7147,6 +7147,9 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Home_Scope_Realtime" xml:space="preserve">
     <value>Live</value>
   </data>
+  <data name="Home_Scope_Range" xml:space="preserve">
+    <value>Range</value>
+  </data>
   <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
     <value>Counted in the work-order time window; same as the Work Order page</value>
   </data>
@@ -7155,6 +7158,21 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
     <value>Live value while running (based on run time)</value>
+  </data>
+  <data name="Home_Scope_Range_Tip" xml:space="preserve">
+    <value>Aggregated from history for this page's time range; not Home shift session and not the work-order window</value>
+  </data>
+  <data name="Overview_ScopeHint" xml:space="preserve">
+    <value>Numbers on this page use the time range above; not the same basis as Home shift / order / live</value>
+  </data>
+  <data name="Viewer_ExitTitle" xml:space="preserve">
+    <value>Exit confirmation</value>
+  </data>
+  <data name="Viewer_ExitConfirm" xml:space="preserve">
+    <value>The display terminal is running. Exit the dashboard?</value>
+  </data>
+  <data name="Settings_LocalSavedCollectorPending" xml:space="preserve">
+    <value>Saved on this PC. Collector was not synced; shop-floor screens still use old settings: {0}</value>
   </data>
   <data name="Settings_DisplayCarousel" xml:space="preserve">
     <value>TV carousel</value>

@@ -52,6 +52,41 @@ public class DisplayCarouselClockTests
     }
 
     [Fact]
+    public void HighAlarm_AfterClick_StaysOnHome()
+    {
+        var clock = new DisplayCarouselClock();
+        clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
+        clock.NoteInteraction(T0);
+        var status = clock.Step(new DisplayCarouselInput(T0.AddSeconds(1), 1000, true, true, true, DisplayCarousel.Home));
+        Assert.True(status.Paused);
+        Assert.False(status.Frozen);
+        Assert.Null(status.NavigateTo);
+        Assert.Equal(DisplayCarousel.Home, status.Scene);
+    }
+
+    [Fact]
+    public void HighAlarm_DoesNotStealSettingsPage()
+    {
+        var clock = new DisplayCarouselClock();
+        var status = clock.Step(new DisplayCarouselInput(T0, 1000, true, true, true, "Settings"));
+        Assert.False(status.OverlayVisible);
+        Assert.Null(status.NavigateTo);
+    }
+
+    [Fact]
+    public void HighAlarm_AfterPauseExpires_ReturnsToAlarmCenter()
+    {
+        var clock = new DisplayCarouselClock();
+        clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
+        clock.NoteInteraction(T0);
+        clock.Step(new DisplayCarouselInput(T0.AddSeconds(1), 1000, true, true, true, DisplayCarousel.Home));
+        var status = clock.Step(new DisplayCarouselInput(
+            T0.AddMilliseconds(DisplayCarousel.ResumeAfterInteractionMs), 1000, true, true, true, DisplayCarousel.Home));
+        Assert.True(status.Frozen);
+        Assert.Equal(DisplayCarousel.AlarmCenter, status.NavigateTo);
+    }
+
+    [Fact]
     public void Interaction_PausesForSixteenSeconds()
     {
         var clock = new DisplayCarouselClock();

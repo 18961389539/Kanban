@@ -15,7 +15,8 @@ namespace MainAPP.Services;
 /// </summary>
 public sealed class ApplicationStartupCoordinator(
     IServiceProvider services,
-    ApplicationRuntime runtime) : IAsyncDisposable
+    ApplicationRuntime runtime,
+    IDialogService dialog) : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private int _disposeStarted;
@@ -48,7 +49,7 @@ public sealed class ApplicationStartupCoordinator(
             if (configErrors.Count > 0)
             {
                 Log.Warning("配置验证发现 {Count} 个错误", configErrors.Count);
-                HandyControl.Controls.MessageBox.Show(
+                dialog.Show(
                     Strings.M131 + "\n\n" + string.Join("\n", configErrors) +
                     "\n\n" + Strings.M132,
                     Strings.M121, MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -87,7 +88,7 @@ public sealed class ApplicationStartupCoordinator(
             // 启动早期（MainWindow 尚未 Show，Growl 容器不存在），使用 HC MessageBox 获得深色主题样式
             if (!string.IsNullOrEmpty(deviceRepository.LoadErrorMessage))
             {
-                HandyControl.Controls.MessageBox.Show(
+                dialog.Show(
                     deviceRepository.LoadErrorMessage, Strings.M122,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 Log.Warning("DeviceRepository.LoadAll 警告: {Message}", deviceRepository.LoadErrorMessage);

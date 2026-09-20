@@ -590,6 +590,46 @@ public class SimulationFlowTests
         return found;
     }
 
+    /// <summary>轮询标题含 hint 的对话框，找到后发送按键关闭（Esc=稍后再说）。</summary>
+    private static bool WaitForDialogAndDismiss(
+        FlaUI.Core.AutomationElements.Window mainWindow,
+        string dialogTitleHint,
+        byte confirmVirtualKey,
+        int timeoutMs)
+    {
+        try { mainWindow.Focus(); } catch { }
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            var dialogHwnd = FindDialogWindow(dialogTitleHint);
+            if (dialogHwnd != IntPtr.Zero)
+            {
+                keybd_event(confirmVirtualKey, 0, 0, IntPtr.Zero);
+                Thread.Sleep(50);
+                keybd_event(confirmVirtualKey, 0, KEYEVENTF_KEYUP, IntPtr.Zero);
+                return true;
+            }
+
+            var fg = GetForegroundWindow();
+            if (fg != IntPtr.Zero)
+            {
+                var fgSb = new System.Text.StringBuilder(256);
+                GetWindowText(fg, fgSb, 256);
+                if (fgSb.ToString().Contains(dialogTitleHint, StringComparison.Ordinal))
+                {
+                    keybd_event(confirmVirtualKey, 0, 0, IntPtr.Zero);
+                    Thread.Sleep(50);
+                    keybd_event(confirmVirtualKey, 0, KEYEVENTF_KEYUP, IntPtr.Zero);
+                    return true;
+                }
+            }
+
+            Thread.Sleep(200);
+        }
+
+        return false;
+    }
+
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
@@ -790,11 +830,9 @@ public class SimulationFlowTests
     }
 
     /// <summary>
-    /// 产量达标自动提示测试：
-    /// 设置工单目标产量=5 件，启动仿真器高速产出，验证 MainAPP 在产量达到目标时弹出 Growl 成功通知。
-    /// HomeViewModel.CheckWorkOrderCompletionTarget 在 SyncRuntime 中每秒检查一次，
-    /// 当 TotalOkProduction + TotalNgProduction >= TargetQuantity 时弹 Growl + 写 INF 日志。
-    /// 断言优先检查日志文件（Serilog 落盘可靠），Growl UI 检测作为辅助。
+    /// 产量达标自动完成测试：
+    /// 设置工单目标产量=5 件，启动仿真器高速产出，验证 MainAPP 在产量达到目标时
+    /// 自动完成工单并弹出「工单已完成」后续选择框。
     /// </summary>
     [Fact]
     [Trait("Category", "LongRunning")]
@@ -803,23 +841,16 @@ public class SimulationFlowTests
         using var ctx = new SimulationContext();
         ctx.PrepareDevicesJson();
         ctx.PrepareSettingsJson();
-        // 仅 1 条 Running 工单，目标产量=5 件（device-001 注塑机1，首页默认设备）
         ctx.PrepareWorkOrdersDb(singleRunning: true, firstTargetQty: 5);
         ctx.StartSimulator("normal", 20);
         ctx.StartApp();
 
-        // 等待 MainAPP 连接 PLC 并加载数据
         Thread.Sleep(5000);
 
         var automation = ctx.App!.Automation;
-        // 首页默认显示 device-001，CurrentWorkOrder 应为 WO-TEST-001-R
-        // 仿真器 speed=20，device-001 节拍~72s/件，加速后约 3.6s/件（预热期 4.32s/件）
-        // BatchUpdateSize=3，每 3 件写一次 PLC。6 件（2 批次）约 26s 达到目标 5 件
-        // SyncRuntime 每秒执行一次，加上日志写入延迟，60s 超时足够覆盖预热 + 批量更新
-        var uiFound = WaitForGrowlText(ctx.App.App, automation, "产量已达标", timeoutMs: 60000);
+        var window = ctx.App.MainWindow;
+        var dismissed = WaitForDialogAndDismiss(window, "工单已完成", VK_ESCAPE, timeoutMs: 60000);
 
-        // 日志文件兜底：CheckWorkOrderCompletionTarget 达标时写 INF 日志，比 Growl UIA 检测更可靠。
-        // 用 FileShare.ReadWrite 打开，避免 Serilog 持有写锁导致 IOException。
         var logPath = Path.Combine(ctx.TempDir, "Config", "Logs", $"kanban_{DateTime.Now:yyyyMMdd}.log");
         var logFound = false;
         if (File.Exists(logPath))
@@ -828,15 +859,14 @@ public class SimulationFlowTests
             {
                 using var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var reader = new StreamReader(fs);
-                var logContent = reader.ReadToEnd();
-                logFound = logContent.Contains("产量已达标");
+                logFound = reader.ReadToEnd().Contains("产量已达标");
             }
             catch { /* 读取失败，忽略 */ }
         }
 
-        // 断言：Growl UI 或日志文件任一检测到"产量已达标"即通过
-        Assert.True(uiFound || logFound,
-            $"未检测到产量达标通知（UI Growl: {uiFound}, 日志: {logFound}）。" +
+        var status = QueryWorkOrderStatus(ctx.TempDir, "WO-TEST-001-R");
+        Assert.True(dismissed || logFound || status == 2,
+            $"未检测到产量达标自动完成（弹窗: {dismissed}, 日志: {logFound}, Status={status}）。" +
             $"日志路径: {logPath}, 存在: {File.Exists(logPath)}。" +
             $"PlcSimulator 输出:\n{ctx.GetSimulatorOutput()}");
     }

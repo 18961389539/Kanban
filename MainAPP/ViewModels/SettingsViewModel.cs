@@ -851,9 +851,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
 
             HasUnsavedChanges = false;
             OnPropertyChanged(nameof(UnsavedChangesText));
-            Feedback.Success(Strings.Ux_StatusSaved);
 
-            _dialog.NotifySuccess(Strings.M023);
             // 语言切换：保存到 settings.json，需重启后经 App 启动应用 CultureInfo 生效
             if (!string.Equals(DraftSettings.EffectiveLanguageCode, _lastSavedLanguageCode, StringComparison.OrdinalIgnoreCase))
             {
@@ -882,10 +880,15 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             CollectorSyncStatus = !remoteMode ? Strings.Settings_CollectorLocalMode : syncResult.IsSuccess ? Strings.Settings_CollectorConfirmed : Strings.Settings_CollectorPending;
             if (CollectorSyncPending)
             {
-                HasUnsavedChanges = true;
-                OnPropertyChanged(nameof(UnsavedChangesText));
-                Feedback.Warning(syncResult.ErrorMessage ?? Strings.Settings_CollectorNotConnectedPending);
-                _dialog.NotifyWarning(syncResult.ErrorMessage ?? Strings.Settings_CollectorNotConnectedPending);
+                var detail = syncResult.ErrorMessage ?? Strings.Settings_CollectorNotConnectedPending;
+                var message = string.Format(Strings.Settings_LocalSavedCollectorPending, detail);
+                Feedback.Warning(message);
+                _dialog.NotifyWarning(message);
+            }
+            else
+            {
+                Feedback.Success(Strings.Ux_StatusSaved);
+                _dialog.NotifySuccess(Strings.M023);
             }
         }
         catch (Exception ex)

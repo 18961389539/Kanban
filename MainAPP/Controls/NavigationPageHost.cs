@@ -2,11 +2,15 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Controls;
 
+/// <summary>
+/// 导航页宿主：只在本页 <see cref="NavigationPage.IsCurrent"/> 变为可见后延迟创建 View。
+/// 唯一入口是 Visibility（绑定 IsCurrent）+ Loaded 优先级延迟，避免 ItemsControl 生成时
+/// 默认 Visible 把隐藏页提前实例化。ContentControl.HasContent 可区分「没切到这页」和「切了但 View 还没挂上」。
+/// </summary>
 public sealed class NavigationPageHost : ContentControl
 {
     public static readonly DependencyProperty PageProperty = DependencyProperty.Register(
@@ -23,35 +27,21 @@ public sealed class NavigationPageHost : ContentControl
 
     public NavigationPageHost()
     {
-        IsVisibleChanged += OnIsVisibleChanged;
-        // 可靠兜底：IsVisibleChanged 依赖 IsVisible 计算链（祖先可见性/布局时序），
-        // 页面切换时可能不触发（线上黑屏：选中导航项但页面 Content 始终为 null）。
-        // Visibility 是属性级直接变化，绑定更新 Visibility=Visible 时必然触发。
         DependencyPropertyDescriptor.FromProperty(VisibilityProperty, typeof(NavigationPageHost))
             .AddValueChanged(this, OnVisibilityPropertyChanged);
     }
 
     /// <summary>
-    /// 延迟到绑定/布局稳定后再判定是否加载（2026-08-11 懒加载修复）：
-    /// ItemsControl 生成 host 并绑定 Page 时，Visibility 绑定（IsCurrent → Collapsed/Visible）
-    /// 尚未应用，此刻 host 仍是默认 Visible，立即判断会把隐藏页误判为可见而提前创建
-    /// View/ViewModel——破坏页面 VM 懒加载（启动期全量实例化）。
-    /// Loaded 优先级回调时绑定已同步，Visibility 是最终值。
+    /// 推迟到绑定把 Visibility 收到最终值之后再加载。
+    /// ItemsControl 生成 host 时默认 Visible，此刻立即判断会把折叠页提前创建。
     /// </summary>
     private void ScheduleEnsureViewLoaded()
     {
-        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
-        {
-            if (Visibility == Visibility.Visible)
-                EnsureViewLoaded();
-        });
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, EnsureViewLoadedIfVisible);
     }
 
     private void OnVisibilityPropertyChanged(object? sender, EventArgs e)
-    {
-        if (Visibility == Visibility.Visible)
-            ScheduleEnsureViewLoaded();
-    }
+        => ScheduleEnsureViewLoaded();
 
     private static void OnPageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -59,10 +49,11 @@ public sealed class NavigationPageHost : ContentControl
             host.ScheduleEnsureViewLoaded();
     }
 
-    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private void EnsureViewLoadedIfVisible()
     {
-        if (IsVisible)
-            ScheduleEnsureViewLoaded();
+        if (Visibility != Visibility.Visible)
+            return;
+        EnsureViewLoaded();
     }
 
     private void EnsureViewLoaded()

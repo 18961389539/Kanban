@@ -138,7 +138,7 @@ public partial class App : Application
             if (_singleInstanceError is not null)
             {
                 Log($"无法建立全局单实例互斥体：{_singleInstanceError}");
-                HandyControl.Controls.MessageBox.Show(
+                ShowHostDialog(
                     _singleInstanceError,
                     MainAPP.Resources.Strings.M130,
                     MessageBoxButton.OK,
@@ -152,7 +152,7 @@ public partial class App : Application
             {
                 Log("检测到已有实例在运行，禁止多开，准备退出");
                 // 启动早期 Growl 容器未就绪，用 HC MessageBox（理由详见下方配置文件损坏处）
-                HandyControl.Controls.MessageBox.Show(
+                ShowHostDialog(
                     MainAPP.Resources.Strings.M309,
                     MainAPP.Resources.Strings.M036,
                     MessageBoxButton.OK,
@@ -286,12 +286,12 @@ public partial class App : Application
                 var expireText = licenseGate.CurrentLicense?.IsPermanent == false
                     ? string.Format(Strings.F042, licenseGate.CurrentLicense.ExpireDate)
                     : MainAPP.Resources.Strings.M308;
-                HandyControl.Controls.Growl.Success(
+                _host.Services.GetRequiredService<IDialogService>().NotifySuccess(
                     string.Format(Strings.F163, expireText));
             }
             else if (licenseStatus == LicenseStatus.Trial && licenseGate.RemainingTrialDays.HasValue)
             {
-                HandyControl.Controls.Growl.Info(
+                _host.Services.GetRequiredService<IDialogService>().NotifyInfo(
                     string.Format(Strings.F214, licenseGate.RemainingTrialDays));
             }
 
@@ -312,7 +312,7 @@ public partial class App : Application
                 // 记录日志并提示用户，窗口保持可用，用户至少能查看/修改配置。
                 // 此时 MainWindow 已 Show，Growl 容器已就绪，用非模态通知避免阻塞。
                 Log($"后台初始化失败: {ex.Message}");
-                HandyControl.Controls.Growl.Warning(
+                _host.Services.GetService<IDialogService>()?.NotifyWarning(
                     string.Format(Strings.F133, ex.Message));
             }
         }
@@ -323,7 +323,7 @@ public partial class App : Application
             // 尽可能释放已构造的 Host 资源，避免互斥锁残留导致下次启动误判。
             try { Serilog.Log.Error(ex, "OnStartup 启动失败"); }
             catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"[OnStartup] Serilog 记录失败: {logEx.Message}"); }
-            HandyControl.Controls.MessageBox.Show(
+            ShowHostDialog(
                 string.Format(Strings.F178, ex.Message),
                 Strings.M130,
                 MessageBoxButton.OK,
@@ -362,7 +362,7 @@ public partial class App : Application
                     var errors = shutdownTask.GetAwaiter().GetResult();
                     if (errors.Count > 0)
                     {
-                        HandyControl.Controls.MessageBox.Show(
+                        ShowHostDialog(
                             Strings.M355 + "\n\n" + string.Join("\n", errors),
                             Strings.M356,
                             MessageBoxButton.OK,
@@ -616,5 +616,18 @@ public partial class App : Application
             try { _singleInstanceMutex.Dispose(); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[SafeReleaseMutex] Dispose 失败: {ex.Message}"); }
         }
+    }
+
+    /// <summary>启动/退出期模态框走 IDialogService；Host 未就绪时回退 HandyControl。</summary>
+    private void ShowHostDialog(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
+    {
+        var dialog = _host.Services.GetService<IDialogService>();
+        if (dialog is not null)
+        {
+            dialog.Show(message, title, buttons, icon);
+            return;
+        }
+
+        HandyControl.Controls.MessageBox.Show(message, title, buttons, icon);
     }
 }

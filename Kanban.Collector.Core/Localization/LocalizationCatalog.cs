@@ -9661,7 +9661,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Home_Tip_Availability"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "可用率 = 运行时长 ÷ (运行+报警)。待机与离线不计入分母。\\n当前：{0} = {1}", ["en-US"] = "Availability = running time ÷ (running + alarm). Standby and offline are excluded from the denominator.\\nNow: {0} = {1}", ["ja-JP"] = "可動率 = 稼働時間 ÷ (稼働+警報)。待機とオフラインは分母に含めない。\\n現在：{0} = {1}", ["pt-BR"] = "Disponibilidade = tempo em execução ÷ (execução + alarme). Espera e offline ficam de fora do denominador.\\nAgora: {0} = {1}"
+            ["zh-CN"] = "时间稼动率=实际生产时间/计划生产时间  计划生产时间=班次时间-待机时间。", ["en-US"] = "Time availability = actual production time / planned production time. Planned production time = shift time − standby time.", ["ja-JP"] = "時間稼働率＝実生産時間／計画生産時間  計画生産時間＝シフト時間−待機時間。", ["pt-BR"] = "Disponibilidade de tempo = tempo real de produção / tempo planejado de produção. Tempo planejado = tempo de turno − tempo de espera."
         },
         ["Wpf|Home_Tip_Performance"] = new Dictionary<string, string>
         {
@@ -9787,6 +9787,10 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "实时", ["en-US"] = "Live", ["ja-JP"] = "リアルタイム", ["pt-BR"] = "Ao vivo"
         },
+        ["Wpf|Home_Scope_Range"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "查询窗", ["en-US"] = "Range", ["ja-JP"] = "期間", ["pt-BR"] = "Intervalo"
+        },
         ["Wpf|Home_Scope_WorkOrder_Tip"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单时间窗口内统计，与工单管理页一致", ["en-US"] = "Counted in the work-order time window; same as the Work Order page", ["ja-JP"] = "工単時間窓で集計。作業指示ページと同じ", ["pt-BR"] = "Contado na janela da ordem; igual à página de Ordens"
@@ -9798,6 +9802,26 @@ public static class LocalizationCatalog
         ["Wpf|Home_Scope_Realtime_Tip"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前运行态即时值（按运行时长）", ["en-US"] = "Live value while running (based on run time)", ["ja-JP"] = "稼働中の即時値（稼働時間ベース）", ["pt-BR"] = "Valor ao vivo em execução (pelo tempo em run)"
+        },
+        ["Wpf|Home_Scope_Range_Tip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "按本页所选时间范围从历史库聚合，不是首页当班会话，也不是工单窗口", ["en-US"] = "Aggregated from history for this page's time range; not Home shift session and not the work-order window", ["ja-JP"] = "このページの期間で履歴集計。ホーム当シフトでも工単窓でもない", ["pt-BR"] = "Agregado do histórico no intervalo desta página; não é a sessão do turno da Home nem a janela da ordem"
+        },
+        ["Wpf|Overview_ScopeHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "本页数字按上方时间范围聚合，与首页「当班 / 工单 / 实时」不是同一口径", ["en-US"] = "Numbers on this page use the time range above; not the same basis as Home shift / order / live", ["ja-JP"] = "このページの数値は上の期間で集計。ホームの当シフト／工単／リアルタイムとは口径が異なります", ["pt-BR"] = "Os números desta página usam o intervalo acima; não é a mesma base da Home (turno / ordem / ao vivo)"
+        },
+        ["Wpf|Viewer_ExitTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "退出确认", ["en-US"] = "Exit confirmation", ["ja-JP"] = "終了の確認", ["pt-BR"] = "Confirmar saída"
+        },
+        ["Wpf|Viewer_ExitConfirm"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "展示终端正在运行，确定要退出看板吗？", ["en-US"] = "The display terminal is running. Exit the dashboard?", ["ja-JP"] = "表示端末が動作中です。かんばんを終了しますか？", ["pt-BR"] = "O terminal de exibição está em execução. Sair do painel?"
+        },
+        ["Wpf|Settings_LocalSavedCollectorPending"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "本机已保存。采集服务未同步，车间看板仍用旧参数：{0}", ["en-US"] = "Saved on this PC. Collector was not synced; shop-floor screens still use old settings: {0}", ["ja-JP"] = "このPCには保存済み。Collector 未同期のため現場画面は旧設定のままです：{0}", ["pt-BR"] = "Salvo neste PC. Collector não sincronizou; as telas do chão ainda usam a configuração antiga: {0}"
         },
         ["Wpf|Settings_DisplayCarousel"] = new Dictionary<string, string>
         {

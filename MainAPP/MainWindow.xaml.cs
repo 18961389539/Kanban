@@ -8,6 +8,8 @@ using System.Windows.Media;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using System.Windows.Threading;
+using MainAPP.Resources;
+using MainAPP.Services;
 using MainAPP.ViewModels;
 using MainAPP.Views;
 
@@ -20,6 +22,7 @@ public partial class MainWindow : Window
 {
     private bool _isFullscreen;
     private INavigationPageLifecycle? _activePageLifecycle;
+    private readonly IDialogService _dialog;
 
     public IReadOnlyList<NavigationPage> Pages { get; }
     private WindowStyle _windowStyleBeforeFullscreen;
@@ -30,11 +33,12 @@ public partial class MainWindow : Window
     private double _widthBeforeFullscreen;
     private double _heightBeforeFullscreen;
 
-    public MainWindow(MainWindowViewModel viewModel, IEnumerable<INavigationPageModule> pageModules)
+    public MainWindow(MainWindowViewModel viewModel, IEnumerable<INavigationPageModule> pageModules, IDialogService dialog)
     {
         Pages = pageModules.Select(module => module.Page)
             .OrderBy(page => page.Definition.Index)
             .ToArray();
+        _dialog = dialog;
         InitializeComponent();
 
         // 注册 Growl 通知容器：HandyControl 的 Growl.Error/Warning/Success/Info
@@ -241,9 +245,9 @@ public partial class MainWindow : Window
         // Viewer（展示）模式：退出看板需确认，防止车间工人误关大屏。
         if (DataContext is MainWindowViewModel viewerVm && viewerVm.IsViewerMode)
         {
-            var confirm = MessageBox.Show(
-                "展示终端正在运行，确定要退出看板吗？",
-                "退出确认",
+            var confirm = _dialog.Show(
+                Strings.Viewer_ExitConfirm,
+                Strings.Viewer_ExitTitle,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
             if (confirm != MessageBoxResult.Yes)
@@ -253,7 +257,9 @@ public partial class MainWindow : Window
             }
         }
 
-        if (DataContext is MainWindowViewModel vm && !vm.DeviceManagerViewModel.TryCloseWithDirtyCheck())
+        if (DataContext is MainWindowViewModel vm
+            && vm.CreatedDeviceManager is { } deviceManager
+            && !deviceManager.TryCloseWithDirtyCheck())
             e.Cancel = true;
         if (!e.Cancel && DataContext is MainWindowViewModel closingViewModel)
             closingViewModel.PropertyChanged -= OnMainViewModelPropertyChanged;
@@ -274,7 +280,7 @@ public partial class MainWindow : Window
             || newItem.Index == deviceManagerIndex)
             return;
 
-        if (vm.DeviceManagerViewModel.TryLeaveWithDirtyCheck()) return;
+        if (vm.CreatedDeviceManager is not { } deviceManager || deviceManager.TryLeaveWithDirtyCheck()) return;
 
         _restoringNavigation = true;
         try

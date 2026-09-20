@@ -16,7 +16,7 @@ public interface IUserHelpService
 /// <summary>
 /// 打开内置使用手册（Markdown → HTML，随界面语言选择中/英版本）。
 /// </summary>
-public sealed class UserHelpService(AppSettings appSettings) : IUserHelpService
+public sealed class UserHelpService(AppSettings appSettings, IDialogService dialog) : IUserHelpService
 {
     private HelpWindow? _openWindow;
 
@@ -25,7 +25,7 @@ public sealed class UserHelpService(AppSettings appSettings) : IUserHelpService
         var manualPath = ResolveManualPath();
         if (manualPath is null)
         {
-            HandyControl.Controls.MessageBox.Show(
+            dialog.Show(
                 string.Format(Strings.Ux_HelpManualMissing, GetExpectedManualFileName()),
                 Strings.Ux_HelpWindowTitle,
                 MessageBoxButton.OK,
@@ -56,7 +56,7 @@ public sealed class UserHelpService(AppSettings appSettings) : IUserHelpService
         catch (Exception ex)
         {
             Log.Warning(ex, "打开使用手册失败：{ManualPath}", manualPath);
-            HandyControl.Controls.MessageBox.Show(
+            dialog.Show(
                 ex.Message,
                 Strings.Ux_HelpWindowTitle,
                 MessageBoxButton.OK,

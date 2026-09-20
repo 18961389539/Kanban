@@ -7052,7 +7052,7 @@
     <value>OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / &lt;60% 红。</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>可用率 = 运行时长 ÷ (运行+报警)。待机与离线不计入分母。\n当前：{0} = {1}</value>
+    <value>时间稼动率=实际生产时间/计划生产时间  计划生产时间=班次时间-待机时间。</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>性能率 = 实际总产量(OK+NG) ÷ (目标产能 × 运行小时)。\n当前：{0} = {1}</value>
@@ -7147,6 +7147,9 @@
   <data name="Home_Scope_Realtime" xml:space="preserve">
     <value>实时</value>
   </data>
+  <data name="Home_Scope_Range" xml:space="preserve">
+    <value>查询窗</value>
+  </data>
   <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
     <value>工单时间窗口内统计，与工单管理页一致</value>
   </data>
@@ -7155,6 +7158,21 @@
   </data>
   <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
     <value>当前运行态即时值（按运行时长）</value>
+  </data>
+  <data name="Home_Scope_Range_Tip" xml:space="preserve">
+    <value>按本页所选时间范围从历史库聚合，不是首页当班会话，也不是工单窗口</value>
+  </data>
+  <data name="Overview_ScopeHint" xml:space="preserve">
+    <value>本页数字按上方时间范围聚合，与首页「当班 / 工单 / 实时」不是同一口径</value>
+  </data>
+  <data name="Viewer_ExitTitle" xml:space="preserve">
+    <value>退出确认</value>
+  </data>
+  <data name="Viewer_ExitConfirm" xml:space="preserve">
+    <value>展示终端正在运行，确定要退出看板吗？</value>
+  </data>
+  <data name="Settings_LocalSavedCollectorPending" xml:space="preserve">
+    <value>本机已保存。采集服务未同步，车间看板仍用旧参数：{0}</value>
   </data>
   <data name="Settings_DisplayCarousel" xml:space="preserve">
     <value>过道电视轮播</value>

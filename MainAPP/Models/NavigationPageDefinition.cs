@@ -33,6 +33,9 @@ public sealed class NavigationPage : INotifyPropertyChanged
     /// </summary>
     public object ViewModel => _viewModel.Value;
 
+    /// <summary>View 是否已创建。可与 <see cref="IsCurrent"/> 对照：当前页但尚未创建 = 还在宿主 Loaded 延迟中。</summary>
+    public bool IsViewCreated => _view.IsValueCreated;
+
     public NavigationPage(NavigationPageDefinition definition, Func<object> viewFactory, Func<object> viewModelFactory)
     {
         Definition = definition;

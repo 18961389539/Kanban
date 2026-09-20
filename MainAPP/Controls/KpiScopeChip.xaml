@@ -25,6 +25,10 @@
                         <Setter Property="Background" Value="{StaticResource StatusPauseSoftBrush}" />
                         <Setter Property="BorderBrush" Value="{StaticResource StatusPauseBrush}" />
                     </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Range}">
+                        <Setter Property="Background" Value="{StaticResource SecondaryRegionBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                    </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
@@ -44,6 +48,11 @@
                             <Setter Property="Text" Value="{x:Static resources:Strings.Home_Scope_Realtime}" />
                             <Setter Property="Foreground" Value="{StaticResource StatusPauseBrush}" />
                             <Setter Property="ToolTip" Value="{x:Static resources:Strings.Home_Scope_Realtime_Tip}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind, ElementName=Root}" Value="{x:Static local:KpiScopeKind.Range}">
+                            <Setter Property="Text" Value="{x:Static resources:Strings.Home_Scope_Range}" />
+                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                            <Setter Property="ToolTip" Value="{x:Static resources:Strings.Home_Scope_Range_Tip}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

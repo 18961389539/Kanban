@@ -378,6 +378,34 @@ public class HomeViewModelTests : IDisposable
         await cancelled.Task.WaitAsync(TestContext.Current.CancellationToken);
     }
 
+    [Fact]
+    public async Task TargetReached_CompletesWorkOrderOnce()
+    {
+        AddDeviceWithRuntime("d1", "设备1");
+        _connectionManager.EnsureConnected();
+        var workOrderService = Substitute.For<IWorkOrderService>();
+        workOrderService.CompleteWorkOrderAsync(Arg.Any<WorkOrder>())
+            .Returns(callInfo => Task.FromResult<WorkOrder?>(callInfo.Arg<WorkOrder>()));
+
+        using var vm = new HomeViewModel(_deviceRepository, _connectionManager, _appSettings,
+            null!, _selection, workOrderService: workOrderService);
+        var order = new WorkOrder
+        {
+            Id = 7,
+            OrderNo = "WO-DONE",
+            DeviceId = "d1",
+            Status = WorkOrderStatus.Running,
+            TargetQuantity = 100,
+        };
+        vm.CurrentWorkOrder = order;
+        vm.ApplyWorkOrderSummaryForTest(order, 100, 0);
+
+        await vm.CheckWorkOrderCompletionTargetForTest();
+        await vm.CheckWorkOrderCompletionTargetForTest();
+
+        await workOrderService.Received(1).CompleteWorkOrderAsync(order);
+    }
+
     // ──────────── ViewDeviceDetailCommand ────────────
 
     [Fact]

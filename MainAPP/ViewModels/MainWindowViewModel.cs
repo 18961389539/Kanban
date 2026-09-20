@@ -47,9 +47,15 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     public AppSettings AppSettings { get; }
 
     /// <summary>
-    /// 设备管理视图模型（懒加载：页面首次进入时创建，见构造函数 Lazy 初始化注释）
+    /// 设备管理视图模型（懒加载：页面首次进入时创建，见构造函数 Lazy 初始化注释）。
+    /// 测试与显式访问会创建实例；关窗/离开脏检查请用 <see cref="CreatedDeviceManager"/>，避免从未打开过该页时提前构造。
     /// </summary>
     public DeviceManagerViewModel DeviceManagerViewModel => _deviceManagerLazy.Value;
+
+    /// <summary>仅在页面已激活或本 VM 的 Lazy 已触发时返回，从未打开设备页则为 null。</summary>
+    public DeviceManagerViewModel? CreatedDeviceManager =>
+        FindAttached<DeviceManagerViewModel>()
+        ?? (_deviceManagerLazy.IsValueCreated ? _deviceManagerLazy.Value : null);
 
     public HistoryQueryViewModel HistoryQueryViewModel => _historyQueryLazy.Value;
 
@@ -337,7 +343,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             // 登录/权限变更触发的强制回退（RefreshNavigationForCurrentUser 直改 SelectedIndex）不经过此处，属有意豁免。
             if (SelectedIndex == NavigationPageCatalog.DeviceManager.Index
                 && page.Index != NavigationPageCatalog.DeviceManager.Index
-                && !_deviceManagerLazy.Value.MayDiscardUnsavedAndLeave())
+                && CreatedDeviceManager is { } deviceManager
+                && !deviceManager.MayDiscardUnsavedAndLeave())
             {
                 Log.Debug("离开设备管理页被未保存确认拦截");
                 return;
@@ -495,8 +502,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// 页面模块直接从 DI 创建 ViewModel 时的订阅入口。
-    /// 页面模块与本 VM 共用 DI 单例，但不会经过本 VM 的 Lazy 包装，
-    /// 因此必须在页面真正激活时补挂跨页事件。
+    /// 页面模块与本 VM 共用 DI 单例；跨页事件只在这里挂，不再依赖本 VM 的第二套 Lazy 工厂。
     /// </summary>
     internal void AttachPageViewModel(object pageViewModel)
     {
@@ -517,7 +523,20 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             case AlarmCenterViewModel alarmCenter:
                 SubscribeAlarmCenter(alarmCenter);
                 break;
+            case DeviceManagerViewModel deviceManager:
+                _attachedPageViewModels.Add(deviceManager);
+                break;
         }
+    }
+
+    private T? FindAttached<T>() where T : class
+    {
+        foreach (var pageViewModel in _attachedPageViewModels)
+        {
+            if (pageViewModel is T typed)
+                return typed;
+        }
+        return null;
     }
 
     /// <summary>产线页"跳转主页"请求：通过名称导航到主页</summary>
@@ -815,7 +834,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     private void OnCarouselTick()
     {
-        var home = _homeLazy.IsValueCreated ? _homeLazy.Value : null;
+        var home = FindAttached<HomeViewModel>()
+            ?? (_homeLazy.IsValueCreated ? _homeLazy.Value : null);
         var status = _carouselClock.Step(new DisplayCarouselInput(
             UtcNow: DateTime.UtcNow,
             DeltaMs: DisplayCarousel.TickMs,

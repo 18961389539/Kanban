@@ -7052,7 +7052,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / &lt;60% 赤。</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>可動率 = 稼働時間 ÷ (稼働+警報)。待機とオフラインは分母に含めない。\n現在：{0} = {1}</value>
+    <value>時間稼働率＝実生産時間／計画生産時間  計画生産時間＝シフト時間−待機時間。</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>性能率 = 実績総生産(OK+NG) ÷ (目標能力 × 稼働時間)。\n現在：{0} = {1}</value>
@@ -7147,6 +7147,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Home_Scope_Realtime" xml:space="preserve">
     <value>リアルタイム</value>
   </data>
+  <data name="Home_Scope_Range" xml:space="preserve">
+    <value>期間</value>
+  </data>
   <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
     <value>工単時間窓で集計。作業指示ページと同じ</value>
   </data>
@@ -7155,6 +7158,21 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
     <value>稼働中の即時値（稼働時間ベース）</value>
+  </data>
+  <data name="Home_Scope_Range_Tip" xml:space="preserve">
+    <value>このページの期間で履歴集計。ホーム当シフトでも工単窓でもない</value>
+  </data>
+  <data name="Overview_ScopeHint" xml:space="preserve">
+    <value>このページの数値は上の期間で集計。ホームの当シフト／工単／リアルタイムとは口径が異なります</value>
+  </data>
+  <data name="Viewer_ExitTitle" xml:space="preserve">
+    <value>終了の確認</value>
+  </data>
+  <data name="Viewer_ExitConfirm" xml:space="preserve">
+    <value>表示端末が動作中です。かんばんを終了しますか？</value>
+  </data>
+  <data name="Settings_LocalSavedCollectorPending" xml:space="preserve">
+    <value>このPCには保存済み。Collector 未同期のため現場画面は旧設定のままです：{0}</value>
   </data>
   <data name="Settings_DisplayCarousel" xml:space="preserve">
     <value>通路TVローテーション</value>

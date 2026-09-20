@@ -3,6 +3,7 @@ namespace Kanban.Contracts.Display;
 /// <summary>
 /// 过道电视轮播片单。停留时间为建议值的两倍：首页 40s、产线 30s、报警 20s。
 /// 点按暂停后 16s 再转；无活跃报警则跳过报警页。
+/// 高报警默认钉在报警中心；人手点主页/产线时暂停期内不抢导航，空闲后再钉回。
 /// </summary>
 public static class DisplayCarousel
 {
@@ -72,7 +73,7 @@ public readonly record struct DisplayCarouselStatus(
         false, false, false, DisplayCarousel.Home, 0, null, 0, DisplayCarousel.Playlist.Length);
 }
 
-/// <summary>可单测的轮播时钟：只决定下一页和剩余秒，不碰 UI。</summary>
+/// <summary>可单测的轮播时钟：只决定下一页和剩余秒，不碰 UI。高报警不覆盖暂停期内的手动页。</summary>
 public sealed class DisplayCarouselClock
 {
     private bool _started;
@@ -93,8 +94,19 @@ public sealed class DisplayCarouselClock
 
         if (input.HasHighAlarm)
         {
-            StartScene(DisplayCarousel.AlarmCenter);
+            // 非片单页（设置/历史等）不抢导航，与无人值守轮播一致。
+            if (!DisplayCarousel.IsPlaylistScene(input.CurrentPageKey))
+                return DisplayCarouselStatus.Hidden;
+
             _started = true;
+            // 刚点过侧栏/键盘：让人留在主页或产线；暂停结束后无人值守再钉回报警中心。
+            if (input.UtcNow < _pausedUntil)
+            {
+                _scene = input.CurrentPageKey;
+                return Status(frozen: false, paused: true, null);
+            }
+
+            StartScene(DisplayCarousel.AlarmCenter);
             var go = input.CurrentPageKey == DisplayCarousel.AlarmCenter ? null : DisplayCarousel.AlarmCenter;
             return Status(frozen: true, paused: false, go);
         }

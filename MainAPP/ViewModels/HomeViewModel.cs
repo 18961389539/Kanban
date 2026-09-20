@@ -66,10 +66,10 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private readonly IProductionHistoryReader? _productionHistory;
 
     /// <summary>
-    /// 已提示产量达标的工单 Id 集合（去重，每个工单仅弹一次 Growl）。
-    /// 工单切换/完成后残留条目无害（仅内存占用），应用重启后自动清空。
+    /// 已处理产量达标的工单 Id（每个工单只自动完成一次，避免弹窗叠开）。
     /// </summary>
     private readonly HashSet<int> _notifiedWorkOrderIds = [];
+    private Task? _autoCompleteWorkOrderTask;
 
     /// <summary>
     /// 当前工单的「工单内 OK / NG 产量」缓存（按工单口径，非会话累计）。
@@ -1223,30 +1223,52 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         RefreshCurrentWorkOrder();
         // 工单内 OK 产量：后台查询 + 2s 节流，回填进度（不可每 tick 同步查）
         RefreshWorkOrderSummary();
-        // 产量达标提示：检查当前工单产量是否达到目标，达标时弹 Growl（每工单仅一次）
+        // 产量达标：自动完成工单并弹出后续选择（每工单仅一次）
         CheckWorkOrderCompletionTarget();
         RefreshDataStatus();
     }
 
     /// <summary>
     /// 检查当前 Running 工单的累计产量是否达到目标产量。
-    /// 达标时通过 Growl 弹出成功提示，并将工单 Id 加入 _notifiedWorkOrderIds 避免重复提示。
+    /// 达标时自动 Complete（落库 + 后续工单三选一弹窗），每个工单只触发一次。
     /// 产量口径与 WorkOrderProgressText 一致：_currentWorkOrderOk（工单内 OK，非会话累计）。
     /// </summary>
     private void CheckWorkOrderCompletionTarget()
     {
-        if (_dialog == null || CurrentWorkOrder == null) return;
+        if (_workOrderService == null || CurrentWorkOrder == null) return;
         if (CurrentWorkOrder.Status != Kanban.Collector.Core.Entities.WorkOrderStatus.Running) return;
         if (_notifiedWorkOrderIds.Contains(CurrentWorkOrder.Id)) return;
+        if (_autoCompleteWorkOrderTask is { IsCompleted: false }) return;
         var produced = _currentWorkOrderOk;
         if (CurrentWorkOrder.TargetQuantity > 0 && produced >= CurrentWorkOrder.TargetQuantity)
         {
-            _notifiedWorkOrderIds.Add(CurrentWorkOrder.Id);
-            // 业务事件 INF 级日志（符合 project_memory 中"产量达标"属于业务事件的约定）
+            var order = CurrentWorkOrder;
+            _notifiedWorkOrderIds.Add(order.Id);
             Serilog.Log.Information("工单 {OrderNo} 产量已达标（{Produced} / {Target} 件）",
-                CurrentWorkOrder.OrderNo, produced, CurrentWorkOrder.TargetQuantity);
-            _dialog.NotifySuccess(string.Format(Strings.F093, CurrentWorkOrder.OrderNo, produced, CurrentWorkOrder.TargetQuantity));
+                order.OrderNo, produced, order.TargetQuantity);
+            _autoCompleteWorkOrderTask = CompleteReachedWorkOrderAsync(order);
         }
+    }
+
+    private async Task CompleteReachedWorkOrderAsync(WorkOrder order)
+    {
+        try
+        {
+            await _workOrderService!.CompleteWorkOrderAsync(order);
+            if (!_disposeCts.IsCancellationRequested)
+                RefreshCurrentWorkOrder();
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "产量达标后自动完成工单失败 OrderNo={OrderNo}", order.OrderNo);
+            _notifiedWorkOrderIds.Remove(order.Id);
+        }
+    }
+
+    internal Task CheckWorkOrderCompletionTargetForTest()
+    {
+        CheckWorkOrderCompletionTarget();
+        return _autoCompleteWorkOrderTask ?? Task.CompletedTask;
     }
 
     public void RefreshDeviceFilterItems()

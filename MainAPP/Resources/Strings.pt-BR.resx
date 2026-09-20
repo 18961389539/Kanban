@@ -7008,7 +7008,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>OEE = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / &lt;60% vermelho.</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>Disponibilidade = tempo em execução ÷ (execução + alarme). Espera e offline ficam de fora do denominador.\nAgora: {0} = {1}</value>
+    <value>Disponibilidade de tempo = tempo real de produção / tempo planejado de produção. Tempo planejado = tempo de turno − tempo de espera.</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>Desempenho = produção real (OK+NG) ÷ (capacidade alvo × horas em execução).\nAgora: {0} = {1}</value>
@@ -7103,6 +7103,9 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Home_Scope_Realtime" xml:space="preserve">
     <value>Ao vivo</value>
   </data>
+  <data name="Home_Scope_Range" xml:space="preserve">
+    <value>Intervalo</value>
+  </data>
   <data name="Home_Scope_WorkOrder_Tip" xml:space="preserve">
     <value>Contado na janela da ordem; igual à página de Ordens</value>
   </data>
@@ -7111,6 +7114,21 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Home_Scope_Realtime_Tip" xml:space="preserve">
     <value>Valor ao vivo em execução (pelo tempo em run)</value>
+  </data>
+  <data name="Home_Scope_Range_Tip" xml:space="preserve">
+    <value>Agregado do histórico no intervalo desta página; não é a sessão do turno da Home nem a janela da ordem</value>
+  </data>
+  <data name="Overview_ScopeHint" xml:space="preserve">
+    <value>Os números desta página usam o intervalo acima; não é a mesma base da Home (turno / ordem / ao vivo)</value>
+  </data>
+  <data name="Viewer_ExitTitle" xml:space="preserve">
+    <value>Confirmar saída</value>
+  </data>
+  <data name="Viewer_ExitConfirm" xml:space="preserve">
+    <value>O terminal de exibição está em execução. Sair do painel?</value>
+  </data>
+  <data name="Settings_LocalSavedCollectorPending" xml:space="preserve">
+    <value>Salvo neste PC. Collector não sincronizou; as telas do chão ainda usam a configuração antiga: {0}</value>
   </data>
   <data name="Settings_DisplayCarousel" xml:space="preserve">
     <value>Carrossel da TV</value>

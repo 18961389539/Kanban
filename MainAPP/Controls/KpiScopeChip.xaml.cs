@@ -7,7 +7,8 @@ public enum KpiScopeKind
 {
     WorkOrder,
     Shift,
-    Realtime
+    Realtime,
+    Range
 }
 
 /// <summary>
