@@ -183,7 +183,17 @@ public sealed class DashboardState : IAsyncDisposable
     /// <summary>当前班次进度（Collector 推送，5s 更新一次）。</summary>
     public ShiftProgressDto? ShiftProgress
     {
-        get { lock (_lock) return _shiftProgress; }
+        get
+        {
+            lock (_lock)
+            {
+                if (_shiftProgress is null) return null;
+                var name = DisplayText.Repair(_shiftProgress.Name);
+                return name == _shiftProgress.Name
+                    ? _shiftProgress
+                    : _shiftProgress with { Name = name };
+            }
+        }
     }
 
     /// <summary>指定设备当前工单（Running 优先回退最新 Pending；null=无工单或尚未收到推送）。</summary>
@@ -967,7 +977,7 @@ public sealed class DashboardState : IAsyncDisposable
         try
         {
             var title = await _client.GetTitleAsync();
-            if (!string.IsNullOrWhiteSpace(title)) Title = title;
+            if (!string.IsNullOrWhiteSpace(title)) Title = DisplayText.Repair(title);
         }
         catch (Exception ex)
         {

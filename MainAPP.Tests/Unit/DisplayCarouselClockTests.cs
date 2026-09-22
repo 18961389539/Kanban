@@ -26,18 +26,18 @@ public class DisplayCarouselClockTests
     }
 
     [Fact]
-    public void HomeDwell_IsFortySeconds()
+    public void HomeDwell_IsTwoHundredSeconds()
     {
         var clock = new DisplayCarouselClock();
         var status = clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
-        Assert.Equal(40, status.RemainingSeconds);
+        Assert.Equal(200, status.RemainingSeconds);
         Assert.Null(status.NavigateTo);
 
-        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(39), DisplayCarousel.HomeDwellMs - 1000));
+        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(199), DisplayCarousel.HomeDwellMs - 1000));
         Assert.Equal(DisplayCarousel.Home, status.Scene);
         Assert.Null(status.NavigateTo);
 
-        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(40), 1000));
+        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(200), 1000));
         Assert.Equal(DisplayCarousel.ProductionLine, status.NavigateTo);
     }
 
@@ -87,18 +87,46 @@ public class DisplayCarouselClockTests
     }
 
     [Fact]
-    public void Interaction_PausesForSixteenSeconds()
+    public void Interaction_PausesForEightySeconds()
     {
         var clock = new DisplayCarouselClock();
         clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
         clock.NoteInteraction(T0);
         var paused = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(10), 10_000));
         Assert.True(paused.Paused);
-        Assert.Equal(40, paused.RemainingSeconds);
+        Assert.Equal(70, paused.RemainingSeconds);
 
-        var resumed = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(16), 1000));
+        var resumed = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(80), 1000));
         Assert.False(resumed.Paused);
-        Assert.Equal(39, resumed.RemainingSeconds);
+        Assert.Equal(199, resumed.RemainingSeconds);
+    }
+
+    [Fact]
+    public void NoteInteraction_ShorterHold_DoesNotCutLongerPause()
+    {
+        var clock = new DisplayCarouselClock();
+        clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
+        clock.NoteInteraction(T0, DisplayCarousel.ResumeAfterNavMs);
+        clock.NoteInteraction(T0.AddSeconds(1), DisplayCarousel.ResumeAfterInteractionMs);
+        var status = clock.Step(new DisplayCarouselInput(
+            T0.AddSeconds(30), 1000, true, true, true, DisplayCarousel.Home));
+        Assert.True(status.Paused);
+        Assert.Null(status.NavigateTo);
+        Assert.Equal(DisplayCarousel.Home, status.Scene);
+    }
+
+    [Fact]
+    public void HighAlarm_AfterNavHold_StaysOnLine()
+    {
+        var clock = new DisplayCarouselClock();
+        clock.Step(EnabledOn(DisplayCarousel.ProductionLine, T0, 0));
+        clock.NoteInteraction(T0, DisplayCarousel.ResumeAfterNavMs);
+        var status = clock.Step(new DisplayCarouselInput(
+            T0.AddSeconds(30), 1000, true, true, true, DisplayCarousel.ProductionLine));
+        Assert.True(status.Paused);
+        Assert.False(status.Frozen);
+        Assert.Null(status.NavigateTo);
+        Assert.Equal(DisplayCarousel.ProductionLine, status.Scene);
     }
 
     [Fact]

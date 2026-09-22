@@ -7147,6 +7147,21 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\n現在：{0}</value>
   </data>
+  <data name="Home_NoDataSpan" xml:space="preserve">
+    <value>データなし {0}</value>
+  </data>
+  <data name="Web_Home_NoDataSpan" xml:space="preserve">
+    <value>データなし {0}</value>
+  </data>
+  <data name="Home_HourlyFlag" xml:space="preserve">
+    <value>基準未達</value>
+  </data>
+  <data name="Home_Tip_HourlyFlag" xml:space="preserve">
+    <value>この時間 OK {0} / NG {1} / 良品率 {2:P1}（目標 {3:P0} 未達）</value>
+  </data>
+  <data name="Web_Home_HourlyFlag" xml:space="preserve">
+    <value>基準未達</value>
+  </data>
   <data name="Home_Scope_WorkOrder" xml:space="preserve">
     <value>工単</value>
   </data>
@@ -7241,7 +7256,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>現在のデバイスレシピ名と値。\n現在：{0}</value>
   </data>
   <data name="Carousel_Tip" xml:space="preserve">
-    <value>通路 TV ローテーションの状態。操作で 16 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0}</value>
+    <value>通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>コレクタとデバイス/PLC の接続状態。\n現在：{0}</value>
@@ -7437,5 +7452,17 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>時間帯</value>
+  </data>
+  <data name="Web_NotFound" xml:space="preserve">
+    <value>ページが見つかりません</value>
+  </data>
+  <data name="Web_NotFoundHint" xml:space="preserve">
+    <value>上部ナビからページを開いてください</value>
+  </data>
+  <data name="Web_SkipToContent" xml:space="preserve">
+    <value>メインコンテンツへ</value>
+  </data>
+  <data name="Web_MainNav" xml:space="preserve">
+    <value>メインナビ</value>
   </data>
 </root>

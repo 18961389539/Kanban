@@ -48,7 +48,12 @@
         <div class="mon-grid">
             @foreach (var d in DeviceList)
             {
-                <div class="mon-card line-card @(SelectedDeviceId == d.Id ? "selected" : "")" @onclick="() => SelectDevice(d.Id)">
+                <div class="mon-card line-card @(SelectedDeviceId == d.Id ? "selected" : "")"
+                     role="button"
+                     tabindex="0"
+                     aria-pressed="@(SelectedDeviceId == d.Id)"
+                     @onclick="() => SelectDevice(d.Id)"
+                     @onkeydown="(e) => OnDeviceCardKey(e, d.Id)">
                     <div class="dev-head">
                         <span class="dev-name">@d.Name</span>
                         <span class="status-badge @StateClass(d.Id)" title="@L.Tip("Home_Tip_DeviceStatus", StateText(d.Id))">@StateText(d.Id)</span>
@@ -57,7 +62,7 @@
                         <div><span class="kpi-label">@L.T("Dv_DeviceId")</span><span class="kpi-value mono">@d.Id</span></div>
                         <div><span class="kpi-label">@L.T("Dv_MachineType")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.MachineType) ? "—" : d.MachineType)</span></div>
                         <div title="@L.Tip("Home_Tip_Recipe", string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)"><span class="kpi-label">@L.T("Rv_Recipe")</span><span class="kpi-value">@(string.IsNullOrEmpty(d.RecipeName) ? "—" : d.RecipeName)</span></div>
-                        <div title="@L.Tip("Home_Tip_TargetCycle", d.TargetCycle, d.TargetCycle > 0 ? $"{SnapshotMetrics.CycleSeconds(d.TargetCycle):F2}s" : "—")"><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@d.TargetCycle @L.T("Unit_PerHour")</span></div>
+                        <div title="@L.Tip("Home_Tip_TargetCycle", d.TargetCycle, d.TargetCycle > 0 ? $"{SnapshotMetrics.CycleSeconds(d.TargetCycle):F2}s" : "—")"><span class="kpi-label">@L.T("Lbl_TargetCapacity")</span><span class="kpi-value">@(d.TargetCycle > 0 ? $"{d.TargetCycle} {L.T("Unit_PerHour")}" : "—")</span></div>
                     </div>
                     <div class="meta-line">@L.T("Dv_AlarmCount", d.Alarms.Count) · @L.T("Dv_DefectCount", d.Defects.Count) · @L.T("Dv_CountAlarmCount", d.CounterAlarms.Count)</div>
                 </div>
@@ -263,6 +268,12 @@
     private async Task RetryAsync() => await LoadDevicesAsync();
 
     private void SelectDevice(string id) => SelectedDeviceId = SelectedDeviceId == id ? null : id;
+
+    private void OnDeviceCardKey(KeyboardEventArgs e, string id)
+    {
+        if (e.Key is "Enter" or " ")
+            SelectDevice(id);
+    }
 
     private void OpenRuntime(string id) => Nav.NavigateTo("/device/" + Uri.EscapeDataString(id));
 

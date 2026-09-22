@@ -84,6 +84,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private List<(DateTime Time, double Quality)> _qualityTrendHistory = [];
     private DateTime[] _hourlyOkBuckets = [];
     private int[] _hourlyOkCounts = [];
+    // 每小时 NG 增量：只用于在良率图上标出「小时良率低于达标线」的小时（不打 NG 柱）。
+    private int[] _hourlyNgCounts = [];
     private static readonly TimeSpan QualityHistoryThrottle = TimeSpan.FromSeconds(15);
 
     /// <summary>工单产量聚合查询节流：上次查询的工单 Id 与时刻（同一 Running 工单 2s 内复用）。</summary>
@@ -1499,7 +1501,8 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             _qualityTrendHistory,
             KpiThresholds.QualityGood,
             shift != null ? shiftStart : null,
-            shift != null ? shiftEnd : null);
+            shift != null ? shiftEnd : null,
+            _hourlyNgCounts);
     }
 
     /// <summary>
@@ -1516,6 +1519,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             _qualityTrendHistory = [];
             _hourlyOkBuckets = [];
             _hourlyOkCounts = [];
+            _hourlyNgCounts = [];
             _lastQualityHistoryQueryAt = DateTime.MinValue;
         }
 
@@ -1528,7 +1532,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             CanDisplayKpiData && TotalOutput > 0);
         var lastQuality = _qualityTrendHistory.Count == 0 ? 0 : Math.Round(_qualityTrendHistory[^1].Quality, 4);
         var lastBucket = _qualityTrendHistory.Count == 0 ? 0 : _qualityTrendHistory[^1].Time.Ticks / TimeSpan.TicksPerMinute;
-        _qualityTrendGate.Evaluate((_qualityTrendHistory.Count, lastQuality, lastBucket, _hourlyOkBuckets.Length, SumOk(_hourlyOkCounts)));
+        _qualityTrendGate.Evaluate((_qualityTrendHistory.Count, lastQuality, lastBucket, _hourlyOkBuckets.Length, Sum(_hourlyOkCounts), Sum(_hourlyNgCounts)));
     }
 
     private void MaybeQueryQualityHistory(DateTime shiftStart, DateTime shiftEnd, DateTime now, string? shiftName)
@@ -1552,17 +1556,20 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
 
                 DateTime[] hours = [];
                 int[] okCounts = [];
+                int[] ngCounts = [];
                 if (shiftEnd > shiftStart)
                 {
                     var queryTo = now < shiftEnd ? now : shiftEnd.AddTicks(-1);
                     if (queryTo < shiftStart)
                         queryTo = shiftStart;
-                    var series = DeviceDetailQueryService.QueryHourlySeries(_productionHistory, deviceId, shiftStart, queryTo);
+                    var series = DeviceDetailQueryService.QueryHourlySeries(
+                        _productionHistory, deviceId, shiftStart, queryTo, trimBeforeLastReset: true);
                     var padded = HourlyProductionDiff.PadToShiftWindow(
                         new HourlyProductionDiff.Series(series.Buckets, series.OkDiff, series.NgDiff),
                         shiftStart, shiftEnd);
                     hours = padded.Hours;
                     okCounts = padded.OkDiff;
+                    ngCounts = padded.NgDiff;
                 }
 
                 if (token.IsCancellationRequested) return;
@@ -1572,6 +1579,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
                     if (!string.Equals(SelectedDeviceId, deviceId, StringComparison.Ordinal)) return;
                     _hourlyOkBuckets = hours;
                     _hourlyOkCounts = okCounts;
+                    _hourlyNgCounts = ngCounts;
                     _qualityTrendHistory = ShiftQualityTrendBuilder.MergeLive(
                         points,
                         DateTime.Now,
@@ -1591,7 +1599,7 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
         }, token).Forget();
     }
 
-    private static int SumOk(int[] counts)
+    private static int Sum(int[] counts)
     {
         var sum = 0;
         for (var i = 0; i < counts.Length; i++)

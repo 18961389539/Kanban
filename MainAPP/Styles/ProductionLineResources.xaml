@@ -61,7 +61,7 @@
     <!--  ============ 产线设备卡片模板：设备状态用粗边框颜色标识（无左侧色条） ============
          边框颜色随状态：运行绿 / 待机黄 / 报警红 / 离线灰，默认 3px 粗边。
          报警时红色脉冲动画边框叠加提示。
-         OEE 用大号百分比 + A/P/Q 三率条，不用环图以免窄栏里挡住数字。  -->
+         OEE / 可用率 / 性能率 / 合格率纵向四行，不用环图以免窄栏里挡住数字。  -->
     <DataTemplate x:Key="LineDeviceCardTemplate">
         <DataTemplate.Resources>
             <Style x:Key="MiniStatCell" TargetType="Border">
@@ -81,8 +81,20 @@
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
-            <!--  OEE 拆解三率条样式（RateBarRow/RateBar）已于 2026-09-17 随「三列等宽」精修移除使用，
-                  保留占位说明避免误以为遗漏；如需恢复迷你条布局可从 git 历史找回。  -->
+            <Style x:Key="OeeMetricLabel" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+            <Style x:Key="OeeMetricValue" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeSubtitle}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="Margin" Value="8,0,0,0" />
+            </Style>
         </DataTemplate.Resources>
 
         <Border CornerRadius="12" Padding="24,18" MinHeight="368" Margin="8"
@@ -160,11 +172,11 @@
                     </Border>
                 </StackPanel>
 
-                <!--  Row 2：左右分栏 —— 左产量区 / 右 OEE 拆解（A×P×Q 三率）  -->
+                <!--  Row 2：左右分栏 —— 左产量区 / 右 OEE 拆解（OEE + A/P/Q 纵向四行）  -->
                 <Grid Grid.Row="2" Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
 
                     <!--  左栏：OK / NG / 总量 + 2×2 辅助指标  -->
@@ -246,54 +258,63 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!--  右栏：OEE 百分比 + A/P/Q 三率条  -->
+                    <!--  右栏：OEE / 可用率 / 性能率 / 合格率 纵向四行（窄栏横排会裁切中英标签）  -->
                     <Grid Grid.Column="1" Margin="14,0,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Width="1" Background="{StaticResource DividerBrush}" />
-                        <StackPanel Grid.Column="1" Margin="14,0,0,0">
-                            <TextBlock HorizontalAlignment="Center"
-                                       FontFamily="Consolas"
-                                       FontSize="{DynamicResource FontSizeKpiMd}"
-                                       FontWeight="Bold"
-                                       Foreground="{Binding Runtime.Oee, Converter={StaticResource OeeThreshold}}"
-                                       Text="{Binding Runtime.Oee, StringFormat={}{0:P1}}"
-                                       ToolTip="{Binding OeeTooltip}" />
-                            <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0"
-                                       FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource SecondaryTextBrush}"
-                                       Text="{x:Static resources:Strings.K587}" />
-                            <!--  2026-09-17 UI 精修：A/P/Q 三率由「右缘窄列 + 迷你条」改等宽三列 + 分隔线，
-                                  数值居中不再挤压裁切；明细仍可从各自 ToolTip 获取。  -->
-                            <Grid Margin="0,6,0,0">
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                            <Grid ToolTip="{Binding OeeTooltip}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
+                                           Text="{x:Static resources:Strings.K587}" />
+                                <TextBlock Grid.Column="1"
+                                           FontFamily="Consolas"
+                                           FontSize="{DynamicResource FontSizeKpiMd}"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"
+                                           Margin="8,0,0,0"
+                                           Foreground="{Binding Runtime.Oee, Converter={StaticResource OeeThreshold}}"
+                                           Text="{Binding Runtime.Oee, StringFormat={}{0:P1}}" />
+                            </Grid>
+                            <Grid Margin="0,10,0,0" ToolTip="{Binding AvailabilityTooltip}">
+                                <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" ToolTip="{Binding AvailabilityTooltip}">
-                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K656}" />
-                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
-                                               Foreground="{StaticResource StatusRunBrush}"
-                                               Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
-                                </StackPanel>
-                                <Border Grid.Column="1" Width="1" Margin="4,2" Background="{StaticResource DividerBrush}" />
-                                <StackPanel Grid.Column="2" ToolTip="{Binding PerformanceTooltip}">
-                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K657}" />
-                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
-                                               Foreground="{StaticResource PrimaryBrush}"
-                                               Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
-                                </StackPanel>
-                                <Border Grid.Column="3" Width="1" Margin="4,2" Background="{StaticResource DividerBrush}" />
-                                <StackPanel Grid.Column="4" ToolTip="{Binding QualityTooltip}">
-                                    <TextBlock HorizontalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K658}" />
-                                    <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0" FontSize="{DynamicResource FontSizeCaption}" FontWeight="Bold" FontFamily="Consolas"
-                                               Foreground="{StaticResource ChartOkSeriesBrush}"
-                                               Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
-                                </StackPanel>
+                                <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
+                                           Text="{x:Static resources:Strings.K656}" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
+                                           Foreground="{StaticResource StatusRunBrush}"
+                                           Text="{Binding Runtime.AvailabilityRate, StringFormat={}{0:P1}}" />
+                            </Grid>
+                            <Grid Margin="0,10,0,0" ToolTip="{Binding PerformanceTooltip}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
+                                           Text="{x:Static resources:Strings.K657}" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           Text="{Binding Runtime.PerformanceRate, StringFormat={}{0:P1}}" />
+                            </Grid>
+                            <Grid Margin="0,10,0,0" ToolTip="{Binding QualityTooltip}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Style="{StaticResource OeeMetricLabel}"
+                                           Text="{x:Static resources:Strings.K658}" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource OeeMetricValue}"
+                                           Foreground="{StaticResource ChartOkSeriesBrush}"
+                                           Text="{Binding Runtime.QualityRate, StringFormat={}{0:P1}}" />
                             </Grid>
                         </StackPanel>
                     </Grid>

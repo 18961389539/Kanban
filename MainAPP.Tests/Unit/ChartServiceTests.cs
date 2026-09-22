@@ -5,6 +5,7 @@ using Kanban.Collector.Core.Services;
 using MainAPP.Models;
 using MainAPP.Services;
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using Xunit;
@@ -302,13 +303,33 @@ public class ChartServiceTests
 
         var bars = Assert.Single(chart.Series.OfType<RectangleBarSeries>());
         Assert.Equal(2, bars.Items.Count); // 中间 0 不画柱
+        // 回归守卫：内置 OxyPlot 的 RectangleBarSeries 构造函数默认 LabelFormatString = "{4}"，
+        // 会把每个 item 的 Title 画到柱体正中（整班多根柱时压字）。这里必须为 null，
+        // Title 只留给 TrackerFormatString="{7}" 的悬停提示。
+        Assert.Null(bars.LabelFormatString);
+        Assert.Equal("{7}", bars.TrackerFormatString);
+        Assert.All(bars.Items, i => Assert.False(string.IsNullOrWhiteSpace(i.Title)));
         var lines = chart.Series.OfType<LineSeries>().ToList();
-        Assert.Equal(2, lines.Count); // 良率 + 达标线
-        Assert.Equal(2, lines[0].Points.Count);
+        // 良率折线按「相邻点间隔 > 15 分钟」断开：测试数据 08:30 与 10:00 隔了 90 分钟 → 两段 + 一条达标线
+        Assert.Equal(3, lines.Count);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), lines[0].Points[0].X);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2)), lines[1].Points[0].X);
         Assert.Equal("shiftQuality", lines[0].YAxisKey);
+        Assert.Equal(2, lines[2].Points.Count); // 达标线
+        // 空档底纹 + 时长文案
+        var gap = Assert.Single(chart.Annotations.OfType<RectangleAnnotation>());
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), gap.MinimumX);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2)), gap.MaximumX);
+        Assert.Contains("1.5h", gap.Text);
+        // 良率末点圆点
+        Assert.Contains(chart.Series.OfType<ScatterSeries>(), s => s.MarkerType == MarkerType.Circle);
         var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
         Assert.Equal(DateTimeAxis.ToDouble(start), xAxis.Minimum);
         Assert.Equal(DateTimeAxis.ToDouble(end), xAxis.Maximum);
+        // 每小时一个刻度、只写小时：不钉 MajorStep 时 OxyPlot 会按像素长度抽稀成 4 小时一档。
+        Assert.Equal(1.0 / 24, xAxis.MajorStep);
+        Assert.Equal(DateTimeIntervalType.Hours, xAxis.IntervalType);
+        Assert.Equal("HH", xAxis.StringFormat);
         Assert.Contains(chart.Axes.OfType<LinearAxis>(), a => a.Position == AxisPosition.Right);
     }
 
@@ -317,6 +338,39 @@ public class ChartServiceTests
     {
         var chart = ChartService.BuildShiftQualityAndOutputChart([], [], []);
         Assert.Empty(chart.Series);
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_FlagsHoursBelowTarget()
+    {
+        var start = DateTime.Today.AddHours(8);
+        var end = start.AddHours(4);
+        var chart = ChartService.BuildShiftQualityAndOutputChart(
+            [start, start.AddHours(1), start.AddHours(2)],
+            [100, 100, 100],
+            [],
+            0.95,
+            start,
+            end,
+            [1, 20, 1]); // 只有第二小时 100/(100+20)=83.3% 低于达标线
+
+        // 现在图上有两类 ScatterSeries：小时异常红三角 + 良率末点圆点，按 MarkerType 区分。
+        var flags = Assert.Single(
+            chart.Series.OfType<ScatterSeries>(),
+            s => s.MarkerType == MarkerType.Triangle);
+        var point = Assert.Single(flags.Points);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(1).AddMinutes(30)), point.X); // 落在该小时柱正中
+        Assert.Equal(100d, point.Y);                                                   // 高度 = 该小时 OK 数
+        Assert.Contains("NG 20", point.Tag?.ToString());
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_NoNgCounts_NoFlags()
+    {
+        var start = DateTime.Today.AddHours(8);
+        var chart = ChartService.BuildShiftQualityAndOutputChart(
+            [start], [100], [], 0.95, start, start.AddHours(1));
+        Assert.Empty(chart.Series.OfType<ScatterSeries>());
     }
 
     [Fact]

@@ -40,6 +40,7 @@
         </label>
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+            <button class="btn" disabled="@IsLoading" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
         </div>
     </div>
 
@@ -147,6 +148,17 @@
     {
         Page = 1;
         await LoadPageAsync();
+    }
+
+    private async Task ResetAsync()
+    {
+        OperatorFilter = "";
+        ActionFilter = "";
+        SucceededFilter = "";
+        var now = Dashboard.ServerNow;
+        FromText = now.Date.AddDays(-7).ToString(TimeFormat);
+        ToText = now.ToString(TimeFormat);
+        await SearchAsync();
     }
 
     private async Task LoadPageAsync()

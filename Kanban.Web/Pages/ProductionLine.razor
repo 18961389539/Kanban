@@ -31,7 +31,7 @@
     {
         <div class="msg-banner @(_resetNoticeIsError ? "msg-error" : "msg-ok")">
             <span>@_resetNotice</span>
-            <button class="msg-close" title="@L.T("Pl_Cancel")" @onclick="() => _resetNotice = null">✕</button>
+            <button class="msg-close" title="@L.T("K143")" @onclick="() => _resetNotice = null">✕</button>
         </div>
     }
 
@@ -131,17 +131,21 @@
             <div class="mon-grid">
                 @foreach (var d in FilteredDevices)
                 {
-                    <div class="mon-card line-card" @onclick="() => OpenDevice(d.DeviceId)">
+                    <div class="mon-card line-card line-device @StateClass(d.Status)"
+                         role="link"
+                         tabindex="0"
+                         aria-label="@d.DeviceName"
+                         @onclick="() => OpenDevice(d.DeviceId)"
+                         @onkeydown="(e) => OnDeviceCardKey(e, d.DeviceId)">
                         <div class="dev-head">
                             <span class="dev-name">@d.DeviceName</span>
                             <span class="status-badge @StateClass(d.Status)" title="@L.Tip("Home_Tip_DeviceStatus", StateText(d))">@StateText(d)</span>
-                            @if (!string.IsNullOrEmpty(RecipeOf(d.DeviceId)))
-                            {
-                                <span class="line-recipe" title="@L.Tip("Home_Tip_Recipe", RecipeOf(d.DeviceId))">@RecipeOf(d.DeviceId)</span>
-                            }
                         </div>
+                        @if (!string.IsNullOrEmpty(RecipeOf(d.DeviceId)))
+                        {
+                            <div class="line-recipe-name" title="@L.Tip("Home_Tip_Recipe", RecipeOf(d.DeviceId))">@RecipeOf(d.DeviceId)</div>
+                        }
 
-                        @* 报警行：⚠ 报警名 · 持续时长 *@
                         @if (d.ActiveAlarms.Count > 0)
                         {
                             var a = d.ActiveAlarms[0];
@@ -156,27 +160,77 @@
                             </div>
                         }
 
-                        <div class="metric-grid">
-                            <div title="@L.Tip("Ln_Tip_SessionOk", d.TotalOkProduction)"><span class="kpi-label">@L.T("Lbl_Ok")</span><span class="kpi-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span></div>
-                            <div title="@L.Tip("Ln_Tip_SessionNg", d.TotalNgProduction)"><span class="kpi-label">@L.T("Lbl_Ng")</span><span class="kpi-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span></div>
-                            <div title="@L.Tip("Ln_Tip_CycleCompare", CycleText(d))"><span class="kpi-label">@L.T("Ln_Cycle")</span><span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span></div>
-                            <div title="@L.Tip("Home_Tip_AlarmTime", FmtDuration(d.AlarmTime), SnapshotMetrics.TimeRatio(d.AlarmTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Alarm")</span><span class="kpi-value kpi-ng">@FmtDuration(d.AlarmTime)</span></div>
-                            <div title="@L.Tip("Home_Tip_PausedTime", FmtDuration(d.PausedTime), SnapshotMetrics.TimeRatio(d.PausedTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Paused")</span><span class="kpi-value">@FmtDuration(d.PausedTime)</span></div>
-                            <div title="@L.Tip("Home_Tip_OfflineTime", FmtDuration(d.OfflineTime), SnapshotMetrics.TimeRatio(d.OfflineTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))"><span class="kpi-label">@L.T("Status_Offline")</span><span class="kpi-value">@FmtDuration(d.OfflineTime)</span></div>
+                        <div class="line-split">
+                            <div class="line-prod">
+                                <div class="mini-stat-row">
+                                    <div class="mini-stat" title="@L.Tip("Ln_Tip_SessionOk", d.TotalOkProduction)">
+                                        <span class="mini-stat-label">@L.T("K588")</span>
+                                        <span class="mini-stat-value kpi-ok">@d.TotalOkProduction.ToString("N0")</span>
+                                    </div>
+                                    <div class="mini-stat" title="@L.Tip("Ln_Tip_SessionNg", d.TotalNgProduction)">
+                                        <span class="mini-stat-label">@L.T("K589")</span>
+                                        <span class="mini-stat-value kpi-ng">@d.TotalNgProduction.ToString("N0")</span>
+                                    </div>
+                                    <div class="mini-stat" title="@L.Tip("Home_Tip_TotalOutput", d.TotalOkProduction, d.TotalNgProduction, SnapshotMetrics.TotalOutput(d.TotalOkProduction, d.TotalNgProduction))">
+                                        <span class="mini-stat-label">@L.T("K590")</span>
+                                        <span class="mini-stat-value">@SnapshotMetrics.TotalOutput(d.TotalOkProduction, d.TotalNgProduction).ToString("N0")</span>
+                                    </div>
+                                </div>
+                                <div class="line-aux">
+                                    <div title="@L.Tip("Ln_Tip_CycleCompare", CycleText(d))">
+                                        <span class="kpi-label">@L.T("Ln_Cycle")</span>
+                                        <span class="kpi-value @(IsCycleSlow(d) ? "kpi-ng" : "")">@CycleText(d)</span>
+                                    </div>
+                                    <div title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
+                                        <span class="kpi-label">@L.T("K593")</span>
+                                        <span class="kpi-value run">@FmtDuration(d.RunTime)</span>
+                                    </div>
+                                    <div title="@L.Tip("Home_Tip_AlarmTime", FmtDuration(d.AlarmTime), SnapshotMetrics.TimeRatio(d.AlarmTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
+                                        <span class="kpi-label">@L.T("Status_Alarm")</span>
+                                        <span class="kpi-value alarm">@FmtDuration(d.AlarmTime)</span>
+                                    </div>
+                                    <div title="@L.Tip("Home_Tip_PausedTime", FmtDuration(d.PausedTime), SnapshotMetrics.TimeRatio(d.PausedTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
+                                        <span class="kpi-label">@L.T("Status_Paused")</span>
+                                        <span class="kpi-value paused">@FmtDuration(d.PausedTime)</span>
+                                    </div>
+                                    <div title="@L.Tip("Home_Tip_OfflineTime", FmtDuration(d.OfflineTime), SnapshotMetrics.TimeRatio(d.OfflineTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">
+                                        <span class="kpi-label">@L.T("Status_Offline")</span>
+                                        <span class="kpi-value idle">@FmtDuration(d.OfflineTime)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="line-oee">
+                                <div class="oee-metric" title="@OeeTip(d)">
+                                    <span class="oee-metric-label">@L.T("K587")</span>
+                                    <span class="oee-metric-value oee-hero @UiPalette.OeeToneClass(d.Oee)">@Pct(d.Oee)</span>
+                                </div>
+                                <div class="oee-metric" title="@AvailabilityTip(d)">
+                                    <span class="oee-metric-label">@L.T("Lbl_Availability")</span>
+                                    <span class="oee-metric-value a">@Pct(d.AvailabilityRate)</span>
+                                </div>
+                                <div class="oee-metric" title="@PerformanceTip(d)">
+                                    <span class="oee-metric-label">@L.T("Lbl_Performance")</span>
+                                    <span class="oee-metric-value p">@Pct(d.PerformanceRate)</span>
+                                </div>
+                                <div class="oee-metric" title="@QualityTip(d)">
+                                    <span class="oee-metric-label">@L.T("Lbl_Quality")</span>
+                                    <span class="oee-metric-value q">@Pct(d.QualityRate)</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="ring-row">
-                            <Ring Value="@d.Oee" ValueText="@Pct(d.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip(d)" />
-                            <Ring Value="@d.AvailabilityRate" ValueText="@Pct(d.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability"
-                                  Title="@AvailabilityTip(d)" />
-                            <Ring Value="@d.PerformanceRate" ValueText="@Pct(d.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTip(d)" />
-                            <Ring Value="@d.QualityRate" ValueText="@Pct(d.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTip(d)" />
-                        </div>
-                        <div class="meta-line">
-                            <span title="@L.Tip("Home_Tip_RunTime", FmtDuration(d.RunTime), SnapshotMetrics.TimeRatio(d.RunTime, d.RunTime, d.AlarmTime, d.PausedTime, d.OfflineTime))">@L.T("Hq_StatusRun") @FmtDuration(d.RunTime)</span>
-                            <span> · </span>
-                            <span title="@L.Tip("Home_Tip_SnapSeq", d.Seq)">@L.T("Lbl_SnapSeq") #@d.Seq</span>
-                        </div>
+                        @if (HasShiftTarget(d))
+                        {
+                            <div class="line-pace" title="@ShiftPaceTooltip(d)">
+                                <span class="kpi-label">@L.T("Ln_ShiftPace")</span>
+                                <div class="time-bar">
+                                    <div class="seg shift" style="width:@ShiftPaceBarPct(d)%"></div>
+                                </div>
+                                <span class="kpi-value">@ShiftPaceText(d)</span>
+                            </div>
+                        }
+
+                        <div class="line-open">→ @L.T("Dd_OpenRuntime")</div>
                     </div>
                 }
             </div>
@@ -189,7 +243,7 @@
     private bool _disposed;
 
     // ──── 筛选状态 ────
-    private int StatusFilter { get; set; } // 0=全部 1=运行 2=报警 3=待机 4=空闲
+    private int StatusFilter { get; set; } // 0=全部 1=运行 2=报警 3=待机 4=离线
     private string SearchText { get; set; } = "";
     private string SortBy { get; set; } = "name";
 
@@ -217,6 +271,12 @@
         => _resetConfirmText = e.Value?.ToString() ?? "";
 
     private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
+
+    private void OnDeviceCardKey(KeyboardEventArgs e, string deviceId)
+    {
+        if (e.Key is "Enter" or " ")
+            OpenDevice(deviceId);
+    }
 
     private void OpenResetConfirm()
     {
@@ -404,6 +464,48 @@
         return L.Tip("Home_Tip_Quality",
             total > 0 ? $"{d.TotalOkProduction} / {total}" : "— / —",
             Pct(d.QualityRate));
+    }
+
+    private bool HasShiftTarget(DeviceSnapshotDto d)
+        => Dashboard.ShiftProgress is { IsInShift: true, ShiftStart: not null }
+           && d.TargetCycle > 0;
+
+    private int ShiftExpectedQuantity(DeviceSnapshotDto d)
+    {
+        var start = Dashboard.ShiftProgress?.ShiftStart;
+        if (start is null || d.TargetCycle <= 0) return 0;
+        return SnapshotMetrics.ExpectedOutput(d.TargetCycle, (Dashboard.ServerNow - start.Value).TotalHours);
+    }
+
+    private double ShiftPaceRatio(DeviceSnapshotDto d)
+    {
+        var expected = ShiftExpectedQuantity(d);
+        return expected > 0 ? (double)d.TotalOkProduction / expected : 0;
+    }
+
+    private int ShiftPaceBarPct(DeviceSnapshotDto d)
+        => (int)Math.Round(Math.Clamp(ShiftPaceRatio(d), 0, 1) * 100);
+
+    private string ShiftPaceText(DeviceSnapshotDto d)
+    {
+        if (!HasShiftTarget(d)) return "";
+        var expected = ShiftExpectedQuantity(d);
+        var ok = d.TotalOkProduction.ToString("N0");
+        if (expected <= 0) return $"{ok} / —";
+        return ShiftPaceRatio(d) >= 1
+            ? $"{ok} / {expected:N0} · {L.T("Ln_ShiftPaceExceeded")}"
+            : $"{ok} / {expected:N0} · {UiPalette.Pct(ShiftPaceRatio(d))}";
+    }
+
+    private string ShiftPaceTooltip(DeviceSnapshotDto d)
+    {
+        if (!HasShiftTarget(d)) return "";
+        var expected = ShiftExpectedQuantity(d);
+        var ok = d.TotalOkProduction.ToString("N0");
+        var full = expected <= 0
+            ? $"{ok} / —"
+            : $"{ok} / {expected:N0} · {UiPalette.Pct(ShiftPaceRatio(d))}";
+        return L.Tip("Ln_Tip_ShiftPace", full);
     }
 
     protected override async Task OnInitializedAsync()

@@ -185,6 +185,45 @@ public static class ChartService
         return model;
     }
 
+    /// <summary>按时间桶去重：同一桶只保留最后一个点（实时点每 20 秒一个，直接在长横轴上连线会糊成竖线）。</summary>
+    private static List<(DateTime Time, double Quality)> DedupeByBucket(
+        IReadOnlyList<(DateTime Time, double Quality)> points,
+        TimeSpan bucket)
+    {
+        var result = new List<(DateTime Time, double Quality)>(points.Count);
+        foreach (var point in points)
+        {
+            var slot = point.Time.Ticks / bucket.Ticks;
+            if (result.Count > 0 && result[^1].Time.Ticks / bucket.Ticks == slot)
+                result[^1] = point;
+            else
+                result.Add(point);
+        }
+
+        return result;
+    }
+
+    /// <summary>相邻点间隔超过 <paramref name="maxGap"/> 就切成新的一段——空档不连线。</summary>
+    private static List<List<(DateTime Time, double Quality)>> SplitByGap(
+        List<(DateTime Time, double Quality)> points,
+        TimeSpan maxGap)
+    {
+        var segments = new List<List<(DateTime Time, double Quality)>>();
+        List<(DateTime Time, double Quality)>? current = null;
+        foreach (var point in points)
+        {
+            if (current == null || point.Time - current[^1].Time > maxGap)
+            {
+                current = [];
+                segments.Add(current);
+            }
+
+            current.Add(point);
+        }
+
+        return segments;
+    }
+
     private static void AddProductionLabel(PlotModel model, DateTime time, double value, int amount, string prefix, OxyColor color)
     {
         if (amount <= 0) return;
@@ -1015,6 +1054,8 @@ public static class ChartService
 
     /// <summary>
     /// 当前班次产量 + 良率：左轴每小时 OK 增量柱，右轴会话累计良率折线与达标虚线。
+    /// 可选 <paramref name="ngCounts"/>：给出每小时 NG 增量时，对小时良率低于
+    /// <paramref name="target"/> 的小时在柱顶补一个红三角（累计折线会把单小时事件摊平）。
     /// 横轴覆盖整班时段。无柱且无折线点时返回空模型（调用方显示空状态）。
     /// </summary>
     public static PlotModel BuildShiftQualityAndOutputChart(
@@ -1023,7 +1064,8 @@ public static class ChartService
         IReadOnlyList<(DateTime Time, double Quality)> qualityPoints,
         double target = 0.95,
         DateTime? axisStart = null,
-        DateTime? axisEnd = null)
+        DateTime? axisEnd = null,
+        int[]? ngCounts = null)
     {
         var model = CreateBaseModel();
         model.IsLegendVisible = false;
@@ -1039,7 +1081,15 @@ public static class ChartService
         if (tEnd <= tStart)
             tEnd = tStart.AddMinutes(1);
 
-        var xAxis = CreateDateTimeAxis("", "HH:mm");
+        // 每小时都要出现刻度标签：不显式钉粒度时 OxyPlot 会按轴的像素长度自动抽稀，
+        // 12 小时窗口落到 4 小时一档（只剩 08:00/12:00/16:00/20:00）。
+        // DateTimeAxis 内部单位是「天」，所以 1 小时 = 1/24；IntervalType 只管标签/次刻度类型，
+        // 真正决定主刻度间距的是 MajorStep。格式只写小时「HH」——整点轴的分钟恒为 00，
+        // 省一半标签宽度，窄窗口也不用转角度。
+        // 注意：CreateDateTimeAxis 被 7 处图表共用，粒度只能在这里单独钉，不能改 helper。
+        var xAxis = CreateDateTimeAxis("", "HH");
+        xAxis.IntervalType = DateTimeIntervalType.Hours;
+        xAxis.MajorStep = 1.0 / 24;
         xAxis.Minimum = DateTimeAxis.ToDouble(tStart);
         xAxis.Maximum = DateTimeAxis.ToDouble(tEnd);
         model.Axes.Add(xAxis);
@@ -1094,6 +1144,10 @@ public static class ChartService
                 FillColor = _okFill,
                 StrokeColor = OxyColors.Transparent,
                 TrackerFormatString = "{7}",
+                // 柱子只保留悬停提示：内置 OxyPlot 的 RectangleBarSeries 构造函数默认
+                // LabelFormatString = "{4}"（title），会把下方每个 item 的两行 Title 直接画在柱体正中，
+                // 整班多根柱时互相压字。显式置 null 后 Title 只被 TrackerFormatString 消费。
+                LabelFormatString = null,
             };
             for (int i = 0; i < buckets.Length; i++)
             {
@@ -1113,22 +1167,53 @@ public static class ChartService
                 model.Series.Add(okSeries);
         }
 
-        if (qualityPoints.Count > 0)
+        // 良率折线（2026-09-22 重做画法）：
+        // ① 先按 5 分钟去重：实时点每 20 秒一个，在 12 小时横轴上 40 分钟只占约 28px，
+        //    直接连线会糊成一根竖线——同一桶只留最后一个点。
+        // ② 相邻点间隔 > 15 分钟就断开：离线那 7.4 小时以前被连成一条斜线，
+        //    看起来像良率在缓慢下滑，其实中间根本没有数据。
+        // ③ 末点另画一个圆点表示当前值。
+        var sampled = DedupeByBucket(qualityPoints, TimeSpan.FromMinutes(5));
+        var segments = SplitByGap(sampled, TimeSpan.FromMinutes(15));
+        foreach (var segment in segments)
         {
             var series = new LineSeries
             {
                 Title = Strings.K001,
                 Color = _primaryColor,
                 StrokeThickness = 2.2,
-                MarkerType = qualityPoints.Count <= 24 ? MarkerType.Circle : MarkerType.None,
+                MarkerType = segment.Count <= 24 ? MarkerType.Circle : MarkerType.None,
                 MarkerSize = 3,
                 MarkerFill = _primaryColor,
                 YAxisKey = "shiftQuality",
                 TrackerFormatString = "{2:HH:mm}\n{4:P1}",
             };
-            foreach (var point in qualityPoints)
+            foreach (var point in segment)
                 series.Points.Add(DateTimeAxis.CreateDataPoint(point.Time, point.Quality));
             model.Series.Add(series);
+        }
+
+        // 无数据时段底纹 + 说明：「这一段没生产」一眼可见，不用靠一条直连的线去猜。
+        var bandTop = maxOk <= 0 ? 8 : maxOk * 1.15;
+        for (var i = 1; i < segments.Count; i++)
+        {
+            var gapFrom = segments[i - 1][^1];
+            var gapTo = segments[i][0];
+            model.Annotations.Add(new RectangleAnnotation
+            {
+                MinimumX = DateTimeAxis.ToDouble(gapFrom.Time),
+                MaximumX = DateTimeAxis.ToDouble(gapTo.Time),
+                MinimumY = 0,
+                MaximumY = bandTop,
+                Fill = OxyColor.FromArgb(90, 0x2A, 0x32, 0x3F),
+                Stroke = OxyColors.Transparent,
+                Layer = AnnotationLayer.BelowSeries,
+                Text = string.Format(Strings.Home_NoDataSpan, $"{(gapTo.Time - gapFrom.Time).TotalHours:0.#}h"),
+                TextColor = ChartPalette.MutedText,
+                FontSize = 11,
+                TextHorizontalAlignment = HorizontalAlignment.Center,
+                TextVerticalAlignment = VerticalAlignment.Bottom,
+            });
         }
 
         var targetLine = new LineSeries
@@ -1143,6 +1228,62 @@ public static class ChartService
         targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tStart, target));
         targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tEnd, target));
         model.Series.Add(targetLine);
+
+        // 单小时质量异常标记（2026-09-22）：折线画的是「累计良率」，一次小时级质量事件会被
+        // 后面的正常时间摊平，看不出是哪一小时出的问题。这里对小时良率低于达标线的小时，
+        // 在柱顶补一个红三角；Tag 里装好该小时的 OK / NG / 良率，由 TrackerFormatString 的 {Tag} 渲染。
+        // 加在最后 = 画在最上层。
+        if (ngCounts != null)
+        {
+            var flags = new ScatterSeries
+            {
+                Title = Strings.Home_HourlyFlag,
+                MarkerType = MarkerType.Triangle,
+                MarkerSize = 5,
+                MarkerFill = _alarmColor,
+                MarkerStroke = OxyColors.Transparent,
+                TrackerFormatString = "{2:HH:mm}\n{Tag}",
+            };
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                var ok = i < okCounts.Length ? Math.Max(0, okCounts[i]) : 0;
+                var ng = i < ngCounts.Length ? Math.Max(0, ngCounts[i]) : 0;
+                if (ok + ng <= 0)
+                    continue;
+
+                var rate = (double)ok / (ok + ng);
+                if (rate >= target)
+                    continue;
+
+                flags.Points.Add(new ScatterPoint(
+                    DateTimeAxis.ToDouble(buckets[i].AddMinutes(30)), ok)
+                {
+                    Tag = string.Format(Strings.Home_Tip_HourlyFlag, ok, ng, rate, target),
+                });
+            }
+
+            if (flags.Points.Count > 0)
+                model.Series.Add(flags);
+        }
+
+        // 当前值单独一个圆点：末段抽稀后仍能一眼看到「现在的良率在哪」。
+        if (sampled.Count > 0)
+        {
+            var last = sampled[^1];
+            var current = new ScatterSeries
+            {
+                Title = Strings.K001,
+                MarkerType = MarkerType.Circle,
+                MarkerSize = 4,
+                MarkerFill = _primaryColor,
+                MarkerStroke = OxyColors.Transparent,
+                YAxisKey = "shiftQuality",
+                TrackerFormatString = "{2:HH:mm}\n{4:P1}",
+            };
+            current.Points.Add(new ScatterPoint(DateTimeAxis.ToDouble(last.Time), last.Quality));
+            model.Series.Add(current);
+        }
+
         return model;
     }
 

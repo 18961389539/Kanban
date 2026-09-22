@@ -35,7 +35,8 @@
                 <span class="kpi-label">@L.T("Rv_Recipe")</span>
                 <span class="kpi-value">@(string.IsNullOrEmpty(Snapshot.RecipeName) ? "—" : Snapshot.RecipeName)</span>
             </div>
-            <div class="kpi-card card-click" @onclick="OpenWorkOrder">
+            <div class="kpi-card card-click" role="link" tabindex="0"
+                 @onclick="OpenWorkOrder" @onkeydown="OnWorkOrderKey">
                 <span class="kpi-label">@L.T("Card_WorkOrder")</span>
                 <span class="kpi-value">@(WorkOrder?.OrderNo ?? L.T("Val_NoWorkOrder"))</span>
                 <span class="kpi-sub dim">@(WorkOrder is null ? "" : WorkOrder.ProductCode)</span>
@@ -49,10 +50,10 @@
         <section class="card">
             <div class="card-title">@L.T("Card_Oee") <KpiScopeChip Kind="Shift" /></div>
             <div class="ring-row">
-                <Ring Value="@Snapshot.Oee" ValueText="@Pct(Snapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip" />
-                <Ring Value="@Snapshot.AvailabilityRate" ValueText="@Pct(Snapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" />
-                <Ring Value="@Snapshot.PerformanceRate" ValueText="@Pct(Snapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" />
-                <Ring Value="@Snapshot.QualityRate" ValueText="@Pct(Snapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" />
+                <Ring Value="@Snapshot.Oee" ValueText="@Pct(Snapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip" HasData="@HasOeeWindow" />
+                <Ring Value="@Snapshot.AvailabilityRate" ValueText="@Pct(Snapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" HasData="@HasOeeWindow" />
+                <Ring Value="@Snapshot.PerformanceRate" ValueText="@Pct(Snapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" HasData="@HasOeeWindow" />
+                <Ring Value="@Snapshot.QualityRate" ValueText="@Pct(Snapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" HasData="@HasOeeWindow" />
             </div>
         </section>
 
@@ -83,9 +84,13 @@
             {
                 <div class="loading-row">@L.T("Hq_Loading")…</div>
             }
+            else if (AlarmError is not null)
+            {
+                <div class="msg-banner msg-error">@AlarmError</div>
+            }
             else if (RecentAlarms.Count == 0)
             {
-                <div class="no-data">@L.T("Val_NoAlarms")</div>
+                <EmptyState Compact="true" Title="@L.T("Val_NoAlarms")" Hint="" Icon="✅" />
             }
             else
             {
@@ -101,7 +106,8 @@
                     <tbody>
                         @foreach (var e in RecentAlarms)
                         {
-                            <tr class="row-click" @onclick="() => OpenAlarm(e)">
+                            <tr class="row-click" tabindex="0" @onclick="() => OpenAlarm(e)"
+                                @onkeydown="(k) => OnAlarmRowKey(k, e)">
                                 <td>@e.EventTime.ToString("MM-dd HH:mm:ss")</td>
                                 <td>@e.AlarmName</td>
                                 <td>@AlarmAnalysis.GetEventTypeText(e.EventType, L.T)</td>
@@ -144,6 +150,7 @@
     private IReadOnlyList<HourBucketItem> HourBuckets { get; set; } = [];
     private List<AlarmEventRecordDto> RecentAlarms { get; set; } = [];
     private bool AlarmLoading { get; set; }
+    private string? AlarmError { get; set; }
     private string? _hourKey;
     private int _hourRunning;
     private DateTime _lastHourAt = DateTime.MinValue;
@@ -220,6 +227,7 @@
     {
         if (string.IsNullOrEmpty(DeviceId)) return;
         AlarmLoading = true;
+        AlarmError = null;
         try
         {
             var now = Dashboard.ServerNow;
@@ -233,12 +241,18 @@
                 PageSize = 30,
             });
             if (_disposed) return;
-            RecentAlarms = resp.ErrorCode == HistoryErrorCode.None
-                ? resp.AlarmEvents.OrderByDescending(e => e.EventTime).Take(30).ToList()
-                : [];
+            if (resp.ErrorCode != HistoryErrorCode.None)
+            {
+                AlarmError = L.T("Hq_QueryFailed");
+                RecentAlarms = [];
+                return;
+            }
+
+            RecentAlarms = resp.AlarmEvents.OrderByDescending(e => e.EventTime).Take(30).ToList();
         }
         catch (Exception)
         {
+            AlarmError = L.T("Hq_QueryFailed");
             RecentAlarms = [];
         }
         finally
@@ -276,6 +290,12 @@
         Nav.NavigateTo($"/workorders?id={WorkOrder.Id}");
     }
 
+    private void OnWorkOrderKey(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+            OpenWorkOrder();
+    }
+
     private void OpenAlarm(AlarmEventRecordDto e)
     {
         var from = e.EventTime.ToString("yyyy-MM-ddTHH:mm");
@@ -283,7 +303,16 @@
         Nav.NavigateTo($"/history?tab=2&deviceId={Uri.EscapeDataString(DeviceId)}&alarmName={Uri.EscapeDataString(e.AlarmName)}&from={from}&to={to}");
     }
 
+    private void OnAlarmRowKey(KeyboardEventArgs e, AlarmEventRecordDto alarm)
+    {
+        if (e.Key is "Enter" or " ")
+            OpenAlarm(alarm);
+    }
+
     private static string Pct(double v) => UiPalette.Pct(v);
+
+    private bool HasOeeWindow => Snapshot is { } s
+        && UiPalette.HasOeeWindow(s.RunTime, s.AlarmTime, s.PausedTime);
 
     private static string StateText(DeviceSnapshotDto s) => s.Status switch
     {

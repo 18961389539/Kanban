@@ -12,7 +12,7 @@
         @for (var i = 0; i < TabTitles.Length; i++)
         {
             var idx = i;
-            <button class="tab-btn @(TabIndex == idx ? "active" : "")" @onclick="() => SwitchTab(idx)">@TabTitles[idx]</button>
+            <button class="tab-btn @(TabIndex == idx ? "active" : "")" @onclick="() => SwitchTabAsync(idx)">@TabTitles[idx]</button>
         }
     </div>
 
@@ -63,7 +63,7 @@
                 <option value="">@L.T("Hq_AllShifts")</option>
                 @foreach (var s in ActiveShiftOptions)
                 {
-                    <option value="@s">@s</option>
+                    <option value="@s">@DisplayText.Repair(s)</option>
                 }
             </select>
         </label>
@@ -83,7 +83,7 @@
         }
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsAnyLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
-            <button class="btn" disabled="@IsAnyLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
+            <button class="btn" disabled="@IsAnyLoading" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
             <button class="btn" disabled="@(!CanExportCurrentTab)" @onclick="ExportCurrentTabAsync">@L.T("Hq_Export")</button>
         </div>
     </div>
@@ -177,10 +177,10 @@
                                 <td>@r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 <td class="mono">@r.DeviceId</td>
                                 <td>@r.DeviceName</td>
-                                <td>@r.ShiftName</td>
+                                <td>@DisplayText.Repair(r.ShiftName)</td>
                                 <td class="num kpi-ok">@r.OkProduction.ToString("N0")</td>
                                 <td class="num kpi-ng">@r.NgProduction.ToString("N0")</td>
-                                <td class="num mono">0x@r.StatusWord.ToString("X4")</td>
+                                <td class="num mono">0x@(r.StatusWord.ToString("X4"))</td>
                             </tr>
                         }
                     </tbody>
@@ -274,7 +274,7 @@
                                 <td>@r.DeviceName</td>
                                 <td>@StateText((int)r.PreviousState)</td>
                                 <td>@StateText((int)r.CurrentState)</td>
-                                <td>@r.ShiftName</td>
+                                <td>@DisplayText.Repair(r.ShiftName)</td>
                             </tr>
                         }
                     </tbody>
@@ -366,7 +366,7 @@
                                 <td>@r.AlarmName</td>
                                 <td class="mono">@r.PlcAddress</td>
                                 <td>@AlarmTypeText(r.EventType)</td>
-                                <td>@r.ShiftName</td>
+                                <td>@DisplayText.Repair(r.ShiftName)</td>
                             </tr>
                         }
                     </tbody>
@@ -465,7 +465,7 @@
                         @foreach (var s in OeShifts)
                         {
                             <tr>
-                                <td>@s.ShiftName</td>
+                                <td>@DisplayText.Repair(s.ShiftName)</td>
                                 <td>@s.ShiftTime.ToString("yyyy-MM-dd HH:mm")</td>
                                 <td class="num">@Pct(s.Quality)</td>
                                 <td class="num">@Pct(s.Performance)</td>
@@ -524,7 +524,7 @@
                                 <td>@r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
                                 <td>@r.DeviceName</td>
                                 <td class="mono">@(r.WorkOrderId?.ToString() ?? "—")</td>
-                                <td>@r.ShiftName</td>
+                                <td>@DisplayText.Repair(r.ShiftName)</td>
                                 <td class="@(r.Result == 0 ? "kpi-ok" : "kpi-ng")">@(r.Result == 0 ? L.T("Lbl_Ok") : L.T("Lbl_Ng"))</td>
                                 <td>@r.Source</td>
                             </tr>

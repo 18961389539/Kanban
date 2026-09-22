@@ -7,10 +7,10 @@ using Xunit;
 namespace MainAPP.UIAutomation;
 
 /// <summary>
-/// 产线概览页设备卡片布局回归测试（B 方案：左右分栏 + OEE 三率条）。
+/// 产线概览页设备卡片布局回归测试（左右分栏 + OEE/可用/性能/合格纵向四行）。
 /// 预置带 3 台设备配置的验证目录（复制自真实 Config 的 json），导航到产线页断言：
 /// 1. 每台设备卡片渲染（Border AutomationProperties.Name=设备名）；
-/// 2. OEE 拆解区三率条标签（可用率/性能率/质量率）与辅助指标（停机）渲染；
+/// 2. OEE 拆解区纵向四率标签（OEE/可用率/性能率/合格率）；
 /// 3. 截图保存到 screenshots/。
 /// 注：UIA 树更新异步于 UI 线程（Content 设置后需布局/渲染通道），断言用轮询等待。
 /// </summary>
@@ -55,8 +55,8 @@ public class ProductionLineCardLayoutTests : IDisposable
             }
         }
 
-        // OEE 拆解区：三率条 + 停机指标（B 方案新增内容）
-        foreach (var text in new[] { "可用率", "性能率", "质量率", "停机" })
+        // OEE 拆解区：纵向四率标签（OEE/可用率/性能率/合格率）
+        foreach (var text in new[] { "OEE", "可用率", "性能率", "合格率" })
         {
             var found = WaitUntil(() => UiaTestHelpers.ContainsTextRecursive(window, text),
                 timeoutMs: 10000);

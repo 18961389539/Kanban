@@ -46,9 +46,8 @@ public partial class HistoryQuery
 
     protected override async Task OnInitializedAsync()
     {
-        ApplyQuickRange(QuickIndex);
-        // 连接 Collector（DashboardState 幂等 + 失败自动重试；历史查询走独立 Invoke 连接，见 ADR-1）
         await Dashboard.InitializeAsync();
+        ApplyQuickRange(QuickIndex);
         await LoadDevicesAsync();
     }
 
@@ -58,7 +57,12 @@ public partial class HistoryQuery
         if (string.IsNullOrEmpty(QueryTab) && string.IsNullOrEmpty(QueryDeviceId)
             && string.IsNullOrEmpty(QueryAlarmName) && string.IsNullOrEmpty(QuerySn)
             && string.IsNullOrEmpty(QueryFrom) && string.IsNullOrEmpty(QueryTo))
+        {
+            if (_appliedQuery == "init") return;
+            _appliedQuery = "init";
+            await SearchAsync();
             return;
+        }
         if (key == _appliedQuery) return;
         _appliedQuery = key;
         ApplyIncomingQuery();
@@ -102,11 +106,23 @@ public partial class HistoryQuery
         }
     }
 
-    private void SwitchTab(int idx)
+    private async Task SwitchTabAsync(int idx)
     {
         if (TabIndex == idx) return;
         TabIndex = idx;
         ValidationMessage = null;
+        if (idx is 1 or 2 or 3 && string.IsNullOrEmpty(DeviceId) && DeviceOptions.Count > 0)
+            DeviceId = DeviceOptions[0].Id;
+        var queried = idx switch
+        {
+            0 => ProdHasQueried,
+            1 => StHasQueried,
+            2 => AlHasQueried,
+            4 => SnHasQueried,
+            _ => OeHasQueried,
+        };
+        if (!queried)
+            await SearchAsync();
     }
 
     private void OnQuickChanged(ChangeEventArgs e)
@@ -115,9 +131,17 @@ public partial class HistoryQuery
         if (QuickIndex > 0) ApplyQuickRange(QuickIndex);
     }
 
-    private void OnFromChanged(ChangeEventArgs e) => FromText = e.Value?.ToString() ?? "";
+    private void OnFromChanged(ChangeEventArgs e)
+    {
+        FromText = e.Value?.ToString() ?? "";
+        QuickIndex = -1;
+    }
 
-    private void OnToChanged(ChangeEventArgs e) => ToText = e.Value?.ToString() ?? "";
+    private void OnToChanged(ChangeEventArgs e)
+    {
+        ToText = e.Value?.ToString() ?? "";
+        QuickIndex = -1;
+    }
 
     /// <summary>快捷时间范围（与 WPF HistoryQueryViewModel 的 1..8 口径对齐，Web 取到"当前时刻"而非"当日末"）。
     /// "当前时刻"用工厂墙钟（Dashboard.ServerNow）——浏览器时区与工厂不同时，"今天/昨天"仍按工厂日历计算。</summary>
@@ -196,7 +220,7 @@ public partial class HistoryQuery
         }
     }
 
-    private void Reset()
+    private async Task ResetAsync()
     {
         ValidationMessage = null;
         QuickIndex = DefaultQuickIndex;
@@ -207,6 +231,7 @@ public partial class HistoryQuery
         ResetAlarm();
         ResetOee();
         ResetSn();
+        await SearchAsync();
     }
 
     // ──────────── 通用查询助手 ────────────

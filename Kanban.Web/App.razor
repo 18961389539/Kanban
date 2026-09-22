@@ -2,11 +2,13 @@
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        <FocusOnNavigate RouteData="routeData" Selector="main.app-body" />
     </Found>
     <NotFound>
-        <MainLayout>
-            <div class="no-data" style="padding: 40px; text-align: center;">404</div>
-        </MainLayout>
+        <LayoutView Layout="typeof(MainLayout)">
+            <EmptyState Title="@L.T("NotFound")" Hint="@L.T("NotFoundHint")" Icon="🧭">
+                <NavLink class="btn btn-primary" href="/" Match="NavLinkMatch.All">@L.T("Nav_Dashboard")</NavLink>
+            </EmptyState>
+        </LayoutView>
     </NotFound>
 </Router>

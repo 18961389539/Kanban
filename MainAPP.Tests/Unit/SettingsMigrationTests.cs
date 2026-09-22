@@ -127,4 +127,17 @@ public sealed class SettingsMigrationTests
         Assert.Contains("\"Omron\":{", migrated);
         Assert.Contains("\"ReadSplits\":500", migrated);
     }
+
+    [Fact]
+    public void Migrate_V8GarbledTitleAndShifts_RepairsUtf8Mojibake()
+    {
+        var runner = new SettingsMigrationRunner();
+        var migrated = runner.Migrate(
+            "{\"SchemaVersion\":8,\"AppTitle\":\"鐢熶骇鐪嬫澘\",\"Shifts\":[{\"Name\":\"鐧界彮\"},{\"Name\":\"澶滅彮\"}]}");
+
+        Assert.Contains("\"AppTitle\":\"生产看板\"", migrated);
+        Assert.Contains("\"Name\":\"白班\"", migrated);
+        Assert.Contains("\"Name\":\"夜班\"", migrated);
+        Assert.Contains($"\"SchemaVersion\":{SettingsMigrationRunner.CurrentVersion}", migrated);
+    }
 }

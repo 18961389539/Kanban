@@ -7147,6 +7147,21 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>Review health score combines availability, performance, quality and alarm stability; lower means more issues.\nNow: {0}</value>
   </data>
+  <data name="Home_NoDataSpan" xml:space="preserve">
+    <value>No data {0}</value>
+  </data>
+  <data name="Web_Home_NoDataSpan" xml:space="preserve">
+    <value>No data {0}</value>
+  </data>
+  <data name="Home_HourlyFlag" xml:space="preserve">
+    <value>Below target</value>
+  </data>
+  <data name="Home_Tip_HourlyFlag" xml:space="preserve">
+    <value>This hour: OK {0} / NG {1} / quality {2:P1} (below the {3:P0} target)</value>
+  </data>
+  <data name="Web_Home_HourlyFlag" xml:space="preserve">
+    <value>Below target</value>
+  </data>
   <data name="Home_Scope_WorkOrder" xml:space="preserve">
     <value>Order</value>
   </data>
@@ -7241,7 +7256,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Current device recipe name and value.\nNow: {0}</value>
   </data>
   <data name="Carousel_Tip" xml:space="preserve">
-    <value>TV carousel status. A click pauses for 16 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0}</value>
+    <value>TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>Collector connection to the device/PLC.\nNow: {0}</value>
@@ -7437,5 +7452,17 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>Hour</value>
+  </data>
+  <data name="Web_NotFound" xml:space="preserve">
+    <value>Page not found</value>
+  </data>
+  <data name="Web_NotFoundHint" xml:space="preserve">
+    <value>Use the top navigation to open a page</value>
+  </data>
+  <data name="Web_SkipToContent" xml:space="preserve">
+    <value>Skip to main content</value>
+  </data>
+  <data name="Web_MainNav" xml:space="preserve">
+    <value>Main navigation</value>
   </data>
 </root>

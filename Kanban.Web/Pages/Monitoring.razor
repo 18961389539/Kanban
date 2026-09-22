@@ -49,7 +49,12 @@
             <div class="mon-grid">
                 @foreach (var s in Dashboard.Snapshots)
                 {
-                    <div class="mon-card line-card" @onclick="() => OpenDevice(s.DeviceId)">
+                    <div class="mon-card line-card line-device @StateClass(s.Status)"
+                         role="link"
+                         tabindex="0"
+                         aria-label="@s.DeviceName"
+                         @onclick="() => OpenDevice(s.DeviceId)"
+                         @onkeydown="(e) => OnDeviceCardKey(e, s.DeviceId)">
                         <div class="dev-head">
                             <span class="dev-name">@s.DeviceName</span>
                             <span class="status-badge @StateClass(s.Status)">@StateText(s)</span>
@@ -58,15 +63,14 @@
                             <div title="@SpeedTooltip(s)"><span class="kpi-label">@L.T("Lbl_RealTimeSpeed")</span><span class="kpi-value">@SpeedText(s)</span></div>
                             <div title="@L.Tip("Home_Tip_TotalOutput", s.TotalOkProduction, s.TotalNgProduction, SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction))"><span class="kpi-label">@L.T("Lbl_TotalOutput")</span><span class="kpi-value">@SnapshotMetrics.TotalOutput(s.TotalOkProduction, s.TotalNgProduction).ToString("N0")</span></div>
                             <div title="@AchievementTooltip(s)"><span class="kpi-label">@L.T("Lbl_Achievement")</span><span class="kpi-value">@AchievementText(s)</span></div>
-                            <div title="@L.Tip("Home_Tip_SnapSeq", s.Seq)"><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value mono">#@s.Seq</span></div>
+                            <div title="@L.Tip("Home_Tip_DataFresh", FreshnessText(s.Timestamp))"><span class="kpi-label">@L.T("Lbl_DataFresh")</span><span class="kpi-value">@FreshnessText(s.Timestamp)</span></div>
                         </div>
                         <div class="ring-row">
-                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip(s)" />
-                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTip(s)" />
-                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTip(s)" />
-                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTip(s)" />
+                            <Ring Value="@s.Oee" ValueText="@Pct(s.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTip(s)" HasData="@HasOeeWindow(s)" />
+                            <Ring Value="@s.AvailabilityRate" ValueText="@Pct(s.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTip(s)" HasData="@HasOeeWindow(s)" />
+                            <Ring Value="@s.PerformanceRate" ValueText="@Pct(s.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTip(s)" HasData="@HasOeeWindow(s)" />
+                            <Ring Value="@s.QualityRate" ValueText="@Pct(s.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTip(s)" HasData="@HasOeeWindow(s)" />
                         </div>
-                        <div class="meta-line" title="@L.Tip("Home_Tip_DataFresh", FreshnessText(s.Timestamp))">@L.T("Lbl_DataFresh") @FreshnessText(s.Timestamp)</div>
                     </div>
                 }
             </div>
@@ -318,7 +322,16 @@ private void OnRenderTick()
     // 百分比口径单源：UiPalette.Pct（P1，与 WPF 一致）
     private static string Pct(double v) => UiPalette.Pct(v);
 
+    private static bool HasOeeWindow(DeviceSnapshotDto s)
+        => UiPalette.HasOeeWindow(s.RunTime, s.AlarmTime, s.PausedTime);
+
     private void OpenDevice(string deviceId) => Nav.NavigateTo($"/device/{Uri.EscapeDataString(deviceId)}");
+
+    private void OnDeviceCardKey(KeyboardEventArgs e, string deviceId)
+    {
+        if (e.Key is "Enter" or " ")
+            OpenDevice(deviceId);
+    }
 
     private static string SpeedText(DeviceSnapshotDto s)
     {

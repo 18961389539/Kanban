@@ -11,7 +11,7 @@ internal interface ISettingsMigration
 
 internal sealed class SettingsMigrationRunner
 {
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;
 
     private readonly IReadOnlyList<ISettingsMigration> _migrations =
     [
@@ -23,6 +23,7 @@ internal sealed class SettingsMigrationRunner
         new Version5To6Migration(),
         new Version6To7Migration(),
         new Version7To8Migration(),
+        new Version8To9Migration(),
     ];
 
     public string Migrate(string json)
@@ -201,6 +202,28 @@ internal sealed class SettingsMigrationRunner
                     ["Config"] = plc,
                 },
             };
+            return settings;
+        }
+    }
+
+    private sealed class Version8To9Migration : ISettingsMigration
+    {
+        public int FromVersion => 8;
+
+        public JsonObject Migrate(JsonObject settings)
+        {
+            if (settings["AppTitle"] is JsonValue title && title.TryGetValue<string>(out var appTitle))
+                settings["AppTitle"] = Kanban.Contracts.Text.GbkMojibake.Repair(appTitle);
+
+            if (settings["Shifts"] is JsonArray shifts)
+            {
+                foreach (var item in shifts.OfType<JsonObject>())
+                {
+                    if (item["Name"] is JsonValue name && name.TryGetValue<string>(out var shiftName))
+                        item["Name"] = Kanban.Contracts.Text.GbkMojibake.Repair(shiftName);
+                }
+            }
+
             return settings;
         }
     }

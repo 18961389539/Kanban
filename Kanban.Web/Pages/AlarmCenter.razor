@@ -37,9 +37,16 @@
                 <button class="chip-btn active" title="@L.T("K331")" @onclick="ClearMute">@L.T("Ac_MutedCount", MutedCount)</button>
             }
         </div>
+        @if (!string.IsNullOrEmpty(_copyNotice))
+        {
+            <div class="msg-banner @(_copyOk ? "msg-ok" : "msg-error")">
+                <span>@_copyNotice</span>
+                <button class="msg-close" title="@L.T("K143")" @onclick="() => _copyNotice = null">✕</button>
+            </div>
+        }
         @if (VisibleGroupedAlarms.Count == 0)
         {
-            <div class="no-data">@L.T("Val_NoAlarms")</div>
+            <EmptyState Compact="true" Title="@L.T("Val_NoAlarms")" Hint="" Icon="✅" />
         }
         else
         {
@@ -170,6 +177,8 @@
 
     private System.Threading.Timer? _renderTimer;
     private bool _disposed;
+    private string? _copyNotice;
+    private bool _copyOk;
 
     private sealed record ActiveItem(string DeviceId, string DeviceName, string AlarmName, AlarmLevel Level, DateTime StartTime);
 
@@ -433,9 +442,13 @@ private void OnRenderTick()
         try
         {
             await JS.InvokeVoidAsync("KanbanShell.copy", text);
+            _copyOk = true;
+            _copyNotice = L.T("K757", a.AlarmName);
         }
         catch (Exception)
         {
+            _copyOk = false;
+            _copyNotice = L.T("Ac_Copy");
         }
     }
 

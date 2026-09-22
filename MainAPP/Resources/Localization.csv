@@ -2595,6 +2595,11 @@ Wpf,Mo_Tip_SuccessRate,采集成功率 = 成功轮次 ÷ 完成轮次（失败�
 Wpf,Mo_Tip_ConsecutiveFail,连续失败轮次；大于 0 表示采集链路当前异常。\n当前：{0},Consecutive failed cycles; greater than 0 means the acquisition path is currently unhealthy.\nNow: {0},連続失敗サイクル。0 超は収集経路の異常。\n現在：{0},Ciclos falhos consecutivos; > 0 indica caminho de coleta instável agora.\nAgora: {0}
 Wpf,Mo_Tip_PendingHistory,尚未落库的历史队列条数；持续升高表示写库跟不上采集。\n当前：{0},History records waiting to flush; a rising count means writes are lagging acquisition.\nNow: {0},未フラッシュの履歴件数。増加は書込が収集に追いついていないことを示す。\n現在：{0},Registros de histórico aguardando gravação; alta persistente = escrita atrasada.\nAgora: {0}
 Wpf,Rv_Tip_Health,复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\n当前：{0},"Review health score combines availability, performance, quality and alarm stability; lower means more issues.\nNow: {0}",復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\n現在：{0},"Pontuação de saúde da revisão combina disponibilidade, desempenho, qualidade e estabilidade de alarmes.\nAgora: {0}"
+Wpf,Home_NoDataSpan,无数据 {0},No data {0},データなし {0},Sem dados {0}
+Wpf,Web_Home_NoDataSpan,无数据 {0},No data {0},データなし {0},Sem dados {0}
+Wpf,Home_HourlyFlag,低于达标线,Below target,基準未達,Abaixo da meta
+Wpf,Home_Tip_HourlyFlag,该小时 OK {0} / NG {1} / 良率 {2:P1}（低于 {3:P0} 达标线）,This hour: OK {0} / NG {1} / quality {2:P1} (below the {3:P0} target),この時間 OK {0} / NG {1} / 良品率 {2:P1}（目標 {3:P0} 未達）,Nesta hora: OK {0} / NG {1} / qualidade {2:P1} (abaixo da meta de {3:P0})
+Wpf,Web_Home_HourlyFlag,低于达标线,Below target,基準未達,Abaixo da meta
 Wpf,Home_Scope_WorkOrder,工单,Order,工単,Ordem
 Wpf,Home_Scope_Shift,当班,Shift,当シフト,Turno
 Wpf,Home_Scope_Realtime,实时,Live,リアルタイム,Ao vivo
@@ -2626,7 +2631,7 @@ Wpf,Home_Tip_DataFresh,距最近一次收到该设备快照的时间。正常应
 Wpf,Home_Tip_TrendWindow,最近 1 分钟速度折线（件/小时）。点为采样，不是班次累计。\n当前速度：{0} 件/h,"Speed sparkline for the last 1 minute (pcs/h). Points are samples, not shift totals.\nCurrent speed: {0} pcs/h",直近 1 分の速度折れ線（個/時）。点はサンプルでありシフト累計ではありません。\n現在速度：{0} 個/h,"Linha de velocidade do último 1 minuto (pçs/h). Pontos são amostras, não o total do turno.\nVelocidade agora: {0} pçs/h"
 Wpf,Home_Tip_StatusWord,PLC 状态字原始值（十六进制）。用于核对通讯与运行态。\n当前：{0},Raw PLC status word (hex). Use it to verify comms and run state.\nNow: {0},PLC 状態語の生値（16 進）。通信と稼働状態の照合用。\n現在：{0},Palavra de status bruta do PLC (hex). Serve para conferir comunicação e estado.\nAgora: {0}
 Wpf,Home_Tip_Recipe,当前设备配方名称与配方值。\n当前：{0},Current device recipe name and value.\nNow: {0},現在のデバイスレシピ名と値。\n現在：{0},Nome e valor da receita atual do dispositivo.\nAgora: {0}
-Wpf,Carousel_Tip,过道电视轮播状态。点按画面暂停 16 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0},TV carousel status. A click pauses for 16 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0},通路 TV ローテーションの状態。操作で 16 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0},Estado do carrossel da TV. Um clique pausa 16 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\n{0}
+Wpf,Carousel_Tip,过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0},TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0},通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0},Estado do carrossel da TV. Um clique pausa 80 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\n{0}
 Wpf,Mo_Tip_ConnStatus,采集服务与设备/PLC 的连接状态。\n当前：{0},Collector connection to the device/PLC.\nNow: {0},コレクタとデバイス/PLC の接続状態。\n現在：{0},Ligação do coletor ao dispositivo/PLC.\nAgora: {0}
 Wpf,Mo_Tip_AcqStatus,数据采集循环是否正在运行。停止则快照不再更新。\n当前：{0},"Whether the acquisition loop is running. When stopped, snapshots stop updating.\nNow: {0}",収集ループが動作中か。停止するとスナップショットは更新されません。\n現在：{0},"Se o loop de coleta está em execução. Parado, os snapshots deixam de atualizar.\nAgora: {0}"
 Wpf,Rv_Tip_AlarmCount,复盘时间窗内历史触发次数（不是当前活跃条数）。已恢复 {1:N0} · 待恢复 {2:N0}。\n当前：{0:N0} 次,Trigger count in the review window (not currently active alarms). Recovered {1:N0} · pending {2:N0}.\nNow: {0:N0},復盤時間窓の発生回数（現在の未復旧件数ではない）。復帰 {1:N0} · 未復帰 {2:N0}。\n現在：{0:N0} 回,Disparos na janela da revisão (não alarmes ativos agora). Recuperados {1:N0} · pendentes {2:N0}.\nAgora: {0:N0}
@@ -2692,4 +2697,8 @@ Wpf,Web_Rv_Defects,缺陷集中度,Defect concentration,不良集中度,Concentr
 Wpf,Web_Rv_DefectEmpty,窗口内无缺陷增量,No defect increment in the window,窓内に不良増分なし,Sem incremento de defeitos na janela
 Wpf,Web_Rv_DefectName,缺陷,Defect,不良,Defeito
 Wpf,Web_Rv_DefectHour,时段,Hour,時間帯,Hora
+Wpf,Web_NotFound,页面不存在,Page not found,ページが見つかりません,Página não encontrada
+Wpf,Web_NotFoundHint,请从顶栏选择功能页面,Use the top navigation to open a page,上部ナビからページを開いてください,Use a navegação superior para abrir uma página
+Wpf,Web_SkipToContent,跳到主要内容,Skip to main content,メインコンテンツへ,Ir para o conteúdo principal
+Wpf,Web_MainNav,主导航,Main navigation,メインナビ,Navegação principal
 

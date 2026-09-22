@@ -20,6 +20,10 @@
     {
         <div class="loading-row">@L.T("Hq_Loading")…</div>
     }
+    else if (Error is not null && RecipeList.Count == 0)
+    {
+        <EmptyState Title="@Error" Hint="@L.T("Dv_LoadFailedHint")" Icon="⚠️" />
+    }
     else if (RecipeList.Count == 0 && Loaded)
     {
         <EmptyState Title="@L.T("Rc_None")" Hint="" Icon="📜" />
@@ -29,7 +33,7 @@
         <div class="mon-grid">
             @foreach (var r in RecipeList)
             {
-                <div class="mon-card line-card">
+                <div class="mon-card recipe-card">
                     <div class="dev-head">
                         <span class="dev-name">@r.Name</span>
                         @if (!string.IsNullOrEmpty(r.MachineType))

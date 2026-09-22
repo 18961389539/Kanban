@@ -1,16 +1,18 @@
 namespace Kanban.Contracts.Display;
 
 /// <summary>
-/// 过道电视轮播片单。停留时间为建议值的两倍：首页 40s、产线 30s、报警 20s。
-/// 点按暂停后 16s 再转；无活跃报警则跳过报警页。
-/// 高报警默认钉在报警中心；人手点主页/产线时暂停期内不抢导航，空闲后再钉回。
+/// 过道电视轮播片单。停留时长为基线值 ×5：首页 200s、产线 150s、报警 100s。
+/// 点按画面暂停 80s 再转；从顶栏进入片单页则按操作停留 120s，避免看卡时被 High 报警抢回。
+/// 无活跃报警则跳过报警页。高报警默认钉在报警中心；暂停期内不抢导航，空闲后再钉回。
 /// </summary>
 public static class DisplayCarousel
 {
-    public const int HomeDwellMs = 40_000;
-    public const int LineDwellMs = 30_000;
-    public const int AlarmDwellMs = 20_000;
-    public const int ResumeAfterInteractionMs = 16_000;
+    public const int HomeDwellMs = 200_000;
+    public const int LineDwellMs = 150_000;
+    public const int AlarmDwellMs = 100_000;
+    public const int ResumeAfterInteractionMs = 80_000;
+    // 未随本轮 ×5 放大：它决定 High 报警最长能被压多久，放大到 600s 等于让高报警最多沉默 10 分钟。
+    public const int ResumeAfterNavMs = 120_000;
     public const int TickMs = 1_000;
 
     public const string Home = "Home";
@@ -81,8 +83,12 @@ public sealed class DisplayCarouselClock
     private int _remainingMs = DisplayCarousel.HomeDwellMs;
     private DateTime _pausedUntil;
 
-    public void NoteInteraction(DateTime utcNow) =>
-        _pausedUntil = utcNow.AddMilliseconds(DisplayCarousel.ResumeAfterInteractionMs);
+    public void NoteInteraction(DateTime utcNow, int holdMs = DisplayCarousel.ResumeAfterInteractionMs)
+    {
+        var until = utcNow.AddMilliseconds(Math.Max(0, holdMs));
+        if (until > _pausedUntil)
+            _pausedUntil = until;
+    }
 
     public DisplayCarouselStatus Step(DisplayCarouselInput input)
     {
@@ -103,12 +109,12 @@ public sealed class DisplayCarouselClock
             if (input.UtcNow < _pausedUntil)
             {
                 _scene = input.CurrentPageKey;
-                return Status(frozen: false, paused: true, null);
+                return Status(input.UtcNow, frozen: false, paused: true, null);
             }
 
             StartScene(DisplayCarousel.AlarmCenter);
             var go = input.CurrentPageKey == DisplayCarousel.AlarmCenter ? null : DisplayCarousel.AlarmCenter;
-            return Status(frozen: true, paused: false, go);
+            return Status(input.UtcNow, frozen: true, paused: false, go);
         }
 
         if (!DisplayCarousel.IsPlaylistScene(input.CurrentPageKey))
@@ -121,22 +127,22 @@ public sealed class DisplayCarouselClock
         }
 
         if (input.UtcNow < _pausedUntil)
-            return Status(frozen: false, paused: true, null);
+            return Status(input.UtcNow, frozen: false, paused: true, null);
 
         if (_scene == DisplayCarousel.AlarmCenter && !input.HasActiveAlarms)
         {
             var skipTo = DisplayCarousel.NextScene(_scene, hasActiveAlarms: false);
             StartScene(skipTo);
-            return Status(frozen: false, paused: false, skipTo);
+            return Status(input.UtcNow, frozen: false, paused: false, skipTo);
         }
 
         _remainingMs = Math.Max(0, _remainingMs - Math.Max(0, input.DeltaMs));
         if (_remainingMs > 0)
-            return Status(frozen: false, paused: false, null);
+            return Status(input.UtcNow, frozen: false, paused: false, null);
 
         var next = DisplayCarousel.NextScene(_scene, input.HasActiveAlarms);
         StartScene(next);
-        return Status(frozen: false, paused: false, next);
+        return Status(input.UtcNow, frozen: false, paused: false, next);
     }
 
     private void StartScene(string scene)
@@ -145,13 +151,21 @@ public sealed class DisplayCarouselClock
         _remainingMs = DisplayCarousel.DwellMs(scene);
     }
 
-    private DisplayCarouselStatus Status(bool frozen, bool paused, string? navigateTo) => new(
-        OverlayVisible: true,
-        Paused: paused,
-        Frozen: frozen,
-        Scene: _scene,
-        RemainingSeconds: frozen ? 0 : (_remainingMs + 999) / 1000,
-        NavigateTo: navigateTo,
-        SceneIndex: DisplayCarousel.SceneIndex(_scene),
-        SceneCount: DisplayCarousel.Playlist.Length);
+    private DisplayCarouselStatus Status(DateTime utcNow, bool frozen, bool paused, string? navigateTo)
+    {
+        var remainingMs = frozen
+            ? 0
+            : paused
+                ? Math.Max(0, (int)(_pausedUntil - utcNow).TotalMilliseconds)
+                : _remainingMs;
+        return new(
+            OverlayVisible: true,
+            Paused: paused,
+            Frozen: frozen,
+            Scene: _scene,
+            RemainingSeconds: (remainingMs + 999) / 1000,
+            NavigateTo: navigateTo,
+            SceneIndex: DisplayCarousel.SceneIndex(_scene),
+            SceneCount: DisplayCarousel.Playlist.Length);
+    }
 }

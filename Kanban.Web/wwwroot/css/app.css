@@ -33,6 +33,40 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
+.skip-link {
+    position: absolute;
+    left: 12px;
+    top: -48px;
+    z-index: 1000;
+    padding: 8px 12px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.skip-link:focus {
+    top: 8px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.empty-actions {
+    margin-top: 14px;
+}
+
 .dashboard { min-height: 100vh; padding: 12px 12px 20px; }
 
 /* ──────────── 顶栏（竖屏：两行堆叠） ──────────── */
@@ -336,6 +370,10 @@ body {
     color: var(--yellow, #FBBF24);
 }
 
+.conn-banner-shell {
+    margin: 8px 12px 0;
+}
+
 /* ──────────── 生产状态卡 ──────────── */
 
 .big-number { font-size: 38px; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -589,6 +627,8 @@ body {
 .kpi-value.run { color: var(--green); }
 .kpi-value.alarm { color: var(--red); }
 .kpi-value.paused { color: var(--yellow); }
+.kpi-value.idle,
+.kpi-value.offline { color: var(--gray); }
 
 .time-bar .seg.run { background: var(--green); }
 .time-bar .seg.alarm { background: var(--red); }
@@ -1086,6 +1126,15 @@ body {
     white-space: nowrap;
 }
 
+.line-recipe-name {
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .line-alarm {
     display: flex;
     align-items: center;
@@ -1097,11 +1146,200 @@ body {
     padding: 5px 10px;
 }
 
+/* 产线设备卡：对齐 WPF 左右分栏 + 四率纵向，状态色粗边框 */
+.line-device {
+    border-width: 3px;
+    gap: 8px;
+    padding: 14px;
+    container-type: inline-size;
+}
+
+.line-device.run { border-color: var(--green); }
+.line-device.alarm { border-color: var(--red); }
+.line-device.paused { border-color: var(--yellow); }
+.line-device.offline { border-color: var(--gray); }
+
+.line-device.alarm {
+    animation: line-alarm-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes line-alarm-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--glow-red); }
+    50% { box-shadow: 0 0 0 5px rgba(248, 113, 113, 0.22); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .line-device.alarm { animation: none; }
+}
+
+.line-split {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+@media (min-width: 560px) {
+    .line-split {
+        grid-template-columns: 3fr 2fr;
+        gap: 14px;
+    }
+}
+
+@container (max-width: 560px) {
+    .line-split {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .line-oee {
+        padding-left: 0;
+        border-left: none;
+        min-height: 0;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+    }
+}
+
+.mini-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.mini-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    min-width: 0;
+}
+
+.mini-stat-label {
+    display: block;
+    color: var(--text-3);
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.mini-stat-value {
+    display: block;
+    margin-top: 2px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.line-aux {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.line-aux > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.line-aux .kpi-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.line-prod { min-width: 0; }
+
+.line-aux .kpi-value {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    max-width: 48%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.line-oee {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding-left: 0;
+    border-left: none;
+}
+
+@media (min-width: 560px) {
+    .line-oee {
+        padding-left: 14px;
+        border-left: 1px solid var(--border);
+        min-height: 168px;
+    }
+}
+
+.oee-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.oee-metric-label {
+    color: var(--text-2);
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.oee-metric-value {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.oee-metric-value.oee-hero { font-size: 22px; font-weight: 800; }
+.oee-metric-value.oee-ok { color: var(--green); }
+.oee-metric-value.oee-watch { color: var(--yellow); }
+.oee-metric-value.oee-low { color: var(--red); }
+.oee-metric-value.a { color: var(--green); }
+.oee-metric-value.p { color: #378ADD; }
+.oee-metric-value.q { color: #818CF8; }
+
+.line-pace {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.line-pace .kpi-value {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.line-open {
+    margin-top: 2px;
+    text-align: right;
+    color: #378ADD;
+    font-size: 12px;
+    font-weight: 600;
+}
+
 /* ──────────── 只读管理页 ──────────── */
 
 .mon-card.selected { border-color: var(--green); cursor: pointer; }
 
 .line-card { cursor: pointer; }
+
+.line-card:focus-visible {
+    outline: 2px solid var(--accent, #378ADD);
+    outline-offset: 2px;
+}
 
 td.dim { color: var(--text-3); }
 
@@ -1195,9 +1433,23 @@ body {
     box-shadow: var(--shadow-1);
 }
 
-.card:hover, .kpi-card:hover, .mon-card:hover {
+.card:hover, .kpi-card:hover, .mon-card:hover:not(.line-device) {
     border-color: #36404F;
     box-shadow: var(--shadow-2);
+}
+
+.line-device:hover {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+}
+
+.line-device:focus-visible {
+    outline: 2px solid var(--accent, #378ADD);
+    outline-offset: 2px;
+}
+
+.recipe-card {
+    cursor: default;
 }
 
 /* 卡片标题：左侧渐变装饰条 */

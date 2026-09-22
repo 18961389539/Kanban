@@ -69,12 +69,15 @@ public static class DeviceDetailQueryService
     /// <summary>
     /// 指定窗口内按小时产量差分（累计值差分 + 窗口前基线）。
     /// 与设备详情小时柱图同一套口径，小时板必须复用，避免两套算法。
+    /// <paramref name="trimBeforeLastReset"/> = true 时只保留最后一次计数器复位之后的段，
+    /// 与「当班总产量」同源（首页良率卡用）；小时计划板 / 设备详情保持整窗统计。
     /// </summary>
     public static HourlyProductionSeries QueryHourlySeries(
         IProductionHistoryReader historyService,
         string deviceId,
         DateTime from,
-        DateTime to)
+        DateTime to,
+        bool trimBeforeLastReset = false)
     {
         var logs = historyService.QueryProductionLogs(from, to, deviceId);
         // 首桶基线：查窗口前最后一条快照作基线，避免把窗口开始前的历史产量计入第一个小时。
@@ -83,7 +86,8 @@ public static class DeviceDetailQueryService
             logs.Select(log => (log.Timestamp, log.OkProduction, log.NgProduction)),
             from, to,
             baseline?.OkProduction ?? 0,
-            baseline?.NgProduction ?? 0);
+            baseline?.NgProduction ?? 0,
+            trimBeforeLastReset);
         return new HourlyProductionSeries(series.Hours, series.OkDiff, series.NgDiff);
     }
 }

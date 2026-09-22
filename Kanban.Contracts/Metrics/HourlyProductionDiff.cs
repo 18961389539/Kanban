@@ -80,14 +80,18 @@ public static class HourlyProductionDiff
 
     /// <summary>
     /// 窗口内快照按小时取末点，空小时沿用上一小时累计值，再对窗口前基线做累计差分。
-    /// 负增量置零（班次切换重置）。
+    /// 计数器被复位（本桶累计低于上一桶）时按新世代起算，不丢产量。
+    /// <paramref name="trimBeforeLastReset"/> = true 时只保留「最后一次复位之后」那一段：
+    /// 复位前的桶属于上一个计数世代，与「当班总产量」（从最后一次复位起算）不同源，
+    /// 一起画出来会让两者对不上（2026-09-22 修复）。
     /// </summary>
     public static Series FromSamples(
         IEnumerable<(DateTime Time, int Ok, int Ng)> samples,
         DateTime from,
         DateTime to,
         int baselineOk,
-        int baselineNg)
+        int baselineNg,
+        bool trimBeforeLastReset = false)
     {
         var hours = BuildHourStarts(from, to);
         if (hours.Length == 0)
@@ -123,20 +127,49 @@ public static class HourlyProductionDiff
             }
         }
 
+        if (trimBeforeLastReset)
+        {
+            var reset = LastResetIndex(okCumulative, ngCumulative);
+            for (var i = 0; i < reset; i++)
+            {
+                okCumulative[i] = 0;
+                ngCumulative[i] = 0;
+            }
+        }
+
         return new Series(
             hours,
             DiffCumulative(okCumulative, baselineOk),
             DiffCumulative(ngCumulative, baselineNg));
     }
 
-    /// <summary>累计值转增量：后一桶减前一桶，负数置零；首桶扣 baseline。</summary>
+    /// <summary>最后一个「计数器复位」桶的下标（本桶累计低于上一桶即视为复位）；无复位返回 0。</summary>
+    private static int LastResetIndex(int[] ok, int[] ng)
+    {
+        var last = 0;
+        for (var i = 1; i < ok.Length; i++)
+        {
+            if (ok[i] < ok[i - 1] || ng[i] < ng[i - 1])
+                last = i;
+        }
+        return last;
+    }
+
+    /// <summary>
+    /// 累计值转增量：后一桶减前一桶。
+    /// 计数器被复位时（本桶累计低于上一桶 / 低于窗口前基线）本桶产量 = 复位后重新累计到的值，
+    /// 而不是夹成 0 —— 旧实现把负增量一律置零，于是「窗口前基线取自复位前累计」时
+    /// 班次首桶的真实产量被整段吞掉（2026-09-22 实测：08:00 桶 272 件消失）。
+    /// </summary>
     public static int[] DiffCumulative(int[] cumulative, int baseline)
     {
         if (cumulative.Length == 0) return cumulative;
         var result = new int[cumulative.Length];
-        result[0] = Math.Max(0, cumulative[0] - baseline);
+        result[0] = cumulative[0] >= baseline ? cumulative[0] - baseline : cumulative[0];
         for (var i = 1; i < cumulative.Length; i++)
-            result[i] = Math.Max(0, cumulative[i] - cumulative[i - 1]);
+            result[i] = cumulative[i] >= cumulative[i - 1]
+                ? cumulative[i] - cumulative[i - 1]
+                : cumulative[i];
         return result;
     }
 }

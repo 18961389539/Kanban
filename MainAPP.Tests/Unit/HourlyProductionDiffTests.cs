@@ -47,6 +47,65 @@ public class HourlyProductionDiffTests
     }
 
     [Fact]
+    public void FromSamples_FirstBucketBelowBaseline_KeepsItsProduction()
+    {
+        var from = new DateTime(2026, 9, 22, 8, 0, 0);
+        var to = new DateTime(2026, 9, 22, 10, 10, 0);
+        // 计数器在 08:00 被清零：窗口前基线 648/72 是上一班的累计值，
+        // 首桶末样本 272/18 低于它 —— 修复前差值为负被夹成 0，早上的产量整段消失。
+        var series = HourlyProductionDiff.FromSamples(
+        [
+            (new DateTime(2026, 9, 22, 8, 59, 59), 272, 18),
+            (new DateTime(2026, 9, 22, 9, 37, 21), 463, 32),
+        ], from, to, baselineOk: 648, baselineNg: 72);
+
+        Assert.Equal(272, series.OkDiff[0]);
+        Assert.Equal(18, series.NgDiff[0]);
+        Assert.Equal(191, series.OkDiff[1]);
+        Assert.Equal(14, series.NgDiff[1]);
+    }
+
+    [Fact]
+    public void FromSamples_CounterReset_KeepsPostResetProduction()
+    {
+        var from = new DateTime(2026, 9, 22, 16, 0, 0);
+        var to = new DateTime(2026, 9, 22, 18, 10, 0);
+        // 17:00 计数器被清零后重新累计到 256：修复前 256-430 为负 → 夹成 0，复位后那一桶全丢。
+        var series = HourlyProductionDiff.FromSamples(
+        [
+            (new DateTime(2026, 9, 22, 16, 55, 0), 430, 30),
+            (new DateTime(2026, 9, 22, 17, 5, 0), 12, 1),
+            (new DateTime(2026, 9, 22, 17, 54, 59), 256, 21),
+        ], from, to, baselineOk: 100, baselineNg: 10);
+
+        Assert.Equal(330, series.OkDiff[0]);
+        Assert.Equal(20, series.NgDiff[0]);
+        Assert.Equal(256, series.OkDiff[1]);
+        Assert.Equal(21, series.NgDiff[1]);
+    }
+
+    [Fact]
+    public void FromSamples_TrimBeforeLastReset_KeepsOnlyLastGeneration()
+    {
+        var from = new DateTime(2026, 9, 22, 8, 0, 0);
+        var to = new DateTime(2026, 9, 22, 18, 10, 0);
+        var series = HourlyProductionDiff.FromSamples(
+        [
+            (new DateTime(2026, 9, 22, 8, 59, 59), 272, 18),
+            (new DateTime(2026, 9, 22, 9, 37, 21), 463, 32),
+            (new DateTime(2026, 9, 22, 16, 59, 57), 0, 0),
+            (new DateTime(2026, 9, 22, 17, 54, 59), 256, 21),
+        ], from, to, 648, 72, trimBeforeLastReset: true);
+
+        var idx = Array.FindIndex(series.Hours, h => h == new DateTime(2026, 9, 22, 17, 0, 0));
+        Assert.True(idx > 0);
+        Assert.Equal(256, series.OkDiff[idx]);
+        Assert.Equal(21, series.NgDiff[idx]);
+        Assert.All(series.OkDiff.Take(idx), v => Assert.Equal(0, v));
+        Assert.All(series.NgDiff.Take(idx), v => Assert.Equal(0, v));
+    }
+
+    [Fact]
     public void PadToShiftWindow_NightShift_FillsAllTwelveHours()
     {
         var start = new DateTime(2026, 9, 17, 20, 0, 0);

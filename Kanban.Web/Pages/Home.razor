@@ -27,17 +27,6 @@
         }
     </header>
 
-    @* 全局连接横幅：断连(红) / 数据停滞(黄，连接正常但采集链路卡死) / 正常不显示。
-       与 WPF MainWindow 横幅三态对齐（IsPlcConnecting 态 Web 端无，故只区分断连与停滞）。 *@
-    @if (!Dashboard.IsConnected)
-    {
-        <div class="conn-banner">@L.T("ConnLost")</div>
-    }
-    else if (Dashboard.IsDataStale)
-    {
-        <div class="conn-banner warn">@L.T("ConnStale", Dashboard.DataStaleSeconds)</div>
-    }
-
     @if (Dashboard.Snapshots.Count == 0)
     {
         <EmptyState Title="@(Dashboard.IsConnected ? L.T("Msg_NoDeviceData") : L.T("Msg_WaitingConn"))"
@@ -69,7 +58,11 @@
                     <button class="chip-btn" title="@L.T("Dd_OpenRuntime")" @onclick="OpenSelectedDevice">@L.T("Dd_OpenRuntime")</button>
                 </div>
                 <div class="dev-head">
-                    <span class="dev-name linkish" @onclick="OpenSelectedDevice">@SelectedSnapshot.DeviceName</span>
+                    <span class="dev-name linkish"
+                          role="link"
+                          tabindex="0"
+                          @onclick="OpenSelectedDevice"
+                          @onkeydown="OnSelectedDeviceKey">@SelectedSnapshot.DeviceName</span>
                     <span class="status-badge @Status.Class" title="@L.Tip("Home_Tip_DeviceStatus", Status.Text)">@Status.Text</span>
                 </div>
                 <div class="duration-row">
@@ -172,10 +165,10 @@
                     }
                 </div>
                 <div class="ring-row">
-                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTooltip" />
-                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTooltip" />
-                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTooltip" />
-                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTooltip" />
+                    <Ring Value="@SelectedSnapshot.Oee" ValueText="@Pct(SelectedSnapshot.Oee)" Label="OEE" Color="@UiPalette.Oee" Title="@OeeTooltip" HasData="@HasOeeWindow(SelectedSnapshot)" />
+                    <Ring Value="@SelectedSnapshot.AvailabilityRate" ValueText="@Pct(SelectedSnapshot.AvailabilityRate)" Label="@L.T("Lbl_Availability")" Color="@UiPalette.Availability" Title="@AvailabilityTooltip" HasData="@HasOeeWindow(SelectedSnapshot)" />
+                    <Ring Value="@SelectedSnapshot.PerformanceRate" ValueText="@Pct(SelectedSnapshot.PerformanceRate)" Label="@L.T("Lbl_Performance")" Color="@UiPalette.Performance" Title="@PerformanceTooltip" HasData="@HasOeeWindow(SelectedSnapshot)" />
+                    <Ring Value="@SelectedSnapshot.QualityRate" ValueText="@Pct(SelectedSnapshot.QualityRate)" Label="@L.T("Lbl_Quality")" Color="@UiPalette.Quality" Title="@QualityTooltip" HasData="@HasOeeWindow(SelectedSnapshot)" />
                 </div>
                 <div class="oee-formula" title="@OeeTooltip">@OeeFormulaText</div>
             </section>
@@ -347,6 +340,7 @@
     private bool _disposed;
     private DateTime[] _hourlyOkHours = [];
     private int[] _hourlyOkCounts = [];
+    private int[] _hourlyNgCounts = [];
     private DateTime _lastHourlyOkQueryAt = DateTime.MinValue;
     private int _hourlyOkRunning;
     private string? _hourlyOkKey;
@@ -359,6 +353,12 @@
     {
         if (string.IsNullOrEmpty(SelectedDeviceId)) return;
         Nav.NavigateTo($"/device/{Uri.EscapeDataString(SelectedDeviceId)}");
+    }
+
+    private void OnSelectedDeviceKey(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+            OpenSelectedDevice();
     }
 
     private void OpenCurrentWorkOrder()
@@ -394,6 +394,7 @@
             _hourlyOkKey = null;
             _hourlyOkHours = [];
             _hourlyOkCounts = [];
+            _hourlyNgCounts = [];
             _lastHourlyOkQueryAt = DateTime.MinValue;
             if (value is null)
                 _ = JS.InvokeVoidAsync("localStorage.removeItem", DevicePreferenceKey);
@@ -540,6 +541,7 @@
         hash.Add(_hourlyOkHours.Length);
         if (_hourlyOkCounts.Length > 0)
             hash.Add(_hourlyOkCounts[^1]);
+        hash.Add(_hourlyNgCounts.Sum());
         return hash.ToHashCode();
     }
 
@@ -701,16 +703,56 @@
             var (yMin, _) = QualityScale;
             var qualityMin = Math.Round(yMin * 100, 0);
             var okData = new List<object[]>();
+            var flagData = new List<object[]>();
             var n = _hourlyOkHours.Length;
             for (var i = 0; i < n; i++)
             {
                 var ok = i < _hourlyOkCounts.Length ? Math.Max(0, _hourlyOkCounts[i]) : 0;
+                var ng = i < _hourlyNgCounts.Length ? Math.Max(0, _hourlyNgCounts[i]) : 0;
+                if (ok + ng > 0 && (double)ok / (ok + ng) < QualityTarget)
+                    flagData.Add([IsoLocal(_hourlyOkHours[i].AddMinutes(30)), ok]);
                 if (ok <= 0) continue;
                 okData.Add([IsoLocal(_hourlyOkHours[i]), ok]);
             }
-            var qualityData = QualityHistory
-                .Select(p => (object[])[IsoLocal(p.Time), Math.Round(p.Quality * 100, 1)])
-                .ToList();
+            // 与 WPF 同款画法：先按 5 分钟去重（实时点每 20 秒一个，12 小时轴上会糊成一根竖线），
+            // 再在间隔 > 15 分钟处插一个空值配合 connectNulls:false 断开空档（离线那段以前被连成斜线）。
+            var qualityData = new List<object[]>();
+            var gapAreas = new List<object[]>();
+            DateTime? prevTime = null;
+            long? prevSlot = null;
+            foreach (var point in QualityHistory)
+            {
+                var slot = point.Time.Ticks / TimeSpan.FromMinutes(5).Ticks;
+                var value = Math.Round(point.Quality * 100, 1);
+                if (prevSlot == slot && qualityData.Count > 0)
+                {
+                    qualityData[^1] = [IsoLocal(point.Time), value];
+                    prevTime = point.Time;
+                    continue;
+                }
+
+                if (prevTime.HasValue && point.Time - prevTime.Value > TimeSpan.FromMinutes(15))
+                {
+                    qualityData.Add([IsoLocal(prevTime.Value.AddTicks(1)), "-"]);
+                    gapAreas.Add(
+                    [
+                        new Dictionary<string, object?> { ["xAxis"] = IsoLocal(prevTime.Value) },
+                        new Dictionary<string, object?> { ["xAxis"] = IsoLocal(point.Time) },
+                    ]);
+                }
+
+                qualityData.Add([IsoLocal(point.Time), value]);
+                prevTime = point.Time;
+                prevSlot = slot;
+            }
+
+            // 末点单独一个圆点：抽稀后仍能一眼看到「现在的良率在哪」。
+            var tailPoint = new List<object[]>();
+            if (QualityHistory.Count > 0)
+            {
+                var lastPoint = QualityHistory[^1];
+                tailPoint.Add([IsoLocal(lastPoint.Time), Math.Round(lastPoint.Quality * 100, 1)]);
+            }
 
             return new Dictionary<string, object?>
             {
@@ -722,7 +764,15 @@
                     ["type"] = "time",
                     ["min"] = IsoLocal(axisStart),
                     ["max"] = IsoLocal(axisEnd),
-                    ["axisLabel"] = new Dictionary<string, object?> { ["color"] = "#8B92A0" },
+                    // 钉住 1 小时粒度：不设时 ECharts 按轴宽自动抽稀，12 小时窗口只出几个刻度。
+                    ["minInterval"] = 3_600_000,
+                    ["maxInterval"] = 3_600_000,
+                    // 只写小时：整点轴分钟恒为 00，省一半宽度（时间轴 axisLabel 支持 {HH} 模板）。
+                    ["axisLabel"] = new Dictionary<string, object?>
+                    {
+                        ["color"] = "#8B92A0",
+                        ["formatter"] = "{HH}",
+                    },
                     ["axisLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
                 },
                 ["yAxis"] = new object[]
@@ -765,6 +815,14 @@
                         ["data"] = qualityData,
                         ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#818CF8" },
                         ["lineStyle"] = new Dictionary<string, object?> { ["width"] = 2.2, ["color"] = "#818CF8" },
+                        ["connectNulls"] = false,
+                        ["markArea"] = new Dictionary<string, object?>
+                        {
+                            ["silent"] = true,
+                            ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "rgba(42, 50, 63, 0.35)" },
+                            ["label"] = new Dictionary<string, object?> { ["show"] = false },
+                            ["data"] = gapAreas,
+                        },
                         ["markLine"] = new Dictionary<string, object?>
                         {
                             ["silent"] = true,
@@ -783,6 +841,25 @@
                                 },
                             },
                         },
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["name"] = L.T("Lbl_Quality"),
+                        ["type"] = "scatter",
+                        ["yAxisIndex"] = 1,
+                        ["symbolSize"] = 9,
+                        ["data"] = tailPoint,
+                        ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#818CF8" },
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["name"] = L.T("Home_HourlyFlag"),
+                        ["type"] = "scatter",
+                        ["yAxisIndex"] = 0,
+                        ["symbol"] = "triangle",
+                        ["symbolSize"] = 9,
+                        ["data"] = flagData,
+                        ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" },
                     },
                 },
             };
@@ -803,6 +880,7 @@
             {
                 _hourlyOkHours = [];
                 _hourlyOkCounts = [];
+                _hourlyNgCounts = [];
             }
             return;
         }
@@ -816,6 +894,7 @@
             _hourlyOkKey = key;
             _hourlyOkHours = [];
             _hourlyOkCounts = [];
+            _hourlyNgCounts = [];
             _lastHourlyOkQueryAt = DateTime.MinValue;
         }
         if (now - _lastHourlyOkQueryAt < HourlyOkThrottle) return;
@@ -839,10 +918,12 @@
                 analysis.CompactLogs.Select(l => (l.Timestamp, l.OkProduction, l.NgProduction)),
                 start, now,
                 baseline?.OkProduction ?? 0,
-                baseline?.NgProduction ?? 0);
+                baseline?.NgProduction ?? 0,
+                trimBeforeLastReset: true);
             var padded = HourlyProductionDiff.PadToShiftWindow(series, start, end);
             _hourlyOkHours = padded.Hours;
             _hourlyOkCounts = padded.OkDiff;
+            _hourlyNgCounts = padded.NgDiff;
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception)
@@ -892,6 +973,9 @@
     }
 
     private static string Pct(double v) => UiPalette.Pct(v);
+
+    private static bool HasOeeWindow(DeviceSnapshotDto d)
+        => UiPalette.HasOeeWindow(d.RunTime, d.AlarmTime, d.PausedTime);
 
     // 时长格式化口径单源：Kanban.Contracts.DurationFormatter.FormatStandard（与 WPF 状态卡一致）
     private static string FmtDuration(double secs)
@@ -1014,7 +1098,7 @@
     private string NgRateTooltip => Tip("Home_Tip_NgRate", SelectedSnapshot?.TotalNgProduction ?? 0, TotalOutput, NgRateText);
     private string LastShiftTooltip => LastShift is null
         ? ""
-        : Tip("Home_Tip_LastShift", LastShift.ShiftName, LastShift.Ok, LastShift.Ng);
+        : Tip("Home_Tip_LastShift", DisplayText.Repair(LastShift.ShiftName), LastShift.Ok, LastShift.Ng);
 
     private string LastShiftLineText
     {
@@ -1025,7 +1109,7 @@
             var okDiff = snap is null ? "" : FormatDiff(snap.TotalOkProduction - LastShift.Ok);
             var ngDiff = snap is null ? "" : FormatDiff(snap.TotalNgProduction - LastShift.Ng);
             return L.T("LastShiftLine",
-                LastShift.ShiftName,
+                DisplayText.Repair(LastShift.ShiftName),
                 LastShift.Ok.ToString("N0"),
                 string.IsNullOrEmpty(okDiff) ? "—" : okDiff,
                 LastShift.Ng.ToString("N0"),

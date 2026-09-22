@@ -40,7 +40,7 @@
         </label>
         <div class="filter-actions">
             <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
-            <button class="btn" disabled="@IsLoading" @onclick="Reset">@L.T("Hq_Reset")</button>
+            <button class="btn" disabled="@IsLoading" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
             <button class="btn" disabled="@IsLoading" @onclick="ExportYesterdayAsync">@L.T("Rv_Daily")</button>
             <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
             <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
@@ -82,9 +82,9 @@
             <span class="rs-item" title="@L.Tip("Rv_Tip_Health", Result.HealthScore)"><b>@L.T("Rv_Health")</b> <span class="rs-strong">@Result.HealthScore</span></span>
             <span class="rs-item" title="@ReviewOeeTooltip"><b>OEE</b> <span class="rs-strong">@Pct(Result.Oee)</span></span>
             <span class="rs-item" title="@ReviewQualityTooltip"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
-            <span class="rs-item" title="@ReviewOutputTooltip"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span></span>
+            <span class="rs-item" title="@ReviewOutputTooltip"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@((Result.TotalOk + Result.TotalNg).ToString("N0"))</span></span>
             <span class="rs-item" title="@ReviewAlarmTooltip"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
-            <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@Result.ShiftName</span></span>
+            <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@DisplayText.Repair(Result.ShiftName)</span></span>
         </div>
 
         @* ──── 健康评分 + 工单/产品/配方 ──── *@
@@ -140,7 +140,7 @@
         <section class="kpi-row">
             <div class="kpi-card" title="@ReviewOutputTooltip">
                 <span class="kpi-label">@L.T("Lbl_TotalOutput")</span>
-                <span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span>
+                <span class="kpi-value">@((Result.TotalOk + Result.TotalNg).ToString("N0"))</span>
                 <span class="kpi-sub">@L.T("Lbl_Ok") @Result.TotalOk.ToString("N0") · @L.T("Lbl_Ng") @Result.TotalNg.ToString("N0")</span>
                 <span class="kpi-sub dim">@L.T("Rv_OutputAchievement") @Pct(Result.PerformanceRate)</span>
             </div>
@@ -167,7 +167,7 @@
         <section class="card">
             <div class="card-title">@L.T("Rv_Comparison") <span class="badge-soft">@L.T("Rv_ComparisonHint")</span></div>
             <div class="kpi-row">
-                <div class="kpi-card" title="@ReviewOutputTooltip"><span class="kpi-label">@L.T("Rv_CurrentOutput")</span><span class="kpi-value">@(Result.TotalOk + Result.TotalNg).ToString("N0")</span><span class="kpi-sub dim">@L.T("Rv_BaselineOutput") @Result.BaselineOutput.ToString("N0")</span></div>
+                <div class="kpi-card" title="@ReviewOutputTooltip"><span class="kpi-label">@L.T("Rv_CurrentOutput")</span><span class="kpi-value">@((Result.TotalOk + Result.TotalNg).ToString("N0"))</span><span class="kpi-sub dim">@L.T("Rv_BaselineOutput") @Result.BaselineOutput.ToString("N0")</span></div>
                 <div class="kpi-card" title="@ReviewQualityTooltip"><span class="kpi-label">@L.T("Hq_QualityRate")</span><span class="kpi-value">@Pct(Result.QualityRate)</span><span class="kpi-sub dim">@L.T("Rv_BaselineQuality") @Pct(Result.BaselineQuality)</span></div>
                 <div class="kpi-card" title="@ReviewOeeTooltip"><span class="kpi-label">OEE</span><span class="kpi-value">@Pct(Result.Oee)</span><span class="kpi-sub dim">@L.T("Rv_BaselineOee") @Pct(Result.BaselineOee)</span></div>
             </div>
@@ -231,7 +231,7 @@
                     {
                         var total = s.OkCount + s.NgCount;
                         <tr>
-                            <td>@s.ShiftName</td>
+                            <td>@DisplayText.Repair(s.ShiftName)</td>
                             <td class="num kpi-ok">@s.OkCount.ToString("N0")</td>
                             <td class="num kpi-ng">@s.NgCount.ToString("N0")</td>
                             <td class="num">@s.AlarmCount</td>
@@ -268,7 +268,7 @@
                         {
                             <tr>
                                 <td>@d.DefectName</td>
-                                <td>@d.ShiftName</td>
+                                <td>@DisplayText.Repair(d.ShiftName)</td>
                                 <td>@d.TimeRangeText</td>
                                 <td class="num kpi-ng">@d.Count.ToString("N0")</td>
                                 <td>
@@ -332,9 +332,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ApplyQuickRange(QuickIndex);
         await Dashboard.InitializeAsync();
+        ApplyQuickRange(QuickIndex);
         await LoadDevicesAsync();
+        if (DeviceOptions.Count > 0)
+        {
+            DeviceId = DeviceOptions[0].Id;
+            await SearchAsync();
+        }
     }
 
     private async Task LoadDevicesAsync()
@@ -358,8 +363,17 @@
         if (QuickIndex > 0) ApplyQuickRange(QuickIndex);
     }
 
-    private void OnFromChanged(ChangeEventArgs e) => FromText = e.Value?.ToString() ?? "";
-    private void OnToChanged(ChangeEventArgs e) => ToText = e.Value?.ToString() ?? "";
+    private void OnFromChanged(ChangeEventArgs e)
+    {
+        FromText = e.Value?.ToString() ?? "";
+        QuickIndex = -1;
+    }
+
+    private void OnToChanged(ChangeEventArgs e)
+    {
+        ToText = e.Value?.ToString() ?? "";
+        QuickIndex = -1;
+    }
 
     private void ApplyQuickRange(int index)
     {
@@ -396,7 +410,7 @@
         await RunReviewAsync(from, to);
     }
 
-    private void Reset()
+    private async Task ResetAsync()
     {
         ValidationMessage = null;
         QueryError = null;
@@ -404,6 +418,8 @@
         Result = null;
         QuickIndex = DefaultQuickIndex;
         ApplyQuickRange(QuickIndex);
+        if (!string.IsNullOrEmpty(DeviceId))
+            await SearchAsync();
     }
 
     /// <summary>

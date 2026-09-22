@@ -7147,6 +7147,21 @@
   <data name="Rv_Tip_Health" xml:space="preserve">
     <value>复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\n当前：{0}</value>
   </data>
+  <data name="Home_NoDataSpan" xml:space="preserve">
+    <value>无数据 {0}</value>
+  </data>
+  <data name="Web_Home_NoDataSpan" xml:space="preserve">
+    <value>无数据 {0}</value>
+  </data>
+  <data name="Home_HourlyFlag" xml:space="preserve">
+    <value>低于达标线</value>
+  </data>
+  <data name="Home_Tip_HourlyFlag" xml:space="preserve">
+    <value>该小时 OK {0} / NG {1} / 良率 {2:P1}（低于 {3:P0} 达标线）</value>
+  </data>
+  <data name="Web_Home_HourlyFlag" xml:space="preserve">
+    <value>低于达标线</value>
+  </data>
   <data name="Home_Scope_WorkOrder" xml:space="preserve">
     <value>工单</value>
   </data>
@@ -7241,7 +7256,7 @@
     <value>当前设备配方名称与配方值。\n当前：{0}</value>
   </data>
   <data name="Carousel_Tip" xml:space="preserve">
-    <value>过道电视轮播状态。点按画面暂停 16 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0}</value>
+    <value>过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>采集服务与设备/PLC 的连接状态。\n当前：{0}</value>
@@ -7437,5 +7452,17 @@
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>时段</value>
+  </data>
+  <data name="Web_NotFound" xml:space="preserve">
+    <value>页面不存在</value>
+  </data>
+  <data name="Web_NotFoundHint" xml:space="preserve">
+    <value>请从顶栏选择功能页面</value>
+  </data>
+  <data name="Web_SkipToContent" xml:space="preserve">
+    <value>跳到主要内容</value>
+  </data>
+  <data name="Web_MainNav" xml:space="preserve">
+    <value>主导航</value>
   </data>
 </root>

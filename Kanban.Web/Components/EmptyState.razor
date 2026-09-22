@@ -11,6 +11,10 @@
     {
         <div class="empty-sub">@Hint</div>
     }
+    @if (ChildContent is not null)
+    {
+        <div class="empty-actions">@ChildContent</div>
+    }
 </div>
 
 @code {
@@ -25,4 +29,6 @@
 
     /// <summary>卡片内空态：取消整页 60vh 高度，只占内容区。</summary>
     [Parameter] public bool Compact { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 }

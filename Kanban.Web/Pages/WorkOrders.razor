@@ -24,6 +24,10 @@
     {
         <div class="loading-row">@L.T("Hq_Loading")…</div>
     }
+    else if (Error is not null && !Loaded)
+    {
+        <EmptyState Title="@Error" Hint="@L.T("Dv_LoadFailedHint")" Icon="⚠️" />
+    }
     else if (Rows.Count == 0 && Loaded)
     {
         <EmptyState Title="@L.T("Wo_None")" Hint="" Icon="📋" />
@@ -139,7 +143,7 @@
                                 <td class="mono">@ev.Sn</td>
                                 <td>@ev.Timestamp.ToString("MM-dd HH:mm:ss")</td>
                                 <td>@ev.DeviceName</td>
-                                <td>@ev.ShiftName</td>
+                                <td>@DisplayText.Repair(ev.ShiftName)</td>
                                 <td class="@(ev.Result == 0 ? "kpi-ok" : "kpi-ng")">@(ev.Result == 0 ? L.T("Lbl_Ok") : L.T("Lbl_Ng"))</td>
                             </tr>
                         }

@@ -9787,6 +9787,26 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "复盘健康分综合可用率、性能率、良品率与报警稳定性；分数越低问题越多。\\n当前：{0}", ["en-US"] = "Review health score combines availability, performance, quality and alarm stability; lower means more issues.\\nNow: {0}", ["ja-JP"] = "復盤の健康スコアは可動・性能・良品・警報安定を総合。低いほど問題が多い。\\n現在：{0}", ["pt-BR"] = "Pontuação de saúde da revisão combina disponibilidade, desempenho, qualidade e estabilidade de alarmes.\\nAgora: {0}"
         },
+        ["Wpf|Home_NoDataSpan"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "无数据 {0}", ["en-US"] = "No data {0}", ["ja-JP"] = "データなし {0}", ["pt-BR"] = "Sem dados {0}"
+        },
+        ["Wpf|Web_Home_NoDataSpan"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "无数据 {0}", ["en-US"] = "No data {0}", ["ja-JP"] = "データなし {0}", ["pt-BR"] = "Sem dados {0}"
+        },
+        ["Wpf|Home_HourlyFlag"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "低于达标线", ["en-US"] = "Below target", ["ja-JP"] = "基準未達", ["pt-BR"] = "Abaixo da meta"
+        },
+        ["Wpf|Home_Tip_HourlyFlag"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "该小时 OK {0} / NG {1} / 良率 {2:P1}（低于 {3:P0} 达标线）", ["en-US"] = "This hour: OK {0} / NG {1} / quality {2:P1} (below the {3:P0} target)", ["ja-JP"] = "この時間 OK {0} / NG {1} / 良品率 {2:P1}（目標 {3:P0} 未達）", ["pt-BR"] = "Nesta hora: OK {0} / NG {1} / qualidade {2:P1} (abaixo da meta de {3:P0})"
+        },
+        ["Wpf|Web_Home_HourlyFlag"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "低于达标线", ["en-US"] = "Below target", ["ja-JP"] = "基準未達", ["pt-BR"] = "Abaixo da meta"
+        },
         ["Wpf|Home_Scope_WorkOrder"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "工单", ["en-US"] = "Order", ["ja-JP"] = "工単", ["pt-BR"] = "Ordem"
@@ -9913,7 +9933,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Carousel_Tip"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "过道电视轮播状态。点按画面暂停 16 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\\n{0}", ["en-US"] = "TV carousel status. A click pauses for 16 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\\n{0}", ["ja-JP"] = "通路 TV ローテーションの状態。操作で 16 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\\n{0}", ["pt-BR"] = "Estado do carrossel da TV. Um clique pausa 16 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\\n{0}"
+            ["zh-CN"] = "过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\\n{0}", ["en-US"] = "TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\\n{0}", ["ja-JP"] = "通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\\n{0}", ["pt-BR"] = "Estado do carrossel da TV. Um clique pausa 80 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\\n{0}"
         },
         ["Wpf|Mo_Tip_ConnStatus"] = new Dictionary<string, string>
         {
@@ -10174,6 +10194,22 @@ public static class LocalizationCatalog
         ["Wpf|Web_Rv_DefectHour"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时段", ["en-US"] = "Hour", ["ja-JP"] = "時間帯", ["pt-BR"] = "Hora"
+        },
+        ["Wpf|Web_NotFound"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "页面不存在", ["en-US"] = "Page not found", ["ja-JP"] = "ページが見つかりません", ["pt-BR"] = "Página não encontrada"
+        },
+        ["Wpf|Web_NotFoundHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请从顶栏选择功能页面", ["en-US"] = "Use the top navigation to open a page", ["ja-JP"] = "上部ナビからページを開いてください", ["pt-BR"] = "Use a navegação superior para abrir uma página"
+        },
+        ["Wpf|Web_SkipToContent"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "跳到主要内容", ["en-US"] = "Skip to main content", ["ja-JP"] = "メインコンテンツへ", ["pt-BR"] = "Ir para o conteúdo principal"
+        },
+        ["Wpf|Web_MainNav"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "主导航", ["en-US"] = "Main navigation", ["ja-JP"] = "メインナビ", ["pt-BR"] = "Navegação principal"
         },
         };
 

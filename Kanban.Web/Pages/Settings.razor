@@ -20,6 +20,10 @@
     {
         <div class="loading-row">@L.T("Hq_Loading")…</div>
     }
+    else if (Error is not null)
+    {
+        <EmptyState Title="@Error" Hint="@L.T("Dv_LoadFailedHint")" Icon="⚠️" />
+    }
     else if (SettingsData is { } s)
     {
         var shifts = s.Shifts ?? [];
@@ -58,7 +62,7 @@
                     <div class="card-title sub" style="margin-top:12px">Modbus TCP</div>
                     <div class="diag-grid">
                         <div class="diag-item"><span class="kpi-label">@L.T("St_UnitId")</span><span class="kpi-value">@modbus.UnitId</span></div>
-                        <div class="diag-item"><span class="kpi-label">@L.T("St_AddrZero")</span><span class="kpi-value">@((modbus.AddressStartWithZero ?? false) ? "✓" : "—")</span></div>
+                        <div class="diag-item"><span class="kpi-label">@L.T("St_AddrZero")</span><span class="kpi-value">@L.T((modbus.AddressStartWithZero ?? false) ? "Val_Yes" : "Val_No")</span></div>
                         <div class="diag-item"><span class="kpi-label">@L.T("St_DataFormat")</span><span class="kpi-value">@modbus.DataFormat</span></div>
                         <div class="diag-item"><span class="kpi-label">@L.T("St_BatchInt32")</span><span class="kpi-value">@modbus.BatchInt32Limit</span></div>
                     </div>
@@ -94,7 +98,7 @@
                         @foreach (var sh in shifts)
                         {
                             <tr>
-                                <td>@sh.Name</td>
+                                <td>@DisplayText.Repair(sh.Name)</td>
                                 <td class="mono">@sh.StartTime</td>
                                 <td class="mono">@sh.EndTime</td>
                             </tr>
