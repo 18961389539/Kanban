@@ -274,18 +274,10 @@
         <!--  ============ TabControl ============  -->
         <Grid Grid.Row="1">
             <TabControl
+                x:Name="HistoryResultsTabs"
                 BorderThickness="0"
-                SelectedIndex="{Binding SelectedTabIndex}">
-                <TabControl.Style>
-                    <Style TargetType="TabControl" BasedOn="{StaticResource KanbanTabControl}">
-                        <Setter Property="Visibility" Value="Visible" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsLoading}" Value="True">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TabControl.Style>
+                SelectedIndex="{Binding SelectedTabIndex}"
+                Style="{StaticResource KanbanTabControl}">
 
             <!--  ============ Tab 0: 产量查询 ============  -->
             <TabItem Style="{StaticResource KanbanTabItem}" AutomationProperties.Name="{x:Static resources:Strings.K279}">
@@ -1004,48 +996,27 @@
             </TabItem>
             </TabControl>
 
-            <!--  ============ 骨架屏占位（IsLoading=true 时显示，模拟 KPI 卡片 + 图表 + 表格布局） ============  -->
-            <StackPanel Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <!-- KPI 骨架卡片（3 列） -->
-                <UniformGrid Margin="0,0,0,12" Columns="3">
-                    <Border Style="{StaticResource KpiCard}">
-                        <StackPanel>
-                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
-                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource KpiCard}">
-                        <StackPanel>
-                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
-                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource KpiCard}">
-                        <StackPanel>
-                            <Border Style="{StaticResource SkeletonBorder}" Width="64" Height="12" />
-                            <Border Style="{StaticResource SkeletonBorder}" Width="100" Height="28" Margin="0,6,0,0" />
-                        </StackPanel>
-                    </Border>
-                </UniformGrid>
-
-                <!-- 图表骨架 -->
-                <Border Margin="0,0,0,12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
-                    <Border Style="{StaticResource SkeletonBorder}" Height="280" Margin="8" />
-                </Border>
-
-                <!-- 数据表骨架 -->
-                <Border Style="{StaticResource MainCard}" Padding="14">
-                    <StackPanel>
-                        <Border Style="{StaticResource SkeletonBorder}" Width="120" Height="17" Margin="0,0,0,10" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" Margin="0,0,0,4" />
-                        <Border Style="{StaticResource SkeletonBorder}" Height="32" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
+            <!--  查询进行中保留当前结果，使用覆盖层反馈状态，避免整页闪烁或暂时消失。  -->
+            <Border
+                x:Name="QueryLoadingOverlay"
+                Panel.ZIndex="100"
+                Style="{StaticResource LoadingOverlay}"
+                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                AutomationProperties.Name="{x:Static resources:Strings.Ux_Querying}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <hc:LoadingCircle
+                        Width="48"
+                        Height="48"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource LoadingDefault}" />
+                    <TextBlock
+                        Margin="0,12,0,0"
+                        HorizontalAlignment="Center"
+                        FontSize="{DynamicResource FontSizeSubtitle}"
+                        Foreground="{StaticResource PrimaryTextBrush}"
+                        Text="{x:Static resources:Strings.Ux_Querying}" />
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

@@ -37,6 +37,7 @@ public static class MainAppPresentationServiceCollectionExtensions
         // LoginViewModel 也不能残留上一次的 LoginSucceeded/SelectedUser/ErrorMessage 状态。
         services.AddTransient<LoginViewModel>();
         services.AddTransient<LoginWindow>();
+        services.AddTransient<ShortcutHelpWindow>();
         services.AddSingleton<UserManagerViewModel>();
         services.AddSingleton<DataSourceMonitoringViewModel>();
         services.AddSingleton<RuntimeMonitoringViewModel>(sp => new RuntimeMonitoringViewModel(

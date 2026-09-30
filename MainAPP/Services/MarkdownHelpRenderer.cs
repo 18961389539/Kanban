@@ -18,13 +18,14 @@ internal static class MarkdownHelpRenderer
     {
         var markdown = File.ReadAllText(markdownPath);
         var manualDir = Path.GetDirectoryName(markdownPath) ?? appBaseDirectory;
-        var body = RenderBody(markdown, manualDir, appBaseDirectory);
-        return WrapHtml(body, Path.GetFileNameWithoutExtension(markdownPath));
+        var (body, toc) = RenderBody(markdown, manualDir, appBaseDirectory);
+        return WrapHtml(body, toc, Path.GetFileNameWithoutExtension(markdownPath));
     }
 
-    private static string RenderBody(string markdown, string manualDir, string appBaseDirectory)
+    private static (string Body, string Toc) RenderBody(string markdown, string manualDir, string appBaseDirectory)
     {
         var sb = new StringBuilder();
+        var toc = new StringBuilder();
         var lines = markdown.Replace("\r\n", "\n").Split('\n');
         var inCode = false;
         var codeLang = string.Empty;
@@ -113,6 +114,12 @@ internal static class MarkdownHelpRenderer
                 var rawTitle = line[level..].Trim();
                 var text = InlineFormat(rawTitle, manualDir, appBaseDirectory);
                 var anchor = Slugify(rawTitle);
+                // 收集 TOC（h2 章节 / h3 小节；h1 仅一个且与窗口标题重复，不收入）
+                if (anchor.Length > 0 && level is 2 or 3)
+                {
+                    toc.Append("<a class=\"t").Append(level).Append("\" href=\"#").Append(anchor).Append("\">")
+                        .Append(text).AppendLine("</a>");
+                }
                 if (anchor.Length > 0)
                     sb.Append("<h").Append(level).Append(" id=\"").Append(anchor).Append("\">").Append(text).Append("</h").Append(level).AppendLine(">");
                 else
@@ -189,7 +196,7 @@ internal static class MarkdownHelpRenderer
                 .AppendLine("</pre>");
         }
 
-        return sb.ToString();
+        return (sb.ToString(), toc.ToString());
     }
 
     private static string InlineFormat(string text, string manualDir, string appBaseDirectory)
@@ -290,7 +297,7 @@ internal static class MarkdownHelpRenderer
         return WebUtility.HtmlEncode(src);
     }
 
-    private static string WrapHtml(string body, string title)
+    private static string WrapHtml(string body, string toc, string title)
     {
         var safeTitle = WebUtility.HtmlEncode(title);
         return $$"""
@@ -301,27 +308,67 @@ internal static class MarkdownHelpRenderer
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 <title>{{safeTitle}}</title>
 <style>
-body { font-family: "Microsoft YaHei", Segoe UI, sans-serif; margin: 24px 32px 48px; background: #1A2029; color: #E5E7EB; line-height: 1.65; }
-h1,h2,h3,h4 { color: #F3F4F6; margin-top: 1.4em; margin-bottom: 0.6em; }
-h1 { font-size: 28px; border-bottom: 1px solid #374151; padding-bottom: 8px; }
-h2 { font-size: 22px; }
-h3 { font-size: 18px; color: #D1D5DB; }
-p, li { font-size: 15px; }
+html, body { margin: 0; padding: 0; }
+body { font-family: "Microsoft YaHei", Segoe UI, sans-serif; font-size: 15px; background: #1A2029; color: #E5E7EB; line-height: 1.65; }
+.toolbar { position: fixed; top: 0; left: 0; right: 0; height: 40px; background: #111827; border-bottom: 1px solid #374151; z-index: 100; }
+.toolbar .inner { padding: 6px 12px; }
+.toolbar button { background: #1F2937; color: #D1D5DB; border: 1px solid #374151; border-radius: 4px; font-size: 12px; padding: 3px 12px; margin-right: 6px; cursor: pointer; }
+.toolbar button:hover { background: #374151; }
+.toc { position: fixed; top: 40px; left: 0; bottom: 0; width: 210px; overflow-y: auto; background: #141A22; border-right: 1px solid #2A3441; padding: 10px 6px; }
+.toc a { display: block; color: #9CA3AF; text-decoration: none; font-size: 12.5px; padding: 3px 8px; border-radius: 4px; }
+.toc a:hover { background: #1F2937; color: #F3F4F6; }
+.toc a.t3 { padding-left: 20px; }
+.main { margin-left: 210px; padding: 64px 36px 96px; }
+.main-body { max-width: 960px; }
+h1, h2, h3, h4 { color: #F3F4F6; margin-top: 1.4em; margin-bottom: 0.6em; }
+h1 { font-size: 1.9em; border-bottom: 1px solid #374151; padding-bottom: 8px; }
+h2 { font-size: 1.45em; }
+h3 { font-size: 1.15em; color: #D1D5DB; }
+p, li { font-size: 1em; }
 blockquote { border-left: 4px solid #3B82F6; margin: 12px 0; padding: 8px 16px; background: #111827; color: #CBD5E1; }
 ul { padding-left: 24px; }
 img { max-width: 100%; height: auto; border: 1px solid #374151; border-radius: 6px; margin: 12px 0; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-code { background: #111827; padding: 2px 6px; border-radius: 4px; }
+code { background: #111827; padding: 2px 6px; border-radius: 4px; font-size: 0.95em; }
 pre.code { background: #0F172A; padding: 12px 16px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
-pre.mermaid { background: #111827; color: #94A3B8; font-size: 13px; }
+pre.mermaid { background: #111827; color: #94A3B8; font-size: 0.87em; }
 a { color: #60A5FA; }
 table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-th, td { border: 1px solid #374151; padding: 6px 10px; font-size: 13px; text-align: left; vertical-align: top; }
+th, td { border: 1px solid #374151; padding: 6px 10px; font-size: 0.87em; text-align: left; vertical-align: top; }
 th { background: #111827; color: #F3F4F6; }
 strong { color: #F9FAFB; }
+.back-top { position: fixed; right: 20px; bottom: 20px; z-index: 100; }
+.back-top a { display: inline-block; background: #1F2937; color: #D1D5DB; border: 1px solid #374151; border-radius: 4px; padding: 6px 12px; font-size: 12px; text-decoration: none; }
+.back-top a:hover { background: #374151; }
 </style>
 </head>
 <body>
+<div class="toolbar">
+    <div class="inner">
+        <button onclick="changeFont(-1)" title="减小字号">A−</button>
+        <button onclick="changeFont(1)" title="增大字号">A+</button>
+        <button onclick="backTop()" title="回到顶部">▲ 顶部</button>
+    </div>
+</div>
+<nav class="toc">{{toc}}</nav>
+<div class="main"><div class="main-body">
 {{body}}
+</div></div>
+<div class="back-top"><a href="#" onclick="backTop(); return false;">▲ 返回顶部</a></div>
+<script>
+function changeFont(d) {
+    var b = document.body;
+    var n = parseInt(b.currentStyle ? b.currentStyle.fontSize : getComputedStyle(b).fontSize, 10);
+    if (!n || isNaN(n)) n = 15;
+    n += d;
+    if (n < 10) n = 10;
+    if (n > 32) n = 32;
+    b.style.fontSize = n + "px";
+}
+function backTop() {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+}
+</script>
 </body>
 </html>
 """;

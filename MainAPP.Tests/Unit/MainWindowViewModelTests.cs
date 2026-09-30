@@ -129,6 +129,11 @@ public class MainWindowViewModelTests : IDisposable
         services.AddSingleton(deviceDetailVm);
         services.AddSingleton(workOrderVm);
         services.AddSingleton(settingsVm);
+        // ExitViewer（展示模式管理员恢复）依赖对话框与用户存储；UserStore.Load 生成默认账号（admin/gly）
+        var exitViewerStore = new UserStore(_appSettings);
+        exitViewerStore.Load();
+        services.AddSingleton<IDialogService>(_dialog);
+        services.AddSingleton(exitViewerStore);
         return new MainWindowViewModel(
             _appSettings, services.BuildServiceProvider(),
             _conn, _licenseGate, userSession, loginDialogService: loginDialogService);
@@ -527,5 +532,60 @@ public class MainWindowViewModelTests : IDisposable
         // 目标页即当前页（原地重进）不触发拦截，避免无意义弹窗
         vm.Navigate(NavigationPageCatalog.DeviceManager.Key);
         Assert.Empty(_dialog.ShowCalls);
+    }
+
+    // ───────────── 展示模式管理员恢复（ExitViewer，Ctrl+Shift+S） ─────────────
+
+    private const string ViewerRecoverySuccessText = "已恢复为完整模式";
+    private const string ViewerRecoveryFailedText = "密码错误或不是管理员账号";
+
+    [Fact]
+    public void ExitViewer_ViewerMode_AdminPassword_SwitchesToFullMode()
+    {
+        _appSettings.RunMode = KanbanRunMode.Viewer;
+        var vm = NewVm();
+        Assert.True(vm.ExitViewerCommand.CanExecute(null));
+
+        _dialog.PasswordInputResult = "gly"; // UserStore.Load 生成的默认 admin 密码
+        vm.ExitViewerCommand.Execute(null);
+
+        Assert.Equal(KanbanRunMode.Full, _appSettings.RunMode);
+        Assert.False(vm.IsViewerMode);
+        Assert.Contains(_dialog.Success, s => s == ViewerRecoverySuccessText);
+    }
+
+    [Fact]
+    public void ExitViewer_WrongPassword_StaysInViewer()
+    {
+        _appSettings.RunMode = KanbanRunMode.Viewer;
+        var vm = NewVm();
+        _dialog.PasswordInputResult = "wrong-pass";
+
+        vm.ExitViewerCommand.Execute(null);
+
+        Assert.Equal(KanbanRunMode.Viewer, _appSettings.RunMode);
+        Assert.True(vm.IsViewerMode);
+        Assert.Contains(_dialog.Error, s => s == ViewerRecoveryFailedText);
+    }
+
+    [Fact]
+    public void ExitViewer_Cancel_StaysInViewer()
+    {
+        _appSettings.RunMode = KanbanRunMode.Viewer;
+        var vm = NewVm();
+        _dialog.PasswordInputResult = null; // 用户取消
+
+        vm.ExitViewerCommand.Execute(null);
+
+        Assert.Equal(KanbanRunMode.Viewer, _appSettings.RunMode);
+        Assert.Empty(_dialog.Error);
+    }
+
+    [Fact]
+    public void ExitViewer_NotExecutableInFullMode()
+    {
+        _appSettings.RunMode = KanbanRunMode.Full;
+        var vm = NewVm();
+        Assert.False(vm.ExitViewerCommand.CanExecute(null));
     }
 }

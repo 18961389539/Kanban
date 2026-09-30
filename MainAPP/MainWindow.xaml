@@ -32,6 +32,10 @@
         <KeyBinding Gesture="Ctrl+8" Command="{Binding SelectPageCommand}" CommandParameter="7" />
         <KeyBinding Gesture="Ctrl+9" Command="{Binding SelectPageCommand}" CommandParameter="8" />
         <KeyBinding Gesture="F1" Command="{Binding OpenHelpCommand}" />
+        <KeyBinding Gesture="Ctrl+L" Command="{Binding SwitchUserCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+K" Command="{Binding OpenShortcutHelpCommand}" />
+        <!-- 展示模式隐藏入口：Ctrl+Shift+S 弹管理员密码验证后切回完整模式（Viewer 下命令方可执行） -->
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding ExitViewerCommand}" />
     </Window.InputBindings>
 
     <!--  大屏自适应：Viewbox 按实际窗口等比缩放 1920×1080 设计画布。
@@ -145,8 +149,64 @@
                     Background="{StaticResource PrimaryBrush}"
                     DockPanel.Dock="Top" />
 
-                <!--  切换用户入口：沉于侧边栏最底部（授权状态之下），Viewer 模式隐藏。
-                      紧凑单行（头像 + 姓名），账户锚点沉底符合 Slack/Teams 习惯。  -->
+                <!--  使用手册（F1）：沉于侧边栏最底部，登录入口之下，避免与导航项重叠。  -->
+                <Button
+                    Margin="10,0,10,6"
+                    Padding="12,10"
+                    MinHeight="40"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Center"
+                    AutomationProperties.Name="{x:Static resources:Strings.Ux_HelpTooltip}"
+                    Command="{Binding OpenHelpCommand}"
+                    DockPanel.Dock="Bottom"
+                    FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                    ToolTip="{x:Static resources:Strings.Ux_HelpTooltip}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                            <Setter Property="Background" Value="{StaticResource RegionBrush}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                        </Style>
+                    </Button.Style>
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="HorizontalAlignment" Value="Left" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <materialIcons:MaterialIcon
+                                Width="16"
+                                Height="16"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Kind="HelpCircleOutline" />
+                            <TextBlock
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Style="{StaticResource SidebarNavTextStyle}"
+                                Text="{x:Static resources:Strings.Ux_HelpTooltip}" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+
+                <!--  切换用户入口：位于使用手册上方，Viewer 模式隐藏。
+                      紧凑单行（头像 + 姓名），账户锚点贴近底部符合 Slack/Teams 习惯。  -->
                 <Button
                     Margin="0,0,0,6"
                     Padding="12,5"
@@ -211,171 +271,6 @@
                             Text="{Binding CurrentUserDisplay}"
                             TextTrimming="CharacterEllipsis"
                             VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
-
-                <!--  底部：授权状态（异常优先：正常仅显示色点，异常显示警示卡片点击激活）。
-                      状态色点通过 DataTrigger 按 LicenseStatus 切换颜色：
-                        Active=绿 / Trial=黄 / 其他异常=红
-                      Dock 顺序：用户按钮(底) → 授权(顶)，与折叠按钮呼应。  -->
-                <Border
-                    Margin="10,0,10,8"
-                    Padding="12,10"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Cursor="Hand"
-                    DockPanel.Dock="Bottom"
-                    ToolTip="{Binding LicenseStatusTooltip}">
-                    <Border.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" Command="{Binding GoToLicenseSettingsCommand}" />
-                    </Border.InputBindings>
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource RegionBrush}" />
-                            <Style.Triggers>
-                                <!--  正常（Active/试用）：无卡片视觉，仅保留色点，省底部空间  -->
-                                <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="Padding" Value="12,5" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="Padding" Value="12,5" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            FontSize="{DynamicResource FontSizeHint}"
-                            Foreground="{StaticResource ThirdlyTextBrush}"
-                            Text="{x:Static resources:Strings.K581}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource SidebarLabel}">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="HorizontalAlignment" Value="Left" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
-                            <Ellipse
-                                Width="10"
-                                Height="10"
-                                Margin="0,0,8,0"
-                                VerticalAlignment="Center">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
-                                                <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
-                                                <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="{DynamicResource FontSizeCaption}"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource PrimaryTextBrush}"
-                                Text="{Binding LicenseStatusText}"
-                                TextTrimming="CharacterEllipsis">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource SidebarLabel}">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Active">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding LicenseStatus}" Value="Trial">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!--  使用手册（F1）：沉于侧边栏底部、授权状态之上，避免与导航项重叠。  -->
-                <Button
-                    Margin="10,0,10,6"
-                    Padding="12,10"
-                    MinHeight="40"
-                    HorizontalContentAlignment="Stretch"
-                    VerticalContentAlignment="Center"
-                    AutomationProperties.Name="{x:Static resources:Strings.Ux_HelpTooltip}"
-                    Command="{Binding OpenHelpCommand}"
-                    DockPanel.Dock="Bottom"
-                    FocusVisualStyle="{StaticResource TouchFocusVisual}"
-                    ToolTip="{x:Static resources:Strings.Ux_HelpTooltip}">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
-                            <Setter Property="Background" Value="{StaticResource RegionBrush}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                        </Style>
-                    </Button.Style>
-                    <Grid>
-                        <Grid.Style>
-                            <Style TargetType="Grid">
-                                <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Grid.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="HorizontalAlignment" Value="Left" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
-                            <materialIcons:MaterialIcon
-                                Width="16"
-                                Height="16"
-                                VerticalAlignment="Center"
-                                Foreground="{StaticResource SecondaryTextBrush}"
-                                Kind="HelpCircleOutline" />
-                            <TextBlock
-                                Margin="12,0,0,0"
-                                VerticalAlignment="Center"
-                                Foreground="{StaticResource SecondaryTextBrush}"
-                                Style="{StaticResource SidebarNavTextStyle}"
-                                Text="{x:Static resources:Strings.Ux_HelpTooltip}" />
-                        </StackPanel>
                     </Grid>
                 </Button>
 

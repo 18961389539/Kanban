@@ -331,51 +331,7 @@ public class UserStoreLoginTests : IDisposable
         Assert.Contains(dialog.Warning, w => w.Contains("管理员") || w.Contains("administrator"));
     }
 
-    // ──────────── 登录失败锁定 ────────────
-
-    [Fact]
-    public void Authenticate_FiveFailures_LocksAccount_AndRejectsWhileLocked()
-    {
-        var store = CreateLoadedStore();
-
-        for (var i = 0; i < 5; i++)
-            Assert.Null(store.Authenticate("admin", "wrong"));
-
-        // 锁定中：即使正确密码也拒绝
-        Assert.Null(store.Authenticate("admin", "gly"));
-        Assert.NotNull(store.GetLockRemaining("admin"));
-
-        // 未锁定账号无剩余时间
-        Assert.Null(store.GetLockRemaining("engineer"));
-    }
-
-    [Fact]
-    public void Unlock_ClearsLockAndFailedAttempts()
-    {
-        var store = CreateLoadedStore();
-        for (var i = 0; i < 5; i++)
-            Assert.Null(store.Authenticate("admin", "wrong"));
-        Assert.NotNull(store.GetLockRemaining("admin"));
-
-        Assert.True(store.Unlock("admin"));
-
-        Assert.Null(store.GetLockRemaining("admin"));
-        Assert.NotNull(store.Authenticate("admin", "gly"));
-    }
-
-    [Fact]
-    public void ResetPassword_ClearsLock()
-    {
-        var store = CreateLoadedStore();
-        for (var i = 0; i < 5; i++)
-            Assert.Null(store.Authenticate("admin", "wrong"));
-        Assert.NotNull(store.GetLockRemaining("admin"));
-
-        store.ResetPassword("admin", "newpass8");
-
-        Assert.Null(store.GetLockRemaining("admin"));
-        Assert.NotNull(store.Authenticate("admin", "newpass8"));
-    }
+    // ──────────── 登录失败锁定的测试已在 2026-09 移除（不再锁定账号） ────────────
 
     [Fact]
     public void LastLoginAt_PersistedAfterReload()

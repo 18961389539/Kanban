@@ -1,4 +1,4 @@
-using Kanban.Client;
+﻿using Kanban.Client;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Mapping;
@@ -25,8 +25,16 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
     private bool _adminRetryLoopStarted;
     private Task? _adminRetryTask;
 
+    /// <summary>
+    /// 指示本次 Remote 启动是否已成功从 Collector 加载设备配置。
+    /// 加载失败时禁止应用退出阶段把空的内存集合保存回服务端。
+    /// </summary>
+    public bool IsDeviceConfigurationLoaded { get; private set; }
+
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        IsDeviceConfigurationLoaded = false;
+
         var client = services.GetRequiredService<KanbanDataClient>();
         var adminClient = services.GetRequiredService<KanbanAdminClient>();
         var sink = services.GetRequiredService<RemoteRuntimeSink>();
@@ -58,11 +66,10 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
         if (client.IsConnected)
             services.GetRequiredService<PlcConnectionManager>().SyncRemoteConnected(Strings.M134);
 
-        var sinkStarted = false;
+        var sinkStarted = 0;
         void EnsureSinkStarted()
         {
-            if (sinkStarted) return;
-            sinkStarted = true;
+            if (Interlocked.Exchange(ref sinkStarted, 1) != 0) return;
             sink.Start();
         }
 
@@ -70,6 +77,12 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
         {
             EnsureSinkStarted();
             _ = SynchronizeRemoteLocalizationSafeAsync(client);
+        };
+        client.Closed += (_, _) =>
+        {
+            // WithAutomaticReconnect 耗尽后，KanbanDataClient 只通知 Closed，
+            // 由此启动新的连接实例并让 RemoteRuntimeSink 重新挂载回调/订阅。
+            StartRetryLoop(client, RestoreMainConnectionAsync, CancellationToken.None);
         };
         try
         {
@@ -80,7 +93,16 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
         catch (Exception ex)
         {
             Log.Warning(ex, "首次连接采集服务失败，转入后台重连循环（5s 间隔）");
-            StartRetryLoop(client, EnsureSinkStarted, cancellationToken);
+            StartRetryLoop(client, RestoreMainConnectionAsync, cancellationToken);
+        }
+
+        Task RestoreMainConnectionAsync()
+        {
+            if (Volatile.Read(ref sinkStarted) == 0)
+                EnsureSinkStarted();
+            else
+                sink.RestoreAfterMainConnection();
+            return Task.CompletedTask;
         }
 
         try
@@ -119,10 +141,12 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
             var entities = DeviceMapper.ToEntities(remoteDevices);
             deviceRepo.ReplaceAll(entities);
             services.GetRequiredService<MainAPP.ViewModels.DeviceManagerViewModel>().SyncAuditBaseline();
+            IsDeviceConfigurationLoaded = true;
             Log.Information("Remote 设备配置已从采集服务加载：{Count} 台", entities.Count);
         }
         catch (Exception ex)
         {
+            IsDeviceConfigurationLoaded = false;
             deviceRepo.ReplaceAll([]);
             Log.Warning(ex, "远程设备配置加载失败，不使用本地缓存，设备配置保持不可用");
         }
@@ -225,9 +249,12 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
 
     private void StartRetryLoop(
         KanbanDataClient client,
-        Action onConnected,
+        Func<Task> onConnected,
         CancellationToken cancellationToken)
     {
+        if (Volatile.Read(ref _disposeStarted) != 0)
+            return;
+
         lock (_retryGate)
         {
             if (_retryLoopStarted) return;
@@ -248,8 +275,8 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
                         await Task.Delay(TimeSpan.FromSeconds(5), linked.Token);
                         await client.ConnectAsync(linked.Token);
                         await SynchronizeRemoteLocalizationAsync(client, linked.Token);
-                        Log.Information("采集服务后台重连成功，启动数据同步");
-                        onConnected();
+                        await onConnected();
+                        Log.Information("采集服务后台重连成功，监控数据同步已恢复");
                         return;
                     }
                     catch (OperationCanceledException)
@@ -265,6 +292,7 @@ public sealed class RemoteDataLinkBootstrapper(IServiceProvider services) : IAsy
             finally
             {
                 linked.Dispose();
+                lock (_retryGate) _retryLoopStarted = false;
             }
         });
     }

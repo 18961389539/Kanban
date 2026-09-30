@@ -26,18 +26,18 @@ public class DisplayCarouselClockTests
     }
 
     [Fact]
-    public void HomeDwell_IsTwoHundredSeconds()
+    public void HomeDwell_IsSixHundredSeconds()
     {
         var clock = new DisplayCarouselClock();
         var status = clock.Step(EnabledOn(DisplayCarousel.Home, T0, 0));
-        Assert.Equal(200, status.RemainingSeconds);
+        Assert.Equal(600, status.RemainingSeconds);
         Assert.Null(status.NavigateTo);
 
-        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(199), DisplayCarousel.HomeDwellMs - 1000));
+        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(599), DisplayCarousel.HomeDwellMs - 1000));
         Assert.Equal(DisplayCarousel.Home, status.Scene);
         Assert.Null(status.NavigateTo);
 
-        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(200), 1000));
+        status = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(600), 1000));
         Assert.Equal(DisplayCarousel.ProductionLine, status.NavigateTo);
     }
 
@@ -98,7 +98,7 @@ public class DisplayCarouselClockTests
 
         var resumed = clock.Step(EnabledOn(DisplayCarousel.Home, T0.AddSeconds(80), 1000));
         Assert.False(resumed.Paused);
-        Assert.Equal(199, resumed.RemainingSeconds);
+        Assert.Equal(599, resumed.RemainingSeconds);
     }
 
     [Fact]

@@ -2702,3 +2702,18 @@ Wpf,Web_NotFoundHint,请从顶栏选择功能页面,Use the top navigation to op
 Wpf,Web_SkipToContent,跳到主要内容,Skip to main content,メインコンテンツへ,Ir para o conteúdo principal
 Wpf,Web_MainNav,主导航,Main navigation,メインナビ,Navegação principal
 
+Wpf,Ux_ViewerRecoveryTitle,展示模式恢复,Exit Viewer Mode,表示モードの復帰,Sair do modo de exibição
+Wpf,Ux_ViewerRecoveryPrompt,请输入管理员密码以退出展示模式,Enter an administrator password to exit Viewer mode,表示モードを終了するには管理者パスワードを入力してください,Digite a senha do administrador para sair do modo de exibição
+Wpf,Ux_ViewerRecoverySuccess,已恢复为完整模式,Back to Full mode,完整モードに戻りました,Modo completo restaurado
+Wpf,Ux_ViewerRecoveryFailed,密码错误或不是管理员账号,Incorrect password or not an administrator,パスワードが違うか管理者アカウントではありません,Senha incorreta ou não é uma conta de administrador
+Wpf,Ux_ShortcutHelpTitle,快捷键速查,Keyboard Shortcuts,ショートカット一覧,Atalhos de teclado
+Wpf,Ux_Kb1,切换侧边栏第 1~9 个页面,Switch to sidebar pages 1-9,サイドバーの1〜9ページ目に切り替え,Alternar para as páginas 1-9 da barra lateral
+Wpf,Ux_Kb2,切换用户（弹出登录窗口）,Switch user (open login dialog),ユーザー切り替え（ログイン窓を表示）,Alternar usuário (abrir janela de login)
+Wpf,Ux_Kb3,打开使用手册,Open the user manual,使用マニュアルを開く,Abrir o manual do usuário
+Wpf,Ux_Kb4,切换全屏 / 退出全屏,Toggle fullscreen,全画面の切り替え,Alternar tela cheia
+Wpf,Ux_Kb5,刷新当前页,Refresh the current page,現在のページを更新,Atualizar a página atual
+Wpf,Ux_Kb6,返回上一页（设备详情页）,Go back (Device Detail page),前のページへ戻る（設備詳細頁）,Voltar (página de detalhes do dispositivo)
+Wpf,Ux_Kb7,触发查询（历史查询）,Run the query (History Query),クエリ実行（履歴照会）,Executar consulta (Consulta de Histórico)
+Wpf,Ux_Kb8,重置筛选条件（历史查询）,Reset filters (History Query),フィルタをリセット（履歴照会）,Redefinir filtros (Consulta de Histórico)
+Wpf,Ux_Kb9,导出查询结果（历史查询）,Export results (History Query),結果をエクスポート（履歴照会）,Exportar resultados (Consulta de Histórico)
+Wpf,Ux_Kb10,保存设置（系统设置）,Save settings (System Settings),設定を保存（システム設定）,Salvar configurações (Configurações do Sistema)

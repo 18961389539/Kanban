@@ -13,6 +13,7 @@ using Kanban.Client;
 using Kanban.Collector.Core.Models;
 using Kanban.Contracts.Display;
 using MainAPP.Models;
+using MainAPP.Views;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Helpers;
@@ -416,6 +417,43 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     private bool CanSwitchUser() => !IsViewerMode && _loginDialogService is not null;
 
+    /// <summary>
+    /// 展示模式下隐藏的管理员恢复入口（Ctrl+Shift+S）：输入管理员密码验证通过后切回完整模式。
+    /// 界面不暴露入口，避免现场人员一键切回管理界面；管理员仍有"界面内恢复"通道，无需改配置文件。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExitViewer))]
+    private void ExitViewer()
+    {
+        var dialog = _serviceProvider.GetService<IDialogService>();
+        var password = dialog?.ShowPasswordInput(Strings.Ux_ViewerRecoveryTitle, Strings.Ux_ViewerRecoveryPrompt);
+        if (string.IsNullOrEmpty(password))
+            return; // 取消输入
+
+        var userStore = _serviceProvider.GetService<UserStore>();
+        var isAdminPassword = userStore?.GetAll().Any(u =>
+            u.IsActive
+            && u.Role == UserRole.Admin
+            && !string.IsNullOrEmpty(u.PasswordHash)
+            && PasswordHasher.Verify(password, u.PasswordHash)) ?? false;
+
+        if (!isAdminPassword)
+        {
+            AuditLog.Record("Auth.ExitViewer", "User", UserSession.CurrentUser?.Username, succeeded: false, detail: "password-rejected");
+            dialog?.NotifyError(Strings.Ux_ViewerRecoveryFailed);
+            return;
+        }
+
+        AppSettings.RunMode = KanbanRunMode.Full;
+        AppSettings.Save();
+        OnPropertyChanged(nameof(IsViewerMode));
+        RefreshNavigationForCurrentUser();
+        AuditLog.Record("Auth.ExitViewer", "System", "run-mode", succeeded: true, detail: "password-verified");
+        dialog?.NotifySuccess(Strings.Ux_ViewerRecoverySuccess);
+        Log.Information("展示模式已通过管理员密码验证切回完整模式");
+    }
+
+    private bool CanExitViewer() => IsViewerMode;
+
     public MainWindowViewModel(
         AppSettings appSettings,
         IServiceProvider serviceProvider,
@@ -780,6 +818,28 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         var owner = UiDispatcher.MainWindow;
         _userHelpService?.OpenUserManual(owner);
     }
+
+    /// <summary>打开快捷键速查小窗（Ctrl+Shift+K）。复用已显示实例，避免堆叠窗口。</summary>
+    [RelayCommand]
+    private void OpenShortcutHelp()
+    {
+        if (_shortcutHelpWindow is null)
+        {
+            _shortcutHelpWindow = _serviceProvider.GetService<ShortcutHelpWindow>();
+            if (_shortcutHelpWindow is null) return;
+            _shortcutHelpWindow.Closed += (_, _) => _shortcutHelpWindow = null;
+        }
+        if (_shortcutHelpWindow.IsVisible)
+        {
+            _shortcutHelpWindow.Activate();
+            return;
+        }
+        _shortcutHelpWindow.Owner = UiDispatcher.MainWindow;
+        _shortcutHelpWindow.Show();
+        _shortcutHelpWindow.Activate();
+    }
+
+    private ShortcutHelpWindow? _shortcutHelpWindow;
 
     /// <summary>
     /// 跳转到设置页（授权状态卡片点击时调用）。

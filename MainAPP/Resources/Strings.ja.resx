@@ -7465,4 +7465,49 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Web_MainNav" xml:space="preserve">
     <value>メインナビ</value>
   </data>
+  <data name="Ux_ViewerRecoveryTitle" xml:space="preserve">
+    <value>表示モードの復帰</value>
+  </data>
+  <data name="Ux_ViewerRecoveryPrompt" xml:space="preserve">
+    <value>表示モードを終了するには管理者パスワードを入力してください</value>
+  </data>
+  <data name="Ux_ViewerRecoverySuccess" xml:space="preserve">
+    <value>完整モードに戻りました</value>
+  </data>
+  <data name="Ux_ViewerRecoveryFailed" xml:space="preserve">
+    <value>パスワードが違うか管理者アカウントではありません</value>
+  </data>
+  <data name="Ux_ShortcutHelpTitle" xml:space="preserve">
+    <value>ショートカット一覧</value>
+  </data>
+  <data name="Ux_Kb1" xml:space="preserve">
+    <value>サイドバーの1〜9ページ目に切り替え</value>
+  </data>
+  <data name="Ux_Kb2" xml:space="preserve">
+    <value>ユーザー切り替え（ログイン窓を表示）</value>
+  </data>
+  <data name="Ux_Kb3" xml:space="preserve">
+    <value>使用マニュアルを開く</value>
+  </data>
+  <data name="Ux_Kb4" xml:space="preserve">
+    <value>全画面の切り替え</value>
+  </data>
+  <data name="Ux_Kb5" xml:space="preserve">
+    <value>現在のページを更新</value>
+  </data>
+  <data name="Ux_Kb6" xml:space="preserve">
+    <value>前のページへ戻る（設備詳細頁）</value>
+  </data>
+  <data name="Ux_Kb7" xml:space="preserve">
+    <value>クエリ実行（履歴照会）</value>
+  </data>
+  <data name="Ux_Kb8" xml:space="preserve">
+    <value>フィルタをリセット（履歴照会）</value>
+  </data>
+  <data name="Ux_Kb9" xml:space="preserve">
+    <value>結果をエクスポート（履歴照会）</value>
+  </data>
+  <data name="Ux_Kb10" xml:space="preserve">
+    <value>設定を保存（システム設定）</value>
+  </data>
 </root>

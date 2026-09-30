@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.IO;
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
@@ -64,6 +64,7 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         /// <summary>报警流订阅参数记录（断线重订阅断言游标续传/归零）。</summary>
         public static readonly ConcurrentQueue<long> AlarmSubscribeSeqs = new();
         public static readonly ConcurrentQueue<long> StatusSubscribeSeqs = new();
+        public static int FailNextAlarmSubscribeCount;
         public static volatile int SnapshotSubscribeCount;
         public static volatile int MetaSubscribeCount;
         public static IReadOnlyList<DeviceSnapshotDto> InitialSnapshots = [];
@@ -72,6 +73,7 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         {
             AlarmSubscribeSeqs.Clear();
             StatusSubscribeSeqs.Clear();
+            FailNextAlarmSubscribeCount = 0;
             SnapshotSubscribeCount = 0;
             MetaSubscribeCount = 0;
             InitialSnapshots = [];
@@ -90,6 +92,8 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         public async Task SubscribeAlarmEventsAsync(long afterSeq)
         {
             AlarmSubscribeSeqs.Enqueue(afterSeq);
+            if (Interlocked.Exchange(ref FailNextAlarmSubscribeCount, 0) > 0)
+                throw new InvalidOperationException("测试：报警订阅首次失败");
             while (true)
                 await Task.Delay(1000, Context.ConnectionAborted);
         }
@@ -421,6 +425,19 @@ public class RemoteRuntimeSinkTests : IAsyncLifetime
         WaitUntil(() => !_deviceRepo.RuntimeMap.ContainsKey("dev-1"), "tombstone 移除设备运行时");
         Assert.Null(_deviceRepo.GetDeviceById("dev-1"));
         Assert.DoesNotContain(_deviceRepo.Devices, device => device.Id == "dev-1");
+    }
+
+    [Fact]
+    public async Task AlarmSubscriptionFailure_RetriesIndependently()
+    {
+        _deviceRepo.ReplaceAll([CreateDeviceWithAlarm()]);
+        SinkTestHub.FailNextAlarmSubscribeCount = 1;
+        await StartSinkAsync(TestContext.Current.CancellationToken);
+
+        WaitUntil(() => !SinkTestHub.StatusSubscribeSeqs.IsEmpty && SinkTestHub.MetaSubscribeCount >= 1,
+            "状态/元数据订阅建立");
+        WaitUntil(() => SinkTestHub.AlarmSubscribeSeqs.Count >= 2,
+            "报警订阅独立重试");
     }
 
     [Fact]

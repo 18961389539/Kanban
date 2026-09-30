@@ -7465,4 +7465,49 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Web_MainNav" xml:space="preserve">
     <value>Main navigation</value>
   </data>
+  <data name="Ux_ViewerRecoveryTitle" xml:space="preserve">
+    <value>Exit Viewer Mode</value>
+  </data>
+  <data name="Ux_ViewerRecoveryPrompt" xml:space="preserve">
+    <value>Enter an administrator password to exit Viewer mode</value>
+  </data>
+  <data name="Ux_ViewerRecoverySuccess" xml:space="preserve">
+    <value>Back to Full mode</value>
+  </data>
+  <data name="Ux_ViewerRecoveryFailed" xml:space="preserve">
+    <value>Incorrect password or not an administrator</value>
+  </data>
+  <data name="Ux_ShortcutHelpTitle" xml:space="preserve">
+    <value>Keyboard Shortcuts</value>
+  </data>
+  <data name="Ux_Kb1" xml:space="preserve">
+    <value>Switch to sidebar pages 1-9</value>
+  </data>
+  <data name="Ux_Kb2" xml:space="preserve">
+    <value>Switch user (open login dialog)</value>
+  </data>
+  <data name="Ux_Kb3" xml:space="preserve">
+    <value>Open the user manual</value>
+  </data>
+  <data name="Ux_Kb4" xml:space="preserve">
+    <value>Toggle fullscreen</value>
+  </data>
+  <data name="Ux_Kb5" xml:space="preserve">
+    <value>Refresh the current page</value>
+  </data>
+  <data name="Ux_Kb6" xml:space="preserve">
+    <value>Go back (Device Detail page)</value>
+  </data>
+  <data name="Ux_Kb7" xml:space="preserve">
+    <value>Run the query (History Query)</value>
+  </data>
+  <data name="Ux_Kb8" xml:space="preserve">
+    <value>Reset filters (History Query)</value>
+  </data>
+  <data name="Ux_Kb9" xml:space="preserve">
+    <value>Export results (History Query)</value>
+  </data>
+  <data name="Ux_Kb10" xml:space="preserve">
+    <value>Save settings (System Settings)</value>
+  </data>
 </root>

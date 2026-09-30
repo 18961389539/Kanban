@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using MainAPP.Resources;
 using System.IO;
 using System.Windows;
@@ -461,10 +461,23 @@ public partial class App : Application
                     ex => string.Format(Strings.F191, ex.Message)).ConfigureAwait(false);
             }
 
-            // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector。
-            await RunStep(errors, "保存设备配置", budget, StepConfigSaveTimeout,
-                _ => _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync(),
-                ex => string.Format(Strings.F210, ex.Message)).ConfigureAwait(false);
+            // Remote 模式必须在 Host 释放 SignalR 之前把设备配置推送到 Collector，
+            // 但仅允许保存已经从 Collector 成功加载的权威配置。
+            // 加载失败时内存集合可能是空集合，退出保存会把服务端配置整体覆盖为空。
+            var remoteConfigurationLoaded = !isRemote ||
+                _host.Services.GetRequiredService<RemoteDataLinkBootstrapper>().IsDeviceConfigurationLoaded;
+            if (ShouldSaveDeviceConfiguration(isRemote, remoteConfigurationLoaded))
+            {
+                await RunStep(errors, "保存设备配置", budget, StepConfigSaveTimeout,
+                    _ => _host.Services.GetRequiredService<DeviceRepository>().SaveAllAsync(),
+                    ex => string.Format(Strings.F210, ex.Message)).ConfigureAwait(false);
+            }
+            else
+            {
+                const string message = "跳过保存设备配置：远程设备配置未成功从 Collector 加载，避免以空配置覆盖服务端";
+                Serilog.Log.Warning(message);
+                errors.Add(message);
+            }
 
             await RunStep(errors, "保存应用设置", budget, StepSettingsSaveTimeout,
                 _ => Task.Run(() => _host.Services.GetRequiredService<AppSettings>().Save()),
@@ -510,6 +523,12 @@ public partial class App : Application
 
         return errors;
     }
+
+    /// <summary>
+    /// Remote 模式只有在权威设备配置成功加载后才允许自动保存；Local 模式始终允许保存。
+    /// </summary>
+    internal static bool ShouldSaveDeviceConfiguration(bool isRemote, bool remoteConfigurationLoaded)
+        => !isRemote || remoteConfigurationLoaded;
 
     /// <summary>
     /// 按剩余预算执行单个关窗步骤：超时即放弃本步并记入错误列表，绝不让单步拖垮整个关窗预算。

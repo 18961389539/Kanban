@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -270,6 +270,7 @@ public class ScreenshotCaptureTests : IDisposable
 
             if (ok)
             {
+                DrawAnnotations(bmp, name);
                 bmp.Save(path, ImageFormat.Png);
                 Console.WriteLine($"  [OK] {name}.png ({w} x {h}) via PrintWindow");
                 return;
@@ -281,8 +282,59 @@ public class ScreenshotCaptureTests : IDisposable
         using (var g2 = Graphics.FromImage(bmp2))
         {
             g2.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(w, h));
+            DrawAnnotations(bmp2, name);
             bmp2.Save(path, ImageFormat.Png);
             Console.WriteLine($"  [OK] {name}.png ({w} x {h}) via CopyFromScreen (fallback)");
+        }
+    }
+
+    // ---------- 截图标注：半透明高亮框 + 文字标签 ----------
+    // 坐标为窗口尺寸的比例（0~1），适配不同分辨率；新页面截图后需校准区域后再进表。
+    // 颜色约定：框/标签 = 品牌蓝 (#3B82F6)，文字白，标签底色深蓝。
+    private sealed record Annotation(float X, float Y, float W, float H, string Label);
+
+    private static readonly Dictionary<string, Annotation[]> PageAnnotations = new()
+    {
+        // 示例标注（侧边栏底部：2026-09 起登录入口在上、使用手册贴最底）
+        ["01_home"] = new[]
+        {
+            new Annotation(0.010f, 0.900f, 0.100f, 0.050f, "切换用户 (Ctrl+L)"),
+            new Annotation(0.010f, 0.950f, 0.100f, 0.050f, "使用手册 (F1)"),
+        },
+    };
+
+    private static void DrawAnnotations(Bitmap bmp, string name)
+    {
+        if (!PageAnnotations.TryGetValue(name, out var list) || list.Length == 0)
+            return;
+
+        var w = bmp.Width;
+        var h = bmp.Height;
+        using var g = Graphics.FromImage(bmp);
+        using var fill = new SolidBrush(Color.FromArgb(46, 59, 130, 246));   // #3B82F6 @18%
+        using var pen = new Pen(Color.FromArgb(235, 96, 165, 250), 3f);      // #60A5FA
+        using var labelBg = new SolidBrush(Color.FromArgb(225, 17, 24, 34)); // #111827 @88%
+        using var textBrush = new SolidBrush(Color.White);
+        using var font = new Font("Microsoft YaHei", 12f, FontStyle.Bold);
+
+        foreach (var a in list)
+        {
+            var rect = new Rectangle(
+                (int)(a.X * w), (int)(a.Y * h),
+                Math.Max(1, (int)(a.W * w)), Math.Max(1, (int)(a.H * h)));
+            g.FillRectangle(fill, rect);
+            g.DrawRectangle(pen, rect);
+
+            var size = g.MeasureString(a.Label, font);
+            var pad = 4;
+            var labelRect = new Rectangle(
+                rect.X, rect.Y - (int)size.Height - pad * 2 - 2,
+                (int)size.Width + pad * 2, (int)size.Height + pad * 2);
+            // 标签越界（贴顶）时移到框内
+            if (labelRect.Y < 2)
+                labelRect = new Rectangle(rect.X, rect.Y + 2, labelRect.Width, labelRect.Height);
+            g.FillRectangle(labelBg, labelRect);
+            g.DrawString(a.Label, font, textBrush, labelRect.X + pad, labelRect.Y + pad);
         }
     }
 

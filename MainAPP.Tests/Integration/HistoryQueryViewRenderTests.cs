@@ -75,6 +75,41 @@ public class HistoryQueryViewRenderTests : WpfTestHost, IDisposable
     }
 
     [Fact]
+    public void View_QueryLoading_KeepsResultsVisible()
+    {
+        var vm = BuildViewModel();
+        vm.IsLoading = true;
+        var resultsVisible = false;
+        var loadingOverlayVisible = false;
+
+        RunOnSta(app =>
+        {
+            var view = new HistoryQueryView { DataContext = vm };
+            var win = new Window { Content = view, Width = 1280, Height = 800 };
+            win.Show();
+            win.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Loaded);
+            win.UpdateLayout();
+
+            foreach (var tabControl in FindVisualDescendants<System.Windows.Controls.TabControl>(view))
+            {
+                if (tabControl.Name == "HistoryResultsTabs")
+                    resultsVisible = tabControl.Visibility == Visibility.Visible;
+            }
+
+            foreach (var border in FindVisualDescendants<System.Windows.Controls.Border>(view))
+            {
+                if (border.Name == "QueryLoadingOverlay")
+                    loadingOverlayVisible = border.Visibility == Visibility.Visible;
+            }
+
+            win.Close();
+        });
+
+        Assert.True(resultsVisible);
+        Assert.True(loadingOverlayVisible);
+    }
+
+    [Fact]
     public void View_SwitchTab_DoesNotThrow()
     {
         var vm = BuildViewModel();

@@ -7421,4 +7421,49 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Web_MainNav" xml:space="preserve">
     <value>Navegação principal</value>
   </data>
+  <data name="Ux_ViewerRecoveryTitle" xml:space="preserve">
+    <value>Sair do modo de exibição</value>
+  </data>
+  <data name="Ux_ViewerRecoveryPrompt" xml:space="preserve">
+    <value>Digite a senha do administrador para sair do modo de exibição</value>
+  </data>
+  <data name="Ux_ViewerRecoverySuccess" xml:space="preserve">
+    <value>Modo completo restaurado</value>
+  </data>
+  <data name="Ux_ViewerRecoveryFailed" xml:space="preserve">
+    <value>Senha incorreta ou não é uma conta de administrador</value>
+  </data>
+  <data name="Ux_ShortcutHelpTitle" xml:space="preserve">
+    <value>Atalhos de teclado</value>
+  </data>
+  <data name="Ux_Kb1" xml:space="preserve">
+    <value>Alternar para as páginas 1-9 da barra lateral</value>
+  </data>
+  <data name="Ux_Kb2" xml:space="preserve">
+    <value>Alternar usuário (abrir janela de login)</value>
+  </data>
+  <data name="Ux_Kb3" xml:space="preserve">
+    <value>Abrir o manual do usuário</value>
+  </data>
+  <data name="Ux_Kb4" xml:space="preserve">
+    <value>Alternar tela cheia</value>
+  </data>
+  <data name="Ux_Kb5" xml:space="preserve">
+    <value>Atualizar a página atual</value>
+  </data>
+  <data name="Ux_Kb6" xml:space="preserve">
+    <value>Voltar (página de detalhes do dispositivo)</value>
+  </data>
+  <data name="Ux_Kb7" xml:space="preserve">
+    <value>Executar consulta (Consulta de Histórico)</value>
+  </data>
+  <data name="Ux_Kb8" xml:space="preserve">
+    <value>Redefinir filtros (Consulta de Histórico)</value>
+  </data>
+  <data name="Ux_Kb9" xml:space="preserve">
+    <value>Exportar resultados (Consulta de Histórico)</value>
+  </data>
+  <data name="Ux_Kb10" xml:space="preserve">
+    <value>Salvar configurações (Configurações do Sistema)</value>
+  </data>
 </root>

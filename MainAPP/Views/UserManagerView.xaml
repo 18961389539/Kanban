@@ -312,21 +312,13 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                                             <Button Padding="8,6" Margin="0,0,4,0" Cursor="Hand"
-                                                    AutomationProperties.Name="{x:Static resources:Strings.M324}"
-                                                    ToolTip="{x:Static resources:Strings.M324}"
-                                                    Command="{Binding DataContext.ResetPasswordForCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}">
-                                                <materialIcons:MaterialIcon Width="16" Height="16" Kind="Key" />
-                                            </Button>
-                                            <Button Padding="8,6" Margin="0,0,4,0" Cursor="Hand"
-                                                    AutomationProperties.Name="{x:Static resources:Strings.M367}"
-                                                    ToolTip="{x:Static resources:Strings.M367}"
-                                                    Command="{Binding DataContext.UnlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    Visibility="{Binding Converter={StaticResource UserIsLockedToVisibilityConverter}}">
-                                                <materialIcons:MaterialIcon Width="16" Height="16" Kind="LockOpenVariantOutline" />
-                                            </Button>
-                                            <Button Padding="8,6" Cursor="Hand"
+                                            AutomationProperties.Name="{x:Static resources:Strings.M324}"
+                                            ToolTip="{x:Static resources:Strings.M324}"
+                                            Command="{Binding DataContext.ResetPasswordForCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <materialIcons:MaterialIcon Width="16" Height="16" Kind="Key" />
+                                    </Button>
+                                    <Button Padding="8,6" Cursor="Hand"
                                                     AutomationProperties.Name="{x:Static resources:Strings.M323}"
                                                     ToolTip="{x:Static resources:Strings.M323}"
                                                     Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -536,16 +528,6 @@
                             Margin="0,0,0,12"
                             Content="{x:Static resources:Strings.M331}"
                             IsChecked="{Binding EditIsActive, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <!-- 解锁（仅锁定中显示） -->
-                        <Button
-                            Margin="0,0,0,8"
-                            HorizontalAlignment="Stretch"
-                            Command="{Binding UnlockCommand}"
-                            CommandParameter="{Binding SelectedUser}"
-                            Content="{x:Static resources:Strings.M367}"
-                            Visibility="{Binding SelectedUser, Converter={StaticResource UserIsLockedToVisibilityConverter}}"
-                            Style="{StaticResource ButtonDefault}" />
 
                         <Button
                             Margin="0,0,0,8"

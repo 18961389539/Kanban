@@ -83,11 +83,7 @@ public partial class LoginViewModel : ObservableObject
         if (user is null)
         {
             AuditLog.Record("Auth.Login", "User", SelectedUser.Username, succeeded: false, detail: Strings.M_LoginFailed);
-            // 失败原因区分：账号锁定 vs 密码错误（锁定给出剩余时间）
-            var remaining = _userStore.GetLockRemaining(SelectedUser.Username);
-            ErrorMessage = remaining is { } r
-                ? string.Format(Strings.M366, Math.Ceiling(r.TotalMinutes))
-                : Strings.M319;
+            ErrorMessage = Strings.M319; // 密码错误（账号锁定已在 2026-09 移除）
             return;
         }
 

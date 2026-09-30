@@ -1,14 +1,16 @@
-# MainAPP User Manual (English)
+# Kanban User Manual (English)
 
 > For operators, shift leaders, and on-site administrators using Kanban for the first time.
 >
 > This manual uses a step-by-step approach. Click blue buttons when you see them; handle red alarms first. You do not need to understand the code to perform daily work.
 >
-> **中文版:** [MainAPP 用户使用手册](./MainAPP用户使用手册.md) · **Screenshots:** [README](./README.md)
+> Last updated: 2026-09 · Applies to: Kanban (`MainAPP.exe`). If the UI changes, the on-screen behavior takes precedence; ask an administrator to update this manual.
+>
+> **中文版:** [Kanban 用户使用手册](./MainAPP用户使用手册.md) · **Screenshots:** [README](./README.md)
 
 ## 1. What This System Does
 
-MainAPP centralizes shop-floor production information:
+Kanban centralizes shop-floor production information:
 
 - View device status: Running, Standby, Alarm, Initial (when no data yet).
 - View total output, good count, defect count, production rate, and OEE.
@@ -49,14 +51,14 @@ The app has two run modes: **Full mode** (default, all pages available) and **Vi
 
 When you need step-by-step help:
 
-1. At the **bottom of the left sidebar** (above license info), click **User Manual (F1)**.
+1. At the very **bottom of the left sidebar**, click **User Manual (F1)**.
 2. Or press **F1** on the keyboard.
 3. The manual opens inside the app with screenshots (screenshot files must be shipped with the app).
 4. When the UI language is English, the English manual opens automatically; other UI languages may show Chinese or English.
 
 On first launch, a **quick guide** may appear; the last step also offers **Open User Manual**.
 
-> Other shortcuts: `Ctrl+1`–`Ctrl+9` switch directly to Home, Production Line, Alarm Center, Device Manager, Work Orders, History Query, Review, System Settings, and Runtime Monitor; `F11` toggles fullscreen.
+> Other shortcuts: `Ctrl+1`–`Ctrl+9` switch directly to Home, Production Line, Alarm Center, Device Manager, Work Orders, History Query, Review, System Settings, and Runtime Monitor; `Ctrl+L` switches the current user; `F11` toggles fullscreen.
 
 ## 3. Main Interface Overview
 
@@ -88,24 +90,24 @@ The left sidebar lists pages from top to bottom in the order below (some entries
 
 ![Production Line example](screenshots/02_production_line.png)
 
-### 3.2 PLC Connection Status
+### 3.2 Checking Connection Health
 
-At the bottom of the navigation bar:
+A global connection banner appears at the **top** of the page (no banner when connected normally):
 
-- **Green dot**: PLC connected; acquisition can continue.
-- **Red dot**: PLC disconnected or last connection failed; check network and settings.
-- **Disconnect count**: Cumulative disconnects this session—not alarm count.
+- **Red banner**: PLC disconnected or the last connection failed; check network and settings.
+- **Yellow banner (connecting)**: the system is trying to connect; wait a moment.
+- **Yellow banner (data stale)**: connected, but data has not updated for a while—the acquisition end may be stuck.
 
 If the PLC is disconnected, home page status and output stop updating. Check **System Settings** and **Runtime Monitor** first; do not repeatedly click reset commands.
 
-> When the data source is **Collector service (Remote)**, the connection status here reflects the connection to the **collector service**, not the PLC directly. Check the actual PLC status in **Runtime Monitor**.
+> When the data source is **Collector service (Remote)**, the banner reflects the connection to the **collector service**, not the PLC directly. Check the actual PLC status in **Runtime Monitor**.
 
 ## 4. Daily Startup Procedure
 
 Recommended order each day:
 
 1. Open the app and wait for pages to load.
-2. Confirm the PLC indicator is green (bottom-left).
+2. Confirm there is no red or yellow connection banner at the top of the page.
 3. Open **Runtime Monitor** and confirm the acquisition service is running.
 4. Open **Alarm Center** and confirm no high-priority unhandled alarms.
 5. Return to **Home** and confirm device count and KPIs match the shop floor.
@@ -314,8 +316,8 @@ The top of **System Settings** shows the license status (see **License Managemen
 
 ### 12.1 Data Source (General)
 
-- **Local acquisition (default)**: MainAPP connects to the PLC directly—suited for single-machine deployment.
-- **Collector service (Remote)**: MainAPP acts as a display client and receives data from the Kanban.Collector service—suited for multi-display or remote deployment.
+- **Local acquisition (default)**: Kanban connects to the PLC directly—suited for single-machine deployment.
+- **Collector service (Remote)**: Kanban acts as a display client and receives data from the Kanban.Collector service—suited for multi-display or remote deployment.
 
 When **Collector service** is selected, fill in the **collector service address** (default `http://127.0.0.1:5129/hubs/kanban`) and use **Test Connection** to verify it.
 
@@ -425,6 +427,14 @@ Create accounts, assign roles, reset passwords (Admin).
 
 The last administrator account cannot be deleted or demoted.
 
+> **Which account should I log in with?**
+>
+> - Only viewing output and alarms → use an **Operator** account.
+> - Configuring devices, addresses, or recipes → use an **Engineer** account.
+> - System Settings, User Management, and Audit Log → use an **Admin** account.
+>
+> When in doubt, confirm with your shift leader or administrator—avoid changing shop-floor configuration with a high-privilege account. Press `Ctrl+L` to open the login dialog and switch accounts at any time.
+
 ## 18. Audit Log
 
 ![Audit Log](screenshots/13_audit.png)
@@ -466,11 +476,25 @@ Confirm Save was clicked; reopen the page. Check write permissions and `.corrupt
 
 Contact admin with: full error text, time, recent config changes, network/PLC changes, and logs under `%APPDATA%\Kanban` (or the custom data folder). Back up before deleting data.
 
+### 19.1 Quick Diagnostic Table
+
+| Symptom | Possible cause | Action |
+| --- | --- | --- |
+| Red banner “disconnected” at top | Network or PLC configuration | Check cable, IP/port, then Runtime Monitor |
+| Yellow banner “data stale” | Acquisition stuck | Check the acquisition service in Runtime Monitor; restart if needed |
+| Home output not increasing | Wrong addresses or not producing | Verify OK/NG addresses and the shift reset window |
+| No alarm in app, alarm at site | Alarm point not configured/enabled | Check the alarm point address and enabled state |
+| History query empty | No acquisition in range / wrong filter | Widen the range; check history write status |
+| PDF export fails | Missing CJK fonts | Install a system CJK font and retry |
+| Settings not applied after save | Save not clicked / no permission | Save again; check config folder write permissions |
+
+> Detailed steps are in Q1–Q7 above.
+
 ## 20. Daily Shutdown
 
 1. Confirm no reset or save in progress.
 2. Update work order status per site procedure.
-3. Close MainAPP and wait for clean exit.
+3. Close Kanban and wait for clean exit.
 4. Back up `%APPDATA%\Kanban` (or the custom data folder) if required.
 
 ## 21. Three Rules for New Users
@@ -502,3 +526,20 @@ On the device **Data Sources** tab, export/import CSV per device. Each row is a 
 ### B.2 Manual Languages
 
 The app UI supports 简体中文, English, 日本語, and Português. The user manual is available in **Chinese** and **English**; F1 opens the English manual when the UI language is English, otherwise the Chinese manual (including for 日本語 and Português).
+
+## Appendix C: Keyboard Shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl+1`–`Ctrl+9` | Switch to sidebar pages 1–9 |
+| `Ctrl+L` | Switch user (open the login dialog) |
+| `F1` | Open the user manual |
+| `F11` | Toggle fullscreen |
+| `F5` | Refresh the current page (Home, Production Line, Alarm Center, Work Orders, Data Monitoring, Runtime Monitor, etc.) |
+| `Esc` | Go back (Device Detail page) |
+| `Ctrl+Enter` | Run the query (History Query) |
+| `Ctrl+R` | Reset filters (History Query) |
+| `Ctrl+E` | Export results (History Query) |
+| `Ctrl+S` | Save settings (System Settings) |
+
+> This table covers the main window and common pages; some pages have additional local shortcuts described in their chapters. Whether a shortcut works depends on the current page.

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Kanban.Client;
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
@@ -34,6 +34,7 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly Dispatcher _dispatcher;
     private readonly CancellationTokenSource _shutdownCts = new();
     private CancellationToken _cancellationToken => _shutdownCts.Token;
+    private int _disposeStarted;
     private readonly List<Task> _backgroundTasks = new();
     private readonly object _taskGate = new();
     private long _lastSnapshotReceivedTicks;
@@ -101,10 +102,21 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
         // 首次连接由 StartEventLinkAsync 在 ConnectAsync 成功后注册；
         // 首次失败后的后台重连成功路径由 OnEventsReconnectedAsync 兜底补注册。
         _eventsClient.Reconnected += (_, _) => { _ = OnEventsReconnectedAsync(); };
+        _eventsClient.Closed += (_, _) => StartEventsRetryLoop();
 
-        TrackTask(RefreshAsync());
-        TrackTask(_client.SubscribeSnapshotsAsync());
+        RestoreAfterMainConnection();
         TrackTask(StartEventLinkAsync());
+    }
+
+    /// <summary>主连接由 Closed 后重新创建时，重新挂载快照回调和订阅。</summary>
+    internal void RestoreAfterMainConnection()
+    {
+        if (Volatile.Read(ref _disposeStarted) != 0)
+            return;
+
+        _client.OnSnapshot(OnSnapshotReceived);
+        TrackTask(RefreshAsync());
+        TrackTask(_client.SubscribeSnapshotsAsync(_cancellationToken));
     }
 
     /// <summary>注册事件连接回调（幂等：KanbanDataClient 按连接实例去重，审查修复 2026-08-13——
@@ -142,40 +154,50 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly object _eventsRetryGate = new();
 
     /// <summary>
-    /// 事件连接首次连接失败后的后台重连循环（5s 间隔，单实例保证）。
-    /// 重连成功后补齐事件连接的回调注册与长驻订阅；运行中连接断开时由 WithAutomaticReconnect
-    /// + <see cref="OnEventsReconnectedAsync"/> 恢复，本循环只负责"从未连上过"的启动期场景。
+    /// 事件连接建立失败或自动重连耗尽后的后台重连循环（5s 间隔，单实例保证）。
+    /// 重连成功后补齐事件连接的回调注册与长驻订阅；运行中短暂断开仍由 WithAutomaticReconnect
+    /// + <see cref="OnEventsReconnectedAsync"/> 恢复，长时间断开则由 Closed 事件重新进入本循环。
     /// </summary>
     private void StartEventsRetryLoop()
     {
+        if (Volatile.Read(ref _disposeStarted) != 0)
+            return;
+
         lock (_eventsRetryGate)
         {
             if (_eventsRetryLoopStarted) return;
             _eventsRetryLoopStarted = true;
         }
-        _ = Task.Run(async () =>
+        TrackTask(Task.Run(async () =>
         {
-            while (true)
+            try
             {
-                try
+                while (true)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
-                    await _eventsClient.ConnectAsync(_cancellationToken);
-                    EnsureEventsCallbacksRegistered();
-                    StartSubscribeRetryLoop();
-                    _logger.LogInformation("事件连接后台重连成功，报警/状态/元数据订阅已恢复");
-                    return;
-                }
-                catch (OperationCanceledException)
-                {
-                    return; // 连接被释放
-                }
-                catch (Exception retryEx)
-                {
-                    _logger.LogWarning(retryEx, "事件连接后台重连失败，5s 后重试");
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
+                        await _eventsClient.ConnectAsync(_cancellationToken);
+                        EnsureEventsCallbacksRegistered();
+                        StartSubscribeRetryLoop();
+                        _logger.LogInformation("事件连接后台重连成功，报警/状态/元数据订阅已恢复");
+                        return;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return; // 连接被释放
+                    }
+                    catch (Exception retryEx)
+                    {
+                        _logger.LogWarning(retryEx, "事件连接后台重连失败，5s 后重试");
+                    }
                 }
             }
-        });
+            finally
+            {
+                lock (_eventsRetryGate) _eventsRetryLoopStarted = false;
+            }
+        }));
     }
 
     /// <summary>报警事件游标：已消费的最大 Seq。断线重连后从此处补拉，避免漏报。
@@ -246,54 +268,73 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
     private readonly object _subscribeRetryGate = new();
 
     /// <summary>
-    /// 订阅层失败重试循环（单实例守卫）：报警/状态订阅任一失败（协议错误/服务端故障等非连接类异常）
-    /// 即 5s 退避重试，全部成功后退出——旧实现只 LogWarning 无重试（重试仅挂在 Reconnected 上），
-    /// 非连接类故障会让报警/状态事件永久漏掉。连接断开场景由连接层 Reconnected 重新触发本循环。
+    /// 启动三条相互独立的订阅重试循环。每条循环只负责自己的 SignalR 长驻订阅，
+    /// 某一条失败时不会等待另外两条结束；连接断开或非连接类故障均按 5s 退避重试。
     /// </summary>
     private void StartSubscribeRetryLoop()
     {
+        if (Volatile.Read(ref _disposeStarted) != 0)
+            return;
+
         lock (_subscribeRetryGate)
         {
             if (_subscribeRetryLoopStarted) return;
             _subscribeRetryLoopStarted = true;
         }
-        _ = Task.Run(async () =>
+
+        var retryTask = Task.Run(async () =>
         {
             try
             {
-                while (true)
-                {
-                    try
-                    {
-                        // 三个长驻订阅必须**并行**启动（审查修复 2026-08-13）：报警订阅在连接正常时永不返回，
-                        // 原实现串行 await 使状态/元数据订阅永远不可达（Remote 模式状态事件流与工单元数据从未建立）。
-                        var alarmTask = SubscribeAlarmEventsWithResumeAsync();
-                        var statusTask = SubscribeStatusEventsWithResumeAsync();
-                        var metaTask = SubscribeMetaSafeAsync();
-                        // WhenAll(Task<bool>, Task<bool>, Task) 命中 params Task[] 重载返回 Task（await 为 void，不能 var 接），
-                        // 故分开取值：三个订阅一起结束后再读报警/状态结果。
-                        await Task.WhenAll(alarmTask, statusTask, metaTask);
-                        // 连接断开时三个长驻订阅一起结束（正常生命周期），由连接层 Reconnected 重启本循环；
-                        // 非连接类失败（返回 false）才需要本循环 5s 退避重试。
-                        if (await alarmTask && await statusTask)
-                            return;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        return; // 连接被释放
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "事件订阅重试循环异常，5s 后重试");
-                    }
-                    await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
-                }
+                await Task.WhenAll(
+                    RunSubscriptionRetryLoopAsync(
+                        async () =>
+                        {
+                            await SubscribeAlarmEventsWithResumeAsync();
+                        }, "报警"),
+                    RunSubscriptionRetryLoopAsync(
+                        async () =>
+                        {
+                            await SubscribeStatusEventsWithResumeAsync();
+                        }, "状态"),
+                    RunSubscriptionRetryLoopAsync(SubscribeMetaSafeAsync, "元数据"));
             }
             finally
             {
                 lock (_subscribeRetryGate) _subscribeRetryLoopStarted = false;
             }
         });
+        TrackTask(retryTask);
+    }
+
+    private async Task RunSubscriptionRetryLoopAsync(Func<Task> subscribeOnce, string streamName)
+    {
+        try
+        {
+            while (!_cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await subscribeOnce();
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "{Stream}事件订阅循环异常，5s 后重试", streamName);
+                }
+
+                if (_cancellationToken.IsCancellationRequested)
+                    return;
+                await Task.Delay(TimeSpan.FromSeconds(5), _cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 连接/应用释放时结束该订阅循环。
+        }
     }
 
     /// <summary>主连接重连成功：恢复快照订阅 + 按游标补拉报警事件。</summary>
@@ -634,6 +675,9 @@ public sealed class RemoteRuntimeSink : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        if (Interlocked.Exchange(ref _disposeStarted, 1) != 0)
+            return;
+
         _shutdownCts.Cancel();
         _batchTimer.Stop();
         Task[] tasks;

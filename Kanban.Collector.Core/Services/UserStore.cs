@@ -18,12 +18,6 @@ public class UserStore
 {
     private const string UsersFileName = "users.json";
 
-    /// <summary>连续登录失败达到该次数后锁定账号。</summary>
-    public const int MaxFailedAttempts = 5;
-
-    /// <summary>锁定持续时间。</summary>
-    public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(10);
-
     /// <summary>默认账号口令（安全体检检测"默认口令未改"用；源码不含其它明文口令）。</summary>
     public const string DefaultAdminPassword = "gly";
     public const string DefaultEngineerPassword = "gcs";
@@ -122,8 +116,7 @@ public class UserStore
     /// <summary>
     /// 验证登录凭据。成功时更新 LastLoginAt 并持久化，返回用户对象；失败返回 null。
     /// PasswordHash 为空表示免密账号（如默认 Operator），任意密码（含空）均可通过。
-    /// 锁定策略：连续失败 <see cref="MaxFailedAttempts"/> 次锁定 <see cref="LockoutDuration"/>，
-    /// 计数与锁定时间持久化（重启不失效）；锁定期间直接拒绝。
+    /// 密码错误不触发账号锁定，仅记录审计日志。
     /// </summary>
     public User? Authenticate(string username, string password)
     {
@@ -137,11 +130,6 @@ public class UserStore
             {
                 result = null;
             }
-            else if (user.LockedUntil is { } until && until > DateTime.Now)
-            {
-                // 锁定期间拒绝（计数不清零，解锁/重置密码时清零）
-                result = null;
-            }
             else if (string.IsNullOrEmpty(user.PasswordHash))
             {
                 // PasswordHash 为空 = 免密账号，跳过密码验证
@@ -150,21 +138,10 @@ public class UserStore
             }
             else if (!PasswordHasher.Verify(password, user.PasswordHash))
             {
-                user.FailedAttempts++;
-                if (user.FailedAttempts >= MaxFailedAttempts)
-                {
-                    user.LockedUntil = DateTime.Now.Add(LockoutDuration);
-                    user.FailedAttempts = 0;
-                    Log.Warning("账号 {Username} 连续失败 {Count} 次，已锁定 {Minutes} 分钟",
-                        username, MaxFailedAttempts, (int)LockoutDuration.TotalMinutes);
-                }
-                Save();
                 result = null;
-                changed = true;
             }
             else
             {
-                user.FailedAttempts = 0;
                 result = FinalizeLogin(user);
                 changed = true;
             }
@@ -173,35 +150,6 @@ public class UserStore
         // 锁外统一派发：避免在锁内触发事件导致重入/跨线程问题；Front UI 层负责封送
         if (changed) UsersChanged?.Invoke();
         return result;
-    }
-
-    /// <summary>账号当前锁定剩余时间（未锁定/账号不存在返回 null）。</summary>
-    public TimeSpan? GetLockRemaining(string username)
-    {
-        lock (_lock)
-        {
-            var user = _users.FirstOrDefault(u =>
-                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
-            if (user?.LockedUntil is not { } until) return null;
-            var remaining = until - DateTime.Now;
-            return remaining > TimeSpan.Zero ? remaining : null;
-        }
-    }
-
-    /// <summary>解锁账号（清零失败计数与锁定时间），供管理员操作。</summary>
-    public bool Unlock(string username)
-    {
-        lock (_lock)
-        {
-            var user = _users.FirstOrDefault(u =>
-                string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
-            if (user is null) return false;
-            user.FailedAttempts = 0;
-            user.LockedUntil = null;
-            Save();
-        }
-        UsersChanged?.Invoke();
-        return true;
     }
 
     /// <summary>登录成功收尾：更新 LastLoginAt 并持久化。</summary>
@@ -260,8 +208,6 @@ public class UserStore
                 string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase));
             if (user is null) return false;
             user.PasswordHash = PasswordHasher.Hash(newPassword);
-            user.FailedAttempts = 0;
-            user.LockedUntil = null;
             Save();
         }
         UsersChanged?.Invoke();

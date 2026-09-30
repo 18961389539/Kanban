@@ -45,25 +45,12 @@ public sealed class UserRoleToTextConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>账号锁定中 → Visible（解锁按钮显隐，User 直接转 Visibility）。</summary>
-public sealed class UserIsLockedToVisibilityConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is User { LockedUntil: { } until } && until > DateTime.Now
-            ? System.Windows.Visibility.Visible
-            : System.Windows.Visibility.Collapsed;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>账号状态文本：锁定 &gt; 启用/禁用。</summary>
+/// <summary>账号状态文本：启用/禁用。</summary>
 public sealed class UserStatusToTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not User user) return string.Empty;
-        if (user.LockedUntil is { } until && until > DateTime.Now) return Strings.M376;
         return user.IsActive ? Strings.M331 : Strings.M378;
     }
 
@@ -71,13 +58,12 @@ public sealed class UserStatusToTextConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>账号状态色：锁定=黄、启用=绿、禁用=灰。</summary>
+/// <summary>账号状态色：启用=绿、禁用=灰。</summary>
 public sealed class UserStatusToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not User user) return AppBrushes.Thirdly;
-        if (user.LockedUntil is { } until && until > DateTime.Now) return AppBrushes.Warning;
         return user.IsActive ? AppBrushes.Success : AppBrushes.Thirdly;
     }
 

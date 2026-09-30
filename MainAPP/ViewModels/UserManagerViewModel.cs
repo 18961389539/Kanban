@@ -14,10 +14,9 @@ using MainAPP.Services;
 namespace MainAPP.ViewModels;
 
 /// <summary>
-/// 用户管理 ViewModel：管理员可添加/删除用户、修改角色/启用状态、重置密码、解锁账号。
+/// 用户管理 ViewModel：管理员可添加/删除用户、修改角色/启用状态、重置密码。
 /// - 编辑区基于副本（Edit* 属性），保存时才提交（列表行不被未保存输入污染）
 /// - 列表支持搜索 + 角色筛选（ICollectionView 单一数据源）
-/// - 登录失败锁定（UserStore 持久化）+ 管理员解锁
 /// - 安全体检横幅：默认口令 / 免密账号 / 从未登录
 /// - 密码策略：最小 8 位 + 确认输入 + 强度条（PasswordPolicy 统一）
 /// </summary>
@@ -458,17 +457,6 @@ public partial class UserManagerViewModel : ObservableObject, IDisposable, INavi
         _userStore.ResetPassword(target.Username, password);
         _dialog.NotifySuccess(Strings.M324);
         AuditLog.Record("User.ResetPassword", "User", target.Username);
-    }
-
-    /// <summary>解锁账号（清零失败计数与锁定时间）。</summary>
-    [RelayCommand]
-    private void Unlock(User? user)
-    {
-        var target = user ?? SelectedUser;
-        if (target is null) return;
-        if (!_userStore.Unlock(target.Username)) return;
-        _dialog.NotifySuccess(Strings.M367);
-        AuditLog.Record("User.Unlock", "User", target.Username);
     }
 
     public void Dispose()

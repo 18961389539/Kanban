@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -14,6 +14,7 @@ using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
+using OxyPlot.Annotations;
 using Xunit;
 
 namespace MainAPP.Tests.Integration;
@@ -751,20 +752,43 @@ public class HistoryQueryViewModelTests : IDisposable
     public void Search_ProductionChartAnnotations_AddedWhenSuddenDrop()
     {
         var t = new DateTime(2026, 7, 23, 8, 0, 0);
-        // 制造 OK 突降：100 → 50（跌幅 50%）
-        InsertProductionLog("dev-001", "设备A", "白班", 100, 0, 1, t);
-        InsertProductionLog("dev-001", "设备A", "白班", 50, 0, 1, t.AddMinutes(15));
+        // 班次内累计值的增量从 100 降到 10（跌幅 90%）。
+        InsertProductionLog("dev-001", "设备A", "白班", 0, 0, 1, t);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 0, 1, t.AddMinutes(15));
+        InsertProductionLog("dev-001", "设备A", "白班", 110, 0, 1, t.AddMinutes(30));
 
         _vm.SelectedTabIndex = 0;
         _vm.SelectedDeviceId = "dev-001";
         _vm.FromDate = t.AddMinutes(-1);
-        _vm.ToDate = t.AddMinutes(20);
+        _vm.ToDate = t.AddMinutes(35);
 
         _vm.SearchCommand.Execute(null);
 
         Assert.NotNull(_vm.ProductionQuery.ProductionChart);
         // 突降点应被标注（至少 1 个 PointAnnotation）
-        Assert.NotEmpty(_vm.ProductionQuery.ProductionChart!.Annotations);
+        Assert.Contains(_vm.ProductionQuery.ProductionChart!.Annotations,
+            annotation => annotation is PointAnnotation);
+    }
+
+    [Fact]
+    public void Search_ProductionChartAnnotations_DoNotMarkNormalShiftChangeAsSuddenDrop()
+    {
+        var shiftChange = new DateTime(2026, 7, 23, 8, 0, 0);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 0, 1, shiftChange.AddMinutes(-15));
+        // 正常换班后班次内累计值从 0 附近重新开始，不能与上一班次末值比较。
+        InsertProductionLog("dev-001", "设备A", "夜班", 20, 0, 1, shiftChange);
+        InsertProductionLog("dev-001", "设备A", "夜班", 30, 0, 1, shiftChange.AddMinutes(15));
+
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = shiftChange.AddMinutes(-16);
+        _vm.ToDate = shiftChange.AddMinutes(1);
+
+        _vm.SearchCommand.Execute(null);
+
+        Assert.NotNull(_vm.ProductionQuery.ProductionChart);
+        Assert.DoesNotContain(_vm.ProductionQuery.ProductionChart!.Annotations,
+            annotation => annotation is PointAnnotation);
     }
 
     // ════════════════════ 空状态码 ════════════════════

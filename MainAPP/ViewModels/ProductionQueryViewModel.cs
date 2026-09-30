@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Entities;
@@ -125,17 +125,23 @@ public partial class ProductionQueryViewModel : ObservableObject
                 LastQueryShiftNames = sortedAll.Select(p => p.ShiftName)
                     .Where(n => !string.IsNullOrEmpty(n)).Select(n => n!).Distinct().ToList();
 
+                // 保留班次实例编号：累计值在换班时会归零，跨实例比较没有业务意义。
                 var chartData = shiftGroups
-                    .SelectMany(g => g
+                    .SelectMany((g, groupIndex) => g
                         .GroupBy(p => new DateTime(
                             p.Timestamp.Year, p.Timestamp.Month, p.Timestamp.Day,
                             p.Timestamp.Hour, p.Timestamp.Minute / 15 * 15, 0))
                         .OrderBy(b => b.Key)
-                        .Select(b => b.OrderByDescending(p => p.Timestamp).First()))
-                    .OrderBy(p => p.Timestamp)
-                    .Select(p => (p.Timestamp, p.OkProduction, p.NgProduction))
+                        .Select(b =>
+                        {
+                            var point = b.OrderByDescending(p => p.Timestamp).First();
+                            return (Time: point.Timestamp, Ok: point.OkProduction,
+                                Ng: point.NgProduction, Group: groupIndex);
+                        }))
+                    .OrderBy(p => p.Time)
                     .ToList();
-                ProductionChart = ChartService.BuildProductionChart(chartData);
+                var plotData = chartData.Select(p => (p.Time, p.Ok, p.Ng)).ToList();
+                ProductionChart = ChartService.BuildProductionChart(plotData);
 
                 ProductionInsight = BuildProductionInsight(chartData);
 
@@ -204,7 +210,7 @@ public partial class ProductionQueryViewModel : ObservableObject
             $"# {ProductionInsight ?? Strings.M176}");
     }
 
-    private static string? BuildProductionInsight(List<(DateTime Time, int Ok, int Ng)> chartData)
+    private static string? BuildProductionInsight(List<(DateTime Time, int Ok, int Ng, int Group)> chartData)
     {
         if (chartData.Count < 2) return null;
 
@@ -223,15 +229,13 @@ public partial class ProductionQueryViewModel : ObservableObject
             _ => string.Format(Strings.F064, avgOk, peak.Ok, peak.Time)
         };
 
-        // 突降检测：复用 AnnotateProductionChart 的判断逻辑（curr.Ok < prev.Ok * 0.8），
-        // 在文本洞察中追加提示，避免用户错过图表标注。
+        // 突降检测比较同一班次实例内相邻时间桶的产量增量，
+        // 不能直接比较班次累计值，否则换班归零会被误判为突降。
         List<(DateTime Time, int PrevOk, int CurrOk)> drops = [];
         for (int i = 1; i < chartData.Count; i++)
         {
-            var prev = chartData[i - 1];
-            var curr = chartData[i];
-            if (prev.Ok > 0 && curr.Ok < prev.Ok * 0.8)
-                drops.Add((curr.Time, prev.Ok, curr.Ok));
+            if (TryGetSuddenDrop(chartData, i, out var previousInterval, out var currentInterval))
+                drops.Add((chartData[i].Time, previousInterval, currentInterval));
         }
         if (drops.Count > 0)
         {
@@ -247,31 +251,53 @@ public partial class ProductionQueryViewModel : ObservableObject
         return main;
     }
 
-    private void AnnotateProductionChart(List<(DateTime Time, int Ok, int Ng)> chartData)
+    private void AnnotateProductionChart(List<(DateTime Time, int Ok, int Ng, int Group)> chartData)
     {
         if (ProductionChart == null || chartData.Count < 2) return;
 
         for (int i = 1; i < chartData.Count; i++)
         {
-            var prev = chartData[i - 1];
-            var curr = chartData[i];
+            if (!TryGetSuddenDrop(chartData, i, out _, out _))
+                continue;
 
-            if (prev.Ok > 0 && curr.Ok < prev.Ok * 0.8)
+            var curr = chartData[i];
+            var annot = new PointAnnotation
             {
-                var annot = new PointAnnotation
-                {
-                    X = DateTimeAxis.ToDouble(curr.Time),
-                    Y = curr.Ok,
-                    Text = string.Format(Strings.F043, curr.Time),
-                    Fill = ChartPalette.Alarm,
-                    Stroke = OxyColors.White,
-                    TextColor = ChartPalette.Alarm,
-                };
-                ProductionChart.Annotations.Add(annot);
-            }
+                X = DateTimeAxis.ToDouble(curr.Time),
+                Y = curr.Ok,
+                Text = string.Format(Strings.F043, curr.Time),
+                Fill = ChartPalette.Alarm,
+                Stroke = OxyColors.White,
+                TextColor = ChartPalette.Alarm,
+            };
+            ProductionChart.Annotations.Add(annot);
         }
 
         ProductionChart.InvalidatePlot(true);
+    }
+
+    private static bool TryGetSuddenDrop(
+        IReadOnlyList<(DateTime Time, int Ok, int Ng, int Group)> chartData,
+        int currentIndex,
+        out int previousInterval,
+        out int currentInterval)
+    {
+        previousInterval = 0;
+        currentInterval = 0;
+        if (currentIndex < 2)
+            return false;
+
+        var beforePrevious = chartData[currentIndex - 2];
+        var previous = chartData[currentIndex - 1];
+        var current = chartData[currentIndex];
+        if (beforePrevious.Group != previous.Group || previous.Group != current.Group)
+            return false;
+
+        previousInterval = previous.Ok - beforePrevious.Ok;
+        currentInterval = current.Ok - previous.Ok;
+        return previousInterval > 0
+            && currentInterval >= 0
+            && currentInterval < previousInterval * 0.8;
     }
 
     private class ProductionCsvRow

@@ -1,7 +1,8 @@
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using MainAPP;
 using Xunit;
 
 namespace MainAPP.Tests.Unit;
@@ -31,6 +32,22 @@ public sealed class RemoteStoreRoutingTests
         Assert.NotNull(received);
         Assert.Equal("远程设备", Assert.Single(received!).Name);
         Assert.Throws<InvalidOperationException>(() => repository.SaveAll());
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public void App_AllowsDeviceSaveOnlyWhenRemoteConfigurationWasLoaded(
+        bool isRemote,
+        bool remoteConfigurationLoaded)
+    {
+        Assert.True(App.ShouldSaveDeviceConfiguration(isRemote, remoteConfigurationLoaded));
+    }
+
+    [Fact]
+    public void App_SkipsRemoteDeviceSaveWhenConfigurationLoadFailed()
+    {
+        Assert.False(App.ShouldSaveDeviceConfiguration(isRemote: true, remoteConfigurationLoaded: false));
     }
 
     [Fact]

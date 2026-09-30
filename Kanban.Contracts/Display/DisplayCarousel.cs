@@ -1,14 +1,14 @@
 namespace Kanban.Contracts.Display;
 
 /// <summary>
-/// 过道电视轮播片单。停留时长为基线值 ×5：首页 200s、产线 150s、报警 100s。
+/// 过道电视轮播片单。停留时长：首页 600s、产线 100s、报警 100s。
 /// 点按画面暂停 80s 再转；从顶栏进入片单页则按操作停留 120s，避免看卡时被 High 报警抢回。
 /// 无活跃报警则跳过报警页。高报警默认钉在报警中心；暂停期内不抢导航，空闲后再钉回。
 /// </summary>
 public static class DisplayCarousel
 {
-    public const int HomeDwellMs = 200_000;
-    public const int LineDwellMs = 150_000;
+    public const int HomeDwellMs = 600_000;
+    public const int LineDwellMs = 100_000;
     public const int AlarmDwellMs = 100_000;
     public const int ResumeAfterInteractionMs = 80_000;
     // 未随本轮 ×5 放大：它决定 High 报警最长能被压多久，放大到 600s 等于让高报警最多沉默 10 分钟。

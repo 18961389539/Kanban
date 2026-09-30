@@ -10211,6 +10211,66 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "主导航", ["en-US"] = "Main navigation", ["ja-JP"] = "メインナビ", ["pt-BR"] = "Navegação principal"
         },
+        ["Wpf|Ux_ViewerRecoveryTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "展示模式恢复", ["en-US"] = "Exit Viewer Mode", ["ja-JP"] = "表示モードの復帰", ["pt-BR"] = "Sair do modo de exibição"
+        },
+        ["Wpf|Ux_ViewerRecoveryPrompt"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请输入管理员密码以退出展示模式", ["en-US"] = "Enter an administrator password to exit Viewer mode", ["ja-JP"] = "表示モードを終了するには管理者パスワードを入力してください", ["pt-BR"] = "Digite a senha do administrador para sair do modo de exibição"
+        },
+        ["Wpf|Ux_ViewerRecoverySuccess"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已恢复为完整模式", ["en-US"] = "Back to Full mode", ["ja-JP"] = "完整モードに戻りました", ["pt-BR"] = "Modo completo restaurado"
+        },
+        ["Wpf|Ux_ViewerRecoveryFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "密码错误或不是管理员账号", ["en-US"] = "Incorrect password or not an administrator", ["ja-JP"] = "パスワードが違うか管理者アカウントではありません", ["pt-BR"] = "Senha incorreta ou não é uma conta de administrador"
+        },
+        ["Wpf|Ux_ShortcutHelpTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "快捷键速查", ["en-US"] = "Keyboard Shortcuts", ["ja-JP"] = "ショートカット一覧", ["pt-BR"] = "Atalhos de teclado"
+        },
+        ["Wpf|Ux_Kb1"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "切换侧边栏第 1~9 个页面", ["en-US"] = "Switch to sidebar pages 1-9", ["ja-JP"] = "サイドバーの1〜9ページ目に切り替え", ["pt-BR"] = "Alternar para as páginas 1-9 da barra lateral"
+        },
+        ["Wpf|Ux_Kb2"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "切换用户（弹出登录窗口）", ["en-US"] = "Switch user (open login dialog)", ["ja-JP"] = "ユーザー切り替え（ログイン窓を表示）", ["pt-BR"] = "Alternar usuário (abrir janela de login)"
+        },
+        ["Wpf|Ux_Kb3"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打开使用手册", ["en-US"] = "Open the user manual", ["ja-JP"] = "使用マニュアルを開く", ["pt-BR"] = "Abrir o manual do usuário"
+        },
+        ["Wpf|Ux_Kb4"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "切换全屏 / 退出全屏", ["en-US"] = "Toggle fullscreen", ["ja-JP"] = "全画面の切り替え", ["pt-BR"] = "Alternar tela cheia"
+        },
+        ["Wpf|Ux_Kb5"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "刷新当前页", ["en-US"] = "Refresh the current page", ["ja-JP"] = "現在のページを更新", ["pt-BR"] = "Atualizar a página atual"
+        },
+        ["Wpf|Ux_Kb6"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "返回上一页（设备详情页）", ["en-US"] = "Go back (Device Detail page)", ["ja-JP"] = "前のページへ戻る（設備詳細頁）", ["pt-BR"] = "Voltar (página de detalhes do dispositivo)"
+        },
+        ["Wpf|Ux_Kb7"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "触发查询（历史查询）", ["en-US"] = "Run the query (History Query)", ["ja-JP"] = "クエリ実行（履歴照会）", ["pt-BR"] = "Executar consulta (Consulta de Histórico)"
+        },
+        ["Wpf|Ux_Kb8"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "重置筛选条件（历史查询）", ["en-US"] = "Reset filters (History Query)", ["ja-JP"] = "フィルタをリセット（履歴照会）", ["pt-BR"] = "Redefinir filtros (Consulta de Histórico)"
+        },
+        ["Wpf|Ux_Kb9"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出查询结果（历史查询）", ["en-US"] = "Export results (History Query)", ["ja-JP"] = "結果をエクスポート（履歴照会）", ["pt-BR"] = "Exportar resultados (Consulta de Histórico)"
+        },
+        ["Wpf|Ux_Kb10"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "保存设置（系统设置）", ["en-US"] = "Save settings (System Settings)", ["ja-JP"] = "設定を保存（システム設定）", ["pt-BR"] = "Salvar configurações (Configurações do Sistema)"
+        },
         };
 
     private static readonly Dictionary<string, Dictionary<string, string>> LanguageNames =

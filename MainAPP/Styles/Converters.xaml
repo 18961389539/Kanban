@@ -20,7 +20,6 @@
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     <converters:InvertedBooleanConverter x:Key="InvertedBooleanConverter" />
     <converters:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
-    <converters:UserIsLockedToVisibilityConverter x:Key="UserIsLockedToVisibilityConverter" />
     <converters:UserRoleToBrushConverter x:Key="UserRoleToBrushConverter" />
     <converters:UserRoleToTextConverter x:Key="UserRoleToTextConverter" />
     <converters:UserStatusToBrushConverter x:Key="UserStatusToBrushConverter" />
