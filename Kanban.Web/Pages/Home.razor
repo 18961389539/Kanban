@@ -1,4 +1,4 @@
-@page "/"
+﻿@page "/"
 @implements IDisposable
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
@@ -943,20 +943,26 @@
         axisStart = default;
         axisEnd = default;
         var sp = Dashboard.ShiftProgress;
+        var pts = QualityHistory;
         if (sp is { IsInShift: true, ShiftStart: not null, ShiftEnd: not null })
         {
             axisStart = sp.ShiftStart.Value;
             axisEnd = sp.ShiftEnd.Value;
-            if (axisEnd <= axisStart)
-                axisEnd = axisStart.AddMinutes(1);
-            return true;
+        }
+        else
+        {
+            if (pts.Count == 0)
+                return false;
+            axisStart = pts[0].Time;
+            axisEnd = pts[^1].Time;
         }
 
-        var pts = QualityHistory;
-        if (pts.Count == 0)
-            return false;
-        axisStart = pts[0].Time;
-        axisEnd = pts.Count >= 2 ? pts[^1].Time : pts[0].Time.AddMinutes(1);
+        foreach (var point in pts)
+        {
+            var center = ShiftQualityTrendBuilder.HourOf(point.Time).AddMinutes(30);
+            if (center <= axisStart) axisStart = center.AddMinutes(-1);
+            if (center >= axisEnd) axisEnd = center.AddMinutes(1);
+        }
         if (axisEnd <= axisStart)
             axisEnd = axisStart.AddMinutes(1);
         return true;
@@ -967,7 +973,7 @@
     private static bool HasOeeWindow(DeviceSnapshotDto d)
         => UiPalette.HasOeeWindow(d.RunTime, d.AlarmTime, d.PausedTime);
 
-    // 时长格式化口径单源：Kanban.Contracts.DurationFormatter.FormatStandard（与 WPF 状态卡一致）
+    // 时长格式化口径单源
     private static string FmtDuration(double secs)
         => Kanban.Contracts.Formatting.DurationFormatter.FormatStandard(secs);
 

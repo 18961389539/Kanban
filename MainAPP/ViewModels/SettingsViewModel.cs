@@ -198,6 +198,23 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     [ObservableProperty]
     private string _collectorTestResultType = "None";
 
+    private int _collectorTestRevision;
+    private int _plcTestRevision;
+
+    private void InvalidateCollectorTestResult()
+    {
+        Interlocked.Increment(ref _collectorTestRevision);
+        CollectorTestResult = string.Empty;
+        CollectorTestResultType = "None";
+    }
+
+    private void InvalidatePlcTestResult()
+    {
+        Interlocked.Increment(ref _plcTestRevision);
+        TestConnectionResult = null;
+        TestConnectionResultType = "None";
+    }
+
     partial void OnIsTestingCollectorConnectionChanged(bool value)
     {
         TestCollectorConnectionCommand.NotifyCanExecuteChanged();
@@ -219,6 +236,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return;
         }
 
+        var revision = Volatile.Read(ref _collectorTestRevision);
         IsTestingCollectorConnection = true;
         CollectorTestResult = string.Format(Strings.F158, url);
         CollectorTestResultType = "None";
@@ -228,13 +246,17 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             var builder = new HubConnectionBuilder().WithUrl(url);
             await using var connection = builder.Build();
             await connection.StartAsync(cts.Token);
+            if (revision != Volatile.Read(ref _collectorTestRevision)) return;
             CollectorTestResult = Strings.M065;
             CollectorTestResultType = "Success";
         }
         catch (Exception ex)
         {
-            CollectorTestResult = string.Format(Strings.F222, ex.Message);
-            CollectorTestResultType = "Error";
+            if (revision == Volatile.Read(ref _collectorTestRevision))
+            {
+                CollectorTestResult = string.Format(Strings.F222, ex.Message);
+                CollectorTestResultType = "Error";
+            }
         }
         finally
         {
@@ -297,17 +319,18 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             return;
         }
 
+        var revision = Volatile.Read(ref _plcTestRevision);
         IsTestingConnection = true;
         TestConnectionResult = string.Format(Strings.F157, ip, port);
         TestConnectionResultType = "None";
 
         try
         {
+            var testConfig = ClonePlcConfig(DraftSettings.PlcConfig);
             // 5 秒超时：HslCommunication 默认超时较长，UI 场景需快速反馈
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var connectTask = Task.Run(() =>
             {
-                var testConfig = ClonePlcConfig(DraftSettings.PlcConfig);
                 var factory = _services.GetRequiredService<ISharedPlcDriverFactory>();
                 using var driver = factory.Create(testConfig);
                 var r = driver.Connect();
@@ -318,6 +341,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
             if (completed != connectTask)
                 throw new OperationCanceledException(cts.Token);
             var result = await connectTask;
+            if (revision != Volatile.Read(ref _plcTestRevision)) return;
 
             if (result.IsSuccess)
             {
@@ -340,13 +364,19 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         }
         catch (OperationCanceledException)
         {
-            TestConnectionResult = Strings.F226;
-            TestConnectionResultType = "Error";
+            if (revision == Volatile.Read(ref _plcTestRevision))
+            {
+                TestConnectionResult = Strings.F226;
+                TestConnectionResultType = "Error";
+            }
         }
         catch (Exception ex)
         {
-            TestConnectionResult = string.Format(Strings.F224, ex.Message);
-            TestConnectionResultType = "Error";
+            if (revision == Volatile.Read(ref _plcTestRevision))
+            {
+                TestConnectionResult = string.Format(Strings.F224, ex.Message);
+                TestConnectionResultType = "Error";
+            }
         }
         finally
         {
@@ -427,6 +457,10 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
     {
         if (e.PropertyName == nameof(AppSettings.UiScale))
             MainAPP.FontSizeManager.ApplyScale(DraftSettings.UiScale);
+        if (e.PropertyName == nameof(AppSettings.CollectorHubUrl) || e.PropertyName == nameof(AppSettings.DataMode))
+            InvalidateCollectorTestResult();
+        if (e.PropertyName == nameof(AppSettings.DataMode))
+            InvalidatePlcTestResult();
         MarkDraftDirty();
     }
 
@@ -439,6 +473,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
                 plcConfig.Port = PlcConfig.GetDefaultPort(plcConfig.Brand);
             _draftBrand = plcConfig.Brand;
         }
+        if (sender is PlcConfig)
+            InvalidatePlcTestResult();
         MarkDraftDirty();
     }
 
@@ -1007,6 +1043,8 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         DraftSettings = settings;
         _draftBrand = DraftSettings.PlcConfig.Brand;
         WireDraftEvents();
+        InvalidateCollectorTestResult();
+        InvalidatePlcTestResult();
         OnPropertyChanged(nameof(DraftSettings));
         OnPropertyChanged(nameof(SelectedDataMode));
         OnPropertyChanged(nameof(IsLocalMode));

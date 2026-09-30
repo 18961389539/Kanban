@@ -635,11 +635,10 @@ public sealed class DashboardState : IAsyncDisposable
 
         try
         {
-            await _client.ConnectAsync();
+            await Task.WhenAll(_client.ConnectAsync(), _metaClient.ConnectAsync());
             // 回调注册必须在连接建立之后（KanbanDataClient.On* 依赖 _connection 已创建）
             _client.OnSnapshot(OnSnapshotReceived);
             _client.OnLocalizationChanged(OnLocalizationChanged);
-            await _metaClient.ConnectAsync();
             _metaClient.OnMeta(OnMetaReceived);
         }
         catch (Exception ex)
@@ -945,10 +944,18 @@ public sealed class DashboardState : IAsyncDisposable
 
     private async Task SubscribeAndRefreshCoreAsync()
     {
-        // ① 先做 Invoke（连接空闲，不会被长驻订阅阻塞）
+        // 先发出独立的 Invoke，避免每个查询都等待一次网络往返；全部完成后才发长驻订阅。
+        var snapshotsTask = _client.GetCurrentSnapshotsAsync();
+        var versionTask = _client.GetServerVersionAsync();
+        var titleTask = _client.GetTitleAsync();
+        var carouselTask = _client.GetDisplayCarouselEnabledAsync();
+        var settingsTask = _client.GetCollectorSettingsAsync();
+        var languageTask = _client.GetLanguageCodeAsync();
+        var overridesTask = _client.GetLocalizationOverridesAsync();
+
         try
         {
-            var snapshots = await _client.GetCurrentSnapshotsAsync();
+            var snapshots = await snapshotsTask;
             lock (_lock)
             {
                 _snapshots.Clear();
@@ -967,7 +974,7 @@ public sealed class DashboardState : IAsyncDisposable
         // 版本握手（升级兼容性观测）：失败不阻断看板（LogWarning 便于冒烟/运维诊断）
         try
         {
-            ServerVersion = await _client.GetServerVersionAsync();
+            ServerVersion = await versionTask;
         }
         catch (Exception ex)
         {
@@ -976,7 +983,7 @@ public sealed class DashboardState : IAsyncDisposable
         // 看板标题（屏端零配置——从服务端拉取；失败保持默认"生产看板"）
         try
         {
-            var title = await _client.GetTitleAsync();
+            var title = await titleTask;
             if (!string.IsNullOrWhiteSpace(title)) Title = DisplayText.Repair(title);
         }
         catch (Exception ex)
@@ -985,7 +992,7 @@ public sealed class DashboardState : IAsyncDisposable
         }
         try
         {
-            DisplayCarouselEnabled = await _client.GetDisplayCarouselEnabledAsync();
+            DisplayCarouselEnabled = await carouselTask;
         }
         catch (Exception ex)
         {
@@ -994,7 +1001,7 @@ public sealed class DashboardState : IAsyncDisposable
         }
         try
         {
-            var settings = await _client.GetCollectorSettingsAsync();
+            var settings = await settingsTask;
             Shifts = settings.Shifts ?? [];
         }
         catch (Exception ex)
@@ -1005,7 +1012,7 @@ public sealed class DashboardState : IAsyncDisposable
         // 界面语言（屏端零配置——从服务端拉取；失败保持默认中文）
         try
         {
-            var languageCode = await _client.GetLanguageCodeAsync();
+            var languageCode = await languageTask;
             ApplyLanguage(L.NormalizeLanguage(languageCode));
         }
         catch (Exception ex)
@@ -1023,7 +1030,7 @@ public sealed class DashboardState : IAsyncDisposable
         // 覆盖文件由 Collector 启动时读取；Web 端通过只读 Hub 获取，失败时继续使用内置资源。
         try
         {
-            var overrides = await _client.GetLocalizationOverridesAsync();
+            var overrides = await overridesTask;
             L.ApplyOverrides(overrides);
         }
         catch (Exception ex)
@@ -1031,7 +1038,7 @@ public sealed class DashboardState : IAsyncDisposable
             _logger.LogWarning(ex, "获取本地化覆盖失败（使用内置资源）");
         }
 
-        // ② 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）
+        // 最后发起长驻订阅（Invoke 全部完成后，避免占线阻塞——见方法注释的顺序约束）
         EnsureSnapshotSubscription();        // 长驻调用，在途守卫防健康连接被重复订阅
         _ = RequestMetaSubscribeAsync();     // 元数据订阅走元数据连接（每连接单长驻订阅约束；单飞防双订阅）
     }

@@ -297,9 +297,9 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             newDevice = new Device { Name = newName };
         }
 
+        DeviceList.ClearFilters();
         Devices.Add(newDevice);
         _deviceRepository.AddRuntime(newDevice);
-        DeviceList.SearchKeyword = string.Empty;
         SelectedDevice = newDevice;
         SelectedTabIndex = (int)DeviceManagerTab.Parameters;
         MarkDirty();
@@ -496,6 +496,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
 
         var copy = CloneDevice(src);
         copy.Name = EnsureUniqueName(string.Format(Strings.F039, src.Name), Devices.Select(d => d.Name));
+        DeviceList.ClearFilters();
         Devices.Add(copy);
         _deviceRepository.AddRuntime(copy);
         SelectedDevice = copy;

@@ -224,13 +224,18 @@ public static class ReviewWindowMetrics
         List<ProductionLogDto> logs, List<AlarmEventRecordDto> alarms)
     {
         var result = new List<ReviewShiftRowDto>();
-        foreach (var group in ProductionWindowMetrics.SplitShiftInstances(logs))
+        var groups = ProductionWindowMetrics.SplitShiftInstances(logs.OrderBy(log => log.Timestamp).ToList());
+        for (var i = 0; i < groups.Count; i++)
         {
-            var first = group.First();
+            var group = groups[i];
+            var first = group[0];
             var shiftName = first.ShiftName;
-            var ok = Math.Max(0, group.Last().OkProduction - first.OkProduction);
-            var ng = Math.Max(0, group.Last().NgProduction - first.NgProduction);
-            var alarmCount = alarms.Count(a => a.ShiftName == shiftName && a.EventType == AlarmEventType.Triggered);
+            var ok = Math.Max(0, group[^1].OkProduction - first.OkProduction);
+            var ng = Math.Max(0, group[^1].NgProduction - first.NgProduction);
+            var start = i == 0 ? DateTime.MinValue : first.Timestamp;
+            var end = i + 1 < groups.Count ? groups[i + 1][0].Timestamp : DateTime.MaxValue;
+            var alarmCount = alarms.Count(a => a.ShiftName == shiftName
+                && a.EventType == AlarmEventType.Triggered && a.EventTime >= start && a.EventTime < end);
             result.Add(new ReviewShiftRowDto
             {
                 ShiftName = shiftName,

@@ -10,6 +10,9 @@ namespace Kanban.Collector.Core.Services;
 /// </summary>
 public static class WorkOrderProductionSummaryCalculator
 {
+    // 日志没有班次实例 ID；采样跨越半天时不能仅凭相同班次名或单调计数认定仍是同一会话。
+    private static readonly TimeSpan SessionGap = TimeSpan.FromHours(12);
+
     public static WorkOrderProductionSummaryDto Empty { get; } = new();
 
     public static WorkOrderProductionSummaryDto Calculate(WorkOrder workOrder, IProductionHistoryReader history)
@@ -37,36 +40,65 @@ public static class WorkOrderProductionSummaryCalculator
     {
         var okTotal = 0;
         var ngTotal = 0;
-        foreach (var run in SplitConsecutiveShiftRuns(logs))
+        var runs = SplitSessionRuns(logs);
+        ProductionLog? previousRunEnd = null;
+        for (var runIndex = 0; runIndex < runs.Count; runIndex++)
         {
-            if (run.Count == 1)
+            var run = runs[runIndex];
+            var first = run[0];
+            var sameShiftReset = previousRunEnd != null
+                && string.Equals(previousRunEnd.ShiftName, first.ShiftName, StringComparison.Ordinal);
+            var includeFirst = sameShiftReset;
+            if (run.Count == 1 && !sameShiftReset)
             {
-                var sample = run[0];
                 var baseline = history.GetLatestProductionBefore(
-                    workOrder.DeviceId, sample.Timestamp, sample.ShiftName ?? string.Empty);
-                okTotal += CountFromBaseline(baseline?.OkProduction, sample.OkProduction);
-                ngTotal += CountFromBaseline(baseline?.NgProduction, sample.NgProduction);
-                continue;
+                    workOrder.DeviceId, first.Timestamp, first.ShiftName ?? string.Empty);
+                var firstBeforeReset = runIndex == 0 && runs.Count > 1
+                    && string.Equals(first.ShiftName, runs[1][0].ShiftName, StringComparison.Ordinal);
+                if (baseline == null)
+                {
+                    // 同名会话后续发生复位时，首条无基线快照仍按多条日志的首点处理。
+                    includeFirst = !firstBeforeReset;
+                }
+                else if (IsNewSession(baseline, first))
+                {
+                    includeFirst = true;
+                }
+                else
+                {
+                    okTotal += Math.Max(0, first.OkProduction - baseline.OkProduction);
+                    ngTotal += Math.Max(0, first.NgProduction - baseline.NgProduction);
+                }
             }
 
-            okTotal += AccumulateSession(run, static log => log.OkProduction);
-            ngTotal += AccumulateSession(run, static log => log.NgProduction);
+            if (includeFirst)
+            {
+                okTotal += Math.Max(0, first.OkProduction);
+                ngTotal += Math.Max(0, first.NgProduction);
+            }
+
+            for (var i = 1; i < run.Count; i++)
+            {
+                okTotal += Math.Max(0, run[i].OkProduction - run[i - 1].OkProduction);
+                ngTotal += Math.Max(0, run[i].NgProduction - run[i - 1].NgProduction);
+            }
+
+            previousRunEnd = run[^1];
         }
 
         return FromCounts(okTotal, ngTotal, workOrder.TargetQuantity);
     }
 
-    /// <summary>
-    /// 按时间切成连续的同名班次段。班次名变化就切开，避免把隔天的「白班」并成一条首尾相减。
-    /// </summary>
-    private static List<List<ProductionLog>> SplitConsecutiveShiftRuns(IReadOnlyList<ProductionLog> logs)
+    /// <summary>班次名变化、任一计数回退或长时间断采都表示新会话；OK/NG 必须共用边界。</summary>
+    private static List<List<ProductionLog>> SplitSessionRuns(IReadOnlyList<ProductionLog> logs)
     {
         var runs = new List<List<ProductionLog>>();
         List<ProductionLog>? current = null;
         foreach (var log in logs.OrderBy(p => p.Timestamp).ThenBy(p => p.Id))
         {
             if (current != null
-                && !string.Equals(current[^1].ShiftName ?? string.Empty, log.ShiftName ?? string.Empty, StringComparison.Ordinal))
+                && (!string.Equals(current[^1].ShiftName ?? string.Empty, log.ShiftName ?? string.Empty, StringComparison.Ordinal)
+                    || IsNewSession(current[^1], log)))
             {
                 runs.Add(current);
                 current = null;
@@ -81,36 +113,10 @@ public static class WorkOrderProductionSummaryCalculator
         return runs;
     }
 
-    /// <summary>
-    /// 同一班次段内累加会话增量。计数器回退表示新会话开始，已累计的产量保留，并计入新会话当前值。
-    /// </summary>
-    private static int AccumulateSession(List<ProductionLog> run, Func<ProductionLog, int> value)
-    {
-        var total = 0;
-        var previous = value(run[0]);
-        for (var i = 1; i < run.Count; i++)
-        {
-            var current = value(run[i]);
-            if (current >= previous)
-                total += current - previous;
-            else if (current > 0)
-                total += current;
-            previous = current;
-        }
-
-        return total;
-    }
-
-    /// <summary>
-    /// 单条样本：基线不高于当前值时做差分；基线更高说明会话已复位，改计当前会话累计，避免出现负数。
-    /// </summary>
-    private static int CountFromBaseline(int? baseline, int current)
-    {
-        if (current <= 0) return 0;
-        if (baseline is int start && start >= 0 && start <= current)
-            return current - start;
-        return current;
-    }
+    private static bool IsNewSession(ProductionLog previous, ProductionLog current)
+        => current.Timestamp - previous.Timestamp >= SessionGap
+            || current.OkProduction < previous.OkProduction
+            || current.NgProduction < previous.NgProduction;
 
     private static bool HasCompletedSnapshot(WorkOrder workOrder)
         => workOrder.Status is WorkOrderStatus.Completed or WorkOrderStatus.Aborted

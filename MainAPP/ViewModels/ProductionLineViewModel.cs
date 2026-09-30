@@ -750,6 +750,13 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
     private void SetSort(LineSortBy? sort)
         => LineSortBy = sort ?? LineSortBy.Default;
 
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        LineSearchKeyword = null;
+        LineStatusFilter = LineStatusFilter.All;
+    }
+
     /// <summary>筛选后无匹配设备（有设备但当前条件为空）。</summary>
     public bool HasNoFilteredDevices => !HasNoDevices && FilteredLineDevices.IsEmpty;
 

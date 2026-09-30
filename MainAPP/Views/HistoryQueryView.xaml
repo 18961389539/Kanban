@@ -337,10 +337,10 @@
                         Margin="0,0,0,12"
                         Style="{StaticResource HintCard}"
                         Visibility="{Binding ProductionQuery.ProductionInsight, Converter={StaticResource NullToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
+                        <DockPanel>
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ProductionQuery.ProductionInsight}" />
-                        </StackPanel>
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding ProductionQuery.ProductionInsight}" TextWrapping="Wrap" />
+                        </DockPanel>
                     </Border>
 
                     <!-- 图表 -->
@@ -473,10 +473,10 @@
                         Margin="0,0,0,12"
                         Style="{StaticResource HintCard}"
                         Visibility="{Binding StatusQuery.StatusInsight, Converter={StaticResource NullToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
+                        <DockPanel>
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding StatusQuery.StatusInsight}" />
-                        </StackPanel>
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding StatusQuery.StatusInsight}" TextWrapping="Wrap" />
+                        </DockPanel>
                     </Border>
 
                     <Border Grid.Row="2" Margin="0,0,0,12" Padding="12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
@@ -622,10 +622,10 @@
                         Margin="0,0,0,12"
                         Style="{StaticResource HintCard}"
                         Visibility="{Binding AlarmQuery.AlarmInsight, Converter={StaticResource NullToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
+                        <DockPanel>
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AlarmQuery.AlarmInsight}" />
-                        </StackPanel>
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding AlarmQuery.AlarmInsight}" TextWrapping="Wrap" />
+                        </DockPanel>
                     </Border>
 
                     <Border Grid.Row="2" Margin="0,0,0,12" Background="{StaticResource RegionBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8">
@@ -787,10 +787,10 @@
                         Margin="0,0,0,12"
                         Style="{StaticResource HintCard}"
                         Visibility="{Binding OeeQuery.OeeInsight, Converter={StaticResource NullToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
+                        <DockPanel>
                             <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
-                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OeeQuery.OeeInsight}" />
-                        </StackPanel>
+                            <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding OeeQuery.OeeInsight}" TextWrapping="Wrap" />
+                        </DockPanel>
                     </Border>
 
                     <!-- 明细 -->

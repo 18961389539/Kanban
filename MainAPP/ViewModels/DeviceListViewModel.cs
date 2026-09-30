@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Helpers;
@@ -29,6 +30,15 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
     public bool HasDevices => _deviceRepository.Devices.Count > 0;
     public bool HasFilteredDevices => FilteredDevices.Cast<object>().Any();
     public bool IsFiltering => !string.IsNullOrWhiteSpace(SearchKeyword) || StatusFilter != DeviceStatusFilter.All;
+    public string FilteredDeviceSummaryText => string.Format(
+        Strings.Dsm_ShowingSummary, FilteredDevices.Cast<object>().Count(), _deviceRepository.Devices.Count);
+
+    [RelayCommand]
+    public void ClearFilters()
+    {
+        SearchKeyword = string.Empty;
+        StatusFilter = DeviceStatusFilter.All;
+    }
 
     /// <summary>状态筛选下拉选项（全部 / 运行 / 报警 / 待机 / 离线）。</summary>
     public IReadOnlyList<StatusFilterOption> StatusFilterOptions { get; } = [
@@ -186,6 +196,7 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasDevices));
         OnPropertyChanged(nameof(HasFilteredDevices));
         OnPropertyChanged(nameof(IsFiltering));
+        OnPropertyChanged(nameof(FilteredDeviceSummaryText));
     }
 
     private void OnRuntimesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -194,7 +205,15 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
             foreach (DeviceRuntime rt in e.NewItems) AttachRuntime(rt);
         if (e.OldItems != null)
             foreach (DeviceRuntime rt in e.OldItems) DetachRuntime(rt);
-        UiDispatcher.Dispatch(() => OnPropertyChanged(nameof(DeviceSummaryText)));
+        UiDispatcher.Dispatch(() =>
+        {
+            OnPropertyChanged(nameof(DeviceSummaryText));
+            if (StatusFilter != DeviceStatusFilter.All)
+            {
+                FilteredDevices.Refresh();
+                NotifyFilterState();
+            }
+        });
     }
 
     private void AttachRuntime(DeviceRuntime rt) => rt.PropertyChanged += OnRuntimePropertyChanged;
@@ -208,7 +227,10 @@ public partial class DeviceListViewModel : ObservableObject, IDisposable
         {
             OnPropertyChanged(nameof(DeviceSummaryText));
             if (StatusFilter != DeviceStatusFilter.All)
+            {
                 FilteredDevices.Refresh();
+                NotifyFilterState();
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -179,6 +179,116 @@ public class WorkOrderServiceTests : IDisposable
         var summary = svc.GetProductionSummary(wo);
         Assert.Equal(164, summary.OkCount); // (250-100) + 14
         Assert.Equal(12, summary.NgCount);  // (10-0) + 2
+    }
+
+    [Fact]
+    public void GetProductionSummary_OkResetAlsoRestartsIncreasingNgCounter()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-NG-RESET", Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1", TargetQuantity = 900,
+        });
+        var start = new DateTime(2026, 9, 28, 8, 0, 0);
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 100, NgProduction = 3, Timestamp = start, WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 10, NgProduction = 5, Timestamp = start.AddMinutes(5), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 15, NgProduction = 7, Timestamp = start.AddMinutes(10), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(15, summary.OkCount);
+        Assert.Equal(7, summary.NgCount);
+    }
+
+    [Fact]
+    public void GetProductionSummary_NgResetAlsoRestartsIncreasingOkCounter()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-OK-RESET", Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1", TargetQuantity = 900,
+        });
+        var start = new DateTime(2026, 9, 28, 8, 0, 0);
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 100, NgProduction = 3, Timestamp = start, WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 150, NgProduction = 4, Timestamp = start.AddMinutes(5), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 170, NgProduction = 1, Timestamp = start.AddMinutes(10), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 190, NgProduction = 2, Timestamp = start.AddMinutes(15), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(240, summary.OkCount);
+        Assert.Equal(3, summary.NgCount);
+    }
+
+    [Fact]
+    public void GetProductionSummary_RepeatedShiftWithHigherCounters_StartsNewSessionAfterGap()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-NEXT-DAY", Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1", TargetQuantity = 900,
+        });
+        var start = new DateTime(2026, 9, 28, 8, 0, 0);
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 100, NgProduction = 3, Timestamp = start, WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 150, NgProduction = 5, Timestamp = start.AddHours(4), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 170, NgProduction = 8, Timestamp = start.AddDays(1), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 190, NgProduction = 9, Timestamp = start.AddDays(1).AddHours(1), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(240, summary.OkCount); // (150-100) + 170 + (190-170)
+        Assert.Equal(11, summary.NgCount); // (5-3) + 8 + (9-8)
+    }
+
+    [Fact]
+    public void GetProductionSummary_OvernightShiftWithoutReset_RemainsOneSession()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-OVERNIGHT", Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1", TargetQuantity = 900,
+        });
+        var start = new DateTime(2026, 9, 28, 23, 55, 0);
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "夜班", OkProduction = 100, NgProduction = 3, Timestamp = start, WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "夜班", OkProduction = 120, NgProduction = 4, Timestamp = start.AddMinutes(10), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(20, summary.OkCount);
+        Assert.Equal(1, summary.NgCount);
+    }
+
+    [Fact]
+    public void GetProductionSummary_SingleRecord_LowerStaleBaseline_DoesNotSubtractOtherSession()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-STALE-BASELINE", Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1", TargetQuantity = 900,
+        });
+        var start = new DateTime(2026, 9, 28, 8, 0, 0);
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 5, NgProduction = 1, Timestamp = start },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 14, NgProduction = 2, Timestamp = start.AddDays(1), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(14, summary.OkCount);
+        Assert.Equal(2, summary.NgCount);
     }
 
     [Fact]

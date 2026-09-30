@@ -145,6 +145,59 @@ public class DeviceManagerViewModelTests
     }
 
     [Fact]
+    public void DeviceList_ClearFilters_UpdatesResultCount()
+    {
+        var (vm, _, _, tmp) = NewVm(repo =>
+        {
+            repo.Devices.Add(new Device { Name = "设备一" });
+            repo.Devices.Add(new Device { Name = "设备二" });
+        });
+        var list = vm.DeviceList;
+        Assert.Equal(string.Format(MainAPP.Resources.Strings.Dsm_ShowingSummary, 2, 2), list.FilteredDeviceSummaryText);
+
+        list.SearchKeyword = "设备一";
+        Assert.Equal(string.Format(MainAPP.Resources.Strings.Dsm_ShowingSummary, 1, 2), list.FilteredDeviceSummaryText);
+        list.StatusFilter = DeviceStatusFilter.Running;
+        Assert.Equal(string.Format(MainAPP.Resources.Strings.Dsm_ShowingSummary, 0, 2), list.FilteredDeviceSummaryText);
+
+        list.ClearFiltersCommand.Execute(null);
+        Assert.False(list.IsFiltering);
+        Assert.Equal(string.Format(MainAPP.Resources.Strings.Dsm_ShowingSummary, 2, 2), list.FilteredDeviceSummaryText);
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void AddDevice_ClearsBothFiltersSoNewDeviceIsVisible()
+    {
+        var (vm, _, _, tmp) = NewVm();
+        vm.DeviceList.SearchKeyword = "missing";
+        vm.DeviceList.StatusFilter = DeviceStatusFilter.Running;
+
+        vm.AddDeviceCommand.Execute(null);
+
+        Assert.False(vm.DeviceList.IsFiltering);
+        Assert.Contains(vm.SelectedDevice, vm.DeviceList.FilteredDevices.Cast<Device>());
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
+    public void CopyDevice_ClearsSearchSoCopyIsVisible()
+    {
+        var (vm, _, _, tmp) = NewVm();
+        vm.AddDeviceCommand.Execute(null);
+        var original = vm.SelectedDevice!;
+        vm.DeviceList.SearchKeyword = original.Id[..8];
+        Assert.Single(vm.DeviceList.FilteredDevices.Cast<Device>());
+
+        vm.CopyDeviceCommand.Execute(null);
+
+        Assert.False(vm.DeviceList.IsFiltering);
+        Assert.NotSame(original, vm.SelectedDevice);
+        Assert.Contains(vm.SelectedDevice, vm.DeviceList.FilteredDevices.Cast<Device>());
+        Directory.Delete(tmp, true);
+    }
+
+    [Fact]
     public void EditDeviceName_AfterSave_SetsDirty()
     {
         var (vm, _, _, tmp) = NewVm();

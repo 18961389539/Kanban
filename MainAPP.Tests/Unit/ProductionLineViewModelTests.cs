@@ -79,6 +79,27 @@ public class ProductionLineViewModelTests
         Assert.Empty(vm.FilteredLineDevices);
     }
 
+    [Theory]
+    [InlineData(LineStatusFilter.All, "不存在")]
+    [InlineData(LineStatusFilter.Alarm, null)]
+    [InlineData(LineStatusFilter.Alarm, "不存在")]
+    public void ClearFiltersCommand_WhenNoMatch_RestoresDevicesAndKeepsSort(LineStatusFilter filter, string? keyword)
+    {
+        using var vm = CreateViewModelWithDevices((DeviceStatus.Running, "注塑机A"));
+        vm.LineSortBy = LineSortBy.OeeDesc;
+        vm.LineStatusFilter = filter;
+        vm.LineSearchKeyword = keyword;
+        Assert.True(vm.HasNoFilteredDevices);
+
+        vm.ClearFiltersCommand.Execute(null);
+
+        Assert.Equal(LineStatusFilter.All, vm.LineStatusFilter);
+        Assert.Null(vm.LineSearchKeyword);
+        Assert.Equal(LineSortBy.OeeDesc, vm.LineSortBy);
+        Assert.False(vm.HasNoFilteredDevices);
+        Assert.Single(vm.FilteredLineDevices);
+    }
+
     [Fact]
     public void LineSearchKeyword_CaseInsensitive_FiltersByDeviceName()
     {

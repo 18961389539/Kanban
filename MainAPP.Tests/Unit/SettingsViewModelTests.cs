@@ -140,6 +140,69 @@ public class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task TestConnection_EditingPlcConfig_ClearsOldResult()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.PlcConfig.IpAddress = "invalid";
+        await vm.TestConnectionCommand.ExecuteAsync(null);
+        Assert.Equal("Error", vm.TestConnectionResultType);
+
+        vm.DraftSettings.AppTitle = "新标题";
+        Assert.Equal("Error", vm.TestConnectionResultType);
+
+        vm.DraftSettings.PlcConfig.IpAddress = "127.0.0.2";
+        Assert.Null(vm.TestConnectionResult);
+        Assert.Equal("None", vm.TestConnectionResultType);
+    }
+
+    [Fact]
+    public async Task TestCollectorConnection_EditingUrl_ClearsOldResult()
+    {
+        var vm = NewVm();
+        vm.DraftSettings.CollectorHubUrl = "";
+        await vm.TestCollectorConnectionCommand.ExecuteAsync(null);
+        Assert.Equal("Error", vm.CollectorTestResultType);
+
+        vm.DraftSettings.CollectorHubUrl = "http://localhost:5129/hubs/kanban";
+        Assert.Equal(string.Empty, vm.CollectorTestResult);
+        Assert.Equal("None", vm.CollectorTestResultType);
+    }
+
+    [Fact]
+    public async Task TestConnection_EditingWhileRunning_DoesNotShowStaleResult()
+    {
+        using var release = new ManualResetEventSlim(false);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var driver = Substitute.For<IPlcDriver>();
+        driver.Connect().Returns(_ =>
+        {
+            started.TrySetResult();
+            release.Wait();
+            return PlcOperationResult.Success();
+        });
+        var factory = Substitute.For<ISharedPlcDriverFactory>();
+        factory.Create(Arg.Any<PlcConfig>()).Returns(driver);
+        var vm = NewVmWithTestFactory(factory);
+        var originalPort = vm.DraftSettings.PlcConfig.Port;
+        var test = vm.TestConnectionCommand.ExecuteAsync(null);
+        try
+        {
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
+            vm.DraftSettings.PlcConfig.Port = originalPort + 1;
+            Assert.Null(vm.TestConnectionResult);
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        await test;
+        factory.Received(1).Create(Arg.Is<PlcConfig>(c => c.Port == originalPort));
+        Assert.Null(vm.TestConnectionResult);
+        Assert.Equal("None", vm.TestConnectionResultType);
+    }
+
+    [Fact]
     public async Task TestConnection_RefusedWhileAcquisitionConnected_SameEndpoint_ShowsSingleConnectionHint()
     {
         // 主采集已连接同一端点

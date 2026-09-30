@@ -74,16 +74,17 @@
                            Foreground="{StaticResource SecondaryTextBrush}"
                            Text="{Binding DeviceCount, Converter={StaticResource LocFormatConverter}, ConverterParameter=F248}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                        ToolTip="{Binding ShiftTooltip}"
-                        ToolTipService.ShowDuration="30000">
-                <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
+            <Grid HorizontalAlignment="Right"
+                  ToolTip="{Binding ShiftTooltip}"
+                  ToolTipService.ShowDuration="30000">
+                <TextBlock MaxWidth="340" TextTrimming="CharacterEllipsis"
+                           FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
                     <Run Text="{x:Static resources:Strings.K415}" />
                     <Run FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding CurrentShiftName, Mode=OneWay}" />
                     <Run Text="  " />
                     <Run Foreground="{StaticResource SecondaryTextBrush}" Text="{Binding CurrentShiftTimeRange, Mode=OneWay}" />
                 </TextBlock>
-            </StackPanel>
+            </Grid>
         </DockPanel>
 
         <!--  目标产能 + 四态设备数：同一行  -->
@@ -299,7 +300,15 @@
             <Border Background="{StaticResource RegionBrush}" CornerRadius="8"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     Visibility="{Binding HasNoFilteredDevices, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.Web_Ln_EmptyFilter}" />
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <controls:EmptyState IconKind="FilterRemoveOutline" Message="{x:Static resources:Strings.Web_Ln_EmptyFilter}" />
+                    <Button Margin="0,16,0,0" HorizontalAlignment="Center"
+                            AutomationProperties.Name="{x:Static resources:Strings.Dsm_ClearFilters}"
+                            Command="{Binding ClearFiltersCommand}"
+                            Content="{x:Static resources:Strings.Dsm_ClearFilters}"
+                            Style="{StaticResource IconButtonDefault}"
+                            Tag="{x:Static mi:MaterialIconKind.FilterRemoveOutline}" />
+                </StackPanel>
             </Border>
 
             <ListBox x:Name="LineDeviceCards"

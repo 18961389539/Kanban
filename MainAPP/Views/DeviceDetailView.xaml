@@ -106,25 +106,33 @@
         <!-- ════════ 有设备内容 ════════ -->
         <Grid Grid.Row="0" Margin="0,0,0,12" Visibility="{Binding HasDevice, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <!-- 标题栏：返回 + 设备名 + 状态 -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <Grid Grid.Column="0" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <Button
                     Command="{Binding GoBackCommand}"
                     Style="{StaticResource IconButtonDefault}"
                     Tag="{x:Static mi:MaterialIconKind.ArrowLeft}"
                     Content="{x:Static resources:Strings.K146}"
                     ToolTip="{x:Static resources:Strings.K147}" />
-                <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Harddisk" Margin="16,0,0,0" />
-                <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
-                           Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}" />
+                <materialIcons:MaterialIcon Grid.Column="1" Style="{StaticResource PageTitleIcon}" Kind="Harddisk" Margin="16,0,0,0" />
+                <TextBlock Grid.Column="2" Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
+                           Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding CurrentDevice.Name}" />
                 <!-- 状态徽章：15% 软底 + 同色文字 + 同色描边 + 同色色点（2026-09-19 全站统一，
                      替换原「白字压满色块」——琥珀/灰档位白字对比度仅约 1.9–2.4:1 不可读） -->
-                <Border Margin="16,0,0,0" Padding="10,3" CornerRadius="11" BorderThickness="1">
+                <Border Grid.Column="3" Margin="16,0,0,0" Padding="10,3" CornerRadius="11" BorderThickness="1">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="{StaticResource StatusIdleSoftBrush}" />
@@ -186,10 +194,10 @@
                     </StackPanel>
                 </Border>
                 <!-- 设备 Id -->
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
-                           Foreground="{StaticResource ThirdlyTextBrush}"
-                           Text="{Binding CurrentDevice.Id, StringFormat=ID: {0}}" />
-            </StackPanel>
+                <TextBlock Grid.Column="4" Margin="16,0,0,0" MaxWidth="140" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
+                           Foreground="{StaticResource ThirdlyTextBrush}" TextTrimming="CharacterEllipsis"
+                           Text="{Binding CurrentDevice.Id, StringFormat=ID: {0}}" ToolTip="{Binding CurrentDevice.Id}" />
+            </Grid>
 
             <!-- 右侧：刷新按钮 + 最后更新时间 -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -199,9 +207,9 @@
                 <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeMicro}"
                            Foreground="{StaticResource ThirdlyTextBrush}"
                            Text="{Binding LastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F249}" />
-                <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" FontSize="{DynamicResource FontSizeHint}"
-                           Foreground="{StaticResource SecondaryTextBrush}"
-                           Text="{Binding RefreshStatusText}" />
+                <TextBlock VerticalAlignment="Center" Margin="12,0,0,0" MaxWidth="160" FontSize="{DynamicResource FontSizeHint}"
+                           Foreground="{StaticResource SecondaryTextBrush}" TextTrimming="CharacterEllipsis"
+                           Text="{Binding RefreshStatusText}" ToolTip="{Binding RefreshStatusText}" />
                 <Button
                     Margin="12,0,0,0"
                     Command="{Binding RefreshCommand}"

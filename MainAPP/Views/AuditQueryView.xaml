@@ -102,7 +102,22 @@
             BorderBrush="{StaticResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="6">
-            <StackPanel Orientation="Horizontal">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Margin="12,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button
+                        Padding="16,6"
+                        Command="{Binding QueryCommand}"
+                        Content="{x:Static resources:Strings.K625}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        Margin="8,0,0,0"
+                        Padding="16,6"
+                        Command="{Binding ResetCommand}"
+                        Content="{x:Static resources:Strings.K626}"
+                        Style="{StaticResource ButtonDefault}" />
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal">
                 <TextBlock
                     Margin="0,0,8,0"
                     VerticalAlignment="Center"
@@ -217,20 +232,9 @@
                     <ComboBoxItem Content="{x:Static resources:Strings.K620}" />
                     <ComboBoxItem Content="{x:Static resources:Strings.K621}" />
                 </ComboBox>
-
-                <Button
-                    Margin="16,0,0,0"
-                    Padding="16,6"
-                    Command="{Binding QueryCommand}"
-                    Content="{x:Static resources:Strings.K625}"
-                    Style="{StaticResource ButtonDefault}" />
-                <Button
-                    Margin="8,0,0,0"
-                    Padding="16,6"
-                    Command="{Binding ResetCommand}"
-                    Content="{x:Static resources:Strings.K626}"
-                    Style="{StaticResource ButtonDefault}" />
-            </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Border>
 
         <!--  查询错误  -->

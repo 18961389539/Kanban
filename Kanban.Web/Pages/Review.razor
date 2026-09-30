@@ -1,19 +1,21 @@
 ﻿@page "/review"
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
+@inject ILogger<Review> Logger
 @using System.Globalization
 @using System.Text
 @using Kanban.Analysis
 @using Kanban.Contracts.Dtos
 @using Kanban.Contracts.Enums
 @using Kanban.Web.Services
+@using Microsoft.Extensions.Logging
 
 <div class="query-page">
     <div class="filter-bar">
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_Device")</span>
             <select class="filter-input" @bind="DeviceId">
-                <option value="">@L.T("Hq_AllDevices")</option>
+                <option value="" disabled>@L.T("Hq_Device")</option>
                 @foreach (var d in DeviceOptions)
                 {
                     <option value="@d.Id">@d.Name</option>
@@ -39,14 +41,21 @@
             <input class="filter-input" type="datetime-local" lang="en-GB" value="@ToText" @onchange="OnToChanged" />
         </label>
         <div class="filter-actions">
-            <button class="btn btn-primary" disabled="@IsLoading" @onclick="SearchAsync">@L.T("Hq_Search")</button>
-            <button class="btn" disabled="@IsLoading" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
-            <button class="btn" disabled="@IsLoading" @onclick="ExportYesterdayAsync">@L.T("Rv_Daily")</button>
-            <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
-            <button class="btn" disabled="@(Result is null || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
+            <button class="btn btn-primary" disabled="@(IsLoading || _deviceLoadFailed || DeviceOptions.Count == 0)" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+            <button class="btn" disabled="@(IsLoading || _deviceLoadFailed)" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
+            <button class="btn" disabled="@(IsLoading || _deviceLoadFailed || DeviceOptions.Count == 0)" @onclick="ExportYesterdayAsync">@L.T("Rv_Daily")</button>
+            <button class="btn" disabled="@(!ResultMatchesFilters || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
+            <button class="btn" disabled="@(!ResultMatchesFilters || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
         </div>
     </div>
 
+    @if (_deviceLoadFailed)
+    {
+        <div class="msg-banner msg-error">
+            @L.T("Dv_LoadFailed") @L.T("Dv_LoadFailedHint")
+            <button class="chip-btn" @onclick="RetryLoadDevicesAsync">@L.T("Dv_Retry")</button>
+        </div>
+    }
     @if (!string.IsNullOrEmpty(ValidationMessage))
     {
         <div class="msg-banner msg-error">@ValidationMessage</div>
@@ -60,8 +69,11 @@
     {
         <div class="loading-row">@L.T("Hq_Analyzing")</div>
     }
-    else if (QueryError is not null)
+    else if (QueryError is not null && Result is null)
     {
+        <div class="filter-bar compact">
+            <button class="btn btn-primary" disabled="@_deviceLoadFailed" @onclick="SearchAsync">@L.T("Hq_Search")</button>
+        </div>
     }
     else if (!HasQueried)
     {
@@ -73,6 +85,15 @@
     }
     else
     {
+        @if (!ResultMatchesFilters)
+        {
+            <div class="msg-banner msg-warn">@L.T("Rv_HintBody")</div>
+        }
+        <div class="review-summary">
+            <span class="rs-item"><b>@L.T("Hq_Device")</b> @ReviewDeviceName</span>
+            <span class="rs-item"><b>@L.T("Hq_From")</b> @_reviewFrom.ToString("yyyy-MM-dd HH:mm")</span>
+            <span class="rs-item"><b>@L.T("Hq_To")</b> @_reviewTo.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
         @if (Result.Truncated)
         {
             <div class="msg-banner msg-warn">@L.T("Hq_Truncated")</div>
@@ -84,7 +105,7 @@
             <span class="rs-item" title="@ReviewQualityTooltip"><b>@L.T("Hq_QualityRate")</b> <span class="rs-strong">@Pct(Result.QualityRate)</span></span>
             <span class="rs-item" title="@ReviewOutputTooltip"><b>@L.T("Lbl_TotalOutput")</b> <span class="rs-strong">@((Result.TotalOk + Result.TotalNg).ToString("N0"))</span></span>
             <span class="rs-item" title="@ReviewAlarmTooltip"><b>@L.T("Rv_AlarmCount")</b> <span class="rs-strong rs-alarm">@Result.AlarmTriggered.ToString("N0")</span></span>
-            <span class="rs-item"><b>@L.T("Rv_CurrentShift")</b> <span class="rs-strong">@DisplayText.Repair(Result.ShiftName)</span></span>
+            <span class="rs-item"><b>@L.T("Hq_Shift")</b> <span class="rs-strong">@DisplayText.Repair(Result.ShiftName)</span></span>
         </div>
 
         @* ──── 健康评分 + 工单/产品/配方 ──── *@
@@ -304,7 +325,15 @@
     private ReviewResult? Result { get; set; }
     private DateTime _reviewFrom;
     private DateTime _reviewTo;
-    private bool _exportDailyAfterSearch;
+    private string _reviewDeviceId = "";
+    private bool _deviceLoadFailed;
+
+    private bool ResultMatchesFilters => Result is not null
+        && string.Equals(DeviceId, _reviewDeviceId, StringComparison.Ordinal)
+        && string.Equals(FromText, _reviewFrom.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal)
+        && string.Equals(ToText, _reviewTo.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+    private string ReviewDeviceName => DeviceOptions.FirstOrDefault(d => d.Id == _reviewDeviceId).Name ?? _reviewDeviceId;
 
     private sealed class ReviewResult
     {
@@ -344,17 +373,28 @@
 
     private async Task LoadDevicesAsync()
     {
-        if (Dashboard.Snapshots.Count > 0)
-            DeviceOptions = Dashboard.Snapshots.Select(s => (s.DeviceId, s.DeviceName)).ToList();
         try
         {
             _deviceConfigs = [.. await Dashboard.QueryDevicesAsync()];
-            if (DeviceOptions.Count == 0)
-                DeviceOptions = _deviceConfigs.Select(d => (d.Id, d.Name)).ToList();
+            DeviceOptions = _deviceConfigs.Select(d => (d.Id, d.Name)).ToList();
+            _deviceLoadFailed = false;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _deviceLoadFailed = true;
+            Logger.LogWarning(ex, "Failed to load device configurations for review");
         }
+    }
+
+    private async Task RetryLoadDevicesAsync()
+    {
+        await LoadDevicesAsync();
+        if (_deviceLoadFailed)
+            return;
+        if (!DeviceOptions.Any(d => d.Id == DeviceId))
+            DeviceId = DeviceOptions.FirstOrDefault().Id ?? "";
+        if (!HasQueried && !string.IsNullOrEmpty(DeviceId))
+            await SearchAsync();
     }
 
     private void OnQuickChanged(ChangeEventArgs e)
@@ -398,17 +438,24 @@
             || from > to)
         {
             ValidationMessage = L.T("Hq_ValidationRange");
-            _exportDailyAfterSearch = false;
             return;
         }
         if (string.IsNullOrEmpty(DeviceId))
         {
             ValidationMessage = L.T("Hq_NeedDevice");
-            _exportDailyAfterSearch = false;
             return;
         }
+        if (_deviceLoadFailed)
+        {
+            ValidationMessage = L.T("Dv_LoadFailed");
+            return;
+        }
+        to = EndOfMinute(to);
         await RunReviewAsync(from, to);
     }
+
+    private static DateTime EndOfMinute(DateTime minute)
+        => minute < DateTime.MaxValue.AddMinutes(-1) ? minute.AddMinutes(1).AddTicks(-1) : DateTime.MaxValue;
 
     private async Task ResetAsync()
     {
@@ -434,98 +481,106 @@
         try
         {
             var deviceId = DeviceId;
-            var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId);
-            var dto = await HistoryFetch.AnalyzeReviewWindowAsync(Dashboard, from, to, deviceId, null);
-
-            var r = new ReviewResult
-            {
-                Truncated = dto.Truncated,
-            };
-
-            var ok = dto.Ok;
-            var ng = dto.Ng;
-            r.TotalOk = ok;
-            r.TotalNg = ng;
-            r.QualityRate = dto.QualityRate;
-            var targetCycle = device?.TargetCycle ?? 0;
-            r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, dto.RunSeconds);
-            r.AvailabilityRate = OeeCalculator.CalculateAvailabilityRate(dto.RunSeconds, dto.AlarmSeconds);
-            r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate, r.AvailabilityRate);
-
-            r.AlarmTriggered = dto.AlarmTriggered;
-            r.AlarmRecovered = dto.AlarmRecovered;
-            r.AlarmPending = dto.AlarmPending;
-            r.Alarms = dto.Alarms.ToList();
-            r.LongestDowntimeText = dto.LongestAlarmHours > 0 ? $"{dto.LongestAlarmHours:F1} h" : "—";
-            if (dto.LongestAlarmHours > 0)
-            {
-                r.LongestDowntimeDevice = device?.Name ?? deviceId;
-                r.LongestDowntimeAlarm = dto.LongestAlarmName;
-            }
-
-            r.PeakHour = dto.PeakHour;
-            r.PeakOk = dto.PeakOk;
-            r.ValleyHour = dto.ValleyHour;
-            r.ValleyOk = dto.ValleyOk;
-            r.PeakShare = ok > 0 ? (double)dto.PeakOk / ok : 0;
-            r.ValleyShare = ok > 0 ? (double)dto.ValleyOk / ok : 0;
-            r.ChartData = dto.ChartPoints.Count > 0
-                ? dto.ChartPoints.Select(p => (p.Time, p.Ok, p.Ng)).ToList()
-                : [];
-
-            r.Timeline = dto.Timeline.ToList();
-            r.Defects = dto.Defects.ToList();
-            r.Shifts = dto.Shifts.ToList();
-            r.ShiftName = r.Shifts.FirstOrDefault()?.ShiftName ?? "—";
-
-            r.BaselineOutput = dto.BaselineOutput;
-            r.BaselineQuality = dto.BaselineQuality;
-            var baselineOk = dto.BaselineOutput == 0
-                ? 0
-                : (int)Math.Round(dto.BaselineOutput * dto.BaselineQuality);
-            var baselineNg = Math.Max(0, dto.BaselineOutput - baselineOk);
-            r.BaselineOee = OeeCalculator.CalculateOee(
-                dto.BaselineQuality,
-                OeeCalculator.CalculatePerformanceRate(baselineOk, baselineNg, targetCycle, dto.BaselineRunSeconds),
-                OeeCalculator.CalculateAvailabilityRate(dto.BaselineRunSeconds, dto.BaselineAlarmSeconds));
-
-            (r.HealthIssues, r.HealthScore) = ReviewAnalysis.CalculateHealth(
-                targetCycle, dto.Ok + dto.Ng, dto.AlarmTriggered, r.Timeline, r.Defects,
-                dto.PreviousAlarmTriggered, dto.PreviousDefectCount, from, to, L.T);
-            r.Conclusions = ReviewAnalysis.BuildConclusions(
-                ok, ng, r.AlarmTriggered, dto.LongestAlarmHours, r.LongestDowntimeDevice, dto.LongestAlarmName,
-                r.Shifts, r.Defects, r.QualityRate, r.Oee, L.T);
-
-            // ── 工单/产品/配方 ──
-            var wo = Dashboard.GetWorkOrder(deviceId);
-            r.WorkOrderText = wo is null ? "—" : $"{wo.OrderNo} · {L.T("Meta_PlanWo", wo.TargetQuantity.ToString("N0"))}";
-            r.ProductText = wo is null ? "—" : $"{wo.ProductCode} · {wo.ProductName}";
-            r.RecipeText = string.IsNullOrWhiteSpace(device?.RecipeName) ? "—" : $"{device.RecipeName} · {device.RecipeValue:N0}";
-            var metText = r.Oee >= ReviewAnalysis.OeeTarget ? L.T("Rv_Met") : L.T("Rv_NotMet");
-            r.Takeaway = L.T("Rv_Takeaway", r.HealthScore, metText, r.LongestDowntimeText,
-                string.IsNullOrEmpty(r.LongestDowntimeDevice) ? "—" : r.LongestDowntimeDevice);
-
-            BuildCharts(r);
+            var r = await BuildReviewAsync(from, to, deviceId);
             _reviewFrom = from;
             _reviewTo = to;
+            _reviewDeviceId = deviceId;
             Result = r;
             HasQueried = true;
-            if (_exportDailyAfterSearch)
-            {
-                _exportDailyAfterSearch = false;
-                await ExportCsvAsync(daily: true);
-            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Failed to analyze review window");
             QueryError = L.T("Hq_QueryFailed");
             HasQueried = true;
-            _exportDailyAfterSearch = false;
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    private async Task<ReviewResult> BuildReviewAsync(DateTime from, DateTime to, string deviceId)
+    {
+        var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId)
+            ?? throw new InvalidOperationException($"Device configuration is unavailable: {deviceId}");
+        var dto = await HistoryFetch.AnalyzeReviewWindowAsync(Dashboard, from, to, deviceId, null);
+
+        var r = new ReviewResult
+        {
+            Truncated = dto.Truncated,
+        };
+
+        var ok = dto.Ok;
+        var ng = dto.Ng;
+        r.TotalOk = ok;
+        r.TotalNg = ng;
+        r.QualityRate = dto.QualityRate;
+        var targetCycle = device.TargetCycle;
+        r.PerformanceRate = OeeCalculator.CalculatePerformanceRate(ok, ng, targetCycle, dto.RunSeconds);
+        r.AvailabilityRate = OeeCalculator.CalculateAvailabilityRate(dto.RunSeconds, dto.AlarmSeconds);
+        r.Oee = OeeCalculator.CalculateOee(r.QualityRate, r.PerformanceRate, r.AvailabilityRate);
+
+        r.AlarmTriggered = dto.AlarmTriggered;
+        r.AlarmRecovered = dto.AlarmRecovered;
+        r.AlarmPending = dto.AlarmPending;
+        r.Alarms = dto.Alarms.ToList();
+        r.LongestDowntimeText = dto.LongestAlarmHours > 0 ? $"{dto.LongestAlarmHours:F1} h" : "—";
+        if (dto.LongestAlarmHours > 0)
+        {
+            r.LongestDowntimeDevice = device.Name;
+            r.LongestDowntimeAlarm = dto.LongestAlarmName;
+        }
+
+        r.PeakHour = dto.PeakHour;
+        r.PeakOk = dto.PeakOk;
+        r.ValleyHour = dto.ValleyHour;
+        r.ValleyOk = dto.ValleyOk;
+        r.PeakShare = ok > 0 ? (double)dto.PeakOk / ok : 0;
+        r.ValleyShare = ok > 0 ? (double)dto.ValleyOk / ok : 0;
+        r.ChartData = dto.ChartPoints.Count > 0
+            ? dto.ChartPoints.Select(p => (p.Time, p.Ok, p.Ng)).ToList()
+            : [];
+
+        r.Timeline = dto.Timeline.ToList();
+        r.Defects = dto.Defects.ToList();
+        r.Shifts = dto.Shifts.ToList();
+        r.ShiftName = r.Shifts.Count switch
+        {
+            0 => "—",
+            1 => r.Shifts[0].ShiftName,
+            _ => L.T("Hq_AllShifts"),
+        };
+
+        r.BaselineOutput = dto.BaselineOutput;
+        r.BaselineQuality = dto.BaselineQuality;
+        var baselineOk = dto.BaselineOutput == 0
+            ? 0
+            : (int)Math.Round(dto.BaselineOutput * dto.BaselineQuality);
+        var baselineNg = Math.Max(0, dto.BaselineOutput - baselineOk);
+        r.BaselineOee = OeeCalculator.CalculateOee(
+            dto.BaselineQuality,
+            OeeCalculator.CalculatePerformanceRate(baselineOk, baselineNg, targetCycle, dto.BaselineRunSeconds),
+            OeeCalculator.CalculateAvailabilityRate(dto.BaselineRunSeconds, dto.BaselineAlarmSeconds));
+
+        (r.HealthIssues, r.HealthScore) = ReviewAnalysis.CalculateHealth(
+            targetCycle, dto.Ok + dto.Ng, dto.AlarmTriggered, r.Timeline, r.Defects,
+            dto.PreviousAlarmTriggered, dto.PreviousDefectCount, from, to, L.T);
+        r.Conclusions = ReviewAnalysis.BuildConclusions(
+            ok, ng, r.AlarmTriggered, dto.LongestAlarmHours, r.LongestDowntimeDevice, dto.LongestAlarmName,
+            r.Shifts, r.Defects, r.QualityRate, r.Oee, L.T);
+
+        // ── 工单/产品/配方 ──
+        var wo = Dashboard.GetWorkOrder(deviceId);
+        r.WorkOrderText = wo is null ? "—" : $"{wo.OrderNo} · {L.T("Meta_PlanWo", wo.TargetQuantity.ToString("N0"))}";
+        r.ProductText = wo is null ? "—" : $"{wo.ProductCode} · {wo.ProductName}";
+        r.RecipeText = string.IsNullOrWhiteSpace(device.RecipeName) ? "—" : $"{device.RecipeName} · {device.RecipeValue:N0}";
+        var metText = r.Oee >= ReviewAnalysis.OeeTarget ? L.T("Rv_Met") : L.T("Rv_NotMet");
+        r.Takeaway = L.T("Rv_Takeaway", r.HealthScore, metText, r.LongestDowntimeText,
+            string.IsNullOrEmpty(r.LongestDowntimeDevice) ? "—" : r.LongestDowntimeDevice);
+
+        BuildCharts(r);
+        return r;
     }
 
     private void BuildCharts(ReviewResult r)
@@ -711,35 +766,54 @@
 
     private async Task ExportYesterdayAsync()
     {
-        QuickIndex = 2;
-        ApplyQuickRange(2);
-        _exportDailyAfterSearch = true;
-        await SearchAsync();
+        if (_deviceLoadFailed || string.IsNullOrEmpty(DeviceId))
+        {
+            ValidationMessage = L.T(_deviceLoadFailed ? "Dv_LoadFailed" : "Hq_NeedDevice");
+            return;
+        }
+        IsLoading = true;
+        ValidationMessage = null;
+        QueryError = null;
+        try
+        {
+            var from = Dashboard.ServerNow.Date.AddDays(-1);
+            var to = from.AddDays(1).AddTicks(-1);
+            var report = await BuildReviewAsync(from, to, DeviceId);
+            await ExportCsvAsync(report, from, to, daily: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to export yesterday's review");
+            QueryError = L.T("Hq_QueryFailed");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    private Task ExportCsvAsync() => ExportCsvAsync(daily: false);
+    private Task ExportCsvAsync()
+        => Result is null || !ResultMatchesFilters ? Task.CompletedTask : ExportCsvAsync(Result, _reviewFrom, _reviewTo, daily: false);
 
-    private async Task ExportCsvAsync(bool daily)
+    private async Task ExportCsvAsync(ReviewResult report, DateTime from, DateTime to, bool daily)
     {
-        if (Result is null)
-            return;
         var sb = new StringBuilder();
-        sb.AppendLine(C(Result.Takeaway));
-        sb.AppendLine(L.T("Csv_SumRange", _reviewFrom, _reviewTo));
-        sb.AppendLine($"{C(L.T("Rv_Health"))},{Result.HealthScore}");
-        sb.AppendLine($"OEE,{Pct(Result.Oee)}");
-        sb.AppendLine($"{C(L.T("Hq_QualityRate"))},{Pct(Result.QualityRate)}");
-        sb.AppendLine($"{C(L.T("Lbl_TotalOutput"))},{Result.TotalOk + Result.TotalNg}");
-        sb.AppendLine($"{C(L.T("Lbl_Ok"))},{Result.TotalOk}");
-        sb.AppendLine($"{C(L.T("Lbl_Ng"))},{Result.TotalNg}");
-        sb.AppendLine($"{C(L.T("Rv_AlarmCount"))},{Result.AlarmTriggered}");
-        sb.AppendLine($"{C(L.T("Rv_LongestDowntime"))},{C(Result.LongestDowntimeText)},{C(Result.LongestDowntimeDevice)},{C(Result.LongestDowntimeAlarm)}");
-        foreach (var issue in Result.HealthIssues)
+        sb.AppendLine(C(report.Takeaway));
+        sb.AppendLine(L.T("Csv_SumRange", from, to));
+        sb.AppendLine($"{C(L.T("Rv_Health"))},{report.HealthScore}");
+        sb.AppendLine($"OEE,{Pct(report.Oee)}");
+        sb.AppendLine($"{C(L.T("Hq_QualityRate"))},{Pct(report.QualityRate)}");
+        sb.AppendLine($"{C(L.T("Lbl_TotalOutput"))},{report.TotalOk + report.TotalNg}");
+        sb.AppendLine($"{C(L.T("Lbl_Ok"))},{report.TotalOk}");
+        sb.AppendLine($"{C(L.T("Lbl_Ng"))},{report.TotalNg}");
+        sb.AppendLine($"{C(L.T("Rv_AlarmCount"))},{report.AlarmTriggered}");
+        sb.AppendLine($"{C(L.T("Rv_LongestDowntime"))},{C(report.LongestDowntimeText)},{C(report.LongestDowntimeDevice)},{C(report.LongestDowntimeAlarm)}");
+        foreach (var issue in report.HealthIssues)
             sb.AppendLine($"{C(L.T("Rv_Health"))},{C(issue)}");
-        foreach (var c in Result.Conclusions)
+        foreach (var c in report.Conclusions)
             sb.AppendLine($"{C(L.T("Rv_Conclusions"))},{C(c.Text)}");
         sb.AppendLine(string.Join(',', C(L.T("Hq_Shift")), C(L.T("Hq_OkCol")), C(L.T("Hq_NgCol")), C(L.T("Rv_AlarmCol")), C(L.T("Hq_QualityRate"))));
-        foreach (var s in Result.Shifts)
+        foreach (var s in report.Shifts)
         {
             var total = s.OkCount + s.NgCount;
             sb.AppendLine(string.Join(',',
@@ -748,8 +822,8 @@
         }
 
         var fileName = daily
-            ? L.T("Rv_DailyCsvFile", _reviewFrom.Date)
-            : L.T("Rv_CsvFile", _reviewFrom, _reviewTo);
+            ? L.T("Rv_DailyCsvFile", from.Date)
+            : L.T("Rv_CsvFile", from, to);
         await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
     }
 

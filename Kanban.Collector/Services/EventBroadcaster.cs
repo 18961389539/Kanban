@@ -18,11 +18,13 @@ public sealed class EventBroadcaster
     public const int RetentionCount = 4096;
 
     private readonly object _gate = new();
-    private readonly LinkedList<(long Seq, object Payload)> _alarmRing = new();
-    private readonly LinkedList<(long Seq, object Payload)> _statusRing = new();
+    private readonly Queue<(long Seq, AlarmEventDto Payload)> _alarmRing = new();
+    private readonly Queue<(long Seq, StatusEventDto Payload)> _statusRing = new();
     private readonly List<Channel<AlarmEventDto>> _alarmSubscribers = new();
     private readonly List<Channel<StatusEventDto>> _statusSubscribers = new();
     private readonly ILogger<EventBroadcaster> _logger;
+    internal int AlarmSubscriberCount { get { lock (_gate) return _alarmSubscribers.Count; } }
+    internal int StatusSubscriberCount { get { lock (_gate) return _statusSubscribers.Count; } }
     // 报警/状态各自独立计数：两条流互不占用对方序号，各自的 Seq 连续（补拉游标语义干净）
     private long _nextAlarmSeq = 1;
     private long _nextStatusSeq = 1;
@@ -48,9 +50,9 @@ public sealed class EventBroadcaster
         {
             var seq = _nextAlarmSeq++;
             var withSeq = evt with { Seq = seq, ServerEpoch = ServerEpoch };
-            _alarmRing.AddLast((withSeq.Seq, withSeq));
-            while (_alarmRing.Count > RetentionCount)
-                _alarmRing.RemoveFirst();
+            if (_alarmRing.Count == RetentionCount)
+                _alarmRing.Dequeue();
+            _alarmRing.Enqueue((withSeq.Seq, withSeq));
             foreach (var subscriber in _alarmSubscribers)
             {
                 subscriber.Writer.TryWrite(withSeq);
@@ -68,9 +70,9 @@ public sealed class EventBroadcaster
         {
             var seq = _nextStatusSeq++;
             var withSeq = evt with { Seq = seq, ServerEpoch = ServerEpoch };
-            _statusRing.AddLast((withSeq.Seq, withSeq));
-            while (_statusRing.Count > RetentionCount)
-                _statusRing.RemoveFirst();
+            if (_statusRing.Count == RetentionCount)
+                _statusRing.Dequeue();
+            _statusRing.Enqueue((withSeq.Seq, withSeq));
             foreach (var subscriber in _statusSubscribers)
             {
                 subscriber.Writer.TryWrite(withSeq);
@@ -104,22 +106,25 @@ public sealed class EventBroadcaster
             foreach (var (seq, payload) in _alarmRing)
             {
                 if (seq > afterSeq)
-                    channel.Writer.TryWrite((AlarmEventDto)payload);
+                    channel.Writer.TryWrite(payload);
             }
             _alarmSubscribers.Add(channel);
         }
 
-        cancellationToken.Register(() =>
+        using var registration = cancellationToken.Register(() =>
         {
             lock (_gate)
-            {
                 _alarmSubscribers.Remove(channel);
-            }
         });
-
-        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+        try
         {
-            yield return evt;
+            await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+                yield return evt;
+        }
+        finally
+        {
+            lock (_gate)
+                _alarmSubscribers.Remove(channel);
         }
     }
 
@@ -144,22 +149,25 @@ public sealed class EventBroadcaster
             foreach (var (seq, payload) in _statusRing)
             {
                 if (seq > afterSeq)
-                    channel.Writer.TryWrite((StatusEventDto)payload);
+                    channel.Writer.TryWrite(payload);
             }
             _statusSubscribers.Add(channel);
         }
 
-        cancellationToken.Register(() =>
+        using var registration = cancellationToken.Register(() =>
         {
             lock (_gate)
-            {
                 _statusSubscribers.Remove(channel);
-            }
         });
-
-        await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+        try
         {
-            yield return evt;
+            await foreach (var evt in channel.Reader.ReadAllAsync(cancellationToken))
+                yield return evt;
+        }
+        finally
+        {
+            lock (_gate)
+                _statusSubscribers.Remove(channel);
         }
     }
 }

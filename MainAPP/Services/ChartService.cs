@@ -1,4 +1,4 @@
-using Kanban.Contracts.Metrics;
+﻿using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Models;
 using MainAPP.Resources;
 using Kanban.Collector.Core.Services;
@@ -1109,10 +1109,16 @@ public static class ChartService
             ?? (buckets.Length > 0 ? buckets[0] : qualityPoints[0].Time);
         var tEnd = axisEnd
             ?? (buckets.Length > 0 ? buckets[^1].AddHours(1) : qualityPoints[^1].Time);
+        foreach (var point in qualityPoints)
+        {
+            var center = HourCenter(point.Time);
+            if (center <= tStart) tStart = center.AddMinutes(-1);
+            if (center >= tEnd) tEnd = center.AddMinutes(1);
+        }
         if (tEnd <= tStart)
             tEnd = tStart.AddMinutes(1);
 
-        // 每小时一个刻度，落在该小时柱的正中（柱是 [整点, 下一整点)）。
+        // 每小时一个刻度
         // 不显式钉粒度时 OxyPlot 会按轴的像素长度抽稀，12 小时窗口只剩几个刻度。
         // 竖网格不跟到正中，避免一根线把柱切开；横网格仍由左轴画出。
         var xAxis = new BarCenterHourAxis

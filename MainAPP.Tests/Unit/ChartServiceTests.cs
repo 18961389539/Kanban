@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
@@ -356,6 +356,32 @@ public class ChartServiceTests
         Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), line.Points[0].X, 6);
         Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(1).AddMinutes(30)), line.Points[1].X, 6);
         Assert.Empty(chart.Annotations.OfType<RectangleAnnotation>());
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_SinglePointWithoutShift_ContainsCenteredMarker()
+    {
+        var sample = DateTime.Today.AddHours(8).AddMinutes(5);
+        var chart = ChartService.BuildShiftQualityAndOutputChart([], [], [(sample, 0.97)]);
+        var xAxis = Assert.Single(chart.Axes.OfType<DateTimeAxis>());
+        var marker = Assert.Single(Assert.Single(chart.Series.OfType<ScatterSeries>()).Points);
+
+        Assert.True(xAxis.Minimum < marker.X);
+        Assert.True(marker.X < xAxis.Maximum);
+        Assert.Equal(DateTimeAxis.ToDouble(sample.Date.AddHours(8).AddMinutes(30)), marker.X, 6);
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_PartialShift_ContainsCenteredMarker()
+    {
+        var start = DateTime.Today.AddHours(8).AddMinutes(45);
+        var end = start.AddMinutes(20);
+        var chart = ChartService.BuildShiftQualityAndOutputChart([], [], [(start.AddMinutes(5), 0.97)], 0.95, start, end);
+        var xAxis = Assert.Single(chart.Axes.OfType<DateTimeAxis>());
+        var marker = Assert.Single(Assert.Single(chart.Series.OfType<ScatterSeries>()).Points);
+
+        Assert.True(xAxis.Minimum < marker.X);
+        Assert.True(marker.X < xAxis.Maximum);
     }
 
     [Fact]

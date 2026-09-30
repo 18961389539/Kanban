@@ -290,43 +290,45 @@
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="6">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="{DynamicResource FontSizeHint}"
-                            FontWeight="Bold"
-                            Foreground="{StaticResource PrimaryBrush}"
-                            Text="{x:Static resources:Strings.K354}" />
-                        <TextBlock
-                            Margin="10,0,0,0"
-                            VerticalAlignment="Center"
-                            FontSize="{DynamicResource FontSizeHint}"
-                            FontWeight="Bold"
-                            Foreground="{StaticResource PrimaryTextBrush}"
-                            Text="{Binding HealthScoreText}"
-                            ToolTip="{Binding HealthTooltip}"
-                            ToolTipService.ShowDuration="30000" />
-                        <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K587}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding Oee, StringFormat={}{0:P1}}"
-                                   ToolTip="{Binding OeeTooltip}"
-                                   ToolTipService.ShowDuration="30000" />
-                        <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M238}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding QualityRate, StringFormat={}{0:P1}}"
-                                   ToolTip="{Binding QualityTooltip}"
-                                   ToolTipService.ShowDuration="30000" />
-                        <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K023}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
-                                   Text="{Binding TotalOutput, StringFormat={}{0:N0}}"
-                                   ToolTip="{Binding OutputTooltip}"
-                                   ToolTipService.ShowDuration="30000" />
-                        <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K090}" />
-                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}"
-                                   ToolTip="{Binding AlarmCountTooltip}"
-                                   ToolTipService.ShowDuration="30000" />
-                        <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding CurrentShiftName}" />
-                    </StackPanel>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="{DynamicResource FontSizeHint}"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Text="{x:Static resources:Strings.K354}" />
+                            <TextBlock
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="{DynamicResource FontSizeHint}"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource PrimaryTextBrush}"
+                                Text="{Binding HealthScoreText}"
+                                ToolTip="{Binding HealthTooltip}"
+                                ToolTipService.ShowDuration="30000" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K587}" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding Oee, StringFormat={}{0:P1}}"
+                                       ToolTip="{Binding OeeTooltip}"
+                                       ToolTipService.ShowDuration="30000" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.M238}" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding QualityRate, StringFormat={}{0:P1}}"
+                                       ToolTip="{Binding QualityTooltip}"
+                                       ToolTipService.ShowDuration="30000" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K023}" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource PrimaryTextBrush}"
+                                       Text="{Binding TotalOutput, StringFormat={}{0:N0}}"
+                                       ToolTip="{Binding OutputTooltip}"
+                                       ToolTipService.ShowDuration="30000" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}" Text="{x:Static resources:Strings.K090}" />
+                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" FontWeight="Bold" Foreground="{StaticResource StatusAlarmBrush}" Text="{Binding AlarmCount, StringFormat={}{0:N0}}"
+                                       ToolTip="{Binding AlarmCountTooltip}"
+                                       ToolTipService.ShowDuration="30000" />
+                            <TextBlock Margin="14,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding CurrentShiftName}" />
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- 查询错误提示条：失败可见 + 一键重试 -->

@@ -100,62 +100,75 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,14">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="MonitorDashboard" />
                 <StackPanel Margin="10,0,0,0">
                     <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.K420}" />
                     <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K421}" />
                 </StackPanel>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F284}" />
-                <!-- 真·重连：绑定 ReconnectCommand（后台线程调 IPlcConnectionManager.EnsureConnected）。
-                     原实现绑的是 RefreshCommand，点了只刷新显示、不重连，属误导性按钮。
-                     Remote 模式下 SignalR 连接归上层 Coordinator 统一重连，本页不越权建链，故隐藏。 -->
-                <Button Margin="0,0,8,0" Command="{Binding ReconnectCommand}" Content="{x:Static resources:Strings.Rtmon_RetryConnect}" Tag="{x:Static mi:MaterialIconKind.LanConnect}">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource IconButtonWarning}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsLocalMode}" Value="True" />
-                                        <Condition Binding="{Binding IsConnected}" Value="False" />
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <!-- 1Hz 刷新会让 P99/队列峰值/磁盘剩余这类准静态指标一直跳，排查时先暂停再读数 -->
-                <Button Margin="0,0,8,0" Command="{Binding ToggleAutoRefreshCommand}" Content="{Binding AutoRefreshToggleText}" Tag="{x:Static mi:MaterialIconKind.Pause}">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource IconButtonDefault}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsAutoRefreshPaused}" Value="True">
-                                    <Setter Property="Tag" Value="{x:Static mi:MaterialIconKind.Play}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                <!-- 诊断快照导出/复制：排查故障时只靠截图会丢数值精度也无法检索，
-                     这里给出结构化文本出口（工单页有导出 CSV，本页对齐该能力）。 -->
-                <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
-                        Command="{Binding CopyDiagnosticsCommand}"
-                        Content="{x:Static resources:Strings.Rtmon_CopyDiagnostics}"
-                        Tag="{x:Static mi:MaterialIconKind.ContentCopy}"
-                        ToolTip="{x:Static resources:Strings.Rtmon_CopyDiagnostics}" />
-                <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
-                        Command="{Binding ExportDiagnosticsCommand}"
-                        Content="{x:Static resources:Strings.Rtmon_ExportDiagnostics}"
-                        Tag="{x:Static mi:MaterialIconKind.FileExport}"
-                        ToolTip="{x:Static resources:Strings.Rtmon_ExportDiagnostics}" />
-                <Button Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}" Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}" ToolTip="{x:Static resources:Strings.K422}" />
-            </StackPanel>
-        </DockPanel>
+            <Grid Grid.Row="1" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <WrapPanel VerticalAlignment="Center">
+                    <TextBlock Margin="0,0,14,0" VerticalAlignment="Center" Foreground="{StaticResource ThirdlyTextBrush}" Text="{Binding LastRefreshTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F284}" />
+                    <!-- 真·重连：绑定 ReconnectCommand（后台线程调 IPlcConnectionManager.EnsureConnected）。
+                         原实现绑的是 RefreshCommand，点了只刷新显示、不重连，属误导性按钮。
+                         Remote 模式下 SignalR 连接归上层 Coordinator 统一重连，本页不越权建链，故隐藏。 -->
+                    <Button Margin="0,0,8,0" Command="{Binding ReconnectCommand}" Content="{x:Static resources:Strings.Rtmon_RetryConnect}" Tag="{x:Static mi:MaterialIconKind.LanConnect}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource IconButtonWarning}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsLocalMode}" Value="True" />
+                                            <Condition Binding="{Binding IsConnected}" Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <!-- 1Hz 刷新会让 P99/队列峰值/磁盘剩余这类准静态指标一直跳，排查时先暂停再读数 -->
+                    <Button Margin="0,0,8,0" Command="{Binding ToggleAutoRefreshCommand}" Content="{Binding AutoRefreshToggleText}" Tag="{x:Static mi:MaterialIconKind.Pause}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource IconButtonDefault}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAutoRefreshPaused}" Value="True">
+                                        <Setter Property="Tag" Value="{x:Static mi:MaterialIconKind.Play}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <!-- 诊断快照导出/复制：排查故障时只靠截图会丢数值精度也无法检索，
+                          这里给出结构化文本出口（工单页有导出 CSV，本页对齐该能力）。 -->
+                    <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
+                            Command="{Binding CopyDiagnosticsCommand}"
+                            Content="{x:Static resources:Strings.Rtmon_CopyDiagnostics}"
+                            Tag="{x:Static mi:MaterialIconKind.ContentCopy}"
+                            ToolTip="{x:Static resources:Strings.Rtmon_CopyDiagnostics}" />
+                    <Button Margin="0,0,8,0" Style="{StaticResource IconButtonDefault}"
+                            Command="{Binding ExportDiagnosticsCommand}"
+                            Content="{x:Static resources:Strings.Rtmon_ExportDiagnostics}"
+                            Tag="{x:Static mi:MaterialIconKind.FileExport}"
+                            ToolTip="{x:Static resources:Strings.Rtmon_ExportDiagnostics}" />
+                </WrapPanel>
+                <Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"
+                        Command="{Binding RefreshCommand}" Style="{StaticResource IconButtonPrimary}"
+                        Tag="{x:Static mi:MaterialIconKind.Refresh}" Content="{x:Static resources:Strings.K015}"
+                        ToolTip="{x:Static resources:Strings.K422}" />
+            </Grid>
+        </Grid>
 
         <Border Grid.Row="1" Margin="0,0,0,14" Padding="14,10"
                 Background="{StaticResource StatusAlarmSoftBrush}"

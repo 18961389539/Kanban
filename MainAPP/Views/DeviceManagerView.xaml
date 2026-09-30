@@ -128,20 +128,35 @@
                     Style="{StaticResource SearchBarExtend}"
                     Text="{Binding DeviceList.SearchKeyword, UpdateSourceTrigger=PropertyChanged}" />
 
-                <!--  状态筛选  -->
-                <hc:ComboBox
-                    Grid.Row="2"
-                    Margin="18,0,18,10"
-                    Width="150"
-                    HorizontalAlignment="Left"
-                    AutomationProperties.Name="{x:Static resources:Strings.K224}"
-                    hc:InfoElement.Placeholder="{x:Static resources:Strings.K225}"
-                    hc:InfoElement.Title="{x:Static resources:Strings.K003}"
-                    DisplayMemberPath="Label"
-                    ItemsSource="{Binding DeviceList.StatusFilterOptions}"
-                    SelectedValue="{Binding DeviceList.StatusFilter}"
-                    SelectedValuePath="Value"
-                    Style="{StaticResource ComboBoxExtend}" />
+                <!--  状态筛选与结果数  -->
+                <StackPanel Grid.Row="2" Margin="18,0,18,10">
+                    <DockPanel LastChildFill="False">
+                        <hc:ComboBox
+                            DockPanel.Dock="Left"
+                            Width="150"
+                            AutomationProperties.Name="{x:Static resources:Strings.K224}"
+                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K225}"
+                            hc:InfoElement.Title="{x:Static resources:Strings.K003}"
+                            DisplayMemberPath="Label"
+                            ItemsSource="{Binding DeviceList.StatusFilterOptions}"
+                            SelectedValue="{Binding DeviceList.StatusFilter}"
+                            SelectedValuePath="Value"
+                            Style="{StaticResource ComboBoxExtend}" />
+                        <Button
+                            DockPanel.Dock="Right"
+                            Margin="6,0,0,0"
+                            AutomationProperties.Name="{x:Static resources:Strings.Dsm_ClearFilters}"
+                            Command="{Binding DeviceList.ClearFiltersCommand}"
+                            Content="{x:Static resources:Strings.Dsm_ClearFilters}"
+                            Style="{StaticResource ButtonDefault}"
+                            Visibility="{Binding DeviceList.IsFiltering, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </DockPanel>
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontSize="{DynamicResource FontSizeHint}"
+                        Foreground="{StaticResource ThirdlyTextBrush}"
+                        Text="{Binding DeviceList.FilteredDeviceSummaryText}" />
+                </StackPanel>
 
                 <!--  设备列表  -->
                 <ListBox

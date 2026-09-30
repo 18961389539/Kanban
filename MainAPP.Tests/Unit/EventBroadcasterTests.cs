@@ -274,4 +274,46 @@ public class EventBroadcasterTests
         }
         Assert.Equal(4200, prev); // 最新一条在补拉尾部
     }
+
+    [Fact]
+    public async Task StatusRing_RetainsLatestRetentionCount()
+    {
+        var bc = CreateBroadcaster();
+        for (var i = 0; i < EventBroadcaster.RetentionCount + 2; i++)
+            bc.PublishStatusEvent(Status());
+
+        await using var enumerator = bc.WatchStatusEventsAsync(0, CancellationToken.None).GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        Assert.Equal(3, enumerator.Current.Seq);
+        Assert.Equal(1, bc.StatusSubscriberCount);
+        await enumerator.DisposeAsync();
+        Assert.Equal(0, bc.StatusSubscriberCount);
+    }
+
+    [Fact]
+    public async Task DisposingAlarmEnumerator_UnsubscribesWithoutCancellation()
+    {
+        var bc = CreateBroadcaster();
+        bc.PublishAlarmEvent(Alarm());
+        var enumerator = bc.WatchAlarmEventsAsync(0, CancellationToken.None).GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        Assert.Equal(1, bc.AlarmSubscriberCount);
+
+        await enumerator.DisposeAsync();
+        Assert.Equal(0, bc.AlarmSubscriberCount);
+    }
+
+    [Fact]
+    public async Task CancellingStatusEnumerator_Unsubscribes()
+    {
+        var bc = CreateBroadcaster();
+        using var cts = new CancellationTokenSource();
+        await using var enumerator = bc.WatchStatusEventsAsync(0, cts.Token).GetAsyncEnumerator();
+        var pending = enumerator.MoveNextAsync();
+        Assert.Equal(1, bc.StatusSubscriberCount);
+
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await pending.AsTask());
+        Assert.Equal(0, bc.StatusSubscriberCount);
+    }
 }

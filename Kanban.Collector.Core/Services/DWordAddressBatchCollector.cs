@@ -6,26 +6,48 @@ internal static class DWordAddressBatchCollector
 {
     public static HashSet<string> Collect(Device device, IDeviceAdapter adapter)
     {
-        var addresses = new[]
+        var okAddress = device.OkCountAddress;
+        var ngAddress = device.NgCountAddress;
+        var statusAddress = device.StatusCountAddress;
+        var defects = device.Defects.ToList();
+        var counterAlarms = device.CounterAlarms.ToList();
+        var sources = device.Sources.ToList();
+        var addresses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var codec = adapter.AddressCodec;
+
+        void Add(string? address)
         {
-            device.OkCountAddress,
-            device.NgCountAddress,
-            device.StatusCountAddress,
+            var parsed = codec.Parse(address);
+            if (parsed is { IsValid: true, Type: PlcAddressType.DWord })
+                addresses.Add(parsed.Original);
         }
-        .Concat(device.Defects.ToList().Select(defect => defect.PlcAddress))
-        .Concat(device.CounterAlarms.ToList()
-            .Where(counterAlarm => counterAlarm.Enabled)
-            .Select(counterAlarm => counterAlarm.PlcAddress))
-        .Concat(device.Sources.ToList()
-            .Where(source => source.Enabled)
-            .SelectMany(source => source.Values
-                .Where(v => v.Enabled)
-                .Select(v => v.PlcAddress)
-                .Append(source.TriggerAddress)))
-        .Select(adapter.AddressCodec.Parse)
-        .Where(parsed => parsed is { IsValid: true, Type: PlcAddressType.DWord })
-        .Select(parsed => parsed.Original)
-        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Add(okAddress);
+        Add(ngAddress);
+        Add(statusAddress);
+
+        foreach (var defect in defects)
+            Add(defect.PlcAddress);
+
+        foreach (var counterAlarm in counterAlarms)
+        {
+            if (counterAlarm.Enabled)
+                Add(counterAlarm.PlcAddress);
+        }
+
+        foreach (var source in sources)
+        {
+            if (!source.Enabled)
+                continue;
+
+            foreach (var value in source.Values)
+            {
+                if (value.Enabled)
+                    Add(value.PlcAddress);
+            }
+            Add(source.TriggerAddress);
+        }
+
         return addresses;
     }
 }

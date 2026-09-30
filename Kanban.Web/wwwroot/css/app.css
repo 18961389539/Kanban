@@ -1543,6 +1543,23 @@ body {
     font-weight: 500;
 }
 
+@media (max-width: 719px) {
+    .topnav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scroll-padding-inline: 14px;
+    }
+
+    .topnav-link {
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        min-height: 44px;
+        white-space: nowrap;
+    }
+}
+
 /* ── 按钮 ── */
 .btn { box-shadow: var(--shadow-1); }
 .btn:hover:not(:disabled) { border-color: #3A4453; box-shadow: var(--shadow-2); transform: translateY(-1px); }
@@ -1624,6 +1641,23 @@ body {
 .pager .btn { min-height: 32px; padding: 5px 14px; }
 
 .empty-icon { opacity: 0.7; }
+
+@media (max-width: 719px) {
+    .tab-bar { overflow-x: auto; }
+    .tab-btn { flex: 0 0 auto; min-height: 44px; white-space: nowrap; }
+
+    .filter-actions { width: 100%; margin-left: 0; flex-wrap: wrap; }
+    .filter-actions .btn { flex: 1 1 auto; min-height: 44px; }
+
+    .card-title { flex-wrap: wrap; }
+    .pager { flex-wrap: wrap; gap: 8px; }
+    .pager .btn { min-height: 44px; }
+}
+
+@media (max-width: 559px) {
+    .filter-bar:not(.compact) > .filter-item { flex: 1 1 100%; min-width: 0; }
+    .filter-bar:not(.compact) > .filter-item > .filter-input { width: 100%; min-width: 0; min-height: 44px; }
+}
 
 /* ── 复盘页 ── */
 .health-score {

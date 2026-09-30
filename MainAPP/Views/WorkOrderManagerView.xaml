@@ -161,6 +161,8 @@
                         ItemsSource="{Binding FilteredView}"
                         SelectedItem="{Binding SelectedWorkOrder, Mode=TwoWay}"
                         ItemContainerStyle="{StaticResource CardListItemStyle}"
+                        HorizontalContentAlignment="Stretch"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                         VirtualizingStackPanel.IsVirtualizing="True"
                         VirtualizingStackPanel.VirtualizationMode="Recycling"
                         VirtualizingStackPanel.ScrollUnit="Pixel"
@@ -170,12 +172,21 @@
                         ContextMenu="{StaticResource WorkOrderRowContextMenu}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="6,4">
-                                    <StackPanel Orientation="Horizontal">
+                                <Grid Margin="6,4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
                                         <TextBlock FontSize="{DynamicResource FontSizeKpiLabel}" FontWeight="Bold"
                                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                                   Text="{Binding OrderNo}" TextTrimming="CharacterEllipsis" />
-                                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
+                                                   Text="{Binding OrderNo}" TextTrimming="CharacterEllipsis" ToolTip="{Binding OrderNo}" />
+                                        <Border Grid.Column="1" Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
                                                 BorderBrush="{StaticResource WarningBrush}" BorderThickness="1">
                                             <Border.Style>
                                                 <Style TargetType="Border">
@@ -196,7 +207,7 @@
                                             <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
                                                        Foreground="{StaticResource WarningBrush}" Text="{x:Static resources:Strings.K762}" />
                                         </Border>
-                                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
+                                        <Border Grid.Column="2" Margin="6,0,0,0" Padding="5,1" CornerRadius="6" Background="Transparent"
                                                 BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
                                             <Border.Style>
                                                 <Style TargetType="Border">
@@ -217,20 +228,27 @@
                                             <TextBlock FontSize="{DynamicResource FontSizeMicro}" FontWeight="Bold"
                                                        Foreground="{StaticResource DangerBrush}" Text="{x:Static resources:Strings.K763}" />
                                         </Border>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                                    </Grid>
+                                    <Grid Grid.Row="1" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
                                         <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource SecondaryTextBrush}"
-                                                   Text="{Binding ProductName}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Margin="4,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="&#x00B7;" />
-                                        <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryBrush}"
+                                                   Text="{Binding ProductName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProductName}" />
+                                        <TextBlock Grid.Column="1" Margin="4,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="&#x00B7;" />
+                                        <TextBlock Grid.Column="2" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryBrush}"
                                                    Text="{Binding Production.AchievementRate, StringFormat={}{0:P0}, TargetNullValue=-}" />
-                                        <TextBlock Margin="4,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="&#x00B7;" />
-                                        <StackPanel Orientation="Horizontal">
+                                        <TextBlock Grid.Column="3" Margin="4,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="&#x00B7;" />
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal">
                                             <Ellipse Style="{StaticResource StatusDot}" Width="7" Height="7" />
                                             <TextBlock Margin="4,0,0,0" Style="{StaticResource StatusText}" FontSize="{DynamicResource FontSizeHint}" />
                                         </StackPanel>
-                                    </StackPanel>
-                                </StackPanel>
+                                    </Grid>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

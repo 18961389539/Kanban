@@ -213,6 +213,29 @@ public class KanbanDataClientIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Bootstrap_ConcurrentConnectionsAndInvokes_Complete()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var client = CreateClient();
+        await using var metaClient = CreateClient();
+        await Task.WhenAll(client.ConnectAsync(ct), metaClient.ConnectAsync(ct));
+
+        var snapshotsTask = client.GetCurrentSnapshotsAsync(ct);
+        var versionTask = client.GetServerVersionAsync(ct);
+        var titleTask = client.GetTitleAsync(ct);
+        var carouselTask = client.GetDisplayCarouselEnabledAsync(ct);
+        var languageTask = client.GetLanguageCodeAsync(ct);
+        await Task.WhenAll(snapshotsTask, versionTask, titleTask, carouselTask, languageTask)
+            .WaitAsync(TimeSpan.FromSeconds(10), ct);
+
+        Assert.Equal("dev-1", Assert.Single(await snapshotsTask).DeviceId);
+        Assert.Equal("test-1.0.0", await versionTask);
+        Assert.Equal("测试看板", await titleTask);
+        Assert.True(await carouselTask);
+        Assert.Equal("en-US", await languageTask);
+    }
+
+    [Fact]
     [Trait("Contract", "SignalROrdering")]
     public async Task ConcurrentInvoke_WhileLongRunningSubscribePending_IsQueued()
     {
