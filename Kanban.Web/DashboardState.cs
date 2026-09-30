@@ -1129,7 +1129,7 @@ public sealed class DashboardState : IAsyncDisposable
         }
     }
 
-    /// <summary>班次良率采样：换班清空；20s 内更新末点，否则追加，再压到 80 点。</summary>
+    /// <summary>班次良率采样：换班清空；同一小时更新末点，跨小时才追加。</summary>
     private void RecordShiftQuality(DeviceSnapshotDto snapshot)
     {
         var shiftName = _shiftProgress?.Name ?? "";

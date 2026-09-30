@@ -703,47 +703,44 @@
             var (yMin, _) = QualityScale;
             var qualityMin = Math.Round(yMin * 100, 0);
             var okData = new List<object[]>();
-            var flagData = new List<object[]>();
             var n = _hourlyOkHours.Length;
             for (var i = 0; i < n; i++)
             {
                 var ok = i < _hourlyOkCounts.Length ? Math.Max(0, _hourlyOkCounts[i]) : 0;
-                var ng = i < _hourlyNgCounts.Length ? Math.Max(0, _hourlyNgCounts[i]) : 0;
-                if (ok + ng > 0 && (double)ok / (ok + ng) < QualityTarget)
-                    flagData.Add([IsoLocal(_hourlyOkHours[i].AddMinutes(30)), ok]);
                 if (ok <= 0) continue;
-                okData.Add([IsoLocal(_hourlyOkHours[i]), ok]);
+                okData.Add([IsoLocal(_hourlyOkHours[i].AddMinutes(30)), ok]);
             }
-            // 与 WPF 同款画法：先按 5 分钟去重（实时点每 20 秒一个，12 小时轴上会糊成一根竖线），
-            // 再在间隔 > 15 分钟处插一个空值配合 connectNulls:false 断开空档（离线那段以前被连成斜线）。
+            var hourTicks = HourCenterTicks(axisStart, axisEnd);
+            // 与 WPF 同款：每小时一个点。相邻小时连线；中间空掉至少一整个小时才断开。
             var qualityData = new List<object[]>();
             var gapAreas = new List<object[]>();
             DateTime? prevTime = null;
-            long? prevSlot = null;
+            DateTime? prevHour = null;
             foreach (var point in QualityHistory)
             {
-                var slot = point.Time.Ticks / TimeSpan.FromMinutes(5).Ticks;
+                var hour = new DateTime(point.Time.Year, point.Time.Month, point.Time.Day, point.Time.Hour, 0, 0);
+                var center = hour.AddMinutes(30);
                 var value = Math.Round(point.Quality * 100, 1);
-                if (prevSlot == slot && qualityData.Count > 0)
+                if (prevHour == hour && qualityData.Count > 0)
                 {
-                    qualityData[^1] = [IsoLocal(point.Time), value];
-                    prevTime = point.Time;
+                    qualityData[^1] = [IsoLocal(center), value];
+                    prevTime = center;
                     continue;
                 }
 
-                if (prevTime.HasValue && point.Time - prevTime.Value > TimeSpan.FromMinutes(15))
+                if (prevTime.HasValue && prevHour.HasValue && hour - prevHour.Value > TimeSpan.FromHours(1))
                 {
                     qualityData.Add([IsoLocal(prevTime.Value.AddTicks(1)), "-"]);
                     gapAreas.Add(
                     [
                         new Dictionary<string, object?> { ["xAxis"] = IsoLocal(prevTime.Value) },
-                        new Dictionary<string, object?> { ["xAxis"] = IsoLocal(point.Time) },
+                        new Dictionary<string, object?> { ["xAxis"] = IsoLocal(center) },
                     ]);
                 }
 
-                qualityData.Add([IsoLocal(point.Time), value]);
-                prevTime = point.Time;
-                prevSlot = slot;
+                qualityData.Add([IsoLocal(center), value]);
+                prevTime = center;
+                prevHour = hour;
             }
 
             // 末点单独一个圆点：抽稀后仍能一眼看到「现在的良率在哪」。
@@ -751,7 +748,8 @@
             if (QualityHistory.Count > 0)
             {
                 var lastPoint = QualityHistory[^1];
-                tailPoint.Add([IsoLocal(lastPoint.Time), Math.Round(lastPoint.Quality * 100, 1)]);
+                var lastHour = new DateTime(lastPoint.Time.Year, lastPoint.Time.Month, lastPoint.Time.Day, lastPoint.Time.Hour, 0, 0);
+                tailPoint.Add([IsoLocal(lastHour.AddMinutes(30)), Math.Round(lastPoint.Quality * 100, 1)]);
             }
 
             return new Dictionary<string, object?>
@@ -764,15 +762,19 @@
                     ["type"] = "time",
                     ["min"] = IsoLocal(axisStart),
                     ["max"] = IsoLocal(axisEnd),
-                    // 钉住 1 小时粒度：不设时 ECharts 按轴宽自动抽稀，12 小时窗口只出几个刻度。
-                    ["minInterval"] = 3_600_000,
-                    ["maxInterval"] = 3_600_000,
-                    // 只写小时：整点轴分钟恒为 00，省一半宽度（时间轴 axisLabel 支持 {HH} 模板）。
+                    // 刻度落在每小时柱的正中；只写小时数字。
+                    ["axisTick"] = new Dictionary<string, object?>
+                    {
+                        ["customValues"] = hourTicks,
+                        ["alignWithLabel"] = true,
+                    },
                     ["axisLabel"] = new Dictionary<string, object?>
                     {
                         ["color"] = "#8B92A0",
-                        ["formatter"] = "{HH}",
+                        ["formatter"] = "__hourOnly",
+                        ["customValues"] = hourTicks,
                     },
+                    ["splitLine"] = new Dictionary<string, object?> { ["show"] = false },
                     ["axisLine"] = new Dictionary<string, object?> { ["lineStyle"] = new Dictionary<string, object?> { ["color"] = "#212834" } },
                 },
                 ["yAxis"] = new object[]
@@ -823,24 +825,6 @@
                             ["label"] = new Dictionary<string, object?> { ["show"] = false },
                             ["data"] = gapAreas,
                         },
-                        ["markLine"] = new Dictionary<string, object?>
-                        {
-                            ["silent"] = true,
-                            ["symbol"] = "none",
-                            ["data"] = new object[]
-                            {
-                                new Dictionary<string, object?>
-                                {
-                                    ["yAxis"] = QualityTarget * 100,
-                                    ["lineStyle"] = new Dictionary<string, object?>
-                                    {
-                                        ["type"] = "dashed",
-                                        ["color"] = "#F87171",
-                                        ["width"] = 1.4,
-                                    },
-                                },
-                            },
-                        },
                     },
                     new Dictionary<string, object?>
                     {
@@ -851,16 +835,6 @@
                         ["data"] = tailPoint,
                         ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#818CF8" },
                     },
-                    new Dictionary<string, object?>
-                    {
-                        ["name"] = L.T("Home_HourlyFlag"),
-                        ["type"] = "scatter",
-                        ["yAxisIndex"] = 0,
-                        ["symbol"] = "triangle",
-                        ["symbolSize"] = 9,
-                        ["data"] = flagData,
-                        ["itemStyle"] = new Dictionary<string, object?> { ["color"] = "#F87171" },
-                    },
                 },
             };
         }
@@ -868,6 +842,22 @@
 
     private static string IsoLocal(DateTime time)
         => time.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>每根小时柱的正中：柱占 [H:00, H+1:00)，刻度在 H:30。</summary>
+    private static List<string> HourCenterTicks(DateTime axisStart, DateTime axisEnd)
+    {
+        var ticks = new List<string>();
+        var hour = new DateTime(axisStart.Year, axisStart.Month, axisStart.Day, axisStart.Hour, 0, 0);
+        if (hour.AddMinutes(30) < axisStart)
+            hour = hour.AddHours(1);
+        while (hour.AddMinutes(30) <= axisEnd && ticks.Count < 48)
+        {
+            ticks.Add(IsoLocal(hour.AddMinutes(30)));
+            hour = hour.AddHours(1);
+        }
+
+        return ticks;
+    }
 
     private async Task MaybeRefreshHourlyOkAsync()
     {

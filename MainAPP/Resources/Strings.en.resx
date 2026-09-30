@@ -7079,7 +7079,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Gap versus the 95% quality target. Positive = above target, negative = still short.\nQuality now {0}, gap {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>Green bars are hourly OK output this shift. The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. The axis covers the whole shift.</value>
+    <value>Green bars are hourly OK output this shift. The line is cumulative shift quality, one point per hour: that hour's latest OK ÷ (OK+NG). The axis covers the whole shift.</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>Current-shift session OK / NG. Arrows compare with the previous shift.\nOK {0}   NG {1}</value>

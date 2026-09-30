@@ -7079,7 +7079,7 @@
     <value>相对良品率目标 95% 的差距。正数=超出目标，负数=尚未达标。\n当前合格率 {0}，差距 {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。横轴覆盖整班。</value>
+    <value>绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次累计良率，每小时一个点：该小时最后一次 OK ÷ (OK+NG)。横轴覆盖整班。</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>本班次会话累计 OK / NG。箭头对比上一班次同期口径。\nOK {0}   NG {1}</value>

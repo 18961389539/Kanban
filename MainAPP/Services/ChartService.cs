@@ -1,3 +1,4 @@
+using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Models;
 using MainAPP.Resources;
 using Kanban.Collector.Core.Services;
@@ -185,7 +186,11 @@ public static class ChartService
         return model;
     }
 
-    /// <summary>按时间桶去重：同一桶只保留最后一个点（实时点每 20 秒一个，直接在长横轴上连线会糊成竖线）。</summary>
+    /// <summary>小时柱正中：柱占 [H:00, H+1:00)，折线点与刻度都画在 H:30。</summary>
+    private static DateTime HourCenter(DateTime time)
+        => ShiftQualityTrendBuilder.HourOf(time).AddMinutes(30);
+
+    /// <summary>按时间桶去重：同一桶只保留最后一个点。</summary>
     private static List<(DateTime Time, double Quality)> DedupeByBucket(
         IReadOnlyList<(DateTime Time, double Quality)> points,
         TimeSpan bucket)
@@ -203,16 +208,57 @@ public static class ChartService
         return result;
     }
 
-    /// <summary>相邻点间隔超过 <paramref name="maxGap"/> 就切成新的一段——空档不连线。</summary>
-    private static List<List<(DateTime Time, double Quality)>> SplitByGap(
-        List<(DateTime Time, double Quality)> points,
-        TimeSpan maxGap)
+    /// <summary>
+    /// 小时柱横轴：刻度在每根柱正中。柱占 [H:00, H+1:00)，标签写 H，位置在 H:30。
+    /// </summary>
+    private sealed class BarCenterHourAxis : DateTimeAxis
+    {
+        public override void GetTickValues(
+            out IList<double> majorLabelValues,
+            out IList<double> majorTickValues,
+            out IList<double> minorTickValues)
+        {
+            if (double.IsNaN(Minimum) || double.IsNaN(Maximum) || Maximum <= Minimum)
+            {
+                base.GetTickValues(out majorLabelValues, out majorTickValues, out minorTickValues);
+                return;
+            }
+
+            var ticks = HourCenterTicks(Minimum, Maximum);
+            majorLabelValues = ticks;
+            majorTickValues = ticks;
+            minorTickValues = [];
+        }
+
+        private static List<double> HourCenterTicks(double minimum, double maximum)
+        {
+            var start = ToDateTime(minimum, DefaultPrecision);
+            var end = ToDateTime(maximum, DefaultPrecision);
+            var hour = new DateTime(start.Year, start.Month, start.Day, start.Hour, 0, 0);
+            if (hour.AddMinutes(30) < start)
+                hour = hour.AddHours(1);
+
+            var ticks = new List<double>();
+            while (hour.AddMinutes(30) <= end && ticks.Count < 48)
+            {
+                ticks.Add(ToDouble(hour.AddMinutes(30)));
+                hour = hour.AddHours(1);
+            }
+
+            return ticks;
+        }
+    }
+
+    /// <summary>时钟小时相差超过 1 小时就切开：08 点与 09 点仍连线，08 点与 10 点之间视为空档。</summary>
+    private static List<List<(DateTime Time, double Quality)>> SplitBySkippedHour(
+        List<(DateTime Time, double Quality)> points)
     {
         var segments = new List<List<(DateTime Time, double Quality)>>();
         List<(DateTime Time, double Quality)>? current = null;
         foreach (var point in points)
         {
-            if (current == null || point.Time - current[^1].Time > maxGap)
+            if (current == null
+                || ShiftQualityTrendBuilder.HourOf(point.Time) - ShiftQualityTrendBuilder.HourOf(current[^1].Time) > TimeSpan.FromHours(1))
             {
                 current = [];
                 segments.Add(current);
@@ -990,7 +1036,7 @@ public static class ChartService
     }
 
     /// <summary>
-    /// 当前班次累计良率折线。Y 轴按数据下限收缩，并画 95% 达标虚线。
+    /// 当前班次累计良率折线。Y 轴按数据下限收缩，不画达标虚线。
     /// 横轴默认覆盖整班时段（<paramref name="axisStart"/>–<paramref name="axisEnd"/>），
     /// 未指定时回退为首尾数据点时间。无点时返回空模型（调用方显示空状态）。
     /// </summary>
@@ -1037,25 +1083,11 @@ public static class ChartService
         foreach (var point in points)
             series.Points.Add(DateTimeAxis.CreateDataPoint(point.Time, point.Quality));
         model.Series.Add(series);
-
-        var targetLine = new LineSeries
-        {
-            Title = string.Format(Strings.F171, target),
-            Color = _alarmColor,
-            StrokeThickness = 1.4,
-            LineStyle = LineStyle.Dash,
-            TrackerFormatString = "{4:P0}",
-        };
-        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tStart, target));
-        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tEnd, target));
-        model.Series.Add(targetLine);
         return model;
     }
 
     /// <summary>
-    /// 当前班次产量 + 良率：左轴每小时 OK 增量柱，右轴会话累计良率折线与达标虚线。
-    /// 可选 <paramref name="ngCounts"/>：给出每小时 NG 增量时，对小时良率低于
-    /// <paramref name="target"/> 的小时在柱顶补一个红三角（累计折线会把单小时事件摊平）。
+    /// 当前班次产量 + 良率：左轴每小时 OK 增量柱，右轴会话累计良率折线。
     /// 横轴覆盖整班时段。无柱且无折线点时返回空模型（调用方显示空状态）。
     /// </summary>
     public static PlotModel BuildShiftQualityAndOutputChart(
@@ -1064,8 +1096,7 @@ public static class ChartService
         IReadOnlyList<(DateTime Time, double Quality)> qualityPoints,
         double target = 0.95,
         DateTime? axisStart = null,
-        DateTime? axisEnd = null,
-        int[]? ngCounts = null)
+        DateTime? axisEnd = null)
     {
         var model = CreateBaseModel();
         model.IsLegendVisible = false;
@@ -1081,17 +1112,25 @@ public static class ChartService
         if (tEnd <= tStart)
             tEnd = tStart.AddMinutes(1);
 
-        // 每小时都要出现刻度标签：不显式钉粒度时 OxyPlot 会按轴的像素长度自动抽稀，
-        // 12 小时窗口落到 4 小时一档（只剩 08:00/12:00/16:00/20:00）。
-        // DateTimeAxis 内部单位是「天」，所以 1 小时 = 1/24；IntervalType 只管标签/次刻度类型，
-        // 真正决定主刻度间距的是 MajorStep。格式只写小时「HH」——整点轴的分钟恒为 00，
-        // 省一半标签宽度，窄窗口也不用转角度。
-        // 注意：CreateDateTimeAxis 被 7 处图表共用，粒度只能在这里单独钉，不能改 helper。
-        var xAxis = CreateDateTimeAxis("", "HH");
-        xAxis.IntervalType = DateTimeIntervalType.Hours;
-        xAxis.MajorStep = 1.0 / 24;
-        xAxis.Minimum = DateTimeAxis.ToDouble(tStart);
-        xAxis.Maximum = DateTimeAxis.ToDouble(tEnd);
+        // 每小时一个刻度，落在该小时柱的正中（柱是 [整点, 下一整点)）。
+        // 不显式钉粒度时 OxyPlot 会按轴的像素长度抽稀，12 小时窗口只剩几个刻度。
+        // 竖网格不跟到正中，避免一根线把柱切开；横网格仍由左轴画出。
+        var xAxis = new BarCenterHourAxis
+        {
+            Position = AxisPosition.Bottom,
+            StringFormat = "HH",
+            IntervalType = DateTimeIntervalType.Hours,
+            MajorStep = 1.0 / 24,
+            Minimum = DateTimeAxis.ToDouble(tStart),
+            Maximum = DateTimeAxis.ToDouble(tEnd),
+            MajorGridlineStyle = LineStyle.None,
+            MinorGridlineStyle = LineStyle.None,
+            TicklineColor = _gridColor,
+            AxislineColor = _gridColor,
+            TextColor = _textColor,
+            TitleColor = _textColor,
+            LabelFormatter = static value => DateTimeAxis.ToDateTime(value, DateTimeAxis.DefaultPrecision).ToString("HH"),
+        };
         model.Axes.Add(xAxis);
 
         var maxOk = 0;
@@ -1167,14 +1206,11 @@ public static class ChartService
                 model.Series.Add(okSeries);
         }
 
-        // 良率折线（2026-09-22 重做画法）：
-        // ① 先按 5 分钟去重：实时点每 20 秒一个，在 12 小时横轴上 40 分钟只占约 28px，
-        //    直接连线会糊成一根竖线——同一桶只留最后一个点。
-        // ② 相邻点间隔 > 15 分钟就断开：离线那 7.4 小时以前被连成一条斜线，
-        //    看起来像良率在缓慢下滑，其实中间根本没有数据。
-        // ③ 末点另画一个圆点表示当前值。
-        var sampled = DedupeByBucket(qualityPoints, TimeSpan.FromMinutes(5));
-        var segments = SplitByGap(sampled, TimeSpan.FromMinutes(15));
+        // 良率折线：每小时一个点（同一小时只留最后一次的良率），横坐标落在该小时柱正中。
+        // 相邻小时连成一段；中间空掉至少一整个小时才断开，避免把整点间距画成离线。
+        // 末点另画一个圆点表示当前值。
+        var sampled = DedupeByBucket(qualityPoints, TimeSpan.FromHours(1));
+        var segments = SplitBySkippedHour(sampled);
         foreach (var segment in segments)
         {
             var series = new LineSeries
@@ -1189,7 +1225,7 @@ public static class ChartService
                 TrackerFormatString = "{2:HH:mm}\n{4:P1}",
             };
             foreach (var point in segment)
-                series.Points.Add(DateTimeAxis.CreateDataPoint(point.Time, point.Quality));
+                series.Points.Add(DateTimeAxis.CreateDataPoint(HourCenter(point.Time), point.Quality));
             model.Series.Add(series);
         }
 
@@ -1199,71 +1235,23 @@ public static class ChartService
         {
             var gapFrom = segments[i - 1][^1];
             var gapTo = segments[i][0];
+            var gapFromCenter = HourCenter(gapFrom.Time);
+            var gapToCenter = HourCenter(gapTo.Time);
             model.Annotations.Add(new RectangleAnnotation
             {
-                MinimumX = DateTimeAxis.ToDouble(gapFrom.Time),
-                MaximumX = DateTimeAxis.ToDouble(gapTo.Time),
+                MinimumX = DateTimeAxis.ToDouble(gapFromCenter),
+                MaximumX = DateTimeAxis.ToDouble(gapToCenter),
                 MinimumY = 0,
                 MaximumY = bandTop,
                 Fill = OxyColor.FromArgb(90, 0x2A, 0x32, 0x3F),
                 Stroke = OxyColors.Transparent,
                 Layer = AnnotationLayer.BelowSeries,
-                Text = string.Format(Strings.Home_NoDataSpan, $"{(gapTo.Time - gapFrom.Time).TotalHours:0.#}h"),
+                Text = string.Format(Strings.Home_NoDataSpan, $"{(gapToCenter - gapFromCenter).TotalHours:0.#}h"),
                 TextColor = ChartPalette.MutedText,
                 FontSize = 11,
                 TextHorizontalAlignment = HorizontalAlignment.Center,
                 TextVerticalAlignment = VerticalAlignment.Bottom,
             });
-        }
-
-        var targetLine = new LineSeries
-        {
-            Title = string.Format(Strings.F171, target),
-            Color = _alarmColor,
-            StrokeThickness = 1.4,
-            LineStyle = LineStyle.Dash,
-            YAxisKey = "shiftQuality",
-            TrackerFormatString = "{4:P0}",
-        };
-        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tStart, target));
-        targetLine.Points.Add(DateTimeAxis.CreateDataPoint(tEnd, target));
-        model.Series.Add(targetLine);
-
-        // 单小时质量异常标记（2026-09-22）：折线画的是「累计良率」，一次小时级质量事件会被
-        // 后面的正常时间摊平，看不出是哪一小时出的问题。这里对小时良率低于达标线的小时，
-        // 在柱顶补一个红三角；Tag 里装好该小时的 OK / NG / 良率，由 TrackerFormatString 的 {Tag} 渲染。
-        // 加在最后 = 画在最上层。
-        if (ngCounts != null)
-        {
-            var flags = new ScatterSeries
-            {
-                Title = Strings.Home_HourlyFlag,
-                MarkerType = MarkerType.Triangle,
-                MarkerSize = 5,
-                MarkerFill = _alarmColor,
-                MarkerStroke = OxyColors.Transparent,
-                TrackerFormatString = "{2:HH:mm}\n{Tag}",
-            };
-            for (int i = 0; i < buckets.Length; i++)
-            {
-                var ok = i < okCounts.Length ? Math.Max(0, okCounts[i]) : 0;
-                var ng = i < ngCounts.Length ? Math.Max(0, ngCounts[i]) : 0;
-                if (ok + ng <= 0)
-                    continue;
-
-                var rate = (double)ok / (ok + ng);
-                if (rate >= target)
-                    continue;
-
-                flags.Points.Add(new ScatterPoint(
-                    DateTimeAxis.ToDouble(buckets[i].AddMinutes(30)), ok)
-                {
-                    Tag = string.Format(Strings.Home_Tip_HourlyFlag, ok, ng, rate, target),
-                });
-            }
-
-            if (flags.Points.Count > 0)
-                model.Series.Add(flags);
         }
 
         // 当前值单独一个圆点：末段抽稀后仍能一眼看到「现在的良率在哪」。
@@ -1280,7 +1268,7 @@ public static class ChartService
                 YAxisKey = "shiftQuality",
                 TrackerFormatString = "{2:HH:mm}\n{4:P1}",
             };
-            current.Points.Add(new ScatterPoint(DateTimeAxis.ToDouble(last.Time), last.Quality));
+            current.Points.Add(new ScatterPoint(DateTimeAxis.ToDouble(HourCenter(last.Time)), last.Quality));
             model.Series.Add(current);
         }
 

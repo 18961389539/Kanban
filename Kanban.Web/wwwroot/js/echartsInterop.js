@@ -38,6 +38,15 @@
         for (const axis of axes) {
             if (axis.type !== 'time') continue;
             hasTimeAxis = true;
+            if (axis.axisLabel && axis.axisLabel.formatter === '__hourOnly') {
+                axis.axisLabel = Object.assign({}, axis.axisLabel, {
+                    formatter: function (value) {
+                        const d = new Date(value);
+                        return Number.isNaN(d.getTime()) ? '' : pad2(d.getHours());
+                    }
+                });
+                continue;
+            }
             axis.axisLabel = Object.assign({}, axis.axisLabel || {}, { formatter: formatAxisTime });
         }
         if (hasTimeAxis) {

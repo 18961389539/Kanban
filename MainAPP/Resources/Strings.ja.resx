@@ -7079,7 +7079,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>良品率目標 95% との差。正=目標超過、負=未達。\n現在の良品率 {0}、差 {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。横軸はシフト全時間。</value>
+    <value>緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率で、1時間に1点：その時間の最後の OK ÷ (OK+NG)。横軸はシフト全時間。</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>当シフトのセッション累計 OK / NG。矢印は前シフトとの差。\nOK {0}   NG {1}</value>

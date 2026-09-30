@@ -271,9 +271,8 @@ public class ChartServiceTests
             (now.AddHours(2), 0.94),
         ], 0.95, now, shiftEnd);
         var lines = chart.Series.OfType<LineSeries>().ToList();
-        Assert.Equal(2, lines.Count);
+        Assert.Single(lines);
         Assert.Equal(3, lines[0].Points.Count);
-        Assert.Equal(2, lines[1].Points.Count);
         var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
         Assert.Equal(DateTimeAxis.ToDouble(now), xAxis.Minimum);
         Assert.Equal(DateTimeAxis.ToDouble(shiftEnd), xAxis.Maximum);
@@ -310,17 +309,17 @@ public class ChartServiceTests
         Assert.Equal("{7}", bars.TrackerFormatString);
         Assert.All(bars.Items, i => Assert.False(string.IsNullOrWhiteSpace(i.Title)));
         var lines = chart.Series.OfType<LineSeries>().ToList();
-        // 良率折线按「相邻点间隔 > 15 分钟」断开：测试数据 08:30 与 10:00 隔了 90 分钟 → 两段 + 一条达标线
-        Assert.Equal(3, lines.Count);
+        // 08:30 与 10:00 中间空掉 09 点整小时 → 两段；点画在各小时柱正中
+        Assert.Equal(2, lines.Count);
         Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), lines[0].Points[0].X);
-        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2)), lines[1].Points[0].X);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2).AddMinutes(30)), lines[1].Points[0].X);
         Assert.Equal("shiftQuality", lines[0].YAxisKey);
-        Assert.Equal(2, lines[2].Points.Count); // 达标线
+        Assert.DoesNotContain(lines, line => line.LineStyle == LineStyle.Dash);
         // 空档底纹 + 时长文案
         var gap = Assert.Single(chart.Annotations.OfType<RectangleAnnotation>());
         Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), gap.MinimumX);
-        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2)), gap.MaximumX);
-        Assert.Contains("1.5h", gap.Text);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(2).AddMinutes(30)), gap.MaximumX);
+        Assert.Contains("2h", gap.Text);
         // 良率末点圆点
         Assert.Contains(chart.Series.OfType<ScatterSeries>(), s => s.MarkerType == MarkerType.Circle);
         var xAxis = chart.Axes.OfType<DateTimeAxis>().Single();
@@ -330,7 +329,33 @@ public class ChartServiceTests
         Assert.Equal(1.0 / 24, xAxis.MajorStep);
         Assert.Equal(DateTimeIntervalType.Hours, xAxis.IntervalType);
         Assert.Equal("HH", xAxis.StringFormat);
+        xAxis.GetTickValues(out var labels, out var ticks, out _);
+        Assert.Equal(12, labels.Count);
+        Assert.Equal(ticks, labels);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), labels[0], 6);
+        Assert.Equal(DateTimeAxis.ToDouble(end.AddMinutes(-30)), labels[^1], 6);
+        Assert.Equal("08", xAxis.FormatValue(labels[0]));
+        Assert.Equal("19", xAxis.FormatValue(labels[^1]));
         Assert.Contains(chart.Axes.OfType<LinearAxis>(), a => a.Position == AxisPosition.Right);
+    }
+
+    [Fact]
+    public void BuildShiftQualityAndOutputChart_ConnectsAdjacentHours()
+    {
+        var start = DateTime.Today.AddHours(8);
+        var chart = ChartService.BuildShiftQualityAndOutputChart(
+            [],
+            [],
+            [(start.AddMinutes(10), 0.98), (start.AddHours(1).AddMinutes(50), 0.94)],
+            0.95,
+            start,
+            start.AddHours(2));
+
+        var line = Assert.Single(chart.Series.OfType<LineSeries>());
+        Assert.Equal(2, line.Points.Count);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddMinutes(30)), line.Points[0].X, 6);
+        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(1).AddMinutes(30)), line.Points[1].X, 6);
+        Assert.Empty(chart.Annotations.OfType<RectangleAnnotation>());
     }
 
     [Fact]
@@ -341,27 +366,18 @@ public class ChartServiceTests
     }
 
     [Fact]
-    public void BuildShiftQualityAndOutputChart_FlagsHoursBelowTarget()
+    public void BuildShiftQualityAndOutputChart_DoesNotDrawTargetTriangles()
     {
         var start = DateTime.Today.AddHours(8);
-        var end = start.AddHours(4);
         var chart = ChartService.BuildShiftQualityAndOutputChart(
             [start, start.AddHours(1), start.AddHours(2)],
             [100, 100, 100],
             [],
             0.95,
             start,
-            end,
-            [1, 20, 1]); // 只有第二小时 100/(100+20)=83.3% 低于达标线
+            start.AddHours(4));
 
-        // 现在图上有两类 ScatterSeries：小时异常红三角 + 良率末点圆点，按 MarkerType 区分。
-        var flags = Assert.Single(
-            chart.Series.OfType<ScatterSeries>(),
-            s => s.MarkerType == MarkerType.Triangle);
-        var point = Assert.Single(flags.Points);
-        Assert.Equal(DateTimeAxis.ToDouble(start.AddHours(1).AddMinutes(30)), point.X); // 落在该小时柱正中
-        Assert.Equal(100d, point.Y);                                                   // 高度 = 该小时 OK 数
-        Assert.Contains("NG 20", point.Tag?.ToString());
+        Assert.DoesNotContain(chart.Series.OfType<ScatterSeries>(), s => s.MarkerType == MarkerType.Triangle);
     }
 
     [Fact]

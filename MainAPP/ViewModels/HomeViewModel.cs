@@ -84,7 +84,6 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
     private List<(DateTime Time, double Quality)> _qualityTrendHistory = [];
     private DateTime[] _hourlyOkBuckets = [];
     private int[] _hourlyOkCounts = [];
-    // 每小时 NG 增量：只用于在良率图上标出「小时良率低于达标线」的小时（不打 NG 柱）。
     private int[] _hourlyNgCounts = [];
     private static readonly TimeSpan QualityHistoryThrottle = TimeSpan.FromSeconds(15);
 
@@ -1501,12 +1500,11 @@ public partial class HomeViewModel : ObservableObject, IDisposable, INavigationP
             _qualityTrendHistory,
             KpiThresholds.QualityGood,
             shift != null ? shiftStart : null,
-            shift != null ? shiftEnd : null,
-            _hourlyNgCounts);
+            shift != null ? shiftEnd : null);
     }
 
     /// <summary>
-    /// 当前班次良率折线 + 小时良品柱：产量快照回填历史点与每小时 OK 增量，再叠实时良率。
+    /// 当前班次良率折线（每小时一个点）+ 小时良品柱：产量快照回填后按小时收成一点，再叠实时良率。
     /// </summary>
     private void RefreshQualityTrend()
     {

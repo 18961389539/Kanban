@@ -154,6 +154,69 @@ public class WorkOrderServiceTests : IDisposable
         Assert.Equal(10, summary.NgCount);
     }
 
+    [Fact]
+    public void GetProductionSummary_SameShiftCounterReset_KeepsPriorGrowthAndAddsNewSession()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-RESET",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            TargetQuantity = 900,
+        });
+
+        // 同一班次名跨天：会话累计 100 → 250 后计数器复位到 14。
+        // 首尾相减会得到 14-100 的负数并被截成 0；复位后应保留已增长的 150，再计入新会话 14。
+        var now = DateTime.Now;
+        _historyService.ProductionLogs.AddRange(new[]
+        {
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 100, NgProduction = 0, Timestamp = now.AddHours(-30), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 250, NgProduction = 10, Timestamp = now.AddHours(-26), WorkOrderId = wo.Id },
+            new ProductionLog { DeviceId = "dev-1", ShiftName = "白班", OkProduction = 14, NgProduction = 2, Timestamp = now.AddMinutes(-1), WorkOrderId = wo.Id },
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(164, summary.OkCount); // (250-100) + 14
+        Assert.Equal(12, summary.NgCount);  // (10-0) + 2
+    }
+
+    [Fact]
+    public void GetProductionSummary_SingleRecord_HigherBaseline_CountsCurrentSession()
+    {
+        var svc = CreateService();
+        var wo = _workOrderRepo.Upsert(new WorkOrder
+        {
+            OrderNo = "WO-RESET-ONE",
+            Status = WorkOrderStatus.Running,
+            DeviceId = "dev-1",
+            TargetQuantity = 900,
+        });
+
+        var now = DateTime.Now;
+        _historyService.ProductionLogs.Add(new ProductionLog
+        {
+            DeviceId = "dev-1",
+            ShiftName = "白班",
+            OkProduction = 473,
+            NgProduction = 41,
+            Timestamp = now.AddDays(-8),
+        });
+        _historyService.ProductionLogs.Add(new ProductionLog
+        {
+            DeviceId = "dev-1",
+            ShiftName = "白班",
+            OkProduction = 14,
+            NgProduction = 2,
+            Timestamp = now.AddMinutes(-1),
+            WorkOrderId = wo.Id,
+        });
+
+        var summary = svc.GetProductionSummary(wo);
+        Assert.Equal(14, summary.OkCount);
+        Assert.Equal(2, summary.NgCount);
+    }
+
     // ──────────── 完成时产量快照写入 ────────────
 
     [Fact]

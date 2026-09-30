@@ -7035,7 +7035,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Diferença em relação à meta de 95%. Positivo = acima, negativo = ainda abaixo.\nQualidade agora {0}, diferença {1}</value>
   </data>
   <data name="Home_Tip_QualityTrend" xml:space="preserve">
-    <value>Barras verdes = OK por hora do turno. A linha é a qualidade acumulada: OK ÷ (OK+NG). A linha vermelha tracejada é a meta de 95%. O eixo cobre o turno inteiro.</value>
+    <value>Barras verdes = OK por hora do turno. A linha é a qualidade acumulada, um ponto por hora: o último OK ÷ (OK+NG) daquela hora. O eixo cobre o turno inteiro.</value>
   </data>
   <data name="Home_Tip_CurrentShift" xml:space="preserve">
     <value>OK / NG acumulados do turno atual. Setas comparam com o turno anterior.\nOK {0}   NG {1}</value>

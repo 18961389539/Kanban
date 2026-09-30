@@ -9697,7 +9697,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Home_Tip_QualityTrend"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次会话累计良率：各时点 OK ÷ (OK+NG)。红虚线为 95% 达标线。横轴覆盖整班。", ["en-US"] = "Green bars are hourly OK output this shift. The line is cumulative shift quality: OK ÷ (OK+NG) at each sample. The dashed red line is the 95% target. The axis covers the whole shift.", ["ja-JP"] = "緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率：各時点の OK ÷ (OK+NG)。赤破線は 95% 目標。横軸はシフト全時間。", ["pt-BR"] = "Barras verdes = OK por hora do turno. A linha é a qualidade acumulada: OK ÷ (OK+NG). A linha vermelha tracejada é a meta de 95%. O eixo cobre o turno inteiro."
+            ["zh-CN"] = "绿柱为本班次每小时良品数（该小时 OK 增量）。折线为本班次累计良率，每小时一个点：该小时最后一次 OK ÷ (OK+NG)。横轴覆盖整班。", ["en-US"] = "Green bars are hourly OK output this shift. The line is cumulative shift quality, one point per hour: that hour's latest OK ÷ (OK+NG). The axis covers the whole shift.", ["ja-JP"] = "緑の棒は当シフトの1時間あたりの良品数。折れ線は当シフト累計良品率で、1時間に1点：その時間の最後の OK ÷ (OK+NG)。横軸はシフト全時間。", ["pt-BR"] = "Barras verdes = OK por hora do turno. A linha é a qualidade acumulada, um ponto por hora: o último OK ÷ (OK+NG) daquela hora. O eixo cobre o turno inteiro."
         },
         ["Wpf|Home_Tip_CurrentShift"] = new Dictionary<string, string>
         {

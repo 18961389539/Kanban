@@ -2,6 +2,7 @@ namespace Kanban.Contracts.Metrics;
 
 /// <summary>
 /// 当前班次良率折线的点列：历史产量快照为班次会话累计 OK/NG，良率 = OK/(OK+NG)。
+/// 每小时只保留最后一个点；当前小时的点随实时良率就地更新。
 /// WPF 主页与 Web 看板共用，避免两端采样口径漂移。
 /// </summary>
 public static class ShiftQualityTrendBuilder
@@ -22,7 +23,7 @@ public static class ShiftQualityTrendBuilder
             .OrderBy(sample => sample.Time)
             .Select(sample => (sample.Time, SnapshotMetrics.QualityRate(sample.Ok, sample.Ng)))
             .ToList();
-        return Downsample(points, MaxPoints);
+        return Downsample(BucketToHours(points), MaxPoints);
     }
 
     public static List<(DateTime Time, double Quality)> MergeLive(
@@ -33,14 +34,33 @@ public static class ShiftQualityTrendBuilder
     {
         var list = history.ToList();
         if (!hasOutput)
-            return Downsample(list, MaxPoints);
+            return Downsample(BucketToHours(list), MaxPoints);
 
-        if (list.Count > 0 && (now - list[^1].Time).TotalSeconds < 20)
+        if (list.Count > 0 && HourOf(list[^1].Time) == HourOf(now))
             list[^1] = (now, liveQuality);
         else
             list.Add((now, liveQuality));
-        return Downsample(list, MaxPoints);
+        return Downsample(BucketToHours(list), MaxPoints);
     }
+
+    /// <summary>同一时钟小时只留最后一个点。</summary>
+    public static List<(DateTime Time, double Quality)> BucketToHours(
+        IReadOnlyList<(DateTime Time, double Quality)> points)
+    {
+        var result = new List<(DateTime Time, double Quality)>(points.Count);
+        foreach (var point in points)
+        {
+            if (result.Count > 0 && HourOf(result[^1].Time) == HourOf(point.Time))
+                result[^1] = point;
+            else
+                result.Add(point);
+        }
+
+        return result;
+    }
+
+    public static DateTime HourOf(DateTime time)
+        => new(time.Year, time.Month, time.Day, time.Hour, 0, 0);
 
     public static List<(DateTime Time, double Quality)> Downsample(
         IReadOnlyList<(DateTime Time, double Quality)> points, int max)
