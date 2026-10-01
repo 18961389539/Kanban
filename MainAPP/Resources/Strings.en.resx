@@ -5469,7 +5469,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Top alarm by trigger count in the selected time range above; refreshed about every 60s</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight</value>
+    <value>Event stream and Top list follow the selected range. Today's trigger and recover counts always start at midnight.</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>Repeated triggers of the same alarm within a short window merged; {0} events total</value>
@@ -7290,6 +7290,12 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
     <value>More unrecovered alarms on this device are not expanded. The card shows the first only.\n{0:N0} more</value>
+  </data>
+  <data name="Ac_GroupRange" xml:space="preserve">
+    <value>Range</value>
+  </data>
+  <data name="Ac_GroupSearch" xml:space="preserve">
+    <value>Search</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
     <value>Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\nNow: {0}</value>

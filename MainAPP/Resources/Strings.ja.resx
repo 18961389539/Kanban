@@ -5469,7 +5469,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>上部で選択した時間範囲内の発生回数第1位。約60秒更新</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計</value>
+    <value>イベント流と Top は選択した範囲に従います。本日の発生・復帰は常に本日 0:00 から集計します。</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件</value>
@@ -7290,6 +7290,12 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
     <value>このデバイスには未展開の未復旧アラームがあります。カードは先頭のみ表示。\nほか {0:N0} 件</value>
+  </data>
+  <data name="Ac_GroupRange" xml:space="preserve">
+    <value>範囲</value>
+  </data>
+  <data name="Ac_GroupSearch" xml:space="preserve">
+    <value>検索</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
     <value>統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\n現在：{0}</value>

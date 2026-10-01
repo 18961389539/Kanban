@@ -5425,7 +5425,7 @@
     <value>Alarme com mais disparos no período selecionado acima; atualizado a cada ~60 s</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>O fluxo de eventos e o Top seguem o período acima; os KPIs de disparo/recuperação de hoje contam sempre desde 0:00</value>
+    <value>O fluxo de eventos e o Top seguem o período selecionado. Disparos e recuperações de hoje contam sempre desde 0:00.</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>Disparos repetidos do mesmo alarme numa janela curta foram mesclados; {0} eventos no total</value>
@@ -7246,6 +7246,12 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
     <value>Há mais alarmes sem recuperação neste dispositivo. O cartão mostra só o primeiro.\nMais {0:N0}</value>
+  </data>
+  <data name="Ac_GroupRange" xml:space="preserve">
+    <value>Período</value>
+  </data>
+  <data name="Ac_GroupSearch" xml:space="preserve">
+    <value>Pesquisar</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
     <value>Soma das durações deste alarme na janela (pareado se recuperado, senão até agora).\nAgora: {0}</value>

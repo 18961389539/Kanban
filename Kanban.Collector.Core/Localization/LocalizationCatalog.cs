@@ -7229,7 +7229,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K717"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计", ["en-US"] = "Event stream and Top list follow the time range above; today's trigger/recover KPIs always count since midnight", ["ja-JP"] = "イベント流と Top ランキングは上部の時間範囲の影響を受けます。本日の発生/復帰 KPI は常に本日 0:00 から集計", ["pt-BR"] = "O fluxo de eventos e o Top seguem o período acima; os KPIs de disparo/recuperação de hoje contam sempre desde 0:00"
+            ["zh-CN"] = "事件流与 Top 排行按所选范围。今日触发、恢复始终从今天 0:00 起。", ["en-US"] = "Event stream and Top list follow the selected range. Today's trigger and recover counts always start at midnight.", ["ja-JP"] = "イベント流と Top は選択した範囲に従います。本日の発生・復帰は常に本日 0:00 から集計します。", ["pt-BR"] = "O fluxo de eventos e o Top seguem o período selecionado. Disparos e recuperações de hoje contam sempre desde 0:00."
         },
         ["Wpf|K718"] = new Dictionary<string, string>
         {
@@ -9978,6 +9978,14 @@ public static class LocalizationCatalog
         ["Wpf|Ln_Tip_ExtraAlarms"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "该设备还有未展开的未恢复报警。卡片只展示第一条。\\n另有 {0:N0} 条", ["en-US"] = "More unrecovered alarms on this device are not expanded. The card shows the first only.\\n{0:N0} more", ["ja-JP"] = "このデバイスには未展開の未復旧アラームがあります。カードは先頭のみ表示。\\nほか {0:N0} 件", ["pt-BR"] = "Há mais alarmes sem recuperação neste dispositivo. O cartão mostra só o primeiro.\\nMais {0:N0}"
+        },
+        ["Wpf|Ac_GroupRange"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "范围", ["en-US"] = "Range", ["ja-JP"] = "範囲", ["pt-BR"] = "Período"
+        },
+        ["Wpf|Ac_GroupSearch"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "搜索", ["en-US"] = "Search", ["ja-JP"] = "検索", ["pt-BR"] = "Pesquisar"
         },
         ["Wpf|Ac_Tip_RankDuration"] = new Dictionary<string, string>
         {

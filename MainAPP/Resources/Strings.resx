@@ -5469,7 +5469,7 @@
     <value>按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>事件流与 Top 排行受上方时间范围影响；今日触发/恢复 KPI 始终按今日 0:00 起统计</value>
+    <value>事件流与 Top 排行按所选范围。今日触发、恢复始终从今天 0:00 起。</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>同一报警在短时间内重复触发已合并显示，共 {0} 条</value>
@@ -7290,6 +7290,12 @@
   </data>
   <data name="Ln_Tip_ExtraAlarms" xml:space="preserve">
     <value>该设备还有未展开的未恢复报警。卡片只展示第一条。\n另有 {0:N0} 条</value>
+  </data>
+  <data name="Ac_GroupRange" xml:space="preserve">
+    <value>范围</value>
+  </data>
+  <data name="Ac_GroupSearch" xml:space="preserve">
+    <value>搜索</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
     <value>统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\n当前：{0}</value>

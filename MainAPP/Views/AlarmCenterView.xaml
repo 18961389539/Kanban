@@ -58,24 +58,58 @@
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <!-- 时间范围切换按钮（RadioButton 模拟分段按钮，GroupName 互斥） -->
-        <Style x:Key="TimeRangeTab" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
-            <Setter Property="Padding" Value="12,5" />
-            <Setter Property="Margin" Value="0,0,4,0" />
+        <Style x:Key="FilterGroupLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeCaption}" />
+            <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+        </Style>
+        <!-- 时间范围分段：去掉系统单选圆点，拼成一组等高按钮。 -->
+        <Style x:Key="TimeRangeSegment" TargetType="RadioButton">
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Foreground" Value="White" />
-                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                    <Condition Property="IsChecked" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}" />
+                            </MultiTrigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TimeRangeSegmentLast" TargetType="RadioButton" BasedOn="{StaticResource TimeRangeSegment}">
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
         <!-- SQL 统计 KPI：DB 故障时数值标红并显示 — -->
         <Style x:Key="StatsKpiValue" TargetType="TextBlock" BasedOn="{StaticResource KpiCellValue}">
@@ -124,112 +158,128 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  ============ 标题栏 + 时间范围切换 ============  -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                <materialIcons:MaterialIcon
-                    Style="{StaticResource PageTitleIcon}" Kind="BellAlert" />
-                <TextBlock
-                    Style="{StaticResource PageTitleText}"
-                    Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
-                <!-- 最后刷新时间 -->
-                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+        <!-- 标题在左；设备、搜索、范围、操作为等高分组，说明单独占下一行。 -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialIcons:MaterialIcon
+                        Style="{StaticResource PageTitleIcon}" Kind="BellAlert" />
                     <TextBlock
-                        FontSize="{DynamicResource FontSizeCaption}"
-                        Foreground="{StaticResource ThirdlyTextBrush}"
-                        Text="{Binding ActiveLastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F716}" />
-                    <TextBlock
-                        FontSize="{DynamicResource FontSizeCaption}"
-                        Foreground="{StaticResource ThirdlyTextBrush}"
-                        Text="{Binding StatsLastUpdateTimeText}">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ShowStatsLastUpdateTime}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                        Style="{StaticResource PageTitleText}"
+                        Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
+                    <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="{DynamicResource FontSizeCaption}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="{Binding ActiveLastUpdateTime, Converter={StaticResource LocFormatConverter}, ConverterParameter=F716}" />
+                        <TextBlock
+                            FontSize="{DynamicResource FontSizeCaption}"
+                            Foreground="{StaticResource ThirdlyTextBrush}"
+                            Text="{Binding StatsLastUpdateTimeText}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowStatsLastUpdateTime}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
 
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                <!--  显式套 ComboBoxExtend 系样式；裸 ComboBox 会回落到 HandyControl 默认浅色样式，
-                      与本页深色底形成「浅底近白字」的低对比度。  -->
-                <ComboBox Width="150" Margin="0,0,8,0" VerticalContentAlignment="Center"
-                          Style="{StaticResource ComboBoxExtend.Small}"
-                          ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
-                          SelectedValue="{Binding SelectedDeviceId}" SelectedValuePath="Id"
-                          ToolTip="{x:Static resources:Strings.K024}" />
-                <Button Content="{x:Static resources:Strings.K004}" Padding="8,3" Margin="0,0,8,0"
-                    Command="{Binding ClearDeviceFilterCommand}" ToolTip="{x:Static resources:Strings.K123}" />
-                <!-- 搜索框：占位符常驻可见（原仅 ToolTip，未悬停时看不出这是搜索框） -->
-                <hc:TextBox Width="170" Margin="0,0,8,0" x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
-                            Style="{StaticResource TextBoxExtend}"
-                            hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
-                            Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
-                            ToolTip="{x:Static resources:Strings.K124}" />
-                <!-- 时间范围切换（RadioButton 互斥，双向绑定 IsXxx 派生属性） -->
-                <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="{x:Static resources:Strings.K042}"
-                    IsChecked="{Binding IsHour1}"
-                    Style="{StaticResource TimeRangeTab}"
-                    Content="{x:Static resources:Strings.K042}" />
-                <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="{x:Static resources:Strings.K043}"
-                    IsChecked="{Binding IsHours4}"
-                    Style="{StaticResource TimeRangeTab}"
-                    Content="{x:Static resources:Strings.K043}" />
-                <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="{x:Static resources:Strings.K025}"
-                    IsChecked="{Binding IsHours24}"
-                    Style="{StaticResource TimeRangeTab}"
-                    Content="{x:Static resources:Strings.K025}" />
-                <RadioButton GroupName="TimeRange"
-                    AutomationProperties.Name="{x:Static resources:Strings.K078}"
-                    IsChecked="{Binding IsCurrentShift}"
-                    Style="{StaticResource TimeRangeTab}"
-                    Content="{x:Static resources:Strings.K078}" />
-                <TextBlock Margin="12,0,12,0" MaxWidth="220" VerticalAlignment="Center"
-                           FontSize="{DynamicResource FontSizeCaption}"
-                           Foreground="{StaticResource ThirdlyTextBrush}"
-                           Text="{x:Static resources:Strings.K717}"
-                           TextWrapping="Wrap"
-                           ToolTip="{x:Static resources:Strings.K717}" />
-                <!-- 静音按钮：抑制新报警声音（与会话级 IAlarmSessionMute 同步；主页报警卡静音同源） -->
-                <Button Width="30" Height="30" Padding="0" Margin="0,0,8,0"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resources:Strings.K330}"
-                        Command="{Binding ToggleAlarmMuteCommand}"
-                        Style="{StaticResource ButtonDefault}"
-                        ToolTip="{x:Static resources:Strings.K331}">
-                    <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
-                        <materialIcons:MaterialIcon.Style>
-                            <Style TargetType="materialIcons:MaterialIcon">
-                                <Setter Property="Kind" Value="VolumeHigh" />
-                                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsAlarmMuted}" Value="True">
-                                        <Setter Property="Kind" Value="VolumeMute" />
-                                        <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </materialIcons:MaterialIcon.Style>
-                    </materialIcons:MaterialIcon>
-                </Button>
-                <!-- 刷新按钮 -->
-                <Button
-                    Command="{Binding RefreshAllCommand}"
-                    Style="{StaticResource IconButtonPrimary}"
-                    Tag="{x:Static mi:MaterialIconKind.Refresh}"
-                    Content="{x:Static resources:Strings.K015}"
-                    ToolTip="{x:Static resources:Strings.K044}" />
-            </StackPanel>
-        </DockPanel>
+                <WrapPanel Grid.Column="1" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.K002}" />
+                        <ComboBox Width="150" Height="32" VerticalContentAlignment="Center"
+                                  Style="{StaticResource ComboBoxExtend.Small}"
+                                  ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
+                                  SelectedValue="{Binding DeviceFilterValue}" SelectedValuePath="Id"
+                                  ToolTip="{x:Static resources:Strings.K024}" />
+                    </StackPanel>
+                    <StackPanel Width="200" Margin="0,0,12,0">
+                        <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Ac_GroupSearch}" />
+                        <hc:TextBox Height="32" x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
+                                    Style="{StaticResource TextBoxExtend}"
+                                    hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
+                                    Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                    ToolTip="{x:Static resources:Strings.K124}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Ac_GroupRange}" />
+                        <Border Height="32" CornerRadius="6" ClipToBounds="True"
+                                Background="{StaticResource RegionBrush}"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton GroupName="TimeRange"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K042}"
+                                    IsChecked="{Binding IsHour1}"
+                                    Style="{StaticResource TimeRangeSegment}"
+                                    Content="{x:Static resources:Strings.K042}" />
+                                <RadioButton GroupName="TimeRange"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K043}"
+                                    IsChecked="{Binding IsHours4}"
+                                    Style="{StaticResource TimeRangeSegment}"
+                                    Content="{x:Static resources:Strings.K043}" />
+                                <RadioButton GroupName="TimeRange"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K025}"
+                                    IsChecked="{Binding IsHours24}"
+                                    Style="{StaticResource TimeRangeSegment}"
+                                    Content="{x:Static resources:Strings.K025}" />
+                                <RadioButton GroupName="TimeRange"
+                                    AutomationProperties.Name="{x:Static resources:Strings.K078}"
+                                    IsChecked="{Binding IsCurrentShift}"
+                                    Style="{StaticResource TimeRangeSegmentLast}"
+                                    Content="{x:Static resources:Strings.K078}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Button Width="32" Height="32" Padding="0" Margin="0,0,8,0"
+                                AutomationProperties.Name="{x:Static resources:Strings.K330}"
+                                Command="{Binding ToggleAlarmMuteCommand}"
+                                Style="{StaticResource ButtonDefault}"
+                                ToolTip="{x:Static resources:Strings.K331}">
+                            <materialIcons:MaterialIcon Width="16" Height="16" VerticalAlignment="Center">
+                                <materialIcons:MaterialIcon.Style>
+                                    <Style TargetType="materialIcons:MaterialIcon">
+                                        <Setter Property="Kind" Value="VolumeHigh" />
+                                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAlarmMuted}" Value="True">
+                                                <Setter Property="Kind" Value="VolumeMute" />
+                                                <Setter Property="Foreground" Value="{StaticResource ThirdlyTextBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialIcons:MaterialIcon.Style>
+                            </materialIcons:MaterialIcon>
+                        </Button>
+                        <Button Height="32" MinHeight="32" Padding="12,0"
+                                Command="{Binding RefreshAllCommand}"
+                                Style="{StaticResource IconButtonPrimary}"
+                                Tag="{x:Static mi:MaterialIconKind.Refresh}"
+                                Content="{x:Static resources:Strings.K015}"
+                                ToolTip="{x:Static resources:Strings.K044}" />
+                    </StackPanel>
+                </WrapPanel>
+            </Grid>
+            <TextBlock Grid.Row="1" Margin="0,8,0,0"
+                       FontSize="{DynamicResource FontSizeCaption}"
+                       Foreground="{StaticResource ThirdlyTextBrush}"
+                       Text="{x:Static resources:Strings.K717}"
+                       TextWrapping="Wrap" />
+        </Grid>
 
         <!--  ============ 主体内容 ============  -->
         <Grid Grid.Row="1">

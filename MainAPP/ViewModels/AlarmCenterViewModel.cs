@@ -396,7 +396,20 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
 
     partial void OnTopSortModeChanged(AlarmTopSortMode value) => RefreshStats();
 
-    public ObservableCollection<Device> DeviceFilterItems { get; } = new();
+    public ObservableCollection<DeviceFilterItem> DeviceFilterItems { get; } = new();
+
+    /// <summary>下拉选中值。空字符串表示全部设备，对应 <see cref="SelectedDeviceId"/> 为 null。</summary>
+    public string DeviceFilterValue
+    {
+        get => SelectedDeviceId ?? "";
+        set
+        {
+            var next = string.IsNullOrEmpty(value) ? null : value;
+            if (string.Equals(SelectedDeviceId, next, StringComparison.Ordinal))
+                return;
+            SelectedDeviceId = next;
+        }
+    }
 
     public event Action<string, string>? ViewAlarmHistoryRequested;
 
@@ -414,8 +427,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         _alarmSessionMute = alarmSessionMute;
         _isAlarmMuted = _alarmSessionMute?.IsMuted ?? false;
 
-        foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
-            DeviceFilterItems.Add(device);
+        RebuildDeviceFilterItems();
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
 
         _activeTimer = new PageRefreshTimer(TimeSpan.FromSeconds(3), OnActiveTimerTick);
@@ -503,6 +515,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
     }
     partial void OnSelectedDeviceIdChanged(string? value)
     {
+        OnPropertyChanged(nameof(DeviceFilterValue));
         RefreshActiveAlarms(blockUntilApplied: true);
         RefreshStats();
     }
@@ -522,11 +535,7 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         // 与 Home/Overview/ProductionLine 的同类回调保持一致，否则跨线程改集合抛异常。
         _uiDispatcher.BeginInvoke(new Action(() =>
         {
-            DeviceFilterItems.Clear();
-            foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
-                DeviceFilterItems.Add(device);
-            if (SelectedDeviceId != null && !DeviceFilterItems.Any(d => d.Id == SelectedDeviceId))
-                SelectedDeviceId = null;
+            RebuildDeviceFilterItems();
             RefreshActiveAlarms(blockUntilApplied: true);
         }));
     }
@@ -1049,8 +1058,17 @@ public partial class AlarmCenterViewModel : ObservableObject, IDisposable, INavi
         _dialog.NotifySuccess(Strings.M007);
     }
 
-    [RelayCommand]
-    private void ClearDeviceFilter() => SelectedDeviceId = null;
+    private void RebuildDeviceFilterItems()
+    {
+        var selected = SelectedDeviceId;
+        DeviceFilterItems.Clear();
+        DeviceFilterItems.Add(new DeviceFilterItem("", Strings.Dsm_AllDevices));
+        foreach (var device in _deviceRepository.GetDevicesSnapshot().OrderBy(d => d.Name))
+            DeviceFilterItems.Add(new DeviceFilterItem(device.Id, device.Name));
+        var stillExists = selected != null && DeviceFilterItems.Any(item => item.Id == selected);
+        SelectedDeviceId = stillExists ? selected : null;
+        OnPropertyChanged(nameof(DeviceFilterValue));
+    }
 
     [RelayCommand]
     private void ViewAlarmHistory(ActiveAlarmInfo? alarm)

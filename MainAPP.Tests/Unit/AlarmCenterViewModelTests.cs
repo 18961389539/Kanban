@@ -5,6 +5,7 @@ using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Models;
+using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Xunit;
@@ -244,6 +245,26 @@ public class AlarmCenterViewModelTests : IDisposable
 
         vm.SelectedDeviceId = null;
         Assert.Equal(2, vm.ActiveCount);
+    }
+
+    [Fact]
+    public void DeviceFilterValue_AllDevicesChoice_ClearsSelectedDevice()
+    {
+        Localization.Apply("zh-CN");
+        _deviceRepo.Devices.Add(CreateDeviceWithAlarm("d1", "设备1"));
+
+        using var vm = CreateVm();
+
+        Assert.Equal("", vm.DeviceFilterItems[0].Id);
+        Assert.Equal(Strings.Dsm_AllDevices, vm.DeviceFilterItems[0].Name);
+        Assert.Equal("d1", vm.DeviceFilterItems[1].Id);
+
+        vm.DeviceFilterValue = "d1";
+        Assert.Equal("d1", vm.SelectedDeviceId);
+
+        vm.DeviceFilterValue = "";
+        Assert.Null(vm.SelectedDeviceId);
+        Assert.Equal("", vm.DeviceFilterValue);
     }
 
     // ──────────── KPI 聚合 ────────────
