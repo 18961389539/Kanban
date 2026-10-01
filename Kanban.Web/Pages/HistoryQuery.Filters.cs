@@ -152,8 +152,8 @@ public partial class HistoryQuery
         {
             1 => (now.Date.ToString(TimeFormat), now.ToString(TimeFormat)),                                  // 今天
             2 => (now.Date.AddDays(-1).ToString(TimeFormat), now.Date.AddSeconds(-1).ToString(TimeFormat)), // 昨天
-            3 => (now.Date.AddDays(-7).ToString(TimeFormat), now.ToString(TimeFormat)),                      // 近 7 天
-            4 => (now.Date.AddDays(-30).ToString(TimeFormat), now.ToString(TimeFormat)),                     // 近 30 天
+            3 => (now.Date.AddDays(-6).ToString(TimeFormat), now.ToString(TimeFormat)),                      // 近 7 天（含今天）
+            4 => (now.Date.AddDays(-29).ToString(TimeFormat), now.ToString(TimeFormat)),                     // 近 30 天（含今天）
             5 => (StartOfWeek(now).ToString(TimeFormat), now.ToString(TimeFormat)),                          // 本周（周一为起点）
             6 => (new DateTime(now.Year, now.Month, 1).ToString(TimeFormat), now.ToString(TimeFormat)),      // 本月
             _ => (FromText, ToText), // 自定义：保持手动输入

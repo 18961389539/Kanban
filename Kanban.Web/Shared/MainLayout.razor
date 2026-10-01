@@ -36,16 +36,6 @@
         @Body
         @ChildContent
     </main>
-    @if (_overlayVisible)
-    {
-        <div class="carousel-overlay" title="@L.Tip("Carousel_Tip", _statusText)" aria-hidden="true">
-            @for (var i = 0; i < DisplayCarousel.Playlist.Length; i++)
-            {
-                <span class="carousel-dot @(i == _sceneIndex ? "on" : "")"></span>
-            }
-            <span class="carousel-status">@_statusText</span>
-        </div>
-    }
 </div>
 
 @code {
@@ -65,9 +55,6 @@
     private readonly DisplayCarouselClock _carouselClock = new();
     private System.Threading.Timer? _carouselTimer;
     private bool _disposed;
-    private bool _overlayVisible;
-    private int _sceneIndex;
-    private string _statusText = "";
 
     protected override void OnInitialized()
     {
@@ -167,11 +154,6 @@
             HasActiveAlarms: Dashboard.HasAnyActiveAlarm,
             CurrentPageKey: CurrentPageKey));
 
-        _overlayVisible = status.OverlayVisible;
-        _sceneIndex = status.SceneIndex;
-        _statusText = FormatCarouselStatus(status);
-        StateHasChanged();
-
         if (status.NavigateTo is { } target && target != CurrentPageKey)
         {
             _carouselNavigating = true;
@@ -207,21 +189,6 @@
         DisplayCarousel.AlarmCenter => "/alarms",
         _ => "/",
     };
-
-    private static string FormatCarouselStatus(DisplayCarouselStatus status)
-    {
-        if (!status.OverlayVisible) return "";
-        if (status.Frozen) return L.T("Carousel_Frozen");
-        var scene = status.Scene switch
-        {
-            DisplayCarousel.ProductionLine => L.T("Nav_Line"),
-            DisplayCarousel.AlarmCenter => L.T("Nav_AlarmCenter"),
-            _ => L.T("Nav_Dashboard"),
-        };
-        return status.Paused
-            ? L.T("Carousel_Paused", scene, status.RemainingSeconds)
-            : L.T("Carousel_Running", scene, status.RemainingSeconds);
-    }
 
     public void Dispose()
     {

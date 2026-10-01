@@ -204,7 +204,9 @@ public class QualityThresholdConverterTests
     [Theory]
     [InlineData(0.95, "Success")]   // 达标边界 → Success
     [InlineData(0.96, "Success")]
-    [InlineData(0.9499, "Danger")]  // 未达标 → Danger
+    [InlineData(0.9499, "Warning")] // 未到 95%，仍在 90% 以上 → Warning
+    [InlineData(0.90, "Warning")]
+    [InlineData(0.8999, "Danger")]
     [InlineData(0.0, "Danger")]
     public void QualityThreshold_ConvertsCorrectly(double input, string expectedBucket)
     {
@@ -234,5 +236,21 @@ public class QualityThresholdConverterTests
         var cvt = new QualityThresholdConverter();
         Assert.Throws<NotSupportedException>(() =>
             cvt.ConvertBack(null!, null!, null, CultureInfo.InvariantCulture));
+    }
+
+    [Theory]
+    [InlineData(0.04, "Success")] // 96% 良品率
+    [InlineData(0.05, "Success")]
+    [InlineData(0.06, "Warning")]
+    [InlineData(0.10, "Warning")]
+    [InlineData(0.11, "Danger")]
+    public void QualityComplement_MatchesQualityBands(double defectRate, string expectedBucket)
+    {
+        RunOnSta(() =>
+        {
+            var cvt = new QualityComplementThresholdConverter();
+            var brush = (Brush)cvt.Convert(defectRate, typeof(Brush), null, CultureInfo.InvariantCulture);
+            Assert.Same(ResolveBrush(expectedBucket), brush);
+        });
     }
 }

@@ -115,6 +115,12 @@ public static class MainAppServiceCollectionExtensions
         // Remote 模式下 ISnEventStore.Append 为忽略（采集只在 Collector 进程发生），查询走 QuerySnEventsAsync。
         services.AddSingleton<ISnEventStore>(sp => sp.GetRequiredService<RemoteHistoryQueryService>());
 
+        // 本地模型：发布目录只带 CPU 版 llama.cpp。权重在第一次 EnsureStartedAsync 时从 ModelScope 下载，启动时不拉。
+        services.AddSingleton<ModelScopeModelDownloader>();
+        services.AddSingleton<ILocalLlamaHost, LocalLlamaHost>();
+        services.AddSingleton<AssistantContextStore>();
+        services.AddSingleton<ILocalLlamaChatClient, LocalLlamaChatClient>();
+
         return services;
     }
 }

@@ -130,6 +130,8 @@ public static class MainAppPresentationServiceCollectionExtensions
         RegisterPage<DeviceManagerView, DeviceManagerViewModel>(services, NavigationPageCatalog.DeviceManager);
         RegisterPage<WorkOrderManagerView, WorkOrderManagerViewModel>(services, NavigationPageCatalog.WorkOrder);
         RegisterPage<HistoryQueryView, HistoryQueryViewModel>(services, NavigationPageCatalog.HistoryQuery);
+        services.AddSingleton<AssistantViewModel>();
+        RegisterPage<AssistantView, AssistantViewModel>(services, NavigationPageCatalog.Assistant);
         RegisterPage<OverviewView, OverviewViewModel>(services, NavigationPageCatalog.Overview);
         RegisterPage<SettingsView, SettingsViewModel>(services, NavigationPageCatalog.Settings);
         RegisterPage<RuntimeMonitoringView, RuntimeMonitoringViewModel>(services, NavigationPageCatalog.RuntimeMonitoring);

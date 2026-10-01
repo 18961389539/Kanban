@@ -8,6 +8,9 @@ obj/
 *.dll
 !lib/HslCommunication/HslCommunication.dll
 *.exe
+# CPU 版 llama.cpp 随 Visual Studio 发布带到输出目录，不能被上面的 *.dll / *.exe 忽略。
+!MainAPP/llama.cpp/*.dll
+!MainAPP/llama.cpp/*.exe
 *.deps.json
 *.runtimeconfig.json
 BenchmarkDotNet.Artifacts/

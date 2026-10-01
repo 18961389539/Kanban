@@ -180,6 +180,10 @@ public class ScreenshotCaptureTests : IDisposable
 
         foreach (var (fileName, navName) in pages)
         {
+            // 有高等级报警时，轮播会在约 1 秒内把首页和产线拉回报警中心。
+            // 侧栏 Select 不经过鼠标/键盘，不会暂停轮播，所以先送一个按键。
+            PauseCarousel();
+
             if (!TryNavigateToPage(navName))
             {
                 Console.WriteLine($"  [WARN] 未找到导航项: {navName}，跳过");
@@ -209,6 +213,15 @@ public class ScreenshotCaptureTests : IDisposable
         {
             return false;
         }
+    }
+
+    private void PauseCarousel()
+    {
+        EnsureForeground();
+        Thread.Sleep(200);
+        FlaUI.Core.Input.Keyboard.Press(FlaUI.Core.WindowsAPI.VirtualKeyShort.LSHIFT);
+        FlaUI.Core.Input.Keyboard.Release(FlaUI.Core.WindowsAPI.VirtualKeyShort.LSHIFT);
+        Thread.Sleep(300);
     }
 
     private void EnsureForeground()

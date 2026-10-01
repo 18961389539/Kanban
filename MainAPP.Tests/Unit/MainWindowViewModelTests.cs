@@ -162,9 +162,9 @@ public class MainWindowViewModelTests : IDisposable
     public void NavItems_HasAllSidebarItems()
     {
         var vm = NewVm();
-        // 主页/产线/报警中心/设备管理/工单/历史查询/生产复盘/设置/运行监控/用户管理/审计日志/配方管理/采集监控 共 13 项
+        // 主页/产线/报警中心/工单/复盘/历史查询/AI问答/设备管理/配方/设置/运行监控/用户/审计/采集监控 共 14 项
         // 设备详情页是上下文页面，不作为侧边栏常驻项（入口在主页"查看详情"按钮）
-        Assert.Equal(13, vm.NavItems.Count);
+        Assert.Equal(14, vm.NavItems.Count);
     }
 
     [Fact]
@@ -224,8 +224,8 @@ public class MainWindowViewModelTests : IDisposable
     public void SelectPageCommand_OperatorRole_MapsToVisibleSidebarPosition()
     {
         // 语义（2026-09-05 起变更）：命令参数是「侧边栏可见位置」下标（Ctrl+1 → 0），
-        // 不再是 NavigationPageCatalog.Index。侧边栏按角色过滤后渲染，Operator 可见 7 项：
-        // 主页/产线/报警中心/工单/复盘/历史查询/数据监控。
+        // 不再是 NavigationPageCatalog.Index。侧边栏按角色过滤后渲染，Operator 可见 8 项：
+        // 主页/产线/报警中心/工单/复盘/历史查询/AI问答/数据监控。
         // 工程页与管理页根本不在可见集合内，因此既不会错位，也不存在越权直达。
         var session = new UserSession();
         session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
@@ -240,10 +240,13 @@ public class MainWindowViewModelTests : IDisposable
         vm.SelectPageCommand.Execute("3");
         Assert.Equal(NavigationPageCatalog.WorkOrder.Index, vm.SelectedIndex);
 
-        vm.SelectPageCommand.Execute("6"); // 第 7 项 数据监控
+        vm.SelectPageCommand.Execute("6"); // 第 7 项 AI问答
+        Assert.Equal(NavigationPageCatalog.Assistant.Index, vm.SelectedIndex);
+
+        vm.SelectPageCommand.Execute("7"); // 第 8 项 数据监控
         Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
 
-        vm.SelectPageCommand.Execute("7"); // 越界（仅 7 项）→ 无操作
+        vm.SelectPageCommand.Execute("8"); // 越界（仅 8 项）→ 无操作
         Assert.Equal(NavigationPageCatalog.DataSourceMonitoring.Index, vm.SelectedIndex);
 
         // 回归：遍历 Ctrl+1~9，操作员永远到不了工程管理页
@@ -258,15 +261,15 @@ public class MainWindowViewModelTests : IDisposable
     [Fact]
     public void SelectPageCommand_AdminRole_MapsToVisibleSidebarPosition()
     {
-        // Admin 可见 13 项（上下文页 DeviceDetail 不进侧边栏），位置下标与视觉顺序一致。
+        // Admin 可见 14 项（上下文页 DeviceDetail 不进侧边栏），位置下标与视觉顺序一致。
         var vm = NewVm(); // 默认 Admin 会话
         vm.SelectedIndex = NavigationPageCatalog.Home.Index;
 
-        vm.SelectPageCommand.Execute("6"); // 第 7 项 设备管理
-        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("6"); // 第 7 项 AI问答
+        Assert.Equal(NavigationPageCatalog.Assistant.Index, vm.SelectedIndex);
 
-        vm.SelectPageCommand.Execute("7"); // 第 8 项 配方管理
-        Assert.Equal(NavigationPageCatalog.RecipeManager.Index, vm.SelectedIndex);
+        vm.SelectPageCommand.Execute("7"); // 第 8 项 设备管理
+        Assert.Equal(NavigationPageCatalog.DeviceManager.Index, vm.SelectedIndex);
 
         vm.SelectPageCommand.Execute("0"); // 第 1 项 主页
         Assert.Equal(NavigationPageCatalog.Home.Index, vm.SelectedIndex);
@@ -308,6 +311,7 @@ public class MainWindowViewModelTests : IDisposable
             NavigationPageCatalog.WorkOrder,
             NavigationPageCatalog.Overview,
             NavigationPageCatalog.HistoryQuery,
+            NavigationPageCatalog.Assistant,
             NavigationPageCatalog.DeviceManager,
             NavigationPageCatalog.RecipeManager,
             NavigationPageCatalog.Settings,

@@ -65,6 +65,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- CPU 版 llama.cpp。单文件发布时排除在包外，落在 exe 旁边的 llama.cpp 目录。模型不在这里。 -->
+    <Content Include="llama.cpp\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <Link>llama.cpp\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="CsvHelper" />

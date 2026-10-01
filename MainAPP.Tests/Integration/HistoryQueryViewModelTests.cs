@@ -153,7 +153,7 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.QuickTimeIndex = 3; // 近7天
 
         var now = DateTime.Now;
-        Assert.Equal(now.Date.AddDays(-7), _vm.FromDate);
+        Assert.Equal(now.Date.AddDays(-6), _vm.FromDate);
         Assert.Equal(now.Date.AddDays(1).AddSeconds(-1), _vm.ToDate);
     }
 
@@ -183,8 +183,8 @@ public class HistoryQueryViewModelTests : IDisposable
 
         _vm.ResetCommand.Execute(null);
 
-        Assert.Null(_vm.SelectedDeviceId);
-        Assert.Equal(-1, _vm.QuickTimeIndex);
+        Assert.Equal("dev-001", _vm.SelectedDeviceId);
+        Assert.Equal(0, _vm.QuickTimeIndex);
         Assert.Equal(DateTime.Today.AddDays(-1), _vm.FromDate);
         Assert.Equal(DateTime.Today.AddDays(1).AddSeconds(-1), _vm.ToDate);
     }
@@ -659,10 +659,10 @@ public class HistoryQueryViewModelTests : IDisposable
 
         _vm.ResetCommand.Execute(null);
 
-        Assert.Null(_vm.SelectedDeviceId);
+        Assert.Equal("dev-001", _vm.SelectedDeviceId);
         Assert.Null(_vm.SelectedShiftName);
         Assert.Null(_vm.SelectedAlarmName);
-        Assert.Equal(-1, _vm.QuickTimeIndex);
+        Assert.Equal(0, _vm.QuickTimeIndex);
     }
 
     // ════════════════════ 智能洞察 ════════════════════
@@ -877,7 +877,7 @@ public class HistoryQueryViewModelTests : IDisposable
 
         Assert.Equal(3, _vm.QuickTimeIndex);
         var now = DateTime.Now;
-        var expectedFrom = now.Date.AddDays(-7);
+        var expectedFrom = now.Date.AddDays(-6);
         var expectedTo = now.Date.AddDays(1).AddSeconds(-1);
         Assert.True(Math.Abs((_vm.FromDate - expectedFrom).TotalSeconds) < 5,
             $"FromDate={_vm.FromDate} 应与近 7 天起点一致（{expectedFrom}）");

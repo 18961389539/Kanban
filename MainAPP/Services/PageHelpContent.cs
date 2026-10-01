@@ -70,6 +70,7 @@ public static class PageHelpContent
     public const string Users = "users";
     public const string Audit = "audit";
     public const string DataSource = "data-source";
+    public const string Assistant = "assistant";
     public const string Login = "login";
 
     public static IReadOnlyList<PageHelpBlock> Extract(string? markdown, string? key)
@@ -190,6 +191,17 @@ public static class PageHelpContent
         return new PageHelpDocument { Intro = intro, Sections = sections };
     }
 
+    /// <summary>页首说明，不含后面的小节和表格。给本地模型看时标成手册，避免把举例当成这一班的数。</summary>
+    public static string IntroExcerpt(string? markdown, string? key, int maxChars = 800)
+    {
+        if (maxChars <= 0)
+            return "";
+        var text = string.Join("\n", ExtractDocument(markdown, key).Intro
+            .Select(block => block.Text)
+            .Where(line => !string.IsNullOrWhiteSpace(line))).Trim();
+        return text.Length <= maxChars ? text : text[..maxChars];
+    }
+
     /// <summary>标记上方最近一个二级标题的锚点，与手册窗口里的标题 id 相同。</summary>
     public static string? ChapterAnchor(string? markdown, string? key)
     {
@@ -218,6 +230,7 @@ public static class PageHelpContent
         "WorkOrder" => WorkOrders,
         "Overview" => Overview,
         "HistoryQuery" => History,
+        "Assistant" => Assistant,
         "DeviceManager" => DeviceManager,
         "RecipeManager" => Recipes,
         "Settings" => Settings,

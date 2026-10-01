@@ -294,8 +294,9 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         {
             1 => (now.Date, now.Date.AddDays(1).AddSeconds(-1)),
             2 => (now.Date.AddDays(-1), now.Date.AddSeconds(-1)),
-            3 => (now.Date.AddDays(-7), now.Date.AddDays(1).AddSeconds(-1)),
-            4 => (now.Date.AddDays(-30), now.Date.AddDays(1).AddSeconds(-1)),
+            // 含今天在内的 7 / 30 个日历日。从今天往前减 7 会落成 8 个日期。
+            3 => (now.Date.AddDays(-6), now.Date.AddDays(1).AddSeconds(-1)),
+            4 => (now.Date.AddDays(-29), now.Date.AddDays(1).AddSeconds(-1)),
             5 => GetShiftRange(now, 0),
             6 => GetShiftRange(now, -1),
             7 => GetWeekRange(now),
@@ -369,12 +370,29 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         }
     }
 
+    private AssistantHistoryFacts CaptureAssistantFacts()
+    {
+        var notes = new List<string>();
+        Add(ProductionQuery.ProductionInsight);
+        Add(StatusQuery.StatusInsight);
+        Add(AlarmQuery.AlarmInsight);
+        Add(OeeQuery.OeeInsight);
+        return new AssistantHistoryFacts(FromDate, ToDate, notes);
+
+        void Add(string? text)
+        {
+            if (!string.IsNullOrWhiteSpace(text))
+                notes.Add(text.Trim());
+        }
+    }
+
     public HistoryQueryViewModel(
         IHistoryService historyService,
         DeviceRepository deviceRepo,
         AppSettings appSettings,
         IDialogService dialog,
-        ISnEventStore? snEventStore = null)
+        ISnEventStore? snEventStore = null,
+        AssistantContextStore? assistantContext = null)
     {
         _historyService = historyService;
         _deviceRepository = deviceRepo;
@@ -386,6 +404,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         AlarmQuery = new AlarmQueryViewModel(historyService);
         OeeQuery = new OeeQueryViewModel(historyService, deviceRepo, appSettings);
         SnQuery = new SnQueryViewModel(snEventStore);
+        assistantContext?.BindHistory(CaptureAssistantFacts);
 
         // 构造期间的属性初始化/条件恢复不是用户主动改筛选，挂起防抖自动查询
         _suspendAutoQuery = true;
@@ -724,22 +743,40 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void Reset()
     {
-        CancelAutoQuery(); // 重置期间属性归零会触发 OnXxxChanged，需先取消在途防抖，避免重置后又自动查询
-        QueryValidationMessage = string.Empty;
-        SelectedDeviceId = null;
-        SelectedShiftName = null;
-        SelectedAlarmName = null;
-        QuickTimeIndex = -1;
-        FromDate = DateTime.Today.AddDays(-1);
-        ToDate = DateTime.Today.AddDays(1).AddSeconds(-1);
-        HasQueried = false;
-        QueryErrorMessage = string.Empty;
-        TotalCount = 0; TotalPages = 0;
-        ProductionQuery.Reset();
-        StatusQuery.Reset();
-        AlarmQuery.Reset();
-        OeeQuery.Reset();
-        SnQuery.Reset();
+        CancelAutoQuery();
+        // 重置会改设备和时间。挂起自动查询，避免先把设备清成空再查出一张空表。
+        _suspendAutoQuery = true;
+        try
+        {
+            QueryValidationMessage = string.Empty;
+            QueryErrorMessage = string.Empty;
+            SelectedShiftName = null;
+            SelectedAlarmName = null;
+            if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
+                SelectedDeviceId = _deviceRepository.Devices[0].Id;
+            _isUpdatingQuickTime = true;
+            try
+            {
+                QuickTimeIndex = 0;
+                FromDate = DateTime.Today.AddDays(-1);
+                ToDate = DateTime.Today.AddDays(1).AddSeconds(-1);
+            }
+            finally
+            {
+                _isUpdatingQuickTime = false;
+            }
+            HasQueried = false;
+            TotalCount = 0; TotalPages = 0;
+            ProductionQuery.Reset();
+            StatusQuery.Reset();
+            AlarmQuery.Reset();
+            OeeQuery.Reset();
+            SnQuery.Reset();
+        }
+        finally
+        {
+            _suspendAutoQuery = false;
+        }
         Feedback.Success(Strings.Ux_ResetQuery);
     }
 
@@ -1003,10 +1040,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             var tabIndex = SelectedTabIndex;
             var from = FromDate; var to = ToDate; var deviceId = SelectedDeviceId;
 
-            // 导出范围二选一：Yes=全量筛选结果，No=仅当前页（取消由默认值覆盖为当前页）
-            var exportAll = _dialog.Show(
-                Strings.M382, Strings.M381, System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes;
+            var exportChoice = _dialog.Show(
+                Strings.M382, Strings.M381, System.Windows.MessageBoxButton.YesNoCancel,
+                System.Windows.MessageBoxImage.Question);
+            if (exportChoice == System.Windows.MessageBoxResult.Cancel)
+                return;
+            var exportAll = exportChoice == System.Windows.MessageBoxResult.Yes;
 
             var (fileName, csv) = await Task.Run<(string?, string?)>(() =>
             {

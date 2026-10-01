@@ -79,7 +79,7 @@ public static class StatusAnalysis
             var pauseRatio = pauseSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             if (pauseRatio > HighPauseRatioThreshold)
                 parts.Add(localize("Hq_InsPauseRatio", [pauseRatio, HighPauseRatioThreshold]));
-            else if (alarmRatio > HighPauseRatioThreshold)
+            if (alarmRatio > HighPauseRatioThreshold)
                 parts.Add(localize("Hq_InsAlarmRatio", [alarmRatio, HighPauseRatioThreshold]));
         }
 

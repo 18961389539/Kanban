@@ -30,6 +30,66 @@
   <data name="Nav_HistoryQuery" xml:space="preserve">
     <value>历史查询</value>
   </data>
+  <data name="Nav_Assistant" xml:space="preserve">
+    <value>AI问答</value>
+  </data>
+  <data name="Nav_Assistant_Tip" xml:space="preserve">
+    <value>根据当前页面已经算好的事实回答问题</value>
+  </data>
+  <data name="Assistant_Title" xml:space="preserve">
+    <value>AI问答</value>
+  </data>
+  <data name="Assistant_Intro" xml:space="preserve">
+    <value>只根据已经算好的事实说明，并带上设备名称和上一页的手册说明。不确认报警，不开停工单，也不下发配方。</value>
+  </data>
+  <data name="Assistant_Compare" xml:space="preserve">
+    <value>对照事实</value>
+  </data>
+  <data name="Assistant_Handover" xml:space="preserve">
+    <value>写成交班</value>
+  </data>
+  <data name="Assistant_CompareQuestion" xml:space="preserve">
+    <value>这几条已经算好的事实里，哪些落在同一时段？只对照，不要写成根因。</value>
+  </data>
+  <data name="Assistant_HandoverQuestion" xml:space="preserve">
+    <value>用这些事实写一段交班说明。不要加入页面上没有的数。</value>
+  </data>
+  <data name="Assistant_Send" xml:space="preserve">
+    <value>发送</value>
+  </data>
+  <data name="Assistant_InputHint" xml:space="preserve">
+    <value>写一句你看到的现象或想核对的数</value>
+  </data>
+  <data name="Assistant_Preparing" xml:space="preserve">
+    <value>正在准备本地模型。第一次使用会下载权重。</value>
+  </data>
+  <data name="Assistant_Answering" xml:space="preserve">
+    <value>正在回答</value>
+  </data>
+  <data name="Assistant_TooLong" xml:space="preserve">
+    <value>请把问题收成一段话。</value>
+  </data>
+  <data name="Assistant_NoServer" xml:space="preserve">
+    <value>发布目录里没有本地模型程序，这次回答不了。</value>
+  </data>
+  <data name="Assistant_Failed" xml:space="preserve">
+    <value>这次没有答上：{0}</value>
+  </data>
+  <data name="Assistant_ContextPage" xml:space="preserve">
+    <value>上一页：{0}</value>
+  </data>
+  <data name="Assistant_ContextDevice" xml:space="preserve">
+    <value>设备：{0}</value>
+  </data>
+  <data name="Assistant_ContextDeviceNone" xml:space="preserve">
+    <value>设备：还没有选中</value>
+  </data>
+  <data name="Assistant_ContextRange" xml:space="preserve">
+    <value>查询时间：{0} 至 {1}</value>
+  </data>
+  <data name="Assistant_ContextRangeNone" xml:space="preserve">
+    <value>查询时间：还没有打开历史查询</value>
+  </data>
   <data name="Nav_Overview" xml:space="preserve">
     <value>生产复盘</value>
   </data>
@@ -2322,7 +2382,7 @@
     <value>停止采集服务失败：{0}</value>
   </data>
   <data name="F069" xml:space="preserve">
-    <value>共 {0:N0} 条 · 第 {1}/{2} 页</value>
+    <value>汇总按全部 {0:N0} 条 · 第 {1}/{2} 页</value>
   </data>
   <data name="F070" xml:space="preserve">
     <value>写入失败: {0}</value>
@@ -4072,7 +4132,7 @@
     <value>导出范围</value>
   </data>
   <data name="M382" xml:space="preserve">
-    <value>导出全部筛选结果？选择\"是\"导出全量，选择\"否\"仅导出当前页。</value>
+    <value>导出全部筛选结果？「是」导出全部，「否」只导出当前这一页，「取消」不导出。</value>
   </data>
   <data name="M384" xml:space="preserve">
     <value>全量筛选结果（共 {0} 条）</value>
@@ -7136,10 +7196,10 @@
     <value>所选查询时间窗内 NG 产量（窗口差分，不是会话累计）。\n当前：{0:N0} 件</value>
   </data>
   <data name="Hq_Tip_WindowQuality" xml:space="preserve">
-    <value>所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。\n当前：{0:N0} / {1:N0} = {2}</value>
+    <value>所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。着色：≥95% 绿 / ≥90% 黄 / 低于 90% 红。\n当前：{0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
-    <value>所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。\n当前：{0:N0} / {1:N0} = {2}</value>
+    <value>所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。颜色与良品率互补：≤5% 绿，≤10% 黄，再高为红。\n当前：{0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowOee" xml:space="preserve">
     <value>所选查询时间窗内 OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / &lt;60% 红。</value>
@@ -7213,15 +7273,6 @@
   <data name="Settings_DisplayCarouselHint" xml:space="preserve">
     <value>默认开启。首页 40 秒 → 产线 30 秒 → 报警 20 秒（无报警跳过）。点按暂停 16 秒。High 报警冻结在报警页。完整模式可取消勾选。</value>
   </data>
-  <data name="Carousel_Frozen" xml:space="preserve">
-    <value>高报警冻结</value>
-  </data>
-  <data name="Carousel_Paused" xml:space="preserve">
-    <value>已暂停 · {0} · {1}s</value>
-  </data>
-  <data name="Carousel_Running" xml:space="preserve">
-    <value>{0} · 剩余 {1}s</value>
-  </data>
   <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
     <value>排期对照：实际达成率对照计划时间进度。正差=超前，负差=滞后。\n实际 {0} · 计划 {1} · {2}\n{3}</value>
   </data>
@@ -7263,9 +7314,6 @@
   </data>
   <data name="Home_Tip_Recipe" xml:space="preserve">
     <value>当前设备配方名称与配方值。\n当前：{0}</value>
-  </data>
-  <data name="Carousel_Tip" xml:space="preserve">
-    <value>过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>采集服务与设备/PLC 的连接状态。\n当前：{0}</value>
@@ -7496,7 +7544,7 @@
     <value>快捷键速查</value>
   </data>
   <data name="Ux_Kb1" xml:space="preserve">
-    <value>切换侧边栏第 1~9 个页面</value>
+    <value>打开当前账号在侧边栏里看得到的前九项</value>
   </data>
   <data name="Ux_Kb2" xml:space="preserve">
     <value>切换用户（弹出登录窗口）</value>
@@ -7508,7 +7556,7 @@
     <value>切换全屏 / 退出全屏</value>
   </data>
   <data name="Ux_Kb5" xml:space="preserve">
-    <value>刷新当前页</value>
+    <value>刷新报警中心、工单产量、生产复盘、设备详情、数据监控或运行监控</value>
   </data>
   <data name="Ux_Kb6" xml:space="preserve">
     <value>返回上一页（设备详情页）</value>
@@ -7523,6 +7571,12 @@
     <value>导出查询结果（历史查询）</value>
   </data>
   <data name="Ux_Kb10" xml:space="preserve">
-    <value>保存设置（系统设置）</value>
+    <value>保存（系统设置或设备管理）</value>
+  </data>
+  <data name="Ux_Kb11" xml:space="preserve">
+    <value>打开快捷键小窗</value>
+  </data>
+  <data name="Ux_Kb12" xml:space="preserve">
+    <value>把焦点放到本页搜索框（报警中心、产线总览、设备管理、工单管理）</value>
   </data>
 </root>

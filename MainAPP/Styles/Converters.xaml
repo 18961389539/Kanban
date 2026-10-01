@@ -31,6 +31,7 @@
     <converters:QualityThresholdConverter x:Key="QualityThreshold" />
     <converters:RatioThresholdConverter x:Key="RatioThreshold" />
     <converters:InverseRatioThresholdConverter x:Key="InverseRatioThreshold" />
+    <converters:QualityComplementThresholdConverter x:Key="QualityComplementThreshold" />
     <converters:RatioToWidthConverter x:Key="RatioToWidthConverter" />
     <converters:EqualityConverter x:Key="EqualityConverter" />
     <converters:CollectionContainsConverter x:Key="CollectionContainsConverter" />

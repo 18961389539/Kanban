@@ -30,6 +30,66 @@
   <data name="Nav_HistoryQuery" xml:space="preserve">
     <value>History Query</value>
   </data>
+  <data name="Nav_Assistant" xml:space="preserve">
+    <value>AI Q&amp;A</value>
+  </data>
+  <data name="Nav_Assistant_Tip" xml:space="preserve">
+    <value>Answer from facts already shown on the current page</value>
+  </data>
+  <data name="Assistant_Title" xml:space="preserve">
+    <value>AI Q&amp;A</value>
+  </data>
+  <data name="Assistant_Intro" xml:space="preserve">
+    <value>It explains facts already calculated and includes device names plus the previous page manual. It does not acknowledge alarms or start stop or release work orders or recipes.</value>
+  </data>
+  <data name="Assistant_Compare" xml:space="preserve">
+    <value>Compare facts</value>
+  </data>
+  <data name="Assistant_Handover" xml:space="preserve">
+    <value>Write handover</value>
+  </data>
+  <data name="Assistant_CompareQuestion" xml:space="preserve">
+    <value>Which of these calculated facts fall in the same period? Compare them only. Do not call it a root cause.</value>
+  </data>
+  <data name="Assistant_HandoverQuestion" xml:space="preserve">
+    <value>Write a shift handover from these facts. Do not add numbers the page does not have.</value>
+  </data>
+  <data name="Assistant_Send" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="Assistant_InputHint" xml:space="preserve">
+    <value>Describe what you see or the number you want checked</value>
+  </data>
+  <data name="Assistant_Preparing" xml:space="preserve">
+    <value>Preparing the local model. The first use downloads the weights.</value>
+  </data>
+  <data name="Assistant_Answering" xml:space="preserve">
+    <value>Answering</value>
+  </data>
+  <data name="Assistant_TooLong" xml:space="preserve">
+    <value>Keep the question to one short paragraph.</value>
+  </data>
+  <data name="Assistant_NoServer" xml:space="preserve">
+    <value>The published folder has no local model program so this question cannot be answered.</value>
+  </data>
+  <data name="Assistant_Failed" xml:space="preserve">
+    <value>No answer this time: {0}</value>
+  </data>
+  <data name="Assistant_ContextPage" xml:space="preserve">
+    <value>Previous page: {0}</value>
+  </data>
+  <data name="Assistant_ContextDevice" xml:space="preserve">
+    <value>Device: {0}</value>
+  </data>
+  <data name="Assistant_ContextDeviceNone" xml:space="preserve">
+    <value>Device: none selected</value>
+  </data>
+  <data name="Assistant_ContextRange" xml:space="preserve">
+    <value>Query time: {0} to {1}</value>
+  </data>
+  <data name="Assistant_ContextRangeNone" xml:space="preserve">
+    <value>Query time: History Query has not been opened</value>
+  </data>
   <data name="Nav_Overview" xml:space="preserve">
     <value>Review</value>
   </data>
@@ -2322,7 +2382,7 @@ Duration: {4}</value>
     <value>Failed to stop the collection service: {0}</value>
   </data>
   <data name="F069" xml:space="preserve">
-    <value>{0:N0} rows · Page {1}/{2}</value>
+    <value>Totals use all {0:N0} rows · page {1}/{2}</value>
   </data>
   <data name="F070" xml:space="preserve">
     <value>Write failed: {0}</value>
@@ -4072,7 +4132,7 @@ A reset command will be written to the PLC and the software-side value cleared; 
     <value>Export Scope</value>
   </data>
   <data name="M382" xml:space="preserve">
-    <value>Export all filtered results? Choose Yes for full export or No for current page only.</value>
+    <value>Export all filtered results? Yes exports everything. No exports this page only. Cancel exports nothing.</value>
   </data>
   <data name="M384" xml:space="preserve">
     <value>All filtered results ({0} rows)</value>
@@ -7136,10 +7196,10 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>NG output in the selected query window (window delta, not session total).\nNow: {0:N0} pcs</value>
   </data>
   <data name="Hq_Tip_WindowQuality" xml:space="preserve">
-    <value>Quality in the selected query window = OK ÷ (OK+NG). Target 95%.\nNow: {0:N0} / {1:N0} = {2}</value>
+    <value>Quality in the selected query window = OK ÷ (OK+NG). Target 95%. Colors: ≥95% green / ≥90% yellow / below 90% red.\nNow: {0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
-    <value>NG rate in the selected query window = NG ÷ (OK+NG); lower is better.\nNow: {0:N0} / {1:N0} = {2}</value>
+    <value>NG rate in the selected query window = NG ÷ (OK+NG); lower is better. Colors match the complement of quality: ≤5% green, ≤10% yellow, above that red.\nNow: {0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowOee" xml:space="preserve">
     <value>OEE in the selected query window = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / &lt;60% red.</value>
@@ -7213,15 +7273,6 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Settings_DisplayCarouselHint" xml:space="preserve">
     <value>On by default. Home 40s → line 30s → alarms 20s (skip if none). Touch pauses 16s. High alarms freeze on the alarm page. Uncheck in full mode to disable.</value>
   </data>
-  <data name="Carousel_Frozen" xml:space="preserve">
-    <value>Frozen on high alarm</value>
-  </data>
-  <data name="Carousel_Paused" xml:space="preserve">
-    <value>Paused · {0} · {1}s</value>
-  </data>
-  <data name="Carousel_Running" xml:space="preserve">
-    <value>{0} · {1}s left</value>
-  </data>
   <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
     <value>Schedule check: actual achievement versus planned time progress. Positive = ahead, negative = behind.\nActual {0} · planned {1} · {2}\n{3}</value>
   </data>
@@ -7263,9 +7314,6 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Home_Tip_Recipe" xml:space="preserve">
     <value>Current device recipe name and value.\nNow: {0}</value>
-  </data>
-  <data name="Carousel_Tip" xml:space="preserve">
-    <value>TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>Collector connection to the device/PLC.\nNow: {0}</value>
@@ -7496,7 +7544,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Keyboard Shortcuts</value>
   </data>
   <data name="Ux_Kb1" xml:space="preserve">
-    <value>Switch to sidebar pages 1-9</value>
+    <value>Open the first nine sidebar pages this account can see</value>
   </data>
   <data name="Ux_Kb2" xml:space="preserve">
     <value>Switch user (open login dialog)</value>
@@ -7508,7 +7556,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Toggle fullscreen</value>
   </data>
   <data name="Ux_Kb5" xml:space="preserve">
-    <value>Refresh the current page</value>
+    <value>Refresh Alarm Center, work-order output, Review, Device Detail, Data Source Monitor, or Runtime Monitor</value>
   </data>
   <data name="Ux_Kb6" xml:space="preserve">
     <value>Go back (Device Detail page)</value>
@@ -7523,6 +7571,12 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Export results (History Query)</value>
   </data>
   <data name="Ux_Kb10" xml:space="preserve">
-    <value>Save settings (System Settings)</value>
+    <value>Save (System Settings or Device Manager)</value>
+  </data>
+  <data name="Ux_Kb11" xml:space="preserve">
+    <value>Open the shortcut list</value>
+  </data>
+  <data name="Ux_Kb12" xml:space="preserve">
+    <value>Move focus to this page search box (Alarm Center Production Line Device Manager Work Orders)</value>
   </data>
 </root>

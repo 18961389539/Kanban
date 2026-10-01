@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -34,7 +33,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 {
     // 注意：设备详情页是上下文页面（依赖选中设备），不作为侧边栏常驻导航项。
     // 入口在主页"查看详情"按钮（HomeViewModel.ViewDeviceDetailCommand），通过 SelectedIndex=9 切换。
-    // 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=13 隐藏占位，UserManager=10/Audit=11 视觉位置为 9/10）：
+    // 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=14 隐藏占位，UserManager=10/Audit=11 视觉位置为 9/10）：
     // ListBox 必须绑 SelectedItem（SelectedNavItem，含真实 Index）而非 SelectedIndex（视觉位置），
     // 由 VM 完成"视觉选择 → 页面索引"映射；程序导航到隐藏页时 SelectedNavItem=null（侧边栏无高亮）。
     // 导航名称直接从 s_navItems.AccessibleName 派生（见 GetNavName），避免维护第二份名称数组导致文案分叉。
@@ -237,7 +236,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// 当前页面索引，由 Navigate()/侧边栏选择驱动；具体页面对应 NavigationPageCatalog 命名键（如 "Home"、"DeviceDetail"）。
-    /// 注意：这是"页面索引"（NavigationPageCatalog.Index），与侧边栏视觉位置不同——隐藏页（DeviceDetail=13）
+    /// 注意：这是"页面索引"（NavigationPageCatalog.Index），与侧边栏视觉位置不同——隐藏页（DeviceDetail=14）
     /// 不显示在 NavItems 中，侧边栏点击必须经 <see cref="SelectedNavItem"/>（含 Index）映射后再写本属性，
     /// 禁止把 ListBox.SelectedIndex（视觉位置）直接双向绑到本属性，否则视觉位置 ≥9 的项会错位。
     /// </summary>
@@ -246,7 +245,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
 
     /// <summary>
     /// 侧边栏当前选中的导航项（ListBox.SelectedItem 双向绑定）。
-    /// 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=13 隐藏占位），故以 NavItem.Index 为
+    /// 侧边栏视觉位置与页面 Index 存在错位（DeviceDetail=14 隐藏占位），故以 NavItem.Index 为
     /// 中介完成"视觉选择 → 页面索引"的映射；程序导航到隐藏页时本属性为 null（侧边栏无高亮）。
     /// </summary>
     [ObservableProperty]
@@ -364,7 +363,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// <summary>
     /// 当前用户可见的侧边栏页面：按 Viewer 模式 + 角色门禁过滤，顺序沿用 <see cref="NavigationPageCatalog.All"/>。
     /// 侧边栏渲染与快捷键定位共用本数据源，保证「肉眼看到的第 N 项」与「Ctrl+N」始终一致
-    /// （管理员 13 项 / 工程师 9 项 / 操作员 7 项，若按目录 Index 解析必然错位）。
+    /// （管理员 14 项 / 工程师 10 项 / 操作员 8 项，若按目录 Index 解析必然错位）。
     /// </summary>
     private IEnumerable<NavigationPageDefinition> VisiblePages => PageDefinitions.Where(p => p.ShowInSidebar
         && (!IsViewerMode || ViewerAllowedPageKeys.Contains(p.Key))
@@ -784,9 +783,15 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         var fromName = GetNavName(_navFromIndex, "初始");
         var toName = GetNavName(value, value.ToString());
         Log.Debug("导航 切换 {From} → {To} 开始", fromName, toName);
+        var toKey = CatalogDefinitions.FirstOrDefault(page => page.Index == value)?.Key;
+        if (toKey == AssistantContextStore.PageKey)
+        {
+            var fromKey = CatalogDefinitions.FirstOrDefault(page => page.Index == _navFromIndex)?.Key;
+            _serviceProvider.GetService<AssistantContextStore>()?.NotePage(fromKey);
+        }
 
         // 反向同步侧边栏高亮：仅当目标页是可见导航项时选中对应 NavItem；
-        // 隐藏页（如 DeviceDetail=13）在 NavItems 中不存在 → 置 null 取消高亮。
+        // 隐藏页（如 DeviceDetail=14）在 NavItems 中不存在 → 置 null 取消高亮。
         var visibleItem = _navItemsBacking.FirstOrDefault(n => n.Index == value);
         if (!ReferenceEquals(SelectedNavItem, visibleItem))
         {
@@ -872,7 +877,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         var visible = VisiblePages.ToList();
         if (idx < 0 || idx >= visible.Count)
         {
-            // 超出当前角色可见项数（如操作员仅 7 项却按了 Ctrl+8）：确实没有对应页面，
+            // 超出当前角色可见项数（如操作员仅 8 项却按了 Ctrl+9）：确实没有对应页面，
             // 只记日志，不做无意义的静默导航尝试。
             Log.Debug("快捷键 Ctrl+{Shortcut} 无对应页面：当前可见 {Count} 项", idx + 1, visible.Count);
             return;
@@ -881,21 +886,8 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         Navigate(visible[idx].Key);
     }
 
-    /// <summary>鼠标/键盘操作：轮播暂停 16s 后再转。</summary>
+    /// <summary>鼠标/键盘操作：轮播暂停后再转。状态不画在界面上。</summary>
     public void NoteCarouselInteraction() => _carouselClock.NoteInteraction(DateTime.UtcNow);
-
-    [ObservableProperty] private bool _isCarouselOverlayVisible;
-    [ObservableProperty] private bool _isCarouselPaused;
-    [ObservableProperty] private bool _isCarouselFrozen;
-    [ObservableProperty] private int _carouselSceneIndex;
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CarouselOverlayTooltip))]
-    private string _carouselStatusText = "";
-
-    public string CarouselOverlayTooltip => string.IsNullOrEmpty(CarouselStatusText)
-        ? ""
-        : string.Format(CultureInfo.CurrentCulture, Strings.Carousel_Tip, CarouselStatusText)
-            .Replace("\\n", Environment.NewLine, StringComparison.Ordinal);
 
     private string CurrentPageKey =>
         CatalogDefinitions.FirstOrDefault(page => page.Index == SelectedIndex)?.Key ?? DisplayCarousel.Home;
@@ -912,28 +904,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
             HasActiveAlarms: home?.HasAnyActiveAlarm ?? false,
             CurrentPageKey: CurrentPageKey));
 
-        IsCarouselOverlayVisible = status.OverlayVisible;
-        IsCarouselPaused = status.Paused;
-        IsCarouselFrozen = status.Frozen;
-        CarouselSceneIndex = status.SceneIndex;
-        CarouselStatusText = FormatCarouselStatus(status);
-
         if (status.NavigateTo is { } target && target != CurrentPageKey)
             Navigate(target);
-    }
-
-    private static string FormatCarouselStatus(DisplayCarouselStatus status)
-    {
-        if (!status.OverlayVisible) return "";
-        if (status.Frozen) return Strings.Carousel_Frozen;
-        var scene = status.Scene switch
-        {
-            DisplayCarousel.ProductionLine => Strings.Nav_ProductionLine,
-            DisplayCarousel.AlarmCenter => Strings.Nav_AlarmCenter,
-            _ => Strings.Nav_Home,
-        };
-        if (status.Paused)
-            return string.Format(Strings.Carousel_Paused, scene, status.RemainingSeconds);
-        return string.Format(Strings.Carousel_Running, scene, status.RemainingSeconds);
     }
 }

@@ -423,8 +423,8 @@
         {
             1 => (now.Date.ToString(TimeFormat), now.ToString(TimeFormat)),
             2 => (now.Date.AddDays(-1).ToString(TimeFormat), now.Date.AddSeconds(-1).ToString(TimeFormat)),
-            3 => (now.Date.AddDays(-7).ToString(TimeFormat), now.ToString(TimeFormat)),
-            4 => (now.Date.AddDays(-30).ToString(TimeFormat), now.ToString(TimeFormat)),
+            3 => (now.Date.AddDays(-6).ToString(TimeFormat), now.ToString(TimeFormat)),
+            4 => (now.Date.AddDays(-29).ToString(TimeFormat), now.ToString(TimeFormat)),
             _ => (FromText, ToText),
         };
     }

@@ -104,12 +104,20 @@ public partial class AlarmQueryViewModel : ObservableObject
             AlarmTriggerCount = list.Count(e => e.EventType == AlarmEventType.Triggered);
             AlarmRecoverCount = list.Count(e => e.EventType == AlarmEventType.Recovered);
 
-            // 待恢复计数：最近事件为 Triggered 的报警。
-            // 注意：最近事件为 ShiftChange 的报警表示"班次切换后已重新开始计时"，
-            // 不应算作待恢复（否则跨班次的报警会被双重计数）。
+            // 待恢复：同一设备、同一报警，最后一次触发之后没有恢复。
+            // 中间夹了班次切换也不算恢复，和提示里的「仍未恢复」同一条规则。按组计数，不会把跨班算成两条。
             AlarmPendingCount = list
+                .Where(e => e.EventType == AlarmEventType.Triggered)
                 .GroupBy(e => new { e.DeviceId, e.AlarmId })
-                .Count(g => g.OrderByDescending(e => e.EventTime).First().EventType == AlarmEventType.Triggered);
+                .Count(g =>
+                {
+                    var lastTrigger = g.OrderByDescending(e => e.EventTime).First();
+                    return !list.Any(r =>
+                        r.EventType == AlarmEventType.Recovered
+                        && r.DeviceId == g.Key.DeviceId
+                        && r.AlarmId == g.Key.AlarmId
+                        && r.EventTime > lastTrigger.EventTime);
+                });
 
             LastQueryAlarmNames = alarmNames;
 
@@ -154,7 +162,23 @@ public partial class AlarmQueryViewModel : ObservableObject
                 .OrderByDescending(x => x.TriggerCount);
             AlarmChart = ChartService.BuildAlarmChart(alarmStats);
 
-            // 回填表格行级持续时长（仅 Triggered；Recovered/未配对 Triggered 保持 null → 表格 "—"）
+            // 还没恢复的最后一次触发，时长计到查询截止（未来则截到现在）。
+            // 更早的未配对触发后面已经有恢复，不拿查询截止去填，避免把已经落下的报警写成还开着。
+            var effectiveTo = HistoryQueryHelper.ClampToNow(to);
+            foreach (var trigger in list.Where(e =>
+                         e.EventType == AlarmEventType.Triggered && !durationByTrigger.ContainsKey(e)))
+            {
+                var recoveredLater = list.Any(r =>
+                    r.EventType == AlarmEventType.Recovered
+                    && r.DeviceId == trigger.DeviceId
+                    && r.AlarmId == trigger.AlarmId
+                    && r.EventTime > trigger.EventTime);
+                if (recoveredLater) continue;
+                var openMinutes = (effectiveTo - trigger.EventTime).TotalMinutes;
+                if (openMinutes > 0)
+                    durationByTrigger[trigger] = openMinutes;
+            }
+
             foreach (var e in list)
             {
                 if (e.EventType == AlarmEventType.Triggered
@@ -167,9 +191,6 @@ public partial class AlarmQueryViewModel : ObservableObject
                 ? FormatDurationText(allDurations.Average())
                 : null;
 
-            // 待恢复持续时长排行的基准时间：查询区间终点，若终点在未来则截到当前时刻。
-            // 历史"待恢复"概念应基于查询窗口的视角，而非物理当下。
-            var effectiveTo = HistoryQueryHelper.ClampToNow(to);
             AlarmInsight = BuildAlarmInsight(alarmStats, AlarmTriggerCount, list, effectiveTo);
 
             return (totalCount, totalPages);

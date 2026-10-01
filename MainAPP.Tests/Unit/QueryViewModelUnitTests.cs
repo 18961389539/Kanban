@@ -229,7 +229,7 @@ public class QueryViewModelUnitTests
     }
 
     [Fact]
-    public void Alarm_UnpairedTrigger_NoDurationAndNoMttr()
+    public void Alarm_UnpairedTrigger_ShowsOpenDuration_AndNoMttr()
     {
         var hs = new InMemoryHistoryService();
         hs.AlarmEvents.Add(new AlarmEventRecord { DeviceId = "dev-1", AlarmId = "a1", AlarmName = "高温", PlcAddress = "D1", EventType = AlarmEventType.Triggered, EventTime = new DateTime(2026, 1, 1, 9, 0, 0) });
@@ -237,7 +237,7 @@ public class QueryViewModelUnitTests
         vm.Query("dev-1", new DateTime(2026, 1, 1, 8, 0, 0), new DateTime(2026, 1, 1, 23, 0, 0), null, null, 1, 50);
 
         var trigger = vm.AlarmEvents.Single();
-        Assert.Null(trigger.DurationText);
+        Assert.Equal("14.0h", trigger.DurationText);
         Assert.Null(vm.AlarmMttrText);
     }
 
@@ -391,9 +391,9 @@ public class QueryViewModelUnitTests
     // ════════════════════ 班次切换不计待恢复（补测 B2）════════════════════
 
     [Fact]
-    public void Alarm_ShiftChangeAsLastEvent_NotCountedAsPending()
+    public void Alarm_ShiftChangeAsLastEvent_StillCountsAsPending()
     {
-        // 最后事件为 ShiftChange 表示"报警在新班次重新开始计时"，不应算作待恢复。
+        // 班次切换不是恢复。最后一次触发之后没有恢复，这一组仍是待恢复，时长计到查询截止。
         var hs = new InMemoryHistoryService();
         hs.AlarmEvents.AddRange(new[]
         {
@@ -405,7 +405,9 @@ public class QueryViewModelUnitTests
 
         Assert.Equal(1, vm.AlarmTriggerCount);
         Assert.Equal(0, vm.AlarmRecoverCount);
-        Assert.Equal(0, vm.AlarmPendingCount); // 末事件为 ShiftChange → 不算待恢复
+        Assert.Equal(1, vm.AlarmPendingCount);
+        var trigger = vm.AlarmEvents.Single(e => e.EventType == AlarmEventType.Triggered);
+        Assert.Equal("14.0h", trigger.DurationText);
     }
 
     // ════════════════════ 持续时长文本格式（补测 B3）════════════════════

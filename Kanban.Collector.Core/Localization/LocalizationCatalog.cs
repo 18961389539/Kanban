@@ -35,6 +35,86 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "历史查询", ["en-US"] = "History Query", ["ja-JP"] = "履歴照会", ["pt-BR"] = "Consulta histórica"
         },
+        ["Wpf|Nav_Assistant"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "AI问答", ["en-US"] = "AI Q&A", ["ja-JP"] = "AI質問", ["pt-BR"] = "Perguntas de IA"
+        },
+        ["Wpf|Nav_Assistant_Tip"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "根据当前页面已经算好的事实回答问题", ["en-US"] = "Answer from facts already shown on the current page", ["ja-JP"] = "いまの画面で算出済みの事実から答える", ["pt-BR"] = "Responde com os fatos já calculados na página atual"
+        },
+        ["Wpf|Assistant_Title"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "AI问答", ["en-US"] = "AI Q&A", ["ja-JP"] = "AI質問", ["pt-BR"] = "Perguntas de IA"
+        },
+        ["Wpf|Assistant_Intro"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "只根据已经算好的事实说明，并带上设备名称和上一页的手册说明。不确认报警，不开停工单，也不下发配方。", ["en-US"] = "It explains facts already calculated and includes device names plus the previous page manual. It does not acknowledge alarms or start stop or release work orders or recipes.", ["ja-JP"] = "算出済みの事実に設備名と前のページの説明を添えます。アラーム確認・工単の開始と終了・レシピ配布はしません。", ["pt-BR"] = "Explica fatos já calculados e inclui os nomes dos dispositivos e o manual da página anterior. Não confirma alarmes nem inicia encerra ordens ou envia receitas."
+        },
+        ["Wpf|Assistant_Compare"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "对照事实", ["en-US"] = "Compare facts", ["ja-JP"] = "事実を対照", ["pt-BR"] = "Comparar fatos"
+        },
+        ["Wpf|Assistant_Handover"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "写成交班", ["en-US"] = "Write handover", ["ja-JP"] = "引き継ぎを書く", ["pt-BR"] = "Escrever passagem"
+        },
+        ["Wpf|Assistant_CompareQuestion"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "这几条已经算好的事实里，哪些落在同一时段？只对照，不要写成根因。", ["en-US"] = "Which of these calculated facts fall in the same period? Compare them only. Do not call it a root cause.", ["ja-JP"] = "これらの算出済み事実のどれが同じ時間帯に重なりますか。対照だけにして原因と断定しないでください。", ["pt-BR"] = "Quais destes fatos calculados caem no mesmo período? Apenas compare. Não chame isso de causa raiz."
+        },
+        ["Wpf|Assistant_HandoverQuestion"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "用这些事实写一段交班说明。不要加入页面上没有的数。", ["en-US"] = "Write a shift handover from these facts. Do not add numbers the page does not have.", ["ja-JP"] = "これらの事実で引き継ぎ文を書いてください。画面にない数は足さないでください。", ["pt-BR"] = "Escreva uma passagem de turno com estes fatos. Não acrescente números que a página não tem."
+        },
+        ["Wpf|Assistant_Send"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "发送", ["en-US"] = "Send", ["ja-JP"] = "送信", ["pt-BR"] = "Enviar"
+        },
+        ["Wpf|Assistant_InputHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "写一句你看到的现象或想核对的数", ["en-US"] = "Describe what you see or the number you want checked", ["ja-JP"] = "見ている現象か確認したい数を書いてください", ["pt-BR"] = "Descreva o que você vê ou o número a conferir"
+        },
+        ["Wpf|Assistant_Preparing"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "正在准备本地模型。第一次使用会下载权重。", ["en-US"] = "Preparing the local model. The first use downloads the weights.", ["ja-JP"] = "ローカルモデルを準備しています。初回は重みをダウンロードします。", ["pt-BR"] = "Preparando o modelo local. O primeiro uso baixa os pesos."
+        },
+        ["Wpf|Assistant_Answering"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "正在回答", ["en-US"] = "Answering", ["ja-JP"] = "回答しています", ["pt-BR"] = "Respondendo"
+        },
+        ["Wpf|Assistant_TooLong"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "请把问题收成一段话。", ["en-US"] = "Keep the question to one short paragraph.", ["ja-JP"] = "質問は一段落に収めてください。", ["pt-BR"] = "Deixe a pergunta em um parágrafo curto."
+        },
+        ["Wpf|Assistant_NoServer"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "发布目录里没有本地模型程序，这次回答不了。", ["en-US"] = "The published folder has no local model program so this question cannot be answered.", ["ja-JP"] = "公開フォルダにローカルモデルのプログラムがないため回答できません。", ["pt-BR"] = "A pasta publicada não tem o programa do modelo local e esta pergunta não pode ser respondida."
+        },
+        ["Wpf|Assistant_Failed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "这次没有答上：{0}", ["en-US"] = "No answer this time: {0}", ["ja-JP"] = "今回は答えられませんでした：{0}", ["pt-BR"] = "Sem resposta desta vez: {0}"
+        },
+        ["Wpf|Assistant_ContextPage"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "上一页：{0}", ["en-US"] = "Previous page: {0}", ["ja-JP"] = "前のページ：{0}", ["pt-BR"] = "Página anterior: {0}"
+        },
+        ["Wpf|Assistant_ContextDevice"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备：{0}", ["en-US"] = "Device: {0}", ["ja-JP"] = "設備：{0}", ["pt-BR"] = "Dispositivo: {0}"
+        },
+        ["Wpf|Assistant_ContextDeviceNone"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备：还没有选中", ["en-US"] = "Device: none selected", ["ja-JP"] = "設備：未選択", ["pt-BR"] = "Dispositivo: nenhum selecionado"
+        },
+        ["Wpf|Assistant_ContextRange"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "查询时间：{0} 至 {1}", ["en-US"] = "Query time: {0} to {1}", ["ja-JP"] = "照会期間：{0} から {1}", ["pt-BR"] = "Período da consulta: {0} até {1}"
+        },
+        ["Wpf|Assistant_ContextRangeNone"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "查询时间：还没有打开历史查询", ["en-US"] = "Query time: History Query has not been opened", ["ja-JP"] = "照会期間：履歴照会はまだ開いていません", ["pt-BR"] = "Período da consulta: a consulta histórica ainda não foi aberta"
+        },
         ["Wpf|Nav_Overview"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "生产复盘", ["en-US"] = "Review", ["ja-JP"] = "生産レビュー", ["pt-BR"] = "Revisão da produção"
@@ -3085,7 +3165,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|F069"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "共 {0:N0} 条 · 第 {1}/{2} 页", ["en-US"] = "{0:N0} rows · Page {1}/{2}", ["ja-JP"] = "{0:N0} 件 · {1}/{2} ページ", ["pt-BR"] = "{0:N0} linhas · Página {1}/{2}"
+            ["zh-CN"] = "汇总按全部 {0:N0} 条 · 第 {1}/{2} 页", ["en-US"] = "Totals use all {0:N0} rows · page {1}/{2}", ["ja-JP"] = "集計は全 {0:N0} 件 · {1}/{2} ページ", ["pt-BR"] = "Totais usam todas as {0:N0} linhas · página {1}/{2}"
         },
         ["Wpf|F070"] = new Dictionary<string, string>
         {
@@ -5377,7 +5457,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|M382"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "导出全部筛选结果？选择\\\"是\\\"导出全量，选择\\\"否\\\"仅导出当前页。", ["en-US"] = "Export all filtered results? Choose Yes for full export or No for current page only.", ["ja-JP"] = "絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。", ["pt-BR"] = "Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual."
+            ["zh-CN"] = "导出全部筛选结果？「是」导出全部，「否」只导出当前这一页，「取消」不导出。", ["en-US"] = "Export all filtered results? Yes exports everything. No exports this page only. Cancel exports nothing.", ["ja-JP"] = "絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみ、「キャンセル」で中止。", ["pt-BR"] = "Exportar todos os resultados filtrados? Sim exporta tudo. Não exporta só esta página. Cancelar não exporta."
         },
         ["Wpf|M384"] = new Dictionary<string, string>
         {
@@ -9773,11 +9853,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|Hq_Tip_WindowQuality"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "Quality in the selected query window = OK ÷ (OK+NG). Target 95%.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%.\\nAgora: {0:N0} / {1:N0} = {2}"
+            ["zh-CN"] = "所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。着色：≥95% 绿 / ≥90% 黄 / 低于 90% 红。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "Quality in the selected query window = OK ÷ (OK+NG). Target 95%. Colors: ≥95% green / ≥90% yellow / below 90% red.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。色：≥95% 緑 / ≥90% 黄 / 90% 未満赤。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%. Cores: ≥95% verde / ≥90% amarelo / abaixo de 90% vermelho.\\nAgora: {0:N0} / {1:N0} = {2}"
         },
         ["Wpf|Hq_Tip_WindowNgRate"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "NG rate in the selected query window = NG ÷ (OK+NG); lower is better.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor.\\nAgora: {0:N0} / {1:N0} = {2}"
+            ["zh-CN"] = "所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。颜色与良品率互补：≤5% 绿，≤10% 黄，再高为红。\\n当前：{0:N0} / {1:N0} = {2}", ["en-US"] = "NG rate in the selected query window = NG ÷ (OK+NG); lower is better. Colors match the complement of quality: ≤5% green, ≤10% yellow, above that red.\\nNow: {0:N0} / {1:N0} = {2}", ["ja-JP"] = "照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。色は良品率の補数：≤5% 緑、≤10% 黄、それ以上は赤。\\n現在：{0:N0} / {1:N0} = {2}", ["pt-BR"] = "Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor. Cores complementam a qualidade: ≤5% verde, ≤10% amarelo, acima disso vermelho.\\nAgora: {0:N0} / {1:N0} = {2}"
         },
         ["Wpf|Hq_Tip_WindowOee"] = new Dictionary<string, string>
         {
@@ -9875,18 +9955,6 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "默认开启。首页 40 秒 → 产线 30 秒 → 报警 20 秒（无报警跳过）。点按暂停 16 秒。High 报警冻结在报警页。完整模式可取消勾选。", ["en-US"] = "On by default. Home 40s → line 30s → alarms 20s (skip if none). Touch pauses 16s. High alarms freeze on the alarm page. Uncheck in full mode to disable.", ["ja-JP"] = "デフォルトでオン。ホーム40秒→ライン30秒→警報20秒（警報なしはスキップ）。操作で16秒停止。High警報は警報ページで固定。完全モードではオフにできます。", ["pt-BR"] = "Ligado por padrão. Início 40s → linha 30s → alarmes 20s (pula se vazio). Toque pausa 16s. Alarmes High travam na página de alarmes. Desmarque no modo completo para desligar."
         },
-        ["Wpf|Carousel_Frozen"] = new Dictionary<string, string>
-        {
-            ["zh-CN"] = "高报警冻结", ["en-US"] = "Frozen on high alarm", ["ja-JP"] = "高警報で固定", ["pt-BR"] = "Congelado em alarme alto"
-        },
-        ["Wpf|Carousel_Paused"] = new Dictionary<string, string>
-        {
-            ["zh-CN"] = "已暂停 · {0} · {1}s", ["en-US"] = "Paused · {0} · {1}s", ["ja-JP"] = "一時停止 · {0} · {1}s", ["pt-BR"] = "Pausado · {0} · {1}s"
-        },
-        ["Wpf|Carousel_Running"] = new Dictionary<string, string>
-        {
-            ["zh-CN"] = "{0} · 剩余 {1}s", ["en-US"] = "{0} · {1}s left", ["ja-JP"] = "{0} · 残り {1}s", ["pt-BR"] = "{0} · restam {1}s"
-        },
         ["Wpf|Home_Tip_WorkOrderSchedule"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "排期对照：实际达成率对照计划时间进度。正差=超前，负差=滞后。\\n实际 {0} · 计划 {1} · {2}\\n{3}", ["en-US"] = "Schedule check: actual achievement versus planned time progress. Positive = ahead, negative = behind.\\nActual {0} · planned {1} · {2}\\n{3}", ["ja-JP"] = "計画対比：実績達成率と計画時間進捗。正=先行、負=遅れ。\\n実績 {0} · 計画 {1} · {2}\\n{3}", ["pt-BR"] = "Comparação de prazo: realização real versus progresso planejado. Positivo = adiantado, negativo = atrasado.\\nReal {0} · planejado {1} · {2}\\n{3}"
@@ -9942,10 +10010,6 @@ public static class LocalizationCatalog
         ["Wpf|Home_Tip_Recipe"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当前设备配方名称与配方值。\\n当前：{0}", ["en-US"] = "Current device recipe name and value.\\nNow: {0}", ["ja-JP"] = "現在のデバイスレシピ名と値。\\n現在：{0}", ["pt-BR"] = "Nome e valor da receita atual do dispositivo.\\nAgora: {0}"
-        },
-        ["Wpf|Carousel_Tip"] = new Dictionary<string, string>
-        {
-            ["zh-CN"] = "过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\\n{0}", ["en-US"] = "TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\\n{0}", ["ja-JP"] = "通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\\n{0}", ["pt-BR"] = "Estado do carrossel da TV. Um clique pausa 80 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\\n{0}"
         },
         ["Wpf|Mo_Tip_ConnStatus"] = new Dictionary<string, string>
         {
@@ -10253,7 +10317,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_Kb1"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "切换侧边栏第 1~9 个页面", ["en-US"] = "Switch to sidebar pages 1-9", ["ja-JP"] = "サイドバーの1〜9ページ目に切り替え", ["pt-BR"] = "Alternar para as páginas 1-9 da barra lateral"
+            ["zh-CN"] = "打开当前账号在侧边栏里看得到的前九项", ["en-US"] = "Open the first nine sidebar pages this account can see", ["ja-JP"] = "今のアカウントに表示されるサイドバー先頭9ページを開く", ["pt-BR"] = "Abrir as primeiras nove páginas visíveis desta conta"
         },
         ["Wpf|Ux_Kb2"] = new Dictionary<string, string>
         {
@@ -10269,7 +10333,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_Kb5"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "刷新当前页", ["en-US"] = "Refresh the current page", ["ja-JP"] = "現在のページを更新", ["pt-BR"] = "Atualizar a página atual"
+            ["zh-CN"] = "刷新报警中心、工单产量、生产复盘、设备详情、数据监控或运行监控", ["en-US"] = "Refresh Alarm Center, work-order output, Review, Device Detail, Data Source Monitor, or Runtime Monitor", ["ja-JP"] = "アラームセンター・工単の出来高・生産レビュー・設備詳細・データソース監視・稼働監視を更新", ["pt-BR"] = "Atualizar alarmes, produção da ordem, revisão, detalhes do dispositivo, monitor de fontes de dados ou monitor de execução"
         },
         ["Wpf|Ux_Kb6"] = new Dictionary<string, string>
         {
@@ -10289,7 +10353,15 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ux_Kb10"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "保存设置（系统设置）", ["en-US"] = "Save settings (System Settings)", ["ja-JP"] = "設定を保存（システム設定）", ["pt-BR"] = "Salvar configurações (Configurações do Sistema)"
+            ["zh-CN"] = "保存（系统设置或设备管理）", ["en-US"] = "Save (System Settings or Device Manager)", ["ja-JP"] = "保存（システム設定または設備管理）", ["pt-BR"] = "Salvar (Configurações ou Gerenciador de dispositivos)"
+        },
+        ["Wpf|Ux_Kb11"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打开快捷键小窗", ["en-US"] = "Open the shortcut list", ["ja-JP"] = "ショートカット一覧を開く", ["pt-BR"] = "Abrir a lista de atalhos"
+        },
+        ["Wpf|Ux_Kb12"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "把焦点放到本页搜索框（报警中心、产线总览、设备管理、工单管理）", ["en-US"] = "Move focus to this page search box (Alarm Center Production Line Device Manager Work Orders)", ["ja-JP"] = "このページの検索欄へ移動（アラーム・生産ライン・設備管理・工単）", ["pt-BR"] = "Mover o foco para a busca desta página (alarmes linha dispositivos ordens)"
         },
         };
 

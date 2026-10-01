@@ -88,7 +88,6 @@ SHARED_WEB_KEYS = {
     "Home_WorkOrderCumulativeOk", "Home_WorkOrderAchievement",
     "Home_Scope_WorkOrder", "Home_Scope_Shift", "Home_Scope_Realtime", "Home_Scope_Range",
     "Home_Scope_WorkOrder_Tip", "Home_Scope_Shift_Tip", "Home_Scope_Realtime_Tip", "Home_Scope_Range_Tip",
-    "Carousel_Frozen", "Carousel_Paused", "Carousel_Running", "Carousel_Tip",
     "Home_Tip_ShiftOk", "Home_Tip_WorkOrderCumulativeOk", "Home_Tip_WorkOrderAchievement",
     "Home_Tip_WorkOrderTarget", "Home_Tip_WorkOrderOk", "Home_Tip_WorkOrderNg", "Home_Tip_WorkOrderQuality",
     "Home_Tip_TargetCycle", "Home_Tip_ActualCycle",

@@ -127,3 +127,29 @@ public class InverseRatioThresholdConverter : ThresholdBrushCacheBase, IValueCon
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// 历史产量页的不良率着色，取良品率阈值的补数：
+/// 不良率 ≤ 5%（良品率 ≥ 95%）绿，≤ 10%（良品率 ≥ 90%）黄，再高为红。
+/// 与 <see cref="QualityThresholdConverter"/> 成对，避免同一行两个互补百分比颜色相反。
+/// </summary>
+public class QualityComplementThresholdConverter : ThresholdBrushCacheBase, IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is double d)
+        {
+            // 用补数回比良品率阈值，并留一点余量，避免 1-0.90 与 0.10 的二进制误差把边界涂红。
+            const double tolerance = 1e-9;
+            var quality = 1 - d;
+            return quality + tolerance >= KpiThresholds.QualityGood
+                ? Green
+                : quality + tolerance >= KpiThresholds.QualityWarning ? Yellow : Red;
+        }
+
+        return Green;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

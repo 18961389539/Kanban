@@ -280,7 +280,7 @@ public partial class StatusQueryViewModel : ObservableObject
             var pauseRatio = pauseSegments.Sum(s => (s.End - s.Start).TotalSeconds) / totalSpan;
             if (pauseRatio > HighPauseRatioThreshold)
                 parts.Add(string.Format(Strings.F045, pauseRatio, HighPauseRatioThreshold));
-            else if (alarmRatio > HighPauseRatioThreshold)
+            if (alarmRatio > HighPauseRatioThreshold)
                 parts.Add(string.Format(Strings.F049, alarmRatio, HighPauseRatioThreshold));
         }
 

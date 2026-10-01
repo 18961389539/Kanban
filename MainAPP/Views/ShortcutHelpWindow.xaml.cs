@@ -18,6 +18,7 @@ public partial class ShortcutHelpWindow : Window
         new("Ctrl+1 ~ Ctrl+9", Strings.Ux_Kb1),
         new("Ctrl+L", Strings.Ux_Kb2),
         new("F1", Strings.Ux_Kb3),
+        new("Ctrl+Shift+K", Strings.Ux_Kb11),
         new("F11", Strings.Ux_Kb4),
         new("F5", Strings.Ux_Kb5),
         new("Esc", Strings.Ux_Kb6),
@@ -25,6 +26,7 @@ public partial class ShortcutHelpWindow : Window
         new("Ctrl+R", Strings.Ux_Kb8),
         new("Ctrl+E", Strings.Ux_Kb9),
         new("Ctrl+S", Strings.Ux_Kb10),
+        new("Ctrl+F", Strings.Ux_Kb12),
     };
 
     public ShortcutHelpWindow()

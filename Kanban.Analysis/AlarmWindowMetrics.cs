@@ -55,10 +55,23 @@ public static class AlarmWindowMetrics
         };
     }
 
+    /// <summary>
+    /// 待恢复组数：最后一次触发之后没有恢复。班次切换不把它清掉。
+    /// 与历史查询提示里的「仍未恢复」同一条规则。
+    /// </summary>
     public static int CountPending(IReadOnlyList<AlarmEventRecordDto> events)
         => events
+            .Where(e => e.EventType == AlarmEventType.Triggered)
             .GroupBy(e => new { e.DeviceId, e.AlarmId })
-            .Count(g => g.OrderByDescending(e => e.EventTime).First().EventType == AlarmEventType.Triggered);
+            .Count(g =>
+            {
+                var lastTrigger = g.OrderByDescending(e => e.EventTime).First();
+                return !events.Any(r =>
+                    r.EventType == AlarmEventType.Recovered
+                    && r.DeviceId == g.Key.DeviceId
+                    && r.AlarmId == g.Key.AlarmId
+                    && r.EventTime > lastTrigger.EventTime);
+            });
 
     public static List<AlarmChartStatDto> BuildChart(IReadOnlyList<AlarmEventRecordDto> events)
     {

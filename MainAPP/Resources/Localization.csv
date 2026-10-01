@@ -5,6 +5,26 @@ Wpf,Nav_AlarmCenter,报警中心,Alarm Center,アラームセンター,Central d
 Wpf,Nav_DeviceManager,设备管理,Device Manager,設備管理,Gerenciador de dispositivos
 Wpf,Nav_WorkOrder,工单管理,Work Orders,工単管理,Ordens de produção
 Wpf,Nav_HistoryQuery,历史查询,History Query,履歴照会,Consulta histórica
+Wpf,Nav_Assistant,AI问答,AI Q&A,AI質問,Perguntas de IA
+Wpf,Nav_Assistant_Tip,根据当前页面已经算好的事实回答问题,Answer from facts already shown on the current page,いまの画面で算出済みの事実から答える,Responde com os fatos já calculados na página atual
+Wpf,Assistant_Title,AI问答,AI Q&A,AI質問,Perguntas de IA
+Wpf,Assistant_Intro,只根据已经算好的事实说明，并带上设备名称和上一页的手册说明。不确认报警，不开停工单，也不下发配方。,It explains facts already calculated and includes device names plus the previous page manual. It does not acknowledge alarms or start stop or release work orders or recipes.,算出済みの事実に設備名と前のページの説明を添えます。アラーム確認・工単の開始と終了・レシピ配布はしません。,Explica fatos já calculados e inclui os nomes dos dispositivos e o manual da página anterior. Não confirma alarmes nem inicia encerra ordens ou envia receitas.
+Wpf,Assistant_Compare,对照事实,Compare facts,事実を対照,Comparar fatos
+Wpf,Assistant_Handover,写成交班,Write handover,引き継ぎを書く,Escrever passagem
+Wpf,Assistant_CompareQuestion,这几条已经算好的事实里，哪些落在同一时段？只对照，不要写成根因。,Which of these calculated facts fall in the same period? Compare them only. Do not call it a root cause.,これらの算出済み事実のどれが同じ時間帯に重なりますか。対照だけにして原因と断定しないでください。,Quais destes fatos calculados caem no mesmo período? Apenas compare. Não chame isso de causa raiz.
+Wpf,Assistant_HandoverQuestion,用这些事实写一段交班说明。不要加入页面上没有的数。,Write a shift handover from these facts. Do not add numbers the page does not have.,これらの事実で引き継ぎ文を書いてください。画面にない数は足さないでください。,Escreva uma passagem de turno com estes fatos. Não acrescente números que a página não tem.
+Wpf,Assistant_Send,发送,Send,送信,Enviar
+Wpf,Assistant_InputHint,写一句你看到的现象或想核对的数,Describe what you see or the number you want checked,見ている現象か確認したい数を書いてください,Descreva o que você vê ou o número a conferir
+Wpf,Assistant_Preparing,正在准备本地模型。第一次使用会下载权重。,Preparing the local model. The first use downloads the weights.,ローカルモデルを準備しています。初回は重みをダウンロードします。,Preparando o modelo local. O primeiro uso baixa os pesos.
+Wpf,Assistant_Answering,正在回答,Answering,回答しています,Respondendo
+Wpf,Assistant_TooLong,请把问题收成一段话。,Keep the question to one short paragraph.,質問は一段落に収めてください。,Deixe a pergunta em um parágrafo curto.
+Wpf,Assistant_NoServer,发布目录里没有本地模型程序，这次回答不了。,The published folder has no local model program so this question cannot be answered.,公開フォルダにローカルモデルのプログラムがないため回答できません。,A pasta publicada não tem o programa do modelo local e esta pergunta não pode ser respondida.
+Wpf,Assistant_Failed,这次没有答上：{0},No answer this time: {0},今回は答えられませんでした：{0},Sem resposta desta vez: {0}
+Wpf,Assistant_ContextPage,上一页：{0},Previous page: {0},前のページ：{0},Página anterior: {0}
+Wpf,Assistant_ContextDevice,设备：{0},Device: {0},設備：{0},Dispositivo: {0}
+Wpf,Assistant_ContextDeviceNone,设备：还没有选中,Device: none selected,設備：未選択,Dispositivo: nenhum selecionado
+Wpf,Assistant_ContextRange,查询时间：{0} 至 {1},Query time: {0} to {1},照会期間：{0} から {1},Período da consulta: {0} até {1}
+Wpf,Assistant_ContextRangeNone,查询时间：还没有打开历史查询,Query time: History Query has not been opened,照会期間：履歴照会はまだ開いていません,Período da consulta: a consulta histórica ainda não foi aberta
 Wpf,Nav_Overview,生产复盘,Review,生産レビュー,Revisão da produção
 Wpf,Nav_Settings,系统设置,Settings,設定,Configurações
 Wpf,Nav_UserManager,用户管理,User Management,ユーザー管理,Gerenciamento de usuários
@@ -782,7 +802,7 @@ Wpf,F065,低于最佳班次 {0:P0}{1},{1} below the best shift {0:P0},最良班 
 Wpf,F066,保存失败: {0},Save failed: {0},保存に失敗しました: {0},Falha ao salvar: {0}
 Wpf,F067,保存失败：发现 {0} 处配置问题，请在设备参数表单中修正,"Save failed: {0} configuration issues found, please fix them in the device parameter form",保存に失敗しました: 設定問題が {0} 件あります。デバイスパラメータフォームで修正してください,Falha ao salvar: {0} problemas de configuração encontrados; corrija-os no formulário de parâmetros do dispositivo
 Wpf,F068,停止采集服务失败：{0},Failed to stop the collection service: {0},収集サービスの停止に失敗しました: {0},Falha ao interromper o serviço de coleta: {0}
-Wpf,F069,共 {0:N0} 条 · 第 {1}/{2} 页,{0:N0} rows · Page {1}/{2},{0:N0} 件 · {1}/{2} ページ,{0:N0} linhas · Página {1}/{2}
+Wpf,F069,汇总按全部 {0:N0} 条 · 第 {1}/{2} 页,Totals use all {0:N0} rows · page {1}/{2},集計は全 {0:N0} 件 · {1}/{2} ページ,Totais usam todas as {0:N0} linhas · página {1}/{2}
 Wpf,F070,写入失败: {0},Write failed: {0},書き込みに失敗しました: {0},Falha na gravação: {0}
 Wpf,F071,写入异常: {0},Write error: {0},書き込みエラー: {0},Erro de gravação: {0}
 Wpf,F072,写入成功 ({0:HH:mm:ss}),Write OK ({0:HH:mm:ss}),書き込み成功（{0:HH:mm:ss}）,Gravação OK ({0:HH:mm:ss})
@@ -1448,7 +1468,7 @@ Wpf,M378,禁用,Disabled,無効,Desabilitada
 Wpf,M379,搜索用户名 / 显示名,Search username / display name,ユーザー名 / 表示名を検索,Pesquisar nome de usuário / nome de exibição
 Wpf,M380,无匹配用户,No matching users,一致するユーザーがいません,Nenhum usuário correspondente
 Wpf,M381,导出范围,Export Scope,エクスポート範囲,Escopo de exportação
-Wpf,M382,"导出全部筛选结果？选择\""是\""导出全量，选择\""否\""仅导出当前页。",Export all filtered results? Choose Yes for full export or No for current page only.,絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。,Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.
+Wpf,M382,"导出全部筛选结果？「是」导出全部，「否」只导出当前这一页，「取消」不导出。",Export all filtered results? Yes exports everything. No exports this page only. Cancel exports nothing.,絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみ、「キャンセル」で中止。,Exportar todos os resultados filtrados? Sim exporta tudo. Não exporta só esta página. Cancelar não exporta.
 Wpf,M384,全量筛选结果（共 {0} 条）,All filtered results ({0} rows),絞り込み結果の全件（{0} 件）,Todos os resultados filtrados ({0} linhas)
 Wpf,M332,操作员,Operator,オペレーター,Operador
 Wpf,M333,工程师,Engineer,エンジニア,Engenheiro
@@ -2591,8 +2611,8 @@ Wpf,Dd_Tip_ActualCapacity,实际产能（件/小时）= (OK+NG) ÷ 运行小时�
 Wpf,Hq_Tip_WindowOutput,所选查询时间窗内总产量 = OK + NG（不是当前会话累计）。\n当前：OK {0:N0} + NG {1:N0} = {2:N0} 件,Total output in the selected query window = OK + NG (not the live session).\nNow: OK {0:N0} + NG {1:N0} = {2:N0} pcs,選択した照会窓の総生産 = OK+NG（現在セッションではない）。\n現在：OK {0:N0} + NG {1:N0} = {2:N0} 個,Produção total na janela da consulta = OK+NG (não a sessão ao vivo).\nAgora: OK {0:N0} + NG {1:N0} = {2:N0} pçs
 Wpf,Hq_Tip_WindowOk,所选查询时间窗内 OK 产量（窗口差分，不是会话累计）。\n当前：{0:N0} 件,"OK output in the selected query window (window delta, not session total).\nNow: {0:N0} pcs",選択した照会窓の OK（窓差分、セッション累計ではない）。\n現在：{0:N0} 個,"OK na janela da consulta (delta da janela, não o total da sessão).\nAgora: {0:N0} pçs"
 Wpf,Hq_Tip_WindowNg,所选查询时间窗内 NG 产量（窗口差分，不是会话累计）。\n当前：{0:N0} 件,"NG output in the selected query window (window delta, not session total).\nNow: {0:N0} pcs",選択した照会窓の NG（窓差分、セッション累計ではない）。\n現在：{0:N0} 個,"NG na janela da consulta (delta da janela, não o total da sessão).\nAgora: {0:N0} pçs"
-Wpf,Hq_Tip_WindowQuality,所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。\n当前：{0:N0} / {1:N0} = {2},Quality in the selected query window = OK ÷ (OK+NG). Target 95%.\nNow: {0:N0} / {1:N0} = {2},照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。\n現在：{0:N0} / {1:N0} = {2},Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%.\nAgora: {0:N0} / {1:N0} = {2}
-Wpf,Hq_Tip_WindowNgRate,所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。\n当前：{0:N0} / {1:N0} = {2},NG rate in the selected query window = NG ÷ (OK+NG); lower is better.\nNow: {0:N0} / {1:N0} = {2},照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。\n現在：{0:N0} / {1:N0} = {2},"Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor.\nAgora: {0:N0} / {1:N0} = {2}"
+Wpf,Hq_Tip_WindowQuality,所选查询时间窗内合格率 = OK ÷ (OK+NG)。达标线 95%。着色：≥95% 绿 / ≥90% 黄 / 低于 90% 红。\n当前：{0:N0} / {1:N0} = {2},Quality in the selected query window = OK ÷ (OK+NG). Target 95%. Colors: ≥95% green / ≥90% yellow / below 90% red.\nNow: {0:N0} / {1:N0} = {2},照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。色：≥95% 緑 / ≥90% 黄 / 90% 未満赤。\n現在：{0:N0} / {1:N0} = {2},Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%. Cores: ≥95% verde / ≥90% amarelo / abaixo de 90% vermelho.\nAgora: {0:N0} / {1:N0} = {2}
+Wpf,Hq_Tip_WindowNgRate,所选查询时间窗内不良率 = NG ÷ (OK+NG)，越低越好。颜色与良品率互补：≤5% 绿，≤10% 黄，再高为红。\n当前：{0:N0} / {1:N0} = {2},"NG rate in the selected query window = NG ÷ (OK+NG); lower is better. Colors match the complement of quality: ≤5% green, ≤10% yellow, above that red.\nNow: {0:N0} / {1:N0} = {2}",照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。色は良品率の補数：≤5% 緑、≤10% 黄、それ以上は赤。\n現在：{0:N0} / {1:N0} = {2},"Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor. Cores complementam a qualidade: ≤5% verde, ≤10% amarelo, acima disso vermelho.\nAgora: {0:N0} / {1:N0} = {2}"
 Wpf,Hq_Tip_WindowOee,所选查询时间窗内 OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / <60% 红。,OEE in the selected query window = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / <60% red.,照会窓の OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / <60% 赤。,OEE na janela da consulta = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / <60% vermelho.
 Wpf,Mo_Tip_SuccessRate,采集成功率 = 成功轮次 ÷ 完成轮次（失败轮是完成轮的子集，不重复计入分母）。\n当前：{0},Acquisition success rate = successful cycles ÷ completed cycles (failures are a subset of completed).\nNow: {0},収集成功率 = 成功サイクル ÷ 完了サイクル（失敗は完了の部分集合）。\n現在：{0},Taxa de sucesso da coleta = ciclos ok ÷ ciclos concluídos (falhas são subconjunto dos concluídos).\nAgora: {0}
 Wpf,Mo_Tip_ConsecutiveFail,连续失败轮次；大于 0 表示采集链路当前异常。\n当前：{0},Consecutive failed cycles; greater than 0 means the acquisition path is currently unhealthy.\nNow: {0},連続失敗サイクル。0 超は収集経路の異常。\n現在：{0},Ciclos falhos consecutivos; > 0 indica caminho de coleta instável agora.\nAgora: {0}
@@ -2617,9 +2637,6 @@ Wpf,Viewer_ExitConfirm,展示终端正在运行，确定要退出看板吗？,Th
 Wpf,Settings_LocalSavedCollectorPending,本机已保存。采集服务未同步，车间看板仍用旧参数：{0},Saved on this PC. Collector was not synced; shop-floor screens still use old settings: {0},このPCには保存済み。Collector 未同期のため現場画面は旧設定のままです：{0},Salvo neste PC. Collector não sincronizou; as telas do chão ainda usam a configuração antiga: {0}
 Wpf,Settings_DisplayCarousel,过道电视轮播,TV carousel,通路TVローテーション,Carrossel da TV
 Wpf,Settings_DisplayCarouselHint,默认开启。首页 40 秒 → 产线 30 秒 → 报警 20 秒（无报警跳过）。点按暂停 16 秒。High 报警冻结在报警页。完整模式可取消勾选。,On by default. Home 40s → line 30s → alarms 20s (skip if none). Touch pauses 16s. High alarms freeze on the alarm page. Uncheck in full mode to disable.,デフォルトでオン。ホーム40秒→ライン30秒→警報20秒（警報なしはスキップ）。操作で16秒停止。High警報は警報ページで固定。完全モードではオフにできます。,Ligado por padrão. Início 40s → linha 30s → alarmes 20s (pula se vazio). Toque pausa 16s. Alarmes High travam na página de alarmes. Desmarque no modo completo para desligar.
-Wpf,Carousel_Frozen,高报警冻结,Frozen on high alarm,高警報で固定,Congelado em alarme alto
-Wpf,Carousel_Paused,已暂停 · {0} · {1}s,Paused · {0} · {1}s,一時停止 · {0} · {1}s,Pausado · {0} · {1}s
-Wpf,Carousel_Running,{0} · 剩余 {1}s,{0} · {1}s left,{0} · 残り {1}s,{0} · restam {1}s
 Wpf,Home_Tip_WorkOrderSchedule,排期对照：实际达成率对照计划时间进度。正差=超前，负差=滞后。\n实际 {0} · 计划 {1} · {2}\n{3},"Schedule check: actual achievement versus planned time progress. Positive = ahead, negative = behind.\nActual {0} · planned {1} · {2}\n{3}",計画対比：実績達成率と計画時間進捗。正=先行、負=遅れ。\n実績 {0} · 計画 {1} · {2}\n{3},"Comparação de prazo: realização real versus progresso planejado. Positivo = adiantado, negativo = atrasado.\nReal {0} · planejado {1} · {2}\n{3}"
 Wpf,Home_Tip_CycleDiff,周期差 = 实际周期 − 目标周期。正数=慢（每件更久），负数=快。\n目标 {0} · 实际 {1} · {2},"Cycle gap = actual cycle − target cycle. Positive = slower (longer per piece), negative = faster.\nTarget {0} · actual {1} · {2}",サイクル差 = 実サイクル − 目標サイクル。正=遅い（1個あたり長い）、負=速い。\n目標 {0} · 実績 {1} · {2},"Diferença de ciclo = ciclo real − ciclo alvo. Positivo = mais lento, negativo = mais rápido.\nAlvo {0} · real {1} · {2}"
 Wpf,Home_Tip_DefectSummary,本班次缺陷帕累托合计件数（已分类缺陷，不含未录入原因的 NG）。\n{0},Shift defect Pareto total count (classified defects only; NG without a reason is excluded).\n{0},当シフトのパレート不良合計（分類済みのみ。原因未入力の NG は含まない）。\n{0},Total da Pareto de defeitos do turno (somente classificados; NG sem motivo fica de fora).\n{0}
@@ -2634,7 +2651,6 @@ Wpf,Home_Tip_DataFresh,距最近一次收到该设备快照的时间。正常应
 Wpf,Home_Tip_TrendWindow,最近 1 分钟速度折线（件/小时）。点为采样，不是班次累计。\n当前速度：{0} 件/h,"Speed sparkline for the last 1 minute (pcs/h). Points are samples, not shift totals.\nCurrent speed: {0} pcs/h",直近 1 分の速度折れ線（個/時）。点はサンプルでありシフト累計ではありません。\n現在速度：{0} 個/h,"Linha de velocidade do último 1 minuto (pçs/h). Pontos são amostras, não o total do turno.\nVelocidade agora: {0} pçs/h"
 Wpf,Home_Tip_StatusWord,PLC 状态字原始值（十六进制）。用于核对通讯与运行态。\n当前：{0},Raw PLC status word (hex). Use it to verify comms and run state.\nNow: {0},PLC 状態語の生値（16 進）。通信と稼働状態の照合用。\n現在：{0},Palavra de status bruta do PLC (hex). Serve para conferir comunicação e estado.\nAgora: {0}
 Wpf,Home_Tip_Recipe,当前设备配方名称与配方值。\n当前：{0},Current device recipe name and value.\nNow: {0},現在のデバイスレシピ名と値。\n現在：{0},Nome e valor da receita atual do dispositivo.\nAgora: {0}
-Wpf,Carousel_Tip,过道电视轮播状态。点按画面暂停 80 秒。High 报警冻结在报警页。无活跃报警时跳过报警页。\n{0},TV carousel status. A click pauses for 80 seconds. High alarms freeze on the alarm page. Empty alarm pages are skipped.\n{0},通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0},Estado do carrossel da TV. Um clique pausa 80 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\n{0}
 Wpf,Mo_Tip_ConnStatus,采集服务与设备/PLC 的连接状态。\n当前：{0},Collector connection to the device/PLC.\nNow: {0},コレクタとデバイス/PLC の接続状態。\n現在：{0},Ligação do coletor ao dispositivo/PLC.\nAgora: {0}
 Wpf,Mo_Tip_AcqStatus,数据采集循环是否正在运行。停止则快照不再更新。\n当前：{0},"Whether the acquisition loop is running. When stopped, snapshots stop updating.\nNow: {0}",収集ループが動作中か。停止するとスナップショットは更新されません。\n現在：{0},"Se o loop de coleta está em execução. Parado, os snapshots deixam de atualizar.\nAgora: {0}"
 Wpf,Rv_Tip_AlarmCount,复盘时间窗内历史触发次数（不是当前活跃条数）。已恢复 {1:N0} · 待恢复 {2:N0}。\n当前：{0:N0} 次,Trigger count in the review window (not currently active alarms). Recovered {1:N0} · pending {2:N0}.\nNow: {0:N0},復盤時間窓の発生回数（現在の未復旧件数ではない）。復帰 {1:N0} · 未復帰 {2:N0}。\n現在：{0:N0} 回,Disparos na janela da revisão (não alarmes ativos agora). Recuperados {1:N0} · pendentes {2:N0}.\nAgora: {0:N0}
@@ -2712,13 +2728,15 @@ Wpf,Ux_ViewerRecoveryPrompt,请输入管理员密码以退出展示模式,Enter 
 Wpf,Ux_ViewerRecoverySuccess,已恢复为完整模式,Back to Full mode,完整モードに戻りました,Modo completo restaurado
 Wpf,Ux_ViewerRecoveryFailed,密码错误或不是管理员账号,Incorrect password or not an administrator,パスワードが違うか管理者アカウントではありません,Senha incorreta ou não é uma conta de administrador
 Wpf,Ux_ShortcutHelpTitle,快捷键速查,Keyboard Shortcuts,ショートカット一覧,Atalhos de teclado
-Wpf,Ux_Kb1,切换侧边栏第 1~9 个页面,Switch to sidebar pages 1-9,サイドバーの1〜9ページ目に切り替え,Alternar para as páginas 1-9 da barra lateral
+Wpf,Ux_Kb1,打开当前账号在侧边栏里看得到的前九项,Open the first nine sidebar pages this account can see,今のアカウントに表示されるサイドバー先頭9ページを開く,Abrir as primeiras nove páginas visíveis desta conta
 Wpf,Ux_Kb2,切换用户（弹出登录窗口）,Switch user (open login dialog),ユーザー切り替え（ログイン窓を表示）,Alternar usuário (abrir janela de login)
 Wpf,Ux_Kb3,打开使用手册,Open the user manual,使用マニュアルを開く,Abrir o manual do usuário
 Wpf,Ux_Kb4,切换全屏 / 退出全屏,Toggle fullscreen,全画面の切り替え,Alternar tela cheia
-Wpf,Ux_Kb5,刷新当前页,Refresh the current page,現在のページを更新,Atualizar a página atual
+Wpf,Ux_Kb5,刷新报警中心、工单产量、生产复盘、设备详情、数据监控或运行监控,"Refresh Alarm Center, work-order output, Review, Device Detail, Data Source Monitor, or Runtime Monitor",アラームセンター・工単の出来高・生産レビュー・設備詳細・データソース監視・稼働監視を更新,"Atualizar alarmes, produção da ordem, revisão, detalhes do dispositivo, monitor de fontes de dados ou monitor de execução"
 Wpf,Ux_Kb6,返回上一页（设备详情页）,Go back (Device Detail page),前のページへ戻る（設備詳細頁）,Voltar (página de detalhes do dispositivo)
 Wpf,Ux_Kb7,触发查询（历史查询）,Run the query (History Query),クエリ実行（履歴照会）,Executar consulta (Consulta de Histórico)
 Wpf,Ux_Kb8,重置筛选条件（历史查询）,Reset filters (History Query),フィルタをリセット（履歴照会）,Redefinir filtros (Consulta de Histórico)
 Wpf,Ux_Kb9,导出查询结果（历史查询）,Export results (History Query),結果をエクスポート（履歴照会）,Exportar resultados (Consulta de Histórico)
-Wpf,Ux_Kb10,保存设置（系统设置）,Save settings (System Settings),設定を保存（システム設定）,Salvar configurações (Configurações do Sistema)
+Wpf,Ux_Kb10,保存（系统设置或设备管理）,Save (System Settings or Device Manager),保存（システム設定または設備管理）,Salvar (Configurações ou Gerenciador de dispositivos)
+Wpf,Ux_Kb11,打开快捷键小窗,Open the shortcut list,ショートカット一覧を開く,Abrir a lista de atalhos
+Wpf,Ux_Kb12,把焦点放到本页搜索框（报警中心、产线总览、设备管理、工单管理）,Move focus to this page search box (Alarm Center Production Line Device Manager Work Orders),このページの検索欄へ移動（アラーム・生産ライン・設備管理・工単）,Mover o foco para a busca desta página (alarmes linha dispositivos ordens)

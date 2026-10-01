@@ -1,0 +1,120 @@
+<UserControl
+    x:Class="MainAPP.Views.AssistantView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:AssistantViewModel}"
+    d:DesignHeight="700"
+    d:DesignWidth="1100"
+    Loaded="OnLoaded"
+    IsVisibleChanged="OnVisibleChanged"
+    mc:Ignorable="d">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Margin="0,0,0,16" Padding="20" Style="{StaticResource MainCard}">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="MessageTextOutline" />
+                    <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.Assistant_Title}" />
+                    <controls:PageHelpButton Margin="8,0,0,0" PageKey="assistant" />
+                </StackPanel>
+                <TextBlock
+                    Margin="0,12,0,0"
+                    Foreground="{StaticResource SecondaryTextBrush}"
+                    Text="{x:Static resources:Strings.Assistant_Intro}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Margin="0,8,0,0"
+                    Foreground="{StaticResource PrimaryTextBrush}"
+                    Text="{Binding ContextLine}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Margin="0,0,0,16" Padding="20" Style="{StaticResource MainCard}">
+            <ScrollViewer x:Name="Transcript" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Messages}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,10" Padding="12" MaxWidth="640" CornerRadius="6">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                        <Setter Property="Background" Value="{StaticResource HoverBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                                <Setter Property="Background" Value="{StaticResource PrimarySoftBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock
+                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                    Text="{Binding Text}"
+                                    TextWrapping="Wrap" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Row="2" Padding="20" Style="{StaticResource MainCard}">
+            <StackPanel>
+                <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                    <Button
+                        MinHeight="36"
+                        Margin="0,0,8,0"
+                        Padding="12,0"
+                        Command="{Binding CompareCommand}"
+                        Content="{x:Static resources:Strings.Assistant_Compare}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        MinHeight="36"
+                        Padding="12,0"
+                        Command="{Binding HandoverCommand}"
+                        Content="{x:Static resources:Strings.Assistant_Handover}"
+                        Style="{StaticResource ButtonDefault}" />
+                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Grid.Column="0"
+                        MinHeight="40"
+                        VerticalContentAlignment="Center"
+                        IsEnabled="{Binding CanType}"
+                        KeyDown="OnInputKeyDown"
+                        Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
+                        ToolTip="{x:Static resources:Strings.Assistant_InputHint}" />
+                    <Button
+                        Grid.Column="2"
+                        MinWidth="88"
+                        MinHeight="40"
+                        Command="{Binding SendCommand}"
+                        Content="{x:Static resources:Strings.Assistant_Send}"
+                        Style="{StaticResource ButtonDefault}" />
+                </Grid>
+                <TextBlock
+                    Margin="0,8,0,0"
+                    Foreground="{StaticResource SecondaryTextBrush}"
+                    Text="{Binding Status}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

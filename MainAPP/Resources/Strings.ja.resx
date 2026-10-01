@@ -30,6 +30,66 @@
   <data name="Nav_HistoryQuery" xml:space="preserve">
     <value>履歴照会</value>
   </data>
+  <data name="Nav_Assistant" xml:space="preserve">
+    <value>AI質問</value>
+  </data>
+  <data name="Nav_Assistant_Tip" xml:space="preserve">
+    <value>いまの画面で算出済みの事実から答える</value>
+  </data>
+  <data name="Assistant_Title" xml:space="preserve">
+    <value>AI質問</value>
+  </data>
+  <data name="Assistant_Intro" xml:space="preserve">
+    <value>算出済みの事実に設備名と前のページの説明を添えます。アラーム確認・工単の開始と終了・レシピ配布はしません。</value>
+  </data>
+  <data name="Assistant_Compare" xml:space="preserve">
+    <value>事実を対照</value>
+  </data>
+  <data name="Assistant_Handover" xml:space="preserve">
+    <value>引き継ぎを書く</value>
+  </data>
+  <data name="Assistant_CompareQuestion" xml:space="preserve">
+    <value>これらの算出済み事実のどれが同じ時間帯に重なりますか。対照だけにして原因と断定しないでください。</value>
+  </data>
+  <data name="Assistant_HandoverQuestion" xml:space="preserve">
+    <value>これらの事実で引き継ぎ文を書いてください。画面にない数は足さないでください。</value>
+  </data>
+  <data name="Assistant_Send" xml:space="preserve">
+    <value>送信</value>
+  </data>
+  <data name="Assistant_InputHint" xml:space="preserve">
+    <value>見ている現象か確認したい数を書いてください</value>
+  </data>
+  <data name="Assistant_Preparing" xml:space="preserve">
+    <value>ローカルモデルを準備しています。初回は重みをダウンロードします。</value>
+  </data>
+  <data name="Assistant_Answering" xml:space="preserve">
+    <value>回答しています</value>
+  </data>
+  <data name="Assistant_TooLong" xml:space="preserve">
+    <value>質問は一段落に収めてください。</value>
+  </data>
+  <data name="Assistant_NoServer" xml:space="preserve">
+    <value>公開フォルダにローカルモデルのプログラムがないため回答できません。</value>
+  </data>
+  <data name="Assistant_Failed" xml:space="preserve">
+    <value>今回は答えられませんでした：{0}</value>
+  </data>
+  <data name="Assistant_ContextPage" xml:space="preserve">
+    <value>前のページ：{0}</value>
+  </data>
+  <data name="Assistant_ContextDevice" xml:space="preserve">
+    <value>設備：{0}</value>
+  </data>
+  <data name="Assistant_ContextDeviceNone" xml:space="preserve">
+    <value>設備：未選択</value>
+  </data>
+  <data name="Assistant_ContextRange" xml:space="preserve">
+    <value>照会期間：{0} から {1}</value>
+  </data>
+  <data name="Assistant_ContextRangeNone" xml:space="preserve">
+    <value>照会期間：履歴照会はまだ開いていません</value>
+  </data>
   <data name="Nav_Overview" xml:space="preserve">
     <value>生産レビュー</value>
   </data>
@@ -2322,7 +2382,7 @@
     <value>収集サービスの停止に失敗しました: {0}</value>
   </data>
   <data name="F069" xml:space="preserve">
-    <value>{0:N0} 件 · {1}/{2} ページ</value>
+    <value>集計は全 {0:N0} 件 · {1}/{2} ページ</value>
   </data>
   <data name="F070" xml:space="preserve">
     <value>書き込みに失敗しました: {0}</value>
@@ -4072,7 +4132,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>エクスポート範囲</value>
   </data>
   <data name="M382" xml:space="preserve">
-    <value>絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみです。</value>
+    <value>絞り込み結果をすべてエクスポートしますか？「はい」で全件、「いいえ」で現在のページのみ、「キャンセル」で中止。</value>
   </data>
   <data name="M384" xml:space="preserve">
     <value>絞り込み結果の全件（{0} 件）</value>
@@ -7136,10 +7196,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>選択した照会窓の NG（窓差分、セッション累計ではない）。\n現在：{0:N0} 個</value>
   </data>
   <data name="Hq_Tip_WindowQuality" xml:space="preserve">
-    <value>照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。\n現在：{0:N0} / {1:N0} = {2}</value>
+    <value>照会窓の良品率 = OK ÷ (OK+NG)。目標 95%。色：≥95% 緑 / ≥90% 黄 / 90% 未満赤。\n現在：{0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
-    <value>照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。\n現在：{0:N0} / {1:N0} = {2}</value>
+    <value>照会窓の不良率 = NG ÷ (OK+NG)。低いほど良い。色は良品率の補数：≤5% 緑、≤10% 黄、それ以上は赤。\n現在：{0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowOee" xml:space="preserve">
     <value>照会窓の OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / &lt;60% 赤。</value>
@@ -7213,15 +7273,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Settings_DisplayCarouselHint" xml:space="preserve">
     <value>デフォルトでオン。ホーム40秒→ライン30秒→警報20秒（警報なしはスキップ）。操作で16秒停止。High警報は警報ページで固定。完全モードではオフにできます。</value>
   </data>
-  <data name="Carousel_Frozen" xml:space="preserve">
-    <value>高警報で固定</value>
-  </data>
-  <data name="Carousel_Paused" xml:space="preserve">
-    <value>一時停止 · {0} · {1}s</value>
-  </data>
-  <data name="Carousel_Running" xml:space="preserve">
-    <value>{0} · 残り {1}s</value>
-  </data>
   <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
     <value>計画対比：実績達成率と計画時間進捗。正=先行、負=遅れ。\n実績 {0} · 計画 {1} · {2}\n{3}</value>
   </data>
@@ -7263,9 +7314,6 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Home_Tip_Recipe" xml:space="preserve">
     <value>現在のデバイスレシピ名と値。\n現在：{0}</value>
-  </data>
-  <data name="Carousel_Tip" xml:space="preserve">
-    <value>通路 TV ローテーションの状態。操作で 80 秒停止。High 警報は警報ページで固定。警報なしはスキップ。\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>コレクタとデバイス/PLC の接続状態。\n現在：{0}</value>
@@ -7496,7 +7544,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>ショートカット一覧</value>
   </data>
   <data name="Ux_Kb1" xml:space="preserve">
-    <value>サイドバーの1〜9ページ目に切り替え</value>
+    <value>今のアカウントに表示されるサイドバー先頭9ページを開く</value>
   </data>
   <data name="Ux_Kb2" xml:space="preserve">
     <value>ユーザー切り替え（ログイン窓を表示）</value>
@@ -7508,7 +7556,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>全画面の切り替え</value>
   </data>
   <data name="Ux_Kb5" xml:space="preserve">
-    <value>現在のページを更新</value>
+    <value>アラームセンター・工単の出来高・生産レビュー・設備詳細・データソース監視・稼働監視を更新</value>
   </data>
   <data name="Ux_Kb6" xml:space="preserve">
     <value>前のページへ戻る（設備詳細頁）</value>
@@ -7523,6 +7571,12 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>結果をエクスポート（履歴照会）</value>
   </data>
   <data name="Ux_Kb10" xml:space="preserve">
-    <value>設定を保存（システム設定）</value>
+    <value>保存（システム設定または設備管理）</value>
+  </data>
+  <data name="Ux_Kb11" xml:space="preserve">
+    <value>ショートカット一覧を開く</value>
+  </data>
+  <data name="Ux_Kb12" xml:space="preserve">
+    <value>このページの検索欄へ移動（アラーム・生産ライン・設備管理・工単）</value>
   </data>
 </root>

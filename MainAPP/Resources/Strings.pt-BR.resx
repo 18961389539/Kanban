@@ -30,6 +30,66 @@
   <data name="Nav_HistoryQuery" xml:space="preserve">
     <value>Consulta histórica</value>
   </data>
+  <data name="Nav_Assistant" xml:space="preserve">
+    <value>Perguntas de IA</value>
+  </data>
+  <data name="Nav_Assistant_Tip" xml:space="preserve">
+    <value>Responde com os fatos já calculados na página atual</value>
+  </data>
+  <data name="Assistant_Title" xml:space="preserve">
+    <value>Perguntas de IA</value>
+  </data>
+  <data name="Assistant_Intro" xml:space="preserve">
+    <value>Explica fatos já calculados e inclui os nomes dos dispositivos e o manual da página anterior. Não confirma alarmes nem inicia encerra ordens ou envia receitas.</value>
+  </data>
+  <data name="Assistant_Compare" xml:space="preserve">
+    <value>Comparar fatos</value>
+  </data>
+  <data name="Assistant_Handover" xml:space="preserve">
+    <value>Escrever passagem</value>
+  </data>
+  <data name="Assistant_CompareQuestion" xml:space="preserve">
+    <value>Quais destes fatos calculados caem no mesmo período? Apenas compare. Não chame isso de causa raiz.</value>
+  </data>
+  <data name="Assistant_HandoverQuestion" xml:space="preserve">
+    <value>Escreva uma passagem de turno com estes fatos. Não acrescente números que a página não tem.</value>
+  </data>
+  <data name="Assistant_Send" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+  <data name="Assistant_InputHint" xml:space="preserve">
+    <value>Descreva o que você vê ou o número a conferir</value>
+  </data>
+  <data name="Assistant_Preparing" xml:space="preserve">
+    <value>Preparando o modelo local. O primeiro uso baixa os pesos.</value>
+  </data>
+  <data name="Assistant_Answering" xml:space="preserve">
+    <value>Respondendo</value>
+  </data>
+  <data name="Assistant_TooLong" xml:space="preserve">
+    <value>Deixe a pergunta em um parágrafo curto.</value>
+  </data>
+  <data name="Assistant_NoServer" xml:space="preserve">
+    <value>A pasta publicada não tem o programa do modelo local e esta pergunta não pode ser respondida.</value>
+  </data>
+  <data name="Assistant_Failed" xml:space="preserve">
+    <value>Sem resposta desta vez: {0}</value>
+  </data>
+  <data name="Assistant_ContextPage" xml:space="preserve">
+    <value>Página anterior: {0}</value>
+  </data>
+  <data name="Assistant_ContextDevice" xml:space="preserve">
+    <value>Dispositivo: {0}</value>
+  </data>
+  <data name="Assistant_ContextDeviceNone" xml:space="preserve">
+    <value>Dispositivo: nenhum selecionado</value>
+  </data>
+  <data name="Assistant_ContextRange" xml:space="preserve">
+    <value>Período da consulta: {0} até {1}</value>
+  </data>
+  <data name="Assistant_ContextRangeNone" xml:space="preserve">
+    <value>Período da consulta: a consulta histórica ainda não foi aberta</value>
+  </data>
   <data name="Nav_Overview" xml:space="preserve">
     <value>Revisão da produção</value>
   </data>
@@ -2317,7 +2377,7 @@
     <value>Falha ao interromper o serviço de coleta: {0}</value>
   </data>
   <data name="F069" xml:space="preserve">
-    <value>{0:N0} linhas · Página {1}/{2}</value>
+    <value>Totais usam todas as {0:N0} linhas · página {1}/{2}</value>
   </data>
   <data name="F070" xml:space="preserve">
     <value>Falha na gravação: {0}</value>
@@ -4036,7 +4096,7 @@
     <value>Escopo de exportação</value>
   </data>
   <data name="M382" xml:space="preserve">
-    <value>Exportar todos os resultados filtrados? Escolha Sim para exportação completa ou Não para apenas a página atual.</value>
+    <value>Exportar todos os resultados filtrados? Sim exporta tudo. Não exporta só esta página. Cancelar não exporta.</value>
   </data>
   <data name="M384" xml:space="preserve">
     <value>Todos os resultados filtrados ({0} linhas)</value>
@@ -7092,10 +7152,10 @@ Manual no rodape da barra lateral ou F1</value>
     <value>NG na janela da consulta (delta da janela, não o total da sessão).\nAgora: {0:N0} pçs</value>
   </data>
   <data name="Hq_Tip_WindowQuality" xml:space="preserve">
-    <value>Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%.\nAgora: {0:N0} / {1:N0} = {2}</value>
+    <value>Qualidade na janela da consulta = OK ÷ (OK+NG). Meta 95%. Cores: ≥95% verde / ≥90% amarelo / abaixo de 90% vermelho.\nAgora: {0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowNgRate" xml:space="preserve">
-    <value>Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor.\nAgora: {0:N0} / {1:N0} = {2}</value>
+    <value>Taxa de NG na janela da consulta = NG ÷ (OK+NG); quanto menor, melhor. Cores complementam a qualidade: ≤5% verde, ≤10% amarelo, acima disso vermelho.\nAgora: {0:N0} / {1:N0} = {2}</value>
   </data>
   <data name="Hq_Tip_WindowOee" xml:space="preserve">
     <value>OEE na janela da consulta = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / &lt;60% vermelho.</value>
@@ -7169,15 +7229,6 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Settings_DisplayCarouselHint" xml:space="preserve">
     <value>Ligado por padrão. Início 40s → linha 30s → alarmes 20s (pula se vazio). Toque pausa 16s. Alarmes High travam na página de alarmes. Desmarque no modo completo para desligar.</value>
   </data>
-  <data name="Carousel_Frozen" xml:space="preserve">
-    <value>Congelado em alarme alto</value>
-  </data>
-  <data name="Carousel_Paused" xml:space="preserve">
-    <value>Pausado · {0} · {1}s</value>
-  </data>
-  <data name="Carousel_Running" xml:space="preserve">
-    <value>{0} · restam {1}s</value>
-  </data>
   <data name="Home_Tip_WorkOrderSchedule" xml:space="preserve">
     <value>Comparação de prazo: realização real versus progresso planejado. Positivo = adiantado, negativo = atrasado.\nReal {0} · planejado {1} · {2}\n{3}</value>
   </data>
@@ -7219,9 +7270,6 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Home_Tip_Recipe" xml:space="preserve">
     <value>Nome e valor da receita atual do dispositivo.\nAgora: {0}</value>
-  </data>
-  <data name="Carousel_Tip" xml:space="preserve">
-    <value>Estado do carrossel da TV. Um clique pausa 80 segundos. Alarmes High travam na página de alarmes. Páginas vazias são puladas.\n{0}</value>
   </data>
   <data name="Mo_Tip_ConnStatus" xml:space="preserve">
     <value>Ligação do coletor ao dispositivo/PLC.\nAgora: {0}</value>
@@ -7452,7 +7500,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Atalhos de teclado</value>
   </data>
   <data name="Ux_Kb1" xml:space="preserve">
-    <value>Alternar para as páginas 1-9 da barra lateral</value>
+    <value>Abrir as primeiras nove páginas visíveis desta conta</value>
   </data>
   <data name="Ux_Kb2" xml:space="preserve">
     <value>Alternar usuário (abrir janela de login)</value>
@@ -7464,7 +7512,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Alternar tela cheia</value>
   </data>
   <data name="Ux_Kb5" xml:space="preserve">
-    <value>Atualizar a página atual</value>
+    <value>Atualizar alarmes, produção da ordem, revisão, detalhes do dispositivo, monitor de fontes de dados ou monitor de execução</value>
   </data>
   <data name="Ux_Kb6" xml:space="preserve">
     <value>Voltar (página de detalhes do dispositivo)</value>
@@ -7479,6 +7527,12 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Exportar resultados (Consulta de Histórico)</value>
   </data>
   <data name="Ux_Kb10" xml:space="preserve">
-    <value>Salvar configurações (Configurações do Sistema)</value>
+    <value>Salvar (Configurações ou Gerenciador de dispositivos)</value>
+  </data>
+  <data name="Ux_Kb11" xml:space="preserve">
+    <value>Abrir a lista de atalhos</value>
+  </data>
+  <data name="Ux_Kb12" xml:space="preserve">
+    <value>Mover o foco para a busca desta página (alarmes linha dispositivos ordens)</value>
   </data>
 </root>

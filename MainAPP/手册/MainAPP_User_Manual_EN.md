@@ -4,7 +4,7 @@
 >
 > This manual uses a step-by-step approach. Click blue buttons when you see them; handle red alarms first. You do not need to understand the code to perform daily work.
 >
-> Last updated: 2026-09 · Applies to: Kanban (`MainAPP.exe`). If the UI changes, the on-screen behavior takes precedence; ask an administrator to update this manual.
+> Last updated: 2026-10 · Applies to: Kanban (`MainAPP.exe`). If the UI changes, the on-screen behavior takes precedence; ask an administrator to update this manual.
 >
 > **中文版:** [Kanban 用户使用手册](./MainAPP用户使用手册.md) · **Screenshots:** [README](./README.md)
 
@@ -34,13 +34,13 @@ Ask your administrator to confirm:
 - A login account is ready (the app auto-logs-in as the default administrator; usually nothing to do).
 - Licensing is active or still within the trial period.
 
-> Do not enter addresses or click “Reset Output” without confirming the address table. PLC write commands can affect live production.
+> Do not enter addresses, or click Reset All on Production Line, without confirming the address table. PLC write commands can affect live production.
 
 ### 2.2 Starting the Application
 
 1. Double-click `MainAPP.exe`, or use the desktop shortcut provided by your administrator.
 2. Wait for the main window to appear.
-3. If a license dialog appears, follow the **License Management** section.
+3. If a window titled 软件激活 appears, send the machine code to the person who issues keys, paste the key, and click 激活. 取消 closes the program. This window does not appear during the trial or after the license is already active.
 4. On first launch, open **System Settings** to confirm PLC and shift configuration before entering Device Manager.
 
 The app starts maximized. If the display is not 16:9, you may see letterboxing. This keeps content from being cropped.
@@ -58,7 +58,7 @@ When you need step-by-step help:
 
 On first launch, a **quick guide** may appear; the last step also offers **Open User Manual**.
 
-> Other shortcuts: `Ctrl+1`–`Ctrl+9` switch directly to Home, Production Line, Alarm Center, Device Manager, Work Orders, History Query, Review, System Settings, and Runtime Monitor; `Ctrl+L` switches the current user; `F11` toggles fullscreen.
+> Other shortcuts: `Ctrl+1`–`Ctrl+9` open the first nine sidebar pages the signed-in account can see. For an administrator those are Home, Production Line, Alarm Center, Work Orders, Review, History Query, Device Manager, Recipes, and System Settings. For an engineer the ninth page is Data Monitoring. An operator sees seven pages, ending at Data Monitoring, so `Ctrl+8` and `Ctrl+9` do nothing. Viewer mode keeps only Home, Production Line, Alarm Center, and Data Monitoring. `Ctrl+L` switches the current user; `F11` toggles fullscreen.
 
 ## 3. Main Interface Overview
 
@@ -77,15 +77,15 @@ The left sidebar lists pages from top to bottom in the order below (some entries
 | Dashboard | Home | Quick view of line KPIs |
 | Factory | Production Line | Every device’s current shift at once |
 | Bell | Alarm Center | Handle alarms and view statistics |
-| Device | Device Manager | Configure devices and addresses (Engineer+) |
-| Clipboard | Work Orders | Create and track work orders |
-| Clock | History Query | Query production, alarm, and status history |
+| Clipboard | Work Orders | Add, start, complete, and abort work orders |
 | Chart | Review | Trends, output, and OEE summary |
+| Clock | History Query | Query production, alarm, and status history |
+| Device | Device Manager | Configure devices and addresses (Engineer+) |
+| Recipe | Recipes | Recipes written to the PLC (Engineer+) |
 | Gear | System Settings | Data source, PLC, shifts, refresh, licensing (Admin) |
 | Monitor | Runtime Monitor | Acquisition service and system health (Admin) |
 | Users | User Management | Accounts and roles (Admin) |
 | Shield | Audit Log | Configuration and operation audit trail (Admin) |
-| Recipe | Recipes | Recipes written to the PLC (Engineer+) |
 | Chart | Data Monitoring | Live data source samples |
 
 ![Production Line example](screenshots/02_production_line.png)
@@ -98,7 +98,7 @@ A global connection banner appears at the **top** of the page (no banner when co
 - **Yellow banner (connecting)**: the system is trying to connect; wait a moment.
 - **Yellow banner (data stale)**: connected, but data has not updated for a while—the acquisition end may be stuck.
 
-If the PLC is disconnected, home page status and output stop updating. Check **System Settings** and **Runtime Monitor** first; do not repeatedly click reset commands.
+If the PLC is disconnected, home page status and output stop updating. Check **System Settings** and **Runtime Monitor** first; do not repeatedly click Reset All.
 
 > When the data source is **Collector service (Remote)**, the banner reflects the connection to the **collector service**, not the PLC directly. Check the actual PLC status in **Runtime Monitor**.
 
@@ -108,7 +108,7 @@ Recommended order each day:
 
 1. Open the app and wait for pages to load.
 2. Confirm there is no red or yellow connection banner at the top of the page.
-3. Open **Runtime Monitor** and confirm the acquisition service is running.
+3. Open **Runtime Monitor**. In local acquisition, confirm the PLC is connected and the acquisition loop is still running. In remote acquisition, also confirm the collector can be reached.
 4. Open **Alarm Center** and confirm no high-priority unhandled alarms.
 5. Return to **Home** and confirm device count and KPIs match the shop floor.
 
@@ -382,30 +382,30 @@ Output, status, and alarm tables show 50 rows per page, newest first. The summar
 ### How the filters stack
 
 - Device: one device. Output, status, alarms, and OEE all follow it. The alarm-type list appears only on Alarm Records.
-- Quick time: Custom, today, yesterday, last 7 days, last 30 days. After you pick today or yesterday and then edit a clock time, the quick choice returns to Custom, so the label cannot keep saying Today while the clocks no longer match. Both ends are included. If the end is still in the future, pending duration and the state time used by OEE stop at now. Time that has not arrived is not counted. On the alarm table, a trigger that has not recovered still shows “—” for duration.
+- Quick time: Custom, today, yesterday, last 7 days, last 30 days, then this shift, previous shift, this week, this month, and the last 1 hour, 4 hours, and 24 hours. Last 7 days is seven calendar dates including today. Last 30 days is the same kind of count. After you pick today or yesterday and then edit a clock time, the quick choice returns to Custom, so the label cannot keep saying Today while the clocks no longer match. Both ends are included. If the end is still in the future, open-alarm duration and the state time used by OEE stop at now. Time that has not arrived is not counted.
 - Shift: leave it on all shifts to keep every shift in the range. After you pick one, only rows that stored that shift name when they were written remain. Changing the shift setup later does not rewrite the name on old rows.
 - Alarm type: every alarm name that appeared in this time window, in name order, with All Alarms first. After you pick one, the table, the four summaries, and the chart keep only that name. The dropdown itself still lists the other names, so you can switch without going back to All Alarms.
-- Reset clears the device, the shift, and the alarm type, sets the range from yesterday 00:00 through today 23:59:59, and clears the table first. With no device selected, the automatic query that follows is still empty.
+- Reset clears the shift and the alarm type, sets the range from yesterday 00:00 through today 23:59:59, and labels the quick choice Custom. A device that is already selected stays selected. If none is selected and the list has devices, the first one is selected. The table is cleared, and reset does not follow that with an empty automatic query.
 - If nothing comes back, check whether the times are reversed, whether the device is the other one, and whether the shift name is the name that was current then. Then check Runtime Monitor for acquisition in that period. An empty result does not by itself mean the line produced nothing.
 
 ### Export
 
-Export asks for the scope first. Yes writes every filtered row. No writes only the current page of 50. The file is a CSV with a header, saved under the Exports folder in this computer’s data directory. A current-page file name includes the page number, and the file ends with a note that it is one page. Export stays disabled until a query has returned rows. SN Traceability does not use this export.
+Export asks for the scope first. Yes writes every filtered row. No writes only the current page of 50. Cancel writes nothing. The file is a CSV with a header, saved under the Exports folder in this computer’s data directory. A current-page file name includes the page number, and the file ends with a note that it is one page. Export stays disabled until a query has returned rows. SN Traceability does not use this export. The title line “Totals use all N rows” is the basis of the summary numbers, not the sum of the 50 rows on this page.
 
 ### Output Query
 
-Five numbers: total output, total OK, total NG, quality rate, defect rate. The two rates keep one decimal. Quality = good count ÷ (good count + defect count). Its colors are not the home quality colors: 90% and above is green, 70% and above is yellow, and below that is red. Defect rate is the rest: 3% and above is yellow, 5% and above is red, and below 3% is green.
+Five numbers: total output, total OK, total NG, quality rate, defect rate. The two rates keep one decimal. Quality = good count ÷ (good count + defect count). Colors match Home and the OEE quality number on this page: 95% and above is green, 90% and above is yellow, and below that is red. Defect rate is the rest, colored as the complement: 5% and below is green, 10% and below is yellow, and above that is red. A 96% quality rate and a 4% defect rate are both green.
 
 | Number | Color |
 | --- | --- |
-| Quality | 90% and above green, 70% and above yellow, below 70% red |
-| Defect rate | Below 3% green, 3% and above yellow, 5% and above red |
+| Quality | 95% and above green, 90% and above yellow, below 90% red |
+| Defect rate | 5% and below green, 10% and below yellow, above 10% red |
 
 When there is data, a note sits under the five numbers, then an output chart, then the table. Columns: time, device, shift, OK output, NG output, and the device state at that time. A row is one stored output record, not the live counter.
 
 ### Status Duration
 
-Four durations: running, alarm, standby, offline. The note under them names the longest running stretch, the longest standby stretch, and any single alarm longer than 30 minutes. If standby is more than 20% of the whole query window, that is called out. Only when standby is under that share, and alarm time is more than 20% of the window, does the note call out the alarm share instead.
+Four durations: running, alarm, standby, offline. The note under them names the longest running stretch, the longest standby stretch, and any single alarm longer than 30 minutes. Standby above 20% of the query window is called out. Alarm time above 20% is called out in the same note, even when standby is also above 20%.
 
 Three charts sit in the middle, left to right: state share, duration bars, and the status-transition timeline. The table under them is each change, 50 rows per page: time, device, previous state, next state. Offline may include a cause, such as communication lost or a gap in acquisition.
 
@@ -417,14 +417,14 @@ Columns: time, device, alarm name, PLC address, event type, duration. There are 
 - Recovered: the alarm fell.
 - Shift change: the alarm was still on when the shift changed, and the new shift starts the timer again. It is not a recovery, and it is not counted in the recovered total.
 
-Duration is filled in only on the trigger row that was paired with a recovery. Pairing works like this: each recovery takes the nearest earlier trigger of the same device and the same alarm that no other recovery has already taken. Recovery rows, shift-change rows, and triggers that are still waiting show “—”.
+Duration is written on trigger rows. Pairing works like this: each recovery takes the nearest earlier trigger of the same device and the same alarm that no other recovery has already taken, and the duration is trigger to recovery. The latest trigger that still has no recovery is measured through the end of the query, or through now when the end is in the future. An earlier unpaired trigger that already has a recovery after it, plus recovery rows and shift-change rows, still show “—”.
 
 The four numbers use every row after the filters. Turning the page does not change them.
 
 - Triggered and recovered counts: how many of each event. One rise and one fall are usually two rows, so the counts are often close and not always equal.
-- Pending: groups of device plus alarm whose latest event in the window is still a trigger. If the latest event is a shift change, that group is not pending.
+- Pending: groups of device plus alarm whose latest trigger has no recovery after it. A shift change in between does not clear the group.
 - Average recovery time: the mean of the pairs above. An hour or more is shown in hours; otherwise whole minutes. The card is hidden when nothing paired.
-- The chart ranks alarm names by trigger count. When there is data, the note above it lists three things: the most frequent names and their share; a chain that shows up at least twice inside a 5-minute window; and the alarms still open at the end of the query that have lasted the longest. “Still open” here means no recovery came after the last trigger. A shift change in between does not close it. That rule is not identical to the Pending count above.
+- The chart ranks alarm names by trigger count. When there is data, the note above it lists three things: the most frequent names and their share; a chain that shows up at least twice inside a 5-minute window; and the alarms still open at the end of the query that have lasted the longest. “Still open” uses the same rule as Pending: no recovery after the last trigger. A shift change in between does not close it.
 
 ### SN Traceability
 
@@ -462,6 +462,16 @@ Under that note: good count, defect count, running time in hours, and rated outp
 One row per shift: shift start, shift, quality, performance, availability, OEE. A row whose performance is under 60% is highlighted yellow. The highlight follows performance, not overall OEE, so a slow shift stays visible next to a shift whose problem is quality.
 
 When one rate is clearly low: quality sends you to Output Query for OK and NG; availability sends you to Status Duration for run time versus alarm time; performance is checked against rated output and running hours. Do not stop at the overall percentage.
+<!-- /page-help -->
+
+## 9.1 AI Q&A
+
+<!-- page-help:assistant -->
+AI Q&A on the sidebar is for questions about facts this board has already calculated. Opening the page carries the previous page, the selected device, the list of device names, and the time range already set in History Query. The previous page’s manual note and any notes History Query has already written are included. The device list is names only. The raw output table, addresses, and connection parameters are not sent.
+
+Type one sentence and press Enter or Send. The first send prepares the model on this computer. The weights download into this user's folder and are not part of the installer. If the download drops, the next send continues from the bytes already saved. Until that finishes, the page says it is preparing.
+
+An answer only explains the facts it was given. It does not acknowledge alarms, start or finish work orders, or release a recipe. When a number was not given, it should say the page does not have that number yet.
 <!-- /page-help -->
 
 ## 10. Production Review: Trends and Summaries
@@ -555,28 +565,17 @@ This page sets how the program connects, how it looks, and which shift the numbe
 ### The five tabs
 
 - General: Local Acquisition means this computer talks to the PLC. Remote Acquisition watches Kanban.Collector, so several screens share one set of numbers. Full Mode keeps the management pages. Viewer Mode keeps only Home, Production Line, Alarm Center, Device Detail, and Data Source Monitor, and leaving the program asks again. After you save, the sidebar opens or hides pages to match the new mode.
-- Display Settings: dashboard title, language, type size, new-alarm sound, TV carousel, and automatic per-device daily report PDF. The languages are 简体中文, English, 日本語, and Português, and a language change waits for a restart. The three type sizes are Standard 100%, Large 115%, and Extra Large 130%. The carousel is on by default: Home 40 seconds, Production Line 30 seconds, Alarm Center 20 seconds, and it skips Alarm Center when there is no alarm. A click pauses it for 16 seconds. A High alarm holds the alarm page. Full mode can turn the carousel off. The daily report runs at the chosen time and writes the previous calendar day’s PDF for each device that has data, under Reports. On several screens, check Daily report master node on only one computer, so each computer does not write its own copy.
+- Display Settings: dashboard title, language, type size, new-alarm sound, TV carousel, and automatic per-device daily report PDF. The languages are 简体中文, English, 日本語, and Português, and a language change waits for a restart. The three type sizes are Standard 100%, Large 115%, and Extra Large 130%. The carousel is on by default: Home 10 minutes, Production Line 100 seconds, Alarm Center 100 seconds, and it skips Alarm Center when there is no alarm. A click pauses it for 80 seconds. A High alarm holds the alarm page. Full mode can turn the carousel off. The daily report runs at the chosen time and writes the previous calendar day’s PDF for each device that has data, under Reports. On several screens, check Daily report master node on only one computer, so each computer does not write its own copy.
 - PLC Connection: brand, IP, port, timeout, and that brand’s protocol parameters. While the port is still the previous brand’s default, changing the brand fills in the new default: Mitsubishi 4999, Siemens 102, Modbus TCP 502, Omron 9600, Keyence 5000. A port you already changed is kept.
 - Acquisition Strategy: poll interval in milliseconds, history write interval in scan counts, home refresh interval in milliseconds, and batch reads. A shorter interval loads the PLC and this computer more. Batch reads usually stay as they are.
 - Shift Config: name, start, and end. An overnight shift has its end on the next day. Home, alarms, and OEE “current shift” all follow these times. At least one shift must remain. A shift name already written on a history row stays as it was written if you rename the shift later.
 
 ### The license card
 
-Machine code, license type, activation time, and expiry. Copy Machine Code is what you send to the person who issues a key. Reactivate enters a new key. A key belongs to this computer.
+Machine code, license type, activation time, and expiry. During the trial the card shows the days remaining. An active license shows the type and the expiry. After expiry a new key is required. Copy Machine Code is what you send to the person who issues a key. Reactivate opens the window titled 软件激活; paste the key and click 激活. A key belongs to this computer. Do not use a key from another computer. When the program starts outside the trial and without an active license, the same window appears first. 取消 closes the program.
 
 Restore Defaults only resets the draft to factory values. The bottom line becomes Unsaved Changes, and Save Settings is still required.
 <!-- /page-help -->
-
-## 13. License Management
-
-The top of **System Settings** shows license status: trial days remaining, activated, or expired.
-
-1. Copy the machine ID.
-2. Send it to your license administrator.
-3. Enter the activation code.
-4. Click **Activate** and verify functionality.
-
-Activation codes are typically machine-bound.
 
 ## 14. Runtime Monitor
 
@@ -758,7 +757,7 @@ Check cable/switch, ping PLC IP from Windows, **System Settings** IP/port, PLC a
 
 ### Q2: Home output not increasing
 
-Confirm production is running, PLC connected, OK/NG addresses correct, not in shift reset window, and recent successful device count.
+Confirm production is running, PLC connected, OK/NG addresses correct, and recent successful device count. Saving a shift change while a shift is in progress can clear the current totals. There is no separate reset window.
 
 ### Q3: Home shows “No status data” or the device is offline, but PLC is green
 
@@ -785,8 +784,8 @@ Contact admin with: full error text, time, recent config changes, network/PLC ch
 | Symptom | Possible cause | Action |
 | --- | --- | --- |
 | Red banner “disconnected” at top | Network or PLC configuration | Check cable, IP/port, then Runtime Monitor |
-| Yellow banner “data stale” | Acquisition stuck | Check the acquisition service in Runtime Monitor; restart if needed |
-| Home output not increasing | Wrong addresses or not producing | Verify OK/NG addresses and the shift reset window |
+| Yellow banner “data stale” | Acquisition stuck | Open Runtime Monitor and check the PLC connection and the acquisition loop. In remote mode, also check whether the collector can be reached |
+| Home output not increasing | Wrong addresses, not producing, or a shift change saved during a shift cleared the totals | Verify OK/NG addresses. If a shift was just saved, check the current-shift totals |
 | No alarm in app, alarm at site | Alarm point not added, or the address and name do not match the site | Check the address and name in Device Manager. After you save, that point is acquired |
 | History query empty | No acquisition in range / wrong filter | Widen the range; check history write status |
 | PDF export fails | Missing CJK fonts | Install a system CJK font and retry |
@@ -796,7 +795,7 @@ Contact admin with: full error text, time, recent config changes, network/PLC ch
 
 ## 20. Daily Shutdown
 
-1. Confirm no reset or save in progress.
+1. Confirm Reset All or a settings save is not in progress.
 2. Update work order status per site procedure.
 3. Close Kanban and wait for clean exit.
 4. Back up `%APPDATA%\Kanban` (or the custom data folder) if required.
@@ -821,7 +820,7 @@ Content below is for engineers and IT—operators can skip it.
 
 ### B.1 Data Source CSV Import/Export
 
-On the device **Data Sources** tab, export/import CSV per device. Each row is a value item.
+In Device Manager, select a device and open the **Data sources** tab to export or import that device’s CSV. Each row is a value item. Device Detail only shows the live values. It does not import there.
 
 - **Replace** clears existing sources for that device; **Append** merges by name.
 - Click **Save** after import.
@@ -835,15 +834,17 @@ The app UI supports 简体中文, English, 日本語, and Português. The user m
 
 | Shortcut | Action |
 | --- | --- |
-| `Ctrl+1`–`Ctrl+9` | Switch to sidebar pages 1–9 |
+| `Ctrl+1`–`Ctrl+9` | Open the first nine sidebar pages this account can see. Keys past the visible list do nothing |
 | `Ctrl+L` | Switch user (open the login dialog) |
 | `F1` | Open the user manual |
+| `Ctrl+Shift+K` | Open the shortcut list |
 | `F11` | Toggle fullscreen |
-| `F5` | Refresh the current page (Home, Production Line, Alarm Center, Work Orders, Data Monitoring, Runtime Monitor, etc.) |
+| `F5` | Refresh Alarm Center, work-order output, Review, Device Detail, Data Monitoring, or Runtime Monitor |
 | `Esc` | Go back (Device Detail page) |
 | `Ctrl+Enter` | Run the query (History Query) |
 | `Ctrl+R` | Reset filters (History Query) |
 | `Ctrl+E` | Export results (History Query) |
-| `Ctrl+S` | Save settings (System Settings) |
+| `Ctrl+S` | Save. Available in System Settings and Device Manager |
+| `Ctrl+F` | Move focus to this page’s search box. Available in Alarm Center, Production Line, Device Manager, and Work Orders |
 
 > This table covers the main window and common pages; some pages have additional local shortcuts described in their chapters. Whether a shortcut works depends on the current page.

@@ -17,11 +17,11 @@ public static class NavigationPageCatalog
     ///
     /// 顺序原则（2026-09-05 调整）：按「使用频率 + 同类聚合」排列，高频在前、低频在后——
     ///   0-3  高频区：监控与作业（日常盯屏与操作主路径，无角色限制）
-    ///   4-5  中频区：复盘与查询分析
-    ///   6-7  低频区：设备与配方配置（工程师）
-    ///   8-11 系统管理区（管理员）
-    ///   12   诊断区：数据监控（采集健康诊断，无角色限制但属低频，放最后）
-    ///   13   上下文页 DeviceDetail：由主页「查看详情」进入，不出现在侧边栏，放最后以免占用快捷键位
+    ///   4-6  中频区：复盘、历史查询、AI问答
+    ///   7-8  低频区：设备与配方配置（工程师）
+    ///   9-12 系统管理区（管理员）
+    ///   13   诊断区：数据监控（采集健康诊断，无角色限制但属低频，放最后）
+    ///   14   上下文页 DeviceDetail：由主页「查看详情」进入，不出现在侧边栏，放最后以免占用快捷键位
     /// 侧边栏按本集合顺序渲染并再按角色过滤，因此快捷键 Ctrl+1~9 必须映射到「过滤后的可见位置」
     /// 而非本 Index（见 MainWindowViewModel.SelectPage）。
     /// </summary>
@@ -35,18 +35,19 @@ public static class NavigationPageCatalog
         // —— 中频区：复盘与查询分析 ——
         Page("Overview", 4, "Nav_Overview", MaterialIconKind.ChartTimelineVariant, "Nav_Overview_Tip", true),
         Page("HistoryQuery", 5, "Nav_HistoryQuery", MaterialIconKind.History, "Nav_HistoryQuery", true),
+        Page("Assistant", 6, "Nav_Assistant", MaterialIconKind.MessageTextOutline, "Nav_Assistant_Tip", true),
         // —— 低频区：设备与配方配置（工程师）——
-        Page("DeviceManager", 6, "Nav_DeviceManager", MaterialIconKind.Harddisk, "Nav_DeviceManager", true, UserRole.Engineer),
-        Page("RecipeManager", 7, "Nav_RecipeManager", MaterialIconKind.SettingsOutline, "Nav_RecipeManager", true, UserRole.Engineer),
+        Page("DeviceManager", 7, "Nav_DeviceManager", MaterialIconKind.Harddisk, "Nav_DeviceManager", true, UserRole.Engineer),
+        Page("RecipeManager", 8, "Nav_RecipeManager", MaterialIconKind.SettingsOutline, "Nav_RecipeManager", true, UserRole.Engineer),
         // —— 系统管理区（管理员）——
-        Page("Settings", 8, "Nav_Settings", MaterialIconKind.Cog, "Nav_Settings", true, UserRole.Admin),
-        Page("RuntimeMonitoring", 9, "Nav_RuntimeMonitoring", MaterialIconKind.MonitorDashboard, "Nav_RuntimeMonitoring", true, UserRole.Admin),
-        Page("UserManager", 10, "Nav_UserManager", MaterialIconKind.AccountGroup, "Nav_UserManager", true, UserRole.Admin),
-        Page("Audit", 11, "Nav_Audit", MaterialIconKind.ShieldAccount, "Nav_Audit", true, UserRole.Admin),
+        Page("Settings", 9, "Nav_Settings", MaterialIconKind.Cog, "Nav_Settings", true, UserRole.Admin),
+        Page("RuntimeMonitoring", 10, "Nav_RuntimeMonitoring", MaterialIconKind.MonitorDashboard, "Nav_RuntimeMonitoring", true, UserRole.Admin),
+        Page("UserManager", 11, "Nav_UserManager", MaterialIconKind.AccountGroup, "Nav_UserManager", true, UserRole.Admin),
+        Page("Audit", 12, "Nav_Audit", MaterialIconKind.ShieldAccount, "Nav_Audit", true, UserRole.Admin),
         // —— 诊断区（低频，放最后）——
-        Page("DataSourceMonitoring", 12, "Nav_DataSourceMonitoring", MaterialIconKind.ChartTimelineVariant, "Nav_DataSourceMonitoring", true),
+        Page("DataSourceMonitoring", 13, "Nav_DataSourceMonitoring", MaterialIconKind.ChartTimelineVariant, "Nav_DataSourceMonitoring", true),
         // —— 上下文页：不进侧边栏 ——
-        Page("DeviceDetail", 13, "Nav_DeviceDetail", MaterialIconKind.Harddisk, "Nav_DeviceDetail", false),
+        Page("DeviceDetail", 14, "Nav_DeviceDetail", MaterialIconKind.Harddisk, "Nav_DeviceDetail", false),
     ];
 
     public static NavigationPageDefinition Home => All[0];
@@ -55,14 +56,15 @@ public static class NavigationPageCatalog
     public static NavigationPageDefinition WorkOrder => All[3];
     public static NavigationPageDefinition Overview => All[4];
     public static NavigationPageDefinition HistoryQuery => All[5];
-    public static NavigationPageDefinition DeviceManager => All[6];
-    public static NavigationPageDefinition RecipeManager => All[7];
-    public static NavigationPageDefinition Settings => All[8];
-    public static NavigationPageDefinition RuntimeMonitoring => All[9];
-    public static NavigationPageDefinition UserManager => All[10];
-    public static NavigationPageDefinition Audit => All[11];
-    public static NavigationPageDefinition DataSourceMonitoring => All[12];
-    public static NavigationPageDefinition DeviceDetail => All[13];
+    public static NavigationPageDefinition Assistant => All[6];
+    public static NavigationPageDefinition DeviceManager => All[7];
+    public static NavigationPageDefinition RecipeManager => All[8];
+    public static NavigationPageDefinition Settings => All[9];
+    public static NavigationPageDefinition RuntimeMonitoring => All[10];
+    public static NavigationPageDefinition UserManager => All[11];
+    public static NavigationPageDefinition Audit => All[12];
+    public static NavigationPageDefinition DataSourceMonitoring => All[13];
+    public static NavigationPageDefinition DeviceDetail => All[14];
 
     private static NavigationPageDefinition Page(
         string key, int index, string labelKey, MaterialIconKind icon, string toolTipKey, bool showInSidebar,

@@ -292,8 +292,8 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="3*" />
-                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="3*" MinHeight="180" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -321,13 +321,13 @@
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.QualityTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K001}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource RatioThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.QualityRate, Converter={StaticResource QualityThreshold}}" Text="{Binding ProductionQuery.QualityRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                         <Border Style="{StaticResource KpiCard}" ToolTip="{Binding ProductionQuery.DefectRateTooltip}" ToolTipService.ShowDuration="30000">
                             <StackPanel>
                                 <TextBlock Style="{StaticResource CaptionText}" Text="{x:Static resources:Strings.K911}" />
-                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.DefectRate, Converter={StaticResource InverseRatioThreshold}}" Text="{Binding ProductionQuery.DefectRate, StringFormat={}{0:P1}}" />
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource KpiValueText}" Foreground="{Binding ProductionQuery.DefectRate, Converter={StaticResource QualityComplementThreshold}}" Text="{Binding ProductionQuery.DefectRate, StringFormat={}{0:P1}}" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -435,8 +435,8 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="3*" />
-                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="3*" MinHeight="180" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -582,8 +582,8 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="3*" />
-                        <RowDefinition Height="1*" MinHeight="120" />
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="3*" MinHeight="180" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -707,10 +707,10 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="3*" />
+                        <RowDefinition Height="2*" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="1*" MinHeight="80" />
+                        <RowDefinition Height="3*" MinHeight="160" />
                     </Grid.RowDefinitions>
 
                     <!-- KPI 卡片 -->
