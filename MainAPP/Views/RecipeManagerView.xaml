@@ -177,6 +177,7 @@
                     <DockPanel Grid.Row="0" Margin="18,18,18,12">
                         <materialIcons:MaterialIcon Kind="PackageVariant" Style="{StaticResource SectionTitleIcon}" />
                         <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K660}" />
+                        <controls:PageHelpButton Margin="8,0,0,0" PageKey="recipes" />
                         <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                    Foreground="{StaticResource ThirdlyTextBrush}"
                                    Text="{Binding AvailableRecipes.Count, StringFormat={}({0})}" />

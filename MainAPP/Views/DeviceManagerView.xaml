@@ -58,6 +58,7 @@
                         Margin="8,0,0,0"
                         Style="{StaticResource SectionTitleText}"
                         Text="{x:Static resources:Strings.K064}" />
+                    <controls:PageHelpButton Margin="8,0,0,0" PageKey="device-manager" />
                     <TextBlock
                         Margin="6,0,0,0"
                         VerticalAlignment="Center"

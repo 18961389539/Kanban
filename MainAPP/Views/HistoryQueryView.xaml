@@ -38,6 +38,7 @@
                     <StackPanel Orientation="Horizontal">
                         <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="DatabaseSearchOutline" />
                         <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K252}" />
+                        <controls:PageHelpButton Margin="8,0,0,0" PageKey="{Binding PageHelpKey}" />
                     </StackPanel>
                     <TextBlock
                         DockPanel.Dock="Right"

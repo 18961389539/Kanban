@@ -8,6 +8,7 @@
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:oxy="http://oxyplot.org/wpf"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
     d:DataContext="{d:DesignInstance Type=vm:RuntimeMonitoringViewModel}"
     d:DesignHeight="900"
     d:DesignWidth="1400"
@@ -111,6 +112,7 @@
                     <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.K420}" />
                     <TextBlock FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.K421}" />
                 </StackPanel>
+                <controls:PageHelpButton Margin="8,0,0,0" VerticalAlignment="Center" PageKey="runtime-monitor" />
             </StackPanel>
             <Grid Grid.Row="1" Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>

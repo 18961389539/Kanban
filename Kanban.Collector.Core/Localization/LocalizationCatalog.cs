@@ -8655,6 +8655,18 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "未找到使用手册文件：{0}", ["en-US"] = "User manual file not found: {0}", ["ja-JP"] = "使用手册ファイルが見つかりません：{0}", ["pt-BR"] = "Arquivo do manual nao encontrado: {0}"
         },
+        ["Wpf|Ux_PageHelpTitle"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "本页说明", ["en-US"] = "About this page", ["ja-JP"] = "このページについて", ["pt-BR"] = "Sobre esta página"
+        },
+        ["Wpf|Ux_PageHelpMissing"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "手册里还没有这一页的说明。", ["en-US"] = "This page has no short guide in the manual yet.", ["ja-JP"] = "このページの短い説明はまだマニュアルにありません。", ["pt-BR"] = "Esta página ainda não tem um guia curto no manual."
+        },
+        ["Wpf|Ux_PageHelpOpenManual"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打开完整手册", ["en-US"] = "Open the full manual", ["ja-JP"] = "マニュアル全文を開く", ["pt-BR"] = "Abrir o manual completo"
+        },
         ["Wpf|Ux_FirstRunTitle"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "欢迎使用 Kanban", ["en-US"] = "Welcome to Kanban", ["ja-JP"] = "Kanban へようこそ", ["pt-BR"] = "Bem-vindo ao Kanban"
@@ -9673,7 +9685,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Home_Tip_Availability"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "时间稼动率=实际生产时间/计划生产时间  计划生产时间=班次时间-待机时间。", ["en-US"] = "Time availability = actual production time / planned production time. Planned production time = shift time − standby time.", ["ja-JP"] = "時間稼働率＝実生産時間／計画生産時間  計画生産時間＝シフト時間−待機時間。", ["pt-BR"] = "Disponibilidade de tempo = tempo real de produção / tempo planejado de produção. Tempo planejado = tempo de turno − tempo de espera."
+            ["zh-CN"] = "时间稼动率 = 运行时间 ÷（运行时间 + 报警时间）。待机和离线不计入分母。\\n当前：{0} = {1}", ["en-US"] = "Availability = running time ÷ (running time + alarm time). Standby and offline are excluded.\\nNow: {0} = {1}", ["ja-JP"] = "時間稼働率 = 稼働時間 ÷（稼働時間 + アラーム時間）。待機とオフラインは分母に含めない。\\n現在：{0} = {1}", ["pt-BR"] = "Disponibilidade = tempo em execução ÷ (tempo em execução + tempo em alarme). Espera e offline ficam de fora.\\nAgora: {0} = {1}"
         },
         ["Wpf|Home_Tip_Performance"] = new Dictionary<string, string>
         {

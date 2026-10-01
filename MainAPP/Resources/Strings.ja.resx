@@ -6294,6 +6294,15 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Ux_HelpManualMissing" xml:space="preserve">
     <value>使用手册ファイルが見つかりません：{0}</value>
   </data>
+  <data name="Ux_PageHelpTitle" xml:space="preserve">
+    <value>このページについて</value>
+  </data>
+  <data name="Ux_PageHelpMissing" xml:space="preserve">
+    <value>このページの短い説明はまだマニュアルにありません。</value>
+  </data>
+  <data name="Ux_PageHelpOpenManual" xml:space="preserve">
+    <value>マニュアル全文を開く</value>
+  </data>
   <data name="Ux_FirstRunTitle" xml:space="preserve">
     <value>Kanban へようこそ</value>
   </data>
@@ -7061,7 +7070,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>OEE = 可動率 × 性能率 × 良品率。\n現在：{0} = {1}\n色：≥85% 緑 / ≥60% 黄 / &lt;60% 赤。</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>時間稼働率＝実生産時間／計画生産時間  計画生産時間＝シフト時間−待機時間。</value>
+    <value>時間稼働率 = 稼働時間 ÷（稼働時間 + アラーム時間）。待機とオフラインは分母に含めない。\n現在：{0} = {1}</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>性能率 = 実績総生産(OK+NG) ÷ (目標能力 × 稼働時間)。\n現在：{0} = {1}</value>

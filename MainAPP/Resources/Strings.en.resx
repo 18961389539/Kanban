@@ -6294,6 +6294,15 @@ Changes are kept in the current session and can still be saved after returning.<
   <data name="Ux_HelpManualMissing" xml:space="preserve">
     <value>User manual file not found: {0}</value>
   </data>
+  <data name="Ux_PageHelpTitle" xml:space="preserve">
+    <value>About this page</value>
+  </data>
+  <data name="Ux_PageHelpMissing" xml:space="preserve">
+    <value>This page has no short guide in the manual yet.</value>
+  </data>
+  <data name="Ux_PageHelpOpenManual" xml:space="preserve">
+    <value>Open the full manual</value>
+  </data>
   <data name="Ux_FirstRunTitle" xml:space="preserve">
     <value>Welcome to Kanban</value>
   </data>
@@ -7061,7 +7070,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>OEE = Availability × Performance × Quality.\nNow: {0} = {1}\nColors: ≥85% green / ≥60% yellow / &lt;60% red.</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>Time availability = actual production time / planned production time. Planned production time = shift time − standby time.</value>
+    <value>Availability = running time ÷ (running time + alarm time). Standby and offline are excluded.\nNow: {0} = {1}</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>Performance = actual output (OK+NG) ÷ (target capacity × running hours).\nNow: {0} = {1}</value>

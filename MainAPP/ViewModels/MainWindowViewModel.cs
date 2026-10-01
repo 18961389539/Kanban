@@ -221,6 +221,9 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     private readonly ILoginDialogService? _loginDialogService;
     private readonly IUserHelpService? _userHelpService;
 
+    /// <summary>页标题问号打开的右侧短说明。</summary>
+    public PageHelpService PageHelp { get; }
+
     /// <summary>当前用户显示名，供侧边栏用户卡片绑定。</summary>
     public string CurrentUserDisplay => UserSession.CurrentUserDisplay;
 
@@ -463,9 +466,11 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
         KanbanDataClient? dataClient = null,
         IPlcDataAcquisitionService? acquisitionService = null,
         ILoginDialogService? loginDialogService = null,
-        IUserHelpService? userHelpService = null)
+        IUserHelpService? userHelpService = null,
+        PageHelpService? pageHelp = null)
     {
         AppSettings = appSettings;
+        PageHelp = pageHelp ?? new PageHelpService(appSettings);
         _serviceProvider = serviceProvider;
         ConnectionManager = connectionManager;
         LicenseGate = licenseGate;
@@ -774,6 +779,7 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     /// </summary>
     partial void OnSelectedIndexChanged(int value)
     {
+        PageHelp.Close();
         _navSwitchStartTicks = Stopwatch.GetTimestamp();
         var fromName = GetNavName(_navFromIndex, "初始");
         var toName = GetNavName(value, value.ToString());

@@ -604,6 +604,9 @@ public class HistoryQueryViewModelTests : IDisposable
 
         Assert.Equal(1, _vm.TotalCount);
         Assert.All(_vm.AlarmQuery.AlarmEvents, e => Assert.Equal("高温报警", e.AlarmName));
+        Assert.Equal("高温报警", _vm.SelectedAlarmName);
+        Assert.Equal(3, _vm.AlarmNameFilterItems.Count);
+        Assert.Contains(_vm.AlarmNameFilterItems, item => item.Value == "低压报警");
     }
 
     // ════════════════════ 智能快捷时间 ════════════════════

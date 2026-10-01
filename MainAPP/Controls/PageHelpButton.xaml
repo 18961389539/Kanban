@@ -1,0 +1,41 @@
+<UserControl
+    x:Class="MainAPP.Controls.PageHelpButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
+    xmlns:resources="clr-namespace:MainAPP.Resources"
+    x:Name="Root"
+    VerticalAlignment="Center"
+    ToolTip="{x:Static resources:Strings.Ux_PageHelpTitle}">
+    <Button
+        x:Name="HelpButton"
+        Width="28"
+        Height="28"
+        MinWidth="28"
+        MinHeight="28"
+        Padding="0"
+        AutomationProperties.Name="{x:Static resources:Strings.Ux_PageHelpTitle}"
+        Click="OnClick"
+        Cursor="Hand"
+        FocusVisualStyle="{StaticResource TouchFocusVisual}"
+        ToolTip="{x:Static resources:Strings.Ux_PageHelpTitle}">
+        <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                <Setter Property="Width" Value="28" />
+                <Setter Property="Height" Value="28" />
+                <Setter Property="MinWidth" Value="28" />
+                <Setter Property="MinHeight" Value="28" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+        </Button.Style>
+        <materialIcons:MaterialIcon
+            Width="18"
+            Height="18"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Foreground="{StaticResource PrimaryBrush}"
+            Kind="HelpCircleOutline" />
+    </Button>
+</UserControl>

@@ -175,6 +175,7 @@
                     <TextBlock
                         Style="{StaticResource PageTitleText}"
                         Margin="10,0,0,0" Text="{x:Static resources:Strings.K122}" />
+                    <controls:PageHelpButton Margin="8,0,0,0" PageKey="alarm-center" />
                     <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
                         <TextBlock
                             FontSize="{DynamicResource FontSizeCaption}"
@@ -201,15 +202,16 @@
                 <WrapPanel Grid.Column="1" Margin="16,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                     <StackPanel Margin="0,0,12,0">
                         <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.K002}" />
-                        <ComboBox Width="150" Height="32" VerticalContentAlignment="Center"
-                                  Style="{StaticResource ComboBoxExtend.Small}"
+                        <ComboBox Width="150" VerticalContentAlignment="Center"
+                                  Style="{StaticResource ComboBoxExtend}"
+                                  Height="{Binding ActualHeight, ElementName=AlarmSearchBox}"
                                   ItemsSource="{Binding DeviceFilterItems}" DisplayMemberPath="Name"
                                   SelectedValue="{Binding DeviceFilterValue}" SelectedValuePath="Id"
                                   ToolTip="{x:Static resources:Strings.K024}" />
                     </StackPanel>
                     <StackPanel Width="200" Margin="0,0,12,0">
                         <TextBlock Style="{StaticResource FilterGroupLabel}" Text="{x:Static resources:Strings.Ac_GroupSearch}" />
-                        <hc:TextBox Height="32" x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
+                        <hc:TextBox x:Name="AlarmSearchBox" VerticalContentAlignment="Center"
                                     Style="{StaticResource TextBoxExtend}"
                                     hc:InfoElement.Placeholder="{x:Static resources:Strings.K124}"
                                     Text="{Binding AlarmSearchText, UpdateSourceTrigger=PropertyChanged}"
@@ -707,16 +709,21 @@
                     <Border Grid.Row="2" Style="{StaticResource MainCard}" Padding="0">
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top" Margin="16,12,16,8">
-                                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                                    <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeTab}"
-                                                 AutomationProperties.Name="{x:Static resources:Strings.K723}"
-                                                 IsChecked="{Binding IsTopSortByCount}"
-                                                 Content="{x:Static resources:Strings.K723}" />
-                                    <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeTab}"
-                                                 AutomationProperties.Name="{x:Static resources:Strings.K724}"
-                                                 IsChecked="{Binding IsTopSortByDuration}"
-                                                 Content="{x:Static resources:Strings.K724}" />
-                                </StackPanel>
+                                <Border DockPanel.Dock="Right" Height="32" VerticalAlignment="Center"
+                                        CornerRadius="6" ClipToBounds="True"
+                                        Background="{StaticResource RegionBrush}"
+                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeSegment}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K723}"
+                                                     IsChecked="{Binding IsTopSortByCount}"
+                                                     Content="{x:Static resources:Strings.K723}" />
+                                        <RadioButton GroupName="TopSort" Style="{StaticResource TimeRangeSegmentLast}"
+                                                     AutomationProperties.Name="{x:Static resources:Strings.K724}"
+                                                     IsChecked="{Binding IsTopSortByDuration}"
+                                                     Content="{x:Static resources:Strings.K724}" />
+                                    </StackPanel>
+                                </Border>
                                 <Border Style="{StaticResource ChartCardTitleBar}" />
                                 <TextBlock Style="{StaticResource SectionTitleText}" Margin="8,0,0,0" Text="{x:Static resources:Strings.K138}" />
                                 <!-- P0-3 修复：Top 排行截断提示（超 10 个聚类组时告知还有更多） -->

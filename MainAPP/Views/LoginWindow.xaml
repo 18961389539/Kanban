@@ -4,15 +4,21 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialIcons="clr-namespace:Material.Icons.WPF;assembly=Material.Icons.WPF"
     Title="{x:Static resources:Strings.M315}"
-    Width="380"
-    Height="280"
+    Width="{Binding WindowWidth}"
+    Height="{Binding WindowHeight}"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     Background="{StaticResource RegionBrush}"
     FocusManager.FocusedElement="{Binding ElementName=UsernameBox}"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
-    <Grid Margin="24">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0" Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -24,13 +30,41 @@
         </Grid.RowDefinitions>
 
         <!--  标题  -->
-        <TextBlock
-            Grid.Row="0"
-            Margin="0,0,0,20"
-            FontSize="{DynamicResource FontSizeKpiLabel}"
-            FontWeight="Bold"
-            Foreground="{StaticResource PrimaryTextBrush}"
-            Text="{x:Static resources:Strings.M315}" />
+        <DockPanel Grid.Row="0" Margin="0,0,0,20">
+            <Button
+                Width="28"
+                Height="28"
+                MinWidth="28"
+                MinHeight="28"
+                Padding="0"
+                DockPanel.Dock="Right"
+                AutomationProperties.Name="{x:Static resources:Strings.Ux_PageHelpTitle}"
+                Command="{Binding ToggleHelpCommand}"
+                Cursor="Hand"
+                FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                ToolTip="{x:Static resources:Strings.Ux_PageHelpTitle}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </Button.Style>
+                <materialIcons:MaterialIcon
+                    Width="18"
+                    Height="18"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="{StaticResource PrimaryBrush}"
+                    Kind="HelpCircleOutline" />
+            </Button>
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="{DynamicResource FontSizeKpiLabel}"
+                FontWeight="Bold"
+                Foreground="{StaticResource PrimaryTextBrush}"
+                Text="{x:Static resources:Strings.M315}" />
+        </DockPanel>
 
         <!--  用户名（下拉选择已有账号；不可手输——账号均在用户管理中登记，手输无匹配账号无意义）  -->
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
@@ -101,5 +135,120 @@
                 IsDefault="True"
                 Style="{StaticResource ButtonPrimary}" />
         </StackPanel>
+        </Grid>
+        <Border
+            Grid.Column="1"
+            Width="420"
+            Padding="20,16"
+            Background="{StaticResource RegionBrush}"
+            BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1,0,0,0"
+            Visibility="{Binding IsHelpOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Ux_PageHelpTitle}" />
+                    <Button
+                        Width="28"
+                        Height="28"
+                        MinWidth="28"
+                        MinHeight="28"
+                        Padding="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static resources:Strings.K143}"
+                        Command="{Binding CloseHelpCommand}"
+                        Cursor="Hand"
+                        FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                        ToolTip="{x:Static resources:Strings.K143}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </Button.Style>
+                        <materialIcons:MaterialIcon Width="16" Height="16" Kind="Close" />
+                    </Button>
+                </Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Foreground="{StaticResource SecondaryTextBrush}"
+                            Text="{Binding HelpError}"
+                            TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HelpError}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ItemsControl ItemsSource="{Binding HelpBlocks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock
+                                            Margin="0,10,0,2"
+                                            FontWeight="Bold"
+                                            Foreground="{StaticResource PrimaryTextBrush}"
+                                            Text="{Binding Text}"
+                                            TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <Grid>
+                                            <Grid.Style>
+                                                <Style TargetType="Grid">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Grid.Style>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Margin="0,0,8,0" Foreground="{StaticResource PrimaryBrush}" Text="•">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBullet}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                Foreground="{StaticResource SecondaryTextBrush}"
+                                                Text="{Binding Text}"
+                                                TextWrapping="Wrap" />
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
     </Grid>
 </Window>

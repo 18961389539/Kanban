@@ -294,6 +294,10 @@
 
         <!--  ============ 内容区（PageTransition：切换时 0.2s 渐显） ============  -->
         <Grid Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <!--  页面内容铺满；连接横幅叠在顶部（不占 Auto 行），避免显隐时下方布局跳动。  -->
             <ItemsControl ItemsSource="{Binding Pages, ElementName=RootWindow}">
                 <ItemsControl.ItemsPanel>
@@ -377,6 +381,129 @@
                 </Button.Style>
                 <materialIcons:MaterialIcon Width="20" Height="20" Kind="Menu" />
             </Button>
+
+            <!--  本页说明：贴在页面右侧，不盖住左侧内容。正文来自使用手册的 page-help 标记。  -->
+            <Border
+                Grid.Column="1"
+                Width="420"
+                Padding="20,16"
+                Background="{StaticResource RegionBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1,0,0,0"
+                Visibility="{Binding PageHelp.IsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.Ux_PageHelpTitle}" />
+                        <Button
+                            Width="28"
+                            Height="28"
+                            MinWidth="28"
+                            MinHeight="28"
+                            Padding="0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="{x:Static resources:Strings.K143}"
+                            Command="{Binding PageHelp.CloseCommand}"
+                            Cursor="Hand"
+                            FocusVisualStyle="{StaticResource TouchFocusVisual}"
+                            ToolTip="{x:Static resources:Strings.K143}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Padding" Value="0" />
+                                </Style>
+                            </Button.Style>
+                            <materialIcons:MaterialIcon Width="16" Height="16" Kind="Close" />
+                        </Button>
+                    </Grid>
+                    <Button
+                        DockPanel.Dock="Bottom"
+                        Margin="0,16,0,0"
+                        HorizontalAlignment="Left"
+                        Command="{Binding OpenHelpCommand}"
+                        Content="{x:Static resources:Strings.Ux_PageHelpOpenManual}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock
+                                Margin="0,0,0,8"
+                                Foreground="{StaticResource SecondaryTextBrush}"
+                                Text="{Binding PageHelp.Error}"
+                                TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PageHelp.Error}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding PageHelp.Blocks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,8">
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Foreground="{StaticResource PrimaryTextBrush}"
+                                                Margin="0,10,0,2"
+                                                Text="{Binding Text}"
+                                                TextWrapping="Wrap">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <Grid>
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Margin="0,0,8,0" Foreground="{StaticResource PrimaryBrush}" Text="•">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsBullet}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Foreground="{StaticResource PrimaryTextBrush}"
+                                                    Text="{Binding Text}"
+                                                    TextWrapping="Wrap" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
         </Grid>
 
         <Border Grid.ColumnSpan="2"

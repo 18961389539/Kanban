@@ -127,9 +127,16 @@
                     Content="{x:Static resources:Strings.K146}"
                     ToolTip="{x:Static resources:Strings.K147}" />
                 <materialIcons:MaterialIcon Grid.Column="1" Style="{StaticResource PageTitleIcon}" Kind="Harddisk" Margin="16,0,0,0" />
-                <TextBlock Grid.Column="2" Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
-                           Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}"
-                           TextTrimming="CharacterEllipsis" ToolTip="{Binding CurrentDevice.Name}" />
+                <Grid Grid.Column="2" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0"
+                               Text="{Binding CurrentDevice.Name, FallbackValue={x:Static resources:Strings.K403}}"
+                               TextTrimming="CharacterEllipsis" ToolTip="{Binding CurrentDevice.Name}" />
+                    <controls:PageHelpButton Grid.Column="1" Margin="8,0,0,0" PageKey="device-detail" />
+                </Grid>
                 <!-- 状态徽章：15% 软底 + 同色文字 + 同色描边 + 同色色点（2026-09-19 全站统一，
                      替换原「白字压满色块」——琥珀/灰档位白字对比度仅约 1.9–2.4:1 不可读） -->
                 <Border Grid.Column="3" Margin="16,0,0,0" Padding="10,3" CornerRadius="11" BorderThickness="1">

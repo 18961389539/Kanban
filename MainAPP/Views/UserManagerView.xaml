@@ -35,6 +35,7 @@
                 <DockPanel Grid.Row="0" Margin="18,18,18,12">
                     <materialIcons:MaterialIcon Kind="AccountGroup" Style="{StaticResource SectionTitleIcon}" />
                     <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.M320}" />
+                    <controls:PageHelpButton Margin="8,0,0,0" PageKey="users" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{Binding Users.Count, StringFormat={}({0})}" />

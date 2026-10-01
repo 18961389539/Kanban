@@ -1,6 +1,4 @@
-using System.IO;
 using System.Windows;
-using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
 using MainAPP.Views;
@@ -64,34 +62,7 @@ public sealed class UserHelpService(AppSettings appSettings, IDialogService dial
         }
     }
 
-    private string GetExpectedManualFileName()
-        => IsEnglishManual() ? "MainAPP_User_Manual_EN.md" : "MainAPP用户使用手册.md";
+    private string GetExpectedManualFileName() => UserManualLocator.ExpectedFileName(appSettings);
 
-    private bool IsEnglishManual()
-        => LocalizationCatalog.Normalize(appSettings.EffectiveLanguageCode)
-            .StartsWith("en", StringComparison.OrdinalIgnoreCase);
-
-    private string? ResolveManualPath()
-    {
-        var fileName = GetExpectedManualFileName();
-        var baseDir = AppContext.BaseDirectory;
-        foreach (var dir in new[] { "手册", "Help", "Manual" })
-        {
-            var candidate = Path.Combine(baseDir, dir, fileName);
-            if (File.Exists(candidate))
-                return candidate;
-        }
-
-        // 开发环境：从输出目录向上查找 MainAPP/手册
-        var current = new DirectoryInfo(baseDir);
-        for (var depth = 0; depth < 6 && current is not null; depth++)
-        {
-            var devCandidate = Path.Combine(current.FullName, "MainAPP", "手册", fileName);
-            if (File.Exists(devCandidate))
-                return devCandidate;
-            current = current.Parent;
-        }
-
-        return null;
-    }
+    private string? ResolveManualPath() => UserManualLocator.Resolve(appSettings);
 }

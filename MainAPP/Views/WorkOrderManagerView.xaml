@@ -65,6 +65,7 @@
                 <DockPanel Grid.Row="0" Margin="18,18,18,10">
                     <materialIcons:MaterialIcon Kind="ClipboardListOutline" Style="{StaticResource SectionTitleIcon}" />
                     <TextBlock Margin="8,0,0,0" Style="{StaticResource SectionTitleText}" Text="{x:Static resources:Strings.K554}" />
+                    <controls:PageHelpButton Margin="8,0,0,0" PageKey="work-orders" />
                     <TextBlock Margin="6,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeCaption}"
                                Foreground="{StaticResource ThirdlyTextBrush}"
                                Text="{Binding FilteredCount, StringFormat={}({0})}" />

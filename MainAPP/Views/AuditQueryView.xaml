@@ -55,17 +55,20 @@
 
         <!--  标题  -->
         <Grid Grid.Row="0">
-            <StackPanel>
-                <TextBlock
-                    FontSize="{DynamicResource FontSizePageTitle}"
-                    FontWeight="Bold"
-                    Foreground="{StaticResource PrimaryTextBrush}"
-                    Text="{x:Static resources:Strings.Nav_Audit}" />
-                <TextBlock
-                    Margin="0,4,0,0"
-                    FontSize="{DynamicResource FontSizeHint}"
-                    Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.K613}" />
+            <StackPanel Orientation="Horizontal">
+                <StackPanel>
+                    <TextBlock
+                        FontSize="{DynamicResource FontSizePageTitle}"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource PrimaryTextBrush}"
+                        Text="{x:Static resources:Strings.Nav_Audit}" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontSize="{DynamicResource FontSizeHint}"
+                        Foreground="{StaticResource SecondaryTextBrush}"
+                        Text="{x:Static resources:Strings.K613}" />
+                </StackPanel>
+                <controls:PageHelpButton Margin="8,0,0,0" VerticalAlignment="Center" PageKey="audit" />
             </StackPanel>
             <Border
                 Padding="10,5"

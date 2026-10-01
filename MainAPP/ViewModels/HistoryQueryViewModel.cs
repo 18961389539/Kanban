@@ -182,9 +182,13 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     partial void OnSelectedAlarmNameChanged(string? value) => ScheduleAutoQuery();
 
+    /// <summary>产量/状态/报警用历史说明，OEE 页签换成 OEE 说明。</summary>
+    public string PageHelpKey => SelectedTabIndex == 3 ? PageHelpContent.HistoryOee : PageHelpContent.History;
+
     partial void OnSelectedTabIndexChanged(int value)
     {
         CancelAutoQuery(); // 切 Tab 不做防抖（切回自动查），避免残留的迟发查询落到错误的 Tab 上
+        OnPropertyChanged(nameof(PageHelpKey));
         OnPropertyChanged(nameof(EmptyStateCode));
         // Tab 切换后页面容量可能不同（产量/状态/报警分页，OEE 不分页），
         // 不重置会导致显示"第 3 页/共 1 页"等错位，且 QueryCurrentTab 跳过 (page-1)*pageSize 行。
@@ -346,10 +350,23 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     private void RefreshAlarmNameFilterItems(IEnumerable<string> alarmNames)
     {
-        AlarmNameFilterItems.Clear();
-        AlarmNameFilterItems.Add(new FilterOption(null, Strings.Web_Hq_AllAlarms));
-        foreach (var n in alarmNames)
-            AlarmNameFilterItems.Add(new FilterOption(n, n));
+        var selected = SelectedAlarmName;
+        var resumeAutoQuery = _suspendAutoQuery;
+        _suspendAutoQuery = true;
+        try
+        {
+            AlarmNameFilterItems.Clear();
+            AlarmNameFilterItems.Add(new FilterOption(null, Strings.Web_Hq_AllAlarms));
+            foreach (var n in alarmNames)
+                AlarmNameFilterItems.Add(new FilterOption(n, n));
+            // Clear 会让下拉框把 SelectedValue 写回 null。补回原选项，且这次写回不触发自动查询。
+            if (!string.Equals(SelectedAlarmName, selected, StringComparison.Ordinal))
+                SelectedAlarmName = selected;
+        }
+        finally
+        {
+            _suspendAutoQuery = resumeAutoQuery;
+        }
     }
 
     public HistoryQueryViewModel(

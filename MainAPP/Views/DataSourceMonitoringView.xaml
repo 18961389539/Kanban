@@ -596,6 +596,7 @@
                     <TextBlock Style="{StaticResource PageTitleText}" Text="{x:Static resources:Strings.Dsm_Title}" />
                     <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource ThirdlyTextBrush}" Text="{x:Static resources:Strings.Dsm_Subtitle}" />
                 </StackPanel>
+                <controls:PageHelpButton Margin="8,0,0,0" VerticalAlignment="Center" PageKey="data-source" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                 <Border Margin="0,0,14,0"

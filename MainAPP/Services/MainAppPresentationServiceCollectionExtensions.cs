@@ -30,6 +30,7 @@ public static class MainAppPresentationServiceCollectionExtensions
         services.AddSingleton<RemoteDataLinkBootstrapper>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IUserHelpService, UserHelpService>();
+        services.AddSingleton<PageHelpService>();
         services.AddSingleton<IFirstRunGuideService, FirstRunGuideService>();
         services.AddSingleton<ILoginDialogService, LoginDialogService>();
         services.AddSingleton<SettingsViewModel>();

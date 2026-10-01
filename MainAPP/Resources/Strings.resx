@@ -6294,6 +6294,15 @@
   <data name="Ux_HelpManualMissing" xml:space="preserve">
     <value>未找到使用手册文件：{0}</value>
   </data>
+  <data name="Ux_PageHelpTitle" xml:space="preserve">
+    <value>本页说明</value>
+  </data>
+  <data name="Ux_PageHelpMissing" xml:space="preserve">
+    <value>手册里还没有这一页的说明。</value>
+  </data>
+  <data name="Ux_PageHelpOpenManual" xml:space="preserve">
+    <value>打开完整手册</value>
+  </data>
   <data name="Ux_FirstRunTitle" xml:space="preserve">
     <value>欢迎使用 Kanban</value>
   </data>
@@ -7061,7 +7070,7 @@
     <value>OEE = 可用率 × 性能率 × 合格率。\n当前：{0} = {1}\n着色：≥85% 绿 / ≥60% 黄 / &lt;60% 红。</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>时间稼动率=实际生产时间/计划生产时间  计划生产时间=班次时间-待机时间。</value>
+    <value>时间稼动率 = 运行时间 ÷（运行时间 + 报警时间）。待机和离线不计入分母。\n当前：{0} = {1}</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>性能率 = 实际总产量(OK+NG) ÷ (目标产能 × 运行小时)。\n当前：{0} = {1}</value>

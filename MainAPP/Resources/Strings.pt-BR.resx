@@ -6250,6 +6250,15 @@
   <data name="Ux_HelpManualMissing" xml:space="preserve">
     <value>Arquivo do manual nao encontrado: {0}</value>
   </data>
+  <data name="Ux_PageHelpTitle" xml:space="preserve">
+    <value>Sobre esta página</value>
+  </data>
+  <data name="Ux_PageHelpMissing" xml:space="preserve">
+    <value>Esta página ainda não tem um guia curto no manual.</value>
+  </data>
+  <data name="Ux_PageHelpOpenManual" xml:space="preserve">
+    <value>Abrir o manual completo</value>
+  </data>
   <data name="Ux_FirstRunTitle" xml:space="preserve">
     <value>Bem-vindo ao Kanban</value>
   </data>
@@ -7017,7 +7026,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>OEE = Disponibilidade × Desempenho × Qualidade.\nAgora: {0} = {1}\nCores: ≥85% verde / ≥60% amarelo / &lt;60% vermelho.</value>
   </data>
   <data name="Home_Tip_Availability" xml:space="preserve">
-    <value>Disponibilidade de tempo = tempo real de produção / tempo planejado de produção. Tempo planejado = tempo de turno − tempo de espera.</value>
+    <value>Disponibilidade = tempo em execução ÷ (tempo em execução + tempo em alarme). Espera e offline ficam de fora.\nAgora: {0} = {1}</value>
   </data>
   <data name="Home_Tip_Performance" xml:space="preserve">
     <value>Desempenho = produção real (OK+NG) ÷ (capacidade alvo × horas em execução).\nAgora: {0} = {1}</value>

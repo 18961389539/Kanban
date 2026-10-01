@@ -189,6 +189,7 @@
                                     VerticalAlignment="Center"
                                     Style="{StaticResource SectionTitleText}"
                                     Text="{x:Static resources:Strings.K472}" />
+                                <controls:PageHelpButton Margin="8,0,0,0" PageKey="settings" />
                                 <Ellipse
                                     Width="9"
                                     Height="9"

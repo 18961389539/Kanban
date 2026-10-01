@@ -69,6 +69,7 @@
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="Factory" />
                 <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K405}" />
+                <controls:PageHelpButton Margin="8,0,0,0" PageKey="production-line" />
                 <TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
                            FontSize="{DynamicResource FontSizeKpiLabel}"
                            Foreground="{StaticResource SecondaryTextBrush}"

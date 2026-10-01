@@ -35,6 +35,7 @@ internal static class MarkdownHelpRenderer
         var tableHeaderPending = false;
         var inQuote = false;
         var quoteBuilder = new StringBuilder();
+        var inPageHelp = false;
 
         void CloseList()
         {
@@ -105,6 +106,20 @@ internal static class MarkdownHelpRenderer
                 CloseQuote();
                 continue;
             }
+
+            // 本页说明写在标记之间，只在页面右侧说明栏显示，避免和后面的操作步骤重复进目录。
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("<!--", StringComparison.Ordinal) && trimmed.EndsWith("-->", StringComparison.Ordinal))
+            {
+                if (trimmed.StartsWith("<!-- page-help:", StringComparison.Ordinal))
+                    inPageHelp = true;
+                else if (trimmed.StartsWith("<!-- /page-help", StringComparison.Ordinal))
+                    inPageHelp = false;
+                continue;
+            }
+
+            if (inPageHelp)
+                continue;
 
             if (line.StartsWith('#'))
             {

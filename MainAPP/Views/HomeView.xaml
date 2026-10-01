@@ -9,6 +9,7 @@
     xmlns:mi="clr-namespace:Material.Icons;assembly=Material.Icons"
     xmlns:vm="clr-namespace:MainAPP.ViewModels"
     xmlns:views="clr-namespace:MainAPP.Views"
+    xmlns:controls="clr-namespace:MainAPP.Controls"
     d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}"
     d:DesignHeight="1080"
     d:DesignWidth="1712"
@@ -46,6 +47,7 @@
                         HorizontalAlignment="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <materialIcons:MaterialIcon Style="{StaticResource PageTitleIcon}" Kind="ChartLineVariant" />
                 <TextBlock Style="{StaticResource PageTitleText}" Margin="10,0,0,0" Text="{x:Static resources:Strings.K335}" />
+                <controls:PageHelpButton Margin="8,0,0,0" PageKey="home" />
             </StackPanel>
 
             <!--  右侧状态栏：占满标题右侧剩余宽度，窄窗时在列内换行  -->

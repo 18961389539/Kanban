@@ -81,6 +81,14 @@ public partial class AlarmQueryViewModel : ObservableObject
         try
         {
             var list = QueryAlarmEvents(from, to, deviceId, shiftName);
+            // 下拉选项来自本次窗口的全部报警名。先按名称过滤再取名字，选中一项后列表会只剩该项，
+            // 刷新 ItemsSource 时 ComboBox 会把选中值写回 null。
+            var alarmNames = list
+                .Where(e => !string.IsNullOrEmpty(e.AlarmName))
+                .Select(e => e.AlarmName!)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList();
 
             if (alarmName != null)
                 list = list.Where(e => e.AlarmName == alarmName).ToList();
@@ -103,12 +111,7 @@ public partial class AlarmQueryViewModel : ObservableObject
                 .GroupBy(e => new { e.DeviceId, e.AlarmId })
                 .Count(g => g.OrderByDescending(e => e.EventTime).First().EventType == AlarmEventType.Triggered);
 
-            LastQueryAlarmNames = list
-                .Where(e => !string.IsNullOrEmpty(e.AlarmName))
-                .Select(e => e.AlarmName!)
-                .Distinct()
-                .OrderBy(n => n)
-                .ToList();
+            LastQueryAlarmNames = alarmNames;
 
             // 班次切换事件（ShiftChange）表示"报警在新班次重新开始计时"，不是物理恢复。
             // 仅 Recovered 事件计入时长差分，避免跨班次报警被错误压缩为"在班次切换点恢复"。

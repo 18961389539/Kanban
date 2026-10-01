@@ -96,6 +96,7 @@
                 <TextBlock
                     Style="{StaticResource PageTitleText}"
                     Margin="10,0,0,0" Text="{x:Static resources:Strings.K342}" />
+                <controls:PageHelpButton Margin="8,0,0,0" PageKey="overview" />
                 <controls:KpiScopeChip Kind="Range" Margin="10,0,0,0" />
                 <TextBlock
                     Margin="8,0,0,0"
