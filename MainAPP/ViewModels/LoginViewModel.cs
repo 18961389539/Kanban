@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Models;
@@ -18,6 +19,7 @@ public partial class LoginViewModel : ObservableObject
     private readonly UserStore _userStore;
     private readonly UserSession _session;
     private readonly AppSettings? _appSettings;
+    private readonly IUserHelpService? _help;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -35,8 +37,10 @@ public partial class LoginViewModel : ObservableObject
     /// <summary>可选用户名列表，绑定到下拉框供选择。</summary>
     public ObservableCollection<User> AvailableUsers { get; } = new();
 
-    /// <summary>登录窗右侧短说明。正文仍从手册的 page-help 标记读取。</summary>
-    public ObservableCollection<PageHelpBlock> HelpBlocks { get; } = new();
+    /// <summary>登录窗右侧说明。正文仍从手册的 page-help 标记读取。</summary>
+    public ObservableCollection<PageHelpBlock> HelpIntro { get; } = new();
+
+    public ObservableCollection<PageHelpSectionItem> HelpSections { get; } = new();
 
     [ObservableProperty]
     private bool _isHelpOpen;
@@ -48,11 +52,16 @@ public partial class LoginViewModel : ObservableObject
 
     public double WindowHeight => IsHelpOpen ? 480 : 280;
 
-    public LoginViewModel(UserStore userStore, UserSession session, AppSettings? appSettings = null)
+    public LoginViewModel(
+        UserStore userStore,
+        UserSession session,
+        AppSettings? appSettings = null,
+        IUserHelpService? help = null)
     {
         _userStore = userStore;
         _session = session;
         _appSettings = appSettings;
+        _help = help;
         RefreshAvailableUsers();
     }
 
@@ -70,9 +79,33 @@ public partial class LoginViewModel : ObservableObject
     [RelayCommand]
     private void CloseHelp() => IsHelpOpen = false;
 
+    [RelayCommand]
+    private void OpenManual(Window? owner)
+    {
+        if (_help is null)
+            return;
+
+        string? anchor = null;
+        var path = _appSettings is null ? null : UserManualLocator.Resolve(_appSettings);
+        if (path is not null)
+        {
+            try
+            {
+                anchor = PageHelpContent.ChapterAnchor(File.ReadAllText(path), PageHelpContent.Login);
+            }
+            catch (IOException)
+            {
+                anchor = null;
+            }
+        }
+
+        _help.OpenUserManual(owner, anchor);
+    }
+
     private void LoadHelp()
     {
-        HelpBlocks.Clear();
+        HelpIntro.Clear();
+        HelpSections.Clear();
         HelpError = null;
         if (_appSettings is null)
         {
@@ -98,15 +131,7 @@ public partial class LoginViewModel : ObservableObject
             return;
         }
 
-        var blocks = PageHelpContent.Extract(markdown, PageHelpContent.Login);
-        if (blocks.Count == 0)
-        {
-            HelpError = Strings.Ux_PageHelpMissing;
-            return;
-        }
-
-        foreach (var block in blocks)
-            HelpBlocks.Add(block);
+        HelpError = PageHelpLoader.Apply(markdown, PageHelpContent.Login, HelpIntro, HelpSections);
     }
 
     /// <summary>从 UserStore 加载活跃用户列表到下拉框。</summary>

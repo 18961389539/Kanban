@@ -424,84 +424,10 @@
                         Command="{Binding OpenHelpCommand}"
                         Content="{x:Static resources:Strings.Ux_PageHelpOpenManual}"
                         Style="{StaticResource ButtonDefault}" />
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                Foreground="{StaticResource SecondaryTextBrush}"
-                                Text="{Binding PageHelp.Error}"
-                                TextWrapping="Wrap">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding PageHelp.Error}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding PageHelp.Blocks}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,0,0,8">
-                                            <TextBlock
-                                                FontWeight="Bold"
-                                                Foreground="{StaticResource PrimaryTextBrush}"
-                                                Margin="0,10,0,2"
-                                                Text="{Binding Text}"
-                                                TextWrapping="Wrap">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsHeading}" Value="True">
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <Grid>
-                                                <Grid.Style>
-                                                    <Style TargetType="Grid">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsHeading}" Value="True">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Grid.Style>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Margin="0,0,8,0" Foreground="{StaticResource PrimaryBrush}" Text="•">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsBullet}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                                    Text="{Binding Text}"
-                                                    TextWrapping="Wrap" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </ScrollViewer>
+                    <controls:PageHelpPanel
+                        Error="{Binding PageHelp.Error}"
+                        Intro="{Binding PageHelp.Intro}"
+                        Sections="{Binding PageHelp.Sections}" />
                 </DockPanel>
             </Border>
         </Grid>

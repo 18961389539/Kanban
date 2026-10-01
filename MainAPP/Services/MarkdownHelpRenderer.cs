@@ -35,13 +35,21 @@ internal static class MarkdownHelpRenderer
         var tableHeaderPending = false;
         var inQuote = false;
         var quoteBuilder = new StringBuilder();
-        var inPageHelp = false;
+        var inOrdered = false;
 
         void CloseList()
         {
-            if (!inList) return;
-            sb.AppendLine("</ul>");
-            inList = false;
+            if (inList)
+            {
+                sb.AppendLine("</ul>");
+                inList = false;
+            }
+
+            if (inOrdered)
+            {
+                sb.AppendLine("</ol>");
+                inOrdered = false;
+            }
         }
 
         void CloseQuote()
@@ -107,18 +115,9 @@ internal static class MarkdownHelpRenderer
                 continue;
             }
 
-            // 本页说明写在标记之间，只在页面右侧说明栏显示，避免和后面的操作步骤重复进目录。
+            // 标记本身不进正文。标记之间的本页说明就是这一章的正文。
             var trimmed = line.Trim();
             if (trimmed.StartsWith("<!--", StringComparison.Ordinal) && trimmed.EndsWith("-->", StringComparison.Ordinal))
-            {
-                if (trimmed.StartsWith("<!-- page-help:", StringComparison.Ordinal))
-                    inPageHelp = true;
-                else if (trimmed.StartsWith("<!-- /page-help", StringComparison.Ordinal))
-                    inPageHelp = false;
-                continue;
-            }
-
-            if (inPageHelp)
                 continue;
 
             if (line.StartsWith('#'))
@@ -159,8 +158,33 @@ internal static class MarkdownHelpRenderer
                 continue;
             }
 
+            if (TryOrderedItem(line, out var orderedText))
+            {
+                if (!inOrdered)
+                {
+                    if (inList)
+                    {
+                        sb.AppendLine("</ul>");
+                        inList = false;
+                    }
+
+                    sb.AppendLine("<ol>");
+                    inOrdered = true;
+                }
+
+                var step = InlineFormat(orderedText, manualDir, appBaseDirectory);
+                sb.Append("<li>").Append(step).AppendLine("</li>");
+                continue;
+            }
+
             if (line.StartsWith("- ") || line.StartsWith("* "))
             {
+                if (inOrdered)
+                {
+                    sb.AppendLine("</ol>");
+                    inOrdered = false;
+                }
+
                 if (!inList)
                 {
                     sb.AppendLine("<ul>");
@@ -248,7 +272,7 @@ internal static class MarkdownHelpRenderer
         var hasDash = false;
         foreach (var ch in content)
         {
-            if (ch is '-' or ':' or ' ')
+            if (ch is '-' or ':' or ' ' or '|')
                 hasDash |= ch == '-';
             else
                 return false;
@@ -256,34 +280,22 @@ internal static class MarkdownHelpRenderer
         return hasDash;
     }
 
-    /// <summary>
-    /// 生成标题锚点 id（供页内 <c>[文字](#anchor)</c> 链接跳转）。
-    /// 规则：字母转小写；字母/数字/汉字等字母类字符保留；空格与连字符转 <c>-</c>；其余标点（含全角括号、冒号、句点）移除。
-    /// 例如 "附录 B：工程师与管理员补充" → "附录-b工程师与管理员补充"，"12.7 运行模式（通用设置）" → "127-运行模式通用设置"。
-    /// </summary>
-    private static string Slugify(string text)
+    private static string Slugify(string text) => PageHelpContent.Slugify(text);
+
+    private static bool TryOrderedItem(string line, out string text)
     {
-        var sb = new StringBuilder();
-        var lastWasDash = false;
-        foreach (var ch in text)
-        {
-            var category = char.GetUnicodeCategory(ch);
-            if (char.IsLetterOrDigit(ch) || category == System.Globalization.UnicodeCategory.OtherLetter)
-            {
-                sb.Append(char.ToLowerInvariant(ch));
-                lastWasDash = false;
-            }
-            else if (char.IsWhiteSpace(ch) || ch is '-' or '_')
-            {
-                if (sb.Length > 0 && !lastWasDash)
-                {
-                    sb.Append('-');
-                    lastWasDash = true;
-                }
-            }
-            // 其余标点直接忽略
-        }
-        return sb.ToString().Trim('-');
+        text = "";
+        var i = 0;
+        if (line.Length == 0 || !char.IsDigit(line[0]))
+            return false;
+        while (i < line.Length && char.IsDigit(line[i]))
+            i++;
+        if (i >= line.Length || line[i] != '.')
+            return false;
+        if (i + 1 >= line.Length || line[i + 1] != ' ')
+            return false;
+        text = line[(i + 2)..].Trim();
+        return text.Length > 0;
     }
 
     private static string ResolveImageUrl(string src, string manualDir, string appBaseDirectory)
@@ -341,7 +353,7 @@ h2 { font-size: 1.45em; }
 h3 { font-size: 1.15em; color: #D1D5DB; }
 p, li { font-size: 1em; }
 blockquote { border-left: 4px solid #3B82F6; margin: 12px 0; padding: 8px 16px; background: #111827; color: #CBD5E1; }
-ul { padding-left: 24px; }
+ul, ol { padding-left: 24px; }
 img { max-width: 100%; height: auto; border: 1px solid #374151; border-radius: 6px; margin: 12px 0; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
 code { background: #111827; padding: 2px 6px; border-radius: 4px; font-size: 0.95em; }
 pre.code { background: #0F172A; padding: 12px 16px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
@@ -382,6 +394,21 @@ function changeFont(d) {
 function backTop() {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+}
+function scrollToAnchor(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var top = 0;
+    var node = el;
+    while (node) {
+        top += node.offsetTop || 0;
+        node = node.offsetParent;
+    }
+    var y = top - 56;
+    if (y < 0) y = 0;
+    window.scrollTo(0, y);
+    document.documentElement.scrollTop = y;
+    document.body.scrollTop = y;
 }
 </script>
 </body>

@@ -821,8 +821,10 @@ public partial class MainWindowViewModel : ObservableObject, INavigationService,
     [RelayCommand]
     private void OpenHelp()
     {
-        var owner = UiDispatcher.MainWindow;
-        _userHelpService?.OpenUserManual(owner);
+        var helpKey = PageHelp.IsOpen && !string.IsNullOrEmpty(PageHelp.ActiveKey)
+            ? PageHelp.ActiveKey
+            : PageHelpContent.HelpKeyForNavigation(CurrentPageKey);
+        _userHelpService?.OpenUserManual(UiDispatcher.MainWindow, PageHelp.ChapterAnchorFor(helpKey));
     }
 
     /// <summary>打开快捷键速查小窗（Ctrl+Shift+K）。复用已显示实例，避免堆叠窗口。</summary>

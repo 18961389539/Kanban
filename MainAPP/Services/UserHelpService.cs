@@ -8,7 +8,7 @@ namespace MainAPP.Services;
 
 public interface IUserHelpService
 {
-    void OpenUserManual(Window? owner);
+    void OpenUserManual(Window? owner, string? anchor = null);
 }
 
 /// <summary>
@@ -18,7 +18,7 @@ public sealed class UserHelpService(AppSettings appSettings, IDialogService dial
 {
     private HelpWindow? _openWindow;
 
-    public void OpenUserManual(Window? owner)
+    public void OpenUserManual(Window? owner, string? anchor = null)
     {
         var manualPath = ResolveManualPath();
         if (manualPath is null)
@@ -36,14 +36,14 @@ public sealed class UserHelpService(AppSettings appSettings, IDialogService dial
             var html = MarkdownHelpRenderer.RenderFile(manualPath, AppContext.BaseDirectory);
             if (_openWindow is { IsVisible: true })
             {
-                _openWindow.NavigateHtml(html, Strings.Ux_HelpWindowTitle);
+                _openWindow.NavigateHtml(html, Strings.Ux_HelpWindowTitle, anchor);
                 _openWindow.Activate();
                 if (owner is not null && !_openWindow.IsActive)
                     _openWindow.Focus();
                 return;
             }
 
-            _openWindow = new HelpWindow(Strings.Ux_HelpWindowTitle, html)
+            _openWindow = new HelpWindow(Strings.Ux_HelpWindowTitle, html, anchor)
             {
                 Owner = owner
             };

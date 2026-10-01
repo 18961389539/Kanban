@@ -45,7 +45,7 @@ Ask your administrator to confirm:
 
 The app starts maximized. If the display is not 16:9, you may see letterboxing. This keeps content from being cropped.
 
-The app has two run modes: **Full mode** (default, all pages available) and **Viewer mode** (usually for shop-floor displays; only viewing pages such as Home, Production Line, and Alarm Center remain, management entries are hidden). Switching modes is done by an administrator under **System Settings → General**. See [12.7 Run Modes (General)](#127-run-modes-general).
+The app has two run modes: **Full mode** (default, all pages available) and **Viewer mode** (usually for shop-floor displays; Home, Production Line, Alarm Center, Device Detail, and Data Source Monitor remain, and management pages are hidden). Switching modes is done by an administrator under **System Settings → General**. See [System Settings](#12-system-settings-data-source-plc-shifts-and-display).
 
 ### 2.3 Opening the User Manual
 
@@ -75,7 +75,7 @@ The left sidebar lists pages from top to bottom in the order below (some entries
 | Icon | Page | Purpose |
 | --- | --- | --- |
 | Dashboard | Home | Quick view of line KPIs |
-| Factory | Production Line | Layout view of production status |
+| Factory | Production Line | Every device’s current shift at once |
 | Bell | Alarm Center | Handle alarms and view statistics |
 | Device | Device Manager | Configure devices and addresses (Engineer+) |
 | Clipboard | Work Orders | Create and track work orders |
@@ -85,7 +85,7 @@ The left sidebar lists pages from top to bottom in the order below (some entries
 | Monitor | Runtime Monitor | Acquisition service and system health (Admin) |
 | Users | User Management | Accounts and roles (Admin) |
 | Shield | Audit Log | Configuration and operation audit trail (Admin) |
-| Recipe | Recipes | Device recipes and apply history (Engineer+) |
+| Recipe | Recipes | Recipes written to the PLC (Engineer+) |
 | Chart | Data Monitoring | Live data source samples |
 
 ![Production Line example](screenshots/02_production_line.png)
@@ -179,6 +179,14 @@ Scoped to the current shift. The three factors and the overall value all carry a
 
 Device health, at the right of the title, is a 0–100 score: 30% availability, 20% performance, 25% quality, 25% stability. Stability = 1 − alarm time ÷ (run + alarm + standby), and offline is excluded. 85 and above is Healthy, 70 and above is Good, 60 and above is Needs attention, and below that is Abnormal. With no run, alarm, or standby time the score is “—”.
 
+| Number | Color |
+| --- | --- |
+| Availability, performance, overall OEE | 85% and above green, 60% and above yellow, below 60% red |
+| Quality (the OEE factor, and shift quality) | 95% and above green, 90% and above yellow, below 90% red |
+| Speed achievement, order achievement | 90% and above green, 70% and above yellow, below 70% red |
+| Device health | 85 and above Healthy, 70 and above Good, 60 and above Needs attention, below 60 Abnormal |
+| Schedule bar | Ahead of plan green, behind plan yellow, past the end time reads overdue |
+
 ### Current Shift Quality (bottom center)
 
 On the left is shift total output, good plus defect, in pieces. On the right is cumulative quality: good so far this shift ÷ (good + defect). It is not the quality of one hour by itself. Colors match the OEE quality number: 95% and above green, 90% and above yellow, below that red. The gap beside it is versus 95%: positive means above the target, negative means still short. With no output both numbers are “—” and the chart area says “No output data”.
@@ -200,55 +208,7 @@ The three empty states are different:
 The page refreshes on its own. Check the PLC dot, then whether the top bar is stuck on No Data or PLC Disconnected. Open Runtime Monitor for whether acquisition is running and when it last succeeded. Leave the page and come back. If it is still empty, ask an administrator. Do not delete the database.
 <!-- /page-help -->
 
-Home has **six cards in two rows** for quick overview—do not edit device configuration here. The top row (Device Status, Current Production, Live Alarms) is the most used and described below; the bottom row holds **OEE, Quality Rate, and Defect Pareto** cards.
-
-### 5.1 Device Status (left card)
-
-- The chip beside the title is the live state: Running, Standby, Alarm, Offline, or Unknown. Next to it are the current shift and the clock.
-- **Ring center** shows “State Duration Share” and this shift’s total duration. With no duration data it shows “No status data”.
-- Right legend: run, alarm, standby, and offline durations and shares, plus the device health score.
-
-| Status | Meaning |
-| --- | --- |
-| **Running** | Device is producing |
-| **Standby** | Temporarily stopped—not necessarily a fault |
-| **Alarm** | Needs attention |
-| **Offline** | Device is not online, or acquisition or communication stopped |
-| **Unknown** | Status word does not match the states above |
-
-### 5.2 Current Production (center card)
-
-- **Current speed** and progress against rated output.
-- **Shift OK count, order target, cumulative order OK, and order achievement**.
-- **Shift total output and quality rate** are on the bottom quality card. **OEE** is the bottom-left card.
-
-Confirm shift and date before comparing numbers across shifts or days.
-
-### 5.3 Live Alarms (right card)
-
-- Active alarms; high-severity items highlighted in red.
-- Filter by level; mute alert sound without losing records.
-- **View all** opens Alarm Center.
-
-### 5.4 Bottom-Row Cards
-
-- **OEE card**: current OEE and its breakdown (availability, performance, quality).
-- **Quality Rate card**: good count / total and the quality trend.
-- **Defect Pareto card**: distribution of main defect types, useful for focusing on the biggest issues.
-
-### 5.5 Home Refresh
-
-The home page refreshes automatically. If data appears frozen:
-
-1. Check PLC connection (green).
-2. Open Runtime Monitor—confirm acquisition is running.
-3. Check “Last successful acquisition time”.
-4. Switch to another page and back, or wait for the next auto-refresh.
-5. If still no data, contact your administrator—do not delete database files.
-
 ## 5.6 Device Detail
-
-Open it from Home with Device Detail, or from a Production Line card with Details. It is not in the sidebar.
 
 <!-- page-help:device-detail -->
 Open it from Home with Device Detail, or from a Production Line card with Details. It is not in the sidebar, so the sidebar does not highlight a page while you are here. Back, or Esc, returns to the page you came from. With no device selected the page says No Device Selected and tells you to pick one from Home or Production Line. This page is one device. Addresses and alarm points are edited in Device Manager. F5 refreshes now.
@@ -273,6 +233,20 @@ Each cell is one hour of the current shift. The plan is rated output prorated by
 
 A past hour that met the plan is marked On target, with a green edge. A past hour that missed it is marked Below plan, with a red edge. The current hour is highlighted. Hours that have not started are faded. Above the cells is cumulative OK, due, and a percent. Off shift, the board says Currently off shift, and shifts need to be configured in Settings.
 
+### Colors
+
+| Mark | Color |
+| --- | --- |
+| Running beside the title | Green |
+| Alarm beside the title | Red |
+| Standby beside the title | Yellow |
+| Any other state beside the title | Gray. The text is still the collected state |
+| A past hour that met the plan | Green “On target”, green edge |
+| A past hour that missed the plan | Red “Below plan”, red edge, and a red-tinted background |
+| The current hour | The theme color, with a thicker edge |
+| An hour that has not started | Faded |
+| OEE breakdown percentages | Not colored. The formulas match Home. The color bands are on Home and on History OEE |
+
 ### Further down
 
 - Data sources: when any are configured, each source shows its live value first. Open one to see its trend, then return to the live cards. When none are configured this block is empty. Add them on the data-source tab in Device Manager.
@@ -294,6 +268,14 @@ This page shows every device at once, for walking the line. The count beside the
 - Running, Alarm, Standby, and Offline are how many devices are in each state right now.
 - Reset All writes an OEE reset to every device and clears the software-side totals. It asks first, and it cannot be undone. The button stays disabled when the PLC is disconnected, or when the signed-in account is below engineer.
 
+| Mark | Color |
+| --- | --- |
+| Running count | Green |
+| Alarm count | Red |
+| Standby count | Yellow |
+| Offline count | Gray |
+| OEE, availability, performance, and quality on a card | Not colored. The formulas match Home. Home’s 85% / 60% and 95% / 90% bands are not applied to these percentages |
+
 ### Filters and cards
 
 - All Statuses, Running, Alarm, Standby, and Offline only decide which cards are shown. Search matches the device name. Sort is Default, Alarm First, By OEE, or Output from high to low.
@@ -303,17 +285,6 @@ This page shows every device at once, for walking the line. The count beside the
 
 Home follows the one device in its top bar. Use this page to find the device, then open its detail. Use History Query for a span of stored records.
 <!-- /page-help -->
-
-Open **Production Line** to view multiple devices in layout.
-
-Suggested workflow:
-
-1. Scan the line for red alarms or devices with no data (gray).
-2. Locate the abnormal device by name.
-3. Click a device for details or jump to Device Manager.
-4. After fixing the issue on site, wait for the next scan cycle to confirm recovery.
-
-Use **History Query** when you need detailed historical data.
 
 ## 7. Alarm Center: Handling Alarms
 
@@ -341,6 +312,16 @@ The left side is what still needs handling. The right side is what already happe
 
 If the history database behind the statistics fails, a red banner appears under the six numbers. Do not treat today’s comparison or the most-frequent name as settled until Runtime Monitor shows acquisition and the database are healthy again.
 
+### Colors
+
+| Mark | Color |
+| --- | --- |
+| High | Red |
+| Medium | Orange |
+| Low | Yellow |
+| Fewer triggers than yesterday, or more recoveries than yesterday | The comparison text is green |
+| A recovery on the event stream | A green check |
+
 ### Each row on the left
 
 The list title is Active Alarms (Live), with a red edge. A row shows the alarm name, a High / Medium / Low pill, the start time, the device, and how long it has already lasted. Within the same level, earlier starts come first.
@@ -359,39 +340,6 @@ Handle high severity first. Confirm the name and the device on site, then wait f
 For anything older than the range, or for a full duration and pending table, use the Alarm Records tab in History Query.
 <!-- /page-help -->
 
-The Alarm Center shows active alarms, today’s trigger count, recovery count, and recent events.
-
-### 7.1 Handling an Alarm
-
-1. Open **Alarm Center** (bell icon).
-2. Review the active alarm list.
-3. Handle high-severity alarms first.
-4. Go to the device on site using alarm and device names.
-5. After fixing the fault, wait for the PLC signal to recover.
-6. Confirm the alarm leaves the active list or shows recovered.
-7. Use **History Query** to trace activation and recovery times if needed.
-
-### 7.2 Colors and States
-
-- **Red**: Priority or severe condition.
-- **Yellow**: Needs attention or pending action.
-- **Green / Recovered**: Condition cleared; history is retained.
-- **Zero active alarms**: Does not mean no alarms occurred today.
-
-### 7.3 Alarm Won’t Clear
-
-Check in order:
-
-1. Is the device actually recovered on site?
-2. Is the PLC connected?
-3. Is the alarm address correct?
-4. Is the alarm point enabled in Device Manager?
-5. Is manual confirmation required on site?
-
-Visual alerts are always shown. If sound is enabled, new alarms play a local alert. Disable sound under **System Settings → Display**; this does not disable alarm records or visual alerts.
-
-Do not delete alarm records—they affect traceability and statistics.
-
 ## 8. Device Manager: Adding and Configuring Devices
 
 ![Device Manager](screenshots/04_device_manager.png)
@@ -404,7 +352,7 @@ This page edits device configuration. It needs an engineer or administrator acco
 - Search and the status list only change which devices you see. They do not change configuration. With no devices the list says No Devices. When a filter matches nothing, clear the filters.
 - Add creates a device. Delete removes that device’s configuration. It does not remove production or alarm history that was already stored. It asks before it deletes.
 - Validate checks every device and does not write. An address conflict shows a warning icon beside the title.
-- Import and Export are the device configuration file, for backup or for moving to another computer. They are not production or alarm history.
+- Import and Export are the device configuration file, for backup or for moving to another computer. They are not production or alarm history. The columns for a data-source CSV are in [Appendix B](#appendix-b-engineers-and-administrators).
 
 ### The six tabs on the right
 
@@ -421,40 +369,6 @@ With no device selected, the right side tells you to select one or click Add.
 
 Wait one acquisition cycle. If an address is wrong, Recent Successful Reads on Runtime Monitor drops toward 0, or the page reports an invalid address or an address conflict. After a rename, Home, Alarm Center, and History Query show the new name. Names already stored on old records stay as they were written.
 <!-- /page-help -->
-
-Device Manager has a device list (left) and detail editor (right).
-
-### 8.1 Information to Prepare
-
-| Field | Example | Notes |
-| --- | --- | --- |
-| Device name | Injection Molder 1 | Display name |
-| OK counter address | D100 | Good count |
-| NG counter address | D110 | Defect count |
-| Status address | D120 | Status or status counter |
-| Reset address | M100 | Used at shift change |
-| Alarm address | M200 | One alarm point per bit |
-| Defect address | D300 | Defect type counter |
-
-Use addresses from your PLC program and site documentation.
-
-### 8.2 Adding a Device
-
-1. Open **Device Manager**.
-2. Click **Add Device**.
-3. Enter device name and OK/NG/status/reset addresses.
-4. Add alarms, defects, or counter alarms on the corresponding tabs.
-5. Validate addresses (no duplicates, not empty, correct format).
-6. Save and confirm the device appears in the list.
-7. Wait one scan cycle and confirm status and data update.
-
-### 8.3 Editing and Deleting
-
-Edit: select device → change fields → save → verify one acquisition cycle if addresses changed.
-
-Before delete: confirm the device is unused, historical data policy is understood, and configuration is backed up. Deleting config does not automatically delete history records.
-
-> **For engineers:** Data source CSV import/export is in [Appendix B](#appendix-b-engineers-and-administrators).
 
 ## 9. History Query
 
@@ -481,6 +395,11 @@ Export asks for the scope first. Yes writes every filtered row. No writes only t
 ### Output Query
 
 Five numbers: total output, total OK, total NG, quality rate, defect rate. The two rates keep one decimal. Quality = good count ÷ (good count + defect count). Its colors are not the home quality colors: 90% and above is green, 70% and above is yellow, and below that is red. Defect rate is the rest: 3% and above is yellow, 5% and above is red, and below 3% is green.
+
+| Number | Color |
+| --- | --- |
+| Quality | 90% and above green, 70% and above yellow, below 70% red |
+| Defect rate | Below 3% green, 3% and above yellow, 5% and above red |
 
 When there is data, a note sits under the five numbers, then an output chart, then the table. Columns: time, device, shift, OK output, NG output, and the device state at that time. A row is one stored output record, not the live counter.
 
@@ -524,6 +443,12 @@ Left to right: quality, performance, availability, overall OEE.
 - Availability = running time ÷ (running time + alarm time). Standby and offline stay out of the denominator. A shift that was mostly standby, with zero alarm time, can still show 100%. If there was neither running nor alarm time, the rate is 0. Colors use the same 85% / 60% scale.
 - Overall OEE = availability × performance × quality. Colors use the same 85% / 60% scale.
 
+| Number | Color |
+| --- | --- |
+| Quality | 95% and above green, 90% and above yellow, below 90% red |
+| Performance, availability, overall OEE | 85% and above green, 60% and above yellow, below 60% red |
+| A shift-table row whose performance is under 60% | The whole row is yellow |
+
 ### Charts, the note, then the inputs
 
 Left to right: OEE Metrics (the three rates and the overall value together), Trend Change (one point per shift, time on the horizontal axis, that shift’s overall OEE on the vertical axis), and Shift Comparison (one bar per shift, also overall OEE).
@@ -538,23 +463,6 @@ One row per shift: shift start, shift, quality, performance, availability, OEE. 
 
 When one rate is clearly low: quality sends you to Output Query for OK and NG; availability sends you to Status Duration for run time versus alarm time; performance is checked against rated output and running hours. Do not stop at the overall percentage.
 <!-- /page-help -->
-
-### 9.1 Query Steps
-
-1. Select type: Production, Alarm, or Status transition.
-2. Set start and end time.
-3. Select device(s)—empty often means all devices.
-4. Select shift if needed.
-5. Click **Query** and review result count and time range.
-6. Export for archival if needed.
-
-### 9.2 No Results
-
-- Time range reversed?
-- Wrong device selected?
-- Wrong shift?
-- Was the app running and acquiring in that period?
-- Check Runtime Monitor for history write diagnostics.
 
 ## 10. Production Review: Trends and Summaries
 
@@ -574,33 +482,24 @@ The title is Production Review. The Range chip beside it means every number on t
 - Device Health Score, the current work order, and Current Recipe sit at the top. The recipe value comes from this device’s configuration now. It is not a recipe name stored on an old record.
 - Review Conclusion is built from production, the device, and quality in this range. Under that, Cycle Comparison shows Current Total Output, Current Quality Rate, Current OEE, and the change against the previous period. The output trend marks the peak period and the valley period.
 - Top 5 Alarms are the five names triggered most often in this range. With none, the block says No alarm records.
-- On the Device Status Timeline, green is Running, red is Alarm, yellow is Standby, and gray is offline. Rest the pointer on a cell and the tip shows that cell’s state and its start and end.
+- On the Device Status Timeline, green is Running, red is Alarm, yellow is Standby, and gray is offline. Rest the pointer on a cell and the tip shows that cell’s state and its start and end. Device Health Score is written as “score / 100”. The number itself is not colored.
+
+| Mark | Color |
+| --- | --- |
+| Timeline running | Green |
+| Timeline alarm | Red |
+| Timeline standby | Yellow |
+| Timeline offline | Gray |
+| Device health score | Not colored |
+
+The output trend, the heatmap, the defect Pareto, and the OEE loss breakdown show time and value when you rest the pointer on them. Clicking them does not open a popup.
+
 - Current Device Details stays collapsed until you open it. It shows this device’s output, run time, and OEE. Clicking the row opens Device Detail.
 - Shift comparison lists output composition, alarm density, and target achievement for each shift. With no shift data it says No shift data and points you to Settings.
 - OEE Loss Breakdown shows whether the loss is in performance, availability, or quality.
 - Current Device Defect Pareto keeps at most 3 rows, ranked by the increase inside this time window. When a count exists before the window, the increase is the last value minus that baseline. Without a baseline, it is the last value in the window minus the first. A window that holds only one sample and has no baseline counts as 0, so that defect does not appear. An empty chart says No cumulative defects. Home’s Pareto uses defects added during the current shift. This chart uses the increase inside the selected window.
 - Downtime Analysis shows Total Downtime and Average Alarm Duration. The output heatmap is this device’s output by hour. With no output it says No heatmap data, and the hint says the device was not running or no output was acquired.
 <!-- /page-help -->
-
-Open **Review** for summaries by current shift, previous shift, today, last 24 hours, or last 7 days. Includes output, yield, OEE, alarms, device details, shift comparison, and top alarms.
-
-**Reading the charts:**
-
-| Area | Hover | Click |
-| --- | --- | --- |
-| Status timeline (color bars) | Status name and time range | No popup |
-| Output/speed trend | Time point and value | No |
-| Production heatmap | Time bucket and value | No |
-| Defect Pareto | Category and count | No |
-| OEE waterfall | Labels on bars | No |
-| Device table mini status bar | No | Row click changes focused device |
-
-1. Select time range.
-2. Click **Refresh** and wait for data.
-3. Check data coverage hints.
-4. **Export Report** (CSV) or **Export PDF** for archival.
-
-PDF requires a system font with CJK support; export fails with a clear message if fonts are missing.
 
 ## 11. Work Orders
 
@@ -621,6 +520,13 @@ The left side is the order list. The right side is the output and the plan of th
 
 - Search matches the order number, the product, or the device. The device list beside it keeps one device. The status chips are All, Pending, In Progress, Completed, and Aborted. The number on a chip is how many orders are in that state.
 - A row shows the order number, the product, the achievement rate, and the status. Achievement = good count ÷ target quantity. The good count does not keep refreshing by itself. Click Refresh Output, or press F5, and the achievement rate is recalculated from the latest collection.
+
+| Mark | Color |
+| --- | --- |
+| In Progress count | Theme color |
+| Completed count | Green |
+| Aborted count | Red |
+| Achievement rate | Not colored. Met Only means the good count has reached the target quantity, which is 100%. It is not Home’s order-achievement rule, where 90% turns green |
 - Conflict: Pending or In Progress orders on the same device have overlapping planned times. Adjust the plan before starting.
 - Overdue: the planned end has passed and the order is not complete.
 - Order Schedule Sort starts on Planned Start. It can also be Planned End, Status + Time, or Created. The same row can keep only Overdue Only, Met Only, or Has NG. Import adds many Pending orders at once. Generate Samples asks for a password and is only for a preview.
@@ -629,16 +535,8 @@ The left side is the order list. The right side is the output and the plan of th
 
 ### Do not mix this with shift output
 
-An order’s good count adds up the production records linked to that order, and it can cross shifts. Shift OK on Home counts only the current shift, so the two numbers can differ. Delete removes the order. It does not remove production history. It asks before it deletes.
+An order’s good count adds up the production records linked to that order, and it can cross shifts. Shift OK on Home counts only the current shift, so the two numbers can differ. Use one spelling for the order number and the product. Delete removes the order. It does not remove production history. It asks before it deletes.
 <!-- /page-help -->
-
-1. Click **Add Work Order**.
-2. Enter order number, product, target quantity, device, and planned times.
-3. Save and set status: Pending, In Progress, Completed, or Cancelled.
-4. Compare actual output on Home and History Query during production.
-5. Review target vs actual when complete.
-
-Use consistent naming for products and orders. The list sorts by planned start time by default; **Schedule conflict** means overlapping active orders on the same device—adjust plans before starting.
 
 ## 12. System Settings: Data Source, PLC, Shifts, and Display
 
@@ -650,7 +548,7 @@ This page sets how the program connects, how it looks, and which shift the numbe
 ### What save asks about
 
 - Changing the PLC, the data source, or the run mode asks for confirmation. A new PLC IP or port disconnects the current link, and the next acquisition cycle reconnects with the new address. Test Connection tries the current IP and port once. It does not stop acquisition that is already running.
-- Switching between Local Acquisition and Remote Acquisition takes effect only after a restart. After you save, the program asks whether to restart now. Remote mode needs the collector address. Test Collector Connection checks it first. Once remote is selected, the PLC Connection and Acquisition Strategy tabs are hidden, because the collector owns the link.
+- Switching between Local Acquisition and Remote Acquisition takes effect only after a restart. After you save, the program asks whether to restart now. Remote mode needs the collector address. The default is http://127.0.0.1:5129/hubs/kanban . Test Collector Connection checks it first. Once remote is selected, the PLC Connection and Acquisition Strategy tabs are hidden, because the collector owns the link.
 - Saving a shift change warns that the new configuration applies immediately. A shift that is already in progress can be treated as a changeover and the current totals can be cleared. At least one shift must remain.
 - A language change waits for a restart. The three type sizes are on Display Settings, and they apply to this screen after you save.
 
@@ -668,54 +566,6 @@ Machine code, license type, activation time, and expiry. Copy Machine Code is wh
 
 Restore Defaults only resets the draft to factory values. The bottom line becomes Unsaved Changes, and Save Settings is still required.
 <!-- /page-help -->
-
-The top of **System Settings** shows the license status (see **License Management**); below it the page is organized into tabs.
-
-### 12.1 Data Source (General)
-
-- **Local acquisition (default)**: Kanban connects to the PLC directly—suited for single-machine deployment.
-- **Collector service (Remote)**: Kanban acts as a display client and receives data from the Kanban.Collector service—suited for multi-display or remote deployment.
-
-When **Collector service** is selected, fill in the **collector service address** (default `http://127.0.0.1:5129/hubs/kanban`) and use **Test Connection** to verify it.
-
-### 12.2 PLC Connection (Local mode only)
-
-- **PLC brand**: Mitsubishi / Siemens / Modbus TCP / Omron / Keyence. The brand determines the address format and default port, e.g. Mitsubishi `4999`, Siemens `102`, Modbus TCP `502`.
-- **IP address**: e.g. `192.168.1.10`
-- **Port**: site-specific; the default is filled in automatically when the brand changes.
-- **Timeout (ms)**: connection and read/write timeout.
-
-Siemens, Modbus TCP, and Omron have additional protocol options (model, rack/slot, station ID, etc.); defaults usually work.
-
-After changes: validate numbers → save → wait for connection status → verify in Runtime Monitor.
-
-### 12.3 Acquisition Strategy (Local mode only)
-
-- **Poll interval (ms)**: how often the system reads devices.
-- **History write interval**: writes per N scans.
-- **Home refresh interval (ms)**.
-- Batch-read parameters usually need no change.
-
-Too small a poll interval increases PLC and PC load; overly frequent history writes increase database pressure. Do not adjust without a clear need.
-
-### 12.4 Shifts
-
-Configure name, start, and end times. For overnight shifts, confirm end time crosses midnight correctly. Avoid renaming shifts used in historical statistics.
-
-### 12.5 Display
-
-Dark theme, font scaling (for large displays), dashboard title, alarm sound, and other preferences. **Automatic daily report**: when enabled, a production report PDF for the previous natural day is generated daily at the configured time; the **master node** option designates which PC generates it in multi-display deployments (leave it on for a single PC). Increase font scale for large displays.
-
-### 12.6 UI Language
-
-Under **System Settings → Display**, select the UI language (简体中文 / English / 日本語 / Português). Changes take effect after **restarting the application**.
-
-### 12.7 Run Modes (General)
-
-- **Full mode (default)**: all pages available—suited for management.
-- **Viewer mode**: usually for shop-floor displays; only viewing pages such as Home, Production Line, and Alarm Center remain, management entries are hidden, and exiting the app requires confirmation.
-
-Restart the app after switching modes for the change to take effect.
 
 ## 13. License Management
 
@@ -756,19 +606,19 @@ When Acquisition Abnormal appears, read the failure line under it. While still c
 - Per-Device Acquisition Status is the read result of each device. Poll Cycle Trend is the last 60 refreshes, in milliseconds.
 
 When numbers stay still, do not delete the database. Check the PLC connection, the last success time, and history writes first.
+
+### Colors
+
+| Mark | Color |
+| --- | --- |
+| PLC connected | Green |
+| PLC disconnected, and Collector unreachable | Red |
+| System Health “Running Normally” | Green |
+| System Health “Communication Lost” | Red |
+| System Health “Acquisition Stopped”, and “N consecutive failures” | Yellow |
+| The Acquisition Abnormal title, and Refresh failed | Red text on a light red background |
+| Address conflicts and invalid addresses | Yellow when the count is not 0, ordinary text when it is 0 |
 <!-- /page-help -->
-
-| Item | Normal | Abnormal |
-| --- | --- | --- |
-| PLC connection | Connected | Disconnected / reconnecting |
-| Acquisition service | Running | Stopped |
-| Recent successful devices | > 0 (or none configured) | Stuck at 0 |
-| Last acquisition time | Updating | Stale |
-| Consecutive failed cycles | 0 or occasional | Increasing |
-| History write | OK | Errors / disk full |
-| System resources | Sufficient | High memory / low disk |
-
-Check PLC status, last successful acquisition, and consecutive failures together when diagnosing faults.
 
 ## 15. Data Monitoring
 
@@ -789,6 +639,14 @@ Total values, Alarm, Read failed, Stale, Not sampled, and Normal. Those six numb
 - Stale: a periodic point whose last success is more than 5 seconds old. A triggered point is not judged stale by those 5 seconds. While the point is still current, Freshness in the detail pane says Fresh.
 - Normal: a value was read, it is not in alarm, and it is not stale.
 
+| Status | Color |
+| --- | --- |
+| Normal | Green |
+| Alarm | Red |
+| Read failed | Red |
+| Stale | Yellow |
+| Not sampled | Gray |
+
 Exceptions keeps only the rows that are not normal. Clear filters returns to everything. Search matches the device, source, value name, current value, and address.
 
 ### Three ways to look
@@ -799,15 +657,6 @@ Exceptions keeps only the rows that are not normal. Clear filters returns to eve
 
 Select a row and the detail pane shows the device, source, current value, last valid value, status, freshness, last update, criteria, address, acquisition mode, trigger address, trigger value, and ack value. Last update is shown to the second. A point that has never been sampled says Not sampled. When a value stays still, see whether the row is Read failed or Not sampled, then check on Runtime Monitor whether the PLC is still connected.
 <!-- /page-help -->
-
-Shows live samples for configured data sources—useful for verifying addresses, limits, and triggers.
-
-1. Select a device.
-2. Review sample values, quality, and timestamps.
-3. Compare with the PLC.
-4. If stale, check PLC connection and Runtime Monitor.
-
-Read-only; edit configuration in Device Manager.
 
 ## 16. Recipes
 
@@ -827,17 +676,8 @@ This page keeps the recipes that get written to a PLC. It needs an engineer or a
 
 - The search box filters by recipe name or parameter name. The machine-type chips only change which recipes you see.
 - New Recipe starts empty. Copy Recipe makes a new copy of the current one. Delete Recipe asks first. It removes the recipe. It does not clear the values already written in the PLC.
-- Export Recipes and Import Recipes are the recipe file, for backup or for moving to another computer. They are not production history.
+- Export Recipes and Import Recipes are the recipe file, for backup or for moving to another computer. They are not production history. Keep the recipe name aligned with the process documents on site.
 <!-- /page-help -->
-
-Maintain device recipe parameters (Engineer+).
-
-1. Select device.
-2. Add or edit recipe entries.
-3. Save and select recipes during production changes.
-4. Review apply history and PLC acknowledgements.
-
-Keep recipe names aligned with process documentation.
 
 ## 17. User Management
 
@@ -851,6 +691,8 @@ This page manages accounts. It needs an administrator. Pick a person on the left
 - Operator: Home, Production Line, Alarm Center, Work Orders, Review, History Query, Data Source Monitor, and Device Detail opened from Home.
 - Engineer: those pages, plus Device Manager and Recipes.
 - Administrator: those pages, plus Settings, Runtime Monitor, User Management, and Audit Log.
+
+When the role is unclear, ask the shift leader or an administrator first.
 
 ### Limits when you edit an account
 
@@ -878,24 +720,6 @@ This window switches the current account. In full mode the program already logs 
 - After a successful login, the sidebar hides or shows pages for the new role. If the new role cannot open the current page, the program returns to Home.
 <!-- /page-help -->
 
-Create accounts, assign roles, reset passwords (Admin).
-
-| Role | Typical access |
-| --- | --- |
-| Operator | Home, Production Line, Alarm Center, Work Orders, History, Review, Data Monitoring |
-| Engineer | Above + Device Manager, Recipes |
-| Admin | All pages including System Settings, Runtime Monitor, User Management, Audit Log |
-
-The last administrator account cannot be deleted or demoted.
-
-> **Which account should I log in with?**
->
-> - Only viewing output and alarms → use an **Operator** account.
-> - Configuring devices, addresses, or recipes → use an **Engineer** account.
-> - System Settings, User Management, and Audit Log → use an **Admin** account.
->
-> When in doubt, confirm with your shift leader or administrator—avoid changing shop-floor configuration with a high-privilege account. Press `Ctrl+L` to open the login dialog and switch accounts at any time.
-
 ## 18. Audit Log
 
 ![Audit Log](screenshots/13_audit.png)
@@ -910,6 +734,13 @@ This page shows who did what, and when. It needs an administrator. It only reads
 - Query goes back to page 1 and searches. Reset clears the operator and the action, sets the result back to All, and returns the time range to the last 7 days.
 - Each page holds 100 rows. Previous and Next only turn pages inside the current query. The success count, the failure count, and the success rate cover every match, not only this page. With no rows, the success rate shows “—”. That is not 0%.
 
+### Colors
+
+| Mark | Color |
+| --- | --- |
+| The success count above, and Success in the result column | Green |
+| The failure count above, and Failed in the result column | Red |
+
 ### What one row contains
 
 Time, operator, action, target type, target, result, and detail. Select a row and Audit details on the right shows the value before the change and the value after it. Settings changes, logins, recipe applies, and user changes are kept here.
@@ -918,13 +749,6 @@ Time, operator, action, target type, target, result, and detail. Select a row an
 
 Export CSV and Export JSON export every match under the current filters, not only this page. The limit is 10,000 rows, and a larger result warns that it was cut off. JSON keeps the full before-and-after content for an archive.
 <!-- /page-help -->
-
-Traces configuration changes, logins, recipe applies, and other critical actions.
-
-1. Set time range.
-2. Filter by action type or keyword if needed.
-3. Query and review results.
-4. Export for records.
 
 ## 19. FAQ
 
@@ -942,7 +766,7 @@ PLC green means connection only—not per-device address correctness. Check that
 
 ### Q4: No alarm in app but device alarms on site
 
-Verify alarm points exist, are enabled, and addresses match PLC signals.
+Verify the alarm point is added and saved, and that its address matches the PLC signal. Alarm Management has no separate enable switch.
 
 ### Q5: History query empty
 
@@ -963,7 +787,7 @@ Contact admin with: full error text, time, recent config changes, network/PLC ch
 | Red banner “disconnected” at top | Network or PLC configuration | Check cable, IP/port, then Runtime Monitor |
 | Yellow banner “data stale” | Acquisition stuck | Check the acquisition service in Runtime Monitor; restart if needed |
 | Home output not increasing | Wrong addresses or not producing | Verify OK/NG addresses and the shift reset window |
-| No alarm in app, alarm at site | Alarm point not configured/enabled | Check the alarm point address and enabled state |
+| No alarm in app, alarm at site | Alarm point not added, or the address and name do not match the site | Check the address and name in Device Manager. After you save, that point is acquired |
 | History query empty | No acquisition in range / wrong filter | Widen the range; check history write status |
 | PDF export fails | Missing CJK fonts | Install a system CJK font and retry |
 | Settings not applied after save | Save not clicked / no permission | Save again; check config folder write permissions |
