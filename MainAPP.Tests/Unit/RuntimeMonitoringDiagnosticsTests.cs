@@ -1,11 +1,11 @@
-﻿using System.IO;
-using System.Collections.ObjectModel;
-using Kanban.Collector.Core.Models;
+﻿using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using MainAPP.ViewModels;
 using Xunit;
+using System.IO;
+using System.Collections.ObjectModel;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 
@@ -148,18 +148,70 @@ public sealed class RuntimeMonitoringDiagnosticsTests
     }
 
     [Fact]
-    public void PollingTrendBuffer_CapsPointsAtSixty()
+    public void AcquisitionDiagnosticsStore_KeepsLastSixtyCycleSamples()
     {
-        var buffer = new PollingTrendBuffer();
-
+        var store = new AcquisitionDiagnosticsStore();
         for (var index = 0; index < 75; index++)
-            buffer.Add(DateTime.Today.AddSeconds(index), index);
+        {
+            store.Start();
+            store.CompleteCycle();
+        }
 
-        Assert.Equal(60, buffer.Count);
-        var points = buffer.Add(DateTime.Today.AddSeconds(75), 75);
-        Assert.Equal(60, points.Count);
-        Assert.Equal(16, points[0].Y);
-        Assert.Equal(75, points[^1].Y);
+        var samples = store.Snapshot().RecentCycleSamples;
+        Assert.Equal(75, store.Snapshot().CompletedCycles);
+        Assert.Equal(60, samples.Count);
+        Assert.True(samples[0].Timestamp <= samples[^1].Timestamp);
+    }
+
+    [Fact]
+    public void CollectorOutageClock_KeepsTheFirstFailureInstant()
+    {
+        var clock = new CollectorOutageClock();
+        var start = new DateTime(2026, 10, 2, 8, 0, 0, DateTimeKind.Utc);
+
+        Assert.Equal(0, clock.Observe(start));
+        Assert.Equal(5, clock.Observe(start.AddSeconds(5)));
+
+        clock.Clear();
+        Assert.Equal(0, clock.Observe(start.AddMinutes(10)));
+    }
+
+    [Fact]
+    public void CollectorDiagnosticsMapper_UsesCollectorClockAndAcquisitionResources()
+    {
+        var device = new Device { Name = "A", OkCountAddress = "D100" };
+        var source = new DataSource { TriggerAddress = "D200" };
+        source.Values.Add(new DataSourceValue { PlcAddress = "D210" });
+        device.Sources.Add(source);
+        var disconnectedAt = new DateTime(2026, 10, 2, 10, 0, 0);
+        var resources = new SystemResourceSnapshot(1.5, 0, false, 10, 20, TimeSpan.FromSeconds(9), 4, 8, 3.5);
+
+        var dto = CollectorDiagnosticsMapper.Create(
+            new AcquisitionDiagnosticsSnapshot
+            {
+                RecentCycleSamples = [new CycleDurationSample(disconnectedAt, 12)],
+            },
+            new HistoryDiagnosticsSnapshot(),
+            isConnected: false,
+            isRunning: true,
+            connectionStatus: "断开",
+            totalDisconnectCount: 1,
+            consecutiveConnectionFailures: 2,
+            disconnectedAt: disconnectedAt,
+            devices: [device],
+            runtimeOf: _ => null,
+            resources: resources,
+            clock: disconnectedAt.AddSeconds(90));
+
+        Assert.Equal(90, dto.DisconnectDurationSeconds);
+        Assert.True(dto.ProcessResourcesAvailable);
+        Assert.Equal(1.5, dto.CpuUsagePercent);
+        Assert.Equal(9, dto.ProcessUptimeSeconds);
+        Assert.Equal(8, dto.ProcessHandleCount);
+        Assert.Equal(3, dto.ConfiguredReadAddressCount);
+        var status = Assert.Single(dto.DeviceStatuses);
+        Assert.Equal(3, status.ConfiguredAddressCount);
+        Assert.Equal(12, Assert.Single(dto.RecentCycleSamples).Milliseconds);
     }
 
     [Fact]

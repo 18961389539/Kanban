@@ -1,8 +1,8 @@
-﻿using Kanban.Contracts.Metrics;
+﻿using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Data;
+using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Models;
 using MainAPP.Resources;
-using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using MainAPP.Models;
 using OxyPlot;
@@ -113,7 +113,6 @@ public static class ChartService
     }
 
     private static readonly OxyColor _okFill = ChartPalette.RunFill;
-    private static readonly OxyColor _ngFill = ChartPalette.AlarmFill;
 
     // ════════════════════ Tab 0: 产量趋势堆叠面积图 ════════════════════
 
@@ -810,7 +809,7 @@ public static class ChartService
     /// 班次对比柱状图：按班次名称聚合 OEE 均值。
     /// </summary>
     public static PlotModel BuildOeeShiftBarChart(
-        IEnumerable<(string ShiftName, double Oee)> data, double target = KpiThresholds.OeeGood)
+        IEnumerable<(string ShiftName, double Oee)> data)
     {
         var model = CreateBaseModel(Strings.M206);
         var list = data.GroupBy(d => d.ShiftName)

@@ -1,9 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;

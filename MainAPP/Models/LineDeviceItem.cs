@@ -1,11 +1,11 @@
-﻿using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
-using Kanban.Contracts.Metrics;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Models;
+using Kanban.Contracts.Metrics;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MainAPP.Helpers;
 using MainAPP.Resources;

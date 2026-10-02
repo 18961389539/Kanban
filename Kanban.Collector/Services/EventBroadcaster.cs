@@ -1,8 +1,8 @@
-using System.Threading.Channels;
 using Kanban.Contracts.Abstractions;
-using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Microsoft.Extensions.Logging;
+using System.Threading.Channels;
+using Kanban.Contracts.Dtos;
 
 namespace Kanban.Collector.Services;
 
@@ -22,7 +22,6 @@ public sealed class EventBroadcaster
     private readonly Queue<(long Seq, StatusEventDto Payload)> _statusRing = new();
     private readonly List<Channel<AlarmEventDto>> _alarmSubscribers = new();
     private readonly List<Channel<StatusEventDto>> _statusSubscribers = new();
-    private readonly ILogger<EventBroadcaster> _logger;
     internal int AlarmSubscriberCount { get { lock (_gate) return _alarmSubscribers.Count; } }
     internal int StatusSubscriberCount { get { lock (_gate) return _statusSubscribers.Count; } }
     // 报警/状态各自独立计数：两条流互不占用对方序号，各自的 Seq 连续（补拉游标语义干净）
@@ -34,11 +33,6 @@ public sealed class EventBroadcaster
     /// 客户端据此识别服务端重启并重置补拉游标（否则旧游标会过滤掉新进程的低 Seq 事件）。
     /// </summary>
     public long ServerEpoch { get; } = Environment.TickCount64;
-
-    public EventBroadcaster(ILogger<EventBroadcaster> logger)
-    {
-        _logger = logger;
-    }
 
     /// <summary>发布报警事件（分配报警流 Seq，写入环形缓冲 + 扇出广播）。
     /// 单临界区：seq 分配 + ring 写入 + 扇出原子完成——订阅注册（WatchAlarmEventsAsync 内补发 ring）
@@ -171,3 +165,4 @@ public sealed class EventBroadcaster
         }
     }
 }
+

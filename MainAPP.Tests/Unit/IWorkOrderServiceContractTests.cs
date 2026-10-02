@@ -1,13 +1,13 @@
-﻿using System.IO;
-using System.Windows;
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using Xunit;
+using System.IO;
+using System.Windows;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

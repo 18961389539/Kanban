@@ -1,15 +1,15 @@
-using System.IO;
-using System.Text.Json;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using System.Text.Json;
+using Kanban.Collector.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 using ContractsAlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
 

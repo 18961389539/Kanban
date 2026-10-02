@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -7,8 +6,9 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using MainAPP.ViewModels;
 using Xunit;
+using System.IO;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 

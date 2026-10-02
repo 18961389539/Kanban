@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using LicenseManager.Models;
@@ -9,11 +7,13 @@ using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Diagnostics;
+using System.IO;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -7,8 +6,9 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging.Abstractions;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
 namespace MainAPP.Tests.Unit;
@@ -29,7 +29,6 @@ namespace MainAPP.Tests.Unit;
 [Trait("Requires","None")]
 public class ShiftChangeEndToEndTests : IDisposable
 {
-    private readonly ITestOutputHelper _output;
     private readonly string _tempDir;
     private readonly AppSettings _appSettings;
     private readonly DeviceRepository _deviceRepository;
@@ -39,9 +38,8 @@ public class ShiftChangeEndToEndTests : IDisposable
     private readonly ProductionBaselineStore _baselineStore;
     private readonly PlcDataAcquisitionService _service;
 
-    public ShiftChangeEndToEndTests(ITestOutputHelper output)
+    public ShiftChangeEndToEndTests()
     {
-        _output = output;
         // 临时目录隔离 baselines.json 写入，避免污染真实 %APPDATA%/Kanban
         _tempDir = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "KanbanShiftE2E_" + Guid.NewGuid().ToString("N"));

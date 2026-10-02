@@ -35,7 +35,7 @@ public sealed class CollectorWorker : BackgroundService
     {
         try
         {
-            await InitializeAsync(stoppingToken);
+            await InitializeAsync();
             _logger.LogInformation("采集服务初始化完成，开始轮询采集");
             _healthState.MarkReady();
 
@@ -94,7 +94,7 @@ public sealed class CollectorWorker : BackgroundService
     /// <summary>
     /// 启动初始化（对齐 MainAPP.App.OnStartup 的采集相关顺序）。
     /// </summary>
-    private async Task InitializeAsync(CancellationToken cancellationToken)
+    private async Task InitializeAsync()
     {
         // 1. 配置加载
         var settings = _services.GetRequiredService<AppSettings>();

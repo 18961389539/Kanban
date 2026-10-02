@@ -443,8 +443,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         _isSaving = true;
         try
         {
-            _recipeStore.Upsert(recipe);
-            await _recipeStore.SaveAllAsync();
+            await _recipeStore.CommitUpsertAsync(recipe);
             AuditLog.Record(isNew ? "Recipe.Add" : "Recipe.Update", "Recipe", recipe.Id, detail: recipe.Name);
             _logger.LogInformation("配方已保存：{Name}（{MachineType}）", recipe.Name, recipe.MachineType);
             _dialog.NotifySuccess(string.Format(Strings.K688, recipe.Name));
@@ -480,11 +479,19 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
 
         var id = SelectedRecipe.Id;
         var name = SelectedRecipe.Name;
-        _recipeStore.Delete(id);
-        await _recipeStore.SaveAllAsync();
-        _logger.LogInformation("配方已删除：{Id}", id);
-        AuditLog.Record("Recipe.Delete", "Recipe", id, detail: name);
-        RefreshRecipes();
+        try
+        {
+            if (!await _recipeStore.CommitDeleteAsync(id)) return;
+            _logger.LogInformation("配方已删除：{Id}", id);
+            AuditLog.Record("Recipe.Delete", "Recipe", id, detail: name);
+            RefreshRecipes();
+        }
+        catch (Exception ex)
+        {
+            AuditLog.Record("Recipe.Delete", "Recipe", id, succeeded: false, detail: ex.Message);
+            _dialog.NotifyError(ex.Message);
+            _logger.LogError(ex, "配方删除失败：{Id}", id);
+        }
     }
 
     private bool HasSelectedRecipe() => SelectedRecipe != null && !IsApplying;
@@ -500,6 +507,19 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
             return;
         }
         if (SelectedRecipe is null) return;
+
+        if (IsEditorDirty())
+        {
+            _dialog.NotifyWarning(Strings.Recipe_ApplyUnsaved);
+            return;
+        }
+
+        if (!SelectedRecipe.CanApply)
+        {
+            _dialog.NotifyWarning(string.Format(
+                RecipeValidationMessages.RecipeLoadInvalid, SelectedRecipe.LoadErrorSummary));
+            return;
+        }
 
         // 机型兼容性拦截（对齐 GetByMachineType 语义：空机型=通用，任意设备可用）
         if (!string.IsNullOrEmpty(SelectedRecipe.MachineType)
@@ -616,7 +636,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         else _uiDispatcher.BeginInvoke(OnUi);
     }
 
-    private bool CanApplyRecipe() => SelectedRecipe != null && SelectedTargetDevice != null && !IsApplying;
+    private bool CanApplyRecipe() => SelectedRecipe is { CanApply: true } && SelectedTargetDevice != null && !IsApplying;
 
     /// <summary>添加参数项。</summary>
     [RelayCommand]

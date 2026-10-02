@@ -308,6 +308,19 @@
                                                    Foreground="{StaticResource ThirdlyTextBrush}"
                                                    Text="{Binding Items.Count, Converter={StaticResource LocFormatConverter}, ConverterParameter=K699}" />
                                     </StackPanel>
+                                    <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource FontSizeHint}"
+                                               Foreground="{StaticResource DangerBrush}"
+                                               Text="{Binding LoadErrorSummary}" TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LoadErrorSummary}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

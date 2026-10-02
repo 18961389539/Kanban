@@ -1,8 +1,8 @@
 using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using MainAPP.Resources;
+using Kanban.Collector.Core.Models;
 using Material.Icons;
 
 namespace MainAPP.Models;

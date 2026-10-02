@@ -1,7 +1,7 @@
-﻿using System.IO;
-using LicenseManager.Crypto;
+﻿using LicenseManager.Crypto;
 using LicenseManager.Services;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 

@@ -1,7 +1,6 @@
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 [Trait("Category", "Unit")]

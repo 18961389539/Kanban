@@ -1,9 +1,9 @@
-﻿using System.IO;
-using System.Linq;
-using System.Text.Json;
+﻿using System.Linq;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
+using System.IO;
+using System.Text.Json;
 
 namespace MainAPP.Tests.Integration;
 

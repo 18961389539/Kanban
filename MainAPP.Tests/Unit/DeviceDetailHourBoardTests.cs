@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using Kanban.Collector.Core.Entities;
 using Kanban.Contracts.Metrics;
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

@@ -1,11 +1,11 @@
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
+using Xunit;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using System.Windows;
 using System.Windows.Threading;
-using Xunit;
 
 namespace MainAPP.E2E;
 

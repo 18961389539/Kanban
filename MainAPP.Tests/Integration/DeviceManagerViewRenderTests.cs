@@ -1,15 +1,15 @@
-using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using MainAPP.Tests;
+using Xunit;
+using System.Windows;
+using MainAPP.Models;
+using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
 using MainAPP.Views;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 
@@ -140,7 +140,7 @@ public class DeviceManagerViewRenderTests : WpfTestHost, IDisposable
     [Fact]
     public void SearchKeyword_FiltersDeviceList()
     {
-        var (repo, _, _, vm) = BuildViewModel(deviceCount: 3);
+        var (_, _, _, vm) = BuildViewModel(deviceCount: 3);
 
         vm.DeviceList.SearchKeyword = "焊接";
         vm.DeviceList.FilteredDevices.Refresh();

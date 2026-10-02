@@ -1,7 +1,7 @@
-﻿using System.ComponentModel;
-using Kanban.Collector.Core.Models;
-using MainAPP.Models;
+﻿using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using System.ComponentModel;
+using Kanban.Collector.Core.Models;
 using MainAPP.Services;
 
 namespace MainAPP.ViewModels;

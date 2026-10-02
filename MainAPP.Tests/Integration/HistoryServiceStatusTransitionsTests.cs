@@ -1,13 +1,13 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Integration;
 

@@ -1,6 +1,6 @@
 using Kanban.Collector.Core.Models;
-using MainAPP.ViewModels;
 using Xunit;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 

@@ -1,7 +1,6 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-
 namespace MainAPP.Tests.Unit;
 
 internal sealed class FakeRemoteDeviceConfigurationStore : IRemoteDeviceConfigurationStore

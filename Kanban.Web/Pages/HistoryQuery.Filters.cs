@@ -245,22 +245,6 @@ public partial class HistoryQuery
         Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
         => await HistoryFetch.FetchAllAsync(Dashboard, type, from, to, deviceId, shiftName, selector);
 
-    /// <summary>LatestFirst 语义（单源实现见 <see cref="HistoryFetch.FetchLatestBeforeAsync{T}"/>）。</summary>
-    private async Task<List<T>> FetchLatestBeforeAsync<T>(
-        HistoryQueryType type, DateTime before, string? deviceId, string? shiftName,
-        Func<HistoryQueryResponse, IReadOnlyList<T>> selector)
-        => await HistoryFetch.FetchLatestBeforeAsync(Dashboard, type, before, deviceId, shiftName, selector);
-
-    /// <summary>客户端分页（仅回退路径；状态/报警 Tab 默认服务端分页）。</summary>
-    private static (List<T> Rows, int TotalPages) PageItems<T>(List<T> all, int page, int pageSize)
-    {
-        var totalPages = ProductionAnalysis.CalcTotalPages(all.Count, pageSize);
-        if (page > totalPages) page = Math.Max(1, totalPages);
-        if (page < 1) page = 1;
-        var rows = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        return (rows, totalPages);
-    }
-
     private async Task<HistoryQueryResponse> QueryTablePageAsync(
         HistoryQueryType type, DateTime from, DateTime to, string? deviceId, string? shiftName,
         int page, int pageSize, string? alarmName = null)

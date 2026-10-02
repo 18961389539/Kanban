@@ -1,6 +1,5 @@
 using FlaUI.Core.AutomationElements;
 using Xunit;
-
 namespace MainAPP.UIAutomation;
 
 /// <summary>

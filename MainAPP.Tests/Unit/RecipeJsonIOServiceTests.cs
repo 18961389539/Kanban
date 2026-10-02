@@ -2,12 +2,12 @@ using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

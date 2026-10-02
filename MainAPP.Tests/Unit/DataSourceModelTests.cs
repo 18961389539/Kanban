@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Kanban.Collector.Core.Models;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 [Trait("Category", "Unit")]

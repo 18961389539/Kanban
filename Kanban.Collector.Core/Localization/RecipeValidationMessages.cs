@@ -58,6 +58,12 @@ public static class RecipeValidationMessages
     public const string DefaultRecipeApplyCancelled = "下发已取消，已回滚";
     public const string DefaultRecipeWriteInProgress = "参数 {0} 写入中…";
     public const string DefaultRecipeStringNotRolledBack = "字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对";
+    public const string DefaultRecipeRollbackIncomplete = "回滚不完整（{0}），请人工确认 PLC 当前值";
+    public const string DefaultRecipeRollbackItemFailed = "回滚失败：{0}";
+    public const string DefaultRecipeRollbackRestored = "已恢复写入前的值";
+    public const string DefaultRecipeDeviceRunning = "设备正在运行，禁止下发配方";
+    public const string DefaultRecipeApplyBusy = "该设备正在下发配方，请等待当前下发完成";
+    public const string DefaultRecipeLoadInvalid = "配方未通过校验，禁止下发：{0}";
 
     private static string s_recipeNull = DefaultRecipeNull;
     private static string s_recipeNameEmpty = DefaultRecipeNameEmpty;
@@ -100,6 +106,12 @@ public static class RecipeValidationMessages
     private static string s_recipeApplyCancelled = DefaultRecipeApplyCancelled;
     private static string s_recipeWriteInProgress = DefaultRecipeWriteInProgress;
     private static string s_recipeStringNotRolledBack = DefaultRecipeStringNotRolledBack;
+    private static string s_recipeRollbackIncomplete = DefaultRecipeRollbackIncomplete;
+    private static string s_recipeRollbackItemFailed = DefaultRecipeRollbackItemFailed;
+    private static string s_recipeRollbackRestored = DefaultRecipeRollbackRestored;
+    private static string s_recipeDeviceRunning = DefaultRecipeDeviceRunning;
+    private static string s_recipeApplyBusy = DefaultRecipeApplyBusy;
+    private static string s_recipeLoadInvalid = DefaultRecipeLoadInvalid;
 
     public static string RecipeNull => s_recipeNull;
     public static string RecipeNameEmpty => s_recipeNameEmpty;
@@ -142,6 +154,12 @@ public static class RecipeValidationMessages
     public static string RecipeApplyCancelled => s_recipeApplyCancelled;
     public static string RecipeWriteInProgress => s_recipeWriteInProgress;
     public static string RecipeStringNotRolledBack => s_recipeStringNotRolledBack;
+    public static string RecipeRollbackIncomplete => s_recipeRollbackIncomplete;
+    public static string RecipeRollbackItemFailed => s_recipeRollbackItemFailed;
+    public static string RecipeRollbackRestored => s_recipeRollbackRestored;
+    public static string RecipeDeviceRunning => s_recipeDeviceRunning;
+    public static string RecipeApplyBusy => s_recipeApplyBusy;
+    public static string RecipeLoadInvalid => s_recipeLoadInvalid;
 
     /// <summary>
     /// 简单语言预设：根据语言文化代码覆盖全部文案。传入 null 还原默认中文。
@@ -205,8 +223,15 @@ public static class RecipeValidationMessages
         s_recipeDeviceNotFound = s_rm.GetString("RecipeDeviceNotFound", culture) ?? DefaultRecipeDeviceNotFound;
         s_recipeNotFound = s_rm.GetString("RecipeNotFound", culture) ?? DefaultRecipeNotFound;
         s_recipeApplyCancelled = s_rm.GetString("RecipeApplyCancelled", culture) ?? DefaultRecipeApplyCancelled;
+        s_recipeWriteVerified = s_rm.GetString("RecipeWriteVerified", culture) ?? DefaultRecipeWriteVerified;
         s_recipeWriteInProgress = s_rm.GetString("RecipeWriteInProgress", culture) ?? DefaultRecipeWriteInProgress;
         s_recipeStringNotRolledBack = s_rm.GetString("RecipeStringNotRolledBack", culture) ?? DefaultRecipeStringNotRolledBack;
+        s_recipeRollbackIncomplete = s_rm.GetString("RecipeRollbackIncomplete", culture) ?? DefaultRecipeRollbackIncomplete;
+        s_recipeRollbackItemFailed = s_rm.GetString("RecipeRollbackItemFailed", culture) ?? DefaultRecipeRollbackItemFailed;
+        s_recipeRollbackRestored = s_rm.GetString("RecipeRollbackRestored", culture) ?? DefaultRecipeRollbackRestored;
+        s_recipeDeviceRunning = s_rm.GetString("RecipeDeviceRunning", culture) ?? DefaultRecipeDeviceRunning;
+        s_recipeApplyBusy = s_rm.GetString("RecipeApplyBusy", culture) ?? DefaultRecipeApplyBusy;
+        s_recipeLoadInvalid = s_rm.GetString("RecipeLoadInvalid", culture) ?? DefaultRecipeLoadInvalid;
         ApplyExternalOverrides(culture);
     }
 
@@ -270,5 +295,11 @@ public static class RecipeValidationMessages
         s_recipeApplyCancelled = DefaultRecipeApplyCancelled;
         s_recipeWriteInProgress = DefaultRecipeWriteInProgress;
         s_recipeStringNotRolledBack = DefaultRecipeStringNotRolledBack;
+        s_recipeRollbackIncomplete = DefaultRecipeRollbackIncomplete;
+        s_recipeRollbackItemFailed = DefaultRecipeRollbackItemFailed;
+        s_recipeRollbackRestored = DefaultRecipeRollbackRestored;
+        s_recipeDeviceRunning = DefaultRecipeDeviceRunning;
+        s_recipeApplyBusy = DefaultRecipeApplyBusy;
+        s_recipeLoadInvalid = DefaultRecipeLoadInvalid;
     }
 }

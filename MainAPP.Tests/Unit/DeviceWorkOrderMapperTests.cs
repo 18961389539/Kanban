@@ -184,6 +184,8 @@ public class DeviceWorkOrderMapperTests
             Remark = "加急",
             CreatedAt = new DateTime(2026, 8, 1, 7, 30, 0),
             UpdatedAt = new DateTime(2026, 8, 1, 8, 5, 0),
+            StartedAt = new DateTime(2026, 8, 1, 8, 2, 0),
+            CompletedAt = new DateTime(2026, 8, 1, 18, 10, 0),
         };
 
         var dto = WorkOrderMapper.ToDto(workOrder);
@@ -204,6 +206,8 @@ public class DeviceWorkOrderMapperTests
         Assert.Equal(workOrder.Remark, roundTripped.Remark);
         Assert.Equal(workOrder.CreatedAt, roundTripped.CreatedAt);
         Assert.Equal(workOrder.UpdatedAt, roundTripped.UpdatedAt);
+        Assert.Equal(workOrder.StartedAt, roundTripped.StartedAt);
+        Assert.Equal(workOrder.CompletedAt, roundTripped.CompletedAt);
     }
 
     [Fact]

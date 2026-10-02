@@ -1,17 +1,17 @@
-using System.IO;
-using System.Security.Claims;
-using Kanban.Collector.Hubs;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
+using NSubstitute;
+using Xunit;
+using System.IO;
+using System.Security.Claims;
+using Kanban.Collector.Hubs;
+using Kanban.Collector.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -95,7 +95,7 @@ public sealed class KanbanHubQueriesTests : IDisposable
 
         _hub = new KanbanHub(
             _aggregator,
-            new EventBroadcaster(NullLogger<EventBroadcaster>.Instance),
+            new EventBroadcaster(),
             new HistoryQueryHandler(
                 historyService,
                 executor,

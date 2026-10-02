@@ -1,5 +1,5 @@
-using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Models;
+using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Services;
 
 namespace Kanban.Collector.Services;
@@ -56,3 +56,4 @@ public sealed class ShiftProgressProvider
     private static string FormatShiftTime(double secs)
         => Kanban.Contracts.Formatting.DurationFormatter.FormatCompact(secs);
 }
+

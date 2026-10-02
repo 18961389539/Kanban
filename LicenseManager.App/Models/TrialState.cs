@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-
 namespace LicenseManager.Models;
 
 /// <summary>

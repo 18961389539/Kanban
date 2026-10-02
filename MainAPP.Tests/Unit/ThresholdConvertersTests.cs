@@ -1,10 +1,10 @@
 using System;
+using Xunit;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using MainAPP.Converters;
 using MainAPP.Tests.Integration;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

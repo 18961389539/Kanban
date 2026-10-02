@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Hosting;
+using Serilog;
 using Kanban.Collector.Hubs;
 using Kanban.Collector.Services;
 using Kanban.Collector.Core.DependencyInjection;
@@ -11,9 +13,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace Kanban.Collector;
 
@@ -84,6 +84,8 @@ public static class Program
             builder.Services.AddSingleton<SnapshotPublisher>();
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<HistoryQueryHandler>();
+            builder.Services.AddSingleton<GpuUsageMonitor>();
+            builder.Services.AddSingleton<SystemResourceMonitor>();
             builder.Services.AddSingleton<CollectorDiagnosticsProvider>();
             builder.Services.AddSingleton<ConfigSyncHandler>();
             builder.Services.AddSingleton<ShiftProgressProvider>();
@@ -277,3 +279,4 @@ public static class CollectorPaths
 
     public static string LogDirectory => Path.Combine(ConfigDirectory, "Logs");
 }
+

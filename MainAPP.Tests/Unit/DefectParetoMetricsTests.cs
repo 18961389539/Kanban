@@ -1,7 +1,6 @@
 using Kanban.Contracts.Enums;
 using Kanban.Contracts.Metrics;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>锁住主页缺陷帕累托口径：条宽相对合计、累计 80%、其他桶、空状态。</summary>

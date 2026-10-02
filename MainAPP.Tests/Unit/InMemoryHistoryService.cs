@@ -2,7 +2,6 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
@@ -26,6 +25,9 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
 
     /// <summary>可选报警活跃状态表桩：测试注入后 QueryActiveAlarmStates 委派给它；未注入时返回空（模拟无状态行）。</summary>
     public IActiveAlarmStateService? ActiveStates { get; set; }
+
+    /// <summary>大于 0 时，接下来这么多次严格报警查询抛异常，用来模拟数据库短暂失败。</summary>
+    public int FailAlarmQueryTimes { get; set; }
 
     /// <summary>内存桩无写入队列，返回空诊断快照（对齐 RemoteHistoryQueryService 的空快照语义）。</summary>
     public HistoryDiagnosticsSnapshot GetDiagnosticsSnapshot() => new();
@@ -136,7 +138,15 @@ internal sealed class InMemoryHistoryService : IHistoryService, IWorkOrderProduc
     }
 
     public List<AlarmEventRecord> QueryAlarmEventsStrict(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
-        => QueryAlarmEvents(from, to, deviceId, shiftName);
+    {
+        if (FailAlarmQueryTimes > 0)
+        {
+            FailAlarmQueryTimes--;
+            throw new InvalidOperationException("alarm db unavailable");
+        }
+
+        return QueryAlarmEvents(from, to, deviceId, shiftName);
+    }
 
     public (List<AlarmEventRecord> Items, int Total) QueryAlarmEventsPaged(
         DateTime from, DateTime to, string? deviceId, string? shiftName, int page, int pageSize, string? alarmName = null)

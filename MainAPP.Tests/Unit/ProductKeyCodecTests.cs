@@ -1,6 +1,5 @@
 ﻿using LicenseManager.Crypto;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>
@@ -159,7 +158,6 @@ public class ProductKeyCodecTests
     {
         var machineHash1 = new byte[] { 0x12, 0x34, 0x56, 0x78, 0x9A };
         var machineHash2 = new byte[] { 0x12, 0x34, 0x56, 0x78, 0x9B };  // 仅末位不同
-        var machineHashStr1 = Base32.Encode(machineHash1);
         var machineHashStr2 = Base32.Encode(machineHash2);
 
         var productKey = ProductKeyCodec.Encode(machineHash1, expireDate: null);

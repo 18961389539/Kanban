@@ -19,6 +19,9 @@ public interface IAssistantFactSheet
 /// <summary>工具调用时按类别查询。</summary>
 public sealed class AssistantFactSheet : IAssistantFactSheet
 {
+    /// <summary>审计和条码一次最多带回的行数。其余记录留在原页面里查。</summary>
+    public const int MaxListedRows = 40;
+
     private readonly IProductionHistoryReader _production;
     private readonly IAlarmHistoryService _alarmHistory;
     private readonly IActiveAlarmStateService _activeAlarms;
@@ -72,7 +75,7 @@ public sealed class AssistantFactSheet : IAssistantFactSheet
             var ids = devices.Select(device => device.Id).ToList();
             var lines = kind switch
             {
-                "list_alarms" => AlarmSection(now, devices, ids, from, to, period),
+                "list_alarms" => AlarmSection(now, ids, from, to, period),
                 "list_status" => StatusSection(devices, ids, from, to, period),
                 "list_snapshots" => SnapshotSection(devices, ids, from, to, period),
                 "list_defects" => DefectSection(devices, from, to, period),
@@ -115,7 +118,6 @@ public sealed class AssistantFactSheet : IAssistantFactSheet
 
     private string AlarmSection(
         DateTime now,
-        IReadOnlyList<Device> devices,
         IReadOnlyList<string> ids,
         DateTime from,
         DateTime to,
@@ -240,8 +242,11 @@ public sealed class AssistantFactSheet : IAssistantFactSheet
     {
         if (_serials == null)
             return $"{period}没有条码记录。";
-        var page = _serials.QueryByTimeRange(null, from, to, 1, int.MaxValue);
-        return string.Join("\n", SerialLines(page.Items, period));
+        var (total, items) = _serials.QueryByTimeRange(null, from, to, 1, MaxListedRows);
+        var lines = SerialLines(items, period).ToList();
+        if (total > items.Count)
+            lines.Add("还有更多条码，这次没有全部列出。");
+        return string.Join("\n", lines);
     }
 
     private string AccountSection()
@@ -254,8 +259,11 @@ public sealed class AssistantFactSheet : IAssistantFactSheet
     {
         if (_audit == null)
             return $"{period}没有审计记录。";
-        var page = _audit.QueryPaged(from, to, null, null, null, null, 1, int.MaxValue);
-        return string.Join("\n", AuditLines(page.Items, period));
+        var (items, total) = _audit.QueryPaged(from, to, null, null, null, null, 1, MaxListedRows);
+        var lines = AuditLines(items, period).ToList();
+        if (total > items.Count)
+            lines.Add("还有更多审计记录，这次没有全部列出。");
+        return string.Join("\n", lines);
     }
 
 

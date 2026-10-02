@@ -1,12 +1,12 @@
+using FlaUI.Core;
+using FlaUI.Core.AutomationElements;
+using FlaUI.UIA3;
+using Xunit;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
-using FlaUI.Core;
-using FlaUI.Core.AutomationElements;
-using FlaUI.UIA3;
-using Xunit;
 
 namespace MainAPP.UIAutomation;
 

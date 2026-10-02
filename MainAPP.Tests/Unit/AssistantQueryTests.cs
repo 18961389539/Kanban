@@ -1,7 +1,7 @@
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 
@@ -171,7 +171,7 @@ public class AssistantQueryTests
             ],
         };
         var windows = AssistantQuery.ResolveWindows(ask, Now, shifts, 365);
-        var text = AssistantQuery.Render(ask, Now, devices, null, windows, new Dictionary<string, List<ProductionLog>>(), false, transitions, false);
+        var text = AssistantQuery.Render(ask, devices, null, windows, new Dictionary<string, List<ProductionLog>>(), false, transitions, false);
 
         Assert.Contains("班次窗 早班（2026-10-02 08:00 至 2026-10-02 12:00）", text, StringComparison.Ordinal);
         Assert.Contains("报警时长合计 4.0 小时", text, StringComparison.Ordinal);
@@ -188,7 +188,7 @@ public class AssistantQueryTests
     private static string Show(AssistantAsk ask, IReadOnlyList<Device> devices, IReadOnlyDictionary<string, List<ProductionLog>> logs)
     {
         var windows = AssistantQuery.ResolveWindows(ask, Now, [], 365);
-        return AssistantQuery.Render(ask, Now, devices, null, windows, logs, false, null, false);
+        return AssistantQuery.Render(ask, devices, null, windows, logs, false, null, false);
     }
 
     private static ProductionLog Log(string deviceId, DateTime timestamp, int ok, int ng) => new()

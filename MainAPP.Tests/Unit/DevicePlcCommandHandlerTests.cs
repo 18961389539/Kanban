@@ -1,9 +1,9 @@
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using NSubstitute;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

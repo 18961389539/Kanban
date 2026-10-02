@@ -1,3 +1,9 @@
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Models;
+using OxyPlot.Annotations;
+using OxyPlot.Axes;
+using OxyPlot.Legends;
+using OxyPlot.Series;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -7,16 +13,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Client;
 using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Entities;
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using OxyPlot;
-using OxyPlot.Annotations;
-using OxyPlot.Axes;
-using OxyPlot.Legends;
-using OxyPlot.Series;
 using Serilog;
 using MainAPP.Helpers;
 using MainAPP.Resources;
@@ -35,7 +35,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
     private readonly IDialogService _dialog;
     private readonly IDeviceSelectionService _selection;
     private readonly IProductionReviewPdfService? _pdfService;
-    private readonly IWorkOrderRepository? _workOrderRepository;
     private readonly IProductionReviewCsvExportService _csvExportService;
     private readonly IProductionReviewChartService _chartService;
     // 2026-09-02 拆分（P1-9）：数据聚合全部委托给概览页服务，
@@ -501,7 +500,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         IDialogService dialog,
         IDeviceSelectionService selection,
         IProductionReviewPdfService? pdfService,
-        IWorkOrderRepository? workOrderRepository,
         IProductionReviewCsvExportService csvExportService,
         IProductionReviewChartService chartService,
         IOverviewDashboardService dashboardService)
@@ -511,7 +509,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
         _dialog = dialog;
         _selection = selection;
         _pdfService = pdfService;
-        _workOrderRepository = workOrderRepository;
         _csvExportService = csvExportService;
         _chartService = chartService;
         _dashboardService = dashboardService;
@@ -563,7 +560,6 @@ public partial class OverviewViewModel : ObservableObject, IDisposable, INavigat
             dialog,
             selection,
             pdfService,
-            workOrderRepository,
             csvExportService ?? new ProductionReviewCsvExportService(),
             chartService ?? new ProductionReviewChartService(),
             new OverviewDashboardService(

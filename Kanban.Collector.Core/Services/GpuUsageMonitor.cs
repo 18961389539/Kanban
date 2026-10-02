@@ -1,13 +1,15 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MainAPP.Services;
+namespace Kanban.Collector.Core.Services;
 
 /// <summary>
 /// Reads the busiest Windows GPU Engine counter. GPU Engine values are per engine,
 /// so the maximum is used instead of summing engines and exceeding 100 percent.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class GpuUsageMonitor : IDisposable
 {
     private readonly object _syncRoot = new();

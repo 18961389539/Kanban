@@ -1,5 +1,5 @@
-using Kanban.Contracts;
 using Kanban.Contracts.Abstractions;
+using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Microsoft.Extensions.Logging;
 

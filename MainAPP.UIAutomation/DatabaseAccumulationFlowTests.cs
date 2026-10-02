@@ -1,6 +1,6 @@
-using System.IO;
 using Microsoft.Data.Sqlite;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.UIAutomation;
 
@@ -37,101 +37,6 @@ public class DatabaseAccumulationFlowTests : IDisposable
     {
         // 任何模式都保留临时目录，便于事后检查积累的数据库内容。
         Console.WriteLine($"  [DatabaseAccumulationFlowTests] 保留临时目录: {_tempDir}");
-    }
-
-    /// <summary>获取 Config 目录下指定数据库文件路径</summary>
-    private string GetDbPath(string dbFileName) =>
-        Path.Combine(_tempDir, "Config", dbFileName);
-
-    /// <summary>统计指定表行数</summary>
-    private int CountRows(string dbFileName, string tableName)
-    {
-        var dbPath = GetDbPath(dbFileName);
-        if (!File.Exists(dbPath)) return -1;
-        using var conn = new SqliteConnection($"Data Source={dbPath}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM {tableName}";
-        return Convert.ToInt32(cmd.ExecuteScalar());
-    }
-
-    /// <summary>查询指定表的所有列名</summary>
-    private List<string> GetColumnNames(string dbFileName, string tableName)
-    {
-        var dbPath = GetDbPath(dbFileName);
-        var columns = new List<string>();
-        if (!File.Exists(dbPath)) return columns;
-        using var conn = new SqliteConnection($"Data Source={dbPath}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"PRAGMA table_info({tableName})";
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            columns.Add(reader.GetString(1));
-        }
-        return columns;
-    }
-
-    /// <summary>查询 ProductionLogs 表前 N 条记录的 DeviceId 和 Timestamp</summary>
-    private List<(string DeviceId, string Timestamp, int OkProduction, int NgProduction)> QueryProductionLogs(int limit)
-    {
-        var result = new List<(string, string, int, int)>();
-        var dbPath = GetDbPath("production_logs.db");
-        if (!File.Exists(dbPath)) return result;
-        using var conn = new SqliteConnection($"Data Source={dbPath}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT DeviceId, Timestamp, OkProduction, NgProduction FROM ProductionLogs ORDER BY Timestamp LIMIT {limit}";
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            result.Add((reader.GetString(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt32(3)));
-        }
-        return result;
-    }
-
-    /// <summary>查询 AlarmEvents 表前 N 条记录</summary>
-    private List<(string DeviceId, string AlarmId, string EventTime, int EventType)> QueryAlarmEvents(int limit)
-    {
-        var result = new List<(string, string, string, int)>();
-        var dbPath = GetDbPath("alarm_events.db");
-        if (!File.Exists(dbPath)) return result;
-        using var conn = new SqliteConnection($"Data Source={dbPath}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT DeviceId, AlarmId, EventTime, EventType FROM AlarmEvents ORDER BY EventTime LIMIT {limit}";
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            result.Add((reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetInt32(3)));
-        }
-        return result;
-    }
-
-    /// <summary>查询 StatusTransitions 表前 N 条记录</summary>
-    private List<(string DeviceId, string EventTime, int PreviousState, int CurrentState)> QueryStatusTransitions(int limit)
-    {
-        var result = new List<(string, string, int, int)>();
-        var dbPath = GetDbPath("status_transitions.db");
-        if (!File.Exists(dbPath)) return result;
-        using var conn = new SqliteConnection($"Data Source={dbPath}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT DeviceId, EventTime, PreviousState, CurrentState FROM StatusTransitions ORDER BY EventTime LIMIT {limit}";
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
-        {
-            result.Add((reader.GetString(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt32(3)));
-        }
-        return result;
-    }
-
-    /// <summary>检查指定数据库的 WAL 文件大小（字节）</summary>
-    private long GetWalFileSize(string dbFileName)
-    {
-        var walPath = GetDbPath(dbFileName) + "-wal";
-        return File.Exists(walPath) ? new FileInfo(walPath).Length : 0;
     }
 
     /// <summary>
@@ -253,7 +158,7 @@ public class DatabaseAccumulationFlowTests : IDisposable
 
         // 验证时间戳格式（ISO 8601，可被 DateTime.Parse 解析）
         var logs = QueryProductionLogsWithPath(dbPath, 10);
-        foreach (var (devId, ts, ok, ng) in logs)
+        foreach (var (_, ts, _, _) in logs)
         {
             var dt = DateTime.Parse(ts);
             Assert.True(dt <= DateTime.Now.AddMinutes(1),

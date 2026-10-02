@@ -1,9 +1,9 @@
+using HslCommunication;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Kanban.Contracts.Dtos;
-using HslCommunication;
 using HslCommunication.Core;
 using HslCommunication.Profinet.Melsec;
 
@@ -51,7 +51,6 @@ internal class Program
     private static Task? _resetWatcherTask;
     private static Task? _disconnectSimTask;
     private static TcpRelay? _relay;
-    private static int _listenPort = 4999;
     /// <summary>默认加速倍率：10 倍（节拍缩短到 1/10），使仿真时产量增长明显。
     /// 可通过命令行 --speed N 覆盖（范围 0.1-100）。</summary>
     private static double _speedMultiplier = 10.0;
@@ -238,7 +237,6 @@ internal class Program
             var internalPort = port + 1;
             Console.WriteLine($"启动托管虚拟 PLC 服务器（内部端口 {internalPort}，代理端口 {port}）...");
             _server = new MelsecMcServer();
-            _listenPort = port;
             try { _server.ServerStart(internalPort); }
             catch (Exception ex)
             {
@@ -499,7 +497,7 @@ internal class Program
     {
         var envTickMs = Math.Max(500, _scenario.EnvironmentTickMs);
         var envAccumMs = 0;
-        var env = new DeviceSimulator.EnvironmentSnapshot(false, false);
+        DeviceSimulator.EnvironmentSnapshot env;
 
         while (!token.IsCancellationRequested)
         {

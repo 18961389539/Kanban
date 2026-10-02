@@ -4,7 +4,6 @@ using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

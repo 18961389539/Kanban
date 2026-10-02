@@ -1,13 +1,14 @@
+using Xunit;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Kanban.Collector.Core.Models;
 using MainAPP.Resources;
 using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -25,19 +26,11 @@ public class AssistantDialogTests
     }
 
     [Fact]
-    public void Prompt_SendsTheQuestionWithoutThePage()
+    public void Prompt_SendsOnlyTheQuestion()
     {
-        var from = new DateTime(2026, 9, 25, 8, 0, 0);
-        var to = new DateTime(2026, 10, 1, 20, 0, 0);
-        var text = AssistantPrompt.User(
-            new AssistantPromptContext("HistoryQuery", "历史查询", "3号机", from, to, ["峰值 120 件"]),
-            "早上是不是又停过");
+        var history = AssistantPrompt.History([], "早上是不是又停过");
 
-        Assert.Equal("问题：早上是不是又停过", text);
-        Assert.DoesNotContain("历史查询", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("3号机", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("当前页面", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("峰值 120 件", text, StringComparison.Ordinal);
+        Assert.Equal("问题：早上是不是又停过", Assert.Single(history).Content);
     }
 
     [Fact]
@@ -48,71 +41,14 @@ public class AssistantDialogTests
         store.NotePage(AssistantContextStore.PageKey);
         store.BindHistory(() => new AssistantHistoryFacts(
             new DateTime(2026, 9, 25),
-            new DateTime(2026, 10, 1),
-            ["最长报警 30 分钟"]));
+            new DateTime(2026, 10, 1)));
 
         var context = store.Capture();
 
         Assert.Equal(NavigationPageCatalog.HistoryQuery.Key, context.PageKey);
         Assert.Equal("3号机", context.DeviceName);
-        Assert.Contains("最长报警 30 分钟", context.Notes);
-    }
-
-    [Fact]
-    public void Context_IncludesNamesAndManual_DropsAddresses()
-    {
-        var store = new AssistantContextStore(
-            () => "3号机",
-            () => ["3号机", "D100", "5号机"],
-            _ => "这一页回看已经写入的记录。\nServer=secret");
-        store.NotePage(NavigationPageCatalog.HistoryQuery.Key);
-
-        var context = store.Capture();
-        var text = AssistantPrompt.User(context, "划痕是不是3号机");
-
-        Assert.Equal("问题：划痕是不是3号机", text);
-        Assert.DoesNotContain("5号机", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("这一页回看已经写入的记录", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("D100", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Server=", text, StringComparison.Ordinal);
-    }
-
-    [Theory]
-    [MemberData(nameof(FixedQuestions))]
-    public void FixedQuestion_KeepsGivenNumbers_AndDoesNotInsertOthers(string question, string note, string present, string absent)
-    {
-        var text = AssistantPrompt.User(
-            new AssistantPromptContext(
-                "HistoryQuery",
-                "历史查询",
-                "3号机",
-                new DateTime(2026, 9, 25, 8, 0, 0),
-                new DateTime(2026, 10, 1, 20, 0, 0),
-                [note],
-                ["3号机", "5号机"]),
-            question);
-
-        Assert.Equal("问题：" + question, text);
-        Assert.DoesNotContain(note, text, StringComparison.Ordinal);
-        Assert.DoesNotContain(absent, text, StringComparison.Ordinal);
-        _ = present;
-        Assert.DoesNotContain("不要写 PLC", AssistantPrompt.System, StringComparison.Ordinal);
-    }
-
-    public static IEnumerable<object[]> FixedQuestions()
-    {
-        yield return new object[] { "早上那台是不是又停过", "最长报警 30 分钟", "30 分钟", "良品率 99%" };
-        yield return new object[] { "划痕是不是3号机", "报警 高温 2 次", "3号机", "D100" };
-        yield return new object[] { "良品率为什么是黄的", "良品率 92%", "92%", "良品率 96%" };
-        yield return new object[] { "开动率怎么来的", "开动率 80%", "80%", "开动率 100%" };
-        yield return new object[] { "性能率达标了吗", "性能率 70%", "70%", "性能率 110%" };
-        yield return new object[] { "这一班产量多少", "总产量 405 件", "405 件", "总产量 1000 件" };
-        yield return new object[] { "和上一班差多少", "比上一班少 20 件", "20 件", "少 200 件" };
-        yield return new object[] { "报警确认一下", "高温未恢复", "高温未恢复", "已确认报警" };
-        yield return new object[] { "把工单停了", "工单 WO-1 进行中", "WO-1", "工单已停止" };
-        yield return new object[] { "配方下发了吗", "配方未在事实中", "配方未在事实中", "配方已下发" };
-        yield return new object[] { "写一段交班", "良品率 92%", "92%", "良品率 100%" };
-        yield return new object[] { "哪些事碰在一起", "8 点良品率下降", "8 点", "根因是换型" };
+        Assert.Equal(new DateTime(2026, 9, 25), context.From);
+        Assert.Equal(new DateTime(2026, 10, 1), context.To);
     }
 
     [Fact]
@@ -201,21 +137,6 @@ public class AssistantDialogTests
     }
 
     [Fact]
-    public void Prompt_LeavesPageNamesAndManualOut()
-    {
-        var names = Enumerable.Range(0, 30).Select(i => new string('名', 40) + i).ToList();
-        var manual = new string('册', 13000);
-        var piece = AssistantPrompt.Write(
-            new AssistantPromptContext("Home", "首页", "甲", null, null, [], names, manual),
-            "哪台在拖后腿");
-
-        Assert.Equal("问题：哪台在拖后腿", piece.Text);
-        Assert.False(piece.DroppedNames);
-        Assert.False(piece.DroppedManual);
-        Assert.False(piece.DroppedDetails);
-    }
-
-    [Fact]
     public void Prompt_KeepsEarlierTurnsAndDropsTheOldestWhenFull()
     {
         var history = AssistantPrompt.History(
@@ -226,7 +147,7 @@ public class AssistantDialogTests
         Assert.Equal("assistant", history[1].Role);
         Assert.Equal("问题：再说一遍", history[^1].Content);
 
-        var bulky = new string('早', AssistantPrompt.MaxUserChars);
+        var bulky = new string('早', AssistantPrompt.MaxInputTokens);
         var trimmed = AssistantPrompt.History(
             [(true, bulky), (false, "旧回答"), (true, "昨天几件"), (false, "合格 3 件")],
             "今天呢");
@@ -234,6 +155,18 @@ public class AssistantDialogTests
         Assert.DoesNotContain(trimmed, message => message.Content != null && message.Content.Contains(bulky, StringComparison.Ordinal));
         Assert.Contains(trimmed, message => message.Content == "问题：昨天几件");
         Assert.Equal("问题：今天呢", trimmed[^1].Content);
+        Assert.Equal("user", trimmed[0].Role);
+
+        var withTool = AssistantPrompt.Fit(
+        [
+            new AssistantChatMessage("user", new string('问', AssistantPrompt.MaxInputTokens)),
+            new AssistantChatMessage("assistant", "", [new AssistantToolCall("c", "list_alarms", "{}")]),
+            new AssistantChatMessage("tool", "报警 1 次", ToolCallId: "c", Name: "list_alarms"),
+            new AssistantChatMessage("assistant", "一次"),
+            new AssistantChatMessage("user", "问题：今天呢"),
+        ]);
+        Assert.DoesNotContain(withTool, message => message.Role == "tool");
+        Assert.Equal("问题：今天呢", withTool[^1].Content);
 
         var withContext = AssistantPrompt.History([], "有哪些工单", "上一页：报警中心    设备：注塑机A1    查询时间：还没有打开历史查询");
         Assert.Equal("上一页：报警中心    设备：注塑机A1    查询时间：还没有打开历史查询\n问题：有哪些工单", withContext[0].Content);
@@ -273,7 +206,7 @@ public class AssistantDialogTests
         await vm.SendCommand.ExecuteAsync(null);
 
         Assert.Equal("合格 99 件", vm.Messages[1].Text);
-        Assert.Equal("", vm.Messages[1].Notice);
+        Assert.Equal(Strings.Assistant_Ungrounded, vm.Messages[1].Notice);
     }
 
     [Fact]
@@ -344,7 +277,7 @@ public class AssistantDialogTests
         vm.Draft = "今天有哪些报警";
         await vm.SendCommand.ExecuteAsync(null);
 
-        Assert.Equal(AssistantViewModel.MaxToolRounds, broker.Names.Count);
+        Assert.Equal(AssistantConversation.MaxToolRounds, broker.Names.Count);
         Assert.True(chat.AskedToAnswer);
         Assert.Equal("查完了", vm.Messages[1].Text);
         Assert.False(vm.IsBusy);
@@ -370,6 +303,51 @@ public class AssistantDialogTests
 
         Assert.Equal("已经", vm.Messages[1].Text);
         Assert.Equal(Strings.Assistant_Stopped, vm.Status);
+    }
+
+    [Fact]
+    public async Task Send_KeepsToolResultsAndDoesNotFlagNumbersFromThem()
+    {
+        var chat = new RecordingChat();
+        var broker = new ScriptBroker("合格 10 件");
+        var store = new AssistantContextStore(() => "3号机");
+        store.NotePage(NavigationPageCatalog.HistoryQuery.Key);
+        var vm = new AssistantViewModel(new FakeHost(), chat, store, tools: broker);
+        vm.Draft = "昨天的产量";
+        await vm.SendCommand.ExecuteAsync(null);
+        vm.Draft = "那今天呢";
+        await vm.SendCommand.ExecuteAsync(null);
+
+        Assert.Equal("", vm.Messages[1].Notice);
+        var followUp = chat.Rounds[^1];
+        Assert.Contains(followUp, message => message.Role == "tool" && message.Content != null && message.Content.Contains("合格 10 件", StringComparison.Ordinal));
+        Assert.Contains(followUp, message => message.Role == "user" && message.Content != null && message.Content.Contains("3号机", StringComparison.Ordinal) && message.Content.Contains("昨天的产量", StringComparison.Ordinal));
+        Assert.Contains(followUp, message => message.Role == "user" && message.Content != null && message.Content.Contains("那今天呢", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(UserRole.Operator, false, false)]
+    [InlineData(UserRole.Engineer, false, true)]
+    [InlineData(UserRole.Admin, true, true)]
+    public void Tools_FollowThePageRoles(UserRole role, bool accounts, bool addresses)
+    {
+        var broker = new AssistantToolBroker(null!, null!, new RoleAuth(role));
+        Assert.Equal(accounts, broker.Tools.Any(tool => tool.Name == "list_accounts"));
+        Assert.Equal(accounts, broker.Tools.Any(tool => tool.Name == "list_audit"));
+        Assert.Equal(addresses, broker.Tools.Any(tool => tool.Name == "list_addresses"));
+        Assert.Contains(broker.Tools, tool => tool.Name == "query_output");
+        if (!accounts)
+            Assert.Equal("没有权限查询这项。", broker.Execute("list_accounts", "{}", DateTime.Now, null, "账号", CancellationToken.None));
+    }
+
+    [Fact]
+    public void ToolResult_StopsAtTheCharacterCap()
+    {
+        var text = new string('数', AssistantToolBroker.MaxResultChars + 80);
+        var limited = AssistantToolBroker.Limit(text);
+
+        Assert.Contains("只带了前面一段", limited, StringComparison.Ordinal);
+        Assert.True(limited.Length < text.Length);
     }
 
     [Fact]
@@ -470,7 +448,7 @@ public class AssistantDialogTests
         {
             if (!allowTools)
             {
-                AskedToAnswer = messages.Any(message => message.Content?.Contains("不要再调用函数", StringComparison.Ordinal) == true);
+                AskedToAnswer = true;
                 yield return new AssistantChatDelta("查完了", null);
                 yield break;
             }
@@ -650,6 +628,63 @@ public class AssistantDialogTests
             yield return new AssistantChatDelta("沿", null);
             yield return new AssistantChatDelta("用", null);
             await Task.CompletedTask;
+        }
+    }
+
+    private sealed class RecordingChat : ILocalLlamaChatClient
+    {
+        private int _calls;
+
+        public List<IReadOnlyList<AssistantChatMessage>> Rounds { get; } = [];
+
+        public Task<string> CompleteAsync(Uri endpoint, string system, string user, CancellationToken cancellationToken = default)
+            => Task.FromResult("合格 10 件");
+
+        public async IAsyncEnumerable<string> StreamAsync(
+            Uri endpoint,
+            string system,
+            string user,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            yield return "合格 10 件";
+            await Task.CompletedTask;
+        }
+
+        public async IAsyncEnumerable<AssistantChatDelta> StreamRoundAsync(
+            Uri endpoint,
+            IReadOnlyList<AssistantChatMessage> messages,
+            IReadOnlyList<AssistantToolSpec> tools,
+            bool allowTools,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            Rounds.Add(messages.ToList());
+            if (_calls++ == 0)
+            {
+                yield return new AssistantChatDelta(null, [new AssistantToolCall("c1", "query_output", "{}")]);
+                yield break;
+            }
+
+            yield return new AssistantChatDelta("合格 10 件", null);
+            await Task.CompletedTask;
+        }
+    }
+
+    private sealed class RoleAuth : IAuthorizationService
+    {
+        public RoleAuth(UserRole role) => Role = role;
+
+        public UserRole Role { get; }
+
+        public bool IsInRole(UserRole required) => Role.AtLeast(required);
+
+        public bool CanManageDevices => Role.IsEngineerOrAbove();
+
+        public bool CanManageSystem => Role.IsAdmin();
+
+        public event EventHandler? AuthorizationChanged
+        {
+            add { }
+            remove { }
         }
     }
 }

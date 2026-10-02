@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+﻿using Xunit;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using MainAPP.Converters;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

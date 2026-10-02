@@ -1,5 +1,4 @@
-﻿using System.IO;
-using AutoMapper;
+﻿using AutoMapper;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Mapping;
@@ -9,8 +8,9 @@ using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

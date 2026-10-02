@@ -2,9 +2,9 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using Xunit;
 using MainAPP.Resources;
 using MainAPP.ViewModels;
-using Xunit;
 
 using CoreDataSourceValueType = Kanban.Collector.Core.Models.DataSourceValueType;
 
@@ -510,7 +510,127 @@ public sealed class DataSourceMonitoringViewModelTests : IDisposable
         Assert.True(double.IsNaN(trendSeries.Points[0].Y));
     }
 
-    private DataSourceMonitoringViewModel CreateViewModel() => new(_deviceRepository);
+    [Fact]
+    public void Refresh_LeavesRowAndDeviceFilterUntouchedWhenNothingChanged()
+    {
+        var device = CreateDevice("dev-1", "一号设备");
+        device.Sources.Add(CreateSource("src-1", "环境", CreateValue(
+            "v-1",
+            "温度",
+            valid: true,
+            updatedAt: DateTime.Now)));
+        _deviceRepository.ReplaceAll([device]);
+
+        using var viewModel = CreateViewModel();
+        viewModel.RefreshCommand.Execute(null);
+        var row = Assert.Single(viewModel.Rows);
+        var filterItem = viewModel.DeviceFilterItems[1];
+        var notifications = 0;
+        row.PropertyChanged += (_, _) => notifications++;
+
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.Equal(0, notifications);
+        Assert.Same(row, Assert.Single(viewModel.Rows));
+        Assert.Same(filterItem, viewModel.DeviceFilterItems[1]);
+    }
+
+    [Fact]
+    public void StaleStatus_ScalesWithPollingInterval_AndSkipsTriggerSources()
+    {
+        var now = DateTime.Now;
+        var device = CreateDevice("dev-1", "一号设备");
+        var periodic = CreateSource(
+            "src-periodic",
+            "环境",
+            CreateValue("v-recent", "温度", valid: true, updatedAt: now.AddSeconds(-8)),
+            CreateValue("v-old", "压力", valid: true, address: "D301", updatedAt: now.AddSeconds(-31)));
+        periodic.TriggerAddress = string.Empty;
+        var trigger = CreateSource(
+            "src-trigger",
+            "触发源",
+            CreateValue("v-trigger", "触发值", valid: true, updatedAt: now.AddHours(-1)));
+        device.Sources.Add(periodic);
+        device.Sources.Add(trigger);
+        _deviceRepository.ReplaceAll([device]);
+
+        var settings = new AppSettings { PollingIntervalMs = 10_000 };
+        using var viewModel = CreateViewModel(settings);
+        viewModel.RefreshCommand.Execute(null);
+
+        var recent = Assert.Single(viewModel.Rows, row => row.ValueId == "v-recent");
+        var old = Assert.Single(viewModel.Rows, row => row.ValueId == "v-old");
+        var triggered = Assert.Single(viewModel.Rows, row => row.ValueId == "v-trigger");
+        Assert.False(recent.IsStale);
+        Assert.Equal(DataSourceMonitorStatus.Normal, recent.Status);
+        Assert.True(old.IsStale);
+        Assert.Equal(DataSourceMonitorStatus.Stale, old.Status);
+        Assert.False(triggered.IsStale);
+        Assert.NotEqual(DataSourceMonitorStatus.Stale, triggered.Status);
+    }
+
+    [Fact]
+    public void StaleStatus_KeepsFiveSecondFloorWhenPollingIsFaster()
+    {
+        var now = DateTime.Now;
+        var device = CreateDevice("dev-1", "一号设备");
+        var source = CreateSource(
+            "src-1",
+            "环境",
+            CreateValue("v-fresh", "温度", valid: true, updatedAt: now.AddSeconds(-2)),
+            CreateValue("v-stale", "压力", valid: true, address: "D301", updatedAt: now.AddSeconds(-6)));
+        source.TriggerAddress = string.Empty;
+        device.Sources.Add(source);
+        _deviceRepository.ReplaceAll([device]);
+
+        using var viewModel = CreateViewModel(new AppSettings { PollingIntervalMs = 200 });
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.False(Assert.Single(viewModel.Rows, row => row.ValueId == "v-fresh").IsStale);
+        Assert.True(Assert.Single(viewModel.Rows, row => row.ValueId == "v-stale").IsStale);
+    }
+
+    [Fact]
+    public void TrendView_DropsOlderSamples_AndReplacesTheSameTimestamp()
+    {
+        var device = CreateDevice("dev-1", "一号设备");
+        var source = CreateSource("src-1", "环境");
+        var value = CreateValue("v-trend", "温度", valid: true);
+        value.DataType = CoreDataSourceValueType.Float32;
+        var origin = new DateTime(2026, 8, 18, 12, 0, 0);
+        value.SetRuntimeValue(
+            new DataSourceRuntimeValue(CoreDataSourceValueType.Float32, Float32Value: 20f),
+            origin.AddSeconds(10));
+        source.Values.Clear();
+        source.Values.Add(value);
+        device.Sources.Add(source);
+        _deviceRepository.ReplaceAll([device]);
+
+        using var viewModel = CreateViewModel();
+        viewModel.RefreshCommand.Execute(null);
+        viewModel.SelectedRow = viewModel.Rows[0];
+        viewModel.IsTrendView = true;
+        var trendSeries = Assert.IsType<OxyPlot.Series.LineSeries>(viewModel.TrendChart.Series[0]);
+        Assert.Equal(20, trendSeries.Points[0].Y);
+
+        value.SetRuntimeValue(
+            new DataSourceRuntimeValue(CoreDataSourceValueType.Float32, Float32Value: 99f),
+            origin.AddSeconds(5));
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.Single(trendSeries.Points);
+        Assert.Equal(20, trendSeries.Points[0].Y);
+
+        value.SetRuntimeValue(
+            new DataSourceRuntimeValue(CoreDataSourceValueType.Float32, Float32Value: 21f),
+            origin.AddSeconds(10));
+        viewModel.RefreshCommand.Execute(null);
+
+        Assert.Single(trendSeries.Points);
+        Assert.Equal(21, trendSeries.Points[0].Y);
+    }
+
+    private DataSourceMonitoringViewModel CreateViewModel(AppSettings? settings = null) => new(_deviceRepository, settings);
 
     private static Device CreateDevice(string id, string name) => new()
     {

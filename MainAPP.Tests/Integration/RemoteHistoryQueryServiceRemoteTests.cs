@@ -1,19 +1,19 @@
-using System.IO;
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
+using Microsoft.Extensions.Hosting;
+using NSubstitute;
+using Xunit;
+using System.IO;
 using MainAPP.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

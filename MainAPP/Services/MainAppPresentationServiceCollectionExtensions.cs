@@ -1,8 +1,8 @@
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Entities;
 using Kanban.Client;
 using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Entities;
 using MainAPP.Models;
 using MainAPP.ViewModels;
 using MainAPP.Views;
@@ -93,7 +93,6 @@ public static class MainAppPresentationServiceCollectionExtensions
             sp.GetRequiredService<AppSettings>(), sp.GetRequiredService<IDialogService>(),
             sp.GetRequiredService<IDeviceSelectionService>(),
             sp.GetRequiredService<IProductionReviewPdfService>(),
-            sp.GetRequiredService<WorkOrderRepository>(),
             sp.GetRequiredService<IProductionReviewCsvExportService>(),
             sp.GetRequiredService<IProductionReviewChartService>(),
             sp.GetRequiredService<IOverviewDashboardService>()));

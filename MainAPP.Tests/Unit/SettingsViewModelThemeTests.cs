@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using LicenseManager.Services;
@@ -9,9 +7,11 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using Xunit;
+using System.ComponentModel;
+using System.IO;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

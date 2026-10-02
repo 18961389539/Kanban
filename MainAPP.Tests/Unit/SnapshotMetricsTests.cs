@@ -1,6 +1,5 @@
 using Kanban.Contracts.Metrics;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

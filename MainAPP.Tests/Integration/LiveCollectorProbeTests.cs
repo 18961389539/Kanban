@@ -1,9 +1,9 @@
-using System.IO;
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Integration;
 

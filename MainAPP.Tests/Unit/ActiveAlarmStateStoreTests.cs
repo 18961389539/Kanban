@@ -1,9 +1,9 @@
-using System.IO;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

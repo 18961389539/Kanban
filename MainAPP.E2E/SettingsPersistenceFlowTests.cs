@@ -1,9 +1,9 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using MainAPP.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using MainAPP.Models;
 
 namespace MainAPP.E2E;
 

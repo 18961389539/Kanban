@@ -2,7 +2,6 @@ using System;
 using Kanban.Collector.Core.Models;
 using Kanban.Contracts.Metrics;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

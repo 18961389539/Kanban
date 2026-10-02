@@ -1,10 +1,10 @@
-using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
-using System.Windows.Threading;
 using MainAPP.Converters;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace MainAPP.Tests.Integration;
 

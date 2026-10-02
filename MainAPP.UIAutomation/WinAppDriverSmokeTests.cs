@@ -3,7 +3,6 @@ using System.IO;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
 using Xunit;
-
 namespace MainAPP.UIAutomation;
 
 /// <summary>

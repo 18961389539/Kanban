@@ -69,14 +69,40 @@ public sealed record CollectorDiagnosticsDto
     public string ConnectionStatus { get; init; } = string.Empty;
     public int TotalDisconnectCount { get; init; }
     public int ConsecutiveFailures { get; init; }
-    /// <summary>最近一次断开时刻（用于显示断开持续时长）。</summary>
+    /// <summary>最近一次断开时刻（采集进程本地时钟）。</summary>
     public DateTime? DisconnectedAt { get; init; }
+    /// <summary>
+    /// 快照生成时、采集进程时钟下已经断线的秒数。
+    /// 客户端直接显示这个值，避免用本机时间减去另一台机器的 DisconnectedAt。
+    /// 未断线时为 null。
+    /// </summary>
+    public double? DisconnectDurationSeconds { get; init; }
+    /// <summary>采集进程资源采样是否成功。失败时客户端把资源指标清零，而不是留下半新半旧的数。</summary>
+    public bool ProcessResourcesAvailable { get; init; }
+    public double CpuUsagePercent { get; init; }
+    public double GpuUsagePercent { get; init; }
+    public bool GpuAvailable { get; init; }
+    public double ProcessMemoryMb { get; init; }
+    public double AvailableMemoryMb { get; init; }
+    public long ProcessUptimeSeconds { get; init; }
+    public int ProcessThreadCount { get; init; }
+    public long ProcessHandleCount { get; init; }
+    public double FreeDiskGb { get; init; }
+    /// <summary>最近若干个采集周期的耗时（按周期记录，不是按页面刷新记录）。</summary>
+    public IReadOnlyList<CollectorCycleSampleDto> RecentCycleSamples { get; init; } = [];
     /// <summary>Collector 侧配置的可读地址数（Remote 模式不再读本地配置）。</summary>
     public int ConfiguredReadAddressCount { get; init; }
     /// <summary>设备级采集状态明细。</summary>
     public IReadOnlyList<CollectorDeviceStatusDto> DeviceStatuses { get; init; } = Array.Empty<CollectorDeviceStatusDto>();
     /// <summary>按连接档案划分的运行状态明细（Remote 监控与 /metrics 共用同一事实源）。</summary>
     public IReadOnlyList<CollectorProfileDiagnosticsDto> Profiles { get; init; } = Array.Empty<CollectorProfileDiagnosticsDto>();
+}
+
+/// <summary>一个采集周期的耗时样本。</summary>
+public sealed record CollectorCycleSampleDto
+{
+    public DateTime Timestamp { get; init; }
+    public long Milliseconds { get; init; }
 }
 
 /// <summary>Remote 模式下单台设备的采集状态明细。</summary>

@@ -1,15 +1,15 @@
-using System.IO;
 using System.Linq;
-using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using NSubstitute;
+using Xunit;
+using System.IO;
+using System.Windows;
 using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -297,6 +297,37 @@ public class RecipeManagerViewModelTests : IDisposable
         Assert.Equal("", vm.RecipeSearchText);
         Assert.Equal("新配方", vm.SelectedRecipe?.Name);
         Assert.Contains(vm.FilteredRecipes.Cast<Recipe>(), r => r.Name == "新配方");
+    }
+
+    [Fact]
+    public void Apply_UnsavedEdits_WarnsAndDoesNotConfirm()
+    {
+        _recipeStore.ReplaceAll([MakeRecipe("r1", "配方A")]);
+        _deviceRepo.ReplaceAll([new Device { Id = "d1", Name = "设备1" }]);
+        var vm = CreateVm();
+        vm.SelectedRecipe = vm.AvailableRecipes[0];
+        vm.SelectedTargetDevice = vm.TargetDevices[0];
+        vm.EditName = "改过的名字";
+
+        vm.ApplyRecipeCommand.Execute(null);
+
+        Assert.Contains(_dialog.Warning, message => message.Contains("未保存"));
+        Assert.Empty(_dialog.ShowCalls);
+        Assert.False(vm.IsApplying);
+    }
+
+    [Fact]
+    public void Apply_LoadInvalidRecipe_CannotExecute()
+    {
+        var recipe = MakeRecipe("r1", "配方A");
+        recipe.LoadErrors.Add("地址无法解析");
+        _recipeStore.ReplaceAll([recipe]);
+        _deviceRepo.ReplaceAll([new Device { Id = "d1", Name = "设备1" }]);
+        var vm = CreateVm();
+        vm.SelectedRecipe = vm.AvailableRecipes[0];
+        vm.SelectedTargetDevice = vm.TargetDevices[0];
+
+        Assert.False(vm.ApplyRecipeCommand.CanExecute(null));
     }
 
     [Fact]

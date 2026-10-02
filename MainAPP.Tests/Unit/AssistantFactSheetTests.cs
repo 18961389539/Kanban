@@ -1,5 +1,5 @@
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 
@@ -15,9 +15,7 @@ public class AssistantFactSheetTests
         Assert.DoesNotContain("不要写 PLC", AssistantPrompt.System, StringComparison.Ordinal);
         Assert.DoesNotContain("已经算好", AssistantPrompt.System, StringComparison.Ordinal);
 
-        var text = AssistantPrompt.User(
-            new AssistantPromptContext("AlarmCenter", "报警中心", "注塑机A1", null, null, []),
-            "今天约生产了几个产品");
+        var text = Assert.Single(AssistantPrompt.History([], "今天约生产了几个产品")).Content;
         Assert.Equal("问题：今天约生产了几个产品", text);
         Assert.DoesNotContain("报警中心", text, StringComparison.Ordinal);
         Assert.DoesNotContain("注塑机A1", text, StringComparison.Ordinal);

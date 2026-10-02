@@ -1,6 +1,6 @@
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
-using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
 using Microsoft.Extensions.Logging;
@@ -68,7 +68,6 @@ public sealed class AssistantQueryEngine : IAssistantQueryEngine
         cancellationToken.ThrowIfCancellationRequested();
         var text = AssistantQuery.Render(
             ask,
-            now,
             devices,
             selectedDeviceName,
             windows,

@@ -1414,7 +1414,7 @@
     <value>Select device</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>Toggle sound and flashing for new alarms; the alarm list still updates</value>
+    <value>Toggle sound and flashing for new alarms (same switch as Home, applies to the whole app); the alarm list still updates</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>Level</value>
@@ -1756,7 +1756,7 @@
     <value>Database Storage</value>
   </data>
   <data name="K456" xml:space="preserve">
-    <value>System Resources &amp; Data Consistency</value>
+    <value>Acquisition process resources &amp; configuration</value>
   </data>
   <data name="K457" xml:space="preserve">
     <value>CPU / Memory</value>
@@ -5052,7 +5052,7 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Current Shift</value>
   </data>
   <data name="Web_Rv_WorkOrder" xml:space="preserve">
-    <value>Current Work Order</value>
+    <value>Work orders in window</value>
   </data>
   <data name="Web_Rv_Product" xml:space="preserve">
     <value>Product / Batch</value>
@@ -5565,10 +5565,10 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters</value>
   </data>
   <data name="K710" xml:space="preserve">
-    <value>Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
+    <value>Total trigger events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter</value>
   </data>
   <data name="K711" xml:space="preserve">
-    <value>Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above</value>
+    <value>Total recovery events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter</value>
   </data>
   <data name="K712" xml:space="preserve">
     <value>Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters</value>
@@ -5577,10 +5577,10 @@ Changes are kept in the current session and can still be saved after returning.<
     <value>Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters</value>
   </data>
   <data name="K714" xml:space="preserve">
-    <value>Top alarm by trigger count in the selected time range above; refreshed about every 60s</value>
+    <value>Top alarm by trigger count in the selected time range, after level, device, and search filters; refreshed about every 60s</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>Event stream and Top list follow the selected range. Today's trigger and recover counts always start at midnight.</value>
+    <value>Event stream and Top list follow the selected range and the level, device, and search filters. Today's trigger and recover counts follow only the device filter and always start at midnight.</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>Repeated triggers of the same alarm within a short window merged; {0} events total</value>
@@ -7159,6 +7159,9 @@ Sidebar footer User Manual or F1: open manual</value>
   <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
     <value>Switching recipes discards unsaved edits. Continue?</value>
   </data>
+  <data name="Recipe_ApplyUnsaved" xml:space="preserve">
+    <value>This recipe has unsaved edits. Save it before applying</value>
+  </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\nNow: {0} pcs</value>
   </data>
@@ -7427,7 +7430,7 @@ Sidebar footer User Manual or F1: open manual</value>
     <value>Search</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
-    <value>Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\nNow: {0}</value>
+    <value>Sum of durations inside the stats window. If it started before the window, counting begins at the window start.\nNow: {0}</value>
   </data>
   <data name="Mo_Tip_Health" xml:space="preserve">
     <value>Combines PLC connection, whether the acquisition loop is running, and whether the last cycle succeeded.\nNow: {0}</value>
@@ -7587,6 +7590,33 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>Hour</value>
+  </data>
+  <data name="Web_Rv_WorkOrderHint" xml:space="preserve">
+    <value>Orders whose actual run overlaps this window</value>
+  </data>
+  <data name="Web_Rv_PrintFailed" xml:space="preserve">
+    <value>Print failed. Please try again.</value>
+  </data>
+  <data name="Web_Rv_ExportPdf" xml:space="preserve">
+    <value>Export PDF</value>
+  </data>
+  <data name="Web_Rv_PdfFile" xml:space="preserve">
+    <value>review_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf</value>
+  </data>
+  <data name="Web_Rv_PdfFailed" xml:space="preserve">
+    <value>PDF export failed. Please try again.</value>
+  </data>
+  <data name="Web_Rv_OpenDevice" xml:space="preserve">
+    <value>View details</value>
+  </data>
+  <data name="Web_Rv_FleetHint" xml:space="preserve">
+    <value>Click a device name for its review. View details opens the device page.</value>
+  </data>
+  <data name="Web_Rv_CsvDurationH" xml:space="preserve">
+    <value>Duration (h)</value>
+  </data>
+  <data name="Web_Rv_CsvShare" xml:space="preserve">
+    <value>Share</value>
   </data>
   <data name="Web_NotFound" xml:space="preserve">
     <value>Page not found</value>

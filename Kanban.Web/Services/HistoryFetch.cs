@@ -499,6 +499,8 @@ public static class HistoryFetch
             ValleyHour = valleyHour,
             ValleyOk = valleyOk,
             BaselineOutput = compareAnalysis.Ok + compareAnalysis.Ng,
+            BaselineOk = compareAnalysis.Ok,
+            BaselineNg = compareAnalysis.Ng,
             BaselineQuality = compareAnalysis.QualityRate,
             BaselineRunSeconds = compDurations.RunTime,
             BaselineAlarmSeconds = compDurations.AlarmTime,

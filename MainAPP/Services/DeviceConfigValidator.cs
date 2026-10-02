@@ -33,7 +33,8 @@ public static class DeviceConfigValidator
     /// </summary>
     public static List<DeviceConfigError> CollectValidationErrors(
         IEnumerable<Device> devices,
-        IPlcAddressCodec? addressCodec = null)
+        IPlcAddressCodec? addressCodec = null,
+        bool includeCrossDeviceConflicts = true)
     {
         List<DeviceConfigError> errors = [];
         var deviceList = devices as IList<Device> ?? devices.ToList();
@@ -213,8 +214,10 @@ public static class DeviceConfigValidator
             ValidateChildConfiguration(errors, device);
         }
 
-        // 跨设备地址冲突（两台及以上设备共用同一 PLC 地址，会导致产量/状态数据串台）
-        errors.AddRange(CollectCrossDeviceConflicts(deviceList, addressCodec));
+        // 跨设备地址冲突（两台及以上设备共用同一 PLC 地址，会导致产量/状态数据串台）。
+        // 调用方若已单独统计冲突，传 includeCrossDeviceConflicts: false，避免同一次刷新扫两遍。
+        if (includeCrossDeviceConflicts)
+            errors.AddRange(CollectCrossDeviceConflicts(deviceList, addressCodec));
 
         // 同设备内主地址重复（OK/NG/状态/复位/配方互指同一地址，同样会串台）
         errors.AddRange(CollectSameDevicePrimaryAddressConflicts(deviceList, addressCodec));

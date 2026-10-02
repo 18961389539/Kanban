@@ -2,7 +2,6 @@ using System;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using BenchmarkDotNet.Attributes;
-
 namespace MainAPP.Benchmarks;
 
 /// <summary>

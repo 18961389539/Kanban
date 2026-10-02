@@ -1,3 +1,5 @@
+using System.IO;
+using System.Linq;
 using Kanban.Collector.Core.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -5,8 +7,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Serilog;
 using System.Data.Common;
-using System.IO;
-using System.Linq;
 
 namespace Kanban.Collector.Core.Data;
 
@@ -23,7 +23,6 @@ public class DatabaseProvider(AppSettings appSettings)
     private const string WorkOrderInitialMigration = "20260731070847_InitialSchema";
     private const string DefectHistoryInitialMigration = "20260816190001_InitialSchema";
     private const string AuditInitialMigration = "20260816190000_InitialSchema";
-    private const string DataSourceSnapshotInitialMigration = "20260817120000_InitialSchema";
     private const string DataSourceSnapshotLatestMigration = "20260818110000_AddValueIdentityAndTiming";
 
     private readonly AppSettings _appSettings = appSettings;

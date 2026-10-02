@@ -1,9 +1,9 @@
 ﻿#nullable disable
+using Xunit;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Controls;
 using MainAPP.Converters;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

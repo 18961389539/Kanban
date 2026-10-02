@@ -1,8 +1,8 @@
-using System.Text.Json;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Contracts.Serialization;
 using Xunit;
+using System.Text.Json;
 
 namespace MainAPP.Tests.Unit;
 

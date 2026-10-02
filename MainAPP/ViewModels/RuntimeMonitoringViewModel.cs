@@ -1,14 +1,14 @@
+using System.Windows.Threading;
+using Kanban.Collector.Core.Models;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using MainAPP.Resources;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Client;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -68,8 +68,14 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     private readonly KanbanDataClient? _remoteClient;
     private readonly PageRefreshTimer _refreshTimer;
 
-    /// <summary>远程刷新版本守卫（RefreshFromRemote 防重入：过期响应丢弃）。</summary>
-    private int _refreshVersion;
+    /// <summary>刷新进行中。上一轮未完成时不再发新请求，只记一次“结束后再刷”。</summary>
+    private int _refreshActive;
+    private int _refreshAgain;
+    private int _disposed;
+    private readonly CollectorOutageClock _collectorOutage = new();
+    /// <summary>当前要显示的断线秒数。来自采集进程快照，或采集服务不可达后的本地计时。</summary>
+    private double? _disconnectDurationSeconds;
+    private DateTime _nextConsistencyUtc = DateTime.MinValue;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ReconnectCommand))]
@@ -85,8 +91,6 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [NotifyPropertyChangedFor(nameof(AcquisitionHealthTooltip))]
     private string _connectionStatus = Strings.Conn_Disconnected;
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(DisconnectDurationText))]
-    [NotifyPropertyChangedFor(nameof(DisconnectDurationTooltip))]
     private DateTime? _disconnectedAt;
     [ObservableProperty] private bool _isCollectorUnreachable;
     /// <summary>正在发起重连（用于禁用"重试连接"按钮，避免连点把 PLC 驱动建链请求打爆）。</summary>
@@ -178,8 +182,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public ObservableCollection<DeviceAcquisitionStatusItem> DeviceStatuses { get; } = new();
 
     public string PlcEndpoint => $"{_appSettings.PlcConfig.IpAddress}:{_appSettings.PlcConfig.Port}";
-    public string DisconnectDurationText => DisconnectedAt is { } disconnectedAt
-        ? FormatDuration(DateTime.Now - disconnectedAt)
+    public string DisconnectDurationText => _disconnectDurationSeconds is { } seconds
+        ? FormatDuration(TimeSpan.FromSeconds(seconds))
         : Strings.M049;
     public string ConnectionTooltip => FormatHelper.Tip(Strings.Mo_Tip_ConnStatus, ConnectionStatus);
     public string AcquisitionHealthTooltip => FormatHelper.Tip(Strings.Mo_Tip_Health, HealthText);
@@ -219,7 +223,7 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public string DiskFreeText => string.Format(Strings.F074, FreeDiskGb);
     public int PollingIntervalMs => _appSettings.PollingIntervalMs;
     public int HistoryWriteIntervalScans => _appSettings.HistoryWriteIntervalScans;
-    public int TotalDeviceCount => _deviceRepository.GetDevicesSnapshot().Count;
+    public int TotalDeviceCount => DeviceStatuses.Count;
     public string HealthText => RuntimeHealthText.Format(IsConnected, IsAcquisitionRunning, LastCycleSucceeded, ConsecutiveFailureCycles);
     public string SuccessRateTooltip => FormatHelper.Tip(
         Strings.Mo_Tip_SuccessRate,
@@ -230,8 +234,8 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     public bool HasActiveFailure => !IsConnected
         || HasRefreshError
         || (!LastCycleSucceeded && !string.IsNullOrWhiteSpace(LastFailureMessage));
-    /// <summary>是否已有轮询趋势数据（用于空状态提示）。</summary>
-    public bool HasPollingTrendData => _pollingTrendPoints.Count > 0;
+    /// <summary>是否已有轮询趋势数据（用于空状态提示）。点来自采集周期，不是页面刷新。</summary>
+    public bool HasPollingTrendData => _pollingTrendSeries.Points.Count > 0;
     /// <summary>本地采集模式。只有本地模式才由本页直接发起 PLC 重连；
     /// Remote 模式的 SignalR 连接归上层 Coordinator 统一重连（含回调重新注册），
     /// 本页越权 ConnectAsync 会建出一条无回调注册的连接，页面永远收不到数据。</summary>
@@ -314,14 +318,56 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
     [RelayCommand]
     private void Refresh()
     {
-        // Remote 模式：采集/历史诊断在 Collector 进程，从 SignalR 拉取
-        if (_remoteClient is not null && _runtimeMode.IsRemote)
+        if (Interlocked.CompareExchange(ref _refreshActive, 1, 0) != 0)
         {
-            RefreshFromRemoteAsync().Forget();
+            // 上一轮还没结束：不再发新请求，只要求它结束后补一帧。
+            Interlocked.Exchange(ref _refreshAgain, 1);
             return;
         }
 
-        RefreshFromLocal();
+        RunRefreshLoopAsync().Forget();
+    }
+
+    /// <summary>
+    /// 同一时刻只跑一轮刷新。定时器 1 秒一次，但诊断采样可能超过 1 秒；
+    /// 上一轮没回来就再发，只会把 Collector 或本机采样越堆越慢。
+    /// </summary>
+    private async Task RunRefreshLoopAsync()
+    {
+        try
+        {
+            while (true)
+            {
+                if (Volatile.Read(ref _disposed) != 0) break;
+                Interlocked.Exchange(ref _refreshAgain, 0);
+                try
+                {
+                    await RefreshOnceAsync();
+                }
+                catch (Exception ex)
+                {
+                    HandleRefreshException(ex);
+                }
+
+                if (Volatile.Read(ref _disposed) != 0) break;
+                if (Interlocked.Exchange(ref _refreshAgain, 0) == 0)
+                    break;
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref _refreshActive, 0);
+            if (Volatile.Read(ref _disposed) == 0 && Interlocked.Exchange(ref _refreshAgain, 0) == 1)
+                Refresh();
+        }
+    }
+
+    private async Task RefreshOnceAsync()
+    {
+        if (_remoteClient is not null && _runtimeMode.IsRemote)
+            await RefreshFromRemoteAsync();
+        else
+            await RefreshFromLocalAsync();
     }
 
     /// <summary>
@@ -438,7 +484,6 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
         AppendSection(sb, Strings.K440);
         sb.AppendLine($"  {Strings.K441}: {PlcEndpoint}");
-        sb.AppendLine($"  {Strings.K442}: {DisconnectDurationText}");
         sb.AppendLine($"  {Strings.K443}: {string.Format(Strings.F291, ConsecutiveFailures)}");
 
         AppendSection(sb, Strings.K444);
@@ -494,97 +539,179 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         sb.AppendLine($"[{title}]");
     }
 
-    /// <summary>本地采集模式：直接读本进程采集/历史诊断（原行为不变）。</summary>
-    private void RefreshFromLocal()
+    private async Task RefreshFromLocalAsync()
     {
+        LocalRefreshFrame frame;
         try
         {
-            RefreshFromLocalCore();
+            // 设备快照、库文件大小、性能计数器都在后台取，UI 线程只负责把结果写进绑定。
+            frame = await Task.Run(CaptureLocalFrame);
         }
         catch (Exception ex)
         {
-            // 1s 定时器回调里未捕获的异常会直通 Dispatcher 终止进程：
-            // 设备快照/配置校验/资源采样任一环节抛异常都不该让监控页把整个应用带崩。
+            if (Volatile.Read(ref _disposed) != 0) return;
             HandleRefreshException(ex);
+            return;
+        }
+
+        if (Volatile.Read(ref _disposed) != 0) return;
+        ApplyDiagnostics(frame.Diagnostics);
+        ApplyConsistency(frame.Consistency);
+        if (frame.ConsistencyError is not null)
+            RefreshErrorMessage = frame.ConsistencyError;
+    }
+
+    private LocalRefreshFrame CaptureLocalFrame()
+    {
+        var acquisition = _acquisitionService.GetDiagnosticsSnapshot();
+        var history = _historyService.GetDiagnosticsSnapshot();
+        SystemResourceSnapshot? resources = null;
+        if (_systemResourceMonitor is not null)
+        {
+            try
+            {
+                resources = _systemResourceMonitor.Sample();
+            }
+            catch
+            {
+                // 采样失败只让资源区清零，采集和历史数字仍然更新。
+                resources = null;
+            }
+        }
+
+        var devices = _deviceRepository.GetDevicesSnapshot();
+        var diagnostics = CollectorDiagnosticsMapper.Create(
+            acquisition,
+            history,
+            _connectionManager.IsConnected,
+            _acquisitionService.IsRunning,
+            _connectionManager.ConnectionStatus,
+            _connectionManager.TotalDisconnectCount,
+            _connectionManager.ConsecutiveFailures,
+            _connectionManager.DisconnectedAt,
+            devices,
+            deviceId => _deviceRepository.RuntimeMap.TryGetValue(deviceId, out var runtime) ? runtime : null,
+            resources);
+        var (consistency, consistencyError) = ReadConsistencySafe();
+        return new LocalRefreshFrame(diagnostics, consistency, consistencyError);
+    }
+
+    private sealed record LocalRefreshFrame(
+        CollectorDiagnosticsDto Diagnostics,
+        ConsistencyReading Consistency,
+        string? ConsistencyError);
+
+    private async Task RefreshFromRemoteAsync()
+    {
+        try
+        {
+            var diagnostics = await _remoteClient!.GetDiagnosticsAsync();
+            var (consistency, consistencyError) = await Task.Run(ReadConsistencySafe);
+            if (Volatile.Read(ref _disposed) != 0) return;
+            ApplyDiagnostics(diagnostics);
+            ApplyConsistency(consistency);
+            if (consistencyError is not null)
+                RefreshErrorMessage = consistencyError;
+        }
+        catch (Exception ex)
+        {
+            if (Volatile.Read(ref _disposed) != 0) return;
+            // 网络失败不是 PLC 采集失败：不覆盖 LastFailureMessage，断线起点也只记第一次。
+            NoteCollectorUnreachable(ex.Message);
         }
     }
 
-    private void RefreshFromLocalCore()
+    private void NoteCollectorUnreachable(string message)
     {
-        RefreshErrorMessage = null; // 本次刷新成功跑完即清除上一次的刷新异常
-        var snapshot = _acquisitionService.GetDiagnosticsSnapshot();
-        IsConnected = _connectionManager.IsConnected;
-        IsCollectorUnreachable = false;
-        IsAcquisitionRunning = _acquisitionService.IsRunning;
-        ConnectionStatus = _connectionManager.ConnectionStatus;
-        DisconnectedAt = _connectionManager.DisconnectedAt;
-        TotalDisconnectCount = _connectionManager.TotalDisconnectCount;
-        ConsecutiveFailures = _connectionManager.ConsecutiveFailures;
+        IsConnected = false;
+        IsCollectorUnreachable = true;
+        IsAcquisitionRunning = false;
+        ConnectionStatus = Strings.M050;
+        _disconnectDurationSeconds = _collectorOutage.Observe(DateTime.UtcNow);
+        RefreshErrorMessage = message;
         OnPropertyChanged(nameof(DisconnectDurationText));
-        CompletedCycles = snapshot.CompletedCycles;
-        FailedCycles = snapshot.FailedCycles;
-        LastCycleSucceeded = snapshot.LastCycleSucceeded;
-        ConsecutiveFailureCycles = snapshot.ConsecutiveFailureCycles;
-        LastFailureAt = snapshot.LastFailureAt;
-        LastFailureMessage = snapshot.LastFailureMessage;
-        LastCycleMilliseconds = snapshot.LastCycleMilliseconds;
-        AverageCycleMilliseconds = snapshot.AverageCycleMilliseconds;
-        MaxCycleMilliseconds = snapshot.MaxCycleMilliseconds;
-        CycleP95Milliseconds = snapshot.CycleP95Milliseconds;
-        CycleP99Milliseconds = snapshot.CycleP99Milliseconds;
-        LastSuccessfulDevices = snapshot.LastSuccessfulDevices;
-        ConfiguredDevices = snapshot.ConfiguredDevices;
-        LastSuccessfulAt = snapshot.LastSuccessfulAt;
-        SuccessfulCycles = snapshot.SuccessfulCycles;
-        SuccessRatePercent = snapshot.CompletedCycles == 0
-            ? 0
-            : snapshot.SuccessfulCycles * 100.0 / snapshot.CompletedCycles;
-        EstimatedReadOperations = snapshot.EstimatedReadOperations;
-        ConfiguredReadAddressCount = _deviceRepository.GetDevicesSnapshot()
-            .SelectMany(DeviceConfigValidator.GetDeviceAddresses)
-            .Count(address => !string.IsNullOrWhiteSpace(address));
-
-        var historySnapshot = _historyService.GetDiagnosticsSnapshot();
-        PendingHistoryCount = historySnapshot.PendingProductionCount;
-        RecoveryFileExists = historySnapshot.RecoveryFileExists;
-        RecoveryFileBytes = historySnapshot.RecoveryFileBytes;
-        LastHistoryFlushAt = historySnapshot.LastFlushAt;
-        HistoryFlushFailureCount = historySnapshot.FlushFailureCount;
-        ProductionDatabaseBytes = historySnapshot.ProductionDatabaseBytes;
-        ProductionWalBytes = historySnapshot.ProductionWalBytes;
-        PendingDataSourceCount = historySnapshot.PendingDataSourceCount;
-        DataSourceRecoveryFileExists = historySnapshot.DataSourceRecoveryFileExists;
-        DataSourceRecoveryFileBytes = historySnapshot.DataSourceRecoveryFileBytes;
-        LastDataSourceFlushAt = historySnapshot.LastDataSourceFlushAt;
-        DataSourceFlushFailureCount = historySnapshot.DataSourceFlushFailureCount;
-        ProductionQueuePeakCount = historySnapshot.ProductionQueuePeakCount;
-        ProductionOverflowCount = historySnapshot.ProductionOverflowCount;
-        DataSourceQueuePeakCount = historySnapshot.DataSourceQueuePeakCount;
-        DataSourceOverflowCount = historySnapshot.DataSourceOverflowCount;
-        ProductionFlushP95Milliseconds = historySnapshot.ProductionFlushP95Milliseconds;
-        ProductionFlushP99Milliseconds = historySnapshot.ProductionFlushP99Milliseconds;
-        DataSourceFlushP95Milliseconds = historySnapshot.DataSourceFlushP95Milliseconds;
-        DataSourceFlushP99Milliseconds = historySnapshot.DataSourceFlushP99Milliseconds;
-        DataSourceDatabaseBytes = historySnapshot.DataSourceDatabaseBytes;
-        DataSourceWalBytes = historySnapshot.DataSourceWalBytes;
-        TotalDatabaseBytes = historySnapshot.TotalDatabaseBytes;
-        TotalWalBytes = historySnapshot.TotalWalBytes;
-        BatchPlanRebuilds = snapshot.BatchPlanRebuilds;
-        BatchPlanBuildMilliseconds = snapshot.BatchPlanBuildMilliseconds;
-        DwordReadMilliseconds = snapshot.DWordReadMilliseconds;
-        AlarmReadMilliseconds = snapshot.AlarmReadMilliseconds;
-        DefectReadMilliseconds = snapshot.DefectReadMilliseconds;
-        CounterAlarmReadMilliseconds = snapshot.CounterAlarmReadMilliseconds;
-        HistoryWriteMilliseconds = snapshot.HistoryWriteMilliseconds;
-
-        UpdateResourceMetrics();
-        MaybeUpdateConsistencyMetrics();
-        UpdateDeviceStatuses(snapshot.LastSuccessfulDeviceIds);
-        UpdatePollingTrend();
-        OnPropertyChanged(nameof(HasPollingTrendData));
-        LastRefreshTime = DateTime.Now;
+        OnPropertyChanged(nameof(DisconnectDurationTooltip));
         OnPropertyChanged(nameof(HealthText));
         OnPropertyChanged(nameof(HasActiveFailure));
+    }
+
+    private void ApplyDiagnostics(CollectorDiagnosticsDto dto)
+    {
+        _collectorOutage.Clear();
+        RefreshErrorMessage = null;
+        IsCollectorUnreachable = false;
+        IsConnected = dto.IsConnected;
+        IsAcquisitionRunning = dto.IsRunning;
+        ConnectionStatus = dto.ConnectionStatus;
+        DisconnectedAt = dto.DisconnectedAt;
+        _disconnectDurationSeconds = dto.DisconnectDurationSeconds;
+        TotalDisconnectCount = dto.TotalDisconnectCount;
+        ConsecutiveFailures = dto.ConsecutiveFailures;
+        CompletedCycles = dto.CompletedCycles;
+        FailedCycles = dto.FailedCycles;
+        LastCycleSucceeded = dto.LastCycleSucceeded;
+        ConsecutiveFailureCycles = dto.ConsecutiveFailureCycles;
+        LastFailureAt = dto.LastFailureAt;
+        LastFailureMessage = dto.LastFailureMessage;
+        LastCycleMilliseconds = dto.LastCycleMilliseconds;
+        AverageCycleMilliseconds = dto.AverageCycleMilliseconds;
+        MaxCycleMilliseconds = dto.MaxCycleMilliseconds;
+        CycleP95Milliseconds = dto.CycleP95Milliseconds;
+        CycleP99Milliseconds = dto.CycleP99Milliseconds;
+        LastSuccessfulDevices = dto.LastSuccessfulDevices;
+        ConfiguredDevices = dto.ConfiguredDevices;
+        LastSuccessfulAt = dto.LastSuccessfulAt;
+        SuccessfulCycles = dto.SuccessfulCycles;
+        SuccessRatePercent = dto.CompletedCycles == 0
+            ? 0
+            : dto.SuccessfulCycles * 100.0 / dto.CompletedCycles;
+        EstimatedReadOperations = dto.EstimatedReadOperations;
+        ConfiguredReadAddressCount = dto.ConfiguredReadAddressCount;
+        PendingHistoryCount = dto.PendingHistoryCount;
+        RecoveryFileExists = dto.RecoveryFileExists;
+        RecoveryFileBytes = dto.RecoveryFileBytes;
+        LastHistoryFlushAt = dto.LastHistoryFlushAt;
+        HistoryFlushFailureCount = dto.HistoryFlushFailureCount;
+        ProductionDatabaseBytes = dto.ProductionDatabaseBytes;
+        ProductionWalBytes = dto.ProductionWalBytes;
+        PendingDataSourceCount = dto.PendingDataSourceCount;
+        DataSourceRecoveryFileExists = dto.DataSourceRecoveryFileExists;
+        DataSourceRecoveryFileBytes = dto.DataSourceRecoveryFileBytes;
+        LastDataSourceFlushAt = dto.LastDataSourceFlushAt;
+        DataSourceFlushFailureCount = dto.DataSourceFlushFailureCount;
+        ProductionQueuePeakCount = dto.ProductionQueuePeakCount;
+        ProductionOverflowCount = dto.ProductionOverflowCount;
+        DataSourceQueuePeakCount = dto.DataSourceQueuePeakCount;
+        DataSourceOverflowCount = dto.DataSourceOverflowCount;
+        ProductionFlushP95Milliseconds = dto.ProductionFlushP95Milliseconds;
+        ProductionFlushP99Milliseconds = dto.ProductionFlushP99Milliseconds;
+        DataSourceFlushP95Milliseconds = dto.DataSourceFlushP95Milliseconds;
+        DataSourceFlushP99Milliseconds = dto.DataSourceFlushP99Milliseconds;
+        DataSourceDatabaseBytes = dto.DataSourceDatabaseBytes;
+        DataSourceWalBytes = dto.DataSourceWalBytes;
+        TotalDatabaseBytes = dto.TotalDatabaseBytes;
+        TotalWalBytes = dto.TotalWalBytes;
+        BatchPlanRebuilds = dto.BatchPlanRebuilds;
+        BatchPlanBuildMilliseconds = dto.BatchPlanBuildMilliseconds;
+        DwordReadMilliseconds = dto.DWordReadMilliseconds;
+        AlarmReadMilliseconds = dto.AlarmReadMilliseconds;
+        DefectReadMilliseconds = dto.DefectReadMilliseconds;
+        CounterAlarmReadMilliseconds = dto.CounterAlarmReadMilliseconds;
+        HistoryWriteMilliseconds = dto.HistoryWriteMilliseconds;
+        ApplyResources(dto);
+        UpdateDeviceStatusesFromRemote(dto.DeviceStatuses);
+        ApplyPollingTrend(dto.RecentCycleSamples);
+        LastRefreshTime = DateTime.Now;
+        NotifyDerivedMetrics();
+    }
+
+    private void NotifyDerivedMetrics()
+    {
+        OnPropertyChanged(nameof(DisconnectDurationText));
+        OnPropertyChanged(nameof(DisconnectDurationTooltip));
+        OnPropertyChanged(nameof(HealthText));
+        OnPropertyChanged(nameof(HasActiveFailure));
+        OnPropertyChanged(nameof(HasPollingTrendData));
         OnPropertyChanged(nameof(TotalDeviceCount));
         OnPropertyChanged(nameof(SuccessRateDisplay));
         OnPropertyChanged(nameof(SuccessRateTooltip));
@@ -607,130 +734,6 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         OnPropertyChanged(nameof(ProcessResourceText));
         OnPropertyChanged(nameof(SystemMemoryText));
         OnPropertyChanged(nameof(DiskFreeText));
-    }
-
-    /// <summary>Remote 模式：从 Collector 拉取诊断快照（异步，避免阻塞 UI 刷新）。</summary>
-    /// <remarks>防重入：1s 定时器触发，若上一次拉取未完成（网络慢），版本守卫丢弃过期响应，
-    /// 避免旧数据覆盖新数据导致数值回跳（对齐 OverviewViewModel 的 _refreshVersion 模式）。</remarks>
-    private async Task RefreshFromRemoteAsync()
-    {
-        var refreshVersion = Interlocked.Increment(ref _refreshVersion);
-        try
-        {
-            var d = await _remoteClient!.GetDiagnosticsAsync();
-            if (refreshVersion != Volatile.Read(ref _refreshVersion)) return; // 已有更新的刷新，丢弃过期响应
-            RefreshErrorMessage = null; // 拉取成功且响应未过期才清除上一次的刷新异常
-            IsConnected = d.IsConnected;
-            IsCollectorUnreachable = false;
-            // 采集状态用真值（CollectorDiagnosticsDto.IsRunning）：连接正常 ≠ 采集运行中，
-            // 原先用 IsConnected 会在"连接正常但采集停止"时误报"运行中"。
-            IsAcquisitionRunning = d.IsRunning;
-            ConnectionStatus = d.ConnectionStatus;
-            DisconnectedAt = d.DisconnectedAt;
-            TotalDisconnectCount = d.TotalDisconnectCount;
-            ConsecutiveFailures = d.ConsecutiveFailures;
-            OnPropertyChanged(nameof(DisconnectDurationText));
-            CompletedCycles = d.CompletedCycles;
-            FailedCycles = d.FailedCycles;
-            LastCycleSucceeded = d.LastCycleSucceeded;
-            ConsecutiveFailureCycles = d.ConsecutiveFailureCycles;
-            LastFailureAt = d.LastFailureAt;
-            LastFailureMessage = d.LastFailureMessage;
-            LastCycleMilliseconds = d.LastCycleMilliseconds;
-            AverageCycleMilliseconds = d.AverageCycleMilliseconds;
-            MaxCycleMilliseconds = d.MaxCycleMilliseconds;
-            CycleP95Milliseconds = d.CycleP95Milliseconds;
-            CycleP99Milliseconds = d.CycleP99Milliseconds;
-            LastSuccessfulDevices = d.LastSuccessfulDevices;
-            ConfiguredDevices = d.ConfiguredDevices;
-            LastSuccessfulAt = d.LastSuccessfulAt;
-            SuccessfulCycles = d.SuccessfulCycles;
-            SuccessRatePercent = d.CompletedCycles == 0
-                ? 0
-                : d.SuccessfulCycles * 100.0 / d.CompletedCycles;
-            EstimatedReadOperations = d.EstimatedReadOperations;
-            ConfiguredReadAddressCount = d.ConfiguredReadAddressCount;
-            PendingHistoryCount = d.PendingHistoryCount;
-            RecoveryFileExists = d.RecoveryFileExists;
-            RecoveryFileBytes = d.RecoveryFileBytes;
-            LastHistoryFlushAt = d.LastHistoryFlushAt;
-            HistoryFlushFailureCount = d.HistoryFlushFailureCount;
-            ProductionDatabaseBytes = d.ProductionDatabaseBytes;
-            ProductionWalBytes = d.ProductionWalBytes;
-            PendingDataSourceCount = d.PendingDataSourceCount;
-            DataSourceRecoveryFileExists = d.DataSourceRecoveryFileExists;
-            DataSourceRecoveryFileBytes = d.DataSourceRecoveryFileBytes;
-            LastDataSourceFlushAt = d.LastDataSourceFlushAt;
-            DataSourceFlushFailureCount = d.DataSourceFlushFailureCount;
-            ProductionQueuePeakCount = d.ProductionQueuePeakCount;
-            ProductionOverflowCount = d.ProductionOverflowCount;
-            DataSourceQueuePeakCount = d.DataSourceQueuePeakCount;
-            DataSourceOverflowCount = d.DataSourceOverflowCount;
-            ProductionFlushP95Milliseconds = d.ProductionFlushP95Milliseconds;
-            ProductionFlushP99Milliseconds = d.ProductionFlushP99Milliseconds;
-            DataSourceFlushP95Milliseconds = d.DataSourceFlushP95Milliseconds;
-            DataSourceFlushP99Milliseconds = d.DataSourceFlushP99Milliseconds;
-            DataSourceDatabaseBytes = d.DataSourceDatabaseBytes;
-            DataSourceWalBytes = d.DataSourceWalBytes;
-            TotalDatabaseBytes = d.TotalDatabaseBytes;
-            TotalWalBytes = d.TotalWalBytes;
-            BatchPlanRebuilds = d.BatchPlanRebuilds;
-            BatchPlanBuildMilliseconds = d.BatchPlanBuildMilliseconds;
-            DwordReadMilliseconds = d.DWordReadMilliseconds;
-            AlarmReadMilliseconds = d.AlarmReadMilliseconds;
-            DefectReadMilliseconds = d.DefectReadMilliseconds;
-            CounterAlarmReadMilliseconds = d.CounterAlarmReadMilliseconds;
-            HistoryWriteMilliseconds = d.HistoryWriteMilliseconds;
-
-            UpdateResourceMetrics();
-            MaybeUpdateConsistencyMetrics();
-            // Remote 模式也刷新周期趋势；设备明细列表待诊断 DTO 补充成功后同步（审查修复 2026-08-15 第一步）
-            UpdatePollingTrend();
-            UpdateDeviceStatusesFromRemote(d.DeviceStatuses);
-            OnPropertyChanged(nameof(HasPollingTrendData));
-            LastRefreshTime = DateTime.Now;
-            OnPropertyChanged(nameof(HealthText));
-            OnPropertyChanged(nameof(HasActiveFailure));
-            OnPropertyChanged(nameof(TotalDeviceCount));
-            OnPropertyChanged(nameof(SuccessRateDisplay));
-            OnPropertyChanged(nameof(SuccessRateTooltip));
-            OnPropertyChanged(nameof(RecoveryFileText));
-            OnPropertyChanged(nameof(DataConsistencyText));
-            OnPropertyChanged(nameof(DeviceReadSummary));
-            OnPropertyChanged(nameof(CpuMemoryText));
-            OnPropertyChanged(nameof(GpuUsageText));
-            OnPropertyChanged(nameof(AddressIssueSummary));
-            OnPropertyChanged(nameof(ProcessUptimeText));
-            OnPropertyChanged(nameof(ReadDetailText));
-            OnPropertyChanged(nameof(HistoryStorageText));
-            OnPropertyChanged(nameof(DataSourceStorageText));
-            OnPropertyChanged(nameof(TotalStorageText));
-            OnPropertyChanged(nameof(DataSourceRecoveryFileText));
-            OnPropertyChanged(nameof(HistoryQueueText));
-            OnPropertyChanged(nameof(HistoryFlushLatencyText));
-            OnPropertyChanged(nameof(StageTimingText));
-            OnPropertyChanged(nameof(BatchPlanText));
-            OnPropertyChanged(nameof(ProcessResourceText));
-            OnPropertyChanged(nameof(SystemMemoryText));
-            OnPropertyChanged(nameof(DiskFreeText));
-        }
-        catch (Exception ex)
-        {
-            // Collector 未连接：显示离线状态，不崩溃。旧请求失败不覆盖在途的新请求（版本守卫）。
-            if (refreshVersion != Volatile.Read(ref _refreshVersion)) return;
-            IsConnected = false;
-            IsCollectorUnreachable = true;
-            IsAcquisitionRunning = false;
-            ConnectionStatus = Strings.M050;
-            DisconnectedAt = DateTime.Now;
-            LastFailureMessage = ex.Message;
-            LastFailureAt = DateTime.Now;
-            OnPropertyChanged(nameof(DisconnectDurationText));
-            OnPropertyChanged(nameof(HealthText));
-            OnPropertyChanged(nameof(HasActiveFailure));
-            OnPropertyChanged(nameof(SuccessRateDisplay));
-            OnPropertyChanged(nameof(SuccessRateTooltip));
-        }
     }
 
     private void OnRefreshTimerTick()
@@ -765,28 +768,31 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         OnPropertyChanged(nameof(HasActiveFailure));
     }
 
-    private void UpdateResourceMetrics()
+    private void ApplyResources(CollectorDiagnosticsDto dto)
     {
-        try
-        {
-            var snapshot = _systemResourceMonitor.Sample();
-            CpuUsagePercent = snapshot.CpuUsagePercent;
-            GpuUsagePercent = snapshot.GpuUsagePercent;
-            GpuAvailable = snapshot.GpuAvailable;
-            MemoryMb = snapshot.ProcessMemoryMb;
-            ProcessUptime = snapshot.ProcessUptime;
-            ProcessThreadCount = snapshot.ThreadCount;
-            ProcessHandleCount = snapshot.HandleCount;
-            AvailableMemoryMb = snapshot.AvailableMemoryMb;
-            FreeDiskGb = snapshot.FreeDiskGb;
-        }
-        catch
+        if (!dto.ProcessResourcesAvailable)
         {
             CpuUsagePercent = 0;
+            GpuUsagePercent = 0;
+            GpuAvailable = false;
             MemoryMb = 0;
             AvailableMemoryMb = 0;
+            ProcessUptime = TimeSpan.Zero;
+            ProcessThreadCount = 0;
+            ProcessHandleCount = 0;
             FreeDiskGb = 0;
+            return;
         }
+
+        CpuUsagePercent = dto.CpuUsagePercent;
+        GpuUsagePercent = dto.GpuUsagePercent;
+        GpuAvailable = dto.GpuAvailable;
+        MemoryMb = dto.ProcessMemoryMb;
+        AvailableMemoryMb = dto.AvailableMemoryMb;
+        ProcessUptime = TimeSpan.FromSeconds(dto.ProcessUptimeSeconds);
+        ProcessThreadCount = dto.ProcessThreadCount;
+        ProcessHandleCount = dto.ProcessHandleCount;
+        FreeDiskGb = dto.FreeDiskGb;
     }
 
     private void UpdateDeviceStatusesFromRemote(IReadOnlyList<CollectorDeviceStatusDto> devices)
@@ -810,35 +816,11 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         DeviceStatusCollectionSynchronizer.Synchronize(DeviceStatuses, desired);
     }
 
-    private void UpdateDeviceStatuses(IReadOnlySet<string> lastSuccessfulDeviceIds)
+    private void ApplyPollingTrend(IReadOnlyList<CollectorCycleSampleDto> samples)
     {
-        var devices = _deviceRepository.GetDevicesSnapshot();
-        var desired = new List<DeviceAcquisitionStatusItem>(devices.Count);
-        foreach (var device in devices)
-        {
-            _deviceRepository.RuntimeMap.TryGetValue(device.Id, out var runtime);
-            var addresses = DeviceConfigValidator.GetDeviceAddresses(device)
-                .Count(address => !string.IsNullOrWhiteSpace(address));
-            desired.Add(new DeviceAcquisitionStatusItem
-            {
-                DeviceId = device.Id,
-                DeviceName = device.Name,
-                StatusText = GetStatusText(runtime?.StatusWord ?? 0),
-                AcquisitionText = addresses == 0 ? Strings.M162 : lastSuccessfulDeviceIds.Contains(device.Id) ? Strings.M163 : Strings.M164,
-                ConfiguredAddressCount = addresses,
-                OkProduction = runtime?.OkProduction ?? 0,
-                NgProduction = runtime?.NgProduction ?? 0,
-            });
-        }
-        DeviceStatusCollectionSynchronizer.Synchronize(DeviceStatuses, desired);
-    }
-
-    private void UpdatePollingTrend()
-    {
-        var now = DateTime.Now;
-        var points = _pollingTrendPoints.Add(now, LastCycleMilliseconds);
         _pollingTrendSeries.Points.Clear();
-        _pollingTrendSeries.Points.AddRange(points);
+        foreach (var sample in samples)
+            _pollingTrendSeries.Points.Add(new DataPoint(DateTimeAxis.ToDouble(sample.Timestamp), sample.Milliseconds));
         PollingTrend.InvalidatePlot(false);
     }
 
@@ -856,37 +838,50 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
         return model;
     }
 
-    private static string GetStatusText(int statusWord) => RuntimeDeviceStatusText.Format(statusWord);
+    private readonly record struct ConsistencyReading(bool Updated, int Issues, int Conflicts, int InvalidAddresses);
 
     /// <summary>
-    /// 一致性校验降频（每 10 次 tick ≈ 10s 执行一次）：CollectValidationErrors + CollectCrossDeviceConflicts
-    /// + 逐地址 codec.Parse 在设备/地址多时开销大，每秒执行会卡 UI。
-    /// 采集状态/资源指标保持每秒刷新；进入页面首帧立即执行一次（_consistencyTickCount 初始为阈值前值）。
-    /// 注：CollectValidationErrors 内部已含一次冲突检测，此处再单独统计属现状（降频后成本可接受）。
+    /// 配置校验每 10 秒一次，并且不在 UI 线程上跑。
+    /// 没有协议编解码器时直接跳过：不能悄悄用三菱规则去数别的品牌的非法地址。
     /// </summary>
-    private const int ConsistencyCheckIntervalTicks = 10;
-    private int _consistencyTickCount = ConsistencyCheckIntervalTicks - 1;
-
-    private void MaybeUpdateConsistencyMetrics()
+    private (ConsistencyReading Reading, string? Error) ReadConsistencySafe()
     {
-        if (++_consistencyTickCount < ConsistencyCheckIntervalTicks) return;
-        _consistencyTickCount = 0;
-        UpdateConsistencyMetrics();
+        try
+        {
+            return (ReadConsistency(), null);
+        }
+        catch (Exception ex)
+        {
+            return (default, ex.Message);
+        }
     }
 
-    private void UpdateConsistencyMetrics()
+    private ConsistencyReading ReadConsistency()
     {
+        var now = DateTime.UtcNow;
+        if (now < _nextConsistencyUtc)
+            return default;
+
+        _nextConsistencyUtc = now.AddSeconds(10);
+        var codec = _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current;
+        if (codec is null)
+            return default;
+
         var devices = _deviceRepository.GetDevicesSnapshot();
+        var conflicts = DeviceConfigValidator.CollectCrossDeviceConflicts(devices, codec);
         var errors = DeviceConfigValidator.CollectValidationErrors(
-            devices,
-            _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current);
-        ConfigurationIssueCount = errors.Count;
-        AddressConflictCount = DeviceConfigValidator.CollectCrossDeviceConflicts(
-            devices,
-            _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current).Count;
-        var codec = _profileProvider?.Current.AddressCodec ?? _addressCodecResolver?.Current ?? new MitsubishiAddressCodec();
-        InvalidAddressCount = devices.SelectMany(DeviceConfigValidator.GetDeviceAddresses).Count(address =>
+            devices, codec, includeCrossDeviceConflicts: false);
+        var invalid = devices.SelectMany(DeviceConfigValidator.GetDeviceAddresses).Count(address =>
             !string.IsNullOrWhiteSpace(address) && !codec.Parse(address).IsValid);
+        return new ConsistencyReading(true, errors.Count + conflicts.Count, conflicts.Count, invalid);
+    }
+
+    private void ApplyConsistency(ConsistencyReading reading)
+    {
+        if (!reading.Updated) return;
+        ConfigurationIssueCount = reading.Issues;
+        AddressConflictCount = reading.Conflicts;
+        InvalidAddressCount = reading.InvalidAddresses;
     }
 
     private static string FormatDuration(TimeSpan duration)
@@ -898,12 +893,9 @@ public partial class RuntimeMonitoringViewModel : ObservableObject, INavigationP
 
     public void Dispose()
     {
+        Interlocked.Exchange(ref _disposed, 1);
         OnPageExit();
         _refreshTimer.Dispose();
-        _pollingTrendPoints.Clear();
-        // 注意：不释放 _systemResourceMonitor——它是 DI 容器持有的单例（级联单例 GpuUsageMonitor），
-        // 生命周期归容器管，由页面 VM 释放属所有权违规（host.Dispose 统一释放）。
+        // 不释放 _systemResourceMonitor：它是 DI 单例（级联 GpuUsageMonitor），生命周期归容器。
     }
-
-    private readonly PollingTrendBuffer _pollingTrendPoints = new();
 }

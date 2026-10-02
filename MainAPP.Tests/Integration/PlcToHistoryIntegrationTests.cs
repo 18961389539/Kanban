@@ -1,14 +1,14 @@
-﻿using System.Collections.ObjectModel;
-using System.IO;
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using Xunit;
+using System.Collections.ObjectModel;
+using System.IO;
 using MainAPP.Tests.Unit;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
 namespace MainAPP.Tests.Integration;
@@ -36,14 +36,12 @@ namespace MainAPP.Tests.Integration;
 [Trait("Requires","None")]
 public class PlcToHistoryIntegrationTests : IDisposable
 {
-    private readonly ITestOutputHelper _output;
     private readonly string _tempDir;
     private readonly AppSettings _appSettings;
     private readonly DatabaseProvider _dbProvider;
 
-    public PlcToHistoryIntegrationTests(ITestOutputHelper output)
+    public PlcToHistoryIntegrationTests()
     {
-        _output = output;
         _tempDir = Path.Combine(Path.GetTempPath(), "KanbanE2E_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
 

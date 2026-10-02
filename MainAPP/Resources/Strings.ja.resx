@@ -1414,7 +1414,7 @@
     <value>設備を選択</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>新規アラームの音と点滅を切替（一覧は更新されます）</value>
+    <value>新規アラームの音と点滅を切替（ホームと同一、アプリ全体に効く。一覧は更新されます）</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>レベル</value>
@@ -1756,7 +1756,7 @@
     <value>データベース保存</value>
   </data>
   <data name="K456" xml:space="preserve">
-    <value>システム資源とデータ整合性</value>
+    <value>収集プロセスのリソースと設定チェック</value>
   </data>
   <data name="K457" xml:space="preserve">
     <value>CPU / メモリ</value>
@@ -5052,7 +5052,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>現在のシフト</value>
   </data>
   <data name="Web_Rv_WorkOrder" xml:space="preserve">
-    <value>現在の工単</value>
+    <value>期間内の工単</value>
   </data>
   <data name="Web_Rv_Product" xml:space="preserve">
     <value>製品 / ロット</value>
@@ -5565,10 +5565,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり</value>
   </data>
   <data name="K710" xml:space="preserve">
-    <value>本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし</value>
+    <value>本日 0:00 以降の発生回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ</value>
   </data>
   <data name="K711" xml:space="preserve">
-    <value>本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし</value>
+    <value>本日 0:00 以降の復帰回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ</value>
   </data>
   <data name="K712" xml:space="preserve">
     <value>未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
@@ -5577,10 +5577,10 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり</value>
   </data>
   <data name="K714" xml:space="preserve">
-    <value>上部で選択した時間範囲内の発生回数第1位。約60秒更新</value>
+    <value>選択した時間範囲で、レベル/設備/検索フィルタ後の発生回数第1位。約60秒更新</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>イベント流と Top は選択した範囲に従います。本日の発生・復帰は常に本日 0:00 から集計します。</value>
+    <value>イベント流と Top は時間範囲とレベル/設備/検索に従います。本日の発生・復帰は設備フィルタのみ、本日 0:00 から集計します。</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件</value>
@@ -7159,6 +7159,9 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
     <value>レシピ切替で未保存の編集が失われます。続行しますか？</value>
   </data>
+  <data name="Recipe_ApplyUnsaved" xml:space="preserve">
+    <value>未保存の変更があります。適用する前に保存してください</value>
+  </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\n現在：{0} 個</value>
   </data>
@@ -7427,7 +7430,7 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
     <value>検索</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
-    <value>統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\n現在：{0}</value>
+    <value>統計窓内の継続時間合計。窓の開始前から鳴っている場合は窓の起点から数えます。\n現在：{0}</value>
   </data>
   <data name="Mo_Tip_Health" xml:space="preserve">
     <value>PLC 接続、収集ループ稼働、直近サイクル成功を総合。\n現在：{0}</value>
@@ -7587,6 +7590,33 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>時間帯</value>
+  </data>
+  <data name="Web_Rv_WorkOrderHint" xml:space="preserve">
+    <value>実際の開始・終了が復盤窓と重なる工単</value>
+  </data>
+  <data name="Web_Rv_PrintFailed" xml:space="preserve">
+    <value>印刷に失敗しました。再試行してください。</value>
+  </data>
+  <data name="Web_Rv_ExportPdf" xml:space="preserve">
+    <value>PDF エクスポート</value>
+  </data>
+  <data name="Web_Rv_PdfFile" xml:space="preserve">
+    <value>生産レビュー_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf</value>
+  </data>
+  <data name="Web_Rv_PdfFailed" xml:space="preserve">
+    <value>PDF の書き出しに失敗しました。再試行してください。</value>
+  </data>
+  <data name="Web_Rv_OpenDevice" xml:space="preserve">
+    <value>詳細を表示</value>
+  </data>
+  <data name="Web_Rv_FleetHint" xml:space="preserve">
+    <value>設備名でその復盤を開き、詳細で設備ページへ</value>
+  </data>
+  <data name="Web_Rv_CsvDurationH" xml:space="preserve">
+    <value>継続(h)</value>
+  </data>
+  <data name="Web_Rv_CsvShare" xml:space="preserve">
+    <value>割合</value>
   </data>
   <data name="Web_NotFound" xml:space="preserve">
     <value>ページが見つかりません</value>

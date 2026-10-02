@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Kanban.Client;
+using System.Diagnostics;
 using MainAPP.Resources;
 using System.IO;
 using System.Windows;
@@ -7,7 +8,6 @@ using LicenseManager.Models;
 using LicenseManager.Services;
 using LicenseManager.ViewModels;
 using LicenseManager.Views;
-using Kanban.Client;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;
@@ -95,11 +95,11 @@ public partial class App : Application
         // 启动主流程改为普通 Task（审查修复 2026-09-17）：不再用 async void——
         // async void 的未捕获异常会直接终止进程且无错误提示；Task + 内部 try/catch 兜底后，
         // 任何漏网异常只产生未观察 Task 异常（由上方 UnobservedTaskException 记录），不会无提示崩溃。
-        _ = RunStartupAsync(e);
+        _ = RunStartupAsync();
     }
 
     /// <summary>启动主流程（原 OnStartup 的 async 主体，async void → Task 迁移）。</summary>
-    private async Task RunStartupAsync(StartupEventArgs e)
+    private async Task RunStartupAsync()
     {
         // OnStartup 不再 async void；此处仍用 try/catch 包裹整个启动流程
         // （Host.StartAsync / Load / EnsureCreated / MainWindow.Show 等），

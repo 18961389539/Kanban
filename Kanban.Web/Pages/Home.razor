@@ -92,7 +92,6 @@
                         <span class="cycle-diff pill @(IsCycleSlow ? "slow" : "ok")" title="@CycleDiffTooltip">@CycleDiffText</span>
                     }
                 </div>
-                <div class="meta-line" title="@L.Tip("Home_Tip_StatusWord", $"0x{SelectedSnapshot.StatusWord:X4}")">@L.T("Hq_StatusWord") 0x@(SelectedSnapshot.StatusWord.ToString("X4"))</div>
                 @if (!string.IsNullOrEmpty(SelectedSnapshot.RecipeName))
                 {
                     <div class="meta-line" title="@L.Tip("Home_Tip_Recipe", L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue))">@L.T("RecipeInfo", SelectedSnapshot.RecipeName, SelectedSnapshot.RecipeValue)</div>
@@ -268,7 +267,7 @@
                     <div class="wo-product">@CurrentWorkOrder.ProductCode · @CurrentWorkOrder.ProductName</div>
                     <div class="metric-grid">
                         <div title="@WorkOrderNgTooltip"><span class="kpi-label">@L.T("Home_WorkOrderNg") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderNgText</span></div>
-                        <div title="@WorkOrderQualityTooltip"><span class="kpi-label">@L.T("Home_WorkOrderQuality") <KpiScopeChip Kind="WorkOrder" /></span><span class="kpi-value">@WorkOrderQualityText</span></div>
+                        <div title="@WorkOrderQualityTooltip"><span class="kpi-label">@L.T("Home_WorkOrderQuality") <KpiScopeChip Kind="WorkOrder" /></span><span class="@WorkOrderQualityCssClass">@WorkOrderQualityText</span></div>
                     </div>
                 }
             </section>
@@ -318,8 +317,6 @@
                     <div title="@L.Tip("Home_Tip_ConnBadge", Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))"><span class="kpi-label">@L.T("Lbl_ConnStatus")</span><span class="kpi-value">@(Dashboard.IsConnected ? L.T("Conn_Connected") : L.T("Conn_Disconnected"))</span></div>
                     <div title="@L.Tip("Home_Tip_DeviceCount", Dashboard.DeviceCount)"><span class="kpi-label">@L.T("Lbl_DevTotal")</span><span class="kpi-value">@Dashboard.DeviceCount</span></div>
                     <div title="@L.Tip("Home_Tip_DataFresh", FreshnessText)"><span class="kpi-label">@L.T("Lbl_DataFresh")</span><span class="kpi-value">@FreshnessText</span></div>
-                    <div title="@L.Tip("Home_Tip_SnapSeq", SelectedSnapshot.Seq)"><span class="kpi-label">@L.T("Lbl_SnapSeq")</span><span class="kpi-value">#@SelectedSnapshot.Seq</span></div>
-                    <div><span class="kpi-label">@L.T("Lbl_SvcAddr")</span><span class="kpi-value mono">@L.T("Val_DynAddr")</span></div>
                     @if (!string.IsNullOrEmpty(Dashboard.ServerVersion))
                     {
                         <div><span class="kpi-label">@L.T("Lbl_SvcVersion")</span><span class="kpi-value mono">@Dashboard.ServerVersion</span></div>
@@ -538,6 +535,10 @@
         hash.Add(WorkOrderNgCount);
         hash.Add(wo?.Id);
         hash.Add(Dashboard.IsConnected);
+        hash.Add(FreshnessText);
+        hash.Add(Math.Round(RealtimeSpeed));
+        if (snap is { ActiveAlarms.Count: > 0 })
+            hash.Add(Dashboard.ServerNow.Ticks / TimeSpan.TicksPerSecond);
         hash.Add(_hourlyOkHours.Length);
         if (_hourlyOkCounts.Length > 0)
             hash.Add(_hourlyOkCounts[^1]);
@@ -640,8 +641,8 @@
     {
         get
         {
-            if (Dashboard.LastDataAt is not { } last) return L.T("Fresh_None");
-            var secs = (int)(DateTime.Now - last).TotalSeconds;
+            if (Dashboard.LastDataAt is null) return L.T("Fresh_None");
+            var secs = Dashboard.DataStaleSeconds;
             return secs switch
             {
                 < 3 => L.T("Fresh_Live"),
@@ -670,7 +671,7 @@
         }
     }
 
-    private const double QualityTarget = 0.95;
+    private const double QualityTarget = QualityThresholds.Good;
 
     private string QualityLiveText
         => SelectedSnapshot is null || TotalOutput <= 0 ? "—" : Pct(SelectedSnapshot.QualityRate);
@@ -683,7 +684,7 @@
     private string QualityCssClass
         => SelectedSnapshot is null || TotalOutput <= 0 ? ""
         : SelectedSnapshot.QualityRate >= QualityTarget ? "good"
-        : SelectedSnapshot.QualityRate >= QualityTarget - 0.05 ? "warn"
+        : SelectedSnapshot.QualityRate >= QualityThresholds.Warning ? "warn"
         : "bad";
 
     private string QualityGapTooltip
@@ -982,8 +983,13 @@
 
     /// <summary>实时速度（件/小时）= 总产量 / 运行小时（口径见 SnapshotMetrics，与 WPF 共用）。</summary>
     private double RealtimeSpeed
-        => SelectedSnapshot is null ? 0
-            : SnapshotMetrics.RealtimeSpeed(SelectedSnapshot.RunTime, SelectedSnapshot.TotalOkProduction, SelectedSnapshot.TotalNgProduction);
+    {
+        get
+        {
+            var pts = Dashboard.GetSpeedHistory(SelectedSnapshot?.DeviceId ?? "");
+            return pts.Count > 0 ? pts[^1].Speed : 0;
+        }
+    }
 
     private string RealtimeSpeedText => RealtimeSpeed > 0 ? RealtimeSpeed.ToString("N0") : "—";
     private string TotalOutputText => TotalOutput.ToString("N0");
@@ -999,8 +1005,8 @@
         {
             if (TargetCycleSec <= 0 || ActualCycleSec <= 0) return "";
             var diff = ActualCycleSec - TargetCycleSec;
-            if (Math.Abs(diff) < 0.01) return "●";
-            return diff > 0 ? $"▼ {diff:F2}s" : $"▲ {Math.Abs(diff):F2}s";
+            if (Math.Abs(diff) < 0.01) return L.T("Home_CycleOnTarget");
+            return diff > 0 ? L.T("Home_CycleSlower", diff) : L.T("Home_CycleFaster", -diff);
         }
     }
     private double NgRate => SelectedSnapshot is null ? 0
@@ -1031,7 +1037,8 @@
         => WorkOrderOkCount + WorkOrderNgCount > 0 ? $"{WorkOrderQualityRate:P1}" : "—";
     private string WorkOrderQualityCssClass
         => WorkOrderOkCount + WorkOrderNgCount <= 0 ? "kpi-value"
-        : WorkOrderQualityRate >= 0.95 ? "kpi-value run"
+        : WorkOrderQualityRate >= QualityThresholds.Good ? "kpi-value run"
+        : WorkOrderQualityRate >= QualityThresholds.Warning ? "kpi-value paused"
         : "kpi-value danger";
     private string WorkOrderOkTooltip => Tip("Home_Tip_WorkOrderOk", WorkOrderOkText);
     private string WorkOrderNgTooltip => Tip("Home_Tip_WorkOrderNg", WorkOrderNgCount);

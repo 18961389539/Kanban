@@ -1,7 +1,7 @@
+using Kanban.Contracts.Enums;
 using Kanban.Analysis;
 using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
-using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Caching.Memory;
@@ -315,6 +315,8 @@ public sealed class HistoryQueryHandler
                 ValleyHour = valleyHour,
                 ValleyOk = valleyOk,
                 BaselineOutput = compareProd.Ok + compareProd.Ng,
+                BaselineOk = compareProd.Ok,
+                BaselineNg = compareProd.Ng,
                 BaselineQuality = compareProd.QualityRate,
                 BaselineRunSeconds = compDurations.RunTime,
                 BaselineAlarmSeconds = compDurations.AlarmTime,
@@ -690,3 +692,4 @@ public sealed class HistoryQueryHandler
         Timestamp = e.Timestamp,
     };
 }
+

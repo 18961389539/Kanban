@@ -2,7 +2,6 @@ using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>配方校验（RecipeValidator）单测：覆盖名称/参数项/地址/类型/值/范围/重复地址。</summary>

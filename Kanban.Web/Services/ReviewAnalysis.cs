@@ -10,7 +10,7 @@ namespace Kanban.Web.Services;
 /// </summary>
 public static class ReviewAnalysis
 {
-    public const double QualityTarget = 0.95;
+    public const double QualityTarget = Kanban.Contracts.Metrics.QualityThresholds.Good;
     public const double OeeTarget = 0.85;
 
     public static int CalculateProductionDeltaSorted(List<ProductionLogDto> logs, DateTime from, DateTime to)
@@ -53,8 +53,6 @@ public static class ReviewAnalysis
         IReadOnlyList<ReviewDefectRowDto> concentrations,
         int previousAlarmCount,
         int previousDefectCount,
-        DateTime from,
-        DateTime to,
         Func<string, object[], string> L)
     {
         List<(string Text, int Deduct)> issues = [];

@@ -1,12 +1,12 @@
-using System.Windows.Threading;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using MainAPP.ViewModels;
 using Xunit;
+using System.Windows.Threading;
+using MainAPP.Models;
+using MainAPP.ViewModels;
 
 namespace MainAPP.E2E;
 

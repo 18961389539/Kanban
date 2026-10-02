@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using System.Collections.ObjectModel;
-
 namespace MainAPP.Benchmarks;
 
 /// <summary>

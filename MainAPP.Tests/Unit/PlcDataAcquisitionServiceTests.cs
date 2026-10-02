@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -8,9 +7,10 @@ using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
+using Xunit;
+using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging.Abstractions;
 using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
-using Xunit;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
 namespace MainAPP.Tests.Unit;
@@ -39,7 +39,6 @@ public class PlcDataAcquisitionServiceTests : IDisposable
         public void Enqueue(AlarmNotification notification) => Notifications.Add(notification);
     }
 
-    private readonly ITestOutputHelper _output;
     private readonly string _tempDir;
     private readonly AppSettings _appSettings;
     private readonly DeviceRepository _deviceRepository;
@@ -50,9 +49,8 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     private readonly InMemoryActiveAlarmStateService _activeState;
     private readonly PlcDataAcquisitionService _service;
 
-    public PlcDataAcquisitionServiceTests(ITestOutputHelper output)
+    public PlcDataAcquisitionServiceTests()
     {
-        _output = output;
         // 临时目录隔离 baselines.json 写入，避免污染真实 %APPDATA%/Kanban
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "KanbanPlcSvcTests_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
@@ -771,7 +769,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     [Fact]
     public void ResetShift_DeferPlcReset_WhenDisconnected()
     {
-        var device = AddDevice();
+        AddDevice();
         _connectionManager.IsConnected = false;
 
         _service.ResetShift();
@@ -1042,7 +1040,7 @@ public class PlcDataAcquisitionServiceTests : IDisposable
     public void RefreshDeviceData_AllDevicesNotConfigured_ReturnsNoDevicesToRead()
     {
         // OK/NG/状态地址全空：视为"无设备可读"，不应触发 MarkDisconnected
-        var device = AddDevice(okAddr: "", ngAddr: "", statusAddr: "", resetAddr: "");
+        AddDevice(okAddr: "", ngAddr: "", statusAddr: "", resetAddr: "");
 
         var success = _service.RefreshDeviceData(out var noDevices);
 

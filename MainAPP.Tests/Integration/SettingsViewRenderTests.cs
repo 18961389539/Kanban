@@ -1,12 +1,12 @@
-﻿using System.Windows;
-using LicenseManager.Services;
+﻿using LicenseManager.Services;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Windows;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
 using MainAPP.Views;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

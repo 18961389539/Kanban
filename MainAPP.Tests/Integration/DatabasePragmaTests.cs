@@ -1,11 +1,11 @@
 ﻿using System;
-using System.IO;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.Tests.Integration;
 

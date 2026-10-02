@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.IO;
+using System.Reflection;
+using System.Windows.Threading;
 using MainAPP.Services;
 using MainAPP.Tests.Integration;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

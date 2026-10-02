@@ -1,8 +1,8 @@
-﻿using System.Windows;
+﻿using Material.Icons;
+using Xunit;
+using System.Windows;
 using System.Windows.Controls;
 using MainAPP.Controls;
-using Material.Icons;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

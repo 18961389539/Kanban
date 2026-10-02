@@ -31,14 +31,11 @@ public partial class HistoryQueryView : UserControl
 
     /// <summary>
     /// 产量/状态/报警三个分页控件的统一 PageUpdated 处理函数。
-    /// 三个 Tab 的分页行为完全相同：同步 CurrentPage 后触发 QueryCurrentTab。
+    /// 只切换已缓存结果的当前页，不重新查询。
     /// </summary>
     private void Pagination_PageChanged(object sender, FunctionEventArgs<int> e)
     {
         if (DataContext is HistoryQueryViewModel vm)
-        {
-            vm.CurrentPage = e.Info;
-            vm.QueryCurrentTabCommand.Execute(null);
-        }
+            vm.GoToPage(e.Info);
     }
 }

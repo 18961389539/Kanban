@@ -1,8 +1,8 @@
+using HslCommunication;
+using Xunit;
 using System.Net;
 using System.Net.Sockets;
-using HslCommunication;
 using HslCommunication.Core.Net;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

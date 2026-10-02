@@ -3,7 +3,6 @@ using Kanban.Contracts.Enums;
 using MessagePack;
 using MessagePack.Resolvers;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

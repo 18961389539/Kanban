@@ -1,6 +1,5 @@
 using Kanban.Contracts.Display;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 [Trait("Category", "Unit")]

@@ -1,5 +1,4 @@
 using Kanban.Contracts.Metrics;
-
 namespace Kanban.Web;
 
 /// <summary>
@@ -40,3 +39,4 @@ public static class UiPalette
     public static bool HasOeeWindow(double runTime, double alarmTime, double pausedTime)
         => SnapshotMetrics.OeeActiveTimeSeconds(runTime, alarmTime, pausedTime) > 0;
 }
+

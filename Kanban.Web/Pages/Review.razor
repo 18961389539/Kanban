@@ -2,6 +2,7 @@
 @inject DashboardState Dashboard
 @inject IJSRuntime JS
 @inject ILogger<Review> Logger
+@inject NavigationManager Nav
 @using System.Globalization
 @using System.Text
 @using Kanban.Analysis
@@ -15,7 +16,7 @@
         <label class="filter-item">
             <span class="filter-label">@L.T("Hq_Device")</span>
             <select class="filter-input" @bind="DeviceId">
-                <option value="" disabled>@L.T("Hq_Device")</option>
+                <option value="">@L.T("Hq_AllDevices")</option>
                 @foreach (var d in DeviceOptions)
                 {
                     <option value="@d.Id">@d.Name</option>
@@ -44,8 +45,9 @@
             <button class="btn btn-primary" disabled="@(IsLoading || _deviceLoadFailed || DeviceOptions.Count == 0)" @onclick="SearchAsync">@L.T("Hq_Search")</button>
             <button class="btn" disabled="@(IsLoading || _deviceLoadFailed)" @onclick="ResetAsync">@L.T("Hq_Reset")</button>
             <button class="btn" disabled="@(IsLoading || _deviceLoadFailed || DeviceOptions.Count == 0)" @onclick="ExportYesterdayAsync">@L.T("Rv_Daily")</button>
-            <button class="btn" disabled="@(!ResultMatchesFilters || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
-            <button class="btn" disabled="@(!ResultMatchesFilters || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
+            <button class="btn" disabled="@(!CanExport || IsLoading)" @onclick="ExportCsvAsync">@L.T("Rv_Export")</button>
+            <button class="btn" disabled="@(!CanExport || IsLoading)" @onclick="ExportPdfAsync">@L.T("Rv_ExportPdf")</button>
+            <button class="btn" disabled="@(!CanExport || IsLoading)" @onclick="PrintAsync">@L.T("Rv_Print")</button>
         </div>
     </div>
 
@@ -69,7 +71,7 @@
     {
         <div class="loading-row">@L.T("Hq_Analyzing")</div>
     }
-    else if (QueryError is not null && Result is null)
+    else if (QueryError is not null && Result is null && Fleet is null)
     {
         <div class="filter-bar compact">
             <button class="btn btn-primary" disabled="@_deviceLoadFailed" @onclick="SearchAsync">@L.T("Hq_Search")</button>
@@ -78,6 +80,61 @@
     else if (!HasQueried)
     {
         <EmptyState Title="@L.T("Rv_HintTitle")" Hint="@L.T("Rv_HintBody")" Icon="📊" />
+    }
+    else if (Fleet is not null)
+    {
+        @if (!FleetMatchesFilters)
+        {
+            <div class="msg-banner msg-warn">@L.T("Rv_HintBody")</div>
+        }
+        <div class="review-summary">
+            <span class="rs-item"><b>@L.T("Hq_Device")</b> @L.T("Hq_AllDevices")</span>
+            <span class="rs-item"><b>@L.T("Hq_From")</b> @_fleetFrom.ToString("yyyy-MM-dd HH:mm")</span>
+            <span class="rs-item"><b>@L.T("Hq_To")</b> @_fleetTo.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        <section class="card">
+            <div class="card-title">@L.T("Hq_AllDevices") <span class="badge-soft">@L.T("Rv_FleetHint")</span></div>
+            <div class="table-scroll">
+                <table class="hq-table">
+                    <thead>
+                        <tr>
+                            <th>@L.T("Hq_Device")</th>
+                            <th class="num">@L.T("Lbl_TotalOutput")</th>
+                            <th class="num">@L.T("Hq_QualityRate")</th>
+                            <th class="num">OEE</th>
+                            <th class="num">@L.T("Rv_AlarmCount")</th>
+                            <th class="num">@L.T("Rv_Health")</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Fleet)
+                        {
+                            <tr>
+                                <td>
+                                    <button type="button" class="rv-text-btn" @onclick="() => FocusDeviceAsync(row.DeviceId)">@row.DeviceName</button>
+                                </td>
+                                @if (row.Review is null)
+                                {
+                                    <td class="num" colspan="5">@L.T("Hq_QueryFailed")</td>
+                                }
+                                else
+                                {
+                                    <td class="num">@((row.Review.TotalOk + row.Review.TotalNg).ToString("N0"))</td>
+                                    <td class="num">@Pct(row.Review.QualityRate)</td>
+                                    <td class="num">@Pct(row.Review.Oee)</td>
+                                    <td class="num">@row.Review.AlarmTriggered.ToString("N0")</td>
+                                    <td class="num">@row.Review.HealthScore</td>
+                                }
+                                <td>
+                                    <button type="button" class="chip-btn" @onclick="() => OpenDevice(row.DeviceId)">@L.T("Rv_OpenDevice")</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
     }
     else if (Result is null)
     {
@@ -91,6 +148,7 @@
         }
         <div class="review-summary">
             <span class="rs-item"><b>@L.T("Hq_Device")</b> @ReviewDeviceName</span>
+            <button type="button" class="chip-btn" @onclick="() => OpenDevice(_reviewDeviceId)">@L.T("Rv_OpenDevice")</button>
             <span class="rs-item"><b>@L.T("Hq_From")</b> @_reviewFrom.ToString("yyyy-MM-dd HH:mm")</span>
             <span class="rs-item"><b>@L.T("Hq_To")</b> @_reviewTo.ToString("yyyy-MM-dd HH:mm")</span>
         </div>
@@ -125,9 +183,27 @@
                 </div>
                 <div>
                     <div class="card-title">@L.T("Rv_WorkOrder")</div>
-                    <div class="rv-text">@Result.WorkOrderText</div>
-                    <div class="card-title sub" style="margin-top:10px">@L.T("Rv_Product")</div>
-                    <div class="rv-text dim">@Result.ProductText</div>
+                    <div class="rv-text dim">@L.T("Rv_WorkOrderHint")</div>
+                    @if (Result.WindowWorkOrders.Count == 0)
+                    {
+                        <div class="rv-text">—</div>
+                        <div class="card-title sub" style="margin-top:10px">@L.T("Rv_Product")</div>
+                        <div class="rv-text dim">—</div>
+                    }
+                    else if (Result.WindowWorkOrders.Count == 1)
+                    {
+                        <div class="rv-text">@Result.WindowWorkOrders[0].OrderText</div>
+                        <div class="card-title sub" style="margin-top:10px">@L.T("Rv_Product")</div>
+                        <div class="rv-text dim">@Result.WindowWorkOrders[0].ProductText</div>
+                    }
+                    else
+                    {
+                        @foreach (var wo in Result.WindowWorkOrders)
+                        {
+                            <div class="rv-text">@wo.OrderText</div>
+                            <div class="rv-text dim">@wo.ProductText</div>
+                        }
+                    }
                 </div>
                 <div>
                     <div class="card-title">@L.T("Rv_Recipe")</div>
@@ -323,8 +399,11 @@
     private string? ValidationMessage { get; set; }
     private string? QueryError { get; set; }
     private ReviewResult? Result { get; set; }
+    private List<FleetRow>? Fleet { get; set; }
     private DateTime _reviewFrom;
     private DateTime _reviewTo;
+    private DateTime _fleetFrom;
+    private DateTime _fleetTo;
     private string _reviewDeviceId = "";
     private bool _deviceLoadFailed;
 
@@ -332,6 +411,13 @@
         && string.Equals(DeviceId, _reviewDeviceId, StringComparison.Ordinal)
         && string.Equals(FromText, _reviewFrom.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal)
         && string.Equals(ToText, _reviewTo.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+    private bool FleetMatchesFilters => Fleet is not null
+        && string.IsNullOrEmpty(DeviceId)
+        && string.Equals(FromText, _fleetFrom.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal)
+        && string.Equals(ToText, _fleetTo.ToString(TimeFormat, CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+    private bool CanExport => ResultMatchesFilters || FleetMatchesFilters;
 
     private string ReviewDeviceName => DeviceOptions.FirstOrDefault(d => d.Id == _reviewDeviceId).Name ?? _reviewDeviceId;
 
@@ -351,12 +437,26 @@
         public List<ReviewShiftRowDto> Shifts = [];
         public int BaselineOutput;
         public double BaselineQuality, BaselineOee;
-        public string WorkOrderText = "—", ProductText = "—", RecipeText = "—";
+        public string RecipeText = "—";
+        public List<ReviewWorkOrderLine> WindowWorkOrders = [];
         public string ShiftName = "—";
         public string Takeaway = "";
         public List<(DateTime Time, int Ok, int Ng)> ChartData = [];
         public object? TrendOption, AlarmOption, TimelineOption;
         public bool Truncated;
+    }
+
+    private sealed class ReviewWorkOrderLine
+    {
+        public string OrderText = "—";
+        public string ProductText = "—";
+    }
+
+    private sealed class FleetRow
+    {
+        public string DeviceId = "";
+        public string DeviceName = "";
+        public ReviewResult? Review;
     }
 
     protected override async Task OnInitializedAsync()
@@ -365,10 +465,7 @@
         ApplyQuickRange(QuickIndex);
         await LoadDevicesAsync();
         if (DeviceOptions.Count > 0)
-        {
-            DeviceId = DeviceOptions[0].Id;
             await SearchAsync();
-        }
     }
 
     private async Task LoadDevicesAsync()
@@ -391,9 +488,9 @@
         await LoadDevicesAsync();
         if (_deviceLoadFailed)
             return;
-        if (!DeviceOptions.Any(d => d.Id == DeviceId))
-            DeviceId = DeviceOptions.FirstOrDefault().Id ?? "";
-        if (!HasQueried && !string.IsNullOrEmpty(DeviceId))
+        if (!string.IsNullOrEmpty(DeviceId) && !DeviceOptions.Any(d => d.Id == DeviceId))
+            DeviceId = "";
+        if (!HasQueried && DeviceOptions.Count > 0)
             await SearchAsync();
     }
 
@@ -440,18 +537,16 @@
             ValidationMessage = L.T("Hq_ValidationRange");
             return;
         }
-        if (string.IsNullOrEmpty(DeviceId))
-        {
-            ValidationMessage = L.T("Hq_NeedDevice");
-            return;
-        }
         if (_deviceLoadFailed)
         {
             ValidationMessage = L.T("Dv_LoadFailed");
             return;
         }
         to = EndOfMinute(to);
-        await RunReviewAsync(from, to);
+        if (string.IsNullOrEmpty(DeviceId))
+            await RunFleetAsync(from, to);
+        else
+            await RunReviewAsync(from, to);
     }
 
     private static DateTime EndOfMinute(DateTime minute)
@@ -463,9 +558,10 @@
         QueryError = null;
         HasQueried = false;
         Result = null;
+        Fleet = null;
         QuickIndex = DefaultQuickIndex;
         ApplyQuickRange(QuickIndex);
-        if (!string.IsNullOrEmpty(DeviceId))
+        if (DeviceOptions.Count > 0)
             await SearchAsync();
     }
 
@@ -478,6 +574,7 @@
         IsLoading = true;
         QueryError = null;
         Result = null;
+        Fleet = null;
         try
         {
             var deviceId = DeviceId;
@@ -500,11 +597,91 @@
         }
     }
 
-    private async Task<ReviewResult> BuildReviewAsync(DateTime from, DateTime to, string deviceId)
+    private async Task RunFleetAsync(DateTime from, DateTime to)
+    {
+        IsLoading = true;
+        QueryError = null;
+        Result = null;
+        Fleet = null;
+        try
+        {
+            var rows = await BuildFleetAsync(from, to);
+            _fleetFrom = from;
+            _fleetTo = to;
+            Fleet = rows;
+            HasQueried = true;
+            if (rows.Count > 0 && rows.All(row => row.Review is null))
+                QueryError = L.T("Hq_QueryFailed");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to analyze review fleet");
+            QueryError = L.T("Hq_QueryFailed");
+            HasQueried = true;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task<List<FleetRow>> BuildFleetAsync(DateTime from, DateTime to)
+    {
+        IReadOnlyList<WorkOrderDto> orders = [];
+        try
+        {
+            orders = await Dashboard.QueryWorkOrdersAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load work orders for fleet review");
+        }
+
+        var rows = new List<FleetRow>();
+        foreach (var device in _deviceConfigs)
+        {
+            try
+            {
+                rows.Add(new FleetRow
+                {
+                    DeviceId = device.Id,
+                    DeviceName = device.Name,
+                    Review = await BuildReviewAsync(from, to, device.Id, orders),
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to analyze review for device {DeviceId}", device.Id);
+                rows.Add(new FleetRow { DeviceId = device.Id, DeviceName = device.Name });
+            }
+        }
+
+        return rows
+            .OrderByDescending(row => row.Review?.Oee ?? -1)
+            .ThenBy(row => row.DeviceName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private async Task FocusDeviceAsync(string deviceId)
+    {
+        DeviceId = deviceId;
+        await SearchAsync();
+    }
+
+    private void OpenDevice(string deviceId)
+        => Nav.NavigateTo("/device/" + Uri.EscapeDataString(deviceId));
+
+    private async Task<ReviewResult> BuildReviewAsync(
+        DateTime from, DateTime to, string deviceId, IReadOnlyList<WorkOrderDto>? knownOrders = null)
     {
         var device = _deviceConfigs.FirstOrDefault(d => d.Id == deviceId)
             ?? throw new InvalidOperationException($"Device configuration is unavailable: {deviceId}");
-        var dto = await HistoryFetch.AnalyzeReviewWindowAsync(Dashboard, from, to, deviceId, null);
+        var analysisTask = HistoryFetch.AnalyzeReviewWindowAsync(Dashboard, from, to, deviceId, null);
+        var ordersTask = knownOrders is null
+            ? QueryWindowWorkOrdersAsync(deviceId, from, to)
+            : Task.FromResult<IReadOnlyList<WorkOrderDto>>(ReviewWorkOrderWindow.Select(knownOrders, deviceId, from, to));
+        await Task.WhenAll(analysisTask, ordersTask);
+        var dto = await analysisTask;
 
         var r = new ReviewResult
         {
@@ -554,10 +731,14 @@
 
         r.BaselineOutput = dto.BaselineOutput;
         r.BaselineQuality = dto.BaselineQuality;
-        var baselineOk = dto.BaselineOutput == 0
-            ? 0
-            : (int)Math.Round(dto.BaselineOutput * dto.BaselineQuality);
-        var baselineNg = Math.Max(0, dto.BaselineOutput - baselineOk);
+        var baselineOk = dto.BaselineOk;
+        var baselineNg = dto.BaselineNg;
+        // 旧采集端没有分项合格/不良时，才用产量×良率回推。
+        if (baselineOk == 0 && baselineNg == 0 && dto.BaselineOutput > 0)
+        {
+            baselineOk = (int)Math.Round(dto.BaselineOutput * dto.BaselineQuality);
+            baselineNg = Math.Max(0, dto.BaselineOutput - baselineOk);
+        }
         r.BaselineOee = OeeCalculator.CalculateOee(
             dto.BaselineQuality,
             OeeCalculator.CalculatePerformanceRate(baselineOk, baselineNg, targetCycle, dto.BaselineRunSeconds),
@@ -565,15 +746,12 @@
 
         (r.HealthIssues, r.HealthScore) = ReviewAnalysis.CalculateHealth(
             targetCycle, dto.Ok + dto.Ng, dto.AlarmTriggered, r.Timeline, r.Defects,
-            dto.PreviousAlarmTriggered, dto.PreviousDefectCount, from, to, L.T);
+            dto.PreviousAlarmTriggered, dto.PreviousDefectCount, L.T);
         r.Conclusions = ReviewAnalysis.BuildConclusions(
             ok, ng, r.AlarmTriggered, dto.LongestAlarmHours, r.LongestDowntimeDevice, dto.LongestAlarmName,
             r.Shifts, r.Defects, r.QualityRate, r.Oee, L.T);
 
-        // ── 工单/产品/配方 ──
-        var wo = Dashboard.GetWorkOrder(deviceId);
-        r.WorkOrderText = wo is null ? "—" : $"{wo.OrderNo} · {L.T("Meta_PlanWo", wo.TargetQuantity.ToString("N0"))}";
-        r.ProductText = wo is null ? "—" : $"{wo.ProductCode} · {wo.ProductName}";
+        r.WindowWorkOrders = (await ordersTask).Select(FormatWorkOrder).ToList();
         r.RecipeText = string.IsNullOrWhiteSpace(device.RecipeName) ? "—" : $"{device.RecipeName} · {device.RecipeValue:N0}";
         var metText = r.Oee >= ReviewAnalysis.OeeTarget ? L.T("Rv_Met") : L.T("Rv_NotMet");
         r.Takeaway = L.T("Rv_Takeaway", r.HealthScore, metText, r.LongestDowntimeText,
@@ -766,7 +944,7 @@
 
     private async Task ExportYesterdayAsync()
     {
-        if (_deviceLoadFailed || string.IsNullOrEmpty(DeviceId))
+        if (_deviceLoadFailed || DeviceOptions.Count == 0)
         {
             ValidationMessage = L.T(_deviceLoadFailed ? "Dv_LoadFailed" : "Hq_NeedDevice");
             return;
@@ -778,8 +956,16 @@
         {
             var from = Dashboard.ServerNow.Date.AddDays(-1);
             var to = from.AddDays(1).AddTicks(-1);
-            var report = await BuildReviewAsync(from, to, DeviceId);
-            await ExportCsvAsync(report, from, to, daily: true);
+            if (string.IsNullOrEmpty(DeviceId))
+            {
+                var rows = await BuildFleetAsync(from, to);
+                await ExportFleetCsvAsync(rows, from, to, daily: true);
+            }
+            else
+            {
+                var report = await BuildReviewAsync(from, to, DeviceId);
+                await ExportCsvAsync(report, from, to, daily: true);
+            }
         }
         catch (Exception ex)
         {
@@ -793,7 +979,155 @@
     }
 
     private Task ExportCsvAsync()
-        => Result is null || !ResultMatchesFilters ? Task.CompletedTask : ExportCsvAsync(Result, _reviewFrom, _reviewTo, daily: false);
+    {
+        if (FleetMatchesFilters)
+            return ExportFleetCsvAsync(Fleet!, _fleetFrom, _fleetTo, daily: false);
+        return Result is null || !ResultMatchesFilters
+            ? Task.CompletedTask
+            : ExportCsvAsync(Result, _reviewFrom, _reviewTo, daily: false);
+    }
+
+    private async Task ExportFleetCsvAsync(IReadOnlyList<FleetRow> rows, DateTime from, DateTime to, bool daily)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(L.T("Csv_SumRange", from, to));
+        sb.AppendLine(string.Join(',',
+            C(L.T("Hq_Device")), C(L.T("Lbl_TotalOutput")), C(L.T("Lbl_Ok")), C(L.T("Lbl_Ng")),
+            C(L.T("Hq_QualityRate")), "OEE", C(L.T("Rv_AlarmCount")), C(L.T("Rv_Health"))));
+        foreach (var row in rows)
+        {
+            if (row.Review is null)
+            {
+                sb.AppendLine(string.Join(',', C(row.DeviceName), C(L.T("Hq_QueryFailed"))));
+                continue;
+            }
+            var review = row.Review;
+            sb.AppendLine(string.Join(',',
+                C(row.DeviceName),
+                (review.TotalOk + review.TotalNg).ToString(CultureInfo.InvariantCulture),
+                review.TotalOk.ToString(CultureInfo.InvariantCulture),
+                review.TotalNg.ToString(CultureInfo.InvariantCulture),
+                Pct(review.QualityRate),
+                Pct(review.Oee),
+                review.AlarmTriggered.ToString(CultureInfo.InvariantCulture),
+                review.HealthScore.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        var fileName = daily
+            ? L.T("Rv_DailyCsvFile", from.Date)
+            : L.T("Rv_CsvFile", from, to);
+        await JS.InvokeVoidAsync("KanbanECharts.download", fileName, "\uFEFF" + sb, "text/csv;charset=utf-8");
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        if (!CanExport) return;
+        try
+        {
+            string[] lines;
+            string[] images;
+            DateTime from;
+            DateTime to;
+            if (FleetMatchesFilters)
+            {
+                lines = BuildFleetPdfLines(Fleet!, _fleetFrom, _fleetTo);
+                images = [];
+                from = _fleetFrom;
+                to = _fleetTo;
+            }
+            else
+            {
+                lines = BuildDetailPdfLines(Result!, _reviewFrom, _reviewTo, ReviewDeviceName);
+                images = await JS.InvokeAsync<string[]>("KanbanECharts.exportAllPng");
+                from = _reviewFrom;
+                to = _reviewTo;
+            }
+            await JS.InvokeVoidAsync("KanbanECharts.downloadPdf", L.T("Rv_PdfFile", from, to), lines, images);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to export review PDF");
+            QueryError = L.T("Rv_PdfFailed");
+        }
+    }
+
+    private string[] BuildFleetPdfLines(IReadOnlyList<FleetRow> rows, DateTime from, DateTime to)
+    {
+        var lines = new List<string>
+        {
+            "§" + L.T("Rv_HintTitle"),
+            L.T("Csv_SumRange", from, to),
+            "",
+            "§" + L.T("Hq_AllDevices"),
+        };
+        foreach (var row in rows)
+        {
+            lines.Add(row.Review is null
+                ? $"{row.DeviceName}  {L.T("Hq_QueryFailed")}"
+                : $"{row.DeviceName}  {L.T("Lbl_TotalOutput")} {row.Review.TotalOk + row.Review.TotalNg:N0}  {L.T("Hq_QualityRate")} {Pct(row.Review.QualityRate)}  OEE {Pct(row.Review.Oee)}  {L.T("Rv_AlarmCount")} {row.Review.AlarmTriggered:N0}  {L.T("Rv_Health")} {row.Review.HealthScore}");
+        }
+        return lines.ToArray();
+    }
+
+    private string[] BuildDetailPdfLines(ReviewResult report, DateTime from, DateTime to, string deviceName)
+    {
+        var lines = new List<string>
+        {
+            "§" + L.T("Rv_HintTitle"),
+            deviceName,
+            L.T("Csv_SumRange", from, to),
+            report.Takeaway,
+            "",
+            $"{L.T("Rv_Health")} {report.HealthScore}",
+            $"OEE {Pct(report.Oee)}",
+            $"{L.T("Hq_QualityRate")} {Pct(report.QualityRate)}",
+            $"{L.T("Lbl_TotalOutput")} {report.TotalOk + report.TotalNg:N0}",
+            $"{L.T("Lbl_Ok")} {report.TotalOk:N0}  {L.T("Lbl_Ng")} {report.TotalNg:N0}",
+            $"{L.T("Rv_AlarmCount")} {report.AlarmTriggered:N0}",
+            $"{L.T("Rv_LongestDowntime")} {report.LongestDowntimeText} {report.LongestDowntimeDevice} {report.LongestDowntimeAlarm}",
+        };
+        if (report.HealthIssues.Count > 0)
+        {
+            lines.Add("");
+            lines.Add("§" + L.T("Rv_Health"));
+            lines.AddRange(report.HealthIssues);
+        }
+        if (report.Conclusions.Count > 0)
+        {
+            lines.Add("");
+            lines.Add("§" + L.T("Rv_Conclusions"));
+            lines.AddRange(report.Conclusions.Select(c => c.Text));
+        }
+        lines.Add("");
+        lines.Add("§" + L.T("Rv_WorkOrder"));
+        if (report.WindowWorkOrders.Count == 0)
+            lines.Add("—");
+        else
+            lines.AddRange(report.WindowWorkOrders.Select(wo => $"{wo.OrderText}  {wo.ProductText}"));
+        lines.Add("");
+        lines.Add("§" + L.T("Rv_ShiftDetails"));
+        foreach (var shift in report.Shifts)
+        {
+            var total = shift.OkCount + shift.NgCount;
+            var quality = total > 0 ? $"{(double)shift.OkCount / total:P1}" : "—";
+            lines.Add($"{shift.ShiftName}  OK {shift.OkCount:N0}  NG {shift.NgCount:N0}  {L.T("Rv_AlarmCol")} {shift.AlarmCount}  {quality}");
+        }
+        lines.Add("");
+        lines.Add("§" + L.T("Rv_AlarmRank"));
+        if (report.Alarms.Count == 0)
+            lines.Add(L.T("Val_NoAlarms"));
+        else
+            lines.AddRange(report.Alarms.Select(alarm =>
+                $"{alarm.AlarmName}  {alarm.DeviceName}  {alarm.TriggerCount}  {alarm.TotalDurationHours.ToString("F2", CultureInfo.InvariantCulture)} h"));
+        lines.Add("");
+        lines.Add("§" + L.T("Rv_Defects"));
+        if (report.Defects.Count == 0)
+            lines.Add(L.T("Rv_DefectEmpty"));
+        else
+            lines.AddRange(report.Defects.Select(defect =>
+                $"{defect.DefectName}  {defect.ShiftName}  {defect.TimeRangeText}  {defect.Count:N0}  {defect.Share.ToString("P1", CultureInfo.InvariantCulture)}"));
+        return lines.ToArray();
+    }
 
     private async Task ExportCsvAsync(ReviewResult report, DateTime from, DateTime to, bool daily)
     {
@@ -812,6 +1146,15 @@
             sb.AppendLine($"{C(L.T("Rv_Health"))},{C(issue)}");
         foreach (var c in report.Conclusions)
             sb.AppendLine($"{C(L.T("Rv_Conclusions"))},{C(c.Text)}");
+        sb.AppendLine();
+        sb.AppendLine(C(L.T("Rv_WorkOrder")));
+        if (report.WindowWorkOrders.Count == 0)
+            sb.AppendLine("—,—");
+        else
+        {
+            foreach (var wo in report.WindowWorkOrders)
+                sb.AppendLine($"{C(wo.OrderText)},{C(wo.ProductText)}");
+        }
         sb.AppendLine(string.Join(',', C(L.T("Hq_Shift")), C(L.T("Hq_OkCol")), C(L.T("Hq_NgCol")), C(L.T("Rv_AlarmCol")), C(L.T("Hq_QualityRate"))));
         foreach (var s in report.Shifts)
         {
@@ -819,6 +1162,40 @@
             sb.AppendLine(string.Join(',',
                 C(s.ShiftName), s.OkCount.ToString(), s.NgCount.ToString(), s.AlarmCount.ToString(),
                 total > 0 ? $"{(double)s.OkCount / total:P1}" : "—"));
+        }
+
+        sb.AppendLine();
+        sb.AppendLine(C(L.T("Rv_AlarmRank")));
+        sb.AppendLine(string.Join(',',
+            C(L.T("Ac_AlarmName")), C(L.T("Ac_Device")), C(L.T("Rv_AlarmCol")), C(L.T("Rv_CsvDurationH")), C(L.T("Hq_Shift"))));
+        foreach (var alarm in report.Alarms)
+        {
+            sb.AppendLine(string.Join(',',
+                C(alarm.AlarmName), C(alarm.DeviceName), alarm.TriggerCount.ToString(CultureInfo.InvariantCulture),
+                alarm.TotalDurationHours.ToString("F2", CultureInfo.InvariantCulture), C(alarm.ShiftName)));
+        }
+
+        sb.AppendLine();
+        sb.AppendLine(C(L.T("Rv_Defects")));
+        sb.AppendLine(string.Join(',',
+            C(L.T("Rv_DefectName")), C(L.T("Hq_Shift")), C(L.T("Rv_DefectHour")), C(L.T("Ac_Count")), C(L.T("Rv_CsvShare"))));
+        foreach (var defect in report.Defects)
+        {
+            sb.AppendLine(string.Join(',',
+                C(defect.DefectName), C(defect.ShiftName), C(defect.TimeRangeText),
+                defect.Count.ToString(CultureInfo.InvariantCulture),
+                defect.Share.ToString("P1", CultureInfo.InvariantCulture)));
+        }
+
+        sb.AppendLine();
+        sb.AppendLine(C(L.T("Rv_Trend")));
+        sb.AppendLine(string.Join(',', C(L.T("Hq_Time")), C(L.T("Hq_ChartOk")), C(L.T("Hq_ChartNg"))));
+        foreach (var point in report.ChartData)
+        {
+            sb.AppendLine(string.Join(',',
+                point.Time.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                point.Ok.ToString(CultureInfo.InvariantCulture),
+                point.Ng.ToString(CultureInfo.InvariantCulture)));
         }
 
         var fileName = daily
@@ -833,10 +1210,44 @@
         {
             await JS.InvokeVoidAsync("window.print");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Failed to print review");
+            QueryError = L.T("Rv_PrintFailed");
         }
     }
+
+    private async Task<IReadOnlyList<WorkOrderDto>> QueryWindowWorkOrdersAsync(string deviceId, DateTime from, DateTime to)
+    {
+        try
+        {
+            var orders = await Dashboard.QueryWorkOrdersAsync();
+            return ReviewWorkOrderWindow.Select(orders, deviceId, from, to);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load work orders for review window");
+            return [];
+        }
+    }
+
+    private static ReviewWorkOrderLine FormatWorkOrder(WorkOrderDto order)
+    {
+        var product = $"{order.ProductCode} · {order.ProductName}".Trim();
+        return new ReviewWorkOrderLine
+        {
+            OrderText = $"{order.OrderNo} · {L.T("Meta_PlanWo", order.TargetQuantity.ToString("N0"))} · {WorkOrderStatusText(order.Status)}",
+            ProductText = string.IsNullOrWhiteSpace(order.ProductCode) && string.IsNullOrWhiteSpace(order.ProductName) ? "—" : product,
+        };
+    }
+
+    private static string WorkOrderStatusText(WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.Running => L.T("Wo_Running"),
+        WorkOrderStatus.Completed => L.T("Wo_Completed"),
+        WorkOrderStatus.Aborted => L.T("Wo_Aborted"),
+        _ => L.T("Wo_Pending"),
+    };
 
     private static string C(string? value) => ProductionAnalysis.CsvEscape(value);
 }

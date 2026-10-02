@@ -1,10 +1,10 @@
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Entities;
+using Kanban.Collector.Core.Mapping;
 using Kanban.Client;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.DependencyInjection;
-using Kanban.Collector.Core.Mapping;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

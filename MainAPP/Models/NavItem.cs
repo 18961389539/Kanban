@@ -3,9 +3,9 @@ using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
+using Material.Icons.WPF;
 using MainAPP.Resources;
 using Material.Icons;
-using Material.Icons.WPF;
 
 namespace MainAPP.Models;
 

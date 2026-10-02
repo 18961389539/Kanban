@@ -1,6 +1,6 @@
+using System.IO;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Text.Json;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
@@ -37,6 +37,21 @@ public interface IRecipeStore
     /// <summary>按 Id 删除配方。</summary>
     bool Delete(string id);
 
+    /// <summary>
+    /// 先把含本次新增/更新的快照落盘，成功后再改内存。
+    /// 落盘失败时内存集合保持原样。
+    /// </summary>
+    Task<Recipe> CommitUpsertAsync(Recipe recipe);
+
+    /// <summary>先落盘删除后的快照，成功后再从内存移除。配方不存在时返回 false 且不落盘。</summary>
+    Task<bool> CommitDeleteAsync(string id);
+
+    /// <summary>先落盘整表替换，成功后再替换内存。Remote 模式必须使用 <see cref="CommitReplaceAllAsync"/>。</summary>
+    void CommitReplaceAll(IEnumerable<Recipe> recipes);
+
+    /// <summary>先落盘整表替换，成功后再替换内存。</summary>
+    Task CommitReplaceAllAsync(IEnumerable<Recipe> recipes);
+
 }
 
 /// <summary>
@@ -55,6 +70,7 @@ public sealed class RecipeStore : IRecipeStore
     private readonly AppSettings _appSettings;
     private readonly IRemoteRecipeStore? _remoteStore;
     private readonly object _collectionLock = new();
+    private readonly SemaphoreSlim _commitGate = new(1, 1);
 
     /// <summary>集合同步锁（只读暴露）：供 WPF 绑定引擎注册跨线程同步（MainAPP 启动时调用
     /// BindingOperations.EnableCollectionSynchronization(Recipes, SyncRoot)）。</summary>
@@ -108,23 +124,22 @@ public sealed class RecipeStore : IRecipeStore
             {
                 lock (_collectionLock)
                 {
-                    // 加载校验过滤：非法条目（空名/地址不可解析/值越界/与已加载配方重名等）跳过并告警。
-                    // 文件本身保留（用户可手工修复），不做 .corrupt 备份——避免坏配方进入库后可被下发。
-                    // existing 传已加载集合，顺带拦截历史文件中的同机型重名。
+                    // 校验失败的条目仍然入库并记入 LoadErrors（禁止下发），避免下一次全量保存把它们从文件里抹掉。
+                    // existing 传已加载集合，顺带标记历史文件中的同机型重名。
                     foreach (var r in recipes)
                     {
                         var errors = RecipeValidator.Validate(r, Recipes);
-                        if (errors.Count > 0)
-                        {
-                            Log.Warning("配方加载校验失败，已跳过：{RecipeId} {RecipeName}（{Errors}）",
-                                r.Id, r.Name, string.Join("；", errors));
-                            continue;
-                        }
                         r.MachineType = (r.MachineType ?? "").Trim();
                         // 历史数据修复：早期版本/手工构造的配方未写时间戳（0001-01-01），
                         // 加载时回填当前时间，避免 UI"更新于"显示 01-01 00:00（下次保存时落盘修正）。
                         if (r.CreatedAt == default) r.CreatedAt = DateTime.Now;
                         if (r.UpdatedAt == default) r.UpdatedAt = DateTime.Now;
+                        if (errors.Count > 0)
+                        {
+                            r.LoadErrors.AddRange(errors);
+                            Log.Warning("配方加载校验失败，已保留但禁止下发：{RecipeId} {RecipeName}（{Errors}）",
+                                r.Id, r.Name, string.Join("；", errors));
+                        }
                         Recipes.Add(r);
                         _recipeMap[r.Id] = r;
                     }
@@ -150,15 +165,18 @@ public sealed class RecipeStore : IRecipeStore
 
     public async Task SaveAllAsync()
     {
-        if (_remoteStore?.IsEnabled == true)
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
         {
             List<Recipe> snapshot;
             lock (_collectionLock)
                 snapshot = Recipes.ToList();
-            await _remoteStore.SaveRecipesAsync(snapshot);
-            return;
+            await PersistSnapshotAsync(snapshot).ConfigureAwait(false);
         }
-        SaveAll();
+        finally
+        {
+            _commitGate.Release();
+        }
     }
 
     public void SaveAll()
@@ -166,33 +184,177 @@ public sealed class RecipeStore : IRecipeStore
         if (_remoteStore?.IsEnabled == true)
             throw new InvalidOperationException("Remote 模式不支持同步保存配方，请使用 SaveAllAsync。");
 
-        _appSettings.EnsureDirectory();
-        List<Recipe> snapshot;
-        lock (_collectionLock)
-            snapshot = Recipes.ToList();
-        var json = JsonSerializer.Serialize(snapshot, JsonOptions);
-        AppSettings.WriteFileAtomically(FilePath, json);
+        _commitGate.Wait();
+        try
+        {
+            List<Recipe> snapshot;
+            lock (_collectionLock)
+                snapshot = Recipes.ToList();
+            PersistSnapshot(snapshot);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    public async Task<Recipe> CommitUpsertAsync(Recipe recipe)
+    {
+        Normalize(recipe);
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var snapshot = ProjectUpsert(recipe);
+            await PersistSnapshotAsync(snapshot).ConfigureAwait(false);
+            lock (_collectionLock)
+                ApplyUpsertLocked(recipe);
+            return recipe;
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    public async Task<bool> CommitDeleteAsync(string id)
+    {
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            List<Recipe> snapshot;
+            lock (_collectionLock)
+            {
+                if (!_recipeMap.ContainsKey(id))
+                    return false;
+                snapshot = Recipes.Where(r => !string.Equals(r.Id, id, StringComparison.Ordinal)).ToList();
+            }
+
+            await PersistSnapshotAsync(snapshot).ConfigureAwait(false);
+            lock (_collectionLock)
+            {
+                if (_recipeMap.TryRemove(id, out var existing))
+                    Recipes.Remove(existing);
+            }
+            return true;
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    public void CommitReplaceAll(IEnumerable<Recipe> recipes)
+    {
+        if (_remoteStore?.IsEnabled == true)
+            throw new InvalidOperationException("Remote 模式不支持同步提交配方，请使用 CommitReplaceAllAsync。");
+
+        var list = NormalizeAll(recipes);
+        _commitGate.Wait();
+        try
+        {
+            PersistSnapshot(list);
+            ReplaceAll(list);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
+    }
+
+    public async Task CommitReplaceAllAsync(IEnumerable<Recipe> recipes)
+    {
+        var list = NormalizeAll(recipes);
+        await _commitGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            await PersistSnapshotAsync(list).ConfigureAwait(false);
+            ReplaceAll(list);
+        }
+        finally
+        {
+            _commitGate.Release();
+        }
     }
 
     public Recipe Upsert(Recipe recipe)
     {
-        recipe.UpdatedAt = DateTime.Now;
-        if (recipe.CreatedAt == default) recipe.CreatedAt = DateTime.Now; // 导入/手工构造数据兜底
-        recipe.MachineType = (recipe.MachineType ?? "").Trim();
+        Normalize(recipe);
+        lock (_collectionLock)
+            ApplyUpsertLocked(recipe);
+        return recipe;
+    }
+
+    private List<Recipe> ProjectUpsert(Recipe recipe)
+    {
         lock (_collectionLock)
         {
-            if (_recipeMap.TryGetValue(recipe.Id, out var existing))
+            var snapshot = new List<Recipe>(Recipes.Count + 1);
+            var replaced = false;
+            foreach (var existing in Recipes)
             {
-                var idx = Recipes.IndexOf(existing);
-                if (idx >= 0) Recipes[idx] = recipe;
+                if (!replaced && string.Equals(existing.Id, recipe.Id, StringComparison.Ordinal))
+                {
+                    snapshot.Add(recipe);
+                    replaced = true;
+                }
+                else
+                {
+                    snapshot.Add(existing);
+                }
             }
-            else
-            {
-                Recipes.Add(recipe);
-            }
-            _recipeMap[recipe.Id] = recipe;
+            if (!replaced) snapshot.Add(recipe);
+            return snapshot;
         }
-        return recipe;
+    }
+
+    private void ApplyUpsertLocked(Recipe recipe)
+    {
+        if (_recipeMap.TryGetValue(recipe.Id, out var existing))
+        {
+            var idx = Recipes.IndexOf(existing);
+            if (idx >= 0) Recipes[idx] = recipe;
+        }
+        else
+        {
+            Recipes.Add(recipe);
+        }
+        _recipeMap[recipe.Id] = recipe;
+    }
+
+    private static void Normalize(Recipe recipe)
+    {
+        recipe.UpdatedAt = DateTime.Now;
+        if (recipe.CreatedAt == default) recipe.CreatedAt = DateTime.Now;
+        recipe.MachineType = (recipe.MachineType ?? "").Trim();
+    }
+
+    private static List<Recipe> NormalizeAll(IEnumerable<Recipe> recipes)
+    {
+        var concrete = recipes.ToList();
+        foreach (var recipe in concrete)
+        {
+            recipe.MachineType = (recipe.MachineType ?? "").Trim();
+            if (recipe.CreatedAt == default) recipe.CreatedAt = DateTime.Now;
+            if (recipe.UpdatedAt == default) recipe.UpdatedAt = DateTime.Now;
+        }
+        return concrete;
+    }
+
+    private async Task PersistSnapshotAsync(IReadOnlyList<Recipe> snapshot)
+    {
+        if (_remoteStore?.IsEnabled == true)
+        {
+            await _remoteStore.SaveRecipesAsync(snapshot).ConfigureAwait(false);
+            return;
+        }
+        PersistSnapshot(snapshot);
+    }
+
+    private void PersistSnapshot(IReadOnlyList<Recipe> snapshot)
+    {
+        _appSettings.EnsureDirectory();
+        var json = JsonSerializer.Serialize(snapshot, JsonOptions);
+        AppSettings.WriteFileAtomically(FilePath, json);
     }
 
     public bool Delete(string id)

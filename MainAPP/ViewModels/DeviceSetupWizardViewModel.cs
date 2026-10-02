@@ -1,8 +1,8 @@
+using MainAPP.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
 

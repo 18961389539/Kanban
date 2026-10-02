@@ -13,7 +13,6 @@
     d:DesignHeight="900"
     d:DesignWidth="1400"
     PreviewKeyDown="OnPreviewKeyDown"
-    IsVisibleChanged="OnIsVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}" />

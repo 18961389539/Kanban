@@ -1,17 +1,17 @@
+using Kanban.Collector.Core.Data;
+using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
+using MainAPP.Services;
+using Xunit;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
-using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
 using MainAPP.Views;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

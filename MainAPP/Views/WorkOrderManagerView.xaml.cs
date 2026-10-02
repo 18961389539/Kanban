@@ -1,8 +1,8 @@
+using System.Windows.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Media;
 using Kanban.Collector.Core.Entities;
 using MainAPP.ViewModels;
 
@@ -105,7 +105,7 @@ public partial class WorkOrderManagerView : UserControl
     /// </summary>
     private void OnWorkOrderListPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is ListBox listBox)
+        if (sender is ListBox)
         {
             // 命中测试定位到 ListBoxItem（行），右键时把它选中
             var hit = e.OriginalSource as DependencyObject;

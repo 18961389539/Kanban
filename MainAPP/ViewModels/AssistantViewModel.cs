@@ -32,12 +32,10 @@ public sealed partial class AssistantTurn : ObservableObject
 /// <summary>AI问答页。发送时才准备模型；启动程序本身不下载、不拉起 llama-server。</summary>
 public partial class AssistantViewModel : ObservableObject
 {
-    public const int MaxToolRounds = 4;
     private readonly ILocalLlamaHost _host;
-    private readonly ILocalLlamaChatClient _chat;
     private readonly AssistantContextStore _context;
+    private readonly AssistantConversation _conversation;
     private readonly IAssistantQuestionTally? _questions;
-    private readonly IAssistantToolBroker? _tools;
     private CancellationTokenSource? _sendCancellation;
 
     public AssistantViewModel(
@@ -48,10 +46,9 @@ public partial class AssistantViewModel : ObservableObject
         IAssistantToolBroker? tools = null)
     {
         _host = host;
-        _chat = chat;
         _context = context;
+        _conversation = new AssistantConversation(chat, tools);
         _questions = questions;
-        _tools = tools;
         RefreshContext();
     }
 
@@ -95,110 +92,95 @@ public partial class AssistantViewModel : ObservableObject
         var question = Draft.Trim();
         Draft = "";
         _questions?.Record(question);
-        var earlier = Messages.Select(turn => (turn.IsUser, turn.Text)).ToList();
         Messages.Add(new AssistantTurn(true, question));
         var context = _context.Capture();
         ContextLine = Describe(context);
         IsBusy = true;
         Status = Strings.Assistant_Preparing;
         AssistantTurn? reply = null;
+        var toolsUsed = new List<string>();
+        var committed = false;
         var cancellation = new CancellationTokenSource();
         _sendCancellation = cancellation;
         try
         {
             var endpoint = await _host.EnsureStartedAsync(cancellation.Token).ConfigureAwait(true);
-            Status = Strings.Assistant_Answering;
-            var messages = new List<AssistantChatMessage> { new("system", AssistantPrompt.System) };
-            messages.AddRange(AssistantPrompt.History(earlier, question, ContextLine));
-            var specs = _tools?.Tools ?? [];
-            var rounds = 0;
-            while (true)
-            {
-                cancellation.Token.ThrowIfCancellationRequested();
-                var allowTools = _tools != null && rounds < MaxToolRounds;
-                if (!allowTools && rounds > 0)
-                    messages.Add(new AssistantChatMessage("user", "请根据上面的工具结果直接回答，不要再调用函数。"));
-                IReadOnlyList<AssistantToolCall>? calls = null;
-                var appended = 0;
-                await foreach (var delta in _chat.StreamRoundAsync(
-                        endpoint,
-                        messages,
-                        specs,
-                        allowTools,
-                        cancellation.Token)
-                    .ConfigureAwait(true))
-                {
-                    if (delta.ToolCalls is { Count: > 0 })
-                    {
-                        calls = delta.ToolCalls;
-                        if (reply != null && appended > 0 && reply.Text.Length >= appended)
-                        {
-                            reply.Text = reply.Text[..^appended];
-                            appended = 0;
-                            if (reply.Text.Length == 0)
-                            {
-                                Messages.Remove(reply);
-                                reply = null;
-                            }
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(delta.Text))
-                    {
-                        reply ??= new AssistantTurn(false, "");
-                        if (!Messages.Contains(reply))
-                            Messages.Add(reply);
-                        reply.Text += delta.Text;
-                        appended += delta.Text.Length;
-                    }
-                }
-
-                if (calls is not { Count: > 0 } || _tools == null || !allowTools)
-                    break;
-                rounds++;
-                Status = Strings.Assistant_Querying;
-                messages.Add(new AssistantChatMessage("assistant", "", calls));
-                foreach (var call in calls)
-                {
-                    var result = await Task.Run(
-                        () => _tools.Execute(call.Name, call.ArgumentsJson, DateTime.Now, context.DeviceName, question, cancellation.Token),
-                        cancellation.Token).ConfigureAwait(true);
-                    messages.Add(new AssistantChatMessage("tool", result, ToolCallId: call.Id, Name: call.Name));
-                }
-
-                Status = Strings.Assistant_Answering;
-            }
-
-            if (reply == null || reply.Text.Length == 0)
-                throw new InvalidOperationException("模型没有返回文字");
+            await _conversation.AskAsync(
+                endpoint,
+                question,
+                ContextLine,
+                context.DeviceName,
+                step => reply = Apply(reply, step),
+                toolsUsed,
+                cancellation.Token).ConfigureAwait(true);
             Status = "";
-            Audit(context, succeeded: true);
+            committed = true;
+            Audit(context, toolsUsed, succeeded: true);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
             if (reply == null || reply.Text.Length == 0)
                 DropEmptyReply(reply);
             Status = Strings.Assistant_Stopped;
-            Audit(context, succeeded: false);
+            Audit(context, toolsUsed, succeeded: false);
         }
         catch (FileNotFoundException)
         {
             DropEmptyReply(reply);
             Status = Strings.Assistant_NoServer;
-            Audit(context, succeeded: false);
+            Audit(context, toolsUsed, succeeded: false);
         }
         catch (Exception ex)
         {
             DropEmptyReply(reply);
             Status = string.Format(Strings.Assistant_Failed, ex.Message);
-            Audit(context, succeeded: false);
+            Audit(context, toolsUsed, succeeded: false);
         }
         finally
         {
+            if (!committed)
+                _conversation.Remember(question, ContextLine, reply?.Text);
             if (ReferenceEquals(_sendCancellation, cancellation))
                 _sendCancellation = null;
             cancellation.Dispose();
             IsBusy = false;
         }
+    }
+
+    private AssistantTurn? Apply(AssistantTurn? reply, AssistantStreamEvent step)
+    {
+        switch (step.Kind)
+        {
+            case AssistantStreamKind.Answering:
+                Status = Strings.Assistant_Answering;
+                break;
+            case AssistantStreamKind.Querying:
+                Status = Strings.Assistant_Querying;
+                break;
+            case AssistantStreamKind.Text:
+                reply ??= new AssistantTurn(false, "");
+                if (!Messages.Contains(reply))
+                    Messages.Add(reply);
+                reply.Text += step.Text;
+                break;
+            case AssistantStreamKind.Rewind:
+                if (reply != null && step.Chars > 0 && reply.Text.Length >= step.Chars)
+                {
+                    reply.Text = reply.Text[..^step.Chars];
+                    if (reply.Text.Length == 0)
+                    {
+                        Messages.Remove(reply);
+                        reply = null;
+                    }
+                }
+                break;
+            case AssistantStreamKind.Notice:
+                if (reply != null)
+                    reply.Notice = step.Text ?? "";
+                break;
+        }
+
+        return reply;
     }
 
     private async Task SendPresetAsync(string question)
@@ -247,9 +229,9 @@ public partial class AssistantViewModel : ObservableObject
         return $"{page}    {device}    {range}";
     }
 
-    private static void Audit(AssistantPromptContext context, bool succeeded)
+    private static void Audit(AssistantPromptContext context, IReadOnlyList<string> tools, bool succeeded)
     {
-        var detail = $"device={context.DeviceName ?? ""}; from={context.From:yyyy-MM-dd HH:mm}; to={context.To:yyyy-MM-dd HH:mm}";
+        var detail = $"device={context.DeviceName ?? ""}; from={context.From:yyyy-MM-dd HH:mm}; to={context.To:yyyy-MM-dd HH:mm}; tools={string.Join(",", tools)}";
         AuditLog.Record("Assistant.Ask", "Page", context.PageKey, succeeded, detail);
     }
 }

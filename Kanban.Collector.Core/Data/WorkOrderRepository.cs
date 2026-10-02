@@ -1,7 +1,7 @@
+using Kanban.Collector.Core.Services;
 using AutoMapper;
 using System.Collections.ObjectModel;
 using Kanban.Collector.Core.Entities;
-using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -317,14 +317,12 @@ public class WorkOrderRepository : IWorkOrderRepository
     public void Delete(int id)
     {
         EnsureLocalPersistence();
-        WorkOrder? removed = null;
         using var ctx = _dbProvider.CreateWorkOrderContext();
         var existing = ctx.WorkOrders.Find(id);
         if (existing == null)
         {
             return;
         }
-        removed = existing;
         ctx.WorkOrders.Remove(existing);
         ctx.SaveChanges();
 
@@ -332,7 +330,7 @@ public class WorkOrderRepository : IWorkOrderRepository
         BumpChangeVersion();
 
         Log.Information("工单删除 Id={Id} OrderNo={OrderNo} Device={Device} Status={Status}",
-            removed.Id, removed.OrderNo, removed.DeviceName, removed.Status);
+            existing.Id, existing.OrderNo, existing.DeviceName, existing.Status);
     }
 
     private void EnsureLocalPersistence()

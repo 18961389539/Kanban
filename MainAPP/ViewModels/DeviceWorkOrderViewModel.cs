@@ -1,13 +1,13 @@
-using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Kanban.Collector.Core.Services;
+using System.ComponentModel;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Helpers;
 

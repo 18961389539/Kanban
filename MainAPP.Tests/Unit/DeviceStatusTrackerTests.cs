@@ -2,10 +2,10 @@
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
+using Xunit;
 using Microsoft.Extensions.Logging;
 using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

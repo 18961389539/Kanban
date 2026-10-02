@@ -44,7 +44,12 @@ public sealed record AcquisitionDiagnosticsSnapshot
     public int ConsecutiveFailureCycles { get; init; }
     public DateTime? LastFailureAt { get; init; }
     public string? LastFailureMessage { get; init; }
+    /// <summary>最近采集周期的耗时，最多 60 点，按周期写入。</summary>
+    public IReadOnlyList<CycleDurationSample> RecentCycleSamples { get; init; } = [];
 }
+
+/// <summary>单个采集周期的完成时刻与耗时。</summary>
+public readonly record struct CycleDurationSample(DateTime Timestamp, long Milliseconds);
 
 /// <summary>
 /// PLC 数据采集服务：应用启动即开始定时轮询设备产量 + 状态 + 报警位 + 缺陷计数。

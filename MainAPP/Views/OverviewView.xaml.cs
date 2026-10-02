@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Windows.Input;
 using System.ComponentModel;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Threading;
 using MainAPP.ViewModels;
 using OxyPlot;

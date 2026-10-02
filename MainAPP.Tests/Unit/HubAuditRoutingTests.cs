@@ -1,14 +1,14 @@
-using System.IO;
-using Kanban.Collector.Hubs;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using Kanban.Collector.Hubs;
+using Kanban.Collector.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

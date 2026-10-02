@@ -2,7 +2,6 @@ using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using NSubstitute;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>所有数据源 reader 都应通过的最小协议契约。</summary>

@@ -129,6 +129,10 @@ public sealed record WorkOrderDto
     public string? Remark { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
+    /// <summary>实际开始时间。历史工单或尚未开始时为 null。</summary>
+    public DateTime? StartedAt { get; init; }
+    /// <summary>实际结束时间。进行中或待开始时为 null。</summary>
+    public DateTime? CompletedAt { get; init; }
 }
 
 /// <summary>

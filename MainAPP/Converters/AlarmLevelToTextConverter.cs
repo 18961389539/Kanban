@@ -1,7 +1,7 @@
+using MainAPP.Models;
 using System.Globalization;
 using System.Windows.Data;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using MainAPP.Resources;
 
 namespace MainAPP.Converters;

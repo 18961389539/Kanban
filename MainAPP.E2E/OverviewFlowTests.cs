@@ -1,13 +1,13 @@
-﻿using System.Diagnostics;
-using System.Windows.Threading;
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Diagnostics;
+using System.Windows.Threading;
+using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.E2E;
 

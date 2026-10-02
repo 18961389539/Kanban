@@ -1,11 +1,11 @@
 using System;
-using System.IO;
 using System.Linq;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Resources;
-using MainAPP.Services;
 using Xunit;
+using System.IO;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 
@@ -70,8 +70,6 @@ public sealed class CsvLocalizationTests : IDisposable
         new DataSourceCsvIOService(new FakeDialogService()).ExportDataSourcesToPath(device, dataSourcePath);
 
         var alarmLine = File.ReadLines(alarmPath).First();
-        var defectLine = File.ReadLines(defectPath).First();
-        var counterLine = File.ReadLines(counterAlarmPath).First();
         var sourceLines = File.ReadAllLines(dataSourcePath);
 
         Assert.StartsWith($"{alarmNameHeader},", alarmLine);

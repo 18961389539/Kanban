@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Kanban.Collector.Core.Models;
 
 namespace MainAPP.Services;
 
@@ -52,6 +53,23 @@ public static class AssistantToolCatalog
 
     private static AssistantToolSpec Tool(string name, string title, string description, params AssistantToolParam[] parameters)
         => new(name, title, description, parameters);
+
+    /// <summary>账号和审计只给管理员，点位地址只给工程师及以上。其余查询所有角色都能用。</summary>
+    public static UserRole? RequiredRole(string name) => name switch
+    {
+        "list_accounts" or "list_audit" => UserRole.Admin,
+        "list_addresses" => UserRole.Engineer,
+        _ => null,
+    };
+
+    public static bool IsAllowed(string name, UserRole role)
+    {
+        var required = RequiredRole(name);
+        return required == null || role.AtLeast(required.Value);
+    }
+
+    public static IReadOnlyList<AssistantToolSpec> ForRole(UserRole role)
+        => All.Where(tool => IsAllowed(tool.Name, role)).ToList();
 }
 
 public static class AssistantToolQuestions
@@ -128,16 +146,21 @@ public interface IAssistantToolBroker
 
 public sealed class AssistantToolBroker : IAssistantToolBroker
 {
+    /// <summary>单次工具结果的字符上限。再长就截断，避免一轮查询把上下文撑满。</summary>
+    public const int MaxResultChars = 1500;
+
     private readonly IAssistantQueryEngine _engine;
     private readonly IAssistantFactSheet _facts;
+    private readonly IAuthorizationService _authorization;
 
-    public AssistantToolBroker(IAssistantQueryEngine engine, IAssistantFactSheet facts)
+    public AssistantToolBroker(IAssistantQueryEngine engine, IAssistantFactSheet facts, IAuthorizationService authorization)
     {
         _engine = engine;
         _facts = facts;
+        _authorization = authorization;
     }
 
-    public IReadOnlyList<AssistantToolSpec> Tools => AssistantToolCatalog.All;
+    public IReadOnlyList<AssistantToolSpec> Tools => AssistantToolCatalog.ForRole(CurrentRole);
 
     public string Execute(
         string name,
@@ -148,13 +171,15 @@ public sealed class AssistantToolBroker : IAssistantToolBroker
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (!AssistantToolCatalog.IsAllowed(name, CurrentRole))
+            return "没有权限查询这项。";
         try
         {
             var (period, device) = ReadArgs(argumentsJson);
             var text = name is "query_output" or "query_alarm_duration"
                 ? Metric(name, period, device, userQuestion, now, selectedDeviceName, cancellationToken)
                 : _facts.ReadSection(name, now, selectedDeviceName, period, device);
-            return Trim(text);
+            return Limit(text);
         }
         catch (OperationCanceledException)
         {
@@ -165,6 +190,11 @@ public sealed class AssistantToolBroker : IAssistantToolBroker
             return "这次没有查到。";
         }
     }
+
+    private UserRole CurrentRole
+        => _authorization.IsInRole(UserRole.Admin) ? UserRole.Admin
+        : _authorization.IsInRole(UserRole.Engineer) ? UserRole.Engineer
+        : UserRole.Operator;
 
     private string Metric(
         string name,
@@ -202,10 +232,14 @@ public sealed class AssistantToolBroker : IAssistantToolBroker
             ? value.GetString() ?? ""
             : "";
 
-    private static string Trim(string? text)
+    internal static string Limit(string? text)
     {
         var lines = (text ?? "").Split('\n').Select(AssistantPrompt.CleanFact).OfType<string>().ToList();
         var joined = string.Join("\n", lines);
-        return joined.Length == 0 ? "这次没有查到。" : joined;
+        if (joined.Length == 0)
+            return "这次没有查到。";
+        if (joined.Length <= MaxResultChars)
+            return joined;
+        return joined[..MaxResultChars] + "\n（后面还有，这次只带了前面一段。）";
     }
 }

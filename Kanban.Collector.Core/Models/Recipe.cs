@@ -30,6 +30,21 @@ public partial class Recipe : ObservableObject
     [ObservableProperty]
     private DateTime _updatedAt = DateTime.Now;
 
+    /// <summary>
+    /// 加载时校验失败的原因。非空表示配方仍保留在库中，但禁止下发。
+    /// 不落盘：下次加载会按当前规则重新校验。
+    /// </summary>
+    [JsonIgnore]
+    public List<string> LoadErrors { get; } = new();
+
+    /// <summary>是否允许下发（加载校验通过）。</summary>
+    [JsonIgnore]
+    public bool CanApply => LoadErrors.Count == 0;
+
+    /// <summary>加载校验错误摘要（卡片展示；空 = 可下发）。</summary>
+    [JsonIgnore]
+    public string LoadErrorSummary => LoadErrors.Count == 0 ? "" : string.Join("；", LoadErrors);
+
     /// <summary>配方参数项（private set 防止外部替换集合导致事件订阅丢失）。</summary>
     [JsonInclude]
     public ObservableCollection<RecipeItem> Items { get; private set; } = new();

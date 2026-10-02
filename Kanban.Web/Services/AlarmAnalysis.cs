@@ -66,7 +66,6 @@ public static class AlarmAnalysis
     /// <summary>服务端窗口统计上的洞察（无全量事件：连锁/待恢复由 DTO 结构化字段承载）。</summary>
     public static string? BuildInsight(
         AlarmWindowStatsDto stats,
-        DateTime effectiveTo,
         Func<string, object[], string> localize)
     {
         var chart = stats.Chart.Select(s => (s.AlarmName, s.TriggerCount, s.AvgDurationMin)).ToList();

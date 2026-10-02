@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using LicenseManager.Crypto;
+using System.Runtime.CompilerServices;
 
 namespace MainAPP.Tests.Unit;
 

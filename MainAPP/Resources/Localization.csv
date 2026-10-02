@@ -466,7 +466,7 @@ Wpf,K329,实时故障,Real-time Faults,リアルタイム故障,Falhas em tempo 
 Wpf,K330,新报警静音,Mute New Alarms,新規アラームをミュート,Silenciar novos alarmes
 Wpf,Home_MuteShort,静音,Mute,ミュート,Silenciar
 Wpf,Home_SelectDeviceHint,选择设备,Select device,設備を選択,Selecione o dispositivo
-Wpf,K331,切换新报警声音与闪烁；报警列表仍照常更新,Toggle sound and flashing for new alarms; the alarm list still updates,新規アラームの音と点滅を切替（一覧は更新されます）,Alterna som e piscada de novos alarmes; a lista de alarmes continua atualizando
+Wpf,K331,切换新报警声音与闪烁（与主页同一开关，整个程序生效）；报警列表仍照常更新,"Toggle sound and flashing for new alarms (same switch as Home, applies to the whole app); the alarm list still updates",新規アラームの音と点滅を切替（ホームと同一、アプリ全体に効く。一覧は更新されます）,Alterna som e piscada de novos alarmes (o mesmo botão da página inicial; vale para o aplicativo); a lista continua atualizando
 Wpf,K332,级别,Level,レベル,Nível
 Wpf,K333,实时故障列表,Real-time Fault List,リアルタイム故障一覧,Lista de falhas em tempo real
 Wpf,K335,生产仪表板,Production Dashboard,生産ダッシュボード,Painel de produção
@@ -580,7 +580,7 @@ Wpf,K452,恢复文件,Recovery Files,復元ファイル,Arquivos de recuperaçã
 Wpf,K453,最近成功写入历史,Last Successful Write,直近成功書込み,Última gravação bem-sucedida no histórico
 Wpf,K454,写入失败次数,Write Failures,書込み失敗回数,Falhas de gravação
 Wpf,K455,数据库存储,Database Storage,データベース保存,Armazenamento do banco de dados
-Wpf,K456,系统资源与数据一致性,System Resources & Data Consistency,システム資源とデータ整合性,Recursos do sistema e consistência de dados
+Wpf,K456,采集进程资源与配置检查,Acquisition process resources & configuration,収集プロセスのリソースと設定チェック,Recursos do processo de coleta e verificação
 Wpf,K457,CPU / 内存,CPU / Memory,CPU / メモリ,CPU / Memória
 Wpf,K458,程序运行时长,Program Uptime,プログラム稼働時間,Tempo de atividade do programa
 Wpf,K459,GPU 使用率,GPU Usage,GPU使用率,Uso de GPU
@@ -1796,7 +1796,7 @@ Wpf,Web_Rv_HintBody,选择设备与时间范围后点击“查询”，生成健
 Wpf,Web_Rv_Health,设备健康评分,Device Health,デバイス健康スコア,Saúde do dispositivo
 Wpf,Web_Rv_AlarmCount,报警次数,Alarm Count,警報回数,Nº de alarmes
 Wpf,Web_Rv_CurrentShift,当前班次,Current Shift,現在のシフト,Turno atual
-Wpf,Web_Rv_WorkOrder,当前工单,Current Work Order,現在の工単,Ordem de produção atual
+Wpf,Web_Rv_WorkOrder,窗口工单,Work orders in window,期間内の工単,Ordens na janela
 Wpf,Web_Rv_Product,产品 / 批次,Product / Batch,製品 / ロット,Produto / Lote
 Wpf,Web_Rv_Recipe,当前配方,Current Recipe,現在のレシピ,Receita atual
 Wpf,Web_Rv_RecipeHint,配方值来自当前设备配置,Recipe value from device config,レシピ値はデバイス設定から,Valor da receita vem da configuração do dispositivo
@@ -1967,12 +1967,12 @@ Wpf,K706,配方编辑,Recipe Editor,レシピ編集,Editor de receitas
 Wpf,K707,最频繁报警（{0}）,Most Frequent Alarm ({0}),最も頻発したアラーム（{0}）,Alarme mais frequente ({0})
 Wpf,K708,仅显示前 {0} 条,Showing first {0} only,先頭 {0} 件のみ表示,Exibindo apenas os primeiros {0}
 Wpf,K709,当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响,Count of alarms not yet recovered; live snapshot refreshed about every 3s; affected by level/device/search filters,未復帰のアラーム件数。リアルタイム（約3秒更新）。レベル/設備/検索フィルタの影響あり,"Nº de alarmes ainda não recuperados; snapshot em tempo real, atualizado a cada ~3 s; afetado pelos filtros de nível/dispositivo/pesquisa"
-Wpf,K710,今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响,Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし,Total de disparos históricos desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima
-Wpf,K711,今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响,Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above,本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし,Total de recuperações históricas desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima
+Wpf,K710,今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化,"Total trigger events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter",本日 0:00 以降の発生回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ,Total de disparos desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo
+Wpf,K711,今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化,"Total recovery events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter",本日 0:00 以降の復帰回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ,Total de recuperações desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo
 Wpf,K712,当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响,Earliest-started alarm not yet recovered; live snapshot; affected by level/device/search filters,未復帰アラームのうち最も早く発生し継続中のもの。リアルタイム。レベル/設備/検索フィルタの影響あり,Alarme mais antigo ainda não recuperado; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa
 Wpf,K713,当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响,Number of devices with unrecovered alarms; live snapshot; affected by level/device/search filters,未復帰アラームがある設備台数。リアルタイム。レベル/設備/検索フィルタの影響あり,Nº de dispositivos com alarmes não recuperados; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa
-Wpf,K714,按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新,Top alarm by trigger count in the selected time range above; refreshed about every 60s,上部で選択した時間範囲内の発生回数第1位。約60秒更新,Alarme com mais disparos no período selecionado acima; atualizado a cada ~60 s
-Wpf,K717,事件流与 Top 排行按所选范围。今日触发、恢复始终从今天 0:00 起。,Event stream and Top list follow the selected range. Today's trigger and recover counts always start at midnight.,イベント流と Top は選択した範囲に従います。本日の発生・復帰は常に本日 0:00 から集計します。,O fluxo de eventos e o Top seguem o período selecionado. Disparos e recuperações de hoje contam sempre desde 0:00.
+Wpf,K714,所选时间范围内、且符合当前级别/设备/搜索筛选的触发次数第一名；约每 60 秒刷新,"Top alarm by trigger count in the selected time range, after level, device, and search filters; refreshed about every 60s",選択した時間範囲で、レベル/設備/検索フィルタ後の発生回数第1位。約60秒更新,"Alarme com mais disparos no período selecionado, após filtros de nível, dispositivo e pesquisa; atualizado a cada ~60 s"
+Wpf,K717,事件流与 Top 排行跟随时间范围，并受级别、设备和搜索筛选。今日触发和恢复只随设备筛选，从今天 0:00 起算。,"Event stream and Top list follow the selected range and the level, device, and search filters. Today's trigger and recover counts follow only the device filter and always start at midnight.","イベント流と Top は時間範囲とレベル/設備/検索に従います。本日の発生・復帰は設備フィルタのみ、本日 0:00 から集計します。","O fluxo de eventos e o Top seguem o período e os filtros de nível, dispositivo e pesquisa. Disparos e recuperações de hoje seguem só o dispositivo e contam desde 0:00."
 Wpf,K718,同一报警在短时间内重复触发已合并显示，共 {0} 条,Repeated triggers of the same alarm within a short window merged; {0} events total,同じアラームの短時間内の繰り返しを統合表示。合計 {0} 件,Disparos repetidos do mesmo alarme numa janela curta foram mesclados; {0} eventos no total
 Wpf,K719,较昨日同期：昨日 {0} / 今日 {1},Versus yesterday at the same time: yesterday {0} / today {1},昨日同期比：昨日 {0}／今日 {1},Comparado com ontem no mesmo horário: ontem {0} / hoje {1}
 Wpf,K720,刚刚,Just now,たった今,Agora mesmo
@@ -2114,6 +2114,12 @@ Core,RecipeNotFound,配方不存在：{0},Recipe not found: {0},レシピが見�
 Core,RecipeApplyCancelled,下发已取消，已回滚,"Apply cancelled, rolled back",適用をキャンセルし、ロールバックしました,"Apply cancelled, rolled back"
 Core,RecipeWriteInProgress,参数 {0} 写入中…,Writing parameter {0}…,パラメータ {0} を書き込み中…,Writing parameter {0}…
 Core,RecipeStringNotRolledBack,字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对,String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually,文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください,Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente
+Core,RecipeRollbackIncomplete,回滚不完整（{0}），请人工确认 PLC 当前值,"Rollback incomplete ({0}); verify the current PLC values manually",ロールバックが不完全です（{0}）。PLC の現在値を手動で確認してください,"Rollback incompleto ({0}); verifique os valores atuais do PLC manualmente"
+Core,RecipeRollbackItemFailed,回滚失败：{0},Rollback failed: {0},ロールバック失敗：{0},Rollback failed: {0}
+Core,RecipeRollbackRestored,已恢复写入前的值,Restored the value from before the write,書き込み前の値に戻しました,Restored the value from before the write
+Core,RecipeDeviceRunning,设备正在运行，禁止下发配方,"Device is running; recipe apply is blocked",設備が稼働中のため、レシピを適用できません,"Device is running; recipe apply is blocked"
+Core,RecipeApplyBusy,该设备正在下发配方，请等待当前下发完成,"A recipe apply is already running on this device; wait for it to finish",この設備ではレシピ適用が進行中です。完了までお待ちください,"A recipe apply is already running on this device; wait for it to finish"
+Core,RecipeLoadInvalid,配方未通过校验，禁止下发：{0},Recipe failed validation and cannot be applied: {0},レシピが検証を通過していないため、適用できません：{0},Recipe failed validation and cannot be applied: {0}
 Wpf,Language_Portuguese,葡萄牙语,Portuguese,ポルトガル語,Português
 Wpf,Alarm_LocalizedNames,多语言名称,Localized names,多言語名称,Nomes localizados
 Wpf,Alarm_NameEn,名称(EN),Name (EN),名前(EN),Nome (EN)
@@ -2599,6 +2605,7 @@ Wpf,Csv_Export_PageHint,"本文件仅包含当前页数据（每页最多 {0} �
 Wpf,Csv_WorkOrder_FileName,"工单列表_{0:yyyyMMddHHmm}.csv","work_orders_{0:yyyyMMddHHmm}.csv","工単リスト_{0:yyyyMMddHHmm}.csv","ordens_{0:yyyyMMddHHmm}.csv"
 Wpf,Csv_DailyReport_FileName,"生产日报_{0:yyyyMMdd}_{1}.pdf","daily_report_{0:yyyyMMdd}_{1}.pdf","生産日報_{0:yyyyMMdd}_{1}.pdf","relatorio_diario_{0:yyyyMMdd}_{1}.pdf"
 Wpf,Recipe_SwitchDiscardConfirm,"切换配方会放弃当前未保存的编辑，是否继续？","Switching recipes discards unsaved edits. Continue?","レシピ切替で未保存の編集が失われます。続行しますか？","Trocar de receita descartará edições não salvas. Continuar?"
+Wpf,Recipe_ApplyUnsaved,当前配方有未保存的修改，请先保存再下发,This recipe has unsaved edits. Save it before applying,未保存の変更があります。適用する前に保存してください,Esta receita tem edições não salvas. Salve antes de aplicar
 Wpf,Home_Tip_ShiftOk,"当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\n当前：{0} 件","Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\nNow: {0} pcs","当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\n現在：{0} 個","OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\nAgora: {0} pçs"
 Wpf,Home_Tip_WorkOrderCumulativeOk,"工单累计良品数 = 工单时间窗口内的 OK 产量（非当班会话累计、不含 NG）。\n当前：{0} 件","Order cumulative OK = OK output in the order time window (not shift session total, excludes NG).\nNow: {0} pcs","工単累計良品数 = 工単時間窓の OK 数（当シフトのセッション累計ではなく、NG を含まない）。\n現在：{0} 個","OK acumulado da ordem = OK na janela da ordem (não o total da sessão do turno; exclui NG).\nAgora: {0} pçs"
 Wpf,Home_Tip_WorkOrderAchievement,"工单达成率 = 工单内 OK 产量 ÷ 计划产量，超额时封顶 100%。\n口径为工单时间窗口内的合格产量（与工单管理页一致），不是当班会话累计，也不是速度达成率。\n当前：{0:N0} / {1:N0} 件 = {2}","Order achievement = OK output in the order window ÷ planned quantity, capped at 100%.\nUses OK count in the work-order time window (same as the Work Order page), not shift session totals and not speed achievement.\nNow: {0:N0} / {1:N0} pcs = {2}","工単達成率 = 工単内 OK 生産量 ÷ 計画数量（100% 上限）。\n工単時間窓の合格数（作業指示ページと同じ）。当シフト累計でも速度達成率でもありません。\n現在：{0:N0} / {1:N0} 個 = {2}","Realização da ordem = OK na janela da ordem ÷ quantidade planejada, limitado a 100%.\nUsa OK da janela da ordem (igual à página de Ordens), não o total da sessão do turno nem a realização de velocidade.\nAgora: {0:N0} / {1:N0} pçs = {2}"
@@ -2688,7 +2695,7 @@ Wpf,Hq_Tip_WindowMttr,所选查询时间窗内已配对报警的平均恢复耗�
 Wpf,Ln_Tip_ExtraAlarms,该设备还有未展开的未恢复报警。卡片只展示第一条。\n另有 {0:N0} 条,More unrecovered alarms on this device are not expanded. The card shows the first only.\n{0:N0} more,このデバイスには未展開の未復旧アラームがあります。カードは先頭のみ表示。\nほか {0:N0} 件,Há mais alarmes sem recuperação neste dispositivo. O cartão mostra só o primeiro.\nMais {0:N0}
 Wpf,Ac_GroupRange,范围,Range,範囲,Período
 Wpf,Ac_GroupSearch,搜索,Search,検索,Pesquisar
-Wpf,Ac_Tip_RankDuration,统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\n当前：{0},"Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\nNow: {0}",統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\n現在：{0},"Soma das durações deste alarme na janela (pareado se recuperado, senão até agora).\nAgora: {0}"
+Wpf,Ac_Tip_RankDuration,统计窗口内该报警各次持续时长之和。窗口开始前已触发的，从窗口起点算到恢复或现在。\n当前：{0},"Sum of durations inside the stats window. If it started before the window, counting begins at the window start.\nNow: {0}",統計窓内の継続時間合計。窓の開始前から鳴っている場合は窓の起点から数えます。\n現在：{0},"Soma das durações dentro da janela. Se começou antes, a contagem parte do início da janela.\nAgora: {0}"
 Wpf,Mo_Tip_Health,综合 PLC 连接、采集循环是否运行、最近一轮是否成功。\n当前：{0},"Combines PLC connection, whether the acquisition loop is running, and whether the last cycle succeeded.\nNow: {0}",PLC 接続、収集ループ稼働、直近サイクル成功を総合。\n現在：{0},"Junta ligação PLC, se o loop de coleta está a correr e se o último ciclo teve sucesso.\nAgora: {0}"
 Wpf,Mo_Tip_DisconnectDuration,采集服务与 PLC 断开后的持续时长。\n当前：{0},How long the collector has been disconnected from the PLC.\nNow: {0},コレクタが PLC から切断されてからの経過。\n現在：{0},Há quanto tempo o coletor está desligado do PLC.\nAgora: {0}
 Wpf,Mo_Tip_CompletedCycles,采集循环已完成的总轮次（成功与失败都计入）。\n当前：{0:N0},Completed acquisition cycles (success and failure both count).\nNow: {0:N0},収集ループの完了回数（成功も失敗も含む）。\n現在：{0:N0},Ciclos de coleta concluídos (sucesso e falha entram).\nAgora: {0:N0}
@@ -2742,6 +2749,15 @@ Wpf,Web_Rv_Defects,缺陷集中度,Defect concentration,不良集中度,Concentr
 Wpf,Web_Rv_DefectEmpty,窗口内无缺陷增量,No defect increment in the window,窓内に不良増分なし,Sem incremento de defeitos na janela
 Wpf,Web_Rv_DefectName,缺陷,Defect,不良,Defeito
 Wpf,Web_Rv_DefectHour,时段,Hour,時間帯,Hora
+Wpf,Web_Rv_WorkOrderHint,按实际开停时间与复盘窗口重叠,Orders whose actual run overlaps this window,実際の開始・終了が復盤窓と重なる工単,Ordens cuja execução real cruza esta janela
+Wpf,Web_Rv_PrintFailed,打印失败，请重试,Print failed. Please try again.,印刷に失敗しました。再試行してください。,Falha ao imprimir. Tente novamente.
+Wpf,Web_Rv_ExportPdf,导出 PDF,Export PDF,PDF エクスポート,Exportar PDF
+Wpf,Web_Rv_PdfFile,生产复盘_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf,review_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf,生産レビュー_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf,revisao_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf
+Wpf,Web_Rv_PdfFailed,PDF 导出失败，请重试,PDF export failed. Please try again.,PDF の書き出しに失敗しました。再試行してください。,Falha ao exportar PDF. Tente novamente.
+Wpf,Web_Rv_OpenDevice,查看详情,View details,詳細を表示,Ver detalhes
+Wpf,Web_Rv_FleetHint,点击设备名查看该设备复盘，查看详情进入设备页,Click a device name for its review. View details opens the device page.,設備名でその復盤を開き、詳細で設備ページへ,Clique no nome para a revisão. Ver detalhes abre a página do dispositivo.
+Wpf,Web_Rv_CsvDurationH,持续(h),Duration (h),継続(h),Duração (h)
+Wpf,Web_Rv_CsvShare,占比,Share,割合,Parcela
 Wpf,Web_NotFound,页面不存在,Page not found,ページが見つかりません,Página não encontrada
 Wpf,Web_NotFoundHint,请从顶栏选择功能页面,Use the top navigation to open a page,上部ナビからページを開いてください,Use a navegação superior para abrir uma página
 Wpf,Web_SkipToContent,跳到主要内容,Skip to main content,メインコンテンツへ,Ir para o conteúdo principal

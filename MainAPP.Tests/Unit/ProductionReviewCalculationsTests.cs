@@ -1,6 +1,6 @@
 using Kanban.Collector.Core.Entities;
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

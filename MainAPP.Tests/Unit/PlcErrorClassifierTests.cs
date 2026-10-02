@@ -2,8 +2,8 @@ using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using System.Net.Sockets;
 using Xunit;
+using System.Net.Sockets;
 
 namespace MainAPP.Tests.Unit;
 

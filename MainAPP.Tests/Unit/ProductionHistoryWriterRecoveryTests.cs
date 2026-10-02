@@ -1,12 +1,12 @@
-using System.IO;
-using System.Text.Json;
 using Kanban.Collector.Services;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.IO;
+using System.Text.Json;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

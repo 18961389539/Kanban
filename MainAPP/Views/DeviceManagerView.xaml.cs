@@ -1,3 +1,4 @@
+using MainAPP.Models;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -6,7 +7,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.ComponentModel;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Serilog;

@@ -1,7 +1,7 @@
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

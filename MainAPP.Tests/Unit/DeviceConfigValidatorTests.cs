@@ -2,8 +2,8 @@ using System.Linq;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using Xunit;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 
@@ -240,6 +240,22 @@ public class DeviceConfigValidatorTests
         var e = Assert.Single(errors);
         Assert.Equal(0, e.TargetTabIndex);
         Assert.Contains("地址冲突", e.Message);
+    }
+
+    [Fact]
+    public void CollectValidationErrors_SkipCrossDeviceConflicts_DoesNotCountThemTwice()
+    {
+        var a = ValidDevice("A", "D100");
+        var b = ValidDevice("B", "D200");
+        b.OkCountAddress = a.OkCountAddress;
+        var devices = new[] { a, b };
+
+        var withConflicts = DeviceConfigValidator.CollectValidationErrors(devices);
+        var without = DeviceConfigValidator.CollectValidationErrors(devices, includeCrossDeviceConflicts: false);
+        var conflicts = DeviceConfigValidator.CollectCrossDeviceConflicts(devices);
+
+        Assert.NotEmpty(conflicts);
+        Assert.Equal(withConflicts.Count, without.Count + conflicts.Count);
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using Kanban.Client;
 using Kanban.Contracts;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
+using Xunit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +10,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Hosting;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

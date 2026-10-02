@@ -2,7 +2,6 @@ using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 public sealed class CalculateStateDurationsSnapshotTests

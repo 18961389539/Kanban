@@ -2,10 +2,10 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 
@@ -34,7 +34,7 @@ public class ProductionLineDiagnosticTests
 
         var connectionManager = new PlcConnectionManager(new FakePlcDriver(), appSettings);
         var selection = new DeviceSelectionService();
-        var homeVm = new HomeViewModel(repo, connectionManager, appSettings, null!, selection);
+        new HomeViewModel(repo, connectionManager, appSettings, null!, selection);
         var lineVm = new ProductionLineViewModel(repo, selection);
 
         Assert.Equal(2, lineVm.LineDevices.Count);

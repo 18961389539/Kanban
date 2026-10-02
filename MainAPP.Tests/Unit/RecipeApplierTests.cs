@@ -1,9 +1,11 @@
+using Kanban.Collector.Core.Data;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Xunit;
+using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MainAPP.Tests.Unit;
 
@@ -27,7 +29,8 @@ public class RecipeApplierTests
     private static Device TestDevice() => new() { Name = "测试设备", MachineType = "注塑机" };
 
     /// <summary>装配 RecipeApplier + 伪 IDeviceAdapter；connected=false 时模拟 PLC 未连接。</summary>
-    private static (RecipeApplier Applier, IDeviceAdapter Adapter) CreateApplier(bool connected = true)
+    private static (RecipeApplier Applier, IDeviceAdapter Adapter) CreateApplier(
+        bool connected = true, IDeviceRepository? repository = null)
     {
         var services = new ServiceCollection();
         var settings = new AppSettings();
@@ -44,6 +47,8 @@ public class RecipeApplierTests
         var resolver = Substitute.For<IDeviceAdapterResolver>();
         resolver.Resolve(Arg.Any<Device>()).Returns(adapter);
         services.AddSingleton<IDeviceAdapterResolver>(resolver);
+        if (repository != null)
+            services.AddSingleton(repository);
 
         var provider = services.BuildServiceProvider();
         return (new RecipeApplier(provider), adapter);
@@ -102,8 +107,10 @@ public class RecipeApplierTests
         var result = applier.Apply(TestDevice(), ValidRecipe, ct: TestContext.Current.CancellationToken);
 
         Assert.False(result.Success);
-        Assert.Contains("已回滚", result.Message);
-        // 写 1 次（下发）+ 回滚 1 次（备份值 50 写回）= 2 次；失败场景回滚尽力而为
+        Assert.Contains("回滚不完整", result.Message);
+        Assert.Contains("人工确认", result.Message);
+        Assert.Contains(result.Items, item => !item.Success && item.Message.Contains("回滚失败"));
+        // 写 1 次（下发）+ 回滚 1 次（备份值 50 写回，同样失败）= 2 次
         adapter.Received(2).WriteInt32("D108", 50);
     }
 
@@ -167,10 +174,9 @@ public class RecipeApplierTests
     }
 
     [Fact]
-    public void Apply_ReadBackMismatch_StringItem_IsNotRolledBack()
+    public void Apply_ReadBackMismatch_StringItem_RollsBackFullBackup()
     {
-        // 回归（审查修复）：String 备份按目标值长度读回，PLC 现值更长时会被截断——
-        // 回滚写回截断值会覆盖真实数据，因此 String 项跳过回滚并在失败消息中明示。
+        // 字符串按最大允许长度备份，读回不一致时写回完整备份值，而不是跳过回滚。
         var (applier, adapter) = CreateApplier();
         var recipe = new Recipe
         {
@@ -181,7 +187,6 @@ public class RecipeApplierTests
                 new RecipeItem { ParamName = "节拍", PlcAddress = "D108", DataType = PlcDataType.Int32, Value = "50" },
             },
         };
-        // String 备份读回恒为 OLD-BATCH → 第 1 项读回校验不一致触发回滚
         adapter.ReadString(Arg.Any<string>(), Arg.Any<ushort>()).Returns(PlcOperationResult<string>.Success("OLD-BATCH"));
         adapter.WriteString(Arg.Any<string>(), Arg.Any<string>()).Returns(PlcOperationResult.Success());
         adapter.ReadInt32(Arg.Any<string>()).Returns(PlcOperationResult<int>.Success(50));
@@ -191,9 +196,86 @@ public class RecipeApplierTests
 
         Assert.False(result.Success);
         Assert.Contains("校验不一致", result.Message);
-        Assert.Contains("字符串参数未自动回滚", result.Message); // 跳过回滚的明示提示
-        adapter.Received(1).WriteString("D200", "NEW-BATCH");  // String 仅下发，不回滚
-        adapter.Received(2).WriteInt32("D108", 50);            // Int32 项下发 1 次 + 回滚 1 次（回滚仅跳过 String）
+        Assert.Contains("已回滚", result.Message);
+        adapter.Received().ReadString("D200", (ushort)(RecipeValidator.MaxStringLength + 1));
+        adapter.Received(1).WriteString("D200", "NEW-BATCH");
+        adapter.Received(1).WriteString("D200", "OLD-BATCH");
+        adapter.Received(2).WriteInt32("D108", 50);
+    }
+
+    [Fact]
+    public void Apply_RecipeWithLoadErrors_FailsWithoutWrite()
+    {
+        var (applier, adapter) = CreateApplier();
+        SetupHappyPath(adapter);
+        var recipe = new Recipe
+        {
+            Name = "坏配方",
+            Items =
+            {
+                new RecipeItem { ParamName = "节拍", PlcAddress = "D108", DataType = PlcDataType.Int32, Value = "50" },
+            },
+        };
+        recipe.LoadErrors.Add("地址无法解析");
+
+        var result = applier.Apply(TestDevice(), recipe, ct: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("禁止下发", result.Message);
+        adapter.DidNotReceiveWithAnyArgs().WriteInt32(default!, default);
+    }
+
+    [Fact]
+    public void Apply_DeviceRunning_FailsWithoutWrite()
+    {
+        var device = TestDevice();
+        var runtime = new DeviceRuntime(device)
+        {
+            StatusWord = (int)Kanban.Collector.Core.Models.DeviceStatus.Running,
+        };
+        var map = new ConcurrentDictionary<string, DeviceRuntime> { [device.Id] = runtime };
+        var repo = Substitute.For<IDeviceRepository>();
+        repo.RuntimeMap.Returns(map);
+        var (applier, adapter) = CreateApplier(repository: repo);
+        SetupHappyPath(adapter);
+
+        var result = applier.Apply(device, ValidRecipe, ct: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Success);
+        Assert.Contains("正在运行", result.Message);
+        adapter.DidNotReceiveWithAnyArgs().WriteInt32(default!, default);
+    }
+
+    [Fact]
+    public void Apply_WhenApplyInProgress_SecondCallReportsBusy()
+    {
+        var (applier, adapter) = CreateApplier();
+        SetupHappyPath(adapter);
+        var device = TestDevice();
+        using var entered = new ManualResetEventSlim(false);
+        using var release = new ManualResetEventSlim(false);
+        adapter.WriteInt32(Arg.Any<string>(), Arg.Any<int>()).Returns(_ =>
+        {
+            entered.Set();
+            release.Wait(TimeSpan.FromSeconds(5));
+            return PlcOperationResult.Success();
+        });
+
+        var first = Task.Run(() => applier.Apply(device, ValidRecipe));
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            var second = applier.Apply(device, ValidRecipe);
+            Assert.False(second.Success);
+            Assert.Contains("正在下发", second.Message);
+        }
+        finally
+        {
+            release.Set();
+        }
+
+        Assert.True(first.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(first.Result.Success);
     }
 
     [Fact]

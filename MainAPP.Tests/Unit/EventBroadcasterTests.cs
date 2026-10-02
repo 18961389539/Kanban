@@ -1,10 +1,8 @@
-using System.Threading.Channels;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
-using Microsoft.Extensions.Logging;
-using NSubstitute;
 using Xunit;
+using System.Threading.Channels;
+using Kanban.Collector.Services;
 
 namespace MainAPP.Tests.Unit;
 
@@ -20,7 +18,7 @@ namespace MainAPP.Tests.Unit;
 public class EventBroadcasterTests
 {
     private static EventBroadcaster CreateBroadcaster()
-        => new(Substitute.For<ILogger<EventBroadcaster>>());
+        => new();
 
     private static AlarmEventDto Alarm() => new()
     {

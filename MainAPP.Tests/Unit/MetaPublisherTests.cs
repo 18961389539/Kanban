@@ -1,16 +1,16 @@
-using System.IO;
-using System.Threading.Channels;
 using AutoMapper;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using System.Threading.Channels;
+using Kanban.Collector.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace MainAPP.Tests.Unit;
 

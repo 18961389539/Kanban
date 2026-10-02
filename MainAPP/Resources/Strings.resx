@@ -1414,7 +1414,7 @@
     <value>选择设备</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>切换新报警声音与闪烁；报警列表仍照常更新</value>
+    <value>切换新报警声音与闪烁（与主页同一开关，整个程序生效）；报警列表仍照常更新</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>级别</value>
@@ -1756,7 +1756,7 @@
     <value>数据库存储</value>
   </data>
   <data name="K456" xml:space="preserve">
-    <value>系统资源与数据一致性</value>
+    <value>采集进程资源与配置检查</value>
   </data>
   <data name="K457" xml:space="preserve">
     <value>CPU / 内存</value>
@@ -5052,7 +5052,7 @@
     <value>当前班次</value>
   </data>
   <data name="Web_Rv_WorkOrder" xml:space="preserve">
-    <value>当前工单</value>
+    <value>窗口工单</value>
   </data>
   <data name="Web_Rv_Product" xml:space="preserve">
     <value>产品 / 批次</value>
@@ -5565,10 +5565,10 @@
     <value>当前未恢复的报警条数；实时快照，约每 3 秒刷新；受级别/设备/搜索筛选影响</value>
   </data>
   <data name="K710" xml:space="preserve">
-    <value>今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+    <value>今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化</value>
   </data>
   <data name="K711" xml:space="preserve">
-    <value>今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响</value>
+    <value>今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化</value>
   </data>
   <data name="K712" xml:space="preserve">
     <value>当前最早开始且尚未恢复的报警；实时快照；受级别/设备/搜索筛选影响</value>
@@ -5577,10 +5577,10 @@
     <value>当前未恢复报警涉及的设备台数；实时快照；受级别/设备/搜索筛选影响</value>
   </data>
   <data name="K714" xml:space="preserve">
-    <value>按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新</value>
+    <value>所选时间范围内、且符合当前级别/设备/搜索筛选的触发次数第一名；约每 60 秒刷新</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>事件流与 Top 排行按所选范围。今日触发、恢复始终从今天 0:00 起。</value>
+    <value>事件流与 Top 排行跟随时间范围，并受级别、设备和搜索筛选。今日触发和恢复只随设备筛选，从今天 0:00 起算。</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>同一报警在短时间内重复触发已合并显示，共 {0} 条</value>
@@ -7159,6 +7159,9 @@
   <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
     <value>切换配方会放弃当前未保存的编辑，是否继续？</value>
   </data>
+  <data name="Recipe_ApplyUnsaved" xml:space="preserve">
+    <value>当前配方有未保存的修改，请先保存再下发</value>
+  </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\n当前：{0} 件</value>
   </data>
@@ -7427,7 +7430,7 @@
     <value>搜索</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
-    <value>统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\n当前：{0}</value>
+    <value>统计窗口内该报警各次持续时长之和。窗口开始前已触发的，从窗口起点算到恢复或现在。\n当前：{0}</value>
   </data>
   <data name="Mo_Tip_Health" xml:space="preserve">
     <value>综合 PLC 连接、采集循环是否运行、最近一轮是否成功。\n当前：{0}</value>
@@ -7587,6 +7590,33 @@
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>时段</value>
+  </data>
+  <data name="Web_Rv_WorkOrderHint" xml:space="preserve">
+    <value>按实际开停时间与复盘窗口重叠</value>
+  </data>
+  <data name="Web_Rv_PrintFailed" xml:space="preserve">
+    <value>打印失败，请重试</value>
+  </data>
+  <data name="Web_Rv_ExportPdf" xml:space="preserve">
+    <value>导出 PDF</value>
+  </data>
+  <data name="Web_Rv_PdfFile" xml:space="preserve">
+    <value>生产复盘_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf</value>
+  </data>
+  <data name="Web_Rv_PdfFailed" xml:space="preserve">
+    <value>PDF 导出失败，请重试</value>
+  </data>
+  <data name="Web_Rv_OpenDevice" xml:space="preserve">
+    <value>查看详情</value>
+  </data>
+  <data name="Web_Rv_FleetHint" xml:space="preserve">
+    <value>点击设备名查看该设备复盘，查看详情进入设备页</value>
+  </data>
+  <data name="Web_Rv_CsvDurationH" xml:space="preserve">
+    <value>持续(h)</value>
+  </data>
+  <data name="Web_Rv_CsvShare" xml:space="preserve">
+    <value>占比</value>
   </data>
   <data name="Web_NotFound" xml:space="preserve">
     <value>页面不存在</value>

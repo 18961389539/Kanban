@@ -1,12 +1,12 @@
-using System.ComponentModel;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
-using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 using MainAPP.Tests.Integration;
+using System.ComponentModel;
+using MainAPP.Services;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 

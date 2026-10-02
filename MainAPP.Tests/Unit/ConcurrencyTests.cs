@@ -1,15 +1,15 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.IO;
-using Kanban.Collector.Core.Data;
+﻿using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

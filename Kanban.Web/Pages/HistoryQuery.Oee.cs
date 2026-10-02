@@ -1,8 +1,8 @@
-using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Metrics;
-using Kanban.Web.Services;
 using Microsoft.JSInterop;
+using Kanban.Analysis;
+using Kanban.Web.Services;
 
 namespace Kanban.Web.Pages;
 
@@ -231,3 +231,4 @@ public partial class HistoryQuery
         OeTruncated = false;
     }
 }
+

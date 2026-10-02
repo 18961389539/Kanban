@@ -1,12 +1,12 @@
 using System.Linq;
-using MainAPP.Converters;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Material.Icons;
 using Xunit;
+using MainAPP.Converters;
+using MainAPP.Models;
 
 namespace MainAPP.Tests.Unit;
 

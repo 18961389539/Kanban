@@ -25,6 +25,8 @@ public sealed record ReviewWindowAnalysisDto
     public string ValleyHour { get; init; } = "—";
     public int ValleyOk { get; init; }
     public int BaselineOutput { get; init; }
+    public int BaselineOk { get; init; }
+    public int BaselineNg { get; init; }
     public double BaselineQuality { get; init; }
     public double BaselineRunSeconds { get; init; }
     public double BaselineAlarmSeconds { get; init; }

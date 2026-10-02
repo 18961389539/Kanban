@@ -1,7 +1,7 @@
 ﻿using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

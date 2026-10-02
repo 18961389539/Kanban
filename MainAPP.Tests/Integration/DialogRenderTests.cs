@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using Kanban.Collector.Core.Models;
+using Xunit;
+using System.Windows.Controls;
 using MainAPP.Models;
 using MainAPP.Views;
-using Xunit;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
 namespace MainAPP.Tests.Integration;

@@ -7,7 +7,9 @@ internal sealed class AcquisitionDiagnosticsStore
 {
     private readonly object _sync = new();
     private readonly Stopwatch _stopwatch = new();
+    private const int RecentCycleCapacity = 60;
     private readonly Queue<long> _cycleDurations = new();
+    private readonly Queue<CycleDurationSample> _recentCycles = new();
     private long _totalCycleMs;
     private long _lastCycleMs;
     private long _maxCycleMs;
@@ -73,6 +75,7 @@ internal sealed class AcquisitionDiagnosticsStore
                 ConsecutiveFailureCycles = _consecutiveFailureCycles,
                 LastFailureAt = _lastFailureAt,
                 LastFailureMessage = _lastFailureMessage,
+                RecentCycleSamples = _recentCycles.ToArray(),
             };
         }
     }
@@ -179,6 +182,8 @@ internal sealed class AcquisitionDiagnosticsStore
             _maxCycleMs = Math.Max(_maxCycleMs, cycleMilliseconds);
             _cycleDurations.Enqueue(cycleMilliseconds);
             while (_cycleDurations.Count > 1024) _cycleDurations.Dequeue();
+            _recentCycles.Enqueue(new CycleDurationSample(DateTime.Now, cycleMilliseconds));
+            while (_recentCycles.Count > RecentCycleCapacity) _recentCycles.Dequeue();
         }
     }
 

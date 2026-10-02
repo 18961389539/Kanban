@@ -2,9 +2,9 @@
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
 using System.IO;
 using System.Text.Json;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -123,36 +123,85 @@ public class RecipeStoreTests : IDisposable
     }
 
     [Fact]
-    public void LoadAll_FiltersInvalidEntries()
+    public void LoadAll_KeepsInvalidEntries_AndNextSaveDoesNotDropThem()
     {
         var store = new RecipeStore(_appSettings);
         store.Upsert(NewRecipe("合法配方", "",
             new RecipeItem { ParamName = "节拍", PlcAddress = "D108", DataType = PlcDataType.Int32, Value = "50" }));
-        store.Upsert(NewRecipe("", "", // 空名 → 校验失败，加载时应跳过
+        store.Upsert(NewRecipe("", "", // 空名 → 校验失败，加载时保留但禁止下发
             new RecipeItem { ParamName = "节拍", PlcAddress = "D108", DataType = PlcDataType.Int32, Value = "50" }));
         store.SaveAllAsync().GetAwaiter().GetResult();
 
         var reloaded = new RecipeStore(_appSettings);
         reloaded.LoadAll();
 
-        var recipe = Assert.Single(reloaded.Recipes);
-        Assert.Equal("合法配方", recipe.Name);
-        Assert.True(File.Exists(_appSettings.GetFilePath("recipes.json"))); // 原文件保留，可手工修复
+        Assert.Equal(2, reloaded.Recipes.Count);
+        var invalid = Assert.Single(reloaded.Recipes, r => r.Name == "");
+        Assert.NotEmpty(invalid.LoadErrors);
+        Assert.False(invalid.CanApply);
+        Assert.True(File.Exists(_appSettings.GetFilePath("recipes.json")));
+
+        // 之后再保存合法配方，不能把这次加载时校验失败的条目从文件里抹掉
+        reloaded.SaveAll();
+        var again = new RecipeStore(_appSettings);
+        again.LoadAll();
+        Assert.Equal(2, again.Recipes.Count);
+        Assert.Contains(again.Recipes, r => r.Name == "" && !r.CanApply);
     }
 
     [Fact]
-    public void LoadAll_FiltersDuplicateNames_InFile()
+    public void LoadAll_KeepsDuplicateNames_AndMarksTheLaterOne()
     {
         var item = new RecipeItem { ParamName = "节拍", PlcAddress = "D108", DataType = PlcDataType.Int32, Value = "50" };
         var store = new RecipeStore(_appSettings);
         store.Upsert(NewRecipe("同名配方", "", item));
-        store.Upsert(NewRecipe("同名配方", "", item)); // 与上一条同机型同名 → 后加载的跳过
+        store.Upsert(NewRecipe("同名配方", "", item)); // 与上一条同机型同名 → 后加载的标记为不可下发
         store.SaveAllAsync().GetAwaiter().GetResult();
 
         var reloaded = new RecipeStore(_appSettings);
         reloaded.LoadAll();
 
-        Assert.Single(reloaded.Recipes);
+        Assert.Equal(2, reloaded.Recipes.Count);
+        Assert.Single(reloaded.Recipes, r => r.LoadErrors.Count > 0);
+        Assert.Single(reloaded.Recipes, r => r.CanApply);
+    }
+
+    [Fact]
+    public async Task CommitUpsertAsync_WhenPersistFails_DoesNotChangeMemory()
+    {
+        var remote = new FakeRemoteRecipeStore
+        {
+            IsEnabled = true,
+            SaveHandler = _ => throw new IOException("remote down"),
+        };
+        var store = new RecipeStore(_appSettings, remote);
+        var existing = NewRecipe("原配方", "");
+        store.Upsert(existing);
+        var incoming = NewRecipe("新配方", "");
+
+        await Assert.ThrowsAsync<IOException>(() => store.CommitUpsertAsync(incoming));
+
+        var only = Assert.Single(store.Recipes);
+        Assert.Equal("原配方", only.Name);
+        Assert.Null(store.GetById(incoming.Id));
+    }
+
+    [Fact]
+    public async Task CommitDeleteAsync_WhenPersistFails_KeepsRecipe()
+    {
+        var remote = new FakeRemoteRecipeStore
+        {
+            IsEnabled = true,
+            SaveHandler = _ => throw new IOException("remote down"),
+        };
+        var store = new RecipeStore(_appSettings, remote);
+        var existing = NewRecipe("原配方", "");
+        store.Upsert(existing);
+
+        await Assert.ThrowsAsync<IOException>(() => store.CommitDeleteAsync(existing.Id));
+
+        Assert.Single(store.Recipes);
+        Assert.NotNull(store.GetById(existing.Id));
     }
 
     [Fact]

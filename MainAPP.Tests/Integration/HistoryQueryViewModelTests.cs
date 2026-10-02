@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using OxyPlot.Annotations;
+using Xunit;
+using System.IO;
+using System.Windows;
+using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
-using OxyPlot.Annotations;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 
@@ -316,6 +316,13 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.PreviousPageCommand.Execute(null);
         Assert.Equal(1, _vm.CurrentPage);
         Assert.Equal(50, _vm.ProductionQuery.ProductionLogs.Count);
+
+        var chart = _vm.ProductionQuery.ProductionChart;
+        _vm.GoToPage(2);
+        Assert.Equal(2, _vm.CurrentPage);
+        Assert.Equal(10, _vm.ProductionQuery.ProductionLogs.Count);
+        Assert.Equal(60, _vm.TotalCount);
+        Assert.Same(chart, _vm.ProductionQuery.ProductionChart);
     }
 
     // ════════════════════ Tab 1: 状态时长 ════════════════════
@@ -483,6 +490,19 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Single(_vm.AlarmQuery.AlarmEvents);
         // 注意：各 Tab 集合独立，QueryAlarm 不清空 ProductionLogs
         Assert.Single(_vm.ProductionQuery.ProductionLogs);
+
+        // 切回产量页签应恢复该页签的计数，不再重新查询。
+        _vm.SelectedTabIndex = 0;
+        Assert.Equal(1, _vm.TotalCount);
+        Assert.Single(_vm.ProductionQuery.ProductionLogs);
+        Assert.Single(_vm.AlarmQuery.AlarmEvents);
+
+        // 改了时间再切回来，不能把旧结果当成新条件的答案。
+        _vm.FromDate = t.AddDays(-2);
+        _vm.SelectedTabIndex = 2;
+        _vm.SelectedTabIndex = 0;
+        Assert.False(_vm.HasQueried);
+        Assert.Empty(_vm.ProductionQuery.ProductionLogs);
     }
 
     // ════════════════════ IsEmptyResult 状态机 ════════════════════
@@ -561,7 +581,7 @@ public class HistoryQueryViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Search_ProductionShiftFilterItems_RefreshedAfterQuery()
+    public void Search_ProductionShiftFilterItems_StayOnConfiguredShifts()
     {
         var t = new DateTime(2026, 7, 23, 10, 0, 0);
         InsertProductionLog("dev-001", "设备A", "早班", 100, 5, 1, t);
@@ -575,9 +595,13 @@ public class HistoryQueryViewModelTests : IDisposable
 
         _vm.SearchCommand.Execute(null);
 
-        Assert.Equal(4, _vm.ShiftFilterItems.Count); // 全部 + 3 个班次
+        // 班次下拉只来自配置（默认白班/夜班），查询里的临时班次不再写进下拉。
+        Assert.Equal(3, _vm.ShiftFilterItems.Count);
         Assert.Null(_vm.ShiftFilterItems[0].Value);
         Assert.Equal("全部班次", _vm.ShiftFilterItems[0].DisplayText);
+        Assert.Contains(_vm.ShiftFilterItems, item => item.Value == "白班");
+        Assert.Contains(_vm.ShiftFilterItems, item => item.Value == "夜班");
+        Assert.DoesNotContain(_vm.ShiftFilterItems, item => item.Value == "早班");
     }
 
     // ════════════════════ 报警类型筛选 ════════════════════
@@ -589,16 +613,22 @@ public class HistoryQueryViewModelTests : IDisposable
         InsertAlarmEvent("dev-001", "设备A", "alm-001", "高温报警", "M100", AlarmEventType.Triggered, t);
         InsertAlarmEvent("dev-001", "设备A", "alm-002", "低压报警", "M101", AlarmEventType.Triggered, t.AddMinutes(1));
 
-        _vm.SelectedTabIndex = 2;
+        _dev1.Alarms.Add(new Alarm { Name = "高温报警" });
+        _dev1.Alarms.Add(new Alarm { Name = "低压报警" });
+        _vm.SelectedDeviceId = "dev-002";
         _vm.SelectedDeviceId = "dev-001";
+
+        _vm.SelectedTabIndex = 2;
         _vm.FromDate = t.AddMinutes(-1);
         _vm.ToDate = t.AddMinutes(2);
 
-        // 先查询一次，让 AlarmNameFilterItems 填充
-        _vm.SearchCommand.Execute(null);
+        // 下拉在查询前就按设备配置填好，不依赖本次查询结果。
         Assert.Equal(3, _vm.AlarmNameFilterItems.Count); // 全部 + 高温报警 + 低压报警
 
-        // 选中"高温报警"再查
+        _vm.SearchCommand.Execute(null);
+        Assert.Equal(3, _vm.AlarmNameFilterItems.Count);
+
+        // 选中"高温报警"再查，列表不能缩成只剩这一项。
         _vm.SelectedAlarmName = "高温报警";
         _vm.SearchCommand.Execute(null);
 
@@ -607,6 +637,40 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Equal("高温报警", _vm.SelectedAlarmName);
         Assert.Equal(3, _vm.AlarmNameFilterItems.Count);
         Assert.Contains(_vm.AlarmNameFilterItems, item => item.Value == "低压报警");
+    }
+
+    [Fact]
+    public void ChangingShift_DoesNotQueryUntilSearch()
+    {
+        var t = new DateTime(2026, 7, 23, 10, 0, 0);
+        InsertProductionLog("dev-001", "设备A", "白班", 100, 5, 1, t);
+        InsertProductionLog("dev-001", "设备A", "夜班", 200, 10, 1, t.AddMinutes(1));
+
+        _vm.SelectedTabIndex = 0;
+        _vm.SelectedDeviceId = "dev-001";
+        _vm.FromDate = t.AddMinutes(-1);
+        _vm.ToDate = t.AddMinutes(2);
+        _vm.SearchCommand.Execute(null);
+        Assert.Equal(2, _vm.TotalCount);
+
+        _vm.SelectedShiftName = "白班";
+        Assert.Equal(2, _vm.TotalCount);
+
+        _vm.SearchCommand.Execute(null);
+        Assert.Equal(1, _vm.TotalCount);
+    }
+
+    [Fact]
+    public void SnTab_IgnoresSharedSearch()
+    {
+        Assert.True(_vm.IsSharedFilterVisible);
+        _vm.SelectedTabIndex = 4;
+        Assert.False(_vm.IsSharedFilterVisible);
+        Assert.Equal(string.Empty, _vm.QuerySummaryText);
+
+        _vm.SearchCommand.Execute(null);
+        Assert.False(_vm.HasQueried);
+        Assert.False(_vm.ExportCommand.CanExecute(null));
     }
 
     // ════════════════════ 智能快捷时间 ════════════════════
@@ -1217,15 +1281,13 @@ public class HistoryQueryViewModelTests : IDisposable
         Assert.Equal(0, _vm.ProductionQuery.TotalNg);
     }
 
-    // ════════════════════ 筛选防抖自动查询（合理化建议 6）════════════════════
+    // ════════════════════ 筛选改动不自动查询 ════════════════════
 
     [Fact]
-    public void FilterChange_AfterDebounce_AutoQueries()
+    public void FilterChange_DoesNotQueryUntilSearch()
     {
-        // 构造完成后未查询：HasQueried=false
         Assert.False(_vm.HasQueried);
 
-        // 插入产量数据后修改筛选日期 → 触发 800ms 防抖自动查询
         var from = DateTime.Now.AddMinutes(-30).AddSeconds(-DateTime.Now.Second);
         InsertProductionLog("dev-001", "设备A", "白班", 0, 0, 1, from);
         InsertProductionLog("dev-001", "设备A", "白班", 100, 0, 1, from.AddMinutes(5));
@@ -1233,31 +1295,11 @@ public class HistoryQueryViewModelTests : IDisposable
         _vm.FromDate = from;
         _vm.ToDate = DateTime.Now.AddMinutes(10);
 
-        // 防抖 800ms + 后台查询执行耗时，轮询等待至多 30s。
-        // 预算放宽（与 AuditService 等待先例一致）：全量并行/CI 高负载下调度可能显著延迟，
-        // 过短的固定预算会把"环境慢"误判为"防抖未触发"造成偶发假失败。
-        // 每轮泵一次 Dispatcher：防抖延续若被 Post 回 Dispatcher 队列（STA fixture 场景），
-        // 无泵时永不执行（审查修复 2026-09-03）。
-        var deadline = DateTime.UtcNow.AddSeconds(30);
-        while (DateTime.UtcNow < deadline && !_vm.HasQueried)
-        {
-            Thread.Sleep(100);
-            PumpCurrentDispatcher();
-        }
+        Assert.False(_vm.HasQueried);
 
-        Assert.True(_vm.HasQueried, "筛选变化后 800ms 防抖应自动查询");
+        _vm.SearchCommand.Execute(null);
+        Assert.True(_vm.HasQueried);
         Assert.Equal(2, _vm.TotalCount);
-    }
-
-    /// <summary>在当前线程的 Dispatcher 上泵一帧（处理所有已排队操作后返回）。
-    /// Continue=false 用低于 Background 的优先级，保证防抖/回填等 Background 操作先被处理。</summary>
-    private static void PumpCurrentDispatcher()
-    {
-        var frame = new System.Windows.Threading.DispatcherFrame();
-        _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
-            new Action(() => frame.Continue = false),
-            System.Windows.Threading.DispatcherPriority.SystemIdle);
-        System.Windows.Threading.Dispatcher.PushFrame(frame);
     }
 
     // ════════════════════ 快速时间档位补全（合理化建议 11）════════════════════

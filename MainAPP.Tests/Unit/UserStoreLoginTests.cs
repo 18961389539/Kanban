@@ -1,9 +1,9 @@
-using System.IO;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.IO;
 using MainAPP.Services;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -159,13 +159,6 @@ public class UserStoreLoginTests : IDisposable
     }
 
     // ──────────── LoginViewModel ────────────
-
-    private static UserSession CreateSessionWithOperator()
-    {
-        var session = new UserSession();
-        session.Login(new User { Username = "operator", DisplayName = "操作员", Role = UserRole.Operator });
-        return session;
-    }
 
     [Fact]
     public void Login_NoSelection_ShowsError()

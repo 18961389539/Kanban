@@ -1,10 +1,10 @@
-using System.IO;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

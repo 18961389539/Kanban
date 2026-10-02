@@ -1,8 +1,8 @@
-using System.IO;
 using LicenseManager.Crypto;
 using LicenseManager.Models;
 using LicenseManager.Services;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 
@@ -22,7 +22,6 @@ public class LicenseBoundaryTests : IDisposable
     private readonly LicenseStore _store;
     private readonly TrialTracker _trialTracker;
     private readonly ActivationAttemptTracker _attemptTracker;
-    private readonly string _machineCodeHash;
     private readonly string _previousHmacEnv;
 
     public LicenseBoundaryTests()
@@ -32,7 +31,6 @@ public class LicenseBoundaryTests : IDisposable
         _store = new LicenseStore(_tempDir);
         _trialTracker = new TrialTracker(_store, new TrialRegistryBackupStub());
         _attemptTracker = new ActivationAttemptTracker(_tempDir, () => DateTime.UtcNow);
-        _machineCodeHash = Base32.Encode(HardwareFingerprint.GetMachineCodeHash());
         _previousHmacEnv = Environment.GetEnvironmentVariable(EmbeddedKey.EnvKeyName);
     }
 

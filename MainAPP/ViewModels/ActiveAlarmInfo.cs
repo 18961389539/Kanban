@@ -73,6 +73,12 @@ public partial class ActiveAlarmInfo : ObservableObject
     /// </summary>
     public void RefreshDuration(DateTime now)
     {
+        if (EventTime == default)
+        {
+            DurationText = "—";
+            return;
+        }
+
         var ts = now - EventTime;
         if (ts < TimeSpan.Zero) ts = TimeSpan.Zero;
         DurationText = ts.TotalHours >= 1

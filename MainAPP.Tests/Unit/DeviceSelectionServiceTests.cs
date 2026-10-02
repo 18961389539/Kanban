@@ -1,7 +1,7 @@
-﻿using System.ComponentModel;
-using Kanban.Collector.Core.Services;
-using MainAPP.Services;
+﻿using Kanban.Collector.Core.Services;
 using Xunit;
+using System.ComponentModel;
+using MainAPP.Services;
 
 namespace MainAPP.Tests.Unit;
 

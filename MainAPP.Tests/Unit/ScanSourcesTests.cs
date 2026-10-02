@@ -2,8 +2,8 @@ using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Unit;
 

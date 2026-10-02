@@ -1,6 +1,6 @@
+using Material.Icons.WPF;
 using System.Windows;
 using Material.Icons;
-using Material.Icons.WPF;
 using MainAPP.Resources;
 
 namespace MainAPP.Controls;

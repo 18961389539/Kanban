@@ -1,17 +1,17 @@
-using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Threading;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
-using MainAPP.ViewModels;
 using MainAPP.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Serilog;
+using System.IO;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Threading;
+using MainAPP.Services;
+using MainAPP.ViewModels;
 
 namespace MainAPP.E2E;
 

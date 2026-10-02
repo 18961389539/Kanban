@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using Kanban.Collector.Core.Models;
+using Xunit;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Kanban.Collector.Core.Models;
 using MainAPP.Helpers;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

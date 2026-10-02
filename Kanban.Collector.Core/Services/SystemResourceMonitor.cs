@@ -1,13 +1,9 @@
-﻿using System.Diagnostics;
-using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
-using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Entities;
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.IO;
 
-namespace MainAPP.Services;
+namespace Kanban.Collector.Core.Services;
 
 public sealed record SystemResourceSnapshot(
     double CpuUsagePercent,
@@ -20,6 +16,8 @@ public sealed record SystemResourceSnapshot(
     long HandleCount,
     double FreeDiskGb);
 
+/// <summary>当前进程的 CPU / 内存 / 磁盘采样。本地模式采 MainAPP，Remote 模式由 Collector 进程采样后随诊断快照下发。</summary>
+[SupportedOSPlatform("windows")]
 public sealed class SystemResourceMonitor : IDisposable
 {
     private readonly ILogger<SystemResourceMonitor> _logger;

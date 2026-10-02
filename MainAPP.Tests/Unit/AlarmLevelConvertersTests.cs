@@ -1,9 +1,9 @@
-﻿using System.Globalization;
-using System.Windows.Media;
-using MainAPP.Converters;
-using Kanban.Collector.Core.Models;
+﻿using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Xunit;
+using System.Globalization;
+using System.Windows.Media;
+using MainAPP.Converters;
 
 namespace MainAPP.Tests.Unit;
 

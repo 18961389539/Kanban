@@ -1,5 +1,5 @@
-using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Entities;
+using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Models;
 using ContractDataSourceValueType = Kanban.Contracts.Enums.DataSourceValueType;
 

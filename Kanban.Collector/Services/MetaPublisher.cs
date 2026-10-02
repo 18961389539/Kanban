@@ -1,6 +1,6 @@
+using Kanban.Contracts.Enums;
 using System.Threading.Channels;
 using Kanban.Contracts.Dtos;
-using Kanban.Contracts.Enums;
 using Kanban.Contracts.Metrics;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
@@ -274,3 +274,4 @@ public sealed class MetaPublisher : IHostedService, IDisposable
         _stopCts.Dispose();
     }
 }
+

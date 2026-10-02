@@ -1,6 +1,7 @@
+using System.Windows;
+using Material.Icons;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,7 +17,6 @@ using MainAPP.Views;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using MainAPP.Helpers;
-using Material.Icons;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using MainAPP.Resources;

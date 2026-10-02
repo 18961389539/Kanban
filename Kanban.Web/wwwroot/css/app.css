@@ -1019,6 +1019,18 @@ body {
 
 .rv-text.dim { color: var(--text-2); font-size: 13px; }
 
+.rv-text-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+}
+
+.rv-text-btn:hover { text-decoration: underline; }
+
 .kpi-sub { color: var(--text-3); font-size: 12px; }
 
 .kpi-sub.dim { color: var(--text-3); }

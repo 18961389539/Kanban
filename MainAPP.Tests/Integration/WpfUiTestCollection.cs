@@ -1,5 +1,4 @@
 using Xunit;
-
 // v3：程序集级串行控制已移至 xunit.runner.json（parallelizeAssembly=false + parallelizeTestCollections=false）。
 // 各测试集合可通过 [CollectionDefinition(DisableParallelization = true)] 独立控制并行度（v3 才真正生效）。
 // 修改环境变量（KANBAN_DATA_DIR）的集合均标记 DisableParallelization，避免进程级状态竞态。

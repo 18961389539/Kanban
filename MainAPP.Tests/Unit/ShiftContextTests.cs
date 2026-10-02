@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
+using System.Collections.ObjectModel;
 
 namespace MainAPP.Tests.Unit;
 

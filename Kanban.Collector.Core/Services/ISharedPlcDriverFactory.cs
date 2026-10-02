@@ -1,5 +1,5 @@
-using Kanban.Collector.Core.Models;
 using Microsoft.Extensions.Logging;
+using Kanban.Collector.Core.Models;
 
 namespace Kanban.Collector.Core.Services;
 

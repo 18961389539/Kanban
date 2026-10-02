@@ -1,5 +1,5 @@
-﻿using Kanban.Collector.Core.Services;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Kanban.Collector.Core.Services;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace Kanban.Collector.Core.Data;

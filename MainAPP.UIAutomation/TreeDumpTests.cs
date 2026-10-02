@@ -1,8 +1,8 @@
-using System.IO;
-using System.Text;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using Xunit;
+using System.IO;
+using System.Text;
 // v3: ITestOutputHelper 已从 Xunit.Abstractions 移入 Xunit 命名空间
 
 namespace MainAPP.UIAutomation;

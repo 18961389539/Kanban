@@ -1,9 +1,9 @@
+using Kanban.Collector.Core.Localization;
+using Xunit;
 using System.Globalization;
 using System.IO;
 using System.Resources;
 using System.Text.RegularExpressions;
-using Kanban.Collector.Core.Localization;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -302,24 +302,6 @@ public sealed class LocalizationGuardTests
             $"Found {newLeaks.Count} NEW hardcoded Chinese display strings (not in baseline).\n" +
             $"Either migrate to resx (preferred) or add to baseline if intentional:\n" +
             string.Join("\n", newLeaks.Take(30)));
-    }
-
-    // ─── 辅助：从源码中提取指定方法/属性体（花括号匹配）───
-    private static string ExtractMemberBody(string content, string memberSignature)
-    {
-        var idx = content.IndexOf(memberSignature, StringComparison.Ordinal);
-        if (idx < 0) return string.Empty;
-        var braceStart = content.IndexOf('{', idx);
-        if (braceStart < 0) return string.Empty;
-        int depth = 1;
-        int i = braceStart + 1;
-        while (i < content.Length && depth > 0)
-        {
-            if (content[i] == '{') depth++;
-            else if (content[i] == '}') depth--;
-            i++;
-        }
-        return content.Substring(braceStart, i - braceStart);
     }
 
     // ─── 辅助：检测代码中的中文显示字符串（排除注释/日志/异常/nameof/测试特性）───

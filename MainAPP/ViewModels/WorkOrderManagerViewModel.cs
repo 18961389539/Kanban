@@ -1,5 +1,5 @@
-using System.Collections.ObjectModel;
 using System.Threading;
+using System.Collections.ObjectModel;
 using MainAPP.Resources;
 using Kanban.Analysis;
 using System.ComponentModel;

@@ -1,15 +1,15 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using NSubstitute;
+using Xunit;
+using System.IO;
 using MainAPP.Services;
 using MainAPP.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -260,7 +260,7 @@ public class DeviceDetailViewModelTests : IDisposable
         var device = CreateDevice("d1", "设备1");
         _deviceRepo.Devices.Add(device);
 
-        var wo = _workOrderRepo.Upsert(new WorkOrder
+        _workOrderRepo.Upsert(new WorkOrder
         {
             OrderNo = "WO-001",
             ProductName = "产品A",

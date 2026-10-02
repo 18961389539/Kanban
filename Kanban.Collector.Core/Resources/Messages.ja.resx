@@ -258,4 +258,22 @@
   <data name="RecipeStringNotRolledBack" xml:space="preserve">
     <value>文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください</value>
   </data>
+  <data name="RecipeRollbackIncomplete" xml:space="preserve">
+    <value>ロールバックが不完全です（{0}）。PLC の現在値を手動で確認してください</value>
+  </data>
+  <data name="RecipeRollbackItemFailed" xml:space="preserve">
+    <value>ロールバック失敗：{0}</value>
+  </data>
+  <data name="RecipeRollbackRestored" xml:space="preserve">
+    <value>書き込み前の値に戻しました</value>
+  </data>
+  <data name="RecipeDeviceRunning" xml:space="preserve">
+    <value>設備が稼働中のため、レシピを適用できません</value>
+  </data>
+  <data name="RecipeApplyBusy" xml:space="preserve">
+    <value>この設備ではレシピ適用が進行中です。完了までお待ちください</value>
+  </data>
+  <data name="RecipeLoadInvalid" xml:space="preserve">
+    <value>レシピが検証を通過していないため、適用できません：{0}</value>
+  </data>
 </root>

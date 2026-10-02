@@ -1,6 +1,5 @@
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

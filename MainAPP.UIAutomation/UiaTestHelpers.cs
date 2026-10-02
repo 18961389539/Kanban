@@ -2,7 +2,6 @@ using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
 using Xunit;
-
 namespace MainAPP.UIAutomation;
 
 /// <summary>

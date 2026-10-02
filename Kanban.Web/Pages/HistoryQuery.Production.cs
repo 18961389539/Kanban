@@ -12,8 +12,6 @@ public partial class HistoryQuery
     // ──────────── 产量 Tab 状态 ────────────
     private bool ProdHasQueried { get; set; }
     private bool ProdIsLoading { get; set; }
-    /// <summary>窗口全量分析进行中（表格已渲染，仅图表/KPI 区显示占位）。</summary>
-    private bool ProdAnalyzing { get; set; }
     private bool ProdAnalysisDone { get; set; }
     private bool ProdTruncated { get; set; }
     private int ProdPage { get; set; } = 1;
@@ -31,7 +29,6 @@ public partial class HistoryQuery
 
     // 窗口数据缓存：KPI/图表只查一次，翻页只重查表格页
     private List<ProductionLogDto> _prodWindow = [];
-    private List<ProductionLogDto> _prodBaseline = [];
     private DateTime _prodFrom;
     private DateTime _prodTo;
     private string? _prodDeviceFilter;
@@ -66,7 +63,7 @@ public partial class HistoryQuery
 
     /// <summary>
     /// 产量查询主流程（表格先行）：表格页单次往返秒出（IsLoading 只覆盖表格阶段），
-    /// 窗口全量并发拉取（KPI/图表/洞察）后台填充（ProdAnalyzing 标志，仅图表区显示"分析中"）。
+    /// 窗口全量并发拉取（KPI/图表/洞察）在表格渲染后后台填充。
     /// 窗口全量上限 10 万条（与 WPF Remote 模式一致）；超出时截断并提示。
     /// </summary>
     private async Task ProdRunQueryAsync()
@@ -74,7 +71,6 @@ public partial class HistoryQuery
         ProdIsLoading = true;
         ProdQueryError = null;
         ProdAnalysisDone = false;
-        ProdAnalyzing = false;
         ProdTruncated = false;
         ProdChartOption = null;
         try
@@ -86,11 +82,9 @@ public partial class HistoryQuery
             StateHasChanged();
 
             // 2) 窗口分析（KPI/图表/洞察）——服务端聚合，旧 Collector 自动回退分页全量
-            ProdAnalyzing = true;
             var analysis = await HistoryFetch.AnalyzeProductionWindowAsync(
                 Dashboard, _prodFrom, _prodTo, _prodDeviceFilter, _prodShiftFilter);
             _prodWindow = analysis.CompactLogs.ToList();
-            _prodBaseline = [];
             ProdTruncated = analysis.Truncated;
             ProdApplyAnalysis(analysis);
         }
@@ -106,7 +100,6 @@ public partial class HistoryQuery
         finally
         {
             ProdIsLoading = false;
-            ProdAnalyzing = false;
         }
     }
 
@@ -256,7 +249,6 @@ public partial class HistoryQuery
     {
         ProdHasQueried = false;
         ProdIsLoading = false;
-        ProdAnalyzing = false;
         ProdAnalysisDone = false;
         ProdTruncated = false;
         ProdPage = 1;
@@ -272,7 +264,6 @@ public partial class HistoryQuery
         ProdValidationMessage = null;
         ProdQueryError = null;
         _prodWindow = [];
-        _prodBaseline = [];
     }
 
     private static string C(string? value) => ProductionAnalysis.CsvEscape(value);

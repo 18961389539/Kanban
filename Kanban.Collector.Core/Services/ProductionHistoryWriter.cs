@@ -1,9 +1,9 @@
 ﻿using System.IO;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Threading.Channels;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Kanban.Collector.Core.Services;

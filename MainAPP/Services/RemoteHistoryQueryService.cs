@@ -1,16 +1,16 @@
-using Kanban.Client;
-using Kanban.Collector.Core.Services;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
-using Kanban.Collector.Core.Entities;
-using Kanban.Contracts;
-using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using MainAPP.Models;
-using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using DefectSeverity = Kanban.Contracts.Enums.DefectSeverity;
 using DefectCategory = Kanban.Contracts.Enums.DefectCategory;
+using Kanban.Client;
+using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Entities;
+using Kanban.Contracts;
+using Kanban.Contracts.Dtos;
+using Microsoft.Extensions.Logging;
 
 namespace MainAPP.Services;
 

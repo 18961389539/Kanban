@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Diagnostics;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Services;
 using MainAPP.Models;
 using MainAPP.Resources;
 using MainAPP.Helpers;
@@ -99,8 +101,41 @@ public sealed class DataSourceMonitorRow : ObservableObject
     };
     public DateTime LastUpdatedSortValue => LastUpdatedAt ?? DateTime.MinValue;
 
-    internal void UpdateFrom(DataSourceMonitorRow snapshot)
+    /// <summary>把快照写回这一行。字段都没变时不通知绑定，避免每秒把整行重算一遍。</summary>
+    internal bool UpdateFrom(DataSourceMonitorRow snapshot)
     {
+        if (DeviceId == snapshot.DeviceId
+            && SourceId == snapshot.SourceId
+            && ValueId == snapshot.ValueId
+            && DeviceName == snapshot.DeviceName
+            && SourceName == snapshot.SourceName
+            && SourceType == snapshot.SourceType
+            && ValueName == snapshot.ValueName
+            && DataType == snapshot.DataType
+            && DataTypeText == snapshot.DataTypeText
+            && CurrentValueText == snapshot.CurrentValueText
+            && CriteriaText == snapshot.CriteriaText
+            && Unit == snapshot.Unit
+            && PlcAddress == snapshot.PlcAddress
+            && TriggerModeText == snapshot.TriggerModeText
+            && TriggerAddressText == snapshot.TriggerAddressText
+            && TriggerValueText == snapshot.TriggerValueText
+            && AckValueText == snapshot.AckValueText
+            && Status == snapshot.Status
+            && StatusText == snapshot.StatusText
+            && IsSampled == snapshot.IsSampled
+            && IsStale == snapshot.IsStale
+            && IsReadFailed == snapshot.IsReadFailed
+            && IsEnum == snapshot.IsEnum
+            && BooleanValue == snapshot.BooleanValue
+            && NumericValue == snapshot.NumericValue
+            && LowerLimit == snapshot.LowerLimit
+            && UpperLimit == snapshot.UpperLimit
+            && LastValidValueText == snapshot.LastValidValueText
+            && LastUpdatedAt == snapshot.LastUpdatedAt
+            && LastReadAttemptAt == snapshot.LastReadAttemptAt)
+            return false;
+
         DeviceId = snapshot.DeviceId;
         SourceId = snapshot.SourceId;
         ValueId = snapshot.ValueId;
@@ -132,6 +167,7 @@ public sealed class DataSourceMonitorRow : ObservableObject
         LastUpdatedAt = snapshot.LastUpdatedAt;
         LastReadAttemptAt = snapshot.LastReadAttemptAt;
         OnPropertyChanged(string.Empty);
+        return true;
     }
 }
 
@@ -145,10 +181,16 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     private const string FloatDisplayFormat = "0.###";
     private const int MaxExceptionRows = 6;
     private const int MaxTrendPoints = 600;
+    private const int DefaultPollingIntervalMs = 200;
+    /// <summary>连续大约 3 个扫描周期没有新采样，才把定时采集值判为过期。</summary>
+    private const int StalePollMultiple = 3;
+    /// <summary>过期下限。扫描实际耗时经常长于配置的轮询间隔，低于 5 秒会把正常值刷成过期。</summary>
+    private static readonly TimeSpan MinimumStaleAge = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan MaxTrendAge = TimeSpan.FromMinutes(10);
     private readonly IDeviceRepository _deviceRepository;
+    private readonly AppSettings? _appSettings;
     private readonly PageRefreshTimer _refreshTimer;
-    private readonly Dictionary<string, Queue<DataSourceMonitorTrendPoint>> _trendPoints = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<DataSourceMonitorTrendPoint>> _trendPoints = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DataSourceMonitorRow> _rowCache = new(StringComparer.Ordinal);
     private readonly LineSeries _trendLineSeries;
     private readonly StairStepSeries _trendStateSeries;
@@ -157,6 +199,12 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     private bool _isRefreshing;
     private bool _disposed;
     private bool _pageActive;
+    private int _trendSeriesVersion;
+    private int _drawnTrendVersion = -1;
+    private string? _drawnTrendKey;
+    private double? _drawnLowerLimit;
+    private double? _drawnUpperLimit;
+    private bool _drawnStateTrend;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
@@ -286,9 +334,10 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
         ? Strings.Dsm_NoMatchHint
         : Strings.Dsm_EmptyHint;
 
-    public DataSourceMonitoringViewModel(IDeviceRepository deviceRepository)
+    public DataSourceMonitoringViewModel(IDeviceRepository deviceRepository, AppSettings? appSettings = null)
     {
         _deviceRepository = deviceRepository;
+        _appSettings = appSettings;
         _trendLineSeries = (LineSeries)TrendChart.Series[0];
         _trendStateSeries = (StairStepSeries)TrendChart.Series[1];
         _trendLowerLimitSeries = (LineSeries)TrendChart.Series[2];
@@ -329,6 +378,7 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     private void ResetTrendSession()
     {
         _trendPoints.Clear();
+        _trendSeriesVersion++;
         _trendLineSeries.Points.Clear();
         _trendStateSeries.Points.Clear();
         _trendLowerLimitSeries.Points.Clear();
@@ -387,33 +437,69 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
             SelectedRow = row;
     }
 
-    private void OnRefreshTimerTick() => Refresh();
+    private void OnRefreshTimerTick()
+    {
+        try
+        {
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            // 1 秒定时器回调里的异常会直通 Dispatcher，未接住就会终止进程。
+            Trace.TraceError(ex.ToString());
+        }
+    }
 
     private void RefreshDeviceFilterItems(IReadOnlyList<Device> devices)
     {
         var selectedId = SelectedDeviceId;
-        var deviceIds = devices.Select(device => device.Id).ToHashSet(StringComparer.Ordinal);
+        var ordered = devices
+            .OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        if (!DeviceFilterMatches(ordered))
+        {
+            DeviceFilterItems.Clear();
+            DeviceFilterItems.Add(new DeviceFilterItem(null, Strings.Dsm_AllDevices));
+            foreach (var device in ordered)
+                DeviceFilterItems.Add(new DeviceFilterItem(device.Id, device.Name));
+        }
 
-        DeviceFilterItems.Clear();
-        DeviceFilterItems.Add(new DeviceFilterItem(null, Strings.Dsm_AllDevices));
-        foreach (var device in devices.OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase))
-            DeviceFilterItems.Add(new DeviceFilterItem(device.Id, device.Name));
-
-        SelectedDeviceId = selectedId is not null && deviceIds.Contains(selectedId)
+        var nextId = selectedId is not null && ordered.Any(device => string.Equals(device.Id, selectedId, StringComparison.Ordinal))
             ? selectedId
             : null;
+        if (!string.Equals(SelectedDeviceId, nextId, StringComparison.Ordinal))
+            SelectedDeviceId = nextId;
+    }
+
+    private bool DeviceFilterMatches(IReadOnlyList<Device> ordered)
+    {
+        if (DeviceFilterItems.Count != ordered.Count + 1 || DeviceFilterItems[0].Id is not null)
+            return false;
+
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            var item = DeviceFilterItems[index + 1];
+            var device = ordered[index];
+            if (!string.Equals(item.Id, device.Id, StringComparison.Ordinal)
+                || !string.Equals(item.Name, device.Name, StringComparison.Ordinal))
+                return false;
+        }
+
+        return true;
     }
 
     private void RefreshRows(IReadOnlyList<Device>? devices = null)
     {
         devices ??= _deviceRepository.GetDevicesSnapshot();
+        var now = DateTime.Now;
+        var staleAge = GetStaleAge();
         var selectedRowKey = SelectedRow is null ? null : GetRowKey(SelectedRow);
         var allRows = devices
             .SelectMany(device => device.Sources
                 .Where(source => source.Enabled)
                 .SelectMany(source => source.Values
                     .Where(value => value.Enabled)
-                    .Select(value => GetOrUpdateRow(device, source, value))))
+                    .Select(value => GetOrUpdateRow(device, source, value, now, staleAge))))
             .OrderBy(row => row.DeviceName, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(row => row.SourceName, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(row => row.ValueName, StringComparer.CurrentCultureIgnoreCase)
@@ -467,10 +553,15 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
         UpdateTrendChart();
     }
 
-    private DataSourceMonitorRow GetOrUpdateRow(Device device, DataSource source, DataSourceValue value)
+    private DataSourceMonitorRow GetOrUpdateRow(
+        Device device,
+        DataSource source,
+        DataSourceValue value,
+        DateTime now,
+        TimeSpan staleAge)
     {
         var key = GetRowKey(device.Id, source.Id, value.Id);
-        var snapshot = CreateRow(device, source, value);
+        var snapshot = CreateRow(device, source, value, now, staleAge);
         if (_rowCache.TryGetValue(key, out var row))
         {
             row.UpdateFrom(snapshot);
@@ -528,14 +619,29 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
             || row.PlcAddress.Contains(query, StringComparison.CurrentCultureIgnoreCase);
     }
 
-    private static DataSourceMonitorRow CreateRow(Device device, DataSource source, DataSourceValue value)
+    private TimeSpan GetStaleAge()
+    {
+        var intervalMs = _appSettings?.PollingIntervalMs ?? DefaultPollingIntervalMs;
+        if (intervalMs < 10 || intervalMs > 60_000)
+            intervalMs = DefaultPollingIntervalMs;
+        var scaled = TimeSpan.FromMilliseconds((long)intervalMs * StalePollMultiple);
+        return scaled > MinimumStaleAge ? scaled : MinimumStaleAge;
+    }
+
+    private static DataSourceMonitorRow CreateRow(
+        Device device,
+        DataSource source,
+        DataSourceValue value,
+        DateTime now,
+        TimeSpan staleAge)
     {
         var isSampled = value.LastUpdatedAt.HasValue;
         var isReadFailed = value.HasReadAttempt && !value.IsValid;
+        // 触发采集只在电平到来时更新，长时间不触发不是过期。
         var isStale = isSampled
             && !isReadFailed
             && !source.HasTrigger
-            && DateTime.Now - value.LastUpdatedAt!.Value > TimeSpan.FromSeconds(5);
+            && now - value.LastUpdatedAt!.Value > staleAge;
         var status = !value.HasReadAttempt
             ? DataSourceMonitorStatus.NotSampled
             : isReadFailed
@@ -612,8 +718,15 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
     {
         var rowList = rows.ToList();
         var activeKeys = rowList.Select(GetRowKey).ToHashSet(StringComparer.Ordinal);
+        var removedTrend = false;
         foreach (var key in _trendPoints.Keys.Where(key => !activeKeys.Contains(key)).ToList())
+        {
             _trendPoints.Remove(key);
+            removedTrend = true;
+        }
+
+        if (removedTrend)
+            _trendSeriesVersion++;
 
         foreach (var row in rowList)
         {
@@ -623,13 +736,14 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
             var key = GetRowKey(row);
             if (!_trendPoints.TryGetValue(key, out var points))
             {
-                points = new Queue<DataSourceMonitorTrendPoint>();
+                points = new List<DataSourceMonitorTrendPoint>();
                 _trendPoints[key] = points;
             }
 
             if (row.IsReadFailed && row.LastReadAttemptAt is { } failedAt)
             {
-                AppendTrendPoint(points, new DataSourceMonitorTrendPoint(failedAt, null));
+                if (AppendTrendPoint(points, new DataSourceMonitorTrendPoint(failedAt, null)))
+                    _trendSeriesVersion++;
                 continue;
             }
 
@@ -637,72 +751,112 @@ public sealed partial class DataSourceMonitoringViewModel : ObservableObject, IN
                 || row.LastUpdatedAt is not { } timestamp)
                 continue;
 
-            AppendTrendPoint(points, new DataSourceMonitorTrendPoint(timestamp, numericValue));
+            if (AppendTrendPoint(points, new DataSourceMonitorTrendPoint(timestamp, numericValue)))
+                _trendSeriesVersion++;
         }
     }
 
-    private static void AppendTrendPoint(
-        Queue<DataSourceMonitorTrendPoint> points,
+    /// <summary>
+    /// 只接受不早于末点的采样。失败点用读取尝试时间，成功点用更新时间，
+    /// 乱序点如果直接入队，曲线会回折，按时间丢弃旧点也会删错。
+    /// </summary>
+    private static bool AppendTrendPoint(
+        List<DataSourceMonitorTrendPoint> points,
         DataSourceMonitorTrendPoint point)
     {
-        if (points.Count > 0 && points.Last().Timestamp == point.Timestamp)
-            return;
+        if (points.Count > 0)
+        {
+            var last = points[^1];
+            if (point.Timestamp < last.Timestamp)
+                return false;
+            if (point.Timestamp == last.Timestamp)
+            {
+                if (last.Value == point.Value)
+                    return false;
+                points[^1] = point;
+                return true;
+            }
+        }
 
-        points.Enqueue(point);
-        var newestTimestamp = points.Last().Timestamp;
-        while (points.Count > 1 && newestTimestamp - points.Peek().Timestamp > MaxTrendAge)
-            points.Dequeue();
-        while (points.Count > MaxTrendPoints)
-            points.Dequeue();
+        points.Add(point);
+        var newestTimestamp = points[^1].Timestamp;
+        var removeCount = 0;
+        while (removeCount < points.Count - 1 && newestTimestamp - points[removeCount].Timestamp > MaxTrendAge)
+            removeCount++;
+        if (removeCount > 0)
+            points.RemoveRange(0, removeCount);
+        if (points.Count > MaxTrendPoints)
+            points.RemoveRange(0, points.Count - MaxTrendPoints);
+        return true;
     }
 
     private void UpdateTrendChart()
     {
+        if (SelectedDisplayMode != DataSourceMonitorDisplayMode.Trend)
+            return;
+
+        var selectedTrendRow = SelectedRow;
+        var trendKey = selectedTrendRow is { IsTrendSupported: true } supported ? GetRowKey(supported) : null;
+        var lowerLimit = selectedTrendRow?.LowerLimit;
+        var upperLimit = selectedTrendRow?.UpperLimit;
+        var stateTrend = selectedTrendRow?.IsStateTrend == true;
+        if (_drawnTrendVersion == _trendSeriesVersion
+            && _drawnTrendKey == trendKey
+            && _drawnLowerLimit == lowerLimit
+            && _drawnUpperLimit == upperLimit
+            && _drawnStateTrend == stateTrend)
+            return;
+
         _trendLineSeries.Points.Clear();
         _trendStateSeries.Points.Clear();
         _trendLowerLimitSeries.Points.Clear();
         _trendUpperLimitSeries.Points.Clear();
-        _trendLineSeries.IsVisible = SelectedRow?.IsContinuousTrend == true;
-        _trendStateSeries.IsVisible = SelectedRow?.IsStateTrend == true;
-        var selectedTrendRow = SelectedRow;
+        _trendLineSeries.IsVisible = selectedTrendRow?.IsContinuousTrend == true;
+        _trendStateSeries.IsVisible = stateTrend;
         var hasLimits = selectedTrendRow?.IsContinuousTrend == true
-            && selectedTrendRow.LowerLimit.HasValue
-            && selectedTrendRow.UpperLimit.HasValue;
+            && lowerLimit.HasValue
+            && upperLimit.HasValue;
         _trendLowerLimitSeries.IsVisible = hasLimits;
         _trendUpperLimitSeries.IsVisible = hasLimits;
         TrendChart.IsLegendVisible = hasLimits;
-        if (SelectedRow is { IsTrendSupported: true } row
-            && _trendPoints.TryGetValue(GetRowKey(row), out var points))
+        if (trendKey is not null
+            && selectedTrendRow is not null
+            && _trendPoints.TryGetValue(trendKey, out var points))
         {
             foreach (var point in points)
             {
                 var dataPoint = DateTimeAxis.CreateDataPoint(point.Timestamp, point.Value ?? double.NaN);
-                if (row.IsStateTrend)
+                if (stateTrend)
                     _trendStateSeries.Points.Add(dataPoint);
                 else
                     _trendLineSeries.Points.Add(dataPoint);
             }
 
-            if (hasLimits && selectedTrendRow is not null && points.Count > 0)
+            if (hasLimits && points.Count > 0)
             {
-                var firstTimestamp = points.Peek().Timestamp;
-                var lastTimestamp = points.Last().Timestamp;
+                var firstTimestamp = points[0].Timestamp;
+                var lastTimestamp = points[^1].Timestamp;
                 if (firstTimestamp == lastTimestamp)
                 {
                     firstTimestamp = firstTimestamp.AddSeconds(-1);
                     lastTimestamp = lastTimestamp.AddSeconds(1);
                 }
 
-                _trendLowerLimitSeries.Title = $"{Strings.Dsm_TrendLowerLimit} {FormatTrendLimit(selectedTrendRow.LowerLimit!.Value)}";
-                _trendUpperLimitSeries.Title = $"{Strings.Dsm_TrendUpperLimit} {FormatTrendLimit(selectedTrendRow.UpperLimit!.Value)}";
-                _trendLowerLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(firstTimestamp, selectedTrendRow.LowerLimit.Value));
-                _trendLowerLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(lastTimestamp, selectedTrendRow.LowerLimit.Value));
-                _trendUpperLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(firstTimestamp, selectedTrendRow.UpperLimit.Value));
-                _trendUpperLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(lastTimestamp, selectedTrendRow.UpperLimit.Value));
+                _trendLowerLimitSeries.Title = $"{Strings.Dsm_TrendLowerLimit} {FormatTrendLimit(lowerLimit!.Value)}";
+                _trendUpperLimitSeries.Title = $"{Strings.Dsm_TrendUpperLimit} {FormatTrendLimit(upperLimit!.Value)}";
+                _trendLowerLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(firstTimestamp, lowerLimit.Value));
+                _trendLowerLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(lastTimestamp, lowerLimit.Value));
+                _trendUpperLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(firstTimestamp, upperLimit.Value));
+                _trendUpperLimitSeries.Points.Add(DateTimeAxis.CreateDataPoint(lastTimestamp, upperLimit.Value));
             }
         }
 
         TrendChart.InvalidatePlot(true);
+        _drawnTrendVersion = _trendSeriesVersion;
+        _drawnTrendKey = trendKey;
+        _drawnLowerLimit = lowerLimit;
+        _drawnUpperLimit = upperLimit;
+        _drawnStateTrend = stateTrend;
         OnPropertyChanged(nameof(HasTrendChartData));
         OnPropertyChanged(nameof(HasTrendDataGap));
         OnPropertyChanged(nameof(TrendStateTitle));

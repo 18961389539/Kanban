@@ -1,9 +1,9 @@
-﻿using System.Collections.Concurrent;
-using System.IO;
-using Kanban.Collector.Core.Services;
+﻿using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using System.Collections.Concurrent;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 

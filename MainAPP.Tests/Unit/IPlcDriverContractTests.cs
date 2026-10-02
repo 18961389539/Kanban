@@ -2,7 +2,6 @@
 using MainAPP.Services;
 using NSubstitute;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

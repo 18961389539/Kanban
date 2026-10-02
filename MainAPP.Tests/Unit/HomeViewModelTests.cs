@@ -6,10 +6,10 @@ using Kanban.Collector.Core.Models;
 using Kanban.Contracts.Metrics;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
-using MainAPP.ViewModels;
 using NSubstitute;
 using Xunit;
+using MainAPP.Services;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 

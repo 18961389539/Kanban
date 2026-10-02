@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using Kanban.Collector.Core.Models;
+﻿using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using OxyPlot;
 using OxyPlot.Axes;
 using MainAPP.Resources;
+using System.Collections.ObjectModel;
 
 namespace MainAPP.ViewModels;
 
@@ -13,21 +13,21 @@ internal static class RuntimeDeviceStatusText
         => HistoryQueryHelper.GetStateText(statusWord, offlineCause);
 }
 
-internal sealed class PollingTrendBuffer
+/// <summary>
+/// 采集服务不可达的计时。第一次失败记下起点，之后沿用，避免每秒刷新把起点重置成“现在”。
+/// 恢复连通后 Clear，下一次中断重新计时。
+/// </summary>
+internal sealed class CollectorOutageClock
 {
-    private readonly Queue<DataPoint> _points = new();
+    private DateTime? _sinceUtc;
 
-    public int Count => _points.Count;
-
-    public IReadOnlyList<DataPoint> Add(DateTime timestamp, long milliseconds)
+    public double Observe(DateTime nowUtc)
     {
-        _points.Enqueue(new DataPoint(DateTimeAxis.ToDouble(timestamp), milliseconds));
-        while (_points.Count > 60)
-            _points.Dequeue();
-        return _points.ToArray();
+        _sinceUtc ??= nowUtc;
+        return Math.Max(0, (nowUtc - _sinceUtc.Value).TotalSeconds);
     }
 
-    public void Clear() => _points.Clear();
+    public void Clear() => _sinceUtc = null;
 }
 
 internal static class DeviceStatusCollectionSynchronizer

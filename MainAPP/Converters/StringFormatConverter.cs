@@ -1,6 +1,6 @@
 using System;
-using System.Globalization;
 using System.Linq;
+using System.Globalization;
 using System.Windows.Data;
 using MainAPP.Resources;
 

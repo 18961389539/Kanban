@@ -1,5 +1,4 @@
 using Kanban.Collector.Core.Entities;
-
 namespace Kanban.Collector.Core.Services;
 
 /// <summary>

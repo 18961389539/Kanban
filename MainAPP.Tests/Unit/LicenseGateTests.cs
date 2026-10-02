@@ -1,8 +1,8 @@
-﻿using System.IO;
-using LicenseManager.Crypto;
+﻿using LicenseManager.Crypto;
 using LicenseManager.Models;
 using LicenseManager.Services;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 
@@ -231,7 +231,7 @@ public class LicenseGateTests : IDisposable
         Assert.Equal(2, gate.CurrentActivationAttempts);
 
         // 成功激活后重置计数
-        var result = gate.TryActivate(validKey, out var error);
+        var result = gate.TryActivate(validKey, out _);
         Assert.True(result);
         Assert.Equal(0, gate.CurrentActivationAttempts);
     }

@@ -2,7 +2,6 @@ using System;
 using Kanban.Analysis;
 using Kanban.Contracts.Dtos;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 [Trait("Category", "Unit")]

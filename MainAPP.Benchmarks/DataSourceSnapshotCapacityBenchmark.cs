@@ -1,10 +1,10 @@
 using BenchmarkDotNet.Attributes;
-using System.IO;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace MainAPP.Benchmarks;
 

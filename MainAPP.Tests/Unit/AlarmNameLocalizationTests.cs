@@ -1,13 +1,13 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Text.Json;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using MainAPP.Services;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

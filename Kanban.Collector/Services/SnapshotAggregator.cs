@@ -1,5 +1,5 @@
-using System.Threading.Channels;
 using Kanban.Contracts.Abstractions;
+using System.Threading.Channels;
 using Kanban.Contracts.Dtos;
 
 namespace Kanban.Collector.Services;
@@ -103,3 +103,4 @@ public sealed class SnapshotAggregator
         }
     }
 }
+

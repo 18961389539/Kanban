@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
+using Kanban.Collector.Core.Data;
 using MainAPP.Models;
 
 namespace MainAPP.Services;
@@ -12,32 +12,18 @@ namespace MainAPP.Services;
 public sealed class AssistantContextStore
 {
     public const string PageKey = "Assistant";
-    public const int MaxDeviceNames = 40;
 
     private readonly Func<string?> _deviceName;
-    private readonly Func<IReadOnlyList<string>> _deviceNames;
-    private readonly Func<string, string?> _manualExcerpt;
     private readonly object _gate = new();
     private string _pageKey = NavigationPageCatalog.Home.Key;
     private Func<AssistantHistoryFacts?>? _history;
 
-    public AssistantContextStore(IDeviceSelectionService selection, DeviceRepository devices, AppSettings settings)
-        : this(
-            () => NameOf(devices, selection.SelectedDeviceId),
-            () => Names(devices),
-            pageKey => ManualExcerpt(settings, pageKey))
+    public AssistantContextStore(IDeviceSelectionService selection, DeviceRepository devices)
+        : this(() => NameOf(devices, selection.SelectedDeviceId))
     {
     }
 
-    internal AssistantContextStore(
-        Func<string?> deviceName,
-        Func<IReadOnlyList<string>>? deviceNames = null,
-        Func<string, string?>? manualExcerpt = null)
-    {
-        _deviceName = deviceName;
-        _deviceNames = deviceNames ?? (() => []);
-        _manualExcerpt = manualExcerpt ?? (_ => null);
-    }
+    internal AssistantContextStore(Func<string?> deviceName) => _deviceName = deviceName;
 
     public void NotePage(string? pageKey)
     {
@@ -61,10 +47,7 @@ public sealed class AssistantContextStore
             page?.NavItem.AccessibleName ?? pageKey,
             _deviceName(),
             history?.From,
-            history?.To,
-            history?.Notes ?? [],
-            _deviceNames(),
-            _manualExcerpt(pageKey));
+            history?.To);
     }
 
     private static string? NameOf(DeviceRepository devices, string? deviceId)
@@ -72,24 +55,5 @@ public sealed class AssistantContextStore
         if (string.IsNullOrEmpty(deviceId))
             return null;
         return devices.Devices.FirstOrDefault(device => device.Id == deviceId)?.Name;
-    }
-
-    private static IReadOnlyList<string> Names(DeviceRepository devices)
-        => devices.Devices
-            .Select(device => device.Name)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Select(name => name.Trim())
-            .Where(name => !Regex.IsMatch(name, @"^[A-Za-z]{1,4}\d+(\.\d+)?$"))
-            .Distinct(StringComparer.Ordinal)
-            .Take(MaxDeviceNames)
-            .ToList();
-
-    private static string? ManualExcerpt(AppSettings settings, string pageKey)
-    {
-        var helpKey = PageHelpContent.HelpKeyForNavigation(pageKey);
-        var path = UserManualLocator.Resolve(settings);
-        if (helpKey is null || path is null || !File.Exists(path))
-            return null;
-        return PageHelpContent.IntroExcerpt(File.ReadAllText(path), helpKey);
     }
 }

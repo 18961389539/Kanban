@@ -1,5 +1,4 @@
 ﻿using System.IO;
-
 namespace Kanban.Collector.Core.Services;
 
 public sealed record HistoryStorageSnapshot

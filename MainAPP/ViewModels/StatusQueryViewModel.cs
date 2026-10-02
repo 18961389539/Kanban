@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Data;
+using MainAPP.Models;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using OxyPlot;

@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.IO;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.UIA3;
 using Xunit;
+using System.Diagnostics;
+using System.IO;
 
 namespace MainAPP.UIAutomation;
 

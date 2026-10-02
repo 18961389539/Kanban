@@ -1,8 +1,8 @@
-﻿using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CsvHelper.Configuration.Attributes;
-using Kanban.Collector.Core.Entities;
+﻿using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Models;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Kanban.Collector.Core.Entities;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;

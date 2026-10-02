@@ -1414,7 +1414,7 @@
     <value>Selecione o dispositivo</value>
   </data>
   <data name="K331" xml:space="preserve">
-    <value>Alterna som e piscada de novos alarmes; a lista de alarmes continua atualizando</value>
+    <value>Alterna som e piscada de novos alarmes (o mesmo botão da página inicial; vale para o aplicativo); a lista continua atualizando</value>
   </data>
   <data name="K332" xml:space="preserve">
     <value>Nível</value>
@@ -1756,7 +1756,7 @@
     <value>Armazenamento do banco de dados</value>
   </data>
   <data name="K456" xml:space="preserve">
-    <value>Recursos do sistema e consistência de dados</value>
+    <value>Recursos do processo de coleta e verificação</value>
   </data>
   <data name="K457" xml:space="preserve">
     <value>CPU / Memória</value>
@@ -5008,7 +5008,7 @@
     <value>Turno atual</value>
   </data>
   <data name="Web_Rv_WorkOrder" xml:space="preserve">
-    <value>Ordem de produção atual</value>
+    <value>Ordens na janela</value>
   </data>
   <data name="Web_Rv_Product" xml:space="preserve">
     <value>Produto / Lote</value>
@@ -5521,10 +5521,10 @@
     <value>Nº de alarmes ainda não recuperados; snapshot em tempo real, atualizado a cada ~3 s; afetado pelos filtros de nível/dispositivo/pesquisa</value>
   </data>
   <data name="K710" xml:space="preserve">
-    <value>Total de disparos históricos desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima</value>
+    <value>Total de disparos desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo</value>
   </data>
   <data name="K711" xml:space="preserve">
-    <value>Total de recuperações históricas desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima</value>
+    <value>Total de recuperações desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo</value>
   </data>
   <data name="K712" xml:space="preserve">
     <value>Alarme mais antigo ainda não recuperado; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa</value>
@@ -5533,10 +5533,10 @@
     <value>Nº de dispositivos com alarmes não recuperados; snapshot em tempo real; afetado pelos filtros de nível/dispositivo/pesquisa</value>
   </data>
   <data name="K714" xml:space="preserve">
-    <value>Alarme com mais disparos no período selecionado acima; atualizado a cada ~60 s</value>
+    <value>Alarme com mais disparos no período selecionado, após filtros de nível, dispositivo e pesquisa; atualizado a cada ~60 s</value>
   </data>
   <data name="K717" xml:space="preserve">
-    <value>O fluxo de eventos e o Top seguem o período selecionado. Disparos e recuperações de hoje contam sempre desde 0:00.</value>
+    <value>O fluxo de eventos e o Top seguem o período e os filtros de nível, dispositivo e pesquisa. Disparos e recuperações de hoje seguem só o dispositivo e contam desde 0:00.</value>
   </data>
   <data name="K718" xml:space="preserve">
     <value>Disparos repetidos do mesmo alarme numa janela curta foram mesclados; {0} eventos no total</value>
@@ -7115,6 +7115,9 @@ Manual no rodape da barra lateral ou F1</value>
   <data name="Recipe_SwitchDiscardConfirm" xml:space="preserve">
     <value>Trocar de receita descartará edições não salvas. Continuar?</value>
   </data>
+  <data name="Recipe_ApplyUnsaved" xml:space="preserve">
+    <value>Esta receita tem edições não salvas. Salve antes de aplicar</value>
+  </data>
   <data name="Home_Tip_ShiftOk" xml:space="preserve">
     <value>OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\nAgora: {0} pçs</value>
   </data>
@@ -7383,7 +7386,7 @@ Manual no rodape da barra lateral ou F1</value>
     <value>Pesquisar</value>
   </data>
   <data name="Ac_Tip_RankDuration" xml:space="preserve">
-    <value>Soma das durações deste alarme na janela (pareado se recuperado, senão até agora).\nAgora: {0}</value>
+    <value>Soma das durações dentro da janela. Se começou antes, a contagem parte do início da janela.\nAgora: {0}</value>
   </data>
   <data name="Mo_Tip_Health" xml:space="preserve">
     <value>Junta ligação PLC, se o loop de coleta está a correr e se o último ciclo teve sucesso.\nAgora: {0}</value>
@@ -7543,6 +7546,33 @@ Manual no rodape da barra lateral ou F1</value>
   </data>
   <data name="Web_Rv_DefectHour" xml:space="preserve">
     <value>Hora</value>
+  </data>
+  <data name="Web_Rv_WorkOrderHint" xml:space="preserve">
+    <value>Ordens cuja execução real cruza esta janela</value>
+  </data>
+  <data name="Web_Rv_PrintFailed" xml:space="preserve">
+    <value>Falha ao imprimir. Tente novamente.</value>
+  </data>
+  <data name="Web_Rv_ExportPdf" xml:space="preserve">
+    <value>Exportar PDF</value>
+  </data>
+  <data name="Web_Rv_PdfFile" xml:space="preserve">
+    <value>revisao_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf</value>
+  </data>
+  <data name="Web_Rv_PdfFailed" xml:space="preserve">
+    <value>Falha ao exportar PDF. Tente novamente.</value>
+  </data>
+  <data name="Web_Rv_OpenDevice" xml:space="preserve">
+    <value>Ver detalhes</value>
+  </data>
+  <data name="Web_Rv_FleetHint" xml:space="preserve">
+    <value>Clique no nome para a revisão. Ver detalhes abre a página do dispositivo.</value>
+  </data>
+  <data name="Web_Rv_CsvDurationH" xml:space="preserve">
+    <value>Duração (h)</value>
+  </data>
+  <data name="Web_Rv_CsvShare" xml:space="preserve">
+    <value>Parcela</value>
   </data>
   <data name="Web_NotFound" xml:space="preserve">
     <value>Página não encontrada</value>

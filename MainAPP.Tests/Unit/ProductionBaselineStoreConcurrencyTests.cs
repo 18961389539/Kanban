@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using Kanban.Collector.Core.Services;
 using Xunit;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 

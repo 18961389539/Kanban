@@ -1,17 +1,17 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using MainAPP.Tests;
 using MainAPP.Tests.Unit;
-using MainAPP.ViewModels;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using Microsoft.Extensions.Logging;
+using MainAPP.Services;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 
@@ -524,7 +524,6 @@ public class DeviceManagerViewModelTests
         vm.AddDeviceCommand.Execute(null);
         var dev1 = vm.SelectedDevice!;
         vm.AddDeviceCommand.Execute(null);
-        var dev2 = vm.SelectedDevice!;
         dev1.Name = "改名一号";
         Assert.True(vm.IsDirty);
 

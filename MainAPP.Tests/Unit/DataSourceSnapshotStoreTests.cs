@@ -1,10 +1,10 @@
-using System.IO;
-using System.Text.Json;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
 using Microsoft.Data.Sqlite;
 using Xunit;
+using System.IO;
+using System.Text.Json;
 
 namespace MainAPP.Tests.Unit;
 

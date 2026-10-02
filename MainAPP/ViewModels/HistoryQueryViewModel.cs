@@ -1,10 +1,11 @@
+using System.Windows;
+using NodaTime;
 using System.Collections.ObjectModel;
 using MainAPP.Resources;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kanban.Collector.Core.Data;
@@ -13,7 +14,6 @@ using MainAPP.Helpers;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using NodaTime;
 using Serilog;
 
 namespace MainAPP.ViewModels;
@@ -31,6 +31,27 @@ internal sealed class LastQuerySnapshot
     public int QuickTimeIndex { get; set; } = -1;
     public string? ShiftName { get; set; }
     public string? AlarmName { get; set; }
+}
+
+/// <summary>单个历史查询页签的分页计数。不含结果行，行数据在对应子 ViewModel 里。</summary>
+internal sealed class TabSnapshot
+{
+    public int CurrentPage = 1;
+    public int TotalPages;
+    public int TotalCount;
+    public bool HasQueried;
+    public string QueryError = string.Empty;
+    public string? Signature;
+
+    public void Clear()
+    {
+        CurrentPage = 1;
+        TotalPages = 0;
+        TotalCount = 0;
+        HasQueried = false;
+        QueryError = string.Empty;
+        Signature = null;
+    }
 }
 
 public partial class HistoryQueryViewModel : ObservableObject, IDisposable
@@ -87,23 +108,30 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private bool _queryPending;
     private int _queryVersion;
 
-    /// <summary>筛选条件自动查询防抖（800ms）：用户连续改动筛选时只查询最后一次，避免每次击键/翻日期都全量重查。</summary>
-    private static readonly TimeSpan AutoQueryDebounce = TimeSpan.FromMilliseconds(800);
-    private CancellationTokenSource? _autoQueryCts;
+    /// <summary>正在把某个页签的缓存计数写回界面，避免属性回调把别的页签的页码写进当前快照。</summary>
+    private bool _applyingSnapshot;
 
-    /// <summary>构造/恢复/重置期间的守卫：这些阶段的属性赋值（恢复上次条件、Reset 清零）不是用户主动改筛选，不应触发防抖自动查询。</summary>
-    private bool _suspendAutoQuery;
+    private const int TabCount = 5;
+    private const int SnTabIndex = 4;
+
+    /// <summary>每个页签各自的计数与页码。结果数据留在对应子 ViewModel 的内存缓存里，切页签不再重查。</summary>
+    private readonly TabSnapshot[] _snapshots = Enumerable.Range(0, TabCount).Select(_ => new TabSnapshot()).ToArray();
 
     public bool IsEmptyResult => HasQueried && TotalCount == 0 && !HasQueryError;
 
-    /// <summary>当前查询结果摘要，显示在筛选栏标题区。</summary>
-    public string QuerySummaryText => !HasQueried
-        ? Strings.M096
-        : HasQueryError
-            ? Strings.M097
-        : TotalCount == 0
-            ? Strings.M098
-            : string.Format(Strings.F069, TotalCount, CurrentPage, TotalPages);
+    /// <summary>产量/状态/报警/OEE 共用顶部筛选；SN 追溯在页签内自己查询。</summary>
+    public bool IsSharedFilterVisible => SelectedTabIndex != SnTabIndex;
+
+    /// <summary>当前查询结果摘要，显示在筛选栏标题区。SN 页签不使用这套计数。</summary>
+    public string QuerySummaryText => SelectedTabIndex == SnTabIndex
+        ? string.Empty
+        : !HasQueried
+            ? Strings.M096
+            : HasQueryError
+                ? Strings.M097
+                : TotalCount == 0
+                    ? Strings.M098
+                    : string.Format(Strings.F069, TotalCount, CurrentPage, TotalPages);
 
     [ObservableProperty]
     private string _queryValidationMessage = string.Empty;
@@ -162,6 +190,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     partial void OnCurrentPageChanged(int value)
     {
+        if (!_applyingSnapshot)
+            _snapshots[SelectedTabIndex].CurrentPage = value;
         PreviousPageCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(QuerySummaryText));
         NextPageCommand.NotifyCanExecuteChanged();
@@ -176,32 +206,30 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     partial void OnSelectedDeviceIdChanged(string? value)
     {
         OnPropertyChanged(nameof(EmptyStateCode));
-        ScheduleAutoQuery();
+        RefreshAlarmNameFilterFromDevices();
     }
-
-    partial void OnSelectedShiftNameChanged(string? value) => ScheduleAutoQuery();
-
-    partial void OnSelectedAlarmNameChanged(string? value) => ScheduleAutoQuery();
 
     /// <summary>产量/状态/报警用历史说明，OEE 页签换成 OEE 说明。</summary>
     public string PageHelpKey => SelectedTabIndex == 3 ? PageHelpContent.HistoryOee : PageHelpContent.History;
 
     partial void OnSelectedTabIndexChanged(int value)
     {
-        CancelAutoQuery(); // 切 Tab 不做防抖（切回自动查），避免残留的迟发查询落到错误的 Tab 上
         OnPropertyChanged(nameof(PageHelpKey));
         OnPropertyChanged(nameof(EmptyStateCode));
-        // Tab 切换后页面容量可能不同（产量/状态/报警分页，OEE 不分页），
-        // 不重置会导致显示"第 3 页/共 1 页"等错位，且 QueryCurrentTab 跳过 (page-1)*pageSize 行。
-        // 仅在已查询过时重置并自动查询当前 Tab，避免用户切 Tab 后看到旧数据/空表格的错位状态。
-        if (HasQueried)
+        OnPropertyChanged(nameof(IsSharedFilterVisible));
+        OnPropertyChanged(nameof(QuerySummaryText));
+        if ((uint)value >= TabCount) return;
+        var snap = _snapshots[value];
+        // 筛选已经变过的页签不再把旧结果当成当前条件的答案。
+        if (snap.HasQueried && snap.Signature != CurrentFilterSignature())
         {
-            CurrentPage = 1;
-            QueryCurrentTab();
+            snap.Clear();
+            ResetTabResults(value);
         }
+        ApplySnapshotToView(snap);
     }
 
-    /// <summary>修改日期/快捷档位时防抖自动查询。注意 _isUpdatingQuickTime 期间（QuickTimeIndex 联动设 From/To）也会调用，正好符合"选档位即查询"。</summary>
+    /// <summary>用户改日期时把快捷档位收回“自定义”。查询要等点击查询，改日期本身不查。</summary>
     partial void OnFromDateChanged(DateTime value)
     {
         // 用户手动修改 FromDate 时，QuickTimeIndex 应回到"自定义"(0)，
@@ -209,14 +237,12 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         // _isUpdatingQuickTime=true 时表示是 OnQuickTimeIndexChanged 主动设的，不重置。
         if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
             QuickTimeIndex = 0;
-        ScheduleAutoQuery();
     }
 
     partial void OnToDateChanged(DateTime value)
     {
         if (!_isUpdatingQuickTime && QuickTimeIndex != 0 && QuickTimeIndex != -1)
             QuickTimeIndex = 0;
-        ScheduleAutoQuery();
     }
 
     [ObservableProperty]
@@ -335,59 +361,44 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             ShiftFilterItems.Add(new FilterOption(n, n));
     }
 
-    private void RefreshShiftFilterItems(IEnumerable<string?> shiftNames)
-    {
-        var distinct = shiftNames.Where(n => !string.IsNullOrEmpty(n))
-                                  .Select(n => n!)
-                                  .Distinct()
-                                  .OrderBy(n => n)
-                                  .ToList();
-        ShiftFilterItems.Clear();
-        ShiftFilterItems.Add(new FilterOption(null, Strings.M099));
-        foreach (var n in distinct)
-            ShiftFilterItems.Add(new FilterOption(n, n));
-    }
-
     public ObservableCollection<FilterOption> AlarmNameFilterItems { get; } = new();
 
-    private void RefreshAlarmNameFilterItems(IEnumerable<string> alarmNames)
+    /// <summary>
+    /// 报警名称下拉来自设备配置（位报警 + 计数报警），不随本次查询结果收缩。
+    /// 未选设备时列出全部设备的报警名。
+    /// </summary>
+    private void RefreshAlarmNameFilterFromDevices()
     {
         var selected = SelectedAlarmName;
-        var resumeAutoQuery = _suspendAutoQuery;
-        _suspendAutoQuery = true;
-        try
+        var names = new SortedDictionary<string, string>(StringComparer.CurrentCulture);
+        IEnumerable<Device> devices = _deviceRepository.Devices;
+        if (!string.IsNullOrEmpty(SelectedDeviceId))
+            devices = devices.Where(d => d.Id == SelectedDeviceId);
+
+        foreach (var device in devices)
         {
-            AlarmNameFilterItems.Clear();
-            AlarmNameFilterItems.Add(new FilterOption(null, Strings.Web_Hq_AllAlarms));
-            foreach (var n in alarmNames)
-                AlarmNameFilterItems.Add(new FilterOption(n, n));
-            // Clear 会让下拉框把 SelectedValue 写回 null。补回原选项，且这次写回不触发自动查询。
-            if (!string.Equals(SelectedAlarmName, selected, StringComparison.Ordinal))
-                SelectedAlarmName = selected;
+            foreach (var alarm in device.Alarms)
+                AddAlarmName(names, alarm.Name, AlarmNameLocalizer.Resolve(alarm));
+            foreach (var counter in device.CounterAlarms)
+                AddAlarmName(names, counter.Name, AlarmNameLocalizer.Resolve(counter));
         }
-        finally
+
+        AlarmNameFilterItems.Clear();
+        AlarmNameFilterItems.Add(new FilterOption(null, Strings.Web_Hq_AllAlarms));
+        foreach (var pair in names)
+            AlarmNameFilterItems.Add(new FilterOption(pair.Key, pair.Value));
+        // Clear 会让下拉框把 SelectedValue 写回 null，补回原选项。
+        if (!string.Equals(SelectedAlarmName, selected, StringComparison.Ordinal))
+            SelectedAlarmName = selected;
+
+        static void AddAlarmName(SortedDictionary<string, string> target, string? name, string display)
         {
-            _suspendAutoQuery = resumeAutoQuery;
+            if (string.IsNullOrWhiteSpace(name) || target.ContainsKey(name)) return;
+            target[name] = string.IsNullOrWhiteSpace(display) ? name : display;
         }
     }
 
-    private AssistantHistoryFacts CaptureAssistantFacts()
-    {
-        var notes = new List<string>();
-        Add(ProductionQuery.ProductionInsight);
-        Add(StatusQuery.StatusInsight);
-        Add(AlarmQuery.AlarmInsight);
-        Add(OeeQuery.OeeInsight);
-        foreach (var note in RepeatedNotes())
-            notes.Add(note);
-        return new AssistantHistoryFacts(FromDate, ToDate, notes);
-
-        void Add(string? text)
-        {
-            if (!string.IsNullOrWhiteSpace(text))
-                notes.Add(text.Trim());
-        }
-    }
+    private AssistantHistoryFacts CaptureAssistantFacts() => new(FromDate, ToDate);
 
     [ObservableProperty]
     private string _repeatedQuestionNote = "";
@@ -428,28 +439,20 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         SnQuery = new SnQueryViewModel(snEventStore);
         assistantContext?.BindHistory(CaptureAssistantFacts);
 
-        // 构造期间的属性初始化/条件恢复不是用户主动改筛选，挂起防抖自动查询
-        _suspendAutoQuery = true;
-        try
-        {
-            RefreshDeviceFilterItems();
-            // 班次下拉从配置初始化（所有 Tab 通用），不再依赖产量 Tab 查询结果
-            RefreshShiftFilterFromConfig();
+        RefreshDeviceFilterItems();
+        // 班次下拉只来自配置，查询结果不再改写它
+        RefreshShiftFilterFromConfig();
 
-            // 跨会话恢复上次查询条件（设备 ID 校验存在性，避免引用已删除的设备）
-            RestoreLastQuery();
-            if (!string.IsNullOrEmpty(SelectedDeviceId) &&
-                !_deviceRepository.Devices.Any(d => d.Id == SelectedDeviceId))
-            {
-                SelectedDeviceId = null;
-            }
-            if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
-                SelectedDeviceId = _deviceRepository.Devices[0].Id;
-        }
-        finally
+        // 跨会话恢复上次查询条件（设备 ID 校验存在性，避免引用已删除的设备）
+        RestoreLastQuery();
+        if (!string.IsNullOrEmpty(SelectedDeviceId) &&
+            !_deviceRepository.Devices.Any(d => d.Id == SelectedDeviceId))
         {
-            _suspendAutoQuery = false;
+            SelectedDeviceId = null;
         }
+        if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
+            SelectedDeviceId = _deviceRepository.Devices[0].Id;
+        RefreshAlarmNameFilterFromDevices();
 
         _deviceRepository.Devices.CollectionChanged += OnDevicesCollectionChanged;
     }
@@ -464,7 +467,29 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         {
             RefreshDeviceFilterItems();
             SelectedDeviceId = DeviceFilterHelper.FallbackSelected(_deviceRepository, SelectedDeviceId);
+            RefreshAlarmNameFilterFromDevices();
         });
+    }
+
+    private string CurrentFilterSignature()
+        => FilterSignature(NormalizeDeviceId(), FromDate, ToDate, NormalizeShiftName(), NormalizeAlarmName());
+
+    private static string FilterSignature(QueryRequest request)
+        => FilterSignature(request.DeviceId, request.From, request.To, request.ShiftName, request.AlarmName);
+
+    private static string FilterSignature(string? deviceId, DateTime from, DateTime to, string? shiftName, string? alarmName)
+        => string.Join('\u001f', deviceId ?? "", from.Ticks.ToString(CultureInfo.InvariantCulture), to.Ticks.ToString(CultureInfo.InvariantCulture), shiftName ?? "", alarmName ?? "");
+
+    private void ResetTabResults(int tabIndex)
+    {
+        switch (tabIndex)
+        {
+            case 0: ProductionQuery.Reset(); break;
+            case 1: StatusQuery.Reset(); break;
+            case 2: AlarmQuery.Reset(); break;
+            case 3: OeeQuery.Reset(); break;
+            case SnTabIndex: SnQuery.Reset(); break;
+        }
     }
 
     private string? NormalizeDeviceId() =>
@@ -507,61 +532,42 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             if (!_hasSavedState) return;
         }
 
-        // 恢复条件的属性赋值不是用户主动改筛选，挂起防抖自动查询
-        var prevSuspend = _suspendAutoQuery;
-        _suspendAutoQuery = true;
+        SelectedTabIndex = _savedTabIndex;
+        SelectedDeviceId = _savedDeviceId;
+        // 恢复期间禁用 QuickTimeIndex 的反向覆盖逻辑，避免 OnFromDateChanged 重置 QuickTimeIndex
+        _isUpdatingQuickTime = true;
         try
         {
-            SelectedTabIndex = _savedTabIndex;
-            SelectedDeviceId = _savedDeviceId;
-            // 恢复期间禁用 QuickTimeIndex 的反向覆盖逻辑，避免 OnFromDateChanged 重置 QuickTimeIndex
-            _isUpdatingQuickTime = true;
-            try
+            if (_savedQuickTimeIndex > 0)
             {
-                if (_savedQuickTimeIndex > 0)
-                {
-                    // 快捷档位：按当前时间重算区间（守卫已抑制 OnQuickTimeIndexChanged 的回调），
-                    // 修复恢复后"档位显示近7天、日期停留在默认值"的错位（审查修复 2026-08-13）。
-                    (FromDate, ToDate) = GetQuickTimeRange(_savedQuickTimeIndex, DateTime.Now);
-                }
-                else
-                {
-                    FromDate = _savedFromDate;
-                    ToDate = _savedToDate;
-                }
-                QuickTimeIndex = _savedQuickTimeIndex;
-                SelectedShiftName = _savedShiftName;
-                SelectedAlarmName = _savedAlarmName;
+                // 快捷档位：按当前时间重算区间（守卫已抑制 OnQuickTimeIndexChanged 的回调），
+                // 修复恢复后"档位显示近7天、日期停留在默认值"的错位（审查修复 2026-08-13）。
+                (FromDate, ToDate) = GetQuickTimeRange(_savedQuickTimeIndex, DateTime.Now);
             }
-            finally
+            else
             {
-                _isUpdatingQuickTime = false;
+                FromDate = _savedFromDate;
+                ToDate = _savedToDate;
             }
+            QuickTimeIndex = _savedQuickTimeIndex;
+            SelectedShiftName = _savedShiftName;
+            SelectedAlarmName = _savedAlarmName;
         }
         finally
         {
-            _suspendAutoQuery = prevSuspend;
+            _isUpdatingQuickTime = false;
         }
     }
 
     public void PrepareAlarmHistory(string deviceId, string alarmName)
     {
-        // 主动跳转并立即查询，属性赋值期间的防抖调度需挂起，避免双查
-        _suspendAutoQuery = true;
-        try
-        {
-            SelectedTabIndex = 2;
-            SelectedDeviceId = deviceId;
-            SelectedAlarmName = alarmName;
-            QuickTimeIndex = 3;
-            HasQueried = true;
-            CurrentPage = 1;
-            QueryCurrentTab();
-        }
-        finally
-        {
-            _suspendAutoQuery = false;
-        }
+        SelectedTabIndex = 2;
+        SelectedDeviceId = deviceId;
+        SelectedAlarmName = alarmName;
+        QuickTimeIndex = 3;
+        _snapshots[2].CurrentPage = 1;
+        CurrentPage = 1;
+        _ = QueryCurrentTab();
     }
 
     private string LastQueryFilePath => _appSettings.GetFilePath("last_query.json");
@@ -681,6 +687,17 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
 
     private bool CanNextPage() => CurrentPage < TotalPages;
 
+    /// <summary>分页控件跳页：只切当前页签的内存缓存，不重新查询。</summary>
+    public void GoToPage(int page)
+    {
+        if (SelectedTabIndex is 3 or SnTabIndex) return;
+        if (page < 1) page = 1;
+        if (TotalPages > 0 && page > TotalPages) page = TotalPages;
+        if (CurrentPage != page)
+            CurrentPage = page;
+        PageCurrentTab();
+    }
+
     /// <summary>
     /// 翻页：仅对当前 Tab 的已缓存全量结果做内存分页，不重新查询（KPI/图表不变，避免每次翻页全量重查）。
     /// OEE Tab 不分页，无需处理。
@@ -693,8 +710,29 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             case 1: StatusQuery.Page(CurrentPage, PageSize); break;
             case 2: AlarmQuery.Page(CurrentPage, PageSize); break;
             case 3: break; // OEE 单页
-            case 4: break; // SN 追溯自包含查询，不走公共分页
+            case SnTabIndex: break; // SN 追溯自包含查询，不走公共分页
         }
+    }
+
+    /// <summary>把指定页签的计数写回界面属性，并按该页码重切内存分页。</summary>
+    private void ApplySnapshotToView(TabSnapshot snap)
+    {
+        _applyingSnapshot = true;
+        try
+        {
+            QueryErrorMessage = snap.QueryError;
+            TotalCount = snap.TotalCount;
+            TotalPages = snap.TotalPages;
+            HasQueried = snap.HasQueried;
+            CurrentPage = snap.CurrentPage < 1 ? 1 : snap.CurrentPage;
+        }
+        finally
+        {
+            _applyingSnapshot = false;
+        }
+
+        if (snap.HasQueried && string.IsNullOrEmpty(snap.QueryError))
+            PageCurrentTab();
     }
 
     /// <summary>
@@ -705,131 +743,72 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task Search()
     {
-        CancelAutoQuery(); // 手动查询优先：取消在途的防抖定时，避免手动+自动双查
         QueryValidationMessage = string.Empty;
         QueryErrorMessage = string.Empty;
+        if ((uint)SelectedTabIndex < TabCount)
+            _snapshots[SelectedTabIndex].QueryError = string.Empty;
+        // SN 页签使用页内查询，顶部筛选和 Ctrl+Enter 不作用在它上面。
+        if (SelectedTabIndex == SnTabIndex)
+            return;
         if (FromDate > ToDate)
         {
             QueryValidationMessage = Strings.M101;
             return;
         }
+        _snapshots[SelectedTabIndex].CurrentPage = 1;
         CurrentPage = 1;
-        HasQueried = true;
-        QueryCurrentTab();
+        await QueryCurrentTab();
         // 查询成功后持久化当前条件，便于下次进入页面或重启应用时恢复
-        await SaveLastQueryAsync(); // P1-8 修复 2026-09-02：IO 移出 UI 线程
-    }
-
-    /// <summary>筛选条件变化后的防抖自动查询：取消上一在途定时，800ms 内无新改动才执行一次查询。</summary>
-    private void ScheduleAutoQuery()
-    {
-        if (_suspendAutoQuery) return;
-        // 审查修复 2026-09-05（P2）：Cancel 后随即 Dispose。原实现只 Cancel 不 Dispose，
-        // CancellationTokenSource 持有内核等待句柄，每次防抖重排/取消都泄漏一个（长期累积）。
-        // 取消后旧的 DebounceAndQueryAsync 不再使用该 CTS 的 Token 注册回调，可安全释放。
-        _autoQueryCts?.Cancel();
-        _autoQueryCts?.Dispose();
-        var cts = new CancellationTokenSource();
-        _autoQueryCts = cts;
-        _ = DebounceAndQueryAsync(cts);
-    }
-
-    /// <summary>取消在途的防抖自动查询（手动查询/切换 Tab/重置时调用）。</summary>
-    private void CancelAutoQuery()
-    {
-        _autoQueryCts?.Cancel();
-        _autoQueryCts?.Dispose();
-        _autoQueryCts = null;
-    }
-
-    private async Task DebounceAndQueryAsync(CancellationTokenSource cts)
-    {
-        try
-        {
-            await Task.Delay(AutoQueryDebounce, cts.Token).ConfigureAwait(true);
-        }
-        catch (TaskCanceledException)
-        {
-            return;
-        }
-        if (cts != _autoQueryCts) return; // 已被更新的请求取代
-
-        // 与 Search 同口径：校验区间、从首页查起、持久化条件
-        if (FromDate > ToDate) return;
-        CurrentPage = 1;
-        HasQueried = true;
-        QueryCurrentTab();
         await SaveLastQueryAsync(); // P1-8 修复 2026-09-02：IO 移出 UI 线程
     }
 
     [RelayCommand]
     private void Reset()
     {
-        CancelAutoQuery();
-        // 重置会改设备和时间。挂起自动查询，避免先把设备清成空再查出一张空表。
-        _suspendAutoQuery = true;
+        QueryValidationMessage = string.Empty;
+        QueryErrorMessage = string.Empty;
+        SelectedShiftName = null;
+        SelectedAlarmName = null;
+        if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
+            SelectedDeviceId = _deviceRepository.Devices[0].Id;
+        _isUpdatingQuickTime = true;
         try
         {
-            QueryValidationMessage = string.Empty;
-            QueryErrorMessage = string.Empty;
-            SelectedShiftName = null;
-            SelectedAlarmName = null;
-            if (string.IsNullOrEmpty(SelectedDeviceId) && _deviceRepository.Devices.Count > 0)
-                SelectedDeviceId = _deviceRepository.Devices[0].Id;
-            _isUpdatingQuickTime = true;
-            try
-            {
-                QuickTimeIndex = 0;
-                FromDate = DateTime.Today.AddDays(-1);
-                ToDate = DateTime.Today.AddDays(1).AddSeconds(-1);
-            }
-            finally
-            {
-                _isUpdatingQuickTime = false;
-            }
-            HasQueried = false;
-            TotalCount = 0; TotalPages = 0;
-            ProductionQuery.Reset();
-            StatusQuery.Reset();
-            AlarmQuery.Reset();
-            OeeQuery.Reset();
-            SnQuery.Reset();
+            QuickTimeIndex = 0;
+            FromDate = DateTime.Today.AddDays(-1);
+            ToDate = DateTime.Today.AddDays(1).AddSeconds(-1);
         }
         finally
         {
-            _suspendAutoQuery = false;
+            _isUpdatingQuickTime = false;
         }
+        foreach (var snap in _snapshots)
+            snap.Clear();
+        HasQueried = false;
+        TotalCount = 0;
+        TotalPages = 0;
+        CurrentPage = 1;
+        ProductionQuery.Reset();
+        StatusQuery.Reset();
+        AlarmQuery.Reset();
+        OeeQuery.Reset();
+        SnQuery.Reset();
         Feedback.Success(Strings.Ux_ResetQuery);
     }
 
     [RelayCommand]
     private void ApplyQuickTimePreset(int index) => QuickTimeIndex = index;
 
+    /// <summary>
+    /// 查询当前页签。UI 线程把计算放到后台；没有 WPF 调度器时（单元测试）同一套逻辑在当前线程跑完，
+    /// 调用方可以在命令返回后直接读结果。
+    /// </summary>
     [RelayCommand]
-    private void QueryCurrentTab()
+    private Task QueryCurrentTab()
     {
-        if (UiDispatcher.IsOnLiveUiThread)
-        {
-            _ = QueryCurrentTabAsync();
-            return;
-        }
-
-        QueryCurrentTabSync();
-    }
-
-    private void QueryCurrentTabSync()
-    {
-        QueryErrorMessage = string.Empty;
-        Feedback.Working(Strings.Ux_Querying);
-        if (CurrentPage < 1) CurrentPage = 1;
-        switch (SelectedTabIndex)
-        {
-            case 0: QueryProduction(); break;
-            case 1: QueryStatus(); break;
-            case 2: QueryAlarm(); break;
-            case 3: QueryOee(); break;
-            case 4: break; // SN 追溯使用 Tab 内自包含查询按钮
-        }
+        if (SelectedTabIndex == SnTabIndex)
+            return Task.CompletedTask;
+        return QueryCurrentTabAsync();
     }
 
     private sealed record QueryRequest(
@@ -878,25 +857,43 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         QueryErrorMessage = string.Empty;
         try
         {
-            var result = await Task.Run(() => ExecuteQueryInBackground(request));
+            var result = await ExecuteQueryOffUiThread(request);
             if (requestVersion != _queryVersion) return;
-            ApplyQueryResult(result);
-            if (request.TabIndex != 4)
-                AuditHistoryLookup(result.Error == null, result.TotalCount, result.Error);
+            ApplyQueryResult(request.TabIndex, result, FilterSignature(request));
+            if (request.TabIndex != SnTabIndex)
+                AuditHistoryLookup(request, result.Error == null, result.TotalCount, result.Error);
         }
         catch (Exception ex)
         {
             if (requestVersion != _queryVersion) return;
-            QueryErrorMessage = string.Format(Strings.F077, ex.Message);
-            Feedback.Error(QueryErrorMessage);
-            _dialog.NotifyError(QueryErrorMessage);
-            AuditHistoryLookup(false, 0, QueryErrorMessage);
+            var message = string.Format(Strings.F077, ex.Message);
+            var snap = _snapshots[request.TabIndex];
+            snap.HasQueried = true;
+            snap.Signature = FilterSignature(request);
+            snap.QueryError = message;
+            snap.TotalCount = 0;
+            snap.TotalPages = 0;
+            if (request.TabIndex == SelectedTabIndex)
+            {
+                ApplySnapshotToView(snap);
+                Feedback.Error(message);
+                _dialog.NotifyError(message);
+            }
+            AuditHistoryLookup(request, false, 0, message);
         }
         finally
         {
             if (requestVersion == _queryVersion)
                 IsLoading = false;
         }
+    }
+
+    /// <summary>UI 线程上丢到线程池；测试线程上同步执行，避免测试在命令返回前读不到结果。</summary>
+    private Task<QueryResult> ExecuteQueryOffUiThread(QueryRequest request)
+    {
+        if (!UiDispatcher.IsOnLiveUiThread)
+            return Task.FromResult(ExecuteQueryInBackground(request));
+        return Task.Run(() => ExecuteQueryInBackground(request));
     }
 
     private QueryResult ExecuteQueryInBackground(QueryRequest request)
@@ -907,7 +904,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             1 => CreateStatusResult(request),
             2 => CreateAlarmResult(request),
             3 => CreateOeeResult(request),
-            4 => CreateSnResult(request),
+            4 => CreateSnResult(),
             _ => throw new InvalidOperationException(string.Format(Strings.F144, request.TabIndex)),
         };
     }
@@ -922,7 +919,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private QueryResult CreateStatusResult(QueryRequest request)
     {
         var vm = new StatusQueryViewModel(_historyService);
-        var (count, pages) = vm.Query(request.DeviceId ?? string.Empty, request.From, request.To, request.ShiftName, request.Page, request.PageSize);
+        var (count, pages) = vm.Query(request.DeviceId, request.From, request.To, request.ShiftName, request.Page, request.PageSize);
         return new QueryResult(count, pages, vm, vm.QueryError);
     }
 
@@ -941,26 +938,23 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>SN 追溯 Tab：结果由 SnQueryViewModel 自包含管理，公共管线仅透传（无数据计数）。</summary>
-    private QueryResult CreateSnResult(QueryRequest request)
+    private QueryResult CreateSnResult()
         => new(0, 0, SnQuery, null);
 
-    private void ApplyQueryResult(QueryResult result)
+    private void ApplyQueryResult(int tabIndex, QueryResult result, string signature)
     {
-        TotalCount = result.Error == null ? result.TotalCount : 0;
-        TotalPages = result.Error == null ? result.TotalPages : 0;
-        QueryErrorMessage = result.Error ?? string.Empty;
-        if (result.Error == null)
-            Feedback.Success(string.Format(Strings.Ux_QueryFinished, result.TotalCount));
-        else
-            Feedback.Error(result.Error);
+        var snap = _snapshots[tabIndex];
+        snap.HasQueried = true;
+        snap.Signature = signature;
+        snap.QueryError = result.Error ?? string.Empty;
+        snap.TotalCount = result.Error == null ? result.TotalCount : 0;
+        snap.TotalPages = result.Error == null ? result.TotalPages : 0;
 
         switch (result.ViewModel)
         {
             case ProductionQueryViewModel production:
                 ProductionQuery = production;
                 OnPropertyChanged(nameof(ProductionQuery));
-                if (result.Error == null && result.TotalCount > 0)
-                    RefreshShiftFilterItems(production.LastQueryShiftNames);
                 break;
             case StatusQueryViewModel status:
                 StatusQuery = status;
@@ -969,100 +963,32 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             case AlarmQueryViewModel alarm:
                 AlarmQuery = alarm;
                 OnPropertyChanged(nameof(AlarmQuery));
-                if (result.Error == null && alarm.LastQueryAlarmNames.Count > 0)
-                    RefreshAlarmNameFilterItems(alarm.LastQueryAlarmNames);
                 break;
             case OeeQueryViewModel oee:
                 OeeQuery = oee;
                 OnPropertyChanged(nameof(OeeQuery));
                 break;
         }
+
+        if (tabIndex != SelectedTabIndex) return;
+
+        ApplySnapshotToView(snap);
+        if (result.Error == null)
+            Feedback.Success(string.Format(Strings.Ux_QueryFinished, result.TotalCount));
+        else
+            Feedback.Error(result.Error);
     }
 
-    private void QueryProduction()
-        => ExecuteQuery(() =>
-        {
-            var (totalCount, totalPages) = ProductionQuery.Query(
-                NormalizeDeviceId(), FromDate, ToDate, NormalizeShiftName(), CurrentPage, PageSize);
-            TotalCount = totalCount;
-            TotalPages = totalPages;
-            QueryErrorMessage = ProductionQuery.QueryError ?? string.Empty;
-            // 产量查询后，按本批数据中的实际班次刷新下拉（覆盖配置初始值），
-            // 使下拉可筛选数据中出现的、但配置未显式定义的班次（如临时班次）。
-            // 仅在存在数据时刷新：无数据时保留配置初始的班次项，避免清为仅“全部班次”。
-            if (totalCount > 0)
-                RefreshShiftFilterItems(ProductionQuery.LastQueryShiftNames);
-        });
-
-    private void QueryStatus()
-        => ExecuteQuery(() =>
-        {
-            var (totalCount, totalPages) = StatusQuery.Query(
-                NormalizeDeviceId(), FromDate, ToDate, NormalizeShiftName(), CurrentPage, PageSize);
-            TotalCount = totalCount;
-            TotalPages = totalPages;
-            QueryErrorMessage = StatusQuery.QueryError ?? string.Empty;
-        });
-
-    private void QueryAlarm()
-        => ExecuteQuery(() =>
-        {
-            var (totalCount, totalPages) = AlarmQuery.Query(
-                NormalizeDeviceId(), FromDate, ToDate, NormalizeShiftName(), NormalizeAlarmName(),
-                CurrentPage, PageSize);
-            TotalCount = totalCount;
-            TotalPages = totalPages;
-            QueryErrorMessage = AlarmQuery.QueryError ?? string.Empty;
-            if (AlarmQuery.LastQueryAlarmNames.Count > 0)
-                RefreshAlarmNameFilterItems(AlarmQuery.LastQueryAlarmNames);
-        });
-
-    private void QueryOee()
-        => ExecuteQuery(() =>
-        {
-            var (totalCount, _) = OeeQuery.Query(
-                NormalizeDeviceId(), FromDate, ToDate, NormalizeShiftName());
-            TotalCount = totalCount;
-            TotalPages = totalCount > 0 ? 1 : 0;
-            QueryErrorMessage = OeeQuery.QueryError ?? string.Empty;
-        });
-
-    /// <summary>
-    /// 查询模板：统一处理 IsLoading 状态、异常捕获和 Growl 提示。
-    /// </summary>
-    private void ExecuteQuery(Action queryAction)
+    private void AuditHistoryLookup(QueryRequest request, bool succeeded, int count, string? error)
     {
-        IsLoading = true;
-        Feedback.Working(Strings.Ux_Querying);
-        QueryErrorMessage = string.Empty;
-        try
-        {
-            queryAction();
-        }
-        catch (Exception ex)
-        {
-            QueryErrorMessage = string.Format(Strings.F077, ex.Message);
-            Feedback.Error(QueryErrorMessage);
-            _dialog.NotifyError(string.Format(Strings.F154, ex.Message));
-        }
-        finally
-        {
-            if (SelectedTabIndex != 4)
-                AuditHistoryLookup(string.IsNullOrEmpty(QueryErrorMessage), TotalCount, QueryErrorMessage);
-            IsLoading = false;
-        }
-    }
-
-    private void AuditHistoryLookup(bool succeeded, int count, string? error)
-    {
-        var device = CurrentDeviceLabel();
+        var device = DeviceLabel(request.DeviceId);
         var detail = string.Format(
             Strings.Audit_Detail_HistoryQuery,
-            SelectedTabIndex,
+            request.TabIndex,
             device,
-            FromDate.ToString("yyyy-MM-dd HH:mm"),
-            ToDate.ToString("yyyy-MM-dd HH:mm"),
-            CurrentPage,
+            request.From.ToString("yyyy-MM-dd HH:mm"),
+            request.To.ToString("yyyy-MM-dd HH:mm"),
+            request.Page,
             count);
         if (!succeeded && !string.IsNullOrWhiteSpace(error))
             detail = detail + " " + error;
@@ -1071,11 +997,11 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         AuditLog.Record("History.Query", "History", device, succeeded, detail);
     }
 
-    private string CurrentDeviceLabel()
+    private string DeviceLabel(string? deviceId)
     {
-        if (string.IsNullOrEmpty(SelectedDeviceId))
+        if (string.IsNullOrEmpty(deviceId))
             return "";
-        return _deviceRepository.Devices.FirstOrDefault(device => device.Id == SelectedDeviceId)?.Name ?? SelectedDeviceId;
+        return _deviceRepository.Devices.FirstOrDefault(device => device.Id == deviceId)?.Name ?? deviceId;
     }
 
     [RelayCommand(CanExecute = nameof(CanExport))]

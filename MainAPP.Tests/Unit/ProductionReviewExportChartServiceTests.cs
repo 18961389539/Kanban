@@ -1,13 +1,13 @@
 using Kanban.Collector.Core.Models;
-using MainAPP.Models;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
-using MainAPP.ViewModels;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using System.IO;
 using Xunit;
+using MainAPP.Models;
+using MainAPP.Services;
+using MainAPP.ViewModels;
+using System.IO;
 
 namespace MainAPP.Tests.Unit;
 

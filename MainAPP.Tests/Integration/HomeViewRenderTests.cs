@@ -1,12 +1,12 @@
-﻿using System.Windows;
-using Kanban.Collector.Core.Models;
+﻿using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Windows;
 using MainAPP.Services;
 using MainAPP.Tests.Unit;
 using MainAPP.ViewModels;
 using MainAPP.Views;
-using Xunit;
 
 namespace MainAPP.Tests.Integration;
 

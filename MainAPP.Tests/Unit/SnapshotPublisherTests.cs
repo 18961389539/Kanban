@@ -1,13 +1,13 @@
-using System.IO;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using Kanban.Collector.Services;
+using Microsoft.Extensions.Logging;
 using DeviceStatus = Kanban.Contracts.Enums.DeviceStatus;
 using AlarmLevel = Kanban.Contracts.Enums.AlarmLevel;
 using OfflineCause = Kanban.Contracts.Enums.OfflineCause;

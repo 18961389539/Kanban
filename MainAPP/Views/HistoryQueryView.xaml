@@ -53,16 +53,6 @@
                 <Border
                     Margin="0,0,0,12"
                     Padding="10,8"
-                    Background="{StaticResource PrimarySoftBrush}"
-                    BorderBrush="{StaticResource WarningBrush}"
-                    BorderThickness="1"
-                    Visibility="{Binding HasQueryValidationError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Foreground="{StaticResource WarningBrush}" Text="{Binding QueryValidationMessage}" />
-                </Border>
-
-                <Border
-                    Margin="0,0,0,12"
-                    Padding="10,8"
                     Background="{StaticResource StatusAlarmSoftBrush}"
                     BorderBrush="{StaticResource DangerBrush}"
                     BorderThickness="1"
@@ -80,7 +70,17 @@
                     </DockPanel>
                 </Border>
 
-                <!-- 第一行：设备 / 快捷时间 / 从 / 至 / 查询 / 重置 / 导出 -->
+                <!-- 设备 / 时间 / 班次筛选。SN 追溯页签自带查询框，不套用这套条件。 -->
+                <StackPanel Visibility="{Binding IsSharedFilterVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border
+                    Margin="0,0,0,12"
+                    Padding="10,8"
+                    Background="{StaticResource PrimarySoftBrush}"
+                    BorderBrush="{StaticResource WarningBrush}"
+                    BorderThickness="1"
+                    Visibility="{Binding HasQueryValidationError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Foreground="{StaticResource WarningBrush}" Text="{Binding QueryValidationMessage}" />
+                </Border>
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
@@ -281,6 +281,7 @@
                         </ComboBox.Style>
                     </ComboBox>
                 </Grid>
+                </StackPanel>
             </StackPanel>
         </Border>
 

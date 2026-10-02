@@ -1,7 +1,7 @@
-using Kanban.Contracts.Abstractions;
-using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Mapping;
+using Kanban.Contracts.Abstractions;
+using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Services;
 using Kanban.Collector.Services;
 using Microsoft.AspNetCore.SignalR;
@@ -223,3 +223,4 @@ public sealed class KanbanAdminHub : Hub<IKanbanHubClient>, IKanbanAdminServer
         }
     }
 }
+

@@ -1,14 +1,14 @@
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
+using System.Collections.Generic;
+using System.Linq;
+using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Entities;
 using Kanban.Contracts.Metrics;
 using MainAPP.Resources;
 using OfflineCause = Kanban.Contracts.Enums.OfflineCause;
 using DeviceStatusLocKeys = Kanban.Contracts.Enums.DeviceStatusLocKeys;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;

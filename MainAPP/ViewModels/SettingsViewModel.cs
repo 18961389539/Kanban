@@ -1,10 +1,11 @@
+using System.Windows.Threading;
+using Kanban.Contracts.Dtos;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using MainAPP.Resources;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LicenseManager.Models;
@@ -19,7 +20,6 @@ using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Mapping;
 using MainAPP.Services;
 using Kanban.Client;
-using Kanban.Contracts.Dtos;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 

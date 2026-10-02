@@ -1,6 +1,5 @@
 ﻿using LicenseManager.Crypto;
 using Xunit;
-
 namespace MainAPP.Tests.Unit;
 
 /// <summary>

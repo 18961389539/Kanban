@@ -1,11 +1,11 @@
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using Kanban.Collector.Services;
+using Microsoft.Extensions.Logging;
 using CoreAlarm = Kanban.Collector.Core.Entities.AlarmEventType;
 
 namespace MainAPP.Tests.Unit;
@@ -322,11 +322,24 @@ public class HistoryQueryHandlerTests
         var from = new DateTime(2026, 8, 8, 8, 0, 0);
         var to = new DateTime(2026, 8, 8, 10, 0, 0);
         _executor.QueryProductionLogsSampled15Min(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
-            .Returns(
-            [
-                MakeLogAt(1, "dev1", from, 10, 0),
-                MakeLogAt(2, "dev1", from.AddMinutes(20), 25, 1),
-            ]);
+            .Returns(call =>
+            {
+                var queryTo = call.ArgAt<DateTime>(1);
+                if (queryTo == from)
+                {
+                    return new List<ProductionLog>
+                    {
+                        MakeLogAt(10, "dev1", from.AddHours(-2), 100, 0),
+                        MakeLogAt(11, "dev1", from.AddMinutes(-30), 140, 4),
+                    };
+                }
+
+                return new List<ProductionLog>
+                {
+                    MakeLogAt(1, "dev1", from, 10, 0),
+                    MakeLogAt(2, "dev1", from.AddMinutes(20), 25, 1),
+                };
+            });
         _executor.QueryStatusTransitionsStrict("dev1", Arg.Any<DateTime>(), Arg.Any<DateTime>(), null)
             .Returns([]);
         _executor.QueryAlarmEventsStrict(Arg.Any<DateTime>(), Arg.Any<DateTime>(), "dev1", null)
@@ -343,6 +356,9 @@ public class HistoryQueryHandlerTests
         Assert.Equal(HistoryErrorCode.None, dto.ErrorCode);
         Assert.Equal(15, dto.Ok);
         Assert.Equal(1, dto.Ng);
+        Assert.Equal(40, dto.BaselineOk);
+        Assert.Equal(4, dto.BaselineNg);
+        Assert.Equal(44, dto.BaselineOutput);
         Assert.Empty(dto.Alarms);
     }
 

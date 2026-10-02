@@ -1,12 +1,12 @@
-using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Text.Json;
 using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
 using Microsoft.Data.Sqlite;
 using Xunit;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 
 namespace MainAPP.UIAutomation;
 
@@ -486,7 +486,6 @@ public class SimulationFlowTests
     /// </summary>
     private static void ClickButtonAndConfirmDialog(
         FlaUI.Core.AutomationElements.Window mainWindow,
-        UIA3Automation automation,
         Button button,
         string dialogTitleHint,
         int dialogTimeoutMs = 10000,
@@ -646,49 +645,9 @@ public class SimulationFlowTests
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
 
-    private const uint WM_KEYDOWN = 0x0100;
-    private const uint WM_KEYUP = 0x0101;
     private const byte VK_RETURN = 0x0D;
     private const byte VK_ESCAPE = 0x1B;
     private const uint KEYEVENTF_KEYUP = 0x0002;
-
-    /// <summary>
-    /// 轮询查找主窗口中包含指定文本的元素（用于检测 HandyControl Growl 通知）。
-    /// Growl 通知出现在 GrowlContainer StackPanel 中，包含 TextBlock 显示消息。
-    /// 通知有自动消失时间（默认 3s），所以需要高频轮询。
-    /// </summary>
-    private static bool WaitForGrowlText(
-        FlaUI.Core.Application app,
-        UIA3Automation automation,
-        string textFragment,
-        int timeoutMs = 30000)
-    {
-        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
-        while (DateTime.UtcNow < deadline)
-        {
-            // Growl 通知可能在独立窗口或主窗口的 GrowlContainer 中
-            // 先检查主窗口
-            try
-            {
-                var mainWindow = app.GetMainWindow(automation, TimeSpan.FromSeconds(2));
-                if (mainWindow != null && ContainsTextRecursive(mainWindow, textFragment))
-                    return true;
-            }
-            catch { /* 主窗口获取失败，继续轮询 */ }
-
-            // 也检查所有顶级窗口（Growl 可能创建独立浮层）
-            var allWindows = automation.GetDesktop().FindAllChildren();
-            foreach (var win in allWindows)
-            {
-                if (win.ControlType != ControlType.Window) continue;
-                if (ContainsTextRecursive(win, textFragment))
-                    return true;
-            }
-
-            Thread.Sleep(500);
-        }
-        return false;
-    }
 
     [Fact]
     public void Simulation_WorkOrderComplete()
@@ -760,7 +719,7 @@ public class SimulationFlowTests
         Assert.True(completeBtn!.IsEnabled, "完成按钮未启用（SelectedWorkOrder 可能非 Running 状态）");
 
         // 点击完成按钮：完成后弹出后续工单选择，Esc 关闭（稍后再说），工单本身已落库为已完成
-        ClickButtonAndConfirmDialog(window, automation, completeBtn, "工单已完成", confirmVirtualKey: VK_ESCAPE);
+        ClickButtonAndConfirmDialog(window, completeBtn, "工单已完成", confirmVirtualKey: VK_ESCAPE);
         Thread.Sleep(2000); // 等待命令执行 + 数据库写入
 
         // 断言：工单状态变为已完成（Status=2）
@@ -821,7 +780,7 @@ public class SimulationFlowTests
         Assert.True(abortBtn!.IsEnabled, "中止按钮未启用（SelectedWorkOrder 可能非 Running/Pending 状态）");
 
         // 点击中止按钮 + 处理"确认中止"对话框（点击"是"）
-        ClickButtonAndConfirmDialog(window, automation, abortBtn, "确认中止");
+        ClickButtonAndConfirmDialog(window, abortBtn, "确认中止");
         Thread.Sleep(2000); // 等待命令执行 + 数据库写入
 
         // 断言：工单状态变为已中止（Status=3）
@@ -943,7 +902,7 @@ public class SimulationFlowTests
         Assert.True(resetBtn!.IsEnabled, "清零按钮未启用");
 
         // 点击清零按钮 + 处理"确认 OEE 清零"对话框
-        ClickButtonAndConfirmDialog(window, automation, resetBtn, "确认 OEE 清零");
+        ClickButtonAndConfirmDialog(window, resetBtn, "确认 OEE 清零");
 
         // 等待 PlcSimulator 清零监听循环检测到触发位（每 500ms 轮询一次）
         Thread.Sleep(3000);

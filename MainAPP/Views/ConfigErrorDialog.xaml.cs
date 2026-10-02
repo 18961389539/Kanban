@@ -1,6 +1,6 @@
+using Kanban.Collector.Core.Models;
 using System.Windows;
 using System.Windows.Input;
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 
 namespace MainAPP.Views;

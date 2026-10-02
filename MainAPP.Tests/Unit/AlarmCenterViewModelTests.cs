@@ -5,10 +5,10 @@ using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Models;
+using Xunit;
 using MainAPP.Resources;
 using MainAPP.Services;
 using MainAPP.ViewModels;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 
@@ -562,5 +562,223 @@ public class AlarmCenterViewModelTests : IDisposable
         Assert.Equal(2, result.Count);
         Assert.All(result, r => Assert.False(r.IsStormGroup));
         Assert.All(result, r => Assert.Equal(1, r.RepeatCount));
+    }
+
+    [Fact]
+    public void BuildRecentStream_GroupsByAlarmId_SoRenameStaysTogether_AndSameNameDoesNotMerge()
+    {
+        var t0 = new DateTime(2026, 8, 30, 10, 0, 0);
+        var records = new List<AlarmEventRecord>
+        {
+            new() { DeviceId = "d1", DeviceName = "旧设备名", AlarmId = "a1", AlarmName = "旧名", EventType = AlarmEventType.Triggered, EventTime = t0 },
+            new() { DeviceId = "d1", DeviceName = "新设备名", AlarmId = "a1", AlarmName = "新名", EventType = AlarmEventType.Recovered, EventTime = t0.AddSeconds(20) },
+            new() { DeviceId = "d1", DeviceName = "新设备名", AlarmId = "a2", AlarmName = "新名", EventType = AlarmEventType.Triggered, EventTime = t0.AddSeconds(30) },
+        };
+
+        var result = AlarmCenterViewModel.BuildRecentStream(records, _deviceRepo);
+
+        Assert.Equal(2, result.Count);
+        var renamed = result.Single(r => r.RepeatCount == 2);
+        Assert.Equal("新名", renamed.DisplayName);
+        Assert.Equal("新设备名", renamed.DeviceName);
+        Assert.Equal(1, result.Count(r => r.RepeatCount == 1));
+    }
+
+    [Fact]
+    public void ComputeAlarmTotalDuration_CountsFromWindowStart_WhenTriggerIsOutsideWindow()
+    {
+        var window = new DateTime(2026, 10, 2, 10, 0, 0);
+        var now = window.AddHours(1);
+        var events = new[]
+        {
+            new AlarmEventRecord { EventType = AlarmEventType.Recovered, EventTime = window.AddMinutes(20) },
+        };
+
+        var duration = AlarmCenterViewModel.ComputeAlarmTotalDuration(events, window, now);
+
+        Assert.Equal(TimeSpan.FromMinutes(20), duration);
+    }
+
+    [Fact]
+    public void ComputeAlarmTotalDuration_UsesActiveStart_WhenWindowHasNoEvents()
+    {
+        var window = new DateTime(2026, 10, 2, 10, 0, 0);
+        var now = window.AddHours(1);
+
+        var clipped = AlarmCenterViewModel.ComputeAlarmTotalDuration(
+            Array.Empty<AlarmEventRecord>(), window, now, window.AddHours(-2));
+        var inside = AlarmCenterViewModel.ComputeAlarmTotalDuration(
+            Array.Empty<AlarmEventRecord>(), window, now, window.AddMinutes(30));
+
+        Assert.Equal(TimeSpan.FromHours(1), clipped);
+        Assert.Equal(TimeSpan.FromMinutes(30), inside);
+    }
+
+    [Fact]
+    public void AlarmLevelLookup_UsesAlarmId_AndDoesNotGuessLowWhenMissingOrAmbiguous()
+    {
+        var device = new Device { Id = "d1", Name = "设备1" };
+        device.Alarms.Add(new Alarm { Id = "high", Name = "同名", Level = AlarmLevel.High });
+        device.Alarms.Add(new Alarm { Id = "low", Name = "同名", Level = AlarmLevel.Low });
+
+        var lookup = AlarmCenterViewModel.AlarmLevelLookup.Build(new[] { device });
+
+        Assert.Equal(AlarmLevel.High, lookup.Resolve("d1", "high", "同名"));
+        Assert.Equal(AlarmLevel.Low, lookup.Resolve("d1", "low", "同名"));
+        Assert.Null(lookup.Resolve("d1", "", "同名"));
+        Assert.Null(lookup.Resolve("d1", "missing", "别的报警"));
+    }
+
+    [Fact]
+    public void RefreshStats_TodayCountsIgnoreLevelAndSearch()
+    {
+        var device = new Device { Id = "d1", Name = "设备1" };
+        device.Alarms.Add(new Alarm
+        {
+            Id = "a1",
+            Name = "温度过高",
+            Level = AlarmLevel.High,
+            PlcAddress = "M100",
+        });
+        _deviceRepo.Devices.Add(device);
+        _historyService.AlarmEvents.Add(new AlarmEventRecord
+        {
+            DeviceId = "d1",
+            DeviceName = "设备1",
+            AlarmId = "a1",
+            AlarmName = "温度过高",
+            EventType = AlarmEventType.Triggered,
+            EventTime = DateTime.Now.AddMinutes(-10),
+        });
+
+        using var vm = CreateVm();
+        vm.AlarmSearchText = "找不到";
+        vm.ShowHighAlarms = false;
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.Equal(1, vm.TodayTriggerCount);
+        Assert.Empty(vm.RecentEvents);
+    }
+
+    [Fact]
+    public void RefreshStats_UnknownLevelStaysVisibleWhenLowIsHidden()
+    {
+        _historyService.AlarmEvents.Add(new AlarmEventRecord
+        {
+            DeviceId = "gone",
+            DeviceName = "已删除设备",
+            AlarmId = "missing",
+            AlarmName = "已删除报警",
+            EventType = AlarmEventType.Triggered,
+            EventTime = DateTime.Now.AddMinutes(-5),
+        });
+
+        using var vm = CreateVm();
+        vm.ShowLowAlarms = false;
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.Single(vm.RecentEvents);
+        Assert.Null(vm.TopAlarms[0].Level);
+    }
+
+    [Fact]
+    public void RefreshStats_DurationRank_IncludesAlarmThatStartedBeforeWindow()
+    {
+        var now = DateTime.Now;
+        var device = new Device { Id = "d1", Name = "设备1" };
+        device.Alarms.Add(new Alarm
+        {
+            Id = "still",
+            Name = "仍在报警",
+            Level = AlarmLevel.High,
+            PlcAddress = "M100",
+            StartTime = now.AddHours(-3),
+        });
+        _deviceRepo.Devices.Add(device);
+        _historyService.AlarmEvents.Add(new AlarmEventRecord
+        {
+            DeviceId = "d1", DeviceName = "设备1", AlarmId = "short", AlarmName = "短报警",
+            EventType = AlarmEventType.Triggered, EventTime = now.AddMinutes(-5),
+        });
+        _historyService.AlarmEvents.Add(new AlarmEventRecord
+        {
+            DeviceId = "d1", DeviceName = "设备1", AlarmId = "short", AlarmName = "短报警",
+            EventType = AlarmEventType.Recovered, EventTime = now.AddMinutes(-4),
+        });
+
+        using var vm = CreateVm();
+        vm.IsHour1 = true;
+        vm.IsTopSortByDuration = true;
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.Equal("仍在报警", vm.TopAlarms[0].AlarmName);
+    }
+
+    [Fact]
+    public void RefreshStats_KeepsPreviousLists_WhenQueryFails()
+    {
+        _historyService.AlarmEvents.Add(new AlarmEventRecord
+        {
+            DeviceId = "d1",
+            DeviceName = "设备1",
+            AlarmId = "a1",
+            AlarmName = "温度过高",
+            EventType = AlarmEventType.Triggered,
+            EventTime = DateTime.Now.AddMinutes(-5),
+        });
+
+        using var vm = CreateVm();
+        vm.RefreshAllCommand.Execute(null);
+        Assert.NotEmpty(vm.RecentEvents);
+
+        _historyService.FailAlarmQueryTimes = 1;
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.True(vm.HasStatsError);
+        Assert.NotEmpty(vm.RecentEvents);
+        Assert.Equal("—", vm.TodayTriggerCountDisplay);
+    }
+
+    [Fact]
+    public void RefreshAll_CounterAlarmWithoutStartTime_DoesNotResetDuration()
+    {
+        var device = new Device { Id = "d1", Name = "设备1" };
+        device.CounterAlarms.Add(new CounterAlarm
+        {
+            Name = "不合格计数超限",
+            Enabled = true,
+            MaxValue = 50,
+            CurrentValue = 100,
+        });
+        _deviceRepo.Devices.Add(device);
+
+        using var vm = CreateVm();
+        vm.RefreshAllCommand.Execute(null);
+        vm.RefreshAllCommand.Execute(null);
+
+        Assert.Equal(default, vm.ActiveAlarms[0].EventTime);
+        Assert.Equal("—", vm.ActiveAlarms[0].DurationText);
+        Assert.Equal("—", vm.LongestDurationText);
+    }
+
+    [Fact]
+    public void CompareFlags_DoNotTreatZeroBaselineOrMoreRecoveriesAsBetter()
+    {
+        using var vm = CreateVm();
+        vm.TodayTriggerCount = 0;
+        vm.YesterdayTriggerCount = 0;
+        Assert.False(vm.TodayTriggerCompareBetter);
+        Assert.Equal("—", vm.TodayTriggerCompareText);
+
+        vm.YesterdayTriggerCount = 10;
+        vm.TodayTriggerCount = 10;
+        Assert.False(vm.TodayTriggerCompareBetter);
+
+        vm.TodayTriggerCount = 4;
+        Assert.True(vm.TodayTriggerCompareBetter);
+
+        vm.YesterdayRecoverCount = 1;
+        vm.TodayRecoverCount = 20;
+        Assert.False(vm.TodayRecoverCompareBetter);
     }
 }

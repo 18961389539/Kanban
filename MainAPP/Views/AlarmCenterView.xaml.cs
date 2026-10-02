@@ -1,7 +1,7 @@
 using System.Windows;
+using MainAPP.ViewModels;
 using System.Windows.Controls;
 using System.Windows.Input;
-using MainAPP.ViewModels;
 
 namespace MainAPP.Views;
 
@@ -30,25 +30,6 @@ public partial class AlarmCenterView : UserControl
             AlarmSearchBox.Focus();
             Keyboard.Focus(AlarmSearchBox);
             e.Handled = true;
-        }
-    }
-
-    /// <summary>
-    /// 进入页面（页面切换为当前页时 Visibility 变 Visible）自动聚焦搜索框，
-    /// 免点击直接输入关键字过滤报警。
-    /// </summary>
-    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-    {
-        if (IsVisible)
-        {
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (IsVisible)
-                {
-                    AlarmSearchBox.Focus();
-                    Keyboard.Focus(AlarmSearchBox);
-                }
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
 }

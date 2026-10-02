@@ -1,8 +1,9 @@
+using Kanban.Contracts.Enums;
+using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Hubs;
 using Kanban.Contracts.Abstractions;
 using Kanban.Contracts.Dtos;
-using Kanban.Contracts.Enums;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Mapping;
@@ -12,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
 using System.Reflection;
-using WorkOrderStatus = Kanban.Contracts.Enums.WorkOrderStatus;
 using ContractDataSourceValueType = Kanban.Contracts.Enums.DataSourceValueType;
 
 namespace Kanban.Collector.Services;
@@ -482,8 +482,7 @@ public sealed class ConfigSyncHandler
             throw new InvalidOperationException("配方校验失败：" + string.Join("；", errors));
         try
         {
-            _recipeStore.ReplaceAll(entities);
-            _recipeStore.SaveAll();
+            _recipeStore.CommitReplaceAll(entities);
             _logger.LogInformation("Remote 配方同步完成：{Count} 条", entities.Count);
         }
         catch (Exception ex)
@@ -797,4 +796,5 @@ public sealed class ConfigSyncHandler
             throw new ArgumentOutOfRangeException(paramName, value, $"非法的枚举值 {value}（{typeof(TEnum).Name}）");
     }
 }
+
 

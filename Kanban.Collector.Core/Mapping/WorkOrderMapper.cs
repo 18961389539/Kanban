@@ -27,6 +27,8 @@ public static class WorkOrderMapper
         Remark = w.Remark,
         CreatedAt = w.CreatedAt,
         UpdatedAt = w.UpdatedAt,
+        StartedAt = w.StartedAt,
+        CompletedAt = w.CompletedAt,
     };
 
     public static WorkOrder ToEntity(WorkOrderDto dto) => new()
@@ -46,5 +48,7 @@ public static class WorkOrderMapper
         Remark = dto.Remark,
         CreatedAt = dto.CreatedAt,
         UpdatedAt = dto.UpdatedAt,
+        StartedAt = dto.StartedAt,
+        CompletedAt = dto.CompletedAt,
     };
 }

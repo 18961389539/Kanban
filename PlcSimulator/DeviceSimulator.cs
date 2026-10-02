@@ -1655,7 +1655,6 @@ public class DeviceSimulator
         var isZhuru = name.Contains("注塑", StringComparison.Ordinal);
         var isHanjie = name.Contains("焊接", StringComparison.Ordinal);
         var isZhuangpei = name.Contains("装配", StringComparison.Ordinal);
-        var isJiance = name.Contains("检测", StringComparison.Ordinal);
 
         // 温度：所有工艺类型都有稳定温控需求
         _analogParams.Add(new SimulatedAnalogParam
@@ -1869,12 +1868,12 @@ public class DeviceSimulator
                 _writeString(value.PlcAddress, GetStringSourceValue(source, value));
                 break;
             default:
-                WriteIfNotEmpty(value.PlcAddress, GetIntSourceValue(source, value, now));
+                WriteIfNotEmpty(value.PlcAddress, GetIntSourceValue(value, now));
                 break;
         }
     }
 
-    private int GetIntSourceValue(DataSourceConfigDto source, DataSourceValueConfigDto value, DateTime now)
+    private int GetIntSourceValue(DataSourceValueConfigDto value, DateTime now)
     {
         // Int32 一律写工程整数，不做 ×10 缩放（×10 约定已废弃，曾导致 MainAPP 限值判断失配、报警挂 56h）。
         // 温度/湿度/压力/电流等存在小数域的参数请使用 Float32 数据源（见 GetFloatSourceValue）。

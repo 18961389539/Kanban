@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
+﻿using MainAPP.Services;
+using System.Diagnostics;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using Kanban.Collector.Core.Services;
-using MainAPP.Services;
 using MainAPP.ViewModels;
 using Serilog;
 

@@ -1,8 +1,8 @@
 using System.Threading.Channels;
-using Kanban.Collector.Services;
 using Kanban.Contracts.Dtos;
 using Kanban.Contracts.Enums;
 using Xunit;
+using Kanban.Collector.Services;
 
 namespace MainAPP.Tests.Unit;
 

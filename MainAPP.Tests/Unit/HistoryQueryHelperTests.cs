@@ -2,8 +2,8 @@
 using Kanban.Collector.Core.Entities;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
-using MainAPP.ViewModels;
 using Xunit;
+using MainAPP.ViewModels;
 
 namespace MainAPP.Tests.Unit;
 

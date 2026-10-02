@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Xml.Linq;
 using Kanban.Contracts.Dtos;
 using Kanban.Collector.Core.Localization;
 using Kanban.Collector.Core.Services;
+using Xunit;
+using System.Globalization;
+using System.IO;
+using System.Xml.Linq;
 using MainAPP.Resources;
 using MainAPP.Services;
-using Xunit;
 
 namespace MainAPP.Tests.Unit;
 

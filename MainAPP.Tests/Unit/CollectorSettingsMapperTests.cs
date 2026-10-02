@@ -1,9 +1,9 @@
-using System.Collections.ObjectModel;
 using Kanban.Collector.Core.Mapping;
 using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
 using Kanban.Contracts.Dtos;
 using Xunit;
+using System.Collections.ObjectModel;
 
 namespace MainAPP.Tests.Unit;
 

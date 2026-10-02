@@ -133,7 +133,6 @@ public static class AssistantQuery
 
     internal static string Render(
         AssistantAsk ask,
-        DateTime now,
         IReadOnlyList<Device> devices,
         string? selectedDeviceName,
         IReadOnlyList<ResolvedWindow> windows,

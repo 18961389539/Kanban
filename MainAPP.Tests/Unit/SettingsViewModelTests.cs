@@ -1,15 +1,15 @@
 ﻿using System;
-using System.IO;
-using System.Windows;
 using LicenseManager.Services;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
-using MainAPP.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Xunit;
+using System.IO;
+using System.Windows;
+using MainAPP.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MainAPP.Tests.Unit;
 

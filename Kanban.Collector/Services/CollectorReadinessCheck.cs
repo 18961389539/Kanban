@@ -1,5 +1,5 @@
-using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Models;
+using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Services;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -201,3 +201,4 @@ public sealed class CollectorReadinessCheck : IHealthCheck
             : HealthCheckResult.Degraded($"部分 PLC profile 不健康（{unhealthy.Count}/{configuredProfiles.Count}）：{description}");
     }
 }
+

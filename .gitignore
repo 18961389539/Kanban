@@ -16,6 +16,7 @@ obj/
 BenchmarkDotNet.Artifacts/
 
 # ── 测试输出 ──
+.test-build/
 TestResults/
 *.trx
 *.coverage

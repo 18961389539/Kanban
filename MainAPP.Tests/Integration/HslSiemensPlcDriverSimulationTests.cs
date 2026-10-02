@@ -1,8 +1,8 @@
-﻿using HslCommunication.Profinet.Siemens;
-using Kanban.Collector.Core.Models;
+﻿using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using HslCommunication.Profinet.Siemens;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MainAPP.Tests.Integration;
 

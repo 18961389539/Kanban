@@ -258,4 +258,22 @@
   <data name="RecipeStringNotRolledBack" xml:space="preserve">
     <value>Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente</value>
   </data>
+  <data name="RecipeRollbackIncomplete" xml:space="preserve">
+    <value>Rollback incompleto ({0}); verifique os valores atuais do PLC manualmente</value>
+  </data>
+  <data name="RecipeRollbackItemFailed" xml:space="preserve">
+    <value>Rollback failed: {0}</value>
+  </data>
+  <data name="RecipeRollbackRestored" xml:space="preserve">
+    <value>Restored the value from before the write</value>
+  </data>
+  <data name="RecipeDeviceRunning" xml:space="preserve">
+    <value>Device is running; recipe apply is blocked</value>
+  </data>
+  <data name="RecipeApplyBusy" xml:space="preserve">
+    <value>A recipe apply is already running on this device; wait for it to finish</value>
+  </data>
+  <data name="RecipeLoadInvalid" xml:space="preserve">
+    <value>Recipe failed validation and cannot be applied: {0}</value>
+  </data>
 </root>

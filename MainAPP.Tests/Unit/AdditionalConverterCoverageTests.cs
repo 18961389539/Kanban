@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
-using MainAPP.Converters;
 using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using Xunit;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using MainAPP.Converters;
 
 namespace MainAPP.Tests.Unit;
 

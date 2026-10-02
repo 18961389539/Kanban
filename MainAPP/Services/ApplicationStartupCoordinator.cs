@@ -1,6 +1,6 @@
+using Kanban.Collector.Core.Models;
 using System.Diagnostics;
 using Kanban.Collector.Core.Services;
-using Kanban.Collector.Core.Models;
 using Kanban.Collector.Core.Data;
 using System.Windows;
 using MainAPP.ViewModels;

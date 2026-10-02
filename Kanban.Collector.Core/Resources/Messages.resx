@@ -258,4 +258,22 @@
   <data name="RecipeStringNotRolledBack" xml:space="preserve">
     <value>字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对</value>
   </data>
+  <data name="RecipeRollbackIncomplete" xml:space="preserve">
+    <value>回滚不完整（{0}），请人工确认 PLC 当前值</value>
+  </data>
+  <data name="RecipeRollbackItemFailed" xml:space="preserve">
+    <value>回滚失败：{0}</value>
+  </data>
+  <data name="RecipeRollbackRestored" xml:space="preserve">
+    <value>已恢复写入前的值</value>
+  </data>
+  <data name="RecipeDeviceRunning" xml:space="preserve">
+    <value>设备正在运行，禁止下发配方</value>
+  </data>
+  <data name="RecipeApplyBusy" xml:space="preserve">
+    <value>该设备正在下发配方，请等待当前下发完成</value>
+  </data>
+  <data name="RecipeLoadInvalid" xml:space="preserve">
+    <value>配方未通过校验，禁止下发：{0}</value>
+  </data>
 </root>

@@ -359,7 +359,8 @@ public sealed class DashboardState : IAsyncDisposable
             return _snapshots.TryGetValue(deviceId, out var s) ? s : null;
     }
 
-    /// <summary>指定设备的速度趋势点（时间升序，客户端按 500ms 快照采样，最多保留 120 点 ≈ 1 分钟）。</summary>
+    /// <summary>指定设备的速度趋势点（时间升序，客户端按 500ms 快照采样，最多保留 120 点 ≈ 1 分钟；
+    /// 每点速度为窗口内滚动速度，非班次平均）。</summary>
     public IReadOnlyList<SpeedPoint> GetSpeedHistory(string deviceId)
     {
         lock (_lock)
@@ -780,16 +781,25 @@ public sealed class DashboardState : IAsyncDisposable
                     _sortedSnapshotsDirty = true;
             }
 
-            // 速度点：总产量 / 运行小时（RunTime >= 5s 才记，避免启动失真；口径与 WPF HomeViewModel 一致）
-            double speed = snapshot.RunTime >= 5
-                ? (snapshot.TotalOkProduction + snapshot.TotalNgProduction) / (snapshot.RunTime / 3600.0)
-                : 0;
+            // 速度点：窗口内（≈1 分钟）产量增量 / 运行时长增量；运行增量不足 5s 记 0，计数器复位时清窗
             if (!_speedHistoryByDevice.TryGetValue(snapshot.DeviceId, out var queue))
             {
                 queue = new Queue<SpeedPoint>(121);
                 _speedHistoryByDevice[snapshot.DeviceId] = queue;
             }
-            queue.Enqueue(new SpeedPoint(DateTime.Now, speed));
+            int output = snapshot.TotalOkProduction + snapshot.TotalNgProduction;
+            if (queue.Count > 0 && queue.Peek() is var first
+                && (output < first.Output || snapshot.RunTime < first.RunTime))
+                queue.Clear();
+            double speed = 0;
+            if (queue.Count > 0)
+            {
+                var oldest = queue.Peek();
+                var runDelta = snapshot.RunTime - oldest.RunTime;
+                if (runDelta >= 5)
+                    speed = (output - oldest.Output) / (runDelta / 3600.0);
+            }
+            queue.Enqueue(new SpeedPoint(DateTime.Now, speed, output, snapshot.RunTime));
             while (queue.Count > 120) queue.Dequeue();
 
             RecordShiftQuality(snapshot);
@@ -1186,7 +1196,7 @@ public sealed class DeviceSnapshotStatusSummary
 }
 
 /// <summary>速度趋势点（时间 + 实时速度 件/小时）。</summary>
-public sealed record SpeedPoint(DateTime Time, double Speed);
+public sealed record SpeedPoint(DateTime Time, double Speed, int Output = 0, double RunTime = 0);
 
 /// <summary>当前班次良率点（时间 + 会话累计良率）。</summary>
 public sealed record QualityPoint(DateTime Time, double Quality);

@@ -150,8 +150,7 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
         }
         try
         {
-            _recipeStore.ReplaceAll(merged);
-            await _recipeStore.SaveAllAsync();
+            await _recipeStore.CommitReplaceAllAsync(merged);
             AuditLog.Record("Recipe.Import", "Recipe", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_RecipeImport, valid.Count, skipped));
         }
         catch (Exception ex)

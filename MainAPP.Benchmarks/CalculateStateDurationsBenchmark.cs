@@ -6,7 +6,6 @@ using Kanban.Collector.Core.Services;
 using MainAPP.Services;
 using BenchmarkDotNet.Attributes;
 using Kanban.Collector.Core.Entities;
-
 namespace MainAPP.Benchmarks;
 
 /// <summary>

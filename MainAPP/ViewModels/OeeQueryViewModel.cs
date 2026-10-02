@@ -1,11 +1,11 @@
+using CsvHelper.Configuration.Attributes;
+using Kanban.Collector.Core.Models;
 using System.Collections.ObjectModel;
 using MainAPP.Resources;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CsvHelper.Configuration.Attributes;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
-using Kanban.Collector.Core.Models;
 using MainAPP.Models;
 using Kanban.Collector.Core.Services;
 using MainAPP.Services;
@@ -172,7 +172,7 @@ public partial class OeeQueryViewModel : ObservableObject
 
             OeeChart = ChartService.BuildOeeChart(OeeQualityRate, OeePerformanceRate, OeeAvailabilityRate, OeeValue);
 
-            var perShiftOee = ComputePerShiftOee(deviceId, device.TargetCycle, transitions, initialState, from, to, fullWindow);
+            var perShiftOee = ComputePerShiftOee(device.TargetCycle, transitions, initialState, from, to, fullWindow);
             OeeTrendChart = ChartService.BuildOeeTrendChart(
                 perShiftOee.Select(s => (s.ShiftTime, s.Oee, s.ShiftName)));
             OeeShiftBarChart = ChartService.BuildOeeShiftBarChart(
@@ -257,7 +257,7 @@ public partial class OeeQueryViewModel : ObservableObject
     }
 
     private List<ShiftOeeRecord> ComputePerShiftOee(
-        string deviceId, int targetCycle,
+        int targetCycle,
         List<StatusTransitionRecord> allTransitions, int initialInitialState,
         DateTime fromDate, DateTime toDate,
         List<ProductionLog> fullWindow)

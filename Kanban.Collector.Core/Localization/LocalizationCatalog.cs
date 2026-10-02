@@ -1881,7 +1881,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K331"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "切换新报警声音与闪烁；报警列表仍照常更新", ["en-US"] = "Toggle sound and flashing for new alarms; the alarm list still updates", ["ja-JP"] = "新規アラームの音と点滅を切替（一覧は更新されます）", ["pt-BR"] = "Alterna som e piscada de novos alarmes; a lista de alarmes continua atualizando"
+            ["zh-CN"] = "切换新报警声音与闪烁（与主页同一开关，整个程序生效）；报警列表仍照常更新", ["en-US"] = "Toggle sound and flashing for new alarms (same switch as Home, applies to the whole app); the alarm list still updates", ["ja-JP"] = "新規アラームの音と点滅を切替（ホームと同一、アプリ全体に効く。一覧は更新されます）", ["pt-BR"] = "Alterna som e piscada de novos alarmes (o mesmo botão da página inicial; vale para o aplicativo); a lista continua atualizando"
         },
         ["Wpf|K332"] = new Dictionary<string, string>
         {
@@ -2337,7 +2337,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|K456"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "系统资源与数据一致性", ["en-US"] = "System Resources & Data Consistency", ["ja-JP"] = "システム資源とデータ整合性", ["pt-BR"] = "Recursos do sistema e consistência de dados"
+            ["zh-CN"] = "采集进程资源与配置检查", ["en-US"] = "Acquisition process resources & configuration", ["ja-JP"] = "収集プロセスのリソースと設定チェック", ["pt-BR"] = "Recursos do processo de coleta e verificação"
         },
         ["Wpf|K457"] = new Dictionary<string, string>
         {
@@ -6673,7 +6673,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Web_Rv_WorkOrder"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "当前工单", ["en-US"] = "Current Work Order", ["ja-JP"] = "現在の工単", ["pt-BR"] = "Ordem de produção atual"
+            ["zh-CN"] = "窗口工单", ["en-US"] = "Work orders in window", ["ja-JP"] = "期間内の工単", ["pt-BR"] = "Ordens na janela"
         },
         ["Wpf|Web_Rv_Product"] = new Dictionary<string, string>
         {
@@ -7357,11 +7357,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|K710"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受上方时间范围影响", ["en-US"] = "Total trigger events since midnight today; refreshed about every 60s; not affected by the time-range selector above", ["ja-JP"] = "本日 0:00 以降の発生回数。約60秒更新。上部の時間範囲の影響なし", ["pt-BR"] = "Total de disparos históricos desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima"
+            ["zh-CN"] = "今日 0:00 起的历史触发总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化", ["en-US"] = "Total trigger events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter", ["ja-JP"] = "本日 0:00 以降の発生回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ", ["pt-BR"] = "Total de disparos desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo"
         },
         ["Wpf|K711"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受上方时间范围影响", ["en-US"] = "Total recovery events since midnight today; refreshed about every 60s; not affected by the time-range selector above", ["ja-JP"] = "本日 0:00 以降の復帰回数。約60秒更新。上部の時間範囲の影響なし", ["pt-BR"] = "Total de recuperações históricas desde 0:00 de hoje; atualizado a cada ~60 s; não é afetado pelo seletor de período acima"
+            ["zh-CN"] = "今日 0:00 起的历史恢复总次数；约每 60 秒刷新；不受时间范围、级别和搜索影响，只随设备筛选变化", ["en-US"] = "Total recovery events since midnight today; refreshed about every 60s; ignores time range, level, and search; follows only the device filter", ["ja-JP"] = "本日 0:00 以降の復帰回数。約60秒更新。時間範囲・レベル・検索の影響なし。設備フィルタのみ", ["pt-BR"] = "Total de recuperações desde 0:00 de hoje; atualizado a cada ~60 s; ignora período nível e pesquisa; só segue o filtro de dispositivo"
         },
         ["Wpf|K712"] = new Dictionary<string, string>
         {
@@ -7373,11 +7373,11 @@ public static class LocalizationCatalog
         },
         ["Wpf|K714"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "按上方时间范围内历史触发次数排序的第一名；约每 60 秒刷新", ["en-US"] = "Top alarm by trigger count in the selected time range above; refreshed about every 60s", ["ja-JP"] = "上部で選択した時間範囲内の発生回数第1位。約60秒更新", ["pt-BR"] = "Alarme com mais disparos no período selecionado acima; atualizado a cada ~60 s"
+            ["zh-CN"] = "所选时间范围内、且符合当前级别/设备/搜索筛选的触发次数第一名；约每 60 秒刷新", ["en-US"] = "Top alarm by trigger count in the selected time range, after level, device, and search filters; refreshed about every 60s", ["ja-JP"] = "選択した時間範囲で、レベル/設備/検索フィルタ後の発生回数第1位。約60秒更新", ["pt-BR"] = "Alarme com mais disparos no período selecionado, após filtros de nível, dispositivo e pesquisa; atualizado a cada ~60 s"
         },
         ["Wpf|K717"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "事件流与 Top 排行按所选范围。今日触发、恢复始终从今天 0:00 起。", ["en-US"] = "Event stream and Top list follow the selected range. Today's trigger and recover counts always start at midnight.", ["ja-JP"] = "イベント流と Top は選択した範囲に従います。本日の発生・復帰は常に本日 0:00 から集計します。", ["pt-BR"] = "O fluxo de eventos e o Top seguem o período selecionado. Disparos e recuperações de hoje contam sempre desde 0:00."
+            ["zh-CN"] = "事件流与 Top 排行跟随时间范围，并受级别、设备和搜索筛选。今日触发和恢复只随设备筛选，从今天 0:00 起算。", ["en-US"] = "Event stream and Top list follow the selected range and the level, device, and search filters. Today's trigger and recover counts follow only the device filter and always start at midnight.", ["ja-JP"] = "イベント流と Top は時間範囲とレベル/設備/検索に従います。本日の発生・復帰は設備フィルタのみ、本日 0:00 から集計します。", ["pt-BR"] = "O fluxo de eventos e o Top seguem o período e os filtros de nível, dispositivo e pesquisa. Disparos e recuperações de hoje seguem só o dispositivo e contam desde 0:00."
         },
         ["Wpf|K718"] = new Dictionary<string, string>
         {
@@ -7942,6 +7942,30 @@ public static class LocalizationCatalog
         ["Core|RecipeStringNotRolledBack"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "字符串参数未自动回滚（避免截断值覆盖真实数据），请人工核对", ["en-US"] = "String parameter was not rolled back automatically (to avoid truncated values overwriting real data); please verify manually", ["ja-JP"] = "文字列パラメータは自動ロールバックされませんでした（切り詰め値が実データを上書きするのを避けるため）。手動で確認してください", ["pt-BR"] = "Parâmetro de string não foi revertido automaticamente (para evitar que valores truncados sobrescrevam dados reais); verifique manualmente"
+        },
+        ["Core|RecipeRollbackIncomplete"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "回滚不完整（{0}），请人工确认 PLC 当前值", ["en-US"] = "Rollback incomplete ({0}); verify the current PLC values manually", ["ja-JP"] = "ロールバックが不完全です（{0}）。PLC の現在値を手動で確認してください", ["pt-BR"] = "Rollback incompleto ({0}); verifique os valores atuais do PLC manualmente"
+        },
+        ["Core|RecipeRollbackItemFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "回滚失败：{0}", ["en-US"] = "Rollback failed: {0}", ["ja-JP"] = "ロールバック失敗：{0}", ["pt-BR"] = "Rollback failed: {0}"
+        },
+        ["Core|RecipeRollbackRestored"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "已恢复写入前的值", ["en-US"] = "Restored the value from before the write", ["ja-JP"] = "書き込み前の値に戻しました", ["pt-BR"] = "Restored the value from before the write"
+        },
+        ["Core|RecipeDeviceRunning"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "设备正在运行，禁止下发配方", ["en-US"] = "Device is running; recipe apply is blocked", ["ja-JP"] = "設備が稼働中のため、レシピを適用できません", ["pt-BR"] = "Device is running; recipe apply is blocked"
+        },
+        ["Core|RecipeApplyBusy"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "该设备正在下发配方，请等待当前下发完成", ["en-US"] = "A recipe apply is already running on this device; wait for it to finish", ["ja-JP"] = "この設備ではレシピ適用が進行中です。完了までお待ちください", ["pt-BR"] = "A recipe apply is already running on this device; wait for it to finish"
+        },
+        ["Core|RecipeLoadInvalid"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "配方未通过校验，禁止下发：{0}", ["en-US"] = "Recipe failed validation and cannot be applied: {0}", ["ja-JP"] = "レシピが検証を通過していないため、適用できません：{0}", ["pt-BR"] = "Recipe failed validation and cannot be applied: {0}"
         },
         ["Wpf|Language_Portuguese"] = new Dictionary<string, string>
         {
@@ -9803,6 +9827,10 @@ public static class LocalizationCatalog
         {
             ["zh-CN"] = "切换配方会放弃当前未保存的编辑，是否继续？", ["en-US"] = "Switching recipes discards unsaved edits. Continue?", ["ja-JP"] = "レシピ切替で未保存の編集が失われます。続行しますか？", ["pt-BR"] = "Trocar de receita descartará edições não salvas. Continuar?"
         },
+        ["Wpf|Recipe_ApplyUnsaved"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "当前配方有未保存的修改，请先保存再下发", ["en-US"] = "This recipe has unsaved edits. Save it before applying", ["ja-JP"] = "未保存の変更があります。適用する前に保存してください", ["pt-BR"] = "Esta receita tem edições não salvas. Salve antes de aplicar"
+        },
         ["Wpf|Home_Tip_ShiftOk"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "当班良品数 = 本班次会话累计 OK 产量（不含 NG），与工单窗口累计不是同一口径。\\n当前：{0} 件", ["en-US"] = "Shift OK = session cumulative OK this shift (excludes NG), not the work-order window count.\\nNow: {0} pcs", ["ja-JP"] = "当シフト良品数 = 当シフトのセッション累計 OK（NG を含まない）。工単時間窓の累計とは異なります。\\n現在：{0} 個", ["pt-BR"] = "OK do turno = OK acumulado da sessão neste turno (exclui NG), não a janela da ordem.\\nAgora: {0} pçs"
@@ -10161,7 +10189,7 @@ public static class LocalizationCatalog
         },
         ["Wpf|Ac_Tip_RankDuration"] = new Dictionary<string, string>
         {
-            ["zh-CN"] = "统计窗口内该报警各次持续时长之和（已恢复按配对，未恢复计到现在）。\\n当前：{0}", ["en-US"] = "Sum of durations for this alarm in the stats window (paired if recovered, otherwise until now).\\nNow: {0}", ["ja-JP"] = "統計窓におけるこの警報の継続時間合計（復帰済みはペア、未復帰は現在まで）。\\n現在：{0}", ["pt-BR"] = "Soma das durações deste alarme na janela (pareado se recuperado, senão até agora).\\nAgora: {0}"
+            ["zh-CN"] = "统计窗口内该报警各次持续时长之和。窗口开始前已触发的，从窗口起点算到恢复或现在。\\n当前：{0}", ["en-US"] = "Sum of durations inside the stats window. If it started before the window, counting begins at the window start.\\nNow: {0}", ["ja-JP"] = "統計窓内の継続時間合計。窓の開始前から鳴っている場合は窓の起点から数えます。\\n現在：{0}", ["pt-BR"] = "Soma das durações dentro da janela. Se começou antes, a contagem parte do início da janela.\\nAgora: {0}"
         },
         ["Wpf|Mo_Tip_Health"] = new Dictionary<string, string>
         {
@@ -10374,6 +10402,42 @@ public static class LocalizationCatalog
         ["Wpf|Web_Rv_DefectHour"] = new Dictionary<string, string>
         {
             ["zh-CN"] = "时段", ["en-US"] = "Hour", ["ja-JP"] = "時間帯", ["pt-BR"] = "Hora"
+        },
+        ["Wpf|Web_Rv_WorkOrderHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "按实际开停时间与复盘窗口重叠", ["en-US"] = "Orders whose actual run overlaps this window", ["ja-JP"] = "実際の開始・終了が復盤窓と重なる工単", ["pt-BR"] = "Ordens cuja execução real cruza esta janela"
+        },
+        ["Wpf|Web_Rv_PrintFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "打印失败，请重试", ["en-US"] = "Print failed. Please try again.", ["ja-JP"] = "印刷に失敗しました。再試行してください。", ["pt-BR"] = "Falha ao imprimir. Tente novamente."
+        },
+        ["Wpf|Web_Rv_ExportPdf"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "导出 PDF", ["en-US"] = "Export PDF", ["ja-JP"] = "PDF エクスポート", ["pt-BR"] = "Exportar PDF"
+        },
+        ["Wpf|Web_Rv_PdfFile"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "生产复盘_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf", ["en-US"] = "review_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf", ["ja-JP"] = "生産レビュー_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf", ["pt-BR"] = "revisao_{0:yyyyMMdd}_{1:yyyyMMdd}.pdf"
+        },
+        ["Wpf|Web_Rv_PdfFailed"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "PDF 导出失败，请重试", ["en-US"] = "PDF export failed. Please try again.", ["ja-JP"] = "PDF の書き出しに失敗しました。再試行してください。", ["pt-BR"] = "Falha ao exportar PDF. Tente novamente."
+        },
+        ["Wpf|Web_Rv_OpenDevice"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "查看详情", ["en-US"] = "View details", ["ja-JP"] = "詳細を表示", ["pt-BR"] = "Ver detalhes"
+        },
+        ["Wpf|Web_Rv_FleetHint"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "点击设备名查看该设备复盘，查看详情进入设备页", ["en-US"] = "Click a device name for its review. View details opens the device page.", ["ja-JP"] = "設備名でその復盤を開き、詳細で設備ページへ", ["pt-BR"] = "Clique no nome para a revisão. Ver detalhes abre a página do dispositivo."
+        },
+        ["Wpf|Web_Rv_CsvDurationH"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "持续(h)", ["en-US"] = "Duration (h)", ["ja-JP"] = "継続(h)", ["pt-BR"] = "Duração (h)"
+        },
+        ["Wpf|Web_Rv_CsvShare"] = new Dictionary<string, string>
+        {
+            ["zh-CN"] = "占比", ["en-US"] = "Share", ["ja-JP"] = "割合", ["pt-BR"] = "Parcela"
         },
         ["Wpf|Web_NotFound"] = new Dictionary<string, string>
         {

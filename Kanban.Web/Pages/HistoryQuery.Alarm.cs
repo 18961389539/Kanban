@@ -80,9 +80,8 @@ public partial class HistoryQuery
             ActiveShiftOptions = stats.ShiftNames.ToList();
 
             AlBuildChartOption(stats.Chart.Select(s => (s.AlarmName, s.TriggerCount, s.AvgDurationMin)).ToList());
-            var effectiveTo = _alTo > Dashboard.ServerNow ? Dashboard.ServerNow : _alTo;
             if (stats.Chart.Count > 0 && AlTriggered > 0)
-                AlInsight = AlarmAnalysis.BuildInsight(stats, effectiveTo, L.T);
+                AlInsight = AlarmAnalysis.BuildInsight(stats, L.T);
 
             await AlLoadTablePageAsync();
             AlAnalysisDone = true;
