@@ -96,6 +96,12 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
     [ObservableProperty]
     private string _successRateDisplay = "—";
 
+    [ObservableProperty]
+    private string _chainStatus = "";
+
+    [ObservableProperty]
+    private bool _chainIntact = true;
+
     public AuditQueryViewModel(IAuditService auditService, IDialogService dialog)
     {
         _auditService = auditService;
@@ -347,6 +353,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                 var (items, total) = _auditService.QueryPaged(from, to, op, action, null, succeeded, page, pageSize);
                 // 统计卡口径 = 整个查询结果（与列表同一过滤条件），而非仅当前页
                 var (okCount, failCount) = _auditService.CountByResult(from, to, op, action, null, succeeded);
+                var chain = _auditService.VerifyChain();
                 UiDispatcher.Dispatch(() =>
                 {
                     if (requestVersion != _queryVersion) return;
@@ -366,6 +373,7 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                     OnPropertyChanged(nameof(PageSummary));
                     PreviousPageCommand.NotifyCanExecuteChanged();
                     NextPageCommand.NotifyCanExecuteChanged();
+                    ApplyChain(chain);
                     IsLoading = false;
                 });
             }
@@ -382,9 +390,23 @@ public partial class AuditQueryViewModel : ObservableObject, INavigationPageLife
                     OnPropertyChanged(nameof(HasPreviousPage));
                     OnPropertyChanged(nameof(HasNextPage));
                     OnPropertyChanged(nameof(PageSummary));
+                    ApplyChain(null);
                     IsLoading = false;
                 });
             }
         });
+    }
+
+    private void ApplyChain(AuditChainReport? report)
+    {
+        if (report is null || report.Unchecked)
+        {
+            ChainIntact = false;
+            ChainStatus = Strings.Audit_ChainUnchecked;
+            return;
+        }
+
+        ChainIntact = report.Intact;
+        ChainStatus = report.Intact ? Strings.Audit_ChainIntact : Strings.Audit_ChainBroken;
     }
 }

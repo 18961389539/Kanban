@@ -33,6 +33,7 @@ public sealed class AuditDbContext : KanbanDbContextBase
             entity.Property(entry => entry.Detail).HasMaxLength(512);
             entity.Property(entry => entry.BeforeJson).HasMaxLength(4000);
             entity.Property(entry => entry.AfterJson).HasMaxLength(4000);
+            entity.Property(entry => entry.ChainHash).HasMaxLength(64);
         });
     }
 }

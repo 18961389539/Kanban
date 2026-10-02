@@ -13,6 +13,8 @@
     d:DataContext="{d:DesignInstance Type=vm:HistoryQueryViewModel}"
     d:DesignHeight="800"
     d:DesignWidth="1200"
+    Loaded="OnLoaded"
+    IsVisibleChanged="OnVisibleChanged"
     mc:Ignorable="d" xmlns:resources="clr-namespace:MainAPP.Resources">
     <UserControl.InputBindings>
         <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SearchCommand}" />
@@ -66,6 +68,16 @@
                     BorderThickness="1"
                     Visibility="{Binding HasQueryError, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Foreground="{StaticResource DangerBrush}" Text="{Binding QueryErrorMessage}" TextWrapping="Wrap" />
+                </Border>
+
+                <Border
+                    Margin="0,0,0,12"
+                    Style="{StaticResource HintCard}"
+                    Visibility="{Binding HasRepeatedQuestionNote, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <DockPanel>
+                        <materialIcons:MaterialIcon Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource PrimaryBrush}" Kind="LightbulbOnOutline" />
+                        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource FontSizeHint}" Foreground="{StaticResource PrimaryTextBrush}" Text="{Binding RepeatedQuestionNote}" TextWrapping="Wrap" />
+                    </DockPanel>
                 </Border>
 
                 <!-- 第一行：设备 / 快捷时间 / 从 / 至 / 查询 / 重置 / 导出 -->

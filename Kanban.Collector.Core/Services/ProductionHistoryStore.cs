@@ -202,20 +202,26 @@ ORDER BY p.Timestamp")
     {
         try
         {
-            var idSet = deviceIds.ToHashSet();
-            using var context = db.CreateProductionLogContext();
-            return context.ProductionLogs.AsNoTracking()
-                .Where(log => idSet.Contains(log.DeviceId) && log.Timestamp >= from && log.Timestamp <= to)
-                .OrderBy(log => log.Timestamp)
-                .ToList()
-                .GroupBy(log => log.DeviceId)
-                .ToDictionary(group => group.Key, group => group.ToList());
+            return QueryProductionLogsBatchStrict(from, to, deviceIds);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "批量查询生产快照失败");
             return [];
         }
+    }
+
+    public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatchStrict(
+        DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+    {
+        var idSet = deviceIds.ToHashSet();
+        using var context = db.CreateProductionLogContext();
+        return context.ProductionLogs.AsNoTracking()
+            .Where(log => idSet.Contains(log.DeviceId) && log.Timestamp >= from && log.Timestamp <= to)
+            .OrderBy(log => log.Timestamp)
+            .ToList()
+            .GroupBy(log => log.DeviceId)
+            .ToDictionary(group => group.Key, group => group.ToList());
     }
 
     public int CleanupOldProductionLogs(int retentionDays = 365) =>

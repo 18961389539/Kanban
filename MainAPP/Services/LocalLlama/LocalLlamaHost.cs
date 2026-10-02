@@ -22,6 +22,7 @@ public sealed class LocalLlamaHost : ILocalLlamaHost
 {
     public const string FolderName = "llama.cpp";
     public const string ServerFileName = "llama-server.exe";
+    public const int ContextTokens = 16384;
 
     private readonly ModelScopeModelDownloader _downloader;
     private readonly ILogger<LocalLlamaHost> _logger;
@@ -73,12 +74,10 @@ public sealed class LocalLlamaHost : ILocalLlamaHost
             process.StartInfo.ArgumentList.Add("--port");
             process.StartInfo.ArgumentList.Add(port.ToString());
             process.StartInfo.ArgumentList.Add("-c");
-            process.StartInfo.ArgumentList.Add("4096");
+            process.StartInfo.ArgumentList.Add(ContextTokens.ToString());
             process.StartInfo.ArgumentList.Add("-ngl");
             process.StartInfo.ArgumentList.Add("0");
             process.StartInfo.ArgumentList.Add("--jinja");
-            process.StartInfo.ArgumentList.Add("--reasoning");
-            process.StartInfo.ArgumentList.Add("off");
 
             if (!process.Start())
                 throw new InvalidOperationException("llama-server 没有启动");

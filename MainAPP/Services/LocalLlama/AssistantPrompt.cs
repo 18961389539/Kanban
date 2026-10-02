@@ -1,8 +1,6 @@
-using System.Text.RegularExpressions;
-
 namespace MainAPP.Services;
 
-/// <summary>送给本地模型的短事实。产量表、地址和连接串不进这里。</summary>
+/// <summary>送给本地模型的事实。连接口令、连接串和许可证不进这里。</summary>
 public sealed record AssistantPromptContext(
     string PageKey,
     string PageName,
@@ -15,67 +13,92 @@ public sealed record AssistantPromptContext(
 
 public sealed record AssistantHistoryFacts(DateTime From, DateTime To, IReadOnlyList<string> Notes);
 
-/// <summary>模型只改写已经给出的事实。数字和能否操作设备都写死在这段说明里。</summary>
+/// <summary>把已经显示的对话交给模型。超长时从最早的一轮开始丢，当前问题留下。</summary>
 public static class AssistantPrompt
 {
-    public const string System =
-        """
-        你是这块生产看板的说明员。只根据用户消息里已经给出的事实回答，用提问所用的语言。
-        不要编造产量、良品率、开动率或报警次数。没有给出的数，就说页面上还没有这个数。
-        不要确认报警，不要开始或结束工单，不要下发配方，不要写 PLC。
-        良品率 = 合格数 / (合格数 + 不良数)。
-        性能率 = (合格数 + 不良数) / (额定件每小时 × 运行小时)，最高 100%。
-        开动率 = 运行 / (运行 + 报警)，待机和离线不计入。
-        """;
+    /// <summary>用户消息字符上限。上下文是 16384，还要留给系统提示和最多 2048 个生成词。中文按接近一字一词来留。</summary>
+    public const int MaxUserChars = 12000;
 
-    public static string User(AssistantPromptContext context, string question)
+    public const string System = "你是这块生产看板的问答助手。需要数据时自己调用工具。";
+
+        public readonly record struct AssistantPromptPiece(
+        string Text,
+        bool DroppedNames,
+        bool DroppedManual,
+        bool DroppedNotes,
+        bool DroppedDetails,
+        IReadOnlyList<string> KeptFacts,
+        IReadOnlyList<string> KeptNotes);
+
+    public static string User(
+        AssistantPromptContext context,
+        string question,
+        string? previousQuestion = null,
+        string? previousAnswer = null)
+        => Write(context, question, previousQuestion, previousAnswer).Text;
+
+    public static AssistantPromptPiece Write(
+        AssistantPromptContext context,
+        string question,
+        string? previousQuestion = null,
+        string? previousAnswer = null)
     {
-        var device = string.IsNullOrWhiteSpace(context.DeviceName) ? "未选择" : context.DeviceName.Trim();
-        var range = context.From is DateTime from && context.To is DateTime to
-            ? $"{from:yyyy-MM-dd HH:mm} 至 {to:yyyy-MM-dd HH:mm}"
-            : "还没有历史查询时间";
-        var notes = FormatList(context.Notes.Select(CleanFact).OfType<string>());
-        var names = FormatList((context.DeviceNames ?? []).Select(CleanFact).OfType<string>());
-        var manual = CleanBlock(context.ManualExcerpt);
-        return $"""
-            当前页面：{context.PageName}
-            设备：{device}
-            设备名单（只有名称）：
-            {names}
-            查询时间：{range}
-            手册说明（不是本班的数）：
-            {manual}
-            已经算好的说明：
-            {notes}
-            问题：{question.Trim()}
-            """;
+        _ = context;
+        return new AssistantPromptPiece(
+            Assemble(question, FormatPrevious(previousQuestion, previousAnswer)),
+            false,
+            false,
+            false,
+            false,
+            [],
+            []);
     }
 
-    internal static string CleanBlock(string? text)
+    public static IReadOnlyList<AssistantChatMessage> History(
+        IEnumerable<(bool IsUser, string Text)> earlier,
+        string question,
+        string? contextLine = null)
     {
-        if (string.IsNullOrWhiteSpace(text))
-            return "（没有）";
-        var lines = text.Split('\n').Select(CleanFact).OfType<string>().ToList();
-        return lines.Count == 0 ? "（没有）" : string.Join("\n", lines);
+        var messages = new List<AssistantChatMessage>();
+        foreach (var turn in earlier)
+        {
+            if (string.IsNullOrWhiteSpace(turn.Text))
+                continue;
+            messages.Add(new AssistantChatMessage(
+                turn.IsUser ? "user" : "assistant",
+                turn.IsUser ? "问题：" + turn.Text.Trim() : turn.Text.Trim()));
+        }
+
+        var current = "问题：" + question.Trim();
+        if (!string.IsNullOrWhiteSpace(contextLine))
+            current = contextLine.Trim() + "\n" + current;
+        messages.Add(new AssistantChatMessage("user", current));
+        while (messages.Count > 1 && Length(messages) > MaxUserChars)
+            messages.RemoveAt(0);
+        if (messages.Count > 1 && messages[0].Role != "user")
+            messages.RemoveAt(0);
+        return messages;
     }
+
+    private static int Length(IReadOnlyList<AssistantChatMessage> messages)
+        => messages.Sum(message => message.Content?.Length ?? 0);
+
+    private static string? FormatPrevious(string? question, string? answer)
+    {
+        if (string.IsNullOrWhiteSpace(question) || string.IsNullOrWhiteSpace(answer))
+            return null;
+        return "上一问：" + question.Trim() + "\n上一答：" + answer.Trim();
+    }
+
+    private static string Assemble(string question, string? previous)
+        => previous == null
+            ? "问题：" + question.Trim()
+            : previous + "\n问题：" + question.Trim();
 
     internal static string? CleanFact(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;
-        var value = text.Trim();
-        if (value.Contains("Server=", StringComparison.OrdinalIgnoreCase)
-            || value.Contains("Password", StringComparison.OrdinalIgnoreCase)
-            || value.Contains("Data Source", StringComparison.OrdinalIgnoreCase)
-            || value.Contains("://", StringComparison.Ordinal)
-            || Regex.IsMatch(value, @"^[A-Za-z]{1,4}\d+(\.\d+)?$"))
-            return null;
-        return value;
-    }
-
-    private static string FormatList(IEnumerable<string> items)
-    {
-        var lines = items.Where(item => item.Length > 0).Distinct(StringComparer.Ordinal).ToList();
-        return lines.Count == 0 ? "（没有）" : string.Join("\n", lines.Select(item => "- " + item));
+        return text.Trim();
     }
 }

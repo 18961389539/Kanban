@@ -527,6 +527,12 @@ public sealed class KanbanDataClient : IAsyncDisposable, IKanbanMonitoringClient
         return await _connection!.InvokeAsync<AuditLogQueryResponse>(nameof(IKanbanHubServer.QueryAuditLogsAsync), request, ct);
     }
 
+    public async Task<AuditChainReportDto> VerifyAuditChainAsync(CancellationToken ct = default)
+    {
+        EnsureConnected();
+        return await _connection!.InvokeAsync<AuditChainReportDto>(nameof(IKanbanHubServer.VerifyAuditChainAsync), ct);
+    }
+
     /// <summary>看板标题（Collector settings.json 的 AppTitle；屏端拉取实现零配置）。</summary>
     public async Task<string> GetTitleAsync(CancellationToken ct = default)
     {

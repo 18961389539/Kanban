@@ -118,7 +118,14 @@ public static class MainAppServiceCollectionExtensions
         // 本地模型：发布目录只带 CPU 版 llama.cpp。权重在第一次 EnsureStartedAsync 时从 ModelScope 下载，启动时不拉。
         services.AddSingleton<ModelScopeModelDownloader>();
         services.AddSingleton<ILocalLlamaHost, LocalLlamaHost>();
+        services.AddSingleton<AssistantFactSheet>();
+        services.AddSingleton<IAssistantFactSheet>(sp => sp.GetRequiredService<AssistantFactSheet>());
+        services.AddSingleton<AssistantQueryEngine>();
+        services.AddSingleton<IAssistantQueryEngine>(sp => sp.GetRequiredService<AssistantQueryEngine>());
+        services.AddSingleton<AssistantToolBroker>();
+        services.AddSingleton<IAssistantToolBroker>(sp => sp.GetRequiredService<AssistantToolBroker>());
         services.AddSingleton<AssistantContextStore>();
+        services.AddSingleton<IAssistantQuestionTally, AssistantQuestionTally>();
         services.AddSingleton<ILocalLlamaChatClient, LocalLlamaChatClient>();
 
         return services;

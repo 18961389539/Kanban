@@ -58,7 +58,7 @@ When you need step-by-step help:
 
 On first launch, a **quick guide** may appear; the last step also offers **Open User Manual**.
 
-> Other shortcuts: `Ctrl+1`–`Ctrl+9` open the first nine sidebar pages the signed-in account can see. For an administrator those are Home, Production Line, Alarm Center, Work Orders, Review, History Query, Device Manager, Recipes, and System Settings. For an engineer the ninth page is Data Monitoring. An operator sees seven pages, ending at Data Monitoring, so `Ctrl+8` and `Ctrl+9` do nothing. Viewer mode keeps only Home, Production Line, Alarm Center, and Data Monitoring. `Ctrl+L` switches the current user; `F11` toggles fullscreen.
+> Other shortcuts: `Ctrl+1`–`Ctrl+9` open the first nine sidebar pages the signed-in account can see. For an administrator or an engineer the first nine are Home, Production Line, Alarm Center, Work Orders, Review, History Query, AI Q&A, Device Manager, and Recipes. An operator does not see Device Manager or Recipes. The first seven end at AI Q&A, the eighth is Data Monitoring, and `Ctrl+9` does nothing. Viewer mode keeps only Home, Production Line, Alarm Center, and Data Monitoring. `Ctrl+L` switches the current user; `F11` toggles fullscreen.
 
 ## 3. Main Interface Overview
 
@@ -80,6 +80,7 @@ The left sidebar lists pages from top to bottom in the order below (some entries
 | Clipboard | Work Orders | Add, start, complete, and abort work orders |
 | Chart | Review | Trends, output, and OEE summary |
 | Clock | History Query | Query production, alarm, and status history |
+| Message | AI Q&A | Ask the local model about output, alarms, and work orders |
 | Device | Device Manager | Configure devices and addresses (Engineer+) |
 | Recipe | Recipes | Recipes written to the PLC (Engineer+) |
 | Gear | System Settings | Data source, PLC, shifts, refresh, licensing (Admin) |
@@ -375,7 +376,7 @@ Wait one acquisition cycle. If an address is wrong, Recent Successful Reads on R
 ![History Query](screenshots/05_history_query.png)
 
 <!-- page-help:history -->
-This page reads records that have already been stored. It is not the live home screen. Changing the device, quick time, start, end, shift, or alarm type waits about 0.8 seconds and then queries by itself. Query runs immediately and starts again at page 1. If the start is after the end, the page says the start cannot be after the end, and this attempt returns nothing.
+This page reads records that have already been stored. It is not the live home screen. The same question asked three times in AI Q&A on this computer adds one line at the top. That line is a record of the question and not a newly calculated quantity. Changing the device, quick time, start, end, shift, or alarm type waits about 0.8 seconds and then queries by itself. Query runs immediately and starts again at page 1. If the start is after the end, the page says the start cannot be after the end, and this attempt returns nothing.
 
 Output, status, and alarm tables show 50 rows per page, newest first. The summaries, the note, and the chart use every matching row, so turning the page only swaps those 50 rows. OEE Analysis is not paged. With no device selected, these tabs stay empty.
 
@@ -467,11 +468,68 @@ When one rate is clearly low: quality sends you to Output Query for OK and NG; a
 ## 9.1 AI Q&A
 
 <!-- page-help:assistant -->
-AI Q&A on the sidebar is for questions about facts this board has already calculated. Opening the page carries the previous page, the selected device, the list of device names, and the time range already set in History Query. The previous page’s manual note and any notes History Query has already written are included. The device list is names only. The raw output table, addresses, and connection parameters are not sent.
+AI Q&A answers production questions with the local model. After you click Send, the model chooses what to look up, the program runs the query and returns the result, and the model writes the answer. One turn looks up at most four times, then answers from what it already has. Stop keeps the text already written. Opening this page does not start the model. The first send prepares the model, and downloads the weights when they are not on this computer. Operators, engineers, and administrators can open the page. Viewer mode does not show it.
 
-Type one sentence and press Enter or Send. The first send prepares the model on this computer. The weights download into this user's folder and are not part of the installer. If the download drops, the next send continues from the bytes already saved. Until that finishes, the page says it is preparing.
+### How to ask
 
-An answer only explains the facts it was given. It does not acknowledge alarms, start or finish work orders, or release a recipe. When a number was not given, it should say the page does not have that number yet.
+The box is a single line. Enter does the same thing as Send. While an answer is in progress, the box and the five buttons cannot be used.
+
+The button labels are short. Each one sends a fixed question:
+
+- Today output sends “production today”.
+- This shift sends “production this shift”.
+- Lowest quality sends “which device has the lowest quality rate this shift”.
+- Versus yesterday sends “production today and yesterday”.
+- Alarm duration sends “alarm duration today”.
+
+Output, quality rate, and alarm duration need a time in the question. The program recognizes today, yesterday, the day before yesterday, 3 days ago, last 7 days, this shift, the previous shift, this week, last week, this month, last month, this year, last year, and dates such as 2026-10-01. Today, this week, this month, and this year run up to now. Yesterday and a named day run through the end of that day. Last 7 days are seven dates including today. Two times in one question, such as today and yesterday, are calculated separately, and the difference is written as well. “Which device is lowest” compares quality rate.
+
+A device name limits the lookup to that device. “This device” or “selected device” uses the device named at the top of the page. If none is selected, that output or alarm-duration question cannot be calculated. With no device named, the lookup is the whole plant. An unknown device name is reported as something that cannot be calculated, or as no such device.
+
+A time that has not arrived returns nothing. Output and alarm duration keep the last 365 days by default. An earlier start is reported as outside retention and returns no number. An administrator can change the number of days with the environment variable KANBAN_HISTORY_RETENTION_DAYS. A value of 0 does not cut off by age. When the question has no usable time and measure, the program returns: This cannot be calculated. Name the period and the measure such as output or quality for a day.
+
+The same question asked three times on this computer is stored here and shown at the top of History Query. That line is a question record, not a newly calculated number.
+
+### The line at the top
+
+Three items sit at the top of the page. They are attached only in front of the current question. Earlier turns are not rewritten.
+
+- Previous page: the page you were on before opening AI Q&A.
+- Device: the same device selected on Home. If none is selected, the line says none is selected.
+- Query time: after History Query has been opened, the start and end currently set there. If it has not been opened, the line says History Query has not been opened.
+
+These three items tell the model where you just came from. They do not lock the answer to that query range. The time in the question still decides what is looked up.
+
+### Follow-up questions
+
+Every question and answer already on the screen is sent to the model. A later question can refer to earlier turns. You do not have to repeat them.
+
+When the conversation grows long, the oldest turns are dropped and the current question stays. Leaving the page and coming back keeps the conversation for this run of the program. Closing the program clears it. This page has no clear, copy, or regenerate action.
+
+### What can be looked up
+
+The model chooses the kind of lookup. The program can only read the items below. It does not change the PLC, work orders, or alarms.
+
+- Output and quality rate: the difference across the time window. A shift question says this is a shift-window difference, not the counter still adding up on Home. Quality rate is good count divided by good count plus defect count. A window with no output has no quality rate.
+- Alarm duration: hours spent in the alarm state during that window.
+- Alarm records: raised and cleared events, plus alarms that are still active. The name is included, and the address is included when there is one.
+- Status records: changes among running, alarm, idle, and offline. Record lookups with no time in the question use today from midnight until now.
+- Defects: defect counts added during the window.
+- Work orders: the orders as they are now, not the historical window in the question. Completion is good count divided by the target. Defect count is not part of completion.
+- Output snapshots: shift cumulative good and defect counts, not the window difference above. When they disagree with Home or with an output question, read which kind the answer names.
+- Current runtime: the current shift, the recipe configured now, performance, and availability. Shift piece counts are the numbers still adding up on Home, and they reset at shift change. Overall OEE is given per device. The plant is not rolled into one OEE. There is no separate recipe list.
+- Barcodes: serial number, device, time, and good or defect.
+- Accounts: display name, user name, role, and whether the account is enabled. Passwords are not included.
+- Audit: time, operator, action, target, and success or failure. The before-and-after content is not included.
+- Device addresses: points such as good count, defect count, status, and recipe. Connection passwords and connection strings are not included.
+
+When nothing is found, or the lookup fails, the result is a sentence such as “nothing was found this time”, and the model answers from that.
+
+### Numbers in the answer
+
+Output, quality rate, and alarm duration that the program calculated follow the result returned for that lookup. The model can also skip the lookup and write a number itself. The program does not mark that number as unsupported. When it does not match the shop floor, check History Query or Home.
+
+The page cannot write the PLC, download a recipe, start, complete, or abort a work order, or acknowledge an alarm. Those actions stay on their own pages.
 <!-- /page-help -->
 
 ## 10. Production Review: Trends and Summaries
@@ -724,7 +782,7 @@ This window switches the current account. In full mode the program already logs 
 ![Audit Log](screenshots/13_audit.png)
 
 <!-- page-help:audit -->
-This page shows who did what, and when. It needs an administrator. It only reads the record. It does not change devices or production. Opening the page runs one query for the default range.
+This page shows who did what, and when. It needs an administrator. It only reads the record. It does not change devices or production. Opening the page runs one query for the default range. The top of the page says whether the record chain is intact. Records are kept for 365 days by default.
 
 ### Range and filters
 
@@ -742,7 +800,11 @@ This page shows who did what, and when. It needs an administrator. It only reads
 
 ### What one row contains
 
-Time, operator, action, target type, target, result, and detail. Select a row and Audit details on the right shows the value before the change and the value after it. Settings changes, logins, recipe applies, and user changes are kept here.
+Time, operator, action, target type, target, result, and detail. Select a row and Audit details on the right shows the value before the change and the value after it. Logins, activation, settings, device saves, work orders, recipe saves and applies, recipe import and export, PLC writes, history queries, exports, and user changes are kept here. A failed save is kept as a failed row. AI Q&A records the page, device, and time, not the question text.
+
+### Record chain and retention
+
+Each row carries a check linked to the previous row. If someone edits a row in the database, or deletes a row in the middle, the top of the page says the record chain is broken. Deleting the oldest rows for retention stores the break point, so the chain that remains stays continuous. The default retention is 365 days, using the same environment variable as history data, KANBAN_HISTORY_RETENTION_DAYS. A value of 0 does not delete by age. In remote acquisition, a full send queue is written to a local recovery file and sent to the collector later.
 
 ### Export
 

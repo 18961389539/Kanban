@@ -30,11 +30,6 @@
                 </StackPanel>
                 <TextBlock
                     Margin="0,12,0,0"
-                    Foreground="{StaticResource SecondaryTextBrush}"
-                    Text="{x:Static resources:Strings.Assistant_Intro}"
-                    TextWrapping="Wrap" />
-                <TextBlock
-                    Margin="0,8,0,0"
                     Foreground="{StaticResource PrimaryTextBrush}"
                     Text="{Binding ContextLine}"
                     TextWrapping="Wrap" />
@@ -59,10 +54,19 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <TextBlock
-                                    Foreground="{StaticResource PrimaryTextBrush}"
-                                    Text="{Binding Text}"
-                                    TextWrapping="Wrap" />
+                                <StackPanel>
+                                    <TextBlock
+                                        Foreground="{StaticResource PrimaryTextBrush}"
+                                        Text="{Binding Text}"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        Margin="0,6,0,0"
+                                        FontSize="{DynamicResource FontSizeHint}"
+                                        Foreground="{StaticResource WarningBrush}"
+                                        Text="{Binding Notice}"
+                                        TextWrapping="Wrap"
+                                        Visibility="{Binding HasNotice, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -72,21 +76,43 @@
 
         <Border Grid.Row="2" Padding="20" Style="{StaticResource MainCard}">
             <StackPanel>
-                <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                <WrapPanel Margin="0,0,0,4">
                     <Button
                         MinHeight="36"
-                        Margin="0,0,8,0"
+                        Margin="0,0,8,8"
                         Padding="12,0"
                         Command="{Binding CompareCommand}"
                         Content="{x:Static resources:Strings.Assistant_Compare}"
                         Style="{StaticResource ButtonDefault}" />
                     <Button
                         MinHeight="36"
+                        Margin="0,0,8,8"
                         Padding="12,0"
                         Command="{Binding HandoverCommand}"
                         Content="{x:Static resources:Strings.Assistant_Handover}"
                         Style="{StaticResource ButtonDefault}" />
-                </StackPanel>
+                    <Button
+                        MinHeight="36"
+                        Margin="0,0,8,8"
+                        Padding="12,0"
+                        Command="{Binding LagCommand}"
+                        Content="{x:Static resources:Strings.Assistant_Lag}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        MinHeight="36"
+                        Margin="0,0,8,8"
+                        Padding="12,0"
+                        Command="{Binding YesterdayCommand}"
+                        Content="{x:Static resources:Strings.Assistant_Yesterday}"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        MinHeight="36"
+                        Margin="0,0,8,8"
+                        Padding="12,0"
+                        Command="{Binding OrderBehindCommand}"
+                        Content="{x:Static resources:Strings.Assistant_OrderBehind}"
+                        Style="{StaticResource ButtonDefault}" />
+                </WrapPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -101,13 +127,22 @@
                         KeyDown="OnInputKeyDown"
                         Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
                         ToolTip="{x:Static resources:Strings.Assistant_InputHint}" />
-                    <Button
-                        Grid.Column="2"
-                        MinWidth="88"
-                        MinHeight="40"
-                        Command="{Binding SendCommand}"
-                        Content="{x:Static resources:Strings.Assistant_Send}"
-                        Style="{StaticResource ButtonDefault}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button
+                            MinWidth="88"
+                            MinHeight="40"
+                            Margin="0,0,8,0"
+                            Command="{Binding StopCommand}"
+                            Content="{x:Static resources:Strings.Assistant_Stop}"
+                            Style="{StaticResource ButtonDefault}"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button
+                            MinWidth="88"
+                            MinHeight="40"
+                            Command="{Binding SendCommand}"
+                            Content="{x:Static resources:Strings.Assistant_Send}"
+                            Style="{StaticResource ButtonDefault}" />
+                    </StackPanel>
                 </Grid>
                 <TextBlock
                     Margin="0,8,0,0"

@@ -46,12 +46,14 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
             var snapshot = _recipeStore.Recipes.ToList();
             var json = JsonSerializer.Serialize(snapshot, JsonOptions);
             AppSettings.WriteFileAtomically(path, json);
+            AuditLog.Record("Recipe.Export", "Recipe", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_RecipeExport, snapshot.Count));
             _dialog.NotifySuccess(string.Format(Strings.F319, snapshot.Count));
             _logger.LogInformation("配方已导出：{Count} 条 → {Path}", snapshot.Count, path);
             return true;
         }
         catch (Exception ex)
         {
+            AuditLog.Record("Recipe.Export", "Recipe", Path.GetFileName(path), succeeded: false, detail: ex.Message);
             _dialog.NotifyError(string.Format(Strings.F320, ex.Message));
             _logger.LogError(ex, "配方导出失败");
             return false;
@@ -72,6 +74,7 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
         }
         catch (Exception ex)
         {
+            AuditLog.Record("Recipe.Import", "Recipe", Path.GetFileName(path), succeeded: false, detail: ex.Message);
             _dialog.NotifyError(string.Format(Strings.F321, ex.Message));
             _logger.LogError(ex, "配方导入文件解析失败：{Path}", path);
             return 0;
@@ -145,8 +148,17 @@ public class RecipeJsonIOService(IRecipeStore recipeStore, IDialogService dialog
             }
             else merged.Add(r);
         }
-        _recipeStore.ReplaceAll(merged);
-        await _recipeStore.SaveAllAsync();
+        try
+        {
+            _recipeStore.ReplaceAll(merged);
+            await _recipeStore.SaveAllAsync();
+            AuditLog.Record("Recipe.Import", "Recipe", Path.GetFileName(path), detail: string.Format(Strings.Audit_Detail_RecipeImport, valid.Count, skipped));
+        }
+        catch (Exception ex)
+        {
+            AuditLog.Record("Recipe.Import", "Recipe", Path.GetFileName(path), succeeded: false, detail: ex.Message);
+            throw;
+        }
         _logger.LogInformation("配方导入完成：{Imported} 条（跳过 {Skipped} 条），来源 {Path}", valid.Count, skipped, path);
         _dialog.NotifySuccess(string.Format(Strings.F318, valid.Count, skipped));
         return valid.Count;

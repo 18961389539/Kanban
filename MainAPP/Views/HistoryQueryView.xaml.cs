@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using HandyControl.Data;
 using MainAPP.ViewModels;
@@ -12,6 +13,20 @@ public partial class HistoryQueryView : UserControl
     public HistoryQueryView()
     {
         InitializeComponent();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e) => RefreshRepeatedQuestions();
+
+    private void OnVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible)
+            RefreshRepeatedQuestions();
+    }
+
+    private void RefreshRepeatedQuestions()
+    {
+        if (DataContext is HistoryQueryViewModel vm)
+            vm.RefreshRepeatedQuestions();
     }
 
     /// <summary>

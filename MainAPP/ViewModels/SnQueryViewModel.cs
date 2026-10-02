@@ -64,11 +64,15 @@ public partial class SnQueryViewModel : ObservableObject
                 Results.Add(record);
             if (list.Count == 0)
                 QueryError = string.Format(MainAPP.Resources.Strings.K922, sn);
+            Kanban.Collector.Core.Services.AuditLog.Record(
+                "History.Query", "History", sn, detail: string.Format(MainAPP.Resources.Strings.Audit_Detail_SnQuery, sn, list.Count));
         }
         catch (Exception ex)
         {
             Results.Clear();
             QueryError = string.Format(MainAPP.Resources.Strings.K923, ex.Message);
+            Kanban.Collector.Core.Services.AuditLog.Record(
+                "History.Query", "History", sn, succeeded: false, detail: QueryError);
         }
         finally
         {

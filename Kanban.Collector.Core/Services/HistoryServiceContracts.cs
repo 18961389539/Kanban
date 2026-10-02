@@ -11,6 +11,10 @@ public interface IProductionHistoryReader
     List<ProductionLog> QueryProductionLogsByWorkOrder(int workOrderId);
     ProductionLog? GetLatestProductionBefore(string deviceId, DateTime before, string shiftName);
     Dictionary<string, List<ProductionLog>> QueryProductionLogsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds);
+
+    /// <summary>与批量查询相同的结果。数据库异常向调用方抛出。成功但没有快照时返回空字典。</summary>
+    Dictionary<string, List<ProductionLog>> QueryProductionLogsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => QueryProductionLogsBatch(from, to, deviceIds);
 }
 
 /// <summary>生产快照兼容门面，同时提供采集线程使用的写入能力。</summary>
@@ -36,6 +40,10 @@ public interface IAlarmHistoryService
 {
     List<AlarmEventRecord> QueryAlarmEvents(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null);
     Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds);
+
+    /// <summary>与批量查询相同的结果。数据库异常向调用方抛出。成功但没有事件时返回空字典。</summary>
+    Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => QueryAlarmEventsBatch(from, to, deviceIds);
     AlarmEventRecord? GetLatestAlarmEvent(string alarmId);
 
     /// <summary>严格查询：按 AlarmId 取最新一条（SQL 层 Where(AlarmId)+OrderByDescending+First，异常向调用方抛出）。
@@ -64,6 +72,10 @@ public interface IStatusTransitionHistoryService
     List<StatusTransitionRecord> QueryStatusTransitions(string deviceId, DateTime from, DateTime to, string? shiftName = null);
     StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName = null);
     Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatch(DateTime from, DateTime to, IReadOnlyList<string> deviceIds);
+
+    /// <summary>与批量查询相同的结果。数据库异常向调用方抛出。成功但没有记录时返回空字典。</summary>
+    Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => QueryStatusTransitionsBatch(from, to, deviceIds);
     bool LogStatusTransition(string deviceId, string deviceName,
         int previousState, int currentState, DateTime eventTime,
         string? shiftName = null, int offlineCause = 0);

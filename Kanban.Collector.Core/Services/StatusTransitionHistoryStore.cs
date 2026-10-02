@@ -142,20 +142,26 @@ public sealed class StatusTransitionHistoryStore : IStatusTransitionHistoryServi
     {
         try
         {
-            using var ctx = _db.CreateStatusTransitionContext();
-            var idSet = deviceIds.ToHashSet();
-            return ctx.StatusTransitions.AsNoTracking()
-                .Where(s => idSet.Contains(s.DeviceId) && s.EventTime >= from && s.EventTime <= to)
-                .OrderBy(s => s.EventTime)
-                .ToList()
-                .GroupBy(s => s.DeviceId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            return QueryStatusTransitionsBatchStrict(from, to, deviceIds);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "批量查询状态转换失败");
             return [];
         }
+    }
+
+    public Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatchStrict(
+        DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+    {
+        using var ctx = _db.CreateStatusTransitionContext();
+        var idSet = deviceIds.ToHashSet();
+        return ctx.StatusTransitions.AsNoTracking()
+            .Where(s => idSet.Contains(s.DeviceId) && s.EventTime >= from && s.EventTime <= to)
+            .OrderBy(s => s.EventTime)
+            .ToList()
+            .GroupBy(s => s.DeviceId)
+            .ToDictionary(g => g.Key, g => g.ToList());
     }
 
     public int CleanupOldStatusTransitions(int retentionDays = 365) =>

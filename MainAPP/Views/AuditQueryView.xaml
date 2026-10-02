@@ -67,6 +67,22 @@
                         FontSize="{DynamicResource FontSizeHint}"
                         Foreground="{StaticResource SecondaryTextBrush}"
                         Text="{x:Static resources:Strings.K613}" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        FontSize="{DynamicResource FontSizeHint}"
+                        Text="{Binding ChainStatus}"
+                        TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ChainIntact}" Value="False">
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
                 <controls:PageHelpButton Margin="8,0,0,0" VerticalAlignment="Center" PageKey="audit" />
             </StackPanel>

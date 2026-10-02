@@ -34,37 +34,85 @@
     <value>AI質問</value>
   </data>
   <data name="Nav_Assistant_Tip" xml:space="preserve">
-    <value>いまの画面で算出済みの事実から答える</value>
+    <value>送信時にモデルが照会を選びプログラムが実行する</value>
   </data>
   <data name="Assistant_Title" xml:space="preserve">
     <value>AI質問</value>
   </data>
   <data name="Assistant_Intro" xml:space="preserve">
-    <value>算出済みの事実に設備名と前のページの説明を添えます。アラーム確認・工単の開始と終了・レシピ配布はしません。</value>
+    <value>送信後に手元のモデルが照会を呼び出しプログラムが結果を返します。</value>
   </data>
   <data name="Assistant_Compare" xml:space="preserve">
-    <value>事実を対照</value>
+    <value>今日の出来高</value>
   </data>
   <data name="Assistant_Handover" xml:space="preserve">
-    <value>引き継ぎを書く</value>
+    <value>このシフト</value>
   </data>
   <data name="Assistant_CompareQuestion" xml:space="preserve">
-    <value>これらの算出済み事実のどれが同じ時間帯に重なりますか。対照だけにして原因と断定しないでください。</value>
+    <value>今日の出来高</value>
   </data>
   <data name="Assistant_HandoverQuestion" xml:space="preserve">
-    <value>これらの事実で引き継ぎ文を書いてください。画面にない数は足さないでください。</value>
+    <value>このシフトの出来高</value>
+  </data>
+  <data name="Assistant_Lag" xml:space="preserve">
+    <value>最も低い良品率</value>
+  </data>
+  <data name="Assistant_LagQuestion" xml:space="preserve">
+    <value>このシフトで良品率が最も低い設備はどれですか</value>
+  </data>
+  <data name="Assistant_Yesterday" xml:space="preserve">
+    <value>昨日と比べる</value>
+  </data>
+  <data name="Assistant_YesterdayQuestion" xml:space="preserve">
+    <value>今日と昨日の出来高</value>
+  </data>
+  <data name="Assistant_OrderBehind" xml:space="preserve">
+    <value>アラーム時間</value>
+  </data>
+  <data name="Assistant_OrderBehindQuestion" xml:space="preserve">
+    <value>今日のアラーム時間</value>
+  </data>
+  <data name="Assistant_Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Assistant_Stopped" xml:space="preserve">
+    <value>停止しました</value>
+  </data>
+  <data name="Assistant_Ungrounded" xml:space="preserve">
+    <value>この数字は事実にありません</value>
+  </data>
+  <data name="Assistant_Omitted" xml:space="preserve">
+    <value>今回は付けていません：{0}。</value>
+  </data>
+  <data name="Assistant_OmittedNames" xml:space="preserve">
+    <value>設備名</value>
+  </data>
+  <data name="Assistant_OmittedManual" xml:space="preserve">
+    <value>手引の説明</value>
+  </data>
+  <data name="Assistant_OmittedNotes" xml:space="preserve">
+    <value>履歴の説明</value>
+  </data>
+  <data name="Assistant_OmittedDetails" xml:space="preserve">
+    <value>設備ごとの明細</value>
+  </data>
+  <data name="Assistant_RepeatedNote" xml:space="preserve">
+    <value>繰り返し聞かれた質問：{0}。これは質問の記録で新しく計算した数ではありません。</value>
   </data>
   <data name="Assistant_Send" xml:space="preserve">
     <value>送信</value>
   </data>
   <data name="Assistant_InputHint" xml:space="preserve">
-    <value>見ている現象か確認したい数を書いてください</value>
+    <value>アラーム・工単・出来高を聞けます。例：今日のアラーム</value>
   </data>
   <data name="Assistant_Preparing" xml:space="preserve">
     <value>ローカルモデルを準備しています。初回は重みをダウンロードします。</value>
   </data>
   <data name="Assistant_Answering" xml:space="preserve">
     <value>回答しています</value>
+  </data>
+  <data name="Assistant_Querying" xml:space="preserve">
+    <value>看板のデータを照会しています。</value>
   </data>
   <data name="Assistant_TooLong" xml:space="preserve">
     <value>質問は一段落に収めてください。</value>
@@ -74,6 +122,9 @@
   </data>
   <data name="Assistant_Failed" xml:space="preserve">
     <value>今回は答えられませんでした：{0}</value>
+  </data>
+  <data name="Assistant_Unrecognized" xml:space="preserve">
+    <value>今回は計算できません。期間と指標を書いてください。</value>
   </data>
   <data name="Assistant_ContextPage" xml:space="preserve">
     <value>前のページ：{0}</value>
@@ -6918,6 +6969,27 @@ PLC にリセット指令を書き込み、ソフトウェア側の現在値を�
   </data>
   <data name="Audit_Detail_PageExport" xml:space="preserve">
     <value>現在のページをエクスポート Tab={0} Page={1}</value>
+  </data>
+  <data name="Audit_Detail_HistoryQuery" xml:space="preserve">
+    <value>タブ={0} 設備={1} {2} から {3} {4}ページ目 全{5}件</value>
+  </data>
+  <data name="Audit_Detail_SnQuery" xml:space="preserve">
+    <value>シリアル={0} 全{1}件</value>
+  </data>
+  <data name="Audit_Detail_RecipeImport" xml:space="preserve">
+    <value>インポート {0} 件、スキップ {1} 件</value>
+  </data>
+  <data name="Audit_Detail_RecipeExport" xml:space="preserve">
+    <value>エクスポート {0} 件</value>
+  </data>
+  <data name="Audit_ChainIntact" xml:space="preserve">
+    <value>記録チェーンは完全です</value>
+  </data>
+  <data name="Audit_ChainBroken" xml:space="preserve">
+    <value>記録チェーンが切れました。データベースの記録が変更または削除された可能性があります。</value>
+  </data>
+  <data name="Audit_ChainUnchecked" xml:space="preserve">
+    <value>今回は記録チェーンを照合できませんでした</value>
   </data>
   <data name="Hq_SnNotSupported" xml:space="preserve">
     <value>現在のモードでは SN トレーサビリティは利用できません</value>

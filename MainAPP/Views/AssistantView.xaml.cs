@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -35,7 +36,25 @@ public partial class AssistantView : UserControl
         e.Handled = true;
     }
 
-    private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e) => Transcript.ScrollToEnd();
+    private void OnMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+        {
+            foreach (var item in e.NewItems)
+            {
+                if (item is AssistantTurn turn)
+                    turn.PropertyChanged += OnTurnChanged;
+            }
+        }
+
+        Transcript.ScrollToEnd();
+    }
+
+    private void OnTurnChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AssistantTurn.Text))
+            Transcript.ScrollToEnd();
+    }
 
     private void Refresh()
     {

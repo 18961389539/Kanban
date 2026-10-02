@@ -243,6 +243,7 @@ public class DatabaseProvider(AppSettings appSettings)
         // 索引也一并补齐，保证 MigrateContext 的 IsSchemaCompatible 对旧库能通过并建立迁移基线。
         EnsureColumn(connection, transaction, "AuditEntries", "BeforeJson", "TEXT");
         EnsureColumn(connection, transaction, "AuditEntries", "AfterJson", "TEXT");
+        EnsureColumn(connection, transaction, "AuditEntries", "ChainHash", "TEXT");
         EnsureIndex(connection, transaction, "IX_AuditEntries_Timestamp", "AuditEntries", "Timestamp");
         EnsureIndex(connection, transaction, "IX_AuditEntries_Operator", "AuditEntries", "Operator");
         EnsureIndex(connection, transaction, "IX_AuditEntries_Action", "AuditEntries", "Action");

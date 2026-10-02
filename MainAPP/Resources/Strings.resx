@@ -34,37 +34,85 @@
     <value>AI问答</value>
   </data>
   <data name="Nav_Assistant_Tip" xml:space="preserve">
-    <value>根据当前页面已经算好的事实回答问题</value>
+    <value>发送时由模型选择查询，程序执行后再回答</value>
   </data>
   <data name="Assistant_Title" xml:space="preserve">
     <value>AI问答</value>
   </data>
   <data name="Assistant_Intro" xml:space="preserve">
-    <value>只根据已经算好的事实说明，并带上设备名称和上一页的手册说明。不确认报警，不开停工单，也不下发配方。</value>
+    <value>发送后由本机模型自己调用查询，程序执行后把结果交回。</value>
   </data>
   <data name="Assistant_Compare" xml:space="preserve">
-    <value>对照事实</value>
+    <value>今天产量</value>
   </data>
   <data name="Assistant_Handover" xml:space="preserve">
-    <value>写成交班</value>
+    <value>当前班次</value>
   </data>
   <data name="Assistant_CompareQuestion" xml:space="preserve">
-    <value>这几条已经算好的事实里，哪些落在同一时段？只对照，不要写成根因。</value>
+    <value>今天的产量</value>
   </data>
   <data name="Assistant_HandoverQuestion" xml:space="preserve">
-    <value>用这些事实写一段交班说明。不要加入页面上没有的数。</value>
+    <value>当前班次的产量</value>
+  </data>
+  <data name="Assistant_Lag" xml:space="preserve">
+    <value>哪台最低</value>
+  </data>
+  <data name="Assistant_LagQuestion" xml:space="preserve">
+    <value>当前班次合格率最低的是哪台</value>
+  </data>
+  <data name="Assistant_Yesterday" xml:space="preserve">
+    <value>比昨天</value>
+  </data>
+  <data name="Assistant_YesterdayQuestion" xml:space="preserve">
+    <value>今天和昨天的产量</value>
+  </data>
+  <data name="Assistant_OrderBehind" xml:space="preserve">
+    <value>报警时长</value>
+  </data>
+  <data name="Assistant_OrderBehindQuestion" xml:space="preserve">
+    <value>今天的报警时长</value>
+  </data>
+  <data name="Assistant_Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Assistant_Stopped" xml:space="preserve">
+    <value>已停止</value>
+  </data>
+  <data name="Assistant_Ungrounded" xml:space="preserve">
+    <value>这句数字不在事实里</value>
+  </data>
+  <data name="Assistant_Omitted" xml:space="preserve">
+    <value>这次没带上：{0}。</value>
+  </data>
+  <data name="Assistant_OmittedNames" xml:space="preserve">
+    <value>设备名单</value>
+  </data>
+  <data name="Assistant_OmittedManual" xml:space="preserve">
+    <value>手册说明</value>
+  </data>
+  <data name="Assistant_OmittedNotes" xml:space="preserve">
+    <value>历史说明</value>
+  </data>
+  <data name="Assistant_OmittedDetails" xml:space="preserve">
+    <value>逐台明细</value>
+  </data>
+  <data name="Assistant_RepeatedNote" xml:space="preserve">
+    <value>反复问过：{0}。这是提问记录，不是新算出来的数。</value>
   </data>
   <data name="Assistant_Send" xml:space="preserve">
     <value>发送</value>
   </data>
   <data name="Assistant_InputHint" xml:space="preserve">
-    <value>写一句你看到的现象或想核对的数</value>
+    <value>可以问报警、工单或产量。例如今天有哪些报警</value>
   </data>
   <data name="Assistant_Preparing" xml:space="preserve">
     <value>正在准备本地模型。第一次使用会下载权重。</value>
   </data>
   <data name="Assistant_Answering" xml:space="preserve">
     <value>正在回答</value>
+  </data>
+  <data name="Assistant_Querying" xml:space="preserve">
+    <value>正在查询看板数据。</value>
   </data>
   <data name="Assistant_TooLong" xml:space="preserve">
     <value>请把问题收成一段话。</value>
@@ -74,6 +122,9 @@
   </data>
   <data name="Assistant_Failed" xml:space="preserve">
     <value>这次没有答上：{0}</value>
+  </data>
+  <data name="Assistant_Unrecognized" xml:space="preserve">
+    <value>这次算不了。请写明时间和指标，例如某一天的产量或合格率。</value>
   </data>
   <data name="Assistant_ContextPage" xml:space="preserve">
     <value>上一页：{0}</value>
@@ -6918,6 +6969,27 @@
   </data>
   <data name="Audit_Detail_PageExport" xml:space="preserve">
     <value>当前页导出 Tab={0} Page={1}</value>
+  </data>
+  <data name="Audit_Detail_HistoryQuery" xml:space="preserve">
+    <value>页签={0} 设备={1} {2} 至 {3} 第{4}页 共{5}条</value>
+  </data>
+  <data name="Audit_Detail_SnQuery" xml:space="preserve">
+    <value>序列号={0} 共{1}条</value>
+  </data>
+  <data name="Audit_Detail_RecipeImport" xml:space="preserve">
+    <value>导入 {0} 条，跳过 {1} 条</value>
+  </data>
+  <data name="Audit_Detail_RecipeExport" xml:space="preserve">
+    <value>导出 {0} 条</value>
+  </data>
+  <data name="Audit_ChainIntact" xml:space="preserve">
+    <value>记录链完整</value>
+  </data>
+  <data name="Audit_ChainBroken" xml:space="preserve">
+    <value>记录链已断开。库中记录可能被改过或删过中间的条目。</value>
+  </data>
+  <data name="Audit_ChainUnchecked" xml:space="preserve">
+    <value>这次没能核对记录链</value>
   </data>
   <data name="Hq_SnNotSupported" xml:space="preserve">
     <value>当前运行模式不支持 SN 追溯</value>

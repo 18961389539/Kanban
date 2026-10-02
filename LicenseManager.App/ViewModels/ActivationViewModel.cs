@@ -74,6 +74,9 @@ public partial class ActivationViewModel : ObservableObject
     /// <summary>激活成功事件（对话框据此关闭）</summary>
     public event Action? ActivationSucceeded;
 
+    /// <summary>激活码被拒绝。不含激活码本身。</summary>
+    public event Action? ActivationFailed;
+
     /// <summary>激活命令：可执行条件为非激活中且激活码非空。</summary>
     [RelayCommand(CanExecute = nameof(CanActivate))]
     private void Activate()
@@ -91,6 +94,7 @@ public partial class ActivationViewModel : ObservableObject
             else
             {
                 ErrorMessage = error;
+                ActivationFailed?.Invoke();
             }
         }
         finally

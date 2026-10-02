@@ -16,7 +16,7 @@ namespace Kanban.Collector.Core.Services;
 ///   审计/缺陷实体无 EventId 唯一键，无法做 ProductionHistoryWriter 式幂等去重——
 ///   对"防静默丢失"场景，极窄窗口的重复远优于数据缺口（合规审计宁可重复不可缺）。
 /// </summary>
-internal sealed class SpilloverRecoveryFile<T>
+public sealed class SpilloverRecoveryFile<T>
 {
     private static readonly TimeSpan ReplayRetryDelay = TimeSpan.FromSeconds(30);
 

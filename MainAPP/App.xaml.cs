@@ -161,6 +161,11 @@ public partial class App : Application
                 return;
             }
 
+            // 操作审计要先于激活对话框，否则启动时的激活成功或拒绝不会留下记录。
+            Kanban.Collector.Core.Services.AuditLog.Initialize(
+                _host.Services.GetService<Kanban.Collector.Core.Services.IAuditService>(),
+                () => _host.Services.GetService<Services.UserSession>()?.CurrentUserDisplay ?? string.Empty);
+
             // 授权检查：在 Host.StartAsync 之前拦截，未激活/试用过期时弹激活对话框。
             // 试用期内或已激活 → 继续启动主程序；激活失败或取消 → 直接退出，不启动后台服务。
             var licenseGate = _host.Services.GetRequiredService<LicenseGate>();
@@ -175,6 +180,7 @@ public partial class App : Application
             {
                 // 试用过期/被篡改/机器码不匹配/未激活 → 弹激活对话框
                 var activationVm = _host.Services.GetRequiredService<ActivationViewModel>();
+                LicenseAudit.Watch(activationVm, licenseGate);
                 var activationDialog = new ActivationDialog(activationVm);
 
                 activationVm.StatusMessage = licenseStatus switch
@@ -218,12 +224,6 @@ public partial class App : Application
             // Viewer 模式（屏端大屏）跳过登录，直接以未登录态进入展示页面。
             var userStore = _host.Services.GetRequiredService<UserStore>();
             userStore.Load();
-
-            // 操作审计门面初始化：必须在任何用户登录/保存等可审计操作之前。
-            // operatorProvider 提供当前操作人显示名；未登录（Viewer）时为空串。
-            Kanban.Collector.Core.Services.AuditLog.Initialize(
-                _host.Services.GetService<Kanban.Collector.Core.Services.IAuditService>(),
-                () => _host.Services.GetService<Services.UserSession>()?.CurrentUserDisplay ?? string.Empty);
 
             var appSettingsForLogin = _host.Services.GetRequiredService<AppSettings>();
             if (appSettingsForLogin.RunMode != KanbanRunMode.Viewer)

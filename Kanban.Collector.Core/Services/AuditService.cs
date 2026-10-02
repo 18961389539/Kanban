@@ -1,3 +1,4 @@
+using System.Data;
 using System.Threading.Channels;
 using Kanban.Collector.Core.Data;
 using Kanban.Collector.Core.Entities;
@@ -16,7 +17,8 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     private const int BatchSize = 200;
     private const int MaxQueueLength = 2048;
     private const int CleanupIntervalMinutes = 30;
-    private const int RetentionDays = 30;
+    private const int DefaultRetentionDays = 365;
+    private readonly object _chainGate = new();
     private const int PersistenceRetryCount = 3;
     /// <summary>恢复文件大小上限：超过后停止追加并告警（有界且大声的丢失 &gt; 无限磁盘占用）。</summary>
     private const long MaxRecoveryFileBytes = 100 * 1024 * 1024;
@@ -102,7 +104,7 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
             TargetType = targetType ?? string.Empty,
             TargetId = targetId,
             Succeeded = succeeded,
-            Detail = detail,
+            Detail = Trim(detail, 512),
             BeforeJson = beforeJson,
             AfterJson = afterJson,
         };
@@ -191,24 +193,77 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
         return (items, total);
     }
 
-    public int CleanupOldEntries(int retentionDays = RetentionDays)
+    /// <summary>保留天数。未设置环境变量时 365 天；0 表示不按天数删除；非法值回落到 365。</summary>
+    public static int ReadRetentionDays()
     {
+        var raw = Environment.GetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS");
+        if (string.IsNullOrWhiteSpace(raw))
+            return DefaultRetentionDays;
+        return int.TryParse(raw, out var days) && days >= 0 && days <= 36500
+            ? days
+            : DefaultRetentionDays;
+    }
+
+    public int CleanupOldEntries(int retentionDays = DefaultRetentionDays)
+    {
+        if (retentionDays <= 0) return 0;
         var cutoff = DateTime.Now.AddDays(-retentionDays);
         try
         {
-            using var context = _db.CreateAuditContext();
-            var old = context.AuditEntries
-                .Where(entry => entry.Timestamp < cutoff)
-                .Take(10000)
-                .ToList();
-            if (old.Count == 0) return 0;
-            context.AuditEntries.RemoveRange(old);
-            return context.SaveChanges();
+            lock (_chainGate)
+            {
+                using var context = _db.CreateAuditContext();
+                SealOpenChain(context);
+                var oldestKept = context.AuditEntries
+                    .Where(entry => entry.Timestamp >= cutoff)
+                    .OrderBy(entry => entry.Id)
+                    .Select(entry => (long?)entry.Id)
+                    .FirstOrDefault();
+                var doomed = oldestKept is null
+                    ? context.AuditEntries.OrderBy(entry => entry.Id)
+                    : context.AuditEntries.Where(entry => entry.Id < oldestKept.Value).OrderBy(entry => entry.Id);
+                var batch = doomed.Take(10000).ToList();
+                if (batch.Count == 0) return 0;
+                var anchor = batch[^1].ChainHash;
+                if (!string.IsNullOrEmpty(anchor))
+                    WriteAnchor(context, anchor);
+                context.AuditEntries.RemoveRange(batch);
+                return context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "审计记录清理失败");
             return 0;
+        }
+    }
+
+    public AuditChainReport VerifyChain()
+    {
+        try
+        {
+            lock (_chainGate)
+            {
+                using var context = _db.CreateAuditContext();
+                SealOpenChain(context);
+                var previous = ReadAnchor(context);
+                var checkedCount = 0;
+                foreach (var entry in context.AuditEntries.AsNoTracking().OrderBy(entry => entry.Id))
+                {
+                    checkedCount++;
+                    var expected = AuditChain.Hash(previous, entry);
+                    if (!string.Equals(expected, entry.ChainHash, StringComparison.Ordinal))
+                        return new AuditChainReport(false, checkedCount);
+                    previous = entry.ChainHash ?? "";
+                }
+
+                return new AuditChainReport(true, checkedCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "审计记录链核对失败");
+            return new AuditChainReport(false, 0, Unchecked: true);
         }
     }
 
@@ -254,11 +309,10 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     }
 
     /// <summary>恢复文件回放批次落库（回放线程 = 后台 flush 循环，与正常批量写串行）。</summary>
-    private async Task InsertRecoveryBatchAsync(IReadOnlyList<AuditEntry> batch)
+    private Task InsertRecoveryBatchAsync(IReadOnlyList<AuditEntry> batch)
     {
-        using var context = _db.CreateAuditContext();
-        context.AuditEntries.AddRange(batch);
-        await context.SaveChangesAsync(CancellationToken.None);
+        SaveStamped(batch);
+        return Task.CompletedTask;
     }
 
     private async Task FlushPendingAsync(CancellationToken ct)
@@ -282,9 +336,7 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
         {
             try
             {
-                using var context = _db.CreateAuditContext();
-                context.AuditEntries.AddRange(batch);
-                await context.SaveChangesAsync(CancellationToken.None);
+                SaveStamped(batch);
                 Interlocked.Add(ref _flushedCount, batch.Count);
                 _flushSignal.Release(); // 唤醒可能的 WaitFlushedAsync 等待者
                 return;
@@ -310,9 +362,10 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
     {
         if ((DateTime.Now - _lastCleanupAt).TotalMinutes < CleanupIntervalMinutes) return;
         _lastCleanupAt = DateTime.Now;
-        var deleted = CleanupOldEntries(RetentionDays);
+        var days = ReadRetentionDays();
+        var deleted = CleanupOldEntries(days);
         if (deleted > 0)
-            _logger.LogInformation("审计记录已清理 {Count} 条（保留 {Days} 天）", deleted, RetentionDays);
+            _logger.LogInformation("审计记录已清理 {Count} 条（保留 {Days} 天）", deleted, days);
     }
 
     public async ValueTask DisposeAsync()
@@ -364,6 +417,97 @@ public sealed class AuditService : IAuditService, IDisposable, IAsyncDisposable
             GC.SuppressFinalize(this);
         }
     }
+
+    private void SaveStamped(IReadOnlyList<AuditEntry> batch)
+    {
+        if (batch.Count == 0) return;
+        lock (_chainGate)
+        {
+            using var context = _db.CreateAuditContext();
+            SealOpenChain(context);
+            var previous = ReadTailHash(context);
+            foreach (var entry in batch)
+            {
+                entry.ChainHash = AuditChain.Hash(previous, entry);
+                previous = entry.ChainHash;
+            }
+
+            context.AuditEntries.AddRange(batch);
+            context.SaveChanges();
+        }
+    }
+
+    /// <summary>给升级前没有哈希的旧记录补链。新写入之前调用，避免新旧记录交错。</summary>
+    private void SealOpenChain(AuditDbContext context)
+    {
+        var open = context.AuditEntries
+            .Where(entry => entry.ChainHash == null || entry.ChainHash == "")
+            .OrderBy(entry => entry.Id)
+            .ToList();
+        if (open.Count == 0) return;
+
+        var previous = context.AuditEntries
+            .Where(entry => entry.Id < open[0].Id && entry.ChainHash != null && entry.ChainHash != "")
+            .OrderByDescending(entry => entry.Id)
+            .Select(entry => entry.ChainHash)
+            .FirstOrDefault() ?? ReadAnchor(context);
+        foreach (var entry in open)
+        {
+            entry.ChainHash = AuditChain.Hash(previous, entry);
+            previous = entry.ChainHash;
+        }
+
+        context.SaveChanges();
+    }
+
+    private string ReadTailHash(AuditDbContext context)
+    {
+        var tail = context.AuditEntries
+            .OrderByDescending(entry => entry.Id)
+            .Select(entry => entry.ChainHash)
+            .FirstOrDefault();
+        return string.IsNullOrEmpty(tail) ? ReadAnchor(context) : tail;
+    }
+
+    private static void EnsureAnchorTable(AuditDbContext context)
+    {
+        context.Database.ExecuteSqlRaw(
+            """
+            CREATE TABLE IF NOT EXISTS "AuditChainAnchor" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_AuditChainAnchor" PRIMARY KEY,
+                "Hash" TEXT NOT NULL
+            )
+            """);
+    }
+
+    private static string ReadAnchor(AuditDbContext context)
+    {
+        EnsureAnchorTable(context);
+        var connection = context.Database.GetDbConnection();
+        var opened = connection.State != ConnectionState.Open;
+        if (opened) connection.Open();
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = """SELECT "Hash" FROM "AuditChainAnchor" WHERE "Id" = 1""";
+            return command.ExecuteScalar() as string ?? "";
+        }
+        finally
+        {
+            if (opened) connection.Close();
+        }
+    }
+
+    private static void WriteAnchor(AuditDbContext context, string hash)
+    {
+        EnsureAnchorTable(context);
+        context.Database.ExecuteSqlRaw(
+            """INSERT INTO "AuditChainAnchor" ("Id", "Hash") VALUES (1, {0}) ON CONFLICT("Id") DO UPDATE SET "Hash" = {0}""",
+            hash);
+    }
+
+    private static string? Trim(string? text, int max)
+        => text is { Length: > 0 } && text.Length > max ? text[..max] : text;
 
     /// <summary>测试入口：同步触发一次恢复文件回放（生产路径由 FlushLoop 自动调用）。</summary>
     internal Task ReplayRecoveryForTestAsync(CancellationToken ct = default)

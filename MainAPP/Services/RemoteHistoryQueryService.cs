@@ -142,6 +142,11 @@ public sealed class RemoteHistoryQueryService :
             ? QueryBatchByDevice<ProductionLog>(HistoryQueryType.ProductionLog, from, to, deviceIds)
             : _local.QueryProductionLogsBatch(from, to, deviceIds);
 
+    public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => IsRemote
+            ? QueryBatchByDevice<ProductionLog>(HistoryQueryType.ProductionLog, from, to, deviceIds)
+            : _local.QueryProductionLogsBatchStrict(from, to, deviceIds);
+
     // ──────────── IAlarmHistoryService ────────────
 
     public List<AlarmEventRecord> QueryAlarmEvents(DateTime from, DateTime to, string? deviceId = null, string? shiftName = null)
@@ -153,6 +158,11 @@ public sealed class RemoteHistoryQueryService :
         => IsRemote
             ? QueryBatchByDevice<AlarmEventRecord>(HistoryQueryType.AlarmEvent, from, to, deviceIds)
             : _local.QueryAlarmEventsBatch(from, to, deviceIds);
+
+    public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => IsRemote
+            ? QueryBatchByDevice<AlarmEventRecord>(HistoryQueryType.AlarmEvent, from, to, deviceIds)
+            : _local.QueryAlarmEventsBatchStrict(from, to, deviceIds);
 
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId)
         => IsRemote
@@ -201,6 +211,11 @@ public sealed class RemoteHistoryQueryService :
         => IsRemote
             ? QueryBatchByDevice<StatusTransitionRecord>(HistoryQueryType.StatusTransition, from, to, deviceIds)
             : _local.QueryStatusTransitionsBatch(from, to, deviceIds);
+
+    public Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+        => IsRemote
+            ? QueryBatchByDevice<StatusTransitionRecord>(HistoryQueryType.StatusTransition, from, to, deviceIds)
+            : _local.QueryStatusTransitionsBatchStrict(from, to, deviceIds);
 
     public StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName = null)
         => IsRemote

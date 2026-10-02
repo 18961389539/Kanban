@@ -53,6 +53,9 @@ public interface IKanbanMonitoringClient
     /// <summary>审计日志分页查询（只读审计页数据源）。</summary>
     Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request, CancellationToken ct = default);
 
+    /// <summary>核对审计记录链是否连续。</summary>
+    Task<AuditChainReportDto> VerifyAuditChainAsync(CancellationToken ct = default);
+
     /// <summary>配方列表（只读数据源）。</summary>
     Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(CancellationToken ct = default);
 

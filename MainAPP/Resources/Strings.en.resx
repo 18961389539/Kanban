@@ -34,37 +34,85 @@
     <value>AI Q&amp;A</value>
   </data>
   <data name="Nav_Assistant_Tip" xml:space="preserve">
-    <value>Answer from facts already shown on the current page</value>
+    <value>On send the model chooses a query and the program runs it</value>
   </data>
   <data name="Assistant_Title" xml:space="preserve">
     <value>AI Q&amp;A</value>
   </data>
   <data name="Assistant_Intro" xml:space="preserve">
-    <value>It explains facts already calculated and includes device names plus the previous page manual. It does not acknowledge alarms or start stop or release work orders or recipes.</value>
+    <value>On send the local model calls a query and the program returns the result.</value>
   </data>
   <data name="Assistant_Compare" xml:space="preserve">
-    <value>Compare facts</value>
+    <value>Today output</value>
   </data>
   <data name="Assistant_Handover" xml:space="preserve">
-    <value>Write handover</value>
+    <value>This shift</value>
   </data>
   <data name="Assistant_CompareQuestion" xml:space="preserve">
-    <value>Which of these calculated facts fall in the same period? Compare them only. Do not call it a root cause.</value>
+    <value>production today</value>
   </data>
   <data name="Assistant_HandoverQuestion" xml:space="preserve">
-    <value>Write a shift handover from these facts. Do not add numbers the page does not have.</value>
+    <value>production this shift</value>
+  </data>
+  <data name="Assistant_Lag" xml:space="preserve">
+    <value>Lowest quality</value>
+  </data>
+  <data name="Assistant_LagQuestion" xml:space="preserve">
+    <value>which device has the lowest quality rate this shift</value>
+  </data>
+  <data name="Assistant_Yesterday" xml:space="preserve">
+    <value>Versus yesterday</value>
+  </data>
+  <data name="Assistant_YesterdayQuestion" xml:space="preserve">
+    <value>production today and yesterday</value>
+  </data>
+  <data name="Assistant_OrderBehind" xml:space="preserve">
+    <value>Alarm duration</value>
+  </data>
+  <data name="Assistant_OrderBehindQuestion" xml:space="preserve">
+    <value>alarm duration today</value>
+  </data>
+  <data name="Assistant_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Assistant_Stopped" xml:space="preserve">
+    <value>Stopped</value>
+  </data>
+  <data name="Assistant_Ungrounded" xml:space="preserve">
+    <value>This number is not in the facts</value>
+  </data>
+  <data name="Assistant_Omitted" xml:space="preserve">
+    <value>Left out this time: {0}.</value>
+  </data>
+  <data name="Assistant_OmittedNames" xml:space="preserve">
+    <value>device names</value>
+  </data>
+  <data name="Assistant_OmittedManual" xml:space="preserve">
+    <value>the manual</value>
+  </data>
+  <data name="Assistant_OmittedNotes" xml:space="preserve">
+    <value>history notes</value>
+  </data>
+  <data name="Assistant_OmittedDetails" xml:space="preserve">
+    <value>per-device lines</value>
+  </data>
+  <data name="Assistant_RepeatedNote" xml:space="preserve">
+    <value>Asked more than once: {0}. This is a record of the question and not a newly calculated number.</value>
   </data>
   <data name="Assistant_Send" xml:space="preserve">
     <value>Send</value>
   </data>
   <data name="Assistant_InputHint" xml:space="preserve">
-    <value>Describe what you see or the number you want checked</value>
+    <value>Ask about alarms work orders or output. For example which alarms happened today</value>
   </data>
   <data name="Assistant_Preparing" xml:space="preserve">
     <value>Preparing the local model. The first use downloads the weights.</value>
   </data>
   <data name="Assistant_Answering" xml:space="preserve">
     <value>Answering</value>
+  </data>
+  <data name="Assistant_Querying" xml:space="preserve">
+    <value>Querying the board.</value>
   </data>
   <data name="Assistant_TooLong" xml:space="preserve">
     <value>Keep the question to one short paragraph.</value>
@@ -74,6 +122,9 @@
   </data>
   <data name="Assistant_Failed" xml:space="preserve">
     <value>No answer this time: {0}</value>
+  </data>
+  <data name="Assistant_Unrecognized" xml:space="preserve">
+    <value>This cannot be calculated. Name the period and the measure such as output or quality for a day.</value>
   </data>
   <data name="Assistant_ContextPage" xml:space="preserve">
     <value>Previous page: {0}</value>
@@ -6918,6 +6969,27 @@ Sidebar footer User Manual or F1: open manual</value>
   </data>
   <data name="Audit_Detail_PageExport" xml:space="preserve">
     <value>Current page export Tab={0} Page={1}</value>
+  </data>
+  <data name="Audit_Detail_HistoryQuery" xml:space="preserve">
+    <value>Tab={0} device={1} {2} to {3} page {4} total {5}</value>
+  </data>
+  <data name="Audit_Detail_SnQuery" xml:space="preserve">
+    <value>Serial={0} total {1}</value>
+  </data>
+  <data name="Audit_Detail_RecipeImport" xml:space="preserve">
+    <value>Imported {0} and skipped {1}</value>
+  </data>
+  <data name="Audit_Detail_RecipeExport" xml:space="preserve">
+    <value>Exported {0}</value>
+  </data>
+  <data name="Audit_ChainIntact" xml:space="preserve">
+    <value>The record chain is intact</value>
+  </data>
+  <data name="Audit_ChainBroken" xml:space="preserve">
+    <value>The record chain is broken. Entries in the database may have been changed or removed.</value>
+  </data>
+  <data name="Audit_ChainUnchecked" xml:space="preserve">
+    <value>The record chain could not be checked this time</value>
   </data>
   <data name="Hq_SnNotSupported" xml:space="preserve">
     <value>SN traceability is not available in the current mode</value>

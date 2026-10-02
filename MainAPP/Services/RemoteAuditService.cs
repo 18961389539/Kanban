@@ -17,6 +17,7 @@ public sealed class RemoteAuditService : IAuditService, IAsyncDisposable
     private readonly KanbanDataClient _monitorClient;
     private readonly KanbanAdminClient _adminClient;
     private readonly ILogger<RemoteAuditService> _logger;
+    private readonly SpilloverRecoveryFile<AuditLogRecordRequest> _spillover;
     private readonly Channel<AuditLogRecordRequest> _pending;
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly Task _writerTask;
@@ -26,11 +27,17 @@ public sealed class RemoteAuditService : IAuditService, IAsyncDisposable
     public RemoteAuditService(
         KanbanDataClient monitorClient,
         KanbanAdminClient adminClient,
+        AppSettings settings,
         ILogger<RemoteAuditService> logger)
     {
         _monitorClient = monitorClient;
         _adminClient = adminClient;
         _logger = logger;
+        _spillover = new SpilloverRecoveryFile<AuditLogRecordRequest>(
+            settings.GetFilePath("audit.remote.recovery.jsonl"),
+            100 * 1024 * 1024,
+            logger,
+            "远程审计");
         _pending = Channel.CreateBounded<AuditLogRecordRequest>(new BoundedChannelOptions(QueueCapacity)
         {
             FullMode = BoundedChannelFullMode.DropWrite,
@@ -66,9 +73,24 @@ public sealed class RemoteAuditService : IAuditService, IAsyncDisposable
         };
         if (!_pending.Writer.TryWrite(request))
         {
-            var dropped = Interlocked.Increment(ref _droppedCount);
-            if (dropped == 1 || dropped % 100 == 0)
-                _logger.LogWarning("Remote 审计待发送队列已丢弃 {Dropped} 条记录", dropped);
+            _spillover.Append([request]);
+            var spilled = Interlocked.Increment(ref _droppedCount);
+            if (spilled == 1 || spilled % 100 == 0)
+                _logger.LogWarning("Remote 审计队列已满，{Spilled} 条记录已转存恢复文件待发送", spilled);
+        }
+    }
+
+    public AuditChainReport VerifyChain()
+    {
+        try
+        {
+            var report = _monitorClient.VerifyAuditChainAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            return new AuditChainReport(report.Intact, report.Checked, report.Unchecked);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "远程审计记录链核对失败");
+            return new AuditChainReport(false, 0, Unchecked: true);
         }
     }
 
@@ -141,38 +163,63 @@ public sealed class RemoteAuditService : IAuditService, IAsyncDisposable
     }
 
     /// <summary>Remote 审计保留期由 Collector 唯一负责，展示端不执行本地清理。</summary>
-    public int CleanupOldEntries(int retentionDays = 30) => 0;
+    public int CleanupOldEntries(int retentionDays = 365) => 0;
 
     private async Task WriteLoopAsync(CancellationToken cancellationToken)
     {
         try
         {
-            await foreach (var request in _pending.Reader.ReadAllAsync(cancellationToken))
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                var ready = false;
+                try
                 {
-                    try
-                    {
-                        if (!_adminClient.IsConnected)
-                            await _adminClient.ConnectAsync(cancellationToken);
-                        await _adminClient.RecordAuditAsync(request, cancellationToken);
-                        break;
-                    }
-                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                    {
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Remote 审计发送失败，2 秒后重试");
-                        try { await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken); }
-                        catch (OperationCanceledException) { return; }
-                    }
+                    ready = await _pending.Reader.WaitToReadAsync(cancellationToken)
+                        .AsTask()
+                        .WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
                 }
+                catch (TimeoutException)
+                {
+                }
+
+                while (_pending.Reader.TryRead(out var request))
+                    await SendAsync(request, cancellationToken);
+
+                await _spillover.ReplayAsync(async batch =>
+                {
+                    foreach (var item in batch)
+                        await SendAsync(item, cancellationToken);
+                }, 50, cancellationToken);
+
+                if (!ready && _pending.Reader.Completion.IsCompleted)
+                    break;
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+    }
+
+    private async Task SendAsync(AuditLogRecordRequest request, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                if (!_adminClient.IsConnected)
+                    await _adminClient.ConnectAsync(cancellationToken);
+                await _adminClient.RecordAuditAsync(request, cancellationToken);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Remote 审计发送失败，2 秒后重试");
+                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            }
         }
     }
 

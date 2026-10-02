@@ -50,8 +50,11 @@ public interface IAuditService
         string? operatorName, string? action, string? targetType, bool? succeeded,
         int maxResults = 10000);
 
-    /// <summary>清理早于保留期的记录，返回删除条数（默认 30 天）。</summary>
-    int CleanupOldEntries(int retentionDays = 30);
+    /// <summary>清理早于保留期的记录，返回删除条数。传入天数；0 表示不删除。</summary>
+    int CleanupOldEntries(int retentionDays = 365);
+
+    /// <summary>从最早一条核对到最新一条。中间被改过或删过时 Intact 为 false。</summary>
+    AuditChainReport VerifyChain();
 
     /// <summary>全部未落库条数（队列满丢弃 + 最终写入失败），供 readiness/告警判断审计链完整性。</summary>
     int DroppedCount { get; }

@@ -692,6 +692,7 @@ public partial class DeviceManagerViewModel : ObservableObject, IDeviceManagerHo
             Feedback.Error(string.Format(Strings.F066, ex.Message));
             _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
             Log.Error(ex, "保存设备配置失败");
+            AuditLog.Record("Device.Update", "Device", null, succeeded: false, detail: ex.Message);
         }
         finally
         {

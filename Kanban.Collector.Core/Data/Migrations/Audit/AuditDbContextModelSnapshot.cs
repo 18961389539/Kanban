@@ -36,6 +36,10 @@ namespace Kanban.Collector.Core.Data.Migrations.Audit
                         .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ChainHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Detail")
                         .HasMaxLength(512)
                         .HasColumnType("TEXT");

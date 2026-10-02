@@ -3,7 +3,8 @@ namespace Kanban.Collector.Core.Entities;
 /// <summary>
 /// 操作审计记录：谁在何时对什么做了什么、结果如何。
 /// 只追加写入 audit_logs.db（<see cref="Data.AuditDbContext"/>），不提供编辑/删除接口；
-/// 保留期由 AuditService.CleanupOldEntries 按 30 天滚动清理。
+/// 保留期默认 365 天，与历史数据共用 KANBAN_HISTORY_RETENTION_DAYS。
+/// <see cref="ChainHash"/> 把本条和上一条串起来，中间被改或被删时核对会失败。
 /// </summary>
 public class AuditEntry
 {
@@ -35,4 +36,7 @@ public class AuditEntry
 
     /// <summary>变更后值 JSON 摘要（无对比语义的操作可为 null），最长 4000 字符。</summary>
     public string? AfterJson { get; set; }
+
+    /// <summary>与上一条串起来的 SHA-256。空表示尚未封链的旧记录。</summary>
+    public string? ChainHash { get; set; }
 }

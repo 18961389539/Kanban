@@ -679,6 +679,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         if (!EnsureAdmin()) return;
 
         var activationVm = _services.GetRequiredService<ActivationViewModel>();
+        LicenseAudit.Watch(activationVm, _licenseGate);
         var dialog = new ActivationDialog(activationVm);
 
         // 根据当前状态设置提示消息
@@ -931,6 +932,7 @@ public partial class SettingsViewModel : CommunityToolkit.Mvvm.ComponentModel.Ob
         {
             Feedback.Error(string.Format(Strings.F066, ex.Message));
             _dialog.NotifyError(string.Format(Strings.F066, ex.Message));
+            AuditLog.Record("Settings.Update", "Settings", null, succeeded: false, detail: ex.Message);
         }
         finally
         {

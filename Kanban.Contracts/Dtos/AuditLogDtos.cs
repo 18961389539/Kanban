@@ -54,6 +54,14 @@ public sealed record AuditLogEntryDto
     public string? AfterJson { get; init; }
 }
 
+/// <summary>审计记录链核对结果。Unchecked 表示这次没有完成核对。</summary>
+public sealed record AuditChainReportDto
+{
+    public bool Intact { get; init; }
+    public int Checked { get; init; }
+    public bool Unchecked { get; init; }
+}
+
 /// <summary>审计日志分页响应（服务端 Count + Skip/Take，与历史查询同构）。</summary>
 public sealed record AuditLogQueryResponse
 {

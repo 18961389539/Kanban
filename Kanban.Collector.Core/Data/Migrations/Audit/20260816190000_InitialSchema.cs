@@ -25,7 +25,8 @@ namespace Kanban.Collector.Core.Data.Migrations.Audit
                     Succeeded = table.Column<bool>(type: "INTEGER", nullable: false),
                     Detail = table.Column<string>(type: "TEXT", maxLength: 512, nullable: true),
                     BeforeJson = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true),
-                    AfterJson = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true)
+                    AfterJson = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true),
+                    ChainHash = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {

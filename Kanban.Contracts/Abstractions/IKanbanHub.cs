@@ -137,6 +137,9 @@ public interface IKanbanHubServer
     /// <summary>审计日志分页查询（只读；服务端 Count + Skip/Take，与历史查询同构）。</summary>
     Task<AuditLogQueryResponse> QueryAuditLogsAsync(AuditLogQueryRequest request);
 
+    /// <summary>核对审计记录链是否连续。只读。</summary>
+    Task<AuditChainReportDto> VerifyAuditChainAsync();
+
     /// <summary>拉取全部配方（只读；管理页/看板展示数据源）。</summary>
     Task<IReadOnlyList<RecipeDto>> GetRecipesAsync();
 

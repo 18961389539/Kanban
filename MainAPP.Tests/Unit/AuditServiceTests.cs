@@ -214,6 +214,62 @@ public class AuditServiceTests : IDisposable
             null, null, null, null, 1, 100);
         Assert.Equal(1, total);
         Assert.Equal("new", items[0].TargetId);
+        Assert.True(service.VerifyChain().Intact);
+    }
+
+    [Fact]
+    public void Record_LinksEachRowToThePreviousOne()
+    {
+        using var service = CreateService();
+        service.Record("Auth.Login", "User", "admin", operatorName: "admin");
+        service.Record("Device.Update", "Device", "device-1", operatorName: "admin");
+        WaitFlushed(service, 2);
+
+        var report = service.VerifyChain();
+        Assert.True(report.Intact);
+        Assert.Equal(2, report.Checked);
+
+        var (items, _) = service.QueryAll(DateTime.Now.AddMinutes(-1), DateTime.Now.AddMinutes(1), null, null, null, null);
+        Assert.Equal(2, items.Count);
+        Assert.All(items, item => Assert.False(string.IsNullOrEmpty(item.ChainHash)));
+    }
+
+    [Fact]
+    public void VerifyChain_DetectsAChangedRow()
+    {
+        using var service = CreateService();
+        service.Record("Settings.Update", "Settings", null, operatorName: "admin", detail: "原来的说明");
+        WaitFlushed(service, 1);
+
+        using (var context = _db.CreateAuditContext())
+        {
+            var row = Assert.Single(context.AuditEntries.ToList());
+            row.Detail = "被改过";
+            context.SaveChanges();
+        }
+
+        var report = service.VerifyChain();
+        Assert.False(report.Intact);
+        Assert.False(report.Unchecked);
+    }
+
+    [Fact]
+    public void ReadRetentionDays_UsesTheHistoryEnvironmentVariable()
+    {
+        var previous = Environment.GetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS");
+        try
+        {
+            Environment.SetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS", "90");
+            Assert.Equal(90, AuditService.ReadRetentionDays());
+            Environment.SetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS", "0");
+            Assert.Equal(0, AuditService.ReadRetentionDays());
+            Environment.SetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS", null);
+            Assert.Equal(365, AuditService.ReadRetentionDays());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("KANBAN_HISTORY_RETENTION_DAYS", previous);
+        }
     }
 
     [Fact]
@@ -257,6 +313,7 @@ public class AuditServiceTests : IDisposable
                     "SELECT name FROM pragma_table_info('AuditEntries')").ToList();
                 Assert.Contains("BeforeJson", columns);
                 Assert.Contains("AfterJson", columns);
+                Assert.Contains("ChainHash", columns);
 
                 var legacy = Assert.Single(context.AuditEntries.ToList());
                 Assert.Equal("Legacy.Action", legacy.Action);

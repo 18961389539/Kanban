@@ -59,27 +59,27 @@ public class DevicePlcCommandHandler(
     public async Task<PlcOpResult> WriteRecipeAsync(Device device)
     {
         if (!_connectionManager.IsConnected)
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M179);
+            return AuditWrite("Plc.WriteRecipe", device.Id, new PlcOpResult(PlcOpStatus.Warning, Strings.M179));
 
         if (string.IsNullOrWhiteSpace(device.RecipeAddress))
             return new PlcOpResult(PlcOpStatus.Info, Strings.M180);
 
         if (GetAdapter(device).AddressCodec.Parse(device.RecipeAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F230, device.RecipeAddress));
+            return AuditWrite("Plc.WriteRecipe", device.Id, new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F230, device.RecipeAddress)));
 
         if (device.RecipeValue < 0 || device.RecipeValue > 999_999)
-            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F229, device.RecipeValue));
+            return AuditWrite("Plc.WriteRecipe", device.Id, new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F229, device.RecipeValue)));
 
         try
         {
             var result = await Task.Run(() => GetAdapter(device).WriteInt32(device.RecipeAddress!, device.RecipeValue));
-            return result.IsSuccess
+            return AuditWrite("Plc.WriteRecipe", device.Id, result.IsSuccess
                 ? new PlcOpResult(PlcOpStatus.Success, result.Message)
-                : new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F070, result.Message));
+                : new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F070, result.Message)));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F071, ex.Message));
+            return AuditWrite("Plc.WriteRecipe", device.Id, new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F071, ex.Message)));
         }
     }
 
@@ -97,14 +97,14 @@ public class DevicePlcCommandHandler(
     public async Task<PlcOpResult> ResetProductionAsync(Device device, Func<Device, bool> confirmCallback)
     {
         if (!_connectionManager.IsConnected)
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M181);
+            return AuditWrite("Plc.ResetProduction", device.Id, new PlcOpResult(PlcOpStatus.Warning, Strings.M181));
 
         var addr = device.ProductionResetAddress;
         if (string.IsNullOrWhiteSpace(addr))
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M182);
+            return AuditWrite("Plc.ResetProduction", device.Id, new PlcOpResult(PlcOpStatus.Warning, Strings.M182));
 
         if (GetAdapter(device).AddressCodec.Parse(addr) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F008, addr));
+            return AuditWrite("Plc.ResetProduction", device.Id, new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F008, addr)));
 
         if (!confirmCallback(device))
             return new PlcOpResult(PlcOpStatus.Cancelled, Strings.M183);
@@ -112,13 +112,13 @@ public class DevicePlcCommandHandler(
         try
         {
             var success = await Task.Run(() => _dataAcquisitionService.ResetDeviceProduction(device));
-            return success
+            return AuditWrite("Plc.ResetProduction", device.Id, success
                 ? new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F116, device.Name))
-                : new PlcOpResult(PlcOpStatus.Warning, Strings.M184);
+                : new PlcOpResult(PlcOpStatus.Warning, Strings.M184));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F162, ex.Message));
+            return AuditWrite("Plc.ResetProduction", device.Id, new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F162, ex.Message)));
         }
     }
 
@@ -137,7 +137,7 @@ public class DevicePlcCommandHandler(
     public async Task<PlcOpResult> ResetAllProductionAsync(Func<bool> confirmCallback)
     {
         if (!_connectionManager.IsConnected)
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M181);
+            return AuditWrite("Device.ResetAllOee", null, new PlcOpResult(PlcOpStatus.Warning, Strings.M181));
 
         if (!confirmCallback())
             return new PlcOpResult(PlcOpStatus.Cancelled, Strings.M183);
@@ -145,13 +145,13 @@ public class DevicePlcCommandHandler(
         try
         {
             var (triggered, total) = await Task.Run(() => _dataAcquisitionService.ResetAllDevicesProduction());
-            return total == 0
+            return AuditWrite("Device.ResetAllOee", null, total == 0
                 ? new PlcOpResult(PlcOpStatus.Info, Strings.M386)
-                : new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F718, triggered, total));
+                : new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F718, triggered, total)));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F719, ex.Message));
+            return AuditWrite("Device.ResetAllOee", null, new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F719, ex.Message)));
         }
     }
 
@@ -196,13 +196,13 @@ public class DevicePlcCommandHandler(
     public async Task<PlcOpResult> ResetCounterAlarmValueAsync(CounterAlarm alarm)
     {
         if (alarm == null || string.IsNullOrWhiteSpace(alarm.PlcAddress))
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M185);
+            return AuditWrite("Plc.ResetCounter", alarm?.Name, new PlcOpResult(PlcOpStatus.Warning, Strings.M185));
 
         if (!_connectionManager.IsConnected)
-            return new PlcOpResult(PlcOpStatus.Warning, Strings.M188);
+            return AuditWrite("Plc.ResetCounter", alarm.Name, new PlcOpResult(PlcOpStatus.Warning, Strings.M188));
 
         if (_fallbackAdapter.AddressCodec.Parse(alarm.PlcAddress) is not { IsValid: true, Type: PlcAddressType.DWord })
-            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F083, alarm.PlcAddress));
+            return AuditWrite("Plc.ResetCounter", alarm.Name, new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F083, alarm.PlcAddress)));
 
         try
         {
@@ -210,14 +210,26 @@ public class DevicePlcCommandHandler(
             if (result.IsSuccess)
             {
                 alarm.CurrentValue = 0;
-                return new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F111, alarm.Name));
+                return AuditWrite("Plc.ResetCounter", alarm.Name, new PlcOpResult(PlcOpStatus.Success, string.Format(Strings.F111, alarm.Name)));
             }
-            return new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F160, result.Message));
+            return AuditWrite("Plc.ResetCounter", alarm.Name, new PlcOpResult(PlcOpStatus.Warning, string.Format(Strings.F160, result.Message)));
         }
         catch (Exception ex)
         {
-            return new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F161, ex.Message));
+            return AuditWrite("Plc.ResetCounter", alarm.Name, new PlcOpResult(PlcOpStatus.Error, string.Format(Strings.F161, ex.Message)));
         }
+    }
+
+    private static PlcOpResult AuditWrite(string action, string? targetId, PlcOpResult result)
+    {
+        if (result.Status == PlcOpStatus.Cancelled)
+            return result;
+        var detail = result.Message ?? "";
+        if (detail.Length > 400)
+            detail = detail[..400];
+        var targetType = action == "Device.ResetAllOee" ? "Device" : "Plc";
+        AuditLog.Record(action, targetType, targetId, result.Status is PlcOpStatus.Success or PlcOpStatus.Info, detail);
+        return result;
     }
 
     private IDeviceAdapter GetAdapter(Device device) => _adapterResolver?.Resolve(device) ?? _fallbackAdapter;

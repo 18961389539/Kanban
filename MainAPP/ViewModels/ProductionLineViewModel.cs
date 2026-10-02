@@ -645,7 +645,6 @@ public partial class ProductionLineViewModel : ObservableObject, IDisposable, IN
 
             if (result.Status == PlcOpStatus.Success)
             {
-                AuditLog.Record("Device.ResetAllOee", "Device", null, detail: result.Message);
                 // 清零是全设备累计归零：立刻刷新页面汇总与班次进度，避免等下一次采集 tick 才归零
                 RefreshSummaryKpis();
                 RefreshLastShiftComparison();

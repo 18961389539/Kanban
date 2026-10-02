@@ -445,6 +445,7 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
         {
             _recipeStore.Upsert(recipe);
             await _recipeStore.SaveAllAsync();
+            AuditLog.Record(isNew ? "Recipe.Add" : "Recipe.Update", "Recipe", recipe.Id, detail: recipe.Name);
             _logger.LogInformation("配方已保存：{Name}（{MachineType}）", recipe.Name, recipe.MachineType);
             _dialog.NotifySuccess(string.Format(Strings.K688, recipe.Name));
             _skipSelectionGuard = true;
@@ -456,6 +457,11 @@ public partial class RecipeManagerViewModel : ObservableObject, IDisposable, INa
             // 重建编辑区副本，彻底隔离与库的引用
             if (SelectedRecipe is not null) LoadIntoEditor(SelectedRecipe);
             _skipSelectionGuard = false;
+        }
+        catch (Exception ex)
+        {
+            AuditLog.Record(isNew ? "Recipe.Add" : "Recipe.Update", "Recipe", recipe.Id, succeeded: false, detail: ex.Message);
+            throw;
         }
         finally
         {

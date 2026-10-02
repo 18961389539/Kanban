@@ -158,6 +158,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _productionStore.GetLatestProductionBeforeStrict(deviceId, before, shiftName);
     public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _productionStore.QueryProductionLogsBatch(from, to, ids);
+    public Dictionary<string, List<ProductionLog>> QueryProductionLogsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> ids)
+        => _productionStore.QueryProductionLogsBatchStrict(from, to, ids);
     public int CleanupOldProductionLogs(int retentionDays = 365)
         => _productionStore.CleanupOldProductionLogs(retentionDays);
 
@@ -173,6 +175,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _alarmStore.QueryAlarmEventsPaged(from, to, deviceId, shiftName, page, pageSize, alarmName);
     public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _alarmStore.QueryAlarmEventsBatch(from, to, ids);
+    public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> ids)
+        => _alarmStore.QueryAlarmEventsBatchStrict(from, to, ids);
     public AlarmEventRecord? GetLatestAlarmEvent(string alarmId) => _alarmStore.GetLatestAlarmEvent(alarmId);
     public AlarmEventRecord? GetLatestAlarmEventStrict(string alarmId) => _alarmStore.GetLatestAlarmEventStrict(alarmId);
     public int CleanupOldAlarmEvents(int retentionDays = 365) => _alarmStore.CleanupOldAlarmEvents(retentionDays);
@@ -191,6 +195,8 @@ public sealed class HistoryService : IHistoryService, IHistoryQueryExecutor, IWo
         => _statusStore.QueryStatusTransitionsPaged(deviceId, from, to, shiftName, page, pageSize);
     public Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatch(DateTime from, DateTime to, IReadOnlyList<string> ids)
         => _statusStore.QueryStatusTransitionsBatch(from, to, ids);
+    public Dictionary<string, List<StatusTransitionRecord>> QueryStatusTransitionsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> ids)
+        => _statusStore.QueryStatusTransitionsBatchStrict(from, to, ids);
     public StatusTransitionRecord? GetLatestStatusBefore(string deviceId, DateTime before, string? shiftName = null)
         => _statusStore.GetLatestStatusBefore(deviceId, before, shiftName);
     public StatusTransitionRecord? GetLatestStatusBeforeStrict(string deviceId, DateTime before, string? shiftName = null)

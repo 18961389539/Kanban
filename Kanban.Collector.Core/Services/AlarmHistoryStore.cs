@@ -146,20 +146,25 @@ public sealed class AlarmHistoryStore : IAlarmHistoryService, IDisposable
     {
         try
         {
-            using var ctx = _db.CreateAlarmEventContext();
-            var idSet = deviceIds.ToHashSet();
-            return ctx.AlarmEvents.AsNoTracking()
-                .Where(e => idSet.Contains(e.DeviceId) && e.EventTime >= from && e.EventTime <= to)
-                .OrderBy(e => e.EventTime)
-                .ToList()
-                .GroupBy(e => e.DeviceId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            return QueryAlarmEventsBatchStrict(from, to, deviceIds);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "批量查询报警事件失败");
             return [];
         }
+    }
+
+    public Dictionary<string, List<AlarmEventRecord>> QueryAlarmEventsBatchStrict(DateTime from, DateTime to, IReadOnlyList<string> deviceIds)
+    {
+        using var ctx = _db.CreateAlarmEventContext();
+        var idSet = deviceIds.ToHashSet();
+        return ctx.AlarmEvents.AsNoTracking()
+            .Where(e => idSet.Contains(e.DeviceId) && e.EventTime >= from && e.EventTime <= to)
+            .OrderBy(e => e.EventTime)
+            .ToList()
+            .GroupBy(e => e.DeviceId)
+            .ToDictionary(g => g.Key, g => g.ToList());
     }
 
     public int CleanupOldAlarmEvents(int retentionDays = 365) =>

@@ -39,6 +39,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
     private readonly DeviceRepository _deviceRepository;
     private readonly IDialogService _dialog;
     private readonly AppSettings _appSettings;
+    private readonly IAssistantQuestionTally? _questions;
 
     public ProductionQueryViewModel ProductionQuery { get; private set; }
     public StatusQueryViewModel StatusQuery { get; private set; }
@@ -377,6 +378,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         Add(StatusQuery.StatusInsight);
         Add(AlarmQuery.AlarmInsight);
         Add(OeeQuery.OeeInsight);
+        foreach (var note in RepeatedNotes())
+            notes.Add(note);
         return new AssistantHistoryFacts(FromDate, ToDate, notes);
 
         void Add(string? text)
@@ -386,18 +389,37 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         }
     }
 
+    [ObservableProperty]
+    private string _repeatedQuestionNote = "";
+
+    public bool HasRepeatedQuestionNote => !string.IsNullOrWhiteSpace(RepeatedQuestionNote);
+
+    partial void OnRepeatedQuestionNoteChanged(string value) => OnPropertyChanged(nameof(HasRepeatedQuestionNote));
+
+    public void RefreshRepeatedQuestions() => RepeatedQuestionNote = string.Join(Environment.NewLine, RepeatedNotes());
+
+    private IEnumerable<string> RepeatedNotes()
+    {
+        if (_questions == null)
+            yield break;
+        foreach (var question in _questions.Repeated())
+            yield return string.Format(Strings.Assistant_RepeatedNote, question);
+    }
+
     public HistoryQueryViewModel(
         IHistoryService historyService,
         DeviceRepository deviceRepo,
         AppSettings appSettings,
         IDialogService dialog,
         ISnEventStore? snEventStore = null,
-        AssistantContextStore? assistantContext = null)
+        AssistantContextStore? assistantContext = null,
+        IAssistantQuestionTally? questions = null)
     {
         _historyService = historyService;
         _deviceRepository = deviceRepo;
         _appSettings = appSettings;
         _dialog = dialog;
+        _questions = questions;
 
         ProductionQuery = new ProductionQueryViewModel(historyService);
         StatusQuery = new StatusQueryViewModel(historyService);
@@ -859,6 +881,8 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             var result = await Task.Run(() => ExecuteQueryInBackground(request));
             if (requestVersion != _queryVersion) return;
             ApplyQueryResult(result);
+            if (request.TabIndex != 4)
+                AuditHistoryLookup(result.Error == null, result.TotalCount, result.Error);
         }
         catch (Exception ex)
         {
@@ -866,6 +890,7 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
             QueryErrorMessage = string.Format(Strings.F077, ex.Message);
             Feedback.Error(QueryErrorMessage);
             _dialog.NotifyError(QueryErrorMessage);
+            AuditHistoryLookup(false, 0, QueryErrorMessage);
         }
         finally
         {
@@ -1022,8 +1047,35 @@ public partial class HistoryQueryViewModel : ObservableObject, IDisposable
         }
         finally
         {
+            if (SelectedTabIndex != 4)
+                AuditHistoryLookup(string.IsNullOrEmpty(QueryErrorMessage), TotalCount, QueryErrorMessage);
             IsLoading = false;
         }
+    }
+
+    private void AuditHistoryLookup(bool succeeded, int count, string? error)
+    {
+        var device = CurrentDeviceLabel();
+        var detail = string.Format(
+            Strings.Audit_Detail_HistoryQuery,
+            SelectedTabIndex,
+            device,
+            FromDate.ToString("yyyy-MM-dd HH:mm"),
+            ToDate.ToString("yyyy-MM-dd HH:mm"),
+            CurrentPage,
+            count);
+        if (!succeeded && !string.IsNullOrWhiteSpace(error))
+            detail = detail + " " + error;
+        if (detail.Length > 400)
+            detail = detail[..400];
+        AuditLog.Record("History.Query", "History", device, succeeded, detail);
+    }
+
+    private string CurrentDeviceLabel()
+    {
+        if (string.IsNullOrEmpty(SelectedDeviceId))
+            return "";
+        return _deviceRepository.Devices.FirstOrDefault(device => device.Id == SelectedDeviceId)?.Name ?? SelectedDeviceId;
     }
 
     [RelayCommand(CanExecute = nameof(CanExport))]

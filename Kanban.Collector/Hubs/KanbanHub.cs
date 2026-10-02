@@ -335,6 +335,18 @@ public sealed class KanbanHub : Hub<IKanbanHubClient>, IKanbanHubServer
     }
 
     /// <inheritdoc />
+    public Task<AuditChainReportDto> VerifyAuditChainAsync()
+    {
+        var report = _auditService.VerifyChain();
+        return Task.FromResult(new AuditChainReportDto
+        {
+            Intact = report.Intact,
+            Checked = report.Checked,
+            Unchecked = report.Unchecked,
+        });
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<RecipeDto>> GetRecipesAsync()
         => _configSyncHandler.GetRecipesAsync();
 

@@ -6,20 +6,37 @@ Wpf,Nav_DeviceManager,设备管理,Device Manager,設備管理,Gerenciador de di
 Wpf,Nav_WorkOrder,工单管理,Work Orders,工単管理,Ordens de produção
 Wpf,Nav_HistoryQuery,历史查询,History Query,履歴照会,Consulta histórica
 Wpf,Nav_Assistant,AI问答,AI Q&A,AI質問,Perguntas de IA
-Wpf,Nav_Assistant_Tip,根据当前页面已经算好的事实回答问题,Answer from facts already shown on the current page,いまの画面で算出済みの事実から答える,Responde com os fatos já calculados na página atual
+Wpf,Nav_Assistant_Tip,发送时由模型选择查询，程序执行后再回答,On send the model chooses a query and the program runs it,送信時にモデルが照会を選びプログラムが実行する,No envio o modelo escolhe a consulta e o programa executa
 Wpf,Assistant_Title,AI问答,AI Q&A,AI質問,Perguntas de IA
-Wpf,Assistant_Intro,只根据已经算好的事实说明，并带上设备名称和上一页的手册说明。不确认报警，不开停工单，也不下发配方。,It explains facts already calculated and includes device names plus the previous page manual. It does not acknowledge alarms or start stop or release work orders or recipes.,算出済みの事実に設備名と前のページの説明を添えます。アラーム確認・工単の開始と終了・レシピ配布はしません。,Explica fatos já calculados e inclui os nomes dos dispositivos e o manual da página anterior. Não confirma alarmes nem inicia encerra ordens ou envia receitas.
-Wpf,Assistant_Compare,对照事实,Compare facts,事実を対照,Comparar fatos
-Wpf,Assistant_Handover,写成交班,Write handover,引き継ぎを書く,Escrever passagem
-Wpf,Assistant_CompareQuestion,这几条已经算好的事实里，哪些落在同一时段？只对照，不要写成根因。,Which of these calculated facts fall in the same period? Compare them only. Do not call it a root cause.,これらの算出済み事実のどれが同じ時間帯に重なりますか。対照だけにして原因と断定しないでください。,Quais destes fatos calculados caem no mesmo período? Apenas compare. Não chame isso de causa raiz.
-Wpf,Assistant_HandoverQuestion,用这些事实写一段交班说明。不要加入页面上没有的数。,Write a shift handover from these facts. Do not add numbers the page does not have.,これらの事実で引き継ぎ文を書いてください。画面にない数は足さないでください。,Escreva uma passagem de turno com estes fatos. Não acrescente números que a página não tem.
+Wpf,Assistant_Intro,发送后由本机模型自己调用查询，程序执行后把结果交回。,On send the local model calls a query and the program returns the result.,送信後に手元のモデルが照会を呼び出しプログラムが結果を返します。,No envio o modelo local chama uma consulta e o programa devolve o resultado.
+Wpf,Assistant_Compare,今天产量,Today output,今日の出来高,Produção de hoje
+Wpf,Assistant_Handover,当前班次,This shift,このシフト,Este turno
+Wpf,Assistant_CompareQuestion,今天的产量,production today,今日の出来高,produção hoje
+Wpf,Assistant_HandoverQuestion,当前班次的产量,production this shift,このシフトの出来高,produção este turno
+Wpf,Assistant_Lag,哪台最低,Lowest quality,最も低い良品率,Menor qualidade
+Wpf,Assistant_LagQuestion,当前班次合格率最低的是哪台,which device has the lowest quality rate this shift,このシフトで良品率が最も低い設備はどれですか,qual equipamento tem a menor taxa de qualidade neste turno
+Wpf,Assistant_Yesterday,比昨天,Versus yesterday,昨日と比べる,Contra ontem
+Wpf,Assistant_YesterdayQuestion,今天和昨天的产量,production today and yesterday,今日と昨日の出来高,produção hoje e ontem
+Wpf,Assistant_OrderBehind,报警时长,Alarm duration,アラーム時間,Duração do alarme
+Wpf,Assistant_OrderBehindQuestion,今天的报警时长,alarm duration today,今日のアラーム時間,duração do alarme hoje
+Wpf,Assistant_Stop,停止,Stop,停止,Parar
+Wpf,Assistant_Stopped,已停止,Stopped,停止しました,Interrompido
+Wpf,Assistant_Ungrounded,这句数字不在事实里,This number is not in the facts,この数字は事実にありません,Este número não está nos fatos
+Wpf,Assistant_Omitted,这次没带上：{0}。,Left out this time: {0}.,今回は付けていません：{0}。,Desta vez ficou de fora: {0}.
+Wpf,Assistant_OmittedNames,设备名单,device names,設備名,nomes dos dispositivos
+Wpf,Assistant_OmittedManual,手册说明,the manual,手引の説明,o manual
+Wpf,Assistant_OmittedNotes,历史说明,history notes,履歴の説明,as notas do histórico
+Wpf,Assistant_OmittedDetails,逐台明细,per-device lines,設備ごとの明細,as linhas por equipamento
+Wpf,Assistant_RepeatedNote,反复问过：{0}。这是提问记录，不是新算出来的数。,Asked more than once: {0}. This is a record of the question and not a newly calculated number.,繰り返し聞かれた質問：{0}。これは質問の記録で新しく計算した数ではありません。,Perguntado mais de uma vez: {0}. Isto é um registro da pergunta e não um número recém-calculado.
 Wpf,Assistant_Send,发送,Send,送信,Enviar
-Wpf,Assistant_InputHint,写一句你看到的现象或想核对的数,Describe what you see or the number you want checked,見ている現象か確認したい数を書いてください,Descreva o que você vê ou o número a conferir
+Wpf,Assistant_InputHint,可以问报警、工单或产量。例如今天有哪些报警,Ask about alarms work orders or output. For example which alarms happened today,アラーム・工単・出来高を聞けます。例：今日のアラーム,Pergunte sobre alarmes ordens ou produção. Por exemplo quais alarmes houve hoje
 Wpf,Assistant_Preparing,正在准备本地模型。第一次使用会下载权重。,Preparing the local model. The first use downloads the weights.,ローカルモデルを準備しています。初回は重みをダウンロードします。,Preparando o modelo local. O primeiro uso baixa os pesos.
 Wpf,Assistant_Answering,正在回答,Answering,回答しています,Respondendo
+Wpf,Assistant_Querying,正在查询看板数据。,Querying the board.,看板のデータを照会しています。,Consultando os dados do painel.
 Wpf,Assistant_TooLong,请把问题收成一段话。,Keep the question to one short paragraph.,質問は一段落に収めてください。,Deixe a pergunta em um parágrafo curto.
 Wpf,Assistant_NoServer,发布目录里没有本地模型程序，这次回答不了。,The published folder has no local model program so this question cannot be answered.,公開フォルダにローカルモデルのプログラムがないため回答できません。,A pasta publicada não tem o programa do modelo local e esta pergunta não pode ser respondida.
 Wpf,Assistant_Failed,这次没有答上：{0},No answer this time: {0},今回は答えられませんでした：{0},Sem resposta desta vez: {0}
+Wpf,Assistant_Unrecognized,这次算不了。请写明时间和指标，例如某一天的产量或合格率。,This cannot be calculated. Name the period and the measure such as output or quality for a day.,今回は計算できません。期間と指標を書いてください。,Não dá para calcular desta vez. Indique o período e a medida.
 Wpf,Assistant_ContextPage,上一页：{0},Previous page: {0},前のページ：{0},Página anterior: {0}
 Wpf,Assistant_ContextDevice,设备：{0},Device: {0},設備：{0},Dispositivo: {0}
 Wpf,Assistant_ContextDeviceNone,设备：还没有选中,Device: none selected,設備：未選択,Dispositivo: nenhum selecionado
@@ -2519,6 +2536,13 @@ Wpf,Audit_Detail_ReviewPdf,生产复盘 PDF,Production review PDF,生産振り�
 Wpf,Audit_Detail_AuditArchive,审计归档 {0} 条,Audit archive: {0} entries,監査アーカイブ {0} 件,Arquivo de auditoria: {0} registros
 Wpf,Audit_Detail_WoAdd,产品={0} 目标={1},Product={0} Target={1},製品={0} 目標={1},Produto={0} Meta={1}
 Wpf,Audit_Detail_PageExport,当前页导出 Tab={0} Page={1},Current page export Tab={0} Page={1},現在のページをエクスポート Tab={0} Page={1},Exportação da página atual Tab={0} Page={1}
+Wpf,Audit_Detail_HistoryQuery,页签={0} 设备={1} {2} 至 {3} 第{4}页 共{5}条,Tab={0} device={1} {2} to {3} page {4} total {5},タブ={0} 設備={1} {2} から {3} {4}ページ目 全{5}件,Aba={0} dispositivo={1} {2} até {3} página {4} total {5}
+Wpf,Audit_Detail_SnQuery,序列号={0} 共{1}条,Serial={0} total {1},シリアル={0} 全{1}件,Série={0} total {1}
+Wpf,Audit_Detail_RecipeImport,导入 {0} 条，跳过 {1} 条,Imported {0} and skipped {1},インポート {0} 件、スキップ {1} 件,Importados {0} e ignorados {1}
+Wpf,Audit_Detail_RecipeExport,导出 {0} 条,Exported {0},エクスポート {0} 件,Exportados {0}
+Wpf,Audit_ChainIntact,记录链完整,The record chain is intact,記録チェーンは完全です,A cadeia de registros está intacta
+Wpf,Audit_ChainBroken,记录链已断开。库中记录可能被改过或删过中间的条目。,The record chain is broken. Entries in the database may have been changed or removed.,記録チェーンが切れました。データベースの記録が変更または削除された可能性があります。,A cadeia de registros foi interrompida. Os registros no banco podem ter sido alterados ou removidos.
+Wpf,Audit_ChainUnchecked,这次没能核对记录链,The record chain could not be checked this time,今回は記録チェーンを照合できませんでした,Não foi possível conferir a cadeia de registros desta vez
 Wpf,Hq_SnNotSupported,当前运行模式不支持 SN 追溯,SN traceability is not available in the current mode,現在のモードでは SN トレーサビリティは利用できません,A rastreabilidade de SN não está disponível no modo atual
 Wpf,Hq_SnNotSupportedHint,SN 事件记录未启用，或当前远程连接无 SN 查询通道,"SN event recording is disabled, or the current remote connection has no SN query channel",SN イベント記録が無効、または現在のリモート接続に SN クエリチャネルがありません,"O registro de eventos de SN está desativado, ou a conexão remota atual não tem canal de consulta de SN"
 Wpf,Web_App_Title,生产看板,Production Dashboard,生産ダッシュボード,Painel de Produção
